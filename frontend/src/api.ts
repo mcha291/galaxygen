@@ -209,9 +209,12 @@ export interface Census {
 
 export type RegionWindowQuery = { r_min: number; r_max: number; phi_min: number; phi_max: number; level?: number };
 
-/** The clouds of a window, at a level (the census the region regime synthesises interiors from). */
-export async function loadClouds(window: RegionWindowQuery, query: Query, signal?: AbortSignal): Promise<Census> {
-  const got = await clouds(window, query, { signal });
+/**
+ * The clouds of a window, at a level (the census the region regime synthesises interiors from). `precision` "f4" asks
+ * for float32 (S64): the whole disc's census the clouds' opacity raster is built from, about 1.6 MB against 2.8.
+ */
+export async function loadClouds(window: RegionWindowQuery, query: Query, signal?: AbortSignal, precision?: "f4" | "f8"): Promise<Census> {
+  const got = await clouds(window, precision ? { ...query, precision } : query, { signal });
   return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
 

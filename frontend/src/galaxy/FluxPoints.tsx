@@ -13,13 +13,17 @@ import { RING_ROWS } from "./regimes";
 // Additive: light adds. Not pickable here: the view's Picker works on positions.
 
 /** The march's dust, as the points read it: the ring texture, the scattered light's (whose spare channel is the
- * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. */
+ * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. Since S64 (V6) the clouds'
+ * raster (null: no clouds' layer drawn), each channel's depth per magnitude of its A_V, and the clouds' layer, kpc. */
 export interface PointDust {
   rings: Texture;
   scatter: Texture;
   rLo: number;
   rHi: number;
   top: number;
+  clouds?: Texture | null;
+  cloudExt?: readonly [number, number, number];
+  cloudsHeight?: number;
 }
 
 const VERTEX = /* glsl */ `
@@ -34,6 +38,10 @@ const VERTEX = /* glsl */ `
   uniform float rHi;
   uniform float dustTop;
   uniform float dustOn;
+  uniform sampler2D cloudTex;
+  uniform vec3 cloudExt;
+  uniform float cloudsHeight;
+  uniform float cloudsOn;
   varying vec3 vLight;
 
   // The march's own (FieldVolume): a sech²(y / 2h) / 4h layer's column from height y0 to y1 over a path ds.
@@ -76,7 +84,11 @@ const VERTEX = /* glsl */ `
       vec3 face = textureLod(rings, vec2(x, (${RING_ROWS.depth}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).rgb;
       float h = textureLod(rings, vec2(x, (${RING_ROWS.thermal}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
       float place = textureLod(scatter, vec2(x, phi / 6.28318531), 0.0).a;
-      tau += face * place * column(p.y + u.y * s0, p.y + u.y * s1, h, ds);
+      // The diffuse share the ring's realised clouds leave (S64), and the clouds' own layer from the march's raster.
+      float share = textureLod(rings, vec2(x, (${RING_ROWS.share}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).r;
+      float cloudColumn = cloudsOn > 0.5 ? column(p.y + u.y * s0, p.y + u.y * s1, cloudsHeight, ds) : 0.0;
+      vec3 clouds = cloudsOn > 0.5 ? textureLod(cloudTex, vec2(x, phi / 6.28318531), 0.0).r * cloudExt : vec3(0.0);
+      tau += face * place * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;
     }
     return tau;
   }
@@ -146,6 +158,10 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
         rHi: { value: 1 },
         dustTop: { value: 0 },
         dustOn: { value: 0 },
+        cloudTex: { value: sprite },
+        cloudExt: { value: new Vector3(0, 0, 0) },
+        cloudsHeight: { value: 0 },
+        cloudsOn: { value: 0 },
       },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
@@ -182,6 +198,14 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
       uniforms.rLo.value = dust.rLo;
       uniforms.rHi.value = dust.rHi;
       uniforms.dustTop.value = dust.top;
+    }
+    // The clouds' layer (S64): read only with a raster in hand.
+    const clouds = dust?.clouds ?? null;
+    uniforms.cloudsOn.value = clouds ? 1 : 0;
+    if (clouds) {
+      uniforms.cloudTex.value = clouds;
+      (uniforms.cloudExt.value as Vector3).set(...(dust!.cloudExt ?? [0, 0, 0]));
+      uniforms.cloudsHeight.value = dust!.cloudsHeight ?? 0;
     }
   });
   return <primitive object={points} />;

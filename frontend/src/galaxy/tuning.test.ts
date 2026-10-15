@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "./FieldVolume";
-import pinned from "./fieldFragment.d207.glsl?raw";
+import pinned from "./fieldFragment.s64.glsl?raw";
 import { WHITE_KELVIN } from "./filters";
 import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
@@ -70,6 +70,9 @@ describe("tuning defaults (D199)", () => {
       ageYoung: true,
       ageMiddle: true,
       ageOld: true,
+      // S64 (V6): the clouds as extinction, on; the raster at the finest 16 MiB holds on the render grid.
+      cloudsExtinction: true,
+      cloudRaster: 5,
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
@@ -91,7 +94,9 @@ describe("tuning defaults (D199)", () => {
     // S50's declared uniforms one replacement at a time and compared the rest with session-46's source, which
     // proved those two rows changed no picture. D206 changes the march on purpose (the dust in its own layer,
     // each sub-step composed in order), so the comparison ends there and the source is pinned whole: a change
-    // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source.
+    // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source. S64 (V6)
+    // re-pinned it on purpose: the diffuse depth times the ring's diffuse share, the clouds' raster a third layer in
+    // the step, the pieces cut at both layers' cuts (fieldFragment.s64.glsl; D207's snapshot is in git).
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
     expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
@@ -104,11 +109,14 @@ describe("tuning defaults (D199)", () => {
     expect(SUB_SAMPLES_MAX).toBe(8);
     // D206: the dust's height is read per ring, never a uniform, and the cuts are regimes.ts's.
     expect(now).not.toContain("uniform float dustHeight");
-    expect(now).toContain(`for (int m = 0; m <= ${DUST_CUTS.length}; m++)`);
+    expect(now).toContain(`for (int m = 0; m <= ${2 * DUST_CUTS.length}; m++)`);
     DUST_CUTS.forEach((c) => expect(now).toContain(`return ${c.toFixed(2)};`));
     // D207: the dust's placement multiplies its depth, its thermal light and the diagnostic, not the scattered light.
     expect(now).toContain("float place = scattered.a;");
-    expect(now).toMatch(/tau = readRing\(rp\.x, \d\.0\) \* place \* dustDepth;/);
+    expect(now).toMatch(/tau = readRing\(rp\.x, \d\.0\) \* place \* readRing\(rp\.x, \d\.0\)\.r \* dustDepth;/);
+    // S64: the clouds' layer, its uniforms and its own column in each piece.
+    for (const name of ["cloudsHeight", "cloudsOn"]) expect(now).toContain(`uniform float ${name};`);
+    expect(now).toContain("vec3 depth = tau * cDust + (clouds ? tauC * column(a, b, cloudsHeight, piece) : vec3(0.0));");
     expect(now).toMatch(/\(scattered\.rgb \* scattering \+ readRing\(rp\.x, \d\.0\) \* place\) \* dustGain \+ dustWhere \* level \* whereTint\(level\) \* place;/);
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
@@ -194,7 +202,7 @@ describe("tuning storage", () => {
     expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
-    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
     for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
   });
 });

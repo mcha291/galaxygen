@@ -104,7 +104,9 @@ describe("planeTexture", () => {
 
   it("draws the components it is not given as nothing", () => {
     const bare = planeTexture({ R, phi, stars, white });
-    expect(bare.hii.every((v) => v === 0) && bare.rings.every((v) => v === 0)).toBe(true);
+    // Every ring row is nothing but the diffuse share (S64), which is all of the dust (1) when none is given.
+    const shareRow = (n: number) => Math.floor(n / (4 * R.n)) === RING_ROWS.share;
+    expect(bare.hii.every((v) => v === 0) && bare.rings.every((v, n) => v === (shareRow(n) ? 1 : 0))).toBe(true);
     // The scattered light is nothing; its spare channel is the dust's placement, an even ring (1) when none is given.
     expect(bare.scatter.every((v, n) => v === (n % 4 === 3 ? 1 : 0))).toBe(true);
   });
@@ -475,5 +477,95 @@ describe("the starlight by age", () => {
     const a = agedLight(served, parts, ALL_AGES, n);
     const b = agedLight(arrays, partsOf(header, arrays)!, ALL_AGES, n);
     for (let q = 0; q < a.length; q += 997) expect(a[q]).toBeCloseTo(b[q], 10);
+  });
+});
+
+// S64 (BUILD_III V6; RULING_S64 R2-R3): the clouds' own dust as a third layer in the step, the diffuse dust reduced by
+// the ring's share.
+describe("the clouds as extinction (S64)", () => {
+  const sech2 = (x: number) => 1 / Math.cosh(Math.min(30, Math.max(-30, x))) ** 2;
+  const density = (y: number, h: number) => sech2(y / (2 * h)) / (4 * h);
+  // Three layers by brute force: unit starlight in hStars, dimmed by the dust (tau in hDust) and the clouds (tauC in
+  // hClouds) in front of it.
+  const quadrature3 = (y0: number, y1: number, path: number, hS: number, hD: number, tau: number, hC: number, tauC: number, n = 200_000) => {
+    let light = 0;
+    let depth = 0;
+    const dt = path / n;
+    for (let k = 0; k < n; k += 1) {
+      const y = y0 + ((y1 - y0) * (k + 0.5)) / n;
+      const d = (tau * density(y, hD) + tauC * density(y, hC)) * dt;
+      light += density(y, hS) * dt * Math.exp(-(depth + 0.5 * d));
+      depth += d;
+    }
+    return light;
+  };
+  const marched3 = (y0: number, y1: number, path: number, hS: number, hD: number, tau: number, hC: number, tauC: number, edges: number[]) => {
+    let light = 0;
+    let transmitted = 1;
+    for (let k = 0; k + 1 < edges.length; k += 1) {
+      const step = composeStep(y0 + (y1 - y0) * edges[k], y0 + (y1 - y0) * edges[k + 1], path * (edges[k + 1] - edges[k]), hS, hD, tau, hC, tauC);
+      light += transmitted * step.light;
+      transmitted *= step.transmitted;
+    }
+    return { light, transmitted };
+  };
+  const H_STARS = 0.3557;
+  // The default galaxy's rings (dust height kpc, V depth; S50's), the clouds' layer 0.1778 kpc (the S64 probe's), and a
+  // share of the depth to the clouds in the probe's range (0.27 to 0.73 of a ring's dust).
+  const RINGS: [number, number][] = [[0.0213, 47.9], [0.0469, 2.49], [0.1131, 0.472], [0.438, 0.025]];
+  const H_CLOUDS = 0.1778;
+  const STEPPINGS = [[0, 1], [0, 0.4983, 1], [0, 0.31, 0.493, 0.5003, 0.52, 1], Array.from({ length: 25 }, (_, k) => k / 24)];
+
+  it("composes stars, diffuse dust and clouds in order: within 1 % of the three layers' own integral, however stepped", () => {
+    let worst = 0;
+    for (const [hDust, tau] of RINGS) {
+      for (const clouds of [0.27, 0.73]) {
+        for (const cosView of [1, 0.5, 0.1]) {
+          const path = 12 / cosView;
+          const [td, tc] = [tau * (1 - clouds), tau * clouds];
+          const want = quadrature3(6, -6, path, H_STARS, hDust, td, H_CLOUDS, tc) * cosView;
+          for (const edges of STEPPINGS) {
+            const got = marched3(6, -6, path, H_STARS, hDust, td, H_CLOUDS, tc, edges);
+            worst = Math.max(worst, Math.abs(got.light * cosView - want));
+            // The two layers' own columns, however cut.
+            expect(got.transmitted).toBeCloseTo(Math.exp(-td * layerColumn(6, -6, hDust, path) - tc * layerColumn(6, -6, H_CLOUDS, path)), 9);
+          }
+        }
+      }
+    }
+    // 0.0047 as measured (S64); cut at the thinner layer alone it was 0.084.
+    expect(worst).toBeLessThan(0.01);
+    expect(worst).toBeGreaterThan(0.003);
+  });
+
+  it("is the dust-only step to the bit without clouds, whatever the clouds' layer", () => {
+    for (const [hDust, tau] of RINGS) {
+      for (const [y0, y1, path] of [[6, -6, 12], [0.3, -0.1, 0.9], [0.2, 0.2, 2]]) {
+        expect(composeStep(y0, y1, path, H_STARS, hDust, tau, H_CLOUDS, 0)).toEqual(composeStep(y0, y1, path, H_STARS, hDust, tau));
+        expect(composeStep(y0, y1, path, H_STARS, hDust, tau, 0, 3)).toEqual(composeStep(y0, y1, path, H_STARS, hDust, tau));
+      }
+    }
+  });
+
+  it("dims more with the clouds in their thicker layer than with the same dust in the gas layer, seen through the disc", () => {
+    // The inner ring: the clouds' share moved from the 21 pc gas layer into the 178 pc clouds' layer covers more of
+    // the stars' layer, so less of the near side escapes; the transmission through the whole disc is the same.
+    const [hDust, tau] = RINGS[0];
+    const all = composeStep(6, -6, 12, H_STARS, hDust, tau);
+    const split = composeStep(6, -6, 12, H_STARS, hDust, tau * 0.27, H_CLOUDS, tau * 0.73);
+    expect(split.transmitted).toBeCloseTo(all.transmitted, 12);
+    expect(split.light).toBeLessThan(all.light);
+  });
+
+  it("holds each ring's diffuse share in the ring texture's share row, 1 where none is published", () => {
+    const share = Float64Array.from({ length: R.n }, (_, i) => (i % 5) / 4);
+    share[3] = Number.NaN;
+    const t = planeTexture({ R, phi, stars, extinction, diffuseShare: share, white });
+    for (let i = 0; i < R.n; i += 1) {
+      for (let k = 0; k < 4; k += 1) expect(t.rings[(RING_ROWS.share * R.n + i) * 4 + k]).toBe(i === 3 ? 1 : Math.fround(share[i]));
+    }
+    const bare = planeTexture({ R, phi, stars, extinction, white });
+    for (let i = 0; i < R.n; i += 1) expect(bare.rings[(RING_ROWS.share * R.n + i) * 4]).toBe(1);
+    expect(RING_ROWS.count).toBe(4);
   });
 });

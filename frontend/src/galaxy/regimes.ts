@@ -26,6 +26,7 @@
 // model's grid — a knot, a filament — is V3's, from the cloud catalogue.
 
 import type { Axis } from "../preview/axes";
+import { shareAt } from "./cloudOpacity";
 
 /**
  * The drawn value of one published response: divided by its filter's white point, the tone map's
@@ -109,6 +110,12 @@ export interface PlaneFields {
    */
   dustPlacement?: ArrayLike<number> | null;
   /**
+   * The share of each ring's dust that is diffuse once the ring's realised clouds hold theirs, per R cell
+   * (`dust_diffuse_share`, S64 V6): the diffuse depth's multiplier, the clouds' dust drawn as its own layer
+   * (cloudOpacity.ts). Missing, or not a number at a ring, is all of it diffuse there: 1.
+   */
+  diffuseShare?: ArrayLike<number> | null;
+  /**
    * The white point: each filter's response to a unit of white light (/api/render's `white`). Every
    * channel is divided by it, so white light draws (1, 1, 1) per unit of light in any filter set.
    */
@@ -129,7 +136,8 @@ export interface PlaneTexture {
    * Per ring, three rows of one texel per R cell: row 0 the dust's face-on optical depth per channel,
    * row 1 the diffuse gas's Hα and row 2 the dust's thermal emission, each over the white point. The spare
    * channel: row 0's is the dust diagnostic's level (D205, written by FieldVolume), row 2's the dust layer's
-   * scale height, kpc (D206), row 1's unused.
+   * scale height, kpc (D206), row 1's unused. Since S64 (V6) a fourth row, `share`: the ring's `dust_diffuse_share`
+   * in every channel, which multiplies the depth row where the march and the points read the diffuse dust.
    */
   rings: Float32Array;
   width: number;
@@ -142,7 +150,7 @@ export interface PlaneTexture {
 }
 
 /** The rows of `PlaneTexture.rings`, and where a shader samples each (texel centres). */
-export const RING_ROWS = { depth: 0, dig: 1, thermal: 2, count: 3 } as const;
+export const RING_ROWS = { depth: 0, dig: 1, thermal: 2, share: 3, count: 4 } as const;
 
 /**
  * RGBA float textures from the published components, one texel per (R cell, φ cell), row-major with φ as
@@ -150,7 +158,7 @@ export const RING_ROWS = { depth: 0, dig: 1, thermal: 2, count: 3 } as const;
  * where it is light, or −ln of its transmission where it is dust: nothing is placed, clumped or recoloured.
  */
 export function planeTexture(fields: PlaneFields): PlaneTexture {
-  const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, white } = fields;
+  const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, diffuseShare, white } = fields;
   const nPhi = phi.n;
   const nF = white.length;
   const data = starTexels(R.n, nPhi, stars, white);
@@ -160,6 +168,8 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
   for (let i = 0; i < R.n; i += 1) {
     const h = Number(typeof dustHeight === "number" ? dustHeight : (dustHeight?.[i] ?? 0));
     rings[(RING_ROWS.thermal * R.n + i) * 4 + 3] = Number.isFinite(h) && h > 0 ? h : 0;
+    const share = shareAt(diffuseShare, i);
+    for (let k = 0; k < 4; k += 1) rings[(RING_ROWS.share * R.n + i) * 4 + k] = share;
     for (let k = 0; k < 3 && k < nF; k += 1) {
       rings[(RING_ROWS.depth * R.n + i) * 4 + k] = extinction ? depthOf(Number(extinction[i * nF + k])) : 0;
       rings[(RING_ROWS.dig * R.n + i) * 4 + k] = dig ? balanced(Number(dig[i * nF + k]), white[k]) : 0;
@@ -254,34 +264,63 @@ export const DUST_CUTS = [-11, -8, -6, -4.5, -3, -2, -1, 1, 2, 3, 4.5, 6, 8, 11]
  * line, for a unit face-on column of starlight in a layer `hStars` and a dust of face-on optical depth `tau` in a
  * layer `hDust`, along a ray from height y0 to y1 over a path `path` (the same units as the heights). Returns the
  * light that leaves the sub-step's near end and the share of what lies behind it that the sub-step lets through.
+ *
+ * The clouds (S64, V6; RULING_S64 R3): a third layer, the clouds' face-on optical depth `tauClouds` in their own
+ * published layer `hClouds` (cloud_layer_height, the halpha_hii layer), composed with the diffuse dust in the same
+ * pieces. The pieces are cut at both layers' cuts (DUST_CUTS times each height, merged in order), so neither is mixed
+ * with the stars across more than a few of its own heights: cut at the thinner alone, the inner disc's 21 pc dust left
+ * a fifth of the 178 pc clouds' column outside the last cut, mixed, 8 % of the light wrong. Without clouds
+ * (`tauClouds` 0, the default) the pieces and every number are the dust's alone, as before, to the bit.
  */
-export function composeStep(y0: number, y1: number, path: number, hStars: number, hDust: number, tau: number): { light: number; transmitted: number } {
+export function composeStep(
+  y0: number,
+  y1: number,
+  path: number,
+  hStars: number,
+  hDust: number,
+  tau: number,
+  hClouds: number = 0,
+  tauClouds: number = 0,
+): { light: number; transmitted: number } {
   // Heights run upward along the ray in u: the layers are symmetric about the midplane, so a descending ray is
   // the ascending one mirrored.
   const sign = y1 >= y0 ? 1 : -1;
   const u0 = sign * y0;
   const u1 = sign * y1;
   const du = u1 - u0;
-  const whole = !(hDust > 0) || du <= 1e-6 * hDust;
+  const clouds = tauClouds > 0 && hClouds > 0;
+  const dusty = hDust > 0;
+  // The thinnest layer the pieces are cut for: a step shorter than a millionth of it is one piece.
+  const hMin = dusty && clouds ? Math.min(hDust, hClouds) : dusty ? hDust : clouds ? hClouds : 0;
+  const whole = !(hMin > 0) || du <= 1e-6 * hMin;
+  const N = DUST_CUTS.length;
   let light = 0;
   let transmitted = 1;
-  for (let m = 0; m <= DUST_CUTS.length; m += 1) {
-    let a = u0;
+  // The next cut of each layer (an index into DUST_CUTS; past the last, none), merged in order of height.
+  let pd = 0;
+  let pc = 0;
+  let a = u0;
+  for (let m = 0; m <= 2 * N; m += 1) {
     let b = u1;
     let share = 1;
     if (whole) {
       if (m > 0) break;
     } else {
-      a = Math.max(u0, m === 0 ? -1e9 : DUST_CUTS[m - 1] * hDust);
-      b = Math.min(u1, m === DUST_CUTS.length ? 1e9 : DUST_CUTS[m] * hDust);
+      const nd = dusty && pd < N ? DUST_CUTS[pd] * hDust : 1e9;
+      const nc = clouds && pc < N ? DUST_CUTS[pc] * hClouds : 1e9;
+      b = Math.min(u1, Math.min(nd, nc));
+      if (nd <= nc) pd += 1;
+      else pc += 1;
       if (b <= a) continue;
       share = (b - a) / du;
     }
     const ds = path * share;
-    const depth = tau * layerColumn(a, b, hDust, ds);
+    const depth = tau * layerColumn(a, b, hDust, ds) + (clouds ? tauClouds * layerColumn(a, b, hClouds, ds) : 0);
     const own = depth >= 1e-3 ? (1 - Math.exp(-depth)) / Math.max(depth, 1e-6) : 1 - 0.5 * depth;
     light += transmitted * layerColumn(a, b, hStars, ds) * own;
     transmitted *= Math.exp(-depth);
+    a = b;
+    if (a >= u1) break;
   }
   return { light, transmitted };
 }

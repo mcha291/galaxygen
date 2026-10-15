@@ -10,6 +10,7 @@
 // 100 L☉ stay where they are and are tuned by a multiplier of 1.
 
 import { WHITE_KELVIN } from "./filters";
+import { CLOUD_RASTER } from "./cloudOpacity";
 import { CLOSE_FIELD_FLOOR, SUB_SAMPLES_MAX } from "./regimes";
 
 /** Ray-march steps through the galaxy's bounding box. */
@@ -88,6 +89,12 @@ export interface Tuning {
   ageMiddle: boolean;
   /** The old part's light. */
   ageOld: boolean;
+  // The clouds as extinction (S64, BUILD_III V6): the census's own dust drawn as a layer of opacity, and the raster's
+  // resolution.
+  /** The clouds' layer of opacity drawn (the diffuse dust is the render's reduced one either way). */
+  cloudsExtinction: boolean;
+  /** The clouds' raster, texels per render cell on each axis (cloudOpacity.ts). */
+  cloudRaster: number;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -120,6 +127,8 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   ageYoung: true,
   ageMiddle: true,
   ageOld: true,
+  cloudsExtinction: true,
+  cloudRaster: CLOUD_RASTER,
 });
 
 export type TuningKey = keyof Tuning;
@@ -278,6 +287,21 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "ageOld", label: "old stars", group: "Components", kind: "toggle", switch: true,
     about: "The field's starlight of the old part, placed round each ring by its own weight (S63, D223). A display choice of what is drawn.",
+  },
+  {
+    key: "cloudsExtinction", label: "clouds as extinction", group: "Components", kind: "toggle", switch: true,
+    about:
+      "The molecular clouds' own dust as a layer of opacity in the clouds' layer: /api/clouds' cloud_dust_extinction_v, " +
+      "rasterised conserving each cloud's A_V x area (S64, V6). Off draws no clouds' layer; the diffuse dust stays the " +
+      "render's reduced one (dust_diffuse_share, the model's), so off shows the dust without what the clouds hold. A display choice.",
+  },
+  {
+    key: "cloudRaster", label: "cloud raster", group: "March", kind: "range", min: 1, max: CLOUD_RASTER, step: 1, integer: true, unit: "texels / cell",
+    about:
+      `The clouds' opacity raster, texels per render cell on each axis. The default, ${CLOUD_RASTER}, is the finest whose ` +
+      `float32 texture fits 16 MiB on the 400 x 360 render grid (${400 * CLOUD_RASTER} x ${360 * CLOUD_RASTER} texels, ` +
+      `${((400 * CLOUD_RASTER * 360 * CLOUD_RASTER * 4) / 1e6).toFixed(1)} MB; computed in cloudOpacity.ts). Every cloud's A_V x area is ` +
+      "conserved at any setting: a display resolution, not light.",
   },
 ];
 

@@ -1,0 +1,108 @@
+import { describe, expect, it } from "vitest";
+
+import { CLOUD_RASTER, CLOUD_RASTER_BUDGET_BYTES, MAG_PER_DEPTH, RENDER_GRID, cloudDepthScale, cloudRaster, finestRaster, shareAt, texelArea } from "./cloudOpacity";
+import { depthOf } from "./regimes";
+
+// S64 (BUILD_III V6; RULING_S64 R4): the clouds' raster conserves what the census gives it - each cloud's A_V x area -
+// to float32 rounding, at any resolution; the default resolution is the finest a 16 MiB float32 texture holds.
+
+/** A hand-made census of three clouds on a 10 x 64 raster over R in [0, 10) kpc: a sub-texel one at R = 3.3, one that
+ * spans several texels at R = 6, and one that straddles phi = 0 (it wraps). */
+const THREE = {
+  cloud_radius: [3.3, 6.0, 8.2],
+  cloud_azimuth: [1.0, 2.5, 0.01],
+  cloud_size: [20, 900, 700], // pc: the radius
+  cloud_dust_extinction_v: [2.0, 0.5, 4.0],
+};
+const avArea = (c: typeof THREE) => c.cloud_size.reduce((s, size, i) => s + c.cloud_dust_extinction_v[i] * Math.PI * (size / 1000) ** 2, 0);
+
+function heldOf(av: Float32Array, width: number, height: number, rLo: number, rHi: number): number {
+  const dR = (rHi - rLo) / width;
+  const dPhi = (2 * Math.PI) / height;
+  let held = 0;
+  for (let i = 0; i < width; i += 1) for (let j = 0; j < height; j += 1) held += av[j * width + i] * texelArea(i, rLo, dR, dPhi);
+  return held;
+}
+
+describe("the clouds' raster (S64, V6)", () => {
+  it("conserves the census's A_V x area to float32 rounding: three clouds, one sub-texel, one split, one wrapping", () => {
+    const got = cloudRaster(THREE, 0, 10, 10, 64);
+    const want = avArea(THREE);
+    expect(got.census).toBeCloseTo(want, 12);
+    expect(got.outside).toBe(0);
+    expect(got.split).toBe(2); // the 900 pc and the 700 pc clouds; the 20 pc one falls whole in its texel
+    // My own sum over the texels, from the float32 values: the census's to float32 rounding.
+    const held = heldOf(got.av, 10, 64, 0, 10);
+    expect(Math.abs(held - want) / want).toBeLessThan(2e-7);
+    expect(Math.abs(got.held - held) / want).toBeLessThan(1e-12);
+    // The sub-texel cloud is in the one texel holding its centre: R 3.3 -> i 3, phi 1.0 -> j 1.
+    const i = 3;
+    const j = Math.floor(1.0 / ((2 * Math.PI) / 64));
+    expect(got.av[j * 10 + i] * texelArea(i, 0, 1, (2 * Math.PI) / 64)).toBeCloseTo(2.0 * Math.PI * 0.02 ** 2, 9);
+    // The wrapping cloud puts some of itself on both sides of phi = 0 (the last row and the first).
+    const rowSum = (j: number) => Array.from({ length: 10 }, (_, i) => got.av[j * 10 + i]).reduce((a, b) => a + b, 0);
+    expect(rowSum(0)).toBeGreaterThan(0);
+    expect(rowSum(63)).toBeGreaterThan(0);
+  });
+
+  it("conserves at every resolution, and draws nothing for a cloud with no column or beyond the disc", () => {
+    for (const [w, h] of [[1, 1], [37, 29], [400, 360]]) {
+      const got = cloudRaster(THREE, 0, 10, w, h);
+      const held = heldOf(got.av, w, h, 0, 10);
+      expect(Math.abs(held - avArea(THREE)) / avArea(THREE)).toBeLessThan(2e-7);
+    }
+    const none = cloudRaster({ ...THREE, cloud_dust_extinction_v: [0, Number.NaN, -1] }, 0, 10, 10, 8);
+    expect(none.census).toBe(0);
+    expect(none.av.every((v) => v === 0)).toBe(true);
+    const far = cloudRaster({ cloud_radius: [12], cloud_azimuth: [0], cloud_size: [10], cloud_dust_extinction_v: [1] }, 0, 10, 10, 8);
+    expect(far.outside).toBeCloseTo(far.census, 15);
+    expect(far.av.every((v) => v === 0)).toBe(true);
+  });
+
+  it("spreads a large cloud by a uniform sphere's chord: its centre texel holds the most", () => {
+    const big = cloudRaster({ cloud_radius: [5], cloud_azimuth: [Math.PI], cloud_size: [2000], cloud_dust_extinction_v: [1] }, 0, 10, 40, 64);
+    let best = -1;
+    let at = -1;
+    big.av.forEach((v, t) => {
+      if (v > best) {
+        best = v;
+        at = t;
+      }
+    });
+    const i = at % 40;
+    expect(Math.abs(i - 20)).toBeLessThanOrEqual(1);
+    // A sphere's face-on column at its centre is 1.5 x its disc's mean.
+    expect(best).toBeGreaterThan(1.2);
+    expect(best).toBeLessThan(1.6);
+  });
+
+  it("is the finest raster a 16 MiB float32 texture holds on the render grid: 5 texels a cell, 2000 x 1800", () => {
+    expect(CLOUD_RASTER_BUDGET_BYTES).toBe(16 * 1024 * 1024);
+    expect(CLOUD_RASTER).toBe(5);
+    const bytes = (k: number) => RENDER_GRID.R * k * RENDER_GRID.phi * k * 4;
+    expect(bytes(CLOUD_RASTER)).toBe(14_400_000);
+    expect(bytes(CLOUD_RASTER)).toBeLessThanOrEqual(CLOUD_RASTER_BUDGET_BYTES);
+    expect(bytes(CLOUD_RASTER + 1)).toBeGreaterThan(CLOUD_RASTER_BUDGET_BYTES);
+    expect(finestRaster(48, 36)).toBe(49);
+    expect(finestRaster(1e6, 1e6)).toBe(1);
+  });
+
+  it("turns A_V into each channel's depth as the diffuse dust does: A_V x A_lambda/A_V / 1.0857", () => {
+    const ratio = [1.31, 1.0, 0.79];
+    const scale = cloudDepthScale(ratio);
+    for (let k = 0; k < 3; k += 1) {
+      // The diffuse dust's depth of a column of 2 mag: -ln 10^(-0.4 x 2 x r).
+      expect(2 * scale[k]).toBeCloseTo(depthOf(10 ** (-0.4 * 2 * ratio[k])), 12);
+    }
+    expect(MAG_PER_DEPTH).toBeCloseTo(1.0857362, 7);
+    expect(cloudDepthScale(null)).toEqual([0, 0, 0]);
+    expect(cloudDepthScale([1, null, Number.NaN])).toEqual([1 / MAG_PER_DEPTH, 0, 0]);
+  });
+
+  it("reads the diffuse share, and all of the dust is diffuse where none is published", () => {
+    expect(shareAt([0.4, Number.NaN, -1], 0)).toBe(0.4);
+    expect(shareAt([0.4, Number.NaN, -1], 1)).toBe(1);
+    expect(shareAt([0.4, Number.NaN, -1], 2)).toBe(1);
+    expect(shareAt(null, 3)).toBe(1);
+  });
+});

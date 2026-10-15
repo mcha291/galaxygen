@@ -151,6 +151,15 @@ const COMPONENT_SWITCHES: { key: "compPoints" | "compStars" | "compGas" | "compD
   { key: "compClouds", label: "molecular clouds", what: "The cloud census as markers sized by cloud_size, painted by cloud_mass's ramp (a diagnostic)" },
   { key: "compCells", label: "cell outlines", what: "The level-0 cells, 32 rings by 32 sectors, the volumes the catalogues are drawn in (a diagnostic)" },
 ];
+/**
+ * The "clouds as extinction" switch's tooltip (S64, V6): the rule and the share, and that off keeps the share.
+ */
+const CLOUDS_EXTINCTION_WHAT =
+  "The molecular clouds' own dust as a layer of opacity in the clouds' layer (cloud_layer_height): each cloud's " +
+  "face-on A_V from /api/clouds' cloud_dust_extinction_v, rasterised conserving its A_V x area. The diffuse dust is " +
+  "the ring's depth x dust_placement x dust_diffuse_share - the share of the ring's dust its realised clouds do not " +
+  "hold (/api/render's clouds entry). Off draws no clouds' layer; the diffuse dust stays reduced by the share (the " +
+  "share is the model's, the switch is display), so off shows the dust without what the clouds hold";
 /** The field mode's age switches (S63, D223): each part's tuning value. */
 const AGE_SWITCH = { young: "ageYoung", middle: "ageMiddle", old: "ageOld" } as const;
 const DUST_READINGS:{ key: "acts" | "where"; label: string; what: string }[] = [
@@ -358,9 +367,14 @@ export function GalaxyTab({
   const [dustPaint, setDustPaint] = useState<DustPaintShown | null>(null);
   const marchLayers = brightestLayers(tuning, ramp);
   const diagnostic = mode === "stars" && diagnosticOn(tuning);
-  // The whole disc's cloud census, loaded once per query (about 17 000 clouds) and cut to the footprint here.
-  const cloudsKey = mode === "stars" && tuning.compClouds ? JSON.stringify(["clouds", query]) : null;
-  const cloudCensus = useLoad<Census>(cloudsKey, (signal) => loadClouds(wholeDisc, query, signal)).value ?? null;
+  // The whole disc's cloud census, loaded once per query (about 17 000 clouds), float32 (S64): cut to the footprint
+  // here for the markers, and rasterised by the field's march into the clouds' layer of opacity (V6, "clouds as
+  // extinction"). One request serves both.
+  const cloudsWanted = (mode === "stars" && tuning.compClouds) || tuning.cloudsExtinction;
+  const cloudsKey = cloudsWanted ? JSON.stringify(["clouds", "f4", query]) : null;
+  const wholeClouds = useLoad<Census>(cloudsKey, (signal) => loadClouds(wholeDisc, query, signal, "f4")).value ?? null;
+  const cloudCensus = mode === "stars" && tuning.compClouds ? wholeClouds : null;
+  const extinctionClouds = tuning.cloudsExtinction ? wholeClouds : null;
   const cloudPaint = useMemo(() => {
     if (!cloudCensus || !CLOUD_COLUMNS.every((k) => k in cloudCensus.columns)) return null;
     try {
@@ -455,6 +469,8 @@ export function GalaxyTab({
             stats={marchStats}
             ages={agesOf(tuning)}
             onAges={setAgeParts}
+            clouds={extinctionClouds}
+            cloudsOn={tuning.cloudsExtinction}
           />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
@@ -472,6 +488,8 @@ export function GalaxyTab({
             onDepth={setDustPaint}
             lMin={lMin}
             onDust={setFieldDust}
+            clouds={extinctionClouds}
+            cloudsOn={tuning.cloudsExtinction}
           />
         )}
         {/* The points, on the field's scale (D208): the clusters first, the bright stars over them. */}
@@ -613,6 +631,21 @@ export function GalaxyTab({
             </p>
           </div>
         )}
+
+        {/* The clouds as extinction (S64, BUILD_III V6): the census's own dust as a layer of opacity in the clouds'
+            layer, on by default. The diffuse dust is the render's reduced one whether it is on or off. */}
+        <div className={styles.section}>
+          <div className={styles.chips}>
+            <button
+              type="button"
+              aria-pressed={tuning.cloudsExtinction}
+              title={CLOUDS_EXTINCTION_WHAT}
+              onClick={() => setComponent({ cloudsExtinction: !tuning.cloudsExtinction })}
+            >
+              clouds as extinction
+            </button>
+          </div>
+        </div>
 
         {mode === "stars" && (
           <div className={styles.section}>

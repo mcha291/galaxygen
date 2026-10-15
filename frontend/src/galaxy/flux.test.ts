@@ -147,3 +147,24 @@ describe("the dust in front of a point (T20, D208)", () => {
     expect(tallestLayer(Number.NaN)).toBe(0);
   });
 });
+
+// S64 (BUILD_III V6): the points read the clouds' own layer from the march's raster as they read the diffuse dust.
+describe("the clouds in front of a point (S64)", () => {
+  const dust = (r: number) => 5 * Math.exp(-r / 3);
+  const read: DustRead = (r) => ({ depth: [dust(r), dust(r), 2 * dust(r)], height: 0.05, clouds: [1.5, 1.5, 3], cloudsHeight: 0.178 });
+  const bare: DustRead = (r) => ({ depth: [dust(r), dust(r), 2 * dust(r)], height: 0.05 });
+
+  it("adds half of each layer's face-on depth for a point in the midplane seen face-on, all of each from behind", () => {
+    const ring = dust(5);
+    const mid = dustToPoint([5, 0, 0], [5, 60, 0], 8, 30, read);
+    expect(mid[0]).toBeCloseTo(ring / 2 + 1.5 / 2, 6);
+    expect(mid[2]).toBeCloseTo(ring + 1.5, 6);
+    expect(dustToPoint([5, -7, 0], [5, 60, 0], 8, 30, read)[0]).toBeCloseTo(ring + 1.5, 5);
+  });
+
+  it("is the diffuse dust alone without a clouds' layer, to the bit", () => {
+    for (const [point, eye] of [[[5, 0, 0], [35, 30, 0]], [[8, -0.1, 0], [8, 20, 60]]] as [[number, number, number], [number, number, number]][]) {
+      expect(dustToPoint(point, eye, 8, 30, (r, phi) => ({ ...read(r, phi), clouds: undefined }))).toEqual(dustToPoint(point, eye, 8, 30, bare));
+    }
+  });
+});
