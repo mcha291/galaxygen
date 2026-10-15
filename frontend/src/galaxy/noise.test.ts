@@ -117,15 +117,18 @@ describe("the gas fluctuation field against vectors.json's gas section (R1b, R1c
   });
 
   it("read at the twin's own positions g is within 5e-3 of float64 and the map within 1e-3 relative (float32's geometry)", () => {
-    // D226 R1c: the declared float32 floor. The polar read's transcendentals at R up to 26 kpc move the read point by
-    // about 0.03 pc (an ulp of 1.9e-6 kpc at 26 kpc is 4e-4 on g by itself); the twist is reduced mod 2 pi in doubles.
+    // D226 R1c: the declared float32 floor. The read's transcendentals at R up to 26 kpc move the read point by about
+    // 0.03 pc (an ulp of 1.9e-6 kpc at 26 kpc is 4e-4 on g by itself); the twist is reduced mod 2 pi in doubles, and
+    // the point is rotated by theta rather than rebuilt from atan2 (gasReadPosition): measured 4.85e-4 on g at worst,
+    // 2.2e-5 inside 3 kpc, the map 1.9e-4 (the polar form, as numpy writes it: 1.13e-3, 2.8e-5, 2.5e-4).
     const t = prepareGas(vectorEntry())!;
     const errors = rows.map(([x, y, , g]) => Math.abs(gasGaussian(x, y, t) - g));
     const inner = rows.map(([x, y, , g], i) => (Math.hypot(x, y) < 3 ? errors[i] : 0));
     expect(Math.max(...errors)).toBeLessThan(5e-3);
     expect(Math.max(...inner)).toBeLessThan(5e-4);
     for (const [x, y, , , v] of G.maps.rows as number[][]) expect(Math.abs(gasMap(x, y, t) / v - 1)).toBeLessThan(1e-3);
-    // the reduction, measured: the largest error with it against without it (S66: 1.13e-3 against 2.47e-3, both at 24-26 kpc; inside 3 kpc 2.8e-5; the map 2.5e-4 against 5.1e-4)
+    // the reduction, measured: the largest error with it against without it (S66: 4.85e-4 against 1.85e-3; the map
+    // 1.9e-4 against 3.2e-4)
     const raw = prepareGas(vectorEntry(), false)!;
     const unreduced = Math.max(...rows.map(([x, y, , g]) => Math.abs(gasGaussian(x, y, raw) - g)));
     expect(Math.max(...errors)).toBeLessThanOrEqual(unreduced);
@@ -181,7 +184,7 @@ describe("the clustering field's three maps and the spurs' sum against the model
 // The include's text, pinned as the field's fragment is (tuning.test.ts): a change to the GLSL is a change here, made
 // knowingly, and the e2e probe (e2e/noise.spec.ts) measures the text on the GPU.
 const sha256 = (text: string) => createHash("sha256").update(text.replace(/\r\n/g, "\n"), "utf-8").digest("hex");
-const GLSL_SHA256 = "31a28ab6710cd719d45f6662a43075e5c7ca0a0a23ca1c2d1d1eaead7fc4e7d9";
+const GLSL_SHA256 = "34fc93ab5ccc26e12517cef6eec0675021b2857ffb68c60d3f77f72ee6a3a147";
 const UNIFORMS_SHA256 = "6784c35556edc3eab7219616fb88a86c7ffe3064775d5046a6d91445e438f3d6";
 
 describe("the GLSL include (noise.glsl.ts)", () => {

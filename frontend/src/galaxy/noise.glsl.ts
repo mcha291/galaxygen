@@ -62,10 +62,13 @@ float layerValue(uint h) { return float(h >> 8u) * 1.1920928955078125e-7 - 1.0; 
 
 // --- one octave (noise.py _fade, _cell, noise2, noise3) ----------------------------------------------------------
 float layerFade(float t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
-// (uint index, fade weight, variance factor 1 - 2 s (1 - s)); the index is GLSL's uint(int): two's complement
+// (uint index, fade weight, variance factor 1 - 2 s (1 - s)); the index is GLSL's uint(int): two's complement. The
+// fraction is fract(c), which is c - floor(c) exactly (noise.py: "the fraction is exact"), taken by its own instruction
+// so that a driver cannot fuse the coordinate's product into the subtraction (S66: at 4 000 lattice cells a fused
+// fraction moved the gas sum by 2e-4 on the RTX 4070).
 void layerCell(float c, out uint u, out float s, out float n) {
   float base = floor(c);
-  s = layerFade(c - base);
+  s = layerFade(fract(c));
   n = 1.0 - 2.0 * s * (1.0 - s);
   u = uint(int(base));
 }
@@ -168,13 +171,16 @@ int layerGasSector(vec2 xy) {
   if (phi < 0.0) phi += 6.283185307179586;
   return clamp(int(floor(phi / 0.19634954084936207)), 0, 31);
 }
-// read_positions: R = hypot, theta = sense (twist + strain log(max(R, R_0) / R_r)), phi = atan2(y, x) - theta
+// read_positions: R = hypot, theta = sense (twist + strain log(max(R, R_0) / R_r)), (R cos, R sin)(atan2(y, x) - theta)
+// - here as the same point by rotation, (x cos theta + y sin theta, y cos theta - x sin theta): no atan2 and no second
+// cos and sin of a large angle (S66: the polar form's transcendentals put g 5e-2 from float64 at 24 kpc on the GPU)
 vec2 layerGasRead(vec2 xy, int ring) {
   vec4 row = texelFetch(uGasRing, ivec2(ring, 0), 0);
   float R = length(xy);
   float theta = uGasSense * (row.w + row.z * log(max(R, uGasEdge0) / row.x));
-  float phi = atan(xy.y, xy.x) - theta;
-  return vec2(R * cos(phi), R * sin(phi));
+  float c = cos(theta);
+  float s = sin(theta);
+  return vec2(xy.x * c + xy.y * s, xy.y * c - xy.x * s);
 }
 // _sum: sum_j w[b_r][j] noise2(seed, X f_j, Y f_j, j), f stepped by doubling from 1 / scale
 float layerGasSum(vec2 q, int ring) {

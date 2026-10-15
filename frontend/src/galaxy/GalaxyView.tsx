@@ -24,6 +24,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { type CaptureCamera, DEFAULT_FOV, type LensCamera, isLens, lensScale, orbitPosition, standOf } from "./capture";
+import { type NoiseProbeKind, type NoiseProbeRow, type NoiseProbeTables, runNoiseProbe } from "./noiseProbe";
 import { extent } from "./positions";
 import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
@@ -143,6 +144,7 @@ export function GalaxyView({
         {hdr && <HdrOutput tuning={tuning} />}
         <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
         <FrameProbe />
+        <NoiseProbe />
         <CaptureProbe reach={reach} standRadius={standRadius} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
         <ZoomBridge reach={reach} standRadius={standRadius} zoom={zoom} onView={onView} />
@@ -271,6 +273,25 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
   }, [gl, composer, toneMapping]);
   // A positive priority takes the render over from react-three-fiber.
   useFrame(() => composer.render(), 1);
+  return null;
+}
+
+/**
+ * An instrument for V7's noise (S66, D226 R9b; rule B1): `window.__galaxygenNoiseProbe(kind, rows, tables)` evaluates
+ * the GLSL include's function `kind` (noise.glsl.ts, through noiseProbe.ts) at each row's inputs on this canvas's GPU
+ * and returns the values, N x 4 floats - so the e2e spec holds the shader's own arithmetic to the model's vectors. It
+ * draws into its own target and changes nothing that is drawn.
+ */
+function NoiseProbe() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    const holder = window as unknown as Record<string, unknown>;
+    const probe = (kind: NoiseProbeKind, rows: NoiseProbeRow[], tables?: NoiseProbeTables) => Array.from(runNoiseProbe(gl, kind, rows, tables));
+    holder.__galaxygenNoiseProbe = probe;
+    return () => {
+      if (holder.__galaxygenNoiseProbe === probe) delete holder.__galaxygenNoiseProbe;
+    };
+  }, [gl]);
   return null;
 }
 

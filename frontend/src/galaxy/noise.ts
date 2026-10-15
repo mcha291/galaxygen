@@ -249,8 +249,10 @@ export function sectorOf(x: number, y: number): number {
 }
 
 /**
- * gas_fluctuation `read_positions` in float32: R = hypot(x, y), theta = sense (twist + strain log(max(R, R_0) /
- * R_r)), phi = atan2(y, x) - theta, (R cos phi, R sin phi), with ring r's numbers.
+ * gas_fluctuation `read_positions` in float32, with ring r's numbers: R = hypot(x, y), theta = sense (twist + strain
+ * log(max(R, R_0) / R_r)), and the point (R cos, R sin)(atan2(y, x) - theta) as the same point by rotation, (x cos theta
+ * + y sin theta, y cos theta - x sin theta) - the GLSL's form (noise.glsl.ts layerGasRead), which needs no atan2 and no
+ * cos and sin of the larger angle phi - theta (S66: on the RTX 4070 the polar form put g 5e-2 from float64 at 24 kpc).
  */
 export function gasReadPosition(x: number, y: number, ring: number, t: GasTables): [number, number] {
   x = f(x);
@@ -259,8 +261,9 @@ export function gasReadPosition(x: number, y: number, ring: number, t: GasTables
   const R = f(Math.hypot(x, y));
   const L = f(Math.log(f(f(Math.max(R, t.edges[0])) / t.ring[row])));
   const theta = f(t.sense * f(t.ring[row + 3] + f(t.ring[row + 2] * L)));
-  const phi = f(f(Math.atan2(y, x)) - theta);
-  return [f(R * f(Math.cos(phi))), f(R * f(Math.sin(phi)))];
+  const c = f(Math.cos(theta));
+  const s = f(Math.sin(theta));
+  return [f(f(x * c) + f(y * s)), f(f(y * c) - f(x * s))];
 }
 
 /** gas_fluctuation `_sum` in float32: sum_j w[b_r][j] noise2(seed, X f_j, Y f_j, j), f stepped by doubling. */
@@ -393,4 +396,49 @@ export function spurSum(R: number, phi: number, t: SpurTables): number {
     if (spurReads(R, j, t)) total = f(total + spurExcess(R, phi, j, t));
   }
   return total;
+}
+
+// --- the textures' layouts (noise.glsl.ts' tables): row-major texel arrays, four floats a texel -------------------
+
+/** `uGasRing`, 32 x 2 RGBA: texel (r, 0) = (inner edge, sigma, strain, twist), (r, 1) = (break index, norm, outer edge, 0). */
+export function gasRingTexels(t: GasTables): Float32Array {
+  const out = new Float32Array(CELL_RINGS * 2 * 4);
+  for (let r = 0; r < CELL_RINGS; r += 1) {
+    out.set(t.ring.subarray(r * GAS_RING_STRIDE, r * GAS_RING_STRIDE + 4), r * 4);
+    out.set(t.ring.subarray(r * GAS_RING_STRIDE + 4, r * GAS_RING_STRIDE + 8), (CELL_RINGS + r) * 4);
+  }
+  return out;
+}
+
+/** `uGasWeights`, (octaves + 1) x 2 RGBA: texel (b, 0) = weights 0-3, (b, 1) = weights 4-5, 0, 0. */
+export function gasWeightTexels(t: GasTables): Float32Array {
+  const rows = t.weights.length / GAS_WEIGHT_STRIDE;
+  const out = new Float32Array(rows * 2 * 4);
+  for (let b = 0; b < rows; b += 1) {
+    out.set(t.weights.subarray(b * GAS_WEIGHT_STRIDE, b * GAS_WEIGHT_STRIDE + 4), b * 4);
+    out.set(t.weights.subarray(b * GAS_WEIGHT_STRIDE + 4, b * GAS_WEIGHT_STRIDE + 8), (rows + b) * 4);
+  }
+  return out;
+}
+
+/** `uSpurs`, (3 count) x 1 RGBA: the rows as they are (SPUR_STRIDE is three texels). */
+export function spurTexels(t: SpurTables): Float32Array {
+  return t.rows.length > 0 ? t.rows : new Float32Array(SPUR_STRIDE);
+}
+
+/**
+ * The scalar uniforms the include reads, from the prepared tables (absent tables leave their uniforms unset). The
+ * clustering field's coarsest frequency is rounded once, as numpy's ft(base_frequency).
+ */
+export function noiseScalars(gas: GasTables | null, clustering: ClusteringTables | null, spurs: SpurTables | null): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (gas) Object.assign(out, { uGasSeed: gas.seed, uGasInvScale: gas.invScale, uGasSense: gas.sense, uGasEdge0: gas.edges[0] });
+  if (clustering) {
+    Object.assign(out, {
+      uClusterSeed: clustering.seed, uClusterInvScale: f(clustering.base_frequency), uClusterGain: f(clustering.gain),
+      uClusterTop: f(clustering.top), uClusterNorm: f(clustering.norm), uClusterSigma: f(clustering.sigma),
+    });
+  }
+  if (spurs) Object.assign(out, { uSpurTurn: spurs.turn, uSpurReach: spurs.reach });
+  return out;
 }
