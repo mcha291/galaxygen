@@ -87,7 +87,9 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("clouds: one sector", "/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the census of 9 cells"),
     # S61 (D220 part II; debt #159): the clouds placed on their cells' lattices by the clustering field - cold 4.0 s
     # before, 9.6-10.3 s after (the field on the lattices 2.0 s, the pattern's meshes 1.1 s); clusters 5.3 -> 11.9 s.
-    Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4"),
+    Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4; since S64 with cloud_dust_extinction_v"),
+    # S64 (V6, R4): the whole disc as the viewer asks for it, float32 - the clouds' opacity raster's source.
+    Endpoint("clouds: whole disc, f4", "/api/clouds", "precision=f4", "every cloud in float32, the viewer's request (S64)"),
     # The cluster census (S33, BUILD_II Phase 11): the cells' clouds drawn, then one cluster per cloud past its embedded phase.
     Endpoint("clusters: one sector", "/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the clusters of 9 cells"),
     Endpoint("clusters: whole disc", "/api/clusters", "", "every cluster, about 1.3e4"),
@@ -105,7 +107,8 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
              "193 temperatures x 3 filters, no stage (S42)"),
     Endpoint("render: whole, rgb", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4"}),
-             "400 x 360 x 3 stars, HII line, scattered; the DIG, dust depth, thermal per ring (S39)"),
+             "400 x 360 x 3 stars, HII line, scattered; the DIG, dust depth, thermal per ring (S39); "
+             "the diffuse share off the ring streams (S64)"),
     Endpoint("render: one region", "/api/render",
              urlencode({"filters": _RGB, "r_min": 7, "r_max": 9, "phi_min": 0, "phi_max": 0.4, "level": 2}),
              "90 level-2 cells' means"),

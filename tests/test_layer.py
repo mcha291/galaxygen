@@ -481,13 +481,18 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             # light temperature (ADDED_AT_S61). The star sample's routes likewise (its star, its planets, its cells).
             names, was = [a[0] for a in got["arrays"]], [a[0] for a in held["arrays"]]
             assert [n for n in names if n not in ADDED_AT_S61] == was, label
+            # S64 (V6): the clouds' own dust column is digested apart and reported added (layer_reference.ADDED_AT_S64).
+            assert got.get("added", []) == (["cloud_dust_extinction_v"] if "/clouds/" in label else []), label
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue
         # S63 (D223): the render adds the stars split by age and the weights that place them (the old part's, and the
         # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
+        # S64 (V6): and the share of each ring's dust that is diffuse once its realised clouds hold theirs, with its
+        # header entry `clouds`, digested apart likewise (layer_reference.ADDED_AT_S64).
         assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
-                                         + (["stars_middle_placement"] if not label.startswith("basic/") else []))
+                                         + (["stars_middle_placement"] if not label.startswith("basic/") else [])
+                                         + ["dust_diffuse_share"])
                                         if "/render/" in label else []), label
         if "/render/" in label:
             # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first

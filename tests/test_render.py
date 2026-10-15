@@ -566,7 +566,9 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     # And the stars split by age with the weights that place them (S63, D223): the middle part's own weight where the
     # model publishes sfr_modulation.
     by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement", *(["stars_middle_placement"] if model.name != "basic" else [])}
-    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement", *by_age}
+    # And the share of each ring's dust that is diffuse once its realised clouds hold theirs (S64, V6): one per ring.
+    assert arrays["dust_diffuse_share"].shape == (48,) and header["axes"]["dust_diffuse_share"] == ["R"]
+    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement", "dust_diffuse_share", *by_age}
 
 
 def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):
