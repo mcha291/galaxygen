@@ -14,7 +14,8 @@ import { RING_ROWS } from "./regimes";
 
 /** The march's dust, as the points read it: the ring texture, the scattered light's (whose spare channel is the
  * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. Since S64 (V6) the clouds'
- * raster (null: no clouds' layer drawn), each channel's depth per magnitude of its A_V, and the clouds' layer, kpc. */
+ * raster (null: no clouds drawn) and its slab texture (each texel's clouds' mean height and half-thickness, kpc), and
+ * each channel's depth per magnitude of A_V. */
 export interface PointDust {
   rings: Texture;
   scatter: Texture;
@@ -22,8 +23,8 @@ export interface PointDust {
   rHi: number;
   top: number;
   clouds?: Texture | null;
+  slab?: Texture | null;
   cloudExt?: readonly [number, number, number];
-  cloudsHeight?: number;
 }
 
 const VERTEX = /* glsl */ `
@@ -39,8 +40,8 @@ const VERTEX = /* glsl */ `
   uniform float dustTop;
   uniform float dustOn;
   uniform sampler2D cloudTex;
+  uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
-  uniform float cloudsHeight;
   uniform float cloudsOn;
   varying vec3 vLight;
 
@@ -52,6 +53,19 @@ const VERTEX = /* glsl */ `
     float dy = y1 - y0;
     if (abs(dy) < 1e-4 * h) return sech2(0.5 * (y0 + y1) / (2.0 * h)) / (4.0 * h) * ds;
     return abs(safeTanh(y1 / (2.0 * h)) - safeTanh(y0 / (2.0 * h))) * 0.5 * ds / abs(dy);
+  }
+
+  // The column of a uniform slab of face-on depth 1 between heights lo and hi (regimes.ts slabColumn, line for line).
+  float slabColumn(float y0, float y1, float lo, float hi, float ds) {
+    float thick = hi - lo;
+    if (thick <= 0.0) return 0.0;
+    float dy = y1 - y0;
+    if (abs(dy) < 1e-4 * thick) {
+      float mid = 0.5 * (y0 + y1);
+      return (mid >= lo && mid <= hi) ? ds / thick : 0.0;
+    }
+    float overlap = max(0.0, min(max(y0, y1), hi) - max(min(y0, y1), lo));
+    return overlap / thick * ds / abs(dy);
   }
 
   // The dust's optical depth per channel from the point to the camera (flux.ts dustToPoint, line for line).
@@ -86,7 +100,8 @@ const VERTEX = /* glsl */ `
       float place = textureLod(scatter, vec2(x, phi / 6.28318531), 0.0).a;
       // The diffuse share the ring's realised clouds leave (S64), and the clouds' own layer from the march's raster.
       float share = textureLod(rings, vec2(x, (${RING_ROWS.share}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).r;
-      float cloudColumn = cloudsOn > 0.5 ? column(p.y + u.y * s0, p.y + u.y * s1, cloudsHeight, ds) : 0.0;
+      vec2 slab = cloudsOn > 0.5 ? textureLod(cloudSlab, vec2(x, phi / 6.28318531), 0.0).rg : vec2(0.0);
+      float cloudColumn = cloudsOn > 0.5 ? slabColumn(p.y + u.y * s0, p.y + u.y * s1, slab.x - slab.y, slab.x + slab.y, ds) : 0.0;
       vec3 clouds = cloudsOn > 0.5 ? textureLod(cloudTex, vec2(x, phi / 6.28318531), 0.0).r * cloudExt : vec3(0.0);
       tau += face * place * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;
     }
@@ -159,8 +174,8 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
         dustTop: { value: 0 },
         dustOn: { value: 0 },
         cloudTex: { value: sprite },
+        cloudSlab: { value: sprite },
         cloudExt: { value: new Vector3(0, 0, 0) },
-        cloudsHeight: { value: 0 },
         cloudsOn: { value: 0 },
       },
       vertexShader: VERTEX,
@@ -201,11 +216,12 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
     }
     // The clouds' layer (S64): read only with a raster in hand.
     const clouds = dust?.clouds ?? null;
-    uniforms.cloudsOn.value = clouds ? 1 : 0;
-    if (clouds) {
+    const slab = dust?.slab ?? null;
+    uniforms.cloudsOn.value = clouds && slab ? 1 : 0;
+    if (clouds && slab) {
       uniforms.cloudTex.value = clouds;
+      uniforms.cloudSlab.value = slab;
       (uniforms.cloudExt.value as Vector3).set(...(dust!.cloudExt ?? [0, 0, 0]));
-      uniforms.cloudsHeight.value = dust!.cloudsHeight ?? 0;
     }
   });
   return <primitive object={points} />;

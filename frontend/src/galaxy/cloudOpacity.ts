@@ -36,12 +36,14 @@ export function finestRaster(nR: number, nPhi: number, budget: number = CLOUD_RA
 export const RENDER_GRID = { R: 400, phi: 360 } as const;
 export const CLOUD_RASTER = finestRaster(RENDER_GRID.R, RENDER_GRID.phi);
 
-/** The census columns the raster reads (kpc, rad, pc, mag). */
+/** The census columns the raster reads (kpc, rad, pc, mag, kpc). */
 export interface CloudColumns {
   cloud_radius: ArrayLike<number>;
   cloud_azimuth: ArrayLike<number>;
   cloud_size: ArrayLike<number>;
   cloud_dust_extinction_v: ArrayLike<number>;
+  /** The cloud's published height above the plane, kpc (S64, the lead's ruling on R3: each cloud at its own height). */
+  cloud_height: ArrayLike<number>;
 }
 
 export interface CloudRaster {
@@ -59,6 +61,14 @@ export interface CloudRaster {
   outside: number;
   /** How many clouds were split over several texels (the rest fell in one). */
   split: number;
+  /**
+   * Per texel, two numbers, kpc (S64, R3 as the lead ruled it): the A_V-weighted mean height of the clouds the texel
+   * holds, and the half-thickness of the slab they are drawn as - the A_V-weighted rms of their heights about that
+   * mean in quadrature with their A_V-weighted mean radius, floored at the smallest radius among them. A texel holding
+   * one cloud is that cloud at its own height and extent; one holding several is one slab spanning them. 0, 0 where a
+   * texel holds nothing. Row-major as `av`, two values a texel.
+   */
+  slab: Float32Array;
 }
 
 /** The points a side each texel a split cloud touches is sampled at: 16 a texel. The raster's sampling, not light. */
@@ -85,6 +95,30 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
   const dR = (rHi - rLo) / width;
   const dPhi = (2 * Math.PI) / height;
   const sum = new Float64Array(width * height); // A_V x area per texel, mag kpc^2
+  // The slab's sums, kept only for the texels a cloud reaches: each texel's weights times height, height squared and
+  // radius, and its smallest radius (the weight is the A_V x area deposited there).
+  const slot = new Int32Array(width * height).fill(-1);
+  const wz: number[] = [];
+  const wz2: number[] = [];
+  const ws: number[] = [];
+  const least: number[] = [];
+  let z = 0;
+  let s = 0;
+  const deposit = (t: number, part: number) => {
+    sum[t] += part;
+    let k = slot[t];
+    if (k < 0) {
+      k = slot[t] = wz.length;
+      wz.push(0);
+      wz2.push(0);
+      ws.push(0);
+      least.push(Infinity);
+    }
+    wz[k] += part * z;
+    wz2[k] += part * z * z;
+    ws[k] += part * s;
+    if (s < least[k]) least[k] = s;
+  };
   let census = 0;
   let outside = 0;
   let split = 0;
@@ -100,10 +134,11 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
   const n = clouds.cloud_radius.length;
   for (let c = 0; c < n; c += 1) {
     const av = Number(clouds.cloud_dust_extinction_v[c]);
-    const s = Number(clouds.cloud_size[c]) / 1000; // the cloud's radius, kpc
+    s = Number(clouds.cloud_size[c]) / 1000; // the cloud's radius, kpc
+    z = Number(clouds.cloud_height[c]); // its height, kpc
     const r = Number(clouds.cloud_radius[c]);
     const phi = Number(clouds.cloud_azimuth[c]);
-    if (!(av > 0) || !(s > 0) || !Number.isFinite(r) || !Number.isFinite(phi)) continue;
+    if (!(av > 0) || !(s > 0) || !Number.isFinite(r) || !Number.isFinite(phi) || !Number.isFinite(z)) continue;
     const total = av * Math.PI * s * s;
     census += total;
     const x = r * Math.cos(phi);
@@ -112,7 +147,7 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     if (2 * s < side) {
       const t = texelOf(x, y);
       if (t < 0) outside += total;
-      else sum[t] += total;
+      else deposit(t, total);
       continue;
     }
     split += 1;
@@ -155,16 +190,17 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     if (!(w > 0)) {
       const t = texelOf(x, y);
       if (t < 0) outside += total;
-      else sum[t] += total;
+      else deposit(t, total);
       continue;
     }
     for (let q = 0; q < at.length; q += 1) {
       const part = (total * weight[q]) / w;
       if (at[q] < 0) outside += part;
-      else sum[at[q]] += part;
+      else deposit(at[q], part);
     }
   }
   const av = new Float32Array(width * height);
+  const slab = new Float32Array(width * height * 2);
   let held = 0;
   for (let i = 0; i < width; i += 1) {
     const area = texelArea(i, rLo, dR, dPhi);
@@ -173,9 +209,15 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
       if (sum[t] === 0) continue;
       av[t] = sum[t] / area;
       held += av[t] * area;
+      const k = slot[t];
+      const mean = wz[k] / sum[t];
+      const spread = Math.max(0, wz2[k] / sum[t] - mean * mean);
+      const radius = ws[k] / sum[t];
+      slab[2 * t] = mean;
+      slab[2 * t + 1] = Math.max(Math.sqrt(spread + radius * radius), least[k]);
     }
   }
-  return { av, width, height, rLo, rHi, census, held, outside, split };
+  return { av, width, height, rLo, rHi, census, held, outside, split, slab };
 }
 
 /**

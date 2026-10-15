@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { fieldFragment } from "./FieldVolume";
 import pinned from "./fieldFragment.s64.glsl?raw";
 import { WHITE_KELVIN } from "./filters";
-import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
+import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SLAB_PIECES, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
   BLOOM,
   MAX_RESOLUTION,
@@ -95,8 +95,8 @@ describe("tuning defaults (D199)", () => {
     // proved those two rows changed no picture. D206 changes the march on purpose (the dust in its own layer,
     // each sub-step composed in order), so the comparison ends there and the source is pinned whole: a change
     // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source. S64 (V6)
-    // re-pinned it on purpose: the diffuse depth times the ring's diffuse share, the clouds' raster a third layer in
-    // the step, the pieces cut at both layers' cuts (fieldFragment.s64.glsl; D207's snapshot is in git).
+    // re-pinned it on purpose: the diffuse depth times the ring's diffuse share, each raster texel's clouds a slab at
+    // their own heights in the step, the pieces cut at the dust's cuts and the slab's parts (fieldFragment.s64.glsl; D207's snapshot is in git).
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
     expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
@@ -109,14 +109,15 @@ describe("tuning defaults (D199)", () => {
     expect(SUB_SAMPLES_MAX).toBe(8);
     // D206: the dust's height is read per ring, never a uniform, and the cuts are regimes.ts's.
     expect(now).not.toContain("uniform float dustHeight");
-    expect(now).toContain(`for (int m = 0; m <= ${2 * DUST_CUTS.length}; m++)`);
+    expect(now).toContain(`for (int m = 0; m <= ${DUST_CUTS.length + SLAB_PIECES + 1}; m++)`);
     DUST_CUTS.forEach((c) => expect(now).toContain(`return ${c.toFixed(2)};`));
     // D207: the dust's placement multiplies its depth, its thermal light and the diagnostic, not the scattered light.
     expect(now).toContain("float place = scattered.a;");
     expect(now).toMatch(/tau = readRing\(rp\.x, \d\.0\) \* place \* readRing\(rp\.x, \d\.0\)\.r \* dustDepth;/);
     // S64: the clouds' layer, its uniforms and its own column in each piece.
-    for (const name of ["cloudsHeight", "cloudsOn"]) expect(now).toContain(`uniform float ${name};`);
-    expect(now).toContain("vec3 depth = tau * cDust + (clouds ? tauC * column(a, b, cloudsHeight, piece) : vec3(0.0));");
+    for (const name of ["cloudsOn"]) expect(now).toContain(`uniform float ${name};`);
+    expect(now).toContain("vec3 depth = tau * cDust + (clouds ? tauC * slabColumn(a, b, lo, hi, piece) : vec3(0.0));");
+    expect(now).toContain("uniform sampler2D cloudSlab;");
     expect(now).toMatch(/\(scattered\.rgb \* scattering \+ readRing\(rp\.x, \d\.0\) \* place\) \* dustGain \+ dustWhere \* level \* whereTint\(level\) \* place;/);
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");

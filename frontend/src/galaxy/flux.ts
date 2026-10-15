@@ -9,9 +9,10 @@
 // The dust in front of a point (T20) is the march's own: each ring's published depth times its placement,
 // through the dust's layer, along the segment from the point to the camera, each step taking the layer's
 // exact column. Since S64 (V6) the diffuse depth is also times the ring's diffuse share, and the clouds' own dust
-// is read from the march's raster (cloudOpacity.ts) through the clouds' layer, the same way.
+// is read from the march's raster (cloudOpacity.ts) as the march reads it: each texel's clouds a uniform slab at their
+// own heights, each step taking the slab's exact column.
 
-import { layerColumn } from "./regimes";
+import { layerColumn, slabColumn } from "./regimes";
 
 /**
  * Each point's light per display channel, L☉: its `response` (row-major, N × filters, /api/bright's and
@@ -59,11 +60,11 @@ export const DUST_SEGMENT_STEPS = 48;
 
 /** What the segment reads at a place in the disc: the ring's face-on depth per channel times the dust's placement
  * there (and, since S64, the ring's diffuse share), and the dust layer's scale height, kpc (the march's own textures);
- * with the clouds' layer drawn, the clouds' face-on depth per channel there and their layer's scale height, kpc. */
+ * with the clouds drawn, their face-on depth per channel there and their slab, [mean height, half-thickness], kpc. */
 export type DustRead = (
   r: number,
   phi: number,
-) => { depth: readonly [number, number, number]; height: number; clouds?: readonly [number, number, number]; cloudsHeight?: number };
+) => { depth: readonly [number, number, number]; height: number; clouds?: readonly [number, number, number]; slab?: readonly [number, number] };
 
 /**
  * The dust's optical depth per channel between a point and the camera (T20) — the vertex shader's `dustTo`, line
@@ -110,8 +111,9 @@ export function dustToPoint(
     if (phi < 0) phi += 2 * Math.PI;
     const at = read(r, phi);
     const column = layerColumn(point[1] + u[1] * s0, point[1] + u[1] * s1, at.height, ds);
-    // The clouds' layer (S64): its own column over the same step, at the clouds' depth read there.
-    const cloudColumn = at.clouds ? layerColumn(point[1] + u[1] * s0, point[1] + u[1] * s1, at.cloudsHeight ?? 0, ds) : 0;
+    // The clouds (S64): the slab's own column over the same step, at the clouds' depth read there.
+    const slab = at.slab ?? [0, 0];
+    const cloudColumn = at.clouds ? slabColumn(point[1] + u[1] * s0, point[1] + u[1] * s1, slab[0] - slab[1], slab[0] + slab[1], ds) : 0;
     for (let k = 0; k < 3; k += 1) tau[k] += at.depth[k] * column + (at.clouds ? at.clouds[k] * cloudColumn : 0);
   }
   return tau;

@@ -13,6 +13,7 @@ const THREE = {
   cloud_azimuth: [1.0, 2.5, 0.01],
   cloud_size: [20, 900, 700], // pc: the radius
   cloud_dust_extinction_v: [2.0, 0.5, 4.0],
+  cloud_height: [0.05, -0.1, 0.2], // kpc
 };
 const avArea = (c: typeof THREE) => c.cloud_size.reduce((s, size, i) => s + c.cloud_dust_extinction_v[i] * Math.PI * (size / 1000) ** 2, 0);
 
@@ -54,13 +55,13 @@ describe("the clouds' raster (S64, V6)", () => {
     const none = cloudRaster({ ...THREE, cloud_dust_extinction_v: [0, Number.NaN, -1] }, 0, 10, 10, 8);
     expect(none.census).toBe(0);
     expect(none.av.every((v) => v === 0)).toBe(true);
-    const far = cloudRaster({ cloud_radius: [12], cloud_azimuth: [0], cloud_size: [10], cloud_dust_extinction_v: [1] }, 0, 10, 10, 8);
+    const far = cloudRaster({ cloud_radius: [12], cloud_azimuth: [0], cloud_size: [10], cloud_dust_extinction_v: [1], cloud_height: [0] }, 0, 10, 10, 8);
     expect(far.outside).toBeCloseTo(far.census, 15);
     expect(far.av.every((v) => v === 0)).toBe(true);
   });
 
   it("spreads a large cloud by a uniform sphere's chord: its centre texel holds the most", () => {
-    const big = cloudRaster({ cloud_radius: [5], cloud_azimuth: [Math.PI], cloud_size: [2000], cloud_dust_extinction_v: [1] }, 0, 10, 40, 64);
+    const big = cloudRaster({ cloud_radius: [5], cloud_azimuth: [Math.PI], cloud_size: [2000], cloud_dust_extinction_v: [1], cloud_height: [0] }, 0, 10, 40, 64);
     let best = -1;
     let at = -1;
     big.av.forEach((v, t) => {
@@ -74,6 +75,33 @@ describe("the clouds' raster (S64, V6)", () => {
     // A sphere's face-on column at its centre is 1.5 x its disc's mean.
     expect(best).toBeGreaterThan(1.2);
     expect(best).toBeLessThan(1.6);
+  });
+
+  it("draws one cloud in a texel as itself, at its own height and extent, and several as one slab spanning them", () => {
+    const got = cloudRaster(THREE, 0, 10, 10, 64);
+    // The sub-texel cloud (R 3.3, phi 1.0) is alone in its texel: its height and its radius, kpc.
+    const t = Math.floor(1.0 / ((2 * Math.PI) / 64)) * 10 + 3;
+    expect(got.slab[2 * t]).toBeCloseTo(0.05, 6); // float32
+    expect(got.slab[2 * t + 1]).toBeCloseTo(0.02, 6);
+    // Every texel the 900 pc cloud alone touches is that cloud: -0.1 kpc, 0.9 kpc.
+    const j = Math.floor(2.5 / ((2 * Math.PI) / 64));
+    expect(got.slab[2 * (j * 10 + 6)]).toBeCloseTo(-0.1, 6);
+    expect(got.slab[2 * (j * 10 + 6) + 1]).toBeCloseTo(0.9, 6);
+    // An empty texel has no slab.
+    expect([got.slab[0], got.slab[1]]).toEqual([0, 0]);
+    // Two sub-texel clouds in one texel, A_V x area 1 : 3 at heights 0 and 0.1 kpc, radii 10 and 20 pc: the
+    // A_V-weighted mean height, and the rms about it in quadrature with the mean radius.
+    const two = cloudRaster(
+      { cloud_radius: [5, 5.01], cloud_azimuth: [1, 1.001], cloud_size: [10, 20], cloud_dust_extinction_v: [4, 3], cloud_height: [0, 0.1] },
+      0, 10, 10, 64,
+    );
+    const k = Math.floor(1 / ((2 * Math.PI) / 64)) * 10 + 5;
+    const w = [4 * 0.01 ** 2, 3 * 0.02 ** 2]; // A_V x radius^2: the weights' ratio, 1 : 3
+    const mean = (w[1] * 0.1) / (w[0] + w[1]);
+    const rms2 = (w[0] * mean ** 2 + w[1] * (0.1 - mean) ** 2) / (w[0] + w[1]);
+    const radius = (w[0] * 0.01 + w[1] * 0.02) / (w[0] + w[1]);
+    expect(two.slab[2 * k]).toBeCloseTo(mean, 6);
+    expect(two.slab[2 * k + 1]).toBeCloseTo(Math.sqrt(rms2 + radius ** 2), 6);
   });
 
   it("is the finest raster a 16 MiB float32 texture holds on the render grid: 5 texels a cell, 2000 x 1800", () => {

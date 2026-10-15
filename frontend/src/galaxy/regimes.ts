@@ -247,6 +247,27 @@ export function layerColumn(y0: number, y1: number, h: number, ds: number): numb
 }
 
 /**
+ * The column of a uniform slab of face-on depth 1 between heights `lo` and `hi` along a ray from height y0 to y1 over a
+ * path `ds` (S64: the clouds of a raster texel, cloudOpacity.ts `slab`) - the shader's `slabColumn`, line for line: the
+ * share of the slab's thickness the ray crosses, over the ray's slope, or for a ray running level the slab's density
+ * at its height times the path. No thickness is no column.
+ */
+export function slabColumn(y0: number, y1: number, lo: number, hi: number, ds: number): number {
+  const thick = hi - lo;
+  if (!(thick > 0)) return 0;
+  const dy = y1 - y0;
+  if (Math.abs(dy) < 1e-4 * thick) {
+    const mid = 0.5 * (y0 + y1);
+    return mid >= lo && mid <= hi ? ds / thick : 0;
+  }
+  const overlap = Math.max(0, Math.min(Math.max(y0, y1), hi) - Math.max(Math.min(y0, y1), lo));
+  return ((overlap / thick) * ds) / Math.abs(dy);
+}
+
+/** How many equal pieces the march cuts a texel's clouds' slab into, so the stars inside it are not mixed across all of it. */
+export const SLAB_PIECES = 4;
+
+/**
  * Where the march cuts a sub-step that crosses the dust's layer, in the dust's own scale heights about the
  * midplane (D206). Since the dust has its own height a sub-step may span the whole of a layer far thinner than
  * the stars': treated as one mixed slab (S39's `(1 − e^−τ)/τ`, exact only when light and dust share a profile)
@@ -265,12 +286,13 @@ export const DUST_CUTS = [-11, -8, -6, -4.5, -3, -2, -1, 1, 2, 3, 4.5, 6, 8, 11]
  * layer `hDust`, along a ray from height y0 to y1 over a path `path` (the same units as the heights). Returns the
  * light that leaves the sub-step's near end and the share of what lies behind it that the sub-step lets through.
  *
- * The clouds (S64, V6; RULING_S64 R3): a third layer, the clouds' face-on optical depth `tauClouds` in their own
- * published layer `hClouds` (cloud_layer_height, the halpha_hii layer), composed with the diffuse dust in the same
- * pieces. The pieces are cut at both layers' cuts (DUST_CUTS times each height, merged in order), so neither is mixed
- * with the stars across more than a few of its own heights: cut at the thinner alone, the inner disc's 21 pc dust left
- * a fifth of the 178 pc clouds' column outside the last cut, mixed, 8 % of the light wrong. Without clouds
- * (`tauClouds` 0, the default) the pieces and every number are the dust's alone, as before, to the bit.
+ * The clouds (S64, V6; RULING_S64 R3 as the lead ruled it): the clouds of the raster texel the step reads, at their own
+ * published heights - a uniform slab of face-on optical depth `tauClouds` between `slabMid` - `slabHalf` and
+ * `slabMid` + `slabHalf` (cloudOpacity.ts `slab`), composed with the diffuse dust in the same pieces. The pieces are
+ * cut at the dust's cuts and at SLAB_PIECES equal parts of the slab, merged in order of height, so the slab's column
+ * in a piece is exact (slabColumn) and the stars are mixed with it across a quarter of it at most. The slab is not
+ * symmetric about the midplane: a descending ray mirrors it with the heights. Without clouds (`tauClouds` 0, the
+ * default) the pieces and every number are the dust's alone, as before, to the bit.
  */
 export function composeStep(
   y0: number,
@@ -279,7 +301,8 @@ export function composeStep(
   hStars: number,
   hDust: number,
   tau: number,
-  hClouds: number = 0,
+  slabMid: number = 0,
+  slabHalf: number = 0,
   tauClouds: number = 0,
 ): { light: number; transmitted: number } {
   // Heights run upward along the ray in u: the layers are symmetric about the midplane, so a descending ray is
@@ -288,34 +311,37 @@ export function composeStep(
   const u0 = sign * y0;
   const u1 = sign * y1;
   const du = u1 - u0;
-  const clouds = tauClouds > 0 && hClouds > 0;
+  const clouds = tauClouds > 0 && slabHalf > 0;
   const dusty = hDust > 0;
-  // The thinnest layer the pieces are cut for: a step shorter than a millionth of it is one piece.
-  const hMin = dusty && clouds ? Math.min(hDust, hClouds) : dusty ? hDust : clouds ? hClouds : 0;
+  // The slab in u, and the thinnest thing the pieces are cut for: a step shorter than a millionth of it is one piece.
+  const lo = sign * slabMid - slabHalf;
+  const hi = sign * slabMid + slabHalf;
+  const hMin = dusty && clouds ? Math.min(hDust, slabHalf) : dusty ? hDust : clouds ? slabHalf : 0;
   const whole = !(hMin > 0) || du <= 1e-6 * hMin;
   const N = DUST_CUTS.length;
   let light = 0;
   let transmitted = 1;
-  // The next cut of each layer (an index into DUST_CUTS; past the last, none), merged in order of height.
+  // The next cut of the dust (an index into DUST_CUTS) and of the slab (its k-th of SLAB_PIECES + 1 edges); past
+  // the last, none; merged in order of height.
   let pd = 0;
-  let pc = 0;
+  let ps = 0;
   let a = u0;
-  for (let m = 0; m <= 2 * N; m += 1) {
+  for (let m = 0; m <= N + SLAB_PIECES + 1; m += 1) {
     let b = u1;
     let share = 1;
     if (whole) {
       if (m > 0) break;
     } else {
       const nd = dusty && pd < N ? DUST_CUTS[pd] * hDust : 1e9;
-      const nc = clouds && pc < N ? DUST_CUTS[pc] * hClouds : 1e9;
-      b = Math.min(u1, Math.min(nd, nc));
-      if (nd <= nc) pd += 1;
-      else pc += 1;
+      const ns = clouds && ps <= SLAB_PIECES ? lo + ((hi - lo) * ps) / SLAB_PIECES : 1e9;
+      b = Math.min(u1, Math.min(nd, ns));
+      if (nd <= ns) pd += 1;
+      else ps += 1;
       if (b <= a) continue;
       share = (b - a) / du;
     }
     const ds = path * share;
-    const depth = tau * layerColumn(a, b, hDust, ds) + (clouds ? tauClouds * layerColumn(a, b, hClouds, ds) : 0);
+    const depth = tau * layerColumn(a, b, hDust, ds) + (clouds ? tauClouds * slabColumn(a, b, lo, hi, ds) : 0);
     const own = depth >= 1e-3 ? (1 - Math.exp(-depth)) / Math.max(depth, 1e-6) : 1 - 0.5 * depth;
     light += transmitted * layerColumn(a, b, hStars, ds) * own;
     transmitted *= Math.exp(-depth);

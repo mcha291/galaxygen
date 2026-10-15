@@ -301,7 +301,11 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       `The clouds' opacity raster, texels per render cell on each axis. The default, ${CLOUD_RASTER}, is the finest whose ` +
       `float32 texture fits 16 MiB on the 400 x 360 render grid (${400 * CLOUD_RASTER} x ${360 * CLOUD_RASTER} texels, ` +
       `${((400 * CLOUD_RASTER * 360 * CLOUD_RASTER * 4) / 1e6).toFixed(1)} MB; computed in cloudOpacity.ts). Every cloud's A_V x area is ` +
-      "conserved at any setting: a display resolution, not light.",
+      "conserved at any setting: a display resolution, not light. Beside it a half-float texture of the same texels holds each " +
+      "texel's slab (4 bytes a texel: 14.4 MB more at the default, 28.8 MB the two): the clouds are drawn at their own heights, " +
+      "a texel holding one cloud as exactly that cloud at its height and extent, one holding several as one uniform slab " +
+      "spanning them (their A_V-weighted mean height, half-thickness the rms of their heights in quadrature with their mean " +
+      "radius) - the approximation, finer as the raster is finer.",
   },
 ];
 
