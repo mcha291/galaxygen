@@ -155,7 +155,11 @@ def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str]) -> dic
             "filters=), its light hii_halpha_luminosity; a point until its diameter, 2 x hii_stromgren_radius, fills a "
             "pixel, then a disc of that radius - the Stromgren sphere holds the line light (hii_halpha_emissivity is "
             "uniform over it); the wind bubble (bubble_radius) is the shell's own object, drawn by the region regime, "
-            "not the knot. Named by its cell column: the level-0 cell whose census drew it, which K_c sums, even where "
+            "not the knot. The cluster's starlight beside it (response, with filters=) is a point until 2 x "
+            "cluster_half_mass_radius fills a pixel, then a Plummer sphere of scale a = r_h / 1.305 (r_h / a = 1 / "
+            "sqrt(2^(2/3) - 1), the radius holding half the mass), its sprite integrating to the cluster's light (to "
+            "1e-3, the viewer's gate; T6). Named by its cell column: the level-0 cell whose census drew it, which K_c "
+            "sums, even where "
             "its source offset places it in a neighbour (2.7 % of the Milky Way's knots). The cells are the layout's, "
             "systems.cell_edges; K_c is the sum of the cell's rows, so no per-cell sum rides the wire"
         ),
