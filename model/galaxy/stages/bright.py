@@ -318,10 +318,27 @@ def part_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants: M
     field's light split by age (S63, D223; ``/api/render``'s ``stars_young``, ``stars_middle``, ``stars_old``). The same
     decomposition :func:`resolve` reads (:func:`part_masses` on the field's own tables), with no threshold: the three
     sum to the stars' ``disc_sed_*`` per ring and band to rounding (8e-14 measured at S63)."""
-    masses = part_masses(fields, t_max, n_t, constants)
+    return _anchors_of(part_masses(fields, t_max, n_t, constants))
+
+
+def _anchors_of(masses: np.ndarray) -> np.ndarray:
+    """(parts, n_R, 8): λL_λ at the eight bands of the mass on each isochrone, (parts, n_R, n_age, n_mh)."""
     flat = masses.reshape(*masses.shape[:2], -1)
-    bands = flat @ population_light().band_flux.reshape(-1, len(BANDS))  # (3, n_R, 8)
+    bands = flat @ population_light().band_flux.reshape(-1, len(BANDS))  # (parts, n_R, 8)
     return np.stack([band_nu_l_nu(bands[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
+
+
+def window_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any],
+                   windows: Sequence[tuple[float, float]]) -> np.ndarray:
+    """(len(windows), n_R, 8): :func:`part_anchors`' arithmetic over any age windows ``(age_min, age_max)`` in Gyr - the
+    same history, the same isochrone weights and the same clip of the fine-age reading's few 1e-16 negatives. S66
+    (D226 R5b): the middle part split at the clustering field's octave survival ages, so that each age window's light
+    is modulated by the octaves its stars keep; windows that partition the middle part sum to its anchors to
+    rounding."""
+    formed = np.asarray(fields["stars_formed_history"], dtype=float) / (1.0 - float(constants["RETURN_FRACTION"]))
+    feh = fields["feh_history"]
+    masses = [mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=float(a), age_max_gyr=float(b)) for a, b in windows]
+    return _anchors_of(np.maximum(np.stack(masses), 0.0))
 
 
 def part_weights(contrast: np.ndarray, modulation: np.ndarray | None) -> np.ndarray:

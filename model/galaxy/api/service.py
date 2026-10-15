@@ -52,6 +52,7 @@ from galaxy import templates as _tpl  # the named galaxies (S54); Service._templ
 from galaxy.api import v6_clouds as _v6_clouds  # S64 (V6, R1-R2): the clouds as extinction
 from galaxy.api import v6_tiles as _v6_tiles  # S64 (V6, R8): bright stars by tiles, their table, the remainder alone
 from galaxy.api import v6_knots as _v6_knots  # S64 (V6, R5-R6): the HII regions as knots, their lines and the field's share
+from galaxy.api import v7_layer as _v7  # S66 (V7, R4-R6): the layer's fields on the render's header, the spurs' pieces
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
@@ -1710,10 +1711,18 @@ class Service:
             wanted += [n for n in self._reads(model, bright) if n in _bright.RESOLVE_READS and n not in wanted]
         inputs = self._overrides(model, q)
         layer = self._layer(q)
+        # S66 (V7, R4-R6): with the layer on, what the header's gas_fluctuation, census_clustering and spurs entries read
+        # - the two fields' stages and the spurs' table - where the model publishes them; nothing more with it off (D4).
+        gas_declared = all(n in declared for n in _v7.GAS_READS)
+        clustering_declared = all(n in declared for n in _v7.CLUSTERING_READS)
+        if layer:
+            wanted += [n for n in (*(_v7.GAS_READS if gas_declared else ()), *(_v7.CLUSTERING_READS if clustering_declared else ()))
+                       if n not in wanted]
         out, ran = self.compute(model, inputs, wanted, layer)
         f = out.fields
         R_axis, phi_axis = out.grid.axes["R"], out.grid.axes["phi"]
         R = out.grid.R
+        constants = {k: c.value for k, c in model.constants.items()}
 
         # The components on the whole grid: the stars per (R, phi), the line and the dust per R.
         sed = np.stack([np.asarray(f[f"disc_sed_{b.lower()}"], dtype=float) for b in _spectra.SED_BANDS], axis=-1)
@@ -1870,6 +1879,19 @@ class Service:
                         "is already a share of the placed starlight. It averages to 1 round every ring" + even,
                 }},
             }
+        # The spurs' pieces (S66, V7, R4): the spurs' table and ring mean, and the placement without them, so that the
+        # viewer composes the spurs per sub-step - where the dust is placed by the gas's own contrast.
+        spurs_entry, unspurred = (None, None) if placement is None else _v7.spurs_entry(f, constants, R, phi_axis.edges)
+        if unspurred is not None:
+            placement["dust_unspurred"] = _v7.UNSPURRED
+            placement["arrays"][_v7.UNSPURRED] = {
+                "unit": "dimensionless", "fields": [*gas_fields, *_v7.SPUR_FIELDS],
+                "about": "the gas's own density contrast at each (R, phi) cell over its ring's mean without the gas "
+                         "spurs: the gas pattern's exact cell means of its response and the bar's lanes, floored at zero "
+                         "as dust_placement is. Composed with the spurs' table (the header's spurs) it is dust_placement: "
+                         "(1 - share(R)) times it plus the spurs' cell means (stages/spurs.Spurs.compose_cells); with no "
+                         "spur laid it is dust_placement to the bit (S66, V7, D226)",
+            }
         # The clouds as extinction (S64, BUILD_III V6; RULING_S64 R2): the share of each ring's dust that is diffuse once
         # the ring's realised clouds hold theirs, summed off the ring-first draw's streams (no census, nothing placed).
         # The dust_extinction component is unchanged: the viewer multiplies the diffuse depth by the share and draws
@@ -1952,6 +1974,8 @@ class Service:
                 arrays.append((RENDER_DUST_HEIGHT, dust_height[rows]))
             if placement is not None:
                 arrays.append((RENDER_DUST_PLACEMENT, placed_gas[rows][:, cols]))
+            if unspurred is not None:
+                arrays.append((_v7.UNSPURRED, unspurred[rows][:, cols]))
             if diffuse_share is not None:
                 arrays.append((RENDER_DIFFUSE_SHARE, diffuse_share[rows]))
             window: dict[str, Any] = {
@@ -1964,6 +1988,8 @@ class Service:
                 axes[RENDER_DUST_HEIGHT] = ["R"]
             if placement is not None:
                 axes[RENDER_DUST_PLACEMENT] = ["R", "phi"]
+            if unspurred is not None:
+                axes[_v7.UNSPURRED] = ["R", "phi"]
             if diffuse_share is not None:
                 axes[RENDER_DIFFUSE_SHARE] = ["R"]
             for name, value in age_rings:
@@ -1996,6 +2022,9 @@ class Service:
                 # share of the ring's area.
                 arrays.append((RENDER_DUST_PLACEMENT, _cell_means(placed_gas[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
                 axes[RENDER_DUST_PLACEMENT] = ["cell"]
+            if unspurred is not None:
+                arrays.append((_v7.UNSPURRED, _cell_means(unspurred[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
+                axes[_v7.UNSPURRED] = ["cell"]
             if diffuse_share is not None:
                 # A cell's area-weighted mean of its rings' shares, as the dust's height is.
                 arrays.append((RENDER_DIFFUSE_SHARE, _cell_means(diffuse_share, bounds, R_axis, phi_axis, per_ring=True)))
@@ -2034,6 +2063,11 @@ class Service:
             # The clouds as extinction (S64, V6): the diffuse share's array, its rule, the clouds' route, column and
             # layer, the closure - or null where the model publishes no dust or no clouds.
             "clouds": clouds_entry,
+            # The randomness layer's two fields and the gas spurs, for the viewer's march (S66, V7, D226 R4-R6): every
+            # number the model's and the rule the viewer evaluates; the values null with the layer off, the keys kept.
+            "gas_fluctuation": _v7.gas_fluctuation_entry(gas_declared, f, constants, R),
+            "census_clustering": _v7.clustering_entry(clustering_declared, f, constants, R),
+            "spurs": spurs_entry,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,
@@ -2148,6 +2182,11 @@ class Service:
                            "not its own [inferred], as l_min='s parts are: it shapes only the blackbody tails beyond U and K",
         }
         rings = [(RENDER_AGES[p], parts[k]) for k, p in enumerate(_bright.AGE_PARTS)]
+        # S66 (V7, R5b): the middle part split by the clustering octaves its stars keep, with the layer on.
+        header["middle_kept"], kept = _v7.middle_kept(
+            f, constants, float(spec.t_max), int(spec.n_t), curves, parts[_bright.AGE_PARTS.index("middle")], cut,
+            _catalogue.YOUNG_STAR_AGE, middle_by)
+        rings += kept
         return header, rings, [(n, w[0]) for n, w in weights.items()]
 
     def _unresolved(

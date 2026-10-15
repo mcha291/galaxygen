@@ -494,9 +494,13 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
         # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
         # S64 (V6): and the share of each ring's dust that is diffuse once its realised clouds hold theirs, with its
         # header entry `clouds`, digested apart likewise (layer_reference.ADDED_AT_S64).
+        # S66 (V7, D226 R6): and the render header's gas_fluctuation, census_clustering and spurs entries - their values
+        # null with the layer off, the entries null on a model without the field - digested apart likewise
+        # (layer_reference.ADDED_AT_S66).
+        s66 = list(layer_reference.ADDED_AT_S66)
         assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
                                          + (["stars_middle_placement"] if not label.startswith("basic/") else [])
-                                         + ["dust_diffuse_share"])
+                                         + ["dust_diffuse_share"] + s66)
                                         if "/render/" in label else []), label
         if "/render/" in label:
             # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first

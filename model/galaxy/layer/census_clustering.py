@@ -70,6 +70,7 @@ continuing finer; the three octaves, the scale and the width here are L1's.
 
 from __future__ import annotations
 
+import functools
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -265,6 +266,34 @@ class ClusteringField:
                 e = self.map(q[:, 0] * np.cos(q[:, 1]), q[:, 0] * np.sin(q[:, 1]))
                 out[r * CELL_SECTORS + s] = float(np.sum(q[:, 0] * e) / np.sum(q[:, 0]))
         return out
+
+    def kept_cell_means(self, R: np.ndarray, kept: tuple[int, ...], points: int | None = None) -> dict[int, np.ndarray]:
+        """:meth:`cell_means` of each truncated map of :meth:`maps` - the ``n`` coarsest octaves, for each ``n`` of
+        ``kept`` - on the same lattice, R-weighted, by the same arithmetic (S66, D226 R5c: the viewer divides a
+        truncated map by its own cell mean, which plateaus well under 1, #162). ``n = octaves`` is :meth:`cell_means`
+        to the bit. Cached by the field, the grid and the counts (:func:`kept_cell_means`)."""
+        return {int(n): m.copy() for n, m in kept_cell_means(self, tuple(float(r) for r in np.asarray(R, dtype=float)),
+                                                             tuple(int(n) for n in kept), points).items()}
+
+
+@functools.lru_cache(maxsize=8)
+def kept_cell_means(field: ClusteringField, R: tuple[float, ...], kept: tuple[int, ...], points: int | None) -> dict[int, np.ndarray]:
+    """:meth:`ClusteringField.kept_cell_means`, cached: a few seconds a field (one pass of the noise per cell for every
+    count), the same for every request of the same run."""
+    from galaxy.stages.systems import CELL_RINGS, CELL_SECTORS, cell_edges
+
+    rings, sectors = cell_edges(np.asarray(R, dtype=float))
+    out = {int(n): np.empty(CELL_RINGS * CELL_SECTORS) for n in kept}
+    for r in range(CELL_RINGS):
+        lo, hi = float(rings[r]), float(rings[r + 1])
+        for s in range(CELL_SECTORS):
+            r_mid, phi_mid = field.lattice(lo, hi, float(sectors[s]), float(sectors[s + 1]), points)
+            q = _noise.cell_quadrature(lo, hi, float(sectors[s]), float(sectors[s + 1]), (r_mid.size, phi_mid.size))
+            for n, e in zip(kept, field.maps(q[:, 0] * np.cos(q[:, 1]), q[:, 0] * np.sin(q[:, 1]), kept)):
+                out[int(n)][r * CELL_SECTORS + s] = float(np.sum(q[:, 0] * e) / np.sum(q[:, 0]))
+    for m in out.values():
+        m.setflags(write=False)
+    return out
 
 
 def mesh_factor(law: Any, cell: tuple[float, float, float, float], r_mid: np.ndarray, phi_mid: np.ndarray) -> np.ndarray | None:

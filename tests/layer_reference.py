@@ -56,6 +56,10 @@ ADDED_AT_S64 = ("dust_diffuse_share", "cloud_dust_extinction_v")
 # What S64 (V6, the HII regions as knots) sends that S55 did not: the clusters' line_response (with filters=) and the
 # clusters header's entries `knots` and `line_response`; and the sentence each of the render's two HII abouts gains.
 ADDED_KNOTS = ("line_response", "knots")
+# What S66 (V7, D226 R6) sends that S55 did not: the render header's entries for the viewer's march - the two fields and
+# the gas spurs - present with null values when the layer is off; the arrays they bring (the middle part's kept splits,
+# dust_placement_unspurred) and ages' middle_kept are sent with the layer on only.
+ADDED_AT_S66 = ("gas_fluctuation", "census_clustering", "spurs")
 
 
 def _sha(raw: bytes) -> str:
@@ -174,6 +178,11 @@ def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[s
         if "axes" in header:
             header["axes"] = {k: v for k, v in header["axes"].items() if k != v6_knots.COLUMN}
         added += [*lines, "knots"]
+    # S66 (V7, R6): the render header's three new entries, digested apart and returned among the added (D223's handling).
+    s66 = [key for key in ADDED_AT_S66 if key in header and "components" in header]
+    for key in s66:
+        header.pop(key)
+    added += s66
     components = header.get("components", {})
     if "halpha_hii" in components:
         from galaxy.api import v6_knots
