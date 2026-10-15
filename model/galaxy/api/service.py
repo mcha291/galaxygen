@@ -336,6 +336,10 @@ ROUTES: tuple[Route, ...] = (
         "once its realised clouds (summed off the census's ring streams, no census materialised) hold theirs - the "
         "viewer multiplies the dust's depth by it and draws the clouds' own column, /api/clouds' "
         "cloud_dust_extinction_v, in the clouds' layer; the header's clouds states the rule and the closure. "
+        "The randomness layer per sub-step (S66, V7): the header's gas_fluctuation, census_clustering and spurs carry "
+        "the two fields and the gas spurs, every number the model's and each entry's rule (null values with "
+        "layer=off), dust_placement_unspurred the dust's placement without the spurs, and stars_middle_kept3, _kept2 "
+        "and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
         "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
         "filter, which this render's own stars_middle_placement (or stars_placement) and stars_placement turn into "
         "stars_unresolved exactly; the header's remainder states the rule.",

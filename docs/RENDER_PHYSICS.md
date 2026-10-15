@@ -286,6 +286,24 @@ to 1e-12; none fills a pixel in a star-first capture) `[verified:
 frontend/src/galaxy/plummer.test.ts, knots.test.ts]`. Not built: the region regime's
 clusters keep their sprite (they are drawn in display colours, not on the field's scale).
 
+**Since S66 (BUILD_III V7, the model's side) `/api/render` carries what the march needs to
+draw the randomness layer per sub-step**, every number the model's (D226 R4-R6): the header's
+`gas_fluctuation` (the field's seed, form, ring table, ladder weights and cell normalisers),
+`census_clustering` (the clustering field's form, its octaves' survival ages and the 1-, 2- and
+3-octave maps' means per level-0 cell on its table lattice, the 3-octave one the published
+`census_clustering_cell_mean` to the bit) and `spurs` (the gas spurs' table and their ring mean
+per render ring), each stating its rule, their values null with the layer off; and the arrays
+`dust_placement_unspurred` (the gas pattern's cell means without the spurs, which composed
+through `Spurs.compose_cells` give `dust_placement` to 1e-12; the neutral placement with the
+layer off) and `stars_middle_kept3/2/1` (the middle part's light of the age windows that keep
+3, 2 and 1 clustering octaves, summing with the rest to `stars_middle` to 1e-12). No array sent
+before moved, on eight requests against S65's bodies. The noise the march evaluates is one GLSL
+include (`frontend/src/galaxy/noise.glsl.ts`) with a float32 TypeScript twin held to the
+model's vectors: the hash and the noise bit-exact to numpy's float32, the gas sum at numpy's
+read positions bit-exact, the composed g within 4.9e-4 of float64; on the RTX 4070 the GLSL
+itself within 5.5e-7 of float32 on the primitives and 1.7e-3 on g `[verified:
+tests/test_v7_header.py, frontend/src/galaxy/noise.test.ts, frontend/e2e/noise.spec.ts]`.
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are
