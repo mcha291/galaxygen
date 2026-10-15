@@ -482,7 +482,10 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             names, was = [a[0] for a in got["arrays"]], [a[0] for a in held["arrays"]]
             assert [n for n in names if n not in ADDED_AT_S61] == was, label
             # S64 (V6): the clouds' own dust column is digested apart and reported added (layer_reference.ADDED_AT_S64).
-            assert got.get("added", []) == (["cloud_dust_extinction_v"] if "/clouds/" in label else []), label
+            # S64 (V6, R5): and the clusters' knots entry, with their line_response where filters= is asked
+            # (layer_reference.ADDED_KNOTS).
+            knots = (["line_response"] if label.endswith("/clusters/filters") else []) + ["knots"]
+            assert got.get("added", []) == (["cloud_dust_extinction_v"] if "/clouds/" in label else knots if "/clusters/" in label else []), label
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue

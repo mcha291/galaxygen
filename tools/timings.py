@@ -93,6 +93,10 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # The cluster census (S33, BUILD_II Phase 11): the cells' clouds drawn, then one cluster per cloud past its embedded phase.
     Endpoint("clusters: one sector", "/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the clusters of 9 cells"),
     Endpoint("clusters: whole disc", "/api/clusters", "", "every cluster, about 1.3e4"),
+    # S64 (V6, R5): the whole disc as the viewer asks it - each cluster's starlight (`response`) and, since S64, its HII
+    # region's lines (`line_response`) through the curves, the knots' light.
+    Endpoint("clusters: whole, rgb + lines", "/api/clusters", urlencode({"filters": _RGB, "white": 6500}),
+             "every cluster through 3 filters: its starlight and its region's six lines (S64)"),
     # The remnant census (S36, BUILD_II Phase 10): Poisson per cell on the supernova rates times the visible lifetime.
     Endpoint("remnants: one sector", "/api/remnants", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the remnants of 9 cells"),
     Endpoint("remnants: whole disc", "/api/remnants", "", "every visible remnant, about 1.4e3"),

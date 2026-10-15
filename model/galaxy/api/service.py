@@ -51,6 +51,7 @@ import numpy as np
 from galaxy import templates as _tpl  # the named galaxies (S54); Service._templates is the route
 from galaxy.api import v6_clouds as _v6_clouds  # S64 (V6, R1-R2): the clouds as extinction
 from galaxy.api import v6_tiles as _v6_tiles  # S64 (V6, R8): bright stars by tiles, their table, the remainder alone
+from galaxy.api import v6_knots as _v6_knots  # S64 (V6, R5-R6): the HII regions as knots, their lines and the field's share
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
@@ -1459,6 +1460,16 @@ class Service:
             anchors = _clusters.band_anchors(census["cluster_mass"], census["cluster_age"], census["cluster_metallicity"])
             arrays.append(("response", _spectra.object_response(anchors, np.asarray(census["cluster_light_temperature"], dtype=float), curves)))
             header.update(_object_response_header(curves, white, "cluster_light_temperature"))
+        # S64 (V6, R5-R6): the HII regions as knots - the lines the field's HII layers carry, each region's through the
+        # curves beside its starlight, and the rule by which a viewer drawing them scales the field (api/v6_knots.py).
+        if _v6_knots.LIGHT in census:
+            lines, unmatched = _v6_knots.matched(_v6_knots.field_lines(self._declared(model)), columns)
+            shares = None
+            if curves is not None and lines:
+                knot_light, shares = _v6_knots.line_response(census, lines, curves)
+                arrays.append((_v6_knots.COLUMN, knot_light))
+                header[_v6_knots.COLUMN] = {"unit": "Lsun", "axes": ["row", "filter"], "about": _v6_knots.LINE_ABOUT}
+            header["knots"] = _v6_knots.header(R, lines, unmatched, shares)
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 
     def _remnants(self, q: Query) -> Response:
@@ -1764,7 +1775,7 @@ class Service:
                 "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
                          f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "
                          "stellar contrast; it averages to 1, so each ring keeps its published line) in the clouds' "
-                         "layer, where the regions' clusters are" + even,
+                         "layer, where the regions' clusters are" + _v6_knots.HALPHA_WORDS + even,
             }
         # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
         # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
@@ -1781,7 +1792,8 @@ class Service:
                 "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
                 "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
                          "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
-                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer" + even,
+                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer"
+                         + _v6_knots.LINES_WORDS + even,
             }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
