@@ -248,6 +248,28 @@ far apart in height, still draws thin vertical streaks on an inclined view (half
 up to 1.1 kpc MW, 3.0 kpc NGC 4414). The clouds sit up to 3.8x (MW) higher than the gas
 layer D211's heating and the scattered light were computed in (debt #168).
 
+**Since S64 (BUILD_III V6) the HII regions are knots at galaxy scale.** `/api/clusters`
+with `filters=` carries `line_response`: each region's Hα (`hii_halpha_luminosity`),
+Hβ (over `hii_balmer_decrement`) and the four forbidden lines (times `hii_*_ratio`),
+each through each curve at its wavelength by `spectra.line_response` - the lines of the
+render's `halpha_hii` and `lines_hii`, one for one. Its header's `knots` names the light,
+the size (`hii_stromgren_radius`: the line light's sphere; the bubble is the shell's
+object) and the naming cell, the level-0 layout, and the rule the render's two HII abouts
+repeat: in a level-0 cell c the field's HII layers are scaled by 1 - D_c / K_c, D_c the Hα
+of the knots drawn in c, K_c of every knot c names, 1 where K_c is 0 - so the screen holds
+the census where every knot is drawn and the field where none is, never both, never
+negative `[verified: tests/test_v6_knots.py]`. The census against the field (§7's check,
+not a target): the knots' Hα is 0.921 of the field's (MW), 1.081 (NGC 4414), per ring
+0.53-1.43 and 0.37-2.15; cells naming no knot keep their field, 1.29 % and 5.5 % of the HII
+Hα. The viewer draws the knots in the field mode above the region regime, on the field's
+scale at its weight, dimmed by the field's dust, and hands the march the per-cell share;
+a knot is a point until 2 R_S fills a pixel, then a disc of R_S summed over its own box.
+In the star-first mode a cluster whose 2 r_h fills a pixel is a Plummer sphere of
+a = r_h / 1.3048, each pixel the profile's exact integral over it over the box's (the light
+to 1e-12; none fills a pixel in a star-first capture) `[verified:
+frontend/src/galaxy/plummer.test.ts, knots.test.ts]`. Not built: the region regime's
+clusters keep their sprite (they are drawn in display colours, not on the field's scale).
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are
