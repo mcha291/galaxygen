@@ -94,7 +94,8 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("clusters: one sector", "/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the clusters of 9 cells"),
     Endpoint("clusters: whole disc", "/api/clusters", "", "every cluster, about 1.3e4"),
     # S64 (V6, R5): the whole disc as the viewer asks it - each cluster's starlight (`response`) and, since S64, its HII
-    # region's lines (`line_response`) through the curves, the knots' light.
+    # region's lines (`line_response`) through the curves, the knots' light. Cold 9.78 s, warm 0.102 s, 4 488 712 B before
+    # line_response; 9.12 s, 0.104 s, 4 798 896 B after (a fresh process each, S64).
     Endpoint("clusters: whole, rgb + lines", "/api/clusters", urlencode({"filters": _RGB, "white": 6500}),
              "every cluster through 3 filters: its starlight and its region's six lines (S64)"),
     # The remnant census (S36, BUILD_II Phase 10): Poisson per cell on the supernova rates times the visible lifetime.
