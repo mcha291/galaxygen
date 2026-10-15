@@ -22,7 +22,10 @@ import { RING_ROWS } from "./regimes";
 /** The march's dust, as the points read it: the ring texture, the scattered light's (whose spare channel is the
  * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. Since S64 (V6) the clouds'
  * raster (null: no clouds drawn) and its slab texture (each texel's clouds' mean height and half-thickness, kpc), and
- * each channel's depth per magnitude of A_V. */
+ * each channel's depth per magnitude of A_V. Since S66 (V7, D226 R7) the march multiplies the diffuse dust's placement
+ * per sub-step by the gas fluctuation map and draws the spurs from their table; the points do not: a point's dust is
+ * the ring's placed column as the textures hold it (the cell means, spurs included), unmodulated below the cell - a
+ * debt (the mend: the GLSL include shared into this shader, its pin moved). */
 export interface PointDust {
   rings: Texture;
   scatter: Texture;

@@ -716,7 +716,9 @@ export function FieldVolume({
     const a = light.arrays;
     // The starlight by age (S63, D223): where the render carries the three parts, the stellar layer is their sum at
     // the switches, each part placed round the ring by its own weight. Not under the star-first mode's threshold,
-    // whose remainder is its own component.
+    // whose remainder is its own component - and so not clustered in the march either (S66, D226 R5e): the remainder
+    // has no young part (the clusters carry it) and its middle part stays placed by sfr_modulation, unmodulated - a debt
+    // (the mend: only=remainder's per-part arrays split by kept octaves as the field's are).
     const parts = unresolved ? null : (ageParts(light.header, a) as AgePart[] | null);
     const n = { R: R.n, phi: phi.n, filter: white.length };
     // The randomness layer's tables (S66, V7; D226 R6): every number the render header's, null with the layer off.
