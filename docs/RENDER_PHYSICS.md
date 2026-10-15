@@ -224,12 +224,19 @@ clouds' dust is the ring's dust to 1e-12 (measured under 1e-15)
 Milky Way's dust and 0.633 of NGC 4414's (expected, the molecular fraction: 0.548,
 0.590). The viewer rasterises the whole disc's census into a polar texture of face-on
 A_V, conserving each cloud's A_V x area to float32 rounding, at the "cloud raster"
-tuning value (default 5 texels a render cell a side, 2000 x 1800, the finest under
-16 MiB), and the march composes it as a third layer in the clouds' own published layer
-(`cloud_layer_height`) `[verified: frontend/src/galaxy/cloudOpacity.test.ts,
-regimes.test.ts]`. Stated, not hidden: the clouds sit in a layer up to 3.8x (MW) the
-gas layer D211's heating and the scattered light were computed in (debt #168), and the
-raster spreads the census through the layer rather than at each cloud's own height.
+tuning value (default 5 texels a render cell a side, 2000 x 1800, the finest float32
+A_V texture under 16 MiB), and beside it a half-float texture of each texel's slab: the
+A_V-weighted mean `cloud_height` of its clouds and a half-thickness, the rms of their
+heights in quadrature with their mean radius (28.8 MB the two). The march and the
+star-first points compose each texel's clouds as a uniform slab at those heights, cut
+with the dust's pieces; against brute-force integration the step misses by at most 0.51 %
+of the unattenuated light, and with no clouds it is the dust-only step to the bit
+`[verified: frontend/src/galaxy/cloudOpacity.test.ts, regimes.test.ts]`. Stated, not
+hidden: a texel holding one cloud is that cloud at its own height and extent; one holding
+several is one slab spanning them, which in the inner disc, where a texel gathers clouds
+far apart in height, still draws thin vertical streaks on an inclined view (half-thickness
+up to 1.1 kpc MW, 3.0 kpc NGC 4414). The clouds sit up to 3.8x (MW) higher than the gas
+layer D211's heating and the scattered light were computed in (debt #168).
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
