@@ -394,7 +394,7 @@ for (const capture of CAPTURES) {
     }
     const renderer = await rendererOf(page);
     const seconds = (Date.now() - started) / 1000;
-    const selection = capture.mode === "stars" ? ((await page.getByText(SELECTION_TEXT).textContent())?.match(/[\d,]+ stars: [^.]*\./)?.[0] ?? "") : "";
+    const selection = capture.mode === "stars" ? ((await page.getByText(SELECTION_TEXT).textContent())?.match(/[\d,]+ stars: .*?(?=\. The field)/)?.[0] ?? "") : "";
 
     // The committed file, by its path from frontend/ (playwright.config.ts's snapshotPathTemplate).
     const segments = capture.file.split("/");

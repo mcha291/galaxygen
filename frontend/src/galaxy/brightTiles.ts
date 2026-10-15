@@ -220,6 +220,29 @@ export function weighted(counts: BrightTable | CellCounts, weights: ReadonlyMap<
   };
 }
 
+/**
+ * The cells a zoomed frame asks (S65, the lead's ruling on the fetch): those expected to show at least one star in view
+ * at the frame's threshold - weighted count f_c x expected_c(k) >= 1, the unit of the thing counted (B8), no other
+ * constant. The rule's loss is what it skips: `loss`, the expected stars in view in the cells not asked, beside
+ * `inView`, the expected stars in view over every cell. A cell with no count held is asked (never guessed away).
+ */
+export function cellsToFetch(counts: CellCounts, cells: readonly number[], k: number): { fetch: number[]; loss: number; inView: number } {
+  const fetch: number[] = [];
+  let loss = 0;
+  let inView = 0;
+  for (const c of cells) {
+    const n = counts.count(c, k);
+    if (n === undefined || !Number.isFinite(n)) {
+      fetch.push(c);
+      continue;
+    }
+    inView += n;
+    if (n >= 1) fetch.push(c);
+    else loss += n;
+  }
+  return { fetch, loss, inView };
+}
+
 /** What `table=1&cells=&level=` returns (api.ts loadBrightCounts): the thresholds and a row per cell asked. */
 export interface CountsAnswer {
   thresholds: ArrayLike<number>;

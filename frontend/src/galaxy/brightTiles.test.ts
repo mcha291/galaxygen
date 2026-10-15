@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { Matrix4, PerspectiveCamera } from "three";
 
-import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, cellCentre, cellsIn, covers, expectedIn, frustumWeights, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
+import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, cellCentre, cellsIn, cellsToFetch, covers, expectedIn, frustumWeights, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
 import { layerShare } from "./regimes";
 import { levelFor } from "./region";
 
@@ -347,5 +347,22 @@ describe("frustumWeights: the share of the stars' layer inside the frustum over 
     expect(want).toBeLessThan(3);
     // a cell with no weight held is not guessed at
     expect(weighted(counts, new Map()).count(cells[0], 0)).toBeUndefined();
+  });
+});
+
+describe("cellsToFetch: a zoomed frame asks the cells expected to show at least one star in view", () => {
+  it("skips a far cell expecting 0.3 stars, asks a near one expecting 1.2, and sums the skipped as the rule's loss", () => {
+    // weighted counts at the frame's threshold (k = 1): near 1.2, far 0.3 and 0.45, exactly one 1.0, one not held
+    const rows: Record<number, number[]> = { 10: [5, 1.2], 11: [2, 0.3], 12: [3, 0.45], 13: [4, 1.0] };
+    const counts: CellCounts = { thresholds: [100, 112], count: (c, k) => rows[c]?.[k] };
+    const got = cellsToFetch(counts, [10, 11, 12, 13, 14], 1);
+    expect(got.fetch).toEqual([10, 13, 14]); // 14 has no row: asked, never guessed away
+    expect(got.loss).toBeCloseTo(0.75, 12);
+    expect(got.inView).toBeCloseTo(2.95, 12);
+    // through the weights: a cell expecting 4 stars of which 0.3 of its layer is in view shows 1.2; at 0.075, 0.3
+    const w = weighted({ thresholds: [100], count: () => 4 }, new Map([[1, 0.3], [2, 0.075]]));
+    const r = cellsToFetch(w, [1, 2], 0);
+    expect(r.fetch).toEqual([1]);
+    expect([r.loss, r.inView].map((v) => Math.round(v * 1e12) / 1e12)).toEqual([0.3, 1.5]);
   });
 });
