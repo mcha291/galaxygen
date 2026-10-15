@@ -118,12 +118,17 @@ def test_a_tile_at_a_threshold_is_the_same_bytes_every_time(service):
     header, arrays = wire.decode(first)
     # the header has no timing field, and no `stages` (what ran depends on what the service held)
     assert "stages" not in header and not any("time" in k or "seconds" in k for k in header)
-    assert header["tile"]["l_min_asked"] == DEPTH and header["tile"]["l_min_used"] == pytest.approx(10**3.4, rel=1e-12)
+    assert "l_min_asked" not in header["tile"] and header["tile"]["l_min_used"] == pytest.approx(10**3.4, rel=1e-12)
     assert header["tile"]["grid"]["log_l_step"] == 0.05 and arrays["response"].shape == (arrays["cell"].size, 3)
-    # another l_min that snaps to the same grid value: the same rows (only l_min_asked differs)
+    # another l_min that snaps to the same grid value: the same rows
     other, rows, _ = ask(service, "/api/bright", **{**q, "l_min": repr(header["tile"]["l_min_used"] * (1 - 1e-7))})
     assert other["tile"]["l_min_used"] == header["tile"]["l_min_used"]
     assert all(rows[k].tobytes() == arrays[k].tobytes() for k in arrays)
+    # the same (tile, threshold) is the same bytes however l_min is written: the grid value itself, 1e-8 below it
+    # and 1e-12 above it (the header echoes the threshold used, never the one asked)
+    grid_value = header["tile"]["l_min_used"]
+    for written in (grid_value, grid_value * (1 - 1e-8), grid_value * (1 + 1e-12)):
+        assert ask(service, "/api/bright", **{**q, "l_min": repr(written)})[2].body == first, written
 
 
 # --- (c) what the tile form, the table and the remainder refuse -------------------------------------------------------

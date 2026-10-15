@@ -166,7 +166,8 @@ def bright(service: Service, q: Query) -> Response:
     lum = np.asarray(rows["bright_star_luminosity"], dtype=float)
     header = {
         **base,
-        "tile": {"cells": tiles, "level": TILE_LEVEL, "l_min_asked": float(l_min), "l_min_used": used, "grid": GRID},
+        # No echo of the l_min asked: the bytes depend on (tile, grid threshold) alone, however l_min was written.
+        "tile": {"cells": tiles, "level": TILE_LEVEL, "l_min_used": used, "grid": GRID},
         "cells": {"count": int(finest.size), "level": _catalogue.MAX_LEVEL,
                   "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(_catalogue.MAX_LEVEL)},
         "threshold": {"l_min": used, "complete": True, "prefix": _bright.PREFIX,
