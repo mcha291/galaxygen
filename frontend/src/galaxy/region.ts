@@ -371,8 +371,12 @@ export function sortedFrom(objects: RegionObjects, eye: readonly [number, number
  * positive alpha and NO_FRONT can be 1: it is the alpha the pass was cleared to (outside the objects' box no
  * fragment runs, and the clear cannot carry another alpha - three.js premultiplies the clear colour by it, and the
  * pass's white would go with it) and the alpha the pass wrote before S64. A front is a number ≤ 0; a point reads
- * it as "nothing in front" exactly where the alpha is > 0. The target is half-float: a front 5 kpc away is held to
- * 2^-8 of itself, 4 pc (derived from the format's 10-bit mantissa), finer than the clouds' sizes.
+ * it as "nothing in front" exactly where the alpha is > 0. The target is half-float, whose 10-bit mantissa holds a
+ * front d away to a step of 2^-10 of the power of two below d (derived): 4 pc for a front 5 kpc away, as under the
+ * default template's 45 degree lens (a 2.5 kpc view puts the camera ~3 kpc off, a 2 pc step), finer than the
+ * clouds' sizes. Under NGC 4414's 5 degree lens (e2e/captures.json) the camera stands ~9.5 times farther for the same
+ * view: at a 2.5 kpc view ~28.6 kpc off, a 16 pc step - about a median cloud (13 pc), so there the front is placed
+ * no finer than a cloud's own size.
  */
 export const NO_FRONT = 1;
 
@@ -442,7 +446,8 @@ export function marchTransmission(
 /**
  * The factor a star's light takes from the region's clouds (T5): the pass's colour T where the star lies beyond
  * the front (its distance from the camera greater than −alpha), 1 where it lies in front or no cloud is on its line
- * of sight. The points' shader (`POINTS_REGION_VERTEX`) line for line.
+ * of sight. The points' shader (`POINTS_REGION_VERTEX`) line for line. The comparison is strict: a star exactly at
+ * the front (its distance equal to −alpha) is in front of it and drawn undimmed.
  */
 export function pointTransmission(texel: readonly [number, number, number, number], distance: number): [number, number, number] {
   return texel[3] <= 0 && distance > -texel[3] ? [texel[0], texel[1], texel[2]] : [1, 1, 1];
@@ -489,6 +494,7 @@ export const POINTS_REGION_VERTEX = /* glsl */ `
     ivec2 regionSize = textureSize(regionTransmission, 0);
     vec2 regionUv = gl_Position.xy / gl_Position.w * 0.5 + 0.5;
     vec4 regionTexel = texelFetch(regionTransmission, clamp(ivec2(regionUv * vec2(regionSize)), ivec2(0), regionSize - 1), 0);
+    // strict: a star exactly at the front (regionDistance == -alpha) is in front of it, drawn undimmed
     vRegionT = regionTexel.a <= 0.0 && regionDistance > -regionTexel.a ? regionTexel.rgb : vec3(1.0);
   }
 `;

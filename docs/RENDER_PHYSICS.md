@@ -212,7 +212,8 @@ march's transmission pass writes, beside the whole ray's T, the clouds' front:
 the optical-depth-weighted entry distance −Σ τ t0 / Σ τ in its alpha (`NO_FRONT`,
 1, where no cloud's optical depth is met). The star points draw after the
 multiply quad and take T themselves, read once per star at the pixel holding its
-centre, only where the star is farther from the camera than the front; the field
+centre, only where the star is farther from the camera than the front (strictly:
+a star exactly at the front is drawn undimmed); the field
 is still multiplied by the whole ray's T, in front of a cloud as well (the
 stated approximation; the exact composite, T at K depth slabs, is not built)
 `[verified: frontend/src/galaxy/regionDepth.test.ts]`. FluxPoints' own dust is

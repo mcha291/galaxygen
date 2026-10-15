@@ -70,6 +70,8 @@ describe("the depth-aware composite (T5): one cloud, a star in front and a star 
     expect(1 - ray.trans[1]).toBeGreaterThan(0.93);
     // A star past the entry but inside the cloud is behind the front: the whole cloud's T (the pixel holds one T).
     expect(pointTransmission(texel, 8)).toEqual(ray.trans);
+    // A star exactly at the front is in front of it (the comparison is strict, as in the shader): undimmed.
+    expect(pointTransmission(texel, -texel[3])).toEqual([1, 1, 1]);
   });
 
   it("draws the points between the multiply and the light", () => {
