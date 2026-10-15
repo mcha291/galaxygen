@@ -361,6 +361,164 @@ export function sortedFrom(objects: RegionObjects, eye: readonly [number, number
   return out;
 }
 
+// --- the clouds' front on a ray (T5, S64; RULING_S64 R9) ------------------------------------------------------
+
+/**
+ * What the transmission pass's alpha carries (S64, T5): **the negated front distance** of the clouds on the ray,
+ * −Σ τ_i t0_i / Σ τ_i - each cloud's entry distance t0 (scene kpc, along the ray from the camera, 0 for a camera
+ * inside it) weighted by its V-band optical depth τ on the ray - and NO_FRONT where the ray meets no cloud's optical
+ * depth (Σ τ = 0, or not a number: B9, a missing depth draws nothing). Negated so that "nothing in front" is a
+ * positive alpha and NO_FRONT can be 1: it is the alpha the pass was cleared to (outside the objects' box no
+ * fragment runs, and the clear cannot carry another alpha - three.js premultiplies the clear colour by it, and the
+ * pass's white would go with it) and the alpha the pass wrote before S64. A front is a number ≤ 0; a point reads
+ * it as "nothing in front" exactly where the alpha is > 0. The target is half-float: a front 5 kpc away is held to
+ * 2^-8 of itself, 4 pc (derived from the format's 10-bit mantissa), finer than the clouds' sizes.
+ */
+export const NO_FRONT = 1;
+
+/**
+ * A ray against a sphere - the shader's `sphere`, line for line: the entry and exit distances along the unit
+ * direction `d` from `o`, the entry clamped to 0 for an origin inside; null where the ray misses or the sphere is
+ * wholly behind.
+ */
+export function sphereChord(
+  o: readonly [number, number, number], d: readonly [number, number, number], c: readonly [number, number, number], r: number,
+): [number, number] | null {
+  const oc = [o[0] - c[0], o[1] - c[1], o[2] - c[2]];
+  const b = oc[0] * d[0] + oc[1] * d[1] + oc[2] * d[2];
+  let h = b * b - (oc[0] * oc[0] + oc[1] * oc[1] + oc[2] * oc[2] - r * r);
+  if (h < 0) return null;
+  h = Math.sqrt(h);
+  const t0 = Math.max(-b - h, 0);
+  const t1 = -b + h;
+  return t1 > t0 ? [t0, t1] : null;
+}
+
+/** What the transmission pass writes for one ray: its colour, mix(1, T, weight), and its alpha (NO_FRONT or −front). */
+export interface RayTransmission {
+  trans: [number, number, number];
+  alpha: number;
+}
+
+/**
+ * The transmission pass for one ray - the shader's march (`regionFragment`, mode 1) line for line, in float64:
+ * every object the ray meets in table order (nearest-first after `sortedFrom`), HII regions and shells adding
+ * light only (the light pass's, not twinned here), each cloud's optical depth sampled CLOUD_SAMPLES times along its
+ * chord through the published interior and the cavity, its transmission multiplied in, and its τ and τ·t0 summed
+ * for the front. `extRatio` is the dust's A_λ/A_V per channel, `weight` the stars regime's.
+ */
+export function marchTransmission(
+  origin: readonly [number, number, number], dir: readonly [number, number, number], objects: Float32Array, count: number,
+  extRatio: readonly [number, number, number], weight: number, noise: InteriorNoise | null,
+): RayTransmission {
+  const trans: [number, number, number] = [1, 1, 1];
+  let tauSum = 0;
+  let tauT0 = 0;
+  for (let i = 0; i < Math.min(count, MAX_OBJECTS); i += 1) {
+    const o = i * OBJECT_FLOATS;
+    const a = objects.subarray(o, o + 4), b = objects.subarray(o + 4, o + 8), c = objects.subarray(o + 8, o + 12), e = objects.subarray(o + 12, o + 16);
+    const chord = sphereChord(origin, dir, [a[0], a[1], a[2]], a[3]);
+    if (!chord) continue;
+    const [t0, t1] = chord;
+    const kind = Math.floor(b[0] + 0.5);
+    if (kind === KIND.hii || kind === KIND.shell) continue; // light, the other pass's
+    const seed = cloudSeed(Math.trunc(b[1]), Math.trunc(b[2]));
+    const ds = (t1 - t0) / CLOUD_SAMPLES;
+    let tau = 0;
+    for (let k = 0; k < CLOUD_SAMPLES; k += 1) {
+      const p = [0, 1, 2].map((j) => origin[j] + dir[j] * (t0 + (k + 0.5) * ds));
+      let rho = densityRatio((p[0] - a[0]) / a[3], (p[1] - a[1]) / a[3], (p[2] - a[2]) / a[3], seed, b[3], c[0], c[1], noise);
+      if (e[3] > 0 && Math.hypot(p[0] - e[0], p[1] - e[1], p[2] - e[2]) < e[3] && rho < Math.exp(b[3])) rho = 0;
+      tau += c[2] * rho * ds;
+    }
+    for (let j = 0; j < 3; j += 1) trans[j] *= Math.exp(-tau * extRatio[j]);
+    tauSum += tau;
+    tauT0 += tau * t0;
+  }
+  // GLSL's mix(x, y, a) is x (1 - a) + y a.
+  return { trans: [0, 1, 2].map((j) => 1 * (1 - weight) + trans[j] * weight) as [number, number, number], alpha: tauSum > 0 ? -tauT0 / tauSum : NO_FRONT };
+}
+
+/**
+ * The factor a star's light takes from the region's clouds (T5): the pass's colour T where the star lies beyond
+ * the front (its distance from the camera greater than −alpha), 1 where it lies in front or no cloud is on its line
+ * of sight. The points' shader (`POINTS_REGION_VERTEX`) line for line.
+ */
+export function pointTransmission(texel: readonly [number, number, number, number], distance: number): [number, number, number] {
+  return texel[3] <= 0 && distance > -texel[3] ? [texel[0], texel[1], texel[2]] : [1, 1, 1];
+}
+
+/**
+ * The order the region's quads and the star points are drawn in (S64, T5): the transmission quad multiplies the
+ * frame drawn so far - the field - by T; the star points come after it and take T themselves, behind the front
+ * only; the light quad adds last. Without a region in the scene the points keep the order they had (0), so a frame
+ * with no region volume draws in the same order as before.
+ */
+export const REGION_ORDER = { multiply: 1, points: 1.5, light: 2 } as const;
+export const POINTS_ORDER_WITHOUT_REGION = 0;
+
+/** Where the region volume leaves its transmission target's texture for the points: the scene's userData, by this key. */
+export const REGION_TRANSMISSION_KEY = "regionTransmission";
+
+/** The uniforms the points' patch reads: the transmission pass's texture (null without a region) and whether to read it. */
+export interface PointsRegionUniforms {
+  regionTransmission: { value: unknown };
+  regionOn: { value: boolean };
+}
+
+/**
+ * The points' half of T5, written into three.js's points shader. **In the vertex shader, once per star**: a star is
+ * a point and its sprite the instrument's spread, so its light has one line of sight - the transmission pixel that
+ * holds its centre (texelFetch, unfiltered: a front distance is not interpolated across a cloud's edge) - and its
+ * distance from the camera, Euclidean as the march's t0 is, decides whether that pixel's T applies
+ * (`pointTransmission`, line for line). The fragment multiplies the star's colour by it, after the vertex colour:
+ * the light only, not the alpha, so a star in front blends over the dimmed field as before and a star behind is
+ * dimmed as the quad dimmed it. Without a region (`regionOn` false) the factor is 1 and every colour is the same
+ * number as before (x · 1.0 = x).
+ */
+export const POINTS_REGION_PARS = /* glsl */ `
+uniform sampler2D regionTransmission;
+uniform bool regionOn;
+varying vec3 vRegionT;
+`;
+export const POINTS_REGION_VERTEX = /* glsl */ `
+  vRegionT = vec3(1.0);
+  if (regionOn && gl_Position.w > 0.0) {
+    vec4 regionWorld = modelMatrix * vec4(transformed, 1.0);
+    float regionDistance = length(regionWorld.xyz - cameraPosition);
+    ivec2 regionSize = textureSize(regionTransmission, 0);
+    vec2 regionUv = gl_Position.xy / gl_Position.w * 0.5 + 0.5;
+    vec4 regionTexel = texelFetch(regionTransmission, clamp(ivec2(regionUv * vec2(regionSize)), ivec2(0), regionSize - 1), 0);
+    vRegionT = regionTexel.a <= 0.0 && regionDistance > -regionTexel.a ? regionTexel.rgb : vec3(1.0);
+  }
+`;
+export const POINTS_REGION_FRAGMENT = /* glsl */ `
+  diffuseColor.rgb *= vRegionT;
+`;
+
+/** The three.js points-shader lines the patch is written after (three 0.186's ShaderLib.points). */
+export const POINTS_ANCHORS = { common: "#include <common>", vertex: "#include <fog_vertex>", fragment: "#include <color_fragment>" } as const;
+
+/**
+ * Patch a points material's shader for T5 (its `onBeforeCompile`). Refuses a shader without the anchors - a
+ * three.js whose points shader moved would otherwise draw every star undimmed behind a cloud, silently.
+ */
+export function patchPointsForRegion(
+  shader: { vertexShader: string; fragmentShader: string; uniforms: Record<string, unknown> }, uniforms: PointsRegionUniforms,
+): void {
+  for (const [text, anchors] of [[shader.vertexShader, [POINTS_ANCHORS.common, POINTS_ANCHORS.vertex]], [shader.fragmentShader, [POINTS_ANCHORS.common, POINTS_ANCHORS.fragment]]] as const) {
+    for (const anchor of anchors) if (!text.includes(anchor)) throw new Error(`the points shader has no "${anchor}" to patch the region's transmission after`);
+  }
+  shader.uniforms.regionTransmission = uniforms.regionTransmission;
+  shader.uniforms.regionOn = uniforms.regionOn;
+  shader.vertexShader = shader.vertexShader
+    .replace(POINTS_ANCHORS.common, POINTS_ANCHORS.common + POINTS_REGION_PARS)
+    .replace(POINTS_ANCHORS.vertex, POINTS_ANCHORS.vertex + POINTS_REGION_VERTEX);
+  shader.fragmentShader = shader.fragmentShader
+    .replace(POINTS_ANCHORS.common, POINTS_ANCHORS.common + "\nvarying vec3 vRegionT;\n")
+    .replace(POINTS_ANCHORS.fragment, POINTS_ANCHORS.fragment + POINTS_REGION_FRAGMENT);
+}
+
 // --- the march's fragment shader ---------------------------------------------------------------------------
 
 /** Samples of a cloud's density along each chord through it. */
@@ -450,6 +608,8 @@ const fragmentTail = () => /* glsl */ `
     vec3 dir = normalize(vWorld - cameraPosition);
     vec3 light = vec3(0.0);
     vec3 trans = vec3(1.0);
+    float tauSum = 0.0;
+    float tauT0 = 0.0;
     for (int i = 0; i < ${MAX_OBJECTS}; i++) {
       if (i >= count) break;
       vec4 a = obj(i, 0);
@@ -481,10 +641,12 @@ const fragmentTail = () => /* glsl */ `
           tau += c.z * rho * ds;
         }
         trans *= exp(-tau * extRatio);
+        tauSum += tau;
+        tauT0 += tau * t0;
       }
     }
     if (mode == 0) gl_FragColor = vec4(light * gain, 1.0);
-    else gl_FragColor = vec4(mix(vec3(1.0), trans, weight), 1.0);
+    else gl_FragColor = vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : ${glslFloat(NO_FRONT)});
   }
 `;
 
