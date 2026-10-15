@@ -3996,7 +3996,9 @@ never been judged in twenty-three sessions.
    by the lead as measured and told to the owner, whose bound on the viewer's whole-disc calls is still theirs
    (D219 (c)). **Carried.** Closable in V7 (S65) by a per-cell lattice computed once per run and shared by the
    placement, the cell-mean table and the shader, or by a coarser lattice whose error is declared as the table's is
-   (2 points per finest cell: 5.7e-3 rms against 4).
+   (2 points per finest cell: 5.7e-3 rms against 4). **S64 (D224, the review's note 6):** `/api/bright?table=1`, the
+   expected-count table the tiles' threshold is picked from, pays `_bright_galaxy`'s default selection it never reads
+   (the first request ~13 s cold, 23.7 s on a loaded machine); the same one pass takes it.
 160. **The star sample and the bright catalogue place old stars by two rules that differ by 3.9e-3 per sector**
    (S61, D220; measured by the star sample's builder on ring 8, 7.52-8.45 kpc, young share 0.00367, no sector
    clipped). The sample allocates a young star by c-bar p and an old one by c-bar (1 - p) - the stellar contrast's
