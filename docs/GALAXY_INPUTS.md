@@ -694,10 +694,11 @@ defined here once and used in every entry below:
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
+| **discharged** at S64 | **112, 116** (a star in front of a cloud keeps its light, the depth-aware composite; a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166 | 90 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170 | 92 |
 
-So the board's **101 open** is 11 permanent and 90 carried, and no item is unruled. (S22
+So the board's **103 open** is 11 permanent and 92 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -729,7 +730,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #112 and #116, the screen-space multiply over a star in front of a cloud and the cluster's undrawn extent, D224.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3264,8 +3265,13 @@ never been judged in twenty-three sessions.
    their luminosity — V4's cluster points carrying the census's Hα. **S41 (D191): not closed by V4.** The cluster
    points carry the cluster's *stellar* light (`cluster_luminosity`), not its region's Hα, and the field's HII
    still fades by the regime's weight; the light past the 64th region is dropped as before. The remedy stands.
-112. **The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
-   them, a star in front included** (S40, V3, D190). The region volume renders emission and transmission to two
+112. ~~**The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
+   them, a star in front included**~~ **DISCHARGED at S64** (D224, R9, T5: the region march's transmission pass
+   writes the clouds' optical-depth-weighted entry distance into its alpha and the star points take T themselves,
+   only where the star is farther than that front — a star at 4 kpc before a cloud at 8 kpc keeps its light
+   exactly, one at 12 kpc is multiplied by exactly T, where before S64 the front star lost 93.5 %; the field is
+   still multiplied by the whole ray's T in front of a cloud as well, the approximation `RENDER_PHYSICS.md` §0
+   states). Was: (S40, V3, D190). The region volume renders emission and transmission to two
    offscreen targets and blends them over the frame — light added, transmission multiplied (render orders 2 and 1,
    after the field's −1 and the star points' 0) — so a star between the camera and a cloud is darkened as if behind
    it, and the field's light in front of the cloud likewise; the objects among themselves composite front to back
@@ -3321,8 +3327,12 @@ never been judged in twenty-three sessions.
    young stars a cell's clusters account for, or a `star_cluster_index`) so the sample excludes what the points
    carry; the dissolved clusters' light handed back to the sample rather than pointed; and #113's closure test
    summing the sample and the points against the render's `stars` over the same cells.
-116. **A cluster's extent is published and not drawn: every cluster is a point sprite at every level** (S41, V4,
-   D191). `cluster_half_mass_radius` (one to three parsecs at the published half-mass density) is on the wire, and
+116. ~~**A cluster's extent is published and not drawn: every cluster is a point sprite at every level**~~
+   **DISCHARGED at S64** (D224, R7, T6: the form ruled Plummer, a = r_h / 1.305; `plummer.ts` draws it in place of a
+   cluster's point where 2 r_h fills a pixel, each pixel the profile's exact integral, the sprite summing to the light
+   to 1e-12; the point is kept where it does not — the largest r_h 3.00 / 3.11 pc against the captures' 39.1 / 19.3
+   pc pixels, so both star-first frames are byte-identical with the profile on and off; the region regime's
+   clusters keep their display-colour sprite, #170). Was: (S41, V4, D191). `cluster_half_mass_radius` (one to three parsecs at the published half-mass density) is on the wire, and
    at level 3 — a view some sixty parsecs across — spans tens of pixels; the sprite's size is the display's.
    **Carried.** What closes it: a light profile of the published radius (Plummer or King, the form to be ruled)
    drawn at the levels that resolve it, the point kept where it does not.
@@ -4057,6 +4067,40 @@ never been judged in twenty-three sessions.
    points; `_unresolved` repeats the same `part_masses` work. The field mode's own request is the recorded warm cost
    (0.39 → 0.90 s). **Carried.** Two mends, one pass: skip `_ages` under `l_min`, and cache the parts' anchors per run
    (0.13 s), which V7 or V8 takes with the render's other costs (#159, #163).
+167. **The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud** (S64, D224 stop
+   condition 1; the probe's measurement). The census's `central_extinction_v` is solar dust per hydrogen at one surface
+   density (Σ_GMC 42 M☉/pc²), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
+   dust-to-gas ratio times the grain cross-section, 6.3× the cloud law at R = 2 kpc and 0.15× at R = 14 (Milky Way). A
+   cloud drawn at its published A_V would not carry the extinction it takes from the ring. The API's derived column
+   stands in at galaxy scale: `/api/clouds`' `cloud_dust_extinction_v`, the cloud's face-on mean A_V from its own dust
+   (`cloud_mass` × `dust_to_gas_ratio` × `dust_extinction_v` / `dust_surface_density` at the ring of
+   `cloud_birth_radius`, over π `cloud_size`²; every term published, no constant on the wire, no stage change) — median
+   1.897 mag (p90 12.64, max 26.23) on the Milky Way, 4.606 on `ngc_4414`. The stage's own law stays for the region
+   regime's interiors, and the two disagree. **Carried.** The mend is one pass: the clouds stage reads
+   `dust_to_gas_ratio` at the cloud's ring, which moves the region regime's interiors and their pins.
+168. **Half the disc's dust now sits in the clouds' layer, up to 3.8× / 5.6× the gas layer the heating and the
+   scattering were computed in** (S64, D224 stop condition 2). The clouds hold 0.4899973 of the disc's dust on the
+   Milky Way and 0.6327142 on `ngc_4414` (realised; the molecular fraction's expectation 0.548 / 0.590), and since
+   S64 each cloud sits at its own published `cloud_height` — `cloud_layer_height` 178 pc (Milky Way) and 477 pc
+   (`ngc_4414`), half the thin disc, a guess (#95) — while the diffuse dust sits in the gas layer D211's heating and
+   the scattering were computed for; `dust_scattered` and `dust_thermal` are unchanged, and closure (i) holds the
+   dust's mass (the ring's diffuse share times its dust plus the census's clouds' dust is the published dust to under
+   1e-15). Half the dust is drawn in a geometry the energy balance was not computed in. **Carried.** The mend is one
+   pass: #95's closure with D211's geometry re-done — the heating and the scattering computed with the clouds' dust at
+   the clouds' heights.
+169. **A texel holding clouds far apart in height is drawn as one slab: thin vertical streaks inside ~3 kpc of the
+   inclined view** (S64, D224; the clouds builder's first `ngc_4414` frame and the lead's ruling on it). The viewer's
+   cloud raster holds per texel the A_V-weighted mean height and a half-thickness (the rms of the heights about it, in
+   quadrature with the mean radius, floored at the smallest radius), and the march composes each texel's clouds as
+   one uniform slab there. A texel holding one cloud is that cloud at its own height and radius; a texel holding
+   several far apart in height is one tall slab — the largest half-thickness 1.10 kpc on the Milky Way, 2.96 kpc on
+   `ngc_4414` — the stated approximation, which still draws thin vertical streaks inside ~3 kpc of the inclined view
+   (round `ngc_4414`'s bulge). **Carried.** The mend is one pass: a second slab per texel.
+170. **The knots are not drawn in the star-first mode, and the region regime's clusters keep a display-colour sprite**
+   (S64, D224 R5–R7). The HII regions are drawn as knots in the field mode at galaxy scale only: the star-first mode's
+   clusters carry their stellar light alone, so its screen has no knot. The region regime's clusters are a sprite in
+   display colours, not on the field's scale the knots use. **Carried.** The mend is one pass each: the knots in the
+   star-first mode by their `line_response`, and the region regime's clusters on the field's scale.
 
 ---
 
