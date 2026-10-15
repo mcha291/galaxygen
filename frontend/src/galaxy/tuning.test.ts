@@ -73,6 +73,9 @@ describe("tuning defaults (D199)", () => {
       // S64 (V6): the clouds as extinction, on; the raster at the finest 16 MiB holds on the render grid.
       cloudsExtinction: true,
       cloudRaster: 5,
+      // S64 (V6): the HII regions as knots and the clusters with their radius, both on.
+      knots: true,
+      clusterRadius: true,
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
@@ -96,7 +99,8 @@ describe("tuning defaults (D199)", () => {
     // each sub-step composed in order), so the comparison ends there and the source is pinned whole: a change
     // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source. S64 (V6)
     // re-pinned it on purpose: the diffuse depth times the ring's diffuse share, each raster texel's clouds a slab at
-    // their own heights in the step, the pieces cut at the dust's cuts and the slab's parts (fieldFragment.s64.glsl; D207's snapshot is in git).
+    // their own heights in the step, the pieces cut at the dust's cuts and the slab's parts (fieldFragment.s64.glsl; D207's snapshot is in git);
+    // and again for the knots' undrawn share (S64, R5): the HII light times each level-0 cell's 1 - D_c / K_c.
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
     expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
@@ -118,6 +122,10 @@ describe("tuning defaults (D199)", () => {
     for (const name of ["cloudsOn"]) expect(now).toContain(`uniform float ${name};`);
     expect(now).toContain("vec3 depth = tau * cDust + (clouds ? tauC * slabColumn(a, b, lo, hi, piece) : vec3(0.0));");
     expect(now).toContain("uniform sampler2D cloudSlab;");
+    // S64 (V6, R5): the knots' undrawn share multiplies the field's HII light, cell by cell, and nothing else.
+    expect(now).toContain("hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);");
+    expect(now.match(/knotShare\(rp\)/g)).toHaveLength(1);
+    expect(now).toContain("if (shareOn < 0.5 || rp.x < shareCells.x || rp.x >= shareCells.y) return 1.0;");
     expect(now).toMatch(/\(scattered\.rgb \* scattering \+ readRing\(rp\.x, \d\.0\) \* place\) \* dustGain \+ dustWhere \* level \* whereTint\(level\) \* place;/);
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
@@ -203,7 +211,7 @@ describe("tuning storage", () => {
     expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
-    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "clusterRadius", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading", "knots"]);
     for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
   });
 });

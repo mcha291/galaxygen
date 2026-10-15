@@ -42,6 +42,12 @@
   uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
   uniform float cloudsOn;
+  // The knots' undrawn share (S64, V6, R5): per level-0 cell, 1 - D_c / K_c (knots.ts undrawnShare), a sectors x rings
+  // texture; the cells' radial edges and counts (lo, hi, rings, sectors: the clusters header's knots.layout); 1 to read
+  // it, 0 to leave the field's HII whole.
+  uniform sampler2D hiiShare;
+  uniform vec4 shareCells;
+  uniform float shareOn;
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -82,6 +88,15 @@
 
   float inRegion(vec2 rp) {
     return (rp.x >= regionWindow.x && rp.x <= regionWindow.y && rp.y >= regionWindow.z && rp.y <= regionWindow.w) ? 1.0 : 0.0;
+  }
+
+  // The share of the field's HII light the drawn knots leave in the level-0 cell at rp (knots.ts cellAt, line for
+  // line); 1 outside the cells or with none drawn.
+  float knotShare(vec2 rp) {
+    if (shareOn < 0.5 || rp.x < shareCells.x || rp.x >= shareCells.y) return 1.0;
+    float ring = min(shareCells.z - 1.0, floor((rp.x - shareCells.x) / (shareCells.y - shareCells.x) * shareCells.z));
+    float sector = min(shareCells.w - 1.0, floor(rp.y / 6.28318531 * shareCells.w));
+    return textureLod(hiiShare, vec2((sector + 0.5) / shareCells.w, (ring + 0.5) / shareCells.z), 0.0).r;
   }
 
   // regimes.ts's phaseAt, line for line: the table read linearly at |cos i|.
@@ -212,7 +227,7 @@
           vec4 scattered = readPolar(scatter, rp);
           float place = scattered.a;
           dustLight = (scattered.rgb * scattering + readRing(rp.x, 2.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
-          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain;
+          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);
           digLight = readRing(rp.x, 1.0) * gasGain;
           // The diffuse dust (S64): the ring's depth times its placement times the share the realised clouds leave.
           tau = readRing(rp.x, 0.0) * place * readRing(rp.x, 3.0).r * dustDepth;

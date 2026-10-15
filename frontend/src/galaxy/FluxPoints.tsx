@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { AdditiveBlending, BufferAttribute, BufferGeometry, type PerspectiveCamera, Points, ShaderMaterial, type Texture, Vector2, Vector3 } from "three";
 
 import { DUST_SEGMENT_STEPS } from "./flux";
+import { DISC_LOOP_HALF, PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF } from "./plummer";
 import { type SpritePsf, psfMean, psfTexture } from "./psf";
 import { RING_ROWS } from "./regimes";
 
@@ -11,6 +12,12 @@ import { RING_ROWS } from "./regimes";
 // pixelArea and spriteLight, line for line), times the field's gain; and the dust between the point and the
 // camera dims it per channel (flux.ts dustToPoint, line for line), read from the textures the march reads.
 // Additive: light adds. Not pickable here: the view's Picker works on positions.
+//
+// Since S64 (V6; RULING_S64 R6, R7) a point with an extent (pc) and a profile is drawn with its own extent once its
+// diameter fills a pixel (plummer.ts, line for line): a cluster as a Plummer sphere of its half-mass radius, a knot as
+// a disc of its Stromgren radius, in a box of whole pixels round it, each pixel taking the profile's light over its
+// own area over the box's - its light summed over the box, dimmed as the point is. Below the switch, or without a
+// profile, the point is drawn exactly as before (the same statements: the frame is the same bytes).
 
 /** The march's dust, as the points read it: the ring texture, the scattered light's (whose spare channel is the
  * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. Since S64 (V6) the clouds'
@@ -26,6 +33,18 @@ export interface PointDust {
   slab?: Texture | null;
   cloudExt?: readonly [number, number, number];
 }
+
+// plummer.ts plummerCorner and plummerRect, line for line: the Plummer's share of its light over a rectangle.
+const PROFILE_GLSL = /* glsl */ `
+  float plummerCorner(float x, float y, float a) {
+    float sx = sqrt(a * a + x * x);
+    float sy = sqrt(a * a + y * y);
+    return ((x / sx) * atan(y / sx) + (y / sy) * atan(x / sy)) / 6.28318531;
+  }
+  float plummerRect(vec2 lo, vec2 hi, float a) {
+    return plummerCorner(hi.x, hi.y, a) - plummerCorner(lo.x, hi.y, a) - plummerCorner(hi.x, lo.y, a) + plummerCorner(lo.x, lo.y, a);
+  }
+`;
 
 const VERTEX = /* glsl */ `
   attribute vec3 flux;
@@ -43,7 +62,30 @@ const VERTEX = /* glsl */ `
   uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
   uniform float cloudsOn;
+  // The profile (S64): 0 none, 1 a Plummer sphere of half-mass radius extent, 2 a disc of radius extent (pc); the
+  // drawing buffer's size, px.
+  attribute float extent;
+  uniform float profile;
+  uniform vec2 bufferPx;
   varying vec3 vLight;
+  varying float vMode;
+  varying vec4 vBox;
+  varying vec2 vCentre;
+  varying float vNorm;
+  ${PROFILE_GLSL}
+  // plummer.ts discNorm: the disc's coverage summed over its box, or its area past the loop's bound.
+  float discNorm(vec2 c, vec2 k0, float n, float r) {
+    if (n > ${2 * DISC_LOOP_HALF + 1}.0) return 3.14159265 * r * r;
+    float s = 0.0;
+    for (int i = 0; i < ${2 * DISC_LOOP_HALF + 1}; i++) {
+      if (float(i) >= n) break;
+      for (int j = 0; j < ${2 * DISC_LOOP_HALF + 1}; j++) {
+        if (float(j) >= n) break;
+        s += clamp(r - length(k0 + vec2(float(i), float(j)) + 0.5 - c) + 0.5, 0.0, 1.0);
+      }
+    }
+    return s;
+  }
 
   // The march's own (FieldVolume): a sech²(y / 2h) / 4h layer's column from height y0 to y1 over a path ds.
   float sech2(float x) { float c = cosh(clamp(x, -30.0, 30.0)); return 1.0 / (c * c); }
@@ -113,26 +155,61 @@ const VERTEX = /* glsl */ `
     float depth = -mv.z;
     float dist = length(mv.xyz);
     vec3 light = vec3(0.0);
+    float mode = 0.0;
+    float side = 0.0;
     if (depth > 0.0) {
       // The area of sky one pixel covers at the point, pc² (flux.ts pixelArea), and the sprite's unit sum.
-      float side = 1000.0 * depth / pxPerUnit;
+      side = 1000.0 * depth / pxPerUnit;
       float area = side * side * depth / dist;
       light = flux * gain / (area * spritePx * spritePx * spriteMean);
       if (dustOn > 0.5) light *= exp(-dustTo(position));
+      // With its extent (S64, plummer.ts resolvedAt): its whole light, dimmed alike, spread by its own profile.
+      if (profile > 0.5 && extent > 0.0 && 2.0 * extent >= side) {
+        mode = profile;
+        light = flux * gain / area;
+        if (dustOn > 0.5) light *= exp(-dustTo(position));
+      }
     }
     vLight = light;
+    vMode = mode;
     gl_PointSize = spritePx;
     gl_Position = projectionMatrix * mv;
+    if (mode > 0.5) {
+      // The box of whole pixels round the point (plummer.ts profileBox), the profile's scale in pixels, and the light
+      // over the box, by which each pixel's share is divided (plummer.ts profileWeights).
+      vec2 c = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * bufferPx;
+      float scale = mode < 1.5 ? extent / ${PLUMMER_HALF_MASS} / side : extent / side;
+      float h = clamp(ceil(mode < 1.5 ? ${PLUMMER_REACH.toFixed(1)} * scale : scale + 1.0), 1.0, ${PROFILE_MAX_HALF.toFixed(1)});
+      vec2 k0 = floor(c) - h;
+      float n = 2.0 * h + 1.0;
+      vBox = vec4(k0, n, scale);
+      vCentre = c;
+      vNorm = 1.0 / (mode < 1.5 ? plummerRect(k0 - c, k0 + n - c, scale) : discNorm(c, k0, n, scale));
+      gl_PointSize = n + 4.0;
+    }
   }
 `;
 
 const FRAGMENT = /* glsl */ `
   uniform sampler2D sprite;
   varying vec3 vLight;
+  varying float vMode;
+  varying vec4 vBox;
+  varying vec2 vCentre;
+  varying float vNorm;
+  ${PROFILE_GLSL}
   void main() {
-    // The instrument's pattern per channel: the sprite's colour times its alpha (psf.ts), unit sum over the sprite.
-    vec4 t = texture2D(sprite, gl_PointCoord);
-    gl_FragColor = vec4(vLight * t.rgb * t.a, 1.0);
+    if (vMode < 0.5) {
+      // The instrument's pattern per channel: the sprite's colour times its alpha (psf.ts), unit sum over the sprite.
+      vec4 t = texture2D(sprite, gl_PointCoord);
+      gl_FragColor = vec4(vLight * t.rgb * t.a, 1.0);
+      return;
+    }
+    // The profile (S64): this pixel's share of the light over the box (plummer.ts profileWeights); none outside it.
+    vec2 k = floor(gl_FragCoord.xy);
+    if (k.x < vBox.x || k.y < vBox.y || k.x >= vBox.x + vBox.z || k.y >= vBox.y + vBox.z) discard;
+    float w = vMode < 1.5 ? plummerRect(k - vCentre, k + 1.0 - vCentre, vBox.w) : clamp(vBox.w - length(k + 0.5 - vCentre) + 0.5, 0.0, 1.0);
+    gl_FragColor = vec4(vLight * (w * vNorm), 1.0);
   }
 `;
 
@@ -148,16 +225,26 @@ interface Props {
   spriteSize: number;
   /** The march's dust for the segment to each point; null draws the points undimmed. */
   dust: PointDust | null;
+  /**
+   * Each point's extent, pc (S64): a cluster's half-mass radius or a knot's Stromgren radius; with `profile` the point
+   * is drawn with it once its diameter fills a pixel (plummer.ts). Without, every point is the sprite.
+   */
+  extent?: Float32Array | null;
+  /** 1 a Plummer sphere (the clusters), 2 a disc (the knots); 0 or absent, the sprite always. */
+  profile?: 0 | 1 | 2;
 }
 
 const BUFFER = new Vector2();
 
-export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Props) {
+export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0 }: Props) {
   const gl = useThree((s) => s.gl);
   const points = useMemo(() => {
     const geometry = new BufferGeometry();
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
     geometry.setAttribute("flux", new BufferAttribute(flux, 3));
+    // No extent: zero for every point, which never switches (the sprite always).
+    const extents = extent && extent.length * 3 === flux.length ? extent : new Float32Array(flux.length / 3);
+    geometry.setAttribute("extent", new BufferAttribute(extents, 1));
     const sprite = psfTexture();
     const material = new ShaderMaterial({
       uniforms: {
@@ -177,6 +264,8 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
         cloudSlab: { value: sprite },
         cloudExt: { value: new Vector3(0, 0, 0) },
         cloudsOn: { value: 0 },
+        profile: { value: 0 },
+        bufferPx: { value: new Vector2(1, 1) },
       },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
@@ -188,7 +277,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
     const object = new Points(geometry, material);
     object.frustumCulled = false;
     return object;
-  }, [positions, flux]);
+  }, [positions, flux, extent]);
   useEffect(
     () => () => {
       points.geometry.dispose();
@@ -201,6 +290,8 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust }: Pro
     const buffer = gl.getDrawingBufferSize(BUFFER);
     const fov = (camera as PerspectiveCamera).fov ?? 45;
     uniforms.pxPerUnit.value = buffer.y / (2 * Math.tan((fov * Math.PI) / 360));
+    uniforms.profile.value = profile;
+    (uniforms.bufferPx.value as Vector2).set(buffer.x, buffer.y);
     uniforms.spritePx.value = (psf?.size ?? spriteSize) * gl.getPixelRatio();
     uniforms.gain.value = gain;
     const mean = psf?.mean ?? DEFAULT_MEAN;

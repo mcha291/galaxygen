@@ -95,6 +95,11 @@ export interface Tuning {
   cloudsExtinction: boolean;
   /** The clouds' raster, texels per render cell on each axis (cloudOpacity.ts). */
   cloudRaster: number;
+  // The HII regions as knots and the clusters with their radius (S64, BUILD_III V6; RULING_S64 R5-R7).
+  /** The field mode's HII regions drawn as knots, the field's HII layers scaled by each cell's undrawn share. */
+  knots: boolean;
+  /** A cluster drawn with its Plummer profile once its half-mass diameter fills a pixel. */
+  clusterRadius: boolean;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -129,6 +134,8 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   ageOld: true,
   cloudsExtinction: true,
   cloudRaster: CLOUD_RASTER,
+  knots: true,
+  clusterRadius: true,
 });
 
 export type TuningKey = keyof Tuning;
@@ -294,6 +301,21 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "The molecular clouds' own dust as a layer of opacity in the clouds' layer: /api/clouds' cloud_dust_extinction_v, " +
       "rasterised conserving each cloud's A_V x area (S64, V6). Off draws no clouds' layer; the diffuse dust stays the " +
       "render's reduced one (dust_diffuse_share, the model's), so off shows the dust without what the clouds hold. A display choice.",
+  },
+  {
+    key: "knots", label: "HII regions as knots", group: "Components", kind: "toggle", switch: true,
+    about:
+      "The field mode's HII regions as knots at galaxy scale: each cluster's region a point of its own lines through the " +
+      "filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills a pixel; in each level-0 " +
+      "cell the field's HII layers are scaled by 1 - D_c / K_c, D_c the Halpha of the knots drawn there and K_c of every " +
+      "knot the cell names (1 where none), so the census replaces the field and the light is the same (S64, V6). A display choice.",
+  },
+  {
+    key: "clusterRadius", label: "clusters with their radius", group: "Components", kind: "toggle", switch: true,
+    about:
+      "A cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills a pixel, in place " +
+      "of the point sprite, its light the same (S64, V6, T6). At galaxy scale no cluster is that large: it shows below " +
+      "about 1 kpc across. A display choice.",
   },
   {
     key: "cloudRaster", label: "cloud raster", group: "March", kind: "range", min: 1, max: CLOUD_RASTER, step: 1, integer: true, unit: "texels / cell",

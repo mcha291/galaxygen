@@ -30,6 +30,8 @@ import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight } from "@interface/ages.js
 
 import { type Census, type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { type CloudColumns, type CloudRaster, CLOUD_RASTER, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
+import type { CellLayout } from "./brightTiles";
+import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SLAB_PIECES, starTexels, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
@@ -197,6 +199,12 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
   uniform float cloudsOn;
+  // The knots' undrawn share (S64, V6, R5): per level-0 cell, 1 - D_c / K_c (knots.ts undrawnShare), a sectors x rings
+  // texture; the cells' radial edges and counts (lo, hi, rings, sectors: the clusters header's knots.layout); 1 to read
+  // it, 0 to leave the field's HII whole.
+  uniform sampler2D hiiShare;
+  uniform vec4 shareCells;
+  uniform float shareOn;
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -237,6 +245,15 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
 
   float inRegion(vec2 rp) {
     return (rp.x >= regionWindow.x && rp.x <= regionWindow.y && rp.y >= regionWindow.z && rp.y <= regionWindow.w) ? 1.0 : 0.0;
+  }
+
+  // The share of the field's HII light the drawn knots leave in the level-0 cell at rp (knots.ts cellAt, line for
+  // line); 1 outside the cells or with none drawn.
+  float knotShare(vec2 rp) {
+    if (shareOn < 0.5 || rp.x < shareCells.x || rp.x >= shareCells.y) return 1.0;
+    float ring = min(shareCells.z - 1.0, floor((rp.x - shareCells.x) / (shareCells.y - shareCells.x) * shareCells.z));
+    float sector = min(shareCells.w - 1.0, floor(rp.y / 6.28318531 * shareCells.w));
+    return textureLod(hiiShare, vec2((sector + 0.5) / shareCells.w, (ring + 0.5) / shareCells.z), 0.0).r;
   }
 
   // regimes.ts's phaseAt, line for line: the table read linearly at |cos i|.
@@ -354,7 +371,7 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
           vec4 scattered = readPolar(scatter, rp);
           float place = scattered.a;
           dustLight = (scattered.rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
-          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain;
+          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);
           digLight = readRing(rp.x, ${RING_ROWS.dig}.0) * gasGain;
           // The diffuse dust (S64): the ring's depth times its placement times the share the realised clouds leave.
           tau = readRing(rp.x, ${RING_ROWS.depth}.0) * place * readRing(rp.x, ${RING_ROWS.share}.0).r * dustDepth;
@@ -462,6 +479,12 @@ interface Props {
   clouds?: Census | null;
   /** The "clouds as extinction" switch (S64): the clouds' layer drawn, or not. The diffuse share applies either way. */
   cloudsOn?: boolean;
+  /**
+   * The knots' undrawn share (S64, V6, R5): per level-0 cell of `layout` (the clusters header's knots.layout), the
+   * share of the field's HII layers (halpha_hii and lines_hii) left drawn, 1 - D_c / K_c (knots.ts undrawnShare). Null
+   * leaves them whole.
+   */
+  hiiShare?: { share: Float32Array; layout: CellLayout } | null;
 }
 
 /** What the clouds' raster measured when last built (S64): its texels, bytes, the time to build it and the conservation. */
@@ -533,6 +556,7 @@ export function FieldVolume({
   onAges,
   clouds = null,
   cloudsOn = true,
+  hiiShare = null,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
@@ -666,6 +690,10 @@ export function FieldVolume({
         cloudSlab: { value: noSlab() },
         cloudExt: { value: new Vector3(...cloudDepthScale(extinctionRatio(light))) },
         cloudsOn: { value: 0 },
+        // The knots' share (S64): none until the view draws knots.
+        hiiShare: { value: noClouds() },
+        shareCells: { value: new Vector4(0, 1, 1, 1) },
+        shareOn: { value: 0 },
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -729,6 +757,17 @@ export function FieldVolume({
   );
   const cloudsShown = Boolean(raster && cloudsOn);
   const cloudsKey = raster ? `${raster.texture.uuid},${cloudsShown}` : "none";
+  // The knots' undrawn share (S64, V6, R5): one texel per level-0 cell, sectors across and rings down, read at its own
+  // texel. Its radial edges and counts beside it; a layout the march's lookup cannot read (uneven edges) draws no share.
+  const share = useMemo(() => {
+    if (!hiiShare || !evenLayout(hiiShare.layout) || hiiShare.share.length !== hiiShare.layout.rings * hiiShare.layout.sectors) return null;
+    const { layout } = hiiShare;
+    const texture = rasterTexture(new DataTexture(hiiShare.share, layout.sectors, layout.rings, RedFormat, FloatType));
+    const edges = layout.ring_edges;
+    return { texture, cells: [edges[0], edges[edges.length - 1], layout.rings, layout.sectors] as const };
+  }, [hiiShare]);
+  useEffect(() => () => share?.texture.dispose(), [share]);
+  const shareKey = share ? share.texture.uuid : "none";
   // The raster is read at its own texels (nearest: a texel's slab is its own clouds'). Its textures and the switch reach
   // the shader in the frame loop (below), where a change re-marches: set in an effect, a frame marched between React's
   // commit and the effect kept the mesh's placeholder, and nothing in the settings key said to march again.
@@ -767,7 +806,7 @@ export function FieldVolume({
       const material = mesh.material as ShaderMaterial;
       for (const name of ["plane", "scatter", "hii", "rings"]) (material.uniforms[name].value as DataTexture).dispose();
       // The placeholder clouds' texture goes with the mesh; the raster's goes with the raster (its own effect).
-      for (const name of ["cloudTex", "cloudSlab"]) {
+      for (const name of ["cloudTex", "cloudSlab", "hiiShare"]) {
         const t = material.uniforms[name].value as DataTexture;
         if (t.image.width === 1 && t.image.height === 1) t.dispose();
       }
@@ -863,7 +902,7 @@ export function FieldVolume({
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -881,6 +920,16 @@ export function FieldVolume({
     }
     if (cloudUniforms.cloudsOn.value !== (cloudsShown ? 1 : 0)) {
       cloudUniforms.cloudsOn.value = cloudsShown ? 1 : 0;
+      cloudsMoved = true;
+    }
+    // The knots' share (S64): likewise, in the frame loop, so a new share re-marches.
+    if (share && cloudUniforms.hiiShare.value !== share.texture) {
+      cloudUniforms.hiiShare.value = share.texture;
+      (cloudUniforms.shareCells.value as Vector4).set(...share.cells);
+      cloudsMoved = true;
+    }
+    if (cloudUniforms.shareOn.value !== (share ? 1 : 0)) {
+      cloudUniforms.shareOn.value = share ? 1 : 0;
       cloudsMoved = true;
     }
     if (!moved && !reattached && !cloudsMoved) return;
