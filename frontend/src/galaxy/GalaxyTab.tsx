@@ -38,7 +38,7 @@ import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
-import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, covers, levelCounts, pickThreshold, tilesFrame } from "./brightTiles";
+import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
@@ -352,7 +352,21 @@ export function GalaxyTab({
   const levelHeld = tileLevel > 0 && levelLoad.value ? countRows.at(countsGalaxy, tileLevel) : null;
   const tileCounts: BrightTable | CellCounts | null =
     tileLevel === 0 ? brightTable : levelHeld && tilesSeen && covers(levelHeld, tilesSeen) ? levelHeld : null;
-  const tileK = tilesSeen && tileCounts ? pickThreshold(tileCounts, tilesSeen, brightestN) : null;
+  // The budget below the stars handover (S65, the lead's ruling on the zoomed footprint): each level-k cell's count
+  // weighted by the share of the stars' layer (the render header's layers.stars, handed up by the field volume) inside
+  // the frustum's height range over the cell's centre - the stars the camera can see, not every star of every cell the
+  // footprint's +-3 kpc slab meets. Every cell the footprint meets is still asked (the GPU clips the rest). Until a
+  // render has named the layer, and at level 0 (above 4 kpc, S64's frames), every cell counts whole.
+  const [starsLayer, setStarsLayer] = useState<number | null>(null);
+  const viewProjection = view?.camera.viewProjection;
+  const pickCounts = useMemo(
+    () =>
+      tileCounts && tilesSeen && tileLevel > 0 && starsLayer && viewProjection && brightTable
+        ? weighted(tileCounts, frustumWeights(tilesSeen, brightTable.layout, tileLevel, viewProjection, starsLayer))
+        : tileCounts,
+    [tileCounts, tilesSeen, tileLevel, starsLayer, viewProjection, brightTable],
+  );
+  const tileK = tilesSeen && pickCounts ? pickThreshold(pickCounts, tilesSeen, brightestN) : null;
   const tileCache = useRef(new TileCache()).current;
   const tileWhites = useRef(new Map<string, unknown>()).current;
   const tileGalaxy = JSON.stringify([filterSet, whiteKelvin, query]);
@@ -577,6 +591,7 @@ export function GalaxyTab({
             onDepth={setDustPaint}
             lMin={lMin}
             onDust={setFieldDust}
+            onStarsLayer={setStarsLayer}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
           />

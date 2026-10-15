@@ -12,7 +12,8 @@
 // level, cell); the threshold is picked over the level-k cells in view by the same rule; the tiles are held by (galaxy,
 // level, cell, threshold). A level-k tile's rows are its finest cells' rows in its level-0 tile: the catalogue is one.
 
-import type { RegionWindow } from "./regimes";
+import { SLAB_KPC } from "./frustum";
+import { type RegionWindow, layerShare } from "./regimes";
 
 /** The level-0 cells as the API publishes them (`/api/bright?table=1`'s header `cells`: systems.cell_edges). */
 export interface CellLayout {
@@ -140,6 +141,83 @@ export function expectedIn(table: BrightTable | CellCounts, tiles: readonly numb
 /** Whether `counts` holds a row for every cell of `cells`: a pick over a cell not held would be a guess (B9). */
 export function covers(counts: BrightTable | CellCounts, cells: readonly number[]): boolean {
   return cells.every((c) => Number.isFinite(countOf(counts, c, 0)));
+}
+
+/**
+ * The heights at which a vertical line through the disc at scene (x, z) lies inside the frustum of `viewProjection`
+ * (column-major, as three.js writes it), clipped to |y| <= `slab`: the line is (x, y, z), so each of the clip space's
+ * six inequalities -w <= c_i <= w (i = x, y, z) is linear in y - c = a + b y with a the matrix applied to (x, 0, z, 1)
+ * and b its second column - and the interval is their intersection with the slab. Null where the line misses the
+ * frustum. Geometry, no physics (D5).
+ */
+export function verticalExtent(viewProjection: ArrayLike<number>, x: number, z: number, slab = SLAB_KPC): [number, number] | null {
+  const m = viewProjection;
+  const a = (i: number) => Number(m[i]) * x + Number(m[8 + i]) * z + Number(m[12 + i]);
+  const b = (i: number) => Number(m[4 + i]);
+  let lo = -slab;
+  let hi = slab;
+  for (let i = 0; i < 3; i += 1) {
+    for (const sign of [-1, 1]) {
+      // w + sign * c_i >= 0, as p + q y >= 0
+      const p = a(3) + sign * a(i);
+      const q = b(3) + sign * b(i);
+      if (Math.abs(q) < 1e-15) {
+        if (p < 0) return null;
+      } else if (q > 0) lo = Math.max(lo, -p / q);
+      else hi = Math.min(hi, -p / q);
+    }
+  }
+  return lo < hi ? [lo, hi] : null;
+}
+
+/** The (R, phi) centre of a level-k cell: the middle of its sub-ring and sub-sector, as systems.cell_bounds cuts it. */
+export function cellCentre(cell: number, layout: CellLayout, level: number): { r: number; phi: number } {
+  const n = 1 << level;
+  const tile = Math.floor(cell / (n * n));
+  const q = cell - tile * n * n;
+  const i = Math.floor(tile / layout.sectors);
+  const j = tile % layout.sectors;
+  const [r0, r1] = [layout.ring_edges[i], layout.ring_edges[i + 1]];
+  const [p0, p1] = [layout.sector_edges[j], layout.sector_edges[j + 1]];
+  const a = Math.floor(q / n);
+  const b = q % n;
+  return { r: r0 + ((r1 - r0) * (a + 0.5)) / n, phi: p0 + ((p1 - p0) * (b + 0.5)) / n };
+}
+
+/**
+ * Each level-k cell's weight in the frame's budget (S65, V6b; the lead's ruling on the zoomed footprint): the share of
+ * the stars' published layer - sech^2(z / 2h) / 4h, h the render header's `layers.stars`, kpc - that lies inside the
+ * frustum's height range over the cell's centre (`verticalExtent`, clipped to the footprint's slab), evaluated by
+ * `layerShare`, the march's own function. 1 for a cell whose layer the camera sees whole, 0 for one it sees none of.
+ * The footprint still asks every cell the frustum meets (a star high above a cell may be in view); the budget counts
+ * the stars the camera can see.
+ */
+export function frustumWeights(
+  cells: readonly number[],
+  layout: CellLayout,
+  level: number,
+  viewProjection: ArrayLike<number>,
+  h: number,
+  slab = SLAB_KPC,
+): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const c of cells) {
+    const { r, phi } = cellCentre(c, layout, level);
+    const span = verticalExtent(viewProjection, r * Math.cos(phi), -r * Math.sin(phi), slab);
+    out.set(c, span ? layerShare(span[0], span[1], h) : 0);
+  }
+  return out;
+}
+
+/** Counts weighted cell by cell: what the frame's threshold is picked over below the stars handover. */
+export function weighted(counts: BrightTable | CellCounts, weights: ReadonlyMap<number, number>): CellCounts {
+  return {
+    thresholds: counts.thresholds,
+    count: (cell, k) => {
+      const w = weights.get(cell);
+      return w === undefined ? undefined : w * countOf(counts, cell, k);
+    },
+  };
 }
 
 /** What `table=1&cells=&level=` returns (api.ts loadBrightCounts): the thresholds and a row per cell asked. */

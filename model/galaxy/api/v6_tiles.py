@@ -71,8 +71,10 @@ TABLE_RULE = (
 )
 # The same rule for the cells asked at a level (S65, V6b, R1): the table served for the cells in view, never whole.
 CELLS_TABLE_RULE = (
-    "pick the smallest grid threshold at which the sum over the level-k cells in view is at most the point budget; ask "
-    "each at that threshold (cells=<ids>&level=<k>&l_min=<threshold>) and the field's remainder at the same one "
+    "pick the smallest grid threshold at which the sum over the level-k cells in view, each cell's count weighted by "
+    "the share of the stars' layer (/api/render's header layers.stars, sech2(z / 2h) / 4h) inside the frustum's height "
+    "range over the cell's centre, is at most the point budget; ask every cell the frustum meets at that threshold "
+    "(cells=<ids>&level=<k>&l_min=<threshold>) and the field's remainder at the same one "
     "(/api/render?only=remainder&l_min=<threshold>)"
 )
 # How a level-k cell is cut from the level-0 layout (systems.cell_bounds, the one definition; D190's naming): what the

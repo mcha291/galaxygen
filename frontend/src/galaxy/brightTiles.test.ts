@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { type BrightTable, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, cellsIn, covers, expectedIn, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf } from "./brightTiles";
+import { Matrix4, PerspectiveCamera } from "three";
+
+import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, cellCentre, cellsIn, covers, expectedIn, frustumWeights, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
+import { layerShare } from "./regimes";
 import { levelFor } from "./region";
 
 // A layout of the API's shape: 32 rings from 0.0375 to 29.9625 kpc (the default grid's R[0], R[-1]), 32 sectors.
@@ -277,5 +280,72 @@ describe("tilesFrame at level k: held by (galaxy, level, tile, threshold), split
     // an answer at another level than asked is refused
     const wrong = async (c: number[]) => levelAnswer(c, 1, 1);
     await expect(tilesFrame(new TileCache(), "g", [4176], 1, counts, wrong, new Map(), undefined, 2)).rejects.toThrow(/level 1, asked at 2/);
+  });
+});
+
+// --- S65 (the lead's ruling on the zoomed footprint): the budget weighs each cell by the layer the camera sees -------
+
+/** A face-on camera `d` kpc above scene (x0, 0, z0) through a 45 degree square lens: its view-projection, column-major. */
+function faceOn(x0: number, z0: number, d: number): number[] {
+  const camera = new PerspectiveCamera(45, 1, d / 1000, 100);
+  camera.position.set(x0, d, z0);
+  camera.up.set(0, 0, -1);
+  camera.lookAt(x0, 0, z0);
+  camera.updateMatrixWorld();
+  return new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).toArray();
+}
+
+describe("frustumWeights: the share of the stars' layer inside the frustum over a cell's centre", () => {
+  const d = 0.25 / Math.tan((22.5 * Math.PI) / 180); // the 0.5 kpc-wide face-on stand: 0.604 kpc up
+  const vp = faceOn(0, 0, d);
+  const h = 0.05;
+
+  it("is the layer's whole column under the camera, none where the frustum misses, and its share where a wall crosses", () => {
+    const under = verticalExtent(vp, 0, 0)!;
+    expect(under[0]).toBe(-3); // the slab's floor
+    expect(under[1]).toBeCloseTo(d - d / 1000, 9); // the near plane
+    expect(layerShare(under[0], under[1], h)).toBeGreaterThan(0.99999);
+    expect(verticalExtent(vp, 3, 0)).toBeNull(); // the cone is 1.49 kpc wide at the slab's floor
+    // 0.2 kpc off the axis the cone's wall crosses the line 0.2 / tan(22.5) below the camera
+    const off = verticalExtent(vp, 0.2, 0)!;
+    const top = d - 0.2 / Math.tan((22.5 * Math.PI) / 180);
+    expect(off[1]).toBeCloseTo(top, 9);
+    expect(off[0]).toBe(-3);
+    const share = layerShare(off[0], off[1], h);
+    expect(share).toBeGreaterThan(0.01);
+    expect(share).toBeLessThan(0.99);
+  });
+
+  it("weighs a level-k cell 1 when its layer is wholly in view, 0 when none is, its share between", () => {
+    // one level-1 cell's centre under the camera, the others of the window off it
+    const { r, phi } = cellCentre(261 * 4 + 2, LAYOUT, 1);
+    const x = r * Math.cos(phi);
+    const z = -r * Math.sin(phi);
+    const w = frustumWeights([261 * 4 + 2, 261 * 4 + 3, 100 * 4], LAYOUT, 1, faceOn(x, z, d), h);
+    expect(w.get(261 * 4 + 2)!).toBeGreaterThan(0.99999);
+    expect(w.get(100 * 4)).toBe(0);
+    // the neighbour's centre is 0.2 rad x 8 kpc / 2 = ~0.8 kpc away: outside the cone above -3 kpc? its share, whatever it is, is in [0, 1)
+    expect(w.get(261 * 4 + 3)!).toBeLessThan(1);
+  });
+
+  it("picks the face-on 0.5 kpc stand's threshold over the weighted counts, far below the unweighted pick", () => {
+    const t = handTable(); // every cell 100, 40, 10, 0 above four thresholds
+    const { r, phi } = cellCentre(261 * 16 + 5, LAYOUT, 2);
+    const vpAt = faceOn(r * Math.cos(phi), -r * Math.sin(phi), d);
+    // the footprint's +-3 kpc slab: every level-2 cell within 1.75 kpc of the stand's centre
+    const cells = cellsIn({ r_min: r - 1.75, r_max: r + 1.75, phi_min: phi - 1.75 / r, phi_max: phi + 1.75 / r }, LAYOUT, 2);
+    const counts: CellCounts = { thresholds: t.thresholds, count: (c, k) => Number(t.expected[Math.floor(c / 16) * 4 + k]) };
+    const weights = frustumWeights(cells, LAYOUT, 2, vpAt, h);
+    const total = [...weights.values()].reduce((s, v) => s + v, 0);
+    expect(cells.length).toBeGreaterThan(40);
+    expect(total).toBeGreaterThan(0.99);
+    expect(total).toBeLessThan(3);
+    // unweighted: more than 40 cells x 10 > 100 at the third threshold - the last; weighted: the sum the rule states
+    expect(pickThreshold(counts, cells, 100)).toBe(3);
+    const want = [100, 40, 10, 0].findIndex((v) => total * v <= 100);
+    expect(pickThreshold(weighted(counts, weights), cells, 100)).toBe(want);
+    expect(want).toBeLessThan(3);
+    // a cell with no weight held is not guessed at
+    expect(weighted(counts, new Map()).count(cells[0], 0)).toBeUndefined();
   });
 });

@@ -194,7 +194,9 @@ below): `cells=<level-k ids>&level=k`, a level-k tile's rows its finest cells'
 rows — the level-0 tile's restricted to them, row for row — and the counts
 `table=1&cells=<ids>&level=k`, each the sum of its finest cells' (never the
 whole level-k table); a tile whose level-0 ring holds more than 5 x 10^6 stars
-above the threshold is refused before any draw (#159) `[verified:
+above the threshold is refused before any draw (#159); below 4 kpc the budget
+weighs each cell by the share of the stars' layer inside the frustum's height
+range over its centre `[verified:
 tests/test_v6b_points.py]`. The zoomed-in point layer is the bright catalogue,
 complete above the frame's threshold; the level-k star sample stays the field
 mode's region regime.
