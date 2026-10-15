@@ -1,5 +1,5 @@
 // The local orchestration (BUILD_IV §2c, "around it"): the gateway, the Python model as a container built from
-// the repository's own Dockerfile, and later the storage emulator for share links. `dotnet run` in this project
+// the repository's own Dockerfile, and the storage emulator for share links. `dotnet run` in this project
 // opens the Aspire dashboard with every service's logs, traces and endpoints.
 //
 // Docker Desktop must be running for the model container. Without it, run the model by hand
@@ -14,13 +14,18 @@ var model = builder.AddDockerfile("model", "../..", "Dockerfile")
     .WithHttpEndpoint(port: 8017, targetPort: 8000, name: "http")
     .WithHttpHealthCheck("/api");
 
-// TODO(W3): the storage emulator for share links (Azurite), via the Aspire.Hosting.Azure.Storage package:
-//   var storage = builder.AddAzureStorage("storage").RunAsEmulator();
-//   var tables = storage.AddTables("share"); var blobs = storage.AddBlobs("bundles");
+// Share links' storage: Azurite locally (a container, so Docker again), the storage account when deployed. The
+// gateway finds the connection strings by these names and falls back to its own memory without them.
+var storage = builder.AddAzureStorage("storage").RunAsEmulator();
+var shares = storage.AddTables("shares");
+var results = storage.AddBlobs("results");
 
 builder.AddProject<Projects.Galaxygen_Gateway>("gateway")
     .WithEnvironment("Gateway__Model__BaseUrl", model.GetEndpoint("http"))
+    .WithReference(shares)
+    .WithReference(results)
     .WaitFor(model)
+    .WaitFor(storage)
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();
