@@ -1602,3 +1602,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] The picture moved for the first time in the third build: the young light placed by the gas contrast's
   law lifts the arm-over-interarm blue from 1.41 to 1.62 against the goal's 1.83. Say so at the close in the
   owner's own yardstick, before the numbers.
+
+## From S64 (the censuses at whole-galaxy scale; a Fable lead on the owner's word, an Opus probe, four builders, a reviewer)
+
+- [viewer] A face-on raster of a three-dimensional census streaks an inclined view: the clouds smeared through the
+  whole 477 pc layer of `ngc_4414` as vertical streaks until each texel carried the clouds' mean height and a
+  half-thickness, and a texel holding clouds far apart in height still draws one tall slab (#169). Carry the height
+  and the thickness per texel, and look at the inclined frame before the face-on one.
+- [api] Where a redistribution subtracts a realisation from an expectation it goes negative: the knots' Hα (a heavy-tailed
+  draw) exceeded the field's HII Hα in 22 % of level-0 cells and 10 of 26 lit rings, and a remainder clipped at
+  zero lost 4.7 % a ring on the Milky Way, 25.5 % on `ngc_4414`, 32 % a cell. Scale the expectation by the undrawn SHARE of the realisation (1 - D_c / K_c), which is in [0, 1] and exact at both ends.
