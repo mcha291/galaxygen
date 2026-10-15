@@ -123,7 +123,7 @@ the row is written with its SHA at once.
 | 61 | `s61` | `8ce8ac36e8f7` | **applied** 2026-10-14 at S61's own close (C2e; D220); the SHA written on `main` in the commit after the merge |
 | 62 | `s62` | `da1da078ffa7` | **applied** 2026-10-14 at S62's own close (C2e; D221); the SHA written on `main` in the commit after the merge |
 | 63 | `s63` | `40e5aa0eb335` | **applied** 2026-10-15 at S63's own close (C2e; D223); the SHA written on `main` in the commit after the merge |
-| 64 | `s64` | (entered after the merge) | **applied** 2026-10-15 at S64's own close (C2e; D224); the SHA written on `main` in the commit after the merge |
+| 64 | `s64` | `9d0722ede008` | **applied** 2026-10-15 at S64's own close (C2e; D224); the SHA written on `main` in the commit after the merge |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
