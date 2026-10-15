@@ -15,15 +15,15 @@ const FIELD = [2.0e5, 1.0e5, 3.3e6, 8.0e4];
 const sum = (a: ArrayLike<number>) => Array.from(a).reduce((s, v) => s + v, 0);
 
 describe("the field's undrawn share (S64, V6, R5)", () => {
-  it("is 0 in every cell that names a knot when all are drawn, 1 elsewhere, and 1 everywhere when none is", () => {
-    expect(Array.from(undrawnShare(CELLS, LIGHT, true, LAYOUT))).toEqual([0, 0, 0, 1]);
+  it("is 0 in every cell when all are drawn - the knotless cell 3 too (1 - d, d = 1) - and 1 everywhere when none is", () => {
+    expect(Array.from(undrawnShare(CELLS, LIGHT, true, LAYOUT))).toEqual([0, 0, 0, 0]);
     expect(Array.from(undrawnShare(CELLS, LIGHT, false, LAYOUT))).toEqual([1, 1, 1, 1]);
   });
 
   it("closes on the hand census: points + scaled field = the census where every knot is drawn, the field where none, to 1e-12", () => {
     const K = [4e5, 2.5e4, 7e3 + 4.2e6, 0];
     for (const [drawn, want] of [
-      [true, sum(K) + FIELD[3]],
+      [true, sum(K)],
       [false, sum(FIELD)],
     ] as const) {
       const share = undrawnShare(CELLS, LIGHT, drawn, LAYOUT);
@@ -41,8 +41,11 @@ describe("the field's undrawn share (S64, V6, R5)", () => {
     expect(share[1]).toBe(0);
     expect(share[2]).toBe(1);
     expect(undrawnShare(CELLS, LIGHT, [0, 0, 0, 0, 0, 1], LAYOUT)[2]).toBeCloseTo(7e3 / 4.207e6, 7);
-    expect(share[3]).toBe(1);
+    // The knotless cell takes the disc's undrawn share: 1 - 3.25e5 / 4.632e6.
+    expect(share[3]).toBeCloseTo(1 - 3.25e5 / 4.632e6, 7);
     for (const v of share) expect(v >= 0 && v <= 1).toBe(true);
+    // Half the census's light drawn: the knotless cells (2 and 3) at 0.5, a cell all drawn at 0, one undrawn at 1.
+    expect(Array.from(undrawnShare([0, 1], [5e4, 5e4], [1, 0], LAYOUT))).toEqual([0, 1, 0.5, 0.5]);
     // A missing or negative light names nothing (B9).
     expect(Array.from(undrawnShare([0, 1], [Number.NaN, -1], true, LAYOUT))).toEqual([1, 1, 1, 1]);
   });

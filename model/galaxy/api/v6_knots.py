@@ -38,8 +38,9 @@ FIELD_LINES = ("halpha", "hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731
 RULE = (
     "in a level-0 cell c, the field's HII layers (/api/render's halpha_hii and lines_hii) are scaled by 1 - D_c / K_c, "
     "D_c the Halpha of the knots a viewer draws in c, K_c the Halpha of every knot named by c (the clusters' cell "
-    "column, /api/clusters' knots); 1 where K_c is 0; the screen then carries the census where every knot is drawn "
-    "and the field where none is"
+    "column, /api/clusters' knots); in a cell that names no knot (K_c = 0: no HII region realised there) by 1 - d, d "
+    "the drawn share of the whole disc's knots' Halpha (the sum of D_c over the sum of K_c, every cell the viewer "
+    "holds); the screen then carries the census exactly where every knot is drawn and the field where none is"
 )
 # The sentence each of /api/render's two HII abouts gains (S64): appended where the text ends, before the layer-off words.
 HALPHA_WORDS = (
@@ -51,10 +52,12 @@ LINES_WORDS = (
     "carries the same lines): " + RULE + "."
 )
 CLOSURE = (
-    "over any set of whole level-0 cells, the drawn knots' Halpha plus the scaled field's is the census's (sum of K_c) "
-    "when every knot is drawn and the field's when none is, exactly; between, the field's undrawn share. The share is "
-    "in [0, 1]: never negative, nothing clipped. The census against the field per cell (K_c / F_c) is the catalogue's "
-    "check on the field (RENDER_PHYSICS section 7), not a target: its own heavy-tailed Poisson noise"
+    "over any set of whole level-0 cells, the drawn knots' Halpha plus the scaled field's is the census's (sum of K_c; "
+    "the field term 0 in every cell, a knotless one too) when every knot is drawn and the field's when none is, "
+    "exactly; between, the field's undrawn share. The share is in [0, 1]: never negative, nothing clipped. The census "
+    "against the field per cell (K_c / F_c) is the catalogue's check on the field (RENDER_PHYSICS section 7), not a "
+    "target: its own heavy-tailed Poisson noise; so is the field's HII Halpha in cells that name no knot, Halpha no "
+    "knot realised (S64: 1.29 % of the Milky Way's, 5.5 % of NGC 4414's), which the knots, all drawn, replace"
 )
 LINE_ABOUT = (
     "each cluster's HII region's light through each curve, Lsun: its Halpha (hii_halpha_luminosity) through the curve "

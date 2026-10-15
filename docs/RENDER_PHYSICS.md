@@ -256,11 +256,12 @@ render's `halpha_hii` and `lines_hii`, one for one. Its header's `knots` names t
 the size (`hii_stromgren_radius`: the line light's sphere; the bubble is the shell's
 object) and the naming cell, the level-0 layout, and the rule the render's two HII abouts
 repeat: in a level-0 cell c the field's HII layers are scaled by 1 - D_c / K_c, D_c the Hα
-of the knots drawn in c, K_c of every knot c names, 1 where K_c is 0 - so the screen holds
-the census where every knot is drawn and the field where none is, never both, never
+of the knots drawn in c, K_c of every knot c names; a cell naming no knot (no region
+realised) by 1 - d, d the drawn share of the disc's knots' Hα - so the screen holds
+the census exactly where every knot is drawn and the field where none is, never both, never
 negative `[verified: tests/test_v6_knots.py]`. The census against the field (§7's check,
 not a target): the knots' Hα is 0.921 of the field's (MW), 1.081 (NGC 4414), per ring
-0.53-1.43 and 0.37-2.15; cells naming no knot keep their field, 1.29 % and 5.5 % of the HII
+0.53-1.43 and 0.37-2.15; the field in cells naming no knot, Hα no knot realised: 1.29 % and 5.5 % of the HII
 Hα. The viewer draws the knots in the field mode above the region regime, on the field's
 scale at its weight, dimmed by the field's dust, and hands the march the per-cell share;
 a knot is a point until 2 R_S fills a pixel, then a disc of R_S summed over its own box.

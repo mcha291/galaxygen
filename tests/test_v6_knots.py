@@ -42,8 +42,8 @@ DISC_RATIO = {"milky_way": 0.9207954271231651, "ngc_4414": 1.0814612378969841}
 # The per-ring ratio's range over the lit rings (measured, recorded: the census's own heavy-tailed Poisson noise).
 RING_RANGE = {"milky_way": (0.531, 1.428), "ngc_4414": (0.371, 2.149)}
 FORBIDDEN = ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")
-# The share of the field's HII Halpha in level-0 cells that name no knot (measured at S64, recorded): there the field is
-# whole whatever the viewer draws, so with every knot drawn the screen carries the census plus this much field.
+# The share of the field's HII Halpha in level-0 cells that name no knot (measured at S64, recorded): Halpha no knot
+# realised, which the knots replace when all are drawn (the rule gives such a cell 1 - d, d the disc's drawn share).
 EMPTY_CELLS_FIELD = {("milky_way", "on"): 0.012877, ("milky_way", "off"): 0.012878, ("ngc_4414", "on"): 0.055367, ("ngc_4414", "off"): 0.057198}
 
 
@@ -161,21 +161,23 @@ def test_gate_ii_points_plus_the_scaled_field_close_on_whole_cells(service, temp
     K = np.bincount(named, weights=L, minlength=RINGS * SECTORS)[cells]
 
     def share(D):
-        return np.where(K > 0, 1.0 - np.divide(D, K, out=np.zeros_like(D), where=K > 0), 1.0)
+        # The rule (the lead's amendment of R5): 1 - D_c / K_c; a cell naming no knot 1 - d, d the drawn share of all.
+        d = D.sum() / K.sum()
+        return np.where(K > 0, 1.0 - np.divide(D, K, out=np.zeros_like(D), where=K > 0), 1.0 - d)
 
     every, none = K.copy(), np.zeros_like(K)
-    # Over the cells that name a knot, the screen with every knot drawn is the census and the field there is 0; a cell
-    # that names none keeps its field whole (the rule's "1 where K_c is 0") - recorded below.
+    # Every knot drawn: the field term is 0 in EVERY cell, a knotless one too, and the screen is the census; none: the field.
     named_any = K > 0
-    assert (F * share(every))[named_any].sum() == 0.0
-    assert (F * share(every))[named_any].sum() + every[named_any].sum() == pytest.approx(L.sum(), rel=1e-12)
-    assert (F * share(every))[~named_any].sum() == F[~named_any].sum()
+    assert (F * share(every)).sum() == 0.0
+    assert (F * share(every)).sum() + every.sum() == pytest.approx(L.sum(), rel=1e-12)
     assert (F * share(none)).sum() + none.sum() == pytest.approx(F.sum(), rel=1e-12)
+    # The field's HII Halpha in cells that name no knot - Halpha no knot realised: a measured check, recorded.
     assert F[~named_any].sum() / F.sum() == pytest.approx(EMPTY_CELLS_FIELD[(template, layer)], abs=5e-5)
-    # Between: half the knots drawn (every other row), each cell's share in [0, 1], the sum the field's undrawn part.
+    # Between: half the knots drawn (every other row), each cell's share in [0, 1], a knotless cell's the disc's.
     drawn = np.bincount(named[::2], weights=L[::2], minlength=RINGS * SECTORS)[cells]
     s = share(drawn)
     assert s.min() >= 0.0 and s.max() <= 1.0
+    assert np.all(s[~named_any] == 1.0 - drawn.sum() / K.sum())
     assert (F * s).sum() + drawn.sum() == pytest.approx(float(np.sum(F * s + drawn)), rel=1e-12)
     # K_c / F_c per cell, recorded (the probe's median 0.388, p90 1.67 on the Milky Way, layer on).
     ok = F > 0
@@ -202,7 +204,8 @@ def test_the_headers_state_the_rule(service):
     header, _ = get(service, "/api/clusters", template="milky_way", layer="on")
     k = header["knots"]
     assert (k["light"], k["size"], k["cell"], k["column"]) == ("hii_halpha_luminosity", "hii_stromgren_radius", "cell", "line_response")
-    assert "1 - D_c / K_c" in k["rule"] and "1 where K_c is 0" in k["rule"]
+    assert "1 - D_c / K_c" in k["rule"] and "1 - d, d the drawn share of the whole disc's knots' Halpha" in k["rule"]
+    assert "census exactly" in k["rule"] and "a knotless one too" in k["closure"] and "1.29 %" in k["closure"]
     assert "never negative" in k["closure"] and "bubble" in k["about"] and "2.7 %" in k["about"]
     assert "line_response" not in header["columns"]
     rh, _ = get(service, "/api/render", template="milky_way", filters=CURVES)

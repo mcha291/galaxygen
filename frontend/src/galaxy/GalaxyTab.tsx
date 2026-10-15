@@ -375,8 +375,8 @@ export function GalaxyTab({
   // The HII regions as knots (S64, V6, R5-R6): in the field mode at galaxy scale - above the region regime, whose
   // resolved spheres are the regions there - every cluster's region a point of its own lines through the set, sized by
   // its Stromgren radius, on the field's scale and at its weight; and in each level-0 cell the field's HII layers scaled
-  // by the share of the cell's census not drawn (the clusters header's knots.rule): all drawn, so 0 where a cell names a
-  // knot and 1 where it names none.
+  // by the share of the cell's census not drawn (the clusters header's knots.rule), a cell naming none by the disc's:
+  // all drawn, so 0 in every cell.
   const knotsCensus = knotsWanted && starClusters ? starClusters : null;
   const knotsHeader = knotsOf(knotsCensus);
   const knotsDrawn = knotsWanted && !area;
@@ -721,7 +721,7 @@ export function GalaxyTab({
               <button
                 type="button"
                 aria-pressed={tuning.knots}
-                title={KNOTS_WHAT + (knotsHeader?.rule ?? "in each level-0 cell by the share of its census not drawn") + KNOTS_OFF}
+                title={KNOTS_WHAT + (knotsHeader?.rule ?? "in each level-0 cell by the share of its census not drawn, a cell with none by the disc's") + KNOTS_OFF}
                 onClick={() => setComponent({ knots: !tuning.knots })}
               >
                 HII regions as knots

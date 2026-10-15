@@ -4,9 +4,10 @@
 // the white point, as every point's light is (flux.ts fluxOf) - sized by its Stromgren radius (plummer.ts: a disc once
 // its diameter fills a pixel). Where the viewer draws knots it takes the same light out of the field: in each level-0
 // cell c the field's HII layers (the render's halpha_hii and lines_hii) are scaled by 1 - D_c / K_c, D_c the Halpha of
-// the knots drawn in c and K_c the Halpha of every knot the cell names (the clusters' `cell` column), 1 where K_c is 0
-// - the clusters header's `knots.rule`, applied here (D5: a sum, a quotient, a guard). The screen then carries the
-// census where every knot is drawn and the field where none is, never both whole. The cells are the header's layout
+// the knots drawn in c and K_c the Halpha of every knot the cell names (the clusters' `cell` column); a cell that
+// names no knot (no HII region realised there) by 1 - d, d the drawn share of the whole census's Halpha - the clusters
+// header's `knots.rule`, applied here (D5: sums, a quotient, a guard). The screen then carries the census exactly where
+// every knot is drawn and the field where none is, never both whole. The cells are the header's layout
 // (`knots.layout`, systems.cell_edges), the same the catalogues are cut by.
 
 import type { Census } from "../api";
@@ -34,9 +35,10 @@ export function knotsOf(census: Census | null | undefined): KnotsHeader | null {
 
 /**
  * Per level-0 cell (ring-major, layout.rings x layout.sectors), the share of the field's HII light that stays drawn:
- * 1 - D_c / K_c, D_c the Halpha of the knots `drawn` names in cell c, K_c the Halpha of every knot c names; 1 where
- * K_c is 0 (no knot, the field whole). `drawn` is every knot (true), none (false), or a mask by row. A non-finite or
- * negative light counts as none (B9). Computed in double, sent as float32: in [0, 1], never negative.
+ * 1 - D_c / K_c, D_c the Halpha of the knots `drawn` names in cell c, K_c the Halpha of every knot c names; where K_c
+ * is 0 (no region realised), 1 - d, d the drawn share of the whole census's Halpha (sum D over sum K: 1 with none drawn,
+ * 0 with all). `drawn` is every knot (true), none (false), or a mask by row. A non-finite or negative light counts as
+ * none (B9). Computed in double, sent as float32: in [0, 1], never negative.
  */
 export function undrawnShare(
   cells: ArrayLike<number | bigint>,
@@ -54,8 +56,15 @@ export function undrawnShare(
     K[c] += l;
     if (drawn === true || (typeof drawn === "object" && drawn[i])) D[c] += l;
   }
+  let sumK = 0;
+  let sumD = 0;
+  for (let c = 0; c < count; c += 1) {
+    sumK += K[c];
+    sumD += D[c];
+  }
+  const undrawn = sumK > 0 ? Math.min(1, Math.max(0, 1 - sumD / sumK)) : 1;
   const share = new Float32Array(count);
-  for (let c = 0; c < count; c += 1) share[c] = K[c] > 0 ? Math.min(1, Math.max(0, 1 - D[c] / K[c])) : 1;
+  for (let c = 0; c < count; c += 1) share[c] = K[c] > 0 ? Math.min(1, Math.max(0, 1 - D[c] / K[c])) : undrawn;
   return share;
 }
 
