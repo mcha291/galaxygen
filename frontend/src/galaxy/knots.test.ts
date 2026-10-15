@@ -65,12 +65,15 @@ describe("the field's undrawn share (S64, V6, R5)", () => {
 describe("the clusters with their radius at the picture test's frames (S64, V6, R7: T6's gate)", () => {
   it("draws no cluster with its profile in a star-first capture: the frame is the same bytes on and off", () => {
     // e2e/captures.json's star-first captures: 1024 px; the Milky Way face-on, 20 kpc half-height (39.1 pc a pixel at
-    // the centre's distance); NGC 4414 at 55 degrees, 15 kpc, a 45 degree lens - its nearest disc point, 15 kpc toward
-    // the camera, at 0.66 of the centre's distance (19.3 pc a pixel). The largest half-mass radius is 3.00 pc (Milky
-    // Way) and 3.11 pc (NGC 4414): S64's probe, REPORT.md section 1C.
+    // the centre's distance); NGC 4414 at 55 degrees, 15 kpc, through its capture's 5 degree lens (fov_deg 5): the
+    // camera 343.6 kpc off, its nearest disc point, 15 kpc toward the camera, at 0.964 of the centre's distance (28.25
+    // pc a pixel; S64's gate first wrote 19.3 pc, under a 45 degree lens that is not the capture's). The largest
+    // half-mass radius is 3.00 pc (Milky Way) and 3.11 pc (NGC 4414): S64's probe, REPORT.md section 1C.
     const centre = (radiusKpc: number, px: number) => (2 * radiusKpc * 1000) / px;
-    const camera = 15 / Math.tan((22.5 * Math.PI) / 180);
+    const camera = 15 / Math.tan((2.5 * Math.PI) / 180);
     const nearest = (camera - 15 * Math.sin((55 * Math.PI) / 180)) / camera;
+    expect(camera).toBeCloseTo(343.6, 1);
+    expect(centre(15, 1024) * nearest).toBeCloseTo(28.25, 2);
     expect(resolvedAt(3.0, centre(20, 1024))).toBe(false);
     expect(resolvedAt(3.11, centre(15, 1024) * nearest)).toBe(false);
     // The median cluster (0.445 pc) fills a pixel below a 0.91 kpc wide view of 1024 pixels; the largest below 6.1.
