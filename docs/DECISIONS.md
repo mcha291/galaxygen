@@ -12826,15 +12826,18 @@ Way), the field under them is not yet.
 
 **Closing.** The full suite ran once, detached from the main checkout at 4a9bdc7 (the builder's seven commits) with
 pytest's own exit code appended to its log, while the review, its fix pass and the close's documents were built in
-worktrees cut from that commit: **[SUITE LINE]**. The files the fix pass and the documents touch — `test_v6b_points`,
+worktrees cut from that commit: **EXIT=1 - 1 591 passed, 2 failed, 5 skipped, 1 xfailed under the agents' and the fresh clone's load: the two wall-clock pricing tests, `test_audit`'s S21b and `test_performance`'s per-cell pricing (#67, #68's class; S45, S60, S63, S64), which re-run alone read green once the machine was idle (the per-cell one failed three times alone while S64's clone was still running its suite, then passed both parametrisations at 0 % load)**. The files the fix pass and the documents touch — `test_v6b_points`,
 `test_v6_bright`, `test_bright`, `test_api`, `test_layer`, `test_docs`, `test_audit`, `test_progress`, `test_picture`
 and `test_render` — re-run on the integrated state: EXIT=0, 351 passed, 1 skipped (the picture test without a
 browser); vitest 371 (31 files), typecheck clean, the picture test 10 of 10 with the eight galaxy-scale frames byte for
 byte S64's at every step. `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved (no stage changed). The register:
-**106 open = 11 permanent + 95 carried, 49 discharged** (#171 the sample's luminosity function, #172 the two modes at
-zoom; #113 re-ruled to #171; #159's cost line extended with the 124 s / out-of-memory floor and the refusal).
-`RESUMING.md` 117 lines, `BRIEF.md` 53. *How S64 ended:* its `verify_clone --ref main` ran detached through this
-session on a loaded machine and had not finished at this close; S66 reads its line. **The main checkout's
+**107 open = 11 permanent + 96 carried, 49 discharged** (#171 the sample's luminosity function, #172 the two modes at
+zoom, #173 the clone's once-seen failure; #113 re-ruled to #171; #159's cost line extended with the 124 s / out-of-memory floor and the refusal).
+`RESUMING.md` 117 lines, `BRIEF.md` 53. *How S64 ended:* its `verify_clone --ref main` at 16ab0c3 (a fresh clone's whole suite, 6 h 08 min on a loaded machine; its
+first step flagged the owner's uncommitted csproj) read **2 failed, 1 561 passed, 5 skipped, 1 xfailed**: the per-cell pricing
+flake, and `test_chemistry`'s migration test on `basic` reading 0.8846 against 0.9284 - a numeric failure never seen before, which
+passes alone in a fresh shallow clone of the same commit and passed in both whole-suite runs here (**#173**, opened at this
+close: state left by an earlier test, or a hash-order dependence, to be told apart). **The main checkout's
 `frontend/node_modules` was emptied at S64's close by `git worktree remove` following a junction** (the builders' link
 to it) — restored with `npm ci` the moment the S65 builder reported it; the trap is in LESSONS. **For the owner,
 plainly (none awaited; their word first if they answer):** (a) V6b was built on the bright catalogue at finer tiles
