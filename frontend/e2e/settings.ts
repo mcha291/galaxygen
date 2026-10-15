@@ -111,7 +111,12 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.97275, 0.97786, 0.98691] as const;
+export const DUSTY_LAYER_RATIO = [0.96265, 0.96703, 0.97596] as const;
+// S66 (V7, D226 R2c): was [0.97275, 0.97786, 0.98691] at S64/S65 - the gas fluctuation map multiplies the dust's
+// placement per sub-step and the spurs are drawn from their table: the same column per level-0 cell, clumped below the
+// cell, so by (ii) more light gets through (Jensen; the probe's +2.4 % at R_sun face-on). Predicted before the capture:
+// the layered frame brighter, the ratio lower. Measured (physics only over layered, the physics-only frame the committed
+// picture byte for byte): 0.96265, 0.96703, 0.97596 - moved by -0.01010, -0.01083, -0.01095.
 // S63 (D223): was [0.98675, 0.99042, 0.99454] at S61/S62 - the field mode draws the starlight by age, the young
 // part placed by the gas contrast's law: more of the young light stands in the gas arms behind the dust, so the
 // layered frame is dimmer against physics only by a further 0.13, 0.17, 0.26 % (the ratio moved by +0.00130,
