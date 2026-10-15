@@ -146,7 +146,8 @@ def test_the_refusals(service):
     message = refused(service, b, cells=every, l_min=1.0)
     assert str(MAX_BRIGHTEST) in message and "expected stars" in message
     assert "table=1" in refused(service, b, table=2)
-    for extra in ({"cells": "261"}, {"l_min": 1000}, {"n": 10}, {"filters": curves("rgb")}):
+    # S65 (V6b): table=1 takes cells= (and level=) since - the table for the cells asked (tests/test_v6b_points.py)
+    for extra in ({"l_min": 1000}, {"n": 10}, {"filters": curves("rgb")}):
         refused(service, b, table=1, **extra)
     r = "/api/render"
     assert "needs l_min" in refused(service, r, only="remainder", filters=curves("rgb"))
