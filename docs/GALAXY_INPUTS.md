@@ -696,9 +696,9 @@ defined here once and used in every entry below:
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170 | 93 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172 | 95 |
 
-So the board's **104 open** is 11 permanent and 93 carried, and no item is unruled. (S22
+So the board's **106 open** is 11 permanent and 95 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -730,7 +730,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#172 — the sample's luminosity function, the two modes at zoom — and re-ruled #113, D225.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3290,6 +3290,11 @@ never been judged in twenty-three sessions.
    name columns (one call and the naming), and a test that the sample's V light over a patch, scaled by its
    sampling fraction, is the render's `stars` over the same cells within the sample's own noise. **S41 (D191):**
    that closure now counts two sources — the sample and V4's cluster points (#115) — and the test must sum both.
+   **S65 (D225), re-ruled 2026-10-15, not discharged:** the closure was measured — the sample's light over its
+   sampling fraction against the render's `stars`, a median of 0.51, biased by #171 (the sample's luminosity function
+   drops the short evolved phases) — so what closes it is #171's mend, a model debt's, not a viewer phase's. The
+   zoomed-in point layer is now the bright catalogue at level-k tiles in the star-first mode (D225 R1), its picker
+   naming the level; the level-k sample stays V3's display points in the field mode's region regime.
 114. **A point is painted by its bolometric light through a blackbody's share at its temperature, and that is
    about twice its light through an optical filter** (S41, V4, D191). A star's point is `star_luminosity` in the
    declared blackbody ramp's hue at `star_temperature` (D5, A9), and P1 paints a cluster the same way from
@@ -3998,7 +4003,11 @@ never been judged in twenty-three sessions.
    placement, the cell-mean table and the shader, or by a coarser lattice whose error is declared as the table's is
    (2 points per finest cell: 5.7e-3 rms against 4). **S64 (D224, the review's note 6):** `/api/bright?table=1`, the
    expected-count table the tiles' threshold is picked from, pays `_bright_galaxy`'s default selection it never reads
-   (the first request ~13 s cold, 23.7 s on a loaded machine); the same one pass takes it.
+   (the first request ~13 s cold, 23.7 s on a loaded machine); the same one pass takes it. **S65 (D225):** the
+   ring-first draw is also the zoomed tiles' depth floor — at a 10⁵ budget it reaches 1.78 L☉ in 124 s on the Milky
+   Way and runs out of memory on `ngc_4414` at 1.1 L☉ (1.23 × 10⁸ stars in a sub-ring); `/api/bright` now refuses,
+   before any draw, a tile request whose ring holds more stars above the threshold than `MAX_STARS` (5 × 10⁶; 310 B a
+   star, so 1.5 GB and ~1 s), naming the count, the bound and #159.
 160. **The star sample and the bright catalogue place old stars by two rules that differ by 3.9e-3 per sector**
    (S61, D220; measured by the star sample's builder on ring 8, 7.52-8.45 kpc, young share 0.00367, no sector
    clipped). The sample allocates a young star by c-bar p and an old one by c-bar (1 - p) - the stellar contrast's
@@ -4104,6 +4113,20 @@ never been judged in twenty-three sessions.
    clusters carry their stellar light alone, so its screen has no knot. The region regime's clusters are a sprite in
    display colours, not on the field's scale the knots use. **Carried.** The mend is one pass each: the knots in the
    star-first mode by their `line_response`, and the region regime's clusters on the field's scale.
+171. **The star sample's luminosity function is not the catalogue's: its bright end is 0.14 of the table's at 10³ L☉**
+   (S65, D225; the probe's measurement). `photometry.lookup` interpolates between isochrones at fixed initial mass and
+   drops the short evolved phases, so the count of old sample stars above L, over the sampling fraction s times the
+   bright catalogue's table expectation, is 0.69 at 0.1 L☉ (1 − the return fraction, 0.70) and falls to 0.14 on the
+   Milky Way and 0.09 on `ngc_4414` at 10³ L☉; the sample's light is 0.51 / 0.54 of its number share, a bias of
+   0.74 / 0.79 against the true light. A model defect since the catalogue's photometry; the region regime's display
+   points carry it, and #113's closure, measured at S65, measured it. **Carried.** The mend is one pass, a model
+   pass's or Audit V's, outside a viewer phase: an EEP-style interpolation (along equivalent evolutionary points) in
+   `photometry.lookup`, which moves the star sample's light and every pin on it.
+172. **The zoomed view is two pictures of one scene** (S65, D225; the probe's finding and the frames). Below 4 kpc the
+   field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
+   display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
+   field with no region march; the two zoom captures are the star-first mode's. **Carried.** One mode at zoom is a
+   display ruling, V8's or the owner's.
 
 ---
 
