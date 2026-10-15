@@ -208,6 +208,29 @@ stated approximation; the exact composite, T at K depth slabs, is not built)
 `[verified: frontend/src/galaxy/regionDepth.test.ts]`. FluxPoints' own dust is
 per point along its segment and was already depth-correct.
 
+**Since S64 (BUILD_III V6) the clouds are extinction at galaxy scale.** `/api/clouds`
+carries `cloud_dust_extinction_v`, each cloud's face-on mean A_V from its own dust:
+`cloud_mass` x `dust_to_gas_ratio` x (`dust_extinction_v` / `dust_surface_density`),
+the ring terms read at `cloud_birth_radius`, over pi `cloud_size`^2 (the radius) -
+derived in the API from published fields, no stage; the clouds stage's own
+`cloud_extinction_v` (S40, 2.97 mag for every cloud) is on another law (debt #167).
+`/api/render` carries `dust_diffuse_share` per ring - 1 less the ring's realised
+clouds' dust over its published dust, summed off the ring-first draw's streams, no
+census materialised, the same layer on and off - and the header's `clouds` states the
+rule "diffuse depth(R, phi) = depth(R) x dust_placement(R, phi) x dust_diffuse_share(R)"
+and the closure: per level-0 ring the share times the ring's dust plus the census's
+clouds' dust is the ring's dust to 1e-12 (measured under 1e-15)
+`[verified: tests/test_v6_clouds.py]`. The disc's realised clouds hold 0.490 of the
+Milky Way's dust and 0.633 of NGC 4414's (expected, the molecular fraction: 0.548,
+0.590). The viewer rasterises the whole disc's census into a polar texture of face-on
+A_V, conserving each cloud's A_V x area to float32 rounding, at the "cloud raster"
+tuning value (default 5 texels a render cell a side, 2000 x 1800, the finest under
+16 MiB), and the march composes it as a third layer in the clouds' own published layer
+(`cloud_layer_height`) `[verified: frontend/src/galaxy/cloudOpacity.test.ts,
+regimes.test.ts]`. Stated, not hidden: the clouds sit in a layer up to 3.8x (MW) the
+gas layer D211's heating and the scattered light were computed in (debt #168), and the
+raster spreads the census through the layer rather than at each cloud's own height.
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are
