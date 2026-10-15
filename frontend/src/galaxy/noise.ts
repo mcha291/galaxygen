@@ -421,6 +421,20 @@ export function gasWeightTexels(t: GasTables): Float32Array {
   return out;
 }
 
+/**
+ * The march's k-octave cell means (S66, D226 R5c), 32 x 32 RGBA, column a sector and row a level-0 ring (the gas
+ * cells' layout): texel (sector, ring) = (mean k = 3, mean k = 2, mean k = 1, 0) - the order of KEPT_OCTAVES
+ * (interface/ages.js) and of the march's three clump textures. Read at its own texel (nearest).
+ */
+export function clusterMeanTexels(t: ClusteringTables): Float32Array {
+  const cells = CELL_RINGS * CELL_SECTORS;
+  const out = new Float32Array(cells * 4);
+  for (let c = 0; c < cells; c += 1) {
+    for (let k = 3; k >= 1; k -= 1) out[c * 4 + (3 - k)] = t.cellMean[(k - 1) * cells + c];
+  }
+  return out;
+}
+
 /** `uSpurs`, (3 count) x 1 RGBA: the rows as they are (SPUR_STRIDE is three texels). */
 export function spurTexels(t: SpurTables): Float32Array {
   return t.rows.length > 0 ? t.rows : new Float32Array(SPUR_STRIDE);

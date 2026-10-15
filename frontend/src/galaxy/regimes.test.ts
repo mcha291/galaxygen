@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { ALL_AGES, ageParts, agedLight, ringClosure } from "@interface/ages.js";
+import { ALL_AGES, KEPT_OCTAVES, ageParts, agedLight, clumpedLight, keptParts, ringClosure } from "@interface/ages.js";
 
 import { agesOf } from "./components";
+import { CELL_RINGS, CELL_SECTORS, clusterMeanTexels, prepareClustering } from "./noise";
 import {
   DUST_CUTS,
   MARCH_SCALE_HEIGHTS,
@@ -478,6 +479,76 @@ describe("the starlight by age", () => {
     const a = agedLight(served, parts, ALL_AGES, n);
     const b = agedLight(arrays, partsOf(header, arrays)!, ALL_AGES, n);
     for (let q = 0; q < a.length; q += 997) expect(a[q]).toBeCloseTo(b[q], 10);
+  });
+
+  // S66 (V7, D226 R5b): the middle part split by the clustering octaves its stars keep (the route's three per-ring
+  // arrays, ages.middle_kept), drawn as the clustered march's textures: the rest, and the shares the k-octave maps take.
+  const kept3 = [1, 0.5, 0.25];
+  const kept2 = [1.5, 1, 0.5];
+  const kept1 = [2, 1.5, 0.75]; // the rest of middle [8, 5, 2]: [3.5, 2, 0.5]
+  const keptHeader = { ...header, ages: { ...header.ages, middle_kept: { arrays: { "3": "stars_middle_kept3", "2": "stars_middle_kept2", "1": "stars_middle_kept1" }, weight: "stars_middle_placement" } } };
+  const keptArrays = { ...arrays, stars_middle_kept3: perRing(() => kept3), stars_middle_kept2: perRing(() => kept2), stars_middle_kept1: perRing(() => kept1) };
+
+  it("reads the middle part's kept arrays from the header, or none", () => {
+    expect(KEPT_OCTAVES).toEqual([3, 2, 1]);
+    expect(keptParts(keptHeader, keptArrays)).toEqual({ arrays: { 3: "stars_middle_kept3", 2: "stars_middle_kept2", 1: "stars_middle_kept1" } });
+    expect(keptParts(header, keptArrays)).toBeNull(); // a render from before S66
+    const { stars_middle_kept2: _k, ...two } = keptArrays;
+    expect(keptParts(keptHeader, two)).toBeNull(); // one missing: nothing invented
+  });
+
+  it("splits the stellar layer into the rest and the clumps, summing to the parts' sum cell by cell", () => {
+    const parts = partsOf(keptHeader, keptArrays)!;
+    const kept = keptParts(keptHeader, keptArrays)!;
+    for (const gains of [ALL_AGES, { young: 0, middle: 1, old: 1 }, { young: 1, middle: 0, old: 1 }, { young: 1, middle: 1, old: 0 }]) {
+      const { rest, clumps } = clumpedLight(keptArrays, parts, kept, gains, n);
+      const whole = agedLight(keptArrays, parts, gains, n);
+      let worst = 0;
+      for (let q = 0; q < whole.length; q += 1) worst = Math.max(worst, Math.abs(rest[q] + clumps[0][q] + clumps[1][q] + clumps[2][q] - whole[q]));
+      expect(worst).toBeLessThan(1e-12);
+    }
+    // At one cell: the 3-octave clump is the young light by its weight and the middle's 3-octave share by the middle's.
+    const c = 17 * phi.n + 40;
+    const { rest, clumps } = clumpedLight(keptArrays, parts, kept, ALL_AGES, n);
+    expect(clumps[0][c * 3]).toBeCloseTo(young[0] * gas[c] + kept3[0] * sfr[c], 12);
+    expect(clumps[1][c * 3 + 1]).toBeCloseTo(kept2[1] * sfr[c], 12);
+    expect(clumps[2][c * 3 + 2]).toBeCloseTo(kept1[2] * sfr[c], 12);
+    expect(rest[c * 3]).toBeCloseTo(old[0] * contrast[c] + (middle[0] - kept3[0] - kept2[0] - kept1[0]) * sfr[c], 12);
+  });
+});
+
+// S66 (V7, D226 R4, R5c): the march's tables beside the plane textures, every number the render's.
+describe("the randomness layer's textures (S66)", () => {
+  it("puts the unspurred placement in the HII texture's spare channel and the spurs' ring mean in the diffuse row's", () => {
+    const place = new Float64Array(R.n * phi.n).map((_, c) => 0.5 + (c % 7) / 7);
+    const share = new Float64Array(R.n).map((_, i) => (i % 3) * 0.01);
+    const plain = planeTexture({ R, phi, stars, white });
+    const withLayer = planeTexture({ R, phi, stars, white, unspurred: place, spurShare: share });
+    const i = 9;
+    const j = 33;
+    expect(withLayer.hii[(j * R.n + i) * 4 + 3]).toBeCloseTo(place[i * phi.n + j], 6);
+    expect(withLayer.rings[(RING_ROWS.dig * R.n + 5) * 4 + 3]).toBeCloseTo(share[5], 7);
+    // Absent, every texture is S64's to the bit: the spare channels stay 0 and nothing else moves.
+    for (let q = 0; q < plain.hii.length; q += 1) if (q % 4 !== 3) expect(withLayer.hii[q]).toBe(plain.hii[q]);
+    expect(plain.hii.filter((_, q) => q % 4 === 3).every((v) => v === 0)).toBe(true);
+    expect(plain.rings.filter((_, q) => q % 4 === 3 && Math.floor(q / 4 / R.n) === RING_ROWS.dig).every((v) => v === 0)).toBe(true);
+    expect(withLayer.data).toEqual(plain.data);
+    expect(withLayer.scatter).toEqual(plain.scatter);
+  });
+
+  it("lays the k-octave cell means out as the gas cells, k = 3, 2, 1 in r, g, b", () => {
+    const cells = CELL_RINGS * CELL_SECTORS;
+    const mean = (k: number) => Array.from({ length: cells }, (_, c) => k + c / cells);
+    const t = prepareClustering({
+      seed: 7, scale: 0.19, octaves: 3, lacunarity: 2, slope: 1.5, sigma: 1.75, gain: 0.9, top: 1.1, norm: 0.4, table_points: 2,
+      octave_ages_myr: [40, 31, 24], cell_mean: { "3": mean(3), "2": mean(2), "1": mean(1) }, rule: "",
+    })!;
+    const texels = clusterMeanTexels(t);
+    expect(texels.length).toBe(cells * 4);
+    const c = 5 * CELL_SECTORS + 17; // ring 5, sector 17: the texel at column 17, row 5
+    expect(Array.from(texels.subarray(c * 4, c * 4 + 4))).toEqual([Math.fround(mean(3)[c]), Math.fround(mean(2)[c]), Math.fround(mean(1)[c]), 0]);
+    // With the layer off there is nothing to lay out: the march's youngClump stays 0.
+    expect(prepareClustering({ ...{ seed: null, scale: 0.19, octaves: 3, lacunarity: 2, slope: 1.5, sigma: 1.75, gain: 0.9, top: 1.1, norm: 0.4, table_points: 2, octave_ages_myr: [], cell_mean: null, rule: "" } })).toBeNull();
   });
 });
 

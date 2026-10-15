@@ -134,3 +134,83 @@ export function ringClosure(arrays, parts, n) {
   }
   return worst;
 }
+
+// --- the young light clustered in the march (S66, BUILD_III V7; D226 R5) -----------------------------------------
+// The field mode's young part keeps every clustering octave (its stars are younger than every octave's survival age),
+// and the middle part's light is split by the route at those ages into the light that keeps 3, 2 and 1 octaves and the
+// rest that keeps none (the header's `ages.middle_kept`, three per-ring arrays; the rest is `stars_middle` less their
+// sum). The march multiplies each kept share by the clustering field's k-octave map over its level-0 cell's k-octave
+// mean, per sub-step; here they are only split and placed - the same multiplications by published weights as
+// agedLight, nothing evaluated.
+
+/** The octave counts a share is clustered by, in the order the march's three clump textures hold them. */
+export const KEPT_OCTAVES = Object.freeze([3, 2, 1]);
+
+/**
+ * The middle part's kept arrays as the render names them: { arrays: { 3, 2, 1 } (each a per-ring (R, filter) array
+ * among `arrays`), weight } - or null where the header names none, or one is missing (the march then draws the parts as
+ * agedLight does: nothing invented).
+ */
+export function keptParts(header, arrays) {
+  const kept = header?.ages?.middle_kept;
+  if (!kept || typeof kept !== "object" || !arrays) return null;
+  const names = {};
+  for (const k of KEPT_OCTAVES) {
+    const name = kept.arrays?.[String(k)];
+    if (typeof name !== "string" || !(name in arrays)) return null;
+    names[k] = name;
+  }
+  return { arrays: names };
+}
+
+/**
+ * The stellar layer split for the clustered march: `rest` (the old part and the middle part's light that keeps no
+ * octave) and `clumps` [k = 3, 2, 1] - the young part with the middle's 3-octave light (both are multiplied by the
+ * 3-octave map), the middle's 2-octave and its 1-octave light - each row-major over (R, phi, filter) and placed as
+ * agedLight places its part (the middle's shares by the middle part's weight), each part times its switch. The four
+ * sum to agedLight's sum per cell and filter, to rounding: a ring's light is where it was before any map multiplies it.
+ * The middle part must be a per-ring part with a weight (keptParts' caller checks): its shares are per ring too.
+ */
+export function clumpedLight(arrays, parts, kept, gains, n) {
+  const cells = n.R * n.phi;
+  const rest = new Float64Array(cells * n.filter);
+  const clumps = KEPT_OCTAVES.map(() => new Float64Array(cells * n.filter));
+  const middleKept = KEPT_OCTAVES.map((k) => arrays[kept.arrays[k]]);
+  for (const part of parts) {
+    const g = Number(gains?.[part.key] ?? 1);
+    if (!(g > 0)) continue;
+    const values = arrays[part.name];
+    const weight = part.weight ? arrays[part.weight] : null;
+    for (let i = 0; i < n.R; i += 1) {
+      for (let j = 0; j < n.phi; j += 1) {
+        const c = i * n.phi + j;
+        let w = 1;
+        if (weight) {
+          const x = Number(weight[c]);
+          w = Number.isFinite(x) && x >= 0 ? x : 1;
+        }
+        for (let k = 0; k < n.filter; k += 1) {
+          const at = weight ? i * n.filter + k : c * n.filter + k;
+          const v = Number(values[at]);
+          if (!Number.isFinite(v)) continue;
+          const q = c * n.filter + k;
+          if (part.key === "young") {
+            clumps[0][q] += g * w * v;
+          } else if (part.key === "middle") {
+            let left = v;
+            middleKept.forEach((share, s) => {
+              const x = Number(share[i * n.filter + k]); // the kept shares are per ring (R, filter)
+              if (!Number.isFinite(x)) return;
+              clumps[s][q] += g * w * x;
+              left -= x;
+            });
+            rest[q] += g * w * left;
+          } else {
+            rest[q] += g * w * v;
+          }
+        }
+      }
+    }
+  }
+  return { rest, clumps };
+}

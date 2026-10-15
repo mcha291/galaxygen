@@ -100,6 +100,14 @@ export interface Tuning {
   knots: boolean;
   /** A cluster drawn with its Plummer profile once its half-mass diameter fills a pixel. */
   clusterRadius: boolean;
+  // The randomness layer in the march (S66, BUILD_III V7; D226 R3-R5): each a function the model publishes, evaluated
+  // per sub-step at the sub-step's read point; with the layer off ("physics only") none is drawn whatever its switch.
+  /** The gas fluctuation map multiplying the dust's placement per sub-step (its column, not its scattered light). */
+  gasInMarch: boolean;
+  /** The gas spurs evaluated per sub-step from the published table, in place of their cell means in the placement. */
+  spursInMarch: boolean;
+  /** The young and middle starlight modulated per sub-step by the clustering field's maps over their cell means. */
+  clumpsInMarch: boolean;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -136,6 +144,9 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   cloudRaster: CLOUD_RASTER,
   knots: true,
   clusterRadius: true,
+  gasInMarch: true,
+  spursInMarch: true,
+  clumpsInMarch: true,
 });
 
 export type TuningKey = keyof Tuning;
@@ -190,6 +201,29 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "dither", label: "dither", group: "March", kind: "toggle",
     about: "A per-pixel offset into each step, fixed by the pixel; off reads each sub-step at its middle. A display choice.",
+  },
+  {
+    key: "gasInMarch", label: "gas fluctuation in the march", group: "March", kind: "toggle",
+    about:
+      "The gas fluctuation field (the randomness layer's, D221) evaluated per sub-step at the sub-step's read point and " +
+      "multiplying the dust's placement there - its depth, its thermal light and the diagnostic, not its scattered light - " +
+      "from the render header's gas_fluctuation (every number the model's; unit mean over every level-0 cell). Off reads " +
+      "the placement's cell means alone; with the layer off it is never drawn (S66, V7, D226 R3). A display choice.",
+  },
+  {
+    key: "spursInMarch", label: "spurs in the march", group: "March", kind: "toggle",
+    about:
+      "The gas spurs evaluated per sub-step from the render header's spurs table (stages/spurs.py's point function, every " +
+      "parameter the model's), composed as (1 - <S>(R)) times the placement without them plus S: a spur 60 pc wide that " +
+      "the 75 pc x 1 degree cells smear. Off reads the placement's cell means, spurs included (S66, V7, D226 R4). A display choice.",
+  },
+  {
+    key: "clumpsInMarch", label: "young light clustered in the march", group: "March", kind: "toggle",
+    about:
+      "The field mode's young starlight and the middle part's light that keeps 1, 2 or 3 clustering octaves, each " +
+      "multiplied per sub-step by the clustering field's k-octave map over its level-0 cell's k-octave mean (the render " +
+      "header's census_clustering), so each cell keeps its light. Off draws them placed by their weights alone (S66, V7, " +
+      "D226 R5). A display choice.",
   },
   {
     key: "filtering", label: "plane filtering", group: "March", kind: "select",

@@ -116,6 +116,18 @@ export interface PlaneFields {
    */
   diffuseShare?: ArrayLike<number> | null;
   /**
+   * The dust's placement without the gas spurs, row-major over (R, phi) (`dust_placement_unspurred`, S66 V7, D226 R4):
+   * where the march evaluates the spurs per sub-step it reads this and adds them. Held in the HII texture's spare
+   * channel; missing, or not a number at a cell, is an even ring there: 1.
+   */
+  unspurred?: ArrayLike<number> | null;
+  /**
+   * The spurs' mean round each render ring, per R cell (the render header's `spurs.share`, S66 V7, D226 R4): what
+   * the per-sub-step spurs replace of the placement, (1 - share) g + S. Held in the diffuse gas row's spare channel;
+   * missing, or not a number at a ring, is no spur there: 0.
+   */
+  spurShare?: ArrayLike<number> | null;
+  /**
    * The white point: each filter's response to a unit of white light (/api/render's `white`). Every
    * channel is divided by it, so white light draws (1, 1, 1) per unit of light in any filter set.
    */
@@ -130,13 +142,16 @@ export interface PlaneTexture {
    * dust's placement (D207), its column at the cell over the ring's mean; 1 where the render places nothing.
    */
   scatter: Float32Array;
-  /** The HII regions' Hα, in the clouds' layer, over the white point; A unused. */
+  /**
+   * The HII regions' Hα, in the clouds' layer, over the white point. A: the dust's placement without the spurs (S66,
+   * V7), 0 where the render names none - read only where the march evaluates the spurs.
+   */
   hii: Float32Array;
   /**
    * Per ring, three rows of one texel per R cell: row 0 the dust's face-on optical depth per channel,
    * row 1 the diffuse gas's Hα and row 2 the dust's thermal emission, each over the white point. The spare
    * channel: row 0's is the dust diagnostic's level (D205, written by FieldVolume), row 2's the dust layer's
-   * scale height, kpc (D206), row 1's unused. Since S64 (V6) a fourth row, `share`: the ring's `dust_diffuse_share`
+   * scale height, kpc (D206), row 1's the spurs' ring mean (S66, V7; 0 where the render names none). Since S64 (V6) a fourth row, `share`: the ring's `dust_diffuse_share`
    * in every channel, which multiplies the depth row where the march and the points read the diffuse dust.
    */
   rings: Float32Array;
@@ -158,7 +173,7 @@ export const RING_ROWS = { depth: 0, dig: 1, thermal: 2, share: 3, count: 4 } as
  * where it is light, or −ln of its transmission where it is dust: nothing is placed, clumped or recoloured.
  */
 export function planeTexture(fields: PlaneFields): PlaneTexture {
-  const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, diffuseShare, white } = fields;
+  const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, diffuseShare, unspurred, spurShare, white } = fields;
   const nPhi = phi.n;
   const nF = white.length;
   const data = starTexels(R.n, nPhi, stars, white);
@@ -170,6 +185,10 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
     rings[(RING_ROWS.thermal * R.n + i) * 4 + 3] = Number.isFinite(h) && h > 0 ? h : 0;
     const share = shareAt(diffuseShare, i);
     for (let k = 0; k < 4; k += 1) rings[(RING_ROWS.share * R.n + i) * 4 + k] = share;
+    if (spurShare) {
+      const s = Number(spurShare[i]);
+      rings[(RING_ROWS.dig * R.n + i) * 4 + 3] = Number.isFinite(s) && s >= 0 ? s : 0;
+    }
     for (let k = 0; k < 3 && k < nF; k += 1) {
       rings[(RING_ROWS.depth * R.n + i) * 4 + k] = extinction ? depthOf(Number(extinction[i * nF + k])) : 0;
       rings[(RING_ROWS.dig * R.n + i) * 4 + k] = dig ? balanced(Number(dig[i * nF + k]), white[k]) : 0;
@@ -180,6 +199,10 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
       const at = (i * nPhi + j) * nF;
       const place = dustPlacement ? Number(dustPlacement[i * nPhi + j]) : 1;
       scatter[q + 3] = Number.isFinite(place) && place >= 0 ? place : 1;
+      if (unspurred) {
+        const u = Number(unspurred[i * nPhi + j]);
+        line[q + 3] = Number.isFinite(u) && u >= 0 ? u : 1;
+      }
       for (let k = 0; k < 3 && k < nF; k += 1) {
         scatter[q + k] = scattered ? balanced(Number(scattered[at + k]), white[k]) : 0;
         line[q + k] = hii ? balanced(Number(hii[at + k]), white[k]) : 0;
