@@ -308,7 +308,10 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "The field mode's HII regions as knots at galaxy scale: each cluster's region a point of its own lines through the " +
       "filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills a pixel; in each level-0 " +
       "cell the field's HII layers are scaled by 1 - D_c / K_c, D_c the Halpha of the knots drawn there and K_c of every " +
-      "knot the cell names (1 where none), so the census replaces the field and the light is the same (S64, V6). A display choice.",
+      "knot the cell names; a cell that names no knot by 1 - d, d the drawn share of the whole census's Halpha. With " +
+      "every knot drawn the screen carries the census exactly, with none the field; the knots' Halpha " +
+      "is 0.921 of the field's on the Milky Way and 1.081 on NGC 4414 (the census's own draw, a measured check, not a " +
+      "target) (S64, V6). A display choice.",
   },
   {
     key: "clusterRadius", label: "clusters with their radius", group: "Components", kind: "toggle", switch: true,
