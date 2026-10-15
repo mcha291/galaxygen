@@ -125,7 +125,8 @@ export const DUSTY_LAYER_RATIO = [0.97275, 0.97786, 0.98691] as const;
 export const DUSTY_RATIO_PIN = 1e-3;
 
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
-export const SELECTION_TEXT = /every disc star in view above/;
+// S64 (V6, R8): the stars are the tiles in view, so the sentence counts the cells.
+export const SELECTION_TEXT = /every disc star in the [\d,]+ cells in view above/;
 
 /**
  * The page's size while the template, the mode and the filters are chosen: wide enough that the panel is the

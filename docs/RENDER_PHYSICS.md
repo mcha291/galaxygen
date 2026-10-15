@@ -178,6 +178,16 @@ summed light with the points on equals the whole starlight's with them off to
 on screen; frontend/src/galaxy/flux.test.ts for the scale and the dust's
 segment]`. #114 (points painted as blackbodies) and #115 (the young population
 drawn twice) no longer apply in this mode; they remain the field mode's.
+Since S64 (V6, R8) the bright stars come by tiles: the view's footprint as
+level-0 cells, one grid threshold per frame picked from `/api/bright?table=1`
+(the smallest at which the tiles in view hold at most the point budget in
+expectation), each tile asked at it (`cells=`, the same bytes every time), and
+the remainder under that threshold as `/api/render?only=remainder`'s two
+per-ring arrays placed by the render's own `stars_middle_placement` and
+`stars_placement` — the full `l_min=` render's `stars_unresolved` bit for bit
+`[verified: tests/test_v6_bright.py]`; the whole render is not asked again on a
+threshold change (T28). The frustum cut is the GPU's clipping; the points are
+every star of the tiles in view above the threshold, not the N brightest.
 
 **Since S63 (D223) the stars are split by age.** `/api/render` returns
 `stars_young`, `stars_middle` and `stars_old` per ring and filter — the bright
