@@ -12681,3 +12681,169 @@ channel; (c) the bright tiles at the 10⁶ depth are ~90 MB a template (92.6 B a
 probe; (d) the stray "v" in the gateway's project file; (e) still theirs, carried from S63: the spurs' factor (10 or
 2.5), #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test. **S65 is V6b**, the
 zoomed-in point layer (`BRIEF.md`); this lead's session continues into it if its context allows.
+
+### D225. S65: the zoomed-in point layer is the bright catalogue at level-k tiles — the plan's level-k sample measured and set aside, the budget weighted by the stellar layer in view, two captures at a zoomed stand (BUILD_III Phase V6b; a Fable lead on the owner's word, an Opus probe, builder and reviewer)
+
+**Session S65, opened 2026-10-15 on `session-65` from S64's merge (`main` 16ab0c3, the tag record; S64's
+`verify_clone` of main running detached at the open, its line below), the same Fable lead continuing on the owner's
+standing order, Opus for the probe, the builder, the reviewer and the close's documents; usage at the open 5-hour
+18 %, weekly all-models 32 %, Fable 40 %.** The phase's text (BUILD_III V6b, inserted by the owner's D222 ruling 13:
+"the level-k stars as the point layer at the levels the view reaches, each star through the filter set as the bright
+catalogue's are, the picker reading level, cell, index; the sample and the bright catalogue withdrawn where the
+level-k points carry them; cell-keyed; the gate T2's closure at each level, the frame-time readout, a census
+identical at every level") was probed before the build, as S63 and S64 were. **The probe's measurements (its scripts
+in the lead's scratchpad, `probe_s65/`):** the level-k sample's light share is its sampling fraction, 1.47e-5 × 4^k on
+the Milky Way at the viewer's 10⁶ cap — at most 9.4e-4 at level 3 — invisible but at ~60 pc views; **its luminosity
+function is not the bright catalogue's:** the count of old sample stars above L over s × the table's expectation is
+0.69 at 0.1 L☉ (the present mass over the mass formed, 1 − the return fraction 0.70) and falls to 0.14 (Milky Way) / 0.09
+(`ngc_4414`) at 10³ L☉, because `photometry.lookup` interpolates between isochrones at fixed initial mass and drops
+the short evolved phases, so the sample's light is 0.51 / 0.54 of its number share — a bias of 0.74 / 0.79 against
+the true light, a model defect since the catalogue's photometry (**#171**; a model pass's or Audit V's, outside a
+viewer phase); the sample holds 0 stars above any frame's threshold at every level (nothing of the bright catalogue
+for it to carry) but 8 % of its level-3 light in stars younger than the cluster window; T2's closure on the sample is
+statistical — median |P/(s U) − 1| 7–19 % per 1 kpc window on the Milky Way, 28–54 % on `ngc_4414` — and exact only as
+a definition; the sample lives in the field mode's region regime and the bright tiles in the star-first mode; the
+field mode's picker was removed at D209; layer on and off a level-2 window holds different objects (2 of 2 387 shared
+names are the same star; D220's placement); no frame-time readout exists (`__galaxygenFrameSum` sums light); the
+level-1 extras are not level-2 rows (stars pop at every level crossing; `test_hierarchy` says so). The probe also
+measured the alternative: the bright catalogue drawn at finer tiles — at the default budget the threshold falls from
+5 012 L☉ (level-0 tiles, a 1 kpc view) to 1 585 (its level-3 cells), 224 at 0.25 kpc, 71 at 62 pc on the Milky Way,
+in ~1.2 s; at a 10⁵ budget 1.78 L☉ in 124 s and, on `ngc_4414` at 1.1 L☉, an out-of-memory in the ring-first draw (#159).
+
+**Ruled (the lead, on the measurement, as the S57 gate ruled "no arm shocks" against the plan's solver, D216;
+the owner told at the close that this is reversible on their word).** (R1) **The zoomed-in point layer below 4 kpc in
+the star-first mode is the bright catalogue at level-k tiles:** S64's tile form with `level=k` (`cells=` level-k ids,
+k 0–3, the 0.05 dex grid), each (level, cell, threshold) answer the same bytes twice, the expected-count table served
+for the cells asked (never the whole level-3 table), the viewer's `levelFor` (level 1 for 1–4 kpc, 2 for 0.25–1, 3
+below — the field mode's rule, shared) choosing the level and the budget rule the threshold, the remainder-only
+render at the frame's threshold as S64 has it — complete above the threshold, the response already served, the
+picker's name gaining the level, no sampling bias. The level-k sample stays V3's display points in the field mode;
+#113 is re-ruled: the closure it asked for was measured (0.51 median, biased by #171) and is a model debt's. (R2)
+Single counting stands as D200 wrote it: the clusters carry the stars younger than 0.02 Gyr; the star-first mode draws
+no whole-galaxy sample; "a census identical at every level" holds for the tiles by construction — a level-k tile's
+rows are the union of its level-3 cells' — and is pinned. (R3) The closure at each level is S48's identity, exact:
+unresolved + young + bright = `stars` over the level-k cells in view at the tiles' threshold, with the render at
+`level=k` — **per ring**, since the age parts placed by their own weights are exact per ring only (D223; per
+level-k cell they differ from `stars` by 0.2–6.3 %), and the bright part ≥ 0 per cell; no statistical closure remains
+in the gate. (R4) The depth's floor is #159's: the route refuses, before any draw, a tile request whose ring holds more
+stars above the threshold than the catalogue's bound; the point budget stays a tuning value at 10^3.5. (R5) The
+frame-time readout the gate names is the picture test's ready time per capture; a per-frame GPU time is V8's (T14),
+stated. (R6) Two captures at a 0.5 kpc-wide star-first stand, one per template, a display capture each. (R7) One Opus
+builder, one Opus reviewer. *A wording of the plan's:* its "below 1 kpc" was where the old sample thinned; the tiles refine
+from the region regime's 4 kpc down, by the field mode's own level rule (level 1 for 1–4 kpc), and the documents say so.
+
+**Built (an Opus builder in a worktree cut from `session-65`, seven commits cherry-picked; three rulings in
+place on its findings).** *The API:* `/api/bright?cells=<level-k ids>&level=k&l_min=…` — level 0 S64's form byte for
+byte (five answers' sha256 unchanged; `level=0` and no `level=` the same bytes); a level-k tile's rows equal to the
+level-0 tile's restricted to its level-3 cells, row for row and every column bytes-equal, levels 1–3, both templates,
+layer on and off; all 4^k children together the level-0 tile star for star, expected count and light to 1e-12; the
+union over a 2 × 2 level-k block across a ring edge and a sector edge the window answer row for row; the same bytes
+twice at every level, after a deeper draw too; the header's `tile` naming the level. `table=1&cells=…&level=k` returns
+the expected counts for the cells asked, a level-k row the sum of its level-3 rows to 1e-12 and the level-0 row the sum
+of its level-k rows (levels 1–3, both templates); the tile's `count.expected` the table's row to 1e-12; ten level-2
+(cell, threshold) pairs' realised counts within z −1.50 … +0.93. The refusal (R4): a tile request whose ring holds more
+stars above the threshold than `MAX_STARS` (5 × 10⁶; the builder measured `draw_ring` at 309–310 bytes and 0.21 µs a
+ring star, so the bound is 1.5 GB and ~1 s — `MAX_BRIGHT_POOL`, 5 × 10⁵, would have refused the default budget's own
+picks: the ring at R = 8 holds 9.6 × 10⁵ stars above 224 L☉) is refused before any draw, naming the count, the bound and
+#159: `ngc_4414` at 1.1 L☉ on two level-3 cells (4.04 × 10⁷ in the ring) in under a second. The identity (R3): at the
+tiles' threshold the render at `level=k` resolves at the same float and unresolved + young + bright = `stars` per ring
+to 1e-12 (1.1e-16 measured), the bright part ≥ 0 per cell; per level-k cell the age parts placed by their own weights
+differ from `stars` by 0.2–6.3 % (D223's split, exact per ring; the reviewer's twelve cells a level read 0.17–10.2 % on the Milky Way, 0.28–8.2 % on `ngc_4414`), so the per-cell form is not claimed. Costs (fresh
+processes, a shared machine): a 1 kpc view at the default budget 8 level-1 cells at 2 239 L☉ in 1.37 s cold (0.028 warm,
+310 kB); 0.25 kpc 2 level-2 cells at 282 L☉ in 1.35 s; 62 pc 2 level-3 cells at 70.8 L☉ in 1.36 s (0.95 s of it the
+in-cell placement's first touch); 10⁴ at 0.25 kpc 89 L☉ in 3.33 s; 10⁵ at 62 pc (1.78 L☉) refused at no cost; the
+per-cells table 13–19 s cold (it builds the galaxy). Timings rows `bright: one tile, level 2` (cell 4181 at 10^2.35: 15.87
+s cold, 0.0137 warm, 147 480 B) and `bright: table, level 2 cells` (16 cells: 13.34 s cold, 0.0015 warm, 16 408 B). *The
+viewer:* below 4 kpc in the star-first mode the tiles are asked at `levelFor(across)` (region.ts's, shared with the
+field mode), the footprint cut from the level-0 layout by `cell_bounds`' rule the per-cells header states, the counts
+held by (galaxy, level, cell) and the threshold picked only once every cell in view has its row (B9), the tile cache
+keyed by (galaxy, level, tile, threshold), the picker's caption "bright star · level k, cell X, rank Y" (`level` not on
+the wire: every row is named by its level-3 cell); above 4 kpc every request unchanged. **The builder's finding, ruled
+in place:** the footprint is D168's frustum cut by a ±3 kpc slab (`SLAB_KPC`, `PAD_KPC` 0.25, the brightest-N mode's, 2026-09-25), and at a 0.6 kpc standoff the cone at z = −3 kpc spans
+3 kpc, so a 0.5 kpc view met 260 (Milky Way) / 1 430 (`ngc_4414`) level-2 cells and the unweighted budget put the
+threshold at 10⁴ L☉ (~40 points on a grey field). **Ruled, no new constant: each cell's expected count is weighted by
+the share of its stellar layer inside the frustum** — the frustum's vertical extent on the line through the cell's
+(R, φ) centre from the six clip-space inequalities, each linear in height, clipped to the slab; the share by the
+viewer's own `layerShare` on the render header's stars layer (h handed up by FieldVolume); the threshold the smallest
+grid value at which Σ f_c × expected_c ≤ the budget — 1 260 L☉ on the Milky Way zoom (1 400 points), 1 780 on
+`ngc_4414`'s — and then, since every footprint cell at that threshold cost 48–78 s to ready (a tile ~0.2 s), **a cell
+is fetched only if it is expected to show at least one star in view, f_c × expected_c ≥ 1 (the unit counted, B8), the
+skipped cells' expectation summed as the loss and stated in the caption**: 55 of 260 cells, 24 483 rows, loss 7.98 of
+2 859 expected in view (0.28 %), ready 19.7 s on the Milky Way; 151 of 1 430, 26 609 rows, loss 2.83 of 2 979
+(0.095 %), 14.7 s on `ngc_4414` — where one rare bright source at the frame's bottom dropped out (the loss counts
+stars, not light; noted, the mend a light-weighted loss if the table carries it). The two captures (R6): `milky_way-zoom`
+on the stellar arm crest (the contrast's maximum 1.502 at R 8.1375 kpc, azimuth 286.5°) and `ngc_4414-zoom` at 2 kpc,
+azimuth 90° (the camera stands over azimuth 0, which is the minor axis), each 0.5 kpc wide in the star-first mode,
+with a `stand` target in `captures.json`'s fields; the picture test 10 of 10, the eight old frames byte for byte
+at every step; vitest 350 → 371 (the vertical extent, the weights, the fetch rule, the level-k footprint, the cache
+key); test_v6b_points 28 passed. `RENDER_PHYSICS.md` §0 states the layer.
+
+**The independent review (an Opus reviewer at 4a9bdc7, read-only, its own lookAt, perspective, sech² integral and
+restriction rule): no blocker; four must-fixes, applied by the builder in a fix pass.** (1) The published rule went
+stale with the fetch commit: the table header's `rule`, a GalaxyTab comment and a brightTiles comment still said every
+cell the frustum meets is asked, and the contract's paragraph did not mention the fetch rule or its loss — reworded.
+(2) **The loss was understated on the inclined stand:** f_c read on one vertical line through the cell's centre gives
+0 to a cell partly in view — by a 6 × 6 average over each level-2 cell the skipped cells of `ngc_4414-zoom` hold 179 of
+2 876 stars in view (6.2 %) against the 2.83 (0.095 %) the caption recorded, the Milky Way 11.6 against 9.3 — **ruled:
+f_c is the mean of the layer share over a 3 × 3 grid of points across the cell (a sampling choice, labelled)**; the
+numbers after the fix: the Milky Way's loss 9.72 of 2 844 expected in view (0.34 %; the centre line had said 7.98 of
+2 859), 55 cells, the frame byte for byte unchanged; `ngc_4414`'s 7.48 of 2 875 (0.26 %; the centre line had said 2.83 of
+2 979), 185 cells of 1 430 (was 151), 32 112 rows, ready 15.8 s; the bright source at that frame's bottom is still not
+back — it stands in a cell whose sampled weighted count is under one star, and the loss counts stars, not light. (3) R3's test pinned the identity on `header.resolved.light`, a whole-disc number
+independent of `level=` and the window; the reviewer's own check per ring through `bright.resolve` read 2.2e-16 (light)
+and 4.4e-16 (anchors against `disc_sed_*`), every ring, both templates, levels 1–3 — the test re-pinned per ring. (4)
+The per-cell departure above widened to the reviewer's range. *Re-derived:* level 0 and the whole table byte-identical
+to 16ab0c3 (five answers' sha256, rgb and wfc3, layer on and off); the restriction row for row on 24 of 24 (level, cell,
+template, layer) cases by the reviewer's own centre-in-bounds rule; the union over a block across a ring and a sector
+edge 6 of 6; the table bit-equal to its level-3 sums, ≤ 7.8e-16 to its level-k sums, 1.5e-14 against the reviewer's own
+quadrature; ten Poisson pairs |z| ≤ 3.03; the refusal 400 in 0.002 s at a 0.07 MB peak with the cache untouched; the
+viewer's f_c and thresholds reproduced (1 258.9 and 1 778.3 L☉ against the builder's 1 260 / 1 780; 55 cells, loss
+8.01); `levelFor` one function; the cache keys; one `only=remainder` per threshold change; the Milky Way stand on the
+crest (1.5028 against the ring's maximum 1.5065 at 286.30°, 0.03 kpc off); the `ngc_4414` stand's azimuth reasoned
+(the camera over azimuth 0 makes 90° the major axis); no test deleted or loosened, the one S64 pin edited because
+`table=1&cells=` is now the per-cells table. *The notes, ruled:* the bound `MAX_STARS` (5 × 10⁶, 313 B a ring star
+measured, ~1.55 GB a request) is fine on this machine and too much for a small container — BUILD_IV W4's to bound; **the
+window form had no ring guard** (a one-cell window at 1.1 L☉ on `ngc_4414` passes the 200 000 cap while its ring holds
+4.4 × 10⁷, a ~13.6 GB draw) — the same guard applied in the fix pass; f_c clips the layer to the ±3 kpc slab (a cell seen
+whole weighs at most 0.917 on `ngc_4414`, h 0.954) and reads the render's single stars layer where the catalogue's
+heights are thin or thick per star — a shift of the budget's pick only, recorded; `FINEST_LEVEL` duplicates
+`MAX_LEVEL` (a comment); the slab and the padding are D168's constants; before the fetch rule `ngc_4414-zoom` pulled
+195 811 rows, 2 % under the cap — a slightly different stand would have lost every point, a cliff the rule removed; the
+picker's name is the level-3 cell's at every level. Not run by the reviewer: the picture test and the suite.
+
+**The frames (the lead's look, 2026-10-15; recorded, nothing tuned).** The eight galaxy-scale frames are byte for
+byte S64's. **`milky_way-zoom` (0.5 kpc across on the arm crest at 8.14 kpc) reads as a star field for the first
+time in this project:** about 1 400 stars above 1 260 L☉ as coloured points with their sprites — blue, white and
+orange — over a grey, featureless glow (the remainder and the dust at the render grid's resolution), two bright
+orange giants with their halos at the right edge, a faint dark smudge (a cloud's slab) near the top. `ngc_4414-zoom`
+(2 kpc on the major axis): a pink-beige field crossed by the render grid's cells enlarged — vertical stripes and
+blocks, since a 0.5 kpc view spans about seven radial cells of 75 pc — with a few hundred red and blue points and
+one bright blue-white star at the left; one rare bright source at the bottom dropped out when the fetch rule skipped
+its cell. The field at this zoom is the grid's: V7's per-pixel layer and V8's display defaults are what the glow waits
+on, and the two modes at zoom are #172. Against the owner's "good looking renders … including when zoomed in": the
+points are now what a zoomed image shows (complete above a threshold the budget sets, 71 L☉ at 62 pc on the Milky
+Way), the field under them is not yet.
+
+**Closing.** The full suite ran once, detached from the main checkout at 4a9bdc7 (the builder's seven commits) with
+pytest's own exit code appended to its log, while the review, its fix pass and the close's documents were built in
+worktrees cut from that commit: **[SUITE LINE]**. The files the fix pass and the documents touch — `test_v6b_points`,
+`test_v6_bright`, `test_bright`, `test_api`, `test_layer`, `test_docs`, `test_audit`, `test_progress`, `test_picture`
+and `test_render` — re-run on the integrated state: EXIT=0, 351 passed, 1 skipped (the picture test without a
+browser); vitest 371 (31 files), typecheck clean, the picture test 10 of 10 with the eight galaxy-scale frames byte for
+byte S64's at every step. `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved (no stage changed). The register:
+**106 open = 11 permanent + 95 carried, 49 discharged** (#171 the sample's luminosity function, #172 the two modes at
+zoom; #113 re-ruled to #171; #159's cost line extended with the 124 s / out-of-memory floor and the refusal).
+`RESUMING.md` 117 lines, `BRIEF.md` 53. *How S64 ended:* its `verify_clone --ref main` ran detached through this
+session on a loaded machine and had not finished at this close; S66 reads its line. **The main checkout's
+`frontend/node_modules` was emptied at S64's close by `git worktree remove` following a junction** (the builders' link
+to it) — restored with `npm ci` the moment the S65 builder reported it; the trap is in LESSONS. **For the owner,
+plainly (none awaited; their word first if they answer):** (a) V6b was built on the bright catalogue at finer tiles
+instead of the plan's level-k sample, because the sample carries under a thousandth of the light, its bright end is a
+seventh of the complete catalogue's (a model defect, #171) and its closure is statistical by 7–54 % — reversible on
+their word; (b) the zoom frames: the Milky Way's 0.5 kpc view on an arm crest is now a star field of 1 400 coloured
+points over a grey glow; `ngc_4414`'s shows the render grid's cells enlarged under its points — the field at that zoom
+waits on V7 and V8, and the two modes at zoom are #172; (c) their dev tab may need a restart (the dependencies were
+restored); (d) the stray "v" in the gateway's project file, still uncommitted; (e) still theirs, carried: the spurs'
+factor, #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test; (f) BUILD_IV W4's
+container must bound a tile request below the 1.55 GB `MAX_STARS` allows here. **S66 is V7**, the layer in the viewer
+(`BRIEF.md`); this lead's session continues into it if its context allows, else the next resumes from `BRIEF.md`.
