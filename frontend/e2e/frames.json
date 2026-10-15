@@ -94,8 +94,8 @@
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 1223933,
-      "sha256": "b1012337b06cb87c8dadcde6a581375291ba1c784e96ab302c3935ab1e13c3bc",
+      "bytes": 1234851,
+      "sha256": "f75d866c9b7097e1ba21ecabe005e951c250620a888161132c248fa5c84176eb",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     }
