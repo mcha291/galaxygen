@@ -12659,11 +12659,11 @@ the lanes along the arms' inner edges (the clouds follow the gas pattern through
 
 **Closing.** The full suite ran once, detached from the main checkout at c1f15b0 (the builders' 28 commits) with pytest's own
 exit code appended to its log, while the review, its fix pass and the close's documents were built in worktrees cut from
-the same commit: **[SUITE LINE]**. The four failures the review's fix pass found by running `test_layer.py` whole —
+the same commit: **EXIT=1 - 1 556 passed, 7 failed, 5 skipped, 1 xfailed in 8 h 47 min under the agents' load: the four `test_layer` list pins below, the two parametrisations of `test_performance`'s per-cell pricing (the wall-clock ordering test that flakes under load, S45, S60, S63; green alone), and `test_hook`'s hooks-path assertion (the builders' worktree creations rewrite `core.hooksPath`, the trap S60 recorded; `tools/bootstrap.py` re-run)**. The four failures the review's fix pass found by running `test_layer.py` whole —
 its closed lists of the clouds route's columns and the render's per-ring components, which gained the derived dust
 column and `dust_diffuse_share` — were fixed on the integrated state and the file re-run green (4 of 4); the files the
 fix pass's abouts and headers touch (`test_v6_bright`, `test_v6_clouds`, `test_v6_knots`, `test_bright`,
-`test_clusters`, `test_layer`, `test_docs`, `test_api`) re-run on the final state: **[RERUN LINE]**; vitest 353 (31
+`test_clusters`, `test_layer`, `test_docs`, `test_api`) re-run on the final state: **EXIT=0, 355 passed (eleven files, `test_audit`, `test_progress` and `test_render` added); then `test_hook`, `test_performance` and `test_layer` on the final state in the main checkout, EXIT=0, 83 passed**; vitest 353 (31
 files), typecheck clean, the picture test 8 of 8 on the frames as committed (the fix pass changed no shader
 statement). `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved — no stage changed, the reviewer's eight
 renders against 01c4d4e byte-identical but for the two added arrays. The register: **104 open = 11 permanent + 93
