@@ -677,18 +677,17 @@ export function FieldVolume({
   useEffect(() => () => raster?.texture.dispose(), [raster]);
   const cloudsShown = Boolean(raster && cloudsOn);
   const cloudsKey = raster ? `${raster.texture.uuid},${cloudsShown}` : "none";
+  // The raster's sampling follows the plane textures'. The texture and the switch reach the shader in the frame loop
+  // (below), where a change re-marches: set in an effect, a frame marched between React's commit and the effect kept
+  // the mesh's placeholder, and nothing in the settings key said to march again.
   useEffect(() => {
-    if (!mesh) return;
-    const uniforms = (mesh.material as ShaderMaterial).uniforms;
+    if (!raster) return;
     const filter = filtering === "nearest" ? NearestFilter : LinearFilter;
-    if (raster && (raster.texture.minFilter !== filter || raster.texture.magFilter !== filter)) {
-      raster.texture.minFilter = filter;
-      raster.texture.magFilter = filter;
-      raster.texture.needsUpdate = true;
-    }
-    if (raster && uniforms.cloudTex.value !== raster.texture) uniforms.cloudTex.value = raster.texture;
-    uniforms.cloudsOn.value = cloudsShown ? 1 : 0;
-  }, [mesh, raster, cloudsShown, filtering]);
+    if (raster.texture.minFilter === filter && raster.texture.magFilter === filter) return;
+    raster.texture.minFilter = filter;
+    raster.texture.magFilter = filter;
+    raster.texture.needsUpdate = true;
+  }, [raster, filtering]);
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -827,7 +826,18 @@ export function FieldVolume({
     // takes it out of the first; whichever scene is kept, the mesh goes back into it here.
     const reattached = mesh.parent !== offscreen.scene;
     if (reattached) offscreen.scene.add(mesh);
-    if (!moved && !reattached) return;
+    // The clouds' layer (S64): this mesh's uniforms hold the raster and the switch the view wants, or it marches again.
+    const cloudUniforms = (mesh.material as ShaderMaterial).uniforms;
+    let cloudsMoved = false;
+    if (raster && cloudUniforms.cloudTex.value !== raster.texture) {
+      cloudUniforms.cloudTex.value = raster.texture;
+      cloudsMoved = true;
+    }
+    if (cloudUniforms.cloudsOn.value !== (cloudsShown ? 1 : 0)) {
+      cloudUniforms.cloudsOn.value = cloudsShown ? 1 : 0;
+      cloudsMoved = true;
+    }
+    if (!moved && !reattached && !cloudsMoved) return;
     if (last.width !== width || last.height !== height) offscreen.target.setSize(width, height);
     const uniforms = (mesh.material as ShaderMaterial).uniforms;
     uniforms.gain.value = gain;
