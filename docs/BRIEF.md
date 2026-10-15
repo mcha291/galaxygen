@@ -5,7 +5,7 @@ cloud at its height, closure (i) under 1e-15), the HII regions are knots that sc
 the undrawn share (closure (ii) exact at both ends), the bright stars come by level-0 tiles with an expected-count
 table and a remainder-only render (bit for bit), the composite is depth-aware (T5), and clusters are Plummer
 profiles where 2 r_h fills a pixel (T6). **The Milky Way frame's arm over interarm in blue 1.623 → 1.634 (the goal
-1.83), its dark fraction 0 → 0.0188.** Register 103 open = 11 + 92, 50 discharged; next number **#171**, decisions
+1.83), its dark fraction 0 → 0.0188.** Register 104 open = 11 + 93, 49 discharged; next number **#171**, decisions
 from **D225**, board row 65, acceptance rows from 38. The owner's standing order: run the sessions back to back, stop
 only for a ruling that is theirs; S61–S64 were led by Fable with Opus builders on their word — re-read their latest
 word on models and the rationing rule (one heavy agent, none started past 50 % of the 5-hour window).

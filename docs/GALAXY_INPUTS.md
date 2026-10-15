@@ -694,11 +694,11 @@ defined here once and used in every entry below:
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
-| **discharged** at S64 | **112, 116** (a star in front of a cloud keeps its light, the depth-aware composite; a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224) | 2 |
+| **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170 | 92 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170 | 93 |
 
-So the board's **103 open** is 11 permanent and 92 carried, and no item is unruled. (S22
+So the board's **104 open** is 11 permanent and 93 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -730,7 +730,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #112 and #116, the screen-space multiply over a star in front of a cloud and the cluster's undrawn extent, D224.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3265,13 +3265,14 @@ never been judged in twenty-three sessions.
    their luminosity — V4's cluster points carrying the census's Hα. **S41 (D191): not closed by V4.** The cluster
    points carry the cluster's *stellar* light (`cluster_luminosity`), not its region's Hα, and the field's HII
    still fades by the regime's weight; the light past the 64th region is dropped as before. The remedy stands.
-112. ~~**The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
-   them, a star in front included**~~ **DISCHARGED at S64** (D224, R9, T5: the region march's transmission pass
-   writes the clouds' optical-depth-weighted entry distance into its alpha and the star points take T themselves,
-   only where the star is farther than that front — a star at 4 kpc before a cloud at 8 kpc keeps its light
-   exactly, one at 12 kpc is multiplied by exactly T, where before S64 the front star lost 93.5 %; the field is
-   still multiplied by the whole ray's T in front of a cloud as well, the approximation `RENDER_PHYSICS.md` §0
-   states). Was: (S40, V3, D190). The region volume renders emission and transmission to two
+112. **The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
+   them, a star in front included** (S40, V3, D190). **S64 (D224, R9, T5): the star's half discharged, the field's
+   half carried.** The region march's transmission pass writes the clouds' optical-depth-weighted entry distance
+   into its alpha and the star points take T only behind that front — a star at 4 kpc before a cloud at 8 kpc keeps
+   its light exactly, one at 12 kpc is multiplied by exactly T, where before S64 the front star lost 93.5 %; the
+   field is still multiplied by the whole ray's T in front of a cloud as well (the approximation
+   `RENDER_PHYSICS.md` §0 states), and that half stays open: its mend is the exact composite, T at K depth slabs,
+   one pass. As recorded at S40: The region volume renders emission and transmission to two
    offscreen targets and blends them over the frame — light added, transmission multiplied (render orders 2 and 1,
    after the field's −1 and the star points' 0) — so a star between the camera and a cloud is darkened as if behind
    it, and the field's light in front of the cloud likewise; the objects among themselves composite front to back
