@@ -188,6 +188,20 @@ per-ring arrays placed by the render's own `stars_middle_placement` and
 `[verified: tests/test_v6_bright.py]`; the whole render is not asked again on a
 threshold change (T28). The frustum cut is the GPU's clipping; the points are
 every star of the tiles in view above the threshold, not the N brightest.
+Since S65 (V6b, RULING_S65 R1) below the stars handover (4 kpc) the tiles are
+level-k cells, k the field mode's `levelFor` (1 for 1-4 kpc, 2 for 0.25-1, 3
+below): `cells=<level-k ids>&level=k`, a level-k tile's rows its finest cells'
+rows — the level-0 tile's restricted to them, row for row — and the counts
+`table=1&cells=<ids>&level=k`, each the sum of its finest cells' (never the
+whole level-k table); a tile whose level-0 ring holds more than 5 x 10^6 stars
+above the threshold is refused before any draw (#159); below 4 kpc the budget
+weighs each cell by the share of the stars' layer inside the frustum's height
+range (the mean over 3 x 3 points across the cell), and a cell is asked only
+when its weighted count is at least one star, the skipped cells' sum stated
+beside the threshold as the rule's loss `[verified:
+tests/test_v6b_points.py]`. The zoomed-in point layer is the bright catalogue,
+complete above the frame's threshold; the level-k star sample stays the field
+mode's region regime.
 
 **Since S63 (D223) the stars are split by age.** `/api/render` returns
 `stars_young`, `stars_middle` and `stars_old` per ring and filter — the bright

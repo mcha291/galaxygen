@@ -113,6 +113,18 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("bright: one tile", "/api/bright",
              urlencode({"cells": 261, "l_min": 2251, "filters": _RGB, "white": 6500, "precision": "f4"}),
              "one level-0 cell's stars above 10^3.4 Lsun, about 1 140, through 3 filters"),
+    # S65 (V6b, RULING_S65 R1): the zoomed-in point layer - one level-2 cell of that tile (4181, about 0.23 kpc by
+    # 0.05 rad) at the default point budget's pick for a 0.25 kpc view, 224 Lsun (10^2.35), as the star-first view asks it.
+    # Measured at S65 (a fresh process each, the machine shared): cold 15.87 s (the galaxy's tables in it; one level-0
+    # tile, the row above, 13.70 s), warm 0.0137 s, 147 480 B.
+    Endpoint("bright: one tile, level 2", "/api/bright",
+             urlencode({"cells": 4181, "level": 2, "l_min": 223.872113856834, "filters": _RGB, "white": 6500, "precision": "f4"}),
+             "one level-2 cell's stars above 10^2.35 Lsun, 1 418 (1 512 expected), through 3 filters (S65)"),
+    # S65 (V6b, R1): the expected-count table for the cells asked - that tile's sixteen level-2 cells, float32. Measured
+    # at S65: cold 13.34 s (the galaxy's tables), warm 0.0015 s, 16 408 B (the whole level-0 table: 633 368 B).
+    Endpoint("bright: table, level 2 cells", "/api/bright",
+             urlencode({"table": 1, "cells": ",".join(str(4176 + q) for q in range(16)), "level": 2, "precision": "f4"}),
+             "16 level-2 cells x 153 thresholds (S65)"),
     # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
     Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
              "193 temperatures x 3 filters, no stage (S42)"),

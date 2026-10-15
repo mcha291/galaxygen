@@ -324,7 +324,10 @@ function FrameProbe() {
  * `window.__galaxygenCapture.place(camera)` stands the orbit camera at a stated inclination, azimuth and framing
  * radius about the galaxy's centre (capture.ts) - and, where the camera states one, through a stated lens
  * (`fov_deg`, S54: the zoom's range and the near and far planes follow it, as they do for a template's);
- * `.where()` reads the stand back from the camera, and `.picture()` draws one frame and returns the canvas as it
+ * since S65 (V6b, R6) about a `target` in the disc's plane - a radius and an azimuth in the model's galactocentric frame
+ * (positions.ts), the orbit controls' target, which a drag on the target reaches too - rather than the centre;
+ * `.where()` reads the stand back from the camera, `.target()` the target it stands about (scene kpc), and
+ * `.picture()` draws one frame and returns the canvas as it
  * is displayed - after the bloom and the tone curve, with none of the page over it - as a PNG data URL. A camera a
  * drag or a template could reach and a copy of what is on screen: it adds nothing to what is drawn and holds no
  * parameter of it.
@@ -338,9 +341,14 @@ function CaptureProbe({ reach, standRadius }: { reach: number; standRadius: numb
     if (!controls) return;
     const holder = window as unknown as Record<string, unknown>;
     const probe = {
-      place(view: CaptureCamera & { fov_deg?: number }) {
+      place(view: CaptureCamera & { fov_deg?: number }, target?: { radius_kpc: number; azimuth_deg: number }) {
         const fov = view.fov_deg ?? camera.fov;
         const position = orbitPosition(view, fov); // refuses a camera or a lens that is not one, before anything moves
+        if (target && !(Number.isFinite(target.radius_kpc) && target.radius_kpc >= 0 && Number.isFinite(target.azimuth_deg))) {
+          throw new Error(`capture target: radius ${target.radius_kpc}, azimuth ${target.azimuth_deg}`);
+        }
+        const phi = ((target?.azimuth_deg ?? 0) * Math.PI) / 180;
+        const at: [number, number, number] = target ? [target.radius_kpc * Math.cos(phi), 0, -target.radius_kpc * Math.sin(phi)] : [0, 0, 0];
         // The lens, and everything that was written for one: the range the controls hold and the two planes.
         const range = zoomRange(reach, fov, Math.max(standRadius, view.radius_kpc));
         const planes = clipPlanes(range);
@@ -351,12 +359,15 @@ function CaptureProbe({ reach, standRadius }: { reach: number; standRadius: numb
         camera.userData.placedRadius = view.radius_kpc;
         controls.minDistance = range.min;
         controls.maxDistance = range.max;
-        controls.target.set(0, 0, 0);
-        camera.position.set(...position);
-        controls.update(); // looks at the centre and tells the view's listeners, as a drag does
+        controls.target.set(...at);
+        camera.position.set(position[0] + at[0], position[1] + at[1], position[2] + at[2]);
+        controls.update(); // looks at the target and tells the view's listeners, as a drag does
       },
       where(): LensCamera {
         return standOf(camera.position.toArray(), controls.target.toArray(), camera.fov);
+      },
+      target(): [number, number, number] {
+        return controls.target.toArray() as [number, number, number];
       },
       picture() {
         // The frame and its read in one task: the drawing buffer is not kept once the browser has shown it.

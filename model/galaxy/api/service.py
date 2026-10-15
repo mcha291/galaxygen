@@ -291,8 +291,12 @@ ROUTES: tuple[Route, ...] = (
         "the 0.05 dex grid (the header's tile says the value used), grouped by finest cell: keyed by cell and "
         "threshold, never by a window, so each answer is the same bytes every time and can be computed ahead; n=, view= "
         "and a window are refused with it. table=1: every level-0 cell's expected count above every grid threshold, "
-        "with the rule the viewer picks one threshold per frame by and the cells' layout.",
-        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white", "cells", "table"),
+        "with the rule the viewer picks one threshold per frame by and the cells' layout. level=<0..3> (S65, V6b): the "
+        "tiles named at that level - a level-k tile's rows are its finest cells' rows, the level-0 tile's restricted "
+        "to them - and table=1&cells=<ids>&level=<k> the expected counts of the cells asked; a tile whose level-0 ring "
+        f"holds more than {MAX_STARS} stars above the threshold is refused before any draw (#159); so is a window "
+        "(l_min=) whose rings would.",
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white", "cells", "table", "level"),
         "bright",
     ),
     Route(
@@ -1558,9 +1562,12 @@ class Service:
         ``l_min`` snapped up to the 0.05 dex grid, so a (tile, threshold) is one answer, the same bytes every time:
         cell-keyed, never keyed by a window the viewer chose (D222 ruling 14), and so computable ahead (BUILD_IV W2).
         ``table=1`` is every level-0 cell's expected count at every grid threshold, the one threshold per frame the
-        viewer picks from. Both are ``api/v6_tiles.py``'s."""
+        viewer picks from. Both are ``api/v6_tiles.py``'s. **S65 (V6b)**: ``level=k`` names the tiles (and the
+        table's ``cells=``) at level k, the zoomed-in point layer."""
         if q.one("cells") is not None or q.one("table") is not None:
             return _v6_tiles.bright(self, q)
+        if q.one("level") is not None:
+            raise BadRequest("level= names tiles (S65): give cells=<level-k ids> with it; a window is cut at the finest cells")
         model = self._model(q)
         stage = _stage_for(model, BRIGHT_SLOT, self.impls)
         R = self.grid.R
@@ -1607,6 +1614,9 @@ class Service:
                     f"l_min={l_min:g} holds {expected:.0f} expected stars in this window, more than {MAX_BRIGHTEST}: "
                     "raise it or narrow the window"
                 )
+            # S65 review (F4): the ring-first draw holds each ring's stars above the threshold whole - refused before
+            # any draw past the tile form's bound (v6_tiles.ring_guard, #159).
+            _v6_tiles.ring_guard(galaxy, cells, used)
             pool = fetch(cells, used)
             lum = np.asarray(pool["bright_star_luminosity"], dtype=float)
             keep = np.arange(lum.size)

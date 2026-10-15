@@ -1612,3 +1612,14 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [api] Where a redistribution subtracts a realisation from an expectation it goes negative: the knots' Hα (a heavy-tailed
   draw) exceeded the field's HII Hα in 22 % of level-0 cells and 10 of 26 lit rings, and a remainder clipped at
   zero lost 4.7 % a ring on the Milky Way, 25.5 % on `ngc_4414`, 32 % a cell. Scale the expectation by the undrawn SHARE of the realisation (1 - D_c / K_c), which is in [0, 1] and exact at both ends.
+
+## From S65 (the zoomed-in point layer; a Fable lead on the owner's word, an Opus probe, a builder, a reviewer)
+
+- [viewer] A sampled catalogue is not a point layer: the plan's level-k sample carried at most 9.4e-4 of the light in
+  view, and its luminosity function fell to 0.14 of the bright catalogue's at 10³ L☉ (#171), so drawn as points it
+  would have lied by the sampling fraction and by the missing evolved stars. A point's light must be complete above
+  a threshold; measure the sample's luminosity function against the complete one before drawing it.
+- [viewer] A budget over "the cells in view" must weight each cell by the share of its layer the frustum sees: at a
+  0.6 kpc standoff the frustum cut by a ±3 kpc slab is a cone 3 kpc wide at its base, a 0.5 kpc view met 260 / 1 430
+  level-2 cells, and the unweighted budget put the threshold at 10⁴ L☉ (~40 points on a grey field); weighted by the
+  stellar layer the frustum sees, 1 260 L☉ and 1 400 points.

@@ -466,6 +466,11 @@ interface Props {
   /** Handed the march's dust textures for the segment to each point (T20, D208); null when the volume goes. */
   onDust?: (dust: PointDust | null) => void;
   /**
+   * Handed the stars' layer scale height, kpc - the render header's `layers.stars` - whenever a render carries one
+   * (S65, V6b): what the star-first view weighs its zoomed budget by (brightTiles.ts frustumWeights).
+   */
+  onStarsLayer?: (h: number) => void;
+  /**
    * The starlight by age (S63, D223): each part's multiplier. Where the render carries the three parts the stellar
    * layer is their sum at these switches; all on (the default) is the whole of the stars' light.
    */
@@ -552,6 +557,7 @@ export function FieldVolume({
   onDepth,
   lMin = null,
   onDust,
+  onStarsLayer,
   ages = ALL_AGES,
   onAges,
   clouds = null,
@@ -818,6 +824,13 @@ export function FieldVolume({
     },
     [mesh, offscreen],
   );
+
+  const tellLayer = useRef(onStarsLayer);
+  tellLayer.current = onStarsLayer;
+  const starsLayer = light?.header.layers?.stars;
+  useEffect(() => {
+    if (typeof starsLayer === "number" && Number.isFinite(starsLayer) && starsLayer > 0) tellLayer.current?.(starsLayer);
+  }, [starsLayer]);
 
   const tellDust = useRef(onDust);
   tellDust.current = onDust;

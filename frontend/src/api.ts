@@ -3,7 +3,7 @@
 // colour comes from the field declarations it returns (rule A9).
 import * as wire from "@interface/transport.js";
 
-import { type BrightTable, type TileAnswer, placeRemainder } from "./galaxy/brightTiles";
+import { type BrightTable, type CountsAnswer, type TileAnswer, placeRemainder } from "./galaxy/brightTiles";
 import type { Curve } from "./galaxy/filters";
 import { checkLayer, reportLayerFault } from "./galaxy/layer";
 import type { Axis } from "./preview/axes";
@@ -179,8 +179,10 @@ export async function loadBrightTiles(
   white: number,
   query: Query,
   signal?: AbortSignal,
+  level = 0,
 ): Promise<TileAnswer> {
-  const params = { ...query, cells: cells.join(","), l_min: lMin, filters: JSON.stringify(curves), white, precision: "f4" };
+  // S65 (V6b): the tiles named at `level`; level 0 asks as S64 did, without the parameter.
+  const params = { ...query, cells: cells.join(","), ...(level ? { level } : {}), l_min: lMin, filters: JSON.stringify(curves), white, precision: "f4" };
   const got = await bright({}, params, { signal });
   const columns = got.arrays as TileAnswer["columns"];
   const bytes = Object.values(columns).reduce((s, a) => s + a.byteLength, 0);
@@ -197,6 +199,17 @@ export async function loadBrightTable(query: Query, signal?: AbortSignal): Promi
   const header = got.header as { table?: { rule: string }; cells: BrightTable["layout"] };
   const a = got.arrays as Record<string, ArrayLike<number>>;
   return { thresholds: a.threshold, expected: a.expected, layout: header.cells, rule: header.table?.rule ?? "" };
+}
+
+/**
+ * The expected-count rows of the level-k cells asked (S65, V6b, R1: `table=1&cells=&level=`): each the API's sum over
+ * the cell's finest cells, the thresholds float64, the counts float32. Never the whole level-k table.
+ */
+export async function loadBrightCounts(cells: number[], level: number, query: Query, signal?: AbortSignal): Promise<CountsAnswer> {
+  const got = await bright({}, { ...query, table: 1, cells: cells.join(","), level, precision: "f4" }, { signal });
+  const header = got.header as { table?: { cells: number[] } };
+  const a = got.arrays as Record<string, ArrayLike<number>>;
+  return { thresholds: a.threshold, expected: a.expected, cells: header.table?.cells ?? [] };
 }
 
 /** A census of one window (S40, V3): the columns as arrays and the header the route wrote. */

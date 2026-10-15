@@ -10,6 +10,7 @@ import {
   type WhitePoint,
   loadBlackbody,
   loadBrightTable,
+  loadBrightCounts,
   loadBrightTiles,
   loadClouds,
   loadClusters,
@@ -37,7 +38,7 @@ import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
-import { type BrightTable, TileCache, type TilesFrame, pickThreshold, tilesFrame, tilesIn } from "./brightTiles";
+import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
@@ -321,6 +322,11 @@ export function GalaxyTab({
   // GPU's own clipping now (the route's view= is the tests'): a star in a tile in view and off the screen draws nothing,
   // and nothing else reads the points' set. Nothing is asked for while the star points are switched off (the footprint
   // still cuts the cloud census).
+  // S65 (V6b, RULING_S65 R1): below the stars handover (REGIME_KPC.stars) the tiles are level-k cells, k the field
+  // mode's own levelFor(across) - 1 for 1-4 kpc, 2 for 0.25-1, 3 below - cut from the whole table's level-0 layout by
+  // the rule its per-cells header states (systems.cell_bounds); their counts are the API's for the cells in view
+  // (table=1&cells=&level=), held per (galaxy, level, cell); the threshold is picked over them by the same rule. Above
+  // 4 kpc levelFor is 0 and every request is S64's.
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
   const R = meta.grid.axes.R;
   const wholeDisc = { r_min: R?.lo ?? 0, r_max: rMax, phi_min: 0, phi_max: 2 * Math.PI, level: 0 };
@@ -328,19 +334,64 @@ export function GalaxyTab({
   const pointsOn = mode === "stars" && tuning.compPoints;
   const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
   const brightTable = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal)).value ?? null;
+  const tileLevel = mode === "stars" && view ? levelFor(view.across) : 0;
   const tilesSeen = useMemo(
-    () => (seen && brightTable ? tilesIn(seen, brightTable.layout) : null),
-    [brightTable, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
+    () => (seen && brightTable ? cellsIn(seen, brightTable.layout, tileLevel) : null),
+    [brightTable, tileLevel, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const tileK = tilesSeen && brightTable ? pickThreshold(brightTable, tilesSeen, brightestN) : null;
+  const countRows = useRef(new CountRows()).current;
+  const countsGalaxy = JSON.stringify(query);
+  const countsKey = pointsOn && tilesSeen && tileLevel > 0 ? JSON.stringify(["brightCounts", tileLevel, tilesSeen, countsGalaxy]) : null;
+  const levelLoad = useLoad<CellCounts>(
+    countsKey,
+    (signal) => levelCounts(countRows, countsGalaxy, tileLevel, tilesSeen!, (cells, level, s) => loadBrightCounts(cells, level, query, s), signal),
+    BRIGHT_SETTLE_MS,
+  );
+  // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
+  // in view has its row (B9: no pick over a cell not held).
+  const levelHeld = tileLevel > 0 && levelLoad.value ? countRows.at(countsGalaxy, tileLevel) : null;
+  const tileCounts: BrightTable | CellCounts | null =
+    tileLevel === 0 ? brightTable : levelHeld && tilesSeen && covers(levelHeld, tilesSeen) ? levelHeld : null;
+  // The budget below the stars handover (S65, the lead's ruling on the zoomed footprint): each level-k cell's count
+  // weighted by the share of the stars' layer (the render header's layers.stars, handed up by the field volume) inside
+  // the frustum's height range, averaged over 3 x 3 points across the cell - the stars the camera can see, not every
+  // star of every cell the footprint's +-3 kpc slab meets. A cell is asked when it expects at least one star in view
+  // (below); the GPU clips the rest. Until a render has named the layer, and at level 0 (above 4 kpc, S64's frames),
+  // every cell counts whole and is asked.
+  const [starsLayer, setStarsLayer] = useState<number | null>(null);
+  const viewProjection = view?.camera.viewProjection;
+  const pickCounts = useMemo(
+    () =>
+      tileCounts && tilesSeen && tileLevel > 0 && starsLayer && viewProjection && brightTable
+        ? weighted(tileCounts, frustumWeights(tilesSeen, brightTable.layout, tileLevel, viewProjection, starsLayer))
+        : tileCounts,
+    [tileCounts, tilesSeen, tileLevel, starsLayer, viewProjection, brightTable],
+  );
+  const tileK = tilesSeen && pickCounts ? pickThreshold(pickCounts, tilesSeen, brightestN) : null;
+  // The cells asked (the lead's ruling on the fetch): weighted, only those expected to show at least one star in view at
+  // the threshold; the rule's loss - the expected stars in view in the cells skipped - is kept beside the threshold and
+  // stated in the caption. Unweighted (level 0, or before the layer is named) every cell is asked, as S64.
+  const tileFetch = useMemo(
+    () =>
+      tilesSeen && tileK != null && pickCounts && pickCounts !== tileCounts
+        ? cellsToFetch(pickCounts as CellCounts, tilesSeen, tileK)
+        : tilesSeen
+          ? { fetch: tilesSeen, loss: 0, inView: Number.NaN }
+          : null,
+    [tilesSeen, tileK, pickCounts, tileCounts],
+  );
   const tileCache = useRef(new TileCache()).current;
   const tileWhites = useRef(new Map<string, unknown>()).current;
   const tileGalaxy = JSON.stringify([filterSet, whiteKelvin, query]);
-  const brightKey = pointsOn && tilesSeen && tileK != null ? JSON.stringify([tilesSeen, tileK, tileGalaxy]) : null;
+  const brightKey = pointsOn && tileFetch && tileK != null ? JSON.stringify([tileFetch.fetch, tileK, tileLevel, tileGalaxy]) : null;
   const brightLoad = useLoad<TilesFrame>(
     brightKey,
     (signal) =>
-      tilesFrame(tileCache, tileGalaxy, tilesSeen!, tileK!, brightTable!, (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s), tileWhites, signal),
+      tilesFrame(
+        tileCache, tileGalaxy, tileFetch!.fetch, tileK!, tileCounts!,
+        (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s, tileLevel),
+        tileWhites, signal, tileLevel,
+      ),
     BRIGHT_SETTLE_MS,
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
@@ -410,7 +461,9 @@ export function GalaxyTab({
   const pickStar = (row: number) => {
     if (!bright) return;
     const c = bright.columns as Record<string, ArrayLike<number | bigint>>;
-    setPicked({ title: `bright star · cell ${named(c, row, "cell")}, rank ${named(c, row, "rank")}`, rows: summaryRows(meta, bright.columns, row, STAR_SUMMARY) });
+    // Its name at every tile level (S65): the finest cell's - the rows are named by level-3 cell and rank, the tile's
+    // level a request's, never the star's (D190's three columns are the region's rows').
+    setPicked({ title: `bright star · level 3, cell ${named(c, row, "cell")}, rank ${named(c, row, "rank")}`, rows: summaryRows(meta, bright.columns, row, STAR_SUMMARY) });
   };
   const pickCluster = (row: number) => {
     if (!clusterCensus) return;
@@ -551,6 +604,7 @@ export function GalaxyTab({
             onDepth={setDustPaint}
             lMin={lMin}
             onDust={setFieldDust}
+            onStarsLayer={setStarsLayer}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
           />
@@ -881,6 +935,10 @@ export function GalaxyTab({
                   ? `${current.what} Asking the cells in view at the threshold a budget of ${brightestN.toLocaleString("en")} allows.`
                   : `${current.what} ${bright.header.count.returned.toLocaleString("en")} stars: every disc star in the ${bright.header.tiles.inView.toLocaleString("en")} cells in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
                       clusterCensus ? `, and ${(clusterCensus.columns.cluster_radius?.length ?? 0).toLocaleString("en")} clusters` : ""
+                    }${
+                      tileFetch && tileFetch.loss > 0
+                        ? `; the cells expecting under one star in view are not asked: ${formatNumber(tileFetch.loss, 3)} expected stars of ${formatNumber(tileFetch.inView, 4)} in view`
+                        : ""
                     }. The field under them is the light no point carries. Click a point for its numbers.`
             : `${regime.what} ${
                 weights.active === "stars"
