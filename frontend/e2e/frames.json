@@ -14,8 +14,8 @@
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 766662,
-      "sha256": "6018a232e7be696436fb01b2aa1c01109a73decdb4521413fe6ed146e115ef5e",
+      "bytes": 766754,
+      "sha256": "56a31bcdb5ebb40a70ae72349dd2d647638be5cba09832df34dcad509876d225",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
@@ -34,8 +34,8 @@
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 765252,
-      "sha256": "6e8c072db1bb5419e932c32ebc2078d93dd993563f4cf52b3604632bba331138",
+      "bytes": 765251,
+      "sha256": "c08dcc0a3eb9cab58541cebaffa277df75750e157ff0fadca77c4bdf730f7a93",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
@@ -44,8 +44,8 @@
       "template": "milky_way",
       "width": 256,
       "height": 256,
-      "bytes": 78871,
-      "sha256": "60dccb28f94a23e47bc998918213d0dfab4439dd6455ba84e1233aa3efd68b01",
+      "bytes": 78882,
+      "sha256": "eb6a7df69e58545118f4ff489939e5075bdd4ac345267fd9f2e8382e025a7c45",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
@@ -54,8 +54,8 @@
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 617976,
-      "sha256": "fb6703299e4f52711ca793b05fe7422655e7224ddb735ee09ce5bf85e5d6c50e",
+      "bytes": 618360,
+      "sha256": "2d842faa3ec404a133e6163736140edc3ed471fce06551c513a29691081962a3",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
@@ -74,8 +74,8 @@
       "template": "ngc_4414",
       "width": 256,
       "height": 256,
-      "bytes": 58618,
-      "sha256": "1d1b04051bae8aed4f9431c0af452e1fbfb39ba7de13f8716051ff2550f12b39",
+      "bytes": 58599,
+      "sha256": "ea7d491335bb9d220762ce3d81b42a7b5db9f287b3a98fceb427b1467188eac9",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     }
