@@ -4,7 +4,7 @@
 are the bright catalogue at level-k tiles (complete above the frame's threshold, the picker naming the level), the
 plan's level-k sample measured and set aside (light share ≤ 9.4e-4; its luminosity function 0.14 of the catalogue's
 at 10³ L☉, #171), the budget weighted by the stellar layer the frustum sees, two zoom captures; the eight old frames
-byte for byte. Register 106 open = 11 + 95, 49 discharged; next number **#173**, decisions from **D226**, board row 66,
+byte for byte. Register 107 open = 11 + 96, 49 discharged; next number **#174**, decisions from **D226**, board row 66,
 acceptance rows from 38. The owner's standing order: run the sessions back to back, stop only for a ruling that is
 theirs; S61–S65 were led by Fable with Opus builders on their word — re-read their latest word on models and the
 rationing rule (one heavy agent, none started past 50 % of the 5-hour window).
