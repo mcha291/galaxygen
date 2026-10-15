@@ -29,6 +29,7 @@ import { FieldLegend } from "./FieldLegend";
 import { type AgePart, FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
+import { knotsOf, undrawnShare } from "./knots";
 import { CLUSTER_SUMMARY, STAR_SUMMARY, type SummaryRow, summaryRows } from "./summary";
 import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
@@ -163,6 +164,19 @@ const CLOUDS_EXTINCTION_WHAT =
   "the ring's depth x dust_placement x dust_diffuse_share - the share of the ring's dust its realised clouds do not " +
   "hold (/api/render's clouds entry). Off draws no clouds' layer; the diffuse dust stays reduced by the share (the " +
   "share is the model's, the switch is display), so off shows the dust without what the clouds hold";
+/**
+ * The knots' switch (S64, V6, R5): the rule, from the clusters header where it has come (knots.rule), and what off does.
+ */
+const KNOTS_WHAT =
+  "The HII regions as knots at galaxy scale (the field mode above the region regime): each cluster's region a point of " +
+  "its own lines through the filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills " +
+  "a pixel, dimmed by the dust in front as the points are. The field's HII layers give way cell by cell: ";
+const KNOTS_OFF = ". Off draws the field's HII layers whole and no knot";
+/** The clusters' radius switch (S64, V6, R7; T6): what it draws and where it shows. */
+const CLUSTER_RADIUS_WHAT =
+  "In the star-first mode, a cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills " +
+  "a pixel, its light the same as the point's, in place of the instrument's sprite. No cluster is that large at galaxy " +
+  "scale: it shows below about 1 kpc across (the median cluster) to 6 kpc (the largest)";
 /** The field mode's age switches (S63, D223): each part's tuning value. */
 const AGE_SWITCH = { young: "ageYoung", middle: "ageMiddle", old: "ageOld" } as const;
 const DUST_READINGS:{ key: "acts" | "where"; label: string; what: string }[] = [
@@ -332,7 +346,9 @@ export function GalaxyTab({
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster
   // of the disc with its own light through the set, loaded once per set and query (about 13 000).
-  const starClustersKey = pointsOn ? JSON.stringify(["clusters", filterSet, whiteKelvin, query]) : null;
+  // S64 (V6, R5): the same request serves the field mode's knots (each cluster's line_response beside its response).
+  const knotsWanted = mode === "field" && tuning.knots;
+  const starClustersKey = pointsOn || knotsWanted ? JSON.stringify(["clusters", filterSet, whiteKelvin, query]) : null;
   const starClusters = useLoad<Census>(starClustersKey, (signal) =>
     loadClusters(wholeDisc, query, signal, { curves: curvesOf(filterSet), white: whiteKelvin }),
   ).value;
@@ -352,14 +368,41 @@ export function GalaxyTab({
     const c = clusterCensus.columns as Record<string, ArrayLike<number>>;
     if (!c.cluster_radius) return null;
     const flux = fluxOf(c.response, clusterCensus.header.white?.response, c.cluster_radius.length);
-    return flux ? { positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height), flux } : null;
+    // S64 (V6, R7): each cluster's half-mass radius, pc, for its Plummer profile once it fills a pixel.
+    const extent = c.cluster_half_mass_radius ? Float32Array.from(c.cluster_half_mass_radius) : null;
+    return flux ? { positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height), flux, extent } : null;
   }, [clusterCensus]);
+  // The HII regions as knots (S64, V6, R5-R6): in the field mode at galaxy scale - above the region regime, whose
+  // resolved spheres are the regions there - every cluster's region a point of its own lines through the set, sized by
+  // its Stromgren radius, on the field's scale and at its weight; and in each level-0 cell the field's HII layers scaled
+  // by the share of the cell's census not drawn (the clusters header's knots.rule): all drawn, so 0 where a cell names a
+  // knot and 1 where it names none.
+  const knotsCensus = knotsWanted && starClusters ? starClusters : null;
+  const knotsHeader = knotsOf(knotsCensus);
+  const knotsDrawn = knotsWanted && !area;
+  const knotPoints = useMemo(() => {
+    if (!knotsCensus || !knotsHeader) return null;
+    const c = knotsCensus.columns as Record<string, ArrayLike<number>>;
+    if (!c.cluster_radius || !c[knotsHeader.size]) return null;
+    const flux = fluxOf(c[knotsHeader.column], knotsCensus.header.white?.response, c.cluster_radius.length);
+    if (!flux) return null;
+    return {
+      positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height),
+      flux,
+      extent: Float32Array.from(c[knotsHeader.size]),
+      share: { share: undrawnShare(c[knotsHeader.cell], c[knotsHeader.light], true, knotsHeader.layout), layout: knotsHeader.layout },
+    };
+  }, [knotsCensus, knotsHeader]);
+  const knotsShown = knotsDrawn && knotPoints ? knotPoints : null;
   // One gain for the field and the points (D208): the field's per L☉/pc², its gain and the exposure's stops; the
   // point gain stays a display multiplier on the points (D199).
   const pointsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * pointGain;
   // The march's dust, handed up by the field volume for the segment to each point (T20): only as it acts.
   const [fieldDust, setFieldDust] = useState<PointDust | null>(null);
   const pointDust = mode === "stars" && tuning.compDust && tuning.dustReading === "acts" ? fieldDust : null;
+  // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
+  const knotDust = mode === "field" ? fieldDust : null;
+  const knotsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * weights.field;
   // What a click on a point opened (T23): the object's own published columns.
   const [picked, setPicked] = useState<{ title: string; rows: SummaryRow[] } | null>(null);
   const named = (columns: Record<string, ArrayLike<number | bigint>>, row: number, key: string) =>
@@ -485,7 +528,13 @@ export function GalaxyTab({
             onAges={setAgeParts}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
+            hiiShare={knotsShown ? knotsShown.share : null}
+            onDust={setFieldDust}
           />
+        )}
+        {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
+        {knotsShown && (
+          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
             its starlight the remainder under the points' threshold (the whole of it while the points are off). */}
@@ -508,7 +557,16 @@ export function GalaxyTab({
         )}
         {/* The points, on the field's scale (D208): the clusters first, the bright stars over them. */}
         {clusterPoints && (
-          <FluxPoints positions={clusterPoints.positions} flux={clusterPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} />
+          <FluxPoints
+            positions={clusterPoints.positions}
+            flux={clusterPoints.flux}
+            gain={pointsGain}
+            psf={spritePsf}
+            spriteSize={tuning.spriteSize}
+            dust={pointDust}
+            extent={clusterPoints.extent}
+            profile={tuning.clusterRadius ? 1 : 0}
+          />
         )}
         {brightPoints && (
           <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} />
@@ -658,6 +716,23 @@ export function GalaxyTab({
             >
               clouds as extinction
             </button>
+            {/* The HII regions as knots (S64, V6, R5): the field mode's; the cluster census's own lines in place of the field's. */}
+            {mode === "field" && (
+              <button
+                type="button"
+                aria-pressed={tuning.knots}
+                title={KNOTS_WHAT + (knotsHeader?.rule ?? "in each level-0 cell by the share of its census not drawn") + KNOTS_OFF}
+                onClick={() => setComponent({ knots: !tuning.knots })}
+              >
+                HII regions as knots
+              </button>
+            )}
+            {/* The clusters with their radius (S64, V6, R7): the star-first mode's. */}
+            {mode === "stars" && (
+              <button type="button" aria-pressed={tuning.clusterRadius} title={CLUSTER_RADIUS_WHAT} onClick={() => setComponent({ clusterRadius: !tuning.clusterRadius })}>
+                clusters with their radius
+              </button>
+            )}
           </div>
         </div>
 

@@ -218,7 +218,9 @@ export async function loadClouds(window: RegionWindowQuery, query: Query, signal
 
 /**
  * The clusters of a window with their HII regions' and bubbles' columns; with `light` (a filter set's curves and a
- * white point, S48) each cluster's `response` too, its own band light through each curve.
+ * white point, S48) each cluster's `response` too, its own band light through each curve, and since S64 (V6, R5) its HII
+ * region's `line_response`, the region's lines through each curve (the knots' light); the header's `knots` entry, with
+ * or without `light`, names the knots' columns, the level-0 cells and the rule (galaxy/knots.ts knotsOf).
  */
 export async function loadClusters(
   window: RegionWindowQuery,
