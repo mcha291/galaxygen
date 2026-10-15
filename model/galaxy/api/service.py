@@ -259,7 +259,12 @@ ROUTES: tuple[Route, ...] = (
         "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
         "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
         "clusters inside the level-k children the window meets. filters= (as /api/render takes it, S48) adds response, "
-        "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header.",
+        "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header. "
+        "With filters=, line_response (S64, V6) too: each cluster's HII region's lines through each curve in Lsun - its "
+        "Halpha (hii_halpha_luminosity) and every other line /api/render's lines_hii carries, each at its own wavelength "
+        "by spectra.line_response as lines_hii is per ring - one point's light, the knot's. The header's knots entry, "
+        "with filters= or without, names the knot's light, size (hii_stromgren_radius) and cell columns, the level-0 "
+        "cells' layout, and the rule by which a viewer drawing some knots scales the field's HII layers cell by cell.",
         ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
         "clusters",
     ),
