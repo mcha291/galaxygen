@@ -264,7 +264,12 @@ export function slabColumn(y0: number, y1: number, lo: number, hi: number, ds: n
   return ((overlap / thick) * ds) / Math.abs(dy);
 }
 
-/** How many equal pieces the march cuts a texel's clouds' slab into, so the stars inside it are not mixed across all of it. */
+/**
+ * How many equal pieces the march cuts a texel's clouds' slab into, so the stars inside it are not mixed across all
+ * of it: a sampling choice, not a display choice (fixed; no tuning value moves it). The slab's column in each piece
+ * is exact (slabColumn), so the clouds' total optical depth on a ray does not depend on it; only where in the slab
+ * the stars it holds sit against it does, to a quarter of the slab (its effect on a frame not measured).
+ */
 export const SLAB_PIECES = 4;
 
 /**

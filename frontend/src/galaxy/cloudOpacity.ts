@@ -71,7 +71,12 @@ export interface CloudRaster {
   slab: Float32Array;
 }
 
-/** The points a side each texel a split cloud touches is sampled at: 16 a texel. The raster's sampling, not light. */
+/**
+ * The points a side each texel a split cloud touches is sampled at: 16 a texel. A sampling choice, not a display
+ * choice (fixed; no tuning value moves it): at 4 x 4 a cloud's edge texels lie 0.03 % to 33 % off a 24 x 24
+ * quadrature's share (S64 review, measured), and each cloud's total A_V x area is conserved whatever the sampling
+ * (the weights are normalised over the cloud's texels).
+ */
 export const SPLIT_SAMPLES = 4;
 
 /** One texel's area, kpc^2: the annulus sector between its radii over its azimuth span. */

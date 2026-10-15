@@ -23,12 +23,20 @@
 export const PLUMMER_HALF_MASS = 1 / Math.sqrt(2 ** (2 / 3) - 1);
 
 /**
- * How far the cluster's box reaches each side of it, in scale lengths: a display choice (A9). The Plummer's light past
- * R is a^2 / (a^2 + R^2) of it, 1.5 % at 8 a, and that light is put back in the box, not lost.
+ * How far the cluster's box reaches each side of it, in scale lengths: a sampling bound, fixed, not a display choice
+ * (no tuning value moves it). The Plummer's light past R is a^2 / (a^2 + R^2) of it, 1.5 % at 8 a; the square box
+ * holds 0.9935 of the light at a = 0.4 px and 0.9876 at a = 7 px (S64 review, measured against the closed form), and
+ * the weights are renormalised to sum to 1, so that light is put back in the box, not lost: the sprite's total is the
+ * cluster's light, only its far wing is cut.
  */
 export const PLUMMER_REACH = 8;
 
-/** The box's largest half-side, pixels: a bound on the sprite (2 x this + 4 pixels a side), a display choice. */
+/**
+ * The box's largest half-side, pixels: a sampling bound on the sprite (2 x this + 4 pixels a side), fixed, not a
+ * display choice. A knot's disc (half-side its radius + 1) past 59 px radius is truncated by it: its weights sum to
+ * 0.722 at r = 80 px (S64 review, measured), light lost - a radius unreachable above the region regime, where the
+ * knots are drawn. A Plummer box reaches it past a = 7.5 px, where its weights, normalised over the box, keep the light.
+ */
 export const PROFILE_MAX_HALF = 60;
 
 /** The largest half-side, pixels, over which a knot's disc sums its own box (the vertex shader's loop bound): past it the disc's area is the sum to 1e-3 (plummer.test.ts). A bound on work, not a display choice. */
