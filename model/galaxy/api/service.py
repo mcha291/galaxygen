@@ -2126,7 +2126,7 @@ class Service:
 
     def _unresolved(
         self, model: Model, f: Mapping[str, Any], R: np.ndarray, curves: Sequence[Any], per_ring: np.ndarray,
-        contrast: Any, l_min: float,
+        contrast: Any, l_min: float, parts: dict[str, np.ndarray] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
         """The field's remainder under ``l_min`` (S48's wiring, D200 (4)): (the component on the (R, phi) grid, its
         entry in ``components``, the header's ``resolved``).
@@ -2140,7 +2140,8 @@ class Service:
         contrast for the old part, the normalised sfr_modulation for the 20-100 Myr part where the model publishes
         it), so the points and the field agree around the arms. The SED join is not linear, so the parts' responses
         do not sum to the total's exactly: the departure through this request's curves is measured here, per ring,
-        and stated in the header."""
+        and stated in the header. ``parts``, when given, receives the two parts' responses per ring and filter
+        (``middle``, ``old``): what ``only=remainder`` sends (S64, V6, R8; ``api/v6_tiles.py``)."""
         spec = self.grid.spec
         constants = {k: c.value for k, c in model.constants.items()}
         res = _bright.resolve(f, float(spec.t_max), int(spec.n_t), constants, l_min)
@@ -2148,6 +2149,8 @@ class Service:
         a = res.anchors
         middle = _spectra.stellar_response(a["unresolved_middle"], T, curves)
         old = _spectra.stellar_response(a["unresolved_old"], T, curves)
+        if parts is not None:
+            parts.update(middle=middle, old=old)
         modulation = _compose.published(f, "sfr_modulation")
         grid_contrast = np.ones((R.size, self.grid.axes["phi"].n)) if contrast is None else contrast
         weights = _bright.part_weights(grid_contrast, modulation)  # (2, R, phi): middle, old

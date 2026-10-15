@@ -282,15 +282,10 @@ def remainder(service: Service, q: Query) -> Response:
     sed = np.stack([np.asarray(f[f"disc_sed_{b.lower()}"], dtype=float) for b in _spectra.SED_BANDS], axis=-1)
     per_ring = _spectra.stellar_response(sed, f["disc_light_temperature"], curves)
     contrast = _compose.published(f, "pattern_density_contrast")
-    # The full render's own entry and closure (the same method, so the same words and the same numbers) ...
-    _, entry, resolved = service._unresolved(model, f, R, curves, per_ring, contrast, l_min)
-    # ... and its two parts, as _unresolved forms them: one decomposition, each part through the curves at the ring's
-    # colour temperature.
-    spec = service.grid.spec
-    constants = {k: c.value for k, c in model.constants.items()}
-    a = _bright.resolve(f, float(spec.t_max), int(spec.n_t), constants, l_min).anchors
-    T = f["disc_light_temperature"]
-    parts = {p: _spectra.stellar_response(a[f"unresolved_{p}"], T, curves) for p in REMAINDER_PARTS}
+    # The full render's own entry and closure (the same method, so the same words and the same numbers), and its two
+    # parts as it forms them: one decomposition, each part through the curves at the ring's colour temperature.
+    parts: dict[str, np.ndarray] = {}
+    _, entry, resolved = service._unresolved(model, f, R, curves, per_ring, contrast, l_min, parts)
     middle_by = RENDER_MIDDLE_PLACEMENT if _compose.published(f, "sfr_modulation") is not None else RENDER_STARS_PLACEMENT
     weight = {"middle": middle_by, "old": RENDER_STARS_PLACEMENT}
     R_axis = out.grid.axes["R"]
