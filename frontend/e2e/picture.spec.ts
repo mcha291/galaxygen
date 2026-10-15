@@ -24,7 +24,9 @@ import {
   DEFAULT_TEMPLATE,
   DUSTY_LAYER_RATIO,
   DUSTY_RATIO_PIN,
+  DUST_COLUMN_TOLERANCE,
   DUST_FREE,
+  DUST_ONLY,
   GPU_ARGS,
   INPUT_ROUTES,
   LAYER_SUM_TOLERANCE,
@@ -66,6 +68,8 @@ interface FrameRecord {
   sha256: string;
   renderer: string;
   browser: string;
+  /** Seconds from the capture's start to its ready frame (S66, D226 R8): the API's compute included, cold on the first. */
+  ready_s?: number;
 }
 
 interface FramesFile {
@@ -106,7 +110,8 @@ const PLAYWRIGHT = (createRequire(import.meta.url)("@playwright/test/package.jso
 
 const FRAMES_ABOUT =
   "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. " +
-  "`file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.";
+  "`file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it. " +
+  "`ready_s` (since S66, D226 R8) is the seconds from the capture's start to its ready frame - the page's load, the template's choice, the API's compute (cold on the run's first capture, cached after) and the march - the frame-time readout of BUILD_III V7, not the GPU's time per frame.";
 
 /**
  * One /api request as it left the page: its route, the `layer` it asked with and the `template` it named (null: no
@@ -495,10 +500,40 @@ for (const capture of CAPTURES) {
         sha256: createHash("sha256").update(bytes).digest("hex"),
         renderer,
         browser: `chromium ${browser.version()}`,
+        ready_s: Math.round(seconds * 10) / 10,
       });
     }
   });
 }
+
+// The dust's column on screen with the layer's gas map (S66, BUILD_III V7; D226 R2a; settings.ts DUST_ONLY): a frame
+// linear in the dust's column, read with the map in the march and without. Nothing is compared as a picture here.
+test("the dust's column on screen: the gas map in the march keeps the dust-only frame's light", async ({ page }) => {
+  const net = watchApi(page);
+  await page.setViewportSize(CHOOSING_VIEWPORT);
+  await page.goto("/");
+  await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenFrameSum, null, { timeout: READY.timeoutMs });
+  await press(page, MODE_BUTTON.stars);
+  await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
+  for (const label of DUST_ONLY.released) await release(page, label, DUST_ONLY.beside);
+  for (const label of DUST_ONLY.kept) await expect(page.getByRole("button", { name: label, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await press(page, DUST_ONLY.reading);
+  await squareCanvas(page, 1024);
+  // With the points off there is no selection to wait for: the view settles as the field mode's does.
+  const withMap = await settle(page, net, "field");
+  // The Tuning panel's switch, through the panel as a user would: its row's "off".
+  await page.getByRole("button", { name: DUST_ONLY.panel }).click();
+  const row = page.getByText(DUST_ONLY.toggle, { exact: true }).locator("xpath=../..");
+  await row.getByRole("button", { name: "off", exact: true }).click();
+  await expect(row.getByRole("button", { name: "off", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const without = await settle(page, net, "field");
+  const ratio = over(lightOf(withMap), lightOf(without));
+  console.log(`the dust's column on screen: frame sum with the gas map ${withMap.sum}, without ${without.sum}; with over without, per channel: ${ratio.map((r) => r.toFixed(6)).join(", ")}`);
+  expect(withMap.png.equals(without.png), "the gas map drew nothing different").toBe(false);
+  for (const r of ratio) expect(Math.abs(r - 1), `the dust-only frame's light moved by more than ${DUST_COLUMN_TOLERANCE} with the gas map (${ratio.join(", ")})`).toBeLessThan(DUST_COLUMN_TOLERANCE);
+  // Back on, for whatever runs after on this page's storage.
+  await row.getByRole("button", { name: "on", exact: true }).click();
+});
 
 // The switch on the wire, in every request shape the Galaxy view has (S55, D214: invariant I5; rule B13). The
 // captures above show it for the field mode's three routes; this walks the rest - the star-first mode's bright

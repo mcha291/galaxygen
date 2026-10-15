@@ -282,6 +282,9 @@ def test_the_record_beside_the_frames_describes_these_files():
         # Committed frames belong to a renderer: WebGL's UNMASKED_RENDERER string, and the browser's version.
         assert isinstance(entry["renderer"], str) and entry["renderer"].strip(), c["name"]
         assert re.fullmatch(r"chromium \d+(\.\d+)+", entry["browser"]), entry["browser"]
+        # The frame-time readout (S66, D226 R8): the seconds from the capture's start to its ready frame, written by
+        # picture:update - the API's compute included (cold on the run's first capture), not the GPU's time per frame.
+        assert isinstance(entry.get("ready_s"), (int, float)) and entry["ready_s"] > 0, f"{c['name']}: no ready_s"
     package = load(FRONTEND / "package.json")
     assert record["playwright"] == package["devDependencies"][PLAYWRIGHT], "the frames were written by another Playwright"
     # The tolerance the frames were written under is the one the spec compares with.

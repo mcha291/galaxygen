@@ -124,6 +124,31 @@ export const DUSTY_LAYER_RATIO = [0.97275, 0.97786, 0.98691] as const;
 // brighter than physics only by 1.4, 1.1 and 0.7 % (the ratio moved by +0.00377, +0.00437, +0.00494: past the pin).
 export const DUSTY_RATIO_PIN = 1e-3;
 
+/**
+ * The dust's column on screen (S66, BUILD_III V7; D226 R2a): the gas fluctuation map multiplies the dust's placement per
+ * sub-step, and its mean is 1 over every level-0 cell on the model's quadrature lattice - so the dust's column on the
+ * frame's pixels moves only by the lattice's sampling. The gate reads it on a frame that is linear in the column: the
+ * default template at its own camera (face-on, 20 kpc framed) in the star-first mode with the points, the starlight and
+ * the ionized gas switched off (`released`, beside "starlight") and the dust kept in its "where it is" reading
+ * (`reading`) - the diagnostic draws each ring's level times the placement, spread through the dust's layer by its
+ * column, with the depth off (components.ts brightestLayers: dust 0, dustDepth 0) - so the frame's light is a sum over
+ * pixels of a ring weight times the placement times the dust's column, with nothing dimmed and nothing else drawn.
+ * `__galaxygenFrameSum` with "gas fluctuation in the march" (`toggle`, the Tuning panel's March group) on over off, per
+ * channel, must lie within DUST_COLUMN_TOLERANCE of 1. The ruling's number, a sampling tolerance: the probe measured the
+ * whole face-on frame's column, place times the map over place, at -5.9e-4 on 39 pc pixels and +9.3e-4 on the march's
+ * own 78 pc ones (Milky Way), -1.7e-3 on NGC 4414's 59 pc ones (REPORT_PROBE D; RULING_S66 R2a). The transmitted light
+ * is not held: a clumped medium of the same column lets more light through (Jensen), which is the mechanism.
+ */
+export const DUST_ONLY = {
+  released: ["stars", "starlight", "ionized gas"],
+  kept: ["dust"],
+  beside: "starlight",
+  reading: "where it is",
+  toggle: "gas fluctuation in the march",
+  panel: "Tuning — display choices (experimental)",
+} as const;
+export const DUST_COLUMN_TOLERANCE = 3e-3;
+
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
 // S64 (V6, R8): the stars are the tiles in view, so the sentence counts the cells.
 export const SELECTION_TEXT = /every disc star in the [\d,]+ cells in view above/;
