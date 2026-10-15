@@ -10,6 +10,7 @@ import {
   type WhitePoint,
   loadBlackbody,
   loadBrightTable,
+  loadBrightCounts,
   loadBrightTiles,
   loadClouds,
   loadClusters,
@@ -37,7 +38,7 @@ import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
-import { type BrightTable, TileCache, type TilesFrame, pickThreshold, tilesFrame, tilesIn } from "./brightTiles";
+import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, covers, levelCounts, pickThreshold, tilesFrame } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
@@ -321,6 +322,11 @@ export function GalaxyTab({
   // GPU's own clipping now (the route's view= is the tests'): a star in a tile in view and off the screen draws nothing,
   // and nothing else reads the points' set. Nothing is asked for while the star points are switched off (the footprint
   // still cuts the cloud census).
+  // S65 (V6b, RULING_S65 R1): below the stars handover (REGIME_KPC.stars) the tiles are level-k cells, k the field
+  // mode's own levelFor(across) - 1 for 1-4 kpc, 2 for 0.25-1, 3 below - cut from the whole table's level-0 layout by
+  // the rule its per-cells header states (systems.cell_bounds); their counts are the API's for the cells in view
+  // (table=1&cells=&level=), held per (galaxy, level, cell); the threshold is picked over them by the same rule. Above
+  // 4 kpc levelFor is 0 and every request is S64's.
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
   const R = meta.grid.axes.R;
   const wholeDisc = { r_min: R?.lo ?? 0, r_max: rMax, phi_min: 0, phi_max: 2 * Math.PI, level: 0 };
@@ -328,19 +334,37 @@ export function GalaxyTab({
   const pointsOn = mode === "stars" && tuning.compPoints;
   const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
   const brightTable = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal)).value ?? null;
+  const tileLevel = mode === "stars" && view ? levelFor(view.across) : 0;
   const tilesSeen = useMemo(
-    () => (seen && brightTable ? tilesIn(seen, brightTable.layout) : null),
-    [brightTable, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
+    () => (seen && brightTable ? cellsIn(seen, brightTable.layout, tileLevel) : null),
+    [brightTable, tileLevel, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const tileK = tilesSeen && brightTable ? pickThreshold(brightTable, tilesSeen, brightestN) : null;
+  const countRows = useRef(new CountRows()).current;
+  const countsGalaxy = JSON.stringify(query);
+  const countsKey = pointsOn && tilesSeen && tileLevel > 0 ? JSON.stringify(["brightCounts", tileLevel, tilesSeen, countsGalaxy]) : null;
+  const levelLoad = useLoad<CellCounts>(
+    countsKey,
+    (signal) => levelCounts(countRows, countsGalaxy, tileLevel, tilesSeen!, (cells, level, s) => loadBrightCounts(cells, level, query, s), signal),
+    BRIGHT_SETTLE_MS,
+  );
+  // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
+  // in view has its row (B9: no pick over a cell not held).
+  const levelHeld = tileLevel > 0 && levelLoad.value ? countRows.at(countsGalaxy, tileLevel) : null;
+  const tileCounts: BrightTable | CellCounts | null =
+    tileLevel === 0 ? brightTable : levelHeld && tilesSeen && covers(levelHeld, tilesSeen) ? levelHeld : null;
+  const tileK = tilesSeen && tileCounts ? pickThreshold(tileCounts, tilesSeen, brightestN) : null;
   const tileCache = useRef(new TileCache()).current;
   const tileWhites = useRef(new Map<string, unknown>()).current;
   const tileGalaxy = JSON.stringify([filterSet, whiteKelvin, query]);
-  const brightKey = pointsOn && tilesSeen && tileK != null ? JSON.stringify([tilesSeen, tileK, tileGalaxy]) : null;
+  const brightKey = pointsOn && tilesSeen && tileK != null ? JSON.stringify([tilesSeen, tileK, tileLevel, tileGalaxy]) : null;
   const brightLoad = useLoad<TilesFrame>(
     brightKey,
     (signal) =>
-      tilesFrame(tileCache, tileGalaxy, tilesSeen!, tileK!, brightTable!, (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s), tileWhites, signal),
+      tilesFrame(
+        tileCache, tileGalaxy, tilesSeen!, tileK!, tileCounts!,
+        (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s, tileLevel),
+        tileWhites, signal, tileLevel,
+      ),
     BRIGHT_SETTLE_MS,
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
@@ -410,7 +434,9 @@ export function GalaxyTab({
   const pickStar = (row: number) => {
     if (!bright) return;
     const c = bright.columns as Record<string, ArrayLike<number | bigint>>;
-    setPicked({ title: `bright star · cell ${named(c, row, "cell")}, rank ${named(c, row, "rank")}`, rows: summaryRows(meta, bright.columns, row, STAR_SUMMARY) });
+    // Its name at every tile level (S65): the finest cell's - the rows are named by level-3 cell and rank, the tile's
+    // level a request's, never the star's (D190's three columns are the region's rows').
+    setPicked({ title: `bright star · level 3, cell ${named(c, row, "cell")}, rank ${named(c, row, "rank")}`, rows: summaryRows(meta, bright.columns, row, STAR_SUMMARY) });
   };
   const pickCluster = (row: number) => {
     if (!clusterCensus) return;

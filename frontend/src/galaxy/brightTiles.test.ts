@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { type BrightTable, type CellLayout, type TileAnswer, TileCache, expectedIn, pickThreshold, placeRemainder, splitByTile, tilesFrame, tilesIn, unionOf } from "./brightTiles";
+import { type BrightTable, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, cellsIn, covers, expectedIn, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf } from "./brightTiles";
+import { levelFor } from "./region";
 
 // A layout of the API's shape: 32 rings from 0.0375 to 29.9625 kpc (the default grid's R[0], R[-1]), 32 sectors.
 const LAYOUT: CellLayout = {
@@ -146,5 +147,135 @@ describe("placeRemainder: the remainder's rule, a product and a sum", () => {
     expect(placeRemainder(undefined, [1], [1], [1], 1)).toBeNull();
     expect(placeRemainder([1, 2], [1], [1], [1], 1)).toBeNull();
     expect(placeRemainder([1, 2, 3], [1, 2, 3], [1, 1], [1, 1], 2)).toBeNull();
+  });
+});
+
+// --- S65 (V6b, RULING_S65 R1): the tiles at level k ------------------------------------------------------------------
+
+describe("cellsIn and tileOf: the footprint as level-k cells, as systems.cells_in and cell_bounds cut them", () => {
+  it("is tilesIn at level 0, and at level k each level-0 cell's 4^k children that meet the window, ascending", () => {
+    const w = { r_min: 8.0, r_max: 8.6, phi_min: 1.0, phi_max: 1.2 };
+    expect(cellsIn(w, LAYOUT, 0)).toEqual(tilesIn(w, LAYOUT));
+    for (const level of [1, 2, 3]) {
+      const got = cellsIn(w, LAYOUT, level);
+      expect([...got].sort((a, b) => a - b)).toEqual(got);
+      // every one stands in a level-0 cell the window meets, and the level-0 cells are exactly those
+      expect([...new Set(got.map((c) => Math.floor(c / 4 ** level)))]).toEqual(tilesIn(w, LAYOUT));
+      expect(got.length).toBeLessThan(tilesIn(w, LAYOUT).length * 4 ** level);
+    }
+  });
+
+  it("a window that is exactly one level-k cell names that cell and no neighbour", () => {
+    const e = LAYOUT.ring_edges;
+    const s = LAYOUT.sector_edges;
+    // tile 261 (ring 8, sector 5); at level 1 its child q = 2 is sub-ring 1, sub-sector 0
+    const r0 = e[8] + ((e[9] - e[8]) * 1) / 2;
+    const r1 = e[8] + ((e[9] - e[8]) * 2) / 2;
+    const p0 = s[5];
+    const p1 = s[5] + ((s[6] - s[5]) * 1) / 2;
+    const w = { r_min: r0, r_max: r1, phi_min: p0, phi_max: p1 };
+    expect(cellsIn(w, LAYOUT, 1)).toEqual([261 * 4 + 2]);
+    // its four level-2 children (sub-rings 2-3, sub-sectors 0-1), and at level 3 its sixteen
+    expect(cellsIn(w, LAYOUT, 2)).toEqual([4184, 4185, 4188, 4189]);
+    expect(cellsIn(w, LAYOUT, 3)).toHaveLength(16);
+  });
+
+  it("the whole disc is every level-k cell once", () => {
+    for (const level of [1, 2]) {
+      const all = cellsIn({ r_min: 0, r_max: 30, phi_min: 0, phi_max: 2 * Math.PI }, LAYOUT, level);
+      expect(all).toHaveLength(1024 * 4 ** level);
+      expect(new Set(all).size).toBe(all.length);
+    }
+  });
+
+  it("tileOf names the level-k cell a finest cell stands in: cell / 64 at level 0, the finest cell itself at level 3", () => {
+    expect(tileOf(261 * 64 + 63, 0)).toBe(261);
+    expect(tileOf(16747, 3)).toBe(16747);
+    // finest cell 261*64 + (5*8 + 6): sub-ring 5, sub-sector 6 of tile 261 -> level 1: (1, 1) = q 3; level 2: (2, 3) = q 11
+    const c = 261 * 64 + 5 * 8 + 6;
+    expect([tileOf(c, 1), tileOf(c, 2)]).toEqual([261 * 4 + 3, 261 * 16 + 11]);
+  });
+
+  it("the level the star-first view asks is the field mode's levelFor: 0 from 4 kpc, 1 to 1, 2 to 0.25, 3 below", () => {
+    expect([20, 15, 4, 3.9, 1, 0.99, 0.5, 0.25, 0.24, 0.062].map(levelFor)).toEqual([0, 0, 0, 1, 1, 2, 2, 2, 3, 3]);
+  });
+});
+
+describe("CountRows and levelCounts: the level-k rows held by (galaxy, level, cell)", () => {
+  const answer = (cells: number[]): CountsAnswer => ({
+    thresholds: [1000, 1122, 1259, 1413],
+    expected: Float32Array.from(cells.flatMap((c) => [100, 40, 10, 0].map((v) => v * (c === 7 ? 10 : 1)))),
+    cells: [...cells].sort((a, b) => a - b),
+  });
+
+  it("asks only the rows not held, and picks the threshold over the level-k cells by the table's rule", async () => {
+    const asked: [number[], number][] = [];
+    const ask = async (cells: number[], level: number) => {
+      asked.push([cells, level]);
+      return answer(cells);
+    };
+    const rows = new CountRows();
+    const a = await levelCounts(rows, "g", 2, [5, 6], ask);
+    expect(asked).toEqual([[[5, 6], 2]]);
+    expect([covers(a, [5, 6]), covers(a, [5, 7])]).toEqual([true, false]);
+    const b = await levelCounts(rows, "g", 2, [6, 7], ask);
+    expect(asked[1]).toEqual([[7], 2]);
+    expect(expectedIn(b, [6, 7], 0)).toBe(1100);
+    expect(pickThreshold(b, [5, 6], 80)).toBe(1);
+    expect(pickThreshold(b, [5, 7], 100)).toBe(3); // cell 7 holds 100 at the third threshold
+    // another level and another galaxy hold their own rows
+    await levelCounts(rows, "g", 3, [5], ask);
+    await levelCounts(rows, "h", 2, [5], ask);
+    expect(asked.slice(2)).toEqual([[[5], 3], [[5], 2]]);
+    expect(CountRows.key("g", 2, 5)).not.toBe(CountRows.key("g", 3, 5));
+  });
+
+  it("refuses an answer that names other cells than asked", async () => {
+    const ask = async () => answer([1]);
+    await expect(levelCounts(new CountRows(), "g", 1, [1, 2], ask)).rejects.toThrow(/answered 1 cells, asked 2/);
+  });
+});
+
+describe("tilesFrame at level k: held by (galaxy, level, tile, threshold), split by tileOf", () => {
+  /** A level-2 answer: each tile's rows in its first two finest cells, by tile ascending. */
+  function levelAnswer(tiles: number[], n: number, level = 2): TileAnswer {
+    const cells: bigint[] = [];
+    const lum: number[] = [];
+    for (const t of [...tiles].sort((a, b) => a - b)) {
+      const parent = Math.floor(t / 16);
+      const q = t % 16;
+      const finest = parent * 64 + Math.floor(q / 4) * 2 * 8 + (q % 4) * 2; // its first finest cell
+      for (let i = 0; i < n; i += 1) {
+        cells.push(BigInt(finest + (i % 2)));
+        lum.push(t + i);
+      }
+    }
+    return {
+      columns: { cell: BigInt64Array.from(cells), bright_star_luminosity: Float32Array.from(lum) },
+      header: { tile: { cells: [...tiles].sort((a, b) => a - b), l_min_used: 1122, level }, cells: { count: 4 * tiles.length }, white: null },
+      bytes: cells.length * 12,
+    };
+  }
+
+  it("splits each level-k tile's run, holds it at its level and asks with that level", async () => {
+    const asked: number[][] = [];
+    const ask = async (cells: number[]) => {
+      asked.push(cells);
+      return levelAnswer(cells, 3);
+    };
+    const cache = new TileCache();
+    const rows = new CountRows();
+    const table = async (c: number[]): Promise<CountsAnswer> => ({ thresholds: [1000, 1122], expected: Float32Array.from(c.flatMap(() => [50, 5])), cells: c });
+    await levelCounts(rows, "g", 2, [4176, 4177, 4190], table);
+    const counts = rows.at("g", 2)!;
+    const f = await tilesFrame(cache, "g", [4176, 4177, 4190], 1, counts, ask, new Map(), undefined, 2);
+    expect([f.header.count.returned, f.header.count.expected, f.header.tiles.level]).toEqual([9, 15, 2]);
+    expect(cache.get("g", 4190, 1, 2)?.rows).toBe(3);
+    expect(cache.get("g", 4190, 1, 0)).toBeUndefined(); // the level is in the key
+    await tilesFrame(cache, "g", [4177, 4190], 1, counts, ask, new Map(), undefined, 2);
+    expect(asked).toEqual([[4176, 4177, 4190]]);
+    // an answer at another level than asked is refused
+    const wrong = async (c: number[]) => levelAnswer(c, 1, 1);
+    await expect(tilesFrame(new TileCache(), "g", [4176], 1, counts, wrong, new Map(), undefined, 2)).rejects.toThrow(/level 1, asked at 2/);
   });
 });
