@@ -10,6 +10,7 @@
 // 100 L☉ stay where they are and are tuned by a multiplier of 1.
 
 import { WHITE_KELVIN } from "./filters";
+import { CLOUD_RASTER } from "./cloudOpacity";
 import { CLOSE_FIELD_FLOOR, SUB_SAMPLES_MAX } from "./regimes";
 
 /** Ray-march steps through the galaxy's bounding box. */
@@ -63,7 +64,7 @@ export interface Tuning {
   pointGain: number;
   // The star-first mode's component layers (D205, D208): the picture's four on by default (the stars, the
   // starlight, the ionized gas and the dust as it acts), the two diagnostics off.
-  /** The mode's own picture, the N brightest stars in view as points: on by default, switched off to see a layer alone. */
+  /** The mode's own picture, the stars in the cells in view above the frame's threshold as points: on by default, switched off to see a layer alone. */
   compPoints: boolean;
   /** The field's stellar layer and the bulge, as a volume. */
   compStars: boolean;
@@ -88,6 +89,17 @@ export interface Tuning {
   ageMiddle: boolean;
   /** The old part's light. */
   ageOld: boolean;
+  // The clouds as extinction (S64, BUILD_III V6): the census's own dust drawn as a layer of opacity, and the raster's
+  // resolution.
+  /** The clouds' layer of opacity drawn (the diffuse dust is the render's reduced one either way). */
+  cloudsExtinction: boolean;
+  /** The clouds' raster, texels per render cell on each axis (cloudOpacity.ts). */
+  cloudRaster: number;
+  // The HII regions as knots and the clusters with their radius (S64, BUILD_III V6; RULING_S64 R5-R7).
+  /** The field mode's HII regions drawn as knots, the field's HII layers scaled by each cell's undrawn share. */
+  knots: boolean;
+  /** A cluster drawn with its Plummer profile once its half-mass diameter fills a pixel. */
+  clusterRadius: boolean;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -120,6 +132,10 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   ageYoung: true,
   ageMiddle: true,
   ageOld: true,
+  cloudsExtinction: true,
+  cloudRaster: CLOUD_RASTER,
+  knots: true,
+  clusterRadius: true,
 });
 
 export type TuningKey = keyof Tuning;
@@ -224,7 +240,7 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "compPoints", label: "stars", group: "Components", kind: "toggle", switch: true,
-    about: "The brightest mode's own picture: the N most luminous stars in view, as points. A display choice of what is drawn.",
+    about: "The star-first mode's own picture: every disc star in the cells in view above the frame's threshold (the faintest the point budget allows), as points. A display choice of what is drawn.",
   },
   {
     key: "compStars", label: "starlight", group: "Components", kind: "toggle", switch: true,
@@ -278,6 +294,43 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "ageOld", label: "old stars", group: "Components", kind: "toggle", switch: true,
     about: "The field's starlight of the old part, placed round each ring by its own weight (S63, D223). A display choice of what is drawn.",
+  },
+  {
+    key: "cloudsExtinction", label: "clouds as extinction", group: "Components", kind: "toggle", switch: true,
+    about:
+      "The molecular clouds' own dust as a layer of opacity in the clouds' layer: /api/clouds' cloud_dust_extinction_v, " +
+      "rasterised conserving each cloud's A_V x area (S64, V6). Off draws no clouds' layer; the diffuse dust stays the " +
+      "render's reduced one (dust_diffuse_share, the model's), so off shows the dust without what the clouds hold. A display choice.",
+  },
+  {
+    key: "knots", label: "HII regions as knots", group: "Components", kind: "toggle", switch: true,
+    about:
+      "The field mode's HII regions as knots at galaxy scale: each cluster's region a point of its own lines through the " +
+      "filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills a pixel; in each level-0 " +
+      "cell the field's HII layers are scaled by 1 - D_c / K_c, D_c the Halpha of the knots drawn there and K_c of every " +
+      "knot the cell names; a cell that names no knot by 1 - d, d the drawn share of the whole census's Halpha. With " +
+      "every knot drawn the screen carries the census exactly, with none the field; the knots' Halpha " +
+      "is 0.921 of the field's on the Milky Way and 1.081 on NGC 4414 (the census's own draw, a measured check, not a " +
+      "target) (S64, V6). A display choice.",
+  },
+  {
+    key: "clusterRadius", label: "clusters with their radius", group: "Components", kind: "toggle", switch: true,
+    about:
+      "A cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills a pixel, in place " +
+      "of the point sprite, its light the same (S64, V6, T6). At galaxy scale no cluster is that large: it shows below " +
+      "about 1 kpc across. A display choice.",
+  },
+  {
+    key: "cloudRaster", label: "cloud raster", group: "March", kind: "range", min: 1, max: CLOUD_RASTER, step: 1, integer: true, unit: "texels / cell",
+    about:
+      `The clouds' opacity raster, texels per render cell on each axis. The default, ${CLOUD_RASTER}, is the finest whose ` +
+      `float32 texture fits 16 MiB on the 400 x 360 render grid (${400 * CLOUD_RASTER} x ${360 * CLOUD_RASTER} texels, ` +
+      `${((400 * CLOUD_RASTER * 360 * CLOUD_RASTER * 4) / 1e6).toFixed(1)} MB; computed in cloudOpacity.ts). Every cloud's A_V x area is ` +
+      "conserved at any setting: a display resolution, not light. Beside it a half-float texture of the same texels holds each " +
+      "texel's slab (4 bytes a texel: 14.4 MB more at the default, 28.8 MB the two): the clouds are drawn at their own heights, " +
+      "a texel holding one cloud as exactly that cloud at its height and extent, one holding several as one uniform slab " +
+      "spanning them (their A_V-weighted mean height, half-thickness the rms of their heights in quadrature with their mean " +
+      "radius) - the approximation, finer as the raster is finer.",
   },
 ];
 

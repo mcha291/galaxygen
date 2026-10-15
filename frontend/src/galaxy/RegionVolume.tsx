@@ -29,7 +29,17 @@ import { useLoad } from "../useLoad";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
 import { type FilterSetName, WHITE_KELVIN, curvesOf, whiteOf } from "./filters";
 import { echoedLayer } from "./layer";
-import { type LineWeights, MAX_OBJECTS, OBJECT_FLOATS, cloudInterior, packObjects, regionFragment, sortedFrom } from "./region";
+import {
+  type LineWeights,
+  MAX_OBJECTS,
+  OBJECT_FLOATS,
+  REGION_ORDER,
+  REGION_TRANSMISSION_KEY,
+  cloudInterior,
+  packObjects,
+  regionFragment,
+  sortedFrom,
+} from "./region";
 import type { RegionWindow } from "./regimes";
 
 /** The most pixels the region is marched at (as FieldVolume's budget): the loop over objects runs per pixel. */
@@ -85,8 +95,10 @@ interface Props {
 /**
  * The region regime (BUILD_II V3): a window's clouds, HII regions and bubble shells drawn from the published
  * vectors (RENDER_PHYSICS §5), marched per pixel front to back. Emission is added to the frame; the clouds'
- * transmission multiplies what lies behind them in a second pass — the field and the stars alike, a star in front
- * of a cloud included (an approximation of the composite, stated in HANDOFF_S40). The line's per-filter weight and
+ * transmission is a second pass, whose colour is the whole ray's T and whose alpha the clouds' front distance
+ * (region.ts NO_FRONT, S64 T5). The field is multiplied by T, in front of a cloud as well (the stated
+ * approximation); the star points take T themselves, only behind the front (region.ts `patchPointsForRegion`;
+ * HANDOFF_S40's approximation, a star in front of a cloud darkened too, is gone). The line's per-filter weight and
  * the dust's extinction ratios are the model's (`/api/render` at the region's level), the white point the viewer's.
  */
 export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN, onInterior }: Props) {
@@ -159,6 +171,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
   }, [note]); // eslint-disable-line react-hooks/exhaustive-deps -- the tab's setter; the note is what changes
 
   const gl = useThree((state) => state.gl);
+  const frame = useThree((state) => state.scene);
 
   const passes = useMemo(() => {
     if (!built) return null;
@@ -184,7 +197,11 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
         }),
       );
       quad.frustumCulled = false;
-      quad.renderOrder = mode === 0 ? 2 : 1;
+      // The multiply (REGION_ORDER.multiply) dims what is drawn before it: the field's quad (renderOrder -1) under
+      // it is dimmed by the whole ray's T, the field in front of a cloud as well - the stated approximation of T5
+      // (RULING_S64 R9; the exact version, T at K depth slabs, is not the smallest). The star points draw after it
+      // (REGION_ORDER.points) and take T themselves only behind the clouds' front; the light adds last.
+      quad.renderOrder = mode === 0 ? REGION_ORDER.light : REGION_ORDER.multiply;
       return { scene, target, quad, mesh };
     });
   }, [built]);
@@ -203,6 +220,17 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     },
     [built, passes],
   );
+
+  // The transmission target, for the star points (T5): left on the frame's scene while the quads are mounted, so
+  // the points read the T and the front this pass drew, and taken away with them.
+  useEffect(() => {
+    if (!passes) return;
+    const texture = passes[1].target.texture;
+    frame.userData[REGION_TRANSMISSION_KEY] = texture;
+    return () => {
+      if (frame.userData[REGION_TRANSMISSION_KEY] === texture) delete frame.userData[REGION_TRANSMISSION_KEY];
+    };
+  }, [frame, passes]);
 
   const last = useMemo(() => ({ view: new Matrix4(), projection: new Matrix4(), gain: -1, weight: -1, width: 0, height: 0 }), [passes]);
   useFrame(({ camera }) => {
@@ -230,7 +258,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
       u.weight.value = weight;
       gl.setRenderTarget(p.target);
       // The transmission pass multiplies the frame by its image, so where no ray meets an object it must read 1,
-      // not the 0 a black clear leaves (outside the objects' box the frame went black).
+      // not the 0 a black clear leaves (outside the objects' box the frame went black). Its alpha, 1, is NO_FRONT.
       gl.setClearColor(p.mesh === passes[1].mesh ? 0xffffff : 0x000000, 1);
       gl.clear(true, false, false);
       gl.render(p.scene, camera);

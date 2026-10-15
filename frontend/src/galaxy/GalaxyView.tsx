@@ -11,6 +11,7 @@ import {
   Matrix4,
   NormalBlending,
   type PerspectiveCamera,
+  type Points,
   ReinhardToneMapping,
   type ToneMapping as ThreeToneMapping,
   Vector2,
@@ -24,6 +25,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { type CaptureCamera, DEFAULT_FOV, type LensCamera, isLens, lensScale, orbitPosition, standOf } from "./capture";
 import { extent } from "./positions";
+import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
@@ -437,11 +439,30 @@ function Picker({ layers }: { layers: StarLayer[] }) {
   return null;
 }
 
+/**
+ * A layer of star points. In the region regime (S64, T5) each star takes the clouds' transmission itself, behind
+ * the clouds' front only (region.ts `patchPointsForRegion`, an `onBeforeCompile` patch on the points material: the
+ * smallest change that does it - the material's sprite, alpha test, size, vertex colours and blending stay three's
+ * own, and a ShaderMaterial would re-write all of them), drawn after the region's multiply quad so the quad no
+ * longer dims them. Without a region in the scene the order and every colour are as before.
+ */
 function Stars({ layer, additive, psf, spriteSize }: { layer: StarLayer; additive: boolean; psf: SpritePsf | null; spriteSize: number }) {
   const opacity = layer.opacity ?? 1;
+  const points = useRef<Points>(null);
+  const region = useMemo(() => {
+    const uniforms: PointsRegionUniforms = { regionTransmission: { value: null }, regionOn: { value: false } };
+    return { uniforms, onBeforeCompile: (shader: Parameters<typeof patchPointsForRegion>[0]) => patchPointsForRegion(shader, uniforms) };
+  }, []);
+  // Each frame, before the scene is sorted: the region volume's transmission texture if one is in the scene.
+  useFrame(({ scene }) => {
+    const texture = scene.userData[REGION_TRANSMISSION_KEY] ?? null;
+    region.uniforms.regionTransmission.value = texture;
+    region.uniforms.regionOn.value = texture !== null;
+    if (points.current) points.current.renderOrder = texture !== null ? REGION_ORDER.points : POINTS_ORDER_WITHOUT_REGION;
+  });
   return (
     // No pointer handlers: picking is the Picker's, in screen space.
-    <points visible={opacity > 0.01}>
+    <points ref={points} visible={opacity > 0.01}>
       <bufferGeometry key={layer.positions.length}>
         <bufferAttribute attach="attributes-position" args={[layer.positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[layer.colors, 3]} />
@@ -460,6 +481,7 @@ function Stars({ layer, additive, psf, spriteSize }: { layer: StarLayer; additiv
         transparent
         opacity={opacity}
         depthWrite={false}
+        onBeforeCompile={region.onBeforeCompile}
       />
     </points>
   );

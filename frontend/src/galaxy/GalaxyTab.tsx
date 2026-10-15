@@ -2,14 +2,15 @@ import { useMemo, useRef, useState } from "react";
 
 import {
   type BlackbodyTable,
-  type BrightFrame,
   type Census,
   type FieldsPayload,
   type Query,
   type Sample,
   STAR_SAMPLE,
+  type WhitePoint,
   loadBlackbody,
-  loadBright,
+  loadBrightTable,
+  loadBrightTiles,
   loadClouds,
   loadClusters,
   loadRegion,
@@ -28,6 +29,7 @@ import { FieldLegend } from "./FieldLegend";
 import { type AgePart, FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
+import { knotsOf, undrawnShare } from "./knots";
 import { CLUSTER_SUMMARY, STAR_SUMMARY, type SummaryRow, summaryRows } from "./summary";
 import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
@@ -35,6 +37,7 @@ import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
+import { type BrightTable, TileCache, type TilesFrame, pickThreshold, tilesFrame, tilesIn } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
@@ -122,16 +125,17 @@ const REGIME_VIEW_KPC = { field: 45, sampled: 12, stars: 2.5 } as const;
 
 /**
  * The two ways the galaxy is rendered. The field mode is the design brief's three regimes above.
- * The star-first mode (S50, D208) draws what the model can name, on the field's own scale: the N most
- * luminous disc stars inside the camera's frustum (the bright catalogue, complete above its threshold) and
- * every cluster of the census, each a point of its own light through the filter set, over the field no
- * point carries (the render's remainder under that threshold). It replaces the "brightest" mode, whose
- * stars were the brightest of a number-drawn sample.
+ * The star-first mode (S50, D208) draws what the model can name, on the field's own scale: every disc star
+ * above one threshold in the level-0 cells in view (the bright catalogue by tiles since S64, V6: the threshold
+ * the smallest at which the cells in view hold at most the point budget, in expectation) and every cluster
+ * of the census, each a point of its own light through the filter set, over the field no point carries (the
+ * render's remainder under that threshold). It replaces the "brightest" mode, whose stars were the brightest
+ * of a number-drawn sample.
  */
 type Mode = "field" | "stars";
 const MODES: { key: Mode; label: string; what: string }[] = [
   { key: "field", label: "field", what: "The field, the sample and a region's stars, handed over by zoom." },
-  { key: "stars", label: "star-first", what: "The N brightest stars in view and every cluster, as points of their own light over the field no point carries." },
+  { key: "stars", label: "star-first", what: "Every disc star in the cells in view above one threshold a frame - the faintest the point budget allows - and every cluster, as points of their own light over the field no point carries." },
 ];
 /**
  * How long the view must hold still before the star-first mode re-selects: a selection is under a second
@@ -140,17 +144,39 @@ const MODES: { key: Mode; label: string; what: string }[] = [
 const BRIGHT_SETTLE_MS = 250;
 /** A layer that is picked and not drawn by the view's own sprites carries no colours. */
 const NO_COLORS = new Float32Array(0);
-/** The N slider's range, decades: 10² to 10⁵ stars, logarithmic. */
+/** The point budget slider's range, decades: 10² to 10⁵ stars expected in the cells in view, logarithmic. */
 const BRIGHTEST_DECADES = { lo: 2, hi: 5 };
 /** The star-first mode's component switches (D205, D208), each a tuning value: the picture's four on by default, the diagnostics off. */
 const COMPONENT_SWITCHES: { key: "compPoints" | "compStars" | "compGas" | "compDust" | "compClouds" | "compCells"; label: string; what: string }[] = [
-  { key: "compPoints", label: "stars", what: "The N most luminous disc stars in view and every cluster, as points of their own light on the field's scale. Off draws the whole starlight as a volume" },
+  { key: "compPoints", label: "stars", what: "Every disc star in the cells in view above the frame's threshold and every cluster, as points of their own light on the field's scale. Off draws the whole starlight as a volume" },
   { key: "compStars", label: "starlight", what: "The starlight no point carries (all of it while the stars are off) and the bulge, as the volume the model publishes light for" },
   { key: "compGas", label: "ionized gas", what: "The HII regions' layer and the diffuse gas's layer, with their lines, as the field draws them" },
   { key: "compDust", label: "dust", what: "The dust: as it acts (extinction, scattered and thermal light) or where it is (a diagnostic)" },
   { key: "compClouds", label: "molecular clouds", what: "The cloud census as markers sized by cloud_size, painted by cloud_mass's ramp (a diagnostic)" },
   { key: "compCells", label: "cell outlines", what: "The level-0 cells, 32 rings by 32 sectors, the volumes the catalogues are drawn in (a diagnostic)" },
 ];
+/**
+ * The "clouds as extinction" switch's tooltip (S64, V6): the rule and the share, and that off keeps the share.
+ */
+const CLOUDS_EXTINCTION_WHAT =
+  "The molecular clouds' own dust as a layer of opacity in the clouds' layer (cloud_layer_height): each cloud's " +
+  "face-on A_V from /api/clouds' cloud_dust_extinction_v, rasterised conserving its A_V x area. The diffuse dust is " +
+  "the ring's depth x dust_placement x dust_diffuse_share - the share of the ring's dust its realised clouds do not " +
+  "hold (/api/render's clouds entry). Off draws no clouds' layer; the diffuse dust stays reduced by the share (the " +
+  "share is the model's, the switch is display), so off shows the dust without what the clouds hold";
+/**
+ * The knots' switch (S64, V6, R5): the rule, from the clusters header where it has come (knots.rule), and what off does.
+ */
+const KNOTS_WHAT =
+  "The HII regions as knots at galaxy scale (the field mode above the region regime): each cluster's region a point of " +
+  "its own lines through the filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills " +
+  "a pixel, dimmed by the dust in front as the points are. The field's HII layers give way cell by cell: ";
+const KNOTS_OFF = ". Off draws the field's HII layers whole and no knot";
+/** The clusters' radius switch (S64, V6, R7; T6): what it draws and where it shows. */
+const CLUSTER_RADIUS_WHAT =
+  "In the star-first mode, a cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills " +
+  "a pixel, its light the same as the point's, in place of the instrument's sprite. No cluster is that large at galaxy " +
+  "scale: it shows below about 1 kpc across (the median cluster) to 6 kpc (the largest)";
 /** The field mode's age switches (S63, D223): each part's tuning value. */
 const AGE_SWITCH = { young: "ageYoung", middle: "ageMiddle", old: "ageOld" } as const;
 const DUST_READINGS:{ key: "acts" | "where"; label: string; what: string }[] = [
@@ -158,9 +184,6 @@ const DUST_READINGS:{ key: "acts" | "where"; label: string; what: string }[] = [
   { key: "where", label: "where it is", what: "A diagnostic: its optical depth along each line of sight drawn as light through a declared ramp, normalised to its peak face-on depth, dimming nothing" },
 ];
 const brightestOf = (slider: number) => Math.round(10 ** (BRIGHTEST_DECADES.lo + ((BRIGHTEST_DECADES.hi - BRIGHTEST_DECADES.lo) * slider) / 1000));
-
-/** The view-projection rounded so the request key does not change with the last bits of a settled camera. */
-const roundedView = (m: number[]) => m.map((v) => Number(v.toPrecision(5)));
 
 /**
  * The zoom slider position that makes the view `width` kpc across. The slider is linear in
@@ -291,25 +314,41 @@ export function GalaxyTab({
     return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable, pointGain);
   }, [meta, shownClusters, exposure, blackbodyTable, pointGain]);
 
-  // The star-first mode (D208): the frustum's footprint, and the N brightest disc stars inside the frustum, each
-  // with its own light through the filter set. Nothing is asked for while the star points are switched off (the
-  // footprint still cuts the cloud census).
+  // The star-first mode (D208): the frustum's footprint, and the disc stars in it by tiles (S64, V6, R8): the footprint
+  // resolved to level-0 cells, ONE threshold per frame picked from the API's table of expected counts per tile - the
+  // smallest grid threshold at which the tiles in view hold at most the point budget (the N slider, a tuning value,
+  // 10^3.5 by default as the N it was) - and each tile asked at it, held by (tile, threshold). The frustum cut is the
+  // GPU's own clipping now (the route's view= is the tests'): a star in a tile in view and off the screen draws nothing,
+  // and nothing else reads the points' set. Nothing is asked for while the star points are switched off (the footprint
+  // still cuts the cloud census).
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
   const R = meta.grid.axes.R;
   const wholeDisc = { r_min: R?.lo ?? 0, r_max: rMax, phi_min: 0, phi_max: 2 * Math.PI, level: 0 };
   const seen = mode === "stars" && view ? footprint(view.camera.viewProjection, rMax) : null;
   const pointsOn = mode === "stars" && tuning.compPoints;
-  const brightKey =
-    seen && view && pointsOn ? JSON.stringify([seen, brightestN, roundedView(view.camera.viewProjection), filterSet, whiteKelvin, query]) : null;
-  const brightLoad = useLoad<BrightFrame>(
+  const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
+  const brightTable = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal)).value ?? null;
+  const tilesSeen = useMemo(
+    () => (seen && brightTable ? tilesIn(seen, brightTable.layout) : null),
+    [brightTable, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const tileK = tilesSeen && brightTable ? pickThreshold(brightTable, tilesSeen, brightestN) : null;
+  const tileCache = useRef(new TileCache()).current;
+  const tileWhites = useRef(new Map<string, unknown>()).current;
+  const tileGalaxy = JSON.stringify([filterSet, whiteKelvin, query]);
+  const brightKey = pointsOn && tilesSeen && tileK != null ? JSON.stringify([tilesSeen, tileK, tileGalaxy]) : null;
+  const brightLoad = useLoad<TilesFrame>(
     brightKey,
-    (signal) => loadBright(seen!, brightestN, view!.camera.viewProjection, curvesOf(filterSet), whiteKelvin, query, signal),
+    (signal) =>
+      tilesFrame(tileCache, tileGalaxy, tilesSeen!, tileK!, brightTable!, (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s), tileWhites, signal),
     BRIGHT_SETTLE_MS,
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster
   // of the disc with its own light through the set, loaded once per set and query (about 13 000).
-  const starClustersKey = pointsOn ? JSON.stringify(["clusters", filterSet, whiteKelvin, query]) : null;
+  // S64 (V6, R5): the same request serves the field mode's knots (each cluster's line_response beside its response).
+  const knotsWanted = mode === "field" && tuning.knots;
+  const starClustersKey = pointsOn || knotsWanted ? JSON.stringify(["clusters", filterSet, whiteKelvin, query]) : null;
   const starClusters = useLoad<Census>(starClustersKey, (signal) =>
     loadClusters(wholeDisc, query, signal, { curves: curvesOf(filterSet), white: whiteKelvin }),
   ).value;
@@ -321,7 +360,7 @@ export function GalaxyTab({
     if (!bright) return null;
     const c = bright.columns as Record<string, ArrayLike<number>>;
     if (!c.bright_star_radius) return null;
-    const flux = fluxOf(c.response, bright.header.white?.response, c.bright_star_radius.length);
+    const flux = fluxOf(c.response, (bright.header.white as WhitePoint | undefined)?.response, c.bright_star_radius.length);
     return flux ? { positions: toScene(c.bright_star_radius, c.bright_star_azimuth, c.bright_star_height), flux } : null;
   }, [bright]);
   const clusterPoints = useMemo(() => {
@@ -329,14 +368,41 @@ export function GalaxyTab({
     const c = clusterCensus.columns as Record<string, ArrayLike<number>>;
     if (!c.cluster_radius) return null;
     const flux = fluxOf(c.response, clusterCensus.header.white?.response, c.cluster_radius.length);
-    return flux ? { positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height), flux } : null;
+    // S64 (V6, R7): each cluster's half-mass radius, pc, for its Plummer profile once it fills a pixel.
+    const extent = c.cluster_half_mass_radius ? Float32Array.from(c.cluster_half_mass_radius) : null;
+    return flux ? { positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height), flux, extent } : null;
   }, [clusterCensus]);
+  // The HII regions as knots (S64, V6, R5-R6): in the field mode at galaxy scale - above the region regime, whose
+  // resolved spheres are the regions there - every cluster's region a point of its own lines through the set, sized by
+  // its Stromgren radius, on the field's scale and at its weight; and in each level-0 cell the field's HII layers scaled
+  // by the share of the cell's census not drawn (the clusters header's knots.rule), a cell naming none by the disc's:
+  // all drawn, so 0 in every cell.
+  const knotsCensus = knotsWanted && starClusters ? starClusters : null;
+  const knotsHeader = knotsOf(knotsCensus);
+  const knotsDrawn = knotsWanted && !area;
+  const knotPoints = useMemo(() => {
+    if (!knotsCensus || !knotsHeader) return null;
+    const c = knotsCensus.columns as Record<string, ArrayLike<number>>;
+    if (!c.cluster_radius || !c[knotsHeader.size]) return null;
+    const flux = fluxOf(c[knotsHeader.column], knotsCensus.header.white?.response, c.cluster_radius.length);
+    if (!flux) return null;
+    return {
+      positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height),
+      flux,
+      extent: Float32Array.from(c[knotsHeader.size]),
+      share: { share: undrawnShare(c[knotsHeader.cell], c[knotsHeader.light], true, knotsHeader.layout), layout: knotsHeader.layout },
+    };
+  }, [knotsCensus, knotsHeader]);
+  const knotsShown = knotsDrawn && knotPoints ? knotPoints : null;
   // One gain for the field and the points (D208): the field's per L☉/pc², its gain and the exposure's stops; the
   // point gain stays a display multiplier on the points (D199).
   const pointsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * pointGain;
   // The march's dust, handed up by the field volume for the segment to each point (T20): only as it acts.
   const [fieldDust, setFieldDust] = useState<PointDust | null>(null);
   const pointDust = mode === "stars" && tuning.compDust && tuning.dustReading === "acts" ? fieldDust : null;
+  // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
+  const knotDust = mode === "field" ? fieldDust : null;
+  const knotsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * weights.field;
   // What a click on a point opened (T23): the object's own published columns.
   const [picked, setPicked] = useState<{ title: string; rows: SummaryRow[] } | null>(null);
   const named = (columns: Record<string, ArrayLike<number | bigint>>, row: number, key: string) =>
@@ -358,9 +424,14 @@ export function GalaxyTab({
   const [dustPaint, setDustPaint] = useState<DustPaintShown | null>(null);
   const marchLayers = brightestLayers(tuning, ramp);
   const diagnostic = mode === "stars" && diagnosticOn(tuning);
-  // The whole disc's cloud census, loaded once per query (about 17 000 clouds) and cut to the footprint here.
-  const cloudsKey = mode === "stars" && tuning.compClouds ? JSON.stringify(["clouds", query]) : null;
-  const cloudCensus = useLoad<Census>(cloudsKey, (signal) => loadClouds(wholeDisc, query, signal)).value ?? null;
+  // The whole disc's cloud census, loaded once per query (about 17 000 clouds), float32 (S64): cut to the footprint
+  // here for the markers, and rasterised by the field's march into the clouds' layer of opacity (V6, "clouds as
+  // extinction"). One request serves both.
+  const cloudsWanted = (mode === "stars" && tuning.compClouds) || tuning.cloudsExtinction;
+  const cloudsKey = cloudsWanted ? JSON.stringify(["clouds", "f4", query]) : null;
+  const wholeClouds = useLoad<Census>(cloudsKey, (signal) => loadClouds(wholeDisc, query, signal, "f4")).value ?? null;
+  const cloudCensus = mode === "stars" && tuning.compClouds ? wholeClouds : null;
+  const extinctionClouds = tuning.cloudsExtinction ? wholeClouds : null;
   const cloudPaint = useMemo(() => {
     if (!cloudCensus || !CLOUD_COLUMNS.every((k) => k in cloudCensus.columns)) return null;
     try {
@@ -455,7 +526,15 @@ export function GalaxyTab({
             stats={marchStats}
             ages={agesOf(tuning)}
             onAges={setAgeParts}
+            clouds={extinctionClouds}
+            cloudsOn={tuning.cloudsExtinction}
+            hiiShare={knotsShown ? knotsShown.share : null}
+            onDust={setFieldDust}
           />
+        )}
+        {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
+        {knotsShown && (
+          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
             its starlight the remainder under the points' threshold (the whole of it while the points are off). */}
@@ -472,11 +551,22 @@ export function GalaxyTab({
             onDepth={setDustPaint}
             lMin={lMin}
             onDust={setFieldDust}
+            clouds={extinctionClouds}
+            cloudsOn={tuning.cloudsExtinction}
           />
         )}
         {/* The points, on the field's scale (D208): the clusters first, the bright stars over them. */}
         {clusterPoints && (
-          <FluxPoints positions={clusterPoints.positions} flux={clusterPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} />
+          <FluxPoints
+            positions={clusterPoints.positions}
+            flux={clusterPoints.flux}
+            gain={pointsGain}
+            psf={spritePsf}
+            spriteSize={tuning.spriteSize}
+            dust={pointDust}
+            extent={clusterPoints.extent}
+            profile={tuning.clusterRadius ? 1 : 0}
+          />
         )}
         {brightPoints && (
           <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} />
@@ -571,7 +661,7 @@ export function GalaxyTab({
           {mode === "stars" && (
             <>
               <div className={styles.zoomHead}>
-                <span className={styles.label}>Brightest</span>
+                <span className={styles.label}>Point budget</span>
                 <span className={styles.value}>{brightestN.toLocaleString("en")} stars</span>
               </div>
               <input
@@ -580,7 +670,7 @@ export function GalaxyTab({
                 min={0}
                 max={1000}
                 value={brightestSlider}
-                aria-label="Brightest stars in view"
+                aria-label="Point budget: the most stars expected in the cells in view"
                 onChange={(e) => setBrightestSlider(Number(e.target.value))}
               />
             </>
@@ -613,6 +703,38 @@ export function GalaxyTab({
             </p>
           </div>
         )}
+
+        {/* The clouds as extinction (S64, BUILD_III V6): the census's own dust as a layer of opacity in the clouds'
+            layer, on by default. The diffuse dust is the render's reduced one whether it is on or off. */}
+        <div className={styles.section}>
+          <div className={styles.chips}>
+            <button
+              type="button"
+              aria-pressed={tuning.cloudsExtinction}
+              title={CLOUDS_EXTINCTION_WHAT}
+              onClick={() => setComponent({ cloudsExtinction: !tuning.cloudsExtinction })}
+            >
+              clouds as extinction
+            </button>
+            {/* The HII regions as knots (S64, V6, R5): the field mode's; the cluster census's own lines in place of the field's. */}
+            {mode === "field" && (
+              <button
+                type="button"
+                aria-pressed={tuning.knots}
+                title={KNOTS_WHAT + (knotsHeader?.rule ?? "in each level-0 cell by the share of its census not drawn, a cell with none by the disc's") + KNOTS_OFF}
+                onClick={() => setComponent({ knots: !tuning.knots })}
+              >
+                HII regions as knots
+              </button>
+            )}
+            {/* The clusters with their radius (S64, V6, R7): the star-first mode's. */}
+            {mode === "stars" && (
+              <button type="button" aria-pressed={tuning.clusterRadius} title={CLUSTER_RADIUS_WHAT} onClick={() => setComponent({ clusterRadius: !tuning.clusterRadius })}>
+                clusters with their radius
+              </button>
+            )}
+          </div>
+        </div>
 
         {mode === "stars" && (
           <div className={styles.section}>
@@ -756,8 +878,8 @@ export function GalaxyTab({
               : !tuning.compPoints
                 ? `${current.what} The stars are switched off: the starlight volume is the whole of the stars' light.`
                 : !bright
-                  ? `${current.what} Finding the ${brightestN.toLocaleString("en")} brightest.`
-                  : `${current.what} ${bright.header.count.returned.toLocaleString("en")} stars: every disc star in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
+                  ? `${current.what} Asking the cells in view at the threshold a budget of ${brightestN.toLocaleString("en")} allows.`
+                  : `${current.what} ${bright.header.count.returned.toLocaleString("en")} stars: every disc star in the ${bright.header.tiles.inView.toLocaleString("en")} cells in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
                       clusterCensus ? `, and ${(clusterCensus.columns.cluster_radius?.length ?? 0).toLocaleString("en")} clusters` : ""
                     }. The field under them is the light no point carries. Click a point for its numbers.`
             : `${regime.what} ${

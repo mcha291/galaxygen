@@ -12467,3 +12467,217 @@ draw, the whole-disc routes' cost (#159), the pitch floor (#142), Erwin's bar fr
 (#147), the 88-minute gate test. **S64 is V6**, the censuses at whole-galaxy scale, on the board the owner's D222
 reshaped (V6b after it, then V7–V9, Audit V, BUILD_IV's W3, W2, W4, W5); this lead's session closes at S63 on its
 context, and the next session resumes from `BRIEF.md`.
+
+### D224. S64: the censuses at whole-galaxy scale — the clouds as extinction in their own slabs, the HII regions as knots scaling the field by the undrawn share, the bright stars by tiles with a remainder-only render, the depth-aware composite (BUILD_III Phase V6; a Fable lead on the owner's word, an Opus probe, four Opus builders and an Opus reviewer)
+
+**Session S64, opened 2026-10-15 on `session-64` from S63's merge (`main` 01c4d4e; S63's `verify_clone` of main had read
+3 failed — two timing flakes green alone and `test_audit`'s register pin one session stale, fixed at 01c4d4e — so the
+opening suite was not re-run; the close runs it).** The owner's word at the open: "you're the fable lead agent
+orchestrating the project. fable usage is limited, so spawn opus subagents to do work that doesn't benefit much from
+fable capabilities" — a Fable lead, Opus for the probe, the builders and the reviewer; usage at the open 5-hour 26 %,
+weekly all-models 20 %, weekly Fable 29 %; at most two agents at once, one heavy, none started past 50 % of the window
+(the rationing rule of 2026-10-09). The ruling is BUILD_III §5 Phase V6 as written, with the owner's 2026-10-14
+sentence (D222 ruling 14: every new answer keyed by cell and level on the wire, any rasterisation by window the
+viewer's), probed before the build as S63 did: **an Opus probe measured the closures the phase's gate names and found
+six places where the code or the numbers contradict the text** (its report and scripts in the lead's scratchpad,
+`probe_s64/`); the lead ruled each on the measurement (`RULING_S64.md`, R1–R10), none the owner's.
+
+**The six stop conditions and their rulings.** (1) *The clouds' extinction law contradicts the rings'.* The census's
+`central_extinction_v` is 2.9696 mag for every cloud — solar dust per hydrogen, one surface density (Σ_GMC 42 M☉/pc²),
+no metallicity — while the rings' A_V per unit gas is the dust-to-gas ratio times the grain cross-section: 6.3× the
+cloud law at R = 2 kpc, 0.15× at R = 14 (Milky Way). A cloud drawn at its published A_V would not carry the extinction
+it takes from the ring. **Ruled:** `/api/clouds` gains an API-derived column `cloud_dust_extinction_v`, the cloud's
+face-on mean A_V from its own dust — `cloud_mass` × `dust_to_gas_ratio` × (`dust_extinction_v` / `dust_surface_density`)
+at the ring of `cloud_birth_radius`, over π `cloud_size`² (the radius) — every term a published field, no constant on the
+wire, no stage change (D4; the pattern of `/api/clusters`' `response`). Since every cloud's mass over its area is the one
+surface density, the column depends on the birth radius alone: median 1.897 mag (p90 12.64, max 26.23) on the Milky Way,
+4.606 on `ngc_4414`. The stage's own law stays for the region regime's interiors; the two disagree — **#167**. (2) *The
+clouds' layer is not the dust's.* `cloud_layer_height` (178 pc Milky Way, 477 pc `ngc_4414`; half the thin disc, a guess,
+#95) is up to 3.8× / 5.6× the gas layer the diffuse dust sits in and D211's heating and the scattering were computed for,
+and the clouds hold 0.49–0.63 of the disc's dust. **Ruled:** each cloud sits at its own published `cloud_height` (the
+plan's "at the clouds' height"), `dust_scattered` and `dust_thermal` unchanged — **#168**: half the dust now sits in a
+geometry the energy balance was not computed in; the mend is #95's closure with D211's geometry re-done. (3) *"The
+smooth Hα layer reduced by what the points carry" goes negative.* The knots' Hα sums to 0.921 of the field's HII Hα
+(Milky Way; 1.081 `ngc_4414`) and exceeds it in 10 of 26 lit rings and 22 % of level-0 cells (29 % of the light); a
+remainder clipped at zero loses 4.7 % per ring (Milky Way), 25.5 % (`ngc_4414`), 32 % per cell. The per-ring ratios
+0.53–1.43 are the census's own heavy-tailed draw (√⟨L²⟩/⟨L⟩ 6.8 over ~500 knots a ring gives ±0.30), not a defect.
+**Ruled:** per level-0 cell c, the field's HII layers are scaled by 1 − D_c / K_c, D_c the Hα of the knots a viewer
+draws in c, K_c the Hα of every knot named by c — a share in [0, 1], never negative, no clip — and, amended on the
+builder's finding (a cell that names no knot kept its whole field, 1.29 % of the Milky Way's HII Hα, 5.5 % of
+`ngc_4414`'s), a knotless cell takes 1 − d, d the drawn share of the whole census's Hα: with every knot drawn the screen
+carries the census exactly, with none the field, between them the undrawn fraction of the field. (4) *"Bright stars by
+tiles to 10⁶" at whole-galaxy scale.* 10⁶ stars over the disc need l_min 2 251 L☉; the whole disc at that depth is 310 s
+cold and 92.7 MB (105.6 with the rgb response); the route refuses past 200 000; and today's request (`n` + `view=`) is
+view-keyed, which the owner's sentence forbids for any answer V6 adds. **Ruled:** the tile form (`cells=` level-0 ids +
+`l_min` on the 0.05 dex grid, each answer the same bytes twice), the cap per request, an expected-count table per tile
+per threshold so the viewer picks ONE threshold a frame against a point budget, a remainder-only render request (the
+remainder is exactly two per-ring arrays times placing weights already on the wire: residual 3.5e-15; 9.6 kB against
+10.4 MB), the `view=` request retired from the viewer; the 10⁶ is the tiles' depth, never a count drawn at once. (5)
+*"Sized by its bubble when resolved."* The bubble exceeds the Strömgren sphere in 99.7 % of knots; by the bubble 51 % of
+the Hα would be resolved at the frame's 39 pc pixel, by R_S 4.9 %. **Ruled:** the knot is sized by its Strömgren
+radius, where its line light is; the shell is V3's own object; the plan's word is superseded by what the model
+publishes. (6) *T6 at galaxy scale draws nothing:* the median cluster's 2 r_h (0.445 pc) fills a pixel only below a
+0.91 kpc view width, the largest below 6.1 kpc. **Ruled:** the Plummer profile (a = r_h / 1.305, the plan's) replaces a
+cluster's point where 2 r_h ≥ one pixel in the star-first mode (the region regime's clusters keep their sprite, #170); a
+20 kpc frame is byte-identical with it on and off.
+
+**Built, round 1 (Opus builder 1, the clouds; builder 3a, the depth composite; in worktrees cut from `session-64`,
+cherry-picked).** *The clouds (R1–R4):* `/api/clouds` carries `cloud_dust_extinction_v` and `precision=f4` (2 689 008 →
+1 629 600 bytes); `/api/render` carries `dust_diffuse_share` per ring — 1 less the ring's REALISED clouds' dust over its
+published dust, summed off the ring-first draw's own mass and radius streams (27.6 ms, no census materialised, the same
+21-stage list as before; floored at 0, the header listing any ring where the floor acted with its excess mass: none on
+either template) — and the header's `clouds` entry states the rule "diffuse depth(R, φ) = depth(R) × dust_placement(R, φ)
+× dust_diffuse_share(R)", the two layers, the closure and the expected share (the ring's molecular fraction, 0.827 at
+ring 0 to 0.007 at the edge; 0.548 of the disc's dust Milky Way, 0.590 `ngc_4414`) marked "not used". **Closure (i):
+per ring the share times the ring's dust plus the materialised census's clouds' dust is the published dust to under
+1e-15 relative (the gate 1e-12), both templates, layer on and off**; the realised disc-wide share 0.4899973 / 0.6327142,
+pinned at 1e-6 (the clouds' realised share of the disc's dust; the diffuse share is its complement); the per-ring realised over expected 0.71–1.62 (rms 0.22, the mass function's tail), recorded. The viewer
+rasterises the whole disc's census into a polar float32 texture of face-on A_V, each cloud's A_V × area deposited
+conserving (1.7e-10 relative on 16 577 clouds; 3.3e-11 on `ngc_4414`), and — after the builder's first frame showed the
+clouds smeared through the whole 477 pc layer as vertical streaks on the inclined `ngc_4414` view (the lead's ruling on
+the builder's finding) — a second half-float texture holding per texel the A_V-weighted mean height and a half-thickness
+(the rms of the heights about it, in quadrature with the mean radius, floored at the smallest radius): the march composes
+each texel's clouds as one uniform slab at that height, cut into four pieces merged with the dust's cuts, mirrored on a
+descending ray; `composeStep` keeps its closed form (no clouds: the dust-only step to the bit; brute-force integration
+worst miss 0.51 % of the unattenuated light, the sech² layer's was 0.47 %; transmission exp(−dust − slab) to 1e-9); the
+star-first mode's points read the slab on their segment as they read the diffuse dust. The "cloud raster" tuning value
+(default 5 texels a render cell a side: 2 000 × 1 800, two textures 28.8 MB, built in 260 ms) and the "clouds as
+extinction" switch are declared where computed (A9). A texel holding one cloud is that cloud at its own height and
+radius (a vitest); **a texel holding several far apart in height is one tall slab — the stated approximation, which
+still draws thin vertical streaks inside ~3 kpc of the inclined view (#169; the mend a second slab per texel)**. The
+march's uniforms now take the raster inside the frame loop (a defect the builder found: a frame could be marched with
+no clouds and kept). *The depth-aware composite (R9, T5):* the region march's transmission pass writes the clouds'
+optical-depth-weighted entry distance (negated; `NO_FRONT` = 1 where no depth is met, the clear's own alpha) into its
+alpha; the star points draw after the multiply quad (renderOrder 1.5 while a region is mounted, 0 otherwise) and take
+T themselves, read once per star by `texelFetch` at its projected centre, only where the star is farther than the
+front; the field is still multiplied by the whole ray's T in front of a cloud as well (stated in the code and in
+`RENDER_PHYSICS.md` §0). The gate: one cloud of A_V 2.9696 at 8 kpc on the axis, a star at 4 kpc keeps its light
+exactly and a star at 12 kpc is multiplied by exactly T (0.0649 in V; before S64 the front star lost 93.5 %); two clouds
+give the τ-weighted mean entry; NaN or zero A_V writes `NO_FRONT` (B9); the GLSL and its TS twin pinned (S55's text
+recovered by taking S64's lines out, 4 181 bytes, the same sha). The picture test kept every frame byte for byte under T5.
+
+**Built, round 2 (builder 3b, the tiles and the remainder; builder 2, the knots and T6; sequential, one heavy agent at
+a time).** *The tiles (R8):* `/api/bright` takes `cells=<level-0 ids>` with `l_min` snapped up to the 0.05 dex grid (the
+header's `tile` names the asked and used thresholds; `n` and `view=` refused with it; the 200 000 cap per request) — the
+same bytes twice, after a deeper draw too (`stages` dropped from the tile header so the body depends on (tile,
+threshold) alone); the tiles' union over a footprint equals the window answer row for row, every column bytes-equal,
+both templates; `table=1` returns the expected count per level-0 cell per grid threshold (1 024 × the grid, 633 368 bytes
+f4) with the cell layout and the rule "pick the smallest grid threshold at which the sum over the tiles in view is at
+most the point budget" — the table against an explicit quadrature 2.2e-16, its ring sums against `ring_curve` 1.1e-15,
+realised counts over thirty (tile, threshold) pairs within |z| 2.7; `/api/render?l_min=…&only=remainder` returns the two
+per-ring arrays (`stars_unresolved_middle`, `stars_unresolved_old`; 14 448 bytes) placed by `stars_middle_placement` and
+`stars_placement`: **bit for bit the full render's `stars_unresolved` on the Milky Way through rgb and wfc3, ≤ 1e-12 on
+`ngc_4414` and layer off**, running a subset of the full request's stages and none of ism, dust, clouds, clusters or
+nebular (D4); after the builder's follow-up `_unresolved` hands the remainder its parts, so one `resolve` runs (warm 0.807
+→ 0.537 s). One threshold per frame keeps S48's identity (unresolved + young + bright = `stars`, residual 0.0); the
+tiles' expected light against `resolve`'s differs by the two quadratures, 2.64e-5 over the disc, bounded at 1e-4. The
+viewer resolves its frustum footprint to level-0 cells from the table's layout, picks the frame's threshold against the
+point budget (the N slider, default 10^3.5, now labelled so), caches tiles by (galaxy, tile, threshold) to 400 000 rows,
+and on a threshold change asks only the remainder (T28); `view=`, `n` and the frustum request are retired from the
+viewer. The star-first frames moved: at the capture's view all 1 024 tiles are in view and the table picks 35 481 L☉
+(2 891 expected, 2 820 drawn) where `n` = 3 162 in the frustum had given 33 500 (`ngc_4414`: 25 119, 2 632 drawn);
+the frame sums moved ≤ 1e-4 per channel; the bright part one request of 293 kB in 0.31 s. *The knots (R5, R6):*
+`/api/clusters` with `filters=` carries `line_response` (N × filters, L☉ through each curve): the region's Hα, Hβ by
+the Balmer decrement and the four forbidden lines by their ratios, each at its own wavelength through the same
+`line_response` the field's `lines_hii` uses — **the six lines matched one for one with the field's list, `unmatched`
+empty on both templates**; against the builder's own arithmetic 1e-12. The header's `knots` names the light
+(`hii_halpha_luminosity`), the size (`hii_stromgren_radius`, "not the bubble"), the naming cell, the cell layout and
+the rule; the render's `halpha_hii` and `lines_hii` abouts carry the same sentence. **Closure (ii): with every knot
+drawn the field term is exactly 0 in all 1 024 cells and points equal the census to 1e-12; with none the screen is the
+field to 1e-12**; the disc-wide knots over field 0.9207954 / 1.0814612 pinned at 1e-6 as a measured check (layer on
+and off: the same knots, the same Hα per ring to 1e-12; K_c per cell moves with the placement); the field's HII Hα in
+cells no knot realised 1.2877 % / 5.5367 % (5.7198 % layer off), recorded. The viewer draws the knots in the field mode
+at galaxy scale (above the region regime) as points of their `line_response` on the field's scale, dimmed by the field's
+own dust, a point until 2 R_S reaches a pixel and then a disc of R_S; the march reads a per-cell share texture
+(1 − D_c / K_c; the knotless cells' 1 − d) over `halpha_hii` and `lines_hii` (a hand census closes to 1e-12); a switch
+"HII regions as knots" (on). *T6 (R7):* `plummer.ts` — each pixel the profile's exact integral over the pixel, normalised
+over an 8 a box; the sprite sums to the light to 1e-12 at a = 0.38–7 px (the gate 1e-3) — inside FluxPoints (which
+already draws the clusters), the switch "clusters with their radius" (on); the largest r_h 3.00 / 3.11 pc against the
+captures' 39.1 / 19.3 pc pixels, so **both star-first frames are byte-identical with the profile on and off**. Not drawn
+at S64 and recorded: the knots in the star-first mode (its clusters carry their stellar light only) and the region
+regime's clusters' sprite (display colours, not the field's scale) — **#170**, one pass each.
+
+**Timings (cold, fresh processes, a shared machine; S63's numbers first):** `render: whole, rgb` 10.56 → 9.43 s,
+warm 0.738 → 0.729 s, 8 690 264 → 8 697 496 bytes; `ngc_4414` 7.55 → 7.41 s; `render: whole, layer off` 2.57 s;
+`clouds: whole disc` 8.95 → 8.18 s (f4 1 629 600 bytes); `clusters: whole, rgb + lines` 9.78 → 9.12 s cold, 0.104 s warm,
+4 488 712 → 4 798 896 bytes; `bright: whole, rgb` 10.75 → 10.55 s (unchanged); `bright: one tile` (cell 261 at 2 511.9
+L☉) 10.04 s cold, 0.009 s warm, 102 104 bytes; `render: remainder, rgb` 3.30 s cold, 0.537 s warm; `table=1` 12.8 s cold.
+The viewer: the cloud raster's two textures 28.8 MB built in 260 ms; the star-first capture ready in 13.6 s (was
+14.0–14.8). Vitest 309 → 350 (30 files), typecheck clean, the picture test 8 of 8 at every step.
+
+**The independent review (an Opus reviewer at c1f15b0, read-only, its own numpy and node 24 on the TS; the note in
+the lead's scratchpad): no blocker; three must-fixes, all words — the "HII regions as knots" tuning about still said "1
+where none" and "the light is the same" (stale since the knotless-cell amendment), the `/api/clusters` route about
+did not name `line_response` or `knots`, and this decision's ruling (6) said the Plummer profile reaches the region
+regime, which is #170 — fixed (the first two by an Opus fix pass, the third in the text above).** Re-derived: closure (i)
+to 9.3e-16 at worst on both templates, on and off, the stream sums equal to the census's to 9e-16, the column against
+the formula 0.0, the clouds using the diffuse dust's own A_V-to-depth conversion to 1.000000; **eight requests against
+01c4d4e (default, `ngc_4414`, layer off, f4, a window, level=1, l_min, `ngc_4414` off + l_min): the stage lists
+identical and every other array byte-identical, only `dust_diffuse_share` and the header's `clouds` added**; the slab
+step against a 400 000-sample brute force within the sampling's own 2.7e-4, the light within 0.31 % (the dust-only step
+alone 0.23 %), the no-clouds step bit-identical with 01c4d4e's `composeStep` on 200 000 random inputs; the raster
+conserving to 1.7e-10 with nothing outside, the slab heights exact on one-cloud texels; closure (ii) exact (0.0) at both
+ends on all cells, ring 8 and 100 random cells, `line_response` 0.0 against the reviewer's own composition, the six
+lines matched; 12 tiles row for row the window answer over 20 columns, the remainder exact (0.0) on rgb and wfc3, both
+templates and layer off, unresolved + young + bright = `stars` to 1e-16, the table non-increasing and its ring sums to
+1.3e-15; the Plummer sprite to 2e-15 at a = 0.4 / 2 / 7 px, the box share's closed form; no stage added by any new
+request (fresh services; the remainder a subset); every rule in a header; no test deleted or loosened, the two re-pins
+with their measured reasons, the new tests checking the decomposition. *The ten notes, ruled:* (1) closure (i) holds in
+the clouds stage's own ring measure (a trapezoid splitting a straddling grid interval half and half), which differs from
+the exact annulus by up to 5.5 % (Milky Way) / 6.9 % (`ngc_4414`) per inner ring, +1.2e-3 / +2.6e-3 over the disc —
+the stage's since S32, recorded, not V6's; (2) a star exactly at the front is drawn undimmed (strict), and the front's
+half-float quantisation is ~4 pc under the 45° lens but ~16 pc under `ngc_4414`'s 5° lens at a 2.5 kpc view, a median
+cloud — stated in the code, the test and the contract (the fix pass); (3) the T6 gate's `ngc_4414` arithmetic used the
+45° lens (19.3 pc); under the capture's 5° lens the nearest pixel is 28.25 pc and the conclusion stands — corrected;
+(4) the knot's disc past a 59 px radius is truncated by its box (0.722 at r = 80 px), unreachable above the region
+regime; the knot is a flat disc where a uniform sphere projects to a chord — light conserved either way, recorded;
+(5) the tile header echoed `l_min_asked`, so the same answer had different bytes for an ask 1e-8 below the grid value —
+the echo dropped, the same-bytes test extended (the fix pass; BUILD_IV's W2 keys files by `l_min_used`); (6) `table=1`
+pays `_bright_galaxy`'s default selection it never reads (the first request ~13 s cold) — one pass, entered under
+#159's cost line; (7) the raster's per-texel A_V comes from 4 × 4 samples: edge texels 0.03 %–33 % off a 24 × 24
+quadrature, each cloud's total conserved, and at the default resolution every Milky Way cloud is split — relabelled a
+sampling choice; (8) `PLUMMER_REACH`, `PROFILE_MAX_HALF`, `SLAB_PIECES` and `SPLIT_SAMPLES` called themselves display
+choices while being fixed sampling bounds — relabelled with their measured effect, and the 16 MiB figure of R4 was one
+texture's (the two are 28.8 MB, stated); (9) neither new header said its arrays are seeded (A10) and no header carried
+the Plummer rule — both added; (10) the field fragment's pin catches GLSL drift, nothing pinned FluxPoints' GLSL or
+compared the TS twin with it — a pin of FluxPoints' shader and a twin-expression test added. Not run by the reviewer: a
+browser (the frames' evidence is the git history and the arithmetic); vitest and pytest (the TS run through node).
+
+**The frames beside the goals (the lead's look at the final frames, 2026-10-15; recorded, nothing tuned).** The Milky
+Way field frame now carries the clouds as a dark speckle over the disc with opaque discs in the inner few kpc (the
+census's 10⁷ M☉ clouds, 275 pc in radius at Σ_GMC 42, 14 px across at 39 pc a pixel) and a dark lane along the bar, and
+the HII regions as faint dots — 322 inside the disc's mask and 551 outside it (`goal_metrics`; before 15 / 25): the
+outer disc's regions, real in the census and bright against the faint outer field at one pixel each. The arm over
+interarm in blue 1.623 → 1.634 (the goal 1.83); the dark covering fraction 0 → 0.0188. The `ngc_4414` field frame:
+separate dark blobs over the outer disc, some blocky (nearest-sampled texels), the inner streaks of #169 round the
+bulge, and the knots green through WFC3's F555W ([O III] and Hβ; Hα falls between the set's bands); dark fraction 0 →
+0.0158; 187 / 140 points. Against the goals: the Milky Way gains the dust's granularity and the regions' dots but not
+the lanes along the arms' inner edges (the clouds follow the gas pattern through the clustering field, loosely);
+`ngc_4414` is still a smooth disc with a bulge, now dusted and dotted. The physics-only over layered ratio, dust on,
+0.98805 / 0.99210 / 0.99716 → 0.97191 / 0.97754 / 0.98663 (more light behind the clouds), re-pinned; dust off 1.00000 /
+0.99999 / 1.00001.
+
+**Closing.** The full suite ran once, detached from the main checkout at c1f15b0 (the builders' 28 commits) with pytest's own
+exit code appended to its log, while the review, its fix pass and the close's documents were built in worktrees cut from
+the same commit: **EXIT=1 - 1 556 passed, 7 failed, 5 skipped, 1 xfailed in 8 h 47 min under the agents' load: the four `test_layer` list pins below, the two parametrisations of `test_performance`'s per-cell pricing (the wall-clock ordering test that flakes under load, S45, S60, S63; green alone), and `test_hook`'s hooks-path assertion (the builders' worktree creations rewrite `core.hooksPath`, the trap S60 recorded; `tools/bootstrap.py` re-run)**. The four failures the review's fix pass found by running `test_layer.py` whole —
+its closed lists of the clouds route's columns and the render's per-ring components, which gained the derived dust
+column and `dust_diffuse_share` — were fixed on the integrated state and the file re-run green (4 of 4); the files the
+fix pass's abouts and headers touch (`test_v6_bright`, `test_v6_clouds`, `test_v6_knots`, `test_bright`,
+`test_clusters`, `test_layer`, `test_docs`, `test_api`) re-run on the final state: **EXIT=0, 355 passed (eleven files, `test_audit`, `test_progress` and `test_render` added); then `test_hook`, `test_performance` and `test_layer` on the final state in the main checkout, EXIT=0, 83 passed**; vitest 353 (31
+files), typecheck clean, the picture test 8 of 8 on the frames as committed (the fix pass changed no shader
+statement). `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved — no stage changed, the reviewer's eight
+renders against 01c4d4e byte-identical but for the two added arrays. The register: **104 open = 11 permanent + 93
+carried, 49 discharged** (#167–#170 opened; #116 discharged — the half-mass radius is drawn where it resolves; #112's
+star half discharged and its field half carried with the exact composite as its mend; #111 carried — the region
+regime's HII budget is unchanged; the review's cost note entered under #159). `RESUMING.md` 117 lines, `BRIEF.md` 56.
+A stray "v" sat uncommitted at the end of `gateway/Galaxygen.AppHost/Galaxygen.AppHost.csproj` at the open — the
+owner's gateway (W3), not this session's; left in place and told. **For the owner, plainly (none awaited):** (a) the
+pictures — the Milky Way's disc now carries its clouds as a dark speckle with opaque discs inside a few kpc and a
+lane along the bar, and its HII regions as dots, hundreds of them beyond the visible disc; the arm-over-interarm blue
+1.62 → 1.63 against the goal's 1.83; `ngc_4414` is dusted and dotted (green knots under WFC3's bands) and keeps thin
+vertical streaks round its bulge (#169) — nothing was tuned; (b) the star-first mode now draws one threshold a frame
+from the expected-count table over the cells in view (the "Point budget" slider), so its frames moved by ≤ 1e-4 per
+channel; (c) the bright tiles at the 10⁶ depth are ~90 MB a template (92.6 B a star), recorded for BUILD_IV's W2
+probe; (d) the stray "v" in the gateway's project file; (e) still theirs, carried from S63: the spurs' factor (10 or
+2.5), #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test. **S65 is V6b**, the
+zoomed-in point layer (`BRIEF.md`); this lead's session continues into it if its context allows.

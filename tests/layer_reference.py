@@ -50,6 +50,12 @@ NARROW = "r_min=8&r_max=8.4&phi_min=0.3&phi_max=0.4"
 DROPPED_KEYS = ("stages",)
 # What the render sends since S63 (D223) that S55 did not: the stars split by age and their placing weights.
 ADDED_AT_S63 = ("stars_young", "stars_middle", "stars_old", "stars_placement", "stars_middle_placement", "stars_young_placement")
+# What S64 (V6, the clouds as extinction) sends that S55 did not: the render's share of each ring's dust that is diffuse
+# (with its header entry `clouds`) and the clouds' own dust column (with its entry in the clouds header's `derived`).
+ADDED_AT_S64 = ("dust_diffuse_share", "cloud_dust_extinction_v")
+# What S64 (V6, the HII regions as knots) sends that S55 did not: the clusters' line_response (with filters=) and the
+# clusters header's entries `knots` and `line_response`; and the sentence each of the render's two HII abouts gains.
+ADDED_KNOTS = ("line_response", "knots")
 
 
 def _sha(raw: bytes) -> str:
@@ -143,6 +149,38 @@ def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[s
         header.pop("ages", None)
         header["arrays"] = [spec for spec in header["arrays"] if spec["name"] not in ADDED_AT_S63]
         header["axes"] = {k: v for k, v in header["axes"].items() if k not in ADDED_AT_S63}
+    # S64 (V6): the clouds as extinction - the render's diffuse share and its header entry, the clouds' dust column and
+    # its entry - digested apart in the same way, and returned among the added.
+    s64 = [spec["name"] for spec in header.get("arrays", []) if spec["name"] in ADDED_AT_S64]
+    if s64:
+        if "dust_diffuse_share" in s64:
+            header.pop("clouds", None)
+        if "cloud_dust_extinction_v" in s64:
+            header["clouds"].pop("derived", None)
+            header["columns"] = [c for c in header["columns"] if c not in ADDED_AT_S64]
+        header["arrays"] = [spec for spec in header["arrays"] if spec["name"] not in ADDED_AT_S64]
+        if "axes" in header:
+            header["axes"] = {k: v for k, v in header["axes"].items() if k not in ADDED_AT_S64}
+    added += s64
+    # S64 (V6, R5): the HII regions as knots - the clusters' line_response and its header entries, and the sentence the
+    # render's halpha_hii and lines_hii abouts gain - digested apart likewise; the clusters' returned among the added.
+    if "knots" in header:
+        from galaxy.api import v6_knots
+
+        lines = [spec["name"] for spec in header.get("arrays", []) if spec["name"] == v6_knots.COLUMN]
+        header.pop("knots")
+        header.pop(v6_knots.COLUMN, None)
+        header["arrays"] = [spec for spec in header["arrays"] if spec["name"] != v6_knots.COLUMN]
+        if "axes" in header:
+            header["axes"] = {k: v for k, v in header["axes"].items() if k != v6_knots.COLUMN}
+        added += [*lines, "knots"]
+    components = header.get("components", {})
+    if "halpha_hii" in components:
+        from galaxy.api import v6_knots
+
+        for name, words in (("halpha_hii", v6_knots.HALPHA_WORDS), ("lines_hii", v6_knots.LINES_WORDS)):
+            if name in components and words in components[name].get("about", ""):
+                components[name]["about"] = components[name]["about"].replace(words, "", 1)
     out = {
         "status": got.status,
         "header": _sha(json.dumps(header, sort_keys=True).encode("utf-8")),

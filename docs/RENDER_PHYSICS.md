@@ -178,6 +178,16 @@ summed light with the points on equals the whole starlight's with them off to
 on screen; frontend/src/galaxy/flux.test.ts for the scale and the dust's
 segment]`. #114 (points painted as blackbodies) and #115 (the young population
 drawn twice) no longer apply in this mode; they remain the field mode's.
+Since S64 (V6, R8) the bright stars come by tiles: the view's footprint as
+level-0 cells, one grid threshold per frame picked from `/api/bright?table=1`
+(the smallest at which the tiles in view hold at most the point budget in
+expectation), each tile asked at it (`cells=`, the same bytes every time), and
+the remainder under that threshold as `/api/render?only=remainder`'s two
+per-ring arrays placed by the render's own `stars_middle_placement` and
+`stars_placement` — the full `l_min=` render's `stars_unresolved` bit for bit
+`[verified: tests/test_v6_bright.py]`; the whole render is not asked again on a
+threshold change (T28). The frustum cut is the GPU's clipping; the points are
+every star of the tiles in view above the threshold, not the N brightest.
 
 **Since S63 (D223) the stars are split by age.** `/api/render` returns
 `stars_young`, `stars_middle` and `stars_old` per ring and filter — the bright
@@ -196,6 +206,71 @@ own contrast — the clusters sit in the clouds; where no dust placement is ship
 `stars_young_placement`, and `stars_placement` for a model with no gas pattern: the header's name rules, S63). Each weight averages to 1 round
 every ring, so the placed parts keep each ring's light; they are `stars` split,
 never light beside it.
+
+**Since S64 (T5) the region's clouds dim a star only behind them.** The region
+march's transmission pass writes, beside the whole ray's T, the clouds' front:
+the optical-depth-weighted entry distance −Σ τ t0 / Σ τ in its alpha (`NO_FRONT`,
+1, where no cloud's optical depth is met). The star points draw after the
+multiply quad and take T themselves, read once per star at the pixel holding its
+centre, only where the star is farther from the camera than the front (strictly:
+a star exactly at the front is drawn undimmed); the field
+is still multiplied by the whole ray's T, in front of a cloud as well (the
+stated approximation; the exact composite, T at K depth slabs, is not built)
+`[verified: frontend/src/galaxy/regionDepth.test.ts]`. FluxPoints' own dust is
+per point along its segment and was already depth-correct.
+
+**Since S64 (BUILD_III V6) the clouds are extinction at galaxy scale.** `/api/clouds`
+carries `cloud_dust_extinction_v`, each cloud's face-on mean A_V from its own dust:
+`cloud_mass` x `dust_to_gas_ratio` x (`dust_extinction_v` / `dust_surface_density`),
+the ring terms read at `cloud_birth_radius`, over pi `cloud_size`^2 (the radius) -
+derived in the API from published fields, no stage; the clouds stage's own
+`cloud_extinction_v` (S40, 2.97 mag for every cloud) is on another law (debt #167).
+`/api/render` carries `dust_diffuse_share` per ring - 1 less the ring's realised
+clouds' dust over its published dust, summed off the ring-first draw's streams, no
+census materialised, the same layer on and off - and the header's `clouds` states the
+rule "diffuse depth(R, phi) = depth(R) x dust_placement(R, phi) x dust_diffuse_share(R)"
+and the closure: per level-0 ring the share times the ring's dust plus the census's
+clouds' dust is the ring's dust to 1e-12 (measured under 1e-15)
+`[verified: tests/test_v6_clouds.py]`. The disc's realised clouds hold 0.490 of the
+Milky Way's dust and 0.633 of NGC 4414's (expected, the molecular fraction: 0.548,
+0.590). The viewer rasterises the whole disc's census into a polar texture of face-on
+A_V, conserving each cloud's A_V x area to float32 rounding, at the "cloud raster"
+tuning value (default 5 texels a render cell a side, 2000 x 1800, the finest float32
+A_V texture under 16 MiB), and beside it a half-float texture of each texel's slab: the
+A_V-weighted mean `cloud_height` of its clouds and a half-thickness, the rms of their
+heights in quadrature with their mean radius (28.8 MB the two). The march and the
+star-first points compose each texel's clouds as a uniform slab at those heights, cut
+with the dust's pieces; against brute-force integration the step misses by at most 0.51 %
+of the unattenuated light, and with no clouds it is the dust-only step to the bit
+`[verified: frontend/src/galaxy/cloudOpacity.test.ts, regimes.test.ts]`. Stated, not
+hidden: a texel holding one cloud is that cloud at its own height and extent; one holding
+several is one slab spanning them, which in the inner disc, where a texel gathers clouds
+far apart in height, still draws thin vertical streaks on an inclined view (half-thickness
+up to 1.1 kpc MW, 3.0 kpc NGC 4414). The clouds sit up to 3.8x (MW) higher than the gas
+layer D211's heating and the scattered light were computed in (debt #168).
+
+**Since S64 (BUILD_III V6) the HII regions are knots at galaxy scale.** `/api/clusters`
+with `filters=` carries `line_response`: each region's Hα (`hii_halpha_luminosity`),
+Hβ (over `hii_balmer_decrement`) and the four forbidden lines (times `hii_*_ratio`),
+each through each curve at its wavelength by `spectra.line_response` - the lines of the
+render's `halpha_hii` and `lines_hii`, one for one. Its header's `knots` names the light,
+the size (`hii_stromgren_radius`: the line light's sphere; the bubble is the shell's
+object) and the naming cell, the level-0 layout, and the rule the render's two HII abouts
+repeat: in a level-0 cell c the field's HII layers are scaled by 1 - D_c / K_c, D_c the Hα
+of the knots drawn in c, K_c of every knot c names; a cell naming no knot (no region
+realised) by 1 - d, d the drawn share of the disc's knots' Hα - so the screen holds
+the census exactly where every knot is drawn and the field where none is, never both, never
+negative `[verified: tests/test_v6_knots.py]`. The census against the field (§7's check,
+not a target): the knots' Hα is 0.921 of the field's (MW), 1.081 (NGC 4414), per ring
+0.53-1.43 and 0.37-2.15; the field in cells naming no knot, Hα no knot realised: 1.29 % and 5.5 % of the HII
+Hα. The viewer draws the knots in the field mode above the region regime, on the field's
+scale at its weight, dimmed by the field's dust, and hands the march the per-cell share;
+a knot is a point until 2 R_S fills a pixel, then a disc of R_S summed over its own box.
+In the star-first mode a cluster whose 2 r_h fills a pixel is a Plummer sphere of
+a = r_h / 1.3048, each pixel the profile's exact integral over it over the box's (the light
+to 1e-12; none fills a pixel in a star-first capture) `[verified:
+frontend/src/galaxy/plummer.test.ts, knots.test.ts]`. Not built: the region regime's
+clusters keep their sprite (they are drawn in display colours, not on the field's scale).
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,

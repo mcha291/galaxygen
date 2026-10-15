@@ -102,8 +102,16 @@ export const TRANSFER_SLACK = 1e-3;
  * field is wound again and the dust lies elsewhere round each ring; the physics-only frame is the same file, byte
  * for byte, and the layered one is brighter by 0.25, 0.18 and 0.08 % (the ratio moved by -0.00246, -0.00176 and
  * -0.00075: past the pin in R and G, inside it in B).
+ *
+ * Re-pinned at S64 from 0.98805, 0.99210, 0.99716 to the measured 0.97275, 0.97786, 0.98691: **the clouds as
+ * extinction, BUILD_III V6**. Half the ring's dust (0.490 of the disc's) is now the census's clouds, drawn as their
+ * own layer from the whole disc's raster: with the layer on the clouds are placed in their cells by the clustering
+ * field and the gas pattern (D220), gathered as the lanes gather the diffuse dust, and by (ii) let more of the light
+ * through; with it off each stands uniform in its sector. The layered frame is brighter by a further 1.5 % in R (each
+ * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
+ * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.98805, 0.99210, 0.99716] as const;
+export const DUSTY_LAYER_RATIO = [0.97275, 0.97786, 0.98691] as const;
 // S63 (D223): was [0.98675, 0.99042, 0.99454] at S61/S62 - the field mode draws the starlight by age, the young
 // part placed by the gas contrast's law: more of the young light stands in the gas arms behind the dust, so the
 // layered frame is dimmer against physics only by a further 0.13, 0.17, 0.26 % (the ratio moved by +0.00130,
@@ -117,7 +125,8 @@ export const DUSTY_LAYER_RATIO = [0.98805, 0.99210, 0.99716] as const;
 export const DUSTY_RATIO_PIN = 1e-3;
 
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
-export const SELECTION_TEXT = /every disc star in view above/;
+// S64 (V6, R8): the stars are the tiles in view, so the sentence counts the cells.
+export const SELECTION_TEXT = /every disc star in the [\d,]+ cells in view above/;
 
 /**
  * The page's size while the template, the mode and the filters are chosen: wide enough that the panel is the

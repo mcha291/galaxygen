@@ -13,6 +13,7 @@ import {
   depthOf,
   layerColumn,
   layerShare,
+  slabColumn,
   marchHalfHeight,
   phaseAt,
   planeTexture,
@@ -104,7 +105,9 @@ describe("planeTexture", () => {
 
   it("draws the components it is not given as nothing", () => {
     const bare = planeTexture({ R, phi, stars, white });
-    expect(bare.hii.every((v) => v === 0) && bare.rings.every((v) => v === 0)).toBe(true);
+    // Every ring row is nothing but the diffuse share (S64), which is all of the dust (1) when none is given.
+    const shareRow = (n: number) => Math.floor(n / (4 * R.n)) === RING_ROWS.share;
+    expect(bare.hii.every((v) => v === 0) && bare.rings.every((v, n) => v === (shareRow(n) ? 1 : 0))).toBe(true);
     // The scattered light is nothing; its spare channel is the dust's placement, an even ring (1) when none is given.
     expect(bare.scatter.every((v, n) => v === (n % 4 === 3 ? 1 : 0))).toBe(true);
   });
@@ -475,5 +478,110 @@ describe("the starlight by age", () => {
     const a = agedLight(served, parts, ALL_AGES, n);
     const b = agedLight(arrays, partsOf(header, arrays)!, ALL_AGES, n);
     for (let q = 0; q < a.length; q += 997) expect(a[q]).toBeCloseTo(b[q], 10);
+  });
+});
+
+// S64 (BUILD_III V6; RULING_S64 R2-R3, R3 as the lead ruled it): the clouds' own dust in the step as each raster
+// texel's slab at the clouds' own heights, the diffuse dust reduced by the ring's share.
+describe("the clouds as extinction (S64)", () => {
+  const sech2 = (x: number) => 1 / Math.cosh(Math.min(30, Math.max(-30, x))) ** 2;
+  const density = (y: number, h: number) => sech2(y / (2 * h)) / (4 * h);
+  // By brute force: unit starlight in hStars, dimmed by the dust (tau in hDust) and a uniform slab of face-on depth
+  // tauC between mid - half and mid + half in front of it.
+  const quadrature3 = (y0: number, y1: number, path: number, hS: number, hD: number, tau: number, mid: number, half: number, tauC: number, n = 200_000) => {
+    let light = 0;
+    let depth = 0;
+    const dt = path / n;
+    for (let k = 0; k < n; k += 1) {
+      const y = y0 + ((y1 - y0) * (k + 0.5)) / n;
+      const slab = Math.abs(y - mid) <= half ? tauC / (2 * half) : 0;
+      const d = (tau * density(y, hD) + slab) * dt;
+      light += density(y, hS) * dt * Math.exp(-(depth + 0.5 * d));
+      depth += d;
+    }
+    return light;
+  };
+  const marched3 = (y0: number, y1: number, path: number, hS: number, hD: number, tau: number, mid: number, half: number, tauC: number, edges: number[]) => {
+    let light = 0;
+    let transmitted = 1;
+    for (let k = 0; k + 1 < edges.length; k += 1) {
+      const step = composeStep(y0 + (y1 - y0) * edges[k], y0 + (y1 - y0) * edges[k + 1], path * (edges[k + 1] - edges[k]), hS, hD, tau, mid, half, tauC);
+      light += transmitted * step.light;
+      transmitted *= step.transmitted;
+    }
+    return { light, transmitted };
+  };
+  const H_STARS = 0.3557;
+  // The default galaxy's rings (dust height kpc, V depth; S50's); the clouds' share of a ring's depth in the probe's
+  // range (0.27 to 0.73); slabs: one median cloud (13 pc) in the midplane, one high above it, one below, and a wide one
+  // spanning many clouds' heights (0.15 kpc, about the clouds' layer).
+  const RINGS: [number, number][] = [[0.0213, 47.9], [0.0469, 2.49], [0.1131, 0.472], [0.438, 0.025]];
+  const SLABS: [number, number][] = [[0, 0.013], [0.12, 0.013], [-0.2, 0.03], [0.02, 0.15]];
+  const STEPPINGS = [[0, 1], [0, 0.4983, 1], [0, 0.31, 0.493, 0.5003, 0.52, 1], Array.from({ length: 25 }, (_, k) => k / 24)];
+
+  it("composes stars, diffuse dust and a slab of clouds in order: within 1 % of the three's own integral, however stepped", () => {
+    let worst = 0;
+    for (const [hDust, tau] of RINGS) {
+      for (const [mid, half] of SLABS) {
+        for (const clouds of [0.27, 0.73]) {
+          for (const cosView of [1, 0.5, 0.1]) {
+            for (const from of [6, -6]) {
+              const path = 12 / cosView;
+              const [td, tc] = [tau * (1 - clouds), tau * clouds];
+              const want = quadrature3(from, -from, path, H_STARS, hDust, td, mid, half, tc) * cosView;
+              for (const edges of STEPPINGS) {
+                const got = marched3(from, -from, path, H_STARS, hDust, td, mid, half, tc, edges);
+                worst = Math.max(worst, Math.abs(got.light * cosView - want));
+                // The dust's column and the slab's whole depth, however cut.
+                expect(got.transmitted).toBeCloseTo(Math.exp(-td * layerColumn(from, -from, hDust, path) - tc * path / 12), 9);
+              }
+            }
+          }
+        }
+      }
+    }
+    // 0.0051 as measured (S64, the slab); the sech2 clouds layer it replaced missed by 0.0047.
+    expect(worst).toBeGreaterThan(0.003);
+    expect(worst).toBeLessThan(0.01);
+  });
+
+  it("is the dust-only step to the bit without clouds, whatever the slab", () => {
+    for (const [hDust, tau] of RINGS) {
+      for (const [y0, y1, path] of [[6, -6, 12], [0.3, -0.1, 0.9], [0.2, 0.2, 2]]) {
+        expect(composeStep(y0, y1, path, H_STARS, hDust, tau, 0.05, 0.02, 0)).toEqual(composeStep(y0, y1, path, H_STARS, hDust, tau));
+        expect(composeStep(y0, y1, path, H_STARS, hDust, tau, 0.05, 0, 3)).toEqual(composeStep(y0, y1, path, H_STARS, hDust, tau));
+      }
+    }
+  });
+
+  it("puts the slab at its own height: above the plane it hides the stars below it from a view from above, not from below", () => {
+    // No diffuse dust, an opaque slab 0.2 kpc above the plane: seen from above it covers the whole stellar layer
+    // beneath it; seen from below only the little of the layer above 0.2 kpc lies behind it.
+    const above = composeStep(6, -6, 12, H_STARS, 0, 0, 0.2, 0.01, 30).light;
+    const below = composeStep(-6, 6, 12, H_STARS, 0, 0, 0.2, 0.01, 30).light;
+    const over = layerShare(0.21, 6, H_STARS);
+    expect(above).toBeCloseTo(over, 2); // only the stars above the slab
+    expect(below).toBeCloseTo(1 - layerShare(0.19, 6, H_STARS), 2);
+    expect(below).toBeGreaterThan(above);
+  });
+
+  it("holds each ring's diffuse share in the ring texture's share row, 1 where none is published", () => {
+    const share = Float64Array.from({ length: R.n }, (_, i) => (i % 5) / 4);
+    share[3] = Number.NaN;
+    const t = planeTexture({ R, phi, stars, extinction, diffuseShare: share, white });
+    for (let i = 0; i < R.n; i += 1) {
+      for (let k = 0; k < 4; k += 1) expect(t.rings[(RING_ROWS.share * R.n + i) * 4 + k]).toBe(i === 3 ? 1 : Math.fround(share[i]));
+    }
+    const bare = planeTexture({ R, phi, stars, extinction, white });
+    for (let i = 0; i < R.n; i += 1) expect(bare.rings[(RING_ROWS.share * R.n + i) * 4]).toBe(1);
+    expect(RING_ROWS.count).toBe(4);
+  });
+
+  it("takes a slab's column as the shader does: its crossed thickness over the slope, the density times the path when level", () => {
+    expect(slabColumn(1, -1, -0.1, 0.1, 4)).toBeCloseTo(2, 12); // crossed whole: the face-on depth times the path over the drop
+    expect(slabColumn(1, 0, -0.1, 0.1, 1)).toBeCloseTo(0.5, 12); // half of it
+    expect(slabColumn(0.05, 0.05, -0.1, 0.1, 3)).toBeCloseTo(3 / 0.2, 12); // level, inside
+    expect(slabColumn(0.5, 0.5, -0.1, 0.1, 3)).toBe(0); // level, outside
+    expect(slabColumn(1, -1, 0.1, 0.1, 4)).toBe(0); // no thickness
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DUST_SEGMENT_STEPS, DUST_TOP_HEIGHTS, type DustRead, dustToPoint, fluxOf, pixelArea, spriteLight, tallestLayer } from "./flux";
 import { patternMean, psfMean, psfProfile } from "./psf";
+import { layerShare } from "./regimes";
 
 describe("a point's flux (D208)", () => {
   const white = [0.2, 0.1, 0.05];
@@ -145,5 +146,31 @@ describe("the dust in front of a point (T20, D208)", () => {
     expect(tallestLayer(0.36)).toBe(0.36);
     expect(tallestLayer(null)).toBe(0);
     expect(tallestLayer(Number.NaN)).toBe(0);
+  });
+});
+
+// S64 (BUILD_III V6): the points read the clouds from the march's raster as they read the diffuse dust - each texel's
+// clouds a uniform slab at their own heights.
+describe("the clouds in front of a point (S64)", () => {
+  const dust = (r: number) => 5 * Math.exp(-r / 3);
+  const read: DustRead = (r) => ({ depth: [dust(r), dust(r), 2 * dust(r)], height: 0.05, clouds: [1.5, 1.5, 3], slab: [0.1, 0.02] });
+  const bare: DustRead = (r) => ({ depth: [dust(r), dust(r), 2 * dust(r)], height: 0.05 });
+
+  it("adds the slab's whole depth for a point below it seen from above, none for one above it", () => {
+    const ring = dust(5);
+    // In the midplane, face-on: half the dust's layer and all of the slab at 0.08-0.12 kpc lie in front.
+    const mid = dustToPoint([5, 0, 0], [5, 60, 0], 8, 30, read);
+    expect(mid[0]).toBeCloseTo(ring / 2 + 1.5, 6);
+    expect(mid[2]).toBeCloseTo(ring + 3, 6);
+    // Above the slab: only the dust's layer above it, nothing of the slab.
+    expect(dustToPoint([5, 0.2, 0], [5, 60, 0], 8, 30, read)[0]).toBeCloseTo(ring * layerShare(0.2, 8, 0.05), 6);
+    // Half way through the slab: half of it.
+    expect(dustToPoint([5, 0.1, 0], [5, 60, 0], 8, 30, read)[0]).toBeCloseTo(ring * layerShare(0.1, 8, 0.05) + 0.75, 6);
+  });
+
+  it("is the diffuse dust alone without clouds, to the bit", () => {
+    for (const [point, eye] of [[[5, 0, 0], [35, 30, 0]], [[8, -0.1, 0], [8, 20, 60]]] as [[number, number, number], [number, number, number]][]) {
+      expect(dustToPoint(point, eye, 8, 30, (r, phi) => ({ ...read(r, phi), clouds: undefined }))).toEqual(dustToPoint(point, eye, 8, 30, bare));
+    }
   });
 });

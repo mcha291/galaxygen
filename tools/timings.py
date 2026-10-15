@@ -87,10 +87,17 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("clouds: one sector", "/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the census of 9 cells"),
     # S61 (D220 part II; debt #159): the clouds placed on their cells' lattices by the clustering field - cold 4.0 s
     # before, 9.6-10.3 s after (the field on the lattices 2.0 s, the pattern's meshes 1.1 s); clusters 5.3 -> 11.9 s.
-    Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4"),
+    Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4; since S64 with cloud_dust_extinction_v"),
+    # S64 (V6, R4): the whole disc as the viewer asks for it, float32 - the clouds' opacity raster's source.
+    Endpoint("clouds: whole disc, f4", "/api/clouds", "precision=f4", "every cloud in float32, the viewer's request (S64)"),
     # The cluster census (S33, BUILD_II Phase 11): the cells' clouds drawn, then one cluster per cloud past its embedded phase.
     Endpoint("clusters: one sector", "/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the clusters of 9 cells"),
     Endpoint("clusters: whole disc", "/api/clusters", "", "every cluster, about 1.3e4"),
+    # S64 (V6, R5): the whole disc as the viewer asks it - each cluster's starlight (`response`) and, since S64, its HII
+    # region's lines (`line_response`) through the curves, the knots' light. Cold 9.78 s, warm 0.102 s, 4 488 712 B before
+    # line_response; 9.12 s, 0.104 s, 4 798 896 B after (a fresh process each, S64).
+    Endpoint("clusters: whole, rgb + lines", "/api/clusters", urlencode({"filters": _RGB, "white": 6500}),
+             "every cluster through 3 filters: its starlight and its region's six lines (S64)"),
     # The remnant census (S36, BUILD_II Phase 10): Poisson per cell on the supernova rates times the visible lifetime.
     Endpoint("remnants: one sector", "/api/remnants", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the remnants of 9 cells"),
     Endpoint("remnants: whole disc", "/api/remnants", "", "every visible remnant, about 1.4e3"),
@@ -101,17 +108,27 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # S48's wiring: each star's band light through the viewer's curves (spectra.object_response).
     Endpoint("bright: whole, rgb", "/api/bright", urlencode({"n": 3162, "filters": _RGB, "white": 6500}),
              "the 3162 brightest, each through 3 filters"),
+    # S64 (V6, R8): one tile - a level-0 cell at R = 8 kpc, its 64 finest cells - at the 10^6-over-the-disc depth, 2251
+    # Lsun snapped up to the grid's 10^3.40, as the star-first view asks it: rgb, float32.
+    Endpoint("bright: one tile", "/api/bright",
+             urlencode({"cells": 261, "l_min": 2251, "filters": _RGB, "white": 6500, "precision": "f4"}),
+             "one level-0 cell's stars above 10^3.4 Lsun, about 1 140, through 3 filters"),
     # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
     Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
              "193 temperatures x 3 filters, no stage (S42)"),
     Endpoint("render: whole, rgb", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4"}),
-             "400 x 360 x 3 stars, HII line, scattered; the DIG, dust depth, thermal per ring (S39)"),
+             "400 x 360 x 3 stars, HII line, scattered; the DIG, dust depth, thermal per ring (S39); "
+             "the diffuse share off the ring streams (S64)"),
     Endpoint("render: one region", "/api/render",
              urlencode({"filters": _RGB, "r_min": 7, "r_max": 9, "phi_min": 0, "phi_max": 0.4, "level": 2}),
              "90 level-2 cells' means"),
     # S48's wiring: the field's remainder under 10^3 Lsun beside the stars (bright.resolve, four more responses).
     Endpoint("render: unresolved", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000}),
              "as the whole rgb render, plus stars_unresolved and the closure"),
+    # S64 (V6, R8; T28): the remainder alone - what a new threshold asks instead of the render.
+    Endpoint("render: remainder, rgb", "/api/render",
+             urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000, "only": "remainder"}),
+             "two per-ring arrays, 400 x 3 each, and the closure: the stellar part of the l_min render"),
     # The templates (S54, D213): a named galaxy's inputs as the base of a request - a profile, and the render the
     # viewer asks for when it switches to NGC 4414: its fitted inputs, no merger, the Hubble broadband set.
     Endpoint("arrays: a template", "/api/arrays", "template=ngc_4414&fields=stellar_surface_density",

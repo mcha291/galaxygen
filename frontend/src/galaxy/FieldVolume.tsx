@@ -14,6 +14,9 @@ import {
   Mesh,
   PlaneGeometry,
   RGBAFormat,
+  RedFormat,
+  RGFormat,
+  DataUtils,
   RepeatWrapping,
   Scene,
   ShaderMaterial,
@@ -25,10 +28,13 @@ import {
 
 import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight } from "@interface/ages.js";
 
-import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
+import { type Census, type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
+import { type CloudColumns, type CloudRaster, CLOUD_RASTER, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
+import type { CellLayout } from "./brightTiles";
+import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, starTexels, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SLAB_PIECES, starTexels, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
@@ -138,6 +144,16 @@ const VERTEX = /* glsl */ `
 // a cell over its ring's mean — multiplies the ring's depth, thermal light and diagnostic where the sub-step
 // reads them. The march is unchanged: a multiplication of what it already read.
 //
+// The clouds as extinction (S64, BUILD_III V6; RULING_S64 R2-R4): the diffuse dust's depth is the ring's times its
+// placement times the ring's diffuse share (dust_diffuse_share, the ring texture's share row) - what the ring's realised
+// clouds do not hold - and the clouds' own dust is a third layer of opacity: the viewer's raster of /api/clouds'
+// cloud_dust_extinction_v (cloudOpacity.ts, face-on A_V conserved per texel) times each channel's depth per
+// magnitude (the header's extinction_ratio over 1.0857, as the diffuse dust's), at the clouds' own published heights:
+// each texel's clouds a uniform slab from their A_V-weighted mean height and spread (the lead's ruling on R3), composed
+// with the diffuse dust in the same pieces (regimes.ts composeStep). The switch "clouds as extinction" (cloudsOn) drops the clouds' layer and leaves the diffuse
+// dust reduced: the share is the model's, the switch is display. Inside the region regime's window the clouds' layer
+// fades as its own cloud interiors fade in, as the field's HII does (no double counting).
+//
 // The steps are compiled in (a GLSL loop needs a constant bound): a new count is a new shader (D199).
 export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform sampler2D plane;
@@ -176,6 +192,19 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform float dustDepth;
   uniform float dustWhere;
   uniform vec3 whereStops[${WHERE_STOPS}];
+  // The clouds' raster (S64, V6): face-on A_V per texel over the plane's polar extent, and beside it each texel's slab
+  // (its clouds' mean height and half-thickness, kpc: cloudOpacity.ts); each channel's depth per magnitude
+  // (cloudOpacity.ts cloudDepthScale); 1 to draw them, 0 not.
+  uniform sampler2D cloudTex;
+  uniform sampler2D cloudSlab;
+  uniform vec3 cloudExt;
+  uniform float cloudsOn;
+  // The knots' undrawn share (S64, V6, R5): per level-0 cell, 1 - D_c / K_c (knots.ts undrawnShare), a sectors x rings
+  // texture; the cells' radial edges and counts (lo, hi, rings, sectors: the clusters header's knots.layout); 1 to read
+  // it, 0 to leave the field's HII whole.
+  uniform sampler2D hiiShare;
+  uniform vec4 shareCells;
+  uniform float shareOn;
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -218,6 +247,15 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
     return (rp.x >= regionWindow.x && rp.x <= regionWindow.y && rp.y >= regionWindow.z && rp.y <= regionWindow.w) ? 1.0 : 0.0;
   }
 
+  // The share of the field's HII light the drawn knots leave in the level-0 cell at rp (knots.ts cellAt, line for
+  // line); 1 outside the cells or with none drawn.
+  float knotShare(vec2 rp) {
+    if (shareOn < 0.5 || rp.x < shareCells.x || rp.x >= shareCells.y) return 1.0;
+    float ring = min(shareCells.z - 1.0, floor((rp.x - shareCells.x) / (shareCells.y - shareCells.x) * shareCells.z));
+    float sector = min(shareCells.w - 1.0, floor(rp.y / 6.28318531 * shareCells.w));
+    return textureLod(hiiShare, vec2((sector + 0.5) / shareCells.w, (ring + 0.5) / shareCells.z), 0.0).r;
+  }
+
   // regimes.ts's phaseAt, line for line: the table read linearly at |cos i|.
   float phaseAt(float cosView) {
     float x = clamp(abs(cosView), 0.0, 1.0) * float(${PHASE_POINTS - 1});
@@ -248,6 +286,18 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   // The dust layer's scale height at a ring, kpc (D206): the thermal row's spare channel (regimes.ts planeTexture).
   float readHeight(float r) {
     return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.thermal}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
+  }
+  // The column of a uniform slab of face-on depth 1 between heights lo and hi (regimes.ts slabColumn, line for line).
+  float slabColumn(float y0, float y1, float lo, float hi, float ds) {
+    float thick = hi - lo;
+    if (thick <= 0.0) return 0.0;
+    float dy = y1 - y0;
+    if (abs(dy) < 1e-4 * thick) {
+      float mid = 0.5 * (y0 + y1);
+      return (mid >= lo && mid <= hi) ? ds / thick : 0.0;
+    }
+    float overlap = max(0.0, min(max(y0, y1), hi) - max(min(y0, y1), lo));
+    return overlap / thick * ds / abs(dy);
   }
   // Where a sub-step is cut as it crosses the dust's layer, in the dust's scale heights (regimes.ts DUST_CUTS).
   float dustCut(int k) {
@@ -307,6 +357,8 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
         vec3 hiiLight = vec3(0.0);
         vec3 digLight = vec3(0.0);
         vec3 tau = vec3(0.0);
+        vec3 tauC = vec3(0.0);
+        vec2 slab = vec2(0.0);
         float hDust = 0.0;
         if (rp.x < rHi) {
           starsLight = readPolar(plane, rp).rgb * starsGain;
@@ -319,29 +371,44 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
           vec4 scattered = readPolar(scatter, rp);
           float place = scattered.a;
           dustLight = (scattered.rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
-          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain;
+          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);
           digLight = readRing(rp.x, ${RING_ROWS.dig}.0) * gasGain;
-          tau = readRing(rp.x, ${RING_ROWS.depth}.0) * place * dustDepth;
+          // The diffuse dust (S64): the ring's depth times its placement times the share the realised clouds leave.
+          tau = readRing(rp.x, ${RING_ROWS.depth}.0) * place * readRing(rp.x, ${RING_ROWS.share}.0).r * dustDepth;
           hDust = readHeight(rp.x);
+          // The clouds' own dust (S64): the raster's face-on A_V here times each channel's depth per magnitude.
+          tauC = readPolar(cloudTex, rp).r * cloudExt * cloudsOn * dustDepth * (1.0 - hiiFade * inRegion(rp));
+          slab = readPolar(cloudSlab, rp).rg;
         }
         // Composed in order (D206; regimes.ts composeStep, line for line). The dust's layer is far thinner than
         // the stars' in the inner disc, so a sub-step that spans it is cut at fixed multiples of the dust's
         // height and its pieces taken front to back: the stars in front of the layer are not dimmed by it. The
-        // layers are symmetric about the midplane, so heights run upward along the ray in u.
+        // layers are symmetric about the midplane, so heights run upward along the ray in u (the clouds' slab, which is
+        // not, mirrored with them). With the slab (S64) the pieces are cut at the dust's cuts and at the slab's
+        // SLAB_PIECES equal parts, merged in order of height.
         float sgn = q1.y >= q0.y ? 1.0 : -1.0;
         float u0 = sgn * q0.y;
         float u1 = sgn * q1.y;
         float du = u1 - u0;
-        bool whole = hDust <= 0.0 || du <= 1e-6 * hDust;
-        for (int m = 0; m <= ${DUST_CUTS.length}; m++) {
-          float a = u0;
+        bool clouds = max(tauC.r, max(tauC.g, tauC.b)) > 0.0 && slab.y > 0.0;
+        bool dusty = hDust > 0.0;
+        float lo = sgn * slab.x - slab.y;
+        float hi = sgn * slab.x + slab.y;
+        float hMin = (dusty && clouds) ? min(hDust, slab.y) : (dusty ? hDust : (clouds ? slab.y : 0.0));
+        bool whole = hMin <= 0.0 || du <= 1e-6 * hMin;
+        int pd = 0;
+        int ps = 0;
+        float a = u0;
+        for (int m = 0; m <= ${DUST_CUTS.length + SLAB_PIECES + 1}; m++) {
           float b = u1;
           float share = 1.0;
           if (whole) {
             if (m > 0) break;
           } else {
-            a = max(u0, m == 0 ? -1.0e9 : dustCut(m - 1) * hDust);
-            b = min(u1, m == ${DUST_CUTS.length} ? 1.0e9 : dustCut(m) * hDust);
+            float nd = (dusty && pd < ${DUST_CUTS.length}) ? dustCut(pd) * hDust : 1.0e9;
+            float ns = (clouds && ps <= ${SLAB_PIECES}) ? lo + (hi - lo) * float(ps) / ${SLAB_PIECES}.0 : 1.0e9;
+            b = min(u1, min(nd, ns));
+            if (nd <= ns) pd++; else ps++;
             if (b <= a) continue;
             share = (b - a) / du;
           }
@@ -349,12 +416,14 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
           float cDust = column(a, b, hDust, piece);
           vec3 emitted = bulgeSub * share + starsLight * column(a, b, starsHeight, piece) + dustLight * cDust
             + hiiLight * column(a, b, hiiHeight, piece) + digLight * column(a, b, digHeight, piece);
-          vec3 depth = tau * cDust;
+          vec3 depth = tau * cDust + (clouds ? tauC * slabColumn(a, b, lo, hi, piece) : vec3(0.0));
           // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each piece's dust dims only what
           // lies behind it, so light and dust keep their order inside a long step.
           vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
           light += transmitted * emitted * own;
           transmitted *= exp(-depth);
+          a = b;
+          if (a >= u1) break;
         }
       }
     }
@@ -378,7 +447,8 @@ interface Props {
    * The Tuning panel's display choices (D199): the march's sampling, the field's gain multiplier and the
    * white point. The defaults are the values the view drew with before the panel.
    */
-  tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin">;
+  tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin"> &
+    Partial<Pick<Tuning, "cloudRaster">>;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
   /**
@@ -402,6 +472,56 @@ interface Props {
   ages?: AgeGains;
   /** Told which age parts the render carries and what places each (null: none, the layer is `stars`): the rail's switches. */
   onAges?: (parts: AgePart[] | null) => void;
+  /**
+   * The whole disc's cloud census (/api/clouds, f4; S64 V6), rasterised into the clouds' opacity layer; null draws no
+   * clouds' layer (the diffuse dust is still the render's reduced one).
+   */
+  clouds?: Census | null;
+  /** The "clouds as extinction" switch (S64): the clouds' layer drawn, or not. The diffuse share applies either way. */
+  cloudsOn?: boolean;
+  /**
+   * The knots' undrawn share (S64, V6, R5): per level-0 cell of `layout` (the clusters header's knots.layout), the
+   * share of the field's HII layers (halpha_hii and lines_hii) left drawn, 1 - D_c / K_c (knots.ts undrawnShare). Null
+   * leaves them whole.
+   */
+  hiiShare?: { share: Float32Array; layout: CellLayout } | null;
+}
+
+/** What the clouds' raster measured when last built (S64): its texels, bytes, the time to build it and the conservation. */
+export interface CloudRasterStats {
+  width: number;
+  height: number;
+  perCell: number;
+  bytes: number;
+  ms: number;
+  census: number;
+  held: number;
+  outside: number;
+  split: number;
+}
+
+/** A 1 x 1 raster of no clouds: what the march reads until a census arrives, so the shader never samples nothing. */
+function noClouds(): DataTexture {
+  const t = new DataTexture(new Float32Array(1), 1, 1, RedFormat, FloatType);
+  t.needsUpdate = true;
+  return t;
+}
+
+/** A 1 x 1 slab of no thickness, beside noClouds. */
+function noSlab(): DataTexture {
+  const t = new DataTexture(new Uint16Array(2), 1, 1, RGFormat, HalfFloatType);
+  t.needsUpdate = true;
+  return t;
+}
+
+/** A raster's texture at its own texels: each texel's clouds, A_V and slab together, never blended with a neighbour's. */
+function rasterTexture(t: DataTexture): DataTexture {
+  t.minFilter = NearestFilter;
+  t.magFilter = NearestFilter;
+  t.wrapS = ClampToEdgeWrapping;
+  t.wrapT = RepeatWrapping;
+  t.needsUpdate = true;
+  return t;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -434,6 +554,9 @@ export function FieldVolume({
   onDust,
   ages = ALL_AGES,
   onAges,
+  clouds = null,
+  cloudsOn = true,
+  hiiShare = null,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
@@ -491,6 +614,8 @@ export function FieldVolume({
       dustHeight: typeof layers.dust === "string" ? a[layers.dust] : layers.dust,
       // The dust round each ring (D207): the render's placement where the header names one, else an even ring.
       dustPlacement: light.header.placement?.dust ? a[light.header.placement.dust] : null,
+      // The share of each ring's dust left diffuse by its realised clouds (S64, V6): where the header names one.
+      diffuseShare: cloudsOf(light) ? a[cloudsOf(light)!.array] : null,
       white,
     });
     // The dust diagnostic's levels (D205): each ring's place on its declared ramp in its declared scale, kept in
@@ -559,6 +684,16 @@ export function FieldVolume({
         dustDepth: { value: FIELD_LAYERS.dustDepth },
         dustWhere: { value: FIELD_LAYERS.where },
         whereStops: { value: FIELD_LAYERS.whereStops.map((c) => new Vector3(...c)) },
+        // The clouds (S64): no clouds until the census's raster arrives; each channel's depth per magnitude from the
+        // dust component's extinction_ratio.
+        cloudTex: { value: noClouds() },
+        cloudSlab: { value: noSlab() },
+        cloudExt: { value: new Vector3(...cloudDepthScale(extinctionRatio(light))) },
+        cloudsOn: { value: 0 },
+        // The knots' share (S64): none until the view draws knots.
+        hiiShare: { value: noClouds() },
+        shareCells: { value: new Vector4(0, 1, 1, 1) },
+        shareOn: { value: 0 },
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -577,10 +712,65 @@ export function FieldVolume({
       top: DUST_TOP_HEIGHTS * tallestLayer(typeof layers.dust === "string" ? a[layers.dust] : layers.dust),
     };
     box.userData.pointDust = pointDust;
+    box.userData.cloudExt = cloudDepthScale(extinctionRatio(light));
     box.userData.aged = aged;
     box.frustumCulled = false;
     return box;
   }, [frame, light, unresolved]);
+
+  // The clouds' raster (S64, V6; RULING_S64 R4): the whole disc's census over the plane's polar extent at the "cloud
+  // raster" tuning value's texels per render cell a side (never past the 16 MiB budget for this grid), built once per
+  // census and grid. The viewer's own resolution: what each cloud deposits is conserved whatever it is.
+  const gridR = frame?.header.grid.axes.R;
+  const gridPhi = frame?.header.grid.axes.phi;
+  const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
+  const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
+    const c = clouds?.columns as Partial<CloudColumns> | undefined;
+    if (!gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
+    const started = performance.now();
+    const built: CloudRaster = cloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell);
+    // The slab beside the A_V (S64, R3 as ruled): half floats, two a texel - each texel's clouds' mean height and
+    // half-thickness, kpc - and the highest a slab reaches, which bounds the points' segment.
+    const halves = new Uint16Array(built.slab.length);
+    let top = 0;
+    for (let k = 0; k < built.slab.length; k += 2) {
+      halves[k] = DataUtils.toHalfFloat(built.slab[k]);
+      halves[k + 1] = DataUtils.toHalfFloat(built.slab[k + 1]);
+      if (built.slab[k + 1] > 0) top = Math.max(top, Math.abs(built.slab[k]) + built.slab[k + 1]);
+    }
+    const ms = performance.now() - started;
+    const texture = rasterTexture(new DataTexture(built.av, built.width, built.height, RedFormat, FloatType));
+    const slab = rasterTexture(new DataTexture(halves, built.width, built.height, RGFormat, HalfFloatType));
+    const stats = {
+      width: built.width, height: built.height, perCell, bytes: built.av.byteLength + halves.byteLength, ms,
+      census: built.census, held: built.held, outside: built.outside, split: built.split,
+    };
+    (globalThis as { __galaxygenCloudRaster?: CloudRasterStats }).__galaxygenCloudRaster = stats;
+    return { texture, slab, top, stats };
+  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(
+    () => () => {
+      raster?.texture.dispose();
+      raster?.slab.dispose();
+    },
+    [raster],
+  );
+  const cloudsShown = Boolean(raster && cloudsOn);
+  const cloudsKey = raster ? `${raster.texture.uuid},${cloudsShown}` : "none";
+  // The knots' undrawn share (S64, V6, R5): one texel per level-0 cell, sectors across and rings down, read at its own
+  // texel. Its radial edges and counts beside it; a layout the march's lookup cannot read (uneven edges) draws no share.
+  const share = useMemo(() => {
+    if (!hiiShare || !evenLayout(hiiShare.layout) || hiiShare.share.length !== hiiShare.layout.rings * hiiShare.layout.sectors) return null;
+    const { layout } = hiiShare;
+    const texture = rasterTexture(new DataTexture(hiiShare.share, layout.sectors, layout.rings, RedFormat, FloatType));
+    const edges = layout.ring_edges;
+    return { texture, cells: [edges[0], edges[edges.length - 1], layout.rings, layout.sectors] as const };
+  }, [hiiShare]);
+  useEffect(() => () => share?.texture.dispose(), [share]);
+  const shareKey = share ? share.texture.uuid : "none";
+  // The raster is read at its own texels (nearest: a texel's slab is its own clouds'). Its textures and the switch reach
+  // the shader in the frame loop (below), where a change re-marches: set in an effect, a frame marched between React's
+  // commit and the effect kept the mesh's placeholder, and nothing in the settings key said to march again.
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -615,6 +805,11 @@ export function FieldVolume({
       if (!mesh || !offscreen) return;
       const material = mesh.material as ShaderMaterial;
       for (const name of ["plane", "scatter", "hii", "rings"]) (material.uniforms[name].value as DataTexture).dispose();
+      // The placeholder clouds' texture goes with the mesh; the raster's goes with the raster (its own effect).
+      for (const name of ["cloudTex", "cloudSlab", "hiiShare"]) {
+        const t = material.uniforms[name].value as DataTexture;
+        if (t.image.width === 1 && t.image.height === 1) t.dispose();
+      }
       material.dispose();
       mesh.geometry.dispose();
       offscreen.target.dispose();
@@ -627,9 +822,20 @@ export function FieldVolume({
   const tellDust = useRef(onDust);
   tellDust.current = onDust;
   useEffect(() => {
-    tellDust.current?.(mesh ? ((mesh.userData.pointDust as PointDust | undefined) ?? null) : null);
+    const base = mesh ? ((mesh.userData.pointDust as PointDust | undefined) ?? null) : null;
+    // The points read the clouds from the same raster (S64): its A_V and slab textures and the depth per magnitude.
+    const withClouds: PointDust | null = base
+      ? {
+          ...base,
+          clouds: cloudsShown && raster ? raster.texture : null,
+          slab: cloudsShown && raster ? raster.slab : null,
+          cloudExt: (mesh!.userData.cloudExt as [number, number, number] | undefined) ?? [0, 0, 0],
+          top: Math.max(base.top, cloudsShown && raster ? raster.top : 0),
+        }
+      : null;
+    tellDust.current?.(withClouds);
     return () => tellDust.current?.(null);
-  }, [mesh]);
+  }, [mesh, raster, cloudsShown]);
 
   const tellAges = useRef(onAges);
   tellAges.current = onAges;
@@ -696,7 +902,7 @@ export function FieldVolume({
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -704,7 +910,29 @@ export function FieldVolume({
     // takes it out of the first; whichever scene is kept, the mesh goes back into it here.
     const reattached = mesh.parent !== offscreen.scene;
     if (reattached) offscreen.scene.add(mesh);
-    if (!moved && !reattached) return;
+    // The clouds' layer (S64): this mesh's uniforms hold the raster and the switch the view wants, or it marches again.
+    const cloudUniforms = (mesh.material as ShaderMaterial).uniforms;
+    let cloudsMoved = false;
+    if (raster && cloudUniforms.cloudTex.value !== raster.texture) {
+      cloudUniforms.cloudTex.value = raster.texture;
+      cloudUniforms.cloudSlab.value = raster.slab;
+      cloudsMoved = true;
+    }
+    if (cloudUniforms.cloudsOn.value !== (cloudsShown ? 1 : 0)) {
+      cloudUniforms.cloudsOn.value = cloudsShown ? 1 : 0;
+      cloudsMoved = true;
+    }
+    // The knots' share (S64): likewise, in the frame loop, so a new share re-marches.
+    if (share && cloudUniforms.hiiShare.value !== share.texture) {
+      cloudUniforms.hiiShare.value = share.texture;
+      (cloudUniforms.shareCells.value as Vector4).set(...share.cells);
+      cloudsMoved = true;
+    }
+    if (cloudUniforms.shareOn.value !== (share ? 1 : 0)) {
+      cloudUniforms.shareOn.value = share ? 1 : 0;
+      cloudsMoved = true;
+    }
+    if (!moved && !reattached && !cloudsMoved) return;
     if (last.width !== width || last.height !== height) offscreen.target.setSize(width, height);
     const uniforms = (mesh.material as ShaderMaterial).uniforms;
     uniforms.gain.value = gain;
@@ -746,3 +974,16 @@ export function FieldVolume({
 }
 
 const DRAWING = new Vector2();
+
+/** The render's clouds entry (S64, V6): the diffuse share's array and the clouds' layer; null in a render from before it. */
+function cloudsOf(light: RenderFrame): { array: string; layers?: { clouds_scale_height?: number | null } } | null {
+  const entry = light.header.clouds as { array?: string; layers?: { clouds_scale_height?: number | null } } | null | undefined;
+  return entry?.array && entry.array in light.arrays ? { array: entry.array, layers: entry.layers } : null;
+}
+
+/** The dust component's A_lambda / A_V per filter (the grain model's, /api/render's dust_extinction about). */
+function extinctionRatio(light: RenderFrame): (number | null)[] | null {
+  const about = light.header.components?.dust_extinction as { extinction_ratio?: (number | null)[] } | undefined;
+  return about?.extinction_ratio ?? null;
+}
+

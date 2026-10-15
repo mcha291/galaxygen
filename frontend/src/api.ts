@@ -3,6 +3,7 @@
 // colour comes from the field declarations it returns (rule A9).
 import * as wire from "@interface/transport.js";
 
+import { type BrightTable, type TileAnswer, placeRemainder } from "./galaxy/brightTiles";
 import type { Curve } from "./galaxy/filters";
 import { checkLayer, reportLayerFault } from "./galaxy/layer";
 import type { Axis } from "./preview/axes";
@@ -167,38 +168,35 @@ export async function loadRegion(
 export type WhitePoint = { kelvin: number; response: (number | null)[] } | null;
 
 /**
- * The bright catalogue's stars for one view (S48, `/api/bright`): rows brightest first, each named by its level-3
- * `cell` and its `rank` there, with `response` (N × filters, L☉ through each curve) when filters were sent.
+ * The star-first mode's stars by tiles (S64, V6, R8): every disc star above `lMin` in each of `cells` (level-0 cell
+ * ids), `lMin` one of the table's grid thresholds, each with its own light through the filter set. Keyed by cell and
+ * threshold, never by the view (D222 ruling 14): the same answer every time. 32-bit: the light goes to a texture.
  */
-export interface BrightFrame {
-  columns: Columns;
-  header: {
-    columns: string[];
-    /** What the body is complete above: the luminosity the field's remainder must be asked at (D208). */
-    threshold: { l_min: number; complete: boolean; why: string; prefix: string };
-    count: { returned: number; expected: number };
-    light: { returned: number; expected: number };
-    white?: WhitePoint;
-    [key: string]: unknown;
-  };
-}
-
-/**
- * The star-first mode's stars (D208): the `n` most luminous disc stars inside the camera's frustum, complete above
- * the header's threshold, each with its own light through the filter set. 32-bit: the light goes to a texture.
- */
-export async function loadBright(
-  window: { r_min: number; r_max: number; phi_min: number; phi_max: number },
-  n: number,
-  view: ArrayLike<number>,
+export async function loadBrightTiles(
+  cells: number[],
+  lMin: number,
   curves: Curve[],
   white: number,
   query: Query,
   signal?: AbortSignal,
-): Promise<BrightFrame> {
-  const params = { ...query, n, view: Array.from(view), filters: JSON.stringify(curves), white, precision: "f4" };
-  const got = await bright(window, params, { signal });
-  return { columns: got.arrays as Columns, header: got.header as BrightFrame["header"] };
+): Promise<TileAnswer> {
+  const params = { ...query, cells: cells.join(","), l_min: lMin, filters: JSON.stringify(curves), white, precision: "f4" };
+  const got = await bright({}, params, { signal });
+  const columns = got.arrays as TileAnswer["columns"];
+  const bytes = Object.values(columns).reduce((s, a) => s + a.byteLength, 0);
+  return { columns, header: got.header as TileAnswer["header"], bytes };
+}
+
+/**
+ * The expected-count table (S64, V6, R8): each level-0 cell's expected count above every grid threshold, the cells'
+ * layout and the rule the viewer picks one threshold per frame by. Once per galaxy; the counts float32, the
+ * thresholds float64 (each the value a tile is asked at).
+ */
+export async function loadBrightTable(query: Query, signal?: AbortSignal): Promise<BrightTable> {
+  const got = await bright({}, { ...query, table: 1, precision: "f4" }, { signal });
+  const header = got.header as { table?: { rule: string }; cells: BrightTable["layout"] };
+  const a = got.arrays as Record<string, ArrayLike<number>>;
+  return { thresholds: a.threshold, expected: a.expected, layout: header.cells, rule: header.table?.rule ?? "" };
 }
 
 /** A census of one window (S40, V3): the columns as arrays and the header the route wrote. */
@@ -209,15 +207,20 @@ export interface Census {
 
 export type RegionWindowQuery = { r_min: number; r_max: number; phi_min: number; phi_max: number; level?: number };
 
-/** The clouds of a window, at a level (the census the region regime synthesises interiors from). */
-export async function loadClouds(window: RegionWindowQuery, query: Query, signal?: AbortSignal): Promise<Census> {
-  const got = await clouds(window, query, { signal });
+/**
+ * The clouds of a window, at a level (the census the region regime synthesises interiors from). `precision` "f4" asks
+ * for float32 (S64): the whole disc's census the clouds' opacity raster is built from, about 1.6 MB against 2.8.
+ */
+export async function loadClouds(window: RegionWindowQuery, query: Query, signal?: AbortSignal, precision?: "f4" | "f8"): Promise<Census> {
+  const got = await clouds(window, precision ? { ...query, precision } : query, { signal });
   return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
 
 /**
  * The clusters of a window with their HII regions' and bubbles' columns; with `light` (a filter set's curves and a
- * white point, S48) each cluster's `response` too, its own band light through each curve.
+ * white point, S48) each cluster's `response` too, its own band light through each curve, and since S64 (V6, R5) its HII
+ * region's `line_response`, the region's lines through each curve (the knots' light); the header's `knots` entry, with
+ * or without `light`, names the knots' columns, the level-0 cells and the rule (galaxy/knots.ts knotsOf).
  */
 export async function loadClusters(
   window: RegionWindowQuery,
@@ -288,13 +291,96 @@ export async function loadBlackbody(curves: Curve[], white: number, signal?: Abo
   return (await blackbody(curves, { white }, { signal })) as BlackbodyTable;
 }
 
+/** The window and level parameters: a render asked with any of them is a region's, not the whole grid's. */
+const REGION_PARAMS = ["r_min", "r_max", "phi_min", "phi_max", "level"];
+/**
+ * The whole renders held (S64, V6; T28): the field mode's and the star-first mode's frames share the one whole render
+ * of a (filter set, white point, query), so a new threshold asks the remainder alone. Two: the galaxy and the one
+ * before it. Fetched without a caller's signal - two loaders may wait on it - and each caller stops waiting on its own.
+ */
+const WHOLE_RENDERS_HELD = 2;
+const wholeRenders = new Map<string, Promise<RenderFrame>>();
+
+/** Drop the held whole renders (tests: each stands its own API up). */
+export function forgetRenders(): void {
+  wholeRenders.clear();
+}
+
+function untilAborted<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(new DOMException("aborted", "AbortError"));
+  return new Promise<T>((resolve, reject) => {
+    const stop = () => reject(new DOMException("aborted", "AbortError"));
+    signal.addEventListener("abort", stop, { once: true });
+    promise.then(
+      (v) => {
+        signal.removeEventListener("abort", stop);
+        resolve(v);
+      },
+      (e) => {
+        signal.removeEventListener("abort", stop);
+        reject(e);
+      },
+    );
+  });
+}
+
+function wholeRender(curves: Curve[], white: number, query: Query): Promise<RenderFrame> {
+  const key = JSON.stringify([curves, white, query]);
+  let held = wholeRenders.get(key);
+  if (held) {
+    wholeRenders.delete(key);
+  } else {
+    held = render(curves, { ...query, white, precision: "f4" }).then((got) => ({
+      header: got.header as RenderFrame["header"],
+      arrays: got.arrays as RenderFrame["arrays"],
+    }));
+    held.catch(() => wholeRenders.delete(key));
+  }
+  wholeRenders.set(key, held);
+  while (wholeRenders.size > WHOLE_RENDERS_HELD) wholeRenders.delete(wholeRenders.keys().next().value as string);
+  return held;
+}
+
+/** `/api/render?only=remainder` (S64, V6, R8): the field's light under `lMin` as two per-ring arrays and their rule. */
+export interface RemainderFrame {
+  header: {
+    window: { R: { n: number } };
+    remainder: { rule: string; parts: Record<"middle" | "old", { array: string; weight: string }> };
+    resolved: unknown;
+    [key: string]: unknown;
+  };
+  arrays: Record<string, Float32Array | Float64Array>;
+}
+
+export async function loadRemainder(curves: Curve[], white: number, query: Query, lMin: number, signal?: AbortSignal): Promise<RemainderFrame> {
+  const got = await render(curves, { ...query, white, precision: "f4", l_min: lMin, only: "remainder" }, { signal });
+  return { header: got.header as RemainderFrame["header"], arrays: got.arrays as RemainderFrame["arrays"] };
+}
+
 /**
  * The whole galaxy through a filter set, at 32 bits (a texture holds no more). The filter integral
  * is the model's: the viewer sends its curves and a white point and only tone-maps what comes back.
+ *
+ * With `lMin` (D208) the frame adds `stars_unresolved`, the stars' light no point carries above that luminosity: since
+ * S64 (T28) the held whole render plus `only=remainder`'s two per-ring arrays, placed by the render's own weights as
+ * the remainder's header states (brightTiles.ts placeRemainder) - a new threshold asks about 10 kB, never the render.
  */
 export async function loadRender(curves: Curve[], white: number, query: Query = {}, signal?: AbortSignal, lMin?: number | null): Promise<RenderFrame> {
-  // With `lMin` (D208) the render adds `stars_unresolved`: the stars' light no point carries, above that luminosity.
-  const params = lMin != null && lMin > 0 ? { ...query, white, precision: "f4", l_min: lMin } : { ...query, white, precision: "f4" };
-  const got = await render(curves, params, { signal });
-  return { header: got.header as RenderFrame["header"], arrays: got.arrays as RenderFrame["arrays"] };
+  const whole = !REGION_PARAMS.some((p) => p in query);
+  if (!whole) {
+    const got = await render(curves, { ...query, white, precision: "f4" }, { signal });
+    return { header: got.header as RenderFrame["header"], arrays: got.arrays as RenderFrame["arrays"] };
+  }
+  if (lMin == null || !(lMin > 0)) return untilAborted(wholeRender(curves, white, query), signal);
+  const [frame, rest] = await Promise.all([untilAborted(wholeRender(curves, white, query), signal), loadRemainder(curves, white, query, lMin, signal)]);
+  const parts = rest.header.remainder?.parts;
+  const a = frame.arrays;
+  const placed = parts
+    ? placeRemainder(rest.arrays[parts.middle.array], rest.arrays[parts.old.array], a[parts.middle.weight], a[parts.old.weight], rest.header.window?.R?.n)
+    : null;
+  return {
+    header: { ...frame.header, resolved: rest.header.resolved, remainder: rest.header.remainder },
+    arrays: placed ? { ...a, stars_unresolved: placed } : a,
+  };
 }

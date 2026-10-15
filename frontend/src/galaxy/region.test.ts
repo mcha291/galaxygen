@@ -239,13 +239,24 @@ describe("with the layer off the interior is smooth (S55, invariant I5)", () => 
 
 describe("the march's shader draws the published interior (S55)", () => {
   const sha256 = (text: string) => createHash("sha256").update(text, "utf-8").digest("hex");
+  const S64_LENGTH = 4311;
+  const S64_SHA256 = "94771a7b1025fe17b622bd211730def3b12845a61739e25d83a616d8f766e2d1";
 
   it("is, at the published values, byte for byte the shader the viewer drew with before", () => {
     // The fragment source RegionVolume.tsx held at S54 (OCTAVES 4, f *= 2.0, w *= 0.5, FIELD_SIGMA.toFixed(6)),
     // hashed at S55 before any code moved. The same text is the same program: the picture cannot have moved.
+    // S64 (T5) added the clouds' front - two sums declared, two accumulated, and the transmission pass's alpha - and
+    // nothing else: with exactly those lines taken back the text is S55's, byte for byte.
     const fragment = regionFragment(NOISE);
-    expect(fragment.length).toBe(4181);
-    expect(sha256(fragment)).toBe("da30e55df935257fcfd2ac99ed6b5e2179f0c676f1ae30dfd90b3fd86194e415");
+    const s55 = fragment
+      .replace("    float tauSum = 0.0;\n    float tauT0 = 0.0;\n", "")
+      .replace("        tauSum += tau;\n        tauT0 += tau * t0;\n", "")
+      .replace("vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : 1.0);", "vec4(mix(vec3(1.0), trans, weight), 1.0);");
+    expect(s55.length).toBe(4181);
+    expect(sha256(s55)).toBe("da30e55df935257fcfd2ac99ed6b5e2179f0c676f1ae30dfd90b3fd86194e415");
+    // S64's text, pinned in its turn.
+    expect(fragment.length).toBe(S64_LENGTH);
+    expect(sha256(fragment)).toBe(S64_SHA256);
     expect(fragment).toContain("for (int k = 0; k < 4; k++) {\n      vec3 q = p * f + vec3(17.3, 31.7, 47.1) * float(k);");
     expect(fragment).toContain("f *= 2.0;\n      w *= 0.5;\n    }\n    return sum / 0.208800;");
     expect(fragment).toContain(`for (int i = 0; i < ${MAX_OBJECTS}; i++)`);

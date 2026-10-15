@@ -35,6 +35,19 @@
   uniform float dustDepth;
   uniform float dustWhere;
   uniform vec3 whereStops[8];
+  // The clouds' raster (S64, V6): face-on A_V per texel over the plane's polar extent, and beside it each texel's slab
+  // (its clouds' mean height and half-thickness, kpc: cloudOpacity.ts); each channel's depth per magnitude
+  // (cloudOpacity.ts cloudDepthScale); 1 to draw them, 0 not.
+  uniform sampler2D cloudTex;
+  uniform sampler2D cloudSlab;
+  uniform vec3 cloudExt;
+  uniform float cloudsOn;
+  // The knots' undrawn share (S64, V6, R5): per level-0 cell, 1 - D_c / K_c (knots.ts undrawnShare), a sectors x rings
+  // texture; the cells' radial edges and counts (lo, hi, rings, sectors: the clusters header's knots.layout); 1 to read
+  // it, 0 to leave the field's HII whole.
+  uniform sampler2D hiiShare;
+  uniform vec4 shareCells;
+  uniform float shareOn;
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -70,11 +83,20 @@
     return textureLod(tex, vec2((rp.x - rLo) / (rHi - rLo), rp.y / 6.28318531), 0.0);
   }
   vec3 readRing(float r, float row) {
-    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (row + 0.5) / 3.0), 0.0).rgb;
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (row + 0.5) / 4.0), 0.0).rgb;
   }
 
   float inRegion(vec2 rp) {
     return (rp.x >= regionWindow.x && rp.x <= regionWindow.y && rp.y >= regionWindow.z && rp.y <= regionWindow.w) ? 1.0 : 0.0;
+  }
+
+  // The share of the field's HII light the drawn knots leave in the level-0 cell at rp (knots.ts cellAt, line for
+  // line); 1 outside the cells or with none drawn.
+  float knotShare(vec2 rp) {
+    if (shareOn < 0.5 || rp.x < shareCells.x || rp.x >= shareCells.y) return 1.0;
+    float ring = min(shareCells.z - 1.0, floor((rp.x - shareCells.x) / (shareCells.y - shareCells.x) * shareCells.z));
+    float sector = min(shareCells.w - 1.0, floor(rp.y / 6.28318531 * shareCells.w));
+    return textureLod(hiiShare, vec2((sector + 0.5) / shareCells.w, (ring + 0.5) / shareCells.z), 0.0).r;
   }
 
   // regimes.ts's phaseAt, line for line: the table read linearly at |cos i|.
@@ -102,11 +124,23 @@
   }
   // Each ring's level on the dust's declared ramp (components.ts dustLevels), held in the depth row's spare channel.
   float readLevel(float r) {
-    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (0.0 + 0.5) / 3.0), 0.0).a;
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (0.0 + 0.5) / 4.0), 0.0).a;
   }
   // The dust layer's scale height at a ring, kpc (D206): the thermal row's spare channel (regimes.ts planeTexture).
   float readHeight(float r) {
-    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (2.0 + 0.5) / 3.0), 0.0).a;
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (2.0 + 0.5) / 4.0), 0.0).a;
+  }
+  // The column of a uniform slab of face-on depth 1 between heights lo and hi (regimes.ts slabColumn, line for line).
+  float slabColumn(float y0, float y1, float lo, float hi, float ds) {
+    float thick = hi - lo;
+    if (thick <= 0.0) return 0.0;
+    float dy = y1 - y0;
+    if (abs(dy) < 1e-4 * thick) {
+      float mid = 0.5 * (y0 + y1);
+      return (mid >= lo && mid <= hi) ? ds / thick : 0.0;
+    }
+    float overlap = max(0.0, min(max(y0, y1), hi) - max(min(y0, y1), lo));
+    return overlap / thick * ds / abs(dy);
   }
   // Where a sub-step is cut as it crosses the dust's layer, in the dust's scale heights (regimes.ts DUST_CUTS).
   float dustCut(int k) {
@@ -179,6 +213,8 @@
         vec3 hiiLight = vec3(0.0);
         vec3 digLight = vec3(0.0);
         vec3 tau = vec3(0.0);
+        vec3 tauC = vec3(0.0);
+        vec2 slab = vec2(0.0);
         float hDust = 0.0;
         if (rp.x < rHi) {
           starsLight = readPolar(plane, rp).rgb * starsGain;
@@ -191,29 +227,44 @@
           vec4 scattered = readPolar(scatter, rp);
           float place = scattered.a;
           dustLight = (scattered.rgb * scattering + readRing(rp.x, 2.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
-          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain;
+          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);
           digLight = readRing(rp.x, 1.0) * gasGain;
-          tau = readRing(rp.x, 0.0) * place * dustDepth;
+          // The diffuse dust (S64): the ring's depth times its placement times the share the realised clouds leave.
+          tau = readRing(rp.x, 0.0) * place * readRing(rp.x, 3.0).r * dustDepth;
           hDust = readHeight(rp.x);
+          // The clouds' own dust (S64): the raster's face-on A_V here times each channel's depth per magnitude.
+          tauC = readPolar(cloudTex, rp).r * cloudExt * cloudsOn * dustDepth * (1.0 - hiiFade * inRegion(rp));
+          slab = readPolar(cloudSlab, rp).rg;
         }
         // Composed in order (D206; regimes.ts composeStep, line for line). The dust's layer is far thinner than
         // the stars' in the inner disc, so a sub-step that spans it is cut at fixed multiples of the dust's
         // height and its pieces taken front to back: the stars in front of the layer are not dimmed by it. The
-        // layers are symmetric about the midplane, so heights run upward along the ray in u.
+        // layers are symmetric about the midplane, so heights run upward along the ray in u (the clouds' slab, which is
+        // not, mirrored with them). With the slab (S64) the pieces are cut at the dust's cuts and at the slab's
+        // SLAB_PIECES equal parts, merged in order of height.
         float sgn = q1.y >= q0.y ? 1.0 : -1.0;
         float u0 = sgn * q0.y;
         float u1 = sgn * q1.y;
         float du = u1 - u0;
-        bool whole = hDust <= 0.0 || du <= 1e-6 * hDust;
-        for (int m = 0; m <= 14; m++) {
-          float a = u0;
+        bool clouds = max(tauC.r, max(tauC.g, tauC.b)) > 0.0 && slab.y > 0.0;
+        bool dusty = hDust > 0.0;
+        float lo = sgn * slab.x - slab.y;
+        float hi = sgn * slab.x + slab.y;
+        float hMin = (dusty && clouds) ? min(hDust, slab.y) : (dusty ? hDust : (clouds ? slab.y : 0.0));
+        bool whole = hMin <= 0.0 || du <= 1e-6 * hMin;
+        int pd = 0;
+        int ps = 0;
+        float a = u0;
+        for (int m = 0; m <= 19; m++) {
           float b = u1;
           float share = 1.0;
           if (whole) {
             if (m > 0) break;
           } else {
-            a = max(u0, m == 0 ? -1.0e9 : dustCut(m - 1) * hDust);
-            b = min(u1, m == 14 ? 1.0e9 : dustCut(m) * hDust);
+            float nd = (dusty && pd < 14) ? dustCut(pd) * hDust : 1.0e9;
+            float ns = (clouds && ps <= 4) ? lo + (hi - lo) * float(ps) / 4.0 : 1.0e9;
+            b = min(u1, min(nd, ns));
+            if (nd <= ns) pd++; else ps++;
             if (b <= a) continue;
             share = (b - a) / du;
           }
@@ -221,12 +272,14 @@
           float cDust = column(a, b, hDust, piece);
           vec3 emitted = bulgeSub * share + starsLight * column(a, b, starsHeight, piece) + dustLight * cDust
             + hiiLight * column(a, b, hiiHeight, piece) + digLight * column(a, b, digHeight, piece);
-          vec3 depth = tau * cDust;
+          vec3 depth = tau * cDust + (clouds ? tauC * slabColumn(a, b, lo, hi, piece) : vec3(0.0));
           // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each piece's dust dims only what
           // lies behind it, so light and dust keep their order inside a long step.
           vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
           light += transmitted * emitted * own;
           transmitted *= exp(-depth);
+          a = b;
+          if (a >= u1) break;
         }
       }
     }

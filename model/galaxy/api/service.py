@@ -49,6 +49,9 @@ from urllib.parse import parse_qsl
 import numpy as np
 
 from galaxy import templates as _tpl  # the named galaxies (S54); Service._templates is the route
+from galaxy.api import v6_clouds as _v6_clouds  # S64 (V6, R1-R2): the clouds as extinction
+from galaxy.api import v6_tiles as _v6_tiles  # S64 (V6, R8): bright stars by tiles, their table, the remainder alone
+from galaxy.api import v6_knots as _v6_knots  # S64 (V6, R5-R6): the HII regions as knots, their lines and the field's share
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
@@ -116,6 +119,8 @@ RENDER_DUST_HEIGHT = "dust_height"
 # The render's (R, phi) array of the dust's column around each ring over the ring's mean (D207; the gas's
 # own contrast since S51, D210): what `placement.dust` names.
 RENDER_DUST_PLACEMENT = "dust_placement"
+# S64 (V6, R2): the share of each ring's dust that is diffuse once its realised clouds hold theirs.
+RENDER_DIFFUSE_SHARE = _v6_clouds.SHARE
 # The stars' light by the age of its stars (S63, D223): one array per part of ``bright.AGE_PARTS``, per ring and filter,
 # each placed round its ring by the (R, phi) array the header's ``ages`` names. The old part is placed as ``stars`` is
 # (``RENDER_STARS_PLACEMENT``), the middle by where stars form today (``RENDER_MIDDLE_PLACEMENT``), the young by the
@@ -240,8 +245,12 @@ ROUTES: tuple[Route, ...] = (
         "The molecular-cloud census for one (R, phi) window (S32): every cloud of the cells the window "
         "meets, each row named by cell and index; level=k keeps the clouds inside the level-k children "
         "the window meets. The header's cloud_interior is {octaves, lacunarity, gain}: the noise a renderer "
-        "synthesises a cloud's interior with (S55).",
-        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "synthesises a cloud's interior with (S55). After the census's own columns, cloud_dust_extinction_v (S64, "
+        "V6): each cloud's face-on mean A_V from its own dust - its mass times the dust-to-gas ratio, times the A_V "
+        "per unit of dust column, both read at its birth radius, over its disc's area - the ring's dust law applied to "
+        "the cloud's gas, derived here from published fields; the header's clouds.derived says so. precision=f4 sends "
+        "float32.",
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level", "precision"),
         "clouds",
     ),
     Route(
@@ -250,7 +259,12 @@ ROUTES: tuple[Route, ...] = (
         "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
         "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
         "clusters inside the level-k children the window meets. filters= (as /api/render takes it, S48) adds response, "
-        "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header.",
+        "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header. "
+        "With filters=, line_response (S64, V6) too: each cluster's HII region's lines through each curve in Lsun - its "
+        "Halpha (hii_halpha_luminosity) and every other line /api/render's lines_hii carries, each at its own wavelength "
+        "by spectra.line_response as lines_hii is per ring - one point's light, the knot's. The header's knots entry, "
+        "with filters= or without, names the knot's light, size (hii_stromgren_radius) and cell columns, the level-0 "
+        "cells' layout, and the rule by which a viewer drawing some knots scales the field's HII layers cell by cell.",
         ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
         "clusters",
     ),
@@ -273,8 +287,12 @@ ROUTES: tuple[Route, ...] = (
         "says what the body is complete above and that the prefix holds by interval (D203). Stars younger than the cluster census's window "
         "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
         "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
-        "header.",
-        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
+        "header. The tile form (S64, V6): cells=<level-0 ids> with l_min= - each cell's stars above l_min snapped up to "
+        "the 0.05 dex grid (the header's tile says the value used), grouped by finest cell: keyed by cell and "
+        "threshold, never by a window, so each answer is the same bytes every time and can be computed ahead; n=, view= "
+        "and a window are refused with it. table=1: every level-0 cell's expected count above every grid threshold, "
+        "with the rule the viewer picks one threshold per frame by and the cells' layout.",
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white", "cells", "table"),
         "bright",
     ),
     Route(
@@ -308,8 +326,15 @@ ROUTES: tuple[Route, ...] = (
         "the header's resolved stating the light split and the closure. The stars split by age (S63, D223): stars_young, "
         "stars_middle and stars_old per ring and filter, each its own spectrum's response scaled by the ring's closure "
         "factor so the three sum to the stars' ring value, with the (R, phi) weights that place them (stars_placement, "
-        "stars_middle_placement, or dust_placement for the young) - the header's ages names each part's weight.",
-        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
+        "stars_middle_placement, or dust_placement for the young) - the header's ages names each part's weight. "
+        "The clouds as extinction (S64, V6): dust_diffuse_share per ring, the share of each ring's dust that is diffuse "
+        "once its realised clouds (summed off the census's ring streams, no census materialised) hold theirs - the "
+        "viewer multiplies the dust's depth by it and draws the clouds' own column, /api/clouds' "
+        "cloud_dust_extinction_v, in the clouds' layer; the header's clouds states the rule and the closure. "
+        "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
+        "filter, which this render's own stars_middle_placement (or stars_placement) and stars_placement turn into "
+        "stars_unresolved exactly; the header's remainder states the rule.",
+        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
         "render",
     ),
 )
@@ -1280,10 +1305,17 @@ class Service:
         phi_min = q.number("phi_min", 0.0)
         phi_max = q.number("phi_max", 2.0 * math.pi)
         level = _level(q)
+        precision = q.one("precision", "f8")
+        if precision not in ("f8", "f4"):
+            raise BadRequest(f"precision={precision!r} is not f8 or f4")
 
         inputs = self._overrides(model, q)
         layer = self._layer(q)
-        out, ran = self.compute(model, inputs, self._reads(model, stage), layer)
+        # S64 (V6, R1): and the dust's ring fields the derived column reads - the ism stage's, which the clouds' own
+        # reads (the molecular gas) already run: no stage more.
+        reads = self._reads(model, stage)
+        reads += tuple(n for n in _v6_clouds.COLUMN_FIELDS if n not in reads)
+        out, ran = self.compute(model, inputs, reads, layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
@@ -1299,6 +1331,9 @@ class Service:
         kept = None
         if level:
             census, kept = _in_children(census, "cloud", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
+        # S64 (V6, R1): the cloud's own dust column, derived here from published fields, after the census's own columns.
+        derived = {_v6_clouds.COLUMN: _v6_clouds.dust_extinction_v(
+            out.fields, R, census["cloud_mass"], census["cloud_size"], census["cloud_birth_radius"])}
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
@@ -1312,7 +1347,8 @@ class Service:
                 "requested": len(parents),
                 "of": _catalogue.CELL_COUNT,
             },
-            "clouds": {"materialised": int(census.size) if kept is None else kept, "seed": seed},
+            "clouds": {"materialised": int(census.size) if kept is None else kept, "seed": seed,
+                       "derived": {_v6_clouds.COLUMN: _v6_clouds.COLUMN_ABOUT}},
             # Three of the stage's galaxy scalars, which rule D4 keeps off the viewer's scalars surface
             # (D148): a renderer that synthesises a cloud's interior reads b and the lifetime here. The
             # stage itself does not run for a window, so the realised mass total is /api/arrays' alone.
@@ -1340,10 +1376,13 @@ class Service:
             # function the viewer may evaluate), and the realised mean of its map in each level-0 cell the window
             # asked for, the number a renderer divides the field by. With layer=off the seed and the means are null.
             "census_clustering": _census_clustering.header(out.fields, constants, parents),
-            "columns": columns,
+            "columns": [*columns, *derived],
             "stages": list(ran),
         }
-        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
+        arrays = [(c, census[c]) for c in columns] + list(derived.items()) + [("cell", census["cell"]), ("index", census["index"])]
+        if precision == "f4":
+            arrays = [(c, a.astype(np.float32) if a.dtype == np.float64 else a) for c, a in arrays]
+        return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 
     def _clusters(self, q: Query) -> Response:
         """The star-cluster census of one window (S33): the clusters of every level-0 cell the window meets,
@@ -1426,6 +1465,15 @@ class Service:
             anchors = _clusters.band_anchors(census["cluster_mass"], census["cluster_age"], census["cluster_metallicity"])
             arrays.append(("response", _spectra.object_response(anchors, np.asarray(census["cluster_light_temperature"], dtype=float), curves)))
             header.update(_object_response_header(curves, white, "cluster_light_temperature"))
+        # S64 (V6, R5-R6): the HII regions as knots - the lines the field's HII layers carry, each region's through the
+        # curves beside its starlight, and the rule by which a viewer drawing them scales the field (api/v6_knots.py).
+        if _v6_knots.LIGHT in census:
+            lines, unmatched = _v6_knots.matched(_v6_knots.field_lines(self._declared(model)), columns)
+            header["knots"] = _v6_knots.header(R, lines, unmatched)
+            if curves is not None and lines:
+                knot_light, shares = _v6_knots.line_response(census, lines, curves)
+                arrays.append((_v6_knots.COLUMN, knot_light))
+                header[_v6_knots.COLUMN] = _v6_knots.column_header(shares)
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 
     def _remnants(self, q: Query) -> Response:
@@ -1504,7 +1552,15 @@ class Service:
     def _bright(self, q: Query) -> Response:
         """Every disc star above a luminosity in one window (S48, D200): the finest cells the window meets, their
         ordered Poisson processes cut at a threshold - found by bisection on the expected count for ``n``, given for
-        ``l_min``. Runs what the stage reads and not the stage (rule D4); the cells are cached between requests."""
+        ``l_min``. Runs what the stage reads and not the stage (rule D4); the cells are cached between requests.
+
+        **The tile form** (S64, V6, R8): ``cells=<level-0 ids>&l_min=`` - each named level-0 cell's stars above
+        ``l_min`` snapped up to the 0.05 dex grid, so a (tile, threshold) is one answer, the same bytes every time:
+        cell-keyed, never keyed by a window the viewer chose (D222 ruling 14), and so computable ahead (BUILD_IV W2).
+        ``table=1`` is every level-0 cell's expected count at every grid threshold, the one threshold per frame the
+        viewer picks from. Both are ``api/v6_tiles.py``'s."""
+        if q.one("cells") is not None or q.one("table") is not None:
+            return _v6_tiles.bright(self, q)
         model = self._model(q)
         stage = _stage_for(model, BRIGHT_SLOT, self.impls)
         R = self.grid.R
@@ -1611,7 +1667,12 @@ class Service:
         every component's vertical layer in ``layers``: the arrays are face-on columns the viewer spreads
         through their layers and integrates along each ray. What the frame's dust removes and what it
         emits balance (``tests/test_render.py``).
+
+        **only=remainder** (S64, V6, R8; T28): with ``l_min=``, the two per-ring arrays the remainder is exactly,
+        placed by weights this render already sends (``api/v6_tiles.py``): a new threshold asks 9.6 kB, not this.
         """
+        if q.one("only") is not None:
+            return _v6_tiles.remainder(self, q)
         model = self._model(q)
         curves = _parse_filters(q)
         precision = q.one("precision", "f8")
@@ -1631,6 +1692,8 @@ class Service:
         # S63 (D223): the history the light by age is decomposed from, and where stars form today (the middle part's
         # weight) - the bright stage's own reads, where the model publishes them.
         wanted += [n for n in _bright.RESOLVE_READS if n in declared and n not in wanted]
+        # S64 (V6, R2): what the diffuse share reads - the ism stage's, which the dust component already runs.
+        wanted += [n for n in _v6_clouds.SHARE_FIELDS if n in declared and n not in wanted]
         if l_min is not None:
             # S48's wiring (D200 (4)): what the field's remainder decomposes - the bright stage's reads, only those (D4).
             bright = _stage_for(model, BRIGHT_SLOT, self.impls)
@@ -1716,7 +1779,7 @@ class Service:
                 "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
                          f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "
                          "stellar contrast; it averages to 1, so each ring keeps its published line) in the clouds' "
-                         "layer, where the regions' clusters are" + even,
+                         "layer, where the regions' clusters are" + _v6_knots.HALPHA_WORDS + even,
             }
         # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
         # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
@@ -1733,7 +1796,8 @@ class Service:
                 "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
                 "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
                          "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
-                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer" + even,
+                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer"
+                         + _v6_knots.LINES_WORDS + even,
             }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
@@ -1796,6 +1860,17 @@ class Service:
                         "is already a share of the placed starlight. It averages to 1 round every ring" + even,
                 }},
             }
+        # The clouds as extinction (S64, BUILD_III V6; RULING_S64 R2): the share of each ring's dust that is diffuse once
+        # the ring's realised clouds hold theirs, summed off the ring-first draw's streams (no census, nothing placed).
+        # The dust_extinction component is unchanged: the viewer multiplies the diffuse depth by the share and draws
+        # the clouds' own column from /api/clouds in the clouds' layer.
+        clouds_entry, diffuse_share = None, None
+        if "dust_extinction_v" in f and all(n in f for n in _v6_clouds.SHARE_FIELDS) and CLOUDS_SLOT in model.stage_map:
+            cloud_seed = int(out.inputs[_stage_for(model, CLOUDS_SLOT, self.impls).reads_seeds[0]])
+            diffuse_share, share_rings = _v6_clouds.diffuse_share(
+                f, R, cloud_seed, {k: c.value for k, c in model.constants.items()})
+            clouds_entry = _v6_clouds.render_header(
+                share_rings, layers.get("halpha_hii"), RENDER_DUST_PLACEMENT if placement is not None else None, even)
         if all(n in f for n in ("dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")):
             tau_sca = _spectra.scattering_depth(f["dust_scattering_optical_depth"], curves)  # (R, filter)
             tau_ext = _spectra.extinction_depth(f["dust_extinction_v"], curves)
@@ -1867,6 +1942,8 @@ class Service:
                 arrays.append((RENDER_DUST_HEIGHT, dust_height[rows]))
             if placement is not None:
                 arrays.append((RENDER_DUST_PLACEMENT, placed_gas[rows][:, cols]))
+            if diffuse_share is not None:
+                arrays.append((RENDER_DIFFUSE_SHARE, diffuse_share[rows]))
             window: dict[str, Any] = {
                 "R": {"first": i0, "n": n_r, "lo": R_axis.lo + i0 * R_axis.width, "width": R_axis.width},
                 "phi": {"first": j0, "n": n_phi, "lo": phi_axis.lo + j0 * phi_axis.width, "width": phi_axis.width,
@@ -1877,6 +1954,8 @@ class Service:
                 axes[RENDER_DUST_HEIGHT] = ["R"]
             if placement is not None:
                 axes[RENDER_DUST_PLACEMENT] = ["R", "phi"]
+            if diffuse_share is not None:
+                axes[RENDER_DIFFUSE_SHARE] = ["R"]
             for name, value in age_rings:
                 arrays.append((name, value[rows]))
                 axes[name] = ["R", "filter"]
@@ -1907,6 +1986,10 @@ class Service:
                 # share of the ring's area.
                 arrays.append((RENDER_DUST_PLACEMENT, _cell_means(placed_gas[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
                 axes[RENDER_DUST_PLACEMENT] = ["cell"]
+            if diffuse_share is not None:
+                # A cell's area-weighted mean of its rings' shares, as the dust's height is.
+                arrays.append((RENDER_DIFFUSE_SHARE, _cell_means(diffuse_share, bounds, R_axis, phi_axis, per_ring=True)))
+                axes[RENDER_DIFFUSE_SHARE] = ["cell"]
             # The light by age (S63): a part's area-weighted mean over the cell's rings, and its weight's mean over the cell.
             for name, value in age_rings:
                 arrays.append((name, _cell_means(value, bounds, R_axis, phi_axis, per_ring=True)))
@@ -1938,6 +2021,9 @@ class Service:
             # The stars' light by age (S63, D223): each part's per-ring array and the array that places it, or null
             # where the model publishes no history to decompose.
             "ages": ages,
+            # The clouds as extinction (S64, V6): the diffuse share's array, its rule, the clouds' route, column and
+            # layer, the closure - or null where the model publishes no dust or no clouds.
+            "clouds": clouds_entry,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,
@@ -2056,7 +2142,7 @@ class Service:
 
     def _unresolved(
         self, model: Model, f: Mapping[str, Any], R: np.ndarray, curves: Sequence[Any], per_ring: np.ndarray,
-        contrast: Any, l_min: float,
+        contrast: Any, l_min: float, parts: dict[str, np.ndarray] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
         """The field's remainder under ``l_min`` (S48's wiring, D200 (4)): (the component on the (R, phi) grid, its
         entry in ``components``, the header's ``resolved``).
@@ -2070,7 +2156,8 @@ class Service:
         contrast for the old part, the normalised sfr_modulation for the 20-100 Myr part where the model publishes
         it), so the points and the field agree around the arms. The SED join is not linear, so the parts' responses
         do not sum to the total's exactly: the departure through this request's curves is measured here, per ring,
-        and stated in the header."""
+        and stated in the header. ``parts``, when given, receives the two parts' responses per ring and filter
+        (``middle``, ``old``): what ``only=remainder`` sends (S64, V6, R8; ``api/v6_tiles.py``)."""
         spec = self.grid.spec
         constants = {k: c.value for k, c in model.constants.items()}
         res = _bright.resolve(f, float(spec.t_max), int(spec.n_t), constants, l_min)
@@ -2078,6 +2165,8 @@ class Service:
         a = res.anchors
         middle = _spectra.stellar_response(a["unresolved_middle"], T, curves)
         old = _spectra.stellar_response(a["unresolved_old"], T, curves)
+        if parts is not None:
+            parts.update(middle=middle, old=old)
         modulation = _compose.published(f, "sfr_modulation")
         grid_contrast = np.ones((R.size, self.grid.axes["phi"].n)) if contrast is None else contrast
         weights = _bright.part_weights(grid_contrast, modulation)  # (2, R, phi): middle, old

@@ -5,14 +5,27 @@
 import { MAX_URL } from "@interface/transport.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type Query, loadArrays, loadBright, loadClouds, loadClusters, loadRegion, loadRemnants, loadRender, loadSample } from "./api";
+import {
+  type Query,
+  forgetRenders,
+  loadArrays,
+  loadBrightTable,
+  loadBrightTiles,
+  loadClouds,
+  loadClusters,
+  loadRegion,
+  loadRemainder,
+  loadRemnants,
+  loadRender,
+  loadSample,
+} from "./api";
 import { LayerMismatch, layerQuery, onLayerFault } from "./galaxy/layer";
 import { templateQuery } from "./workflow/templates";
 
 const QUERY: Query = { halo_mass: 1.1e12, world_seed: 0, texture_seed: 0, mergers: "[]", model: "azimuthal" };
 const WINDOW = { r_min: 7.5, r_max: 8.5, phi_min: 0.1, phi_max: 0.3 };
 const CURVES = [{ name: "r", shape: "gaussian", centre: 600, width: 80 }];
-const VIEW = Array.from({ length: 16 }, (_, k) => k / 7);
+const TILES = [261, 262, 293];
 
 /** One galaxy-bin/1 frame with no arrays: the magic, the header's length, the header (interface/transport.js decode). */
 function frameOf(header: Record<string, unknown>): ArrayBuffer {
@@ -37,6 +50,7 @@ const honest = (params: URLSearchParams) => ({ layer: params.get("layer") ?? "on
 
 beforeEach(() => {
   sent = [];
+  forgetRenders(); // each test stands its own API up: no whole render held from another
   echo = honest;
   vi.stubGlobal("fetch", async (target: string, init: { method: string; body?: string }) => {
     const at = new URL(target, "http://viewer.test");
@@ -54,9 +68,10 @@ const REQUESTS: Record<string, { route: string; ask(query: Query): Promise<unkno
   "the fields the march reads (FieldVolume)": { route: "/api/arrays", ask: (q) => loadArrays(["disc_surface_brightness", "disc_scale_height"], q) },
   "a sampled history (the loader's other shape)": { route: "/api/arrays", ask: (q) => loadArrays(["sfr_history"], q, undefined, { tSamples: 200, precision: "f4" }) },
   "the render (FieldVolume, field mode)": { route: "/api/render", ask: (q) => loadRender(CURVES as never, 5800, q) },
-  "the render's remainder under the points (FieldVolume, star-first mode)": { route: "/api/render", ask: (q) => loadRender(CURVES as never, 5800, q, undefined, 12.5) },
+  "the render's remainder under the points (FieldVolume via loadRender, star-first mode)": { route: "/api/render", ask: (q) => loadRemainder(CURVES as never, 5800, q, 12.5) },
   "a region's render (RegionVolume)": { route: "/api/render", ask: (q) => loadRender(CURVES as never, 5800, { ...q, ...WINDOW, level: 2 }) },
-  "the bright catalogue (GalaxyTab, star-first mode)": { route: "/api/bright", ask: (q) => loadBright(WINDOW, 1000, VIEW, CURVES as never, 5800, q) },
+  "the bright stars by tiles (GalaxyTab, star-first mode)": { route: "/api/bright", ask: (q) => loadBrightTiles(TILES, 2511.886431509577, CURVES as never, 5800, q) },
+  "the bright stars' expected-count table (GalaxyTab, star-first mode)": { route: "/api/bright", ask: (q) => loadBrightTable(q) },
   "the whole disc's clusters with their light (GalaxyTab, star-first mode)": { route: "/api/clusters", ask: (q) => loadClusters({ ...WINDOW, level: 0 }, q, undefined, { curves: CURVES as never, white: 5800 }) },
   "a region's clusters (GalaxyTab)": { route: "/api/clusters", ask: (q) => loadClusters({ ...WINDOW, level: 2 }, q) },
   "the cloud census (GalaxyTab's markers, RegionVolume)": { route: "/api/clouds", ask: (q) => loadClouds({ ...WINDOW, level: 2 }, q) },
@@ -129,7 +144,7 @@ describe("template=<name> on the wire, in every request shape", () => {
     const long = Array.from({ length: 200 }, (_, k) => ({ name: `f${k}`, shape: "sampled", wavelength: [400 + k, 500 + k], throughput: [0.5, 0.25] }));
     expect(JSON.stringify(long).length).toBeGreaterThan(MAX_URL);
     await loadRender(long as never, 5800, templateQuery(QUERY, NGC));
-    await loadBright(WINDOW, 1000, VIEW, long as never, 5800, templateQuery(QUERY, NGC));
+    await loadBrightTiles(TILES, 2511.886431509577, long as never, 5800, templateQuery(QUERY, NGC));
     await loadClusters({ ...WINDOW, level: 0 }, templateQuery(QUERY, NGC), undefined, { curves: long as never, white: 5800 });
     expect(sent.map((s) => [s.route, s.method, s.params.getAll("template")])).toEqual([
       ["/api/render", "POST", ["ngc_4414"]],
@@ -179,3 +194,33 @@ describe("the header's echo, checked where every frame is read", () => {
     expect(census.header.cloud_interior).toEqual({ octaves: 4, lacunarity: 2, gain: 0.5 });
   });
 });
+
+// S64 (V6, R8; T28): the star-first view's requests are keyed by cell and threshold, never by the view, and a new
+// threshold asks the field's remainder alone - the whole render is held, not asked again.
+describe("the bright stars by tiles and the remainder alone on the wire", () => {
+  it("asks tiles by cell id at a grid threshold, with no window, n or view", async () => {
+    await loadBrightTiles(TILES, 2511.886431509577, CURVES as never, 5800, QUERY);
+    const p = sent[0].params;
+    expect([p.get("cells"), p.get("l_min"), p.get("precision")]).toEqual(["261,262,293", "2511.886431509577", "f4"]);
+    for (const gone of ["n", "view", "r_min", "r_max", "phi_min", "phi_max"]) expect(p.has(gone)).toBe(false);
+    await loadBrightTable(QUERY);
+    expect([sent[1].params.get("table"), sent[1].params.has("cells"), sent[1].params.has("l_min")]).toEqual(["1", false, false]);
+  });
+
+  it("a new threshold asks only=remainder; the whole render is asked once", async () => {
+    await loadRender(CURVES as never, 5800, QUERY, undefined, 2238.7211385683377);
+    expect(sent.map((s) => [s.route, s.params.get("only"), s.params.get("l_min")])).toEqual([
+      ["/api/render", null, null],
+      ["/api/render", "remainder", "2238.7211385683377"],
+    ]);
+    await loadRender(CURVES as never, 5800, QUERY, undefined, 2511.886431509577);
+    await loadRender(CURVES as never, 5800, QUERY); // the field mode's frame: the same whole render, held
+    expect(sent).toHaveLength(3);
+    expect([sent[2].params.get("only"), sent[2].params.get("l_min")]).toEqual(["remainder", "2511.886431509577"]);
+    // a region's render is its own request every time, never held
+    await loadRender(CURVES as never, 5800, { ...QUERY, ...WINDOW, level: 2 });
+    await loadRender(CURVES as never, 5800, { ...QUERY, ...WINDOW, level: 2 });
+    expect(sent).toHaveLength(5);
+  });
+});
+

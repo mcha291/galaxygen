@@ -71,6 +71,7 @@ import numpy as np
 import pytest
 
 import layer_reference
+from galaxy.api import v6_clouds as v6c
 from galaxy import templates
 from galaxy.api import wire
 from galaxy.api.service import RESERVED, ROUTES, Service
@@ -481,13 +482,21 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             # light temperature (ADDED_AT_S61). The star sample's routes likewise (its star, its planets, its cells).
             names, was = [a[0] for a in got["arrays"]], [a[0] for a in held["arrays"]]
             assert [n for n in names if n not in ADDED_AT_S61] == was, label
+            # S64 (V6): the clouds' own dust column is digested apart and reported added (layer_reference.ADDED_AT_S64).
+            # S64 (V6, R5): and the clusters' knots entry, with their line_response where filters= is asked
+            # (layer_reference.ADDED_KNOTS).
+            knots = (["line_response"] if label.endswith("/clusters/filters") else []) + ["knots"]
+            assert got.get("added", []) == (["cloud_dust_extinction_v"] if "/clouds/" in label else knots if "/clusters/" in label else []), label
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue
         # S63 (D223): the render adds the stars split by age and the weights that place them (the old part's, and the
         # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
+        # S64 (V6): and the share of each ring's dust that is diffuse once its realised clouds hold theirs, with its
+        # header entry `clouds`, digested apart likewise (layer_reference.ADDED_AT_S64).
         assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
-                                         + (["stars_middle_placement"] if not label.startswith("basic/") else []))
+                                         + (["stars_middle_placement"] if not label.startswith("basic/") else [])
+                                         + ["dust_diffuse_share"])
                                         if "/render/" in label else []), label
         if "/render/" in label:
             # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first
@@ -518,7 +527,9 @@ def test_the_cloud_route_sends_its_columns_in_the_order_it_always_did(prod):
     assert set(cl.WIRE_COLUMNS) == set(own) | set(layers) and len(cl.WIRE_COLUMNS) == len(own) + len(layers)
     assert [n for n in cl.WIRE_COLUMNS if n in own] == own  # the stage's own, in its own order
     header, arrays = Service(grid=SMALL).handle("/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.6").frame()
-    assert header["columns"] == list(cl.WIRE_COLUMNS) and list(arrays) == [*cl.WIRE_COLUMNS, "cell", "index"]
+    # S64 (D224, R1): the route appends ONE column of its own after the stage's and the layer's - the cloud's dust
+    # column, derived in the API from published fields (api/v6_clouds.COLUMN); it is not a stage's column.
+    assert header["columns"] == [*cl.WIRE_COLUMNS, v6c.COLUMN] and list(arrays) == [*cl.WIRE_COLUMNS, v6c.COLUMN, "cell", "index"]
 
 
 # --- I1: the layer off moves no law, no radial field and no total -------------------------------------------------
@@ -1346,7 +1357,7 @@ def test_i5_what_layer_off_serves():
     for header in (on_h, off_h):
         assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
         assert not [k for k in header["scalars"] if "interior" in k]
-        assert header["columns"] == list(cl.WIRE_COLUMNS)
+        assert header["columns"] == [*cl.WIRE_COLUMNS, v6c.COLUMN]  # S64 (D224, R1): the API's derived dust column last
     assert len(off["cloud_radius"]) > 20
     for name in cl.TEXTURE_COLUMNS:
         assert np.all(off[name] == 0.0) and np.any(on[name] != 0.0), name
@@ -1362,7 +1373,9 @@ def test_i5_what_layer_off_serves():
 # mean and the stellar contrast floored at 0 - are (R, phi) arrays, exactly 1 with the layer off.
 RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement")  # (R, phi, ...)
 # S63 (D223): and the three age parts of the starlight, per ring and filter, the same numbers on and off.
-RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old")  # (R, ...)
+# S64 (D224, R2): and the share of each ring's dust that is diffuse once its realised clouds hold theirs - (R,), read off
+# the ring-first draw's streams, so the same bits on and off (the same clouds either way).
+RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old", "dust_diffuse_share")  # (R, ...)
 # S61 (D220 items 4 and 6): was ("lines_hii",) - the regions' ring ratios are the ring-first census's, binned by the
 # clouds' radii, so the HII line light keeps its ring on and off to 1e-12 (RENDER_RING_FIRST). None is left here.
 RENDER_CENSUS_STATISTICS: tuple[str, ...] = ()
