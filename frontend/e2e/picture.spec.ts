@@ -509,7 +509,7 @@ test("physics only on the wire: every request for model data carries layer=off, 
   await press(page, PHYSICS_ONLY_BUTTON);
   const before = net.asked.length;
   await quiet(page, net);
-  // The star-first mode: the N brightest in view, every cluster, and - a diagnostic layer - the cloud census.
+  // The star-first mode: the stars of the cells in view at the frame's threshold, every cluster, and - a diagnostic layer - the cloud census.
   await press(page, MODE_BUTTON.stars);
   await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
   await press(page, "molecular clouds");

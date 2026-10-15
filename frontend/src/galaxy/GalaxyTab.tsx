@@ -124,16 +124,17 @@ const REGIME_VIEW_KPC = { field: 45, sampled: 12, stars: 2.5 } as const;
 
 /**
  * The two ways the galaxy is rendered. The field mode is the design brief's three regimes above.
- * The star-first mode (S50, D208) draws what the model can name, on the field's own scale: the N most
- * luminous disc stars inside the camera's frustum (the bright catalogue, complete above its threshold) and
- * every cluster of the census, each a point of its own light through the filter set, over the field no
- * point carries (the render's remainder under that threshold). It replaces the "brightest" mode, whose
- * stars were the brightest of a number-drawn sample.
+ * The star-first mode (S50, D208) draws what the model can name, on the field's own scale: every disc star
+ * above one threshold in the level-0 cells in view (the bright catalogue by tiles since S64, V6: the threshold
+ * the smallest at which the cells in view hold at most the point budget, in expectation) and every cluster
+ * of the census, each a point of its own light through the filter set, over the field no point carries (the
+ * render's remainder under that threshold). It replaces the "brightest" mode, whose stars were the brightest
+ * of a number-drawn sample.
  */
 type Mode = "field" | "stars";
 const MODES: { key: Mode; label: string; what: string }[] = [
   { key: "field", label: "field", what: "The field, the sample and a region's stars, handed over by zoom." },
-  { key: "stars", label: "star-first", what: "The N brightest stars in view and every cluster, as points of their own light over the field no point carries." },
+  { key: "stars", label: "star-first", what: "Every disc star in the cells in view above one threshold a frame - the faintest the point budget allows - and every cluster, as points of their own light over the field no point carries." },
 ];
 /**
  * How long the view must hold still before the star-first mode re-selects: a selection is under a second
@@ -142,11 +143,11 @@ const MODES: { key: Mode; label: string; what: string }[] = [
 const BRIGHT_SETTLE_MS = 250;
 /** A layer that is picked and not drawn by the view's own sprites carries no colours. */
 const NO_COLORS = new Float32Array(0);
-/** The N slider's range, decades: 10² to 10⁵ stars, logarithmic. */
+/** The point budget slider's range, decades: 10² to 10⁵ stars expected in the cells in view, logarithmic. */
 const BRIGHTEST_DECADES = { lo: 2, hi: 5 };
 /** The star-first mode's component switches (D205, D208), each a tuning value: the picture's four on by default, the diagnostics off. */
 const COMPONENT_SWITCHES: { key: "compPoints" | "compStars" | "compGas" | "compDust" | "compClouds" | "compCells"; label: string; what: string }[] = [
-  { key: "compPoints", label: "stars", what: "The N most luminous disc stars in view and every cluster, as points of their own light on the field's scale. Off draws the whole starlight as a volume" },
+  { key: "compPoints", label: "stars", what: "Every disc star in the cells in view above the frame's threshold and every cluster, as points of their own light on the field's scale. Off draws the whole starlight as a volume" },
   { key: "compStars", label: "starlight", what: "The starlight no point carries (all of it while the stars are off) and the bulge, as the volume the model publishes light for" },
   { key: "compGas", label: "ionized gas", what: "The HII regions' layer and the diffuse gas's layer, with their lines, as the field draws them" },
   { key: "compDust", label: "dust", what: "The dust: as it acts (extinction, scattered and thermal light) or where it is (a diagnostic)" },
@@ -602,7 +603,7 @@ export function GalaxyTab({
           {mode === "stars" && (
             <>
               <div className={styles.zoomHead}>
-                <span className={styles.label}>Brightest</span>
+                <span className={styles.label}>Point budget</span>
                 <span className={styles.value}>{brightestN.toLocaleString("en")} stars</span>
               </div>
               <input
@@ -611,7 +612,7 @@ export function GalaxyTab({
                 min={0}
                 max={1000}
                 value={brightestSlider}
-                aria-label="Brightest stars in view"
+                aria-label="Point budget: the most stars expected in the cells in view"
                 onChange={(e) => setBrightestSlider(Number(e.target.value))}
               />
             </>
@@ -802,7 +803,7 @@ export function GalaxyTab({
               : !tuning.compPoints
                 ? `${current.what} The stars are switched off: the starlight volume is the whole of the stars' light.`
                 : !bright
-                  ? `${current.what} Finding the ${brightestN.toLocaleString("en")} brightest.`
+                  ? `${current.what} Asking the cells in view at the threshold a budget of ${brightestN.toLocaleString("en")} allows.`
                   : `${current.what} ${bright.header.count.returned.toLocaleString("en")} stars: every disc star in the ${bright.header.tiles.inView.toLocaleString("en")} cells in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
                       clusterCensus ? `, and ${(clusterCensus.columns.cluster_radius?.length ?? 0).toLocaleString("en")} clusters` : ""
                     }. The field under them is the light no point carries. Click a point for its numbers.`

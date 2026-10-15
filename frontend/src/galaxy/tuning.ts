@@ -64,7 +64,7 @@ export interface Tuning {
   pointGain: number;
   // The star-first mode's component layers (D205, D208): the picture's four on by default (the stars, the
   // starlight, the ionized gas and the dust as it acts), the two diagnostics off.
-  /** The mode's own picture, the N brightest stars in view as points: on by default, switched off to see a layer alone. */
+  /** The mode's own picture, the stars in the cells in view above the frame's threshold as points: on by default, switched off to see a layer alone. */
   compPoints: boolean;
   /** The field's stellar layer and the bulge, as a volume. */
   compStars: boolean;
@@ -233,7 +233,7 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "compPoints", label: "stars", group: "Components", kind: "toggle", switch: true,
-    about: "The brightest mode's own picture: the N most luminous stars in view, as points. A display choice of what is drawn.",
+    about: "The star-first mode's own picture: every disc star in the cells in view above the frame's threshold (the faintest the point budget allows), as points. A display choice of what is drawn.",
   },
   {
     key: "compStars", label: "starlight", group: "Components", kind: "toggle", switch: true,
