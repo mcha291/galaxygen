@@ -73,9 +73,10 @@ TABLE_RULE = (
 CELLS_TABLE_RULE = (
     "pick the smallest grid threshold at which the sum over the level-k cells in view, each cell's count weighted by "
     "the share of the stars' layer (/api/render's header layers.stars, sech2(z / 2h) / 4h) inside the frustum's height "
-    "range over the cell's centre, is at most the point budget; ask every cell the frustum meets at that threshold "
-    "(cells=<ids>&level=<k>&l_min=<threshold>) and the field's remainder at the same one "
-    "(/api/render?only=remainder&l_min=<threshold>)"
+    "range, averaged over 3 x 3 points across the cell, is at most the point budget; ask at that threshold each cell "
+    "expecting at least one star in view, its weighted count at least 1 (cells=<ids>&level=<k>&l_min=<threshold>), the "
+    "skipped cells' weighted counts summed and stated as the rule's loss, and the field's remainder at the same "
+    "threshold (/api/render?only=remainder&l_min=<threshold>)"
 )
 # How a level-k cell is cut from the level-0 layout (systems.cell_bounds, the one definition; D190's naming): what the
 # viewer resolves its footprint to at level k, from the level-0 edges and this rule alone.
@@ -167,7 +168,7 @@ def ring_guard(galaxy: Any, finest: np.ndarray, used: float) -> None:
     worst = int(np.argmax(counts))
     if float(counts[worst]) > cap:
         raise BadRequest(
-            f"cells= at l_min={used:g} stands in level-0 ring {int(rings[worst])}, which holds {float(counts[worst]):.0f} "
+            f"the cells asked at l_min={used:g} stand in level-0 ring {int(rings[worst])}, which holds {float(counts[worst]):.0f} "
             f"expected stars above it; the ring-first draw (D220) holds a ring's stars whole, about 310 bytes each, and "
             f"refuses a ring past {cap} (debt #159: a cell-local draw below a ring-level prefix is the mend). "
             "Raise l_min (the table, table=1, gives each cell's count at every threshold)"

@@ -102,7 +102,7 @@ export function cellsIn(window: RegionWindow, layout: CellLayout, level: number)
   return out;
 }
 
-/** The finest level (systems.MAX_LEVEL): a bright star's `cell` is always a level-3 id. */
+/** The finest level (systems.MAX_LEVEL; region.ts MAX_LEVEL is the same number): a bright star's `cell` is a level-3 id. */
 export const FINEST_LEVEL = 3;
 
 /** The level-k cell a finest (level-3) cell stands in: D190's naming, the API's v6_tiles.tile_of. At level 0, cell / 64. */
@@ -185,12 +185,20 @@ export function cellCentre(cell: number, layout: CellLayout, level: number): { r
 }
 
 /**
- * Each level-k cell's weight in the frame's budget (S65, V6b; the lead's ruling on the zoomed footprint): the share of
- * the stars' published layer - sech^2(z / 2h) / 4h, h the render header's `layers.stars`, kpc - that lies inside the
- * frustum's height range over the cell's centre (`verticalExtent`, clipped to the footprint's slab), evaluated by
- * `layerShare`, the march's own function. 1 for a cell whose layer the camera sees whole, 0 for one it sees none of.
- * The footprint still asks every cell the frustum meets (a star high above a cell may be in view); the budget counts
- * the stars the camera can see.
+ * Sample points a side across a cell for its weight (S65 review, F1): 3 x 3 at the centres of the cell's thirds in R
+ * and phi. A sampling choice, fixed, no tuning value moves it: one line through the centre gave a cell half in view a
+ * weight of 0 (ngc_4414-zoom: the skipped cells held 6.2 % of the stars in view by a 6 x 6 average, not the 0.095 %
+ * the centre line said).
+ */
+export const FRUSTUM_SAMPLES = 3;
+
+/**
+ * Each level-k cell's weight in the frame's budget (S65, V6b; the lead's rulings on the zoomed footprint): the mean, over
+ * FRUSTUM_SAMPLES^2 points across the cell's (R, phi) extent, of the share of the stars' published layer -
+ * sech^2(z / 2h) / 4h, h the render header's `layers.stars`, kpc - that lies inside the frustum's height range over the
+ * point (`verticalExtent`, clipped to the footprint's slab), evaluated by `layerShare`, the march's own function. 1 for
+ * a cell whose layer the camera sees whole, 0 for one it sees none of. The budget counts the stars the camera can see;
+ * a cell is asked when it expects at least one of them (`cellsToFetch`), the rest summed as the rule's loss.
  */
 export function frustumWeights(
   cells: readonly number[],
@@ -201,10 +209,27 @@ export function frustumWeights(
   slab = SLAB_KPC,
 ): Map<number, number> {
   const out = new Map<number, number>();
+  const n = 1 << level;
+  const m = FRUSTUM_SAMPLES;
   for (const c of cells) {
-    const { r, phi } = cellCentre(c, layout, level);
-    const span = verticalExtent(viewProjection, r * Math.cos(phi), -r * Math.sin(phi), slab);
-    out.set(c, span ? layerShare(span[0], span[1], h) : 0);
+    const tile = Math.floor(c / (n * n));
+    const q = c - tile * n * n;
+    const i = Math.floor(tile / layout.sectors);
+    const j = tile % layout.sectors;
+    const [r0, r1] = [layout.ring_edges[i], layout.ring_edges[i + 1]];
+    const [p0, p1] = [layout.sector_edges[j], layout.sector_edges[j + 1]];
+    const a = Math.floor(q / n);
+    const b = q % n;
+    let sum = 0;
+    for (let u = 0; u < m; u += 1) {
+      const r = r0 + ((r1 - r0) * (a + (u + 0.5) / m)) / n;
+      for (let v = 0; v < m; v += 1) {
+        const phi = p0 + ((p1 - p0) * (b + (v + 0.5) / m)) / n;
+        const span = verticalExtent(viewProjection, r * Math.cos(phi), -r * Math.sin(phi), slab);
+        if (span) sum += layerShare(span[0], span[1], h);
+      }
+    }
+    out.set(c, sum / (m * m));
   }
   return out;
 }

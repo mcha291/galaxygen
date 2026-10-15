@@ -354,9 +354,10 @@ export function GalaxyTab({
     tileLevel === 0 ? brightTable : levelHeld && tilesSeen && covers(levelHeld, tilesSeen) ? levelHeld : null;
   // The budget below the stars handover (S65, the lead's ruling on the zoomed footprint): each level-k cell's count
   // weighted by the share of the stars' layer (the render header's layers.stars, handed up by the field volume) inside
-  // the frustum's height range over the cell's centre - the stars the camera can see, not every star of every cell the
-  // footprint's +-3 kpc slab meets. Every cell the footprint meets is still asked (the GPU clips the rest). Until a
-  // render has named the layer, and at level 0 (above 4 kpc, S64's frames), every cell counts whole.
+  // the frustum's height range, averaged over 3 x 3 points across the cell - the stars the camera can see, not every
+  // star of every cell the footprint's +-3 kpc slab meets. A cell is asked when it expects at least one star in view
+  // (below); the GPU clips the rest. Until a render has named the layer, and at level 0 (above 4 kpc, S64's frames),
+  // every cell counts whole and is asked.
   const [starsLayer, setStarsLayer] = useState<number | null>(null);
   const viewProjection = view?.camera.viewProjection;
   const pickCounts = useMemo(

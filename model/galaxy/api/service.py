@@ -294,7 +294,8 @@ ROUTES: tuple[Route, ...] = (
         "with the rule the viewer picks one threshold per frame by and the cells' layout. level=<0..3> (S65, V6b): the "
         "tiles named at that level - a level-k tile's rows are its finest cells' rows, the level-0 tile's restricted "
         "to them - and table=1&cells=<ids>&level=<k> the expected counts of the cells asked; a tile whose level-0 ring "
-        "holds more than 5000000 stars above the threshold is refused before any draw (#159).",
+        f"holds more than {MAX_STARS} stars above the threshold is refused before any draw (#159); so is a window "
+        "(l_min=) whose rings would.",
         ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white", "cells", "table", "level"),
         "bright",
     ),
@@ -1613,6 +1614,9 @@ class Service:
                     f"l_min={l_min:g} holds {expected:.0f} expected stars in this window, more than {MAX_BRIGHTEST}: "
                     "raise it or narrow the window"
                 )
+            # S65 review (F4): the ring-first draw holds each ring's stars above the threshold whole - refused before
+            # any draw past the tile form's bound (v6_tiles.ring_guard, #159).
+            _v6_tiles.ring_guard(galaxy, cells, used)
             pool = fetch(cells, used)
             lum = np.asarray(pool["bright_star_luminosity"], dtype=float)
             keep = np.arange(lum.size)

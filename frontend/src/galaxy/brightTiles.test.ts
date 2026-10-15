@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { Matrix4, PerspectiveCamera } from "three";
 
-import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, cellCentre, cellsIn, cellsToFetch, covers, expectedIn, frustumWeights, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
+import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, FRUSTUM_SAMPLES, cellCentre, cellsIn, cellsToFetch, covers, expectedIn, frustumWeights, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
 import { layerShare } from "./regimes";
 import { levelFor } from "./region";
 
@@ -316,16 +316,32 @@ describe("frustumWeights: the share of the stars' layer inside the frustum over 
     expect(share).toBeLessThan(0.99);
   });
 
-  it("weighs a level-k cell 1 when its layer is wholly in view, 0 when none is, its share between", () => {
-    // one level-1 cell's centre under the camera, the others of the window off it
-    const { r, phi } = cellCentre(261 * 4 + 2, LAYOUT, 1);
+  it("weighs a level-k cell 1 when its layer is wholly in view, 0 when none is, and its sampled share between", () => {
+    const cell = 261 * 4 + 2;
+    const { r, phi } = cellCentre(cell, LAYOUT, 1);
     const x = r * Math.cos(phi);
     const z = -r * Math.sin(phi);
-    const w = frustumWeights([261 * 4 + 2, 261 * 4 + 3, 100 * 4], LAYOUT, 1, faceOn(x, z, d), h);
-    expect(w.get(261 * 4 + 2)!).toBeGreaterThan(0.99999);
-    expect(w.get(100 * 4)).toBe(0);
-    // the neighbour's centre is 0.2 rad x 8 kpc / 2 = ~0.8 kpc away: outside the cone above -3 kpc? its share, whatever it is, is in [0, 1)
-    expect(w.get(261 * 4 + 3)!).toBeLessThan(1);
+    // 4 kpc up the cone is 3.3 kpc across at the midplane: the whole cell (0.47 kpc by 0.8 kpc) in view
+    const far = frustumWeights([cell, 100 * 4], LAYOUT, 1, faceOn(x, z, 4), h);
+    expect(far.get(cell)!).toBeGreaterThan(0.99999);
+    expect(far.get(100 * 4)).toBe(0);
+    // the 0.5 kpc stand over the cell's centre sees part of it: the mean of the layer's share at its 3 x 3 points
+    const vp = faceOn(x, z, d);
+    const near = frustumWeights([cell], LAYOUT, 1, vp, h).get(cell)!;
+    const e = LAYOUT.ring_edges;
+    const sct = LAYOUT.sector_edges;
+    let sum = 0;
+    for (let u = 0; u < FRUSTUM_SAMPLES; u += 1) {
+      for (let v = 0; v < FRUSTUM_SAMPLES; v += 1) {
+        const rr = e[8] + ((e[9] - e[8]) * (1 + (u + 0.5) / FRUSTUM_SAMPLES)) / 2;
+        const pp = sct[5] + ((sct[6] - sct[5]) * (0 + (v + 0.5) / FRUSTUM_SAMPLES)) / 2;
+        const span = verticalExtent(vp, rr * Math.cos(pp), -rr * Math.sin(pp));
+        sum += span ? layerShare(span[0], span[1], h) : 0;
+      }
+    }
+    expect(near).toBeCloseTo(sum / FRUSTUM_SAMPLES ** 2, 12);
+    expect(near).toBeGreaterThan(0.05);
+    expect(near).toBeLessThan(0.95);
   });
 
   it("picks the face-on 0.5 kpc stand's threshold over the weighted counts, far below the unweighted pick", () => {

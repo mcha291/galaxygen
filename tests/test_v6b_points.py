@@ -245,14 +245,29 @@ def test_a_level_k_cell_s_realised_count_is_poisson_about_its_table_row(service)
 
 # --- R3: at the tiles' threshold S48's identity holds as it is ----------------------------------------------------------
 
+def resolved_per_ring(service: Service, template: str, l_min: float):
+    """bright.resolve on the template's own fields - what /api/render's l_min= decomposes (Service._unresolved)."""
+    from galaxy.api.service import RENDER_STARS, Query
+
+    q = Query({"template": [template]})
+    model = service._model(q)
+    declared = service._declared(model)
+    wanted = [*RENDER_STARS, *(n for n in br.RESOLVE_READS if n in declared)]
+    out, _ = service.compute(model, service._overrides(model, q), wanted, service._layer(q))
+    spec = service.grid.spec
+    constants = {k: c.value for k, c in model.constants.items()}
+    return br.resolve(out.fields, float(spec.t_max), int(spec.n_t), constants, l_min)
+
+
 @pytest.mark.parametrize("template", TEMPLATES)
-@pytest.mark.parametrize("level", LEVELS)
-def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes(service, template, level):
+@pytest.mark.parametrize("level", (2, 3))
+def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes_per_ring(service, template, level):
     """The frame's one threshold at level k: the per-cells table's pick for the cells in view at the default point budget,
     the tile's l_min_used, and the render's l_min at level k (cell means over the same cells) resolved at exactly that
-    float; there unresolved + young + bright is the stars' light (1e-12, S48's identity per ring, test_bright 1e-9 per
-    band), and in each cell in view the bright part the remainder leaves - the middle and old parts placed by their own
-    weights less stars_unresolved - is not negative."""
+    float. There S48's identity holds PER RING (S65 review, F3): unresolved + young + bright is the stars' light ring by
+    ring to 1e-12, and the eight bands' anchors ring by ring and band (bright.resolve, the decomposition the render's
+    l_min= runs; the reviewer measured 2.2e-16 and 4.4e-16). In each cell in view the bright part the remainder leaves -
+    the middle and old parts placed by their own weights less stars_unresolved - is not negative."""
     ids = children(TILE, level)[:4]
     _, t, _ = ask(service, "/api/bright", template=template, table=1, cells=",".join(map(str, ids)), level=level)
     k = next(j for j in range(t["threshold"].size) if t["expected"][:, j].sum() <= 10**3.5)
@@ -266,8 +281,19 @@ def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes(servic
     rh, ra, _ = ask(service, "/api/render", template=template, level=level, filters=curves("rgb"), white=6500, l_min=repr(used),
                     **{k_: repr(v) for k_, v in window.items()})
     assert rh["resolved"]["l_min"] == used == rh["resolved"]["requested"]
-    light = rh["resolved"]["light"]
-    assert light["unresolved"] + light["young"] + light["bright"] == pytest.approx(light["total"], rel=1e-12)
+    res = resolved_per_ring(service, template, used)
+    light = res.light
+    total = np.asarray(light["total"], dtype=float)
+    lit = total > 0
+    assert lit.sum() > 100
+    parts = np.asarray(light["unresolved"]) + np.asarray(light["young"]) + np.asarray(light["bright"])
+    assert np.max(np.abs(parts[lit] / total[lit] - 1.0)) < 1e-12
+    a = res.anchors
+    anchored = a["unresolved_middle"] + a["unresolved_old"] + a["young"] + a["bright_middle"] + a["bright_old"]
+    on = a["total"] > 0
+    assert np.max(np.abs(anchored[on] / a["total"][on] - 1.0)) < 1e-12
+    # and the render's whole-disc numbers are these rings' (the trapezoid in R the header states)
+    assert rh["resolved"]["light"]["bright"] > 0
     placed = (np.asarray(ra["stars_middle"]) * np.asarray(ra["stars_middle_placement"])[:, None]
               + np.asarray(ra["stars_old"]) * np.asarray(ra["stars_placement"])[:, None])
     assert np.all(placed - np.asarray(ra["stars_unresolved"]) >= -1e-12 * placed)
@@ -292,6 +318,21 @@ def test_a_ring_past_the_draw_s_bound_is_refused_before_any_draw(service):
     # the default point budget's deepest stand on the Milky Way (62 pc, 10^1.85 Lsun) stays under it and is served
     ask(service, "/api/bright", template="milky_way", cells=children(TILE, 3)[0], level=3, l_min=repr(grid_l(57)))
     assert galaxy_of(service).ring_curve[:, 57].max() < MAX_STARS
+
+
+def test_a_window_whose_ring_is_past_the_bound_is_refused_before_any_draw(service):
+    """S65 review (F4): the window form (l_min=) draws the same ring-first way, so the same guard. One level-3 cell's window
+    on ngc_4414 at 1.1 Lsun expects some 2e4 stars (under the 2e5 cap) while its ring holds 4.0e7 (a ~13 GB draw)."""
+    ask(service, "/api/bright", template="ngc_4414", table=1, cells=TILE, level=0)  # the galaxy's tables, held
+    b = sy.cell_bounds(service.grid.R, children(TILE, 3)[0], 3)
+    window = {"r_min": repr(b["r_lo"]), "r_max": repr(b["r_hi"]), "phi_min": repr(b["phi_lo"]), "phi_max": repr(b["phi_hi"])}
+    rows_before = service.bright._rows
+    t0 = time.perf_counter()
+    message = refused(service, "/api/bright", template="ngc_4414", l_min=1.1, **window)
+    assert time.perf_counter() - t0 < 1.0
+    ring = galaxy_of(service).ring_curve[8, br.interval_of(1.1)]
+    assert ring > MAX_STARS and f"{ring:.0f}" in message and str(MAX_STARS) in message and "#159" in message
+    assert service.bright._rows == rows_before
 
 
 def test_the_refusals_at_a_level(service):

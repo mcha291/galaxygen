@@ -196,7 +196,9 @@ rows — the level-0 tile's restricted to them, row for row — and the counts
 whole level-k table); a tile whose level-0 ring holds more than 5 x 10^6 stars
 above the threshold is refused before any draw (#159); below 4 kpc the budget
 weighs each cell by the share of the stars' layer inside the frustum's height
-range over its centre `[verified:
+range (the mean over 3 x 3 points across the cell), and a cell is asked only
+when its weighted count is at least one star, the skipped cells' sum stated
+beside the threshold as the rule's loss `[verified:
 tests/test_v6b_points.py]`. The zoomed-in point layer is the bright catalogue,
 complete above the frame's threshold; the level-k star sample stays the field
 mode's region regime.
