@@ -625,7 +625,13 @@ def build_vectors(inputs: Mapping[str, Any]) -> dict[str, Any]:
     xy = np.array(points)
     ring = field.ring_of(np.hypot(xy[:, 0], xy[:, 1]))
     g64, g32 = field.gaussian(xy[:, 0], xy[:, 1]), field.gaussian(xy[:, 0], xy[:, 1], dtype=_F32)
-    sums = [[x, y, int(r), float(a), float(b)] for (x, y), r, a, b in zip(points, ring, g64, g32)]
+    # The read positions each sum was evaluated at (S66, D226 R1b): given them, a float32 twin computes the octave sum
+    # alone, apart from the polar read's transcendentals (hypot, log, atan2, cos, sin), which a shader need not round
+    # as numpy does.
+    read64 = field.read_positions(xy[:, 0], xy[:, 1], ring)
+    read32 = field.read_positions(xy[:, 0], xy[:, 1], ring, _F32)
+    sums = [[x, y, int(r), float(a), float(b), float(X), float(Y), float(X32), float(Y32)]
+            for (x, y), r, a, b, X, Y, X32, Y32 in zip(points, ring, g64, g32, *read64, *read32)]
     normaliser = np.ones(CELL_COUNT)
     cells = []
     for r, s in VECTOR_CELLS:
@@ -649,10 +655,13 @@ def build_vectors(inputs: Mapping[str, Any]) -> dict[str, Any]:
         "about": ("galaxy.layer.gas_fluctuation (S62, D221): g = sum_j w[b_r][j] noise2(seed, X f_j, Y f_j, octave=j), "
                   "f_j = 2^j / scale, (X, Y) = R (cos, sin)(atan2(y, x) - sense (twist_r + strain_r log(max(R, edges[0]) / "
                   "edges[r]))), sense the disc's rotation in phi (-1); the map = normaliser_cell exp(sigma_r g - sigma_r^2 / 2); w[b] = amplitude times the "
-                  "ladder's normaliser for break index b; *_f32 the float32 path"),
+                  "ladder's normaliser for break index b; *_f32 the float32 path; (x_read, y_read) the read positions (X, Y) "
+                  "g was evaluated at, and (x_read_f32, y_read_f32) the float32 path's, at which g_f32 is the octave sum "
+                  "alone (S66, D226 R1b)"),
         "inputs": dict(inputs),
         "weights": [[float(w) for w in row] for row in amplitudes],
-        "sums": {"columns": ["x", "y", "ring", "g", "g_f32"], "rows": sums},
+        "sums": {"columns": ["x", "y", "ring", "g", "g_f32", "x_read", "y_read", "x_read_f32", "y_read_f32"],
+                 "rows": sums},
         "cells": cells,
         "maps": {"columns": ["x", "y", "ring", "sector", "value", "value_f32"], "rows": rows},
     }
