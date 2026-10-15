@@ -2,14 +2,15 @@ import { useMemo, useRef, useState } from "react";
 
 import {
   type BlackbodyTable,
-  type BrightFrame,
   type Census,
   type FieldsPayload,
   type Query,
   type Sample,
   STAR_SAMPLE,
+  type WhitePoint,
   loadBlackbody,
-  loadBright,
+  loadBrightTable,
+  loadBrightTiles,
   loadClouds,
   loadClusters,
   loadRegion,
@@ -35,6 +36,7 @@ import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
+import { type BrightTable, TileCache, type TilesFrame, pickThreshold, tilesFrame, tilesIn } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
@@ -168,9 +170,6 @@ const DUST_READINGS:{ key: "acts" | "where"; label: string; what: string }[] = [
 ];
 const brightestOf = (slider: number) => Math.round(10 ** (BRIGHTEST_DECADES.lo + ((BRIGHTEST_DECADES.hi - BRIGHTEST_DECADES.lo) * slider) / 1000));
 
-/** The view-projection rounded so the request key does not change with the last bits of a settled camera. */
-const roundedView = (m: number[]) => m.map((v) => Number(v.toPrecision(5)));
-
 /**
  * The zoom slider position that makes the view `width` kpc across. The slider is linear in
  * log distance over GalaxyView's range (zoom.ts zoomRange: a factor of ZOOM_SPAN through any lens) and the
@@ -300,19 +299,33 @@ export function GalaxyTab({
     return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable, pointGain);
   }, [meta, shownClusters, exposure, blackbodyTable, pointGain]);
 
-  // The star-first mode (D208): the frustum's footprint, and the N brightest disc stars inside the frustum, each
-  // with its own light through the filter set. Nothing is asked for while the star points are switched off (the
-  // footprint still cuts the cloud census).
+  // The star-first mode (D208): the frustum's footprint, and the disc stars in it by tiles (S64, V6, R8): the footprint
+  // resolved to level-0 cells, ONE threshold per frame picked from the API's table of expected counts per tile - the
+  // smallest grid threshold at which the tiles in view hold at most the point budget (the N slider, a tuning value,
+  // 10^3.5 by default as the N it was) - and each tile asked at it, held by (tile, threshold). The frustum cut is the
+  // GPU's own clipping now (the route's view= is the tests'): a star in a tile in view and off the screen draws nothing,
+  // and nothing else reads the points' set. Nothing is asked for while the star points are switched off (the footprint
+  // still cuts the cloud census).
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
   const R = meta.grid.axes.R;
   const wholeDisc = { r_min: R?.lo ?? 0, r_max: rMax, phi_min: 0, phi_max: 2 * Math.PI, level: 0 };
   const seen = mode === "stars" && view ? footprint(view.camera.viewProjection, rMax) : null;
   const pointsOn = mode === "stars" && tuning.compPoints;
-  const brightKey =
-    seen && view && pointsOn ? JSON.stringify([seen, brightestN, roundedView(view.camera.viewProjection), filterSet, whiteKelvin, query]) : null;
-  const brightLoad = useLoad<BrightFrame>(
+  const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
+  const brightTable = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal)).value ?? null;
+  const tilesSeen = useMemo(
+    () => (seen && brightTable ? tilesIn(seen, brightTable.layout) : null),
+    [brightTable, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const tileK = tilesSeen && brightTable ? pickThreshold(brightTable, tilesSeen, brightestN) : null;
+  const tileCache = useRef(new TileCache()).current;
+  const tileWhites = useRef(new Map<string, unknown>()).current;
+  const tileGalaxy = JSON.stringify([filterSet, whiteKelvin, query]);
+  const brightKey = pointsOn && tilesSeen && tileK != null ? JSON.stringify([tilesSeen, tileK, tileGalaxy]) : null;
+  const brightLoad = useLoad<TilesFrame>(
     brightKey,
-    (signal) => loadBright(seen!, brightestN, view!.camera.viewProjection, curvesOf(filterSet), whiteKelvin, query, signal),
+    (signal) =>
+      tilesFrame(tileCache, tileGalaxy, tilesSeen!, tileK!, brightTable!, (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s), tileWhites, signal),
     BRIGHT_SETTLE_MS,
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
@@ -330,7 +343,7 @@ export function GalaxyTab({
     if (!bright) return null;
     const c = bright.columns as Record<string, ArrayLike<number>>;
     if (!c.bright_star_radius) return null;
-    const flux = fluxOf(c.response, bright.header.white?.response, c.bright_star_radius.length);
+    const flux = fluxOf(c.response, (bright.header.white as WhitePoint | undefined)?.response, c.bright_star_radius.length);
     return flux ? { positions: toScene(c.bright_star_radius, c.bright_star_azimuth, c.bright_star_height), flux } : null;
   }, [bright]);
   const clusterPoints = useMemo(() => {
@@ -790,7 +803,7 @@ export function GalaxyTab({
                 ? `${current.what} The stars are switched off: the starlight volume is the whole of the stars' light.`
                 : !bright
                   ? `${current.what} Finding the ${brightestN.toLocaleString("en")} brightest.`
-                  : `${current.what} ${bright.header.count.returned.toLocaleString("en")} stars: every disc star in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
+                  : `${current.what} ${bright.header.count.returned.toLocaleString("en")} stars: every disc star in the ${bright.header.tiles.inView.toLocaleString("en")} cells in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
                       clusterCensus ? `, and ${(clusterCensus.columns.cluster_radius?.length ?? 0).toLocaleString("en")} clusters` : ""
                     }. The field under them is the light no point carries. Click a point for its numbers.`
             : `${regime.what} ${
