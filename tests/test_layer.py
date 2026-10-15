@@ -494,10 +494,11 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
         # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
         # S64 (V6): and the share of each ring's dust that is diffuse once its realised clouds hold theirs, with its
         # header entry `clouds`, digested apart likewise (layer_reference.ADDED_AT_S64).
-        # S66 (V7, D226 R6): and the render header's gas_fluctuation, census_clustering and spurs entries - their values
-        # null with the layer off, the entries null on a model without the field - digested apart likewise
-        # (layer_reference.ADDED_AT_S66).
-        s66 = list(layer_reference.ADDED_AT_S66)
+        # S66 (V7, D226 R4-R6): and the render's four new arrays (the placement without the spurs - with the layer off
+        # the neutral placement itself - and the middle part's kept-octave windows, the same bits on and off) and its
+        # header's gas_fluctuation, census_clustering and spurs entries, their values null with the layer off -
+        # digested apart likewise (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S66).
+        s66 = [*layer_reference.ADDED_ARRAYS_AT_S66, *layer_reference.ADDED_AT_S66]
         assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
                                          + (["stars_middle_placement"] if not label.startswith("basic/") else [])
                                          + ["dust_diffuse_share"] + s66)
@@ -1375,11 +1376,14 @@ def test_i5_what_layer_off_serves():
 # too: up to a factor of six in a thinly populated ring on the production grid.
 # S63 (D223): the two placing weights the starlight by age ships beside dust_placement - sfr_modulation over its ring
 # mean and the stellar contrast floored at 0 - are (R, phi) arrays, exactly 1 with the layer off.
-RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement")  # (R, phi, ...)
+RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement",
+                 "dust_placement_unspurred")  # (R, phi, ...) - S66 (D226 R4): and the gas's placement without its spurs
 # S63 (D223): and the three age parts of the starlight, per ring and filter, the same numbers on and off.
 # S64 (D224, R2): and the share of each ring's dust that is diffuse once its realised clouds hold theirs - (R,), read off
 # the ring-first draw's streams, so the same bits on and off (the same clouds either way).
-RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old", "dust_diffuse_share")  # (R, ...)
+# S66 (D226 R5b): and the middle part's three kept-octave windows - the history's and the constants', the same bits.
+RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old", "dust_diffuse_share",
+                   "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1")  # (R, ...)
 # S61 (D220 items 4 and 6): was ("lines_hii",) - the regions' ring ratios are the ring-first census's, binned by the
 # clouds' radii, so the HII line light keeps its ring on and off to 1e-12 (RENDER_RING_FIRST). None is left here.
 RENDER_CENSUS_STATISTICS: tuple[str, ...] = ()

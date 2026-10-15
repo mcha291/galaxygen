@@ -130,7 +130,7 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
                 phi_edges: np.ndarray) -> tuple[dict[str, Any] | None, np.ndarray | None]:
     """(the header's ``spurs``, the placement without the spurs on the grid) - or (None, None) where the model
     publishes no spurs' table or the render places no dust by the gas. With the layer off the entry's values are None
-    and no array is shipped. The unspurred placement is the gas pattern's exact cell means without the spurs, floored
+    and no array is made (the route ships the neutral placement itself). The unspurred placement is the gas pattern's exact cell means without the spurs, floored
     at zero as ``dust_placement`` is; on a pattern without spurs it is ``placed_gas`` to the bit (tested)."""
     if any(n not in fields for n in SPUR_FIELDS):
         return None, None
@@ -141,7 +141,8 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
     }
     from galaxy.stages.pattern import rotation_sense
 
-    if _compose.setting(fields) != "on" or _compose.published(fields, "gas_density_contrast") is None:
+    shape = _compose.gas_pattern(fields, R, constants)  # None with the layer off: no spur is composed then
+    if shape is None:
         return entry, None
     columns = {"chain": "gas_spur_chain", "radius": "gas_spur_radius", "azimuth": "gas_spur_azimuth",
                "contrast": "gas_spur_contrast", "pitch": "gas_spur_pitch", "length": "gas_spur_length",
@@ -150,24 +151,25 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
     entry["units"] = {"radius": "kpc", "azimuth": "rad", "pitch": "deg", "length": "kpc", "width": "kpc (FWHM)",
                       "contrast": "dimensionless (A: the ridge's crest contrast at the foot)", "fall": "dimensionless"}
     entry["turn"] = -float(rotation_sense(float(fields["pitch_angle"])))  # GasPattern.from_fields' sense for psi
-    shape = _compose.gas_pattern(fields, R, constants)
-    spurs = None if shape is None else shape.spurs
+    spurs = shape.spurs
     entry["share"] = _floats(np.zeros(np.size(R)) if spurs is None else spurs.ring_mean(np.asarray(R, dtype=float)))
-    if shape is None or shape.flat:
+    if shape.flat:
         return entry, None
     return entry, np.maximum(shape.unspurred_cell_means(R, phi_edges), 0.0)
 
 
-def middle_kept(fields: Any, constants: Mapping[str, Any], t_max: float, n_t: int, curves: Any, middle: np.ndarray,
-                cut: float, young_age: float, weight: str) -> tuple[dict[str, Any] | None, list[tuple[str, np.ndarray]]]:
+def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max: float, n_t: int, curves: Any,
+                middle: np.ndarray, cut: float, young_age: float,
+                weight: str) -> tuple[dict[str, Any] | None, list[tuple[str, np.ndarray]]]:
     """The ages' ``middle_kept`` entry and its three per-ring arrays (S66, D226 R5b): the middle part's light split by
     the clustering field's octaves its stars keep - ages [cut, t_3), [t_3, t_2), [t_2, t_1) keep 3, 2, 1 octaves
     (t_k the octave survival ages, :func:`octave_ages_myr`), the rest [t_1, young_age) none. Each window's anchors are
     ``bright.window_anchors`` (``part_anchors``' arithmetic), put through the curves at the ring's colour temperature,
     and the four are scaled per ring and filter by one closure factor ``middle / their sum``, as the three parts are
     scaled to the stars: so the three arrays and the rest (``middle`` less the three) sum to ``middle`` to rounding.
-    None and no arrays with the layer off: nothing is modulated then."""
-    if _compose.census_clustering(fields, constants) is None:
+    The ages are the history's and the constants', not the layer's: the same arrays with the layer off, where the maps
+    are 1 (I5). None and no arrays where the model publishes no clustering field (``declared``)."""
+    if not declared:
         return None, []
     ages = np.asarray(octave_ages_myr(constants)) / 1000.0  # Gyr, coarsest octave first
     if ages.size != len(KEPT):
@@ -203,6 +205,8 @@ def middle_kept(fields: Any, constants: Mapping[str, Any], t_max: float, n_t: in
         },
         "about": "the middle part's light split by the age windows of the clustering octaves its stars keep (L1's rule "
                  "for the bright catalogue's young stars, D220 part II item 5): the windows' bounds are the octaves' "
-                 "survival ages, derived from the constants as the bright catalogue derives them",
+                 "survival ages, derived from the constants as the bright catalogue derives them. The same arrays with "
+                 "the layer off, where every map is 1 (census_clustering's seed and cell means null): the parts are "
+                 "then stars_middle split and placed as it is",
     }
     return entry, [(MIDDLE_KEPT[k], parts[i]) for i, k in enumerate((3, 2, 1))]

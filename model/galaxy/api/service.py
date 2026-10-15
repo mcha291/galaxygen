@@ -1711,13 +1711,12 @@ class Service:
             wanted += [n for n in self._reads(model, bright) if n in _bright.RESOLVE_READS and n not in wanted]
         inputs = self._overrides(model, q)
         layer = self._layer(q)
-        # S66 (V7, R4-R6): with the layer on, what the header's gas_fluctuation, census_clustering and spurs entries read
-        # - the two fields' stages and the spurs' table - where the model publishes them; nothing more with it off (D4).
+        # S66 (V7, R4-R6): what the header's gas_fluctuation and census_clustering entries read - the two fields' stages,
+        # where the model publishes them. With the layer off they realise nothing (their neutral) and are not read.
         gas_declared = all(n in declared for n in _v7.GAS_READS)
         clustering_declared = all(n in declared for n in _v7.CLUSTERING_READS)
-        if layer:
-            wanted += [n for n in (*(_v7.GAS_READS if gas_declared else ()), *(_v7.CLUSTERING_READS if clustering_declared else ()))
-                       if n not in wanted]
+        wanted += [n for n in (*(_v7.GAS_READS if gas_declared else ()), *(_v7.CLUSTERING_READS if clustering_declared else ()))
+                   if n not in wanted]
         out, ran = self.compute(model, inputs, wanted, layer)
         f = out.fields
         R_axis, phi_axis = out.grid.axes["R"], out.grid.axes["phi"]
@@ -1882,7 +1881,9 @@ class Service:
         # The spurs' pieces (S66, V7, R4): the spurs' table and ring mean, and the placement without them, so that the
         # viewer composes the spurs per sub-step - where the dust is placed by the gas's own contrast.
         spurs_entry, unspurred = (None, None) if placement is None else _v7.spurs_entry(f, constants, R, phi_axis.edges)
-        if unspurred is not None:
+        if placement is not None:
+            # Where no spur is composed (the layer off: the neutral placement; a flat pattern) it is the placement itself.
+            unspurred = placed_gas if unspurred is None else unspurred
             placement["dust_unspurred"] = _v7.UNSPURRED
             placement["arrays"][_v7.UNSPURRED] = {
                 "unit": "dimensionless", "fields": [*gas_fields, *_v7.SPUR_FIELDS],
@@ -1890,7 +1891,7 @@ class Service:
                          "spurs: the gas pattern's exact cell means of its response and the bar's lanes, floored at zero "
                          "as dust_placement is. Composed with the spurs' table (the header's spurs) it is dust_placement: "
                          "(1 - share(R)) times it plus the spurs' cell means (stages/spurs.Spurs.compose_cells); with no "
-                         "spur laid it is dust_placement to the bit (S66, V7, D226)",
+                         "spur laid it is dust_placement to the bit (S66, V7, D226)" + even,
             }
         # The clouds as extinction (S64, BUILD_III V6; RULING_S64 R2): the share of each ring's dust that is diffuse once
         # the ring's realised clouds hold theirs, summed off the ring-first draw's streams (no census, nothing placed).
@@ -1949,7 +1950,7 @@ class Service:
         if all(n in f for n in _bright.RESOLVE_READS[:2]):
             ages, age_rings, age_weights = self._ages(
                 model, f, curves, per_ring, placed, contrast_fields, placed_gas, gas_fields,
-                RENDER_DUST_PLACEMENT if placement is not None else None, even,
+                RENDER_DUST_PLACEMENT if placement is not None else None, even, clustering_declared,
             )
         drawn = {"halpha"} if ("halpha_hii" in about or "halpha_dig" in about) else set()
         for name in ("lines_hii", "lines_dig"):
@@ -2082,6 +2083,7 @@ class Service:
     def _ages(
         self, model: Model, f: Mapping[str, Any], curves: Sequence[Any], per_ring: np.ndarray, placed: np.ndarray,
         contrast_fields: list[str], placed_gas: np.ndarray, gas_fields: list[str], dust_placement: str | None, even: str,
+        kept_declared: bool = False,
     ) -> tuple[dict[str, Any], list[tuple[str, np.ndarray]], list[tuple[str, np.ndarray]]]:
         """The stars component's light split by the age of its stars (S63, D223; BUILD_III Phase V5): (the header's
         ``ages``, the three per-ring (R, filter) arrays, the (R, phi) weight arrays shipped for them).
@@ -2182,9 +2184,9 @@ class Service:
                            "not its own [inferred], as l_min='s parts are: it shapes only the blackbody tails beyond U and K",
         }
         rings = [(RENDER_AGES[p], parts[k]) for k, p in enumerate(_bright.AGE_PARTS)]
-        # S66 (V7, R5b): the middle part split by the clustering octaves its stars keep, with the layer on.
+        # S66 (V7, R5b): the middle part split by the clustering octaves its stars keep (the same arrays layer on and off).
         header["middle_kept"], kept = _v7.middle_kept(
-            f, constants, float(spec.t_max), int(spec.n_t), curves, parts[_bright.AGE_PARTS.index("middle")], cut,
+            kept_declared, f, constants, float(spec.t_max), int(spec.n_t), curves, parts[_bright.AGE_PARTS.index("middle")], cut,
             _catalogue.YOUNG_STAR_AGE, middle_by)
         rings += kept
         return header, rings, [(n, w[0]) for n, w in weights.items()]

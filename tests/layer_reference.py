@@ -56,10 +56,12 @@ ADDED_AT_S64 = ("dust_diffuse_share", "cloud_dust_extinction_v")
 # What S64 (V6, the HII regions as knots) sends that S55 did not: the clusters' line_response (with filters=) and the
 # clusters header's entries `knots` and `line_response`; and the sentence each of the render's two HII abouts gains.
 ADDED_KNOTS = ("line_response", "knots")
-# What S66 (V7, D226 R6) sends that S55 did not: the render header's entries for the viewer's march - the two fields and
-# the gas spurs - present with null values when the layer is off; the arrays they bring (the middle part's kept splits,
-# dust_placement_unspurred) and ages' middle_kept are sent with the layer on only.
+# What S66 (V7, D226 R4-R6) sends that S55 did not: the render header's entries for the viewer's march - the two fields
+# and the gas spurs, their values null with the layer off - and its arrays: the placement without the spurs (with the
+# layer off the neutral placement itself) named in `placement`, and the middle part's three kept-octave windows (in
+# `ages`, digested apart since S63).
 ADDED_AT_S66 = ("gas_fluctuation", "census_clustering", "spurs")
+ADDED_ARRAYS_AT_S66 = ("dust_placement_unspurred", "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1")
 
 
 def _sha(raw: bytes) -> str:
@@ -178,11 +180,19 @@ def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[s
         if "axes" in header:
             header["axes"] = {k: v for k, v in header["axes"].items() if k != v6_knots.COLUMN}
         added += [*lines, "knots"]
-    # S66 (V7, R6): the render header's three new entries, digested apart and returned among the added (D223's handling).
+    # S66 (V7, R4-R6): the render header's three new entries and its four new arrays (with the placement's two words of
+    # them), digested apart and returned among the added (D223's handling).
+    s66_arrays = [spec["name"] for spec in header.get("arrays", []) if spec["name"] in ADDED_ARRAYS_AT_S66]
+    if s66_arrays:
+        header["arrays"] = [spec for spec in header["arrays"] if spec["name"] not in ADDED_ARRAYS_AT_S66]
+        header["axes"] = {k: v for k, v in header["axes"].items() if k not in ADDED_ARRAYS_AT_S66}
+        if isinstance(header.get("placement"), dict):
+            header["placement"].pop("dust_unspurred", None)
+            header["placement"].get("arrays", {}).pop("dust_placement_unspurred", None)
     s66 = [key for key in ADDED_AT_S66 if key in header and "components" in header]
     for key in s66:
         header.pop(key)
-    added += s66
+    added += s66_arrays + s66
     components = header.get("components", {})
     if "halpha_hii" in components:
         from galaxy.api import v6_knots

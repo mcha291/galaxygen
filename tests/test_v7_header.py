@@ -11,7 +11,8 @@ march evaluates per sub-step, every number the model's.
 - ``ages.middle_kept``: the middle part split at the octaves' survival ages, the three kept arrays and the rest summing
   to ``stars_middle`` per ring and filter to 1e-12.
 
-With the layer off every entry's values are null (the keys kept) and none of the arrays is sent (I5).
+With the layer off the three entries' values are null (the keys kept) and the arrays are what they are with no layer
+(I5: the same arrays either way): the unspurred placement is the neutral placement, the kept parts the same bits.
 """
 
 from __future__ import annotations
@@ -152,7 +153,9 @@ def test_the_unspurred_placement_composed_with_the_spurs_is_the_dust_s(api, temp
     assert sp["reach"] == 9.0 and sp["fwhm_per_sigma"] == pytest.approx(2.0 * math.sqrt(2.0 * math.log(2.0)), rel=0, abs=0)
     assert set(sp["constants"]) == {"SPUR_PITCH", "SPUR_LENGTH", "SPUR_WIDTH", "SPUR_FALL"}
     off, off_arrays = render(api, template, "off")
-    assert "dust_placement_unspurred" not in off_arrays and "dust_unspurred" not in off["placement"]
+    assert off["placement"]["dust_unspurred"] == "dust_placement_unspurred"
+    assert np.array_equal(off_arrays["dust_placement_unspurred"], off_arrays["dust_placement"])
+    assert np.all(off_arrays["dust_placement_unspurred"] == 1.0)
     assert all(off["spurs"][k] is None for k in ("rows", "turn", "share"))
 
 
@@ -161,7 +164,8 @@ def test_the_middle_part_s_kept_windows_sum_to_it(api, template):
     """stars_middle_kept3/2/1 and the rest (stars_middle less the three) are the middle part's windows [20, 23.9),
     [23.9, 31.2), [31.2, 40.7) and [40.7, 100) Myr, each bright.window_anchors' light through the curves scaled by one
     closure factor per ring and filter: the four sum to stars_middle to 1e-12 through every set, each is
-    non-negative, and they are recomputed here to 1e-12. Placed by the middle part's weight. Layer off: none."""
+    non-negative, and they are recomputed here to 1e-12. Placed by the middle part's weight. Layer off: the same bits
+    (the ages are the history's and the constants'), the maps 1."""
     c = constants(api)
     for name in ("rgb", "sho", "hoo"):
         header, arrays = render(api, template, name=name)
@@ -191,8 +195,11 @@ def test_the_middle_part_s_kept_windows_sum_to_it(api, template):
         for k, p in zip(range(3), parts):
             assert np.allclose(p, raw[k] * factor, rtol=1e-12, atol=0.0)
         assert kept["closure"]["factor"] == pytest.approx(np.max(np.abs(factor - 1.0), axis=0).tolist(), rel=1e-9)
+    on_header, on = render(api, template)
     off_header, off = render(api, template, "off")
-    assert off_header["ages"]["middle_kept"] is None and not any(n.startswith("stars_middle_kept") for n in off)
+    assert off_header["ages"]["middle_kept"]["arrays"] == on_header["ages"]["middle_kept"]["arrays"]
+    for name in on_header["ages"]["middle_kept"]["arrays"].values():
+        assert np.array_equal(off[name], on[name]), name
 
 
 def test_the_new_arrays_are_named_and_shaped(api):
