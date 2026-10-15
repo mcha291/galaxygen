@@ -50,6 +50,7 @@ import numpy as np
 
 from galaxy import templates as _tpl  # the named galaxies (S54); Service._templates is the route
 from galaxy.api import v6_clouds as _v6_clouds  # S64 (V6, R1-R2): the clouds as extinction
+from galaxy.api import v6_tiles as _v6_tiles  # S64 (V6, R8): bright stars by tiles, their table, the remainder alone
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
@@ -280,8 +281,12 @@ ROUTES: tuple[Route, ...] = (
         "says what the body is complete above and that the prefix holds by interval (D203). Stars younger than the cluster census's window "
         "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
         "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
-        "header.",
-        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
+        "header. The tile form (S64, V6): cells=<level-0 ids> with l_min= - each cell's stars above l_min snapped up to "
+        "the 0.05 dex grid (the header's tile says the value used), grouped by finest cell: keyed by cell and "
+        "threshold, never by a window, so each answer is the same bytes every time and can be computed ahead; n=, view= "
+        "and a window are refused with it. table=1: every level-0 cell's expected count above every grid threshold, "
+        "with the rule the viewer picks one threshold per frame by and the cells' layout.",
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white", "cells", "table"),
         "bright",
     ),
     Route(
@@ -319,8 +324,11 @@ ROUTES: tuple[Route, ...] = (
         "The clouds as extinction (S64, V6): dust_diffuse_share per ring, the share of each ring's dust that is diffuse "
         "once its realised clouds (summed off the census's ring streams, no census materialised) hold theirs - the "
         "viewer multiplies the dust's depth by it and draws the clouds' own column, /api/clouds' "
-        "cloud_dust_extinction_v, in the clouds' layer; the header's clouds states the rule and the closure.",
-        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
+        "cloud_dust_extinction_v, in the clouds' layer; the header's clouds states the rule and the closure. "
+        "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
+        "filter, which this render's own stars_middle_placement (or stars_placement) and stars_placement turn into "
+        "stars_unresolved exactly; the header's remainder states the rule.",
+        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
         "render",
     ),
 )
@@ -1529,7 +1537,15 @@ class Service:
     def _bright(self, q: Query) -> Response:
         """Every disc star above a luminosity in one window (S48, D200): the finest cells the window meets, their
         ordered Poisson processes cut at a threshold - found by bisection on the expected count for ``n``, given for
-        ``l_min``. Runs what the stage reads and not the stage (rule D4); the cells are cached between requests."""
+        ``l_min``. Runs what the stage reads and not the stage (rule D4); the cells are cached between requests.
+
+        **The tile form** (S64, V6, R8): ``cells=<level-0 ids>&l_min=`` - each named level-0 cell's stars above
+        ``l_min`` snapped up to the 0.05 dex grid, so a (tile, threshold) is one answer, the same bytes every time:
+        cell-keyed, never keyed by a window the viewer chose (D222 ruling 14), and so computable ahead (BUILD_IV W2).
+        ``table=1`` is every level-0 cell's expected count at every grid threshold, the one threshold per frame the
+        viewer picks from. Both are ``api/v6_tiles.py``'s."""
+        if q.one("cells") is not None or q.one("table") is not None:
+            return _v6_tiles.bright(self, q)
         model = self._model(q)
         stage = _stage_for(model, BRIGHT_SLOT, self.impls)
         R = self.grid.R
@@ -1636,7 +1652,12 @@ class Service:
         every component's vertical layer in ``layers``: the arrays are face-on columns the viewer spreads
         through their layers and integrates along each ray. What the frame's dust removes and what it
         emits balance (``tests/test_render.py``).
+
+        **only=remainder** (S64, V6, R8; T28): with ``l_min=``, the two per-ring arrays the remainder is exactly,
+        placed by weights this render already sends (``api/v6_tiles.py``): a new threshold asks 9.6 kB, not this.
         """
+        if q.one("only") is not None:
+            return _v6_tiles.remainder(self, q)
         model = self._model(q)
         curves = _parse_filters(q)
         precision = q.one("precision", "f8")
