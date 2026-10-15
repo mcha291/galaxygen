@@ -104,6 +104,10 @@ def test_gate_i_the_rings_dust_is_the_diffuse_share_plus_the_realised_clouds(ser
     assert np.allclose(rings["cloud_dust_mass"], clouds_dust, rtol=1e-12, atol=0.0)
     assert rings["clouds_share_disc"] == pytest.approx(clouds_dust.sum() / dust.sum(), rel=1e-12)
     assert rings["clouds_share_disc"] == pytest.approx(CLOUDS_SHARE_DISC[template], rel=1e-6)
+    # The share is floored at 0 (B9) and the rings where the floor acted are listed: none, on either template.
+    assert rings["floored"] == []
+    assert v6_clouds.floored(np.array([1.0, 2.0, 0.0]), np.array([1.5, 1.0, 0.3])) == [{"ring": 0, "excess_dust_mass": 0.5}]
+    assert v6_clouds.ring_share(np.array([1.0, 2.0, 0.0]), np.array([1.5, 1.0, 0.3])).tolist() == [0.0, 0.5, 1.0]
     # The expected share is recorded, not used: the ring's molecular dust over its dust (its molecular fraction).
     g = fields(service, template, layer, ["gas_molecular_surface_density", "dust_to_gas_ratio"])
     expected = ring_integral(np.asarray(g["gas_molecular_surface_density"]) * g["dust_to_gas_ratio"], R)

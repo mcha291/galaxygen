@@ -114,11 +114,21 @@ def ring_cloud_dust(fields: Mapping[str, Any], R: np.ndarray, seed: int, constan
 
 def ring_share(ring_dust: np.ndarray, cloud_dust: np.ndarray) -> np.ndarray:
     """Per level-0 cell ring, the share of the ring's dust that is diffuse: ``1 - cloud_dust / ring_dust``, 1 where
-    the ring holds no dust. Not clipped: a ring whose realised clouds held more dust than the ring publishes would go
-    negative and say so (none does on either template, the probe's and the tests' measurement)."""
+    the ring holds no dust, floored at 0 (S64, the lead's ruling: a negative depth is no depth, rule B9). Where the
+    floor acts the ring's realised clouds hold more dust than the ring publishes, and the closure misses by the
+    excess - :func:`floored` lists those rings (none on either template, layer on or off: the tests' measurement)."""
     ring_dust = np.asarray(ring_dust, dtype=float)
     with np.errstate(divide="ignore", invalid="ignore"):
-        return np.where(ring_dust > 0.0, 1.0 - np.asarray(cloud_dust, dtype=float) / np.where(ring_dust > 0.0, ring_dust, 1.0), 1.0)
+        raw = np.where(ring_dust > 0.0, 1.0 - np.asarray(cloud_dust, dtype=float) / np.where(ring_dust > 0.0, ring_dust, 1.0), 1.0)
+    return np.maximum(raw, 0.0)
+
+
+def floored(ring_dust: np.ndarray, cloud_dust: np.ndarray) -> list[dict[str, float]]:
+    """The rings where :func:`ring_share`'s floor acted, each with the excess - the realised clouds' dust past the
+    ring's published dust, Msun: what the closure misses there."""
+    excess = np.asarray(cloud_dust, dtype=float) - np.asarray(ring_dust, dtype=float)
+    return [{"ring": int(i), "excess_dust_mass": float(excess[i])}
+            for i in np.flatnonzero((np.asarray(ring_dust, dtype=float) > 0.0) & (excess > 0.0))]
 
 
 def ring_of(R: np.ndarray, at: np.ndarray | None = None) -> np.ndarray:
@@ -149,6 +159,7 @@ def diffuse_share(fields: Mapping[str, Any], R: np.ndarray, seed: int, constants
         "clouds_share_disc": float(cloud_dust.sum() / total) if total > 0.0 else 0.0,
         "expected_clouds_share": expected_share.tolist(),
         "expected_clouds_share_disc": float(expected.sum() / total) if total > 0.0 else 0.0,
+        "floored": floored(ring_dust, cloud_dust),
     }
     return share[ring_of(R)], rings
 
@@ -185,7 +196,10 @@ def render_header(rings: Mapping[str, Any], clouds_layer: float | None, placemen
                    "published dust mass, to 1e-12 (tests/test_v6_clouds.py, both templates, layer on and off)",
         "rings": {
             **rings,
-            "about": "per level-0 cell ring, inner first: the share, the ring's dust mass (Msun), the realised clouds' "
+            "about": "per level-0 cell ring, inner first: the share (floored at 0: a negative depth is no depth; "
+                     "floored lists each ring where the floor acted - its realised clouds holding more dust than the "
+                     "ring publishes - with the excess dust mass, Msun, by which the closure misses there), the "
+                     "ring's dust mass (Msun), the realised clouds' "
                      "dust (Msun) and their share, and the disc's. expected_clouds_share is the ring's molecular "
                      "dust over its dust - the clouds' share in expectation, the ring's molecular fraction: a "
                      "recorded check on the realised share, which departs from it by the census's Poisson noise and "
