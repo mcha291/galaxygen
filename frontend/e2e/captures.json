@@ -9,7 +9,8 @@
     "viewport": "The picture's side in pixels: square, at a device pixel ratio of 1. A thumbnail is drawn at its own size, not scaled down from a frame.",
     "layer": "Present only on a capture taken with the randomness layer off (S55, D214: invariant I5), and then \"off\": the test presses the viewer's own 'physics only' switch, holds every request made after it to layer=off, and compares the frame's summed light with the same view's with the layer - as it is captured, with its dust (the transfer principle), and with the dust switched off (the conserving principle; S58, e2e/settings.ts). Absent, the layer is on, the viewer's default: every other capture.",
     "file": "Where the picture is committed, from frontend/: e2e/frames/<name>.png for a frame (the path tools/goal_metrics.py reads), public/templates/<template>.png for a thumbnail (where the app serves it from: src/workflow/templates.ts thumbnailOf).",
-    "pending": "Present only while the picture cannot be taken: says what it waits on. The test skips the capture until the API serves its template, and tests/test_picture.py refuses the mark once the model has templates."
+    "pending": "Present only while the picture cannot be taken: says what it waits on. The test skips the capture until the API serves its template, and tests/test_picture.py refuses the mark once the model has templates.",
+    "stand": "Present only on a zoomed capture (S65, BUILD_III Phase V6b, RULING_S65 R6), named <template>-zoom: the star-first mode's points at a stand inside the stars handover, where the tiles are level-k cells. The test first sees the template's own camera (`camera`, as /api/templates states it), then stands the camera at that inclination, azimuth and lens but at `radius_kpc` (half the picture's height) about `target` - a point of the disc's plane at `radius_kpc` from the centre and `azimuth_deg` in the model's galactocentric frame (src/galaxy/positions.ts) - through the probe's place(camera, target): the orbit target off the centre, as a drag on the target reaches. milky_way-zoom: the stellar arm crest nearest R0 = 8.15 kpc (the template's, Reid et al. 2019) - pattern_density_contrast's largest value on the grid's ring nearest R0 (8.1375 kpc), 1.502 at the cell centred on azimuth 286.5 degrees (measured at S65 through /api/arrays). ngc_4414-zoom: 2 kpc on the major axis - azimuth 90, since the template's camera stands over azimuth 0 and the minor axis runs through 0 and 180 - where the contrast is 1.26 (its ring's crest, 1.461, at 103.5). A 0.5 kpc wide view asks level-2 tiles. A display capture, never a row."
   },
   "captures": [
     {
@@ -75,6 +76,26 @@
       "filters": "wfc3",
       "viewport": 256,
       "file": "public/templates/ngc_4414.png"
+    },
+    {
+      "name": "milky_way-zoom",
+      "template": "milky_way",
+      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20, "fov_deg": 45 },
+      "stand": { "target": { "radius_kpc": 8.1375, "azimuth_deg": 286.5 }, "radius_kpc": 0.25 },
+      "mode": "stars",
+      "filters": "rgb",
+      "viewport": 1024,
+      "file": "e2e/frames/milky_way-zoom.png"
+    },
+    {
+      "name": "ngc_4414-zoom",
+      "template": "ngc_4414",
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
+      "stand": { "target": { "radius_kpc": 2.0, "azimuth_deg": 90 }, "radius_kpc": 0.25 },
+      "mode": "stars",
+      "filters": "wfc3",
+      "viewport": 1024,
+      "file": "e2e/frames/ngc_4414-zoom.png"
     }
   ]
 }

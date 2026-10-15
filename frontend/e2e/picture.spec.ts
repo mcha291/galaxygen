@@ -50,6 +50,11 @@ interface Capture {
   file: string;
   /** Present while the picture cannot be taken yet; says what it waits on. */
   pending?: string;
+  /**
+   * A zoomed stand (S65, V6b, RULING_S65 R6): the template's inclination, azimuth and lens at `radius_kpc` about
+   * `target`, a point of the disc's plane in the model's galactocentric frame. Absent, the template's camera.
+   */
+  stand?: { target: { radius_kpc: number; azimuth_deg: number }; radius_kpc: number };
 }
 
 interface FrameRecord {
@@ -80,8 +85,9 @@ interface Served {
 declare global {
   interface Window {
     __galaxygenCapture?: {
-      place(view: Partial<LensCamera> & Omit<LensCamera, "fov_deg">): void;
+      place(view: Partial<LensCamera> & Omit<LensCamera, "fov_deg">, target?: { radius_kpc: number; azimuth_deg: number }): void;
       where(): LensCamera;
+      target(): [number, number, number];
       picture(): { png: string; width: number; height: number };
     };
     __galaxygenFrameSum?: () => { sum: number[]; width: number; height: number };
@@ -349,6 +355,18 @@ for (const capture of CAPTURES) {
       await press(page, filters.label);
     }
     await press(page, MODE_BUTTON[capture.mode], capture.mode === "field" ? MODE_BUTTON.stars : undefined);
+    // A zoomed stand (S65, V6b, R6): once the template's own camera is checked, the same inclination, azimuth and lens
+    // at the stand's radius about its target - through the probe, as a drag on the orbit target could reach.
+    const camera: LensCamera = capture.stand ? { ...capture.camera, radius_kpc: capture.stand.radius_kpc } : capture.camera;
+    if (capture.stand) {
+      const { target } = capture.stand;
+      await page.evaluate(([c, t]) => window.__galaxygenCapture!.place(c, t), [camera, target] as const);
+      await standsAt(page, camera);
+      const at = await page.evaluate(() => window.__galaxygenCapture!.target());
+      const phi = (target.azimuth_deg * Math.PI) / 180;
+      const want = [target.radius_kpc * Math.cos(phi), 0, -target.radius_kpc * Math.sin(phi)];
+      expect(Math.max(...at.map((v, i) => Math.abs(v - want[i]))), `${capture.name}: the orbit target`).toBeLessThan(1e-6);
+    }
     // The layer's switch (S55, D214: invariant I5), through the real control. What was asked before it is the
     // landing, with the layer; everything from here on is asked under the switch.
     const physicsOnly = capture.layer === "off";
@@ -359,7 +377,7 @@ for (const capture of CAPTURES) {
 
     const shot = await settle(page, net, capture.mode);
     expect([shot.width, shot.height]).toEqual([side, side]);
-    await standsAt(page, capture.camera); // and it is still there: nothing moved the camera while the view settled
+    await standsAt(page, camera); // and it is still there: nothing moved the camera while the view settled
 
     // The switch on the wire. Released, no request names the layer at all: the requests are those of a viewer
     // without the switch (S54's, but for the `template` they name since S58, held to the capture's below).
@@ -387,7 +405,7 @@ for (const capture of CAPTURES) {
     const sha256 = createHash("sha256").update(shot.png).digest("hex");
     const against = !recorded ? "no committed picture yet" : recorded.sha256 === sha256 ? "the committed picture, byte for byte" : "not the committed picture's bytes";
     const through = template ? "chosen in the switcher" : "the default galaxy of an API without templates";
-    const facts = { capture: capture.name, template: capture.template, through, file: capture.file, renderer, browser: `chromium ${browser.version()}`, playwright: PLAYWRIGHT, args: GPU_ARGS, seconds, bytes: shot.png.length, sha256, against, frameSum: shot.sum, selection };
+    const facts = { capture: capture.name, template: capture.template, stand: capture.stand ?? null, through, file: capture.file, renderer, browser: `chromium ${browser.version()}`, playwright: PLAYWRIGHT, args: GPU_ARGS, seconds, bytes: shot.png.length, sha256, against, frameSum: shot.sum, selection };
     await testInfo.attach("capture.json", { body: JSON.stringify(facts, null, 2), contentType: "application/json" });
     testInfo.annotations.push({ type: "renderer", description: renderer });
     console.log(`${capture.name}: ${side} x ${side}, ${shot.png.length.toLocaleString("en")} B (${against}), ${through}, frame sum ${shot.sum}, ready and taken in ${seconds.toFixed(1)} s, ${renderer}${selection ? `; ${selection}` : ""}`);
@@ -444,7 +462,7 @@ for (const capture of CAPTURES) {
       await press(page, MODE_BUTTON.stars);
       for (const label of DUST_FREE.released) await release(page, label, DUST_FREE.beside);
       for (const label of DUST_FREE.kept) await expect(page.getByRole("button", { name: label, exact: true })).toHaveAttribute("aria-pressed", "true");
-      await standsAt(page, capture.camera);
+      await standsAt(page, camera);
       // With the points off there is no selection to wait for: the view settles as the field mode's does.
       const freeOff = await settle(page, net, "field");
       const sinceFree = net.asked.length;
@@ -452,7 +470,7 @@ for (const capture of CAPTURES) {
       const freeOn = await settle(page, net, "field");
       expect(forModelData(net.asked.slice(sinceFree)).filter((a) => a.layer !== null), "requests naming the layer for the dust-free frame with the switch released").toEqual([]);
       expect([freeOff.width, freeOff.height, freeOn.width, freeOn.height]).toEqual([side, side, side, side]);
-      await standsAt(page, capture.camera);
+      await standsAt(page, camera);
       const free = over(lightOf(freeOff), lightOf(freeOn));
       // The dust is out of both: without its extinction each frame is brighter than its dusty counterpart.
       const lift = { layered: over(lightOf(freeOn), on), physicsOnly: over(lightOf(freeOff), off) };

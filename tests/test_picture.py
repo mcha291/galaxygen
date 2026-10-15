@@ -44,11 +44,12 @@ THUMBNAILS = FRONTEND / "public" / "templates"  # where the app serves a templat
 TEMPLATE = re.compile(r"[a-z0-9]+(_[a-z0-9]+)*")  # src/workflow/templates.ts NAME: a path segment of its thumbnail
 NAME = re.compile(r"[a-z0-9]+(_[a-z0-9]+)*(-[a-z0-9]+)+")  # <template>-<what the picture is>
 ENTRY_KEYS = {"name", "template", "camera", "mode", "filters", "viewport", "file"}
-OPTIONAL_KEYS = {"pending", "layer"}
+OPTIONAL_KEYS = {"pending", "layer", "stand"}
 CAMERA_KEYS = {"inclination_deg", "azimuth_deg", "radius_kpc", "fov_deg"}
 MODES = {"field", "stars"}  # the spec's MODE_BUTTON: the Rendering buttons "field" and "star-first"
 THUMBNAIL = "thumbnail"  # a thumbnail's capture is named <template>-thumbnail
 PHYSICS_ONLY = "physics-only"  # the layer-off capture is named <template>-physics-only (S55, D214: invariant I5)
+ZOOM = "zoom"  # a zoomed stand's capture is named <template>-zoom (S65, V6b: RULING_S65 R6)
 # The spec's tests that are not captures: "physics only on the wire" (every request shape under the switch).
 WIRE_TESTS = 1
 PLAYWRIGHT = "@playwright/test"
@@ -140,7 +141,7 @@ def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
     assert {"milky_way", "ngc_4414"} <= set(by_template), f"the list's templates: {sorted(by_template)}"
     for template, listed in by_template.items():
         # The frames with the layer, the viewer's default: the layer-off capture is held by its own test below.
-        frames = [c for c in listed if not is_thumbnail(c) and not layer_off(c)]
+        frames = [c for c in listed if not is_thumbnail(c) and not layer_off(c) and "stand" not in c]
         thumbnails = [c for c in listed if is_thumbnail(c)]
         assert sorted(c["mode"] for c in frames) == sorted(MODES), f"{template}: frames in modes {[c['mode'] for c in frames]}"
         assert len(thumbnails) == 1, f"{template}: {len(thumbnails)} thumbnails"
@@ -153,6 +154,22 @@ def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
     milky_way, ngc = by_template["milky_way"][0], by_template["ngc_4414"][0]
     assert (milky_way["camera"]["inclination_deg"], milky_way["camera"]["fov_deg"], milky_way["filters"]) == (0, 45, "rgb")
     assert (ngc["camera"]["inclination_deg"], ngc["camera"]["fov_deg"], ngc["filters"]) == (55, 5, "wfc3")
+
+
+def test_the_list_holds_each_template_once_at_a_zoomed_stand():
+    """S65 (V6b, RULING_S65 R6): each template once in the star-first mode at a 0.5 kpc wide stand (radius 0.25 kpc)
+    over a point of its disc, 1024 px, at the template's own camera, lens and filter set otherwise."""
+    zoomed = [c for c in captures() if "stand" in c]
+    assert sorted(c["name"] for c in zoomed) == sorted(f"{t}-{ZOOM}" for t in {c["template"] for c in captures()})
+    for c in zoomed:
+        stand = c["stand"]
+        assert set(stand) == {"target", "radius_kpc"} and set(stand["target"]) == {"radius_kpc", "azimuth_deg"}, c["name"]
+        assert stand["radius_kpc"] == 0.25 and 0 < stand["target"]["radius_kpc"] < 30 and 0 <= stand["target"]["azimuth_deg"] < 360
+        assert c["mode"] == "stars" and c["viewport"] == 1024 and not is_thumbnail(c) and not layer_off(c), c["name"]
+        frame = next(f for f in captures() if f["template"] == c["template"] and f["mode"] == "stars" and "stand" not in f and not is_thumbnail(f))
+        assert (c["camera"], c["filters"]) == (frame["camera"], frame["filters"]), c["name"]
+    spec = (E2E / "picture.spec.ts").read_text(encoding="utf-8")
+    assert "window.__galaxygenCapture!.place(c, t)" in spec, "the spec no longer places a zoomed stand"
 
 
 def test_the_list_holds_one_capture_with_the_layer_off_through_the_real_switch():

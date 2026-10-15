@@ -78,6 +78,26 @@
       "sha256": "ea7d491335bb9d220762ce3d81b42a7b5db9f287b3a98fceb427b1467188eac9",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
+    },
+    "milky_way-zoom": {
+      "file": "e2e/frames/milky_way-zoom.png",
+      "template": "milky_way",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 317346,
+      "sha256": "42d9552a9bd5220b13bc426d58a38b81c178ee818c7e349ef5d5c9e34912dd8e",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
+    "ngc_4414-zoom": {
+      "file": "e2e/frames/ngc_4414-zoom.png",
+      "template": "ngc_4414",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1153325,
+      "sha256": "258175c8d28ebd04b0f18d681f098d34de2298d93c8d0c374c5a9ca2a8470a50",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
     }
   }
 }
