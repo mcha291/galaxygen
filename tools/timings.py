@@ -103,6 +103,11 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # S48's wiring: each star's band light through the viewer's curves (spectra.object_response).
     Endpoint("bright: whole, rgb", "/api/bright", urlencode({"n": 3162, "filters": _RGB, "white": 6500}),
              "the 3162 brightest, each through 3 filters"),
+    # S64 (V6, R8): one tile - a level-0 cell at R = 8 kpc, its 64 finest cells - at the 10^6-over-the-disc depth, 2251
+    # Lsun snapped up to the grid's 10^3.40, as the star-first view asks it: rgb, float32.
+    Endpoint("bright: one tile", "/api/bright",
+             urlencode({"cells": 261, "l_min": 2251, "filters": _RGB, "white": 6500, "precision": "f4"}),
+             "one level-0 cell's stars above 10^3.4 Lsun, about 1 140, through 3 filters"),
     # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
     Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
              "193 temperatures x 3 filters, no stage (S42)"),
@@ -115,6 +120,10 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # S48's wiring: the field's remainder under 10^3 Lsun beside the stars (bright.resolve, four more responses).
     Endpoint("render: unresolved", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000}),
              "as the whole rgb render, plus stars_unresolved and the closure"),
+    # S64 (V6, R8; T28): the remainder alone - what a new threshold asks instead of the render.
+    Endpoint("render: remainder, rgb", "/api/render",
+             urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000, "only": "remainder"}),
+             "two per-ring arrays, 400 x 3 each, and the closure: the stellar part of the l_min render"),
     # The templates (S54, D213): a named galaxy's inputs as the base of a request - a profile, and the render the
     # viewer asks for when it switches to NGC 4414: its fitted inputs, no merger, the Hubble broadband set.
     Endpoint("arrays: a template", "/api/arrays", "template=ngc_4414&fields=stellar_surface_density",
