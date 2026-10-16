@@ -13071,14 +13071,14 @@ framing (their 60 pc width is 1.5 pixels).
 
 **Closing.** The full suite ran once, detached from the main checkout at 019c0d8 (the two builders' sixteen commits)
 with pytest's own exit code appended to its log, while the review, the fix pass and the close's documents were
-built in worktrees cut from that commit: **[SUITE LINE]**. The files the fix pass touches re-run on the integrated
-state: [RERUN LINE]; vitest [VITEST] (32 files), typecheck clean, the picture test 12 of 12 with every committed
+built in worktrees cut from that commit: **EXIT=1 - 1 604 passed, 4 failed, 5 skipped, 1 xfailed in 6 h 29 min under the agents', the review's picture runs' and S65's fresh clone's load: `test_audit`'s S21b wall-clock pricing test (#67, #68's class; S45, S60, S63-S65), and three pins the builders' file lists had not named, found by the suite and re-pinned on the integrated state with their reasons - `test_v6_clouds`' closed render stage list (the render runs `gas_fluctuation` since R6, the review's M1) and its digest assertion (the added keys now end with S66's), and `test_templates`' route test, which passed again on the final state (its one failure at 019c0d8 not reproduced)**. The files the fix pass touches re-run on the integrated
+state: EXIT=0, 380 passed, 2 skipped (the picture test and the viewer's shot without a browser), 1 xfailed - test_v7_layer, test_v7_header, test_render, test_docs, test_api, test_layer, test_picture, test_audit, test_progress, test_viewer, test_gas_fluctuation, test_layer_noise, test_hook; then test_v6_clouds, the templates test and S21b alone on the re-pinned state: EXIT=0, 16 passed (S21b green alone on the idle machine); vitest 387 (32 files), typecheck clean, the picture test 12 of 12 with every committed
 frame byte for byte through the fix pass. `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved (no stage
 changed; the vectors' section gained columns, no value). The register: **110 open = 11 permanent + 99 carried, 49
 discharged** (#174 the points' dust unmodulated, #175 the star-first remainder's middle part, #176 the on-screen
 sampling of the unit mean; #163's cost line extended with the render's 12.8 → 20.1 s cold). `RESUMING.md` 117 lines,
 `BRIEF.md` 49. GALAXY_PLAN §5f re-read to the rows as inserted (S53–S69). *How S65 ended:* its `verify_clone --ref
-main` at 3794fc3 ran detached through this whole session on a loaded machine — [CLONE LINE]. **For the owner,
+main` at 3794fc3 ran detached through this whole session on a loaded machine — **1 failed, 1 591 passed, 5 skipped, 1 xfailed in 6 h 05 min, specs OK** - the one failure `test_performance`'s per-cell pricing ordering (#68's class, S45, S60, S63-S65; green alone), so `verify_clone` reported FAIL on the flake alone; #173's migration test passed. **For the owner,
 plainly (none awaited; their word first if they answer):** (a) V7's tolerances as ruled — the 1e-5 is the noise's
 (bit-exact), the composed field's geometry is float32's (within 0.03 pc at the disc's edge), each ring's dust on
 screen is held as a column to the map's own one-draw bound and the transmitted light rises (+2.4 % at R_SUN) because
