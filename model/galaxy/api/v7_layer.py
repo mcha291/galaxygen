@@ -19,7 +19,8 @@ With the layer off every value is None, the keys kept (I5): the viewer's maps ar
 layer off included, so its header's ``stages`` lists ``gas_fluctuation`` where S65's did not (the only change on the
 eight requests the review compared). With the layer on the stage is needed: the entry carries its cell normalisers.
 With the layer off it returns its neutral (measured under 1 ms in a cold render) and the route does not branch on the
-layer (I5). The middle part's window anchors are cached with the run (:func:`window_anchors`).
+layer (I5). The middle part's four windows - their anchors and their responses through the request's curves -
+are cached with the run (:func:`window_anchors`, :func:`window_responses`).
 """
 
 from __future__ import annotations
@@ -205,13 +206,44 @@ def window_anchors(fields: Any, t_max: float, n_t: int, constants: Mapping[str, 
     return held.copy()
 
 
+_RESPONSES: OrderedDict[tuple, np.ndarray] = OrderedDict()
+
+
+def window_responses(fields: Any, t_max: float, n_t: int, constants: Mapping[str, Any],
+                     windows: Sequence[tuple[float, float]], curves: Sequence[Any]) -> np.ndarray:
+    """(len(windows), n_R, n_filters): the window anchors (:func:`window_anchors`) through ``curves`` at the ring's
+    colour temperature (``spectra.stellar_response``), cached with the run and the request's filter set (the lead's
+    ruling on review M1): keyed as the anchors are, plus disc_light_temperature by its bytes and the parsed curves by a
+    digest of their definition (``repr`` of the frozen ``spectra.Curve`` tuple). The three age parts' own responses
+    (``Service._ages``) are recomputed every request, as at S63-S65; only these four, S66's addition, are held.
+    A copy each call; the arithmetic is the stage's, bit for bit."""
+    from galaxy.stages import spectra as _spectra
+
+    T = fields["disc_light_temperature"]
+    key = (_digest(fields["stars_formed_history"]), _digest(fields["feh_history"]), _digest(T), float(t_max), int(n_t),
+           float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows),
+           hashlib.blake2b(repr(tuple(curves)).encode("utf-8"), digest_size=16).hexdigest())
+    held = _RESPONSES.get(key)
+    if held is None:
+        anchors = window_anchors(fields, t_max, n_t, constants, windows)
+        held = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])
+        held.setflags(write=False)
+        _RESPONSES[key] = held
+        while len(_RESPONSES) > _ANCHORS_HELD:
+            _RESPONSES.popitem(last=False)
+    else:
+        _RESPONSES.move_to_end(key)
+    return held.copy()
+
+
 def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max: float, n_t: int, curves: Any,
                 middle: np.ndarray, cut: float, young_age: float,
                 weight: str) -> tuple[dict[str, Any] | None, list[tuple[str, np.ndarray]]]:
     """The ages' ``middle_kept`` entry and its three per-ring arrays (S66, D226 R5b): the middle part's light split by
     the clustering field's octaves its stars keep - ages [cut, t_3), [t_3, t_2), [t_2, t_1) keep 3, 2, 1 octaves
     (t_k the octave survival ages, :func:`octave_ages_myr`), the rest [t_1, young_age) none. Each window's anchors are
-    ``bright.window_anchors`` (``part_anchors``' arithmetic; cached with the run, :func:`window_anchors`), put through the curves at the ring's colour temperature,
+    ``bright.window_anchors`` (``part_anchors``' arithmetic), put through the curves at the ring's colour temperature
+    (both cached with the run and the curves, :func:`window_responses`),
     and the four are scaled per ring and filter by one closure factor ``middle / their sum``, as the three parts are
     scaled to the stars: so the three arrays and the rest (``middle`` less the three) sum to ``middle`` to rounding.
     The ages are the history's and the constants', not the layer's: the same arrays with the layer off, where the maps
@@ -223,11 +255,7 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
         raise ValueError(f"the middle part splits by {len(KEPT)} octaves; the clustering field has {ages.size}")
     edges = np.clip(np.array([cut, ages[2], ages[1], ages[0], young_age]), cut, young_age)
     windows = [(float(edges[i]), float(edges[i + 1])) for i in range(4)]  # keep 3, 2, 1, 0 octaves
-    from galaxy.stages import spectra as _spectra
-
-    anchors = window_anchors(fields, t_max, n_t, constants, windows)  # cached with the run (review M1)
-    T = fields["disc_light_temperature"]
-    raw = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])  # (4, R, filter)
+    raw = window_responses(fields, t_max, n_t, constants, windows, curves)  # (4, R, filter), cached (review M1)
     total = raw.sum(axis=0)
     lit = (total > 0.0) & (middle > 0.0)
     factor = np.where(lit, middle / np.where(lit, total, 1.0), 1.0)
