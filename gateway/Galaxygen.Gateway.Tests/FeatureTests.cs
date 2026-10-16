@@ -92,6 +92,50 @@ public sealed class FeatureTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_post_to_the_model_is_not_cached()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var form = () => new FormUrlEncodedContent([new("template", "milky_way")]);
+        Assert.Equal("GLXY arrays?template=milky_way", await (await client.PostAsync("/api/arrays", form())).Content.ReadAsStringAsync());
+        await client.PostAsync("/api/arrays", form());
+        Assert.Equal(2, _model.CallsTo("arrays"));
+    }
+
+    [Fact]
+    public async Task An_answer_that_sets_a_cookie_is_not_cached()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        await client.GetStringAsync("/api/cookie");
+        await client.GetStringAsync("/api/cookie");
+        Assert.Equal(2, _model.CallsTo("cookie"));
+    }
+
+    [Fact]
+    public async Task Without_a_hash_nothing_is_cached_and_the_request_still_reaches_the_model()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        _model.VersionStatus = 500; // the model publishes no hash: no key can be made (D3)
+
+        Assert.Equal("GLXY arrays?template=a", await client.GetStringAsync("/api/arrays?template=a"));
+        Assert.Equal("GLXY arrays?template=a", await client.GetStringAsync("/api/arrays?template=a"));
+        Assert.Equal(2, _model.CallsTo("arrays"));
+    }
+
+    [Fact]
+    public async Task A_pinned_hash_keys_the_cache_without_reading_the_version()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        using var client = gateway.CreateClient();
+        await client.GetStringAsync("/api/arrays?template=a");
+        await client.GetStringAsync("/api/arrays?template=a");
+        Assert.Equal(1, _model.CallsTo("arrays"));
+        Assert.Equal(0, _model.CallsTo("version"));
+    }
+
+    [Fact]
     public async Task A_pinned_hash_is_used_without_asking_the_model()
     {
         await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
@@ -203,6 +247,92 @@ public sealed class FeatureTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/jobs/nope")).StatusCode);
     }
 
+    [Fact]
+    public async Task A_model_error_fails_the_job_and_its_result_is_the_models_answer()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        _model.GalaxyStatus = 422;
+        var id = await Post(client, new { template = "milky_way" });
+
+        var failed = await Until(client, id, "failed");
+        Assert.Equal(422, failed.GetProperty("status").GetInt32());
+        Assert.Equal("the model answered 422", failed.GetProperty("error").GetString());
+
+        var result = await client.GetAsync($"/jobs/{id}/result");
+        Assert.Equal((HttpStatusCode)422, result.StatusCode); // the model's own status and body, not a gateway 502
+        Assert.Contains("arrays refused", await result.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task A_job_fails_when_the_models_hash_cannot_be_read()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        _model.VersionStatus = 503;
+        var id = await Post(client, new { template = "milky_way" });
+
+        var failed = await Until(client, id, "failed");
+        Assert.Equal("the model could not be reached", failed.GetProperty("error").GetString());
+        Assert.Equal(HttpStatusCode.BadGateway, (await client.GetAsync($"/jobs/{id}/result")).StatusCode);
+        Assert.Equal(0, _model.CallsTo("arrays")); // a job never runs without the hash it would be recorded under
+    }
+
+    [Fact]
+    public async Task A_query_past_the_url_limit_travels_to_the_model_as_a_post()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var template = new string('x', ModelClient.MaxUrl);
+        var id = await Post(client, new { template });
+        await Until(client, id, "done");
+        Assert.Equal("POST", _model.LastMethod);
+        Assert.Equal($"GLXY arrays?template={template}", await client.GetStringAsync($"/jobs/{id}/result"));
+
+        var shortId = await Post(client, new { template = "a" });
+        await Until(client, shortId, "done");
+        Assert.Equal("GET", _model.LastMethod);
+    }
+
+    [Fact]
+    public async Task A_job_runs_the_route_it_names()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var posted = await client.PostAsJsonAsync("/jobs/", new { route = "render", query = new { template = "a" } });
+        var view = await posted.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("render", view.GetProperty("route").GetString());
+        var id = view.GetProperty("id").GetString()!;
+        await Until(client, id, "done");
+        Assert.Equal("GLXY render?template=a", await client.GetStringAsync($"/jobs/{id}/result"));
+    }
+
+    [Fact]
+    public async Task An_unknown_job_is_not_found_on_every_route()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/jobs/nope/result")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/jobs/nope/events")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync("/jobs/nope")).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_finished_job_is_forgotten_past_the_retained_count()
+    {
+        await using var gateway = Gateway(("Gateway:Jobs:Retain", "1"));
+        using var client = gateway.CreateClient();
+        var first = await Post(client, new { template = "a" });
+        await Until(client, first, "done");
+        var second = await Post(client, new { template = "b" });
+        await Until(client, second, "done");
+        var third = await Post(client, new { template = "c" }); // queueing it evicts down to one finished
+        await Until(client, third, "done");
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/jobs/{first}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/jobs/{second}")).StatusCode);
+    }
+
     // --- Share links --------------------------------------------------------------------------------------------
 
     [Fact]
@@ -270,6 +400,126 @@ public sealed class FeatureTests : IAsyncLifetime
         using var client = gateway.CreateClient();
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/share/", new { query = new { } })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/share/", new { query = new { template = new string('x', 100) } })).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_share_is_made_without_the_model_awake_and_its_routes_wait_for_the_hash()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        _model.VersionStatus = 503;
+
+        var created = await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var record = await created.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Null, record.GetProperty("hash").ValueKind);
+        var id = record.GetProperty("id").GetString();
+        Assert.Equal($"/share/{id}", created.Headers.Location!.ToString());
+
+        // No hash, no key: the route refuses rather than serve or store an answer it cannot key.
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await client.GetAsync($"/share/{id}/arrays")).StatusCode);
+        Assert.Equal(0, _model.CallsTo("arrays"));
+    }
+
+    [Fact]
+    public async Task A_shared_galaxys_error_is_passed_on_and_not_kept()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+
+        _model.GalaxyStatus = 500;
+        var first = await client.GetAsync($"/share/{id}/arrays");
+        Assert.Equal(HttpStatusCode.InternalServerError, first.StatusCode);
+        Assert.Equal("miss", first.Headers.GetValues("x-gateway-cache").Single());
+
+        _model.GalaxyStatus = 200;
+        var second = await client.GetAsync($"/share/{id}/arrays");
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.Equal("miss", second.Headers.GetValues("x-gateway-cache").Single()); // the error was not stored
+    }
+
+    [Fact]
+    public async Task A_shared_galaxys_routes_key_each_extra_parameter_apart()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+
+        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/arrays?fields=sigma")).Headers.GetValues("x-gateway-cache").Single());
+        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/arrays?fields=gas")).Headers.GetValues("x-gateway-cache").Single());
+        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/render?fields=sigma")).Headers.GetValues("x-gateway-cache").Single());
+        Assert.Equal(3, _model.CallsTo("arrays") + _model.CallsTo("render"));
+    }
+
+    [Fact]
+    public async Task A_shared_galaxys_route_refuses_a_bad_parameter_and_an_unknown_link()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/share/{id}/arrays?bad%20key=1")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/share/nope/arrays")).StatusCode);
+        Assert.Equal(0, _model.CallsTo("arrays"));
+    }
+
+    // --- Health and the client's address ------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Healthz_names_the_stores_the_pin_and_the_queue()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        using var client = gateway.CreateClient();
+        var health = await client.GetFromJsonAsync<JsonElement>("/healthz");
+        Assert.Equal(_model.Url, health.GetProperty("model").GetString());
+        Assert.True(health.GetProperty("pinned").GetBoolean());
+        Assert.Equal("memory", health.GetProperty("shares").GetString());
+        Assert.Equal("memory", health.GetProperty("results").GetString());
+        Assert.Equal(0, health.GetProperty("jobs").GetProperty("queued").GetInt32());
+        Assert.Equal(0, health.GetProperty("jobs").GetProperty("running").GetInt32());
+
+        _model.Hold();
+        var id = await Post(client, new { template = "a" });
+        await Until(client, id, "running");
+        health = await client.GetFromJsonAsync<JsonElement>("/healthz");
+        Assert.Equal(1, health.GetProperty("jobs").GetProperty("running").GetInt32());
+        _model.Release();
+    }
+
+    [Fact]
+    public async Task Behind_the_ingress_each_forwarded_address_is_its_own_client()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:TrustForwardedFor", "true"), ("Gateway:Limits:PermitPerWindow", "1"));
+        using var client = gateway.CreateClient();
+
+        async Task<HttpStatusCode> From(string address)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/healthz");
+            request.Headers.Add("X-Forwarded-For", address);
+            return (await client.SendAsync(request)).StatusCode;
+        }
+
+        Assert.Equal(HttpStatusCode.OK, await From("203.0.113.1"));
+        Assert.Equal(HttpStatusCode.TooManyRequests, await From("203.0.113.1"));
+        Assert.Equal(HttpStatusCode.OK, await From("203.0.113.2"));
+
+        // Only the last entry, the ingress's own, is believed: a forged first entry does not make a new client.
+        Assert.Equal(HttpStatusCode.TooManyRequests, await From("198.51.100.9, 203.0.113.2"));
+    }
+
+    [Fact]
+    public async Task Without_trusting_the_ingress_a_forwarded_address_is_ignored()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:PermitPerWindow", "1"));
+        using var client = gateway.CreateClient();
+        using var first = new HttpRequestMessage(HttpMethod.Get, "/healthz") { Headers = { { "X-Forwarded-For", "203.0.113.1" } } };
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/healthz") { Headers = { { "X-Forwarded-For", "203.0.113.2" } } };
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(first)).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.SendAsync(second)).StatusCode);
     }
 
     // --- Helpers ------------------------------------------------------------------------------------------------

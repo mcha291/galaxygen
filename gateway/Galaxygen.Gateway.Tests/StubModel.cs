@@ -22,6 +22,16 @@ public sealed class StubModel : IAsyncDisposable
 
     public string ApiHash { get; set; } = "api0";
     public string ViewerHash { get; set; } = "viewer0";
+
+    /// <summary>What /api/version answers with: anything but 200 is a model that publishes no hash.</summary>
+    public int VersionStatus { get; set; } = 200;
+
+    /// <summary>What a galaxy route answers with: anything but 200 is an error body, as the model's own.</summary>
+    public int GalaxyStatus { get; set; } = 200;
+
+    /// <summary>The HTTP method of the last galaxy-route request.</summary>
+    public string? LastMethod { get; private set; }
+
     public ConcurrentDictionary<string, int> Calls { get; } = new();
     public string Url { get; private set; } = "";
 
@@ -35,6 +45,7 @@ public sealed class StubModel : IAsyncDisposable
         _app.MapGet("/api/version", () =>
         {
             Calls.AddOrUpdate("version", 1, (_, n) => n + 1);
+            if (VersionStatus != 200) return Results.StatusCode(VersionStatus);
             return Results.Json(new
             {
                 viewer = new { hash = ViewerHash, count = 1, bytes = 1 },
@@ -46,8 +57,16 @@ public sealed class StubModel : IAsyncDisposable
 
         _app.Map("/api/fail", () => Results.Json(new { error = "no such input" }, statusCode: 400));
 
+        _app.MapGet("/api/cookie", (HttpResponse response) =>
+        {
+            Calls.AddOrUpdate("cookie", 1, (_, n) => n + 1);
+            response.Headers.SetCookie = "session=1";
+            return Results.Text("with a cookie");
+        });
+
         _app.Map("/api/{route}", async (string route, HttpRequest request) =>
         {
+            LastMethod = request.Method;
             var query = request.QueryString.Value ?? "";
             if (HttpMethods.IsPost(request.Method) && request.HasFormContentType)
             {
@@ -56,6 +75,7 @@ public sealed class StubModel : IAsyncDisposable
             }
             Calls.AddOrUpdate(route, 1, (_, n) => n + 1);
             await _gate.Task;
+            if (GalaxyStatus != 200) return Results.Json(new { error = $"{route} refused" }, statusCode: GalaxyStatus);
             request.HttpContext.Response.Headers["x-galaxy-stages"] = "disc,stars";
             return Results.Bytes(Encoding.UTF8.GetBytes($"GLXY {route}{query}"), "application/octet-stream");
         });
