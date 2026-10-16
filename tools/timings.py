@@ -132,7 +132,9 @@ ENDPOINTS: tuple[Endpoint, ...] = (
              "400 x 360 x 3 stars, HII line, scattered; the DIG, dust depth, thermal per ring (S39); "
              "the diffuse share off the ring streams (S64); the layer's two fields and the spurs on the header, the "
              "unspurred placement and the middle part's kept-octave windows (S66, V7: the gas fluctuation stage and "
-             "the k-octave cell means, cold 12.8 -> 20.1 s, warm 0.80 -> 1.63 s, 17.38 -> 18.66 MB in f8)"),
+             "the k-octave cell means, cold 12.8 -> 20.1 s, warm 0.80 -> 1.63 s, 17.38 -> 18.66 MB in f8; the "
+             "middle part's window anchors cached with the run, warm 1.65-2.11 -> 1.45-1.58 s on a loaded machine, the "
+             "rest the four windows through the curves and the unspurred cell means)"),
     Endpoint("render: one region", "/api/render",
              urlencode({"filters": _RGB, "r_min": 7, "r_max": 9, "phi_min": 0, "phi_max": 0.4, "level": 2}),
              "90 level-2 cells' means"),

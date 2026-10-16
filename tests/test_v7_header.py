@@ -210,3 +210,35 @@ def test_the_new_arrays_are_named_and_shaped(api):
     new = {"dust_placement_unspurred", *v7_layer.MIDDLE_KEPT.values()}
     assert new <= set(arrays)
     assert all(header["axes"][n] == (["R", "phi"] if n == "dust_placement_unspurred" else ["R", "filter"]) for n in new)
+
+
+# The stages a fresh service ran for /api/render at S65 (3794fc3), the same list on each of the six whole-render
+# requests below (the review's eight, recorded by its r8 run): the layer reference drops `stages` from its digest, so
+# this is where a change to the render's stage list is caught.
+S65_RENDER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
+                     "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs",
+                     "vertical_alpha", "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular")
+EIGHT = {"default on": {}, "default off": {"layer": ["off"]},
+         "milky_way on": {"template": ["milky_way"]}, "milky_way off": {"template": ["milky_way"], "layer": ["off"]},
+         "ngc_4414 on": {"template": ["ngc_4414"]}, "ngc_4414 off": {"template": ["ngc_4414"], "layer": ["off"]},
+         "milky_way level=1": {"template": ["milky_way"], "level": ["1"]},
+         "milky_way l_min": {"template": ["milky_way"], "l_min": ["1000"]}}
+
+
+def test_the_render_s_stages_differ_from_s65_s_only_by_gas_fluctuation():
+    """Review M1 (D226): the render asks for the gas fluctuation stage's fields on every request, layer off included -
+    with the layer on its cell normalisers are the header's; with it off the stage returns its neutral and the route
+    does not branch on the layer (I5). On the eight requests, in order on one fresh service, each whole render runs
+    S65's stages plus gas_fluctuation and nothing else; the level=1 and l_min requests reuse the Milky Way's run and
+    report none, as at S65."""
+    api = Service(cache=4)
+    curves = json.dumps(FILTERS["sets"]["rgb"]["curves"])
+    for name, q in EIGHT.items():
+        got = api.handle("/api/render", {**q, "filters": [curves]})
+        assert got.status == 200, (name, got.body[:300])
+        stages = list(wire.decode(got.body)[0].get("stages") or [])
+        if "level" in q or "l_min" in q:
+            assert stages == [], (name, stages)
+            continue
+        assert stages.count("gas_fluctuation") == 1, (name, stages)
+        assert [s for s in stages if s != "gas_fluctuation"] == list(S65_RENDER_STAGES), (name, stages)

@@ -14,11 +14,19 @@ precedent: a function the model publishes, evaluated with every parameter the mo
   the placement without them (``dust_placement_unspurred``): g' = (1 - <S>(R)) g + S, S read once per ray at the midplane (R4).
 
 With the layer off every value is None, the keys kept (I5): the viewer's maps are then exactly 1.
+
+**The render's stages** (review M1): ``/api/render`` asks for the gas fluctuation stage's fields on every request,
+layer off included, so its header's ``stages`` lists ``gas_fluctuation`` where S65's did not (the only change on the
+eight requests the review compared). With the layer on the stage is needed: the entry carries its cell normalisers.
+With the layer off it returns its neutral (measured under 1 ms in a cold render) and the route does not branch on the
+layer (I5). The middle part's window anchors are cached with the run (:func:`window_anchors`).
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import hashlib
+from collections import OrderedDict
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
@@ -167,13 +175,43 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
     return entry, np.maximum(shape.unspurred_cell_means(R, phi_edges), 0.0)
 
 
+# The middle part's window anchors per run (S66 fix pass, review M1): bright.window_anchors is 0.2-0.7 s of history on
+# the isochrones, and was recomputed on every render request. It reads the run's fields and constants only - the curves
+# are applied after - so it is cached as the k-octave means are (census_clustering.kept_cell_means): by what it reads.
+_ANCHORS: OrderedDict[tuple, np.ndarray] = OrderedDict()
+_ANCHORS_HELD = 8  # runs, as kept_cell_means' lru_cache holds
+
+
+def _digest(value: Any) -> tuple:
+    a = np.ascontiguousarray(np.asarray(value))
+    return a.dtype.str, a.shape, hashlib.blake2b(a.tobytes(), digest_size=16).hexdigest()
+
+
+def window_anchors(fields: Any, t_max: float, n_t: int, constants: Mapping[str, Any],
+                   windows: Sequence[tuple[float, float]]) -> np.ndarray:
+    """``bright.window_anchors``, cached by everything it reads: the run's formed and metallicity histories (by their
+    bytes), the age grid, RETURN_FRACTION and the windows. A copy each call; the arithmetic is the stage's, bit for bit."""
+    key = (_digest(fields["stars_formed_history"]), _digest(fields["feh_history"]), float(t_max), int(n_t),
+           float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows))
+    held = _ANCHORS.get(key)
+    if held is None:
+        held = np.array(_bright.window_anchors(fields, t_max, n_t, constants, windows))
+        held.setflags(write=False)
+        _ANCHORS[key] = held
+        while len(_ANCHORS) > _ANCHORS_HELD:
+            _ANCHORS.popitem(last=False)
+    else:
+        _ANCHORS.move_to_end(key)
+    return held.copy()
+
+
 def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max: float, n_t: int, curves: Any,
                 middle: np.ndarray, cut: float, young_age: float,
                 weight: str) -> tuple[dict[str, Any] | None, list[tuple[str, np.ndarray]]]:
     """The ages' ``middle_kept`` entry and its three per-ring arrays (S66, D226 R5b): the middle part's light split by
     the clustering field's octaves its stars keep - ages [cut, t_3), [t_3, t_2), [t_2, t_1) keep 3, 2, 1 octaves
     (t_k the octave survival ages, :func:`octave_ages_myr`), the rest [t_1, young_age) none. Each window's anchors are
-    ``bright.window_anchors`` (``part_anchors``' arithmetic), put through the curves at the ring's colour temperature,
+    ``bright.window_anchors`` (``part_anchors``' arithmetic; cached with the run, :func:`window_anchors`), put through the curves at the ring's colour temperature,
     and the four are scaled per ring and filter by one closure factor ``middle / their sum``, as the three parts are
     scaled to the stars: so the three arrays and the rest (``middle`` less the three) sum to ``middle`` to rounding.
     The ages are the history's and the constants', not the layer's: the same arrays with the layer off, where the maps
@@ -187,7 +225,7 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
     windows = [(float(edges[i]), float(edges[i + 1])) for i in range(4)]  # keep 3, 2, 1, 0 octaves
     from galaxy.stages import spectra as _spectra
 
-    anchors = _bright.window_anchors(fields, t_max, n_t, constants, windows)
+    anchors = window_anchors(fields, t_max, n_t, constants, windows)  # cached with the run (review M1)
     T = fields["disc_light_temperature"]
     raw = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])  # (4, R, filter)
     total = raw.sum(axis=0)
