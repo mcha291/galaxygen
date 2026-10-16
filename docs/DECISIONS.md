@@ -12850,3 +12850,246 @@ restored); (d) the stray "v" in the gateway's project file, still uncommitted; (
 factor, #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test; (f) BUILD_IV W4's
 container must bound a tile request below the 1.55 GB `MAX_STARS` allows here. **S66 is V7**, the layer in the viewer
 (`BRIEF.md`); this lead's session continues into it if its context allows, else the next resumes from `BRIEF.md`.
+
+### D226. S66: the layer in the viewer — the noise's GLSL twin held to the vectors, the diffuse dust and the young starlight modulated per sub-step in the march, the spurs drawn from their table, the bar's body and lanes read as the grid resolves them (BUILD_III Phase V7; a Fable lead on the owner's standing order, an Opus probe, two Opus builders and an Opus reviewer)
+
+**Session S66, opened 2026-10-16 on `session-66` from S65's merge (`main` 3794fc3, the tag record; S65's
+`verify_clone` of main running detached through this session, its line below), a fresh Fable lead on the owner's
+standing order to run the sessions back to back, Opus for the probe, the builders, the reviewer and the close's
+documents; usage at the open 5-hour 16 %, weekly all-models 40 %, Fable 51 %.** The phase's text (BUILD_III V7: the
+GLSL twin of the noise matching the vectors to 1e-5; the diffuse dust modulated per pixel in the march; the spurs;
+the bar's body and lanes; the "physics only" switch; the young starlight of V5 modulated per pixel by the clustering
+field, its finest scales dropped with age as L1 rules for the bright catalogue, unit mean per cell keeping each
+ring's light; the gate the vectors, the frame-time readout, each ring's dust on screen unchanged by the layer) was
+probed before the build, as S63–S65 were. **The probe's measurements (its scripts in the lead's scratchpad,
+`probe_s66/`):** a float32 twin of every noise primitive (the hash in Math.imul, the floats in Math.fround) is
+bit-exact to `vectors.json`'s float32 column on all 528 vectors of the five noise sections and within 5.5e-7 of
+float64; the `gas_fluctuation` section's 56 sums are 2.5e-3 off float64 and 2.9e-3 off numpy's own float32, and
+**the whole gap is the polar read's transcendentals** — given numpy's float32 read positions the twin's sum is
+numpy's to the bit; a float32 position at 26 kpc has an ulp of 1.9e-6 kpc, 4e-4 on g by itself, and GLSL ES 3.00
+states no precision for sin, cos or atan; three r186 compiles every ShaderMaterial as `#version 300 es` with
+`precision highp int`, so the 32-bit hash is available in the march today. The render grid is 400 × 360 (75 pc by
+1°): against the model's point function on a 10 pc mesh the bar's lanes (FWHM 0.1 a = 521 pc) and body
+(`pattern_density_contrast`, 0.83–1.35 at 0.5 a) read bilinearly from the cell texture within 0.5 % rms / 0.8 %
+max, while the spurs (FWHM 60 pc, length 240 pc; 48 rows on the Milky Way, none on `ngc_4414`) lose 16–47 % of
+their crest to the texel (48–66 % max). The gas map's unit mean holds on L1's lattice; on the 1024-frame's 39 pc
+pixels the dust's linear column per **level-0** ring is off by 1.2e-2 at worst (rms 3.5e-3; `ngc_4414` 6.3e-3), the
+whole dust-only frame by ≤ 1.7e-3, the render's 75 pc rings by up to 0.16–0.30 (too few pixels); the **transmitted**
+light rises by Jensen's gap, +2.4 % at R_SUN face-on on the Milky Way, +24 % on ring 1, +8.5 % at R_SUN inclined 60°
+— a clumped medium of the same column is more transparent. Along 1 000 inclined rays through the dust's layer ln m
+varies by rms 0.45–0.49, the field's whole σ (0.50): read once per pixel the column is off by 45–81 % rms. The young
+part is 0–20 Myr and keeps every clustering octave (L1 drops the 47.5 pc octave past 23.87 Myr, the 95 pc past
+31.18, the 190 pc past 40.71); of the middle part's 20–100 Myr light 2.9 % (bolometric; 3.4 % in V) keeps three
+octaves, 4.4 % (5.8 %) two, 4.3 % (6.6 %) one; the truncated maps plateau (cell-mean medians 0.283 and 0.409 for
+one and two octaves, #162) so each must be divided by its own cell mean, published for the full map only; the
+mixture's per-ring sampling on 39 pc pixels 4.1e-2 worst (rms 1.2e-2). The cost at the cap (96 steps, 8 sub-steps,
+262 144 px) ≤ 143 G integer-and-float ops a frame, estimated 5–10 ms on the owner's RTX 4070. `/api/render`'s
+header carried nothing of either field (D221 item 6 had said it would; `/api/arrays` served the gas columns,
+`/api/clouds` the clustering header); the picture test printed each capture's ready time and kept it nowhere.
+
+**Ruled (the lead, on the measurement; `RULING_S66.md`, R1–R10; the mechanism the plan's, the tolerances what
+they can honestly be, the owner told).** (R1) **The 1e-5 is the noise's:** every primitive section bit-exact to the
+float32 column and within 1e-6 of float64, in vitest and in the GLSL itself on the GPU; the vectors' `gas_fluctuation`
+section **gains the float32 read positions** numpy evaluated each sum at (a regeneration of that section alone, the
+noise sections byte for byte — this decision's act) and the sum given them is held to 1e-5; the read positions
+themselves carry float32's geometry, declared: g within 5e-3 of float64, the map within 1e-3 relative — in words,
+the shader draws the field at positions within ~0.03 pc of the reference's, a thirtieth of the finest octave's
+5.9 pc. (R2) **"Each ring's dust on screen unchanged" is the dust's column per level-0 ring, a sampling tolerance:**
+the dust-only frame's `__galaxygenFrameSum` with the modulation on over off within 3e-3; per level-0 ring on the
+frame's pixel lattice the column with the map over without within 1.5e-2 (both templates), from the reference
+evaluator; the transmitted light is not held — its rise is the mechanism's physics, recorded, and the
+layered-over-physics pin moves and is re-pinned once with its direction predicted here (the layered frame transmits
+more light, the ratio falls). (R3) **"Per pixel" — first ruled per sub-step** at the sub-step's read point, on the drift the probe measured
+along inclined rays, **and amended after the first capture to one read per ray at its midplane crossing** (the maps
+are face-on column maps read as a thin screen; the per-sub-step read drew every feature as a pillar through the
+layer — the paragraph on round 2 below has the picture and the reasoning), the value multiplying the dust's
+placement where it stands for the dust's own column (the depth, the thermal light, the diagnostic) and not the
+scattered light, as `place` does; a tuning switch, default on. (R4) **The bar's body and lanes are read from the
+cell texture bilinearly** — the grid resolves them under 1 %, nothing re-evaluated or invented (D189); **the spurs
+are evaluated per sub-step from the published `gas_spur` table** by the model's own point function (D5 as amended),
+composed as D221 item 7's g′ = (1 − ⟨S⟩(R))·g + S, the render shipping the unspurred placement and ⟨S⟩ per render
+ring. (R5) **The young part keeps every octave and is multiplied by the three-octave map over its cell mean; the
+middle part is served split at the octave survival ages** — `stars_middle_kept3/2/1`, the route's own arithmetic on
+the ages it already integrates, no stage change — each multiplied by the k-octave map over the **k-octave cell
+mean**, which the route computes on the clustering field's table lattice and serves; the gate per level-0 ring on
+the pixel lattice 5e-2 for the young light and 2e-2 for the kept parts, stated statistical; the star-first mode
+draws no young part (D200) and its remainder's middle part stays unmodulated (a debt). (R6) **The render header
+carries both fields** (`gas_fluctuation`, `census_clustering`) and `spurs`, every number the model's, null with the
+layer off; the layer-off reference gains ADDED entries (D223's handling). (R7) **The points' dust stays the ring's
+placed column** (a debt; the mend the include shared into FluxPoints' shader). (R8) **The frame-time readout is
+`ready_s`** per capture in `frames.json`, written by `picture:update`, including the API's compute; the per-frame
+GPU time stays V8's. (R9) The noise is one GLSL include with a float32 TypeScript twin tested against
+`model/galaxy/layer/vectors.json`, the GLSL pinned, and tested as GLSL by an instrument (`__galaxygenNoiseProbe`,
+rule B1) in an e2e spec; under "physics only" both seeds are null, the modulations' uniforms 0, every map exactly
+1.0, `milky_way-physics-only` byte for byte. (R10) Two Opus builders in sequence (the model side and the twin;
+then the march), one Opus reviewer.
+
+**Built, round 1 (builder A, the model side and the twin; seven commits on `s66-model`, fast-forwarded).** The
+vectors: each of the 56 sum rows gains `x_read`, `y_read` and their float32 values; every other byte of the file
+the same; the float32 sum at numpy's read positions equals the float32 column to the bit. `/api/render`'s header
+(`api/v7_layer.py`, no stage, no constant): `gas_fluctuation` {seed, scale, slope, change, octaves, lacunarity,
+sense, edges, the ring table, the ladder weights for every break index, the 1 024 cell normalisers, the rule}
+25.3 KB; `census_clustering` {the field's form, `octave_ages_myr`, `cell_mean` for k = 1, 2, 3 on the table lattice
+— k = 3 the published `census_clustering_cell_mean` **to the bit**, k = 1, 2 against a recompute from
+`ClusteringField.maps` 1e-12 — the rule} 63.2 KB; `spurs` {the table's rows, ⟨S⟩ per render ring = `Spurs.ring_mean`
+to the bit, the constants, the rule} 10.6 KB; the arrays `dust_placement_unspurred` (composed through
+`Spurs.compose_cells` with the header's rows and share gives `dust_placement` to 1e-12 on the Milky Way's 48 spurs;
+identical to `dust_placement` to the bit on `ngc_4414`) and `stars_middle_kept3/2/1` (the windows [20, 23.87),
+[23.87, 31.18), [31.18, 40.71) Myr through the same isochrone weights and curves as `stars_middle`, `bright.window_anchors`;
+with the rest they sum to `stars_middle` to 1e-12 through rgb, sho and hoo on both templates; the header's
+`ages.middle_kept` states the closure). **I5, as the tests enforce it:** the arrays ride with the layer off too
+(the unspurred placement the neutral, the windows the same bits on and off), the three entries null-valued, and the
+route does not branch on the layer; `layer_reference.ADDED_AT_S66` and `ADDED_ARRAYS_AT_S66` name the additions.
+Eight requests against 3794fc3: no existing array's bytes moved, each answer four arrays and three keys richer. The
+twin (`noise.glsl.ts`, `noise.ts`, `noise.test.ts`; `vectors.json` read from the model's folder by URL in vitest's
+node environment): the hash, noise2, noise3, shear and fractal **bit-exact** to the float32 column and within 1e-6 of
+float64; the log-normal map within 1.57e-7 of float32 (one ulp of exp; held to 2.5e-7); the gas sum at the read
+positions bit-exact; the composed g within 4.85e-4 of float64 (2.2e-5 inside 3 kpc; 1.85e-3 without the twist
+reduced modulo 2π), the map 1.9e-4 relative; the clustering maps 1.7e-7 against float32 (declared 2e-4); the spur
+sum 1.9e-5 of the peak (declared 1e-3). **On the GPU** (`e2e/noise.spec.ts`, ANGLE D3D11 on the RTX 4070): the
+primitives within 5.5e-7 of float32 (the hash exact), the gas sum at the read positions 4.2e-7, g 1.73e-3 off float64
+(3.6e-5 inside 3 kpc), the map 1.4e-4, the clustering maps 9.7e-5, the spurs 2.1e-5 of the peak. **Two deviations
+the builder made and the lead accepts:** the cell's fraction is `fract(c)`, since the driver fused the coordinate's
+product into c − floor(c) and moved the sum by 2e-4 at ~4 000 lattice cells; the polar read is a rotation of (x, y)
+by the ring's twist — the same point — since atan's unstated precision put the GPU's g 5.4e-2 off float64 at
+24 kpc. The GLSL names carry a `layer` prefix (desktop GLSL reserves noise1–4). Costs: `render: whole, rgb` cold
+12.8 → 20.1 s (the gas fluctuation stage, #163, and the k-octave means, cached with the run), warm 0.80 → 1.63 s
+(the middle's four windows through the curves, 0.7 s a request — a carried cost note), 17.38 → 18.66 MB in f8, the
+header 22 → 123 KB on, 24 → 30 KB off. Tests: test_render, test_layer, test_api, test_docs, test_gas_fluctuation,
+test_layer_noise and the new test_v7_header EXIT=0; typecheck; vitest 371 → 381 (32 files). `RENDER_PHYSICS.md` §0
+states the model's side.
+
+**Built, round 2 (builder B, the march; nine commits on `s66-march`, fast-forwarded; two rulings amended in place
+on its measurement).** The field fragment includes the noise (`fieldFragment.s66.glsl` the new pin; the S64 text in
+git) and, behind three tuning switches in the march's group — "gas fluctuation in the march", "spurs in the march",
+"young light clustered in the march", each on by default with its about, each uniform 1 only when the header's
+tables are present and the switch is on — multiplies the dust's placement by the gas map (`place *= m`: the depth,
+the thermal light and the diagnostic, not the scattered light), composes the spurs as (1 − ⟨S⟩)·unspurred + S
+(the unspurred placement in the HII texture's spare alpha, ⟨S⟩ in the diffuse row's, the rows in A's table texture,
+the loop's compile-time cap stated) and adds the clustered starlight: the young part times the three-octave map
+over its cell mean and the three kept parts times their k-octave maps over theirs (a 32 × 32 texture of the three
+means; three "clump" plane textures — young + kept 3, kept 2, kept 1 — the four parts summing to `agedLight` to
+1e-12, `interface/ages.js clumpedLight`); with the layer off the plane texture holds `agedLight` exactly as before.
+**The first capture (the maps read per sub-step, R3 as first ruled) showed streaks beyond ~13 kpc on both field
+frames** — radial round the Milky Way's outer disc under the 45° lens, along the minor axis on `ngc_4414` at 55° —
+and none on the star-first frames: a face-on column map read per sub-step through the stars' layer (356 pc; the gas
+layer 31–485 pc) makes every 47–190 pc feature a pillar of the layer's height, which a ray at an angle crosses
+obliquely, smearing it by h tan i along the view; the clustered young and middle light is a large share of a faint
+total out there. The builder's test build read the maps once per ray at the midplane crossing: the smear gone, the
+field's own speckle left. **Amended (the lead, on the picture; the probe's measurement D had shown the two reads
+differ, not which is right): the layer's maps are face-on column maps read as a thin screen at each ray's crossing
+of the midplane, one read per ray before the step loop** (a ray with |dir.y| ≤ 1e-6, or whose crossing falls outside
+the march, reads at its start point's projection), the value multiplying each sub-step's placement; a complex is
+compact in three dimensions and a column map says nothing of height — drawing it through the layer invented a
+vertical structure the model never published; S64's per-sub-step reads of the cell textures are untouched, the rule
+and the alternative stated in the shader and in `RENDER_PHYSICS.md` §0. **The second amendment: R5(d)'s 2e-2 for the
+middle's kept parts had been set from the probe's kept-1 number alone (1.4e-2); measured on both templates the kept
+parts read 3.6e-2–4.3e-2 per level-0 ring, the same sampling class as the young part's 4.4e-2 (the placement weight's
+alignment with one draw of the map inside a cell; the bare map over its cell mean holds per ring to 3e-3) — ruled
+5e-2 for every clustered part, stated with the numbers in the test's docstring, the builder's strict xfail replaced
+by the assertion.** *The gates as built (`tests/test_v7_layer.py`, the 1024-frame's 39 pc / 28 pc pixel lattices,
+the spurs per pixel through `Spurs.at`; `e2e/settings.ts`):* the dust's column per level-0 ring with the map over
+without, Milky Way worst 1.22e-2 (rms 3.5e-3), `ngc_4414` 6.3e-3 (2.1e-3), held at 1.5e-2; the young light × m₃/mean₃
+4.42e-2 / 3.38e-2, the kept parts 4.28e-2, 3.70e-2, 3.93e-2 / 3.89e-2, 3.78e-2, 3.59e-2, held at 5e-2; **the dust-only
+frame** (the star-first mode with the stars, the starlight and the ionized gas off, the dust on in its "where it
+is" reading, the depth 0, so the frame is linear in `place`; the default template face-on at 1024 px)
+`__galaxygenFrameSum` with the gas map over without **1.000545** (1.000247 when read per sub-step; the 45° lens
+makes rays non-vertical off the centre), the gate 3e-3; the layered-over-physics ratio with the dust re-pinned from
+0.97191 / 0.97754 / 0.98663 to **0.96265 / 0.96703 / 0.97596** — it fell, as predicted: the layered frame transmits
+more light — and read 0.96249 / 0.96672 / 0.97547 on the thin-screen frame, inside the pin's 1e-3; the dust-off ratio
+0.99996 / 0.99993 / 0.99985 (its tolerance 0.01); `milky_way-physics-only` **byte for byte** (765 251 B) on every
+run; `frames.json` carries `ready_s` per capture (R8; `FRAMES_ABOUT` says it includes the API's compute). The
+picture test 12 of 12 (the ten captures, the physics-only and the dust-only gates); vitest 385 (32 files); typecheck;
+test_v7_layer, test_picture, test_docs, test_v7_header, test_viewer EXIT=0. Ready times (s; S65's first): the Milky
+Way field 42.7 → 30.8 (the first capture, a cold API), stars 13.7 → 13.7, physics-only 10.3 → 10.9, `ngc_4414` field
+28.3 → 29.0, stars 10.7 → 10.7, the zooms 20.7 → 21.4 and 16.8 → 16.8 — the march's cost is not visible beside the
+API's. The points' dust (R7) and the star-first remainder's middle part (R5e) are stated unmodulated in the code and
+the contract.
+
+**The independent review (an Opus reviewer at 019c0d8, read-only, its own numpy float32 noise against node running
+the twin, its own quadratures, its own picture run; the note in the lead's scratchpad): no blocker; four must-fixes,
+applied by an Opus fix pass on the lead's rulings.** (M1) **The render's stage list gained `gas_fluctuation` on every
+request, layer off included** — six of eight requests; the route asks the field's columns for the header's
+normalisers, and with the layer off the stage returns its neutral because the route may not branch on the layer
+(I5, the no-branch test) — which no report had said and the layer reference's digest (which drops `stages`) did not
+catch; **ruled: stated** in the route's about, the module and here, with a test holding the eight stage lists to
+S65's plus that one name; and the warm render's doubling (the middle's four windows recomputed each request, 0.7 s)
+**mended by caching the windows with the run** (the window anchors with the run, then the four windows' responses by the run and a digest of the request's curves — the route's first filter-set key; the warm render on a loaded machine 1.5–1.8 → 1.16–1.26 s layer on, the rest the three age parts' responses, recomputed every request since S63, and the unspurred cell means, 0.18 s each; the cold render unchanged at 21–25 s under load, the gas stage's layer-off neutral under 1 ms). (M2) The header rules, the three switches' abouts, the
+route's about, `RENDER_PHYSICS.md` §0 and the settings' comment still described the per-sub-step read the amendment
+replaced, with the superseded dust-only number (1.000247) — reworded to the thin screen (B9, A9). (M3) **The
+on-screen pins held only on the lattice the test chose:** on the capture's own pixel (39.0625 pc, centred) ring 0's
+dust column reads 1.81e-2 against the 1.5e-2 pinned, 2.54e-2 at a quarter-pixel shift, and the young light 7.6e-2 to
+9.3e-2 against 5e-2; the "sampling tolerance" was a one-draw statistic of ring 0's ~2 000 pixels. **Ruled: the pin
+is the map's own derived bound, not a chosen number** — a log-normal map of width σ point-sampled on N pixels has a
+one-draw scatter of its ring mean of √((e^{σ²} − 1)/N_eff) (1.2e-2 for the gas map's σ 0.50 on ring 0, ~0.10 for the
+clustering map's σ 1.75: the spreads the reviewer measured), and each ring, template and lattice offset (sixteen, a
+quarter pixel apart, on the capture's own pixel) must lie within three of them, the whole-frame sum within 3e-3 as
+before; the measured worst ratios — the Milky Way's dust column worst 2.93 of the bound on ring 2 at a quarter-pixel offset (a departure of 1.64e-2 against the bound's 5.59e-3 per unit; ring 0's largest departure 3.13e-2), `ngc_4414`'s 2.33 on ring 0 (2.12e-2 against 9.09e-3); the young light 2.35 (ring 25, 9.32e-2) / 0.79 (4.30e-2); kept 3 2.24 / 1.53, kept 2 1.26 / 1.51, kept 1 0.53 / 1.30 — every one within three; the whole-frame dust sum 3.9e-4 / 9.2e-4 against 3e-3; the bound's variance the map's own (the gas map σ² Σw² = 0.251; the k-octave clustering maps 3.06 / 1.37 / 0.58) and its grain the finest kept octave over the pixel (1 for the gas map; 1.22 / 2.43 / 4.86 for the clustering maps on the Milky Way, 1.62 / 3.24 / 6.49 on `ngc_4414`), a ring cut by the frame's edge continued past it (a cut ring is a partial cell's mean, 3.1 bounds off, not sampling). The fix pass also measured that only part of the departure is point sampling: ring 2's unweighted mean reads −9.3e-3 at the capture's pixel and 1e-5 at a quarter pixel (sampling, which a footprint average mends), but weighted by the placement it stays at −8.0e-3, and ring 0 at −1.5e-2 — the placement lining up with one draw of the map inside a cell, which no finer lattice removes; #176 says both; #176 carries the numbers and the mend, a footprint average of the map
+over the pixel. (M4) The GPU's composed-field error is printed by the e2e spec and recorded here (1.73e-3 on g), not
+written into `frames.json` — ruled carried as recorded. *Re-derived by the reviewer:* every non-gas vector section
+identical and the gas section's read positions bit for bit; the float32 noise2 of its own against the twin 0 on 20
+vectors and 500 random seeds and octaves to |x| 5 000; the twin's composed field against float64 on the live headers
+2.8e-4 / 5.2e-4 / 1.2e-3 by radius on the Milky Way (map 6.0e-4), 8.6e-4 on `ngc_4414`, 4.8e-3 / 6.0e-3 without the
+twist reduction; the header's normalisers, weights, means (3.3e-15 by its own lattice quadrature), edges, sectors,
+octave ages (bit for bit with `octave_survival`: 40.711, 31.176, 23.874 Myr), the spurs' share and composition (0 on
+ten cells in closed form) and the kept parts' closure (≤ 5.4e-6); eight requests' arrays unmoved by sha256; the
+march's read point, the multiply's place, the cell index and the layer-off branches (no map evaluated at all); the
+dust-only frame linear in `place`; its own picture run 12 of 12 with every frame byte for byte and `ready_s` present.
+*Its notes, ruled:* the screen read is a point sample of a log-normal map at a 39–78 pc pixel with no footprint
+average — the outer disc's grain and M3's lattice sensitivity are one aliasing, recorded above the frames and in
+#176; the GLSL's lacunarity 2 is now checked against the header's (a refusal with a message, F5); the dust-only gate
+now toggles the gas map and the spurs together (it reads 1.000553 per channel against 1.000545 for the gas map alone); ⟨S⟩ and the unspurred placement are read at the sub-step's
+radius and S at the screen point — exact face-on, the declared approximation inclined; the new array's insertion
+shifts later arrays' offsets, not their bytes.
+
+**The frames beside the goals (the lead's look at the committed frames, 2026-10-16; recorded, nothing tuned).**
+The frame sums moved by about 1 % (`milky_way-field` 33 701 / 29 501 / 27 162 → 34 031 / 29 831 / 27 473;
+`ngc_4414-field` 37 193 / 26 581 / 23 662 → 37 554 / 26 882 / 23 937; the star-first frames alike); what moved is
+where the light sits. **The Milky Way field frame is grainy from corner to corner:** the arms and the inner disc
+carry the young light's speckle over the dust's mottling, the arm-over-interarm blue 1.634 → 1.659 (the goal 1.83),
+the dark fraction 0.0188 → 0.0221; and beyond about 13 kpc — out past the disc's visible edge of S65's frame, to the
+frame's corners at ~28 kpc — the faint smooth glow has become a fine blue-white speckle: grains of 1–2 display
+pixels (the autocorrelation 0.36 at 2 px, 0.10 at 4 px at 16–19 kpc; one march texel, 78 pc, the finest octave's
+scale), the 99th-percentile pixel 5.3 times the median where S65's was 1.5, 15 % of the annulus's light in pixels
+brighter than three times the median (S65 1.5 %), the median glow 15 % dimmer as its light gathers into grains; the
+goal metric's point-like sources 322 / 551 → 597 / 1 858 in and out of the disc's mask, the power-spectrum slope
+−1.44 → −1.03. That is the clustering field's statement — σ 1.75 at 47–190 pc, derived from the census's two-point
+statistic (D220) — applied to the unresolved young light as the plan says, with unit mean per cell: the ring's light
+is kept and the tone curve shows the grains. **`ngc_4414`'s field frame:** the near-side dust now shows fine, sharp
+dark threads where the first capture had smeared the gas map along the view — nearer in texture to Hubble's
+filamentary web than the blobs of S64 — the dark fraction 0.0158 → 0.0182, the arm-over-interarm 1.821 → 1.854; the
+same white-blue speckle covers its whole frame, where the goal's complexes follow the arms and fade outward; the
+inner vertical streaks of #169 remain. **The star-first frames** change little (the dust's fine texture; no young
+field light there). **`milky_way-zoom`:** the grey glow under the 1 400 points now carries faint dark filaments of
+dust, the first texture the field has had at that zoom; `ngc_4414-zoom` almost unchanged (+0.7 % in R). Against the
+goals in plain words: the dust moved towards them (texture in the lanes, threads on the inclined disc); the galaxy-
+scale frames moved away from their smoothness — the young light's clumping at the field's full width reads as grain
+at 39 pc a pixel and reaches to the frame's corners — and the arms' blue contrast did not move. Whether the
+clustered young light belongs at the census's width at every radius, and how the display shows it, is V8's (the
+display defaults, "from the owner's tuning") and the owner's; the spurs per pixel are not distinguishable at this
+framing (their 60 pc width is 1.5 pixels).
+
+**Closing.** The full suite ran once, detached from the main checkout at 019c0d8 (the two builders' sixteen commits)
+with pytest's own exit code appended to its log, while the review, the fix pass and the close's documents were
+built in worktrees cut from that commit: **EXIT=1 - 1 604 passed, 4 failed, 5 skipped, 1 xfailed in 6 h 29 min under the agents', the review's picture runs' and S65's fresh clone's load: `test_audit`'s S21b wall-clock pricing test (#67, #68's class; S45, S60, S63-S65), and three pins the builders' file lists had not named, found by the suite and re-pinned on the integrated state with their reasons - `test_v6_clouds`' closed render stage list (the render runs `gas_fluctuation` since R6, the review's M1) and its digest assertion (the added keys now end with S66's), and `test_templates`' route test, which passed again on the final state (its one failure at 019c0d8 not reproduced)**. The files the fix pass touches re-run on the integrated
+state: EXIT=0, 380 passed, 2 skipped (the picture test and the viewer's shot without a browser), 1 xfailed - test_v7_layer, test_v7_header, test_render, test_docs, test_api, test_layer, test_picture, test_audit, test_progress, test_viewer, test_gas_fluctuation, test_layer_noise, test_hook; then test_v6_clouds, the templates test and S21b alone on the re-pinned state: EXIT=0, 16 passed (S21b green alone on the idle machine); vitest 387 (32 files), typecheck clean, the picture test 12 of 12 with every committed
+frame byte for byte through the fix pass. `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved (no stage
+changed; the vectors' section gained columns, no value). The register: **110 open = 11 permanent + 99 carried, 49
+discharged** (#174 the points' dust unmodulated, #175 the star-first remainder's middle part, #176 the on-screen
+sampling of the unit mean; #163's cost line extended with the render's 12.8 → 20.1 s cold). `RESUMING.md` 117 lines,
+`BRIEF.md` 49. GALAXY_PLAN §5f re-read to the rows as inserted (S53–S69). *How S65 ended:* its `verify_clone --ref
+main` at 3794fc3 ran detached through this whole session on a loaded machine — **1 failed, 1 591 passed, 5 skipped, 1 xfailed in 6 h 05 min, specs OK** - the one failure `test_performance`'s per-cell pricing ordering (#68's class, S45, S60, S63-S65; green alone), so `verify_clone` reported FAIL on the flake alone; #173's migration test passed. **For the owner,
+plainly (none awaited; their word first if they answer):** (a) V7's tolerances as ruled — the 1e-5 is the noise's
+(bit-exact), the composed field's geometry is float32's (within 0.03 pc at the disc's edge), each ring's dust on
+screen is held as a column to the map's own one-draw bound and the transmitted light rises (+2.4 % at R_SUN) because
+a clumped medium is more transparent — reversible on their word; (b) the frames: the dust moved towards the goals
+(texture in the lanes, sharp dark threads on NGC 4414's near side, filaments in the Milky Way zoom's glow) and the
+galaxy-scale frames moved away from their smoothness — the young light's clumping at the census's width (σ 1.75 down
+to 47 pc) reads as a blue-white grain over the arms and across the whole outer disc to the frame's corners, partly
+the point sampling of a log-normal at 39 pc a pixel (#176's footprint average is its mend; the display's tone is
+V8's); whether the clustered young light belongs at that width at every radius is theirs; (c) V8's display defaults
+are "from the owner's tuning" — the plan expects their hand on the sliders, or their word that the current values
+stand; (d) the stray "v" in the gateway's project file, still uncommitted; (e) still theirs, carried: the spurs'
+factor (10 or 2.5), #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test, #172
+(one mode at zoom); (f) the render's cold cost rose to ~20 s with the layer's fields (#163) — BUILD_IV W2's bundles
+absorb it. **S67 is V8**, the display defaults, the instrument and the goal captures (`BRIEF.md`).

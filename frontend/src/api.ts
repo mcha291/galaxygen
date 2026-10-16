@@ -252,6 +252,71 @@ export async function loadRemnants(window: RegionWindowQuery, query: Query, sign
   return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
 
+/**
+ * The render header's `gas_fluctuation` (S66, V7, D226 R6): the gas fluctuation field, every number the model's
+ * (galaxy.layer.gas_fluctuation). With the layer off every value but the form's numbers and the rule is null.
+ */
+export interface GasFluctuationEntry {
+  seed: number | null;
+  scale: number;
+  slope: number;
+  change: number;
+  octaves: number;
+  lacunarity: number;
+  /** The disc's rotation in φ (-1: towards decreasing φ). */
+  sense: number | null;
+  /** The 33 level-0 ring edges, kpc. */
+  edges: number[] | null;
+  /** Per level-0 ring (32): the break index, the log-normal width, the strain, the twist at the inner edge (rad), the sum's normaliser. */
+  ring: { break_octave: number[]; sigma: number[]; strain: number[]; twist: number[]; norm: number[] } | null;
+  /** (octaves + 1) × octaves: the ladder's amplitude times its normaliser for each break index. */
+  weights: number[][] | null;
+  /** Per level-0 cell (1024, ring-major): the map's normaliser. */
+  cell_normaliser: number[] | null;
+  rule: string;
+}
+
+/** The render header's `census_clustering` (S66, V7, D226 R5c, R6): the clustering field and its k-octave cell means. */
+export interface ClusteringEntry {
+  seed: number | null;
+  scale: number;
+  octaves: number;
+  lacunarity: number;
+  slope: number;
+  sigma: number;
+  gain: number;
+  top: number;
+  norm: number;
+  table_points: number;
+  /** Myr, coarsest octave first: the age past which a star drops each octave. */
+  octave_ages_myr: number[];
+  /** Per kept octave count ("3", "2", "1"): the k-octave map's mean in each level-0 cell (1024, ring-major). */
+  cell_mean: Record<string, number[]> | null;
+  rule: string;
+}
+
+/** The render header's `spurs` (S66, V7, D226 R4): the gas spurs' table, their ring mean per render ring, the rule. */
+export interface SpursEntry {
+  rows: {
+    chain: number[];
+    radius: number[];
+    azimuth: number[];
+    contrast: number[];
+    pitch: number[];
+    length: number[];
+    width: number[];
+    fall: number[];
+  } | null;
+  /** The sense ψ is taken in from a spur's foot: +1 where an arm's azimuth grows outward. */
+  turn: number | null;
+  /** ⟨S⟩ round each render ring (the grid's R rows). */
+  share: number[] | null;
+  reach: number;
+  fwhm_per_sigma: number;
+  constants: Record<string, number>;
+  rule: string;
+}
+
 /** One render (S38): each published component's response per cell in each filter of the set sent. */
 export interface RenderFrame {
   header: {
@@ -278,8 +343,17 @@ export interface RenderFrame {
       lines_hii?: number | null;
       lines_dig?: number | null;
     };
-    /** The dust round each ring (D207): the name of the (R, φ) array among `arrays` that places it; null when even. */
-    placement?: { dust?: string } | null;
+    /**
+     * The dust round each ring (D207): the name of the (R, φ) array among `arrays` that places it; null when even.
+     * Since S66 (V7, D226 R4), with the layer on, `dust_unspurred` names the placement without the gas spurs.
+     */
+    placement?: { dust?: string; dust_unspurred?: string } | null;
+    /** The gas fluctuation field the march reads once per ray at the midplane (S66, V7, D226 R3 as amended, R6); its values null with the layer off. */
+    gas_fluctuation?: GasFluctuationEntry | null;
+    /** The clustering field's form and its k-octave cell means (S66, V7, D226 R5c, R6); null values with the layer off. */
+    census_clustering?: ClusteringEntry | null;
+    /** The gas spurs' table and ring mean (S66, V7, D226 R4); null values with the layer off. */
+    spurs?: SpursEntry | null;
     /** What each component reads and is; the scattered light's phase table rides here (S39). */
     components?: { dust_scattered?: { phase?: { cos_view: number[]; factor: number[] } } } & Record<string, unknown>;
     [key: string]: unknown;

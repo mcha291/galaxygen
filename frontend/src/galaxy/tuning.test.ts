@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "./FieldVolume";
-import pinned from "./fieldFragment.s64.glsl?raw";
+import { NOISE_GLSL } from "./noise.glsl";
+import pinned from "./fieldFragment.s66.glsl?raw";
 import { WHITE_KELVIN } from "./filters";
 import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SLAB_PIECES, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
@@ -76,6 +77,10 @@ describe("tuning defaults (D199)", () => {
       // S64 (V6): the HII regions as knots and the clusters with their radius, both on.
       knots: true,
       clusterRadius: true,
+      // S66 (V7, D226 R3-R5): the randomness layer in the march, each on (drawn only with the layer on).
+      gasInMarch: true,
+      spursInMarch: true,
+      clumpsInMarch: true,
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
@@ -100,7 +105,12 @@ describe("tuning defaults (D199)", () => {
     // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source. S64 (V6)
     // re-pinned it on purpose: the diffuse depth times the ring's diffuse share, each raster texel's clouds a slab at
     // their own heights in the step, the pieces cut at the dust's cuts and the slab's parts (fieldFragment.s64.glsl; D207's snapshot is in git);
-    // and again for the knots' undrawn share (S64, R5): the HII light times each level-0 cell's 1 - D_c / K_c.
+    // and again for the knots' undrawn share (S64, R5): the HII light times each level-0 cell's 1 - D_c / K_c. S66 (V7,
+    // D226 R3-R5, R9) re-pinned it on purpose (fieldFragment.s66.glsl; S64's is in git): the randomness layer's include
+    // (noise.glsl.ts), each map read once per ray as a thin screen at the ray's midplane crossing (D226 as amended)
+    // and its value multiplying each sub-step - the gas map times the placement, the spurs from their
+    // table, the young and kept light times the clustering maps over their cell means - each behind a uniform that is 0
+    // under "physics only", so that the S64 statements run unchanged there.
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
     expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
@@ -127,6 +137,18 @@ describe("tuning defaults (D199)", () => {
     expect(now.match(/knotShare\(rp\)/g)).toHaveLength(1);
     expect(now).toContain("if (shareOn < 0.5 || rp.x < shareCells.x || rp.x >= shareCells.y) return 1.0;");
     expect(now).toMatch(/\(scattered\.rgb \* scattering \+ readRing\(rp\.x, \d\.0\) \* place\) \* dustGain \+ dustWhere \* level \* whereTint\(level\) \* place;/);
+    // S66 (V7): the include is in the march; each modulation is one statement behind its uniform, at the read point.
+    expect(now).toContain(NOISE_GLSL);
+    for (const name of ["gasFluct", "spursOn", "youngClump"]) expect(now).toContain(`uniform float ${name};`);
+    // As amended on builder B's capture: the maps are a thin screen at the ray's midplane crossing, read once per ray.
+    expect(now).toContain("vec2 rp = polarOf(readPoint(q0, q1, jitter));");
+    expect(now).toContain("float tCross = abs(dir.y) > 1e-6 ? -origin.y / dir.y : -1.0;");
+    expect(now).toContain("float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;");
+    expect(now).toContain("if (gasFluct > 0.5) place *= screenGas;");
+    expect(now).toContain("if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + screenSpurs;");
+    expect(now).toContain("if (youngClump > 0.5) starsLight += clumpedLight(screenClumps, rp) * starsGain;");
+    expect(now.match(/layerGasMap\(/g)).toHaveLength(2); // its definition and the one call, before the step loop
+    expect(now.indexOf("layerGasMap(screenXY)")).toBeLessThan(now.indexOf(`for (int k = 0; k < ${STEPS}; k++)`));
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
   });

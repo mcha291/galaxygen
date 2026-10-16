@@ -451,6 +451,24 @@ def test_the_vectors_cover_what_a_twin_must_match():
     assert np.max(np.abs(maps[:, 5] / maps[:, 4] - 1.0)) < 1e-3
 
 
+def test_the_vectors_carry_the_read_positions_each_sum_was_evaluated_at():
+    """S66 (D226 R1b): each sum row carries the read positions (X, Y) numpy evaluated it at, float64 and float32. Given
+    the float32 ones the octave sum alone reproduces ``g_f32`` to the bit (what a twin is held to, 1e-5, without the
+    polar read's transcendentals), and the float64 ones ``g`` to 1e-12; the two read positions differ by float32's
+    geometry (an ulp of 1.9e-6 kpc at 26 kpc)."""
+    v = stored_section()
+    assert v["sums"]["columns"] == ["x", "y", "ring", "g", "g_f32", "x_read", "y_read", "x_read_f32", "y_read_f32"]
+    sums = np.array(v["sums"]["rows"])
+    field = gf.vector_field(v["inputs"])
+    weights = field.amplitudes()[field.break_octave[sums[:, 2].astype(int)]]
+    assert all(float(np.float32(x)) == x for x in sums[:, 7:9].ravel()), "the float32 read positions are float32"
+    g32 = field._sum(sums[:, 7].astype(np.float32), sums[:, 8].astype(np.float32), weights, np.float32)
+    assert np.array_equal(g32.astype(np.float64), sums[:, 4])
+    g64 = field._sum(sums[:, 5], sums[:, 6], weights)
+    assert np.max(np.abs(g64 - sums[:, 3])) <= 1e-12
+    assert np.max(np.abs(sums[:, 5:7] - sums[:, 7:9])) < 1e-4  # kpc: float32's geometry, not a different read
+
+
 def test_e_nothing_reads_the_field_yet_so_l1_and_the_censuses_are_untouched():
     """Gate (e): the field multiplies nothing in this pass (V7 reads it), so no stage requires any of its fields and the
     clustering field's stage reads nothing of it: L1's map and every census are the branch's before the stage, by

@@ -111,7 +111,16 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.97275, 0.97786, 0.98691] as const;
+export const DUSTY_LAYER_RATIO = [0.96265, 0.96703, 0.97596] as const;
+// S66 (V7, D226 R2c): was [0.97275, 0.97786, 0.98691] at S64/S65 - the gas fluctuation map multiplies the dust's
+// placement and the spurs are drawn from their table: the same column per level-0 cell, clumped below the
+// cell, so by (ii) more light gets through (Jensen; the probe's +2.4 % at R_sun face-on). Predicted before the capture:
+// the layered frame brighter, the ratio lower. Measured (physics only over layered, the physics-only frame the committed
+// picture byte for byte): 0.96265, 0.96703, 0.97596 - moved by -0.01010, -0.01083, -0.01095. That capture read the
+// layer's maps per sub-step; the pin stands for the amended read (D226 R3/R5 as amended: each map read once per ray as a
+// thin screen at the ray's crossing of the midplane, the value multiplying each sub-step's placement), which measures
+// 0.96249, 0.96672, 0.97547 (-1.6e-4, -3.1e-4, -4.9e-4 from the pin, inside DUSTY_RATIO_PIN; predicted to fall before
+// the capture, it fell), so the pin was not re-taken.
 // S63 (D223): was [0.98675, 0.99042, 0.99454] at S61/S62 - the field mode draws the starlight by age, the young
 // part placed by the gas contrast's law: more of the young light stands in the gas arms behind the dust, so the
 // layered frame is dimmer against physics only by a further 0.13, 0.17, 0.26 % (the ratio moved by +0.00130,
@@ -123,6 +132,36 @@ export const DUSTY_LAYER_RATIO = [0.97275, 0.97786, 0.98691] as const;
 // field, the lanes' gas among them, so the dust lies elsewhere round each ring again; the layered frame is now
 // brighter than physics only by 1.4, 1.1 and 0.7 % (the ratio moved by +0.00377, +0.00437, +0.00494: past the pin).
 export const DUSTY_RATIO_PIN = 1e-3;
+
+/**
+ * The dust's column on screen (S66, BUILD_III V7; D226 R2a): the gas fluctuation map multiplies the dust's placement - read
+ * once per ray as a thin screen at the ray's crossing of the midplane, the value multiplying each sub-step's placement
+ * (D226 R3 as amended) - and its mean is 1 over every level-0 cell on the model's quadrature lattice - so the dust's column on the
+ * frame's pixels moves only by the lattice's sampling. The gate reads it on a frame that is linear in the column: the
+ * default template at its own camera (face-on, 20 kpc framed) in the star-first mode with the points, the starlight and
+ * the ionized gas switched off (`released`, beside "starlight") and the dust kept in its "where it is" reading
+ * (`reading`) - the diagnostic draws each ring's level times the placement, spread through the dust's layer by its
+ * column, with the depth off (components.ts brightestLayers: dust 0, dustDepth 0) - so the frame's light is a sum over
+ * pixels of a ring weight times the placement times the dust's column, with nothing dimmed and nothing else drawn.
+ * `__galaxygenFrameSum` with "gas fluctuation in the march" and "spurs in the march" (`toggles`, the Tuning panel's
+ * March group) on over both off - the whole layer in the march, as far as this frame draws it - per channel, must lie
+ * within DUST_COLUMN_TOLERANCE of 1. Measured: 1.000247 with the gas map alone read per sub-step (S66's first capture);
+ * 1.000545 with it alone on the thin screen (D226 R3 as amended); 1.000553 with the gas map and the spurs together
+ * (the S66 fix pass, review N4: the spurs' ring mean is exact in the model's quadrature, so they move it little). The ruling's number, a sampling tolerance: the probe measured the
+ * whole face-on frame's column, place times the map over place, at -5.9e-4 on 39 pc pixels and +9.3e-4 on the march's
+ * own 78 pc ones (Milky Way), -1.7e-3 on NGC 4414's 59 pc ones (REPORT_PROBE D; RULING_S66 R2a). The transmitted light
+ * is not held: a clumped medium of the same column lets more light through (Jensen), which is the mechanism.
+ */
+export const DUST_ONLY = {
+  released: ["stars", "starlight", "ionized gas"],
+  kept: ["dust"],
+  beside: "starlight",
+  reading: "where it is",
+  // The layer's two dust terms in the march, both switched (review N4): the young light is not in this frame.
+  toggles: ["gas fluctuation in the march", "spurs in the march"],
+  panel: "Tuning — display choices (experimental)",
+} as const;
+export const DUST_COLUMN_TOLERANCE = 3e-3;
 
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
 // S64 (V6, R8): the stars are the tiles in view, so the sentence counts the cells.

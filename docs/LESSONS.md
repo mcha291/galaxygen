@@ -1623,3 +1623,19 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   0.6 kpc standoff the frustum cut by a ±3 kpc slab is a cone 3 kpc wide at its base, a 0.5 kpc view met 260 / 1 430
   level-2 cells, and the unweighted budget put the threshold at 10⁴ L☉ (~40 points on a grey field); weighted by the
   stellar layer the frustum sees, 1 260 L☉ and 1 400 points.
+
+## From S66 (the layer in the viewer; a Fable lead on the owner's standing order, an Opus probe, two builders, a reviewer)
+
+- [viewer] State a shader's precision gate per part. Integer hashes and float32 primitives can be held to the bit
+  (the noise's twin matched `vectors.json`'s float32 column exactly, on the GPU within 5.5e-7); a composed field's
+  geometry only to float32's ulp at the disc's radius (1.9e-6 kpc at 26 kpc is 4e-4 on g by itself). GLSL ES states
+  no precision for sin, cos or atan: atan put the GPU's g 5.4e-2 off float64 at 24 kpc, a rotation by the same angle
+  1.73e-3. Prefer a rotation to atan, and write `fract` where the driver would contract a*b - c.
+- [viewer] A per-cell unit mean on a lattice is a sampling tolerance on the frame's pixels (the dust's column per
+  level-0 ring 1.2e-2 on 39 pc pixels, the clustered light 4.4e-2), and a modulated column transmits more light than
+  its mean (Jensen: +2.4 % at R_SUN face-on, +24 % on ring 1). Hold the column, not the light, and predict the
+  light's move before the capture (the layered ratio fell 0.97191 → 0.96265, as predicted).
+- [viewer] "Per pixel" in a march is per sub-step only when the field has a vertical structure to read: measure how
+  the field varies along a ray inside the layer before choosing the evaluation point. A face-on column map read per
+  sub-step through a 356 pc layer drew every 47-190 pc clump as a pillar, smeared into streaks on inclined rays; read
+  once at the midplane crossing, a thin screen, the streaks went. Look at an inclined frame before ruling the read.

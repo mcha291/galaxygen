@@ -286,6 +286,46 @@ to 1e-12; none fills a pixel in a star-first capture) `[verified:
 frontend/src/galaxy/plummer.test.ts, knots.test.ts]`. Not built: the region regime's
 clusters keep their sprite (they are drawn in display colours, not on the field's scale).
 
+**Since S66 (BUILD_III V7, the model's side) `/api/render` carries what the march needs to
+draw the randomness layer once per ray as a thin screen at the midplane**, every number the model's (D226 R4-R6): the header's
+`gas_fluctuation` (the field's seed, form, ring table, ladder weights and cell normalisers),
+`census_clustering` (the clustering field's form, its octaves' survival ages and the 1-, 2- and
+3-octave maps' means per level-0 cell on its table lattice, the 3-octave one the published
+`census_clustering_cell_mean` to the bit) and `spurs` (the gas spurs' table and their ring mean
+per render ring), each stating its rule, their values null with the layer off; and the arrays
+`dust_placement_unspurred` (the gas pattern's cell means without the spurs, which composed
+through `Spurs.compose_cells` give `dust_placement` to 1e-12; the neutral placement with the
+layer off) and `stars_middle_kept3/2/1` (the middle part's light of the age windows that keep
+3, 2 and 1 clustering octaves, summing with the rest to `stars_middle` to 1e-12). No array sent
+before moved, on eight requests against S65's bodies. The noise the march evaluates is one GLSL
+include (`frontend/src/galaxy/noise.glsl.ts`) with a float32 TypeScript twin held to the
+model's vectors: the hash and the noise bit-exact to numpy's float32, the gas sum at numpy's
+read positions bit-exact, the composed g within 4.9e-4 of float64; on the RTX 4070 the GLSL
+itself within 5.5e-7 of float32 on the primitives and 1.7e-3 on g `[verified:
+tests/test_v7_header.py, frontend/src/galaxy/noise.test.ts, frontend/e2e/noise.spec.ts]`.
+
+**Since S66 (V7, the march's side) the field's march evaluates the layer once per ray** (D226
+R3-R5 as amended): the three maps are face-on column maps read as a thin screen at the ray's
+crossing of the midplane (a ray that does not cross it inside the march reads at its start
+point's projection), each value multiplying every sub-step's placement, which is still read per
+sub-step. The alternative was measured and set aside: a column map drawn through the layer makes
+each feature a pillar of the layer's height, smeared by h tan i along the view (the streaks of
+the first capture); a thin screen at the midplane displaces nothing - a declared approximation.
+The gas fluctuation map multiplies the dust's
+placement (its depth, thermal light and diagnostic, not its scattered light); the gas spurs are
+drawn from their table, `(1 - <S>(R))` times the unspurred placement plus their sum; the field
+mode's young light and the middle part's kept shares are multiplied by the 1-, 2- or 3-octave
+clustering map over its level-0 cell's mean. Each is a tuning switch ("gas fluctuation", "spurs",
+"young light clustered" in the march), drawn only with the layer on: under "physics only" the
+frame is S65's byte for byte. Held: the dust-only frame's light with the gas map and the spurs over
+both off 1.000553 (gate 3e-3; the gas map alone 1.000545, and 1.000247 when the maps were read per
+sub-step); per level-0 ring on a
+capture's own pixel lattice, at 16 offsets, the dust's column and every clustered part,
+young and kept, within the derived one-draw bound 3 sqrt((e^v - 1) g^2 / N_r) of a log-normal map
+point-sampled on the ring's pixels (worst 2.93 of it; debt #176) `[verified: tests/test_v7_layer.py,
+frontend/e2e/picture.spec.ts]`. Not modulated: the star-first points' dust (the ring's placed
+column, R7) and the star-first remainder's middle part (R5e) - debts.
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are

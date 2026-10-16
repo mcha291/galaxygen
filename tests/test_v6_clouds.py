@@ -34,7 +34,9 @@ CASES = [(t, layer) for t in ("milky_way", "ngc_4414") for layer in ("on", "off"
 # adds none.
 RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
                  "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs", "vertical_alpha",
-                 "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular"]
+                 "ism", "dust", "clouds", "gas_fluctuation", "cloud_texture", "clusters", "nebular"]
+# S66 (D226 R6; the review's M1): the render runs gas_fluctuation on every request - its header carries the field's
+# cell normalisers - and with the layer off the stage returns its neutral (the route may not branch on the layer, I5).
 # The disc's realised clouds' share of its dust and the first three rings' expected shares (S64's probe, measured;
 # recorded in D224, not targets: the realised share is the census's draw, the expected the ring's molecular fraction).
 CLOUDS_SHARE_DISC = {"milky_way": 0.4899973, "ngc_4414": 0.6327142}
@@ -196,7 +198,8 @@ def test_e_the_header_states_the_rule_and_ships_the_array(service):
 def test_f_the_s55_digest_reports_the_new_keys_added(service):
     q = {"layer": ["off"], "filters": [layer_reference.curves()]}
     got = layer_reference.route_digest(service, "/api/render", q)
-    assert got["added"][-1] == "dust_diffuse_share"
+    # S64's key, then S66's four arrays and three header entries (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S66).
+    assert "dust_diffuse_share" in got["added"] and got["added"][-1] == layer_reference.ADDED_AT_S66[-1]
     got = layer_reference.route_digest(service, "/api/clouds", {"layer": ["off"]})
     assert got["added"] == ["cloud_dust_extinction_v"]
     assert "cloud_dust_extinction_v" not in [x[0] for x in got["arrays"]]

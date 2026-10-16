@@ -26,7 +26,7 @@ import {
   WebGLRenderTarget,
 } from "three";
 
-import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight } from "@interface/ages.js";
+import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
 
 import { type Census, type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { type CloudColumns, type CloudRaster, CLOUD_RASTER, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
@@ -39,6 +39,20 @@ import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustL
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
+import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
+import {
+  type ClusteringTables,
+  type GasTables,
+  type SpurTables,
+  clusterMeanTexels,
+  gasRingTexels,
+  gasWeightTexels,
+  noiseScalars,
+  prepareClustering,
+  prepareGas,
+  prepareSpurs,
+  spurTexels,
+} from "./noise";
 
 /**
  * How bright 1 L☉/pc² of white light draws at zero exposure stops, against a star point's 1 per
@@ -94,9 +108,62 @@ interface AgedStars {
   arrays: Record<string, ArrayLike<number>>;
   n: { R: number; phi: number; filter: number };
   white: number[];
-  /** The switches the texture was last filled with. */
+  /**
+   * The middle part's kept arrays (S66, V7, D226 R5b; interface/ages.js keptParts) where the young light can be
+   * clustered in the march - the render carries them, the clustering field and the gas field's cells (the layer on), and
+   * the middle part is placed by a weight - else null.
+   */
+  kept: { arrays: Record<number, string> } | null;
+  /** The switches the texture was last filled with, and whether it was filled split for the clustered march. */
   shown: string;
 }
+
+/**
+ * Fill the stellar layer's textures for the age switches `gains` (S63) and, where `clumped`, split for the clustered
+ * march (S66): `plane` the rest and the clump textures the young and kept shares (interface/ages.js clumpedLight). Not
+ * clumped, `plane` is agedLight's sum exactly as S63 drew it and the clump textures are not read.
+ */
+function fillStars(aged: AgedStars, gains: AgeGains, clumped: boolean, plane: DataTexture, clumps: DataTexture[]) {
+  const { n, white } = aged;
+  if (clumped && aged.kept) {
+    const split = clumpedLight(aged.arrays, aged.parts, aged.kept, gains, n);
+    (plane.image.data as Float32Array).set(starTexels(n.R, n.phi, split.rest, white));
+    split.clumps.forEach((c, k) => {
+      (clumps[k].image.data as Float32Array).set(starTexels(n.R, n.phi, c, white));
+      clumps[k].needsUpdate = true;
+    });
+  } else {
+    (plane.image.data as Float32Array).set(starTexels(n.R, n.phi, agedLight(aged.arrays, aged.parts, gains, n), white));
+  }
+  plane.needsUpdate = true;
+}
+
+/** The layer's tables as the march holds them (S66, V7): each null with the layer off or where the render has none. */
+interface LayerTables {
+  gas: GasTables | null;
+  clustering: ClusteringTables | null;
+  spurs: SpurTables | null;
+  /** Whether the render names the placement without the spurs and their ring mean: what the per-sub-step spurs read. */
+  unspurred: boolean;
+}
+
+/** A float texture read at its own texels (nearest, clamped): the layer's tables, never blended with a neighbour's. */
+function tableTexture(data: Float32Array, width: number, height: number, red = false): DataTexture {
+  const t = new DataTexture(data, width, height, red ? RedFormat : RGBAFormat, FloatType);
+  t.minFilter = NearestFilter;
+  t.magFilter = NearestFilter;
+  t.wrapS = ClampToEdgeWrapping;
+  t.wrapT = ClampToEdgeWrapping;
+  t.generateMipmaps = false;
+  t.needsUpdate = true;
+  return t;
+}
+
+/** A 1 x 1 zero table: what the march samples where the render carries no table (the layer off). */
+const noTable = (red = false) => tableTexture(new Float32Array(red ? 1 : 4), 1, 1, red);
+
+/** The names of the textures the march's mesh owns and disposes with it. */
+const OWN_TEXTURES = ["plane", "scatter", "hii", "rings", "clump3", "clump2", "clump1", "clusterMeans", "uGasRing", "uGasWeights", "uGasCells", "uSpurs"];
 
 const agesKey = (g: AgeGains) => `${g.young},${g.middle},${g.old}`;
 
@@ -205,6 +272,21 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform sampler2D hiiShare;
   uniform vec4 shareCells;
   uniform float shareOn;
+  // The randomness layer in the march (S66, BUILD_III V7; D226 R3-R5), each 1 only where the render header carries its
+  // field (its seed non-null: the layer on) and its switch is on, else 0 - and then nothing below reads it, so under
+  // "physics only" every map is exactly 1 and the march is the S64 one (R9c). gasFluct: the gas fluctuation map times
+  // the dust's placement. spursOn: the spurs from their table (spurCount rows) in place of their cell means. youngClump:
+  // the young and the middle part's kept light (clump3, clump2, clump1: the textures of k = 3, 2, 1 octaves, placed by
+  // their weights) times the k-octave map over its level-0 cell's k-octave mean (clusterMeans: rgb = k 3, 2, 1).
+  uniform float gasFluct;
+  uniform float spursOn;
+  uniform int spurCount;
+  uniform float youngClump;
+  uniform sampler2D clump3;
+  uniform sampler2D clump2;
+  uniform sampler2D clump1;
+  uniform highp sampler2D clusterMeans;
+${NOISE_UNIFORMS}
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -299,6 +381,27 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
     float overlap = max(0.0, min(max(y0, y1), hi) - max(min(y0, y1), lo));
     return overlap / thick * ds / abs(dy);
   }
+  // The spurs' mean round the ring at r (S66, D226 R4): the diffuse gas row's spare channel (regimes.ts planeTexture).
+  float readSpurShare(float r) {
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.dig}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
+  }
+
+  // The randomness layer's functions (noise.glsl.ts, the include the twin and the GPU probe hold to the model's vectors).
+${NOISE_GLSL}
+
+  // The young light clustered (S66, D226 R5a-b): each k-octave map over the map's mean in its level-0 cell (the gas
+  // field's cells: ring by its edges, sector by azimuth), so a cell's light is kept on the model's lattice - k = 3, 2, 1
+  // in x, y, z, at the screen point xy. A mean that is not a positive number leaves its share unmodulated.
+  vec3 clusterRatios(vec2 xy) {
+    vec3 maps = layerClusterMaps(xy);
+    vec3 mean = texelFetch(clusterMeans, ivec2(layerGasSector(xy), layerGasRing(length(xy))), 0).rgb;
+    return vec3(mean.x > 0.0 ? maps.z / mean.x : 1.0, mean.y > 0.0 ? maps.y / mean.y : 1.0, mean.z > 0.0 ? maps.x / mean.z : 1.0);
+  }
+  // Each kept share at the sub-step's read point times its ratio (clusterRatios, read once per ray).
+  vec3 clumpedLight(vec3 ratio, vec2 rp) {
+    return readPolar(clump3, rp).rgb * ratio.x + readPolar(clump2, rp).rgb * ratio.y + readPolar(clump1, rp).rgb * ratio.z;
+  }
+
   // Where a sub-step is cut as it crosses the dust's layer, in the dust's scale heights (regimes.ts DUST_CUTS).
   float dustCut(int k) {
     ${DUST_CUTS.map((c, k) => (k < DUST_CUTS.length - 1 ? `if (k == ${k}) return ${c.toFixed(2)};` : `return ${c.toFixed(2)};`)).join("\n    ")}
@@ -329,6 +432,20 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
     float jitter = dither > 0.5 ? fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) : 0.5;
     vec3 light = vec3(0.0);
     vec3 transmitted = vec3(1.0);
+    // The layer's maps as a thin screen (S66, D226 R3/R5 as amended): the gas fluctuation map, the spurs' sum and the
+    // clustering maps are face-on column maps, read once per ray where it crosses the midplane (y = 0) - or, for a ray
+    // that does not cross it inside the march (|dir.y| under 1e-6, or the crossing outside [tStart, tFar]), at its start
+    // point's projection - and each value multiplies every sub-step's placement as below. The alternative, the map read
+    // at each sub-step's own point: a column map drawn through the layer makes each feature a pillar of the layer's
+    // height, smeared by h tan i along the view (the streaks of the first capture); a thin screen at the midplane
+    // displaces nothing - a declared approximation. With the layer off none of them is read (each uniform 0).
+    float tCross = abs(dir.y) > 1e-6 ? -origin.y / dir.y : -1.0;
+    vec3 screen = (tCross >= tStart && tCross <= tFar) ? origin + dir * tCross : origin + dir * tStart;
+    vec2 screenXY = vec2(screen.x, -screen.z);
+    vec2 screenRP = polarOf(screen);
+    float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;
+    float screenSpurs = spursOn > 0.5 ? layerSpurSum(screenRP.x, screenRP.y, spurCount) : 0.0;
+    vec3 screenClumps = youngClump > 0.5 ? clusterRatios(screenXY) : vec3(1.0);
     for (int k = 0; k < ${steps}; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
@@ -362,6 +479,8 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
         float hDust = 0.0;
         if (rp.x < rHi) {
           starsLight = readPolar(plane, rp).rgb * starsGain;
+          // The young light clustered (S66, V7): its shares here times the screen's ratios.
+          if (youngClump > 0.5) starsLight += clumpedLight(screenClumps, rp) * starsGain;
           // Where it is (D205): a diagnostic, the ring's level on the declared ramp in its declared scale, in the
           // ramp's colour at that level, spread through the dust's layer by its column; it dims nothing.
           float level = readLevel(rp.x);
@@ -370,6 +489,12 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
           // is the dust's own column — and not the scattered light, already a share of the placed starlight.
           vec4 scattered = readPolar(scatter, rp);
           float place = scattered.a;
+          // The spurs (S66, V7, D226 R4; D221 item 7): g' = (1 - <S>(R)) g + S, g the placement without them (the HII
+          // texture's spare channel) read here and S their sum on the screen (over the rows its radius reads).
+          if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + screenSpurs;
+          // The gas fluctuation (S66, V7, D226 R3): the screen's map times the placement, in one statement, so that
+          // whatever reads place below is the S64 march's.
+          if (gasFluct > 0.5) place *= screenGas;
           dustLight = (scattered.rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
           hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);
           digLight = readRing(rp.x, ${RING_ROWS.dig}.0) * gasGain;
@@ -448,7 +573,7 @@ interface Props {
    * white point. The defaults are the values the view drew with before the panel.
    */
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin"> &
-    Partial<Pick<Tuning, "cloudRaster">>;
+    Partial<Pick<Tuning, "cloudRaster" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
   /**
@@ -565,6 +690,10 @@ export function FieldVolume({
   hiiShare = null,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
+  // The randomness layer's switches in the march (S66, V7): on unless the tuning says off.
+  const gasInMarch = tuning.gasInMarch ?? true;
+  const spursInMarch = tuning.spursInMarch ?? true;
+  const clumpsInMarch = tuning.clumpsInMarch ?? true;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const names = SCALARS.filter((n) => declared(n));
   const lit = Boolean(declared("disc_surface_brightness") && declared("disc_light_temperature"));
@@ -585,6 +714,8 @@ export function FieldVolume({
   metaNow.current = meta;
   const agesNow = useRef(ages);
   agesNow.current = ages;
+  const clumpsNow = useRef(clumpsInMarch);
+  clumpsNow.current = clumpsInMarch;
 
   const mesh = useMemo(() => {
     const R = frame?.header.grid.axes.R;
@@ -599,10 +730,26 @@ export function FieldVolume({
     const a = light.arrays;
     // The starlight by age (S63, D223): where the render carries the three parts, the stellar layer is their sum at
     // the switches, each part placed round the ring by its own weight. Not under the star-first mode's threshold,
-    // whose remainder is its own component.
+    // whose remainder is its own component - and so not clustered in the march either (S66, D226 R5e): the remainder
+    // has no young part (the clusters carry it) and its middle part stays placed by sfr_modulation, unmodulated - a debt
+    // (the mend: only=remainder's per-part arrays split by kept octaves as the field's are).
     const parts = unresolved ? null : (ageParts(light.header, a) as AgePart[] | null);
     const n = { R: R.n, phi: phi.n, filter: white.length };
-    const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, shown: agesKey(agesNow.current) } : null;
+    // The randomness layer's tables (S66, V7; D226 R6): every number the render header's, null with the layer off.
+    const tables: LayerTables = {
+      gas: prepareGas(light.header.gas_fluctuation),
+      clustering: prepareClustering(light.header.census_clustering),
+      spurs: prepareSpurs(light.header.spurs),
+      unspurred: false,
+    };
+    const unspurredName = light.header.placement?.dust_unspurred;
+    const unspurred = unspurredName && unspurredName in a ? a[unspurredName] : null;
+    const spurShare = light.header.spurs?.share ?? null;
+    tables.unspurred = Boolean(unspurred && spurShare && spurShare.length === R.n);
+    // The young light can be clustered where the render splits the middle part and the layer's cells are there (R5).
+    const middle = parts?.find((p) => p.key === "middle");
+    const kept = parts && middle?.weight && tables.clustering && tables.gas ? (keptParts(light.header, a) as AgedStars["kept"]) : null;
+    const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, kept, shown: "" } : null;
     const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
@@ -622,6 +769,9 @@ export function FieldVolume({
       dustPlacement: light.header.placement?.dust ? a[light.header.placement.dust] : null,
       // The share of each ring's dust left diffuse by its realised clouds (S64, V6): where the header names one.
       diffuseShare: cloudsOf(light) ? a[cloudsOf(light)!.array] : null,
+      // The placement without the spurs and their ring mean (S66, V7, R4): where the render names them.
+      unspurred: tables.unspurred ? unspurred : null,
+      spurShare: tables.unspurred ? spurShare : null,
       white,
     });
     // The dust diagnostic's levels (D205): each ring's place on its declared ramp in its declared scale, kept in
@@ -661,9 +811,23 @@ export function FieldVolume({
     const table = light.header.components?.dust_scattered?.phase?.factor;
     const phase = table && table.length === PHASE_POINTS ? table.map(Number) : new Array<number>(PHASE_POINTS).fill(1);
 
+    // The stellar layer and, for the clustered march, the young and kept shares in three more polar textures (S66, R5).
+    const planeTex = polar(data);
+    const clumpTex = [0, 1, 2].map(() => polar(new Float32Array(width * height * 4)));
+    if (aged) {
+      const clumped = Boolean(aged.kept) && clumpsNow.current;
+      if (clumped) fillStars(aged, agesNow.current, true, planeTex, clumpTex);
+      aged.shown = `${agesKey(agesNow.current)},${clumped}`;
+    }
+    const { gas, clustering, spurs } = tables;
+    const scalars: Record<string, number> = {
+      uGasSeed: 0, uGasInvScale: 0, uGasSense: 0, uGasEdge0: 0, uClusterSeed: 0, uClusterInvScale: 0, uClusterGain: 0,
+      uClusterTop: 0, uClusterNorm: 0, uClusterSigma: 0, uSpurTurn: 0, uSpurReach: 0,
+      ...noiseScalars(gas, clustering, spurs),
+    };
     const material = new ShaderMaterial({
       uniforms: {
-        plane: { value: polar(data) },
+        plane: { value: planeTex },
         scatter: { value: polar(scatter) },
         hii: { value: polar(hii) },
         rings: { value: ringTexture },
@@ -700,6 +864,21 @@ export function FieldVolume({
         hiiShare: { value: noClouds() },
         shareCells: { value: new Vector4(0, 1, 1, 1) },
         shareOn: { value: 0 },
+        // The randomness layer (S66, V7): the switches' uniforms are set in the frame loop; the tables here, a 1 x 1
+        // zero where the render has none (the layer off), so the shader never samples nothing.
+        gasFluct: { value: 0 },
+        spursOn: { value: 0 },
+        spurCount: { value: spurs ? spurs.count : 0 },
+        youngClump: { value: 0 },
+        clump3: { value: clumpTex[0] },
+        clump2: { value: clumpTex[1] },
+        clump1: { value: clumpTex[2] },
+        clusterMeans: { value: clustering ? tableTexture(clusterMeanTexels(clustering), 32, 32) : noTable() },
+        uGasRing: { value: gas ? tableTexture(gasRingTexels(gas), 32, 2) : noTable() },
+        uGasWeights: { value: gas ? tableTexture(gasWeightTexels(gas), gas.weights.length / 8, 2) : noTable() },
+        uGasCells: { value: gas ? tableTexture(gas.cells, 32, 32, true) : noTable(true) },
+        uSpurs: { value: spurs && spurs.count > 0 ? tableTexture(spurTexels(spurs), 3 * spurs.count, 1) : noTable() },
+        ...Object.fromEntries(Object.entries(scalars).map(([k, v]) => [k, { value: v }])),
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -720,6 +899,7 @@ export function FieldVolume({
     box.userData.pointDust = pointDust;
     box.userData.cloudExt = cloudDepthScale(extinctionRatio(light));
     box.userData.aged = aged;
+    box.userData.tables = tables;
     box.frustumCulled = false;
     return box;
   }, [frame, light, unresolved]);
@@ -810,7 +990,7 @@ export function FieldVolume({
     () => () => {
       if (!mesh || !offscreen) return;
       const material = mesh.material as ShaderMaterial;
-      for (const name of ["plane", "scatter", "hii", "rings"]) (material.uniforms[name].value as DataTexture).dispose();
+      for (const name of OWN_TEXTURES) (material.uniforms[name].value as DataTexture).dispose();
       // The placeholder clouds' texture goes with the mesh; the raster's goes with the raster (its own effect).
       for (const name of ["cloudTex", "cloudSlab", "hiiShare"]) {
         const t = material.uniforms[name].value as DataTexture;
@@ -860,17 +1040,18 @@ export function FieldVolume({
 
   // An age switch moved (S63, D223): the stellar layer's texture is refilled in place with the parts' sum at the
   // new switches - no new texture, no new shader - and the march's settings key re-marches the frame.
-  const shownAges = agesKey(ages);
+  // Since S66 (V7, R5) also when the young light's clustering is switched: the textures split for the clustered march, or
+  // the parts' sum as before.
+  const aged = mesh ? ((mesh.userData.aged as AgedStars | null | undefined) ?? null) : null;
+  const clumped = Boolean(aged?.kept) && clumpsInMarch;
+  const shownAges = `${agesKey(ages)},${clumped}`;
   useEffect(() => {
-    if (!mesh) return;
-    const aged = mesh.userData.aged as AgedStars | null | undefined;
-    if (!aged || aged.shown === shownAges) return;
-    const texture = (mesh.material as ShaderMaterial).uniforms.plane.value as DataTexture;
-    const texels = starTexels(aged.n.R, aged.n.phi, agedLight(aged.arrays, aged.parts, agesNow.current, aged.n), aged.white);
-    (texture.image.data as Float32Array).set(texels);
-    texture.needsUpdate = true;
+    if (!mesh || !aged || aged.shown === shownAges) return;
+    const uniforms = (mesh.material as ShaderMaterial).uniforms;
+    const clumps = ["clump3", "clump2", "clump1"].map((k) => uniforms[k].value as DataTexture);
+    fillStars(aged, agesNow.current, clumped, uniforms.plane.value as DataTexture, clumps);
     aged.shown = shownAges;
-  }, [mesh, shownAges]);
+  }, [mesh, aged, clumped, shownAges]);
 
   const tellDepth = useRef(onDepth);
   tellDepth.current = onDepth;
@@ -893,7 +1074,7 @@ export function FieldVolume({
     if (!mesh) return;
     const filter = filtering === "nearest" ? NearestFilter : LinearFilter;
     const uniforms = (mesh.material as ShaderMaterial).uniforms;
-    for (const name of ["plane", "scatter", "hii", "rings"]) {
+    for (const name of ["plane", "scatter", "hii", "rings", "clump3", "clump2", "clump1"]) {
       const texture = uniforms[name].value as DataTexture;
       if (texture.minFilter === filter && texture.magFilter === filter) continue;
       texture.minFilter = filter;
@@ -915,7 +1096,11 @@ export function FieldVolume({
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey}`;
+    // The randomness layer's switches (S66, V7): each 1 only where its tables are there (the layer on) and it is on.
+    const tables = mesh.userData.tables as LayerTables;
+    const spursDrawn = Boolean(tables.spurs && tables.spurs.count > 0 && tables.unspurred && spursInMarch);
+    const layerOn = [tables.gas && gasInMarch ? 1 : 0, spursDrawn ? 1 : 0, clumped ? 1 : 0];
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -958,6 +1143,9 @@ export function FieldVolume({
     uniforms.dustGain.value = shown.dust;
     uniforms.dustDepth.value = shown.dustDepth;
     uniforms.dustWhere.value = whereLevel(shown.where, LIGHT_PER_LSUN_PC2);
+    uniforms.gasFluct.value = layerOn[0];
+    uniforms.spursOn.value = layerOn[1];
+    uniforms.youngClump.value = layerOn[2];
     (uniforms.whereStops.value as Vector3[]).forEach((v, i) => v.set(...shown.whereStops[i]));
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);

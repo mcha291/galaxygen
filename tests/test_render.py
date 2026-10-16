@@ -568,7 +568,9 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement", *(["stars_middle_placement"] if model.name != "basic" else [])}
     # And the share of each ring's dust that is diffuse once its realised clouds hold theirs (S64, V6): one per ring.
     assert arrays["dust_diffuse_share"].shape == (48,) and header["axes"]["dust_diffuse_share"] == ["R"]
-    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement", "dust_diffuse_share", *by_age}
+    # And V7's (S66, D226 R4-R5): the placement without the gas spurs, and the middle part split by kept octaves.
+    v7 = {"dust_placement_unspurred", "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1"}
+    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement", "dust_diffuse_share", *by_age, *v7}
 
 
 def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):

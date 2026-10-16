@@ -1369,6 +1369,12 @@ class GasPattern:
         means = self._cell_means(R, edges, (lambda: self.lanes,))[0]
         return means if self.spurs is None else self.spurs.compose_cells(R, edges, means)
 
+    def unspurred_cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
+        """:meth:`cell_means` without the spurs: the exact cell means of g = w_arm s + w_bar L, what the spurs are
+        composed on (``spurs.compose_cells``). S66 (D226 R4): the render ships it beside the placed gas so that the viewer
+        composes the spurs per sub-step from the spurs' table. A pattern without spurs: :meth:`cell_means`, to the bit."""
+        return self._cell_means(R, edges, (lambda: self.lanes,))[0]
+
     def star_formation_cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
         """:meth:`cell_means` of the contrast the star formation law reads (:meth:`star_formation_contrast_at`):
         the footprint-uniform field's interpolant integrated in the lanes' place. An unbarred pattern's, and
