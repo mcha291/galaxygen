@@ -317,8 +317,9 @@ drawn from their table, `(1 - <S>(R))` times the unspurred placement plus their 
 mode's young light and the middle part's kept shares are multiplied by the 1-, 2- or 3-octave
 clustering map over its level-0 cell's mean. Each is a tuning switch ("gas fluctuation", "spurs",
 "young light clustered" in the march), drawn only with the layer on: under "physics only" the
-frame is S65's byte for byte. Held: the dust-only frame's light with the map over without
-1.000545 (gate 3e-3; 1.000247 when the maps were read per sub-step); per level-0 ring on a
+frame is S65's byte for byte. Held: the dust-only frame's light with the gas map and the spurs over
+both off 1.000553 (gate 3e-3; the gas map alone 1.000545, and 1.000247 when the maps were read per
+sub-step); per level-0 ring on a
 capture's own pixel lattice, at 16 offsets, the dust's column and every clustered part,
 young and kept, within the derived one-draw bound 3 sqrt((e^v - 1) g^2 / N_r) of a log-normal map
 point-sampled on the ring's pixels (worst 2.93 of it; debt #176) `[verified: tests/test_v7_layer.py,

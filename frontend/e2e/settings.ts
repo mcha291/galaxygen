@@ -143,8 +143,11 @@ export const DUSTY_RATIO_PIN = 1e-3;
  * (`reading`) - the diagnostic draws each ring's level times the placement, spread through the dust's layer by its
  * column, with the depth off (components.ts brightestLayers: dust 0, dustDepth 0) - so the frame's light is a sum over
  * pixels of a ring weight times the placement times the dust's column, with nothing dimmed and nothing else drawn.
- * `__galaxygenFrameSum` with "gas fluctuation in the march" (`toggle`, the Tuning panel's March group) on over off, per
- * channel, must lie within DUST_COLUMN_TOLERANCE of 1. The ruling's number, a sampling tolerance: the probe measured the
+ * `__galaxygenFrameSum` with "gas fluctuation in the march" and "spurs in the march" (`toggles`, the Tuning panel's
+ * March group) on over both off - the whole layer in the march, as far as this frame draws it - per channel, must lie
+ * within DUST_COLUMN_TOLERANCE of 1. Measured: 1.000247 with the gas map alone read per sub-step (S66's first capture);
+ * 1.000545 with it alone on the thin screen (D226 R3 as amended); 1.000553 with the gas map and the spurs together
+ * (the S66 fix pass, review N4: the spurs' ring mean is exact in the model's quadrature, so they move it little). The ruling's number, a sampling tolerance: the probe measured the
  * whole face-on frame's column, place times the map over place, at -5.9e-4 on 39 pc pixels and +9.3e-4 on the march's
  * own 78 pc ones (Milky Way), -1.7e-3 on NGC 4414's 59 pc ones (REPORT_PROBE D; RULING_S66 R2a). The transmitted light
  * is not held: a clumped medium of the same column lets more light through (Jensen), which is the mechanism.
@@ -154,7 +157,8 @@ export const DUST_ONLY = {
   kept: ["dust"],
   beside: "starlight",
   reading: "where it is",
-  toggle: "gas fluctuation in the march",
+  // The layer's two dust terms in the march, both switched (review N4): the young light is not in this frame.
+  toggles: ["gas fluctuation in the march", "spurs in the march"],
   panel: "Tuning — display choices (experimental)",
 } as const;
 export const DUST_COLUMN_TOLERANCE = 3e-3;

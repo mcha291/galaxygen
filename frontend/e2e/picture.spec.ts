@@ -506,9 +506,10 @@ for (const capture of CAPTURES) {
   });
 }
 
-// The dust's column on screen with the layer's gas map (S66, BUILD_III V7; D226 R2a; settings.ts DUST_ONLY): a frame
-// linear in the dust's column, read with the map in the march and without. Nothing is compared as a picture here.
-test("the dust's column on screen: the gas map in the march keeps the dust-only frame's light", async ({ page }) => {
+// The dust's column on screen with the layer in the march (S66, BUILD_III V7; D226 R2a; settings.ts DUST_ONLY): a frame
+// linear in the dust's column, read with the gas map and the spurs in the march and with both off (review N4: the
+// whole layer as far as this frame draws it). Nothing is compared as a picture here.
+test("the dust's column on screen: the layer in the march keeps the dust-only frame's light", async ({ page }) => {
   const net = watchApi(page);
   await page.setViewportSize(CHOOSING_VIEWPORT);
   await page.goto("/");
@@ -521,18 +522,20 @@ test("the dust's column on screen: the gas map in the march keeps the dust-only 
   await squareCanvas(page, 1024);
   // With the points off there is no selection to wait for: the view settles as the field mode's does.
   const withMap = await settle(page, net, "field");
-  // The Tuning panel's switch, through the panel as a user would: its row's "off".
+  // The Tuning panel's switches, through the panel as a user would: each row's "off".
   await page.getByRole("button", { name: DUST_ONLY.panel }).click();
-  const row = page.getByText(DUST_ONLY.toggle, { exact: true }).locator("xpath=../..");
-  await row.getByRole("button", { name: "off", exact: true }).click();
-  await expect(row.getByRole("button", { name: "off", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const rows = DUST_ONLY.toggles.map((label) => page.getByText(label, { exact: true }).locator("xpath=../.."));
+  for (const row of rows) {
+    await row.getByRole("button", { name: "off", exact: true }).click();
+    await expect(row.getByRole("button", { name: "off", exact: true })).toHaveAttribute("aria-pressed", "true");
+  }
   const without = await settle(page, net, "field");
   const ratio = over(lightOf(withMap), lightOf(without));
-  console.log(`the dust's column on screen: frame sum with the gas map ${withMap.sum}, without ${without.sum}; with over without, per channel: ${ratio.map((r) => r.toFixed(6)).join(", ")}`);
-  expect(withMap.png.equals(without.png), "the gas map drew nothing different").toBe(false);
-  for (const r of ratio) expect(Math.abs(r - 1), `the dust-only frame's light moved by more than ${DUST_COLUMN_TOLERANCE} with the gas map (${ratio.join(", ")})`).toBeLessThan(DUST_COLUMN_TOLERANCE);
+  console.log(`the dust's column on screen: frame sum with the gas map and the spurs ${withMap.sum}, without ${without.sum}; with over without, per channel: ${ratio.map((r) => r.toFixed(6)).join(", ")}`);
+  expect(withMap.png.equals(without.png), "the layer drew nothing different").toBe(false);
+  for (const r of ratio) expect(Math.abs(r - 1), `the dust-only frame's light moved by more than ${DUST_COLUMN_TOLERANCE} with the layer (${ratio.join(", ")})`).toBeLessThan(DUST_COLUMN_TOLERANCE);
   // Back on, for whatever runs after on this page's storage.
-  await row.getByRole("button", { name: "on", exact: true }).click();
+  for (const row of rows) await row.getByRole("button", { name: "on", exact: true }).click();
 });
 
 // The switch on the wire, in every request shape the Galaxy view has (S55, D214: invariant I5; rule B13). The
