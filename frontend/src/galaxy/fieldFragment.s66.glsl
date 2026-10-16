@@ -379,16 +379,17 @@ float layerSpurSum(float R, float phi, int count) {
 }
 
 
-  // The young light clustered (S66, D226 R5a-b): each kept share at the read point times its k-octave map over the
-  // map's mean in the point's level-0 cell (the gas field's cells: ring by its edges, sector by azimuth), so a cell's
-  // light is kept on the model's lattice. A mean that is not a positive number leaves its share unmodulated.
-  vec3 clumpedLight(vec2 xy, vec2 rp) {
+  // The young light clustered (S66, D226 R5a-b): each k-octave map over the map's mean in its level-0 cell (the gas
+  // field's cells: ring by its edges, sector by azimuth), so a cell's light is kept on the model's lattice - k = 3, 2, 1
+  // in x, y, z, at the screen point xy. A mean that is not a positive number leaves its share unmodulated.
+  vec3 clusterRatios(vec2 xy) {
     vec3 maps = layerClusterMaps(xy);
-    vec3 mean = texelFetch(clusterMeans, ivec2(layerGasSector(xy), layerGasRing(rp.x)), 0).rgb;
-    float r3 = mean.x > 0.0 ? maps.z / mean.x : 1.0;
-    float r2 = mean.y > 0.0 ? maps.y / mean.y : 1.0;
-    float r1 = mean.z > 0.0 ? maps.x / mean.z : 1.0;
-    return readPolar(clump3, rp).rgb * r3 + readPolar(clump2, rp).rgb * r2 + readPolar(clump1, rp).rgb * r1;
+    vec3 mean = texelFetch(clusterMeans, ivec2(layerGasSector(xy), layerGasRing(length(xy))), 0).rgb;
+    return vec3(mean.x > 0.0 ? maps.z / mean.x : 1.0, mean.y > 0.0 ? maps.y / mean.y : 1.0, mean.z > 0.0 ? maps.x / mean.z : 1.0);
+  }
+  // Each kept share at the sub-step's read point times its ratio (clusterRatios, read once per ray).
+  vec3 clumpedLight(vec3 ratio, vec2 rp) {
+    return readPolar(clump3, rp).rgb * ratio.x + readPolar(clump2, rp).rgb * ratio.y + readPolar(clump1, rp).rgb * ratio.z;
   }
 
   // Where a sub-step is cut as it crosses the dust's layer, in the dust's scale heights (regimes.ts DUST_CUTS).
@@ -434,6 +435,20 @@ float layerSpurSum(float R, float phi, int count) {
     float jitter = dither > 0.5 ? fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) : 0.5;
     vec3 light = vec3(0.0);
     vec3 transmitted = vec3(1.0);
+    // The layer's maps as a thin screen (S66, D226 R3/R5 as amended): the gas fluctuation map, the spurs' sum and the
+    // clustering maps are face-on column maps, read once per ray where it crosses the midplane (y = 0) - or, for a ray
+    // that does not cross it inside the march (|dir.y| under 1e-6, or the crossing outside [tStart, tFar]), at its start
+    // point's projection - and each value multiplies every sub-step's placement as below. The alternative, the map read
+    // at each sub-step's own point: a column map drawn through the layer makes each feature a pillar of the layer's
+    // height, smeared by h tan i along the view (the streaks of the first capture); a thin screen at the midplane
+    // displaces nothing - a declared approximation. With the layer off none of them is read (each uniform 0).
+    float tCross = abs(dir.y) > 1e-6 ? -origin.y / dir.y : -1.0;
+    vec3 screen = (tCross >= tStart && tCross <= tFar) ? origin + dir * tCross : origin + dir * tStart;
+    vec2 screenXY = vec2(screen.x, -screen.z);
+    vec2 screenRP = polarOf(screen);
+    float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;
+    float screenSpurs = spursOn > 0.5 ? layerSpurSum(screenRP.x, screenRP.y, spurCount) : 0.0;
+    vec3 screenClumps = youngClump > 0.5 ? clusterRatios(screenXY) : vec3(1.0);
     for (int k = 0; k < 96; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
@@ -453,8 +468,7 @@ float layerSpurSum(float R, float phi, int count) {
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
         vec3 bulgeSub = bulge * starsGain / float(n);
-        vec3 rq = readPoint(q0, q1, jitter);
-        vec2 rp = polarOf(rq);
+        vec2 rp = polarOf(readPoint(q0, q1, jitter));
         // What the sub-step reads, once: each layer's light per unit of its own column, the dust's depth per
         // unit of the dust's, and the dust layer's height at this ring (D206). Beyond rHi every texture is
         // zero: the box's side faces clip nothing but zeros.
@@ -468,8 +482,8 @@ float layerSpurSum(float R, float phi, int count) {
         float hDust = 0.0;
         if (rp.x < rHi) {
           starsLight = readPolar(plane, rp).rgb * starsGain;
-          // The young light clustered (S66, V7): the face-on read point is (x, -z) in the stars' frame.
-          if (youngClump > 0.5) starsLight += clumpedLight(vec2(rq.x, -rq.z), rp) * starsGain;
+          // The young light clustered (S66, V7): its shares here times the screen's ratios.
+          if (youngClump > 0.5) starsLight += clumpedLight(screenClumps, rp) * starsGain;
           // Where it is (D205): a diagnostic, the ring's level on the declared ramp in its declared scale, in the
           // ramp's colour at that level, spread through the dust's layer by its column; it dims nothing.
           float level = readLevel(rp.x);
@@ -478,12 +492,12 @@ float layerSpurSum(float R, float phi, int count) {
           // is the dust's own column — and not the scattered light, already a share of the placed starlight.
           vec4 scattered = readPolar(scatter, rp);
           float place = scattered.a;
-          // The spurs per sub-step (S66, V7, D226 R4; D221 item 7): g' = (1 - <S>(R)) g + S, g the placement without
-          // them (the HII texture's spare channel) and S their sum at this point over the rows its radius reads.
-          if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + layerSpurSum(rp.x, rp.y, spurCount);
-          // The gas fluctuation per sub-step (S66, V7, D226 R3): its map at the read point times the placement, in one
-          // statement, so that whatever reads place below is the S64 march's.
-          if (gasFluct > 0.5) place *= layerGasMap(vec2(rq.x, -rq.z));
+          // The spurs (S66, V7, D226 R4; D221 item 7): g' = (1 - <S>(R)) g + S, g the placement without them (the HII
+          // texture's spare channel) read here and S their sum on the screen (over the rows its radius reads).
+          if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + screenSpurs;
+          // The gas fluctuation (S66, V7, D226 R3): the screen's map times the placement, in one statement, so that
+          // whatever reads place below is the S64 march's.
+          if (gasFluct > 0.5) place *= screenGas;
           dustLight = (scattered.rgb * scattering + readRing(rp.x, 2.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
           hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain * knotShare(rp);
           digLight = readRing(rp.x, 1.0) * gasGain;

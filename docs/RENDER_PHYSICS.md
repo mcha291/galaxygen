@@ -304,8 +304,14 @@ read positions bit-exact, the composed g within 4.9e-4 of float64; on the RTX 40
 itself within 5.5e-7 of float32 on the primitives and 1.7e-3 on g `[verified:
 tests/test_v7_header.py, frontend/src/galaxy/noise.test.ts, frontend/e2e/noise.spec.ts]`.
 
-**Since S66 (V7, the march's side) the field's march evaluates the layer per sub-step** at the
-sub-step's face-on read point (D226 R3-R5): the gas fluctuation map multiplies the dust's
+**Since S66 (V7, the march's side) the field's march evaluates the layer once per ray** (D226
+R3-R5 as amended): the three maps are face-on column maps read as a thin screen at the ray's
+crossing of the midplane (a ray that does not cross it inside the march reads at its start
+point's projection), each value multiplying every sub-step's placement, which is still read per
+sub-step. The alternative was measured and set aside: a column map drawn through the layer makes
+each feature a pillar of the layer's height, smeared by h tan i along the view (the streaks of
+the first capture); a thin screen at the midplane displaces nothing - a declared approximation.
+The gas fluctuation map multiplies the dust's
 placement (its depth, thermal light and diagnostic, not its scattered light); the gas spurs are
 drawn from their table, `(1 - <S>(R))` times the unspurred placement plus their sum; the field
 mode's young light and the middle part's kept shares are multiplied by the 1-, 2- or 3-octave
@@ -313,12 +319,10 @@ clustering map over its level-0 cell's mean. Each is a tuning switch ("gas fluct
 "young light clustered" in the march), drawn only with the layer on: under "physics only" the
 frame is S65's byte for byte. Held: the dust-only frame's light with the map over without
 1.000247 (gate 3e-3); per level-0 ring on a 1024-pixel lattice the dust's column within 1.22e-2
-and the young light within 4.4e-2 (sampling tolerances 1.5e-2, 5e-2); the middle part's kept
-shares 3.6e-2 to 4.3e-2 against a ruled 2e-2 (owed a ruling) `[verified: tests/test_v7_layer.py,
+and every clustered part, young and kept, within 4.4e-2 (sampling tolerances 1.5e-2 and 5e-2;
+debt #176) `[verified: tests/test_v7_layer.py,
 frontend/e2e/picture.spec.ts]`. Not modulated: the star-first points' dust (the ring's placed
-column, R7) and the star-first remainder's middle part (R5e) - debts. A 2-D map read per
-sub-step through the stars' one thick layer draws as pillars along each ray (radial streaks
-face-on in a wide lens, streaks along the minor axis inclined): the frames show it.
+column, R7) and the star-first remainder's middle part (R5e) - debts.
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,

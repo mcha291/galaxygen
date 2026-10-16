@@ -1,5 +1,5 @@
 """The layer in the march on the frame's pixels (S66, BUILD_III Phase V7; DECISIONS.md D226, RULING_S66 R2b, R5d): what
-the viewer's march multiplies per sub-step, evaluated with the model's own reference evaluators on a face-on frame's
+the viewer's march multiplies (read once per ray at its midplane crossing: face-on, the pixel itself), evaluated with the model's own reference evaluators on a face-on frame's
 pixel lattice, ring by level-0 ring.
 
 The maps' unit mean holds per level-0 cell on the model's quadrature lattice (gas_fluctuation's normalisers, the
@@ -10,11 +10,10 @@ is a **sampling tolerance**, declared with the number measured when it was writt
   placement the march reads at the pixel - the unspurred placement read bilinearly, times one less the spurs' ring
   mean, plus the spurs' sum at the pixel (stages/spurs.Spurs.at; the Milky Way's 48 rows, none on NGC 4414) - and ``m``
   the gas fluctuation map (gas_fluctuation.GasFluctuationField.evaluate), within 1.5e-2.
-- R5d, the young light: per level-0 ring, the young part's light (its ring light times dust_placement, read bilinearly
-  as the march reads its texture) times m_3 / cell_mean_3 over the same without, within 5e-2; each of the middle part's
-  kept shares (times stars_middle_placement) times m_k / cell_mean_k, within 2e-2 (census_clustering.ClusteringField.maps,
-  the render header's census_clustering.cell_mean) - not met as written (3.6e-2 to 4.3e-2 measured), held as a strict
-  xfail with the numbers until the lead rules.
+- R5d, the clustered light: per level-0 ring, the young part's light (its ring light times dust_placement, read
+  bilinearly as the march reads its texture) times m_3 / cell_mean_3 over the same without; each of the middle part's
+  kept shares (times stars_middle_placement) times m_k / cell_mean_k, every one within 5e-2 (R5d as amended; the
+  maps census_clustering.ClusteringField.maps, the means the render header's census_clustering.cell_mean).
 - the 3-octave map's pixel mean per level-0 cell over the header's cell mean (the lattice's sanity).
 
 The lattice: square pixels of a 1024-pixel frame face-on, 39 pc on the Milky Way (its 40 kpc frame) and 28 pc on NGC
@@ -43,8 +42,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FILTERS = json.loads((ROOT / "frontend" / "src" / "galaxy" / "filters.json").read_text(encoding="utf-8"))
 PIXEL_KPC = {"milky_way": 0.039, "ngc_4414": 0.028}
 DUST_COLUMN = 1.5e-2  # R2b
-YOUNG_LIGHT = 5e-2  # R5d
-KEPT_LIGHT = 2e-2  # R5d
+CLUSTERED_LIGHT = 5e-2  # R5d as amended: every clustered part, young and kept
 G = 1  # the rgb set's G channel: the light's weight in a ring (the maps do not depend on the channel)
 
 
@@ -161,28 +159,19 @@ def light_per_ring(f: dict) -> dict:
 
 
 @pytest.mark.parametrize("template", list(PIXEL_KPC))
-def test_the_young_light_per_level_0_ring_is_kept_by_the_3_octave_map(frames, template):
-    """R5d, a sampling tolerance of 5e-2 on the young light. Written at: Milky Way worst 4.42e-2 (rms 1.39e-2), NGC
-    4414 3.38e-2 (8.4e-3); the probe's 4.1e-2 with nearest weights. The map's own pixel mean over its cell mean holds
-    per ring to 1.6e-2 (the last test): the rest is the covariance, ring by ring, of the light's placement inside a
-    level-0 cell with one realisation of the map."""
+def test_every_clustered_part_s_light_per_level_0_ring_is_kept_by_its_map(frames, template):
+    """R5d as amended on builder B's measurement: one sampling tolerance, 5e-2, for every part the march clusters - the
+    young light (times m_3 / cell_mean_3) and each of the middle part's kept shares (times m_k / cell_mean_k). Written
+    at, worst per level-0 ring (rms): Milky Way young 4.42e-2 (1.39e-2), kept 3 4.28e-2 (1.27e-2), kept 2 3.70e-2
+    (1.04e-2), kept 1 3.93e-2 (8.4e-3); NGC 4414 young 3.38e-2 (8.4e-3), kept 3 3.89e-2 (9.6e-3), kept 2 3.78e-2
+    (1.22e-2), kept 1 3.59e-2 (1.11e-2). One class: the placement weight's alignment with one draw of the map inside a
+    level-0 cell (the bare map over its cell mean holds per ring to 3e-3 for k = 1, 2). The 2e-2 first ruled for the
+    kept shares came from the probe's one number, kept 1 alone on the Milky Way (1.4e-2; 1.34e-2 here with the
+    placement alone). Debt #176 carries the numbers."""
     worst = light_per_ring(frames[template])
     print(f"{template}: light per level-0 ring with the map over without - 1 (worst, rms): "
           + ", ".join(f"{n} {w:.2e} / {s:.2e}" for n, (w, s) in worst.items()))
-    assert worst["young"][0] < YOUNG_LIGHT, worst
-
-
-@pytest.mark.xfail(strict=True, reason=(
-    "RULING_S66 R5d holds each kept share to 2e-2 per level-0 ring; measured (light-weighted, bilinear): Milky Way "
-    "kept3 4.28e-2, kept2 3.70e-2, kept1 3.93e-2 (ring 0); NGC 4414 3.89e-2, 3.78e-2, 3.59e-2 - the probe's 1.4e-2 was "
-    "kept1 alone on the Milky Way (reproduced: 1.34e-2 with the placement alone, rings 0-24). The bare map over its "
-    "cell mean holds per ring to 3e-3 for k = 1, 2: the departure is the placement's covariance with the map inside a "
-    "cell. The lead's ruling is owed (builder B, S66); nothing loosened here."))
-@pytest.mark.parametrize("template", list(PIXEL_KPC))
-def test_the_middle_part_s_kept_shares_per_level_0_ring_are_kept_by_their_maps(frames, template):
-    """R5d as ruled: each of the middle part's kept shares times m_k / cell_mean_k within 2e-2 per level-0 ring."""
-    worst = light_per_ring(frames[template])
-    assert all(worst[f"kept{k}"][0] < KEPT_LIGHT for k in (3, 2, 1)), worst
+    assert all(w < CLUSTERED_LIGHT for w, _ in worst.values()), worst
 
 
 @pytest.mark.parametrize("template", list(PIXEL_KPC))

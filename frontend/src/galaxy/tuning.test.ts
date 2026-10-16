@@ -139,11 +139,15 @@ describe("tuning defaults (D199)", () => {
     // S66 (V7): the include is in the march; each modulation is one statement behind its uniform, at the read point.
     expect(now).toContain(NOISE_GLSL);
     for (const name of ["gasFluct", "spursOn", "youngClump"]) expect(now).toContain(`uniform float ${name};`);
-    expect(now).toContain("vec3 rq = readPoint(q0, q1, jitter);");
-    expect(now).toContain("if (gasFluct > 0.5) place *= layerGasMap(vec2(rq.x, -rq.z));");
-    expect(now).toContain("if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + layerSpurSum(rp.x, rp.y, spurCount);");
-    expect(now).toContain("if (youngClump > 0.5) starsLight += clumpedLight(vec2(rq.x, -rq.z), rp) * starsGain;");
-    expect(now.match(/layerGasMap\(/g)).toHaveLength(2); // its definition and the one call
+    // As amended on builder B's capture: the maps are a thin screen at the ray's midplane crossing, read once per ray.
+    expect(now).toContain("vec2 rp = polarOf(readPoint(q0, q1, jitter));");
+    expect(now).toContain("float tCross = abs(dir.y) > 1e-6 ? -origin.y / dir.y : -1.0;");
+    expect(now).toContain("float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;");
+    expect(now).toContain("if (gasFluct > 0.5) place *= screenGas;");
+    expect(now).toContain("if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + screenSpurs;");
+    expect(now).toContain("if (youngClump > 0.5) starsLight += clumpedLight(screenClumps, rp) * starsGain;");
+    expect(now.match(/layerGasMap\(/g)).toHaveLength(2); // its definition and the one call, before the step loop
+    expect(now.indexOf("layerGasMap(screenXY)")).toBeLessThan(now.indexOf(`for (int k = 0; k < ${STEPS}; k++)`));
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
   });
