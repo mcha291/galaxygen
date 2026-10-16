@@ -3,13 +3,14 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import type { GasFluctuationEntry, SpursEntry } from "../api";
+import type { ClusteringEntry, GasFluctuationEntry, SpursEntry } from "../api";
 import clusteringFixture from "./__fixtures__/clustering_maps.json";
 import spurFixture from "./__fixtures__/spur_sum.json";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
   CELL_SECTORS,
   type ClusteringTables,
+  GLSL_LACUNARITY,
   clusteringMaps,
   fractal,
   gasGaussian,
@@ -20,6 +21,7 @@ import {
   lognormalMap,
   noise2,
   noise3,
+  prepareClustering,
   prepareGas,
   prepareSpurs,
   reduceTwist,
@@ -104,6 +106,31 @@ function vectorEntry(): GasFluctuationEntry {
     weights: G.weights, cell_normaliser: cells, rule: "",
   };
 }
+
+describe("the include's compiled lacunarity (review N2)", () => {
+  // noise.glsl.ts steps every octave's frequency by a literal 2.0; the header serves the model's lacunarity. A table
+  // read from a header with another is refused, naming the compiled constant, rather than drawn at the wrong scales.
+  const clustering = (lacunarity: number): ClusteringEntry => ({
+    seed: 7, scale: 0.19, octaves: 3, lacunarity, slope: 1.5, sigma: 1.75, gain: 1, top: 1, norm: 1, table_points: 4,
+    octave_ages_myr: [40, 31, 24], cell_mean: { "1": new Array(1024).fill(1), "2": new Array(1024).fill(1), "3": new Array(1024).fill(1) }, rule: "",
+  });
+
+  it("takes the model's 2 and refuses any other for the gas field and the clustering field", () => {
+    expect(GLSL_LACUNARITY).toBe(2);
+    expect(vectorEntry().lacunarity).toBe(GLSL_LACUNARITY);
+    expect(prepareGas(vectorEntry())).not.toBeNull();
+    expect(prepareClustering(clustering(2))).not.toBeNull();
+    for (const other of [1.9, 2.5, 3]) {
+      expect(() => prepareGas({ ...vectorEntry(), lacunarity: other })).toThrow(/gas_fluctuation.*noise\.glsl\.ts compiles 2\.0 \(GLSL_LACUNARITY\)/);
+      expect(() => prepareClustering(clustering(other))).toThrow(/census_clustering.*noise\.glsl\.ts compiles 2\.0 \(GLSL_LACUNARITY\)/);
+    }
+  });
+
+  it("still draws nothing, refusing nothing, with the layer off (the seed null)", () => {
+    expect(prepareGas({ ...vectorEntry(), seed: null, lacunarity: 3 })).toBeNull();
+    expect(prepareClustering({ ...clustering(3), seed: null })).toBeNull();
+  });
+});
 
 describe("the gas fluctuation field against vectors.json's gas section (R1b, R1c)", () => {
   const G = VECTORS.gas_fluctuation;

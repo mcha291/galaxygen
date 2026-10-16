@@ -176,6 +176,18 @@ export function lognormalMap(g: number, sigma: number, normaliser = 1): number {
 export const CELL_RINGS = 32;
 export const CELL_SECTORS = 32;
 export const GAS_OCTAVES = 6;
+/**
+ * The lacunarity compiled into the include (noise.glsl.ts): layerGasSum steps its frequency by `fr * 2.0` and the
+ * clustering maps call layerFractal2Coarsest with `2.0`. The header serves the model's; a table that reads another is
+ * refused (review N2), since the shader would draw the field at the wrong scales.
+ */
+export const GLSL_LACUNARITY = 2;
+
+function compiledLacunarity(field: string, lacunarity: number): void {
+  if (lacunarity !== GLSL_LACUNARITY) {
+    throw new Error(`the ${field} header's lacunarity is ${lacunarity}; noise.glsl.ts compiles ${GLSL_LACUNARITY}.0 (GLSL_LACUNARITY)`);
+  }
+}
 /** Floats per ring row of the gas table: inner edge, sigma, strain, twist (mod 2 pi), break index, norm, outer edge, 0. */
 export const GAS_RING_STRIDE = 8;
 /** Floats per weights row: the six octaves' weights, then two zeros. */
@@ -209,6 +221,7 @@ export function reduceTwist(twist: number): number {
 export function prepareGas(entry: GasFluctuationEntry | null | undefined, reduce = true): GasTables | null {
   if (!entry || entry.seed === null || !entry.ring || !entry.edges || !entry.weights || !entry.cell_normaliser || entry.sense === null) return null;
   if (entry.octaves !== GAS_OCTAVES || entry.edges.length !== CELL_RINGS + 1 || entry.cell_normaliser.length !== CELL_RINGS * CELL_SECTORS) return null;
+  compiledLacunarity("gas_fluctuation", entry.lacunarity);
   const ring = new Float32Array(CELL_RINGS * GAS_RING_STRIDE);
   for (let r = 0; r < CELL_RINGS; r += 1) {
     const twist = entry.ring.twist[r];
@@ -307,6 +320,7 @@ export interface ClusteringTables extends OctaveSum {
 /** The clustering tables from the render header's entry, or null with the layer off or off-form (three octaves). */
 export function prepareClustering(entry: ClusteringEntry | null | undefined): ClusteringTables | null {
   if (!entry || entry.seed === null || !entry.cell_mean || entry.octaves !== 3) return null;
+  compiledLacunarity("census_clustering", entry.lacunarity);
   const cellMean = new Float32Array(3 * CELL_RINGS * CELL_SECTORS);
   for (let k = 1; k <= 3; k += 1) {
     const row = entry.cell_mean[String(k)];
