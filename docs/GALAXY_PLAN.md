@@ -681,7 +681,7 @@ redistribution and catalogue-against-field tests are in the suite; every
 visible feature of the viewer traces to a published field; and the tag batch
 has been run from a desktop, which is the one item §5d could not close.
 
-## 5f. The third build — S53 to S66 (written 2026-10-03, at the owner's request; D212)
+## 5f. The third build — S53 to S69 (written 2026-10-03, at the owner's request, as S53 to S66; D212. Three rows inserted since: P5 at S60 (D219), V6b at S65 and V9 at S68 (D222), so V8 is S67 and Audit V is S69)
 
 **`BUILD_III.md`** is the plan, adopted by the owner on 2026-10-03 with ten rulings (its §7, recorded in D212): two
 templates (the Milky Way and NGC 4414), **the physics model beside a randomness layer** — a fourth kind of quantity,
@@ -691,12 +691,12 @@ above carry the deliverables; `BUILD_III.md` carries each phase's ruling, its re
 session reads with `BRIEF.md` in place of this plan.
 
 - **Every row is led by Opus; Fable is called at four gates** — G1 (S55: do the invariants mean what they say), G2
-  and G3 (S57: the shock's equations, then the solver's review), G4 (S66: the audit's verdict) — each one short turn
+  and G3 (S57: the shock's equations, then the solver's review), G4 (S69: the audit's verdict; S66 at the adoption) — each one short turn
   on a `docs/HANDOFF_S<NN>.md` of at most 150 lines (`BUILD_III.md` §3). An Opus lead that meets a stop condition
   (§3d) closes partially and writes a handoff; it does not improvise a ruling on physics.
-- **The model's phases run first, the viewer's after** (the owner's ruling 9): S54–S61, then S62–S65, then the audit.
+- **The model's phases run first, the viewer's after** (the owner's ruling 9): S54–S62, then S63–S68, then the audit at S69 (S54–S61, S62–S65 and S66 as adopted).
 - **The goal pictures are display targets, never rows** (C6, D113), and are not in the repository (ruling 5): the
-  baseline of `tools/goal_metrics.py`'s numbers is in D212 and the final table is S65's.
+  baseline of `tools/goal_metrics.py`'s numbers is in D212 and the final table is S67's (Phase V8; S65's as adopted).
 - **`basic` is frozen** (ruling 7): registered, not merged, used once at S55 as the layer-off oracle.
 
 **Done means**, for this build `[inferred]`: with the layer off the acceptance table is S52's row for row unless a
