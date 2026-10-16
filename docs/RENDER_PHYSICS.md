@@ -287,7 +287,7 @@ frontend/src/galaxy/plummer.test.ts, knots.test.ts]`. Not built: the region regi
 clusters keep their sprite (they are drawn in display colours, not on the field's scale).
 
 **Since S66 (BUILD_III V7, the model's side) `/api/render` carries what the march needs to
-draw the randomness layer per sub-step**, every number the model's (D226 R4-R6): the header's
+draw the randomness layer once per ray as a thin screen at the midplane**, every number the model's (D226 R4-R6): the header's
 `gas_fluctuation` (the field's seed, form, ring table, ladder weights and cell normalisers),
 `census_clustering` (the clustering field's form, its octaves' survival ages and the 1-, 2- and
 3-octave maps' means per level-0 cell on its table lattice, the 3-octave one the published
@@ -318,7 +318,8 @@ mode's young light and the middle part's kept shares are multiplied by the 1-, 2
 clustering map over its level-0 cell's mean. Each is a tuning switch ("gas fluctuation", "spurs",
 "young light clustered" in the march), drawn only with the layer on: under "physics only" the
 frame is S65's byte for byte. Held: the dust-only frame's light with the map over without
-1.000247 (gate 3e-3); per level-0 ring on a 1024-pixel lattice the dust's column within 1.22e-2
+1.000545 (gate 3e-3; 1.000247 when the maps were read per sub-step); per level-0 ring on a
+1024-pixel lattice the dust's column within 1.22e-2
 and every clustered part, young and kept, within 4.4e-2 (sampling tolerances 1.5e-2 and 5e-2;
 debt #176) `[verified: tests/test_v7_layer.py,
 frontend/e2e/picture.spec.ts]`. Not modulated: the star-first points' dust (the ring's placed

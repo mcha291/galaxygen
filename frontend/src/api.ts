@@ -348,7 +348,7 @@ export interface RenderFrame {
      * Since S66 (V7, D226 R4), with the layer on, `dust_unspurred` names the placement without the gas spurs.
      */
     placement?: { dust?: string; dust_unspurred?: string } | null;
-    /** The gas fluctuation field the march evaluates per sub-step (S66, V7, D226 R6); its values null with the layer off. */
+    /** The gas fluctuation field the march reads once per ray at the midplane (S66, V7, D226 R3 as amended, R6); its values null with the layer off. */
     gas_fluctuation?: GasFluctuationEntry | null;
     /** The clustering field's form and its k-octave cell means (S66, V7, D226 R5c, R6); null values with the layer off. */
     census_clustering?: ClusteringEntry | null;

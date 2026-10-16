@@ -336,10 +336,10 @@ ROUTES: tuple[Route, ...] = (
         "once its realised clouds (summed off the census's ring streams, no census materialised) hold theirs - the "
         "viewer multiplies the dust's depth by it and draws the clouds' own column, /api/clouds' "
         "cloud_dust_extinction_v, in the clouds' layer; the header's clouds states the rule and the closure. "
-        "The randomness layer per sub-step (S66, V7): the header's gas_fluctuation, census_clustering and spurs carry "
-        "the two fields and the gas spurs, every number the model's and each entry's rule (null values with "
-        "layer=off), dust_placement_unspurred the dust's placement without the spurs, and stars_middle_kept3, _kept2 "
-        "and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
+        "The randomness layer (S66, V7): the header's gas_fluctuation, census_clustering and spurs carry the two "
+        "fields and the gas spurs, every number the model's and each entry's rule (null values with layer=off), "
+        "each map " + _v7.THIN_SCREEN + " (D226 as amended); dust_placement_unspurred the dust's placement without "
+        "the spurs, and stars_middle_kept3, _kept2 and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
         "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
         "filter, which this render's own stars_middle_placement (or stars_placement) and stars_placement turn into "
         "stars_unresolved exactly; the header's remainder states the rule.",
@@ -1883,7 +1883,8 @@ class Service:
                 }},
             }
         # The spurs' pieces (S66, V7, R4): the spurs' table and ring mean, and the placement without them, so that the
-        # viewer composes the spurs per sub-step - where the dust is placed by the gas's own contrast.
+        # viewer composes the spurs (their sum read once per ray at the midplane) - where the dust is placed by the gas's
+        # own contrast.
         spurs_entry, unspurred = (None, None) if placement is None else _v7.spurs_entry(f, constants, R, phi_axis.edges)
         if placement is not None:
             # Where no spur is composed (the layer off: the neutral placement; a flat pattern) it is the placement itself.

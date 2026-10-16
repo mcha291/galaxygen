@@ -1,6 +1,6 @@
 /**
  * The randomness layer's noise as one GLSL ES 3.00 include (S66, BUILD_III Phase V7; D226 R1, R9a): the functions the
- * march evaluates per sub-step - the gas fluctuation map, the clustering field's three truncated maps, the gas spurs'
+ * march evaluates once per ray at the midplane (a thin screen, D226 as amended) - the gas fluctuation map, the clustering field's three truncated maps, the gas spurs'
  * point function - and the primitives they are made of. three r186 compiles a ShaderMaterial as `#version 300 es`
  * with `precision highp float; precision highp int;`, so `uint` arithmetic wraps modulo 2^32 and `>>` on a uint is a
  * logical shift, as the model's numpy uint32 is.

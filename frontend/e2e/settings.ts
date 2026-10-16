@@ -113,10 +113,14 @@ export const TRANSFER_SLACK = 1e-3;
  */
 export const DUSTY_LAYER_RATIO = [0.96265, 0.96703, 0.97596] as const;
 // S66 (V7, D226 R2c): was [0.97275, 0.97786, 0.98691] at S64/S65 - the gas fluctuation map multiplies the dust's
-// placement per sub-step and the spurs are drawn from their table: the same column per level-0 cell, clumped below the
+// placement and the spurs are drawn from their table: the same column per level-0 cell, clumped below the
 // cell, so by (ii) more light gets through (Jensen; the probe's +2.4 % at R_sun face-on). Predicted before the capture:
 // the layered frame brighter, the ratio lower. Measured (physics only over layered, the physics-only frame the committed
-// picture byte for byte): 0.96265, 0.96703, 0.97596 - moved by -0.01010, -0.01083, -0.01095.
+// picture byte for byte): 0.96265, 0.96703, 0.97596 - moved by -0.01010, -0.01083, -0.01095. That capture read the
+// layer's maps per sub-step; the pin stands for the amended read (D226 R3/R5 as amended: each map read once per ray as a
+// thin screen at the ray's crossing of the midplane, the value multiplying each sub-step's placement), which measures
+// 0.96249, 0.96672, 0.97547 (-1.6e-4, -3.1e-4, -4.9e-4 from the pin, inside DUSTY_RATIO_PIN; predicted to fall before
+// the capture, it fell), so the pin was not re-taken.
 // S63 (D223): was [0.98675, 0.99042, 0.99454] at S61/S62 - the field mode draws the starlight by age, the young
 // part placed by the gas contrast's law: more of the young light stands in the gas arms behind the dust, so the
 // layered frame is dimmer against physics only by a further 0.13, 0.17, 0.26 % (the ratio moved by +0.00130,
@@ -130,8 +134,9 @@ export const DUSTY_LAYER_RATIO = [0.96265, 0.96703, 0.97596] as const;
 export const DUSTY_RATIO_PIN = 1e-3;
 
 /**
- * The dust's column on screen (S66, BUILD_III V7; D226 R2a): the gas fluctuation map multiplies the dust's placement per
- * sub-step, and its mean is 1 over every level-0 cell on the model's quadrature lattice - so the dust's column on the
+ * The dust's column on screen (S66, BUILD_III V7; D226 R2a): the gas fluctuation map multiplies the dust's placement - read
+ * once per ray as a thin screen at the ray's crossing of the midplane, the value multiplying each sub-step's placement
+ * (D226 R3 as amended) - and its mean is 1 over every level-0 cell on the model's quadrature lattice - so the dust's column on the
  * frame's pixels moves only by the lattice's sampling. The gate reads it on a frame that is linear in the column: the
  * default template at its own camera (face-on, 20 kpc framed) in the star-first mode with the points, the starlight and
  * the ionized gas switched off (`released`, beside "starlight") and the dust kept in its "where it is" reading

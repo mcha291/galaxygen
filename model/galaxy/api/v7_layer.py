@@ -1,17 +1,17 @@
 """The randomness layer's fields on /api/render's header (S66, BUILD_III Phase V7; RULING_S66 R4-R6): what the viewer
-needs to evaluate the gas fluctuation field, the clustering field and the gas spurs per sub-step in its march - every
-number the model's, read off the run's published fields and the model's constants (rule D5 as amended, D220's
+needs to evaluate the gas fluctuation field, the clustering field and the gas spurs in its march - each map read once
+per ray as a thin screen at the ray's crossing of the midplane (D226 R3/R5 as amended) - every number the model's, read off the run's published fields and the model's constants (rule D5 as amended, D220's
 precedent: a function the model publishes, evaluated with every parameter the model's). No stage and no constant here.
 
 - **gas_fluctuation** (:func:`gas_fluctuation_entry`): the seed, the field's form, the ring table (break index, sigma,
   strain, twist, normaliser), the ladder's weights for every break index (``GasFluctuationField.amplitudes``) and the
   level-0 cells' normalisers: the map ``normaliser_cell exp(sigma_r g - sigma_r^2 / 2)`` the viewer multiplies the
-  dust's placement by per sub-step (R3).
+  dust's placement by, read once per ray at the midplane, the value multiplying each sub-step's placement (R3).
 - **census_clustering** (:func:`clustering_entry`): the field's form and seed, the octaves' survival ages, and the
   k-octave maps' means per level-0 cell for k = 1, 2, 3 on the field's table lattice (R5c), so that the field mode's
   young and middle starlight are modulated by a map over its own cell mean whatever the clouds toggle.
 - **spurs** (:func:`spurs_entry`): the gas spurs' table and their ring mean per render ring, and beside the placed gas
-  the placement without them (``dust_placement_unspurred``): g' = (1 - <S>(R)) g + S per sub-step (R4).
+  the placement without them (``dust_placement_unspurred``): g' = (1 - <S>(R)) g + S, S read once per ray at the midplane (R4).
 
 With the layer off every value is None, the keys kept (I5): the viewer's maps are then exactly 1.
 """
@@ -35,15 +35,21 @@ CLUSTERING_READS = (_l1.CENSUS_CLUSTERING_SEED.name, _l1.CENSUS_CLUSTERING_CELL_
 KEPT = (1, 2, 3)  # the octave counts the young starlight keeps (bright.octaves_kept): each a cell-mean table
 UNSPURRED = "dust_placement_unspurred"
 MIDDLE_KEPT = {3: "stars_middle_kept3", 2: "stars_middle_kept2", 1: "stars_middle_kept1"}
+# How the march reads every map of the layer (D226 R3/R5 as amended): the rules below and the render about say it.
+THIN_SCREEN = (
+    "read once per ray as a thin screen at the ray's crossing of the midplane, the value multiplying each "
+    "sub-step's placement; a column map says nothing of height, and drawn through the layer it would smear each "
+    "feature by h tan i along the view"
+)
 
 GAS_RULE = (
     "the map m(x, y) = cell_normaliser[c] exp(sigma_r g - sigma_r^2 / 2), c the point's level-0 cell (ring r by the "
     "edges, sector by floor(atan2(y, x) mod 2 pi / (2 pi / 32))), g = sum_j weights[break_octave_r][j] noise2(seed, "
     "X 2^j / scale, Y 2^j / scale, octave j), (X, Y) = R (cos, sin)(atan2(y, x) - sense (twist_r + strain_r "
     "log(max(R, edges[0]) / edges[r]))), R = hypot(x, y) (gas_fluctuation.GasFluctuationField.evaluate; the twin's "
-    "vectors in layer/vectors.json); its mean is 1 over every level-0 cell's quadrature lattice. Evaluated per "
-    "sub-step in the march at the sub-step's face-on read point, multiplying the dust's placement (its column: the "
-    "depth, the thermal light, the diagnostic - not the scattered light) (V7, D226)"
+    "vectors in layer/vectors.json); its mean is 1 over every level-0 cell's quadrature lattice. In the march it is "
+    + THIN_SCREEN + "; it multiplies the dust's placement (its column: the depth, the thermal light, the diagnostic - "
+    "not the scattered light) (V7, D226 R3 as amended)"
 )
 CLUSTERING_RULE = (
     "the k-octave map m_k(x, y) = exp(sigma g_k - sigma^2 / 2), g_k = norm sum_(j < k) a_j noise2(seed, x 2^j / scale, "
@@ -51,11 +57,14 @@ CLUSTERING_RULE = (
     "maps; noise.fractal_coarsest); cell_mean[k][c] its mean over level-0 cell c's table lattice (table_points per "
     "finest lattice cell, R-weighted), cell_mean['3'] the published census_clustering_cell_mean. A star of age t keeps "
     "the octaves whose survival age (octave_ages_myr, coarsest first) it has not passed (bright.octaves_kept). In the "
-    "field mode the young starlight (stars_young) is multiplied per sub-step by m_3 / cell_mean['3'] and each of the "
-    "middle part's kept arrays (ages.middle_kept) by m_k / cell_mean[k] at the sub-step's read point (V7, D226)"
+    "field mode the young starlight (stars_young) is multiplied by m_3 / cell_mean['3'] and each of the middle "
+    "part's kept arrays (ages.middle_kept) by m_k / cell_mean[k], each map " + THIN_SCREEN + " (V7, D226 R5 as amended)"
 )
 SPUR_RULE = (
-    "g' = (1 - share(R)) g_unspurred + S per sub-step (D221 item 7; V7, D226): g_unspurred the array placement."
+    "g' = (1 - share(R)) g_unspurred + S (D221 item 7; V7, D226 R4 as amended): share and g_unspurred read at each "
+    "sub-step's radius, the spurs' sum S read once per ray as a thin screen at the ray's crossing of the midplane and "
+    "added to each sub-step's placement (a column map says nothing of height, and drawn through the layer it would "
+    "smear each feature by h tan i along the view). g_unspurred the array placement."
     "dust_unspurred names, share the spurs' exact mean round the render ring, S = sum over the rows a radius reads of "
     "each spur's excess (stages/spurs.Spurs.excess: in the log-polar plane from the foot, across d = dx cos p - psi "
     "sin p, along t = dx sin p + psi cos p, dx = ln(R / R_f), psi = turn (phi - phi_f) within half a turn of the "
@@ -193,9 +202,9 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
         "weight": weight,
         "rest": "stars_middle less the three kept arrays: the middle part's stars older than every octave's survival "
                 "age, placed as stars_middle is and modulated by nothing (bright.octaves_kept: 0 octaves)",
-        "rule": "each kept part k is placed as stars_middle is (its weight) and multiplied per sub-step by the "
-                "clustering field's k-octave map over its level-0 cell's k-octave mean (census_clustering.cell_mean[k], "
-                "census_clustering.rule) (V7, D226)",
+        "rule": "each kept part k is placed as stars_middle is (its weight) and multiplied by the clustering field's "
+                "k-octave map over its level-0 cell's k-octave mean (census_clustering.cell_mean[k], "
+                "census_clustering.rule), the map " + THIN_SCREEN + " (V7, D226 R5 as amended)",
         "closure": {
             "factor": departure,
             "about": "per filter, the largest |factor - 1| over the rings of the factor the four windows' responses are "

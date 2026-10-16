@@ -1,5 +1,5 @@
 """The render header's V7 entries (S66, BUILD_III Phase V7; DECISIONS.md D226, RULING_S66 R4-R6): what the viewer's
-march evaluates per sub-step, every number the model's.
+march evaluates, each map read once per ray as a thin screen at the midplane, every number the model's.
 
 - ``gas_fluctuation``: the gas fluctuation field's seed, form, ring table, ladder weights and cell normalisers - the
   run's published fields to the bit;
@@ -88,7 +88,7 @@ def test_the_gas_fluctuation_entry_is_the_run_s_published_field(api, template):
                                     "sense": g["sense"]}, c)
     assert np.array_equal(np.array(g["weights"]), field.amplitudes()) and np.shape(g["weights"]) == (7, 6)
     assert g["sense"] == -1.0 and (g["scale"], g["octaves"], g["lacunarity"]) == (0.19, 6, 2.0)
-    assert "per sub-step in the march" in g["rule"] and "D226" in g["rule"]
+    assert "thin screen at the ray's crossing of the midplane" in g["rule"] and "D226" in g["rule"]
     off, arrays = render(api, template, "off")
     assert {k for k, v in off["gas_fluctuation"].items() if v is not None} == {"scale", "slope", "change", "octaves", "lacunarity", "rule"}
     assert set(off["gas_fluctuation"]) == set(g)

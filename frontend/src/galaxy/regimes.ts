@@ -117,13 +117,14 @@ export interface PlaneFields {
   diffuseShare?: ArrayLike<number> | null;
   /**
    * The dust's placement without the gas spurs, row-major over (R, phi) (`dust_placement_unspurred`, S66 V7, D226 R4):
-   * where the march evaluates the spurs per sub-step it reads this and adds them. Held in the HII texture's spare
+   * where the march evaluates the spurs (their sum once per ray at the midplane) it reads this per sub-step and
+   * adds them. Held in the HII texture's spare
    * channel; missing, or not a number at a cell, is an even ring there: 1.
    */
   unspurred?: ArrayLike<number> | null;
   /**
    * The spurs' mean round each render ring, per R cell (the render header's `spurs.share`, S66 V7, D226 R4): what
-   * the per-sub-step spurs replace of the placement, (1 - share) g + S. Held in the diffuse gas row's spare channel;
+   * the spurs drawn from their table replace of the placement, (1 - share) g + S. Held in the diffuse gas row's spare channel;
    * missing, or not a number at a ring, is no spur there: 0.
    */
   spurShare?: ArrayLike<number> | null;

@@ -107,7 +107,8 @@ describe("tuning defaults (D199)", () => {
     // their own heights in the step, the pieces cut at the dust's cuts and the slab's parts (fieldFragment.s64.glsl; D207's snapshot is in git);
     // and again for the knots' undrawn share (S64, R5): the HII light times each level-0 cell's 1 - D_c / K_c. S66 (V7,
     // D226 R3-R5, R9) re-pinned it on purpose (fieldFragment.s66.glsl; S64's is in git): the randomness layer's include
-    // (noise.glsl.ts) evaluated per sub-step at the read point - the gas map times the placement, the spurs from their
+    // (noise.glsl.ts), each map read once per ray as a thin screen at the ray's midplane crossing (D226 as amended)
+    // and its value multiplying each sub-step - the gas map times the placement, the spurs from their
     // table, the young and kept light times the clustering maps over their cell means - each behind a uniform that is 0
     // under "physics only", so that the S64 statements run unchanged there.
     const now = fieldFragment();
