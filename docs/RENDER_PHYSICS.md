@@ -319,9 +319,9 @@ clustering map over its level-0 cell's mean. Each is a tuning switch ("gas fluct
 "young light clustered" in the march), drawn only with the layer on: under "physics only" the
 frame is S65's byte for byte. Held: the dust-only frame's light with the map over without
 1.000545 (gate 3e-3; 1.000247 when the maps were read per sub-step); per level-0 ring on a
-1024-pixel lattice the dust's column within 1.22e-2
-and every clustered part, young and kept, within 4.4e-2 (sampling tolerances 1.5e-2 and 5e-2;
-debt #176) `[verified: tests/test_v7_layer.py,
+capture's own pixel lattice, at 16 offsets, the dust's column and every clustered part,
+young and kept, within the derived one-draw bound 3 sqrt((e^v - 1) g^2 / N_r) of a log-normal map
+point-sampled on the ring's pixels (worst 2.93 of it; debt #176) `[verified: tests/test_v7_layer.py,
 frontend/e2e/picture.spec.ts]`. Not modulated: the star-first points' dust (the ring's placed
 column, R7) and the star-first remainder's middle part (R5e) - debts.
 

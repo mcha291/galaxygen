@@ -4164,7 +4164,12 @@ never been judged in twenty-three sessions.
    at R_SUN face-on on the Milky Way, +24 % on ring 1, +8.5 % at R_SUN inclined 60°) — a clumped medium of the same
    column is more transparent, the mechanism's physics, and the layered-over-physics pin fell as predicted (0.97191 /
    0.97754 / 0.98663 → 0.96265 / 0.96703 / 0.97596). **Carried.** The mend is one pass: a renormalisation on the
-   frame's own lattice (statistical), or a finer lattice (#163's cost ×4 per doubling).
+   frame's own lattice (statistical), or a finer lattice (#163's cost ×4 per doubling). The review (S66, M3, N1) found
+   the pins held only on the test's one lattice - the dust's column on ring 0 1.25e-2 there, 1.81e-2 on the capture's
+   own 39.0625 pc pixel and 2.54e-2 a quarter pixel off, the young light 7.6e-2 to 9.3e-2, kept 3 to 6.1e-2 / 5.4e-2 -
+   since the march point-samples a log-normal map at the pixel with no footprint average; the pins are now the
+   derived one-draw bound 3 √((e^v − 1) g² / N_r) over 16 lattice offsets (worst 2.93 s_r), and the mend for that
+   part is a footprint average of the map over the pixel.
 
 ---
 
