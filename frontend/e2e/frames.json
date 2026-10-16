@@ -1,5 +1,5 @@
 {
-  "about": "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. `file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.",
+  "about": "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. `file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it. `ready_s` (since S66, D226 R8) is the seconds from the capture's start to its ready frame - the page's load, the template's choice, the API's compute (cold on the run's first capture, cached after) and the march - the frame-time readout of BUILD_III V7, not the GPU's time per frame.",
   "playwright": "1.62.1",
   "args": [
     "--use-angle=d3d11"
@@ -14,20 +14,22 @@
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 766754,
-      "sha256": "56a31bcdb5ebb40a70ae72349dd2d647638be5cba09832df34dcad509876d225",
+      "bytes": 1445489,
+      "sha256": "f6ed4670b5199fae9ea82676e934c97977bd83978e77a4295d8903826ab5d74d",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 51.8
     },
     "milky_way-stars": {
       "file": "e2e/frames/milky_way-stars.png",
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 1014037,
-      "sha256": "751b5c8c5d651b3c7fad770dc2e4f83872e973cfba8f872d1a0d5ab2c9056d61",
+      "bytes": 1085091,
+      "sha256": "20c46e1988e083e2698708a34c0c05ffc74d763b2ce32de27e6dd1be6556d744",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 13.3
     },
     "milky_way-physics-only": {
       "file": "e2e/frames/milky_way-physics-only.png",
@@ -37,67 +39,74 @@
       "bytes": 765251,
       "sha256": "c08dcc0a3eb9cab58541cebaffa277df75750e157ff0fadca77c4bdf730f7a93",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 10.2
     },
     "milky_way-thumbnail": {
       "file": "public/templates/milky_way.png",
       "template": "milky_way",
       "width": 256,
       "height": 256,
-      "bytes": 78882,
-      "sha256": "eb6a7df69e58545118f4ff489939e5075bdd4ac345267fd9f2e8382e025a7c45",
+      "bytes": 102161,
+      "sha256": "56caf049d7cd8eb4f1d852cbeead7fd511f70ab9381e4705320f82e467dbe14d",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 5.2
     },
     "ngc_4414-field": {
       "file": "e2e/frames/ngc_4414-field.png",
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 618360,
-      "sha256": "2d842faa3ec404a133e6163736140edc3ed471fce06551c513a29691081962a3",
+      "bytes": 750816,
+      "sha256": "969d97657b6be3bb8d3656b5eb2b17590b64d4c819cebd14a61289203304b6bd",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 27.4
     },
     "ngc_4414-stars": {
       "file": "e2e/frames/ngc_4414-stars.png",
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 840286,
-      "sha256": "9f5fe8fa4ba682bdba9cad171969a05068141c53bb9581d5729177f52f676cbd",
+      "bytes": 847629,
+      "sha256": "45bd95b9381a48be3c0692c37a9cafc647b1e855b1cbc136c6c3a0cde08e4e59",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 10.5
     },
     "ngc_4414-thumbnail": {
       "file": "public/templates/ngc_4414.png",
       "template": "ngc_4414",
       "width": 256,
       "height": 256,
-      "bytes": 58599,
-      "sha256": "ea7d491335bb9d220762ce3d81b42a7b5db9f287b3a98fceb427b1467188eac9",
+      "bytes": 62080,
+      "sha256": "8fce5c09547b7b37ba922cf6597d59f0b114e9d89860ddaf4ad54d84eaa61eac",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 6
     },
     "milky_way-zoom": {
       "file": "e2e/frames/milky_way-zoom.png",
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 753256,
-      "sha256": "2a2947a3f907c7f64a632b5a825d8061ef8dfe6116fe455d3d65f22e10a23a00",
+      "bytes": 1038120,
+      "sha256": "c468a421473fe21d1dcaec290cfbcd87b7dc6952f2a3cb50398c295a6ba5faf9",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 19.7
     },
     "ngc_4414-zoom": {
       "file": "e2e/frames/ngc_4414-zoom.png",
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 1234851,
-      "sha256": "f75d866c9b7097e1ba21ecabe005e951c250620a888161132c248fa5c84176eb",
+      "bytes": 1268535,
+      "sha256": "86f38653e882f55f65f007becdcc9baf85c9e2aa389e69ac1692052f87ffd133",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-      "browser": "chromium 151.0.7922.34"
+      "browser": "chromium 151.0.7922.34",
+      "ready_s": 16.7
     }
   }
 }
