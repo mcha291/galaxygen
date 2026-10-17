@@ -266,8 +266,27 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     expect(loadTuning(s, "milky_way")).toEqual({ ...TUNING_DEFAULTS, steps: 128 });
     expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, dither: false });
     expect(loadTuning(s, "andromeda")).toEqual(TUNING_DEFAULTS);
+    // At the defaults a template's key is kept, empty, so the old key is not read for it again (the fallback below).
     saveTuning({ ...TUNING_DEFAULTS }, s, "milky_way");
-    expect(s.store.has(`${TUNING_STORAGE_KEY}.milky_way`)).toBe(false);
+    expect(s.store.get(`${TUNING_STORAGE_KEY}.milky_way`)).toBe("{}");
+  });
+
+  it("falls back to the old key for a template with no key of its own, read and never written back (the lead's second pass)", () => {
+    const s = memory();
+    // The owner's live tuning, stored before S67 under the one key.
+    s.store.set(TUNING_STORAGE_KEY, JSON.stringify({ bloomStrength: 0.6, spikes: true }));
+    expect(loadTuning(s, "milky_way")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    // A save writes the template's own key; the old key is untouched, and from then on the template's own wins.
+    saveTuning({ ...TUNING_DEFAULTS, bloomStrength: 0.7 }, s, "milky_way");
+    expect(JSON.parse(s.store.get(TUNING_STORAGE_KEY)!)).toEqual({ bloomStrength: 0.6, spikes: true });
+    expect(loadTuning(s, "milky_way")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.7 });
+    // Saved back at the defaults, the template's key stays (empty) and the old key's values do not return.
+    saveTuning({ ...TUNING_DEFAULTS }, s, "milky_way");
+    expect(loadTuning(s, "milky_way")).toEqual(TUNING_DEFAULTS);
+    expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    // Over a template's own defaults, the old key's values are laid as any stored choices are.
+    expect(loadTuning(s, null)).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
   });
 
   it("has the star-first picture's four on by default and the diagnostics off, nothing stored, and keeps a switched one (D205, D208)", () => {

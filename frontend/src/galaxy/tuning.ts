@@ -447,19 +447,25 @@ export function sanitize(raw: unknown, base: Readonly<Tuning> = TUNING_DEFAULTS)
 export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage(), template: string | null = null): Tuning {
   const base = defaultsFor(template);
   try {
-    const text = storage?.getItem(storageKeyFor(template));
+    // A template with no key of its own falls back to the one key of before S67 (the lead's second pass, D227): the
+    // choices made under it carry over, read and never written back - the first save writes the template's own key.
+    const own = storage?.getItem(storageKeyFor(template));
+    const text = own ?? (template ? storage?.getItem(TUNING_STORAGE_KEY) : null);
     return text ? sanitize(JSON.parse(text), base) : base;
   } catch {
     return base;
   }
 }
 
-/** Keeps only what differs from the template's defaults, under its own key; nothing is stored at the defaults. */
+/**
+ * Keeps only what differs from the template's defaults, under its own key. With no template nothing is stored at the
+ * defaults; a template's key is kept as "{}" there, so the old key (loadTuning's fallback) is not read again for it.
+ */
 export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage(), template: string | null = null): void {
   try {
     const diff = changed(t, defaultsFor(template));
     const key = storageKeyFor(template);
-    if (Object.keys(diff).length === 0) storage?.removeItem(key);
+    if (Object.keys(diff).length === 0 && !template) storage?.removeItem(key);
     else storage?.setItem(key, JSON.stringify(diff));
   } catch {
     // Private windows and blocked site data: the panel works for this visit without it.
