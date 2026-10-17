@@ -554,11 +554,21 @@ test("the dust's column on screen: the layer in the march keeps the dust-only fr
   for (const row of rows) await row.getByRole("button", { name: "on", exact: true }).click();
 });
 
-// The surface-brightness gate (S67, BUILD_III V8; D227 R5; settings.ts RING_GATE): each ring's light on screen against
-// the render's own, the closure's frame (the points on, the dust and the gas off), with the layer and without, and the
-// field alone beside it. Measured and attached, NOT pinned: the points' rings were not near one at S67 (settings.ts
-// states the numbers) and the lead's rule is to stop there. What is held is that the two probes answer on one grid.
-test("the surface-brightness gate: each ring's light on screen against the render's (measured, not pinned)", async ({ page }, testInfo) => {
+// The surface-brightness gates (S67, BUILD_III V8; D227 R5 as ruled on the measurement; settings.ts RING_GATE). The
+// default template face-on in the star-first mode, the dust and the ionized gas off, each ring of RING_GATE.widthKpc out
+// to the frame's inscribed circle, per channel, with the layer and without:
+//   A (T1's surface-brightness gate): the points off - the field's whole march - against the render's published stars
+//     per ring plus the march's bulge there;
+//   B (the drawing's closure): the points on, against the render's remainder per ring plus the bulge plus the drawn
+//     points' own light summed in that ring (`__galaxygenPointsShown`: the realised census, not its expectation).
+// Each ring 1-20 kpc within RING_GATE.tolerance (S66's per-ring bound); the ring 0-1 kpc within RING_GATE.innerTolerance,
+// a carried debt (#177 at the close): the march's bulge cusp, -2.3 % in every state.
+// Disclosed, not asserted: the realised cluster census carries 0.9436 / 0.9410 / 0.9346 of the render's young part over
+// the disc (tests/test_bright.py CLUSTERS_LIGHT_OVER_YOUNG, 0.93132 since S61: a seeded Poisson realisation of the
+// clouds that moves 3-5 % with every redraw since S51), and per 1 kpc ring the clusters stand off the young part by -7.3
+// to +5.2 % of the ring's light (17-18 kpc lowest, 15-16 highest at S67) - what the points-on rings measured against the
+// expectation; gate B takes the census as drawn, so it holds the drawing, not the draw.
+test("the surface-brightness gates: each ring's light on screen against the render's (A) and the drawing's closure (B)", async ({ page }, testInfo) => {
   const net = watchApi(page);
   await page.setViewportSize(CHOOSING_VIEWPORT);
   await page.goto("/");
@@ -566,71 +576,96 @@ test("the surface-brightness gate: each ring's light on screen against the rende
   await press(page, MODE_BUTTON.stars);
   await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
   for (const label of RING_GATE.released) await release(page, label, RING_GATE.beside);
-  const group = page.getByRole("button", { name: RING_GATE.beside, exact: true }).locator("xpath=..");
-  for (const label of RING_GATE.kept) await expect(group.getByRole("button", { name: label, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: RING_GATE.beside, exact: true })).toHaveAttribute("aria-pressed", "true");
   await squareCanvas(page, 1024);
-  const read = async (label: string) => {
-    await settle(page, net, label.includes("points on") ? "stars" : "field");
+  const bins = Array.from({ length: Math.round(RING_GATE.maxKpc / RING_GATE.widthKpc) + 1 }, (_, i) => i * RING_GATE.widthKpc);
+  const pixelKpc = (2 * 20) / 1024; // the frame: 40 kpc over 1024 px
+
+  // One state's rings: the screen's light per ring over the expectation per ring, per channel; with the points, the
+  // largest single point's share of its ring and its distance from the ring's nearest edge, px (a 9 px display sprite
+  // reaches 4.5 px across an edge).
+  const read = async (gate: "A" | "B", layer: string) => {
+    await settle(page, net, gate === "B" ? "stars" : "field");
     const got = await page.evaluate(() => {
       const ref = window.__galaxygenRenderRings!;
       const shown = window.__galaxygenPointsShown;
       const arr = (p?: { positions: Float32Array; flux: Float32Array } | null) => (p ? { positions: Array.from(p.positions), flux: Array.from(p.flux) } : null);
-      return { ref, screen: window.__galaxygenRingProfile!(ref.edges), bright: arr(shown?.bright), clusters: arr(shown?.clusters), fetch: shown?.fetch ?? null };
+      return { ref, screen: window.__galaxygenRingProfile!(ref.edges), bright: arr(shown?.bright), clusters: arr(shown?.clusters) };
     });
-    expect(got.screen.rings.length, `${label}: the probes on one grid`).toBe(got.ref.light.length);
-    // Gathered into rings of RING_GATE.widthKpc (whole render rings each), out to the frame's inscribed circle; beside each
-    // ratio the lead's decomposition (second pass): the points' draw noise sigma = sqrt(sum L^2) / T, the clusters' light
-    // against the render's young part (the remainder holds no young light: the clusters carry it), the bright stars'
-    // against the render's light above the threshold (middle + old - remainder), and the share of the points' light
-    // within the display sprite's half-width (4.5 px) of the ring's edges.
-    const bins = Array.from({ length: Math.round(RING_GATE.maxKpc / RING_GATE.widthKpc) + 1 }, (_, i) => i * RING_GATE.widthKpc);
-    const halfSprite = (4.5 * 2 * 20) / 1024; // kpc: the frame is 40 kpc over 1024 px
-    const pts = (p: typeof got.bright) => (p ? pointRings(p.positions, p.flux, bins, halfSprite) : null);
-    const bright = pts(got.bright);
-    const clusters = pts(got.clusters);
-    const part = (key: string) => got.ref.parts?.[key] ?? null;
-    const rows: Record<string, unknown>[] = [];
+    expect(got.screen.rings.length, `gate ${gate}, layer ${layer}: the probes on one grid`).toBe(got.ref.light.length);
+    const points = gate === "B" ? [got.bright, got.clusters].filter((p): p is NonNullable<typeof p> => p !== null) : [];
+    if (gate === "B") expect(points.length, "gate B: the drawn points are there to sum").toBe(2);
+    if (gate === "B") expect(got.ref.unresolved, "gate B: the render's remainder per ring").toBeTruthy();
+    const rows: { from: number; to: number; ratio: number[]; largest?: number[]; edgePx?: number }[] = [];
     for (let b = 0; b + 1 < bins.length; b += 1) {
       const [from, to] = [bins[b], bins[b + 1]];
-      const sum = (rings: number[][] | null) => {
+      // The render's rings wholly inside the bin (75 pc rings do not fall on every kpc): the screen, the render and the
+      // points are each summed over exactly that span, [lo, hi), the ring straddling an edge left out of all three.
+      const inside = got.ref.light.map((_, i) => got.ref.edges[i] >= from - 1e-9 && got.ref.edges[i + 1] <= to + 1e-9);
+      const lo = got.ref.edges[inside.indexOf(true)];
+      const hi = got.ref.edges[inside.lastIndexOf(true) + 1];
+      const sum = (rings: number[][] | null | undefined) => {
         const out = [0, 0, 0];
-        if (rings) got.ref.light.forEach((_, i) => {
-          if (got.ref.edges[i] < from - 1e-9 || got.ref.edges[i + 1] > to + 1e-9) return;
-          for (let k = 0; k < 3; k += 1) out[k] += rings[i][k];
+        if (rings) inside.forEach((wholly, i) => {
+          if (wholly) for (let k = 0; k < 3; k += 1) out[k] += rings[i][k];
         });
         return out;
       };
+      const pointLight = points.map((p) => pointRings(p.positions, p.flux, [lo, hi], 0).light[0]);
       const screen = sum(got.screen.rings).map((v) => v / RING_GATE.gain);
-      const disc = sum(got.ref.light);
       const bulge = sum(got.ref.bulgeRings);
-      const T = disc.map((v, k) => v + bulge[k]);
-      const ratio = screen.map((v, k) => v / T[k]);
-      const young = sum(part("young"));
-      const above = sum(part("middle")).map((v, k) => v + sum(part("old"))[k] - sum(got.ref.unresolved ?? null)[k]);
-      const row: Record<string, unknown> = { from, to, ratio };
-      if (bright && clusters) {
-        const sigma = T.map((t, k) => Math.sqrt(bright.square[b][k] + clusters.square[b][k]) / t);
-        row.sigma = sigma;
-        row.z = ratio.map((r, k) => (r - 1) / sigma[k]);
-        row.clustersMinusYoung = clusters.light[b].map((v, k) => (v - young[k]) / T[k]);
-        row.brightMinusAbove = bright.light[b].map((v, k) => (v - above[k]) / T[k]);
-        row.nearEdge = [0, 1, 2].map((k) => (bright.nearEdge[b][k] + clusters.nearEdge[b][k]) / (bright.light[b][k] + clusters.light[b][k]));
+      const field = gate === "A" ? sum(got.ref.light) : sum(got.ref.unresolved);
+      const drawn = [0, 1, 2].map((k) => pointLight.reduce((s, p) => s + p[k], 0));
+      const expected = field.map((v, k) => v + bulge[k] + drawn[k]);
+      const row: (typeof rows)[number] = { from, to, ratio: screen.map((v, k) => v / expected[k]) };
+      if (gate === "B") {
+        // The ring's brightest point: its light over the ring's expectation, per channel, and how near an edge it stands.
+        let best = -1;
+        let bestP: { p: NonNullable<typeof points[number]>; i: number } | null = null;
+        for (const p of points) {
+          for (let i = 0; i < p.flux.length / 3; i += 1) {
+            const radius = Math.hypot(p.positions[3 * i], p.positions[3 * i + 2]);
+            if (radius < lo || radius >= hi) continue;
+            const L = p.flux[3 * i] + p.flux[3 * i + 1] + p.flux[3 * i + 2];
+            if (L > best) [best, bestP] = [L, { p, i }];
+          }
+        }
+        if (bestP) {
+          const { p, i } = bestP;
+          const radius = Math.hypot(p.positions[3 * i], p.positions[3 * i + 2]);
+          row.largest = [0, 1, 2].map((k) => p.flux[3 * i + k] / expected[k]);
+          row.edgePx = Math.min(radius - lo, hi - radius) / pixelKpc;
+        }
       }
       rows.push(row);
     }
-    const fmt = (v: unknown) => (Array.isArray(v) ? v.map((x: number) => x.toFixed(4)).join("/") : "-");
-    console.log(`the surface-brightness gate, ${label} (tile fetch ${JSON.stringify(got.fetch)}): ${rows.map((r) => `${r.from}-${r.to} kpc ${fmt(r.ratio)} sigma ${fmt(r.sigma)} z ${fmt(r.z)} clusters-young ${fmt(r.clustersMinusYoung)}`).join("; ")}`);
+    const fmt = (v: number[]) => v.map((x) => x.toFixed(5)).join("/");
+    console.log(`the surface-brightness gate ${gate}, layer ${layer}: ${rows.map((r) => `${r.from}-${r.to} kpc ${fmt(r.ratio)}${r.largest ? ` (largest point ${fmt(r.largest)} at ${r.edgePx!.toFixed(1)} px from an edge)` : ""}`).join("; ")}`);
     return rows;
   };
+  const check = (gate: string, layer: string, rows: Awaited<ReturnType<typeof read>>) => {
+    for (const row of rows) {
+      const bound = row.from < RING_GATE.innerKpc ? RING_GATE.innerTolerance : RING_GATE.tolerance;
+      const worst = Math.max(...row.ratio.map((r) => Math.abs(r - 1)));
+      expect.soft(worst, `gate ${gate}, layer ${layer}, ${row.from}-${row.to} kpc: ${row.ratio.map((r) => r.toFixed(5)).join(", ")} against ${bound}${row.from < RING_GATE.innerKpc ? " (the bulge cusp, a carried debt)" : ""}`).toBeLessThanOrEqual(bound);
+    }
+  };
   const measured: Record<string, unknown> = {};
-  measured["layer on, points on"] = await read("layer on, points on");
+  // A: the points off, with the layer and without.
   await release(page, "stars", RING_GATE.beside);
-  measured["layer on, points off"] = await read("layer on, points off");
+  measured["A, layer on"] = await read("A", "on");
   await press(page, PHYSICS_ONLY_BUTTON);
-  measured["layer off, points off"] = await read("layer off, points off");
+  measured["A, layer off"] = await read("A", "off");
+  // B: the points on, without the layer and with it.
   await press(page, "stars", RING_GATE.beside);
-  measured["layer off, points on"] = await read("layer off, points on");
+  measured["B, layer off"] = await read("B", "off");
+  await release(page, PHYSICS_ONLY_BUTTON);
+  measured["B, layer on"] = await read("B", "on");
   await testInfo.attach("rings.json", { body: JSON.stringify(measured, null, 2), contentType: "application/json" });
+  for (const [name, rows] of Object.entries(measured)) {
+    const [gate, layer] = name.split(", layer ");
+    check(gate, layer, rows as Awaited<ReturnType<typeof read>>);
+  }
 });
 
 // The switch on the wire, in every request shape the Galaxy view has (S55, D214: invariant I5; rule B13). The

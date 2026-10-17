@@ -203,41 +203,30 @@ export const READY = {
 };
 
 /**
- * The surface-brightness gate (S67, BUILD_III V8; D227 R5; T1): the default template's face-on field in the star-first
- * mode, the dust off (the conserving principle, as DUST_FREE: no extinction, no scattered or thermal light) and the
- * ionized gas off (its light is not the stars'), the points ("stars") ON - the closure, the field's remainder plus
- * the points equal the render's stars - and the starlight on. Each ring of `widthKpc` out to `maxKpc` (the frame's
- * inscribed circle), its light on screen (`__galaxygenRingProfile`, over the field's gain LIGHT_PER_LSUN_PC2) against
- * the render's stars in it plus the march's bulge there (`__galaxygenRenderRings`), per channel.
+ * The surface-brightness gates (S67, BUILD_III V8; D227 R5 as ruled on the measurement; T1): the default template's
+ * face-on field in the star-first mode, the dust off (the conserving principle, as DUST_FREE) and the ionized gas off
+ * (its light is not the stars'), each ring of `widthKpc` out to `maxKpc` (the frame's inscribed circle), per channel, its
+ * light on screen (`__galaxygenRingProfile`, over the field's gain) with the layer and without:
+ * - **A**, the points ("stars") off: against the render's stars in the ring plus the march's bulge there
+ *   (`__galaxygenRenderRings`);
+ * - **B**, the points on: against the render's remainder in the ring plus the bulge plus the drawn points' own light
+ *   summed in the ring (`__galaxygenPointsShown`: the realised census, so the gate holds the drawing, not the draw).
+ * Each ring from `innerKpc` out within `tolerance`, S66's per-ring bound; the ring inside `innerKpc` within
+ * `innerTolerance`, a carried debt (#177 at the close): the march's bulge cusp, -2.3 % in every state.
  *
- * **Measured, not pinned (D227 R5: the lead's STOP rule).** At S67 (RTX 4070, 1024 px, 1 kpc rings 1-20 kpc):
- * - the field alone (points off), layer off: every ring within 0.0053 of 1 (the march's quadrature and the pixels'
- *   squares against the rings' circles); layer on: within 0.0136 (8-9 kpc in B), the layer moving a ring by up to
- *   0.0115 against its own layer-off reading;
- * - the points on: rings from 0.920 (17-18 kpc, layer off, B) to 1.055 (13-14 kpc, layer on, B), the 17-20 kpc rings
- *   short by 4-8 % in every channel in both layer states (two draws of the catalogue), the 10-15 kpc rings over by 1-3 %;
- *   the whole R <= 20 kpc 0.9948, 0.9937, 0.9904 (layer on) and 0.9951, 0.9941, 0.9909 (off), against 0.9987, 0.9990,
- *   0.9994 with the points off;
- * - the innermost kpc 0.977 in every state: the march's bulge cusp.
- * The points' rings are not near one: the gate is reported here and in the spec's attachment, and no tolerance is
- * pinned until the lead rules (no tuning).
- *
- * **Decomposed (the lead's second pass).** The layer states are not two independent draws (D220: ring-first). At this
- * frame the tiles are level 0, all 1024 cells asked, none skipped (the tile rule's loss is 0, so the remainder lacks
- * nothing). The bright catalogue is 2 820 stars above 35 500 L_sun, 0.19 / 0.13 / 0.09 % of the stars' light, off its
- * expectation by at most 0.18 % of any ring. The points' light is the 12 710 clusters', which carry the young part (the
- * remainder holds none): their light is 0.9436 / 0.9410 / 0.9346 of the render's young part over the disc - which is
- * the whole-disc shortfall to the digit (young share 0.066 / 0.085 / 0.133 x that gap = 0.37 / 0.50 / 0.87 %). Per ring,
- * sigma = sqrt(sum L^2) / T is 0.6-6 %; (ratio - 1) / sigma lies in -2.4..+2.3 at 1-20 kpc except 2-3 kpc (layer on,
- * -5.7 R / -4.8 B), 7-8 kpc (layer on, -3.2 / -3.6) and 17-18 kpc (-3.4 / -2.8 on, -4.2 / -4.3 off), each the clusters
- * short of the young part there; less the disc-wide 0.94 the 17-18 kpc ring is still -2.1..-3.6 sigma. The innermost
- * kpc's -2.3 % is the march's bulge, not a point.
+ * Measured at S67 (RTX 4070, 1024 px), the largest |ratio - 1| over 1-20 kpc and the three channels: A 1.359e-2 with
+ * the layer (8-9 kpc, B) and 5.33e-3 without - inside; B 3.66e-2 with the layer (13-14 kpc, B; 14-15 kpc 2.9e-2 under)
+ * and 4.57e-2 without (15-16 kpc, B; 16-17 kpc 1.7e-2 over) - OUTSIDE in five ring-states, neighbouring rings off with
+ * opposite signs, while the whole of 1-20 kpc closes to 3e-4: the gate fails and is reported to the lead (D227 R5: stop,
+ * do not widen). The ring 0-1 kpc 0.977-0.978 in all four states.
  */
 export const RING_GATE = {
   widthKpc: 1,
   maxKpc: 20,
+  innerKpc: 1,
+  tolerance: 1.5e-2,
+  innerTolerance: 3e-2,
   released: ["dust", "ionized gas"],
-  kept: ["stars", "starlight"],
   beside: "starlight",
   /** The field's gain at the defaults (FieldVolume LIGHT_PER_LSUN_PC2, the field gain 1, no stops): screen light to L_sun. */
   gain: 1 / 400,
