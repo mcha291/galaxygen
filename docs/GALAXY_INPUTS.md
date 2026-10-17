@@ -695,10 +695,11 @@ defined here once and used in every entry below:
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
+| **discharged** at S67 | **120** (the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176 | 99 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179 | 101 |
 
-So the board's **110 open** is 11 permanent and 99 carried, and no item is unruled. (S22
+So the board's **112 open** is 11 permanent and 101 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3397,8 +3398,13 @@ never been judged in twenty-three sessions.
    narrowband frame's diffuse glow is Hα-only where the sky's is not. **Carried.** What closes it: a sourced
    DIG [N II]/Hα and [S II]/Hα (a value with a width, or a relation with the layer's temperature) published as
    two scalars of the nebular stage and drawn beside the layer's Hβ.
-120. **The named instrument's sprite is a display choice, and the curves' wavelength convention is unstated**
-   (S42, D192). Under `wfc3` / `wfc3n` a star is the Airy pattern of a circular aperture per channel at a
+120. ~~**The named instrument's sprite is a display choice, and the curves' wavelength convention is unstated**~~
+   **DISCHARGED at S67** (D227 R1, R3: where a template carries an instrument and a distance and the view uses that
+   instrument's filters, a point is the instrument's image of a point at its physical size - the obscured Airy of a
+   2.4 m aperture, ε 0.33, at each pivot, in pc through the distance, convolved with the 0.04″ pixel, drawn through
+   S64's extent box path, summing to one at every scale (`hstPsf.ts`); the four vanes and three pads a switch, on the
+   owner's word; the Milky Way, an artist's impression with no instrument, keeps the display sprite, declared; JWST
+   has no template and is not owed by the plan; what the build left is #178 and #179). (S42, D192). Under `wfc3` / `wfc3n` a star is the Airy pattern of a circular aperture per channel at a
    radius in proportion to the filter's pivot — the shape is the physics, its scale on screen is not (the view
    has no distance to the galaxy; the reddest first dark ring sits at 0.16 of a 25 px sprite `[inferred]`);
    HST's central obscuration and its secondary's four spikes are not drawn, and JWST (NIRCam, a hexagonal PSF —
@@ -4170,6 +4176,31 @@ never been judged in twenty-three sessions.
    since the march point-samples a log-normal map at the pixel with no footprint average; the pins are now the
    derived one-draw bound 3 √((e^v − 1) g² / N_r) over 16 lattice offsets (worst 2.93 s_r), and the mend for that
    part is a footprint average of the map over the pixel.
+177. **The march under-samples the bulge's cusp: the innermost kiloparsec reads 2.3 % low on screen** (S67, D227 R5;
+   the picture spec's ring gates). On `milky_way`'s face-on frame, dust and gas off, the ring 0-1 kpc's on-screen
+   light over the render's published light plus the bulge is 0.977-0.978 in every state (layer on or off, points on
+   or off) where every ring from 1 to 20 kpc holds within 1.36e-2 (gate A) and 5.0e-3 (gate B); the Hernquist cusp
+   (a = 0.365 kpc) varies inside one pixel (39 pc) and one march step faster than the jittered sub-samples average.
+   Held at 3e-2 and named in the test. **Carried.** What closes it: the bulge's light integrated over each pixel's
+   footprint (its projected profile is closed-form) instead of point-sampled in the march.
+178. **At a close stand the instrument's image is clamped to a 121-pixel box, its outside light returned to the inside**
+   (S67, D227 R1, R3; the review). At `ngc_4414`'s zoom stand (0.488 pc a pixel) the PSF table's half-width is 314 px
+   and S64's box path clamps it at 60: the light outside, 4.2 % (red, Airy) to 6.0 % (red, with the spikes), is put
+   back by 1/share, so the core and inner wings are 4.4-6.4 % bright and the spikes end at the box's square edge (about
+   5 λ/D in F814W); the light is kept, the shape is not (disclosed in the PSF's about). The table and the spike FFT
+   (2048², λ/D/16) are built on the main thread (about 1.6 s the first time the spikes are switched on), keep about
+   32 MB of pupil image per optics, and never free their textures. **Carried.** What closes it: a larger box at close
+   stands (the cost per point grows as its area) or the wings drawn as a second, coarser pass; the build in a worker.
+179. **The instrument is WFC3/UVIS's by its filter set, not the goal camera's, and the pupil's vanes are inferred** (S67,
+   D227; `docs/READING_HST_OPTICS.md`). `ngc_4414` draws WFC3/UVIS's 0.04″ pixel and TinyTim's `wfc3_uvis1.pup` pupil
+   because its filter set is WFC3's (D213); the goal picture (STScI-PRC99-25) was taken with WFPC2's WF chips at
+   0.0996″ a pixel, whose own spiders add a second set of vanes. The vane count (four), their full width (0.022 pupil
+   radii) and their angle on the frame (45°, a display choice) are inferred, not read; pad 1 sits on a vane in the
+   drawn geometry, true to TinyTim only if its spider runs along V2/V3 (`cpupil.c` not read). The PSF is monochromatic
+   at each pivot (not band-averaged), with no charge diffusion, jitter or aberration; the far wings carry the FFT's
+   wrap (about 0.3 % of the light); the resolved clusters, the knots and the field are not convolved with it.
+   **Carried.** What closes it: a WFPC2 instrument set on the owner's word (its curves are a download), the spider
+   read from TinyTim's code or the OTA handbook, the PSF averaged over each band.
 
 ---
 
