@@ -145,7 +145,7 @@ export function GalaxyView({
         {hdr && <HdrOutput tuning={tuning} />}
         <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
         <FrameProbe />
-        <RingProbe />
+        <RingProbe spriteSize={psf?.size ?? tuning.spriteSize} defaultSprite={psf === null} />
         <NoiseProbe />
         <CaptureProbe reach={reach} standRadius={standRadius} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
@@ -348,8 +348,11 @@ function FrameProbe() {
  * `__galaxygenFrameSum` does, and sums each pixel's linear light times the sky's area it covers at the disc's plane in
  * rings of galactocentric radius (`edges`, kpc; ringProfile.ts screenRings) - a read-only copy of what is on screen,
  * which divided by the field's gain is L_sun over the white point, the render's own unit. It changes nothing drawn.
+ * Beside the rings (the fix pass, F1): the sprite the points are drawn with - its size in drawing-buffer pixels as
+ * FluxPoints sets it (the instrument's or the tuning's spriteSize, times the pixel ratio) and whether it is the default
+ * PSF's texture - so the gate bins each point's sprite at the size the page drew it.
  */
-function RingProbe() {
+function RingProbe({ spriteSize, defaultSprite }: { spriteSize: number; defaultSprite: boolean }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
@@ -382,13 +385,14 @@ function RingProbe() {
       const tanHalfY = Math.tan((camera.fov * Math.PI) / 360);
       // The camera it binned by, returned too (the lead's fourth pass): a point's screen ring can be traced against it.
       const cam = { eye, forward, right, up, tanHalfY };
-      return { ...screenRings(pixels, size.x, size.y, cam, edges), width: size.x, height: size.y, camera: cam };
+      const sprite = { px: spriteSize * gl.getPixelRatio(), default: defaultSprite };
+      return { ...screenRings(pixels, size.x, size.y, cam, edges), width: size.x, height: size.y, camera: cam, sprite };
     };
     holder.__galaxygenRingProfile = probe;
     return () => {
       if (holder.__galaxygenRingProfile === probe) delete holder.__galaxygenRingProfile;
     };
-  }, [gl, scene, camera, advance]);
+  }, [gl, scene, camera, advance, spriteSize, defaultSprite]);
   return null;
 }
 

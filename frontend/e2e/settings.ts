@@ -231,8 +231,6 @@ export const RING_GATE = {
   innerTolerance: 3e-2,
   released: ["dust", "ionized gas"],
   beside: "starlight",
-  /** The Milky Way's display sprite, px (tuning.ts STAR_SPRITE_PX, the default): gate B bins each point's sprite pixels. */
-  spritePx: 9,
   /** The field's gain at the defaults (FieldVolume LIGHT_PER_LSUN_PC2, the field gain 1, no stops): screen light to L_sun. */
   gain: 1 / 400,
 } as const;
