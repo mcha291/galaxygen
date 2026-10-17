@@ -13093,3 +13093,15 @@ stand; (d) the stray "v" in the gateway's project file, still uncommitted; (e) s
 factor (10 or 2.5), #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test, #172
 (one mode at zoom); (f) the render's cold cost rose to ~20 s with the layer's fields (#163) — BUILD_IV W2's bundles
 absorb it. **S67 is V8**, the display defaults, the instrument and the goal captures (`BRIEF.md`).
+
+### D227. S67: the display defaults, the instrument, the goal captures (BUILD_III Phase V8; an Opus lead, Opus agents)
+
+**Opening (2026-10-17).** The owner's answers at the open, asked before anything was built: (1) **T1 — "I'll tune
+and paste"**: the display defaults per template come from the owner's hand on the tuning panel (localhost:5173),
+pasted from its copy box; the session makes them the defaults and declares each a display choice where it is
+computed (A9); nothing is picked to look like a goal. (2) **The clustered young light — "Keep as is"**: the census's
+measured width at every radius stays in the defaults; the grain's sampling half stays debt #176. (3) **One mode at
+zoom — "Leave both, carry #172"**: no ruling; #172 stays open. Usage at the open: 5-hour 0 %, weekly all-models
+57 %, weekly Fable 76 % — agents run on Opus (Fable is near the rationing rule's 80 %). T9 is ruled in the plan (the
+sprite scaled by the template's distance and the instrument's pixel scale, both carried by the template); it, NGC
+4414's instrument look, the committed captures and the goal metrics' final table are built while the owner tunes.
