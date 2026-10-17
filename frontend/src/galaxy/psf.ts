@@ -154,9 +154,6 @@ export interface PhysicalPsf {
   texture: DataTexture;
   cells: number;
   cellPc: number;
-  /** Each channel's share of the PSF the table holds before it is renormalised (the light past its edge put back). */
-  captured: [number, number, number];
-  spikes: boolean;
 }
 
 const physicalCache = new Map<string, PhysicalPsf>();
@@ -189,7 +186,7 @@ export function physicalPsf(set: FilterSet, optics: Optics | null, spikes: boole
     texture.minFilter = NearestFilter;
     texture.magFilter = NearestFilter;
     texture.needsUpdate = true;
-    psf = { texture, cells: table.cells, cellPc: table.cellPc, captured: table.captured, spikes };
+    psf = { texture, cells: table.cells, cellPc: table.cellPc };
     physicalCache.set(key, psf);
   }
   return psf;

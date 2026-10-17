@@ -719,14 +719,9 @@ export function FieldVolume({
     if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
     const holder = window as unknown as Record<string, unknown>;
     const a = light.arrays as Record<string, ArrayLike<number>>;
-    // Beside the whole (the lead's second pass on R5): each age part per ring, and the star-first remainder per ring.
-    const parts: Record<string, [number, number, number][]> = {};
-    for (const p of (ageParts(light.header, a) as AgePart[] | null) ?? []) {
-      parts[p.key] = partRings(R, phi.n, a[p.name], p.weight ? a[p.weight] : null, white);
-    }
+    // Beside the whole (the lead's second pass on R5): the star-first remainder per ring.
     const value = {
       ...renderRings(R, phi.n, a.stars, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0),
-      parts,
       unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
       lMin,
     };
