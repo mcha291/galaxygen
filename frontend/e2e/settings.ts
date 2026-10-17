@@ -219,8 +219,19 @@ export const READY = {
  *   the whole R <= 20 kpc 0.9948, 0.9937, 0.9904 (layer on) and 0.9951, 0.9941, 0.9909 (off), against 0.9987, 0.9990,
  *   0.9994 with the points off;
  * - the innermost kpc 0.977 in every state: the march's bulge cusp.
- * The points' rings are not near one, and the same sign in two draws says it is not their draw alone: the gate is
- * reported here and in the spec's attachment, and no tolerance is pinned until the lead rules (no tuning).
+ * The points' rings are not near one: the gate is reported here and in the spec's attachment, and no tolerance is
+ * pinned until the lead rules (no tuning).
+ *
+ * **Decomposed (the lead's second pass).** The layer states are not two independent draws (D220: ring-first). At this
+ * frame the tiles are level 0, all 1024 cells asked, none skipped (the tile rule's loss is 0, so the remainder lacks
+ * nothing). The bright catalogue is 2 820 stars above 35 500 L_sun, 0.19 / 0.13 / 0.09 % of the stars' light, off its
+ * expectation by at most 0.18 % of any ring. The points' light is the 12 710 clusters', which carry the young part (the
+ * remainder holds none): their light is 0.9436 / 0.9410 / 0.9346 of the render's young part over the disc - which is
+ * the whole-disc shortfall to the digit (young share 0.066 / 0.085 / 0.133 x that gap = 0.37 / 0.50 / 0.87 %). Per ring,
+ * sigma = sqrt(sum L^2) / T is 0.6-6 %; (ratio - 1) / sigma lies in -2.4..+2.3 at 1-20 kpc except 2-3 kpc (layer on,
+ * -5.7 R / -4.8 B), 7-8 kpc (layer on, -3.2 / -3.6) and 17-18 kpc (-3.4 / -2.8 on, -4.2 / -4.3 off), each the clusters
+ * short of the young part there; less the disc-wide 0.94 the 17-18 kpc ring is still -2.1..-3.6 sigma. The innermost
+ * kpc's -2.3 % is the march's bulge, not a point.
  */
 export const RING_GATE = {
   widthKpc: 1,

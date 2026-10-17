@@ -73,6 +73,70 @@ export function renderRings(
   return { edges, light, bulge: b, bulgeRings };
 }
 
+/**
+ * An age part's light per ring (the lead's second pass on R5): the render's (R, filter) part over the white point,
+ * placed round each ring by its (R, phi) weight (interface/ages.js agedLight's product), times each cell's area; with
+ * no weight, an even ring. Or an (R, phi, filter) array, summed as renderRings does.
+ */
+export function partRings(
+  R: { lo: number; width: number; n: number },
+  nPhi: number,
+  part: ArrayLike<number>,
+  weight: ArrayLike<number> | null,
+  white: readonly number[],
+): [number, number, number][] {
+  const nF = white.length;
+  const perCell = part.length === R.n * nPhi * nF;
+  const out: [number, number, number][] = [];
+  for (let i = 0; i < R.n; i += 1) {
+    const r0 = R.lo + i * R.width;
+    const area = (Math.PI * ((r0 + R.width) ** 2 - r0 ** 2) * 1e6) / nPhi;
+    const ring: [number, number, number] = [0, 0, 0];
+    for (let j = 0; j < nPhi; j += 1) {
+      const w = perCell ? 1 : weight ? Number(weight[i * nPhi + j]) : 1;
+      for (let k = 0; k < 3 && k < nF; k += 1) {
+        const v = (Number(perCell ? part[(i * nPhi + j) * nF + k] : part[i * nF + k]) * w) / white[k];
+        if (Number.isFinite(v) && v > 0) ring[k] += v * area;
+      }
+    }
+    out.push(ring);
+  }
+  return out;
+}
+
+/**
+ * Points summed in rings (the lead's second pass on R5): each point's light per channel and its square, by the ring its
+ * galactocentric radius falls in (scene positions, positions.ts toScene: x = R cos phi, z = -R sin phi), and the light
+ * of the points within `edgeKpc` of their ring's inner or outer edge - what a sprite of that half-width can carry across.
+ */
+export function pointRings(
+  positions: ArrayLike<number>,
+  flux: ArrayLike<number>,
+  edges: readonly number[],
+  edgeKpc: number,
+): { light: [number, number, number][]; square: [number, number, number][]; nearEdge: [number, number, number][]; count: number[] } {
+  const n = edges.length - 1;
+  const zero = () => Array.from({ length: n }, () => [0, 0, 0] as [number, number, number]);
+  const light = zero();
+  const square = zero();
+  const nearEdge = zero();
+  const count = new Array<number>(n).fill(0);
+  for (let p = 0; p < flux.length / 3; p += 1) {
+    const radius = Math.hypot(Number(positions[3 * p]), Number(positions[3 * p + 2]));
+    const i = radiusIndex(radius, edges);
+    if (i < 0) continue;
+    count[i] += 1;
+    const near = radius - edges[i] < edgeKpc || edges[i + 1] - radius < edgeKpc;
+    for (let k = 0; k < 3; k += 1) {
+      const L = Number(flux[3 * p + k]);
+      light[i][k] += L;
+      square[i][k] += L * L;
+      if (near) nearEdge[i][k] += L;
+    }
+  }
+  return { light, square, nearEdge, count };
+}
+
 /** A camera as the probe reads it: the eye, its unit axes (forward into the view), and the lens's tan(fov_y / 2). */
 export interface RingCamera {
   eye: readonly [number, number, number];

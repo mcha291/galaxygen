@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
 
 import type { LensCamera } from "../src/galaxy/capture";
+import { pointRings } from "../src/galaxy/ringProfile";
 import {
   CHOOSING_VIEWPORT,
   DEFAULT_TEMPLATE,
@@ -102,7 +103,9 @@ declare global {
     __galaxygenMarchGpu?: { available: boolean; ms: number | null };
     /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
     __galaxygenRingProfile?: (edges: number[]) => { rings: number[][]; pixels: number[]; outside: number[]; width: number; height: number };
-    __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][] };
+    __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][]; parts?: Record<string, number[][]>; unresolved?: number[][] | null };
+    /** The points as drawn (S67, the lead's second pass on R5; GalaxyTab). */
+    __galaxygenPointsShown?: { bright: { positions: Float32Array; flux: Float32Array } | null; clusters: { positions: Float32Array; flux: Float32Array } | null; fetch: unknown };
   }
 }
 
@@ -570,25 +573,53 @@ test("the surface-brightness gate: each ring's light on screen against the rende
     await settle(page, net, label.includes("points on") ? "stars" : "field");
     const got = await page.evaluate(() => {
       const ref = window.__galaxygenRenderRings!;
-      return { ref, screen: window.__galaxygenRingProfile!(ref.edges) };
+      const shown = window.__galaxygenPointsShown;
+      const arr = (p?: { positions: Float32Array; flux: Float32Array } | null) => (p ? { positions: Array.from(p.positions), flux: Array.from(p.flux) } : null);
+      return { ref, screen: window.__galaxygenRingProfile!(ref.edges), bright: arr(shown?.bright), clusters: arr(shown?.clusters), fetch: shown?.fetch ?? null };
     });
     expect(got.screen.rings.length, `${label}: the probes on one grid`).toBe(got.ref.light.length);
-    // Gathered into rings of RING_GATE.widthKpc (whole render rings each), out to the frame's inscribed circle.
-    const rows: { from: number; to: number; ratio: number[] }[] = [];
-    for (let from = 0; from + RING_GATE.widthKpc <= RING_GATE.maxKpc + 1e-9; from += RING_GATE.widthKpc) {
-      const to = from + RING_GATE.widthKpc;
-      const screen = [0, 0, 0];
-      const render = [0, 0, 0];
-      got.ref.light.forEach((ring, i) => {
-        if (got.ref.edges[i] < from - 1e-9 || got.ref.edges[i + 1] > to + 1e-9) return;
-        for (let k = 0; k < 3; k += 1) {
-          screen[k] += got.screen.rings[i][k] / RING_GATE.gain;
-          render[k] += ring[k] + got.ref.bulgeRings[i][k];
-        }
-      });
-      rows.push({ from, to, ratio: screen.map((v, k) => v / render[k]) });
+    // Gathered into rings of RING_GATE.widthKpc (whole render rings each), out to the frame's inscribed circle; beside each
+    // ratio the lead's decomposition (second pass): the points' draw noise sigma = sqrt(sum L^2) / T, the clusters' light
+    // against the render's young part (the remainder holds no young light: the clusters carry it), the bright stars'
+    // against the render's light above the threshold (middle + old - remainder), and the share of the points' light
+    // within the display sprite's half-width (4.5 px) of the ring's edges.
+    const bins = Array.from({ length: Math.round(RING_GATE.maxKpc / RING_GATE.widthKpc) + 1 }, (_, i) => i * RING_GATE.widthKpc);
+    const halfSprite = (4.5 * 2 * 20) / 1024; // kpc: the frame is 40 kpc over 1024 px
+    const pts = (p: typeof got.bright) => (p ? pointRings(p.positions, p.flux, bins, halfSprite) : null);
+    const bright = pts(got.bright);
+    const clusters = pts(got.clusters);
+    const part = (key: string) => got.ref.parts?.[key] ?? null;
+    const rows: Record<string, unknown>[] = [];
+    for (let b = 0; b + 1 < bins.length; b += 1) {
+      const [from, to] = [bins[b], bins[b + 1]];
+      const sum = (rings: number[][] | null) => {
+        const out = [0, 0, 0];
+        if (rings) got.ref.light.forEach((_, i) => {
+          if (got.ref.edges[i] < from - 1e-9 || got.ref.edges[i + 1] > to + 1e-9) return;
+          for (let k = 0; k < 3; k += 1) out[k] += rings[i][k];
+        });
+        return out;
+      };
+      const screen = sum(got.screen.rings).map((v) => v / RING_GATE.gain);
+      const disc = sum(got.ref.light);
+      const bulge = sum(got.ref.bulgeRings);
+      const T = disc.map((v, k) => v + bulge[k]);
+      const ratio = screen.map((v, k) => v / T[k]);
+      const young = sum(part("young"));
+      const above = sum(part("middle")).map((v, k) => v + sum(part("old"))[k] - sum(got.ref.unresolved ?? null)[k]);
+      const row: Record<string, unknown> = { from, to, ratio };
+      if (bright && clusters) {
+        const sigma = T.map((t, k) => Math.sqrt(bright.square[b][k] + clusters.square[b][k]) / t);
+        row.sigma = sigma;
+        row.z = ratio.map((r, k) => (r - 1) / sigma[k]);
+        row.clustersMinusYoung = clusters.light[b].map((v, k) => (v - young[k]) / T[k]);
+        row.brightMinusAbove = bright.light[b].map((v, k) => (v - above[k]) / T[k]);
+        row.nearEdge = [0, 1, 2].map((k) => (bright.nearEdge[b][k] + clusters.nearEdge[b][k]) / (bright.light[b][k] + clusters.light[b][k]));
+      }
+      rows.push(row);
     }
-    console.log(`the surface-brightness gate, ${label}: ${rows.map((r) => `${r.from}-${r.to} kpc ${five(r.ratio)}`).join("; ")}`);
+    const fmt = (v: unknown) => (Array.isArray(v) ? v.map((x: number) => x.toFixed(4)).join("/") : "-");
+    console.log(`the surface-brightness gate, ${label} (tile fetch ${JSON.stringify(got.fetch)}): ${rows.map((r) => `${r.from}-${r.to} kpc ${fmt(r.ratio)} sigma ${fmt(r.sigma)} z ${fmt(r.z)} clusters-young ${fmt(r.clustersMinusYoung)}`).join("; ")}`);
     return rows;
   };
   const measured: Record<string, unknown> = {};

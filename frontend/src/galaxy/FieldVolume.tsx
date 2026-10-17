@@ -39,7 +39,7 @@ import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustL
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { gpuTimer } from "./gpuTimer";
-import { renderRings } from "./ringProfile";
+import { partRings, renderRings } from "./ringProfile";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
@@ -718,12 +718,23 @@ export function FieldVolume({
     const white = light ? whiteOf(light.header) : null;
     if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
     const holder = window as unknown as Record<string, unknown>;
-    const value = renderRings(R, phi.n, light.arrays.stars as ArrayLike<number>, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0);
+    const a = light.arrays as Record<string, ArrayLike<number>>;
+    // Beside the whole (the lead's second pass on R5): each age part per ring, and the star-first remainder per ring.
+    const parts: Record<string, [number, number, number][]> = {};
+    for (const p of (ageParts(light.header, a) as AgePart[] | null) ?? []) {
+      parts[p.key] = partRings(R, phi.n, a[p.name], p.weight ? a[p.weight] : null, white);
+    }
+    const value = {
+      ...renderRings(R, phi.n, a.stars, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0),
+      parts,
+      unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
+      lMin,
+    };
     holder.__galaxygenRenderRings = value;
     return () => {
       if (holder.__galaxygenRenderRings === value) delete holder.__galaxygenRenderRings;
     };
-  }, [frame, light]);
+  }, [frame, light, lMin]);
 
   // Read when the material is built, so a mesh made after a steps change compiles once, with them.
   const stepsNow = useRef(steps);
