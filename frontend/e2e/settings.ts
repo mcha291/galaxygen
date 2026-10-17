@@ -207,8 +207,9 @@ export const READY = {
  * (29.3 pc a pixel) and at the zoom capture's stand (0.488 pc), per channel.
  * - (i) **the spikes' switch moves no light**: the frame's summed linear light with the spikes on over off, every
  *   component at its default, within `spikesTolerance` (ruled 1e-4). Measured at the fix pass (RTX 4070, 1024 px), on
- *   over off - 1, red/green/blue: 9.3e-6 / 7.7e-6 / 6.4e-6 at the template's camera, 3.6e-6 / 8.4e-6 / 1.85e-5 at the
- *   zoom stand.
+ *   over off - 1, red/green/blue, in two runs: 9.3e-6 / 7.7e-6 / 6.4e-6 and 4.9e-7 / 6.8e-7 / 8.5e-7 at the template's
+ *   camera, 3.6e-6 / 8.4e-6 / 1.85e-5 and 1.1e-6 / -1.3e-6 / -5.3e-7 at the zoom stand (the first run's server cold).
+ *   Part (ii) read the same to three figures in both runs.
  * - (ii) **the points' light lands on screen**: with the field and the dust off (`released`, beside `beside`), the
  *   points-only frame's sum against the drawn points' own light (`__galaxygenPointsShown`) as FluxPoints deposits it -
  *   each point's flux times its gain over the sky's area a pixel covers at it, times the share of its box on screen (the
