@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import type { MarchStats } from "./FieldVolume";
+import { gpuWords } from "./gpuTimer";
 import {
   type RangeControl,
   type Tuning,
@@ -49,6 +50,8 @@ interface Props {
   template?: string | null;
   filterSet?: string;
   exposure?: number;
+  /** The defaults the choices are compared with and reset to: the template's own (S67, D227 R4: tuning.ts defaultsFor). */
+  defaults?: Tuning;
 }
 
 /**
@@ -56,19 +59,19 @@ interface Props {
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS }: Props) {
   const [open, setOpen] = useState(false);
   const [march, setMarch] = useState<MarchStats>({ ...stats });
   useEffect(() => {
     if (!open) return;
-    const read = () => setMarch((m) => (m.width === stats.width && m.height === stats.height && m.ms === stats.ms ? m : { ...stats }));
+    const read = () => setMarch((m) => (m.width === stats.width && m.height === stats.height && m.ms === stats.ms && m.gpuMs === stats.gpuMs && m.gpuAvailable === stats.gpuAvailable ? m : { ...stats }));
     read();
     const timer = setInterval(read, 500);
     return () => clearInterval(timer);
   }, [open, stats]);
 
   const set = (key: keyof Tuning, value: Tuning[keyof Tuning] | string) => onChange({ ...tuning, [key]: value } as Tuning);
-  const diff = changed(tuning);
+  const diff = changed(tuning, defaults);
 
   return (
     <div className={styles.section}>
@@ -87,7 +90,7 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
               <div className={styles.label}>{group}</div>
               {TUNING_CONTROLS.filter((c) => c.group === group && !c.switch).map((control) => {
                 const value = tuning[control.key];
-                const fallback = TUNING_DEFAULTS[control.key];
+                const fallback = defaults[control.key];
                 return (
                   <div key={control.key} className={styles.tuningRow} title={control.about}>
                     <div className={styles.zoomHead}>
@@ -151,11 +154,11 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
             </div>
           ))}
           <div className={styles.tuningGroup}>
-            <div className={styles.muted} title="The march target's size and the last re-march's CPU-side time (the render call; the GPU's finish is not measured)">
-              march: {march.width}×{march.height} px, {march.ms.toFixed(1)} ms
+            <div className={styles.muted} title="The march target's size, the last re-march's CPU-side time (the render call) and, since S67, the GPU's time for it from a timer query (EXT_disjoint_timer_query_webgl2), where the browser gives one">
+              march: {march.width}×{march.height} px, {march.ms.toFixed(1)} ms CPU, {gpuWords(march.gpuMs, march.gpuAvailable ?? false)}
             </div>
             <div className={styles.pair}>
-              <button type="button" disabled={Object.keys(diff).length === 0} onClick={() => onChange({ ...TUNING_DEFAULTS })}>
+              <button type="button" disabled={Object.keys(diff).length === 0} onClick={() => onChange({ ...defaults })}>
                 Reset all
               </button>
             </div>

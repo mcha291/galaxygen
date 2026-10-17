@@ -15,7 +15,10 @@ marked **read** (quoted on the page named) or **inferred**. Nothing here was dow
   "2.4 meters in diameter", the secondary 30.5 cm.
 - **Read**, TinyTim's pupil table `wfc3_uvis1.pup` (github.com/spacetelescope/tinytim): "0.330 = OTA Secondary
   Mirror Radius", "0.022 = OTA Spider Width", three pads at radius 0.065 about 120° apart, "135.0 = image axis
-  rotation"; `cpupil.c` scales each by the pupil radius, so ε = 0.33 is the linear obscuration ratio. Whether 0.022
+  rotation"; `cpupil.c` scales each by the pupil radius, so ε = 0.33 is the linear obscuration ratio.
+- **Read** (S67's builder, the same file, 2026-10-17): the pads' lines, "# Mirror pad positions and radii",
+  "0.8921  0.0000 0.065 = OTA Pad 1 (V3, V2, Pad Radius)", "-0.4615  0.7555 0.065 = OTA Pad 2",
+  "-0.4564 -0.7606 0.065 = OTA Pad 3" - each pad's centre (V3, V2) and radius in pupil radii. Whether 0.022
   is a full or half width is not stated in the code read (**inferred**: full width, ~26 mm).
 - **Inferred**: four spider vanes (Hubble's pictures show four spikes; no official page read states the count),
   and the spikes' angle on the detector (not read).

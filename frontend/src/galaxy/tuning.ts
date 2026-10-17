@@ -62,6 +62,8 @@ export interface Tuning {
   spriteSize: number;
   /** A multiplier on the points' light: REFERENCE_LUMINOSITY is divided by it. */
   pointGain: number;
+  /** Where a template's instrument draws a point (S67, D227 R3): the full pupil's image, spikes and pads, in place of the obscured Airy. */
+  spikes: boolean;
   // The star-first mode's component layers (D205, D208): the picture's four on by default (the stars, the
   // starlight, the ionized gas and the dust as it acts), the two diagnostics off.
   /** The mode's own picture, the stars in the cells in view above the frame's threshold as points: on by default, switched off to see a layer alone. */
@@ -127,6 +129,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   toneMapping: "agx",
   spriteSize: STAR_SPRITE_PX,
   pointGain: 1,
+  spikes: false,
   compPoints: true,
   compStars: true,
   compGas: true,
@@ -273,11 +276,22 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "spriteSize", label: "sprite size", group: "Points", kind: "range", min: 3, max: 25, step: 1, unit: "px", integer: true,
-    about: "The default star sprite's size on screen; a named instrument's sprite keeps its own. A display choice.",
+    about:
+      "The default star sprite's size on screen; a named instrument's sprite keeps its own, and where a template carries " +
+      "its instrument with a distance (NGC 4414 through WFC3) a point is drawn at its physical size instead (S67). A display choice.",
   },
   {
     key: "pointGain", label: "point gain", group: "Points", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
     about: "Divides the points' 100 L☉ reference luminosity: brighter or fainter stars against the field. A display choice.",
+  },
+  {
+    key: "spikes", label: "diffraction spikes", group: "Points", kind: "toggle",
+    about:
+      "Where a template carries its instrument (NGC 4414 through WFC3: HST at 17.7 Mpc), each point is drawn as the " +
+      "telescope's image of a point at its physical size. Off: the obscured Airy pattern (2.4 m, obscuration 0.33). On: the " +
+      "full pupil's image - the obscuration, four vanes 0.022 pupil radii wide and the primary's three pads, by a 2-D FFT of " +
+      "the pupil at load - normalised to the same light, so the switch moves none. The vanes stand at 45 degrees to the " +
+      "picture's axes, a display choice: the detector's own angle was not read. No effect without an instrument (S67, D227 R3). A display choice.",
   },
   {
     key: "compPoints", label: "stars", group: "Components", kind: "toggle", switch: true,
@@ -375,8 +389,34 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
 ];
 
-/** The storage key: a UI preference, not a generated object. */
+/** The storage key: a UI preference, not a generated object. Since S67 (D227 R4) one per template: `<key>.<template>`. */
 export const TUNING_STORAGE_KEY = "galaxygen.tuning";
+
+/**
+ * Each template's display defaults over TUNING_DEFAULTS (S67, D227 R4; T1): what the owner tuned on that template,
+ * pasted from the Tuning panel's copy box. Display choices (rule D5), each declared one where it is computed (A9); none
+ * picked to look like a goal. Empty until the owner's paste: every template draws with today's values.
+ */
+export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({});
+/** Each template's default exposure, stops (S67, D227 R4: the photometric slider's start, App's state); 0 where absent. */
+export const TEMPLATE_EXPOSURE: Readonly<Record<string, number>> = Object.freeze({});
+
+/** A template's display defaults: TUNING_DEFAULTS with its own laid over, each made valid; the plain defaults for none. */
+export function defaultsFor(template: string | null | undefined, map: Readonly<Record<string, Readonly<Partial<Tuning>>>> = TEMPLATE_TUNING): Tuning {
+  const own = template ? map[template] : undefined;
+  return own ? sanitize(own, TUNING_DEFAULTS) : { ...TUNING_DEFAULTS };
+}
+
+/** A template's default exposure, stops. */
+export function exposureFor(template: string | null | undefined, map: Readonly<Record<string, number>> = TEMPLATE_EXPOSURE): number {
+  const v = template ? map[template] : undefined;
+  return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
+/** Where a template's tuning is kept: its own key, or the one key of before S67 with no template (an API without templates). */
+export function storageKeyFor(template: string | null | undefined): string {
+  return template ? `${TUNING_STORAGE_KEY}.${template}` : TUNING_STORAGE_KEY;
+}
 
 const controlOf = (key: string) => TUNING_CONTROLS.find((c) => c.key === key);
 
@@ -390,9 +430,9 @@ export function clampValue(control: TuningControl, value: unknown): number | boo
   return control.integer ? Math.round(clamped) : clamped;
 }
 
-/** Any object read as a Tuning: unknown keys dropped, bad values replaced by the default, numbers clamped. */
-export function sanitize(raw: unknown): Tuning {
-  const out: Tuning = { ...TUNING_DEFAULTS };
+/** Any object read as a Tuning: unknown keys dropped, bad values replaced by the default (`base`'s), numbers clamped. */
+export function sanitize(raw: unknown, base: Readonly<Tuning> = TUNING_DEFAULTS): Tuning {
+  const out: Tuning = { ...base };
   if (!raw || typeof raw !== "object") return out;
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     const control = controlOf(key);
@@ -403,32 +443,34 @@ export function sanitize(raw: unknown): Tuning {
   return out;
 }
 
-/** The stored tuning, or the defaults when there is none or storage is unavailable. */
-export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage()): Tuning {
+/** The stored tuning of a template (S67: its own key, over its own defaults), or its defaults when there is none or storage is unavailable. */
+export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage(), template: string | null = null): Tuning {
+  const base = defaultsFor(template);
   try {
-    const text = storage?.getItem(TUNING_STORAGE_KEY);
-    return text ? sanitize(JSON.parse(text)) : { ...TUNING_DEFAULTS };
+    const text = storage?.getItem(storageKeyFor(template));
+    return text ? sanitize(JSON.parse(text), base) : base;
   } catch {
-    return { ...TUNING_DEFAULTS };
+    return base;
   }
 }
 
-/** Keeps only what differs from the defaults; nothing is stored at the defaults. */
-export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage()): void {
+/** Keeps only what differs from the template's defaults, under its own key; nothing is stored at the defaults. */
+export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage(), template: string | null = null): void {
   try {
-    const diff = changed(t);
-    if (Object.keys(diff).length === 0) storage?.removeItem(TUNING_STORAGE_KEY);
-    else storage?.setItem(TUNING_STORAGE_KEY, JSON.stringify(diff));
+    const diff = changed(t, defaultsFor(template));
+    const key = storageKeyFor(template);
+    if (Object.keys(diff).length === 0) storage?.removeItem(key);
+    else storage?.setItem(key, JSON.stringify(diff));
   } catch {
     // Private windows and blocked site data: the panel works for this visit without it.
   }
 }
 
-/** The entries that differ from the defaults: the combination to report. */
-export function changed(t: Tuning): Partial<Tuning> {
+/** The entries that differ from the defaults (a template's, since S67: defaultsFor): the combination to report. */
+export function changed(t: Tuning, defaults: Readonly<Tuning> = TUNING_DEFAULTS): Partial<Tuning> {
   const out: Record<string, unknown> = {};
   for (const control of TUNING_CONTROLS) {
-    if (t[control.key] !== TUNING_DEFAULTS[control.key]) out[control.key] = t[control.key];
+    if (t[control.key] !== defaults[control.key]) out[control.key] = t[control.key];
   }
   return out as Partial<Tuning>;
 }

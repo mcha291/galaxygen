@@ -38,6 +38,8 @@ import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SLAB_PIECES, starT
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
+import { gpuTimer } from "./gpuTimer";
+import { renderRings } from "./ringProfile";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
@@ -659,6 +661,10 @@ export interface MarchStats {
   width: number;
   height: number;
   ms: number;
+  /** The GPU's time for the last march, ms, from a timer query (S67, D227 R6); null until one comes back. */
+  gpuMs?: number | null;
+  /** Whether the browser gives the timer query at all (EXT_disjoint_timer_query_webgl2). */
+  gpuAvailable?: boolean;
 }
 
 /**
@@ -704,6 +710,20 @@ export function FieldVolume({
   const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
   const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
+  // The render's own stars per ring (S67, D227 R5; rule B1: a read-only copy of what the viewer was sent):
+  // `window.__galaxygenRenderRings`, the surface-brightness gate's reference beside GalaxyView's ring probe.
+  useEffect(() => {
+    const R = frame?.header.grid.axes.R;
+    const phi = frame?.header.grid.axes.phi;
+    const white = light ? whiteOf(light.header) : null;
+    if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
+    const holder = window as unknown as Record<string, unknown>;
+    const value = renderRings(R, phi.n, light.arrays.stars as ArrayLike<number>, white, light.header.bulge);
+    holder.__galaxygenRenderRings = value;
+    return () => {
+      if (holder.__galaxygenRenderRings === value) delete holder.__galaxygenRenderRings;
+    };
+  }, [frame, light]);
 
   // Read when the material is built, so a mesh made after a steps change compiles once, with them.
   const stepsNow = useRef(steps);
@@ -960,6 +980,9 @@ export function FieldVolume({
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
+  // The GPU's time for the march (S67, D227 R6; gpuTimer.ts): a timer query round its render call, read back frames later.
+  const timer = useMemo(() => gpuTimer(gl.getContext() as WebGL2RenderingContext), [gl]);
+  useEffect(() => () => timer.dispose(), [timer]);
 
   // The box lives in a scene of its own, marched into a lower-resolution float target.
   const offscreen = useMemo(() => {
@@ -1086,6 +1109,13 @@ export function FieldVolume({
   // Before the composer (priority 1) draws the frame: march again only if the camera, the
   // drawing size, the gain or a tuning choice changed. A still view costs nothing after its first frame.
   useFrame(({ camera }) => {
+    // The last march's GPU time, once the GPU has it (R6): the readout's and the picture test's (window.__galaxygenMarchGpu).
+    const gpuMs = timer.poll();
+    if (stats) {
+      stats.gpuMs = gpuMs;
+      stats.gpuAvailable = timer.available;
+    }
+    (window as unknown as Record<string, unknown>).__galaxygenMarchGpu = { available: timer.available, ms: gpuMs };
     if (!mesh || !offscreen) return;
     const gain = LIGHT_PER_LSUN_PC2 * fieldGain * 2 ** stops * weight;
     const buffer = gl.getDrawingBufferSize(DRAWING);
@@ -1152,7 +1182,9 @@ export function FieldVolume({
     gl.setClearColor(0x000000, 0);
     gl.clear(true, false, false);
     const started = performance.now();
+    timer.begin();
     gl.render(offscreen.scene, camera);
+    timer.end();
     const ms = performance.now() - started;
     gl.setRenderTarget(before);
     gl.setClearColor(0x000000, 1);

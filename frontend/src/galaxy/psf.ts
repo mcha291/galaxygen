@@ -1,6 +1,7 @@
-import { CanvasTexture, DataTexture, FloatType, LinearFilter, RGBAFormat, SRGBColorSpace, type Texture } from "three";
+import { CanvasTexture, DataTexture, FloatType, LinearFilter, NearestFilter, RGBAFormat, SRGBColorSpace, type Texture } from "three";
 
 import type { FilterSet } from "./filters";
+import { type Optics, imageDensity, psfTable, pupilImage } from "./hstPsf";
 
 /**
  * A star's point spread function as a sprite (RENDER_PLAN R2): a Gaussian core
@@ -159,6 +160,64 @@ export function instrumentPsf(set: FilterSet): SpritePsf | null {
     const texture = airyTexture(pivots);
     psf = { texture, size: 25, alphaTest: 0, mean: patternMean(texture.image.data as Float32Array) };
     instrumentCache.set(key, psf);
+  }
+  return psf;
+}
+
+/**
+ * Which instrument a filter set's curves are (S67, D227 R1): its curves' SVO family, "HST/WFC3_UVIS2" for both of the
+ * WFC3 sets, or null for a stand-in set. A template's instrument applies where the view's set is its own set's.
+ */
+export function instrumentOfSet(set: FilterSet | null | undefined): string | null {
+  const svo = set?.psf?.kind === "airy" ? set.sources?.[0]?.svo : undefined;
+  return svo ? svo.slice(0, svo.lastIndexOf(".")) : null;
+}
+
+/**
+ * A point drawn as the instrument's image of a point at its physical size (S67, D227 R1, R3; hstPsf.ts): the table's
+ * corner integral as a float texture of (cells + 1)^2 texels, read by texelFetch (FluxPoints psfCorner), and its scale.
+ */
+export interface PhysicalPsf {
+  texture: DataTexture;
+  cells: number;
+  cellPc: number;
+  /** Each channel's share of the PSF the table holds before it is renormalised (the light past its edge put back). */
+  captured: [number, number, number];
+  spikes: boolean;
+}
+
+const physicalCache = new Map<string, PhysicalPsf>();
+const imageCache = new Map<string, Float64Array>();
+
+/**
+ * The table for a set's pivots under a template's optics, the obscured Airy (spikes off) or the pupil's transform with
+ * its vanes and pads (on): built once per set, optics and switch, at load (the transform about 1 s, a table about
+ * 0.6 s, on the main thread). Null where the optics are not all read (R2: the display sprite instead).
+ */
+export function physicalPsf(set: FilterSet, optics: Optics | null, spikes: boolean): PhysicalPsf | null {
+  if (!optics || !set.sources?.length) return null;
+  const pivots = set.sources.map((s) => s.pivot);
+  const opticsKey = JSON.stringify(optics);
+  const key = `${pivots.join(",")}|${opticsKey}|${spikes}`;
+  let psf = physicalCache.get(key);
+  if (!psf) {
+    let density;
+    if (spikes) {
+      let image = imageCache.get(opticsKey);
+      if (!image) {
+        image = pupilImage(optics);
+        imageCache.set(opticsKey, image);
+      }
+      density = imageDensity(image);
+    }
+    const table = psfTable(optics, { pivots, density });
+    const nodes = table.cells + 1;
+    const texture = new DataTexture(table.corners, nodes, nodes, RGBAFormat, FloatType);
+    texture.minFilter = NearestFilter;
+    texture.magFilter = NearestFilter;
+    texture.needsUpdate = true;
+    psf = { texture, cells: table.cells, cellPc: table.cellPc, captured: table.captured, spikes };
+    physicalCache.set(key, psf);
   }
   return psf;
 }

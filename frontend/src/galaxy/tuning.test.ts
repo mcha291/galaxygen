@@ -13,7 +13,13 @@ import {
   STEPS,
   TUNING_CONTROLS,
   TUNING_DEFAULTS,
+  TEMPLATE_EXPOSURE,
+  TEMPLATE_TUNING,
   TUNING_STORAGE_KEY,
+  type Tuning,
+  defaultsFor,
+  exposureFor,
+  storageKeyFor,
   changed,
   loadTuning,
   positionOf,
@@ -57,6 +63,8 @@ describe("tuning defaults (D199)", () => {
       toneMapping: "agx",
       spriteSize: STAR_SPRITE_PX,
       pointGain: 1,
+      // S67 (D227 R3): the owner's spike switch, off until their tuning sets it (off: the obscured Airy).
+      spikes: false,
       compPoints: true,
       compStars: true,
       compGas: true,
@@ -211,6 +219,55 @@ describe("tuning storage", () => {
   it("changed is empty at the defaults", () => {
     expect(changed({ ...TUNING_DEFAULTS })).toEqual({});
     expect(changed({ ...TUNING_DEFAULTS, bloomStrength: 0.5 })).toEqual({ bloomStrength: 0.5 });
+  });
+});
+
+describe("the display defaults per template (S67, D227 R4; T1)", () => {
+  // A map as the owner's paste would fill it: the Milky Way's bloom and points, NGC 4414's spikes and steps.
+  const MAP = { milky_way: { bloomStrength: 0.5, pointGain: 2 }, ngc_4414: { spikes: true, steps: 1000, bogus: 1 } as Partial<Tuning> };
+  const EXPOSURE = { ngc_4414: 1.5 };
+
+  it("ship empty: every template draws with today's values until the owner's paste fills them", () => {
+    expect(TEMPLATE_TUNING).toEqual({});
+    expect(TEMPLATE_EXPOSURE).toEqual({});
+    for (const name of ["milky_way", "ngc_4414", null]) {
+      expect(defaultsFor(name)).toEqual(TUNING_DEFAULTS);
+      expect(exposureFor(name)).toBe(0);
+    }
+  });
+
+  it("lay a template's own over TUNING_DEFAULTS, made valid; another template and none keep the plain ones", () => {
+    expect(defaultsFor("milky_way", MAP)).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.5, pointGain: 2 });
+    // Clamped and cleaned as stored choices are: steps to its range, an unknown key dropped.
+    expect(defaultsFor("ngc_4414", MAP)).toEqual({ ...TUNING_DEFAULTS, spikes: true, steps: 256 });
+    expect(defaultsFor("andromeda", MAP)).toEqual(TUNING_DEFAULTS);
+    expect(defaultsFor(null, MAP)).toEqual(TUNING_DEFAULTS);
+    expect(exposureFor("ngc_4414", EXPOSURE)).toBe(1.5);
+    expect(exposureFor("milky_way", EXPOSURE)).toBe(0);
+    expect(exposureFor("ngc_4414", { ngc_4414: Number.NaN })).toBe(0);
+  });
+
+  it("compare and reset against the template's defaults: changed() is what differs from them", () => {
+    const own = defaultsFor("milky_way", MAP);
+    expect(changed(own, own)).toEqual({});
+    expect(changed({ ...own, bloomStrength: 0.35 }, own)).toEqual({ bloomStrength: 0.35 }); // back at today's is a change here
+    expect(changed(own)).toEqual({ bloomStrength: 0.5, pointGain: 2 }); // against the plain defaults: the template's own
+  });
+
+  it("keep each template's choices under its own key, and the one key of before for no template", () => {
+    expect(storageKeyFor("milky_way")).toBe(`${TUNING_STORAGE_KEY}.milky_way`);
+    expect(storageKeyFor(null)).toBe(TUNING_STORAGE_KEY);
+    const s = memory();
+    saveTuning({ ...TUNING_DEFAULTS, steps: 128 }, s, "milky_way");
+    saveTuning({ ...TUNING_DEFAULTS, dither: false }, s, "ngc_4414");
+    expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.milky_way`)!)).toEqual({ steps: 128 });
+    expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.ngc_4414`)!)).toEqual({ dither: false });
+    expect(s.store.has(TUNING_STORAGE_KEY)).toBe(false);
+    expect(loadTuning(s, "milky_way")).toEqual({ ...TUNING_DEFAULTS, steps: 128 });
+    expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, dither: false });
+    expect(loadTuning(s, "andromeda")).toEqual(TUNING_DEFAULTS);
+    saveTuning({ ...TUNING_DEFAULTS }, s, "milky_way");
+    expect(s.store.has(`${TUNING_STORAGE_KEY}.milky_way`)).toBe(false);
   });
 
   it("has the star-first picture's four on by default and the diagnostics off, nothing stored, and keeps a switched one (D205, D208)", () => {

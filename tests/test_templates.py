@@ -346,8 +346,13 @@ def test_ngc_4414_states_the_controls_its_targets_measure_and_invents_nothing():
     assert (NGC_4414.camera.inclination_deg, NGC_4414.camera.azimuth_deg, NGC_4414.camera.fov_deg) == (55.0, 0.0, 5.0)
     assert (MILKY_WAY.camera.inclination_deg, MILKY_WAY.camera.azimuth_deg, MILKY_WAY.camera.radius_kpc,
             MILKY_WAY.camera.fov_deg) == (0.0, 270.0, 20.0, 45.0)
-    assert (NGC_4414.instrument.distance_mpc, NGC_4414.instrument.pixel_scale_arcsec) == (17.7, None)
-    assert (MILKY_WAY.instrument.distance_mpc, MILKY_WAY.instrument.pixel_scale_arcsec) == (None, None)
+    # S67 (D227 R1): was (17.7, None) - WFC3/UVIS's pixel and HST's optics, read in READING_HST_OPTICS.md.
+    assert (NGC_4414.instrument.distance_mpc, NGC_4414.instrument.pixel_scale_arcsec) == (17.7, 0.04)
+    assert (NGC_4414.instrument.aperture_m, NGC_4414.instrument.obscuration, NGC_4414.instrument.spider_width,
+            NGC_4414.instrument.spider_vanes) == (2.4, 0.33, 0.022, 4)
+    assert NGC_4414.instrument.pads == ((0.8921, 0.0, 0.065), (-0.4615, 0.7555, 0.065), (-0.4564, -0.7606, 0.065))
+    # R2: an artist's impression carries no instrument - every number None, nothing inferred entered.
+    assert all(getattr(MILKY_WAY.instrument, n) is None for n in templates.INSTRUMENT_FIELDS)
     # The frame holds the disc: the 3.6 micron isophote the source's tag names, 153.5 arcsec at 17.7 Mpc.
     assert 153.5 * 17.7e3 * math.radians(1.0 / 3600.0) < NGC_4414.camera.radius_kpc
 
@@ -426,7 +431,8 @@ def test_every_number_of_ngc_4414_has_a_tag_and_the_tag_s_citation_exists():
     decisions = text("DECISIONS.md")
     assert "### D213." in decisions
     paths = templates.numbers(NGC_4414)
-    assert len(paths) == 4 + len(seeds()) + 1 + 4 + 1  # the free controls, seeds, the merger list, the camera, the distance
+    # S67 (D227 R1): was ... + 1 (the distance alone) - the pixel scale and the five optics numbers joined it.
+    assert len(paths) == 4 + len(seeds()) + 1 + 4 + 7  # the free controls, seeds, the merger list, the camera, the instrument
     tagged = {path: NGC_4414.sources[path] for path in paths}
     tagged |= {f"fit.targets.{t.name}": t.source for t in NGC_4414.fit.targets}
     tagged |= {f"checks.{c.name}": c.source for c in NGC_4414.checks}
@@ -450,8 +456,15 @@ def test_every_number_of_ngc_4414_has_a_tag_and_the_tag_s_citation_exists():
         assert "a target measures it" in fitted and "plateau" in fitted and "not a minimum to the printed precision" in fitted
     assert not any(f"inputs.controls.{name}" in tagged for name in HELD)  # a held control states no number of its own
     assert "no merger of NGC 4414 was read" in tagged["inputs.mergers"]
-    # What was not read is None and carries no source to dress it as a number (rule B9).
-    assert "instrument.pixel_scale_arcsec" not in NGC_4414.sources
+    # What was not read is None and carries no source to dress it as a number (rule B9). S67 (D227 R1): was
+    # `"instrument.pixel_scale_arcsec" not in NGC_4414.sources` - read since; the Milky Way's instrument is not.
+    assert not any(k.startswith("instrument.") for k in MILKY_WAY.sources)
+    optics = " ".join(text("READING_HST_OPTICS.md").split())  # the reading wraps its lines
+    for path, quoted in (("instrument.pixel_scale_arcsec", "pixel scale 0.04 arcsec/pix"), ("instrument.aperture_m", "aperture 2.4 m"),
+                         ("instrument.obscuration", "0.330 = OTA Secondary Mirror Radius"), ("instrument.spider_width", "0.022 = OTA Spider Width"),
+                         ("instrument.pads", "-0.4564 -0.7606 0.065")):
+        assert "READING_HST_OPTICS.md" in tagged[path] and "[verified:" in tagged[path] and quoted in optics, path
+    assert "[inferred]" in tagged["instrument.spider_vanes"] and "[inferred]" in tagged["instrument.spider_width"]
     # The numbers the tags quote are the reading's own.
     for quoted in ("V_max = 237 ± 10, V_flat = 185 ± 10", "h_r = 19.22″", "log M* = 10.65 ± 0.10", "i = 55 ± 2",
                    "μ_Z = 31.24, D_Z = 17.70 Mpc", "(B−V)_T⁰ = 0.77", "153.5″"):
@@ -703,7 +716,9 @@ def test_the_templates_route_has_the_stated_shape():
         assert all(isinstance(v, float) for v in t["camera"].values())
         assert t["filters"] in viewer_sets, "a template names a filter set the viewer holds"
         # S58 (D217 item 2): was `t["pins"] == []`.
-        assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec"]
+        # S67 (D227 R1): was ["distance_mpc", "pixel_scale_arcsec"] - the telescope's numbers joined them.
+        assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec", "aperture_m", "obscuration", "spider_width",
+                                         "spider_vanes", "pads"]
         # S59 (D218 items 5-6): was one pin each; the second is a measured number.
         # S59 (D218): was {"name", "value", "source"} - a pin carries its input's label and unit (null for a class).
         # S60 (D219 items 3 and 8): was two pins each - a third: a named class carries ``classes``, the closed list
@@ -730,11 +745,13 @@ def test_the_templates_route_has_the_stated_shape():
     assert mw["inputs"]["controls"] == {c["name"]: c["default"] for c in registry["controls"]}
     assert mw["inputs"]["seeds"] == {s["name"]: s["default"] for s in registry["seeds"]}
     assert mw["inputs"]["mergers"] == registry["events"][0]["default"]
-    assert mw["fit"] is None and mw["checks"] == [] and mw["instrument"] == {"distance_mpc": None, "pixel_scale_arcsec": None}
+    assert mw["fit"] is None and mw["checks"] == [] and set(mw["instrument"].values()) == {None}
     assert mw["camera"] == {"inclination_deg": 0.0, "azimuth_deg": 270.0, "radius_kpc": 20.0, "fov_deg": 45.0}
     assert ngc["inputs"]["mergers"] == [] and set(ngc["inputs"]["seeds"].values()) == {4414}
     assert ngc["camera"] == {"inclination_deg": 55.0, "azimuth_deg": 0.0, "radius_kpc": NGC_4414.camera.radius_kpc, "fov_deg": 5.0}
-    assert ngc["instrument"] == {"distance_mpc": 17.7, "pixel_scale_arcsec": None}
+    assert ngc["instrument"] == {"distance_mpc": 17.7, "pixel_scale_arcsec": 0.04, "aperture_m": 2.4, "obscuration": 0.33,
+                                 "spider_width": 0.022, "spider_vanes": 4,
+                                 "pads": [[0.8921, 0.0, 0.065], [-0.4615, 0.7555, 0.065], [-0.4564, -0.7606, 0.065]]}
     fit = ngc["fit"]
     assert set(fit) == FIT_KEYS and [t["name"] for t in fit["targets"]] == ["curve_peak", "disc_scale_length", "stellar_mass"]
     for target in fit["targets"]:

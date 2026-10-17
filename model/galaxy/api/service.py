@@ -193,7 +193,7 @@ ROUTES: tuple[Route, ...] = (
         "inputs: {controls: {name: value}, seeds: {name: value}, mergers: [event]} - every input resolved, the "
         "template's overrides on the registry's defaults, in the shapes /api/inputs uses - camera: {inclination_deg, "
         "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
-        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, label, unit, value, source}] - "
+        "name>, instrument: {distance_mpc, pixel_scale_arcsec, aperture_m, obscuration (linear, pupil radii), spider_width (pupil radii), spider_vanes, pads: [[V3, V2, radius]] (pupil radii)} (null: not read), pins: [{name, label, unit, value, source}] - "
         "measured facts of the galaxy's structure that replace what the model derives: value is true or false, "
         "the observed class, and name is the published field it decides (bar_present: barred or not) - "
         "fit: null | {targets: "
@@ -805,9 +805,11 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
             "fov_deg": template.camera.fov_deg,
         },
         "filters": template.filters,
+        # S67 (D227 R1): the telescope's numbers beside the distance and the pixel, each null where not read.
         "instrument": {
-            "distance_mpc": template.instrument.distance_mpc,
-            "pixel_scale_arcsec": template.instrument.pixel_scale_arcsec,
+            name: ([list(p) for p in value] if name == "pads" and value is not None else value)
+            for name in _tpl.INSTRUMENT_FIELDS
+            for value in (getattr(template.instrument, name),)
         },
         # S58 (D217 item 2): the measured structure the template states in place of a derivation, with its source.
         # S59 (D218): a pin carries its input's label and unit, so a client can state a measured number in words.

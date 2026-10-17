@@ -70,10 +70,18 @@ SETS = {
 }
 PSF = {
     "kind": "airy",
+    # S67 (D227 R7): was "... Its scale on screen is a display choice [inferred], because the view has no distance to
+    # the galaxy; HST's central obscuration and the four spikes its secondary's supports make are not drawn." - a
+    # template with this instrument and a distance draws the physical PSF since (frontend/src/galaxy/hstPsf.ts). The
+    # JSON's copy was set to this string by hand, without a fetch; the next run of this tool writes the same.
     "about": ("The diffraction pattern of a circular aperture, (2 J1(v)/v)^2: the shape of an unresolved point through a "
-              "telescope, drawn per channel at a radius proportional to the channel's pivot wavelength (lambda/D). Its "
-              "scale on screen is a display choice [inferred], because the view has no distance to the galaxy; HST's "
-              "central obscuration and the four spikes its secondary's supports make are not drawn."),
+              "telescope, drawn per channel at a radius proportional to the channel's pivot wavelength (lambda/D). Where "
+              "a template carries this instrument with a distance (NGC 4414: WFC3/UVIS at 17.7 Mpc), a point is drawn at "
+              "its physical size instead: HST's obscured Airy pattern (2.4 m, linear obscuration 0.33) at each channel's "
+              "pivot, its angle turned into pc by the distance and convolved with the 0.04 arcsec pixel as a box, each "
+              "screen pixel taking its share of the point's light; a switch draws the full pupil's image instead, its four "
+              "spikes and the mirror's pads, the same light. Without a distance its scale on screen is a display choice "
+              "[inferred] (S67, D227)."),
 }
 
 
