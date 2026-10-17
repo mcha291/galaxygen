@@ -44,6 +44,11 @@ interface Props {
   onChange(t: Tuning): void;
   /** The field's last re-march, filled in by FieldVolume; read while the section is open. */
   stats: MarchStats;
+  /** What the copy box names beside the changed choices (S67, D227): the template tuned on, its filter set and the
+   * exposure's stops, which live outside the tuning object, so a pasted box says which galaxy it was found on. */
+  template?: string | null;
+  filterSet?: string;
+  exposure?: number;
 }
 
 /**
@@ -51,7 +56,7 @@ interface Props {
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure }: Props) {
   const [open, setOpen] = useState(false);
   const [march, setMarch] = useState<MarchStats>({ ...stats });
   useEffect(() => {
@@ -158,7 +163,7 @@ export function TuningPanel({ tuning, onChange, stats }: Props) {
               className={styles.tuningCopy}
               readOnly
               rows={3}
-              value={JSON.stringify(diff)}
+              value={JSON.stringify({ template: template ?? null, filters: filterSet ?? null, exposure: exposure ?? 0, ...diff })}
               aria-label="The changed display choices, as JSON"
               onFocus={(e) => e.currentTarget.select()}
             />

@@ -914,7 +914,7 @@ export function GalaxyTab({
           )}
         </div>
 
-        <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} />
+        <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} template={template?.name ?? null} filterSet={filterSet} exposure={exposure} />
       </div>
 
       {/* The view's own captions sit over the render's half, wherever the stage is split. */}
