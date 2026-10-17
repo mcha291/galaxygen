@@ -113,7 +113,7 @@ declare global {
       /** The points' sprite as drawn (F1): its size in drawing-buffer pixels, and whether it is the default PSF's texture. */
       sprite: { px: number; default: boolean };
     };
-    __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][]; parts?: Record<string, number[][]>; unresolved?: number[][] | null };
+    __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][]; unresolved?: number[][] | null };
     /** The points as drawn (S67, the lead's second pass on R5; GalaxyTab). */
     __galaxygenPointsShown?: { bright: { positions: Float32Array; flux: Float32Array } | null; clusters: { positions: Float32Array; flux: Float32Array } | null; fetch: unknown };
   }
