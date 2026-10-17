@@ -290,7 +290,10 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "Where a template carries its instrument (NGC 4414 through WFC3: HST at 17.7 Mpc), each point is drawn as the " +
       "telescope's image of a point at its physical size. Off: the obscured Airy pattern (2.4 m, obscuration 0.33). On: the " +
       "full pupil's image - the obscuration, four vanes 0.022 pupil radii wide and the primary's three pads, by a 2-D FFT of " +
-      "the pupil at load - normalised to the same light, so the switch moves none. The vanes stand at 45 degrees to the " +
+      "the pupil at load - normalised to the same light, so the switch moves none. Close in the box is clamped: at 0.488 " +
+      "pc a screen pixel (NGC 4414's zoom stand) the table's half-width is 314 px and the box 60, the light outside it " +
+      "returned inside by the box's share (0.958 of the red Airy, 0.940 of the red spikes), so the core is drawn 4.4 to " +
+      "6.4 % brighter in red and the spikes end at the box's square edge. The vanes stand at 45 degrees to the " +
       "picture's axes, a display choice: the detector's own angle was not read. No effect without an instrument (S67, D227 R3). A display choice.",
   },
   {

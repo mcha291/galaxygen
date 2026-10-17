@@ -437,7 +437,15 @@ export function psfRect(t: Pick<PsfTable, "cells" | "corners">, lo: [number, num
   return [a[0] - b[0] - c[0] + d[0], a[1] - b[1] - c[1] + d[1], a[2] - b[2] - c[2] + d[2]];
 }
 
-/** The box's half-side, screen pixels, at `sidePc` pc a pixel: the table's half-width, at most PROFILE_MAX_HALF (plummer.ts profileBox clamps). */
+/**
+ * The box's half-side, screen pixels, at `sidePc` pc a pixel: the table's half-width, at most PROFILE_MAX_HALF (plummer.ts
+ * profileBox clamps). The clamp, disclosed (the fix pass, F4; not changed): at NGC 4414's zoom stand, 0.488 pc a pixel,
+ * the table's half-width is 314 px (768 cells of 0.399 pc), drawn in a box of 60 px each side; psfWeights divides by the
+ * box's share, so the light outside it (the box holds 0.958 of the red Airy, 0.940 of the red spikes) is returned inside
+ * it - the core drawn 4.4 % (Airy) to 6.4 % (spikes) brighter in red, less in the bluer channels (0.971 / 0.976 of the
+ * Airy, 0.952 / 0.958 of the spikes) - and the spikes end at the box's square edge. The point's light is kept; its shape
+ * past 60 px is not drawn. At the template's camera (29.3 pc a pixel) the half-width is 6 px and nothing is clamped.
+ */
 export function psfHalf(t: Pick<PsfTable, "cells" | "cellPc">, sidePc: number): number {
   return (0.5 * t.cells * t.cellPc) / sidePc;
 }
