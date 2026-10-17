@@ -201,3 +201,33 @@ export const READY = {
   /** The longest the camera takes to stand where a template or the test put it: a canvas remade, not a model run. */
   standMs: 30_000,
 };
+
+/**
+ * The surface-brightness gate (S67, BUILD_III V8; D227 R5; T1): the default template's face-on field in the star-first
+ * mode, the dust off (the conserving principle, as DUST_FREE: no extinction, no scattered or thermal light) and the
+ * ionized gas off (its light is not the stars'), the points ("stars") ON - the closure, the field's remainder plus
+ * the points equal the render's stars - and the starlight on. Each ring of `widthKpc` out to `maxKpc` (the frame's
+ * inscribed circle), its light on screen (`__galaxygenRingProfile`, over the field's gain LIGHT_PER_LSUN_PC2) against
+ * the render's stars in it plus the march's bulge there (`__galaxygenRenderRings`), per channel.
+ *
+ * **Measured, not pinned (D227 R5: the lead's STOP rule).** At S67 (RTX 4070, 1024 px, 1 kpc rings 1-20 kpc):
+ * - the field alone (points off), layer off: every ring within 0.0053 of 1 (the march's quadrature and the pixels'
+ *   squares against the rings' circles); layer on: within 0.0136 (8-9 kpc in B), the layer moving a ring by up to
+ *   0.0115 against its own layer-off reading;
+ * - the points on: rings from 0.920 (17-18 kpc, layer off, B) to 1.055 (13-14 kpc, layer on, B), the 17-20 kpc rings
+ *   short by 4-8 % in every channel in both layer states (two draws of the catalogue), the 10-15 kpc rings over by 1-3 %;
+ *   the whole R <= 20 kpc 0.9948, 0.9937, 0.9904 (layer on) and 0.9951, 0.9941, 0.9909 (off), against 0.9987, 0.9990,
+ *   0.9994 with the points off;
+ * - the innermost kpc 0.977 in every state: the march's bulge cusp.
+ * The points' rings are not near one, and the same sign in two draws says it is not their draw alone: the gate is
+ * reported here and in the spec's attachment, and no tolerance is pinned until the lead rules (no tuning).
+ */
+export const RING_GATE = {
+  widthKpc: 1,
+  maxKpc: 20,
+  released: ["dust", "ionized gas"],
+  kept: ["stars", "starlight"],
+  beside: "starlight",
+  /** The field's gain at the defaults (FieldVolume LIGHT_PER_LSUN_PC2, the field gain 1, no stops): screen light to L_sun. */
+  gain: 1 / 400,
+} as const;

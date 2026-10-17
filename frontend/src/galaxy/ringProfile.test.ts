@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { radiusIndex, renderRings, screenRings } from "./ringProfile";
+import { hernquistWithin, radiusIndex, renderRings, screenRings } from "./ringProfile";
 
 describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
   it("sums the render's stars round each ring over the white point, times the cells' area", () => {
@@ -41,6 +41,27 @@ describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
     }
     expect(got.pixels[0]).toBeGreaterThan(0);
     expect(got.outside[0]).toBeGreaterThan(0); // the frame's corners lie past 15 kpc
+  });
+
+  it("projects the march's Hernquist bulge: its share within R, against the density integrated through cylinders", () => {
+    const a = 0.7;
+    // rho(r) = a / (2 pi r (r + a)^3) of unit mass; its light within a cylinder of radius R, by shells.
+    const within = (R: number) => {
+      let m = 0;
+      const dr = 1e-4;
+      for (let r = dr / 2; r < 400; r += dr * (1 + r)) {
+        const step = dr * (1 + r);
+        const shell = (a / (2 * Math.PI * r * (r + a) ** 3)) * 4 * Math.PI * r * r * step;
+        // A shell's share inside the cylinder: 1 - sqrt(1 - (R/r)^2) where r > R, all of it where r <= R.
+        m += shell * (r <= R ? 1 : 1 - Math.sqrt(1 - (R / r) ** 2));
+      }
+      return m;
+    };
+    for (const R of [0.1, 0.7, 2, 8]) expect(hernquistWithin(R, a)).toBeCloseTo(within(R), 3);
+    expect(hernquistWithin(a, a)).toBeCloseTo(1 / 3, 12);
+    expect(hernquistWithin(a * (1 + 1e-3), a)).toBeCloseTo(1 / 3, 3);
+    const got = renderRings({ lo: 0, width: 1, n: 2 }, 1, [0, 0], [1], [6], a);
+    expect(got.bulgeRings[0][0] + got.bulgeRings[1][0]).toBeCloseTo(6 * hernquistWithin(2, a), 12);
   });
 
   it("finds a radius's ring by its edges", () => {

@@ -33,6 +33,7 @@ import {
   MODE_BUTTON,
   PHYSICS_ONLY_BUTTON,
   READY,
+  RING_GATE,
   SELECTION_TEXT,
   STAND_TOLERANCE,
   TOLERANCE,
@@ -70,6 +71,8 @@ interface FrameRecord {
   browser: string;
   /** Seconds from the capture's start to its ready frame (S66, D226 R8): the API's compute included, cold on the first. */
   ready_s?: number;
+  /** The GPU's time for the frame's last march, ms, from a timer query (S67, D227 R6); null where the browser gives none. */
+  gpu_ms?: number | null;
 }
 
 interface FramesFile {
@@ -95,6 +98,11 @@ declare global {
       picture(): { png: string; width: number; height: number };
     };
     __galaxygenFrameSum?: () => { sum: number[]; width: number; height: number };
+    /** The march's GPU time (S67, D227 R6; FieldVolume's timer query). */
+    __galaxygenMarchGpu?: { available: boolean; ms: number | null };
+    /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
+    __galaxygenRingProfile?: (edges: number[]) => { rings: number[][]; pixels: number[]; outside: number[]; width: number; height: number };
+    __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][] };
   }
 }
 
@@ -111,7 +119,8 @@ const PLAYWRIGHT = (createRequire(import.meta.url)("@playwright/test/package.jso
 const FRAMES_ABOUT =
   "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. " +
   "`file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it. " +
-  "`ready_s` (since S66, D226 R8) is the seconds from the capture's start to its ready frame - the page's load, the template's choice, the API's compute (cold on the run's first capture, cached after) and the march - the frame-time readout of BUILD_III V7, not the GPU's time per frame.";
+  "`ready_s` (since S66, D226 R8) is the seconds from the capture's start to its ready frame - the page's load, the template's choice, the API's compute (cold on the run's first capture, cached after) and the march - the frame-time readout of BUILD_III V7, not the GPU's time per frame. " +
+  "`gpu_ms` (since S67, D227 R6) is the GPU's time for the ready frame's last march, from a WebGL2 timer query (EXT_disjoint_timer_query_webgl2) round the march's render call - the field alone, not the points or the bloom - or null where the browser gives no timer.";
 
 /**
  * One /api request as it left the page: its route, the `layer` it asked with and the `template` it named (null: no
@@ -399,6 +408,9 @@ for (const capture of CAPTURES) {
     }
     const renderer = await rendererOf(page);
     const seconds = (Date.now() - started) / 1000;
+    // The GPU's time for the ready frame's last march (S67, D227 R6): FieldVolume's timer query, null without one.
+    const gpu = await page.evaluate(() => window.__galaxygenMarchGpu ?? null);
+    const gpuMs = gpu?.available && typeof gpu.ms === "number" ? Math.round(gpu.ms * 100) / 100 : null;
     const selection = capture.mode === "stars" ? ((await page.getByText(SELECTION_TEXT).textContent())?.match(/[\d,]+ stars: .*?(?=\. The field)/)?.[0] ?? "") : "";
 
     // The committed file, by its path from frontend/ (playwright.config.ts's snapshotPathTemplate).
@@ -410,10 +422,10 @@ for (const capture of CAPTURES) {
     const sha256 = createHash("sha256").update(shot.png).digest("hex");
     const against = !recorded ? "no committed picture yet" : recorded.sha256 === sha256 ? "the committed picture, byte for byte" : "not the committed picture's bytes";
     const through = template ? "chosen in the switcher" : "the default galaxy of an API without templates";
-    const facts = { capture: capture.name, template: capture.template, stand: capture.stand ?? null, through, file: capture.file, renderer, browser: `chromium ${browser.version()}`, playwright: PLAYWRIGHT, args: GPU_ARGS, seconds, bytes: shot.png.length, sha256, against, frameSum: shot.sum, selection };
+    const facts = { capture: capture.name, template: capture.template, stand: capture.stand ?? null, through, file: capture.file, renderer, browser: `chromium ${browser.version()}`, playwright: PLAYWRIGHT, args: GPU_ARGS, seconds, gpuMs, bytes: shot.png.length, sha256, against, frameSum: shot.sum, selection };
     await testInfo.attach("capture.json", { body: JSON.stringify(facts, null, 2), contentType: "application/json" });
     testInfo.annotations.push({ type: "renderer", description: renderer });
-    console.log(`${capture.name}: ${side} x ${side}, ${shot.png.length.toLocaleString("en")} B (${against}), ${through}, frame sum ${shot.sum}, ready and taken in ${seconds.toFixed(1)} s, ${renderer}${selection ? `; ${selection}` : ""}`);
+    console.log(`${capture.name}: ${side} x ${side}, ${shot.png.length.toLocaleString("en")} B (${against}), ${through}, frame sum ${shot.sum}, ready and taken in ${seconds.toFixed(1)} s, the march ${gpuMs === null ? "with no GPU timer" : `${gpuMs} ms on the GPU`}, ${renderer}${selection ? `; ${selection}` : ""}`);
 
     const updating = testInfo.config.updateSnapshots === "all" || testInfo.config.updateSnapshots === "changed";
     try {
@@ -501,6 +513,7 @@ for (const capture of CAPTURES) {
         renderer,
         browser: `chromium ${browser.version()}`,
         ready_s: Math.round(seconds * 10) / 10,
+        gpu_ms: gpuMs,
       });
     }
   });
@@ -536,6 +549,57 @@ test("the dust's column on screen: the layer in the march keeps the dust-only fr
   for (const r of ratio) expect(Math.abs(r - 1), `the dust-only frame's light moved by more than ${DUST_COLUMN_TOLERANCE} with the layer (${ratio.join(", ")})`).toBeLessThan(DUST_COLUMN_TOLERANCE);
   // Back on, for whatever runs after on this page's storage.
   for (const row of rows) await row.getByRole("button", { name: "on", exact: true }).click();
+});
+
+// The surface-brightness gate (S67, BUILD_III V8; D227 R5; settings.ts RING_GATE): each ring's light on screen against
+// the render's own, the closure's frame (the points on, the dust and the gas off), with the layer and without, and the
+// field alone beside it. Measured and attached, NOT pinned: the points' rings were not near one at S67 (settings.ts
+// states the numbers) and the lead's rule is to stop there. What is held is that the two probes answer on one grid.
+test("the surface-brightness gate: each ring's light on screen against the render's (measured, not pinned)", async ({ page }, testInfo) => {
+  const net = watchApi(page);
+  await page.setViewportSize(CHOOSING_VIEWPORT);
+  await page.goto("/");
+  await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenRingProfile, null, { timeout: READY.timeoutMs });
+  await press(page, MODE_BUTTON.stars);
+  await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
+  for (const label of RING_GATE.released) await release(page, label, RING_GATE.beside);
+  const group = page.getByRole("button", { name: RING_GATE.beside, exact: true }).locator("xpath=..");
+  for (const label of RING_GATE.kept) await expect(group.getByRole("button", { name: label, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await squareCanvas(page, 1024);
+  const read = async (label: string) => {
+    await settle(page, net, label.includes("points on") ? "stars" : "field");
+    const got = await page.evaluate(() => {
+      const ref = window.__galaxygenRenderRings!;
+      return { ref, screen: window.__galaxygenRingProfile!(ref.edges) };
+    });
+    expect(got.screen.rings.length, `${label}: the probes on one grid`).toBe(got.ref.light.length);
+    // Gathered into rings of RING_GATE.widthKpc (whole render rings each), out to the frame's inscribed circle.
+    const rows: { from: number; to: number; ratio: number[] }[] = [];
+    for (let from = 0; from + RING_GATE.widthKpc <= RING_GATE.maxKpc + 1e-9; from += RING_GATE.widthKpc) {
+      const to = from + RING_GATE.widthKpc;
+      const screen = [0, 0, 0];
+      const render = [0, 0, 0];
+      got.ref.light.forEach((ring, i) => {
+        if (got.ref.edges[i] < from - 1e-9 || got.ref.edges[i + 1] > to + 1e-9) return;
+        for (let k = 0; k < 3; k += 1) {
+          screen[k] += got.screen.rings[i][k] / RING_GATE.gain;
+          render[k] += ring[k] + got.ref.bulgeRings[i][k];
+        }
+      });
+      rows.push({ from, to, ratio: screen.map((v, k) => v / render[k]) });
+    }
+    console.log(`the surface-brightness gate, ${label}: ${rows.map((r) => `${r.from}-${r.to} kpc ${five(r.ratio)}`).join("; ")}`);
+    return rows;
+  };
+  const measured: Record<string, unknown> = {};
+  measured["layer on, points on"] = await read("layer on, points on");
+  await release(page, "stars", RING_GATE.beside);
+  measured["layer on, points off"] = await read("layer on, points off");
+  await press(page, PHYSICS_ONLY_BUTTON);
+  measured["layer off, points off"] = await read("layer off, points off");
+  await press(page, "stars", RING_GATE.beside);
+  measured["layer off, points on"] = await read("layer off, points on");
+  await testInfo.attach("rings.json", { body: JSON.stringify(measured, null, 2), contentType: "application/json" });
 });
 
 // The switch on the wire, in every request shape the Galaxy view has (S55, D214: invariant I5; rule B13). The

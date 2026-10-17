@@ -14,6 +14,25 @@ export interface RenderRings {
   light: [number, number, number][];
   /** The bulge's light per channel over the white point, L_sun (the header's bulge): not in any ring's. */
   bulge: [number, number, number];
+  /**
+   * The bulge's light in each ring as the march draws it - a Hernquist sphere of the published scale radius
+   * (bulge_scale_radius), projected (hernquistWithin) - so each ring's light on screen can be set against the disc's
+   * and the bulge's together. Zero where the render carries no bulge.
+   */
+  bulgeRings: [number, number, number][];
+}
+
+/**
+ * A Hernquist sphere's share of its light within projected radius R, scale a (Hernquist 1990, eq. 37 integrated: M_p(<R)
+ * / M = s^2 (X(s) - 1) / (1 - s^2), s = R / a, X(s) = sech^-1(s) / sqrt(1 - s^2) below 1 and sec^-1(s) / sqrt(s^2 - 1)
+ * above; 1/3 at s = 1, by the limit). The march's bulge, FieldVolume's bulgeScale / (2 pi s (s + a)^3).
+ */
+export function hernquistWithin(R: number, a: number): number {
+  if (!(R > 0) || !(a > 0)) return 0;
+  const s = R / a;
+  if (Math.abs(s - 1) < 1e-6) return 1 / 3;
+  const X = s < 1 ? Math.acosh(1 / s) / Math.sqrt(1 - s * s) : Math.acos(1 / s) / Math.sqrt(s * s - 1);
+  return (s * s * (X - 1)) / (1 - s * s);
 }
 
 /**
@@ -26,6 +45,7 @@ export function renderRings(
   stars: ArrayLike<number>,
   white: readonly number[],
   bulge: readonly (number | null)[] | null | undefined,
+  bulgeScale = 0,
 ): RenderRings {
   const nF = white.length;
   const edges: number[] = [];
@@ -46,7 +66,11 @@ export function renderRings(
     const v = Number(bulge?.[k]) / white[k];
     return Number.isFinite(v) && v > 0 ? v : 0;
   }) as [number, number, number];
-  return { edges, light, bulge: b };
+  const bulgeRings = light.map((_, i) => {
+    const share = bulgeScale > 0 ? hernquistWithin(edges[i + 1], bulgeScale) - hernquistWithin(edges[i], bulgeScale) : 0;
+    return [b[0] * share, b[1] * share, b[2] * share] as [number, number, number];
+  });
+  return { edges, light, bulge: b, bulgeRings };
 }
 
 /** A camera as the probe reads it: the eye, its unit axes (forward into the view), and the lens's tan(fov_y / 2). */

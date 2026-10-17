@@ -718,7 +718,7 @@ export function FieldVolume({
     const white = light ? whiteOf(light.header) : null;
     if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
     const holder = window as unknown as Record<string, unknown>;
-    const value = renderRings(R, phi.n, light.arrays.stars as ArrayLike<number>, white, light.header.bulge);
+    const value = renderRings(R, phi.n, light.arrays.stars as ArrayLike<number>, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0);
     holder.__galaxygenRenderRings = value;
     return () => {
       if (holder.__galaxygenRenderRings === value) delete holder.__galaxygenRenderRings;

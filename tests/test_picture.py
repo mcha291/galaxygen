@@ -285,6 +285,9 @@ def test_the_record_beside_the_frames_describes_these_files():
         # The frame-time readout (S66, D226 R8): the seconds from the capture's start to its ready frame, written by
         # picture:update - the API's compute included (cold on the run's first capture), not the GPU's time per frame.
         assert isinstance(entry.get("ready_s"), (int, float)) and entry["ready_s"] > 0, f"{c['name']}: no ready_s"
+        # The GPU's time for the ready frame's last march (S67, D227 R6): a timer query's ms, or null where the browser
+        # gives no timer - present either way, so a missing number is said, not left out.
+        assert "gpu_ms" in entry and (entry["gpu_ms"] is None or entry["gpu_ms"] >= 0), f"{c['name']}: no gpu_ms"
     package = load(FRONTEND / "package.json")
     assert record["playwright"] == package["devDependencies"][PLAYWRIGHT], "the frames were written by another Playwright"
     # The tolerance the frames were written under is the one the spec compares with.
