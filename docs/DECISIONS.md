@@ -13105,3 +13105,18 @@ zoom — "Leave both, carry #172"**: no ruling; #172 stays open. Usage at the op
 57 %, weekly Fable 76 % — agents run on Opus (Fable is near the rationing rule's 80 %). T9 is ruled in the plan (the
 sprite scaled by the template's distance and the instrument's pixel scale, both carried by the template); it, NGC
 4414's instrument look, the committed captures and the goal metrics' final table are built while the owner tunes.
+
+**The probe and the reading (2026-10-17).** An Opus probe (read-only) found the sprite a fixed screen size (9 px,
+FWHM 1.78 px; the WFC3 Airy at 25 px, F814W FWHM 1.69 px), i.e. the WFC3 PSF drawn as if a screen pixel were a WFC3
+pixel; at `ngc_4414`'s camera (29.3 pc a pixel) T9's rule makes the PSF 0.11–0.21 screen px, at the zoom stand
+6.7–12.5 px. A reader (Opus) read HST's optics (`docs/READING_HST_OPTICS.md`): WFC3/UVIS 0.04″/px, 2.4 m, ε 0.33 and
+a spider of 0.022 pupil radii from TinyTim's pupil table, four vanes inferred; **the goal picture is WFPC2's** (WF,
+0.0996″/px), the template's instrument stays its filter set's (WFC3), disclosed. **The owner on the spikes (D192's
+reservation): "make a switch to toggle between the two".** **The lead's rulings:** R1 T9 physical — where a template
+carries an instrument and distance and the view uses that instrument's filters, a point is the obscured Airy at its
+pivot, in pc through the distance, convolved with the instrument's pixel box, through S64's extent box path (sums
+to one at every scale); R2 the Milky Way carries no instrument, its sprite a declared display choice; R3 the spikes a
+switch (off = obscured Airy, on = the pupil's FFT with vanes and pads), both normalised to one; R4 per-template
+display defaults as a viewer map, filled from the owner's paste; R5 the surface-brightness gate on screen, dust off,
+measured before pinned; R6 the GPU's time by a timer query; R7 the generated psf text changed without a fetch; R8
+the captures regenerated and the goal metrics read. One Opus builder.
