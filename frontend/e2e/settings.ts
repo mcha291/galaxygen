@@ -267,6 +267,19 @@ export const RING_GATE = {
   innerTolerance: 3e-2,
   released: ["dust", "ionized gas"],
   beside: "starlight",
-  /** The field's gain at the defaults (FieldVolume LIGHT_PER_LSUN_PC2, the field gain 1, no stops): screen light to L_sun. */
-  gain: 1 / 400,
+  /**
+   * Since the fix pass (F7) the gates read the page's own gains (`__galaxygenPointsShown`: the field's, LIGHT_PER_LSUN_PC2
+   * x the field gain x 2^exposure, and the points', times the point gain) in place of a hard-coded 1/400, and run at each
+   * setting here, set through the page's exposure slider and the Tuning panel's point gain; the gains read are held to the
+   * setting's against FieldVolume's LIGHT_PER_LSUN_PC2. Measured at F7, the largest |ratio - 1| over 1-20 kpc: at the
+   * defaults as above; at exposure +1 and point gain 2, A 1.359e-2 on / 5.33e-3 off (unmoved: the field alone scales with
+   * the stop) and B 4.53e-3 on / 4.99e-3 off (the points' selection moves with the point gain).
+   */
+  settings: [
+    { name: "at the defaults", exposure: 0, pointGain: 1 },
+    { name: "exposure +1 stop, point gain 2", exposure: 1, pointGain: 2 },
+  ],
+  lightPerLsunPc2: 1 / 400,
+  /** The point gain's control (tuning.ts TUNING_CONTROLS pointGain): a log slider of 1000 positions from min to max. */
+  pointGainControl: { min: 0.25, max: 4 },
 } as const;

@@ -476,6 +476,7 @@ export function GalaxyTab({
   // draws them with: their gain, the clusters' profile switch, and the instrument's table's grid where R1 applies - for
   // the GPU light check. It changes nothing drawn.
   const clusterProfile = tuning.clusterRadius ? 1 : 0;
+  const starFieldGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure;
   useEffect(() => {
     const holder = window as unknown as Record<string, unknown>;
     const value = {
@@ -485,6 +486,8 @@ export function GalaxyTab({
       tileLevel,
       fetch: tileFetch ? { loss: tileFetch.loss, inView: tileFetch.inView, asked: tileFetch.fetch.length, seen: tilesSeen?.length ?? 0 } : null,
       gain: pointsGain,
+      // The star-first march's gain (FieldVolume's, at weight 1): the field's light on screen per L_sun/pc^2 (F7).
+      fieldGain: starFieldGain,
       clusterProfile,
       physical: physical ? { cells: physical.cells, cellPc: physical.cellPc } : null,
     };
@@ -492,7 +495,7 @@ export function GalaxyTab({
     return () => {
       if (holder.__galaxygenPointsShown === value) delete holder.__galaxygenPointsShown;
     };
-  }, [brightPoints, clusterPoints, lMin, tileLevel, tileFetch, tilesSeen, pointsGain, clusterProfile, physical]);
+  }, [brightPoints, clusterPoints, lMin, tileLevel, tileFetch, tilesSeen, pointsGain, starFieldGain, clusterProfile, physical]);
   // What a click on a point opened (T23): the object's own published columns.
   const [picked, setPicked] = useState<{ title: string; rows: SummaryRow[] } | null>(null);
   const named = (columns: Record<string, ArrayLike<number | bigint>>, row: number, key: string) =>
