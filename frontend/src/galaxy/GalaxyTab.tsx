@@ -444,17 +444,6 @@ export function GalaxyTab({
   // its Stromgren radius, on the field's scale and at its weight; and in each level-0 cell the field's HII layers scaled
   // by the share of the cell's census not drawn (the clusters header's knots.rule), a cell naming none by the disc's:
   // all drawn, so 0 in every cell.
-  // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
-  // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
-  // the surface-brightness gate's per-ring reading of the points' draw. It changes nothing drawn.
-  useEffect(() => {
-    const holder = window as unknown as Record<string, unknown>;
-    const value = { bright: brightPoints, clusters: clusterPoints, lMin, tileLevel, fetch: tileFetch ? { loss: tileFetch.loss, inView: tileFetch.inView, asked: tileFetch.fetch.length, seen: tilesSeen?.length ?? 0 } : null };
-    holder.__galaxygenPointsShown = value;
-    return () => {
-      if (holder.__galaxygenPointsShown === value) delete holder.__galaxygenPointsShown;
-    };
-  }, [brightPoints, clusterPoints, lMin, tileLevel, tileFetch, tilesSeen]);
   const knotsCensus = knotsWanted && starClusters ? starClusters : null;
   const knotsHeader = knotsOf(knotsCensus);
   const knotsDrawn = knotsWanted && !area;
@@ -481,6 +470,29 @@ export function GalaxyTab({
   // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
   const knotDust = mode === "field" ? fieldDust : null;
   const knotsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * weights.field;
+  // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
+  // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
+  // the surface-brightness gate's per-ring reading of the points' draw. Since the fix pass (F3) also what FluxPoints
+  // draws them with: their gain, the clusters' profile switch, and the instrument's table's grid where R1 applies - for
+  // the GPU light check. It changes nothing drawn.
+  const clusterProfile = tuning.clusterRadius ? 1 : 0;
+  useEffect(() => {
+    const holder = window as unknown as Record<string, unknown>;
+    const value = {
+      bright: brightPoints,
+      clusters: clusterPoints,
+      lMin,
+      tileLevel,
+      fetch: tileFetch ? { loss: tileFetch.loss, inView: tileFetch.inView, asked: tileFetch.fetch.length, seen: tilesSeen?.length ?? 0 } : null,
+      gain: pointsGain,
+      clusterProfile,
+      physical: physical ? { cells: physical.cells, cellPc: physical.cellPc } : null,
+    };
+    holder.__galaxygenPointsShown = value;
+    return () => {
+      if (holder.__galaxygenPointsShown === value) delete holder.__galaxygenPointsShown;
+    };
+  }, [brightPoints, clusterPoints, lMin, tileLevel, tileFetch, tilesSeen, pointsGain, clusterProfile, physical]);
   // What a click on a point opened (T23): the object's own published columns.
   const [picked, setPicked] = useState<{ title: string; rows: SummaryRow[] } | null>(null);
   const named = (columns: Record<string, ArrayLike<number | bigint>>, row: number, key: string) =>

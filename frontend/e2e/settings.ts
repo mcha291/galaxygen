@@ -203,6 +203,38 @@ export const READY = {
 };
 
 /**
+ * The GPU light check for R1's path (S67's fix pass, F3; D227 R1, R3): NGC 4414 in the star-first mode at its own camera
+ * (29.3 pc a pixel) and at the zoom capture's stand (0.488 pc), per channel.
+ * - (i) **the spikes' switch moves no light**: the frame's summed linear light with the spikes on over off, every
+ *   component at its default, within `spikesTolerance` (ruled 1e-4). Measured at the fix pass (RTX 4070, 1024 px), on
+ *   over off - 1, red/green/blue: 9.3e-6 / 7.7e-6 / 6.4e-6 at the template's camera, 3.6e-6 / 8.4e-6 / 1.85e-5 at the
+ *   zoom stand.
+ * - (ii) **the points' light lands on screen**: with the field and the dust off (`released`, beside `beside`), the
+ *   points-only frame's sum against the drawn points' own light (`__galaxygenPointsShown`) as FluxPoints deposits it -
+ *   each point's flux times its gain over the sky's area a pixel covers at it, times the share of its box on screen (the
+ *   box the shader draws, by the table's or the Plummer's rectangle integrals) - within `pointsTolerance`, for both
+ *   switch states, over every point in front of the camera: the GPU draws a wide point whose centre is off the frame
+ *   (counted by centres alone the zoom frame read +1.04 % in red). Measured, frame over drawn - 1: at the template's
+ *   camera (7 661 points, no box clamped) -5.3e-5 / -2.0e-5 / -7.5e-6 with the spikes on, -5.1e-5 / -1.8e-5 / -6.0e-6
+ *   off; at the zoom stand (36 746 points, 33 958 boxes clamped to PROFILE_MAX_HALF, 2 861 clusters as Plummer spheres)
+ *   -3.57e-4 / -8.6e-5 / -4.5e-5 on, -3.58e-4 / -8.6e-5 / -4.5e-5 off.
+ *   **The tolerance, derived**: above the largest measured (3.6e-4, the zoom's red) by at least a factor two, so the
+ *   float32 rectangle differences it stands for do not fail it - the smallest power of ten above 7.2e-4, 1e-3; and far
+ *   below what the clamp's renormalisation carries (hstPsf.ts psfHalf: the 60 px box holds 0.958 / 0.971 / 0.976 of the
+ *   Airy and 0.940 / 0.952 / 0.958 of the spikes, so a box drawn without its 1/share would read 2.4-6.0 % low on the
+ *   clamped points, 92 % of the zoom's): 1e-3 is 24 times under the smallest of those, the blue Airy's 2.4e-2.
+ */
+export const GPU_LIGHT = {
+  template: "ngc_4414",
+  zoom: "ngc_4414-zoom",
+  spikes: "diffraction spikes",
+  released: ["starlight", "dust", "ionized gas"],
+  beside: "starlight",
+  spikesTolerance: 1e-4,
+  pointsTolerance: 1e-3,
+} as const;
+
+/**
  * The surface-brightness gates (S67, BUILD_III V8; D227 R5 as ruled on the measurement; T1): the default template's
  * face-on field in the star-first mode, the dust off (the conserving principle, as DUST_FREE) and the ionized gas off
  * (its light is not the stars'), each ring of `widthKpc` out to `maxKpc` (the frame's inscribed circle), per channel, its
@@ -211,12 +243,15 @@ export const READY = {
  *   (`__galaxygenRenderRings`);
  * - **B**, the points on: against the render's remainder in the ring plus the bulge plus the drawn points' own light
  *   (`__galaxygenPointsShown`: the realised census, so the gate holds the drawing, not the draw), each point's display
- *   sprite binned pixel by pixel where its pixels' rays meet the plane (ringProfile.ts spriteRings) - as the screen is.
+ *   sprite binned pixel by pixel where its pixels' rays meet the plane (ringProfile.ts spriteRings) - as the screen is:
+ *   at the size the page drew it (the ring probe's `sprite`, the fix pass F1) and each pixel turned back by the sky's
+ *   area at the plane over that at the point (F2).
  * Each ring from `innerKpc` out within `tolerance`, S66's per-ring bound; the ring inside `innerKpc` within
  * `innerTolerance`, a carried debt (#177 at the close): the march's bulge cusp, -2.3 % in every state.
  *
  * Measured at S67 (RTX 4070, 1024 px), the largest |ratio - 1| over 1-20 kpc and the three channels: A 1.359e-2 with
- * the layer (8-9 kpc, B) and 5.33e-3 without; B 5.04e-3 with the layer and 5.01e-3 without. The ring 0-1 kpc 0.977-0.978
+ * the layer (8-9 kpc, B) and 5.33e-3 without; B 5.04e-3 with the layer and 5.01e-3 without - after the fix pass's F2
+ * (the area ratio) B 5.16e-3 with the layer and 5.04e-3 without (11-12 kpc, R), A unmoved. The ring 0-1 kpc 0.977-0.978
  * in all four states. B binned by the points' own radii read up to 4.57e-2 off (the lead's fourth pass): the clusters
  * stand off the plane (|height| median 233 pc, 90 % 740 pc, at most 2.75 kpc), so from the face-on camera 48 kpc away a
  * cluster lands up to 7 px from its own radius at 15 kpc (the brightest of 15-16 kpc, 5 % of the ring at 525 pc up, in
