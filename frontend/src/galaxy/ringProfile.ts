@@ -107,45 +107,16 @@ export function partRings(
 }
 
 /**
- * Points summed in rings (the lead's second pass on R5): each point's light per channel and its square, by the ring its
- * galactocentric radius falls in (scene positions, positions.ts toScene: x = R cos phi, z = -R sin phi), and the light
- * of the points within `edgeKpc` of their ring's inner or outer edge - what a sprite of that half-width can carry across.
- */
-export function pointRings(
-  positions: ArrayLike<number>,
-  flux: ArrayLike<number>,
-  edges: readonly number[],
-  edgeKpc: number,
-): { light: [number, number, number][]; square: [number, number, number][]; nearEdge: [number, number, number][]; count: number[] } {
-  const n = edges.length - 1;
-  const zero = () => Array.from({ length: n }, () => [0, 0, 0] as [number, number, number]);
-  const light = zero();
-  const square = zero();
-  const nearEdge = zero();
-  const count = new Array<number>(n).fill(0);
-  for (let p = 0; p < flux.length / 3; p += 1) {
-    const radius = Math.hypot(Number(positions[3 * p]), Number(positions[3 * p + 2]));
-    const i = radiusIndex(radius, edges);
-    if (i < 0) continue;
-    count[i] += 1;
-    const near = radius - edges[i] < edgeKpc || edges[i + 1] - radius < edgeKpc;
-    for (let k = 0; k < 3; k += 1) {
-      const L = Number(flux[3 * p + k]);
-      light[i][k] += L;
-      square[i][k] += L * L;
-      if (near) nearEdge[i][k] += L;
-    }
-  }
-  return { light, square, nearEdge, count };
-}
-
-/**
  * Points' light binned where their sprites put it (the lead's fourth pass on R5, gate B): each point projected through
  * the probe's camera to its window position, its `size` px display sprite's pixels - those whose centres fall in the
  * square about it, as the GPU rasterises a point - each taking the point's light times the texture's bilinear sample at
  * that pixel's gl_PointCoord over size^2 x the sprite's mean (FluxPoints' deposit, flux.ts spriteLight), and each pixel
  * binned by where its ray meets the disc's plane, as screenRings bins it. A point off the plane lands where its ray
  * meets the plane, not over its own radius; a sprite near a ring's edge lands on both sides of it.
+ * The GPU deposits a point's light over the sky's area one pixel covers at the point (FluxPoints: (1000 depth / f)^2
+ * depth / dist) and screenRings turns each pixel back by the area at the plane ((1000 t / f)^2 / |dir|), so each sprite
+ * pixel's light is multiplied by the second over the first (the fix pass, F2) and the gate reads what the screen does:
+ * a point 0.5 kpc above the plane under a camera 48 kpc away comes back 2 % brighter than it was drawn.
  */
 export function spriteRings(
   positions: ArrayLike<number>,
@@ -168,6 +139,8 @@ export function spriteRings(
     const d = [Number(positions[3 * p]) - ex, Number(positions[3 * p + 1]) - ey, Number(positions[3 * p + 2]) - ez];
     const depth = dot(d, cam.forward);
     if (!(depth > 0)) continue;
+    const pointSide = (1000 * depth) / f;
+    const pointArea = (pointSide * pointSide * depth) / Math.hypot(d[0], d[1], d[2]); // pc^2 a pixel covers at the point
     const cx = width / 2 + (f * dot(d, cam.right)) / depth;
     const cy = height / 2 + (f * dot(d, cam.up)) / depth;
     for (let iy = Math.floor(cy - size / 2) - 1; iy <= Math.ceil(cy + size / 2); iy += 1) {
@@ -187,7 +160,10 @@ export function spriteRings(
         const dz = cam.forward[2] + cam.right[2] * u + cam.up[2] * v;
         const ring = radiusIndex(Math.hypot(ex + t * dx, ez + t * dz), edges);
         if (ring < 0) continue;
-        for (let k = 0; k < 3; k += 1) rings[ring][k] += Number(flux[3 * p + k]) * w;
+        // The sky's area at the plane over its area at the point: screenRings' weight over FluxPoints' deposit.
+        const planeSide = (1000 * t) / f;
+        const back = (planeSide * planeSide) / Math.hypot(dx, dy, dz) / pointArea;
+        for (let k = 0; k < 3; k += 1) rings[ring][k] += Number(flux[3 * p + k]) * w * back;
       }
     }
   }

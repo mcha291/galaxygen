@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hernquistWithin, partRings, pointRings, radiusIndex, renderRings, screenRings, spriteRings } from "./ringProfile";
+import { hernquistWithin, partRings, radiusIndex, renderRings, screenRings, spriteRings } from "./ringProfile";
 import { psfMean, spriteTexels } from "./sprite";
 
 describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
@@ -65,16 +65,10 @@ describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
     expect(got.bulgeRings[0][0] + got.bulgeRings[1][0]).toBeCloseTo(6 * hernquistWithin(2, a), 12);
   });
 
-  it("sums an age part placed by its weight, and points by their ring with their squares and their edge light", () => {
+  it("sums an age part placed by its weight", () => {
     // One ring of two sectors: a part of 2 per pc^2 placed 1.5 and 0.5 round it, the white point 2.
     const got = partRings({ lo: 0, width: 1, n: 1 }, 2, [2, 2, 2], [1.5, 0.5], [2, 2, 2]);
     expect(got[0][0]).toBeCloseTo(Math.PI * 1e6, 6);
-    const pts = pointRings([0.5, 0, 0, 0, 0, -1.95, 3, 0, 0], [1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2], 0.1);
-    expect(pts.count).toEqual([1, 1]);
-    expect(pts.light[1]).toEqual([4, 5, 6]);
-    expect(pts.square[0]).toEqual([1, 4, 9]);
-    expect(pts.nearEdge[1]).toEqual([4, 5, 6]); // 1.95 kpc: within 0.1 of the outer edge
-    expect(pts.nearEdge[0]).toEqual([0, 0, 0]);
   });
 
   it("bins a point's sprite where its pixels' rays meet the plane: off the plane outward, near an edge on both sides", () => {
@@ -95,6 +89,12 @@ describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
     expect(high[2][0]).toBeLessThan(low[2][0]); // 15-15.5 loses it
     expect(high[2][0] + high[3][0]).toBeGreaterThan(0.98 * (low[2][0] + low[3][0])); // the light kept
     expect(high[3][0]).toBeGreaterThan(0.5); // most of it past 15.5 kpc, where its ray meets the plane
+    // Each pixel turned back by the sky's area at the plane over that at the point (F2): the point 0.5 kpc nearer the
+    // camera was deposited over a smaller area, so the plane's reading returns (d / (d - 0.5))^2 of the in-plane one -
+    // set on the same screen position as the in-plane point, so the same pixels sample the same sprite.
+    const sum = (r: number[][]) => r.reduce((s, ring) => s + ring[0], 0);
+    const above = spriteRings([(15.42 * (d - 0.5)) / d, 0.5, 0], [1, 1, 1], cam, 1024, 1024, 9, texels, 64, mean, edges);
+    expect(sum(above) / sum(low)).toBeCloseTo((d / (d - 0.5)) ** 2, 6);
   });
 
   it("finds a radius's ring by its edges", () => {
