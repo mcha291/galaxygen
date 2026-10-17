@@ -124,6 +124,8 @@ declare global {
       fetch: unknown;
       /** What FluxPoints draws them with (the fix pass, F3): the points' gain, the clusters' profile, the table's grid. */
       gain: number;
+      /** The star-first march's gain: L_SUN per pc^2 to screen light, the field gain and the exposure's stops (F7). */
+      fieldGain: number;
       clusterProfile: 0 | 1;
       physical: { cells: number; cellPc: number } | null;
     };
@@ -589,7 +591,11 @@ test("the dust's column on screen: the layer in the march keeps the dust-only fr
 // clouds that moves 3-5 % with every redraw since S51), and per 1 kpc ring the clusters stand off the young part by -7.3
 // to +5.2 % of the ring's light (17-18 kpc lowest, 15-16 highest at S67) - what the points-on rings measured against the
 // expectation; gate B takes the census as drawn, so it holds the drawing, not the draw.
-test("the surface-brightness gates: each ring's light on screen against the render's (A) and the drawing's closure (B)", async ({ page }, testInfo) => {
+// Since the fix pass (F7) read on the page's own gains (`__galaxygenPointsShown`: the field's and the points'), at the
+// defaults and again at another exposure and point gain set through the page (RING_GATE.settings), so they hold under
+// any template's tuning.
+for (const setting of RING_GATE.settings) {
+test(`the surface-brightness gates, ${setting.name}: each ring's light on screen against the render's (A) and the drawing's closure (B)`, async ({ page }, testInfo) => {
   const net = watchApi(page);
   await page.setViewportSize(CHOOSING_VIEWPORT);
   await page.goto("/");
@@ -599,6 +605,13 @@ test("the surface-brightness gates: each ring's light on screen against the rend
   for (const label of RING_GATE.released) await release(page, label, RING_GATE.beside);
   await expect(page.getByRole("button", { name: RING_GATE.beside, exact: true })).toHaveAttribute("aria-pressed", "true");
   await squareCanvas(page, 1024);
+  // The setting, through the page's own controls: the exposure slider and the Tuning panel's point gain.
+  if (setting.exposure !== 0 || setting.pointGain !== 1) {
+    await page.getByRole("slider", { name: "Exposure", exact: true }).fill(String(setting.exposure));
+    await page.getByRole("button", { name: DUST_ONLY.panel }).click();
+    const { min, max } = RING_GATE.pointGainControl;
+    await page.getByRole("slider", { name: "point gain", exact: true }).fill(String(Math.round((1000 * Math.log(setting.pointGain / min)) / Math.log(max / min))));
+  }
   const bins = Array.from({ length: Math.round(RING_GATE.maxKpc / RING_GATE.widthKpc) + 1 }, (_, i) => i * RING_GATE.widthKpc);
   const pixelKpc = (2 * 20) / 1024; // the frame: 40 kpc over 1024 px
 
@@ -611,8 +624,11 @@ test("the surface-brightness gates: each ring's light on screen against the rend
       const ref = window.__galaxygenRenderRings!;
       const shown = window.__galaxygenPointsShown;
       const arr = (p?: { positions: Float32Array; flux: Float32Array } | null) => (p ? { positions: Array.from(p.positions), flux: Array.from(p.flux) } : null);
-      return { ref, screen: window.__galaxygenRingProfile!(ref.edges), bright: arr(shown?.bright), clusters: arr(shown?.clusters) };
+      return { ref, screen: window.__galaxygenRingProfile!(ref.edges), bright: arr(shown?.bright), clusters: arr(shown?.clusters), gain: shown!.gain, fieldGain: shown!.fieldGain };
     });
+    // The gains the page drew with (F7): the field's on the march, the points' on their sprites - the setting's, as set.
+    const gains = [got.fieldGain / RING_GATE.lightPerLsunPc2 / 2 ** setting.exposure, got.gain / got.fieldGain / setting.pointGain];
+    expect(farthest(gains), `gate ${gate}, layer ${layer}: the page's gains, ${setting.name} (${gains.join(", ")})`).toBeLessThan(1e-12);
     expect(got.screen.rings.length, `gate ${gate}, layer ${layer}: the probes on one grid`).toBe(got.ref.light.length);
     const points = gate === "B" ? [got.bright, got.clusters].filter((p): p is NonNullable<typeof p> => p !== null) : [];
     // The drawn points' light where their sprites put it (the lead's fourth pass): each point through the probe's own
@@ -643,10 +659,11 @@ test("the surface-brightness gates: each ring's light on screen against the rend
         return out;
       };
 
-      const screen = sum(got.screen.rings).map((v) => v / RING_GATE.gain);
+      // In the field's unit, L_sun over the white point: the screen over the field's gain, the points at their own gain.
+      const screen = sum(got.screen.rings).map((v) => v / got.fieldGain);
       const bulge = sum(got.ref.bulgeRings);
       const field = gate === "A" ? sum(got.ref.light) : sum(got.ref.unresolved);
-      const drawn = [0, 1, 2].map((k) => sprites.reduce((s, rings) => s + sum(rings)[k], 0));
+      const drawn = [0, 1, 2].map((k) => (sprites.reduce((s, rings) => s + sum(rings)[k], 0) * got.gain) / got.fieldGain);
       const expected = field.map((v, k) => v + bulge[k] + drawn[k]);
       const row: (typeof rows)[number] = { from, to, ratio: screen.map((v, k) => v / expected[k]) };
       if (gate === "B") {
@@ -664,14 +681,14 @@ test("the surface-brightness gates: each ring's light on screen against the rend
         if (bestP) {
           const { p, i } = bestP;
           const radius = Math.hypot(p.positions[3 * i], p.positions[3 * i + 2]);
-          row.largest = [0, 1, 2].map((k) => p.flux[3 * i + k] / expected[k]);
+          row.largest = [0, 1, 2].map((k) => (p.flux[3 * i + k] * got.gain) / got.fieldGain / expected[k]);
           row.edgePx = Math.min(radius - lo, hi - radius) / pixelKpc;
         }
       }
       rows.push(row);
     }
     const fmt = (v: number[]) => v.map((x) => x.toFixed(5)).join("/");
-    console.log(`the surface-brightness gate ${gate}, layer ${layer}: ${rows.map((r) => `${r.from}-${r.to} kpc ${fmt(r.ratio)}${r.largest ? ` (largest point ${fmt(r.largest)} at ${r.edgePx!.toFixed(1)} px from an edge)` : ""}`).join("; ")}`);
+    console.log(`the surface-brightness gate ${gate}, layer ${layer}, ${setting.name}:${rows.map((r) => `${r.from}-${r.to} kpc ${fmt(r.ratio)}${r.largest ? ` (largest point ${fmt(r.largest)} at ${r.edgePx!.toFixed(1)} px from an edge)` : ""}`).join("; ")}`);
     return rows;
   };
   const check = (gate: string, layer: string, rows: Awaited<ReturnType<typeof read>>) => {
@@ -698,6 +715,7 @@ test("the surface-brightness gates: each ring's light on screen against the rend
     check(gate, layer, rows as Awaited<ReturnType<typeof read>>);
   }
 });
+}
 
 /** One point set as the page drew it, copied out of the page. */
 interface ShownPoints {
