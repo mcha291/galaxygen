@@ -103,7 +103,16 @@ declare global {
     /** The march's GPU time (S67, D227 R6; FieldVolume's timer query). */
     __galaxygenMarchGpu?: { available: boolean; ms: number | null };
     /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
-    __galaxygenRingProfile?: (edges: number[]) => { rings: number[][]; pixels: number[]; outside: number[]; width: number; height: number; camera: RingCamera };
+    __galaxygenRingProfile?: (edges: number[]) => {
+      rings: number[][];
+      pixels: number[];
+      outside: number[];
+      width: number;
+      height: number;
+      camera: RingCamera;
+      /** The points' sprite as drawn (F1): its size in drawing-buffer pixels, and whether it is the default PSF's texture. */
+      sprite: { px: number; default: boolean };
+    };
     __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][]; parts?: Record<string, number[][]>; unresolved?: number[][] | null };
     /** The points as drawn (S67, the lead's second pass on R5; GalaxyTab). */
     __galaxygenPointsShown?: { bright: { positions: Float32Array; flux: Float32Array } | null; clusters: { positions: Float32Array; flux: Float32Array } | null; fetch: unknown };
@@ -599,9 +608,12 @@ test("the surface-brightness gates: each ring's light on screen against the rend
     // camera, its display sprite's pixels each binned where its ray meets the plane (ringProfile.ts spriteRings) - a
     // cluster hundreds of pc off the plane lands up to 7 px from its own radius at 15 kpc, and a 9 px sprite near an
     // edge lands on both sides of it; binned by the points' own radii instead, gate B read up to 4.6 % off at S67.
+    // At the size the page drew the sprite (F1: the ring probe's reading of FluxPoints' spritePx), with the default PSF's
+    // texels - the only sprite this gate's template draws (R2), held so.
+    expect(got.screen.sprite.default, `gate ${gate}, layer ${layer}: the points drawn with the default sprite`).toBe(true);
     const texels = spriteTexels(64);
     const mean = psfMean(64);
-    const sprites = points.map((p) => spriteRings(p.positions, p.flux, got.screen.camera, got.screen.width, got.screen.height, RING_GATE.spritePx, texels, 64, mean, got.ref.edges));
+    const sprites = points.map((p) => spriteRings(p.positions, p.flux, got.screen.camera, got.screen.width, got.screen.height, got.screen.sprite.px, texels, 64, mean, got.ref.edges));
     if (gate === "B") expect(points.length, "gate B: the drawn points are there to sum").toBe(2);
     if (gate === "B") expect(got.ref.unresolved, "gate B: the render's remainder per ring").toBeTruthy();
     const rows: { from: number; to: number; ratio: number[]; largest?: number[]; edgePx?: number }[] = [];
