@@ -380,7 +380,9 @@ function RingProbe() {
       const forward: [number, number, number] = [-e[8], -e[9], -e[10]];
       const eye: [number, number, number] = [e[12], e[13], e[14]];
       const tanHalfY = Math.tan((camera.fov * Math.PI) / 360);
-      return { ...screenRings(pixels, size.x, size.y, { eye, forward, right, up, tanHalfY }, edges), width: size.x, height: size.y };
+      // The camera it binned by, returned too (the lead's fourth pass): a point's screen ring can be traced against it.
+      const cam = { eye, forward, right, up, tanHalfY };
+      return { ...screenRings(pixels, size.x, size.y, cam, edges), width: size.x, height: size.y, camera: cam };
     };
     holder.__galaxygenRingProfile = probe;
     return () => {

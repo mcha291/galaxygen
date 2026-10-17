@@ -210,15 +210,18 @@ export const READY = {
  * - **A**, the points ("stars") off: against the render's stars in the ring plus the march's bulge there
  *   (`__galaxygenRenderRings`);
  * - **B**, the points on: against the render's remainder in the ring plus the bulge plus the drawn points' own light
- *   summed in the ring (`__galaxygenPointsShown`: the realised census, so the gate holds the drawing, not the draw).
+ *   (`__galaxygenPointsShown`: the realised census, so the gate holds the drawing, not the draw), each point's display
+ *   sprite binned pixel by pixel where its pixels' rays meet the plane (ringProfile.ts spriteRings) - as the screen is.
  * Each ring from `innerKpc` out within `tolerance`, S66's per-ring bound; the ring inside `innerKpc` within
  * `innerTolerance`, a carried debt (#177 at the close): the march's bulge cusp, -2.3 % in every state.
  *
  * Measured at S67 (RTX 4070, 1024 px), the largest |ratio - 1| over 1-20 kpc and the three channels: A 1.359e-2 with
- * the layer (8-9 kpc, B) and 5.33e-3 without - inside; B 3.66e-2 with the layer (13-14 kpc, B; 14-15 kpc 2.9e-2 under)
- * and 4.57e-2 without (15-16 kpc, B; 16-17 kpc 1.7e-2 over) - OUTSIDE in five ring-states, neighbouring rings off with
- * opposite signs, while the whole of 1-20 kpc closes to 3e-4: the gate fails and is reported to the lead (D227 R5: stop,
- * do not widen). The ring 0-1 kpc 0.977-0.978 in all four states.
+ * the layer (8-9 kpc, B) and 5.33e-3 without; B 5.04e-3 with the layer and 5.01e-3 without. The ring 0-1 kpc 0.977-0.978
+ * in all four states. B binned by the points' own radii read up to 4.57e-2 off (the lead's fourth pass): the clusters
+ * stand off the plane (|height| median 233 pc, 90 % 740 pc, at most 2.75 kpc), so from the face-on camera 48 kpc away a
+ * cluster lands up to 7 px from its own radius at 15 kpc (the brightest of 15-16 kpc, 5 % of the ring at 525 pc up, in
+ * 16-17 on screen); bloom, the tone curve and the clusters' radius moved none of it (the probes read before both, and no
+ * cluster fills a pixel here).
  */
 export const RING_GATE = {
   widthKpc: 1,
@@ -228,6 +231,8 @@ export const RING_GATE = {
   innerTolerance: 3e-2,
   released: ["dust", "ionized gas"],
   beside: "starlight",
+  /** The Milky Way's display sprite, px (tuning.ts STAR_SPRITE_PX, the default): gate B bins each point's sprite pixels. */
+  spritePx: 9,
   /** The field's gain at the defaults (FieldVolume LIGHT_PER_LSUN_PC2, the field gain 1, no stops): screen light to L_sun. */
   gain: 1 / 400,
 } as const;

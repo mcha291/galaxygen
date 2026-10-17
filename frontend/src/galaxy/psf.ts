@@ -2,39 +2,12 @@ import { CanvasTexture, DataTexture, FloatType, LinearFilter, NearestFilter, RGB
 
 import type { FilterSet } from "./filters";
 import { type Optics, imageDensity, psfTable, pupilImage } from "./hstPsf";
+import { psfProfile } from "./sprite";
 
-/**
- * A star's point spread function as a sprite (RENDER_PLAN R2): a Gaussian core
- * with Moffat-like wings, white, so the vertex colour carries the hue.
- *
- * This is the shape of an unresolved point seen through optics, not a property
- * of the star, so it lives in the renderer (rule D5 is about physics, and a PSF
- * is instrument). Returned as alpha: the sprite's brightness falls off from the
- * centre instead of stopping at a square's edge.
- */
-export function psfProfile(r: number, core = 0.3, beta = 2.2): number {
-  // r is 0 at the centre and 1 at the sprite's edge.
-  const gauss = Math.exp(-(r * r) / (2 * core * core));
-  const moffat = (1 + (r / (core * 1.6)) ** 2) ** -beta;
-  const edge = Math.max(0, 1 - r) ** 2; // the wing reaches zero at the edge, never a hard ring
-  return Math.min(1, (0.7 * gauss + 0.3 * moffat) * edge);
-}
+// The default sprite's profile and its mean live in sprite.ts (no three.js there); re-exported here for their callers.
+export { psfMean, psfProfile } from "./sprite";
 
 let cached: CanvasTexture | null = null;
-
-/**
- * The default sprite's mean over its square, as its texture holds it (8-bit alpha on a `size` grid): what the
- * star-first mode divides by so that a sprite's pixels sum to the point's light (flux.ts, D208). The same for
- * every channel: the sprite is white.
- */
-export function psfMean(size = 64): number {
-  const half = size / 2;
-  let sum = 0;
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) sum += Math.round(255 * psfProfile(Math.hypot(x + 0.5 - half, y + 0.5 - half) / half)) / 255;
-  }
-  return sum / (size * size);
-}
 
 export function psfTexture(size = 64): CanvasTexture {
   if (cached) return cached;

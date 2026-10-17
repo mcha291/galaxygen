@@ -1,3 +1,5 @@
+import { spriteSample } from "./sprite";
+
 // The surface-brightness gate's two sides (S67, BUILD_III V8; D227 R5; T1). No three.js here: the pure parts, tested.
 //
 // On screen: each pixel's linear light (the frame as FrameProbe draws it, before bloom and tone) turned back into the
@@ -135,6 +137,61 @@ export function pointRings(
     }
   }
   return { light, square, nearEdge, count };
+}
+
+/**
+ * Points' light binned where their sprites put it (the lead's fourth pass on R5, gate B): each point projected through
+ * the probe's camera to its window position, its `size` px display sprite's pixels - those whose centres fall in the
+ * square about it, as the GPU rasterises a point - each taking the point's light times the texture's bilinear sample at
+ * that pixel's gl_PointCoord over size^2 x the sprite's mean (FluxPoints' deposit, flux.ts spriteLight), and each pixel
+ * binned by where its ray meets the disc's plane, as screenRings bins it. A point off the plane lands where its ray
+ * meets the plane, not over its own radius; a sprite near a ring's edge lands on both sides of it.
+ */
+export function spriteRings(
+  positions: ArrayLike<number>,
+  flux: ArrayLike<number>,
+  cam: RingCamera,
+  width: number,
+  height: number,
+  size: number,
+  texels: Float64Array,
+  texSize: number,
+  mean: number,
+  edges: readonly number[],
+): [number, number, number][] {
+  const n = edges.length - 1;
+  const rings = Array.from({ length: n }, () => [0, 0, 0] as [number, number, number]);
+  const f = height / (2 * cam.tanHalfY);
+  const [ex, ey, ez] = cam.eye;
+  const dot = (a: readonly number[], b: readonly number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  for (let p = 0; p < flux.length / 3; p += 1) {
+    const d = [Number(positions[3 * p]) - ex, Number(positions[3 * p + 1]) - ey, Number(positions[3 * p + 2]) - ez];
+    const depth = dot(d, cam.forward);
+    if (!(depth > 0)) continue;
+    const cx = width / 2 + (f * dot(d, cam.right)) / depth;
+    const cy = height / 2 + (f * dot(d, cam.up)) / depth;
+    for (let iy = Math.floor(cy - size / 2) - 1; iy <= Math.ceil(cy + size / 2); iy += 1) {
+      const py = iy + 0.5;
+      if (py < cy - size / 2 || py >= cy + size / 2) continue;
+      for (let ix = Math.floor(cx - size / 2) - 1; ix <= Math.ceil(cx + size / 2); ix += 1) {
+        const px = ix + 0.5;
+        if (px < cx - size / 2 || px >= cx + size / 2) continue;
+        const w = spriteSample(texels, texSize, (px - (cx - size / 2)) / size, (py - (cy - size / 2)) / size) / (size * size * mean);
+        if (w <= 0) continue;
+        const u = (px - width / 2) / f;
+        const v = (py - height / 2) / f;
+        const dy = cam.forward[1] + cam.right[1] * u + cam.up[1] * v;
+        const t = Math.abs(dy) > 1e-12 ? -ey / dy : -1;
+        if (!(t > 0)) continue;
+        const dx = cam.forward[0] + cam.right[0] * u + cam.up[0] * v;
+        const dz = cam.forward[2] + cam.right[2] * u + cam.up[2] * v;
+        const ring = radiusIndex(Math.hypot(ex + t * dx, ez + t * dz), edges);
+        if (ring < 0) continue;
+        for (let k = 0; k < 3; k += 1) rings[ring][k] += Number(flux[3 * p + k]) * w;
+      }
+    }
+  }
+  return rings;
 }
 
 /** A camera as the probe reads it: the eye, its unit axes (forward into the view), and the lens's tan(fov_y / 2). */

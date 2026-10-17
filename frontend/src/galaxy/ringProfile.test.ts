@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { hernquistWithin, partRings, pointRings, radiusIndex, renderRings, screenRings } from "./ringProfile";
+import { hernquistWithin, partRings, pointRings, radiusIndex, renderRings, screenRings, spriteRings } from "./ringProfile";
+import { psfMean, spriteTexels } from "./sprite";
 
 describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
   it("sums the render's stars round each ring over the white point, times the cells' area", () => {
@@ -74,6 +75,26 @@ describe("the surface-brightness gate's two sides (S67, D227 R5)", () => {
     expect(pts.square[0]).toEqual([1, 4, 9]);
     expect(pts.nearEdge[1]).toEqual([4, 5, 6]); // 1.95 kpc: within 0.1 of the outer edge
     expect(pts.nearEdge[0]).toEqual([0, 0, 0]);
+  });
+
+  it("bins a point's sprite where its pixels' rays meet the plane: off the plane outward, near an edge on both sides", () => {
+    const tanHalfY = Math.tan((22.5 * Math.PI) / 180);
+    const d = 20 / tanHalfY;
+    const cam = { eye: [0, d, 0] as const, forward: [0, -1, 0] as const, right: [1, 0, 0] as const, up: [0, 0, -1] as const, tanHalfY };
+    const texels = spriteTexels(64);
+    const mean = psfMean(64);
+    const edges = [0, 10, 15, 15.5, 20];
+    // In the plane at 12 kpc: all of its light in the 10-15 ring, to the sprite's sampled sum (within 1.5 %).
+    const flat = spriteRings([12, 0, 0], [1, 1, 1], cam, 1024, 1024, 9, texels, 64, mean, edges);
+    expect(flat[1][0]).toBeGreaterThan(0.985);
+    expect(flat[1][0]).toBeLessThan(1.015);
+    expect(flat[0][0] + flat[2][0] + flat[3][0]).toBe(0); // rings 0-10, 15-15.5, 15.5-20
+    // 0.5 kpc above the plane at 15.42 kpc: its ray meets the plane at 15.42 d / (d - 0.5) = 15.58 kpc, 4 px out and past 15.5.
+    const high = spriteRings([15.42, 0.5, 0], [1, 1, 1], cam, 1024, 1024, 9, texels, 64, mean, edges);
+    const low = spriteRings([15.42, 0, 0], [1, 1, 1], cam, 1024, 1024, 9, texels, 64, mean, edges);
+    expect(high[2][0]).toBeLessThan(low[2][0]); // 15-15.5 loses it
+    expect(high[2][0] + high[3][0]).toBeGreaterThan(0.98 * (low[2][0] + low[3][0])); // the light kept
+    expect(high[3][0]).toBeGreaterThan(0.5); // most of it past 15.5 kpc, where its ray meets the plane
   });
 
   it("finds a radius's ring by its edges", () => {

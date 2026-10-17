@@ -19,7 +19,8 @@ import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
 
 import type { LensCamera } from "../src/galaxy/capture";
-import { pointRings } from "../src/galaxy/ringProfile";
+import { type RingCamera, spriteRings } from "../src/galaxy/ringProfile";
+import { psfMean, spriteTexels } from "../src/galaxy/sprite";
 import {
   CHOOSING_VIEWPORT,
   DEFAULT_TEMPLATE,
@@ -102,7 +103,7 @@ declare global {
     /** The march's GPU time (S67, D227 R6; FieldVolume's timer query). */
     __galaxygenMarchGpu?: { available: boolean; ms: number | null };
     /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
-    __galaxygenRingProfile?: (edges: number[]) => { rings: number[][]; pixels: number[]; outside: number[]; width: number; height: number };
+    __galaxygenRingProfile?: (edges: number[]) => { rings: number[][]; pixels: number[]; outside: number[]; width: number; height: number; camera: RingCamera };
     __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][]; parts?: Record<string, number[][]>; unresolved?: number[][] | null };
     /** The points as drawn (S67, the lead's second pass on R5; GalaxyTab). */
     __galaxygenPointsShown?: { bright: { positions: Float32Array; flux: Float32Array } | null; clusters: { positions: Float32Array; flux: Float32Array } | null; fetch: unknown };
@@ -594,6 +595,13 @@ test("the surface-brightness gates: each ring's light on screen against the rend
     });
     expect(got.screen.rings.length, `gate ${gate}, layer ${layer}: the probes on one grid`).toBe(got.ref.light.length);
     const points = gate === "B" ? [got.bright, got.clusters].filter((p): p is NonNullable<typeof p> => p !== null) : [];
+    // The drawn points' light where their sprites put it (the lead's fourth pass): each point through the probe's own
+    // camera, its display sprite's pixels each binned where its ray meets the plane (ringProfile.ts spriteRings) - a
+    // cluster hundreds of pc off the plane lands up to 7 px from its own radius at 15 kpc, and a 9 px sprite near an
+    // edge lands on both sides of it; binned by the points' own radii instead, gate B read up to 4.6 % off at S67.
+    const texels = spriteTexels(64);
+    const mean = psfMean(64);
+    const sprites = points.map((p) => spriteRings(p.positions, p.flux, got.screen.camera, got.screen.width, got.screen.height, RING_GATE.spritePx, texels, 64, mean, got.ref.edges));
     if (gate === "B") expect(points.length, "gate B: the drawn points are there to sum").toBe(2);
     if (gate === "B") expect(got.ref.unresolved, "gate B: the render's remainder per ring").toBeTruthy();
     const rows: { from: number; to: number; ratio: number[]; largest?: number[]; edgePx?: number }[] = [];
@@ -611,11 +619,11 @@ test("the surface-brightness gates: each ring's light on screen against the rend
         });
         return out;
       };
-      const pointLight = points.map((p) => pointRings(p.positions, p.flux, [lo, hi], 0).light[0]);
+
       const screen = sum(got.screen.rings).map((v) => v / RING_GATE.gain);
       const bulge = sum(got.ref.bulgeRings);
       const field = gate === "A" ? sum(got.ref.light) : sum(got.ref.unresolved);
-      const drawn = [0, 1, 2].map((k) => pointLight.reduce((s, p) => s + p[k], 0));
+      const drawn = [0, 1, 2].map((k) => sprites.reduce((s, rings) => s + sum(rings)[k], 0));
       const expected = field.map((v, k) => v + bulge[k] + drawn[k]);
       const row: (typeof rows)[number] = { from, to, ratio: screen.map((v, k) => v / expected[k]) };
       if (gate === "B") {
