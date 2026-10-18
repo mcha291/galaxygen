@@ -697,9 +697,9 @@ defined here once and used in every entry below:
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180 | 101 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181 | 102 |
 
-So the board's **112 open** is 11 permanent and 101 carried, and no item is unruled. (S22
+So the board's **113 open** is 11 permanent and 102 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4236,6 +4236,19 @@ never been judged in twenty-three sessions.
    molecular, a disclosed check, not a pin). **Carried.** What closes it: a radial law for the layer read against
    the conflicting sources (a constant with its citation per regime), a mass dependence read from a cloud survey's
    heights, and a template's own layer where its edge-on CO is measured.
+181. **The HII regions are one cluster's Strömgren sphere each, never a complex: the knots are unresolved points made
+   large on screen only by their brightness** (S67, D227; the owner's question of 2026-10-18, "the hii knots are
+   very big, bigger than the stars, is this right?"). The census's 12 710 HII regions on `milky_way` have Strömgren
+   radii of median 0.7 pc, 99th percentile 7.6 pc, largest 20.7 pc (`hii_stromgren_radius`, measured through
+   /api/clusters), so nearly none fills a 39 pc pixel and each is drawn as a point with the same sprite as a star
+   (FluxPoints' one `spritePx`); a knot looks larger than the stars only because it carries its whole region's line
+   light in one point, which the bloom (the owner's 1.5 above 0.4) and the tone curve spread. Real HII regions in
+   galaxy images are resolved complexes, tens to hundreds of pc across (NGC 604 in M33 about 400 pc `[recall]`),
+   built from many clusters' overlapping ionised volumes in a star-forming complex; the model's clusters cluster
+   (D220's lattice) but their regions are never merged, so a complex is drawn as separate unresolved points.
+   **Carried.** What closes it: a reading of HII region sizes and luminosity functions in nearby discs (e.g. the
+   giant HII regions' size-luminosity relation), and the census's regions in one clustering cell merged into one
+   region of the summed ionising photons in the cell's gas (a Strömgren volume of the sum), drawn at its own radius.
 
 ---
 
