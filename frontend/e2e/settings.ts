@@ -111,7 +111,10 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.96265, 0.96703, 0.97596] as const;
+export const DUSTY_LAYER_RATIO = [0.96717, 0.96839, 0.97315] as const;
+// S67 (D227 T1): was [0.96265, 0.96703, 0.97596] - the Milky Way's display defaults are the owner's paste (the
+// starlight at 0.403, the dust's own light at 4, the clouds as extinction off, ACES): the ratio of two frames' light
+// weighs the dust's glow against the starlight, so it moves with the display balance; no model number moved.
 // S66 (V7, D226 R2c): was [0.97275, 0.97786, 0.98691] at S64/S65 - the gas fluctuation map multiplies the dust's
 // placement and the spurs are drawn from their table: the same column per level-0 cell, clumped below the
 // cell, so by (ii) more light gets through (Jensen; the probe's +2.4 % at R_sun face-on). Predicted before the capture:

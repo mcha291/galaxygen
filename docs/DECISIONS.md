@@ -13120,3 +13120,17 @@ switch (off = obscured Airy, on = the pupil's FFT with vanes and pads), both nor
 display defaults as a viewer map, filled from the owner's paste; R5 the surface-brightness gate on screen, dust off,
 measured before pinned; R6 the GPU's time by a timer query; R7 the generated psf text changed without a fetch; R8
 the captures regenerated and the goal metrics read. One Opus builder.
+
+**T1, the owner's paste (2026-10-18).** The owner, after the build: "set these values as the default so i can adjust
+them after the fix finish" (the region view's clouds, run as a session of its own) — the Milky Way's display defaults
+are now `TEMPLATE_TUNING.milky_way` in `tuning.ts`, as pasted: resolution 1, pixel budget 2 000 000, steps 160, field
+gain 2, field floor 0.1, bloom 1.5 / 0.5 / 0.4, ACES, sprite 3 px, point gain 4, the cell outlines on, the starlight
+0.403, the ionized gas 0.898, the dust's own light 4, the clouds as extinction off; exposure 0; NGC 4414 keeps
+today's values (no paste). Found on the way, on the owner's questions: the Components intensities reached only the
+star-first mode (now the field mode too, `fieldLayers`, FIELD_LAYERS exactly at 1); the bloom sliders moved a pass in
+the composer React's development build discards (now read from the composer that renders: strength 4 at threshold 0
+takes the frame's mean 23.5 -> 134 on screen); bloom strength's range 0-4. The picture test's surface-brightness
+gates run at the plain display defaults, stored as the Milky Way's tuning before the page loads (they test the
+drawing, not the look); `filters.ts` imports its JSON with `type: "json"` so the e2e can import `tuning.ts`; the
+physics-only ratio re-pinned 0.96265 -> 0.96717 (red), the display balance's; the Milky Way's five captures
+regenerated, the frame's GPU time 28 -> 52 ms (star-first) at the higher resolution and steps.

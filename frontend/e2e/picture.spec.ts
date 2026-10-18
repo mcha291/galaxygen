@@ -23,6 +23,7 @@ import { type PsfTable, imageDensity, opticsOf, psfRect, psfTable, pupilImage } 
 import { PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF, plummerRect } from "../src/galaxy/plummer";
 import { type RingCamera, spriteRings } from "../src/galaxy/ringProfile";
 import { psfMean, spriteTexels } from "../src/galaxy/sprite";
+import { TUNING_DEFAULTS, TUNING_STORAGE_KEY } from "../src/galaxy/tuning";
 import {
   CHOOSING_VIEWPORT,
   DEFAULT_TEMPLATE,
@@ -598,6 +599,16 @@ for (const setting of RING_GATE.settings) {
 test(`the surface-brightness gates, ${setting.name}: each ring's light on screen against the render's (A) and the drawing's closure (B)`, async ({ page }, testInfo) => {
   const net = watchApi(page);
   await page.setViewportSize(CHOOSING_VIEWPORT);
+  // The gates test the drawing, not the look: they run at the plain display defaults (TUNING_DEFAULTS), stored as the
+  // Milky Way's own tuning before the page loads, so the owner's per-template defaults (S67, D227 T1: field gain 2,
+  // point gain 4, the starlight at 0.403, the cell outlines on) do not enter the comparison with the render's light.
+  await page.addInitScript(([key, value]) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* no storage: the page draws its template's defaults and the gains' guard below says so */
+    }
+  }, [`${TUNING_STORAGE_KEY}.milky_way`, JSON.stringify(TUNING_DEFAULTS)] as const);
   await page.goto("/");
   await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenRingProfile, null, { timeout: READY.timeoutMs });
   await press(page, MODE_BUTTON.stars);

@@ -398,9 +398,30 @@ export const TUNING_STORAGE_KEY = "galaxygen.tuning";
 /**
  * Each template's display defaults over TUNING_DEFAULTS (S67, D227 R4; T1): what the owner tuned on that template,
  * pasted from the Tuning panel's copy box. Display choices (rule D5), each declared one where it is computed (A9); none
- * picked to look like a goal. Empty until the owner's paste: every template draws with today's values.
+ * picked to look like a goal. The Milky Way's is the owner's paste of 2026-10-18; NGC 4414 keeps today's values.
  */
-export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({});
+export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({
+  // The owner's paste of 2026-10-18 (S67, D227 T1), as pasted: "set these values as the default so i can adjust them
+  // after the fix finish" (the region view's clouds, a session of its own). Display choices, none physics (D5).
+  milky_way: Object.freeze({
+    resolution: 1,
+    pixelBudget: 2_000_000,
+    steps: 160,
+    fieldGain: 2,
+    fieldFloor: 0.1,
+    bloomStrength: 1.5,
+    bloomRadius: 0.5,
+    bloomThreshold: 0.4,
+    toneMapping: "aces",
+    spriteSize: 3,
+    pointGain: 4,
+    compCells: true,
+    starsIntensity: 0.403,
+    gasIntensity: 0.898,
+    dustIntensity: 4,
+    cloudsExtinction: false,
+  } satisfies Partial<Tuning>),
+});
 /** Each template's default exposure, stops (S67, D227 R4: the photometric slider's start, App's state); 0 where absent. */
 export const TEMPLATE_EXPOSURE: Readonly<Record<string, number>> = Object.freeze({});
 
