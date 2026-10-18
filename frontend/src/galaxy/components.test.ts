@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Columns, FieldsPayload } from "../api";
 import { srgbToLinear } from "./colors";
 import {
+  fieldLayers,
   CELL_RINGS,
   CELL_SECTORS,
   CIRCLE_SEGMENTS,
@@ -240,5 +241,17 @@ describe("the cloud markers", () => {
   it("are cut to the footprint by radius and azimuth", () => {
     const rows = rowsInWindow([1, 5, 9, 5], [0.1, 1, 1, 3], { r_min: 4, r_max: 10, phi_min: 0.5, phi_max: 2 });
     expect(Array.from(rows)).toEqual([1, 2]);
+  });
+});
+
+describe("fieldLayers (S67, D227: the intensities in the field mode)", () => {
+  it("is FIELD_LAYERS exactly at the defaults, so the landing frames do not move", () => {
+    expect(fieldLayers({ starsIntensity: 1, gasIntensity: 1, dustIntensity: 1 })).toEqual({ ...FIELD_LAYERS });
+  });
+  it("scales each emitting layer by its slider and never the dust's depth or the where tint", () => {
+    const l = fieldLayers({ starsIntensity: 2, gasIntensity: 0.5, dustIntensity: 3 });
+    expect([l.stars, l.gas, l.dust]).toEqual([2, 0.5, 3]);
+    expect(l.dustDepth).toBe(FIELD_LAYERS.dustDepth);
+    expect(l.where).toBe(FIELD_LAYERS.where);
   });
 });

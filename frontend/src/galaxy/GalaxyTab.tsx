@@ -17,7 +17,7 @@ import {
   loadRegion,
 } from "../api";
 import { CellOutlines, CloudMarkers } from "./ComponentLayers";
-import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, agesOf, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
+import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, agesOf, brightestLayers, cloudColors, diagnosticOn, dustRamp, fieldLayers, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { type Template, pinWords, switcherItems, templateLabel } from "../workflow/templates";
@@ -619,6 +619,7 @@ export function GalaxyTab({
             hiiFade={area ? weights.stars : 0}
             tuning={fieldTuning}
             stats={marchStats}
+            layers={fieldLayers(tuning)}
             ages={agesOf(tuning)}
             onAges={setAgeParts}
             clouds={extinctionClouds}

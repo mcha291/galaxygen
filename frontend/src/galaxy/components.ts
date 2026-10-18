@@ -46,6 +46,16 @@ export const GREY_STOPS: readonly Rgb[] = Object.freeze(Array.from({ length: WHE
 export const FIELD_LAYERS: Readonly<MarchLayers> = Object.freeze({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: 0, whereStops: GREY_STOPS });
 
 /**
+ * The field mode's layers with the Components intensities (S67, D227, on the owner's word: "make the starlight, gas
+ * and dust intensity sliders work in field mode too"): FIELD_LAYERS with each emitting layer at its slider, the dust's
+ * depth and the "where" tint untouched (the intensity never scales a depth, and the field mode has no "where"
+ * reading). At the defaults (1, 1, 1) this is FIELD_LAYERS exactly. The switches stay the star-first mode's.
+ */
+export function fieldLayers(t: Pick<Tuning, "starsIntensity" | "gasIntensity" | "dustIntensity">): MarchLayers {
+  return { ...FIELD_LAYERS, stars: FIELD_LAYERS.stars * t.starsIntensity, gas: FIELD_LAYERS.gas * t.gasIntensity, dust: FIELD_LAYERS.dust * t.dustIntensity };
+}
+
+/**
  * The level a ring at the top of the ramp (level 1) draws at, seen face-on, in the "where it is" reading:
  * linear, before tone mapping, at intensity ×1, zero stops and a field gain of 1 (with a grey ramp; a
  * coloured one tints it). **A display normalisation of a diagnostic, not physics.** The level itself is the

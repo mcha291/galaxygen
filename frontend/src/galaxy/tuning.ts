@@ -253,12 +253,12 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
     about: "The colour temperature drawn white; asks the model for new responses (400 ms after the last move). A display choice.",
   },
   {
-    key: "bloomStrength", label: "bloom strength", group: "Bloom and tone", kind: "range", min: 0, max: 1.5, step: 0.05, unit: "",
-    about: "How much light above the threshold spreads. A display choice.",
+    key: "bloomStrength", label: "bloom strength", group: "Bloom and tone", kind: "range", min: 0, max: 4, step: 0.05, unit: "",
+    about: "How much light above the threshold spreads (S67: the range 0-4, was 0-1.5, on the owner's ask; the pass has no upper limit). It acts only on light above the threshold: lower that to see it. A display choice.",
   },
   {
     key: "bloomRadius", label: "bloom radius", group: "Bloom and tone", kind: "range", min: 0, max: 1, step: 0.05, unit: "",
-    about: "How far the bloom spreads. A display choice.",
+    about: "How far the bloom spreads. Held to 0-1: the pass blends its five blur levels by mix(f, 1.2 - f, radius), and past 1 the finest level's weight turns negative. A display choice.",
   },
   {
     key: "bloomThreshold", label: "bloom threshold", group: "Bloom and tone", kind: "range", min: 0, max: 3, step: 0.05, unit: "",
@@ -327,15 +327,15 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "starsIntensity", label: "starlight intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
-    about: "Multiplies the starlight volume, on the field's gain and the slider's stops. A display balance.",
+    about: "Multiplies the starlight volume, in either mode, on the field's gain and the slider's stops. A display balance.",
   },
   {
     key: "gasIntensity", label: "ionized gas intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
-    about: "Multiplies the ionized gas's light, on the field's gain and the slider's stops. A display balance.",
+    about: "Multiplies the ionized gas's light, in either mode, on the field's gain and the slider's stops. A display balance.",
   },
   {
     key: "dustIntensity", label: "dust intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
-    about: "Multiplies the dust's own light (as it acts) or its drawn depth (where it is); never its extinction. A display balance.",
+    about: "Multiplies the dust's own light (as it acts, in either mode) or its drawn depth (where it is, the star-first mode); never its extinction. A display balance.",
   },
   {
     key: "cloudIntensity", label: "cloud marker brightness", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
