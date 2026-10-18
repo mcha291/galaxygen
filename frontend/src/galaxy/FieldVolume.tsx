@@ -29,7 +29,7 @@ import {
 import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
 
 import { type Census, type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
-import { type CloudColumns, type CloudRaster, CLOUD_RASTER, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
+import { type CloudColumns, type CloudRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
@@ -575,7 +575,7 @@ interface Props {
    * white point. The defaults are the values the view drew with before the panel.
    */
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin"> &
-    Partial<Pick<Tuning, "cloudRaster" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
+    Partial<Pick<Tuning, "cloudRaster" | "cloudElongation" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
   /**
@@ -936,11 +936,29 @@ export function FieldVolume({
   const gridR = frame?.header.grid.axes.R;
   const gridPhi = frame?.header.grid.axes.phi;
   const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
+  // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
+  // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
+  // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
+  // gas fluctuation field's shear (the header's gas_fluctuation strain, sense and edges), at the "cloud elongation"
+  // power. With the layer off the field's seed is null and the clouds stay round.
+  const cloudLayerH = light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
+  const gasEntry = light?.header.gas_fluctuation ?? null;
+  const elongation = tuning.cloudElongation ?? 0;
+  const rasterShape = useMemo(
+    (): RasterShape => ({
+      verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
+      shear: gasEntry && gasEntry.seed !== null && gasEntry.edges && gasEntry.ring && gasEntry.sense !== null
+        ? { edges: gasEntry.edges, strain: gasEntry.ring.strain, sense: gasEntry.sense }
+        : null,
+      elongation,
+    }),
+    [cloudLayerH, gasEntry, elongation],
+  );
   const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
     const c = clouds?.columns as Partial<CloudColumns> | undefined;
     if (!gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
     const started = performance.now();
-    const built: CloudRaster = cloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell);
+    const built: CloudRaster = cloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell, rasterShape);
     // The slab beside the A_V (S64, R3 as ruled): half floats, two a texel - each texel's clouds' mean height and
     // half-thickness, kpc - and the highest a slab reaches, which bounds the points' segment.
     const halves = new Uint16Array(built.slab.length);
@@ -959,7 +977,7 @@ export function FieldVolume({
     };
     (globalThis as { __galaxygenCloudRaster?: CloudRasterStats }).__galaxygenCloudRaster = stats;
     return { texture, slab, top, stats };
-  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(
     () => () => {
       raster?.texture.dispose();

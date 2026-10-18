@@ -83,6 +83,7 @@ describe("tuning defaults (D199)", () => {
       // S64 (V6): the clouds as extinction, on; the raster at the finest 16 MiB holds on the render grid.
       cloudsExtinction: true,
       cloudRaster: 5,
+      cloudElongation: 1, // S67, D230: the gas field's own shear (R2, the owner's choice)
       // S64 (V6): the HII regions as knots and the clusters with their radius, both on.
       knots: true,
       clusterRadius: true,

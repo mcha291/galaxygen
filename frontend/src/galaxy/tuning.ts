@@ -102,6 +102,8 @@ export interface Tuning {
   cloudsExtinction: boolean;
   /** The clouds' raster, texels per render cell on each axis (cloudOpacity.ts). */
   cloudRaster: number;
+  /** Each cloud's elongation along the gas field's shear, as a power of that shear's own axis ratio (S67, D230). */
+  cloudElongation: number;
   // The HII regions as knots and the clusters with their radius (S64, BUILD_III V6; RULING_S64 R5-R7).
   /** The field mode's HII regions drawn as knots, the field's HII layers scaled by each cell's undrawn share. */
   knots: boolean;
@@ -152,6 +154,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   ageOld: true,
   cloudsExtinction: true,
   cloudRaster: CLOUD_RASTER,
+  cloudElongation: 1,
   knots: true,
   clusterRadius: true,
   gasInMarch: true,
@@ -387,6 +390,10 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "A cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills a pixel, in place " +
       "of the point sprite, its light the same (S64, V6, T6). At galaxy scale no cluster is that large: it shows below " +
       "about 1 kpc across. A display choice.",
+  },
+  {
+    key: "cloudElongation", label: "cloud elongation", group: "March", kind: "range", min: 0, max: 2, step: 0.05, unit: "power",
+    about: "Each cloud's face-on shape in the clouds' raster (S67, D230, the owner's choice: \"Stretch clouds along arms\"): an ellipse of the cloud's own area, its long axis along the gas fluctuation field's local shear (the render header's gas_fluctuation strain per ring, D221), its axis ratio that shear's own, lambda+ = 1 + k^2/2 + |k| sqrt(1 + k^2/4) (5.8 inside 2 kpc, 2.7 at the Sun's radius on the Milky Way), raised to this power: 0 round, 1 the field's. Every cloud's A_V x area is conserved at any value; with the randomness layer off there is no field and the clouds are round. A display choice.",
   },
   {
     key: "cloudRaster", label: "cloud raster", group: "March", kind: "range", min: 1, max: CLOUD_RASTER, step: 1, integer: true, unit: "texels / cell",

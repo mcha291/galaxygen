@@ -79,6 +79,44 @@ export interface CloudRaster {
  */
 export const SPLIT_SAMPLES = 4;
 
+/**
+ * The half-maximum of a sech²(z / 2h) layer in units of h: sech²(x) = 1/2 at x = arcsech(1/sqrt 2) = ln(1 + sqrt 2), so
+ * z = 2 ln(1 + sqrt 2) h = 1.7627 h. Geometry, not a choice. (S67, D230 R1.)
+ */
+export const SECH2_HWHM_PER_H = 2 * Math.log(1 + Math.SQRT2);
+
+/**
+ * The gas fluctuation field's shear where a cloud sits (S67, D230 R2): the field is read at its point rotated by
+ * theta(R) = sense (twist + strain ln(R / R_r)) (noise.ts gasReadPosition), whose local Jacobian in the (radial,
+ * azimuthal) frame is the simple shear [[1, 0], [-k, 1]] with k = sense x strain (dtheta / dlnR). A round feature of the
+ * field is the image of a circle under its inverse, an ellipse of shape [[1, k], [k, 1 + k²]]: axis ratio lambda+ =
+ * (2 + k² + |k| sqrt(k² + 4)) / 2, the long axis along (k, lambda+ - 1) in (r-hat, phi-hat). `exponent` scales the
+ * ratio in log - lambda+ ^ exponent - so 0 is round and 1 the field's own anisotropy.
+ */
+export function shearEllipse(k: number, exponent: number): { ratio: number; angle: number } {
+  const lam = (2 + k * k + Math.abs(k) * Math.sqrt(k * k + 4)) / 2;
+  const ratio = exponent === 0 || k === 0 ? 1 : lam ** exponent;
+  // the long axis's angle from r-hat towards phi-hat
+  return { ratio, angle: Math.atan2(lam - 1, k) };
+}
+
+/** What the raster reads beside the census (S67, D230): the clouds' vertical cap and the gas field's shear, if any. */
+export interface RasterShape {
+  /** Each cloud's vertical half-extent is at most this, kpc (R1: the clouds' layer's half-maximum). */
+  verticalCap?: number;
+  /** The gas fluctuation field's rings: edges (kpc), strain per ring and the sense; null with the layer off. */
+  shear?: { edges: ArrayLike<number>; strain: ArrayLike<number>; sense: number } | null;
+  /** The elongation's exponent (R2's tuning control): 0 round, 1 the field's own anisotropy. */
+  elongation?: number;
+}
+
+/** The field's strain at R: its ring's (gas_fluctuation `ring_of`, held to the first and last rings). */
+export function strainAt(R: number, edges: ArrayLike<number>, strain: ArrayLike<number>): number {
+  let r = 0;
+  while (r + 1 < strain.length && edges[r + 1] <= R) r += 1;
+  return Number(strain[r]);
+}
+
 /** One texel's area, kpc^2: the annulus sector between its radii over its azimuth span. */
 export function texelArea(i: number, rLo: number, dR: number, dPhi: number): number {
   const r0 = rLo + i * dR;
@@ -96,7 +134,9 @@ export function texelArea(i: number, rLo: number, dR: number, dPhi: number): num
  * texel holds its A_V x area over its own area: the mean face-on A_V across it. Clouds with no column (0, or a missing
  * number) deposit nothing (rule B9).
  */
-export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number): CloudRaster {
+export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape = {}): CloudRaster {
+  const cap = shape.verticalCap ?? Infinity;
+  const elongation = shape.elongation ?? 0;
   const dR = (rHi - rLo) / width;
   const dPhi = (2 * Math.PI) / height;
   const sum = new Float64Array(width * height); // A_V x area per texel, mag kpc^2
@@ -109,6 +149,7 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
   const least: number[] = [];
   let z = 0;
   let s = 0;
+  let sv = 0; // the cloud's vertical half-extent: its radius, capped at the clouds' layer (S67, D230 R1)
   const deposit = (t: number, part: number) => {
     sum[t] += part;
     let k = slot[t];
@@ -121,8 +162,8 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     }
     wz[k] += part * z;
     wz2[k] += part * z * z;
-    ws[k] += part * s;
-    if (s < least[k]) least[k] = s;
+    ws[k] += part * sv;
+    if (sv < least[k]) least[k] = sv;
   };
   let census = 0;
   let outside = 0;
@@ -140,6 +181,7 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
   for (let c = 0; c < n; c += 1) {
     const av = Number(clouds.cloud_dust_extinction_v[c]);
     s = Number(clouds.cloud_size[c]) / 1000; // the cloud's radius, kpc
+    sv = Math.min(s, cap);
     z = Number(clouds.cloud_height[c]); // its height, kpc
     const r = Number(clouds.cloud_radius[c]);
     const phi = Number(clouds.cloud_azimuth[c]);
@@ -149,7 +191,15 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     const x = r * Math.cos(phi);
     const y = r * Math.sin(phi);
     const side = Math.min(dR, Math.max(r, 0.5 * dR) * dPhi);
-    if (2 * s < side) {
+    // Its face-on shape (S67, D230 R2): round, or an ellipse of the same area pi s² along the gas field's local shear,
+    // semi-axes s sqrt(q) and s / sqrt(q); e1 its long axis, e2 the short, in the raster's (x, y).
+    const ell = shape.shear && elongation > 0 ? shearEllipse(shape.shear.sense * strainAt(r, shape.shear.edges, shape.shear.strain), elongation) : null;
+    const q = ell ? ell.ratio : 1;
+    const along = s * Math.sqrt(q);
+    const across = s / Math.sqrt(q);
+    const e1x = ell ? Math.cos(ell.angle) * Math.cos(phi) - Math.sin(ell.angle) * Math.sin(phi) : 1;
+    const e1y = ell ? Math.cos(ell.angle) * Math.sin(phi) + Math.sin(ell.angle) * Math.cos(phi) : 0;
+    if (2 * along < side) {
       const t = texelOf(x, y);
       if (t < 0) outside += total;
       else deposit(t, total);
@@ -159,9 +209,9 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     // Every texel the cloud's disc may touch - those past the raster's radii too, whose share is drawn nowhere -
     // each weighted by the chord's integral over its own area (SPLIT_SAMPLES^2 points in it), so every texel is
     // sampled alike and none aliases; then the cloud's A_V x area shared in those weights.
-    const i0 = Math.floor((Math.max(0, r - s) - rLo) / dR);
-    const i1 = Math.floor((r + s - rLo) / dR);
-    const half = s < r ? Math.asin(s / r) : Math.PI;
+    const i0 = Math.floor((Math.max(0, r - along) - rLo) / dR);
+    const i1 = Math.floor((r + along - rLo) / dR);
+    const half = along < r ? Math.asin(along / r) : Math.PI;
     let j0 = Math.floor((phi - half) / dPhi);
     let j1 = Math.floor((phi + half) / dPhi);
     if (j1 - j0 + 1 >= height) {
@@ -182,7 +232,8 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
             const pb = (j + (b + 0.5) / m) * dPhi;
             const dx = ra * Math.cos(pb) - x;
             const dy = ra * Math.sin(pb) - y;
-            const rho2 = (dx * dx + dy * dy) / (s * s);
+            // round: the S64 expression, to the bit; an ellipse: its own axes
+            const rho2 = q === 1 ? (dx * dx + dy * dy) / (s * s) : ((dx * e1x + dy * e1y) / along) ** 2 + ((dy * e1x - dx * e1y) / across) ** 2;
             if (rho2 < 1) got += Math.sqrt(1 - rho2) * ra;
           }
         }
