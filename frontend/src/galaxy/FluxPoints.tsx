@@ -35,6 +35,8 @@ export interface PointDust {
   clouds?: Texture | null;
   slab?: Texture | null;
   cloudExt?: readonly [number, number, number];
+  /** The extinction strength (S67, D228, the owner's ruling): every depth to a point multiplied by it; 1 when absent. */
+  depthScale?: number;
 }
 
 // plummer.ts plummerCorner and plummerRect, line for line: the Plummer's share of its light over a rectangle.
@@ -83,6 +85,7 @@ const VERTEX = /* glsl */ `
   uniform float rHi;
   uniform float dustTop;
   uniform float dustOn;
+  uniform float dustDepthScale;
   uniform sampler2D cloudTex;
   uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
@@ -178,7 +181,7 @@ const VERTEX = /* glsl */ `
       vec3 clouds = cloudsOn > 0.5 ? textureLod(cloudTex, vec2(x, phi / 6.28318531), 0.0).r * cloudExt : vec3(0.0);
       tau += face * place * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;
     }
-    return tau;
+    return tau * dustDepthScale;
   }
 
   void main() {
@@ -326,6 +329,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         rHi: { value: 1 },
         dustTop: { value: 0 },
         dustOn: { value: 0 },
+        dustDepthScale: { value: 1 },
         cloudTex: { value: sprite },
         cloudSlab: { value: sprite },
         cloudExt: { value: new Vector3(0, 0, 0) },
@@ -375,6 +379,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     (uniforms.spriteMean.value as Vector3).set(mean[0], mean[1], mean[2]);
     uniforms.sprite.value = psf?.texture ?? psfTexture();
     uniforms.dustOn.value = dust ? 1 : 0;
+    uniforms.dustDepthScale.value = dust?.depthScale ?? 1;
     if (dust) {
       uniforms.rings.value = dust.rings;
       uniforms.scatter.value = dust.scatter;

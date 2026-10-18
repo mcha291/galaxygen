@@ -16,8 +16,12 @@ import regimesSource from "./regimes.ts?raw";
 // the vertex (the box at psfHalf, the per-channel normaliser) and its pixel's share in the fragment. Was S64's, hashed
 // when the review's pin was added: vertex 6291 c47e7aaa901faee00621c8ff2bfd9088323ba616ab153f49c632e895facffed3,
 // fragment 1269 0d28a2c493d5c139e316146d4c56723e685160e8fdff305da479e3f844fd602f (LF line ends).
-const VERTEX_LENGTH = 8207;
-const VERTEX_SHA256 = "ca2da355803635aa0cd5ff548b49a56afea4f61cfcf6a38ee6cd1fcf168f5864";
+// S67's second change (D228, the owner's ruling): the extinction strength - one uniform declared and the dust to each
+// point multiplied by it; with those two taken back the vertex is S67's first text (8207, ca2da355...), as below.
+const S67_VERTEX_LENGTH = 8207;
+const S67_VERTEX_SHA256 = "ca2da355803635aa0cd5ff548b49a56afea4f61cfcf6a38ee6cd1fcf168f5864";
+const VERTEX_LENGTH = 8256;
+const VERTEX_SHA256 = "2ce20fe75c5fb22978aefef37b15d1fab62da8e3d063a53a82649f37e51710e6";
 const FRAGMENT_LENGTH = 2410;
 const FRAGMENT_SHA256 = "e8f58add7f895054ffb63159f5754d6d6f4ea6fdac6071e1d868ba5174cbd3da";
 
@@ -27,6 +31,9 @@ describe("the points' shader (FluxPoints, S64)", () => {
   it("is the text S67 left, byte for byte", () => {
     expect(FLUX_POINTS_SHADER.vertex.length).toBe(VERTEX_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.vertex)).toBe(VERTEX_SHA256);
+    const before = FLUX_POINTS_SHADER.vertex.replace(/\r\n/g, "\n").replace("  uniform float dustDepthScale;\n", "").replace("return tau * dustDepthScale;", "return tau;");
+    expect(before.length).toBe(S67_VERTEX_LENGTH);
+    expect(sha256(before)).toBe(S67_VERTEX_SHA256);
     expect(FLUX_POINTS_SHADER.fragment.length).toBe(FRAGMENT_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.fragment)).toBe(FRAGMENT_SHA256);
     // what the pin covers, named: the dust to each point, the slab's column in it, the two profiles

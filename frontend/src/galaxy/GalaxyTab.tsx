@@ -466,9 +466,12 @@ export function GalaxyTab({
   const pointsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * pointGain;
   // The march's dust, handed up by the field volume for the segment to each point (T20): only as it acts.
   const [fieldDust, setFieldDust] = useState<PointDust | null>(null);
-  const pointDust = mode === "stars" && tuning.compDust && tuning.dustReading === "acts" ? fieldDust : null;
+  // The extinction strength (S67, D228): the march's textures with every depth to a point at the slider; at 1 the same object.
+  const strength = tuning.extinctionStrength;
+  const scaledDust = useMemo(() => (fieldDust && strength !== 1 ? { ...fieldDust, depthScale: strength } : fieldDust), [fieldDust, strength]);
+  const pointDust = mode === "stars" && tuning.compDust && tuning.dustReading === "acts" ? scaledDust : null;
   // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
-  const knotDust = mode === "field" ? fieldDust : null;
+  const knotDust = mode === "field" ? scaledDust : null;
   const knotsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * weights.field;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
   // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
@@ -675,7 +678,7 @@ export function GalaxyTab({
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={tuning.extinctionStrength} />
         )}
       </GalaxyView>
       </div>

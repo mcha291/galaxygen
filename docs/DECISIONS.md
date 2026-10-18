@@ -13201,3 +13201,35 @@ per-cloud columns move each cloud's central column from 2.97 mag to 1.5 × its o
 
 **The register.** #112 discharged (its star half at S64, its field half here); #167 carried, its region half done.
 The board 111 open, 51 discharged.
+
+**The whole-galaxy blobs, measured (2026-10-18, the lead's follow-up).** The owner still saw near-black cloud blobs
+at galaxy scale in the field mode: S64's cloud raster in the march, not the region regime. At the Milky Way's
+template camera at the owner's defaults, "clouds as extinction" on over off in linear light (a float read before
+tone mapping), over the disc pixels brighter than 40/255: the darkest keeps 0.033, the 0.1 % quantile 0.135, the 1 %
+quantile 0.288, 2.9 % of them lose more than half (in display 0.131 / 0.249 / 0.454, the lead's reading). The march
+dims only the light behind each slab (the piece loop, `composeStep` its twin; the twin's face-on floor over the raster
+0.012). The raster concentrates no cloud (a split cloud's central texel ~1.5x its mean; its 432 mag maximum is 23
+clouds overlapping face-on at R = 1.9 kpc, the census's own sum), and the one merged slab per texel is not darker
+than each cloud its own slab (1 % quantile 0.080 merged, 0.048 apart). **The cause is the clouds' published heights**:
+a sech² layer at `CLOUD_LAYER_SHARE` 0.5 of the thin disc's scale height (178 pc, "a stated guess with no source",
+#95), realised |z| median 197 pc, p90 524 pc, max 1.95 kpc; face-on from above, a slab 0.6-1.2 kpc up has 1-9 % of the
+stars' layer (h 356 pc) in front of it. A thinner layer is the model's mend, not built: the twin's floor is 0.10 at a
+share of 0.25, 0.25 at 0.125, 0.34 with every cloud at the midplane (the session's notes carry the table and the
+knock-ons - the render's HII layer reads the same height). Left to the lead's and the owner's ruling.
+
+**R3, the extinction strength (2026-10-18), on the owner's ruling.** The owner: "Yes, add an extinction-strength display
+slider as well; I rule it a display choice." One Tuning control, `extinctionStrength` ("extinction strength", group
+Components, linear 0-2, step 0.01, default 1), multiplies every optical depth the viewer draws, in either mode: the
+march's dust depth (`MarchLayers.dustDepth`, which both the diffuse dust and the clouds' raster read: `fieldLayers` and
+`brightestLayers`), the dust to each point and each knot (`PointDust.depthScale`, the points' shader's `dustTo` times
+`dustDepthScale`) and the region regime's clouds (each cloud's kappa as the table is uploaded, `scaleCloudDepths`, so
+the march's T, the field's slabs and the points' T take it alike). Never the dust's own light (that stays "dust
+intensity"). **An exception to rule D5's "a display intensity never scales a depth"**, by the owner's ruling; its
+`about` says so. At 1 every number is the model's and nothing moves: the picture test 15 passed with every frame the
+committed picture's bytes but milky_way-physics-only, whose `frames.json` record has been stale since 60232e8 (the
+same bytes as its committed PNG, as before); vitest 430 passed (`extinction.test.ts`: the layers at 0, 0.37 and 2,
+T at strength s is T^s, the region's table scaled in its clouds' kappa only and untouched at 1, the points' shader;
+`TUNING_DEFAULTS` pinned with it); the points' vertex shader re-pinned (8256 characters; S67's first text recovered
+byte for byte with the two lines taken back). On screen (the frame's linear light, G): the field mode at the template
+camera 30 241 at 0, 24 255 at 0.5, 21 888 at 1, 19 083 at 2; the star-first mode 50 789 / 38 476 / 34 710 at 0 / 1 / 2;
+the field mode's region regime at the zoom stand 22 752 / 15 071 / 11 062.

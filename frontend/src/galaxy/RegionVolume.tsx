@@ -37,6 +37,7 @@ import {
   REGION_TRANSMISSION_KEY,
   cloudInterior,
   packObjects,
+  scaleCloudDepths,
   regionFragment,
   sortedFrom,
 } from "./region";
@@ -90,6 +91,11 @@ interface Props {
    * the layer is off, and when the volume goes.
    */
   onInterior?: (note: string | null) => void;
+  /**
+   * The extinction strength (S67, D228, the owner's ruling; the Tuning panel's): every cloud's kappa multiplied by it as
+   * the table is uploaded, so the march and the points' T take it alike. 1, the model's, uploads the table untouched.
+   */
+  extinction?: number;
 }
 
 /**
@@ -104,7 +110,7 @@ interface Props {
  * where it hides about half. The line's per-filter weight and
  * the dust's extinction ratios are the model's (`/api/render` at the region's level), the white point the viewer's.
  */
-export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN, onInterior }: Props) {
+export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN, onInterior, extinction = 1 }: Props) {
   const place = { ...window, level };
   const key = JSON.stringify([place, query]);
   const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal)).value ?? null;
@@ -240,7 +246,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     };
   }, [frame, passes]);
 
-  const last = useMemo(() => ({ view: new Matrix4(), projection: new Matrix4(), gain: -1, weight: -1, width: 0, height: 0 }), [passes]);
+  const last = useMemo(() => ({ view: new Matrix4(), projection: new Matrix4(), gain: -1, weight: -1, width: 0, height: 0, extinction: -1 }), [passes]);
   useFrame(({ camera }) => {
     if (!built || !passes) return;
     const gain = LIGHT_PER_LSUN_PC2 * 2 ** stops * weight;
@@ -251,12 +257,12 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     camera.updateMatrixWorld();
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
-      last.weight !== weight || last.width !== width || last.height !== height;
+      last.weight !== weight || last.width !== width || last.height !== height || last.extinction !== extinction;
     const reattached = passes.some((p) => p.mesh.parent !== p.scene);
     for (const p of passes) if (p.mesh.parent !== p.scene) p.scene.add(p.mesh);
     if (!moved && !reattached) return;
     const eye: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z];
-    built.texture.image.data = sortedFrom(built.table, eye, built.sorted);
+    built.texture.image.data = scaleCloudDepths(sortedFrom(built.table, eye, built.sorted), built.table.count, extinction);
     built.texture.needsUpdate = true;
     const before = gl.getRenderTarget();
     for (const p of passes) {
@@ -279,6 +285,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     last.weight = weight;
     last.width = width;
     last.height = height;
+    last.extinction = extinction;
   }, 0.5);
 
   return passes ? (

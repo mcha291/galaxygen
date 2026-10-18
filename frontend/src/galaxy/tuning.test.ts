@@ -75,6 +75,7 @@ describe("tuning defaults (D199)", () => {
       starsIntensity: 1,
       gasIntensity: 1,
       dustIntensity: 1,
+      extinctionStrength: 1, // S67, D228: the model's extinction, the owner's ruling's default
       cloudIntensity: 1,
       ageYoung: true,
       ageMiddle: true,
@@ -313,7 +314,12 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
     expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "clusterRadius", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading", "knots"]);
-    for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
+    // ...and, since S67 (D228, the owner's ruling), the extinction strength: linear from 0 to 2, at 1 the model's.
+    for (const c of group.filter((c) => !c.switch && c.key !== "extinctionStrength")) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
+    const strength = group.find((c) => c.key === "extinctionStrength")!;
+    expect(strength).toMatchObject({ kind: "range", min: 0, max: 2, step: 0.01 });
+    expect((strength as { log?: boolean }).log).toBeFalsy();
+    expect(strength.about).toContain("by the owner's ruling of 2026-10-18");
   });
 });
 

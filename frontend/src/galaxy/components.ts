@@ -51,8 +51,16 @@ export const FIELD_LAYERS: Readonly<MarchLayers> = Object.freeze({ stars: 1, gas
  * depth and the "where" tint untouched (the intensity never scales a depth, and the field mode has no "where"
  * reading). At the defaults (1, 1, 1) this is FIELD_LAYERS exactly. The switches stay the star-first mode's.
  */
-export function fieldLayers(t: Pick<Tuning, "starsIntensity" | "gasIntensity" | "dustIntensity">): MarchLayers {
-  return { ...FIELD_LAYERS, stars: FIELD_LAYERS.stars * t.starsIntensity, gas: FIELD_LAYERS.gas * t.gasIntensity, dust: FIELD_LAYERS.dust * t.dustIntensity };
+export function fieldLayers(t: Pick<Tuning, "starsIntensity" | "gasIntensity" | "dustIntensity"> & Partial<Pick<Tuning, "extinctionStrength">>): MarchLayers {
+  return {
+    ...FIELD_LAYERS,
+    stars: FIELD_LAYERS.stars * t.starsIntensity,
+    gas: FIELD_LAYERS.gas * t.gasIntensity,
+    dust: FIELD_LAYERS.dust * t.dustIntensity,
+    // The extinction strength (S67, D228, the owner's ruling): the dust's depth - the diffuse dust's and the clouds'
+    // raster's, both multiplied by it in the march - at the slider; 1 x 1 = 1 at the default.
+    dustDepth: FIELD_LAYERS.dustDepth * (t.extinctionStrength ?? 1),
+  };
 }
 
 /**
@@ -156,7 +164,8 @@ export function diagnosticOn(t: Pick<Tuning, "compDust" | "dustReading" | "compC
  * scale, dustLevels) and dims nothing; without a declared ramp it draws nothing (rule A9).
  */
 export function brightestLayers(
-  t: Pick<Tuning, "compStars" | "compGas" | "compDust" | "dustReading" | "starsIntensity" | "gasIntensity" | "dustIntensity">,
+  t: Pick<Tuning, "compStars" | "compGas" | "compDust" | "dustReading" | "starsIntensity" | "gasIntensity" | "dustIntensity"> &
+    Partial<Pick<Tuning, "extinctionStrength">>,
   ramp: DustRamp | null,
 ): MarchLayers {
   const where = t.compDust && t.dustReading === "where";
@@ -165,7 +174,7 @@ export function brightestLayers(
     stars: t.compStars ? t.starsIntensity : 0,
     gas: t.compGas ? t.gasIntensity : 0,
     dust: acts ? t.dustIntensity : 0,
-    dustDepth: acts ? 1 : 0,
+    dustDepth: acts ? (t.extinctionStrength ?? 1) : 0, // at the extinction strength (S67, D228): 1, the model's
     where: where && ramp ? t.dustIntensity : 0,
     whereStops: ramp?.stops ?? GREY_STOPS,
   };

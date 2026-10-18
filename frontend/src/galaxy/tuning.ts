@@ -82,6 +82,11 @@ export interface Tuning {
   starsIntensity: number;
   gasIntensity: number;
   dustIntensity: number;
+  /**
+   * Every optical depth the viewer draws, multiplied (S67, D228): a display choice by the owner's ruling of 2026-10-18,
+   * an exception to rule D5's "a display intensity never scales a depth". 1 is the model's extinction.
+   */
+  extinctionStrength: number;
   cloudIntensity: number;
   // The field mode's starlight by age (S63, D223): the render's three age parts, each a layer of the stellar
   // light, all on by default (their sum, the whole).
@@ -140,6 +145,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   starsIntensity: 1,
   gasIntensity: 1,
   dustIntensity: 1,
+  extinctionStrength: 1,
   cloudIntensity: 1,
   ageYoung: true,
   ageMiddle: true,
@@ -336,6 +342,10 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "dustIntensity", label: "dust intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
     about: "Multiplies the dust's own light (as it acts, in either mode) or its drawn depth (where it is, the star-first mode); never its extinction. A display balance.",
+  },
+  {
+    key: "extinctionStrength", label: "extinction strength", group: "Components", kind: "range", min: 0, max: 2, step: 0.01, unit: "×",
+    about: "Multiplies every optical depth the viewer draws - the diffuse dust's, the field march's cloud raster, the region's clouds and the dust to each point - in either mode; never the dust's own light (dust intensity). A display choice by the owner's ruling of 2026-10-18 (D228), and an exception to rule D5's \"a display intensity never scales a depth\": at 1 the extinction is the model's.",
   },
   {
     key: "cloudIntensity", label: "cloud marker brightness", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",

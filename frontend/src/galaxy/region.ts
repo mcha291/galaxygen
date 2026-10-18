@@ -376,6 +376,20 @@ export function sortedFrom(objects: RegionObjects, eye: readonly [number, number
   return out;
 }
 
+/**
+ * The extinction strength (S67, D228; the owner's ruling of 2026-10-18, a display choice and an exception to rule D5):
+ * every cloud's kappa in a table multiplied by `strength`, in place - the HII regions' and shells' rows untouched. At
+ * 1 nothing is written, so the table the march reads is the packed one to the bit.
+ */
+export function scaleCloudDepths(table: Float32Array, count: number, strength: number): Float32Array {
+  if (strength === 1) return table;
+  for (let k = 0; k < Math.min(count, MAX_OBJECTS); k += 1) {
+    const o = k * OBJECT_FLOATS;
+    if (Math.floor(table[o + 4] + 0.5) === KIND.cloud) table[o + 10] *= strength;
+  }
+  return table;
+}
+
 // --- the clouds' front on a ray (T5, S64; RULING_S64 R9) ------------------------------------------------------
 
 /**
