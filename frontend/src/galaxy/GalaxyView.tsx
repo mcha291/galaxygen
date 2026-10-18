@@ -230,7 +230,6 @@ function ZoomBridge({ reach, standRadius, zoom, onView }: { reach: number; stand
 function HdrOutput({ tuning }: { tuning: ViewTuning }) {
   const latest = useRef(tuning);
   latest.current = tuning;
-  const bloom = useRef<UnrealBloomPass | null>(null);
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
@@ -242,8 +241,7 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
     // giants), and not by much. Bloom is also the fastest way to make an instrument look like
     // a screensaver (RENDER_PLAN R5).
     const t = latest.current;
-    bloom.current = new UnrealBloomPass(new Vector2(size.width, size.height), t.bloomStrength, t.bloomRadius, t.bloomThreshold);
-    c.addPass(bloom.current);
+    c.addPass(new UnrealBloomPass(new Vector2(size.width, size.height), t.bloomStrength, t.bloomRadius, t.bloomThreshold));
     c.addPass(new OutputPass()); // tone mapping and the sRGB encode, once
     return c;
   }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
@@ -264,7 +262,10 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
   // the output pass rebuilds its tone curve when the renderer's changes.
   const { bloomStrength, bloomRadius, bloomThreshold, toneMapping } = tuning;
   useEffect(() => {
-    const pass = bloom.current;
+    // The pass is read from the composer that renders, not kept in a ref filled inside the memo: in development
+    // React builds a memo twice and keeps one, so a ref set there could hold the discarded composer's pass and the
+    // sliders would move a bloom nobody draws (S67: the owner saw no change at any strength).
+    const pass = composer.passes.find((p): p is UnrealBloomPass => p instanceof UnrealBloomPass);
     if (!pass) return;
     pass.strength = bloomStrength;
     pass.radius = bloomRadius;
