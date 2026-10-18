@@ -13134,3 +13134,70 @@ gates run at the plain display defaults, stored as the Milky Way's tuning before
 drawing, not the look); `filters.ts` imports its JSON with `type: "json"` so the e2e can import `tuning.ts`; the
 physics-only ratio re-pinned 0.96265 -> 0.96717 (red), the display balance's; the Milky Way's five captures
 regenerated, the frame's GPU time 28 -> 52 ms (star-first) at the higher resolution and steps.
+
+### D228. S67: the region regime's clouds stop drawing as black holes — the field dimmed only behind them (#112's field half, discharged with #112), and each cloud at its own column (#167's region half) (BUILD_III Phase V8, a side session of S67's lead; Opus)
+
+**What the owner saw (2026-10-18).** Zoomed into the field mode, the "clouds as extinction" were near-solid black
+spheres. The lead's diagnosis, confirmed: (1) the region regime's transmission pass multiplied the field's whole
+light along a ray by the clouds' T — the light in front of a cloud as well (RULING_S64 R9's stated approximation,
+#112's field half), so a cloud at the midplane, which hides about half the layer's light, took all of it; (2) every
+cloud took the census's one central A_V, `cloud_extinction_v` = 2.97 mag (#167), as a hard-edged uniform sphere.
+Nothing in the model changed.
+
+**R1, the field's light by depth (#112's field half; VIEWER_TASKS T5's recorded mend).** The march gains a third
+pass (mode 2) whose image multiplies the field: the field's light along each ray is placed where the stars' layer
+puts it — sech²(y / 2h) / 4h at the render header's `layers.stars` (0.356 kpc on the Milky Way), FieldVolume's own
+profile, so the share in front of a height is a difference of tanh over the ray's whole span to the layer's far face
+(`region.ts layerDepthShare`) — and cut into K slabs of equal light; every cloud sample's optical depth dims the
+slabs whose middles lie beyond it, and the factor is the slabs' mean transmission. The march sums the slabs as it
+passes the samples (`marchFieldTransmission`, held to the order-free definition `fieldTransmissionBySlabs` on
+depth-ordered rays to 1e-12), so no slab is stored and K costs nothing. With no cloud on a ray the factor is K / K,
+exactly 1. The star points keep mode 1's target (the whole ray's T and the clouds' front, S64), which no longer
+multiplies the frame. **K = 1024, from a measured convergence (A9)**: on the Milky Way's zoom stand in the field mode
+(e2e/captures.json milky_way-zoom; 128 × 128 rays through the region's table, its 44 clouds), the worst ray's
+summed light moves from K / 2 to K by 0.0114 at 64, 0.0058 at 128, 0.0027 at 256, 0.0013 at 512, **0.0009 at 1024**,
+0.0004 at 2048 — about 1 / K, an opaque cloud's edge crossing a slab's middle — while the frame's mean factor moves
+by under 1e-4 from K = 8 (`regionSlabs.test.ts` FIELD_SLABS_MEASURED, re-measured against a live API when asked).
+**Stated, not mended:** (i) the field's light is placed by the stars' layer alone — the ionized gas's thicker layers
+and the field's own diffuse dust between the slabs are not split by depth; (ii) where two clouds overlap on a ray a
+sample can arrive behind one already passed (the near-surface sort), and it then dims from the slabs already
+reached — the march's stated approximation for overlaps (#112's text), now the field's too; (iii) a ray running
+level through the layer, or a ray leaving it away from it, takes the whole ray's T, as before.
+
+**R2, each cloud at its own column (#167's region half).** `packObjects` reads each cloud's `/api/clouds`
+`cloud_dust_extinction_v` — the face-on mean A_V over its disc π `cloud_size`², the column D224 publishes and the
+galaxy-scale raster already draws — as a uniform sphere of that mean column: κ = (3/4) τ̄ / r (the chord's mean over
+the projected disc is (4/3) κ r), so the centre's column is 1.5 τ̄ (`kappaOfMeanColumn`). A cloud without the column
+is not drawn (B9). The interior noise (`cloudInterior`) is unchanged. The census scalar `cloud_extinction_v` is now
+read by no drawing; the stage's law and the column still disagree (#167 carried: its mend is the stage's).
+
+**The gates.** A synthetic cloud at the midplane, face-on, at 1000 mag dims a uniform field to the light in front of
+its first sample, 0.469 — about half — where the whole ray's T gave 0 (`regionSlabs.test.ts`); a cloud of the
+census's median column leaves the front half and the back half's T; with no cloud, with a missed cloud and with HII
+regions only the factor is exactly 1 on every ray tried. On screen (the field mode at milky_way-zoom's stand, 1024 px,
+the region's clouds removed by emptying the region's /api/clouds window): the frame's summed light with the clouds
+off is the same before and after to every digit (13 279.34, 12 219.86, 11 501.20 per channel at the display
+defaults; 106 234.70, 97 758.88, 92 009.64 at +3 stops), well inside 1e-6. The shader's text: S64's recovered byte
+for byte with S67's additions taken back, S67's pinned (5416 characters). vitest 425 passed (1 skipped: the live
+measurement), tsc -b, vite build; the picture test 15 passed and no capture moved, as none draws the region regime
+(the zoom captures are the star-first mode's; RegionVolume mounts in the field mode only), so nothing was
+regenerated. Eight frames read "the committed picture, byte for byte"; milky_way-physics-only reads "not the
+committed picture's bytes" against `frames.json`, whose record of it (765 251 B) is the frame from before 60232e8 —
+the committed PNG is 672 371 B, the bytes this run took, and the screenshot comparison passed: the record was not
+rewritten with the picture (found here, not this branch's to mend).
+
+**Before and after (the owner's Milky Way defaults, D227 T1; the field mode at the zoom stand).** Taken at the
+session-67 tip (60232e8) and on
+this branch, 1024 px, at exposure 0 (the frame's median luminance 10.35 of 255) and at +3 stops. The frame's
+summed light (linear, V): 12 193.85 before, 12 206.93 after, 12 219.86 with the region's clouds removed — the
+clouds took 0.213 % of it and now take 0.106 %, half, as midplane clouds should. The near-black fraction (pixels
+under a quarter of the frame's median luminance): 0.00161 → **0** (0 without clouds); at +3 stops 0.00105 → 0. The
+dark fraction (under 0.75 × the frame's median, goal_metrics' DARK_T taken on the whole frame, which is a zoom and
+has no disc geometry): 0.10592 → 0.10511 (0.10315 without clouds); at +3 stops 0.02526 → 0.02418 (0.02292). The
+8-bit mean 10.314 → 10.326 (10.342); at +3 stops 82.185 → 82.277 (82.346). The two clouds in the frame are black
+discs before and grey shadows after (the screenshot pair in the session's notes, `s67-clouds-before-after-e3.png`).
+The two changes are measured together; the slabs alone halve a midplane cloud's hold on the field, and the
+per-cloud columns move each cloud's central column from 2.97 mag to 1.5 × its own mean A_V.
+
+**The register.** #112 discharged (its star half at S64, its field half here); #167 carried, its region half done.
+The board 111 open, 51 discharged.
