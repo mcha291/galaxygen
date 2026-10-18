@@ -13368,3 +13368,85 @@ TUNING_DEFAULTS pinned with cloudElongation 1); tsc -b; vite build. picture:upda
 unchanged byte for byte (its defaults draw no clouds' layer); NGC 4414's four moved - field +0.85 % in display mean,
 1.72 % of pixels by >= 3/255; star-first +0.62 %, 1.86 %; thumbnail +0.93 %, 1.41 %; zoom stand +1.48 %, 38.6 % (the
 clouds resolve there); then the picture test once more: 15 passed, all nine frames the committed pictures byte for byte.
+
+### D231. S67: the clouds' size law from a read source — Lada & Dame 2020's X_CO-corrected Σ_GMC, 82 M☉ pc⁻² inside the solar circle and 35 outside it, the radius held at 150 pc with the mass kept, the dispersion at each cloud's own surface density (#182 opened) (BUILD_III Phase V8, S67; the lead's ruling on an Opus probe, an Opus builder)
+
+**The owner's choice (2026-10-18).** "Smaller giant clouds (model)", of the options measured for the whole-galaxy
+clouds' dark orbs (D230). Every cloud's radius was √(M/πΣ) at one `GMC_SURFACE_DENSITY` = 42 (Heyer et al. 2009's
+median), so with Rice et al. 2016's inner truncation at 10⁷ M☉ the inner Galaxy's largest clouds were 150-275 pc.
+
+**The reading** (a blind Opus reader, 2026-10-18; `docs/READING_CLOUD_SIZES.md`). Heyer et al.'s 42 is measured over
+R 4.1-8.1 kpc only, at a constant X_CO; Lada & Dame 2020, correcting X_CO for its radial gradient, find 82 ± 10 in the
+molecular ring and inside it (their 3-5 kpc mean 84.5) and "a single mass surface density of Σ_GMC = 35" outside it;
+their constant-X_CO 13 ± 4 at 9-14 kpc and eq. 1 (Σ = 54.5 − 3.7 R) are uncorrected. The Milky Way's largest clouds have
+R ~60-150 pc (Miville-Deschenes et al. 2017's largest ~150 pc, "comparable to the molecular disk's scale height").
+
+**The probe** (phase 1, the size law substituted alone, masses and streams unchanged; the session's notes,
+probe_s67/size). Eq. 1 made clouds larger (Σ < 42 beyond 3.4 kpc: max 305 pc); the 13 regime enlarged the outer clouds
+(to 176 pc at Rice's outer 1.5 × 10⁶); no Σ ≤ 82 brings a 10⁷ M☉ cloud under 150 pc (that needs Σ ≥ 141) - only a cap
+does; the mass function already truncates at Rice's M₀ (10⁷ inside R_SUN, 1.5 × 10⁶ outside).
+
+**The ruling (the lead's).**
+1. *Two regimes, a step*: `GMC_SURFACE_DENSITY_INNER` = 82 and `GMC_SURFACE_DENSITY_OUTER` = 35 M☉ pc⁻² (level 0,
+   `[verified: Lada & Dame 2020]`; Heyer et al.'s 42 in the inner one's about, superseded by the X_CO(R) correction),
+   at the cloud's birth radius against `R_SUN` - the one boundary the mass function's truncation uses (`law_for`);
+   R_SUN itself is outside. `GMC_SURFACE_DENSITY` is retired. Not the uncorrected 13, which enlarges the outer clouds.
+2. *The cap*: `GMC_RADIUS_MAX` = 150 pc (`[verified: Miville-Deschenes et al. 2017]`), the mass kept, so a capped
+   cloud's surface density rises (W43's ≈ 460 at R_eq ~70 pc a disclosed check that the giants are denser).
+3. *The dispersion at each cloud's own Σ = M/πR²* (Heyer et al. eq. 10, √(GM/5R)), so Mach follows. The test's Mach
+   range 20-35 was the model's own S32 number ("Measured at S32"), not a sourced window: re-pinned (max 39.86).
+4. *`ngc_4414` takes the same law at the same R*, consistent with the mass function's absolute R_SUN; disclosed - no
+   measured cloud census, PHANGS discs' ~100 (Rosolowsky et al. 2021) near the inner regime. At the same R/R_d the
+   inner mass function would meet Σ 35 inside 8.2 kpc (clouds to 440 pc under the probe's 13), a coupled change.
+5. *`cloud_extinction_v`*: its about meant "the census's one surface density", which no longer exists; it is computed at
+   the inner regime's 82 (`clouds.census_extinction_v`), the regime that holds 83 % of the Milky Way's cloud mass and
+   every cloud above 1.5 × 10⁶ M☉: 2.9696 → 5.7977 mag (82/42); the about says an outer uncapped cloud's is 2.47 and a
+   capped giant's more. No drawing reads it since D228 (region.ts reads `cloud_dust_extinction_v`; only a comment
+   names the scalar); `/api/clouds`' header still carries it.
+
+**Built.** `clouds.surface_density_at` and `clouds.cloud_size_law` (radius and effective Σ), read in
+`materialise_clouds`; the three constants in the clouds stage's `reads_constants`; the abouts of `cloud_size`,
+`cloud_velocity_dispersion`, `cloud_extinction_v`, the stage's docstring and `/api/clouds`' derived column's; the offset
+declaration in `layer/cloud_texture.py` re-read to the model. A test by hand
+(`test_the_size_law_by_hand_either_side_of_the_solar_circle_and_at_the_cap`): 10⁵ M☉ at 8.19 kpc 19.702 pc, at 8.20
+and 8.21 kpc 30.157 pc, 10⁷ M☉ at 4 kpc held at 150 pc with Σ 141.47 and σ_v 7.573 km/s, the A_V 5.7977.
+
+**Measured** (the census, layer off; before → after). Milky Way (16 577 clouds): radius median 12.9 → 12.1 pc, p90
+35.5 → 30.1, p99 129.5 → 95.2, max 272.7 → 150.0; > 75 pc 480 → 309, > 150 pc 117 → 0; inside 3 kpc median 15.4 → 11.0,
+p99 171.0 → 122.4, > 75 pc 174 → 99, > 150 pc 44 → 0; 39 clouds capped, all inside R_SUN, at Σ 82.4-138.9; outside R_SUN
+the largest 109 pc. `ngc_4414` (6 530): median 13.9 → 11.8, p90 46.1 → 34.6, p99 173.5 → 124.2, max 273.5 → 150.0, > 75
+pc 314 → 190, > 150 pc 96 → 0; 35 capped (one outside R_SUN, a 4.8 × 10⁶ M☉ cloud of a ring straddling it: the mass
+function reads the ring's mid-radius, Σ the birth radius, #182). The smallest cloud 8.71 → 6.23 pc; Mach 5.28-29.6 →
+5.05-39.86. Through the clouds' mean densities: the HII regions' Strömgren radius median 0.716 → 0.605 pc, n_e 193.7 →
+177.9 cm⁻³, log U −2.826 → −2.788; the Hα-weighted [O III] 0.781 → 0.775 and [N II] 0.082 → 0.078; the bubbles' median
+radius 8.766 → 8.349 pc, stalled 12 373 → 12 445, outgrowing their cloud 0.205 → 0.230, the porosity at R0 0.0104 →
+0.00439; the clusters' offsets inside smaller clouds: 1 581 → 1 376 in another radial ring, 133 → 119 in another cell
+ring, the largest 230 → 140 pc.
+
+**Specs**: `uv run python -m galaxy.specs` reads the same before and after but for row 37 (and its convergence sweeps)
+and the timings: row 37 −0.097717 → −0.097902, a recorded miss still (#117); both models 12 pass / 20 fail / 5
+not-yet-computable of 37, `ngc_4414`'s template checks 0 / 5 / 0; specs: OK, EXIT=0 both.
+
+**Re-pins, each with its reason in the file.** `tests/test_clouds.py` (the size law, the dispersion at each cloud's
+own Σ, the smallest cloud and the Mach range, the A_V; the new hand test); `tests/test_nebular.py` (the Strömgren
+radius, n_e and log U medians, the weighted [O III] and [N II], the 4 kpc ring's [O III]/Hα bound 0.6 → 0.7 on its
+0.605, the layer-on row-37 reading); `tests/test_bubbles.py` (median radius, stalled count, outgrown share, R0
+porosity); `tests/test_s45_diagnosis.py` (row 37's parts: G_age 0.267 → 0.247, its percentiles, the clamped 0.266 →
+0.246, G_U's percentiles, lu0 −2.112 → −2.030); `tests/test_layer.py` (`cloud_extinction_v` joins the layer-off
+reference's named list by this decision, on both templates; row 37's readings; the offset declaration's numbers);
+`tests/test_audit.py` (the debt pin (114, 51) and the carried row).
+
+**The register.** **#182** opened: the clouds' surface density is two regimes and a cap - no continuous Σ(R), the
+boundary a step at R_SUN (and read at the ring's mid-radius by the mass function, the birth radius by Σ), no mass
+dependence below the cap, `ngc_4414` the Milky Way's law. #167's text records the A_V's new surface density. The board
+114 open, 51 discharged.
+
+**The checks.** The targeted set - test_clouds, test_nebular, test_bubbles, test_clusters, test_v6_clouds,
+test_v6_knots, test_s45_diagnosis, test_audit_iii, test_audit_iv, test_layer, test_render, test_v7_header,
+test_hierarchy, test_v4, test_templates, test_docs, test_audit, test_progress - 390 passed, 1 skipped (the refit),
+EXIT=0, pytest's own exit code to a file; the full suite is the lead's. **The frames.** `npm --prefix frontend ci`;
+`picture:update` once: 15 passed, all nine captures rewritten - display mean / pixels moved by >= 3/255: Milky Way field
+−0.61 % / 2.80 %, stars −0.06 % / 23.4 % (a fine-grained shift, mean flat; not traced further), physics-only −0.16 % /
+0.31 %, zoom 0.00 % / 0.00 % (not byte-identical), thumbnail −0.01 % / 0.25 %; `ngc_4414` field +0.37 % / 1.41 %, stars
++1.15 % / 3.88 %, zoom +0.37 % / 10.4 %, thumbnail +0.22 % / 1.04 % - the captures move through the clouds' own columns
+and the HII regions; then `npm run picture` once: 15 passed, every frame the committed bytes.
