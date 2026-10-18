@@ -51,13 +51,18 @@ def test_the_mass_function_arithmetic():
 
 
 def test_size_dispersion_and_mach_follow_the_sourced_relations(default):
-    """R = √(M/πΣ) at Heyer's 42 M☉ pc⁻²; σ_v = (πGΣ/5)^½ R^½ (Heyer et al. 2009 eq. 10); c_s(10 K) ≈ 0.19 km/s."""
+    """R = √(M/πΣ) at Lada & Dame 2020's 82 / 35 M☉ pc⁻² inside / outside R_SUN, held at 150 pc (S67, D231; was
+    Heyer's 42 for every cloud); σ_v = (πGΣ/5)^½ R^½ at each cloud's own Σ = M/πR² (Heyer et al. 2009 eq. 10);
+    c_s(10 K) ≈ 0.19 km/s."""
     o, c = default
     F = o.fields
-    sigma = c["GMC_SURFACE_DENSITY"]
-    assert sigma == 42.0
-    assert np.allclose(F["cloud_size"], np.sqrt(F["cloud_mass"] / (math.pi * sigma)))
-    assert np.allclose(F["cloud_velocity_dispersion"], np.sqrt(math.pi * cl.G_PC * sigma / 5.0 * F["cloud_size"]))
+    assert (c["GMC_SURFACE_DENSITY_INNER"], c["GMC_SURFACE_DENSITY_OUTER"], c["GMC_RADIUS_MAX"]) == (82.0, 35.0, 150.0)
+    birth, mass, size = (np.asarray(F[k], dtype=float) for k in ("cloud_birth_radius", "cloud_mass", "cloud_size"))
+    regime = np.where(birth < c["R_SUN"], 82.0, 35.0)
+    assert np.allclose(size, np.minimum(np.sqrt(mass / (math.pi * regime)), 150.0))
+    sigma = mass / (math.pi * size**2)  # each cloud's own: the regime's below the cap, above it for a capped giant
+    assert np.allclose(sigma[size < 150.0], regime[size < 150.0]) and np.all(sigma[size >= 150.0] >= regime[size >= 150.0])
+    assert np.allclose(F["cloud_velocity_dispersion"], np.sqrt(math.pi * cl.G_PC * sigma / 5.0 * size))
     c_s = cl.sound_speed(c["MOLECULAR_GAS_TEMPERATURE"], c["MOLECULAR_MEAN_WEIGHT"])
     assert c_s == pytest.approx(0.19, abs=0.01)  # Bergin & Tafalla 2007: 0.2 km/s at 10 K
     assert np.allclose(F["cloud_mach_number"], F["cloud_velocity_dispersion"] / c_s)
@@ -65,8 +70,11 @@ def test_size_dispersion_and_mach_follow_the_sourced_relations(default):
     assert F["cloud_forcing_parameter"] == b == 0.4
     assert np.allclose(F["cloud_density_pdf_width"] ** 2, np.log1p(b * b * F["cloud_mach_number"] ** 2))
     # Measured at S32: a 10^4 M☉ cloud is 8.7 pc across and Mach 5; the largest, 10^7, 275 pc and Mach 30.
-    assert F["cloud_size"].min() == pytest.approx(8.7, abs=0.2) and F["cloud_mach_number"].min() == pytest.approx(5.3, abs=0.2)
-    assert 20.0 < F["cloud_mach_number"].max() < 35.0
+    # S67 (D231): was 8.7 pc / Mach 5.3 / a Mach range 20-35 - the model's own S32 measurement, not a sourced window.
+    # Now a 10^4 M☉ cloud inside R_SUN is 6.23 pc (at 82), the slowest an outer one (9.5 pc at 35, Mach 5.05), and
+    # the fastest a capped giant (~10^7 M☉ held at 150 pc, Σ 139, Mach 39.9).
+    assert F["cloud_size"].min() == pytest.approx(6.23, abs=0.02) and F["cloud_mach_number"].min() == pytest.approx(5.05, abs=0.02)
+    assert F["cloud_size"].max() == pytest.approx(150.0) and F["cloud_mach_number"].max() == pytest.approx(39.86, abs=0.05)
 
 
 def test_the_census_redistributes_the_molecular_gas(default):
@@ -233,6 +241,30 @@ def test_the_cloud_layer_s_half_maximum_is_at_half_the_measured_fwhm():
     assert 2.0 * math.atanh(0.999999) == pytest.approx(14.51, abs=0.01)
 
 
+def test_the_size_law_by_hand_either_side_of_the_solar_circle_and_at_the_cap():
+    """S67 (D231), by hand: Lada & Dame 2020's X_CO-corrected Σ_GMC, 82 M☉ pc⁻² inside R_SUN and 35 outside it (a step
+    at the cloud's birth radius, R_SUN itself outside, as the mass function's ``law_for``), the radius held at 150 pc
+    (Miville-Deschenes et al. 2017) with the mass kept; and the constants are level 0's, with their sources."""
+    from galaxy.models.level0 import LEVEL0
+
+    c = {k: float(LEVEL0[k].value) for k in ("R_SUN", "GMC_SURFACE_DENSITY_INNER", "GMC_SURFACE_DENSITY_OUTER", "GMC_RADIUS_MAX")}
+    assert c == {"R_SUN": 8.2, "GMC_SURFACE_DENSITY_INNER": 82.0, "GMC_SURFACE_DENSITY_OUTER": 35.0, "GMC_RADIUS_MAX": 150.0}
+    assert "Lada & Dame 2020" in LEVEL0["GMC_SURFACE_DENSITY_INNER"].about and "Heyer et al. 2009" in LEVEL0["GMC_SURFACE_DENSITY_INNER"].about
+    assert "Lada & Dame 2020" in LEVEL0["GMC_SURFACE_DENSITY_OUTER"].about
+    assert "Miville-Deschenes" in LEVEL0["GMC_RADIUS_MAX"].about and "GMC_SURFACE_DENSITY" not in LEVEL0
+    mass = np.array([1.0e5, 1.0e5, 1.0e5, 1.0e7])
+    birth = np.array([8.19, 8.2, 8.21, 4.0])
+    size, sigma = cl.cloud_size_law(mass, birth, c)
+    # 1e5 / (pi 82) = 388.18 -> 19.702 pc; 1e5 / (pi 35) = 909.46 -> 30.157 pc; 1e7 / (pi 82) = 38 818 -> 197.0, held
+    # at 150 pc, so its Σ is 1e7 / (pi 150^2) = 141.47.
+    assert size == pytest.approx([19.702, 30.157, 30.157, 150.0], abs=1e-3)
+    assert sigma == pytest.approx([82.0, 35.0, 35.0, 141.47], abs=1e-2)
+    # σ_v at the capped giant's own Σ: (pi G 141.47 / 5 x 150)^1/2 = (G M / 5 R)^1/2 = (4.3009e-3 x 1e7 / 750)^1/2 = 7.573.
+    assert float(cl.velocity_dispersion(size[3:], sigma[3:])[0]) == pytest.approx(7.573, abs=1e-3)
+    # The inner regime's central A_V is 82/42 of the 42's 2.9696: the column cancels to Σ alone.
+    assert cl.census_extinction_v(c | {"HII_MASS_PER_HYDROGEN": float(LEVEL0["HII_MASS_PER_HYDROGEN"].value)}) == pytest.approx(5.7977, abs=1e-3)
+
+
 def test_the_clouds_header_carries_the_stage_scalars(model):
     """Rule D4 keeps a catalogue stage's galaxy scalars off the viewer's scalars surface (D148); the
     census route carries them in its header instead, so a renderer reads b and the lifetime there."""
@@ -250,7 +282,8 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
     # gain ride in the header under their own key, not among the scalars - they are constants of the model, not a
     # stage's fields - so a renderer reads them instead of holding them (rule D5 as amended).
     assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
-    assert scalars["cloud_extinction_v"] == pytest.approx(2.9696, abs=1e-3)  # 42 Msun/pc2 x 3/2 through Draine's V row
+    # S67 (D231): was 2.9696 (42 Msun/pc2); the inner regime's 82 x 3/2 through Draine's V row, 82/42 of it.
+    assert scalars["cloud_extinction_v"] == pytest.approx(5.7977, abs=1e-3)  # 2.9696 x 82/42 = 5.7978
     assert scalars["cloud_lifetime"] == pytest.approx(26.0)
     assert 0.0 < scalars["cloud_forcing_parameter"] < 1.0
     # The same numbers /api/arrays serves when the stage itself runs; the realised mass is that route's alone.

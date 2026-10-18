@@ -178,14 +178,17 @@ def test_the_default_numbers(default):
     # S59 (D218 follow-up): was 8.963 (S36's pin, which every draw since had read inside its 1 %: 8.912 at S57); this
     # draw's median bubble reads 8.863 pc, 1.1 % under it - re-read, the tolerance kept.
     # S61 (D220): was 8.863 (the ring-first census, a new draw: 8.766 pc, 1.1 % under)
-    assert float(np.median(radius)) == pytest.approx(8.766, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
+    # S67 (D231): was 8.766 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one
+    # 42): a bubble stalls against its region's pressure, which its cloud's mean density sets; the census, its masses
+    # and streams unchanged.
+    assert float(np.median(radius)) == pytest.approx(8.349, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
     # S57 (D216): was 12477 (another draw of the census); S56 (D215): was 12582 (another draw of the census)
     # S59 (D218 follow-up): was 12499; first pass 12496 (another draw of the census). S58 (D217): was 12503 (another draw of the census)
     # S60 (D219): was 12502 (another draw of the census, 76 more clusters)
     # S61 (D220): was 12575 (the ring-first census, a new draw: 206 fewer clusters)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12373
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12445  # S67 (D231): was 12373, the clouds' size law
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -193,7 +196,8 @@ def test_the_default_numbers(default):
     ratio = np.asarray(F["bubble_interior_pressure"])[stalled] / p_region[stalled]
     assert float(np.median(ratio)) == pytest.approx(1.0, abs=0.25)
     hosts = np.flatnonzero(np.asarray(F["cloud_cluster_index"]) >= 0)
-    assert float(np.mean(radius > np.asarray(F["cloud_size"])[hosts])) == pytest.approx(0.205, abs=0.01)
+    # S67 (D231): was 0.205 - the inner clouds 0.72x smaller under the size law, so more bubbles outgrow theirs.
+    assert float(np.mean(radius > np.asarray(F["cloud_size"])[hosts])) == pytest.approx(0.230, abs=0.01)
     assert float(np.mean(radius > np.asarray(F["hii_stromgren_radius"]))) > 0.99
     assert np.asarray(F["remnant_size"]).size == 1464
     assert float(F["remnant_count_total"]) == pytest.approx(1448.41, rel=1e-4)
@@ -215,7 +219,10 @@ def test_the_default_numbers(default):
     # S61 (D220): was 0.0344 - the clusters drawn ring-first, a new draw of that ring's bubbles, and binned by their
     # clouds' radii since (D220 item 6), the offset no longer carrying a bubble across the ring's edge: 0.0104, 1.5
     # times the sixteen seeds' spread under their mean (0.022 +/- 0.008, S51). The same on and off since.
-    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0104, abs=0.001)
+    # S67 (D231): was 0.0104 - the clouds' size law moves that ring's bubbles (an r^3-weighted sum, at the ring where
+    # the regime steps from 82 to 35): 0.00439, 2.2 times the sixteen seeds' spread under their mean (S51); one
+    # ring's draw, not judged.
+    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.00439, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
     assert n_mid == pytest.approx(0.688, abs=0.002)
 

@@ -292,7 +292,12 @@ LAYER_OFF_EXCEPTIONS = {
     # own value 14.3° is published beside it" - `ngc_4414`'s pitch is the template's pin, layer on and off alike, and
     # the number S55 drew is `pitch_angle_drawn`, to the bit (the test below). The Milky Way's is S55's draw.
     "pitch_angle": {"milky_way": (13.53784060954308, 13.53784060954308), "ngc_4414": (14.330046483982906, 28.9)},
+    # S67 (D231): the clouds stage's one central A_V, a law of the constants: one surface density (Heyer et al. 2009's
+    # 42) until the size law took Lada & Dame 2020's two regimes; now the inner regime's 82, 82/42 of S55's on both.
+    "cloud_extinction_v": {"milky_way": (2.9695761563889844, 5.7977439243784925),
+                           "ngc_4414": (2.9695761563889844, 5.7977439243784925)},
 }
+CLOUD_SIZE_LAW_BY_RULING = {"cloud_extinction_v"}  # S67 (D231): both templates
 UNBARRED_BY_RULING = {"bar_half_length", "bar_contrast", "bar_corotation_radius", "bar_pattern_speed"}
 PITCH_PINNED_BY_RULING = {"pitch_angle"}  # S59 (D218 item 6): `ngc_4414` alone
 
@@ -393,7 +398,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     # S59 (D218 item 6): was `else UNBARRED_BY_RULING` - and its pitch is the measured one by ruling. Nothing else of
     # either template's layer-off run moved at S59: "a galaxy without pins: layer off bit for bit" (item 7), and the
     # Milky Way's pin places the Sun and "moves nothing else".
-    assert moved == ({"arm_multiplicity"} if template == "milky_way" else UNBARRED_BY_RULING | PITCH_PINNED_BY_RULING)
+    # S67 (D231): and the clouds' one central A_V on both, the size law's inner surface density.
+    assert moved == ({"arm_multiplicity"} if template == "milky_way" else UNBARRED_BY_RULING | PITCH_PINNED_BY_RULING) | CLOUD_SIZE_LAW_BY_RULING
     for n, by_template in LAYER_OFF_EXCEPTIONS.items():
         was, is_now = by_template[template]
         assert held[n] == layer_reference.value_digest(was) and same_number(float(out.fields[n]), is_now), (n, template)
@@ -437,7 +443,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
         assert "pitch_angle" not in unpinned.inputs and out.inputs["pitch_angle"] == 28.9
         assert "arm_class" not in unpinned.inputs and out.inputs["arm_class"] == "flocculent" and unpinned.fields["arm_class"] == "grand_design"
         # S61 (D220 item 10): was `== set()` - the unpinned run's census is the ring-first redraw too.
-        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == redrawn_at_s61(unpinned, held)
+        # S67 (D231): and the clouds' one central A_V, the size law's inner surface density (pinned or not).
+        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == redrawn_at_s61(unpinned, held) | CLOUD_SIZE_LAW_BY_RULING
         differ = {n for n in out.fields if not same(out.fields[n], unpinned.fields[n])}
         assert differ == {"bar_present", *UNBARRED_BY_RULING, "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", *pt.AMPLITUDE_FIELDS,
                           *PITCH_PINNED_BY_RULING, "arm_class", "arm_design_count", "arm_power_budget"}
@@ -1020,7 +1027,8 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         assert float(off["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
         # S55 (D214): was -0.105511 (the layer-on census), read layer-off
         # S61 (D220 item 10): was -0.102973 - the layer-off census redrawn ring-first
-        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.097717, abs=1e-6)
+        # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities; still a miss (#117).
+        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.097902, abs=1e-6)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
         # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
@@ -1045,7 +1053,7 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
                 assert same(on[q.field], off[q.field]), (q.n, q.field)
     q35 = next(q for q in spec.QUANTITIES if q.n == spec.ROW_HII_LF_SLOPE)
     q37 = next(q for q in spec.QUANTITIES if q.n == spec.ROW_NII_HALPHA_GRADIENT)
-    assert q35.lo <= -2.05555 <= q35.hi and not q37.lo <= -0.097717 <= q37.hi  # S61 (D220): were -2.08124 and -0.102973
+    assert q35.lo <= -2.05555 <= q35.hi and not q37.lo <= -0.097902 <= q37.hi  # S67 (D231): was -0.097717. S61 (D220): were -2.08124 and -0.102973
     assert spec.ROW_NII_HALPHA_GRADIENT in spec.MISSES and spec.ROW_HII_LF_SLOPE not in spec.MISSES
 
 
@@ -1059,7 +1067,7 @@ def test_rows_35_and_37_on_the_layer_on_census_as_measured(runs):
         # S61 (D220 item 4): were -2.03381 and -0.101488 - drawn ring-first, the layer-on census is the layer-off
         # census's regions, placed: the two rows read the layer-off numbers (here the same bits).
         assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.097717, abs=1e-6)
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.097902, abs=1e-6)  # S67 (D231): was -0.097717
         off = runs[name, False].fields
         for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii"):
             assert same(on[n], off[n]), n
@@ -1757,10 +1765,13 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S61 (D220 part II as amended): were "by up to 229 pc", "1 629 of 12 710 clusters (12.8 %, 37.4 % ...)", "161 in
     # another cell ring" and "bin a cluster by its cloud's radius" - the clouds are placed within their cells by the
     # clustering field, so the offsets start from other centres; the binners read the radius the cloud's ring drew.
-    for phrase in ("at S61 the offset moves a cluster",
-                   "by up to 230 pc in radius (its own length reaches 248 pc) against a 75 pc radial step",
-                   "1 581 of 12 710 clusters (12.4 %, 36.1 % of the cluster mass)",  # S62 (D221 item 7 as amended): was 1 582 - the spurs move the clouds' sector shares
-                   "133 in another cell ring", "`nebular` and `bubbles` bin a cluster by the radius its cloud's ring drew",
+    # S67 (D231): were "at S61", "by up to 230 pc in radius (its own length reaches 248 pc)", "1 581 of 12 710 clusters
+    # (12.4 %, 36.1 % of the cluster mass)" and "133 in another cell ring" - the clouds' size law shrinks the inner
+    # clouds the offset is drawn inside (the giants held at 150 pc), so the declaration was re-read to the model.
+    for phrase in ("at S67 the offset moves a cluster",
+                   "by up to 140 pc in radius (its own length reaches 146 pc) against a 75 pc radial step",
+                   "1 376 of 12 710 clusters (10.8 %, 31.8 % of the cluster mass)",  # S62 (D221 item 7 as amended): was 1 582 - the spurs move the clouds' sector shares
+                   "119 in another cell ring", "`nebular` and `bubbles` bin a cluster by the radius its cloud's ring drew",
                    "`cluster_birth_radius`", "No clamp"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
@@ -1786,15 +1797,16 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S61 (D220): was 1605 and 0.1243 of 12 916 (the ring-first census, a new draw).
     # S61 (D220 part II as amended): was 1629 and 0.1282 - the clouds placed within their cells.
     # S62 (D221 item 7 as amended): was 1582 - the gas spurs move the clouds' sector shares, and one cluster's cloud with them.
-    assert int(moved.sum()) == 1581 and moved.mean() == pytest.approx(0.1244, abs=5e-4)
+    # S67 (D231): was 1581 and 0.1244 - the clouds' size law: the inner clouds smaller, the offsets inside them shorter.
+    assert int(moved.sum()) == 1376 and moved.mean() == pytest.approx(0.1083, abs=5e-4)
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3614, abs=5e-4)  # S61 (D220 part II as amended): was 0.3741
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3182, abs=5e-4)  # S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 133  # S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 119  # S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -1805,8 +1817,9 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S59's first build again.
     # S61 (D220): were 248.5 and 265.2 pc - the ring-first census is a new draw and its texture is drawn on
     # texture_seed (D220 item 5), so the offsets are other numbers: 229.5 and 248.4 pc.
-    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(229.9, abs=0.1)  # S61 (D220 part II as amended): was 229.5
-    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(248.4, abs=0.1)
+    # S67 (D231): were 229.9 and 248.4 pc - the largest clouds held at 150 pc by the size law, so no offset can pass it.
+    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(140.4, abs=0.1)  # S61 (D220 part II as amended): was 229.5
+    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(146.4, abs=0.1)
 
 
 def test_the_cloud_interior_s_noise_is_three_constants_of_the_model(runs, prod):

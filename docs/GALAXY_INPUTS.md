@@ -697,9 +697,9 @@ defined here once and used in every entry below:
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181 | 102 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182 | 103 |
 
-So the board's **113 open** is 11 permanent and 102 carried, and no item is unruled. (S22
+So the board's **114 open** is 11 permanent and 103 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -732,7 +732,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -4105,7 +4105,7 @@ never been judged in twenty-three sessions.
    (0.13 s), which V7 or V8 takes with the render's other costs (#159, #163).
 167. **The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud** (S64, D224 stop
    condition 1; the probe's measurement). The census's `central_extinction_v` is solar dust per hydrogen at one surface
-   density (Σ_GMC 42 M☉/pc²), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
+   density (Σ_GMC 42 M☉/pc²; since S67, D231, the inner regime's 82, 5.7977 mag), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
    dust-to-gas ratio times the grain cross-section, 6.3× the cloud law at R = 2 kpc and 0.15× at R = 14 (Milky Way). A
    cloud drawn at its published A_V would not carry the extinction it takes from the ring. The API's derived column
    stands in at galaxy scale: `/api/clouds`' `cloud_dust_extinction_v`, the cloud's face-on mean A_V from its own dust
@@ -4114,7 +4114,8 @@ never been judged in twenty-three sessions.
    1.897 mag (p90 12.64, max 26.23) on the Milky Way, 4.606 on `ngc_4414`. The stage's own law stays for the region
    regime's interiors, and the two disagree. **S67 (D228): the region half done** — the region regime reads each
    cloud's `cloud_dust_extinction_v` too, as a uniform sphere of that face-on mean column (κ = (3/4) τ̄ / r), so no
-   drawing reads the stage's `cloud_extinction_v` any more; the census still publishes it, on its own law. **Carried.** The mend is one pass: the clouds stage reads
+   drawing reads the stage's `cloud_extinction_v` any more; the census still publishes it, on its own law. **S67 (D231)**: computed at the inner regime's Σ_GMC 82 (5.7977 mag), an uncapped cloud inside the
+   solar circle; outside it an uncapped cloud's would be 2.47 mag, a capped giant's more. **Carried.** The mend is one pass: the clouds stage reads
    `dust_to_gas_ratio` at the cloud's ring, which moves the region regime's interiors and their pins.
 168. **Half the disc's dust now sits in the clouds' layer, up to 3.8× / 5.6× the gas layer the heating and the
    scattering were computed in** (S64, D224 stop condition 2). The clouds hold 0.4899973 of the disc's dust on the
@@ -4249,6 +4250,20 @@ never been judged in twenty-three sessions.
    **Carried.** What closes it: a reading of HII region sizes and luminosity functions in nearby discs (e.g. the
    giant HII regions' size-luminosity relation), and the census's regions in one clustering cell merged into one
    region of the summed ionising photons in the cell's gas (a Strömgren volume of the sum), drawn at its own radius.
+182. **The clouds' surface density is two regimes and a cap, not a law of radius or of mass** (S67, D231;
+   `docs/READING_CLOUD_SIZES.md`; the owner's choice "Smaller giant clouds (model)"). A cloud's radius is √(M/πΣ) at
+   Lada & Dame 2020's X_CO-corrected Σ_GMC, `GMC_SURFACE_DENSITY_INNER` 82 M☉ pc⁻² inside `R_SUN` and
+   `GMC_SURFACE_DENSITY_OUTER` 35 outside it, a step at the cloud's birth radius, held at `GMC_RADIUS_MAX` 150 pc
+   (Miville-Deschenes et al. 2017's largest) with the mass kept. Not built: a continuous Σ(R) (Lada & Dame's own
+   regimes are the molecular ring and outside it, joined by no measured profile; their constant-X_CO eq. 1, Σ = 54.5 −
+   3.7 R, is uncorrected); the boundary is a step, at the model's R_SUN rather than the ring's measured edge, and the mass
+   function's own boundary is read at the ring's mid-radius while Σ reads the birth radius, so a ring straddling R_SUN
+   can hold an inner-law mass at the outer Σ (`ngc_4414`: one cloud of 4.8 × 10⁶ M☉, capped); no mass dependence of Σ
+   below the cap (the giants are denser - W43 ≈ 460, Sgr B2 more - and M = 36.7 R^2.2 or 78.6 R^1.98 are the catalogues'
+   own relations), so the cap alone carries it, a jump from the regime's Σ to up to 141 at 10⁷ M☉; and `ngc_4414` takes
+   the Milky Way's law at the same R (no measured cloud census; PHANGS discs' ~100 near the inner regime). **Carried.**
+   What closes it: a radial Σ profile read across the ring's edge, a mass-radius relation for the catalogue's giants in
+   place of the cap, and a template's own cloud census where one is measured.
 
 ---
 

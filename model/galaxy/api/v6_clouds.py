@@ -6,8 +6,8 @@ Two answers, each a hook in its own route method of ``service.py``:
 - **The cloud's own dust column** (``/api/clouds``' ``cloud_dust_extinction_v``, :func:`dust_extinction_v`): the
   cloud's face-on MEAN A_V over its disc, from its own dust - its mass times the ring's dust-to-gas ratio, times the
   ring's A_V per unit of dust column, over the disc's area ``pi cloud_size^2`` (``cloud_size`` is the cloud's radius,
-  ``sqrt(M / (pi Sigma_GMC))``, ``clouds.cloud_radius_pc``). Each ring term is read at the cloud's
-  ``cloud_birth_radius`` - the radius its ring drew, which every per-cloud law and every binner reads (D220) -
+  ``sqrt(M / (pi Sigma_GMC))`` at its regime's Sigma_GMC and capped, ``clouds.cloud_size_law``, S67 D231). Each
+  ring term is read at the cloud's ``cloud_birth_radius`` - the radius its ring drew, which every per-cloud law and every binner reads (D220) -
   interpolated on the grid as the census reads its metallicity there. The ring's dust law applied to the cloud's
   gas: the clouds stage's own ``cloud_extinction_v`` (S40, the interior's central A_V at solar dust per hydrogen and
   one surface density) is on another law and the two disagree (debt #167).
@@ -54,8 +54,8 @@ COLUMN_ABOUT: dict[str, Any] = {
              "diffuse dust /api/render's dust_diffuse_share leaves sum to the ring's published dust. 0 where the ring "
              "holds no dust (no dust, no extinction; never a guess). The clouds stage's own cloud_extinction_v (the "
              "header's scalars; S40) is the interior's central A_V on another law - solar dust per hydrogen at one "
-             "surface density, the same 2.97 mag for every cloud, no metallicity - and the two disagree: 6.3x this "
-             "law's column at R = 2 kpc, 0.15x at R = 14 on the Milky Way (debt #167)",
+             "surface density, 5.80 mag at the inner regime's 82 Msun/pc2 since D231 (2.97 at one 42 before), no "
+             "metallicity - and the two disagree (at S64, on the 42: 6.3x this law's column at R = 2 kpc, 0.15x at R = 14 on the Milky Way; debt #167)",
 }
 
 
