@@ -13309,3 +13309,62 @@ every frame the committed bytes.
 offset, the density gradient, the remnant state). #168: its ratios re-measured (above), the old ones marked stale.
 **#180** opened: the clouds' layer is one thickness at every radius, for every cloud and for every template. The board
 112 open, 51 discharged.
+
+### D230. S67: the galaxy-scale clouds flattened to their layer and stretched along the gas field's shear (BUILD_III Phase V8, S67; the lead's ruling and the owner's choice, an Opus side session)
+
+**The owner's words (2026-10-18).** "even a very low cloud extinction turns the milky way galaxy into many black orbs in
+the center, this doesn't seem right?", then "i thought cloud extinction is like a lane of dust, why is ours globe shaped
+orbs that seem to overlap with stars". Of the measured options (the session's notes, s67-orbs-findings and -2) the owner
+chose "Flatten big clouds (viewer)", "Smaller giant clouds (model)" and "Stretch clouds along arms" - not the young
+light's thin layer and not the resolved-only raster on its own. The model's size law is the lead's, built separately.
+
+**What was measured first (the template camera, field mode, the owner's defaults, linear light, clouds on over off).**
+The orbs are single giant clouds, 150-270 pc in radius (Σ fixed at 42 Msun/pc², r = sqrt(M / pi Σ)), drawn as uniform
+discs, opaque at any useful strength: their A_V is 5-25 mag inside 5 kpc under every dust-to-gas law tried. They
+go below the ~0.45 a midplane cloud should leave because the raster's slab took each cloud's radius as its
+vertical half-thickness (110-260 pc against a 34 pc layer, D229), and the dust's own light at the owner's x4 lies
+inside it. The clouds follow the arms as the lane's dust does (A_V x area-weighted placement 2.08, the lane's own 1 +
+rms² = 2.08) - their shape, not their place, made the orbs. The sampled stars are undimmed by any field dust (they draw
+on 0.1 % of disc pixels at this camera); what shows through an orb is the front of the stellar layer.
+
+**R1, the lead's ruling (an amendment of D224's R3).** Each cloud's vertical half-extent in the galaxy-scale raster's
+slab is capped at the clouds' published layer's half-maximum: the render header's `clouds.layers.clouds_scale_height` h
+(34.04 pc), HWHM = 2 ln(1 + sqrt 2) h = 1.7627 h = 60.0 pc (`SECH2_HWHM_PER_H`). Applied to each cloud's radius term in
+the slab (cloudOpacity.ts `cloudRaster`, `verticalCap`), not to the slab as a whole: the A_V-weighted spread of
+distinct clouds' published heights within a texel stays, since it is where their dust is; a texel holding one cloud is
+that cloud at its height, at most 60 pc thick each way. The face-on raster is unchanged to the bit (tested), every
+height untouched; the march, its twin `composeStep` and the points' `dustTo` all read the slab as built, so none of them
+changed and the twin's tests hold as they were. A variance-matched uniform slab (half-width sqrt 3 x the sech²'s rms,
+3.14 h = 107 pc) was the other well-defined bound; the half-maximum is the ruling's and the tighter.
+
+**R2, the owner's choice: each cloud an ellipse along the gas field's shear - a read source for the direction and the
+default ratio, a tuning control for its strength.** The gas fluctuation field (D221) is read at each point rotated by
+theta(R) = sense (twist + strain ln(R / R_r)); the Jacobian of that read is, in the local (radial, azimuthal) frame, the
+simple shear [[1, 0], [-k, 1]] with k = sense x strain, so a round feature of the field is, in the disc, an ellipse of
+shape [[1, k], [k, 1 + k²]]: axis ratio lambda+ = 1 + k²/2 + |k| sqrt(1 + k²/4), long axis along (k, lambda+ - 1)
+(`shearEllipse`, tested against the read's own finite-difference Jacobian). On the Milky Way the published strain gives
+lambda+ 5.83 inside 2 kpc, 3.95 at 4 kpc, 2.72 at R0 and 1.3 at 30 kpc. Each cloud is deposited as an ellipse of its own
+area pi r² (semi-axes r sqrt q and r / sqrt q, the same uniform-spheroid chord profile), q = lambda+ ^ e, e the tuning
+control **"cloud elongation"** (group March, 0-2, default **1**: the field's own shear, so the default's shape is the
+read source's; 0 round). A_V x area is conserved per cloud (tested to 1e-6), the ellipse's direction and axes' ratio
+are held by the deposit's second moments (the angle to 0.02 rad, the ratio to 5 % on 5 pc texels). With the randomness layer off the field's seed is null:
+no shear, every cloud round (the physics-only frame unchanged). A display choice in its exponent; recorded as such.
+
+**Measured, before and after (the same camera; linear light, clouds on over off).**
+
+| | darkest | 0.1 % | 1 % | dimmed > 5 % | < 0.45 | 60 largest orbs: darkest (median) / mean (median) |
+|---|---|---|---|---|---|---|
+| before | 0.053 | 0.320 | 0.442 | 10.9 % | 1.10 % | 0.339 / 0.553 |
+| R1 alone (elongation 0) | 0.070 | 0.364 | 0.510 | 10.2 % | 0.46 % | 0.412 / 0.626 |
+| R1 + R2 (the default) | 0.075 | 0.368 | 0.511 | 10.9 % | 0.43 % | 0.388 / 0.622 |
+
+In display (tone-mapped) the 1 % quantile goes 0.601 -> 0.657 and the darkest 0.230 -> 0.242. The clouds read as streaks
+along the spiral where they were discs (the crop in the session's notes, s67-d230). The darkest pixels are the HII
+knots inside their clouds (debt #181's points), unchanged by either.
+
+**The checks.** vitest 436 passed (cloudShape.test.ts: the cap's half-maximum, the face-on raster unchanged by the cap,
+the shear's shape against the read, A_V x area conserved, round to the bit at 0 and without the field, the ring lookup;
+TUNING_DEFAULTS pinned with cloudElongation 1); tsc -b; vite build. picture:update once: the Milky Way's five captures
+unchanged byte for byte (its defaults draw no clouds' layer); NGC 4414's four moved - field +0.85 % in display mean,
+1.72 % of pixels by >= 3/255; star-first +0.62 %, 1.86 %; thumbnail +0.93 %, 1.41 %; zoom stand +1.48 %, 38.6 % (the
+clouds resolve there); then the picture test once more: 15 passed, all nine frames the committed pictures byte for byte.
