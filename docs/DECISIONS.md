@@ -13233,3 +13233,79 @@ T at strength s is T^s, the region's table scaled in its clouds' kappa only and 
 byte for byte with the two lines taken back). On screen (the frame's linear light, G): the field mode at the template
 camera 30 241 at 0, 24 255 at 0.5, 21 888 at 1, 19 083 at 2; the star-first mode 50 789 / 38 476 / 34 710 at 0 / 1 / 2;
 the field mode's region regime at the zoom stand 22 752 / 15 071 / 11 062.
+
+### D229. S67: the clouds' layer from a read source — `MOLECULAR_LAYER_FWHM` 120 pc, the clouds' sech² scale height 34.04 pc at every radius and for every template (#95's height part discharged, #180 opened) (BUILD_III Phase V8, S67; the lead's ruling, an Opus builder)
+
+**The owner's words (2026-10-18).** "Read a source for the clouds' scale height and fix the layer in the model before I
+retune." D228 had measured the cause of the whole-galaxy clouds' near-black blobs: the clouds' published heights, a
+sech² layer at `CLOUD_LAYER_SHARE` 0.5 of the thin disc's scale height (177.8 pc Milky Way, 477 pc `ngc_4414`; "a stated
+guess with no source", #95), realised |z| to 1.95 kpc.
+
+**The reading** (a blind Opus reader, 2026-10-18; `docs/READING_CLOUD_LAYER.md`). The Milky Way's molecular layer at
+R0 is FWHM 120 ± 18 pc, roughly independent of R from 2 kpc to R0 (Bronfman et al. 1988 via Ferrière 2001 §II.A), 118 pc
+(Bronfman et al. 2000 §4.1, read), 136 ± 17 pc (Clemens, Sanders & Scoville 1988 via Ferrière), Malhotra 1994's σ_z
+58 pc at R0 (FWHM 137); massive clouds as thin as the CO layer or thinner (Stark & Lee 2005: ~35 pc below 2 × 10⁵ M☉);
+the layer flares outside R0 (Nakanishi & Sofue 2006, 160-186 pc at 8-11 kpc) and the sources conflict inside it
+(Marasco et al. 2017 falling, Malhotra and Nakanishi & Sofue rising); edge-on spirals' CO σ = 31-89 pc + 1-5 pc/kpc × R
+(Yim et al. 2014). Heyer & Dame 2015 was not read (403).
+
+**The ruling (the lead's).**
+1. *An absolute thickness, not a share of the stellar disc* (a share would mix the sech² and exponential shapes'
+   FWHM): the level-0 `Constant` `MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.A]` with the two
+   neighbours in its about, in the clouds stage's `reads_constants`. The cloud layer's sech²(z/2h) scale height is
+   the h whose FWHM that is: sech²(x) = 1/2 at x = artanh(1/√2), so FWHM = 4 artanh(1/√2) h = 3.5255 h and
+   h = 120 / 3.5254943 = **34.0378 pc**, derived in code (`clouds.SECH2_FWHM_PER_SCALE_HEIGHT`,
+   `clouds.cloud_layer_height(constants)`), with a test by hand (the profile's half maximum at ±FWHM/2,
+   `test_the_cloud_layer_s_half_maximum_is_at_half_the_measured_fwhm`). `CLOUD_LAYER_SHARE` and
+   `cloud_layer_height(h_thin)` are retired: the function keeps its name and takes the model's constants; the
+   clouds stage no longer requires `thin_disc_scale_height`.
+2. *One value at every radius and for every template*: `ngc_4414` takes the Milky Way's measured layer, disclosed
+   against Yim et al. 2014's edge-on CO widths, which bracket it. The flaring, the conflict inside R0 and the mass
+   dependence are **#180**, not built.
+3. *The draw is unchanged*: the same ring-first uniforms (`systems_seed, "cloud", ring, "height"`), z = 2h·artanh(2u−1),
+   the clip at ±0.999999 kept (14.5 h = 494 pc); every cloud keeps its sign and rank and moves by h_new / h_old -
+   0.1914 on the Milky Way, 0.07133 on `ngc_4414`. Cluster heights follow by copy.
+4. *The HII and lines layers keep reading the cloud layer* (`/api/render`'s `layers.halpha_hii` = `lines_hii`, and the
+   `clouds` entry's `clouds_scale_height`), now the new h from the model's constants, not the thin disc's height,
+   which left the two components' `fields`. Bronfman et al. 2000's OB layer (FWHM 73 pc, 0.62 of the molecular) is a
+   disclosed check, not a pin.
+
+**Measured.** The census's |z| (the whole disc, `/api/clouds`), before → after: the Milky Way (16 577 clouds) median
+196.7 → 37.64 pc, p90 523.7 → 100.2 pc, max 1953.5 → 373.9 pc (D228's probe read 196.7 / 523.7 / 1953.5 before); `ngc_4414`
+(6 530) median 530.0 → 37.81 pc, p90 1385.5 → 98.82 pc, max 5980.5 → 426.6 pc (the before by the exact ratio, the draw
+being the same uniforms). Over the rings holding more than 1 % of the peak molecular surface density the clouds' h over
+the gas layer's is now 0.34-1.60 (Milky Way) and 0.24-1.22 (`ngc_4414`), where it was 1.76-8.35 and 3.42-17.1 (#168's
+"3.8× / 5.6×" were S64's, their definition not recorded, and are stale). **On screen**, D228's harness (the session's
+notes, `s67-clouds-galaxy-probe`: the frame's linear pixels read before tone mapping by an uncommitted probe, applied
+and taken back), the Milky Way's field capture at the template camera and its display defaults, "clouds as extinction"
+on over off (switched on for the measurement only; the defaults keep it off), over the 248 428 disc pixels brighter
+than 40/255: the darkest pixel keeps **0.053** (D228: 0.033), the 0.1 % quantile **0.320** (0.135), the 1 % quantile
+**0.442** (0.288); 1.8 % of the disc pixels lose more than half (2.9 %), 10.9 % more than 5 %; in display 0.231 / 0.458 /
+0.601 (0.131 / 0.249 / 0.454); the frame's linear sum on / off 0.957. The clouds now sit in the stars' midplane, where
+half the stars' light is in front of them, not 0.6-1.2 kpc above most of it.
+
+**Specs unchanged**: `uv run python -m galaxy.specs` reads the same, line for line, before and after but for the
+timings - both models 12 pass / 20 fail / 5 not-yet-computable of 37, `ngc_4414`'s template checks 0 / 5 / 0.
+
+**Re-pins, each with its reason.** `tests/test_clouds.py` (positions and abundances): the median |z| from the new h
+(was 0.5 × `thin_disc_scale_height`), and the new by-hand test of the half maximum. `tests/test_render.py` (the
+nebular split): `layers["halpha_hii"]` = 0.120 / 3.5254943 kpc (was 0.5 × the thin disc's height / 1000), and the
+HII component's fields `["halpha_surface_brightness_hii", "gas_density_contrast"]` (was with `thin_disc_scale_height`
+last). `tests/layer_reference.py`: a by-decision carve-out in `normalise` (`_s67_cloud_layer`, naming D229) puts S55's
+words back - `layers.halpha_hii` / `lines_hii` and the `clouds` entry's `clouds_scale_height` as 0.5 × `layers.stars`
+(exact, a power of two) and `thin_disc_scale_height` back at the end of the two HII components' fields - so every other
+word of the S55 render header is still held. `tests/test_audit.py`: the debt pin (112, 51) and the carried row with
+#180. Nothing else moved: test_clouds, test_render, test_v6_clouds, test_clusters, test_v6_knots, test_bubbles,
+test_templates (EXIT=0, one skip, the refit) and test_layer, test_docs, test_audit, test_progress (EXIT=0), pytest's
+own exit codes to files; the full suite is the lead's.
+
+**The frames.** `npm --prefix frontend run picture:update` once: 15 passed, seven captures and both thumbnails rewritten
+(the captures move through the cloud raster and the HII layer; `ngc_4414-zoom.png` the most, 1 230 243 → 892 975
+bytes), the Milky Way's physics-only record in `frames.json`, stale since 60232e8, refreshed with them (its gpu_ms
+recorded while the targeted pytest run shared the machine); then `npm --prefix frontend run picture` once: 15 passed,
+every frame the committed bytes.
+
+**The register.** #95: the height's part discharged in its text, the debt carried for its other parts (the source's
+offset, the density gradient, the remnant state). #168: its ratios re-measured (above), the old ones marked stale.
+**#180** opened: the clouds' layer is one thickness at every radius, for every cloud and for every template. The board
+112 open, 51 discharged.

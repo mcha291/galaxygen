@@ -13,7 +13,7 @@ reading; (2) massive clouds sit in a layer as thin as the CO layer or thinner (S
 outside R0 (Nakanishi & Sofue 2006, FWHM 160-186 pc at 8-11 kpc) and the sources conflict inside R0 (Marasco et al.
 2017 falling with R, Malhotra and Nakanishi & Sofue rising); (4) edge-on spirals' CO widths are σ = 31-89 pc plus 1-5
 pc/kpc × R (Yim et al. 2014). The layer is entered as an absolute thickness, the level-0 constant
-`MOLECULAR_LAYER_FWHM` = 120 pc, `[verified]`; the clouds' scale height is the sech² h whose FWHM that is,
+`MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.A]`; the clouds' scale height is the sech² h whose FWHM that is,
 h = FWHM / (4 artanh(1/√2)) = FWHM / 3.5255 = 34.04 pc (D229).
 
 ---
