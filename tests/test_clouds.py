@@ -203,12 +203,34 @@ def test_positions_and_abundances(default):
     # than a ring's width and a step.
     rings, _ = cl.cell_edges(R)
     assert np.all(np.abs(r - born) < (rings[1] - rings[0]) + (R[1] - R[0])) and not np.array_equal(r, born)
-    # Half the thin disc's scale height, stated as a guess (debt #95).
-    h = 0.5 * F["thin_disc_scale_height"] / 1000.0
+    # S67 (D229): the molecular layer's measured FWHM, 120 pc, an absolute thickness (was half the thin disc's scale
+    # height, a guess, debt #95): the sech²(z/2h) whose FWHM that is, h = 34.04 pc, at every radius.
+    h = cl.cloud_layer_height({"MOLECULAR_LAYER_FWHM": 120.0})
+    assert h == pytest.approx(0.120 / 3.5254943, rel=1e-7)
     assert np.median(np.abs(F["cloud_height"])) == pytest.approx(2.0 * h * math.atanh(0.5), rel=0.15)
     # The embedded source lies inside the cloud; the gradient's steepness in [0, 1].
     assert np.all(F["cloud_source_offset"] <= F["cloud_size"] + 1e-9)
     assert np.all((F["cloud_density_gradient"] >= 0.0) & (F["cloud_density_gradient"] <= 1.0))
+
+
+def test_the_cloud_layer_s_half_maximum_is_at_half_the_measured_fwhm():
+    """S67 (D229), by hand: the clouds' sech²(z/2h) layer whose scale height is derived from MOLECULAR_LAYER_FWHM falls
+    to half its midplane density at z = ±FWHM/2 and is above half inside it - the h is the one whose FWHM is the
+    measured layer's; and the constant is level 0's 120 pc (Bronfman et al. 1988 via Ferriere 2001)."""
+    from galaxy.models.level0 import LEVEL0
+
+    fwhm = float(LEVEL0["MOLECULAR_LAYER_FWHM"].value)
+    assert fwhm == 120.0 and LEVEL0["MOLECULAR_LAYER_FWHM"].unit == "pc"
+    h = cl.cloud_layer_height({"MOLECULAR_LAYER_FWHM": fwhm}) * 1000.0  # pc
+    assert h == pytest.approx(34.0378, abs=1e-4)
+
+    def profile(z):
+        return 1.0 / math.cosh(z / (2.0 * h)) ** 2
+
+    assert profile(fwhm / 2.0) == pytest.approx(0.5, abs=1e-12) and profile(-fwhm / 2.0) == pytest.approx(0.5, abs=1e-12)
+    assert profile(0.999 * fwhm / 2.0) > 0.5 > profile(1.001 * fwhm / 2.0)
+    # The draw's clip at ±0.999999 is kept (D229 item 3): the farthest a cloud can sit is 2h·artanh(0.999999), 14.5 h.
+    assert 2.0 * math.atanh(0.999999) == pytest.approx(14.51, abs=0.01)
 
 
 def test_the_clouds_header_carries_the_stage_scalars(model):

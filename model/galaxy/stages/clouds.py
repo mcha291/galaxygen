@@ -37,7 +37,7 @@ source in the about line; nothing here is recalled (rule B9).**
   four are the randomness layer's**: synthetic, published by its stage ``cloud_texture``
   (``galaxy/layer/cloud_texture.py``), drawn since S61 on the layer's own seed (``texture_seed``, D220
   item 5) and zero with the layer off; a census materialised here carries them through
-  ``galaxy.layer.compose``. The cloud's height, a sech² layer at half the thin disc's scale height, stays
+  ``galaxy.layer.compose``. The cloud's height, a sech² layer of the molecular layer's measured FWHM (S67, D229), stays
   this stage's seeded draw (debt #95): a sample of the cloud layer's vertical profile, drawn on the
   ring's stream and the same with the layer on or off - not a placement (D220 item 7).
 - *Where* — radius inverted from Σ_H₂ within the cell's ring; each cell's expected count, and each
@@ -118,16 +118,19 @@ CLUSTER_HOSTING_STATES: tuple[str, ...] = ("blown_open", "dispersing")
 # m_p = 1.67262192e-27 kg, read at S43].
 K_OVER_MH = 1.380649e-23 / 1.67262192e-27 / 1.0e6  # (km/s)^2 / K
 G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) times 1000
-# The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
-# source (debt #95) [inferred]. Named at S39 so the render's HII layer reads this one number (A9).
-CLOUD_LAYER_SHARE = 0.5
+# The clouds' layer (S67, D229): an absolute thickness read from the Milky Way's molecular layer, the level-0
+# constant MOLECULAR_LAYER_FWHM, not a share of the stellar disc (a share would mix the sech² and exponential
+# shapes' FWHM). Until S67 it was CLOUD_LAYER_SHARE 0.5 of the thin disc's scale height, a stated guess (#95).
+# The FWHM of sech²(z/2h) in units of h: sech²(x) = 1/2 at x = artanh(1/√2), so the half maximum is at
+# z = ±2h·artanh(1/√2) and the full width 4·artanh(1/√2) h = 3.5255 h.
+SECH2_FWHM_PER_SCALE_HEIGHT = 4.0 * math.atanh(1.0 / math.sqrt(2.0))
 # The clustering field's constants, which the census reads to place a cloud in its cell (S61, D220 part II as amended).
 CLUSTERING_CONSTANTS: tuple[str, ...] = tuple(_CLUSTERING_CONSTANTS.values())
 
 
-def cloud_layer_height(thin_disc_scale_height_pc: float) -> float:
-    """The clouds' sech² scale height, kpc, from the thin disc's (pc)."""
-    return CLOUD_LAYER_SHARE * float(thin_disc_scale_height_pc) / PC_PER_KPC
+def cloud_layer_height(constants: Mapping[str, Any]) -> float:
+    """The clouds' sech²(z/2h) scale height, kpc: the h whose FWHM is the molecular layer's (S67, D229)."""
+    return float(constants["MOLECULAR_LAYER_FWHM"]) / SECH2_FWHM_PER_SCALE_HEIGHT / PC_PER_KPC
 
 
 # --- the mass function ---------------------------------------------------------------------------
@@ -429,7 +432,7 @@ def materialise_clouds(
     b = float(c["TURBULENCE_FORCING_B"])
     phases = (float(c["GMC_PHASE_EMBEDDED"]), float(c["GMC_PHASE_BLOWN_OPEN"]), float(c["GMC_PHASE_DISPERSING"]))
     lifetime = sum(phases)
-    h_cloud = cloud_layer_height(fields["thin_disc_scale_height"])  # kpc, half the thin disc's [inferred]
+    h_cloud = cloud_layer_height(c)  # kpc, the molecular layer's measured FWHM (S67, D229)
     feh_gas = np.asarray(fields["feh_gas"], dtype=float)
     alpha_gas = np.asarray(fields["alpha_fe_gas"], dtype=float)
     width = 2.0 * math.pi / CELL_SECTORS
@@ -559,8 +562,10 @@ CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "the randomness layer's clustering field, so the clouds gather into complexes below a "
                         "cell's scale (D220 part II); the sector is not moved by it.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
-                       "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
-                       "molecular layer's thickness was read (debt #95). A sample of the layer's vertical "
+                       "A sech² layer whose FWHM is the Milky Way's molecular layer, 120 pc (Bronfman et al. "
+                       "1988; scale height 34.04 pc), one value at every radius and for every template - "
+                       "the flaring and the massive clouds' thinner layer are not built (debt #180; S67, "
+                       "D229; until then half the thin disc's scale height, a guess). A sample of the layer's vertical "
                        "profile drawn on the ring's stream, the same with the layer on or off: not a placement "
                        "(D220 item 7).")
 CLOUD_MASS = _column("cloud_mass", "Cloud mass", "Msun",
@@ -703,11 +708,12 @@ CLOUDS = IMPLEMENTATIONS.register(
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_SURFACE_DENSITY", "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
+            "MOLECULAR_LAYER_FWHM",  # S67 (D229): the clouds' layer, an absolute thickness (was half the thin disc's)
             *GAS_PATTERN_CONSTANTS,  # S57 (D216): the gas's own response places the clouds - its sound speed, and G
             *CLUSTERING_CONSTANTS,  # S61 (D220 part II): the clustering field's five numbers
         ),
         requires=(
-            "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
+            "gas_molecular_surface_density", "feh_gas", "alpha_fe_gas",  # S67 (D229): no longer the thin disc's height
             *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
             "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud is placed by in its cell
             *SPUR_READS,  # S62 (D221 item 7 as amended): the gas spurs, composed into the gas pattern the clouds are placed by

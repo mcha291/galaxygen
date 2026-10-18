@@ -179,7 +179,7 @@ def render_header(rings: Mapping[str, Any], clouds_layer: float | None, placemen
             "diffuse": "dust",
             "clouds": "halpha_hii",
             "about": "the diffuse dust stays in the dust layer (the gas's published scale height, dust_height); the "
-                     "clouds sit in their own layer, cloud_layer_height - the halpha_hii layer, the clouds' layer the "
+                     "clouds sit in their own layer, cloud_layer_height (the molecular layer's measured FWHM, S67 D229) - the halpha_hii layer, the clouds' layer the "
                      "HII regions are drawn in - each cloud at its published cloud_height. The dust stage's heating "
                      "and the scattered light were computed with all the dust in the gas layer (debt #168)",
             "clouds_scale_height": clouds_layer,

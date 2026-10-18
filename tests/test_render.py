@@ -241,7 +241,10 @@ def test_the_line_is_the_nebular_field_in_two_layers(full, model):
     for name in ("halpha_hii", "halpha_dig"):
         assert header["components"][name]["transmission"] == [0.0, 1.0, 0.0]  # [S II], Halpha, [O III] boxes
     assert np.array_equal(arrays["halpha_dig"][:, 1], f["halpha_surface_brightness_dig"])
-    assert header["components"]["halpha_hii"]["fields"] == ["halpha_surface_brightness_hii", "gas_density_contrast", "thin_disc_scale_height"]
+    # S67 (D229): the HII layer is the clouds', now the molecular layer's measured thickness, a constant of the model -
+    # so the thin disc's height left the fields (was ["halpha_surface_brightness_hii", "gas_density_contrast",
+    # "thin_disc_scale_height"]).
+    assert header["components"]["halpha_hii"]["fields"] == ["halpha_surface_brightness_hii", "gas_density_contrast"]
     placed = f["halpha_surface_brightness_hii"][:, None] * np.maximum(f["gas_density_contrast"], 0.0)
     assert np.array_equal(arrays["halpha_hii"][..., 1], placed)
     assert not arrays["halpha_hii"][..., [0, 2]].any() and not arrays["halpha_dig"][:, [0, 2]].any()
@@ -249,7 +252,8 @@ def test_the_line_is_the_nebular_field_in_two_layers(full, model):
     assert ring == pytest.approx(f["halpha_surface_brightness_nebular"], rel=1e-12, abs=0.0)
     layers = header["layers"]
     assert layers["halpha_dig"] == f["dig_scale_height"] == 1.4
-    assert layers["halpha_hii"] == pytest.approx(0.5 * f["thin_disc_scale_height"] / 1000.0, rel=1e-15)  # the clouds' layer
+    # S67 (D229): the clouds' layer, the sech² whose FWHM is the molecular layer's 120 pc (was half the thin disc's height).
+    assert layers["halpha_hii"] == pytest.approx(0.120 / 3.5254943480781717, rel=1e-15)  # the clouds' layer, 34.04 pc
     assert layers["stars"] == pytest.approx(f["thin_disc_scale_height"] / 1000.0, rel=1e-15)
     # S50 (D206): the dust has its own layer, the gas's published height ring by ring (tests/test_dust_layer.py);
     # until then layers["dust"] was the stars' one height (S39).

@@ -463,6 +463,22 @@ LEVEL0: dict[str, Constant] = {
         "VI.3; their M = 228 R^2.36, eq. 13) and Solomon et al. 1987's 206, which Heyer et al. re-derive "
         "downward; three sourced values, the largest homogeneous re-analysis chosen (rule B12).",
     ),
+    "MOLECULAR_LAYER_FWHM": Constant(
+        120.0,
+        "pc",
+        "Full width at half maximum of the Milky Way's molecular (CO) layer, the clouds' layer: 'a FWHM of 120 "
+        "+/- 18 pc, roughly independent of R' from 2 kpc to the solar circle [verified: Bronfman et al. 1988, "
+        "ApJ 324, 248, read via Ferriere 2001, RMP 73, 1031, section II.A, at S67]. The neighbours: 118 pc FWHM "
+        "'for the layer of molecular gas traced by CO' [verified: Bronfman et al. 2000, A&A 358, 521, section "
+        "4.1, read at S67] and 136 +/- 17 pc at R0 [verified: Clemens, Sanders & Scoville 1988, ApJ 327, 139, "
+        "via Ferriere 2001 section II.A]; Malhotra 1994's Gaussian sigma_z 58 pc at R0 (FWHM 137) the high "
+        "reading (docs/READING_CLOUD_LAYER.md). An absolute thickness, not a share of the stellar disc (D229): "
+        "the clouds' sech^2(z/2h) scale height is the h whose FWHM this is, h = FWHM / (4 artanh(1/sqrt 2)) = "
+        "34.04 pc, derived in stages/clouds.py. One value at every radius and for every template: the layer's "
+        "flaring outside R0 (Nakanishi & Sofue 2006), the conflict inside it and the most massive clouds' "
+        "thinner layer (Stark & Lee 2005) are not built (debt #180); ngc_4414 takes the Milky Way's measured "
+        "layer, which Yim et al. 2014's edge-on CO widths (sigma 31-89 pc + 1-5 pc/kpc x R) bracket [inferred].",
+    ),
     "MOLECULAR_GAS_TEMPERATURE": Constant(
         10.0,
         "K",

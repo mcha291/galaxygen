@@ -697,9 +697,9 @@ defined here once and used in every entry below:
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179 | 100 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180 | 101 |
 
-So the board's **111 open** is 11 permanent and 100 carried, and no item is unruled. (S22
+So the board's **112 open** is 11 permanent and 101 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3051,6 +3051,13 @@ never been judged in twenty-three sessions.
    the offset is bounded to the cell or the cluster is binned by its cloud's ring. `cloud_height` is as unsourced
    and stays seeded (BUILD_III Appendix B): whether a cloud's height is a placement, and so the layer's, or a
    sample of the model's vertical profile is L1's to rule with the census's redraw.
+   **S67 (D229): the height's part discharged.** The cloud layer is read from a source, the Milky Way's molecular
+   layer: the level-0 constant `MOLECULAR_LAYER_FWHM` 120 pc `[verified: Bronfman et al. 1988 via Ferrière 2001
+   §II.A]`, the sech²(z/2h) whose FWHM that is (h = 34.04 pc), an absolute thickness replacing `CLOUD_LAYER_SHARE`
+   0.5 of the thin disc's scale height (`docs/READING_CLOUD_LAYER.md`); the draw is unchanged (D220 item 7), every
+   cloud moving by h_new / h_old (0.191 Milky Way, 0.0713 `ngc_4414`). What the one value leaves out - the flaring,
+   the massive clouds' thinner layer, one layer for every template - is **#180**. The debt stays **carried** for its
+   other parts: the source's offset and the density gradient (synthetic, none read) and the remnant state.
 
 96. **The cluster census inherits the clouds' mass function, not the review's** (S33, BUILD_II Phase 11,
    D182). One cluster per cloud past its embedded phase at an efficiency derived from the local depletion
@@ -4113,7 +4120,11 @@ never been judged in twenty-three sessions.
    scattering were computed in** (S64, D224 stop condition 2). The clouds hold 0.4899973 of the disc's dust on the
    Milky Way and 0.6327142 on `ngc_4414` (realised; the molecular fraction's expectation 0.548 / 0.590), and since
    S64 each cloud sits at its own published `cloud_height` — `cloud_layer_height` 178 pc (Milky Way) and 477 pc
-   (`ngc_4414`), half the thin disc, a guess (#95) — while the diffuse dust sits in the gas layer D211's heating and
+   (`ngc_4414`), half the thin disc, a guess (#95; **since S67, D229, 34.04 pc on both**, the molecular layer's
+   measured 120 pc FWHM: over the rings holding more than 1 % of the peak molecular surface density the clouds' h
+   over the gas layer's is now 0.34-1.60 (Milky Way) and 0.24-1.22 (`ngc_4414`), where S64's h made it 1.76-8.35 and
+   3.42-17.1 on the same rings; the 3.8× / 5.6× above were S64's, their definition not recorded, and are stale - the
+   clouds now sit about in the gas layer, not above it) — while the diffuse dust sits in the gas layer D211's heating and
    the scattering were computed for; `dust_scattered` and `dust_thermal` are unchanged, and closure (i) holds the
    dust's mass (the ring's diffuse share times its dust plus the census's clouds' dust is the published dust to under
    1e-15). Half the dust is drawn in a geometry the energy balance was not computed in. **Carried.** The mend is one
@@ -4212,6 +4223,19 @@ never been judged in twenty-three sessions.
    wrap (about 0.3 % of the light); the resolved clusters, the knots and the field are not convolved with it.
    **Carried.** What closes it: a WFPC2 instrument set on the owner's word (its curves are a download), the spider
    read from TinyTim's code or the OTA handbook, the PSF averaged over each band.
+180. **The clouds' layer is one thickness at every radius, for every cloud and for every template** (S67, D229;
+   `docs/READING_CLOUD_LAYER.md`). `MOLECULAR_LAYER_FWHM` 120 pc is the Milky Way's molecular layer from 2 kpc to R0
+   (Bronfman et al. 1988 via Ferrière 2001, "roughly independent of R"); the model draws every cloud's height from
+   the sech² of that FWHM (h 34.04 pc) at every radius. Not built: the flaring outside R0 (Nakanishi & Sofue 2006,
+   sech² FWHM 186 pc at 8-9 kpc, 160 pc at 10-11 kpc), the sources' conflict inside it (Marasco et al. 2017's HWHM
+   falling from ~100 pc at the centre to ~50 pc at R0, against Malhotra 1994's and Nakanishi & Sofue's rise), the
+   massive clouds' thinner layer (Stark & Lee 2005: clouds below ~2 × 10⁵ M☉ as thick as the CO layer, the most
+   massive thinner), and the other template's own layer: `ngc_4414` takes the Milky Way's measured thickness,
+   disclosed against Yim et al. 2014's edge-on CO widths (σ = 31-89 pc + 1.1-5.0 pc/kpc × R over three spirals),
+   which bracket it. The HII layer reads the same h (Bronfman et al. 2000's OB layer, FWHM 73 pc, 0.62 of the
+   molecular, a disclosed check, not a pin). **Carried.** What closes it: a radial law for the layer read against
+   the conflicting sources (a constant with its citation per regime), a mass dependence read from a cloud survey's
+   heights, and a template's own layer where its edge-on CO is measured.
 
 ---
 

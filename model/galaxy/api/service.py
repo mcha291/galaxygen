@@ -1798,12 +1798,14 @@ class Service:
             about["stars_unresolved"]["about"] += even
             components.append(("stars_unresolved", unresolved))
         line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
-        if "halpha_surface_brightness_hii" in f and h_thin is not None:
+        # The HII regions' layer is the clouds' (S39): since S67 (D229) the molecular layer's measured thickness, read
+        # from the model's constant MOLECULAR_LAYER_FWHM (was half the thin disc's scale height, a guess, #95).
+        if "halpha_surface_brightness_hii" in f and "MOLECULAR_LAYER_FWHM" in model.constants:
             hii = np.asarray(f["halpha_surface_brightness_hii"], dtype=float)
             components.append(("halpha_hii", hii[:, None, None] * placed_gas[..., None] * halpha_share))
-            layers["halpha_hii"] = _clouds.cloud_layer_height(float(f["thin_disc_scale_height"]))
+            layers["halpha_hii"] = _clouds.cloud_layer_height({k: c.value for k, c in model.constants.items()})
             about["halpha_hii"] = {
-                **line_about, "fields": ["halpha_surface_brightness_hii", *gas_fields, "thin_disc_scale_height"],
+                **line_about, "fields": ["halpha_surface_brightness_hii", *gas_fields],
                 "layer": "halpha_hii",
                 "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
                          f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "

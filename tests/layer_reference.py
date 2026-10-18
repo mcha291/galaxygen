@@ -83,7 +83,31 @@ def normalise(header: dict[str, Any]) -> dict[str, Any]:
     out = copy.deepcopy(header)
     for key in DROPPED_KEYS:
         out.pop(key, None)
+    _s67_cloud_layer(out)
     return out
+
+
+def _s67_cloud_layer(header: dict[str, Any]) -> None:
+    """A by-decision carve-out (S67, D229): the clouds' layer - the render's ``layers.halpha_hii`` and ``lines_hii``,
+    and the ``clouds`` entry's ``layers.clouds_scale_height`` - is since S67 the molecular layer's measured thickness
+    (MOLECULAR_LAYER_FWHM 120 pc, h = 34.04 pc), a constant of the model; S55 had it at half the thin disc's scale
+    height, the stars' layer ``layers.stars``, with ``thin_disc_scale_height`` last among the HII components' fields.
+    The header is digested with those words put back as S55's rule made them - 0.5 x layers.stars, exact (a power of
+    two) - so every other word of it is still held to S55's. The new values are pinned in tests/test_render.py."""
+    layers = header.get("layers")
+    if not isinstance(layers, dict) or not isinstance(layers.get("stars"), float):
+        return
+    s55 = 0.5 * layers["stars"]
+    for name in ("halpha_hii", "lines_hii"):
+        if name in layers:
+            layers[name] = s55
+    clouds = header.get("clouds")
+    if isinstance(clouds, dict) and isinstance(clouds.get("layers"), dict) and "clouds_scale_height" in clouds["layers"]:
+        clouds["layers"]["clouds_scale_height"] = s55
+    for name in ("halpha_hii", "lines_hii"):
+        comp = header.get("components", {}).get(name)
+        if isinstance(comp, dict) and isinstance(comp.get("fields"), list) and "thin_disc_scale_height" not in comp["fields"]:
+            comp["fields"] = [*comp["fields"], "thin_disc_scale_height"]
 
 
 def curves() -> str:
