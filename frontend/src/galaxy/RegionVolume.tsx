@@ -94,11 +94,14 @@ interface Props {
 
 /**
  * The region regime (BUILD_II V3): a window's clouds, HII regions and bubble shells drawn from the published
- * vectors (RENDER_PHYSICS §5), marched per pixel front to back. Emission is added to the frame; the clouds'
- * transmission is a second pass, whose colour is the whole ray's T and whose alpha the clouds' front distance
- * (region.ts NO_FRONT, S64 T5). The field is multiplied by T, in front of a cloud as well (the stated
- * approximation); the star points take T themselves, only behind the front (region.ts `patchPointsForRegion`;
- * HANDOFF_S40's approximation, a star in front of a cloud darkened too, is gone). The line's per-filter weight and
+ * vectors (RENDER_PHYSICS §5), marched per pixel front to back, in three passes. Emission (mode 0) is added to the
+ * frame. The clouds' transmission for the star points (mode 1) is drawn to a target the points read - its colour
+ * the whole ray's T, its alpha the clouds' front distance (region.ts NO_FRONT, S64 T5) - and the star points take T
+ * themselves, only behind the front (region.ts `patchPointsForRegion`). The field's factor (mode 2; S67, D228, #112's
+ * field half) multiplies the field: its light split into FIELD_SLABS slabs along the ray where the stars' layer
+ * puts it, each dimmed by the clouds in front of it only (region.ts `marchFieldTransmission`) - until S67 the field
+ * took the whole ray's T, its light in front of a cloud as well, and a cloud at the midplane read as a black hole
+ * where it hides about half. The line's per-filter weight and
  * the dust's extinction ratios are the model's (`/api/render` at the region's level), the white point the viewer's.
  */
 export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN, onInterior }: Props) {
@@ -111,7 +114,6 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
 
   const built = useMemo(() => {
     if (!clouds || !clusters || !remnants || !rendered) return null;
-    const scalars = (clouds.header.scalars ?? {}) as Record<string, number>;
     const white = whiteOf(rendered.header) ?? [1, 1, 1];
     const comps = (rendered.header.components ?? {}) as Record<
       string,
@@ -122,8 +124,12 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     const weigh = (tr: number[]) => [0, 1, 2].map((k) => (white[k] > 0 ? (tr[k] ?? 0) / white[k] : 0)) as [number, number, number];
     const lines: LineWeights = { halpha: weigh(t) };
     for (const [name, entry] of Object.entries(comps.lines_hii?.lines ?? {})) lines[name] = weigh(entry.transmission);
-    const table = packObjects(clouds.columns, clusters.columns, Number(scalars.cloud_extinction_v ?? 0), undefined, remnants.columns, lines);
+    // Each cloud at its own published column (S67, D228): /api/clouds' cloud_dust_extinction_v, not the census's law.
+    const table = packObjects(clouds.columns, clusters.columns, undefined, remnants.columns, lines);
     if (!table.count) return null;
+    // The stars' layer the field's light is split along (mode 2): the render header's own scale height, kpc. Without
+    // one the field takes the whole ray's T, as before S67 (region.ts layerDepthShare).
+    const starsHeight = Number(rendered.header.layers?.stars ?? 0) || 0;
     const x = comps.dust_extinction?.extinction_ratio ?? [1, 1, 1];
     const line = new Vector3(...[0, 1, 2].map((k) => (white[k] > 0 ? (t[k] ?? 0) / white[k] : 0)));
     const ratio = new Vector3(...[0, 1, 2].map((k) => x[k] ?? 1));
@@ -144,6 +150,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
           gain: { value: 0 },
           weight: { value: 0 },
           mode: { value: mode },
+          starsHeight: { value: starsHeight },
         },
         vertexShader: VERTEX,
         fragmentShader: fragment,
@@ -154,7 +161,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     const size = table.max.map((v, a) => v - table.min[a] + 0.01);
     const centre = table.max.map((v, a) => 0.5 * (v + table.min[a]));
     const box = new BoxGeometry(size[0], size[1], size[2]);
-    const meshes = [0, 1].map((mode) => {
+    const meshes = [0, 1, 2].map((mode) => {
       const m = new Mesh(box, material(mode));
       m.position.set(centre[0], centre[1], centre[2]);
       m.frustumCulled = false;
@@ -181,6 +188,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
       const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
       target.texture.minFilter = LinearFilter;
       target.texture.magFilter = LinearFilter;
+      // Mode 1 draws no quad: its target is the points' (REGION_TRANSMISSION_KEY), not the frame's.
       const quad = new Mesh(
         new PlaneGeometry(2, 2),
         new ShaderMaterial({
@@ -197,12 +205,12 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
         }),
       );
       quad.frustumCulled = false;
-      // The multiply (REGION_ORDER.multiply) dims what is drawn before it: the field's quad (renderOrder -1) under
-      // it is dimmed by the whole ray's T, the field in front of a cloud as well - the stated approximation of T5
-      // (RULING_S64 R9; the exact version, T at K depth slabs, is not the smallest). The star points draw after it
-      // (REGION_ORDER.points) and take T themselves only behind the clouds' front; the light adds last.
+      // The multiply (REGION_ORDER.multiply, mode 2) dims what is drawn before it: the field's quad (renderOrder -1)
+      // under it, by the field's factor - each depth slab of its light by the clouds in front of it (S67, D228; until
+      // then by the whole ray's T, RULING_S64 R9's stated approximation). The star points draw after it
+      // (REGION_ORDER.points) and take mode 1's T themselves only behind the clouds' front; the light adds last.
       quad.renderOrder = mode === 0 ? REGION_ORDER.light : REGION_ORDER.multiply;
-      return { scene, target, quad, mesh };
+      return { scene, target, quad, mesh, mode };
     });
   }, [built]);
 
@@ -257,9 +265,9 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
       u.gain.value = gain;
       u.weight.value = weight;
       gl.setRenderTarget(p.target);
-      // The transmission pass multiplies the frame by its image, so where no ray meets an object it must read 1,
-      // not the 0 a black clear leaves (outside the objects' box the frame went black). Its alpha, 1, is NO_FRONT.
-      gl.setClearColor(p.mesh === passes[1].mesh ? 0xffffff : 0x000000, 1);
+      // The transmission passes (modes 1 and 2) multiply by their image, so where no ray meets an object they must
+      // read 1, not the 0 a black clear leaves (outside the objects' box the frame went black). The alpha, 1, is NO_FRONT.
+      gl.setClearColor(p.mode === 0 ? 0x000000 : 0xffffff, 1);
       gl.clear(true, false, false);
       gl.render(p.scene, camera);
     }
@@ -275,7 +283,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
 
   return passes ? (
     <>
-      <primitive object={passes[1].quad} />
+      <primitive object={passes[2].quad} />
       <primitive object={passes[0].quad} />
     </>
   ) : null;

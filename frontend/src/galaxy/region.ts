@@ -255,9 +255,22 @@ function scene(radius: number, azimuth: number, height: number): [number, number
 }
 
 /**
+ * κ_V per kpc of a uniform sphere of radius `r` kpc whose face-on mean column is `meanAv` magnitudes (S67, D228).
+ * The chord at impact parameter b is 2 κ √(r² − b²); its mean over the projected disc π r² is (4/3) κ r, so
+ * κ = (3/4) τ̄ / r with τ̄ = A_V / (2.5 log10 e). A sphere looks the same from every side, so "face-on" is any
+ * line of sight. Geometry, not a choice: the central column is then 1.5 τ̄.
+ */
+export function kappaOfMeanColumn(meanAv: number, r: number): number {
+  return (0.75 * (meanAv / MAG_PER_TAU)) / r;
+}
+
+/**
  * The region's clouds, HII regions and bubble shells as the table the shader marches, within the budget.
- * - a cloud: its sphere, its seed path (cell, index), σ_s, its gradient, κ_V per kpc from the census's central
- *   A_V through a uniform sphere (τ over the diameter), and the cavity its cluster's Strömgren sphere carves;
+ * - a cloud: its sphere, its seed path (cell, index), σ_s, its gradient, κ_V per kpc from **its own** published
+ *   column (`/api/clouds`' `cloud_dust_extinction_v`, the face-on mean A_V over its disc π `cloud_size`², D224)
+ *   through a uniform sphere of that mean column (`kappaOfMeanColumn`; S67, D228 - until then every cloud took the
+ *   census's one central A_V, `cloud_extinction_v`, 2.97 mag, #167), and the cavity its cluster's Strömgren sphere
+ *   carves; a cloud whose column is missing or negative is not drawn (B9);
  * - an HII region: the Strömgren sphere at its cluster, its Hα emissivity per volume in L☉ pc⁻³, and its colour per
  *   unit Hα from all its lines through the filters (`regionLineColour`, S42);
  * - a shell: the bubble's sphere, its shell emissivity in L☉ pc⁻³, its thickness.
@@ -266,7 +279,6 @@ function scene(radius: number, azimuth: number, height: number): [number, number
 export function packObjects(
   clouds: Record<string, Col>,
   clusters: Record<string, Col>,
-  extinctionV: number,
   budget: { clouds: number; hii: number; shells: number } = BUDGET,
   remnants: Record<string, Col> = {},
   lines: LineWeights = HALPHA_ONLY,
@@ -281,10 +293,13 @@ export function packObjects(
 
   const cloudList: Obj[] = [];
   const nClouds = clouds.cloud_radius?.length ?? 0;
-  const tauCentre = extinctionV / MAG_PER_TAU;
   for (let i = 0; i < nClouds; i += 1) {
     const sizePc = num(clouds.cloud_size, i);
     if (!(sizePc > 0) || !Number.isFinite(sizePc)) continue;
+    // The cloud's own column (S67, D228; #167): its published face-on mean A_V, or nothing drawn where the census
+    // carries none (B9) - no other cloud's number, and not the census's one law, stands in.
+    const meanAv = num(clouds.cloud_dust_extinction_v, i);
+    if (!(meanAv >= 0) || !Number.isFinite(meanAv)) continue;
     const [x, y, z] = scene(num(clouds.cloud_radius, i), num(clouds.cloud_azimuth, i), num(clouds.cloud_height, i));
     const r = sizePc / 1000;
     let cavity = [0, 0, 0, 0];
@@ -299,7 +314,7 @@ export function packObjects(
     cloudList.push({
       weight: num(clouds.cloud_mass, i),
       row: [x, y, z, r, KIND.cloud, num(clouds.cell, i), num(clouds.index, i), num(clouds.cloud_density_pdf_width, i),
-        num(clouds.cloud_density_gradient, i) || 0, num(clouds.cloud_gradient_angle, i) || 0, tauCentre / (2 * r), 0, ...cavity],
+        num(clouds.cloud_density_gradient, i) || 0, num(clouds.cloud_gradient_angle, i) || 0, kappaOfMeanColumn(meanAv, r), 0, ...cavity],
     });
   }
 
@@ -443,6 +458,153 @@ export function marchTransmission(
   return { trans: [0, 1, 2].map((j) => 1 * (1 - weight) + trans[j] * weight) as [number, number, number], alpha: tauSum > 0 ? -tauT0 / tauSum : NO_FRONT };
 }
 
+// --- the field's light behind the clouds (#112's field half, S67, D228) ----------------------------------------
+
+/**
+ * K, the depth slabs the field's light is split into along each ray, **derived from a measured convergence** (rule
+ * A9: the display choice declared where it is computed). The field's light along a ray is taken where the stars'
+ * layer puts it (`layerDepthShare`), cut into K slabs of equal light, and each slab is dimmed by the clouds in front
+ * of its middle; K doubles until the ray's summed light moves by less than 1e-3. Measured at S67 on the Milky Way's
+ * zoom stand (field mode, `e2e/captures.json` milky_way-zoom; the region's 44 drawn clouds; 128 x 128 rays;
+ * regionSlabs.test.ts FIELD_SLABS_MEASURED): the worst ray's change from K / 2 to K is 0.0114 at 64, 0.0058 at 128,
+ * 0.0027 at 256, 0.0013 at 512 and 0.0009 at 1024 - about 1 / K, an opaque cloud's edge crossing a slab's middle
+ * (the bound, half a slab's light per cloud edge, 1 / (2K)) - while the frame's mean moves by under 1e-4 from K = 8.
+ * The worst ray decides: 1024. It costs nothing per slab: the march sums the slabs as it passes the clouds
+ * (`marchFieldTransmission`), so K is only the grain the depths are placed to.
+ */
+export const FIELD_SLABS = 1024;
+
+/**
+ * The share of the field's light in front of the point at height `y` on a ray leaving height `y0` with vertical
+ * direction `dy` - the stars' layer, sech²(y / 2h) / 4h (the render header's `layers.stars`, FieldVolume's profile):
+ * along the ray its light lies as tanh(y / 2h) / 2 does, so the share between the camera and `y` is the difference
+ * of tanh over the whole ray's (to ±1, the layer's far face, as the ray leaves it). Null where the ray carries none
+ * of the layer's light (it leaves the layer away from it: the span under 1e-6) or there is no layer (h ≤ 0).
+ */
+export function layerDepthShare(y0: number, dy: number, y: number, h: number): number | null {
+  if (!(h > 0)) return null;
+  const u = (v: number) => Math.tanh(Math.min(10, Math.max(-10, v / (2 * h))));
+  const u0 = u(y0);
+  const span = (dy > 0 ? 1 : -1) - u0;
+  if (Math.abs(span) < 1e-6) return null;
+  return (u(y) - u0) / span;
+}
+
+/**
+ * The field's transmission for one ray by its definition (S67, D228; #112's field half): the field's light split
+ * into `slabs` slabs of equal light along the ray (`layerDepthShare`); every cloud sample's optical depth put in the
+ * first slab whose middle lies beyond it; slab k dimmed by the depth summed to k - the clouds in front of it, not
+ * those behind; the factor the slabs' mean transmission, mix(1, ·, weight). Order-free: the reference
+ * `marchFieldTransmission` is held to (regionSlabs.test.ts). With no cloud on the ray it is exactly 1.
+ */
+export function fieldTransmissionBySlabs(
+  origin: readonly [number, number, number], dir: readonly [number, number, number], objects: Float32Array, count: number,
+  extRatio: readonly [number, number, number], weight: number, noise: InteriorNoise | null, starsHeight: number,
+  slabs: number = FIELD_SLABS,
+): [number, number, number] {
+  const deposits = cloudDeposits(origin, dir, objects, count, noise);
+  let field = [0, 1, 2].map((j) => Math.exp(-deposits.reduce((s, d) => s + d.dtau, 0) * extRatio[j]));
+  if (layerDepthShare(origin[1], dir[1], origin[1], starsHeight) !== null) {
+    const slab = new Float64Array(slabs);
+    for (const d of deposits) {
+      const first = Math.max(Math.floor(layerDepthShare(origin[1], dir[1], d.y, starsHeight)! * slabs - 0.5) + 1, 0);
+      if (first < slabs) slab[first] += d.dtau;
+    }
+    const sum = [0, 0, 0];
+    let cum = 0;
+    for (let k = 0; k < slabs; k += 1) {
+      cum += slab[k];
+      for (let j = 0; j < 3; j += 1) sum[j] += Math.exp(-cum * extRatio[j]);
+    }
+    field = sum.map((v) => v / slabs);
+  }
+  return field.map((v) => 1 * (1 - weight) + v * weight) as [number, number, number];
+}
+
+/** Each cloud sample's optical depth on a ray and its height, in the march's order: the shader's cloud branch. */
+function cloudDeposits(
+  origin: readonly [number, number, number], dir: readonly [number, number, number], objects: Float32Array, count: number, noise: InteriorNoise | null,
+): { y: number; dtau: number }[] {
+  const out: { y: number; dtau: number }[] = [];
+  for (let i = 0; i < Math.min(count, MAX_OBJECTS); i += 1) {
+    const o = i * OBJECT_FLOATS;
+    const a = objects.subarray(o, o + 4), b = objects.subarray(o + 4, o + 8), c = objects.subarray(o + 8, o + 12), e = objects.subarray(o + 12, o + 16);
+    const chord = sphereChord(origin, dir, [a[0], a[1], a[2]], a[3]);
+    if (!chord) continue;
+    const [t0, t1] = chord;
+    const kind = Math.floor(b[0] + 0.5);
+    if (kind === KIND.hii || kind === KIND.shell) continue;
+    const seed = cloudSeed(Math.trunc(b[1]), Math.trunc(b[2]));
+    const ds = (t1 - t0) / CLOUD_SAMPLES;
+    for (let k = 0; k < CLOUD_SAMPLES; k += 1) {
+      const p = [0, 1, 2].map((j) => origin[j] + dir[j] * (t0 + (k + 0.5) * ds));
+      let rho = densityRatio((p[0] - a[0]) / a[3], (p[1] - a[1]) / a[3], (p[2] - a[2]) / a[3], seed, b[3], c[0], c[1], noise);
+      if (e[3] > 0 && Math.hypot(p[0] - e[0], p[1] - e[1], p[2] - e[2]) < e[3] && rho < Math.exp(b[3])) rho = 0;
+      out.push({ y: p[1], dtau: c[2] * rho * ds });
+    }
+  }
+  return out;
+}
+
+/**
+ * The field's transmission for one ray as the march computes it (S67, D228) - the shader's mode 2 line for line, in
+ * float64: what multiplies the field's light, which before S67 was the whole ray's T. The same K slabs as
+ * `fieldTransmissionBySlabs`, summed as the march passes the clouds' samples, so no slab is stored: the slabs whose
+ * middles lie in front of a sample and were not yet added (from `lit` to its `first`) are added at the transmission
+ * so far, `run`, before the sample dims it; the slabs behind the last sample are added at the end. Equal to the
+ * definition when the samples arrive in depth order - within a cloud they do, and the clouds come nearest-first by
+ * their near surface (`sortedFrom`); where two clouds overlap on a ray a sample can arrive behind one already passed,
+ * and it then dims from `lit` on, slabs it should have left alone included: the march's stated approximation for
+ * overlaps (#112), now the field's as well. With no cloud on the ray the factor is K / K x 1, exactly 1: the field's
+ * light is conserved where the clouds are absent. With no layer, or a ray carrying none of its light, it is the whole
+ * ray's T, as before.
+ */
+export function marchFieldTransmission(
+  origin: readonly [number, number, number], dir: readonly [number, number, number], objects: Float32Array, count: number,
+  extRatio: readonly [number, number, number], weight: number, noise: InteriorNoise | null, starsHeight: number,
+  slabs: number = FIELD_SLABS,
+): [number, number, number] {
+  const trans: [number, number, number] = [1, 1, 1];
+  const split = layerDepthShare(origin[1], dir[1], origin[1], starsHeight) !== null;
+  const field: [number, number, number] = [0, 0, 0];
+  const run: [number, number, number] = [1, 1, 1];
+  let lit = 0;
+  for (let i = 0; i < Math.min(count, MAX_OBJECTS); i += 1) {
+    const o = i * OBJECT_FLOATS;
+    const a = objects.subarray(o, o + 4), b = objects.subarray(o + 4, o + 8), c = objects.subarray(o + 8, o + 12), e = objects.subarray(o + 12, o + 16);
+    const chord = sphereChord(origin, dir, [a[0], a[1], a[2]], a[3]);
+    if (!chord) continue;
+    const [t0, t1] = chord;
+    const kind = Math.floor(b[0] + 0.5);
+    if (kind === KIND.hii || kind === KIND.shell) continue;
+    const seed = cloudSeed(Math.trunc(b[1]), Math.trunc(b[2]));
+    const ds = (t1 - t0) / CLOUD_SAMPLES;
+    let tau = 0;
+    for (let k = 0; k < CLOUD_SAMPLES; k += 1) {
+      const p = [0, 1, 2].map((j) => origin[j] + dir[j] * (t0 + (k + 0.5) * ds));
+      let rho = densityRatio((p[0] - a[0]) / a[3], (p[1] - a[1]) / a[3], (p[2] - a[2]) / a[3], seed, b[3], c[0], c[1], noise);
+      if (e[3] > 0 && Math.hypot(p[0] - e[0], p[1] - e[1], p[2] - e[2]) < e[3] && rho < Math.exp(b[3])) rho = 0;
+      tau += c[2] * rho * ds;
+      if (split) {
+        const q = layerDepthShare(origin[1], dir[1], p[1], starsHeight)!;
+        const first = Math.min(Math.max(Math.floor(q * slabs - 0.5) + 1, lit), slabs);
+        for (let j = 0; j < 3; j += 1) {
+          field[j] += ((first - lit) / slabs) * run[j];
+          run[j] *= Math.exp(-c[2] * rho * ds * extRatio[j]);
+        }
+        lit = first;
+      }
+    }
+    for (let j = 0; j < 3; j += 1) trans[j] *= Math.exp(-tau * extRatio[j]);
+  }
+  let out = trans;
+  if (split) {
+    for (let j = 0; j < 3; j += 1) field[j] += ((slabs - lit) / slabs) * run[j];
+    out = field;
+  }
+  return out.map((v) => 1 * (1 - weight) + v * weight) as [number, number, number];
+}
+
 /**
  * The factor a star's light takes from the region's clouds (T5): the pass's colour T where the star lies beyond
  * the front (its distance from the camera greater than −alpha), 1 where it lies in front or no cloud is on its line
@@ -543,6 +705,7 @@ const FRAGMENT_HEAD = /* glsl */ `
   uniform float gain;
   uniform float weight;
   uniform int mode;
+  uniform float starsHeight;
   varying vec3 vWorld;
 
   float hash01(int x, int y, int z, int seed) {
@@ -616,6 +779,19 @@ const fragmentTail = () => /* glsl */ `
     vec3 trans = vec3(1.0);
     float tauSum = 0.0;
     float tauT0 = 0.0;
+    // Mode 2, the field's factor (S67, D228; #112's field half): the field's light in ${FIELD_SLABS} slabs of equal
+    // light along the ray, as the stars' layer lies on it, summed in march order (region.ts marchFieldTransmission).
+    vec3 field = vec3(0.0);
+    vec3 run = vec3(1.0);
+    float lit = 0.0;
+    bool split = false;
+    float u0 = 0.0;
+    float span = 0.0;
+    if (mode == 2 && starsHeight > 0.0) {
+      u0 = tanh(clamp(origin.y / (2.0 * starsHeight), -10.0, 10.0));
+      span = (dir.y > 0.0 ? 1.0 : -1.0) - u0;
+      split = abs(span) >= 1e-6;
+    }
     for (int i = 0; i < ${MAX_OBJECTS}; i++) {
       if (i >= count) break;
       vec4 a = obj(i, 0);
@@ -645,6 +821,13 @@ const fragmentTail = () => /* glsl */ `
           float rho = densityRatio((p - a.xyz) / a.w, seed, b.w, c.x, c.y);
           if (e.w > 0.0 && length(p - e.xyz) < e.w && rho < exp(b.w)) rho = 0.0;
           tau += c.z * rho * ds;
+          if (split) {
+            float q = (tanh(clamp(p.y / (2.0 * starsHeight), -10.0, 10.0)) - u0) / span;
+            float first = min(max(floor(q * ${glslFloat(FIELD_SLABS)} - 0.5) + 1.0, lit), ${glslFloat(FIELD_SLABS)});
+            field += (first - lit) / ${glslFloat(FIELD_SLABS)} * run;
+            run *= exp(-c.z * rho * ds * extRatio);
+            lit = first;
+          }
         }
         trans *= exp(-tau * extRatio);
         tauSum += tau;
@@ -652,7 +835,12 @@ const fragmentTail = () => /* glsl */ `
       }
     }
     if (mode == 0) gl_FragColor = vec4(light * gain, 1.0);
-    else gl_FragColor = vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : ${glslFloat(NO_FRONT)});
+    else if (mode == 1) gl_FragColor = vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : ${glslFloat(NO_FRONT)});
+    else {
+      vec3 out3 = trans;
+      if (split) out3 = field + (${glslFloat(FIELD_SLABS)} - lit) / ${glslFloat(FIELD_SLABS)} * run;
+      gl_FragColor = vec4(mix(vec3(1.0), out3, weight), 1.0);
+    }
   }
 `;
 

@@ -6,6 +6,7 @@ import {
   BUDGET,
   CLOUD_SAMPLES,
   ERG_S_CM3_TO_LSUN_PC3,
+  FIELD_SLABS,
   FIELD_SIGMA_MEASURED,
   INTERIOR_KEY,
   type InteriorNoise,
@@ -241,22 +242,69 @@ describe("the march's shader draws the published interior (S55)", () => {
   const sha256 = (text: string) => createHash("sha256").update(text, "utf-8").digest("hex");
   const S64_LENGTH = 4311;
   const S64_SHA256 = "94771a7b1025fe17b622bd211730def3b12845a61739e25d83a616d8f766e2d1";
+  const S67_LENGTH = 5416;
+  const S67_SHA256 = "50f6c20d37e446cfd5c243f70c2d1362a3303020242c5d263f7ad795f5efcc01";
+  // What S67 (D228, #112's field half) added: the stars' layer's height, the field's slabs declared and the ray's
+  // span through the layer, each cloud sample's depth put in its slab, and mode 2's output; mode 1's line kept.
+  const K = FIELD_SLABS;
+  const KF = glslFloat(FIELD_SLABS);
+  const S67_ADDED = [
+    `  uniform float starsHeight;
+`,
+    `    // Mode 2, the field's factor (S67, D228; #112's field half): the field's light in ${K} slabs of equal
+    // light along the ray, as the stars' layer lies on it, summed in march order (region.ts marchFieldTransmission).
+    vec3 field = vec3(0.0);
+    vec3 run = vec3(1.0);
+    float lit = 0.0;
+    bool split = false;
+    float u0 = 0.0;
+    float span = 0.0;
+    if (mode == 2 && starsHeight > 0.0) {
+      u0 = tanh(clamp(origin.y / (2.0 * starsHeight), -10.0, 10.0));
+      span = (dir.y > 0.0 ? 1.0 : -1.0) - u0;
+      split = abs(span) >= 1e-6;
+    }
+`,
+    `          if (split) {
+            float q = (tanh(clamp(p.y / (2.0 * starsHeight), -10.0, 10.0)) - u0) / span;
+            float first = min(max(floor(q * ${KF} - 0.5) + 1.0, lit), ${KF});
+            field += (first - lit) / ${KF} * run;
+            run *= exp(-c.z * rho * ds * extRatio);
+            lit = first;
+          }
+`,
+    `    else {
+      vec3 out3 = trans;
+      if (split) out3 = field + (${KF} - lit) / ${KF} * run;
+      gl_FragColor = vec4(mix(vec3(1.0), out3, weight), 1.0);
+    }
+`,
+  ];
 
   it("is, at the published values, byte for byte the shader the viewer drew with before", () => {
     // The fragment source RegionVolume.tsx held at S54 (OCTAVES 4, f *= 2.0, w *= 0.5, FIELD_SIGMA.toFixed(6)),
     // hashed at S55 before any code moved. The same text is the same program: the picture cannot have moved.
     // S64 (T5) added the clouds' front - two sums declared, two accumulated, and the transmission pass's alpha - and
-    // nothing else: with exactly those lines taken back the text is S55's, byte for byte.
+    // nothing else: with exactly those lines taken back the text is S55's, byte for byte. S67 added the field's slabs
+    // (S67_ADDED) and named mode 1 where it had been the "else": with those taken back the text is S64's.
     const fragment = regionFragment(NOISE);
-    const s55 = fragment
+    let s64 = fragment;
+    for (const added of S67_ADDED) {
+      expect(s64).toContain(added);
+      s64 = s64.replace(added, "");
+    }
+    s64 = s64.replace("    else if (mode == 1) gl_FragColor", "    else gl_FragColor");
+    const s55 = s64
       .replace("    float tauSum = 0.0;\n    float tauT0 = 0.0;\n", "")
       .replace("        tauSum += tau;\n        tauT0 += tau * t0;\n", "")
       .replace("vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : 1.0);", "vec4(mix(vec3(1.0), trans, weight), 1.0);");
     expect(s55.length).toBe(4181);
     expect(sha256(s55)).toBe("da30e55df935257fcfd2ac99ed6b5e2179f0c676f1ae30dfd90b3fd86194e415");
-    // S64's text, pinned in its turn.
-    expect(fragment.length).toBe(S64_LENGTH);
-    expect(sha256(fragment)).toBe(S64_SHA256);
+    // S64's text, pinned in its turn, and S67's.
+    expect(s64.length).toBe(S64_LENGTH);
+    expect(sha256(s64)).toBe(S64_SHA256);
+    expect(fragment.length).toBe(S67_LENGTH);
+    expect(sha256(fragment)).toBe(S67_SHA256);
     expect(fragment).toContain("for (int k = 0; k < 4; k++) {\n      vec3 q = p * f + vec3(17.3, 31.7, 47.1) * float(k);");
     expect(fragment).toContain("f *= 2.0;\n      w *= 0.5;\n    }\n    return sum / 0.208800;");
     expect(fragment).toContain(`for (int i = 0; i < ${MAX_OBJECTS}; i++)`);
@@ -288,7 +336,7 @@ describe("the region's object table", () => {
   const clouds = {
     cloud_radius: [8, 8.1], cloud_azimuth: [0, 0.01], cloud_height: [0, 0.01], cloud_size: [10, 20], cloud_mass: [1e5, 2e5],
     cloud_density_pdf_width: [1.4, 1.2], cloud_density_gradient: [0.3, 0.1], cloud_gradient_angle: [0.5, 1],
-    cloud_cluster_index: [0, -1], cell: [300, 300], index: [0, 1],
+    cloud_cluster_index: [0, -1], cell: [300, 300], index: [0, 1], cloud_dust_extinction_v: [1.9, 4.6],
   };
   const clusters = {
     cluster_radius: [8.001], cluster_azimuth: [0], cluster_height: [0], hii_stromgren_radius: [2], hii_halpha_emissivity: [1e-20],
@@ -296,13 +344,14 @@ describe("the region's object table", () => {
   };
 
   it("packs clouds, regions and shells with their units and cavities", () => {
-    const t = packObjects(clouds, clusters, 2.9696);
+    const t = packObjects(clouds, clusters);
     expect(t.count).toBe(4);
     // the heaviest cloud first: the 2e5 one, radius 20 pc
     expect(t.data[3]).toBeCloseTo(0.02, 6);
     expect(t.data[4]).toBe(KIND.cloud);
-    // kappa_V: the central tau over the diameter, per kpc
-    expect(t.data[10]).toBeCloseTo(2.9696 / MAG_PER_TAU / 0.04, 2);
+    // kappa_V per kpc from the cloud's own face-on mean A_V (4.6 mag, S67): (3/4) tau-bar / r
+    expect(t.data[10] / ((0.75 * 4.6) / MAG_PER_TAU / 0.02) - 1).toBeLessThan(1e-6);
+    expect(t.data[OBJECT_FLOATS + 10] / ((0.75 * 1.9) / MAG_PER_TAU / 0.01) - 1).toBeLessThan(1e-6);
     // the 1e5 cloud (second) carries its cluster's cavity: 2 pc at the cluster
     const second = OBJECT_FLOATS;
     expect(t.data[second + 15]).toBeCloseTo(0.002, 6);
@@ -330,12 +379,12 @@ describe("the region's object table", () => {
     // Through one broad filter every line adds: 1 + 1/2.86 + 0.5 + 0.2 + 0.05.
     const broad = { halpha: [1, 1, 1], hbeta: [1, 1, 1], oiii_5007: [1, 1, 1], nii_6583: [1, 1, 1], sii_6716: [1, 1, 1] } as const;
     expect(regionLineColour(withLines, 0, broad)[0]).toBeCloseTo(1 + 1 / 2.86 + 0.75, 12);
-    const t = packObjects(clouds, withLines, 2.9696, undefined, {}, lines);
+    const t = packObjects(clouds, withLines, undefined, {}, lines);
     const hii = 2 * OBJECT_FLOATS;
     expect(t.data[hii + 4]).toBe(KIND.hii);
     expect(Array.from(t.data.slice(hii + 9, hii + 12)).map((v) => Number(v.toFixed(6)))).toEqual([0.05, 1, 0.5]);
     // Without line weights a region is its Halpha alone, in every channel (the default).
-    expect(Array.from(packObjects(clouds, clusters, 2.9696).data.slice(hii + 9, hii + 12))).toEqual([1, 1, 1]);
+    expect(Array.from(packObjects(clouds, clusters).data.slice(hii + 9, hii + 12))).toEqual([1, 1, 1]);
   });
 
   it("draws a remnant's shell and skips a Sedov-phase remnant's NaN emissivity", () => {
@@ -343,7 +392,7 @@ describe("the region's object table", () => {
       remnant_radius: [8, 8.2], remnant_azimuth: [0.1, 0.2], remnant_height: [0, 0], remnant_size: [18, 5],
       remnant_shell_thickness: [1.2, 0.5], remnant_shell_emissivity: [5e-22, Number.NaN], cell: [300, 301], index: [0, 0],
     };
-    const t = packObjects(clouds, clusters, 2.9696, undefined, remnants);
+    const t = packObjects(clouds, clusters, undefined, remnants);
     expect(t.count).toBe(5); // two clouds, one region, the bubble's shell and the radiative remnant's
     const kinds = Array.from({ length: t.count }, (_, k) => t.data[k * OBJECT_FLOATS + 4]);
     expect(kinds.filter((k) => k === KIND.shell).length).toBe(2);
@@ -355,9 +404,9 @@ describe("the region's object table", () => {
       cloud_radius: Array(n).fill(8), cloud_azimuth: Array.from({ length: n }, (_, i) => i * 1e-3), cloud_height: Array(n).fill(0),
       cloud_size: Array(n).fill(5), cloud_mass: Array.from({ length: n }, (_, i) => i + 1), cloud_density_pdf_width: Array(n).fill(1),
       cloud_density_gradient: Array(n).fill(0), cloud_gradient_angle: Array(n).fill(0), cloud_cluster_index: Array(n).fill(-1),
-      cell: Array(n).fill(1), index: Array.from({ length: n }, (_, i) => i),
+      cell: Array(n).fill(1), index: Array.from({ length: n }, (_, i) => i), cloud_dust_extinction_v: Array(n).fill(2),
     };
-    const t = packObjects(many, { cluster_radius: [] }, 3);
+    const t = packObjects(many, { cluster_radius: [] });
     expect(t.count).toBe(BUDGET.clouds);
     expect(t.data[6]).toBe(n - 1); // the heaviest kept first
     const out = sortedFrom(t, [8, 0, -0.3], new Float32Array(t.data.length));
