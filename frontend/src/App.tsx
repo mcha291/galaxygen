@@ -32,6 +32,11 @@ type Tab = View;
 type ScienceLook = "scene" | "plots";
 const SCIENCE_LOOKS: ScienceLook[] = ["scene", "plots"];
 
+/** A transport error without the request's URL (the whole input vector, which says nothing to a reader): "400: <the API's reason>". */
+function briefly(message: string): string {
+  return message.replace(/^(\d{3}) \S+: /, "$1: ");
+}
+
 export function App() {
   const wf = useWorkflow();
   // The viewer lands on the default galaxy, generated on first load (D198, rule D1 as amended).
@@ -188,7 +193,7 @@ export function App() {
     <p className={styles.stale} role="status" data-failed={failure !== null || undefined}>
       {stale
         ? "Stale · the previous galaxy, until the generated one arrives"
-        : `Generation failed: ${failure}. What is drawn is not the inputs shown: change them and generate again, or reset.`}
+        : `Generation failed: ${briefly(failure ?? "")}. What is drawn is not the inputs shown: change them and generate again, or reset.`}
     </p>
   );
 
