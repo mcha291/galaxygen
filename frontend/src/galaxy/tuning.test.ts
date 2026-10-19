@@ -229,16 +229,21 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
   const MAP = { milky_way: { bloomStrength: 0.5, pointGain: 2 }, ngc_4414: { spikes: true, steps: 1000, bogus: 1 } as Partial<Tuning> };
   const EXPOSURE = { ngc_4414: 1.5 };
 
-  it("carry the owner's pastes for both templates (2026-10-18, then 2026-10-19 laid over it and copied to NGC 4414)", () => {
+  // The third paste (2026-10-19): was one set for both - NGC 4414 gains its own values, and both march 48 steps (was 96).
+  it("carry the owner's pastes for both templates (2026-10-18, 2026-10-19 copied to NGC 4414, then the third: NGC 4414's own, steps 48)", () => {
     expect(Object.keys(TEMPLATE_TUNING)).toEqual(["milky_way", "ngc_4414"]);
     expect(TEMPLATE_EXPOSURE).toEqual({});
     const owner = {
-      ...TUNING_DEFAULTS, resolution: 1, pixelBudget: 2_000_000, steps: 96, fieldGain: 1.65, fieldFloor: 0.1, bloomStrength: 2.25,
+      ...TUNING_DEFAULTS, resolution: 1, pixelBudget: 2_000_000, steps: 48, fieldGain: 1.65, fieldFloor: 0.1, bloomStrength: 2.25,
       bloomRadius: 0.35, bloomThreshold: 0.45, toneMapping: "aces", spriteSize: 3, pointGain: 4, compCells: true,
       starsIntensity: 0.55, gasIntensity: 1, dustIntensity: 1, extinctionStrength: 1.25, cloudsExtinction: false,
     };
     expect(defaultsFor("milky_way")).toEqual(owner);
-    expect(defaultsFor("ngc_4414")).toEqual(owner);
+    expect(defaultsFor("ngc_4414")).toEqual({
+      ...owner, fieldGain: 1.2, bloomStrength: 2, spikes: true, cloudsExtinction: true, cloudRaster: 3,
+    });
+    // Against the plain defaults the paste's five values are among what differs (the copy box's own reading).
+    expect(changed(defaultsFor("ngc_4414"))).toMatchObject({ fieldGain: 1.2, bloomStrength: 2, spikes: true, cloudRaster: 3, steps: 48 });
     expect(defaultsFor(null)).toEqual(TUNING_DEFAULTS);
     for (const name of ["milky_way", "ngc_4414", null]) expect(exposureFor(name)).toBe(0);
   });

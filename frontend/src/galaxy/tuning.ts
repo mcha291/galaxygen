@@ -415,7 +415,8 @@ export const TUNING_STORAGE_KEY = "galaxygen.tuning";
 /**
  * Each template's display defaults over TUNING_DEFAULTS (S67, D227 R4; T1): what the owner tuned on that template,
  * pasted from the Tuning panel's copy box. Display choices (rule D5), each declared one where it is computed (A9); none
- * picked to look like a goal. Both templates carry the owner's pastes (2026-10-18, 2026-10-19).
+ * picked to look like a goal. Both templates carry the owner's pastes (2026-10-18, 2026-10-19), and since the third
+ * (2026-10-19) each its own set.
  */
 /**
  * The owner's display defaults (S67, D227 T1): the paste of 2026-10-18 ("set these values as the default so i can
@@ -444,11 +445,30 @@ const OWNER_DEFAULTS_2026_10_19 = Object.freeze({
   cloudsExtinction: false,
 } satisfies Partial<Tuning>);
 
+/**
+ * The owner's third paste (S67, D227 T1, 2026-10-19): "ok use this for ngc4414 {"template":"ngc_4414","filters":"rgb",
+ * "exposure":0,"fieldGain":1.2,"bloomStrength":2,"spikes":true,"cloudsExtinction":true,"cloudRaster":3} then change the
+ * steps for both to 48", and, asked which filter set NGC 4414 should open on, "Switch to RGB". The copy box lists only
+ * what differs from the template's own defaults, so the paste is laid over NGC 4414's set above: its field gain, bloom,
+ * spikes, clouds as extinction and cloud raster; its exposure 0 is TEMPLATE_EXPOSURE's absent entry, its filter set the
+ * template's own (templates.py, now rgb). Steps 48 on both. `spikes` acts only while the template's instrument's own set
+ * (WFC3) is shown (GalaxyTab's physical reading, R1-R3): on RGB it waits for the owner to switch sets.
+ */
+const OWNER_STEPS_2026_10_19 = 48;
+
 export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({
-  milky_way: OWNER_DEFAULTS_2026_10_19,
-  // "then copy it over to 4414": the same choices; its points keep the instrument's image (T9), so the sprite size
-  // does not reach them while the WFC3 set is shown.
-  ngc_4414: OWNER_DEFAULTS_2026_10_19,
+  milky_way: Object.freeze({ ...OWNER_DEFAULTS_2026_10_19, steps: OWNER_STEPS_2026_10_19 }),
+  // "then copy it over to 4414" (the second paste), then the third paste laid over it. Its points keep the instrument's
+  // image (T9) while the WFC3 set is shown, so the sprite size does not reach them there.
+  ngc_4414: Object.freeze({
+    ...OWNER_DEFAULTS_2026_10_19,
+    steps: OWNER_STEPS_2026_10_19,
+    fieldGain: 1.2,
+    bloomStrength: 2,
+    spikes: true,
+    cloudsExtinction: true,
+    cloudRaster: 3,
+  } satisfies Partial<Tuning>),
 });
 /** Each template's default exposure, stops (S67, D227 R4: the photometric slider's start, App's state); 0 where absent. */
 export const TEMPLATE_EXPOSURE: Readonly<Record<string, number>> = Object.freeze({});
