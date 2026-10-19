@@ -1639,3 +1639,23 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the field varies along a ray inside the layer before choosing the evaluation point. A face-on column map read per
   sub-step through a 356 pc layer drew every 47-190 pc clump as a pillar, smeared into streaks on inclined rays; read
   once at the midplane crossing, a thin screen, the streaks went. Look at an inclined frame before ruling the read.
+
+## From S67 (the display defaults, the instrument, the goal captures; an Opus lead, Opus agents, the owner at the tuning panel)
+
+- [viewer] React's StrictMode development build runs a `useMemo` twice and keeps one result: a ref filled inside the
+  memo can hold the discarded object. The bloom sliders moved a pass in the composer React threw away, so the owner saw
+  no change at any strength. Never keep a ref filled inside `useMemo`; read the object from what actually renders.
+- [viewer] `import data from "./x.json" with { type: "json" }` lets Playwright's e2e import the app's own modules
+  (`filters.ts`, so the spec could import `tuning.ts`) where a bare JSON import fails under Node's loader. Use the
+  attribute in any module the e2e reads.
+- [infra] The desktop app stops preview servers after about an hour. Run the owner's servers (:8017, :5173) in their
+  Terminal panel, not as an agent's preview, or the owner's tab goes dead mid-session.
+- [viewer] Display-tuning defaults move display pins: each paste of the owner's defaults re-pinned the physics-only
+  ratio and moved every capture. A gate that tests the drawing runs at the plain display defaults, set before the page
+  loads (`addInitScript`), so the look can change without the gate moving.
+- [viewer] The march is not converged at 48 steps even face-on: halving the Milky Way's steps from 96 brightened its
+  frame by about 4 % and saved no measurable GPU time. "Steps barely matter face-on" was wrong; measure the frame's
+  sum at both step counts before cutting steps.
+- [viewer] A black-blob look was traced to the model's inputs twice: an unsourced cloud layer height (0.5 of the thin
+  disc's, |z| to 1.95 kpc) and one fixed Σ_GMC (clouds to 270 pc). Measure the model's published inputs to the drawing
+  (heights, sizes, columns) before changing the renderer.
