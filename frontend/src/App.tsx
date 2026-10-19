@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { PHOTOMETRIC } from "./galaxy/colors";
@@ -14,7 +14,7 @@ import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
-import { pendingLoads, useLoad, usePendingLoads } from "./useLoad";
+import { pendingLoads, settleSwap, useLoad, useSwap } from "./useLoad";
 import { runHash } from "./workflow/logic";
 import { pinWords, templateLabel } from "./workflow/templates";
 import { type View, useWorkflow } from "./workflow/useWorkflow";
@@ -34,7 +34,6 @@ const SCIENCE_LOOKS: ScienceLook[] = ["scene", "plots"];
 
 export function App() {
   const wf = useWorkflow();
-  const [meta, setMeta] = useState<FieldsPayload | null>(null);
   // The viewer lands on the default galaxy, generated on first load (D198, rule D1 as amended).
   const [tab, setTab] = useState<Tab>("galaxy");
   // "Edit galaxy" (V9, S68): the edit panel as a drawer over the Galaxy view. In the Science tab it is the rail.
@@ -97,11 +96,9 @@ export function App() {
   // The model of the galaxy on screen: its fields are what every view draws. A model chosen in the panel is the
   // draft's until "Generate" (rule D1 as amended).
   const shownModel = wf.shown?.model ?? wf.model;
-  useEffect(() => {
-    const abort = new AbortController();
-    loadFields(shownModel, abort.signal).then(setMeta).catch(() => undefined);
-    return () => abort.abort();
-  }, [shownModel]);
+  // A loader like the others (no settling delay), so a Generate that changes the model swaps the field
+  // declarations with every other answer, whole (useLoad.ts, the swap).
+  const meta = useLoad<FieldsPayload>(shownModel, (signal) => loadFields(shownModel, signal), 0).value;
 
   // The shown galaxy's query: the input vector, the model and - for a galaxy started from a template -
   // `template=`, which brings the template's pins (S58; useWorkflow.ts queryOf). Every tab asks with it and none
@@ -117,17 +114,29 @@ export function App() {
   const current = groups.find((c) => c.n === viewing) ?? groups[0] ?? null;
   const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
 
-  // Stale (rule D1 as amended): from a "Generate" until every loader asking with the new query has answered
-  // (useLoad's pendingLoads - the loaders' own arrival, not a timer), the galaxy on screen is the previous one's
-  // and says so. Only a Generate marks it: a landing is the template's galaxy, with its own "Generating" line.
-  const [stale, setStale] = useState(false);
-  const waiting = usePendingLoads(stale);
+  // Stale (rule D1 as amended): from a "Generate" until the swap completes - every loader asking with the new
+  // query has answered, and every answer is published at once (useLoad.ts) - the galaxy on screen is the previous
+  // one's and says so. A failed answer ends the swap like any other, but leaves the mark up with its message until
+  // the next Generate or landing: what is drawn is then not wholly the inputs shown. Only a Generate marks it; a
+  // landing is the template's galaxy, with its own "Generating" line, and clears what a Generate left.
+  const swap = useSwap();
+  const [settled, setSettled] = useState(0); // the last Generate whose swap has completed
+  const [failure, setFailure] = useState<string | null>(null);
   useEffect(() => {
-    if (wf.generation > 0) setStale(true);
-  }, [wf.generation]);
+    if (wf.generation === settled) return;
+    // A Generate whose query no loader is asking with (none mounted) has nothing to wait for.
+    if (swap.swapping && pendingLoads() === 0) settleSwap();
+    if (!swap.swapping) {
+      setSettled(wf.generation);
+      setFailure(swap.failure);
+    }
+  }, [wf.generation, settled, swap]);
   useEffect(() => {
-    if (stale && pendingLoads() === 0) setStale(false);
-  }, [stale, waiting]);
+    setSettled(wf.generation);
+    setFailure(null);
+  }, [wf.selection]); // eslint-disable-line react-hooks/exhaustive-deps -- a landing, not a Generate
+  const stale = wf.generation !== settled;
+  const marked = stale || failure !== null;
 
   // The star sample runs every stage, so it is only asked for where stars are drawn: the Galaxy
   // tab. The Science tab shows fields only, in every group including the last two.
@@ -149,6 +158,13 @@ export function App() {
   const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${shownModel}` : ""} · world_seed ${seed}${layerMark}` : "";
   // The template the galaxy is, in every tab: its label, and "edited" once it was generated from changed inputs.
   const galaxyName = wf.template && wf.shown ? templateLabel(wf.template, wf.edited) : "";
+  // What the header names is what is drawn (rule D1 as amended): while a Generate is under way, or failed, the
+  // label stays the previous galaxy's, said so, rather than naming the inputs the picture does not show yet.
+  const live = { hash, galaxyName, edited: wf.edited };
+  const label = useRef(live);
+  if (!marked) label.current = live; // a ref filled in render, never in a memo (StrictMode builds a memo twice)
+  const named = marked ? label.current : live;
+  const labelMark = stale ? " · generating" : failure !== null ? " · generation failed" : "";
   // The template's pins, in the field declarations' words (S58, D217): they ride with every request the galaxy
   // makes, edited or not, so an edited galaxy's name says they still hold.
   const pinned = wf.template?.pins.map((p) => pinWords(p, meta?.fields)).join("; ") ?? "";
@@ -168,9 +184,11 @@ export function App() {
       onView={setViewing}
     />
   );
-  const staleMark = stale && (
-    <p className={styles.stale} role="status">
-      Stale · the previous galaxy, until the generated one arrives
+  const staleMark = marked && (
+    <p className={styles.stale} role="status" data-failed={failure !== null || undefined}>
+      {stale
+        ? "Stale · the previous galaxy, until the generated one arrives"
+        : `Generation failed: ${failure}. What is drawn is not the inputs shown: change them and generate again, or reset.`}
     </p>
   );
 
@@ -208,32 +226,24 @@ export function App() {
     <div className={styles.shell}>
       <header className={styles.topbar}>
         <span className={styles.wordmark}>galaxygen</span>
-        {wf.models.length > 1 && (
-          <div className={styles.segmented} role="group" aria-label="Model">
-            {wf.models.map((m) => (
-              <button key={m} aria-pressed={m === wf.model} onClick={() => wf.setModel(m)}>
-                {m}
-              </button>
-            ))}
-          </div>
-        )}
-        {galaxyName && (
+        {named.galaxyName && (
           <span
             className={styles.galaxyName}
             title={
-              wf.edited
+              named.edited
                 ? `Edited from the ${wf.template!.label} template: choose it again in the Galaxy view to restore it${pinned ? `. The template's pins still hold - ${pinned}` : ""}`
                 : wf.template!.about
             }
           >
-            {galaxyName}
+            {named.galaxyName}
           </span>
         )}
         <span
           className={styles.hash}
           title={`Run hash of the input vector · model · world seed${layerMark ? " · the Galaxy view is drawn with the randomness layer off (a display setting: no input, so the hash is the same)" : ""}`}
         >
-          {hash}
+          {named.hash}
+          {labelMark}
         </span>
         <span className={styles.spacer} />
         {tab === "science" && (

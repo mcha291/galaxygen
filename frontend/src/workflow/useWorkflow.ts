@@ -2,6 +2,7 @@ import * as flow from "@interface/flow.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { loadDeclarations, loadTemplates, type Query } from "../api";
+import { beginSwap, endSwap } from "../useLoad";
 import { type FlowState, drawSeed } from "./logic";
 import { type Template, type Templates, applyTemplate, isEdited, templateOf, templateQuery } from "./templates";
 
@@ -29,6 +30,8 @@ export interface Workflow {
   draftQuery: Query | null;
   /** The draft differs from the galaxy shown - an input, a seed, the event list or the model. */
   dirty: boolean;
+  /** The draft's model's declarations have not arrived yet: the draft is still the other model's, and cannot be generated. */
+  loading: boolean;
   /** The groups (checkpoint numbers) whose inputs differ from the galaxy shown, in the catalogue's order. */
   dirtyGroups: ReadonlySet<number>;
   /** Counts the "Generate"s: a view marks the galaxy on screen stale from one until the new answers have arrived. */
@@ -96,6 +99,11 @@ export function dirtyGroupsOf(draft: FlowState, shown: FlowState): Set<number> {
   return new Set(flow.changedGroups(draft, flow.query(draft), flow.query(shown)) as number[]);
 }
 
+/** The draft is still another model's than the one chosen: its declarations are on their way, and nothing is generated. */
+export function isLoading(draft: FlowState | null, model: string): boolean {
+  return !!draft && draft.cat.model !== model;
+}
+
 /** Whether "Generate" has anything to do: the two queries differ in any input, the model or the template. */
 export function isDirty(draftQuery: Query | null, shownQuery: Query | null): boolean {
   return !!draftQuery && !!shownQuery && JSON.stringify(draftQuery) !== JSON.stringify(shownQuery);
@@ -150,6 +158,7 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
   // What a landing sets, wherever it happens: the draft and the galaxy shown, both at the template's inputs.
   const land = useCallback((fresh: FlowState, template: Template) => {
     const landed = landOn(fresh, template);
+    endSwap(); // a landing makes a Generate under way moot: what it held is published, its failure forgotten
     setState(landed);
     setShown({ state: landed, model: template.model });
     setChosen(template.name);
@@ -238,11 +247,16 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
   const query = shown ? queryOf(shown.state, shown.model, template) : null;
   const draftQuery = state ? queryOf(state, model, template) : null;
   const dirty = isDirty(draftQuery, query);
+  const loading = isLoading(state, model);
   const dirtyGroups = state && shown ? dirtyGroupsOf(state, shown.state) : new Set<number>();
   const edited = !!shown && !!template && isEdited(shown.state, shown.model, template);
 
+  // Refused while the draft is another model's than the one chosen (its declarations still loading): the draft's
+  // catalogue would be generated under the wrong model's name. The swap begins before the query moves, so every
+  // answer to the new query is held until all of them have arrived (useLoad.ts, rule D1 as amended).
   const generate = useCallback(() => {
-    if (!state || !dirty) return;
+    if (!state || !dirty || isLoading(state, model)) return;
+    beginSwap();
     setShown(generated(state, model));
     setGeneration((n) => n + 1);
   }, [state, model, dirty]);
@@ -298,6 +312,7 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
     query,
     draftQuery,
     dirty,
+    loading,
     dirtyGroups,
     generation,
     templates: templates?.templates ?? [],
