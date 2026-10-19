@@ -268,7 +268,7 @@ export function templateOf(templates: Templates | null, name: string | null): Te
 /**
  * A template's inputs laid on a fresh flow: each control, each seed and the event list set through
  * `flow.setValue`, the step a user's own edit takes - so a value outside its published range, or an input the
- * model does not have, is refused there (a FlowError) rather than sent. Nothing is confirmed here.
+ * model does not have, is refused there (a FlowError) rather than sent.
  */
 export function applyTemplate(fresh: FlowState, template: Template): FlowState {
   let state = fresh;
@@ -283,8 +283,8 @@ export function applyTemplate(fresh: FlowState, template: Template): FlowState {
 
 /**
  * Whether the galaxy asked for is no longer the template: another model, or an input vector that differs from
- * the template's in what the API is sent (`flow.query`: every value, the events as JSON). A reopened checkpoint
- * whose values still stand is not an edit; a moved control, a re-rolled seed or a changed event list is.
+ * the template's in what the API is sent (`flow.query`: every value, the events as JSON). A value moved and put
+ * back is not an edit; a moved control, a re-rolled seed or a changed event list is.
  */
 export function isEdited(state: FlowState, model: string, template: Template): boolean {
   if (model !== template.model) return true;

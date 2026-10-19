@@ -44,7 +44,7 @@ main { display: grid; grid-template-columns: 320px 1fr; gap: 0; align-items: sta
 #rail {
   border-right: 1px solid var(--panel-edge);
   height: calc(100vh - 42px);
-  overflow-y: auto; /* the confirm button stays reachable however many controls a checkpoint has */
+  overflow-y: auto; /* the generate button stays reachable however many controls a group has */
 }
 #rail ol { list-style: none; margin: 0; padding: 0; }
 #rail li { border-bottom: 1px solid var(--line); }
