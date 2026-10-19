@@ -13617,3 +13617,114 @@ whole-disc routes); #142, #145, #147; the 88-minute gate test; the stray "v" in 
 under WFC3 (every strong line in F555W), now hidden by the RGB default, not mended; #184 (one stellar height for every
 age, offered and not chosen); #185 (the field mode's sampled stars undimmed by the dust). **S68 is V9**, the
 generate-first edit panel (`BRIEF.md`).
+
+### D232. S68, BUILD_III Phase V9: the generate-first edit panel — rule D1 amended to BUILD_IV Appendix A's text; the locks, confirmations and reopenings retired; a draft and a shown galaxy, one Generate that moves the whole picture at once, Reset to template, the Science tab for every group's previews (T18 discharged by construction); no model number moved, the landing byte for byte
+
+**The ruling (BUILD_III §5 Phase V9, the phase's text; BUILD_IV §2a and Appendix A, moved here at D222's adoption,
+ruling 15).** The owner's direction of 2026-10-14: "instead of going through generation step by step with locks and
+stuff … produce a galaxy right away. If a user wants it they can then enable edits and change the variables, which
+should still be grouped for convenience but use whatever makes sense instead of strictly enforcing a sequential
+process." The landing was already a generated galaxy (D198, D213); what goes is the lock-and-sequence machinery
+behind "Edit galaxy". **Rule D1 now reads Appendix A's text verbatim** — *the viewer shows one galaxy at a time and
+never a galaxy that is half one input set and half another*; the landing, the switcher, "Edit galaxy" opening the
+inputs in their registry groups every one editable at any time, seeds as rerolls, pins read-only with their
+source, "Generate" regenerating the galaxy whole with the previous one on screen marked stale until the new one
+returns, "Reset to template" — cited to this decision, the D212–D232 text kept whole as history, with one sentence
+Appendix A did not have: the reference client in `interface/` keeps the same rule as a plain demonstration of the
+routes (BUILD_IV §7 ruling 2 (a)). The justification the old rule carried (a preview must agree with the inputs
+that made it) is the new rule's first sentence, kept by construction instead of by locks. `GALAXY_PLAN.md` §2 and
+§3 ("Locking") and rule A1's justification say the staged flow is history since this decision (the graph audit
+still places each input in its group; a group's preview still runs a prefix, rule D4).
+
+**What was built (session-68; a Fable lead, one Opus builder in a worktree, one Opus reviewer, the builder's fix
+pass on the lead's rulings).** `interface/flow.js` is the draft's half of the rule: `catalogue` (the groups are the
+checkpoints the stage graph declares — names with no order), `initial`, `setValue` (the range and type checks kept,
+the editability check gone), `reroll` (the named seeds, no locks), `seedsAt`, `query`, and the new `changedGroups`
+(the groups in which two input vectors differ — the dirty marker, shared by both clients); `confirm`, `reopen`,
+`goTo`, `isEditable`, `isLocked`, `toggleLock`, `withPreview` and the state's `locked` / `confirmed` / `current` /
+`previews` are removed, and a test asserts the old exports are gone. `useWorkflow.ts` holds two input vectors — the
+**draft** the panel edits and the **shown** one whose galaxy is on screen; `query` is the shown one's and is what
+every loader spreads and every cache key serialises; `dirty` is draft query ≠ shown query (the inputs, the seeds,
+the events as JSON, the model, `template=`), `dirtyGroups` by `changedGroups`; `generate()` makes the draft the shown
+galaxy whole and is refused while the draft's catalogue is another model's than the one chosen; `reset()` returns
+the draft to the template's inputs (waiting for the template's model's declarations where they differ); a landing
+sets both at once, so the landing's query is byte for byte S67's (`applyTemplate` over `flow.initial`; `flow.confirm`
+never changed a value). `Workflow.tsx` is the panel: Generate (disabled when clean) and Reset to template, a line
+naming the changed groups or the model, the pins read-only with each source folded under "Source", the groups
+foldable with a "changed" badge, every control enabled, one named reroll per seed (five: world, pattern, texture,
+systems, planets), the merger timeline; the model switch lives in the panel, since it is a draft input. `App.tsx`:
+two tabs, Science and Galaxy, never disabled; "Edit galaxy" opens the panel as a drawer over the Galaxy view; the
+Science tab merges the old Preview and Science tabs (a scene / plots switch) with the panel as its rail and a
+"previews" button per group — any group of the galaxy on screen at any time, nothing regenerated to look (T18
+discharged by construction). **The swap is whole** (`useLoad.ts`): from `generate()` until no mounted loader is
+waiting on its current key, every answer that arrives is held unpublished and its loader keeps its previous value;
+when the last one answers every held answer is published in one tick (a store of waiting loaders and held
+answers, `beginSwap` / `endSwap`, settled in a microtask after the commit so a key moving inside one commit does not
+end it early; outside a swap nothing is held — a landing, a pan, a display setting behave as before); the header's
+name and hash stay the previous galaxy's followed by "generating" until the swap, so the label never names one input
+set while the picture draws another; a failed load counts as answered so the others can publish and becomes the
+swap's failure, and the mark stays with "Generation failed: 400: <the API's reason>" until the next Generate or a
+landing; a landing ends any swap and clears the mark. The reference client (`app.js`) keeps `draft` / `shown` /
+`looking` / `stale`: every group button enabled and a look at a group regenerates nothing; one "generate", a
+"reset to the defaults", a `.changed` mark per group. **Tests:** `tests/js/flow.test.mjs` rewritten to the rule (8);
+`tests/test_viewer.py`'s live-server driver now loads, edits, generates, resets and regenerates, reading a
+first-group scalar at each step (an edit moves nothing on screen; a generate moves the galaxy; a reset returns the
+inputs and not the galaxy until the next generate, which lands back on the first answer exactly; a reroll dirties
+its group alone), renamed `test_the_viewer_edits_and_generates_against_a_live_server`; `useWorkflow.test.ts` (the
+landing query pinned to a literal and its hash 7c6a54 — the fixture's `milky_way` carries an older Sagittarius
+event than the live route, so the live hash e673d8 is the walk's, not the fixture's — the slider round trip, the
+loading guard, 13 generate-and-reset cases); `useLoad.test.ts` (6: answers publish at once outside a swap; two
+loaders, the first held until the second; a failure counts as answered and is recorded; a held answer dropped when
+its key moves; a landing ends the swap); `logic.test.ts` loses the status, reopen, rerollCost and firstDifference
+tests. `docs/VIEWER_TASKS.md` strikes T18. **No model change, no API change** (a run is a function of the inputs;
+`resume=` reuses what is unchanged).
+
+**The review (an Opus reviewer blind to the builder's report, on the diff and a walk of the panel against the
+owner's API).** Every control reachable without confirming anything: 6 groups, 7 sliders, 5 rerolls, the merger
+editor, 3 pins per template read-only with their `[verified: …]` source, no dialog anywhere; a landing clean
+(e673d8), an edit marking its group alone with the screen and hash unmoved, Reset then Generate back to e673d8
+exactly, the Science tab's requests on the shown query only, NGC 4414 landing clean (f7f894). Ten findings, ruled
+by the lead: **F1** the loaders swapped one by one during a Generate (the new stars over the old field light for
+about 6 s under the mark; measured by resource timings: arrays +3.6 s, region +16.9 s, clusters +17.3 s, render
++23.3 s) and **F2** the header's hash moved at the click — both break D1's first sentence as written; **fixed** (the
+whole swap above; the fix pass measured a canvas frame sum 2.5 s into a second Generate identical to the idle
+frame, 51 186.27, and 61 035.87 after the swap). **F3** a failed Generate (a merger mass ratio of 5, a 400) cleared
+the mark over a mislabelled screen — **fixed**. **F4** a slider moved and put back stayed dirty
+(`fromSlider(toSlider(v)) ≠ v`, four significant figures) — **fixed** (a position equal to the shown value's snaps to
+the shown value; failing that, the template's). **F5** Generate could be pressed while another model's declarations
+were loading, sending the old catalogue's vector under the new model's name (benign today: the two models' inputs
+and checkpoints are identical) — **fixed** (refused, "Loading the <model> model's inputs"). **F6** the merger events
+unvalidated client-side — **a debt, #186**: `/api/inputs` publishes the events input's default and no per-field
+range, so the viewer cannot refuse a bad event before sending it; the API's reason is shown instead (no API change
+in this session). **F7** the mark stayed over a template landing mid-generate — **fixed**. **F8** the header's model
+switch pressed the draft's model while another was on screen — **fixed** (moved into the panel). **F9** the D232
+citation did not resolve — this entry. **F10** "Checkpoint n preview", "Published at this checkpoint" and `title`
+attributes replacing the buttons' accessible names — **fixed** (`aria-describedby` hints). *Ruled, not changed:*
+Reset after a Generate leaves the panel dirty until the next Generate — D1's text ("returns the inputs to the
+template's"), and the galaxy on screen is the one the user generated; the model switch marks no group, the line
+names it; the test rename stands; the fixture's hash pin stands with the reason above.
+
+**The gate.** `tsc -b`, `tsc -p e2e`, `vite build` clean; vitest **447 passed, 1 skipped** (436 → 438 → 447); the
+picture test **15 passed with all 9 captures byte for byte** (the seven frames and the two thumbnails) on four runs
+across the build and the fix pass — the landing did not move; `tests/test_viewer.py` + `test_api.py` 61 passed,
+1 skipped (no chromium for `shot.py`), EXIT=0; re-run on the final state (8357097) `test_viewer`, `test_docs`,
+`test_progress` EXIT=0. The register: **#186** the events' ranges not on the wire, **#187** the whole swap holds only
+the loaders keyed on the query (the star-first mode's dependent tile loaders publish a second time after it; a key
+that keeps moving holds it), **#188** a template landing drops the old field until the new one arrives (bare stars
+about 15 s on a cold NGC 4414; predates V9), **#189** the reference client's generate not whole and its events not
+editable, **#190** the edit drawer covers the Galaxy view's regime caption; **122 open = 11 + 111**, 51 discharged
+(T18 is a viewer task, discharged on its own list). `interface/style.css` loses its unused `.step:disabled` rule.
+
+**Closing.** The full suite ran at 9d12dfa (the build before the fix pass, which touched the frontend only) in a
+detached worktree with pytest's own exit code appended to its log: [SUITE LINE]. S67's `verify_clone --ref main`
+never wrote its log (the session that started it ended first); this session's `verify_clone --ref main` after the
+merge covers both: [VERIFY]. Cold timings unchanged (no stage's cost moved).
+
+**For the owner, plainly (none awaited; their word first if they answer):** the edit panel is theirs to try at
+:5173 — "Edit galaxy" now opens every input at once, Generate redraws the whole galaxy in one step and nothing is
+locked; Reset to template puts the inputs back but does not regenerate by itself (one click more; a one-line change
+if they want it to). The frames beside the goals are S67's exactly (this phase drew nothing new). Carried, theirs:
+#172, #176, #164, #159, #142, #145, #147, the 88-minute gate test, the stray "v" in the gateway's project file
+(still uncommitted in their checkout), #183, #184, #185, and now #186 and #188. **S69 is Audit V** (gate G4): its
+aim is drafted from the plan's text; its Opus readers wait on the weekly usage window (all-models 72 %, Fable 78 %
+at this close; the rationing rule stops spawns at 80 %; reset 2026-10-21 03:00 UTC).

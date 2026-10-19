@@ -697,9 +697,9 @@ defined here once and used in every entry below:
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185 | 106 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190 | 111 |
 
-So the board's **117 open** is 11 permanent and 106 carried, and no item is unruled. (S22
+So the board's **122 open** is 11 permanent and 111 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -732,7 +732,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -4290,6 +4290,28 @@ never been judged in twenty-three sessions.
    cloud; at the template camera their light is 10 of the frame's 36 725 linear units (0.1 % of disc pixels change by
    3/255 or more), but it grows where the sample's weight is high (views ~13-24 kpc across). **Carried.** What closes
    it: the sampled stars take the field's column to each point as FluxPoints does (`dustTo`, the march's textures).
+186. **The merger events' field ranges are not on the wire** (S68, D232; the review's F6). `/api/inputs` gives the
+   `mergers` input only its default; the ranges (`mass_ratio must be in (0, 1]`, the time, the gas fraction) live in
+   the API's own check in `service.py`, so the viewer cannot refuse a bad event before sending it, and a Generate with
+   one fails with the API's reason under the failed-Generate mark. **Carried.** What closes it: per-field `lo` / `hi`
+   on the events declaration in `input_json`, read by `flow.setValue` as a control's range is (metadata, rule D4).
+187. **The whole swap holds only the loaders keyed on the query** (S68, D232; the fix pass's note). In the star-first
+   mode the tile loaders whose keys follow another loader's answer (`GalaxyTab`'s counts and bright tiles after
+   `brightTable` / `tileK`) take their new keys only when the swap publishes, then load and publish on their own - a
+   second, partial update after the swap; and a loader whose key keeps moving during a swap (the camera panning)
+   holds the swap until it is answered. **Carried.** What closes it: the dependent loaders registered with the swap
+   before their dependency resolves (the swap's generation in their key), and the camera's loads kept out of the hold.
+188. **A template landing drops the old field until the new one arrives** (S68, D232; the review and the walk).
+   `FieldVolume` shows bare stars for about 15 s on a cold NGC 4414 landing; a landing takes no stale mark by design
+   (it is the template's galaxy). Predates V9. **Carried.** What closes it: a landing takes the whole-swap hold with
+   its own "landing" line.
+189. **The reference client's generate is not whole** (S68, D232). `interface/app.js` shows "drawing…" instead of
+   the previous picture when a Generate lands while a group's load is in flight, and its merger list is still not
+   editable (as before V9). **Carried.** What closes it: the held answer its `shown` query already allows; an events
+   editor in the reference client.
+190. **The edit drawer covers the Galaxy view's regime caption** (S68, D232). While the panel is open at the right
+   of the Galaxy view, the top-right caption (the regime and the window) sits under it. **Carried.** What closes it:
+   the caption moves left of the drawer while it is open, or the drawer leaves the caption's margin.
 
 ---
 
