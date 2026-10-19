@@ -1,4 +1,4 @@
-// Rule D1, asserted against the real declarations.
+// Rule D1 as amended (D232), asserted against the real declarations.
 //
 // The catalogue comes from a live /api/stages and /api/inputs, dumped by the
 // pytest wrapper (tests/test_viewer.py) into the file named by $GALAXY_FIXTURE.
@@ -12,50 +12,57 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
-  FlowError, catalogue, confirm, goTo, initial, isEditable, isLocked,
-  query, reopen, reroll, seedsAt, setValue, toggleLock, withPreview,
+  FlowError, catalogue, changedGroups, checkpointOf, initial, query, reroll, seedsAt, setValue,
 } from "../../interface/flow.js";
+import * as flow from "../../interface/flow.js";
 
 const path = process.env.GALAXY_FIXTURE;
 assert.ok(path, "GALAXY_FIXTURE is unset; run this through tests/test_viewer.py");
 const fixture = JSON.parse(readFileSync(path, "utf-8"));
 const cat = catalogue(fixture.stages, fixture.inputs);
 
-test("a page load lands on stage one, with the published defaults", () => {
+test("a page load lands on the published defaults, and nothing else is in the state", () => {
   const state = initial(cat);
-  assert.equal(state.current, 1);
-  assert.equal(state.confirmed, 0);
-  assert.equal(state.values.halo_mass, fixture.inputs.controls.find((c) => c.name === "halo_mass").default);
-  assert.deepEqual(state.previews, {});
-  // Six checkpoints, every one of them now built: S8 filled the last. A checkpoint with
-  // no stages is still kept rather than hidden — the flow must survive one — which is
-  // asserted here against a catalogue with the stages taken out.
+  assert.deepEqual(Object.keys(state).sort(), ["cat", "values"], "no lock, no confirmation, no current stage");
+  for (const kind of ["controls", "seeds", "events"]) {
+    for (const input of fixture.inputs[kind]) assert.deepEqual(state.values[input.name], input.default, input.name);
+  }
+  // Six groups, every one of them built. A group with no stages is still kept rather than hidden - the panel
+  // must survive one - which is asserted against a catalogue with the stages taken out.
   assert.equal(cat.checkpoints.length, 6);
   assert.ok(cat.checkpoints.every((cp) => cp.name && cp.stages.length > 0));
   const hollow = catalogue(
     { ...fixture.stages, checkpoints: fixture.stages.checkpoints.map((cp) => ({ ...cp, stages: [] })) },
     fixture.inputs,
   );
-  assert.equal(initial(hollow).current, 1);
+  assert.deepEqual(query(initial(hollow)), query(initial(cat)));
   assert.ok(hollow.checkpoints.every((cp) => cp.stages.length === 0));
 });
 
-test("every input lands in exactly one checkpoint, and none is lost", () => {
+test("the staged flow is gone: nothing locks, confirms or reopens", () => {
+  for (const gone of ["confirm", "reopen", "goTo", "isEditable", "isLocked", "toggleLock", "withPreview"]) {
+    assert.equal(flow[gone], undefined, `flow.${gone} is still exported`);
+  }
+});
+
+test("every input lands in exactly one group, and none is lost", () => {
   const placed = cat.checkpoints.flatMap((cp) => cp.inputs);
   assert.equal(placed.length, new Set(placed).size);
   assert.deepEqual(new Set(placed), new Set(cat.inputs.keys()));
+  const state = initial(cat);
+  for (const cp of cat.checkpoints) for (const name of cp.inputs) assert.equal(checkpointOf(state, name), cp.n, name);
 });
 
-test("a confirmed control is disabled, not hidden", () => {
-  let state = confirm(initial(cat));
-  assert.equal(state.confirmed, 1);
-  assert.equal(state.current, 2);
-  // Still listed at its checkpoint — the viewer can render it, greyed.
-  assert.ok(cat.checkpoints[0].inputs.includes("halo_mass"));
-  assert.equal(isEditable(state, "halo_mass"), false);
-  assert.throws(() => setValue(state, "halo_mass", 1.2e12), FlowError);
-  // ... and a later one is untouched.
-  assert.equal(isEditable(state, "migration_efficiency"), true);
+test("every input is editable at any time, in any order", () => {
+  let state = initial(cat);
+  // The last group first, then the first: no group waits on another.
+  const last = cat.checkpoints.at(-1);
+  const seed = seedsAt(state, last.n)[0];
+  state = setValue(state, seed, 99);
+  state = setValue(state, "halo_mass", 9e11);
+  state = setValue(state, "halo_mass", 1.2e12);
+  assert.equal(state.values[seed], 99);
+  assert.equal(state.values.halo_mass, 1.2e12);
 });
 
 test("a control is held to the range the API publishes", () => {
@@ -65,62 +72,35 @@ test("a control is held to the range the API publishes", () => {
   assert.throws(() => setValue(state, "halo_mass", "not a number"), FlowError);
   assert.equal(setValue(state, "halo_mass", halo.lo).values.halo_mass, halo.lo);
   assert.throws(() => setValue(state, "not_an_input", 1), FlowError);
+  assert.throws(() => setValue(state, "world_seed", 1.5), FlowError, "a seed takes an integer");
 });
 
-test("reopening a stage discards every later one", () => {
-  let state = initial(cat);
-  for (let n = 1; n <= 4; n += 1) state = withPreview(confirm(state), n, { drawn: n });
-  assert.equal(state.confirmed, 4);
-  assert.deepEqual(Object.keys(state.previews), ["1", "2", "3", "4"]);
-
-  state = reopen(state, 2);
-  assert.equal(state.current, 2);
-  assert.equal(state.confirmed, 1, "checkpoint 2 is open again");
-  assert.deepEqual(Object.keys(state.previews), ["1"], "later previews are discarded, not kept as stale");
-  assert.equal(isEditable(state, "infall_timescale"), true);
-  assert.throws(() => reopen(state, 0), FlowError);
-  assert.throws(() => reopen(state, 99), FlowError);
-});
-
-test("you cannot look past the checkpoint you have confirmed", () => {
-  const state = confirm(initial(cat));
-  assert.equal(goTo(state, 2).current, 2);
-  assert.throws(() => goTo(state, 3), FlowError);
-  assert.equal(goTo(state, 1).confirmed, 0, "going back is reopening; it discards");
-});
-
-test("a lock stops a re-roll and nothing else", () => {
-  let state = initial(cat);
-  const draw = () => 4242;
+test("a reroll draws the named seeds and nothing else", () => {
+  const state = initial(cat);
   const seeds = cat.checkpoints.flatMap((cp) => seedsAt(state, cp.n));
-  assert.ok(seeds.includes("pattern_seed"));
+  assert.ok(seeds.includes("pattern_seed") && seeds.includes("world_seed"));
+  assert.deepEqual(new Set(seeds), new Set(fixture.inputs.seeds.map((s) => s.name)));
 
-  state = toggleLock(state, "pattern_seed");
-  assert.ok(isLocked(state, "pattern_seed"));
-  const rolled = reroll(state, seeds, draw);
-  assert.equal(rolled.values.pattern_seed, state.values.pattern_seed, "a locked seed is not re-rolled");
-  assert.equal(rolled.values.world_seed, 4242, "an unlocked one is");
-
-  // The other half of D1: a lock is not a freeze. Confirm through the pattern,
-  // then reopen checkpoint 1 and change the halo mass. The seed keeps its value;
-  // the pattern's result does not survive.
-  let held = rolled;
-  for (let n = 1; n <= 4; n += 1) held = withPreview(confirm(held), n, { drawn: n });
-  held = reopen(held, 1);
-  held = setValue(held, "halo_mass", 9e11);
-  assert.equal(held.values.pattern_seed, state.values.pattern_seed, "the locked value survived");
-  assert.equal(held.previews[4], undefined, "the locked seed's *result* did not");
-  assert.equal(held.confirmed, 0);
-  assert.ok(isLocked(held, "pattern_seed"), "and the lock itself is still set");
-
-  assert.throws(() => toggleLock(state, "halo_mass"), FlowError, "only seeds are locked");
+  const rolled = reroll(state, ["pattern_seed", "halo_mass", "not_an_input"], () => 4242);
+  assert.equal(rolled.values.pattern_seed, 4242, "the named seed is drawn");
+  assert.equal(rolled.values.halo_mass, state.values.halo_mass, "a control is never rerolled");
+  for (const name of seeds.filter((n) => n !== "pattern_seed")) {
+    assert.equal(rolled.values[name], state.values[name], `${name} was not named and did not move`);
+  }
+  assert.deepEqual(changedGroups(rolled, query(rolled), query(state)), [checkpointOf(state, "pattern_seed")]);
 });
 
-test("a re-roll skips seeds whose checkpoint is confirmed", () => {
-  const state = confirm(initial(cat)); // checkpoint 1 confirmed: world_seed is fixed
-  const rolled = reroll(state, ["world_seed", "systems_seed"], () => 7);
-  assert.equal(rolled.values.world_seed, state.values.world_seed);
-  assert.equal(rolled.values.systems_seed, 7);
+test("the changed groups are where two input vectors differ, and only there", () => {
+  const shown = initial(cat);
+  assert.deepEqual(changedGroups(shown, query(shown), query(shown)), [], "a fresh draft is the galaxy shown");
+  const moved = setValue(shown, "halo_mass", 9e11);
+  assert.deepEqual(changedGroups(moved, query(moved), query(shown)), [checkpointOf(shown, "halo_mass")]);
+  const events = fixture.inputs.events[0];
+  const merged = setValue(moved, events.name, [{ time: 5, mass_ratio: 0.1, gas_fraction: 0.2 }]);
+  const both = [checkpointOf(shown, "halo_mass"), checkpointOf(shown, events.name)];
+  assert.deepEqual(changedGroups(merged, query(merged), query(shown)), [...new Set(both)].sort((a, b) => a - b));
+  const back = setValue(setValue(merged, "halo_mass", shown.values.halo_mass), events.name, events.default);
+  assert.deepEqual(changedGroups(back, query(back), query(shown)), [], "an edit undone is clean again");
 });
 
 test("the input vector goes out the way the API takes it", () => {
@@ -128,4 +108,5 @@ test("the input vector goes out the way the API takes it", () => {
   assert.equal(typeof out.halo_mass, "number");
   assert.equal(typeof out.mergers, "string", "an event list travels as JSON");
   assert.deepEqual(JSON.parse(out.mergers), fixture.inputs.events[0].default);
+  assert.deepEqual(new Set(Object.keys(out)), new Set(cat.inputs.keys()), "every input, and nothing else");
 });

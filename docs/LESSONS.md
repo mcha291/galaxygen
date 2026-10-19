@@ -1659,3 +1659,11 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [viewer] A black-blob look was traced to the model's inputs twice: an unsourced cloud layer height (0.5 of the thin
   disc's, |z| to 1.95 kpc) and one fixed Σ_GMC (clouds to 270 pc). Measure the model's published inputs to the drawing
   (heights, sizes, columns) before changing the renderer.
+- [viewer] A draft-and-shown design is not whole until the swap is (S68): the loaders, each keyed on the shown query,
+  swapped one by one and drew the new galaxy's stars over the old one's light for six seconds under the stale mark.
+  Hold every answer until the last loader has answered and publish them in one tick; measure the swap by resource
+  timings or a frame sum, never by the mark alone.
+- [viewer] A slider's position is not its value (S68): `fromSlider(toSlider(v))` rounds to four figures, so a control
+  moved and put back read dirty. A position equal to the shown value's position snaps to the shown value exactly.
+- [close] A detached `verify_clone` dies with the session that started it (S67 → S68: the log was empty). Read the log
+  before the session ends, or the next BRIEF says in words that the check is owed.

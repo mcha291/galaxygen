@@ -1,10 +1,16 @@
 // The shell: the only file here that touches the DOM.
 //
-// Everything with a rule attached to it lives somewhere else — the checkpoint
-// state machine in flow.js (D1), value-to-colour in ramp.js (A9), the one fetch
-// in transport.js (D2) — so this file is wiring, and a bug here is a wiring bug
-// rather than a broken rule. That split is the reason the viewer can be checked
-// without a browser.
+// Everything with a rule attached to it lives somewhere else - the inputs and their groups in flow.js (D1), value
+// to colour in ramp.js (A9), the one fetch in transport.js (D2) - so this file is wiring, and a bug here is a
+// wiring bug rather than a broken rule. That split is the reason the viewer can be checked without a browser.
+//
+// This is the API's own demonstration of its routes (BUILD_IV section 7 ruling 2 (a), S68): the inputs shown in
+// their groups and editable at any time, one "generate", and the fields, the region sample, the star and the
+// system it opens drawn for the galaxy generated. Rule D1 as amended (D232) is kept the way the React viewer
+// keeps it: two input vectors, the **draft** the controls edit and the **shown** one every request is asked with.
+// "generate" makes the draft the shown, whole; until its answer lands the picture on screen is the previous
+// galaxy's and says so (stale). Looking at another group asks for that group's fields of the shown galaxy and
+// regenerates nothing.
 //
 // Two things here are worth reading rather than skimming.
 //
@@ -40,7 +46,10 @@ const el = {
   apiHash: document.getElementById("api-hash"),
 };
 
-let state = null;
+let draft = null; // the inputs the controls edit
+let shown = null; // the inputs of the galaxy on screen: every request is asked with these
+let looking = 1; // the group whose fields are drawn
+let stale = false; // generated, and its answer not landed yet
 let meta = null; // the /api/fields payload, plus a name index
 let picked = { field: null, star: -1, planet: -1, system: null, name: null };
 let systemToken = 0;
@@ -79,8 +88,10 @@ async function boot() {
 
     const byName = Object.fromEntries(fieldsPayload.fields.map((f) => [f.name, f]));
     meta = { ...fieldsPayload, byName };
-    state = flow.initial(flow.catalogue(stages, inputsPayload));
-    picked.field = view.defaultField(meta.fields, state.current);
+    draft = flow.initial(flow.catalogue(stages, inputsPayload));
+    shown = draft;
+    looking = draft.cat.checkpoints[0].n;
+    picked.field = view.defaultField(meta.fields, looking);
     render();
     load();
   } catch (error) {
@@ -93,14 +104,14 @@ async function load() {
   data = { ...data, busy: true, error: null };
   paint();
   try {
-    const names = view.wanted(meta.fields, state.current, picked.field);
-    const query = flow.query(state);
+    const names = view.wanted(meta.fields, looking, picked.field);
+    const query = flow.query(shown);
     const frame = names.length ? await arrays(names, query) : { header: null, arrays: {} };
     if (mine !== token) return; // a newer request is already in flight
 
     let stars = null;
     let header = null;
-    if (view.hasCatalogue(meta.fields, state.current)) {
+    if (view.hasCatalogue(meta.fields, looking)) {
       const got = await region({}, { ...query, stars: STAR_SAMPLE });
       if (mine !== token) return;
       stars = got.arrays;
@@ -112,6 +123,7 @@ async function load() {
     if (mine !== token) return;
     data = { ...data, busy: false, error: error.message };
   }
+  stale = false; // the shown galaxy's answer has landed (or failed, and says so)
   paint();
 }
 
@@ -123,7 +135,7 @@ async function load() {
 async function openSystem(name) {
   const mine = ++systemToken;
   try {
-    const got = await fetchSystem(name, { ...flow.query(state), stars: STAR_SAMPLE });
+    const got = await fetchSystem(name, { ...flow.query(shown), stars: STAR_SAMPLE });
     if (mine !== systemToken) return;
     picked.system = got;
   } catch (error) {
@@ -133,40 +145,64 @@ async function openSystem(name) {
   paint();
 }
 
-function apply(next) {
-  state = next;
-  const still = view.drawableAt(meta.fields, state.current).some((f) => f.name === picked.field);
-  if (!still) picked.field = view.defaultField(meta.fields, state.current);
+// --- the inputs: every group, every control editable, one generate -------------
+
+/** A fresh seed: a uniform non-negative 31-bit integer. */
+const drawSeed = () => Math.floor(Math.random() * 2 ** 31);
+
+/** The groups the draft differs from the shown galaxy in: where the panel puts its "changed" marks. */
+function dirtyGroups() {
+  return flow.changedGroups(draft, flow.query(draft), flow.query(shown));
+}
+
+/** An edit: the draft only. The galaxy on screen, and every request, stay the shown one's until "generate". */
+function edit(next) {
+  draft = next;
+  render();
+}
+
+/** Look at another group's fields: of the shown galaxy, so nothing is regenerated. */
+function look(n) {
+  looking = n;
+  const still = view.drawableAt(meta.fields, looking).some((f) => f.name === picked.field);
+  if (!still) picked.field = view.defaultField(meta.fields, looking);
   render();
   load();
 }
 
-// --- the rail: checkpoints, controls, seeds ----------------------------------
+/** The draft becomes the shown galaxy, whole; the picture on screen is marked stale until the answer lands. */
+function generate() {
+  if (!dirtyGroups().length) return;
+  shown = draft;
+  stale = true;
+  picked = { ...picked, star: -1, planet: -1, system: null, name: null };
+  render();
+  load();
+}
 
 function render() {
-  el.rail.replaceChildren(renderSteps(), renderControls());
+  el.rail.replaceChildren(renderGroups(), renderControls());
   paint();
 }
 
-function renderSteps() {
+function renderGroups() {
+  const dirty = new Set(dirtyGroups());
   return h(
     "ol",
     {},
-    state.cat.checkpoints.map((cp) => {
-      const reachable = cp.n <= state.confirmed + 1;
-      const classes = ["step", cp.n === state.current ? "current" : "", cp.n <= state.confirmed ? "confirmed" : ""];
-      return h(
+    draft.cat.checkpoints.map((cp) =>
+      h(
         "li",
         {},
         h(
           "button",
           {
-            class: classes.filter(Boolean).join(" "),
-            disabled: !reachable,
-            title: reachable ? "" : `confirm checkpoint ${cp.n - 1} first`,
-            onclick: () => apply(flow.goTo(state, cp.n)),
+            class: ["step", cp.n === looking ? "current" : "", dirty.has(cp.n) ? "changed" : ""].filter(Boolean).join(" "),
+            "aria-pressed": String(cp.n === looking),
+            title: dirty.has(cp.n) ? "an input here differs from the galaxy shown" : "",
+            onclick: () => look(cp.n),
           },
-          h("span", { class: "n", text: `${cp.n}` }),
+          h("span", { class: "n", text: dirty.has(cp.n) ? "•" : "" }),
           h(
             "span",
             {},
@@ -174,57 +210,48 @@ function renderSteps() {
             h("span", { class: "stages", text: cp.stages.join(", ") || "nothing is built here yet" }),
           ),
         ),
-      );
-    }),
+      ),
+    ),
   );
 }
 
 function renderControls() {
-  const cp = state.cat.checkpoints.find((c) => c.n === state.current);
+  const cp = draft.cat.checkpoints.find((c) => c.n === looking);
   const panel = h("div", { class: "panel" }, h("h2", { text: `${cp.name} — inputs` }));
-  const inputs = cp.inputs.map((name) => state.cat.inputs.get(name));
-  if (!inputs.length) panel.append(h("p", { class: "empty", text: "no input belongs to this checkpoint" }));
+  const inputs = cp.inputs.map((name) => draft.cat.inputs.get(name));
+  if (!inputs.length) panel.append(h("p", { class: "empty", text: "no input belongs to this group" }));
 
   for (const input of inputs.filter((i) => i.kind === "control")) panel.append(renderControl(input));
   const seeds = inputs.filter((i) => i.kind === "seed");
   if (seeds.length) {
     panel.append(h("h2", { text: "seeds" }));
     for (const seed of seeds) panel.append(renderSeed(seed));
-    panel.append(
-      h("button", {
-        text: "re-roll",
-        disabled: seeds.every((s) => flow.isLocked(state, s.name)) || !flow.isEditable(state, seeds[0].name),
-        onclick: () => apply(flow.reroll(state, seeds.map((s) => s.name), () => Math.floor(Math.random() * 2 ** 31))),
-      }),
-    );
   }
   for (const events of inputs.filter((i) => i.kind === "events")) {
     panel.append(
       h("h2", { text: events.label }),
-      h("p", { class: "caption", text: `${state.values[events.name].length} event(s); editing them is not built yet` }),
+      h("p", { class: "caption", text: `${draft.values[events.name].length} event(s); editing them is the React viewer's` }),
     );
   }
 
-  const confirmed = state.current <= state.confirmed;
+  const changed = dirtyGroups().length > 0;
   panel.append(
     h("div", { class: "panel", style: "padding:10px 0 0;background:none;border:0" },
-      confirmed
-        ? h("button", { class: "primary", text: `reopen checkpoint ${state.current}`, onclick: () => apply(flow.reopen(state, state.current)) })
-        : h("button", { class: "primary", text: "confirm", onclick: () => apply(flow.confirm(state)) }),
-      confirmed ? h("p", { class: "caption", text: "reopening discards every later checkpoint" }) : null,
+      h("button", { class: "primary", text: "generate", disabled: !changed, onclick: generate }),
+      h("button", { text: "reset to the defaults", onclick: () => edit(flow.initial(draft.cat)) }),
+      h("p", { class: "caption", text: changed ? "the inputs differ from the galaxy shown" : "the inputs are the galaxy shown" }),
     ),
   );
   return panel;
 }
 
 function renderControl(input) {
-  const editable = flow.isEditable(state, input.name);
-  const value = state.values[input.name];
+  const value = draft.values[input.name];
   const readout = h("span", { class: "value", text: catalogue.format(value) });
   const step = (input.hi - input.lo) / 200;
   return h(
     "div",
-    { class: "control", "data-disabled": String(!editable) },
+    { class: "control" },
     h("label", {}, h("span", { text: input.label }), readout),
     h("input", {
       type: "range",
@@ -232,34 +259,29 @@ function renderControl(input) {
       max: input.hi,
       step,
       value,
-      disabled: !editable, // rule D1: disabled, never hidden
       oninput: (e) => {
         readout.textContent = catalogue.format(Number(e.target.value));
       },
-      onchange: (e) => apply(flow.setValue(state, input.name, Number(e.target.value))),
+      onchange: (e) => edit(flow.setValue(draft, input.name, Number(e.target.value))),
     }),
     h("div", { class: "range" }, h("span", { text: `${catalogue.format(input.lo)}` }), h("span", { text: `${input.unit_display || input.unit}` }), h("span", { text: `${catalogue.format(input.hi)}` })),
   );
 }
 
 function renderSeed(seed) {
-  const editable = flow.isEditable(state, seed.name);
-  const locked = flow.isLocked(state, seed.name);
   return h(
     "div",
     { class: "seed" },
     h("span", { class: "name", text: seed.label }),
     h("input", {
       type: "number",
-      value: state.values[seed.name],
-      disabled: !editable,
-      onchange: (e) => apply(flow.setValue(state, seed.name, Number(e.target.value))),
+      value: draft.values[seed.name],
+      onchange: (e) => edit(flow.setValue(draft, seed.name, Number(e.target.value))),
     }),
     h("button", {
-      text: locked ? "locked" : "lock",
-      "aria-pressed": String(locked),
-      title: "a lock stops a re-roll; it never freezes this against an earlier change",
-      onclick: () => apply(flow.toggleLock(state, seed.name)),
+      text: "reroll",
+      title: `draw a new ${seed.name}`,
+      onclick: () => edit(flow.reroll(draft, [seed.name], drawSeed)),
     }),
   );
 }
@@ -267,13 +289,15 @@ function renderSeed(seed) {
 // --- the view: galaxy, preview, scalars, star --------------------------------
 
 function paint() {
-  if (!state || !meta) return;
-  const view = h("div", {}, renderGalaxy());
+  if (!shown || !meta) return;
+  // Rule D1 as amended: until the generated galaxy's answer lands, the picture is the previous one's, and says so.
+  const mark = stale ? h("p", { class: "stale", role: "status", text: "stale: this is the previous galaxy; the generated one is on its way" }) : null;
+  const view = h("div", {}, mark, renderGalaxy());
   el.view.replaceChildren(view, renderSide());
 }
 
 function renderGalaxy() {
-  const decl = view.discField(meta.fields, state.current, picked.field);
+  const decl = view.discField(meta.fields, looking, picked.field);
   const wrap = h("div", { id: "galaxy-wrap" });
   if (!decl || !data.arrays?.arrays?.[decl.name]) {
     wrap.append(h("p", { class: "empty", text: data.busy ? "drawing…" : "no radial field is published at this checkpoint yet" }));
@@ -386,8 +410,8 @@ function renderSide() {
   if (data.error) side.append(h("p", { class: "error", text: data.error }));
   if (data.busy) side.append(h("p", { class: "busy", text: "running the stages this answer needs…" }));
 
-  const here = view.publishedAt(meta.fields, state.current);
-  const drawable = view.drawableAt(meta.fields, state.current);
+  const here = view.publishedAt(meta.fields, looking);
+  const drawable = view.drawableAt(meta.fields, looking);
   if (drawable.length) {
     const picker = h(
       "select",
@@ -399,7 +423,7 @@ function renderSide() {
     side.append(h("div", { class: "panel" }, h("p", { class: "empty", text: "This checkpoint has no stages yet — nothing is computed here." })));
   }
 
-  const scalars = view.scalarsAt(meta.fields, state.current);
+  const scalars = view.scalarsAt(meta.fields, looking);
   if (scalars.length) side.append(renderScalars(scalars));
   if (picked.star >= 0 && data.stars) side.append(renderStar());
   if (picked.system) side.append(renderSystem());

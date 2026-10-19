@@ -18,10 +18,11 @@ not reproducible here, it is tagged `[recall]` and says so. **No rule is tagged
 may depend on a later stage's output. Within a stage, iteration is permitted
 when **termination is guaranteed in advance** — a bisection on a monotone
 function, a fixed step count with a known error bound — and forbidden when it
-is a convergence loop whose step count depends on the data. *Justification: the
-staged workflow runs a prefix of the pipeline and stops, so a cycle between
-checkpoints makes a prefix uncomputable and the lock semantics of rule D1
-become a lie. A design constraint, not a performance one* `[inferred]`.
+is a convergence loop whose step count depends on the data. *Justification: a
+group's preview runs a prefix of the pipeline and stops (rule D4; the staged
+workflow did the same until D232), so a cycle between checkpoints makes a prefix
+uncomputable and a preview that claims to agree with its inputs (rule D1's first
+sentence) becomes a lie. A design constraint, not a performance one* `[inferred]`.
 *Precedent: `halo.py` solves the adiabatic contraction — the halo's response to
 the disc it holds — as a bisection on a monotone function, in one pass*
 `[verified: model/galaxy/stages/halo.py, contracted_halo]`. *Until S25 this rule
@@ -225,21 +226,18 @@ A session runs it and reads pass/fail.
 
 ## D. Viewer
 
-**D1. A lock means "do not re-roll this."** It can never mean "freeze this
-against upstream changes." Confirmed controls are **disabled rather than
-hidden**; reopening a stage discards every later one; the viewer lands on the Galaxy view of **the default template**, every checkpoint confirmed at its inputs; **a
-switcher selects another template**; and "Edit galaxy" opens the staged process from the template's inputs with
-the confirmations kept, from which reopening a stage discards the
-later ones as before. *Amended 2026-10-01 on the owner's word — "starts on the
-galaxy view of a default galaxy … an edit galaxy button that opens up the staged
-generation process"* `[verified: DECISIONS.md D198]`, *and on 2026-10-03 for the
-templates* `[verified: DECISIONS.md D212]`: **until D212 the landing clause read
-"the Galaxy view of the default galaxy — every checkpoint confirmed at its default";
-the switcher is built at S54 (BUILD_III Phase T), and until then the default
-template is the only one.** **Until D198 the rule read:
-a page load lands on stage one.** The reference client in `interface/` still does,
-as the API's own demonstration of the staged flow, and `tests/test_viewer.py`
-pins that; the amendment is the React viewer's.
+**D1.** *The viewer shows one galaxy at a time and never a galaxy that is half one input set and half another.*
+It lands on the Galaxy view of the default template, every input at the template's values; a switcher selects
+another template; "Edit galaxy" opens the inputs in their registry groups, every one editable at any time, seeds
+as rerolls, pins read-only with their source; "Generate" regenerates the galaxy whole from the inputs shown, and
+until it returns the previous galaxy stays on screen and is marked stale; "Reset to template" returns the inputs
+to the template's. *Amended on the owner's word of 2026-10-14* `[verified: DECISIONS.md D232]`. **Until then the
+rule read:** "A lock means do not re-roll this … reopening a stage discards every later one" — the staged flow of
+the first three builds, whose justification (a checkpoint's preview must agree with the inputs that made it) is
+kept by the first sentence above. The reference client in `interface/` keeps the same rule since D232, as a plain
+demonstration of the routes (BUILD_IV §7 ruling 2 (a)); `tests/test_viewer.py` pins it.
+
+*The rule as it read from D212 until D232, kept as history:* **D1. A lock means "do not re-roll this."** It can never mean "freeze this against upstream changes." Confirmed controls are **disabled rather than hidden**; reopening a stage discards every later one; the viewer lands on the Galaxy view of **the default template**, every checkpoint confirmed at its inputs; **a switcher selects another template**; and "Edit galaxy" opens the staged process from the template's inputs with the confirmations kept, from which reopening a stage discards the later ones as before. *Amended 2026-10-01 on the owner's word — "starts on the galaxy view of a default galaxy … an edit galaxy button that opens up the staged generation process"* `[verified: DECISIONS.md D198]`, *and on 2026-10-03 for the templates* `[verified: DECISIONS.md D212]`: **until D212 the landing clause read "the Galaxy view of the default galaxy — every checkpoint confirmed at its default"; the switcher is built at S54 (BUILD_III Phase T), and until then the default template is the only one.** **Until D198 the rule read: a page load lands on stage one.** The reference client in `interface/` still does, as the API's own demonstration of the staged flow, and `tests/test_viewer.py` pins that; the amendment is the React viewer's.
 
 **D2. Exactly one `fetch` in the client transport, asserted in CI.**
 *Justification: instrumentation that must be remembered in N places will be

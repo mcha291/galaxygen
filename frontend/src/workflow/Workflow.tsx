@@ -1,28 +1,16 @@
-import { Check, Plus, RotateCcw, X } from "lucide-react";
-import { Fragment, useState } from "react";
+import { ChevronDown, ChevronRight, Eye, Plus, RotateCcw, Shuffle, X } from "lucide-react";
+import { useId, useState } from "react";
 
 import { Button } from "../ui/Button";
 import { MergerTimeline } from "./MergerTimeline";
-import {
-  type Checkpoint,
-  type FlowState,
-  type InputDecl,
-  type MergerEvent,
-  SLIDER_STEPS,
-  formatNumber,
-  fromSlider,
-  isLog,
-  reopenCost,
-  rerollCost,
-  statusOf,
-  toSlider,
-} from "./logic";
+import { type InputDecl, type MergerEvent, SLIDER_STEPS, formatNumber, fromSlider, isLog, toSlider } from "./logic";
+import { pinWords } from "./templates";
 import type { Workflow as WorkflowApi } from "./useWorkflow";
 import styles from "./Workflow.module.css";
 
-// What each checkpoint's preview is for, from the design brief's §1 table. The
-// API declares stages, not purposes, so this is the one table the rail holds.
-const PRODUCES: Record<number, string> = {
+// What each group's previews show, from the design brief's §1 table. The API declares stages, not purposes, so
+// this is the one table the panel holds; the Science tab writes it under the group's name.
+export const PRODUCES: Record<number, string> = {
   1: "Rotation curve; smooth axisymmetric disc",
   2: "Merger history; the thick disc appears edge-on",
   3: "Bar and spiral arms, on the disc's own dynamics",
@@ -31,149 +19,165 @@ const PRODUCES: Record<number, string> = {
   6: "Planetary systems for every star",
 };
 
-function badgeOf(status: string, n: number, invalidated: boolean): { label: string; tone: string } {
-  if (invalidated) return { label: "invalidated", tone: "caution" };
-  if (status === "locked") return { label: "locked", tone: "nominal" };
-  if (status === "editing") return { label: "editing", tone: "accent" };
-  if (status === "next") return { label: "next", tone: "neutral" };
-  return { label: `needs ${n - 1}`, tone: "neutral" };
+type Fields = Parameters<typeof pinWords>[1];
+
+interface Props {
+  wf: WorkflowApi;
+  /** The time axis's end from the API's grid, so the merger timeline spans the model's own history. */
+  tMax?: number;
+  className?: string;
+  /** The field declarations, for the pins' words (templates.ts pinWords). */
+  fields?: Fields;
+  /** The group whose previews the Science tab shows, and how to choose another; absent where there are none. */
+  viewing?: number | null;
+  onView?(n: number): void;
+  /** Close the panel (the Galaxy view's drawer); absent where the panel is part of the page. */
+  onClose?(): void;
 }
 
-/** "5", "5 and 6", "4–6": checkpoint lists in the rail's cost lines. */
-export function spanOf(ns: number[]): string {
-  if (ns.length === 0) return "";
-  if (ns.length === 1) return String(ns[0]);
-  if (ns.length === 2) return `${ns[0]} and ${ns[1]}`;
-  return `${ns[0]}–${ns[ns.length - 1]}`;
-}
-
-/** The six-checkpoint rail (design brief §1): each checkpoint, its state, its controls. */
-/** `tMax` is the time axis's end from the API's grid, so the merger timeline spans the model's own history. */
-export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi; tMax?: number; className?: string }) {
+/**
+ * The edit panel (BUILD_III Phase V9, rule D1 as amended at D232): every input in its registry group - the
+ * checkpoint names `/api/stages` declares, kept as names with no order and no status - every control enabled at
+ * all times, each seed a reroll, the template's pins read-only with their source. One "Generate", enabled while
+ * the draft differs from the galaxy shown, with a mark on each group that changed; "Reset to template" returns the
+ * draft to the template's inputs. Nothing here confirms, locks or reopens: the galaxy on screen is the shown one's
+ * until "Generate" makes the draft the shown, whole.
+ */
+export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = null, onView, onClose }: Props) {
   const panelClass = className ? `${styles.panel} ${className}` : styles.panel;
-  const [askingReopen, setAskingReopen] = useState<number | null>(null);
-  const [askingReroll, setAskingReroll] = useState<number | null>(null);
+  const hints = useId();
+  // Folded groups: a convenience of this panel's, no state of the galaxy's. Every group starts open.
+  const [folded, setFolded] = useState<ReadonlySet<number>>(new Set());
   const { state } = wf;
 
   if (!state) {
-    return <div className={panelClass}><p className={styles.note}>{wf.error ?? "Loading checkpoints."}</p></div>;
+    return <div className={panelClass}><p className={styles.note}>{wf.error ?? "Loading the inputs."}</p></div>;
   }
 
-  const requestReopen = (n: number) => {
-    setAskingReroll(null);
-    if (reopenCost(state, n).length > 0) setAskingReopen(n);
-    else wf.reopenAt(n);
-  };
+  const fold = (n: number) =>
+    setFolded((f) => {
+      const next = new Set(f);
+      if (!next.delete(n)) next.add(n);
+      return next;
+    });
+  const shownModel = wf.shown?.model ?? wf.model;
+  const changed = state.cat.checkpoints.filter((cp) => wf.dirtyGroups.has(cp.n)).map((cp) => cp.name);
+  const resetLabel = wf.template ? "Reset to template" : "Reset to defaults";
 
   return (
-    <div className={panelClass}>
-      <div className={styles.heading}>Generation · {state.cat.checkpoints.length} checkpoints</div>
+    <div className={panelClass} aria-label="Edit galaxy">
+      <div className={styles.heading}>
+        <span>Edit galaxy · {state.cat.checkpoints.length} groups</span>
+        {onClose && (
+          <button type="button" className={styles.close} aria-label="Close the edit panel" onClick={onClose}>
+            <X />
+          </button>
+        )}
+      </div>
+
+      <div className={styles.bar}>
+        <div className={styles.actions}>
+          {/* The hints describe the buttons (aria-describedby) and never replace their names: "Generate" is found as "Generate". */}
+          <Button variant="primary" disabled={!wf.dirty || wf.loading} aria-describedby={`${hints}-generate`} onClick={wf.generate}>
+            Generate
+          </Button>
+          <Button icon={<RotateCcw />} aria-describedby={`${hints}-reset`} onClick={wf.reset}>
+            {resetLabel}
+          </Button>
+          <span id={`${hints}-generate`} hidden>
+            {wf.dirty ? "Regenerates the galaxy whole from the inputs shown" : "The inputs are the galaxy on screen: change one to generate"}
+          </span>
+          <span id={`${hints}-reset`} hidden>
+            {wf.template ? `Returns every input to the ${wf.template.label} template's` : "Returns every input to its published default"}
+          </span>
+        </div>
+        {/* The model is an input of the draft (F8): chosen here, generated with the rest; the header names only the
+            model of the galaxy on screen. */}
+        {wf.models.length > 1 && (
+          <div className={styles.models} role="group" aria-label="Model">
+            <span className={styles.pinsHead}>Model</span>
+            {wf.models.map((m) => (
+              <button key={m} type="button" className={styles.look} aria-pressed={m === wf.model} onClick={() => wf.setModel(m)}>
+                {m}
+              </button>
+            ))}
+          </div>
+        )}
+        <p className={styles.state} data-dirty={wf.dirty || undefined} role="status">
+          {wf.loading
+            ? `Loading the ${wf.model} model's inputs.`
+            : wf.dirty
+              ? `Changed: ${[...changed, ...(wf.model !== shownModel ? [`the model (${wf.model}; on screen ${shownModel})`] : [])].join(", ") || "the template"}.`
+              : "The inputs are the galaxy on screen."}
+        </p>
+      </div>
+
       {wf.error && <p className={styles.fault}>{wf.error}</p>}
 
-      {state.cat.checkpoints.map((cp) => {
-        const status = statusOf(state, cp.n);
-        const invalidated = wf.discarded.has(cp.n) && status !== "locked";
-        const decls = cp.inputs.map((name) => state.cat.inputs.get(name)!);
-        const seedOnly = decls.every((d) => d.kind === "seed");
-        // Every seed of the checkpoint: a reroll there draws them all (flow.seedsAt), and since S55 checkpoint 3
-        // has two, the pattern's and the randomness layer's (`texture_seed`), so the rail names each.
-        const seeds = decls.filter((d) => d.kind === "seed");
-        // As in the design, only the checkpoint in hand is expanded; the rest are one row each.
-        const open = cp.n === state.current;
-        const badge = badgeOf(status, cp.n, invalidated);
+      {wf.template && wf.template.pins.length > 0 && (
+        <section className={styles.pins} aria-label="Pins">
+          <div className={styles.pinsHead}>Pinned by {wf.template.label} · read-only</div>
+          {wf.template.pins.map((p) => (
+            <div key={p.name} className={styles.pin}>
+              <div>{pinWords(p, fields)}</div>
+              {p.source && (
+                <details className={styles.about}>
+                  <summary>Source</summary>
+                  <span className={styles.source}>{p.source}</span>
+                </details>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
+      {state.cat.checkpoints.map((cp) => {
+        const decls = cp.inputs.map((name) => state.cat.inputs.get(name)!);
+        const seeds = decls.filter((d) => d.kind === "seed");
+        const open = !folded.has(cp.n);
+        const dirty = wf.dirtyGroups.has(cp.n);
         return (
-          <section key={cp.n} className={styles.checkpoint} data-open={open || undefined}>
+          <section key={cp.n} className={styles.group} data-dirty={dirty || undefined} data-viewing={viewing === cp.n || undefined} aria-label={cp.name}>
             <div className={styles.head}>
-              <button
-                type="button"
-                className={styles.chip}
-                data-status={status}
-                disabled={status === "blocked"}
-                title={chipTitle(status, cp.n)}
-                onClick={() => (status === "locked" && cp.n !== state.current ? requestReopen(cp.n) : wf.open(cp.n))}
-              >
-                {status === "locked" ? <Check aria-label="locked" /> : cp.n}
+              <button type="button" className={styles.fold} aria-expanded={open} aria-label={`${open ? "Fold" : "Open"} ${cp.name}`} onClick={() => fold(cp.n)}>
+                {open ? <ChevronDown /> : <ChevronRight />}
               </button>
               <div className={styles.title}>
                 <div className={styles.titleRow}>
-                  <span className={styles.name} data-status={status}>{cp.name}</span>
-                  <span className={styles.badge} data-tone={badge.tone}>{badge.label}</span>
+                  <span className={styles.name}>{cp.name}</span>
+                  {dirty && <span className={styles.badge} data-tone="caution" title="An input here differs from the galaxy on screen">changed</span>}
+                  {onView && (
+                    <button
+                      type="button"
+                      className={styles.look}
+                      aria-pressed={viewing === cp.n}
+                      title={`Show ${cp.name}'s previews of the galaxy on screen`}
+                      onClick={() => onView(cp.n)}
+                    >
+                      <Eye /> previews
+                    </button>
+                  )}
                 </div>
-                {invalidated && (
-                  <div className={styles.caution}>Its confirmation was discarded by an earlier change. Confirm it again to lock.</div>
-                )}
-                {open && (
-                  <>
-                    <div className={styles.stages}>{cp.stages.join(" · ")}</div>
-                    {PRODUCES[cp.n] && <div className={styles.produces}>{PRODUCES[cp.n]}</div>}
-                  </>
-                )}
+                {open && <div className={styles.stages}>{cp.stages.join(" · ")}</div>}
               </div>
             </div>
 
-            {askingReopen === cp.n && !open && (
-              <div className={`${styles.ask} ${styles.askOutside}`}>
-                <p>
-                  Checkpoint {spanOf(reopenCost(state, cp.n))} {reopenCost(state, cp.n).length > 1 ? "are" : "is"} confirmed.
-                  Reopening {cp.n} discards {reopenCost(state, cp.n).length > 1 ? "them" : "it"}.
-                </p>
-                <div className={styles.actions}>
-                  <Button variant="primary" onClick={() => { setAskingReopen(null); wf.reopenAt(cp.n); }}>Reopen and discard</Button>
-                  <Button variant="ghost" onClick={() => setAskingReopen(null)}>Cancel</Button>
-                </div>
-              </div>
-            )}
-
             {open && (
               <div className={styles.body}>
-                {seedOnly && status === "editing" && (
-                  <p className={styles.seedOnly}>
-                    No scalar controls at this checkpoint. Its output is determined by everything confirmed above plus{" "}
-                    {seeds.length > 1 ? "its seeds" : "one seed"}, <SeedNames seeds={seeds} />. A reroll is the only edit there is.
-                  </p>
-                )}
-
-                {decls.map((decl) => (
-                  <Control key={decl.name} decl={decl} state={state} disabled={status === "locked"} wf={wf} tMax={tMax} />
-                ))}
-
-                <div className={styles.actions}>
-                  {status === "editing" && (
-                    <Button variant="primary" onClick={() => { setAskingReroll(null); wf.confirm(); }}>
-                      Confirm &amp; lock
-                    </Button>
-                  )}
-                  {status === "locked" && <Button onClick={() => requestReopen(cp.n)}>Reopen to edit</Button>}
-                  {status === "editing" && seeds.length > 0 && (
-                    <Button icon={<RotateCcw />} onClick={() => { setAskingReopen(null); setAskingReroll(cp.n); }}>
-                      {seeds.length > 1 ? "Reroll seeds" : "Reroll seed"}
-                    </Button>
-                  )}
-                </div>
-
-                {askingReopen === cp.n && open && (
-                  <div className={styles.ask}>
-                    <p>
-                      Checkpoint {spanOf(reopenCost(state, cp.n))} {reopenCost(state, cp.n).length > 1 ? "are" : "is"} confirmed.
-                      Reopening {cp.n} discards {reopenCost(state, cp.n).length > 1 ? "them" : "it"}.
-                    </p>
-                    <div className={styles.actions}>
-                      <Button variant="primary" onClick={() => { setAskingReopen(null); wf.reopenAt(cp.n); }}>Reopen and discard</Button>
-                      <Button variant="ghost" onClick={() => setAskingReopen(null)}>Cancel</Button>
-                    </div>
-                  </div>
-                )}
-
-                {askingReroll === cp.n && seeds.length > 0 && (
-                  <RerollAsk
-                    state={state}
-                    cp={cp}
-                    seeds={seeds}
-                    onReroll={() => { setAskingReroll(null); wf.reroll(cp.n); }}
-                    onCancel={() => setAskingReroll(null)}
+                {decls.length === 0 && <p className={styles.note}>No input belongs to this group.</p>}
+                {decls.filter((d) => d.kind !== "seed").map((decl) => (
+                  <Control
+                    key={decl.name}
+                    decl={decl}
+                    value={state.values[decl.name]}
+                    exact={[wf.shown?.state.values[decl.name], wf.template?.inputs.controls[decl.name]]}
+                    wf={wf}
+                    tMax={tMax}
                   />
-                )}
+                ))}
+                {seeds.map((decl) => (
+                  <Seed key={decl.name} decl={decl} value={state.values[decl.name]} wf={wf} />
+                ))}
               </div>
             )}
           </section>
@@ -183,80 +187,20 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
   );
 }
 
-function chipTitle(status: string, n: number): string {
-  if (status === "locked") return `Reopen checkpoint ${n}`;
-  if (status === "blocked") return `Needs checkpoint ${n - 1} confirmed first`;
-  return `Open checkpoint ${n}`;
-}
-
-/** A checkpoint's seeds by name, each in code: "a", "a and b", "a, b and c". */
-function SeedNames({ seeds }: { seeds: InputDecl[] }) {
+/** A seed: its value and a reroll of that seed alone, named (checkpoint 3 has two since S55). */
+function Seed({ decl, value, wf }: { decl: InputDecl; value: unknown; wf: WorkflowApi }) {
   return (
-    <>
-      {seeds.map((s, i) => (
-        <Fragment key={s.name}>
-          {i > 0 && (i === seeds.length - 1 ? " and " : ", ")}
-          <code>{s.name}</code>
-        </Fragment>
-      ))}
-    </>
-  );
-}
-
-function RerollAsk({ state, cp, seeds, onReroll, onCancel }: {
-  state: FlowState; cp: Checkpoint; seeds: InputDecl[]; onReroll(): void; onCancel(): void;
-}) {
-  const later = rerollCost(state, cp.n);
-  return (
-    <div className={styles.ask}>
-      <p>
-        <SeedNames seeds={seeds} /> {seeds.length > 1 ? "get new values" : "gets a new value"}. {later.length > 0
-          ? `Checkpoint ${cp.n} and ${later.length > 1 ? "checkpoints" : "checkpoint"} ${spanOf(later)} are regenerated; nothing earlier changes.`
-          : `Checkpoint ${cp.n} is regenerated; nothing earlier changes.`}
-      </p>
-      <div className={styles.actions}>
-        <Button variant="primary" onClick={onReroll}>Reroll</Button>
-        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-      </div>
-    </div>
-  );
-}
-
-function Control({ decl, state, disabled, wf, tMax }: { decl: InputDecl; state: FlowState; disabled: boolean; wf: WorkflowApi; tMax: number }) {
-  const value = state.values[decl.name];
-  const unit = decl.unit_display && decl.unit !== "dimensionless" ? decl.unit_display : "";
-
-  if (decl.kind === "events") {
-    return <MergerList decl={decl} events={value as MergerEvent[]} disabled={disabled} wf={wf} tMax={tMax} />;
-  }
-
-  return (
-    <div className={styles.control} data-disabled={disabled || undefined}>
+    <div className={styles.control}>
       <div className={styles.controlRow}>
         <span className={styles.label} title={decl.name}>{decl.label}</span>
-        <span className={styles.value}>{decl.kind === "seed" ? String(value) : formatNumber(value as number)}</span>
-        <span className={styles.unit}>{decl.kind === "seed" ? "seed" : unit}</span>
+        <span className={styles.value}>{String(value)}</span>
+        <span className={styles.unit}>seed</span>
       </div>
-      {decl.kind === "control" && (
-        <>
-          <input
-            type="range"
-            className={styles.slider}
-            min={0}
-            max={SLIDER_STEPS}
-            step={1}
-            value={toSlider(decl, value as number)}
-            disabled={disabled}
-            aria-label={decl.label}
-            onChange={(e) => wf.setValue(decl.name, fromSlider(decl, Number(e.target.value)))}
-          />
-          <div className={styles.range}>
-            <span>{formatNumber(decl.lo as number)}</span>
-            {isLog(decl) && <span>log scale</span>}
-            <span>{formatNumber(decl.hi as number)}</span>
-          </div>
-        </>
-      )}
+      <div className={styles.actions}>
+        <Button icon={<Shuffle />} aria-label={`Reroll ${decl.name}`} onClick={() => wf.reroll(decl.name)}>
+          Reroll <code className={styles.code}>{decl.name}</code>
+        </Button>
+      </div>
       <details className={styles.about}>
         <summary>About</summary>
         {decl.about}
@@ -265,7 +209,56 @@ function Control({ decl, state, disabled, wf, tMax }: { decl: InputDecl; state: 
   );
 }
 
-function MergerList({ decl, events, disabled, wf, tMax }: { decl: InputDecl; events: MergerEvent[]; disabled: boolean; wf: WorkflowApi; tMax: number }) {
+/**
+ * The value a slider position stands for. A position is a rounded value (fromSlider, four figures), so a control
+ * moved and put back would not be the value it left; where the position is the one of the galaxy on screen's
+ * value, or of the template's, that exact value is taken instead, and the group is clean again.
+ */
+export function valueAt(decl: InputDecl, position: number, exact: readonly unknown[] = []): number {
+  for (const candidate of exact) {
+    if (typeof candidate === "number" && Number.isFinite(candidate) && toSlider(decl, candidate) === position) return candidate;
+  }
+  return fromSlider(decl, position);
+}
+
+function Control({ decl, value, exact, wf, tMax }: { decl: InputDecl; value: unknown; exact: readonly unknown[]; wf: WorkflowApi; tMax: number }) {
+  const unit = decl.unit_display && decl.unit !== "dimensionless" ? decl.unit_display : "";
+
+  if (decl.kind === "events") {
+    return <MergerList decl={decl} events={value as MergerEvent[]} wf={wf} tMax={tMax} />;
+  }
+
+  return (
+    <div className={styles.control}>
+      <div className={styles.controlRow}>
+        <span className={styles.label} title={decl.name}>{decl.label}</span>
+        <span className={styles.value}>{formatNumber(value as number)}</span>
+        <span className={styles.unit}>{unit}</span>
+      </div>
+      <input
+        type="range"
+        className={styles.slider}
+        min={0}
+        max={SLIDER_STEPS}
+        step={1}
+        value={toSlider(decl, value as number)}
+        aria-label={decl.label}
+        onChange={(e) => wf.setValue(decl.name, valueAt(decl, Number(e.target.value), exact))}
+      />
+      <div className={styles.range}>
+        <span>{formatNumber(decl.lo as number)}</span>
+        {isLog(decl) && <span>log scale</span>}
+        <span>{formatNumber(decl.hi as number)}</span>
+      </div>
+      <details className={styles.about}>
+        <summary>About</summary>
+        {decl.about}
+      </details>
+    </div>
+  );
+}
+
+function MergerList({ decl, events, wf, tMax }: { decl: InputDecl; events: MergerEvent[]; wf: WorkflowApi; tMax: number }) {
   const [selected, setSelected] = useState<number | null>(null);
   const update = (i: number, key: keyof MergerEvent, raw: string | number) => {
     const next = events.map((e, k) => (k === i ? { ...e, [key]: Number(raw) } : e));
@@ -278,7 +271,7 @@ function MergerList({ decl, events, disabled, wf, tMax }: { decl: InputDecl; eve
   };
 
   return (
-    <div className={styles.control} data-disabled={disabled || undefined}>
+    <div className={styles.control}>
       <div className={styles.controlRow}>
         <span className={styles.label} title={decl.name}>{decl.label}</span>
         <span className={styles.value}>{events.length}</span>
@@ -288,7 +281,7 @@ function MergerList({ decl, events, disabled, wf, tMax }: { decl: InputDecl; eve
         events={events}
         tMax={tMax}
         selected={selected}
-        disabled={disabled}
+        disabled={false}
         onSelect={setSelected}
         onMove={(i, time) => update(i, "time", time)}
       />
@@ -299,11 +292,11 @@ function MergerList({ decl, events, disabled, wf, tMax }: { decl: InputDecl; eve
         <tbody>
           {events.map((e, i) => (
             <tr key={i} title={e.about} aria-selected={i === selected} onFocus={() => setSelected(i)}>
-              <td><input type="number" min={0} step={0.1} value={e.time} disabled={disabled} onChange={(x) => update(i, "time", x.target.value)} /></td>
-              <td><input type="number" min={0.001} max={1} step={0.01} value={e.mass_ratio} disabled={disabled} onChange={(x) => update(i, "mass_ratio", x.target.value)} /></td>
-              <td><input type="number" min={0} max={1} step={0.01} value={e.gas_fraction} disabled={disabled} onChange={(x) => update(i, "gas_fraction", x.target.value)} /></td>
+              <td><input type="number" min={0} step={0.1} value={e.time} aria-label={`Event ${i + 1} time`} onChange={(x) => update(i, "time", x.target.value)} /></td>
+              <td><input type="number" min={0.001} max={1} step={0.01} value={e.mass_ratio} aria-label={`Event ${i + 1} mass ratio`} onChange={(x) => update(i, "mass_ratio", x.target.value)} /></td>
+              <td><input type="number" min={0} max={1} step={0.01} value={e.gas_fraction} aria-label={`Event ${i + 1} gas fraction`} onChange={(x) => update(i, "gas_fraction", x.target.value)} /></td>
               <td>
-                <button type="button" className={styles.remove} disabled={disabled} aria-label={`Remove event ${i + 1}`} onClick={() => remove(i)}>
+                <button type="button" className={styles.remove} aria-label={`Remove event ${i + 1}`} onClick={() => remove(i)}>
                   <X />
                 </button>
               </td>
@@ -312,7 +305,7 @@ function MergerList({ decl, events, disabled, wf, tMax }: { decl: InputDecl; eve
         </tbody>
       </table>
       {events.length === 0 && <p className={styles.note}>No mergers. A quiescent history is a legitimate galaxy.</p>}
-      {!disabled && <Button variant="ghost" icon={<Plus />} onClick={add}>Add event</Button>}
+      <Button variant="ghost" icon={<Plus />} onClick={add}>Add event</Button>
       <details className={styles.about}>
         <summary>About</summary>
         {decl.about}
