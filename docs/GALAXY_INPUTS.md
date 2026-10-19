@@ -697,9 +697,9 @@ defined here once and used in every entry below:
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182 | 103 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185 | 106 |
 
-So the board's **114 open** is 11 permanent and 103 carried, and no item is unruled. (S22
+So the board's **117 open** is 11 permanent and 106 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4264,6 +4264,32 @@ never been judged in twenty-three sessions.
    the Milky Way's law at the same R (no measured cloud census; PHANGS discs' ~100 near the inner regime). **Carried.**
    What closes it: a radial Σ profile read across the ring's edge, a mass-radius relation for the catalogue's giants in
    place of the cap, and a template's own cloud census where one is measured.
+183. **In the field mode a knot carries its region's gas and not its cluster's starlight, so an HII region draws as
+   pure line colour** (S67, D227; the owner's questions of 2026-10-19, "why is the hii regions all green on 4414?").
+   The knots (S64, D224) hold each region's line light; the cluster's own starlight is spread through the field's
+   young light over its cell (D223, clumped by D226's map), never drawn at the knot, and the clusters are points only
+   in the star-first mode, where the knots are not drawn (#170). Through `wfc3` every strong line falls in F555W
+   alone (measured: Hβ 0.97, [O III] 5007 0.99, Hα 0.11, [N II] 6583 0.10; F438W and F814W 0 at all of them - F814W
+   starts at ~6 900 Å), so `ngc_4414`'s knots draw pure green, where the goal picture's HII regions are whitish-blue
+   (their young stars outshine the lines in B and V); through `rgb` Hα falls in R, so the Milky Way's knots draw pink
+   and the same gap does not show. **Carried** (the owner: "Record it as a debt for a later session"). What closes
+   it: each knot's cluster drawn at the knot in the field mode with its own starlight through the set (/api/clusters
+   with `filters=`, S48), the field's young light scaled per cell by the drawn clusters' share as the knots scale the
+   HII layers (D224's closure), consistent with D226's clustering map, an exact per-cell closure gate; about one
+   builder pass and a review; it changes the Milky Way's young-light grain too.
+184. **One stellar layer height for every age: the young light is drawn in the old disc's thick layer** (S67, D230's
+   measurement). `/api/render` publishes one `layers.stars` (356 pc on `milky_way`) for the young, middle and old
+   parts alike, so the young light's clumps lie half in front of the clouds (now in their 34 pc layer, D229) and its
+   speckle shows on top of every cloud's shadow, where in a real disc the young stars share the clouds' thin layer
+   (about 50-100 pc `[recall]`). **Carried** (offered to the owner on 2026-10-18 and not chosen then). What closes it:
+   a per-age scale height read from a source (the young population's vertical dispersion), published per part, and
+   the march reading three heights.
+185. **The field mode's sampled stars take no dust at galaxy scale** (S67, D230's measurement). GalaxyView's `<Stars>`
+   layers (opacity `weights.sampled`, 0.185 at a 40 kpc view) are dimmed only by the region regime's transmission
+   (`patchPointsForRegion`), never by the diffuse dust or the clouds' raster, so they draw undimmed over every lane and
+   cloud; at the template camera their light is 10 of the frame's 36 725 linear units (0.1 % of disc pixels change by
+   3/255 or more), but it grows where the sample's weight is high (views ~13-24 kpc across). **Carried.** What closes
+   it: the sampled stars take the field's column to each point as FluxPoints does (`dustTo`, the march's textures).
 
 ---
 
