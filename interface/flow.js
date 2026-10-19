@@ -1,30 +1,28 @@
-// The checkpoint flow: rule D1, as a state machine with no DOM in it.
+// The inputs of one galaxy, in their groups: rule D1 (as amended at D232) as state, with no DOM in it.
 //
-// D1 is four statements, and every one of them is a claim about *state* rather
-// than about pixels:
+// D1 reads, since BUILD_III's Phase V9 (S68): *the viewer shows one galaxy at a time and never a galaxy that is
+// half one input set and half another.* Every input is editable at any time, in its registry group; seeds are
+// rerolled; "Generate" regenerates the galaxy whole from the inputs shown, and until it returns the previous galaxy
+// stays on screen, marked stale; "Reset to template" returns the inputs to the template's.
 //
-//   - a page load lands on stage one
-//   - confirmed controls are disabled rather than hidden
-//   - reopening a stage discards every later one
-//   - a lock means "do not re-roll this", and can never mean "freeze this
-//     against upstream changes"
+// The first sentence is what the staged flow of the first three builds was for, and it is kept: a preview must
+// agree with the inputs that made it. A view drawn half from one input set and half from another is a galaxy that
+// does not exist, and it is wrong in a way nobody can see by looking. The staged flow kept it by locks - a
+// confirmed checkpoint could not be edited, and reopening one discarded every later result. The panel keeps it by
+// construction instead: a viewer holds two input vectors, the **draft** being edited and the **shown** one whose
+// galaxy is on screen, and every view asks with the shown one alone. Only "Generate" makes the draft the shown, and
+// it moves the whole vector at once. Nothing here locks, confirms or reopens; there is nothing left to.
 //
-// Keeping them here, as pure functions over a plain object, is what lets them be
-// asserted (tests/js/flow.test.mjs) instead of demonstrated. A rule that only
-// lives in event handlers is a rule that is checked by looking at the screen.
+// This module is the draft's half: the groups (`catalogue`), a fresh draft at the published defaults (`initial`),
+// one edit held to its published range and type (`setValue`), a reroll of the named seeds (`reroll`), a group's
+// seeds (`seedsAt`), the vector as the API takes it (`query`), and which groups two vectors differ in
+// (`changedGroups`) - the dirty marker. Keeping them here, as pure functions over a plain object, is what lets
+// them be asserted (tests/js/flow.test.mjs) rather than demonstrated.
 //
-// The last of the four is the one with a trap in it. A lock protects a *value*
-// from being re-rolled. It protects nothing from being invalidated: reopening an
-// earlier checkpoint discards every later result whether or not its seed is
-// locked, because the galaxy those results describe no longer exists. Locking
-// `pattern_seed` and then changing the halo mass must keep the seed and discard
-// the pattern.
-//
-// Nothing here is stored anywhere. There is no localStorage in this viewer at
-// all (rule D5) — the state lives in memory, and a reload starts at stage one
-// because that is the only state there is.
+// Nothing here is stored anywhere. There is no localStorage in this viewer at all (rule D5): the state lives in
+// memory, and a reload lands on the published defaults because that is the only state there is.
 
-export const UNSET_CHECKPOINT = 1; // where an input with no checkpoint of its own belongs
+export const UNSET_CHECKPOINT = 1; // where an input with no group of its own belongs
 
 export class FlowError extends Error {
   constructor(message) {
@@ -34,12 +32,11 @@ export class FlowError extends Error {
 }
 
 /**
- * Fold /api/stages and /api/inputs into the checkpoint list the viewer walks.
+ * Fold /api/stages and /api/inputs into the groups the panel shows: the checkpoints the stage graph declares,
+ * each with the inputs that belong to it. The groups are names for convenience, with no order a user must walk.
  *
- * Both are declarations; nothing is invented here. A checkpoint with no stages
- * is kept rather than dropped — "nothing is built at this checkpoint yet" is a
- * true and useful thing for the viewer to say, and hiding it would make the
- * build look further along than it is.
+ * Both are declarations; nothing is invented here. A group with no stages is kept rather than dropped - "nothing
+ * is built here yet" is a true and useful thing for the viewer to say.
  */
 export function catalogue(stages, inputs) {
   const controls = [...inputs.controls, ...inputs.seeds, ...inputs.events];
@@ -53,28 +50,23 @@ export function catalogue(stages, inputs) {
   return { model: stages.model, checkpoints, inputs: byName, order: stages.order.slice() };
 }
 
-/** A fresh session: stage one, nothing confirmed, every value its published default. */
+/** A fresh draft: every value its published default. */
 export function initial(cat) {
   const values = {};
   for (const [name, input] of cat.inputs) values[name] = input.default;
-  return { cat, values, locked: {}, confirmed: 0, current: 1, previews: {} };
+  return { cat, values };
 }
 
+/** The group an input belongs to. */
 export function checkpointOf(state, name) {
   const input = state.cat.inputs.get(name);
   if (!input) throw new FlowError(`${name} is not an input of model ${state.cat.model}`);
   return input.checkpoint ?? UNSET_CHECKPOINT;
 }
 
-/** Editable exactly while its checkpoint is unconfirmed. Confirmed means disabled, never hidden. */
-export function isEditable(state, name) {
-  return checkpointOf(state, name) > state.confirmed;
-}
-
+/** One edit, at any time: held to the published range of a control and to an integer for a seed. */
 export function setValue(state, name, value) {
-  if (!isEditable(state, name)) {
-    throw new FlowError(`${name} belongs to checkpoint ${checkpointOf(state, name)}, which is confirmed`);
-  }
+  checkpointOf(state, name); // an input the model does not have is refused, not sent
   const input = state.cat.inputs.get(name);
   if (input.kind === "control") {
     const number = Number(value);
@@ -90,70 +82,26 @@ export function setValue(state, name, value) {
   return { ...state, values: { ...state.values, [name]: value } };
 }
 
-/** Confirm the current checkpoint and move on. The last one confirms without advancing past itself. */
-export function confirm(state) {
-  const last = state.cat.checkpoints.length;
-  const confirmed = Math.max(state.confirmed, state.current);
-  return { ...state, confirmed, current: Math.min(state.current + 1, last) };
-}
-
 /**
- * Reopen checkpoint n: it and everything after it are unconfirmed, and every
- * later result is discarded. Not marked stale — discarded. A preview of a galaxy
- * that no longer exists is worse than no preview.
- */
-export function reopen(state, n) {
-  const last = state.cat.checkpoints.length;
-  if (!Number.isInteger(n) || n < 1 || n > last) throw new FlowError(`no checkpoint ${n}`);
-  const previews = {};
-  for (const [k, v] of Object.entries(state.previews)) if (Number(k) < n) previews[k] = v;
-  return { ...state, confirmed: n - 1, current: n, previews };
-}
-
-export function goTo(state, n) {
-  const last = state.cat.checkpoints.length;
-  if (!Number.isInteger(n) || n < 1 || n > last) throw new FlowError(`no checkpoint ${n}`);
-  // Forward is a look, not a confirmation: you may only go as far as you have confirmed.
-  if (n > state.confirmed + 1) throw new FlowError(`checkpoint ${n} needs ${n - 1} confirmed first`);
-  return n < state.current && n <= state.confirmed ? reopen(state, n) : { ...state, current: n };
-}
-
-export function isLocked(state, name) {
-  return Boolean(state.locked[name]);
-}
-
-/** Lock a seed against re-rolling. Only a seed: nothing else is ever re-rolled. */
-export function toggleLock(state, name) {
-  const input = state.cat.inputs.get(name);
-  if (!input || input.kind !== "seed") throw new FlowError(`${name} is not a seed; only seeds are locked`);
-  return { ...state, locked: { ...state.locked, [name]: !state.locked[name] } };
-}
-
-/**
- * Re-roll the named seeds — skipping the locked ones, refusing the confirmed ones.
+ * Reroll the named seeds and nothing else: a name that is not a seed of this model is skipped.
  *
- * `draw` is supplied by the caller so this stays a pure function of its
- * arguments; the viewer passes a random source, the tests pass a counter.
+ * `draw` is supplied by the caller so this stays a pure function of its arguments; the viewer passes a random
+ * source, the tests pass a counter.
  */
 export function reroll(state, names, draw) {
   let next = state;
   for (const name of names) {
     const input = state.cat.inputs.get(name);
     if (!input || input.kind !== "seed") continue;
-    if (isLocked(state, name) || !isEditable(state, name)) continue;
     next = { ...next, values: { ...next.values, [name]: draw(name) } };
   }
   return next;
 }
 
-/** The seeds of a checkpoint, which is what a re-roll button there re-rolls. */
+/** The seeds of a group, each of which the panel rerolls by name. */
 export function seedsAt(state, n) {
   const cp = state.cat.checkpoints.find((c) => c.n === n);
   return cp ? cp.inputs.filter((name) => state.cat.inputs.get(name).kind === "seed") : [];
-}
-
-export function withPreview(state, n, preview) {
-  return { ...state, previews: { ...state.previews, [n]: preview } };
 }
 
 /** The input vector as the API takes it: every value, events as JSON. */
@@ -164,4 +112,17 @@ export function query(state) {
     out[name] = input.kind === "events" ? JSON.stringify(value) : value;
   }
   return out;
+}
+
+/**
+ * The groups of `state`'s catalogue in which two input vectors (as `query` gives them) differ, in the
+ * catalogue's order: the panel's dirty marker, with `a` the draft's vector and `b` the shown galaxy's. An input
+ * the other vector does not have (another model's) counts as changed.
+ */
+export function changedGroups(state, a, b) {
+  const changed = new Set();
+  for (const name of state.cat.inputs.keys()) {
+    if (a[name] !== b[name]) changed.add(checkpointOf(state, name));
+  }
+  return state.cat.checkpoints.map((cp) => cp.n).filter((n) => changed.has(n));
 }

@@ -1,10 +1,11 @@
 """The viewer: rule D1 as state, rule A9 as colour, rule D5 as what is absent.
 
 The viewer is written as pure modules plus a thin DOM shell, and the reason is
-this file. D1's four statements are claims about *state* — where a page load
-lands, whether a confirmed control is disabled, what a reopen discards, what a
-lock does and does not protect — and state can be asserted. Demonstrated on a
-screen, they would be checked by looking, which is rule B3's failure.
+this file. D1 (as amended at D232) is a claim about *state* — where a page load
+lands, that every input is editable at any time, that an edit moves nothing on
+screen until "generate" moves the whole galaxy, that a reset returns the inputs
+— and state can be asserted. Demonstrated on a screen, it would be checked by
+looking, which is rule B3's failure.
 
 Node runs the logic tests (``tests/js/``) against the *live* declarations: the
 fixture is dumped from the API rather than written by hand, so a registry change
@@ -173,10 +174,10 @@ def test_the_page_asks_only_for_files_that_exist():
             assert (path.parent / imported).resolve().is_file(), f"{path.name} imports {imported}"
 
 
-# --- the viewer walking the checkpoints, against a live server ----------------
+# --- the viewer looking at every group, editing and generating, against a live server ---
 
 DRIVER = """
-import {{ catalogue, confirm, initial, query, reopen, seedsAt, setValue, withPreview }}
+import {{ catalogue, changedGroups, initial, query, reroll, seedsAt, setValue }}
   from "{client}/flow.js";
 import {{ discScale }} from "{client}/field.js";
 import {{ makeRamp }} from "{client}/ramp.js";
@@ -189,25 +190,23 @@ import * as view from "{client}/view.js";
 const origin = "{origin}";
 const meta = await fields({{ origin }});
 const byName = Object.fromEntries(meta.fields.map((f) => [f.name, f]));
-let state = initial(catalogue(await stages({{ origin }}), await inputs({{ origin }})));
+// A page load: the draft at the published defaults, and the galaxy shown is the draft's (rule D1 as amended).
+let draft = initial(catalogue(await stages({{ origin }}), await inputs({{ origin }})));
+let shown = draft;
+const dirty = () => changedGroups(draft, query(draft), query(shown));
+const landedClean = dirty();
 const ran = {{}};
 
-// Walk the checkpoints the way the viewer does: draw what is published here,
-// confirm, move on. Nothing is asked for that this checkpoint has not made.
-for (const cp of state.cat.checkpoints) {{
+// Look at every group the way the viewer does: draw what is published there for the galaxy shown. Nothing is
+// confirmed, and nothing is asked for that this group has not made. (In the catalogue's order, so that each
+// response's stages are the ones that group's own fields cost on a cold server.)
+for (const cp of draft.cat.checkpoints) {{
   const names = view.wanted(meta.fields, cp.n, view.defaultField(meta.fields, cp.n));
-  if (names.length) {{
-    const frame = await arrays(names, query(state), {{ origin }});
-    ran[cp.n] = frame.stages;
-    state = withPreview(state, cp.n, frame.header.fields.length);
-  }} else {{
-    ran[cp.n] = [];
-  }}
-  state = confirm(state);
+  ran[cp.n] = names.length ? (await arrays(names, query(shown), {{ origin }})).stages : [];
 }}
 
-// The clickable sample, at the checkpoint that publishes it.
-const got = await region({{ r_min: 0, r_max: 30 }}, {{ ...query(state), stars: 5000 }}, {{ origin }});
+// The clickable sample, at the group that publishes it.
+const got = await region({{ r_min: 0, r_max: 30 }}, {{ ...query(shown), stars: 5000 }}, {{ origin }});
 const size = 400;
 const scale = discScale(size, meta.grid.axes.R.hi);
 const points = project(got.arrays, scale, size);
@@ -220,19 +219,32 @@ const hit = nearest(points.sx[7], points.sy[7], points, 3);
 
 // A star picked out of the region is opened by the name that response gave it.
 const name = identify(got.header, 3);
-const opened = await system(name, {{ ...query(state), stars: 5000 }}, {{ origin }});
+const opened = await system(name, {{ ...query(shown), stars: 5000 }}, {{ origin }});
 const laid = layout(opened.arrays, opened.header.belts, {{ x: 0, y: 0, width: 400, height: 40 }});
 
 // A field drawn end to end: values in, colour out, from the published stops.
 const decl = byName.stellar_surface_density;
-const frame = await arrays([decl.name], query(state), {{ origin }});
+const frame = await arrays([decl.name], query(shown), {{ origin }});
 const ramp = makeRamp(decl, meta.cmaps, frame.arrays[decl.name]);
 
-// Reopening discards, even after all that.
-const reopened = reopen(state, 2);
+// An edit, a generate, a reset. A scalar the first group publishes is read for the galaxy shown at each step.
+const first = draft.cat.checkpoints[0].n;
+const scalar = view.scalarsAt(meta.fields, first)[0].name;
+const read = async () => (await arrays([scalar], query(shown), {{ origin }})).header.scalars[scalar];
+const before = await read();
+draft = setValue(draft, "halo_mass", 9e11);
+const afterEdit = {{ dirty: dirty(), value: await read() }};  // the shown galaxy has not moved
+shown = draft;  // generate: the draft becomes the galaxy shown, whole
+const afterGenerate = {{ dirty: dirty(), value: await read() }};
+draft = initial(draft.cat);  // reset to the published defaults (the reference client's template)
+const afterReset = {{ dirty: dirty(), value: await read() }};  // the galaxy shown is still the generated one
+shown = draft;
+const afterRegenerate = {{ dirty: dirty(), value: await read() }};
+const rerolled = reroll(draft, seedsAt(draft, 3), () => 7);  // the pattern is checkpoint 3 since S25 (D174)
 
 console.log(JSON.stringify({{
   ran,
+  landedClean,
   columns: Object.keys(got.arrays).sort(),
   stars: got.header.stars.materialised,
   outside,
@@ -252,22 +264,28 @@ console.log(JSON.stringify({{
   axes: [...(opened.arrays.planet_semi_major_axis ?? [])],
   marks: laid ? laid.marks.length : 0,
   picked: laid ? pick(laid, laid.marks[0].x, laid.axis.y) : -1,
-  previewsAfterReopen: Object.keys(reopened.previews),
-  confirmedAfterReopen: reopened.confirmed,
-  seedsAtPattern: seedsAt(state, 3),  // the pattern is checkpoint 3 since S25 (D174)
-  refusedConfirmed: (() => {{ try {{ setValue(reopened, "halo_mass", 1e12); return null; }} catch (e) {{ return e.name; }} }})(),
+  first,
+  before,
+  afterEdit,
+  afterGenerate,
+  afterReset,
+  afterRegenerate,
+  seedsAtPattern: seedsAt(draft, 3),
+  rerolledDirty: changedGroups(rerolled, query(rerolled), query(shown)),
 }}));
 """
 
 
 @pytest.mark.skipif(NODE is None, reason="node is not installed; the viewer's data path is unchecked here")
-def test_the_viewer_walks_the_checkpoints_against_a_live_server(tmp_path):
+def test_the_viewer_edits_and_generates_against_a_live_server(tmp_path):
     """The whole path, in the client's own modules: declarations in, pixels' worth of data out.
 
-    What this adds over the unit tests is the join: that the fields a checkpoint
+    What this adds over the unit tests is the join: that the fields a group
     publishes can be asked for and drawn, that the region endpoint's columns are
-    the ones ``stars.js`` reads, and — the part rule D4 cares about — that the
-    viewer asking for checkpoint one's fields does not run the whole pipeline.
+    the ones ``stars.js`` reads, that the viewer asking for the first group's
+    fields does not run the whole pipeline (rule D4), and that rule D1 as amended
+    holds against the API: an edit moves nothing on screen, a generate moves the
+    whole galaxy, a reset returns the inputs and not the galaxy until the next.
     """
     import threading
     import urllib.request
@@ -291,7 +309,7 @@ def test_the_viewer_walks_the_checkpoints_against_a_live_server(tmp_path):
         server.server_close()
         thread.join(timeout=5)
 
-    # Rule D4, from the client's side: drawing checkpoint one does not build a galaxy.
+    # Rule D4, from the client's side: drawing the first group does not build a galaxy.
     assert got["ran"]["1"] and "systems" not in got["ran"]["1"] and "chemistry" not in got["ran"]["1"]
     # Checkpoint 6 draws where giants are possible, which is derived from the
     # chemistry — and stops there. Neither materialiser runs anywhere in the walk:
@@ -329,11 +347,16 @@ def test_the_viewer_walks_the_checkpoints_against_a_live_server(tmp_path):
     assert got["axes"] == sorted(got["axes"]), "a system is drawn in the order it was built, outward"
     assert got["picked"] == 0, "a click on the innermost planet picks the innermost planet"
 
-    # Rule D1 survives the round trip.
-    assert got["previewsAfterReopen"] == ["1"]
-    assert got["confirmedAfterReopen"] == 1
-    assert got["refusedConfirmed"] == "FlowError"
+    # Rule D1 as amended (D232), round the API: a page load is clean; an edit dirties its group and moves nothing
+    # on screen; generate moves the galaxy and is clean; reset dirties against the generated galaxy until the next
+    # generate, which lands back on the first answer exactly; a reroll dirties its group alone.
+    assert got["landedClean"] == []
+    assert got["afterEdit"] == {"dirty": [got["first"]], "value": got["before"]}
+    assert got["afterGenerate"]["dirty"] == [] and got["afterGenerate"]["value"] != got["before"]
+    assert got["afterReset"] == {"dirty": [got["first"]], "value": got["afterGenerate"]["value"]}
+    assert got["afterRegenerate"] == {"dirty": [], "value": got["before"]}
     assert "pattern_seed" in got["seedsAtPattern"]
+    assert got["rerolledDirty"] == [3]
 
 
 # --- the logic, run in node ---------------------------------------------------
