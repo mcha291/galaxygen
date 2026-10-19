@@ -13501,3 +13501,119 @@ than at 96 (the march not settled face-on - the lead's earlier "steps barely mat
 the owner: "Put the Milky Way back to 96 steps, keep NGC 4414 at 48, and close S67." `TEMPLATE_TUNING.milky_way`
 steps 96; the physics-only ratio back to its 96-step pin (0.96427, 0.96617, 0.97222); the Milky Way's five captures
 regenerated; the picture test 15 passed twice.
+
+#### D227, the close (2026-10-19)
+
+**What V8 built (D227-D231, on `session-67`; an Opus lead, Opus agents, the owner at the tuning panel).** **T1, the
+display defaults per template, are the owner's**: `TEMPLATE_TUNING` in `tuning.ts`, two objects - the Milky Way's the
+first paste with the second laid over it, 96 steps; `ngc_4414` the same set with the third paste over it (field gain
+1.2, bloom 2, the spikes on, the clouds as extinction on, the cloud raster 3 texels a cell) at 48 steps - each a
+display choice declared where it is computed (A9), stored per template in the browser (an old single key read as the
+fallback, never written back), the copy box naming the template, its filter set and the exposure. **NGC 4414 opens on
+RGB**, the owner's override of D213; `Instrument.filters` keeps WFC3 as the instrument's own set. **T9 is physical**
+(`hstPsf.ts`, `docs/READING_HST_OPTICS.md`): where the view uses the instrument's set, a point is the obscured Airy
+at its pivot in parsecs through the template's distance, convolved with the instrument's pixel box, through S64's
+extent box (one at every scale); the Milky Way, with no instrument, keeps a declared display sprite; **the spikes a
+switch** on the owner's word (the pupil's FFT with vanes and pads, normalised to one). Beside them: the intensity
+sliders acting in the field mode, the bloom sliders' development-build bug (the pass read from the composer that
+renders), the GPU's time per capture (`gpu_ms`, a timer query, in `frames.json`), the surface-brightness gates A and
+B and the GPU light check in the picture spec, run at the plain display defaults. **On the owner's questions, the
+clouds:** D228 (the region regime's field dimmed only behind each cloud, K = 1 024 slabs; each cloud at its own
+column; the extinction-strength slider, the owner's ruled exception to D5), D229 (the clouds' layer from a reading,
+`MOLECULAR_LAYER_FWHM` 120 pc, h 34.04 pc), D230 (the galaxy-scale clouds flattened to that layer and stretched along
+the gas field's shear, "cloud elongation" 1), D231 (Σ_GMC 82 / 35 M☉ pc⁻² either side of R_SUN, the radius held at
+150 pc). The side branches - `s67-clouds` / `s67-clouds-galaxy` / `s67-orbs` (a side session's), `s67-layer`,
+`s67-size`, `s67-t1c` - came in by fast-forward. **The register: #120 and #112 discharged; #177-#185 opened** (the
+bulge's cusp in the march, the clamped box at a close stand, the instrument by its filter set and the inferred vanes,
+the clouds' one layer, the HII regions never a complex, the clouds' two Σ regimes and a cap, the knots without their
+clusters' starlight, one stellar height for every age, the sampled stars undimmed); **117 open = 11 permanent + 106
+carried, 51 discharged** (`tools/progress.py`).
+
+**The goal metrics' final table** (Phase V8's last item; `uv run python tools/goal_metrics.py <image> --table` on
+the committed frames at 8e6e064, linear light; the goal pictures read in the main checkout's `docs/goals/`, never
+copied; the S66 rows the same tool on `bfa5671`'s frames, the S53 rows D212's baseline as printed there). Face-on
+frames with the axis ratio given as 1; NGC 4414's at the template camera's cos 55° = 0.5736 and, below each, with
+the outline estimated; the goal at 0.512 as S67's probe and D212 did. The baseline's inclined rows are the default
+galaxy at 59.2°, not the `ngc_4414` template, which did not exist then; S66's `ngc_4414` frames were on the WFC3
+set, so their B − R is not RGB's.
+
+| Picture | a px | q | B−R in | B−R out | Δ(B−R) | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | arm / interarm, blue | dark fraction | slope | points in | points out |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| goal: Milky Way (a drawing) | 2006 | 1 (given) | −0.459 | −0.813 | −0.354 | 0.051 | 0.194 | 0.059 | 0.107 | 0.046 | 0.046 | 0.025 | 0.029 | 1.829 | 0.0066 | −1.99 | 518 | 139 |
+| S53 baseline (D212): face-on, field mode | 339 | 1 (given) | +0.483 | +0.123 | −0.360 | 0.002 | 0.026 | 0.002 | 0.091 | 0.002 | 0.002 | 0.002 | 0.042 | 1.58 | 0.0000 | −3.32 | 25 | 21 |
+| S66 (D226): `milky_way-field` | 342 | 1 (given) | +0.468 | +0.103 | −0.365 | 0.039 | 0.045 | 0.064 | 0.044 | 0.025 | 0.036 | 0.021 | 0.020 | 1.659 | 0.0221 | −1.03 | 600 | 1 855 |
+| **S67: `milky_way-field`** | 300 | 1 (given) | +0.662 | +0.328 | −0.334 | 0.057 | 0.054 | 0.056 | 0.050 | 0.028 | 0.038 | 0.029 | 0.021 | 1.628 | 0.0184 | −1.24 | 767 | 3 077 |
+| S53 baseline (D212): face-on, star-first mode | 367 | 1 (given) | +0.484 | +0.079 | −0.405 | 0.012 | 0.030 | 0.014 | 0.154 | 0.017 | 0.009 | 0.012 | 0.029 | 2.16 | 0.0005 | −0.61 | 1316 | 1108 |
+| S66: `milky_way-stars` | 367 | 1 (given) | +0.490 | +0.064 | −0.426 | 0.041 | 0.048 | 0.067 | 0.044 | 0.031 | 0.039 | 0.025 | 0.022 | 1.779 | 0.0137 | −0.61 | 1 012 | 1 322 |
+| **S67: `milky_way-stars`** | 494 | 1 (given) | −0.005 | −0.216 | −0.211 | 0.036 | 0.095 | 0.064 | 0.046 | 0.041 | 0.033 | 0.032 | 0.042 | 1.789 | 0.1123 | −3.56 | 181 | 84 |
+| S66: `milky_way-physics-only` | 339 | 1 (given) | +0.490 | +0.111 | −0.378 | 0.006 | 0.006 | 0.007 | 0.008 | 0.007 | 0.007 | 0.006 | 0.007 | 1.066 | 0.0194 | −1.25 | 336 | 547 |
+| **S67: `milky_way-physics-only`** | 295 | 1 (given) | +0.706 | +0.369 | −0.338 | 0.015 | 0.011 | 0.010 | 0.009 | 0.013 | 0.015 | 0.012 | 0.012 | 1.071 | 0.0000 | −2.11 | 702 | 867 |
+| goal: NGC 4414 (Hubble) | 664 | 0.512 | +0.508 | +0.234 | −0.274 | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 0.030 | 0.033 | 2.718 | 0.1572 | −2.09 | 97 | 311 |
+| S53 baseline (D212): inclined, field mode (default galaxy) | 420 | 0.552 | +0.360 | −0.028 | −0.389 | 0.091 | 0.039 | 0.043 | 0.037 | 0.024 | 0.027 | 0.018 | 0.015 | 1.63 | 0.0000 | −3.53 | 14 | 8 |
+| S66: `ngc_4414-field` (wfc3), q 0.5736 | 425 | 0.574 | +0.669 | +0.239 | −0.430 | 0.082 | 0.142 | 0.029 | 0.063 | 0.027 | 0.033 | 0.019 | 0.018 | 2.018 | 0.0196 | −1.22 | 379 | 815 |
+| **S67: `ngc_4414-field` (rgb), q 0.5736** | 288 | 0.574 | +0.328 | +0.516 | +0.187 | 0.112 | 0.198 | 0.054 | 0.045 | 0.040 | 0.034 | 0.026 | 0.025 | 2.852 | 0.0295 | −2.28 | 221 | 2 198 |
+| S67: `ngc_4414-field`, q estimated | 288 | 0.761 | +0.382 | +0.427 | +0.045 | 0.098 | 0.089 | 0.065 | 0.055 | 0.043 | 0.044 | 0.044 | 0.031 | 2.046 | 0.0229 | −1.93 | 424 | 2 132 |
+| S53 baseline (D212): inclined, star-first mode (default galaxy) | 444 | 0.551 | +0.383 | −0.044 | −0.427 | 0.111 | 0.051 | 0.070 | 0.057 | 0.036 | 0.039 | 0.027 | 0.016 | 2.01 | 0.0011 | −0.66 | 787 | 503 |
+| S66: `ngc_4414-stars` (wfc3), q 0.5736 | 404 | 0.574 | +0.667 | +0.270 | −0.397 | 0.088 | 0.142 | 0.027 | 0.059 | 0.032 | 0.033 | 0.020 | 0.017 | 2.120 | 0.0176 | −1.83 | 579 | 966 |
+| **S67: `ngc_4414-stars` (rgb), q 0.5736** | 497 | 0.574 | +0.081 | −0.220 | −0.301 | 0.061 | 0.115 | 0.049 | 0.045 | 0.071 | 0.039 | 0.038 | 0.081 | 2.170 | 0.0252 | −3.56 | 121 | 122 |
+| S67: `ngc_4414-stars`, q estimated | 497 | 0.634 | +0.067 | −0.233 | −0.300 | 0.056 | 0.106 | 0.052 | 0.046 | 0.071 | 0.046 | 0.040 | 0.072 | 2.055 | 0.0295 | −3.57 | 133 | 111 |
+
+**What the table says, read once and not acted on** (display targets, BUILD_III §9; nothing was tuned to them - the
+defaults are the owner's hand). *The Milky Way's field frame against the S53 baseline:* the power has spread over
+every m - the odd amplitudes 0.002 → 0.057 / 0.056 at m = 1 / 3, the drawing's 0.051 / 0.059 - but m = 2 is 0.054
+against the drawing's 0.194: the goal's two dominant arms are not there (the model's four-to-six-armed law, #138);
+the texture slope went from −3.32 (smooth) past the goal's −1.99 to −1.24 (S66's young-light grain, #176, kept at the
+owner's "Keep as is"); the dark fraction 0 → 0.018, now above the drawing's 0.0066; the inward reddening the goal's
+(Δ −0.334 against −0.354) on a disc about 1.1 mag redder in B − R than the drawing's blue-white, and redder than
+S66's by 0.19 at the owner's display set; the arms' blue contrast 1.58 → 1.628 against 1.83, unmoved since S63;
+compact sources 25 / 21 → 767 / 3 077, most of them outside the disc's mask (the grain reaches the frame's corners).
+*NGC 4414's field frame:* the arm-over-interarm 2.85 against Hubble's 2.72 and the slope −2.28 against −2.09 are near
+the goal; the dark fraction 0.030 against 0.157 is a fifth of it (the dust web reaches only the inner disc); A2 is
+0.198 at the camera's 0.5736 and 0.089 at the outline's own estimate, 0.761 - the outline is rounder than the disc
+because the bulge holds so much of the light, and the round bulge stretched by the disc's ratio reads as two-fold
+(the goal 0.068, flat at every m); the colour turns over - the inner annulus +0.33 against +0.51, the outer +0.52,
+redder outward where the goal and S66 redden inward (not traced; the outer annulus is faint). *The star-first frames are the display's, not the
+disc's:* at the owner's defaults (point gain 4, a 3 px sprite, bloom 2.25 above 0.45 on the Milky Way, 2 on NGC 4414,
+the cell outlines on) their points draw as bloomed discs over the cell outlines' grid, and the metrics read that -
+the Milky Way's dark fraction 0.112 and slope −3.56 are the grid and the gaps between blooms (the closer's look at the
+committed PNGs, recorded for the lead). **Against BUILD_III §0's "what will remain"** - the Milky Way "the same kind
+of picture, differing in hand-drawn irregularity"; NGC 4414 "right at a glance in colour, inclination, flocculence
+and mottling", with the dust web and complexes still procedural side by side: the Milky Way is there in kind and
+differs by more than irregularity (the arms' number, the colour's level, the grain); NGC 4414 is right in
+inclination and in its arms' contrast and texture slope, not yet at a glance in colour, flocculence or dust.
+
+**The frames beside the goals (the lead's reading of the committed frames, 2026-10-19).** **The Milky Way** (the
+field mode, the owner's defaults, the clouds off): a barred spiral with visible arms, a warm core and a bluer outer
+disc - the same kind of picture as the artist's impression, its arms less distinct and less irregular, no dust lanes
+drawn by default, the outer disc grainy. **NGC 4414** (now on RGB, its own defaults, the clouds on): an inclined disc
+with sheared dust streaks around the bulge (D229-D231 removed the black orbs) and pale HII knots; against Hubble's
+picture the bulge is too bright and compact, the outer disc lacks the dense flocculent arm segments and the blue
+star-forming complexes, and the dust web is confined to the inner disc.
+
+**The gates.** *Surface brightness* (the picture spec, the Milky Way face-on in the star-first mode, the dust and the
+ionized gas off, run at the plain display defaults): A (points off, against the render's stars and the bulge per
+ring) 1.359e-2 with the layer and 5.33e-3 without, B (points on, against the remainder, the bulge and the drawn points'
+own light, each sprite binned where its rays meet the plane) 5.16e-3 / 5.04e-3 at the defaults and 4.53e-3 / 4.99e-3
+at +1 stop and point gain 2, each ring 1-20 kpc held at 1.5e-2 (S66's per-ring bound); the ring 0-1 kpc 0.977-0.978
+in every state, held at 3e-2 as #177. *The GPU light check* (`ngc_4414` on the instrument's set): the spikes on over
+off within 1.1e-6 (held at 1e-4), the points-only frame against the drawn points' light 6.8e-5 at the camera and
+4.1e-4 at the zoom stand (held at 1e-3, 24 times under the clamp's smallest renormalisation). *The clouds:* with no
+cloud on a ray the field's slab factor exactly 1; at extinction strength 1 every frame the committed bytes; A_V × area
+conserved per cloud to 1e-6 under the elongation. The physics-only ratio at its 96-step pin 0.96427 / 0.96617 /
+0.97222. **The GPU's time** (`gpu_ms`, one timer query a capture, the final run): the Milky Way field 31.3 ms, stars
+22.3, physics-only 36.5, zoom 20.0, thumbnail 7.6; `ngc_4414` field 63.9, stars 103.9, zoom 16.9, thumbnail 40.4 -
+one sample each, noisy (the same capture has read threefold apart); ready times 4.5-29.6 s, the API's compute. Halving
+the Milky Way's steps brightened its march by about 4 % and saved no measurable time: the march is not converged at 48
+steps even face-on, so the Milky Way went back to 96. The picture test 15 passed, every frame the committed bytes;
+vitest 436 passed, 1 skipped; specs 12 / 20 / 5 of 37 unmoved, row 37 −0.097717 → −0.097902 (D231, a recorded miss).
+
+**Closing.** [SUITE LINE]
+
+**For the owner, plainly (none awaited; their word first if they answer):** #172 (one mode at zoom, carried); #176 -
+the young light's speckle at the census's width, kept at their "Keep as is", its sampling half (a footprint average)
+still open; #164's mend (a spur's foot on the ridge doubles the crest); #159 (the lattice placement's cost on the
+whole-disc routes); #142, #145, #147; the 88-minute gate test; the stray "v" in the gateway's project file
+(`gateway/Galaxygen.AppHost/Galaxygen.AppHost.csproj`), still uncommitted; #183 - NGC 4414's knots draw pure green
+under WFC3 (every strong line in F555W), now hidden by the RGB default, not mended; #184 (one stellar height for every
+age, offered and not chosen); #185 (the field mode's sampled stars undimmed by the dust). **S68 is V9**, the
+generate-first edit panel (`BRIEF.md`).
