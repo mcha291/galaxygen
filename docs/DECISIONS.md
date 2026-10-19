@@ -13716,9 +13716,12 @@ editable, **#190** the edit drawer covers the Galaxy view's regime caption; **12
 (T18 is a viewer task, discharged on its own list). `interface/style.css` loses its unused `.step:disabled` rule.
 
 **Closing.** The full suite ran at 9d12dfa (the build before the fix pass, which touched the frontend only) in a
-detached worktree with pytest's own exit code appended to its log: [SUITE LINE]. S67's `verify_clone --ref main`
+detached worktree with pytest's own exit code appended to its log: **EXIT=0 — 1 611 passed, 5 skipped, 1 xfailed, none
+failed** (S67's pricing flake and its two re-pinned snapshots green; 4 h 38 min with the fix pass's picture tests and
+vitest running beside it; `test_hook` green alone in the main checkout after `tools/bootstrap.py`). S67's `verify_clone --ref main`
 never wrote its log (the session that started it ended first); this session's `verify_clone --ref main` after the
-merge covers both: [VERIFY]. Cold timings unchanged (no stage's cost moved).
+merge covers both: started detached at this close (the S68 lead's scratchpad, `verify_s68.log`), to be read at S69's
+open and recorded in D233 — the lesson above says why in words. Cold timings unchanged (no stage's cost moved).
 
 **For the owner, plainly (none awaited; their word first if they answer):** the edit panel is theirs to try at
 :5173 — "Edit galaxy" now opens every input at once, Generate redraws the whole galaxy in one step and nothing is
