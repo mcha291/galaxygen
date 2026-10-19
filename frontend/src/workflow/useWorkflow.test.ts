@@ -1,10 +1,11 @@
 import * as flow from "@interface/flow.js";
 import { describe, expect, it } from "vitest";
 
-import type { FlowState, InputDecl } from "./logic";
+import { type FlowState, type InputDecl, fromSlider, runHash, toSlider } from "./logic";
 import { parseTemplates } from "./templates";
 import fixture from "./templates.fixture.json";
-import { DEFAULT_MODEL, carry, dirtyGroupsOf, generated, isDirty, landOn, queryOf, resetDraft } from "./useWorkflow";
+import { DEFAULT_MODEL, carry, dirtyGroupsOf, generated, isDirty, isLoading, landOn, queryOf, resetDraft } from "./useWorkflow";
+import { valueAt } from "./Workflow";
 
 describe("the viewer's starting model", () => {
   it("is the azimuthal model, the API's and the tests' default since S46 (D197)", () => {
@@ -58,9 +59,19 @@ describe("a template landing (rule D1 as amended, D232)", () => {
     }
   });
 
-  it("is asked for exactly as before V9: the template's inputs, the model and template=", () => {
-    const s = session(ngc);
-    expect(shownQuery(s)).toEqual({ ...(flow.query(landOn(fresh(), ngc)) as Record<string, unknown>), model: "azimuthal", template: "ngc_4414" });
+  it("is asked for exactly as the landing always was: milky_way's query, pinned to the letter and to its hash", () => {
+    const s = session(milkyWay);
+    // The fixture's milky_way (templates.fixture.json, whose Sagittarius is an older one than the route serves):
+    // the query the landing builds from it, to the letter, and its run hash. The live template's landing read
+    // e673d8 in the header at S68's walk; the picture test holds the frames, this the code that builds the query.
+    expect(shownQuery(s)).toEqual({
+      halo_mass: 1.1e12, disc_spin: 0.0173, halo_assembly_z: 1.66, baryon_retention: 0.35,
+      infall_timescale: 7, inside_out_index: 1, migration_efficiency: 3.6,
+      world_seed: 0, pattern_seed: 0, texture_seed: 0, systems_seed: 0, planets_seed: 0,
+      mergers: JSON.stringify(milkyWay.inputs.mergers),
+      model: "azimuthal", template: "milky_way",
+    });
+    expect(runHash(shownQuery(s))).toBe("7c6a54");
   });
 });
 
@@ -139,5 +150,33 @@ describe("a model switch", () => {
     expect(dirty(carried)).toBe(true);
     expect(shownQuery(carried)).toEqual(shownQuery(s));
     expect(generate(carried).shown.model).toBe("basic");
+  });
+});
+
+describe("a slider moved and put back (F4)", () => {
+  const halo: InputDecl = { name: "halo_mass", label: "", kind: "control", about: "", checkpoint: 1, default: 1.1e12, lo: 1e11, hi: 1e13 };
+
+  it("is the exact value of the galaxy on screen again, not its four-figure rounding", () => {
+    const shownValue = 1.1e12;
+    const at = toSlider(halo, shownValue);
+    expect(fromSlider(halo, at)).not.toBe(shownValue); // the trap: the position alone rounds
+    expect(valueAt(halo, at, [shownValue, 9e11])).toBe(shownValue);
+    const s = edit(edit(session(milkyWay), (d) => flow.setValue(d, "halo_mass", fromSlider(halo, at + 40)) as FlowState),
+      (d) => flow.setValue(d, "halo_mass", valueAt(halo, at, [shownValue])) as FlowState);
+    expect(dirty(s)).toBe(false);
+  });
+
+  it("is the template's exact value at the template's position, and the rounded one elsewhere", () => {
+    expect(valueAt(halo, toSlider(halo, 9.0e11), [2e12, 9.0e11])).toBe(9.0e11);
+    expect(valueAt(halo, 600, [undefined, null])).toBe(fromSlider(halo, 600));
+  });
+});
+
+describe("Generate while another model's inputs are loading (F5)", () => {
+  it("is refused: the draft is still the other model's", () => {
+    const s = session();
+    expect(isLoading(s.draft, "basic")).toBe(true);
+    expect(isLoading(s.draft, "azimuthal")).toBe(false);
+    expect(isLoading(null, "basic")).toBe(false);
   });
 });

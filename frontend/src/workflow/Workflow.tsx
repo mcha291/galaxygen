@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Eye, Plus, RotateCcw, Shuffle, X } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "../ui/Button";
 import { MergerTimeline } from "./MergerTimeline";
@@ -45,6 +45,7 @@ interface Props {
  */
 export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = null, onView, onClose }: Props) {
   const panelClass = className ? `${styles.panel} ${className}` : styles.panel;
+  const hints = useId();
   // Folded groups: a convenience of this panel's, no state of the galaxy's. Every group starts open.
   const [folded, setFolded] = useState<ReadonlySet<number>>(new Set());
   const { state } = wf;
@@ -76,26 +77,38 @@ export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = nu
 
       <div className={styles.bar}>
         <div className={styles.actions}>
-          <Button
-            variant="primary"
-            disabled={!wf.dirty}
-            title={wf.dirty ? "Regenerate the galaxy whole from the inputs shown" : "The inputs are the galaxy on screen: change one to generate"}
-            onClick={wf.generate}
-          >
+          {/* The hints describe the buttons (aria-describedby) and never replace their names: "Generate" is found as "Generate". */}
+          <Button variant="primary" disabled={!wf.dirty || wf.loading} aria-describedby={`${hints}-generate`} onClick={wf.generate}>
             Generate
           </Button>
-          <Button
-            icon={<RotateCcw />}
-            title={wf.template ? `Return every input to the ${wf.template.label} template's` : "Return every input to its published default"}
-            onClick={wf.reset}
-          >
+          <Button icon={<RotateCcw />} aria-describedby={`${hints}-reset`} onClick={wf.reset}>
             {resetLabel}
           </Button>
+          <span id={`${hints}-generate`} hidden>
+            {wf.dirty ? "Regenerates the galaxy whole from the inputs shown" : "The inputs are the galaxy on screen: change one to generate"}
+          </span>
+          <span id={`${hints}-reset`} hidden>
+            {wf.template ? `Returns every input to the ${wf.template.label} template's` : "Returns every input to its published default"}
+          </span>
         </div>
+        {/* The model is an input of the draft (F8): chosen here, generated with the rest; the header names only the
+            model of the galaxy on screen. */}
+        {wf.models.length > 1 && (
+          <div className={styles.models} role="group" aria-label="Model">
+            <span className={styles.pinsHead}>Model</span>
+            {wf.models.map((m) => (
+              <button key={m} type="button" className={styles.look} aria-pressed={m === wf.model} onClick={() => wf.setModel(m)}>
+                {m}
+              </button>
+            ))}
+          </div>
+        )}
         <p className={styles.state} data-dirty={wf.dirty || undefined} role="status">
-          {wf.dirty
-            ? `Changed: ${[...changed, ...(wf.model !== shownModel ? [`the model (${wf.model}; on screen ${shownModel})`] : [])].join(", ") || "the template"}.`
-            : "The inputs are the galaxy on screen."}
+          {wf.loading
+            ? `Loading the ${wf.model} model's inputs.`
+            : wf.dirty
+              ? `Changed: ${[...changed, ...(wf.model !== shownModel ? [`the model (${wf.model}; on screen ${shownModel})`] : [])].join(", ") || "the template"}.`
+              : "The inputs are the galaxy on screen."}
         </p>
       </div>
 
@@ -153,7 +166,14 @@ export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = nu
               <div className={styles.body}>
                 {decls.length === 0 && <p className={styles.note}>No input belongs to this group.</p>}
                 {decls.filter((d) => d.kind !== "seed").map((decl) => (
-                  <Control key={decl.name} decl={decl} value={state.values[decl.name]} wf={wf} tMax={tMax} />
+                  <Control
+                    key={decl.name}
+                    decl={decl}
+                    value={state.values[decl.name]}
+                    exact={[wf.shown?.state.values[decl.name], wf.template?.inputs.controls[decl.name]]}
+                    wf={wf}
+                    tMax={tMax}
+                  />
                 ))}
                 {seeds.map((decl) => (
                   <Seed key={decl.name} decl={decl} value={state.values[decl.name]} wf={wf} />
@@ -177,7 +197,7 @@ function Seed({ decl, value, wf }: { decl: InputDecl; value: unknown; wf: Workfl
         <span className={styles.unit}>seed</span>
       </div>
       <div className={styles.actions}>
-        <Button icon={<Shuffle />} aria-label={`Reroll ${decl.name}`} title={`Draw a new ${decl.name}`} onClick={() => wf.reroll(decl.name)}>
+        <Button icon={<Shuffle />} aria-label={`Reroll ${decl.name}`} onClick={() => wf.reroll(decl.name)}>
           Reroll <code className={styles.code}>{decl.name}</code>
         </Button>
       </div>
@@ -189,7 +209,19 @@ function Seed({ decl, value, wf }: { decl: InputDecl; value: unknown; wf: Workfl
   );
 }
 
-function Control({ decl, value, wf, tMax }: { decl: InputDecl; value: unknown; wf: WorkflowApi; tMax: number }) {
+/**
+ * The value a slider position stands for. A position is a rounded value (fromSlider, four figures), so a control
+ * moved and put back would not be the value it left; where the position is the one of the galaxy on screen's
+ * value, or of the template's, that exact value is taken instead, and the group is clean again.
+ */
+export function valueAt(decl: InputDecl, position: number, exact: readonly unknown[] = []): number {
+  for (const candidate of exact) {
+    if (typeof candidate === "number" && Number.isFinite(candidate) && toSlider(decl, candidate) === position) return candidate;
+  }
+  return fromSlider(decl, position);
+}
+
+function Control({ decl, value, exact, wf, tMax }: { decl: InputDecl; value: unknown; exact: readonly unknown[]; wf: WorkflowApi; tMax: number }) {
   const unit = decl.unit_display && decl.unit !== "dimensionless" ? decl.unit_display : "";
 
   if (decl.kind === "events") {
@@ -211,7 +243,7 @@ function Control({ decl, value, wf, tMax }: { decl: InputDecl; value: unknown; w
         step={1}
         value={toSlider(decl, value as number)}
         aria-label={decl.label}
-        onChange={(e) => wf.setValue(decl.name, fromSlider(decl, Number(e.target.value)))}
+        onChange={(e) => wf.setValue(decl.name, valueAt(decl, Number(e.target.value), exact))}
       />
       <div className={styles.range}>
         <span>{formatNumber(decl.lo as number)}</span>

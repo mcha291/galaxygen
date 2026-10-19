@@ -413,3 +413,16 @@
   font-family: var(--font-mono);
   font-size: 10.5px;
 }
+
+/* The draft's model, beside the line that says what differs from the galaxy on screen. */
+.models {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.models .pinsHead {
+  margin: 0 2px 0 0;
+}

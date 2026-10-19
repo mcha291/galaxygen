@@ -43,13 +43,13 @@ export function Preview({ checkpoint, panels, query, cmaps }: Props) {
   );
 
   if (names.length === 0 && panels.maps.length === 0) {
-    return <p className={styles.note}>Checkpoint {checkpoint.n} publishes nothing to preview.</p>;
+    return <p className={styles.note}>{checkpoint.name} publishes nothing to preview.</p>;
   }
 
   return (
     <div className={styles.preview}>
       <header className={styles.head}>
-        <span className="gx-label">Checkpoint {checkpoint.n} preview</span>
+        <span className="gx-label">Science ·</span>
         <span className={styles.name}>{checkpoint.name}</span>
         {frame && (
           // `stages` is what the server ran for this request (rule D4); a cached galaxy runs none.
@@ -60,7 +60,7 @@ export function Preview({ checkpoint, panels, query, cmaps }: Props) {
         {busy && <span className="gx-label">Recomputing</span>}
       </header>
       {error && <p className={styles.fault}>Preview failed: {error}</p>}
-      {names.length > 0 && !frame && !error && <p className={styles.note}>Computing checkpoint {checkpoint.n}.</p>}
+      {names.length > 0 && !frame && !error && <p className={styles.note}>Computing {checkpoint.name}.</p>}
 
       {frame && panels.scalars.length > 0 && <Scalars fields={panels.scalars} values={frame.header.scalars} />}
 

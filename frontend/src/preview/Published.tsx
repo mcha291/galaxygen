@@ -4,7 +4,7 @@ import { formatNumber } from "../workflow/logic";
 import styles from "../App.module.css";
 
 /**
- * "Published at this checkpoint": the checkpoint's galaxy-level scalars as large
+ * "Published in this group": the group's galaxy-level scalars as large
  * readouts, as the design's workflow tab shows them. They ride in the header of
  * an arrays request, which runs the stages up to this checkpoint and no further.
  */
@@ -18,7 +18,7 @@ export function Published({ scalars, query }: { scalars: FieldDecl[]; query: Que
     <section>
       <div className={styles.overlayHead}>
         <span className={styles.rule} />
-        <span className={styles.overlayLabel}>Published at this checkpoint</span>
+        <span className={styles.overlayLabel}>Published in this group</span>
       </div>
       {names.length === 0 && <p className={styles.overlayNote}>No galaxy-level values at this checkpoint.</p>}
       {loaded.error && <p className={styles.overlayNote}>Values unavailable: {loaded.error}</p>}
