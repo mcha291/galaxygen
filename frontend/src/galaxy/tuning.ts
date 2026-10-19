@@ -415,29 +415,40 @@ export const TUNING_STORAGE_KEY = "galaxygen.tuning";
 /**
  * Each template's display defaults over TUNING_DEFAULTS (S67, D227 R4; T1): what the owner tuned on that template,
  * pasted from the Tuning panel's copy box. Display choices (rule D5), each declared one where it is computed (A9); none
- * picked to look like a goal. The Milky Way's is the owner's paste of 2026-10-18; NGC 4414 keeps today's values.
+ * picked to look like a goal. Both templates carry the owner's pastes (2026-10-18, 2026-10-19).
  */
+/**
+ * The owner's display defaults (S67, D227 T1): the paste of 2026-10-18 ("set these values as the default so i can
+ * adjust them after the fix finish"), with the paste of 2026-10-19 laid over it ("update milky way default with this,
+ * then copy it over to 4414") - the copy box lists only the choices that differ from the template's own defaults, so
+ * the second paste changes steps, field gain, the bloom, the three intensities and the extinction strength and keeps
+ * the rest of the first. Display choices, none physics (D5); the extinction strength the owner's ruled exception (D228).
+ */
+const OWNER_DEFAULTS_2026_10_19 = Object.freeze({
+  resolution: 1,
+  pixelBudget: 2_000_000,
+  steps: 96,
+  fieldGain: 1.65,
+  fieldFloor: 0.1,
+  bloomStrength: 2.25,
+  bloomRadius: 0.35,
+  bloomThreshold: 0.45,
+  toneMapping: "aces",
+  spriteSize: 3,
+  pointGain: 4,
+  compCells: true,
+  starsIntensity: 0.55,
+  gasIntensity: 1,
+  dustIntensity: 1,
+  extinctionStrength: 1.25,
+  cloudsExtinction: false,
+} satisfies Partial<Tuning>);
+
 export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({
-  // The owner's paste of 2026-10-18 (S67, D227 T1), as pasted: "set these values as the default so i can adjust them
-  // after the fix finish" (the region view's clouds, a session of its own). Display choices, none physics (D5).
-  milky_way: Object.freeze({
-    resolution: 1,
-    pixelBudget: 2_000_000,
-    steps: 160,
-    fieldGain: 2,
-    fieldFloor: 0.1,
-    bloomStrength: 1.5,
-    bloomRadius: 0.5,
-    bloomThreshold: 0.4,
-    toneMapping: "aces",
-    spriteSize: 3,
-    pointGain: 4,
-    compCells: true,
-    starsIntensity: 0.403,
-    gasIntensity: 0.898,
-    dustIntensity: 4,
-    cloudsExtinction: false,
-  } satisfies Partial<Tuning>),
+  milky_way: OWNER_DEFAULTS_2026_10_19,
+  // "then copy it over to 4414": the same choices; its points keep the instrument's image (T9), so the sprite size
+  // does not reach them while the WFC3 set is shown.
+  ngc_4414: OWNER_DEFAULTS_2026_10_19,
 });
 /** Each template's default exposure, stops (S67, D227 R4: the photometric slider's start, App's state); 0 where absent. */
 export const TEMPLATE_EXPOSURE: Readonly<Record<string, number>> = Object.freeze({});

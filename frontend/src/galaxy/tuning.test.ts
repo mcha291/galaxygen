@@ -229,15 +229,17 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
   const MAP = { milky_way: { bloomStrength: 0.5, pointGain: 2 }, ngc_4414: { spikes: true, steps: 1000, bogus: 1 } as Partial<Tuning> };
   const EXPOSURE = { ngc_4414: 1.5 };
 
-  it("carry the owner's paste for the Milky Way (2026-10-18) and nothing yet for NGC 4414 (was: ship empty)", () => {
-    expect(Object.keys(TEMPLATE_TUNING)).toEqual(["milky_way"]);
+  it("carry the owner's pastes for both templates (2026-10-18, then 2026-10-19 laid over it and copied to NGC 4414)", () => {
+    expect(Object.keys(TEMPLATE_TUNING)).toEqual(["milky_way", "ngc_4414"]);
     expect(TEMPLATE_EXPOSURE).toEqual({});
-    expect(defaultsFor("milky_way")).toEqual({
-      ...TUNING_DEFAULTS, resolution: 1, pixelBudget: 2_000_000, steps: 160, fieldGain: 2, fieldFloor: 0.1, bloomStrength: 1.5,
-      bloomRadius: 0.5, bloomThreshold: 0.4, toneMapping: "aces", spriteSize: 3, pointGain: 4, compCells: true,
-      starsIntensity: 0.403, gasIntensity: 0.898, dustIntensity: 4, cloudsExtinction: false,
-    });
-    for (const name of ["ngc_4414", null]) expect(defaultsFor(name)).toEqual(TUNING_DEFAULTS);
+    const owner = {
+      ...TUNING_DEFAULTS, resolution: 1, pixelBudget: 2_000_000, steps: 96, fieldGain: 1.65, fieldFloor: 0.1, bloomStrength: 2.25,
+      bloomRadius: 0.35, bloomThreshold: 0.45, toneMapping: "aces", spriteSize: 3, pointGain: 4, compCells: true,
+      starsIntensity: 0.55, gasIntensity: 1, dustIntensity: 1, extinctionStrength: 1.25, cloudsExtinction: false,
+    };
+    expect(defaultsFor("milky_way")).toEqual(owner);
+    expect(defaultsFor("ngc_4414")).toEqual(owner);
+    expect(defaultsFor(null)).toEqual(TUNING_DEFAULTS);
     for (const name of ["milky_way", "ngc_4414", null]) expect(exposureFor(name)).toBe(0);
   });
 
@@ -264,12 +266,12 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     expect(storageKeyFor(null)).toBe(TUNING_STORAGE_KEY);
     const s = memory();
     saveTuning({ ...TUNING_DEFAULTS, steps: 128 }, s, "m31");
-    saveTuning({ ...TUNING_DEFAULTS, dither: false }, s, "ngc_4414");
+    saveTuning({ ...TUNING_DEFAULTS, dither: false }, s, "m33");
     expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.m31`)!)).toEqual({ steps: 128 });
-    expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.ngc_4414`)!)).toEqual({ dither: false });
+    expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.m33`)!)).toEqual({ dither: false });
     expect(s.store.has(TUNING_STORAGE_KEY)).toBe(false);
     expect(loadTuning(s, "m31")).toEqual({ ...TUNING_DEFAULTS, steps: 128 });
-    expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, dither: false });
+    expect(loadTuning(s, "m33")).toEqual({ ...TUNING_DEFAULTS, dither: false });
     expect(loadTuning(s, "andromeda")).toEqual(TUNING_DEFAULTS);
     // At the defaults a template's key is kept, empty, so the old key is not read for it again (the fallback below).
     saveTuning({ ...TUNING_DEFAULTS }, s, "m31");
@@ -281,7 +283,7 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     // The owner's live tuning, stored before S67 under the one key.
     s.store.set(TUNING_STORAGE_KEY, JSON.stringify({ bloomStrength: 0.6, spikes: true }));
     expect(loadTuning(s, "m31")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
-    expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    expect(loadTuning(s, "m33")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
     // A save writes the template's own key; the old key is untouched, and from then on the template's own wins.
     saveTuning({ ...TUNING_DEFAULTS, bloomStrength: 0.7 }, s, "m31");
     expect(JSON.parse(s.store.get(TUNING_STORAGE_KEY)!)).toEqual({ bloomStrength: 0.6, spikes: true });
@@ -289,7 +291,7 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     // Saved back at the defaults, the template's key stays (empty) and the old key's values do not return.
     saveTuning({ ...TUNING_DEFAULTS }, s, "m31");
     expect(loadTuning(s, "m31")).toEqual(TUNING_DEFAULTS);
-    expect(loadTuning(s, "ngc_4414")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    expect(loadTuning(s, "m33")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
     // Over a template's own defaults, the old key's values are laid as any stored choices are.
     expect(loadTuning(s, null)).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
   });

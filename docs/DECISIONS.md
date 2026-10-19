@@ -13450,3 +13450,15 @@ EXIT=0, pytest's own exit code to a file; the full suite is the lead's. **The fr
 0.31 %, zoom 0.00 % / 0.00 % (not byte-identical), thumbnail −0.01 % / 0.25 %; `ngc_4414` field +0.37 % / 1.41 %, stars
 +1.15 % / 3.88 %, zoom +0.37 % / 10.4 %, thumbnail +0.22 % / 1.04 % - the captures move through the clouds' own columns
 and the HII regions; then `npm run picture` once: 15 passed, every frame the committed bytes.
+
+**T1, the owner's second paste (2026-10-19).** "update milky way default with this, then copy it over to 4414": the
+copy box lists only what differs from the template's own defaults, so the paste is laid over the first one - steps
+160 -> 96, field gain 2 -> 1.65, bloom 1.5 / 0.5 / 0.4 -> 2.25 / 0.35 / 0.45, the starlight 0.403 -> 0.55, the ionized
+gas 0.898 -> 1, the dust's own light 4 -> 1, the extinction strength 1.25 (D228's slider); the rest of the first paste
+kept (resolution 1, budget 2 000 000, floor 0.1, ACES, sprite 3 px, point gain 4, the cell outlines on, the clouds as
+extinction off) - and `ngc_4414` takes the same set (`TEMPLATE_TUNING`, one frozen object for both). The GPU light
+check on `ngc_4414` now runs at the plain display defaults as the ring gates do (the owner's defaults draw the cell
+outlines, whose lines added light to the points-only frame: 1.58 at the template camera); the physics-only ratio
+re-pinned 0.96717 -> 0.96427 (red), the display balance's. Every capture regenerated; the picture test 15 passed twice.
+Told to the owner with the frames: on `ngc_4414` the same set overexposes the bulge and blooms its HII knots into
+large green glows (point gain 4 and bloom 2.25 above 0.45 on the WFC3 set's bright knots), hiding D229-D231's dust.

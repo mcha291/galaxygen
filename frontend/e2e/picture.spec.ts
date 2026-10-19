@@ -807,6 +807,16 @@ test("the instrument's light on the GPU: the spikes' switch moves none, and the 
   const pivots = (FILTER_LABELS[template.filters] as unknown as { sources: { pivot: number }[] }).sources.map((s) => s.pivot);
   const tables = { off: psfTable(optics, { pivots }), on: psfTable(optics, { pivots, density: imageDensity(pupilImage(optics)) }) };
 
+  // As the surface-brightness gates: the check tests the drawing, not the look, so it runs at the plain display defaults,
+  // stored as the template's own tuning before the page loads (S67, D227 T1: the owner's defaults draw the cell
+  // outlines, whose lines would add their own light to the points-only frame).
+  await page.addInitScript(([key, value]) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* no storage: the page draws its template's defaults */
+    }
+  }, [`${TUNING_STORAGE_KEY}.${GPU_LIGHT.template}`, JSON.stringify(TUNING_DEFAULTS)] as const);
   await page.goto("/");
   await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenRingProfile, null, { timeout: READY.timeoutMs });
   await press(page, template.label);
