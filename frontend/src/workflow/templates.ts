@@ -55,6 +55,8 @@ export interface Instrument {
   spider_width: number | null;
   spider_vanes: number | null;
   pads: [number, number, number][] | null;
+  /** The instrument's own filter set (S67, D227 T1): its PSF and spikes draw while it is shown; null for none or a set the viewer does not hold. */
+  filters: FilterSetName | null;
 }
 
 /** One template, as `/api/templates` publishes it. `inputs` is fully resolved: every control, every seed, the event list. */
@@ -112,6 +114,7 @@ function instrumentOf(raw: Record<string, unknown>): Instrument {
     spider_width: numberOrNull(raw.spider_width),
     spider_vanes: numberOrNull(raw.spider_vanes),
     pads,
+    filters: typeof raw.filters === "string" && (FILTER_SET_NAMES as string[]).includes(raw.filters) ? (raw.filters as FilterSetName) : null,
   };
 }
 

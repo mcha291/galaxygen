@@ -62,15 +62,17 @@ describe("/api/templates, as the viewer reads it (S54, D213)", () => {
     expect(got.default).toBe("milky_way");
     expect(got.templates.map((t) => t.name)).toEqual(["milky_way", "ngc_4414"]);
     const [milkyWay, ngc] = got.templates;
-    // D213 ruling 5: the Milky Way face-on through the 45° lens and rgb; NGC 4414 at 55° through a 5° lens and wfc3.
+    // D213 ruling 5: the Milky Way face-on through the 45° lens and rgb; NGC 4414 at 55° through a 5° lens and wfc3 -
+    // since S67 (D227 T1) rgb, the owner's "Switch to RGB", its instrument naming its own set, wfc3.
     expect(milkyWay.camera).toEqual({ inclination_deg: 0, azimuth_deg: 270, radius_kpc: 20, fov_deg: 45 });
     expect(milkyWay.filters).toBe("rgb");
     expect(ngc.camera).toEqual({ inclination_deg: 55, azimuth_deg: 0, radius_kpc: 20, fov_deg: 5 });
-    expect(ngc.filters).toBe("wfc3");
+    expect(ngc.filters).toBe("rgb");
     // S67 (D227 R1): was { distance_mpc: 17.7, pixel_scale_arcsec: null } - the instrument carries the telescope too,
     // and an absent number is null (the fixture serves the distance alone).
-    expect(ngc.instrument).toEqual({ ...{ distance_mpc: null, pixel_scale_arcsec: null, aperture_m: null, obscuration: null, spider_width: null, spider_vanes: null, pads: null }, distance_mpc: 17.7 });
-    expect(milkyWay.instrument).toEqual({ distance_mpc: null, pixel_scale_arcsec: null, aperture_m: null, obscuration: null, spider_width: null, spider_vanes: null, pads: null });
+    // S67 (D227 T1): and the instrument's own filter set, null where none (or one the viewer does not hold).
+    expect(ngc.instrument).toEqual({ ...{ distance_mpc: null, pixel_scale_arcsec: null, aperture_m: null, obscuration: null, spider_width: null, spider_vanes: null, pads: null }, distance_mpc: 17.7, filters: "wfc3" });
+    expect(milkyWay.instrument).toEqual({ distance_mpc: null, pixel_scale_arcsec: null, aperture_m: null, obscuration: null, spider_width: null, spider_vanes: null, pads: null, filters: null });
     expect(ngc.inputs.seeds).toEqual({ world_seed: 4414, pattern_seed: 4414, systems_seed: 4414, planets_seed: 4414, texture_seed: 4414 });
     expect(ngc.inputs.mergers).toEqual([]);
     expect(milkyWay.inputs.mergers).toHaveLength(2);
@@ -103,7 +105,11 @@ describe("/api/templates, as the viewer reads it (S54, D213)", () => {
     delete p.templates[0].instrument;
     delete p.templates[0].about;
     const [milkyWay, ngc] = parseTemplates(p).templates;
-    expect(milkyWay.instrument).toEqual({ distance_mpc: null, pixel_scale_arcsec: null, aperture_m: null, obscuration: null, spider_width: null, spider_vanes: null, pads: null }); // S67: the telescope's numbers null too
+    expect(milkyWay.instrument).toEqual({ distance_mpc: null, pixel_scale_arcsec: null, aperture_m: null, obscuration: null, spider_width: null, spider_vanes: null, pads: null, filters: null }); // S67: the telescope's numbers null too, and (T1) its own set
+    // A set the viewer does not hold is no instrument set (T1): null, as a number not read is.
+    const q = copy();
+    (q.templates[1].instrument as Record<string, unknown>).filters = "sdss";
+    expect(parseTemplates(q).templates[1].instrument.filters).toBeNull();
     expect(milkyWay.about).toBe("");
     expect(ngc.fit).toEqual({ targets: [], controls: [] });
     expect(ngc.checks).toEqual([]);

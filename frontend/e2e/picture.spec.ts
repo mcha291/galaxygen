@@ -797,14 +797,18 @@ test("the instrument's light on the GPU: the spikes' switch moves none, and the 
   test.setTimeout(900_000);
   const net = watchApi(page);
   await page.setViewportSize(CHOOSING_VIEWPORT);
-  const served = await page.request.get("/api/templates").then((r) => r.json() as Promise<{ templates: { name: string; label: string; camera: LensCamera; instrument: Record<string, unknown>; filters: string }[] }>);
+  const served = await page.request.get("/api/templates").then((r) => r.json() as Promise<{ templates: { name: string; label: string; camera: LensCamera; instrument: Record<string, unknown> & { filters?: string | null }; filters: string }[] }>);
   const template = served.templates.find((t) => t.name === GPU_LIGHT.template)!;
   const zoom = CAPTURES.find((c) => c.name === GPU_LIGHT.zoom)!;
   expect(template, `${GPU_LIGHT.template} among the served templates`).toBeTruthy();
   // The instrument's two tables, built here from what the page builds them from (the template's optics, its set's pivots).
   const optics = opticsOf(template.instrument as unknown as Parameters<typeof opticsOf>[0])!;
   expect(optics, `${GPU_LIGHT.template}: the optics read`).toBeTruthy();
-  const pivots = (FILTER_LABELS[template.filters] as unknown as { sources: { pivot: number }[] }).sources.map((s) => s.pivot);
+  // The instrument's own set (S67, D227 T1): the template opens on RGB since the owner's "Switch to RGB", so the set is
+  // the instrument's, pressed below after landing.
+  const instrumentSet = FILTER_LABELS[template.instrument.filters ?? template.filters];
+  expect(instrumentSet, `${GPU_LIGHT.template}: the instrument's own filter set among the viewer's`).toBeTruthy();
+  const pivots = (instrumentSet as unknown as { sources: { pivot: number }[] }).sources.map((s) => s.pivot);
   const tables = { off: psfTable(optics, { pivots }), on: psfTable(optics, { pivots, density: imageDensity(pupilImage(optics)) }) };
 
   // As the surface-brightness gates: the check tests the drawing, not the look, so it runs at the plain display defaults,
@@ -821,6 +825,7 @@ test("the instrument's light on the GPU: the spikes' switch moves none, and the 
   await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenRingProfile, null, { timeout: READY.timeoutMs });
   await press(page, template.label);
   await standsAt(page, template.camera);
+  await press(page, instrumentSet.label);
   await press(page, MODE_BUTTON.stars);
   await squareCanvas(page, 1024);
   await page.getByRole("button", { name: DUST_ONLY.panel }).click();

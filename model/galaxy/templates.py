@@ -145,7 +145,11 @@ class Instrument:
     vanes, and the primary's mirror pads, each (V3, V2, radius) in pupil radii. The viewer draws a point as the PSF
     these make, its angle turned into pc by ``distance_mpc``, convolved with the detector's pixel of
     ``pixel_scale_arcsec`` (frontend/src/galaxy/hstPsf.ts). Each number read carries its source in the template's
-    ``sources``; an artist's impression carries none (the Milky Way's: all None, its points the display sprite)."""
+    ``sources``; an artist's impression carries none (the Milky Way's: all None, its points the display sprite).
+
+    ``filters`` (S67, D227 T1): the viewer's filter set whose curves are this instrument's, by name - the PSF and the
+    spikes draw a point while that set is shown. Until T1 the template's own ``filters`` said it; since the owner's
+    "Switch to RGB" NGC 4414 opens on RGB and its instrument still names WFC3. A name, not a number: no source tag."""
 
     distance_mpc: float | None
     pixel_scale_arcsec: float | None
@@ -154,6 +158,7 @@ class Instrument:
     spider_width: float | None = None
     spider_vanes: int | None = None
     pads: tuple[tuple[float, float, float], ...] | None = None
+    filters: str | None = None
 
 
 # The instrument's numbers, in the order /api/templates publishes them (S67, D227 R1).
@@ -690,10 +695,14 @@ NGC_4414 = Template(
     seeds={"world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414, "texture_seed": 4414},
     mergers=(),
     camera=Camera(inclination_deg=55.0, azimuth_deg=0.0, radius_kpc=15.0, fov_deg=5.0),
-    filters="wfc3",
-    # S67 (D227 R1): WFC3/UVIS, the filter set's instrument (D213), read in docs/READING_HST_OPTICS.md. The goal
-    # picture is WFPC2's (0.0996"/px), disclosed there and not changed: a template's instrument is its filter set's.
+    # S67 (D227 T1): was "wfc3" (D213's choice) - the owner's override, 2026-10-19: asked which filter set NGC 4414
+    # should open on, "Switch to RGB". The instrument stays as data: its PSF and spikes draw whenever the viewer is
+    # switched to its own set, WFC3 (Instrument.filters).
+    filters="rgb",
+    # S67 (D227 R1): WFC3/UVIS, the instrument of D213's filter set, read in docs/READING_HST_OPTICS.md. The goal
+    # picture is WFPC2's (0.0996"/px), disclosed there and not changed: a template's instrument is its set's.
     instrument=Instrument(
+        filters="wfc3",
         distance_mpc=17.7,
         pixel_scale_arcsec=0.04,
         aperture_m=2.4,

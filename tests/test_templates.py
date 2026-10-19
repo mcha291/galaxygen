@@ -105,7 +105,10 @@ def test_two_templates_are_registered_and_the_default_leads():
         assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == (
             ["bar_present", "sun_bar_angle", "arm_pieces"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class"]
         )
-    assert (MILKY_WAY.filters, NGC_4414.filters) == ("rgb", "wfc3")
+    # S67 (D227 T1): was ("rgb", "wfc3") - the owner's "Switch to RGB": NGC 4414 opens on RGB, and its instrument
+    # names its own set, WFC3, where the PSF and the spikes draw.
+    assert (MILKY_WAY.filters, NGC_4414.filters) == ("rgb", "rgb")
+    assert (MILKY_WAY.instrument.filters, NGC_4414.instrument.filters) == (None, "wfc3")
 
 
 def test_milky_way_overrides_nothing_and_resolves_to_the_registry_s_defaults():
@@ -717,8 +720,10 @@ def test_the_templates_route_has_the_stated_shape():
         assert t["filters"] in viewer_sets, "a template names a filter set the viewer holds"
         # S58 (D217 item 2): was `t["pins"] == []`.
         # S67 (D227 R1): was ["distance_mpc", "pixel_scale_arcsec"] - the telescope's numbers joined them.
+        # S67 (D227 T1): and the instrument's own filter set, by name, after the numbers.
         assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec", "aperture_m", "obscuration", "spider_width",
-                                         "spider_vanes", "pads"]
+                                         "spider_vanes", "pads", "filters"]
+        assert t["instrument"]["filters"] is None or t["instrument"]["filters"] in viewer_sets
         # S59 (D218 items 5-6): was one pin each; the second is a measured number.
         # S59 (D218): was {"name", "value", "source"} - a pin carries its input's label and unit (null for a class).
         # S60 (D219 items 3 and 8): was two pins each - a third: a named class carries ``classes``, the closed list
@@ -751,7 +756,9 @@ def test_the_templates_route_has_the_stated_shape():
     assert ngc["camera"] == {"inclination_deg": 55.0, "azimuth_deg": 0.0, "radius_kpc": NGC_4414.camera.radius_kpc, "fov_deg": 5.0}
     assert ngc["instrument"] == {"distance_mpc": 17.7, "pixel_scale_arcsec": 0.04, "aperture_m": 2.4, "obscuration": 0.33,
                                  "spider_width": 0.022, "spider_vanes": 4,
-                                 "pads": [[0.8921, 0.0, 0.065], [-0.4615, 0.7555, 0.065], [-0.4564, -0.7606, 0.065]]}
+                                 "pads": [[0.8921, 0.0, 0.065], [-0.4615, 0.7555, 0.065], [-0.4564, -0.7606, 0.065]],
+                                 "filters": "wfc3"}
+    assert (mw["filters"], ngc["filters"]) == ("rgb", "rgb")  # S67 (D227 T1): NGC 4414 opens on RGB (was wfc3)
     fit = ngc["fit"]
     assert set(fit) == FIT_KEYS and [t["name"] for t in fit["targets"]] == ["curve_peak", "disc_scale_length", "stellar_mass"]
     for target in fit["targets"]:

@@ -288,9 +288,11 @@ export function GalaxyTab({
   // T9, the physical reading (S67, D227 R1-R3): where the template carries its instrument with a distance and the view's
   // filter set is that instrument's own, a point is the telescope's image of a point at its physical size (the obscured
   // Airy, or with the spikes' switch the full pupil's), in place of the sprite. Elsewhere - the Milky Way, an artist's
-  // impression with no instrument, or another filter set - the sprite stays the display choice it was (R2).
+  // impression with no instrument, or another filter set - the sprite stays the display choice it was (R2). The
+  // instrument's own set is the one it names (S67, D227 T1: NGC 4414 opens on RGB, its instrument still WFC3's).
   const optics = useMemo(() => {
-    const own = template ? instrumentOfSet(FILTER_SETS[template.filters]) : null;
+    const ownSet = template ? (template.instrument.filters ?? template.filters) : null;
+    const own = ownSet ? instrumentOfSet(FILTER_SETS[ownSet]) : null;
     return own && own === instrumentOfSet(FILTER_SETS[filterSet]) ? opticsOf(template?.instrument) : null;
   }, [template, filterSet]);
   const physical = useMemo(() => physicalPsf(FILTER_SETS[filterSet], optics, tuning.spikes), [optics, filterSet, tuning.spikes]);

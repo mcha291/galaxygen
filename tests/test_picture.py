@@ -153,7 +153,8 @@ def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
     # 55 degrees through a 5 degree lens and the Hubble broadband set.
     milky_way, ngc = by_template["milky_way"][0], by_template["ngc_4414"][0]
     assert (milky_way["camera"]["inclination_deg"], milky_way["camera"]["fov_deg"], milky_way["filters"]) == (0, 45, "rgb")
-    assert (ngc["camera"]["inclination_deg"], ngc["camera"]["fov_deg"], ngc["filters"]) == (55, 5, "wfc3")
+    # S67 (D227 T1): was (55, 5, "wfc3") - the owner's "Switch to RGB": NGC 4414 opens on RGB, so its captures are taken there.
+    assert (ngc["camera"]["inclination_deg"], ngc["camera"]["fov_deg"], ngc["filters"]) == (55, 5, "rgb")
 
 
 def test_the_list_holds_each_template_once_at_a_zoomed_stand():
