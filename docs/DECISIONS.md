@@ -13093,3 +13093,527 @@ stand; (d) the stray "v" in the gateway's project file, still uncommitted; (e) s
 factor (10 or 2.5), #164's mend, the default seed's cloud draw, #159, #142, #145, #147, the 88-minute gate test, #172
 (one mode at zoom); (f) the render's cold cost rose to ~20 s with the layer's fields (#163) — BUILD_IV W2's bundles
 absorb it. **S67 is V8**, the display defaults, the instrument and the goal captures (`BRIEF.md`).
+
+### D227. S67: the display defaults, the instrument, the goal captures (BUILD_III Phase V8; an Opus lead, Opus agents)
+
+**Opening (2026-10-17).** The owner's answers at the open, asked before anything was built: (1) **T1 — "I'll tune
+and paste"**: the display defaults per template come from the owner's hand on the tuning panel (localhost:5173),
+pasted from its copy box; the session makes them the defaults and declares each a display choice where it is
+computed (A9); nothing is picked to look like a goal. (2) **The clustered young light — "Keep as is"**: the census's
+measured width at every radius stays in the defaults; the grain's sampling half stays debt #176. (3) **One mode at
+zoom — "Leave both, carry #172"**: no ruling; #172 stays open. Usage at the open: 5-hour 0 %, weekly all-models
+57 %, weekly Fable 76 % — agents run on Opus (Fable is near the rationing rule's 80 %). T9 is ruled in the plan (the
+sprite scaled by the template's distance and the instrument's pixel scale, both carried by the template); it, NGC
+4414's instrument look, the committed captures and the goal metrics' final table are built while the owner tunes.
+
+**The probe and the reading (2026-10-17).** An Opus probe (read-only) found the sprite a fixed screen size (9 px,
+FWHM 1.78 px; the WFC3 Airy at 25 px, F814W FWHM 1.69 px), i.e. the WFC3 PSF drawn as if a screen pixel were a WFC3
+pixel; at `ngc_4414`'s camera (29.3 pc a pixel) T9's rule makes the PSF 0.11–0.21 screen px, at the zoom stand
+6.7–12.5 px. A reader (Opus) read HST's optics (`docs/READING_HST_OPTICS.md`): WFC3/UVIS 0.04″/px, 2.4 m, ε 0.33 and
+a spider of 0.022 pupil radii from TinyTim's pupil table, four vanes inferred; **the goal picture is WFPC2's** (WF,
+0.0996″/px), the template's instrument stays its filter set's (WFC3), disclosed. **The owner on the spikes (D192's
+reservation): "make a switch to toggle between the two".** **The lead's rulings:** R1 T9 physical — where a template
+carries an instrument and distance and the view uses that instrument's filters, a point is the obscured Airy at its
+pivot, in pc through the distance, convolved with the instrument's pixel box, through S64's extent box path (sums
+to one at every scale); R2 the Milky Way carries no instrument, its sprite a declared display choice; R3 the spikes a
+switch (off = obscured Airy, on = the pupil's FFT with vanes and pads), both normalised to one; R4 per-template
+display defaults as a viewer map, filled from the owner's paste; R5 the surface-brightness gate on screen, dust off,
+measured before pinned; R6 the GPU's time by a timer query; R7 the generated psf text changed without a fetch; R8
+the captures regenerated and the goal metrics read. One Opus builder.
+
+**T1, the owner's paste (2026-10-18).** The owner, after the build: "set these values as the default so i can adjust
+them after the fix finish" (the region view's clouds, run as a session of its own) — the Milky Way's display defaults
+are now `TEMPLATE_TUNING.milky_way` in `tuning.ts`, as pasted: resolution 1, pixel budget 2 000 000, steps 160, field
+gain 2, field floor 0.1, bloom 1.5 / 0.5 / 0.4, ACES, sprite 3 px, point gain 4, the cell outlines on, the starlight
+0.403, the ionized gas 0.898, the dust's own light 4, the clouds as extinction off; exposure 0; NGC 4414 keeps
+today's values (no paste). Found on the way, on the owner's questions: the Components intensities reached only the
+star-first mode (now the field mode too, `fieldLayers`, FIELD_LAYERS exactly at 1); the bloom sliders moved a pass in
+the composer React's development build discards (now read from the composer that renders: strength 4 at threshold 0
+takes the frame's mean 23.5 -> 134 on screen); bloom strength's range 0-4. The picture test's surface-brightness
+gates run at the plain display defaults, stored as the Milky Way's tuning before the page loads (they test the
+drawing, not the look); `filters.ts` imports its JSON with `type: "json"` so the e2e can import `tuning.ts`; the
+physics-only ratio re-pinned 0.96265 -> 0.96717 (red), the display balance's; the Milky Way's five captures
+regenerated, the frame's GPU time 28 -> 52 ms (star-first) at the higher resolution and steps.
+
+### D228. S67: the region regime's clouds stop drawing as black holes — the field dimmed only behind them (#112's field half, discharged with #112), and each cloud at its own column (#167's region half) (BUILD_III Phase V8, a side session of S67's lead; Opus)
+
+**What the owner saw (2026-10-18).** Zoomed into the field mode, the "clouds as extinction" were near-solid black
+spheres. The lead's diagnosis, confirmed: (1) the region regime's transmission pass multiplied the field's whole
+light along a ray by the clouds' T — the light in front of a cloud as well (RULING_S64 R9's stated approximation,
+#112's field half), so a cloud at the midplane, which hides about half the layer's light, took all of it; (2) every
+cloud took the census's one central A_V, `cloud_extinction_v` = 2.97 mag (#167), as a hard-edged uniform sphere.
+Nothing in the model changed.
+
+**R1, the field's light by depth (#112's field half; VIEWER_TASKS T5's recorded mend).** The march gains a third
+pass (mode 2) whose image multiplies the field: the field's light along each ray is placed where the stars' layer
+puts it — sech²(y / 2h) / 4h at the render header's `layers.stars` (0.356 kpc on the Milky Way), FieldVolume's own
+profile, so the share in front of a height is a difference of tanh over the ray's whole span to the layer's far face
+(`region.ts layerDepthShare`) — and cut into K slabs of equal light; every cloud sample's optical depth dims the
+slabs whose middles lie beyond it, and the factor is the slabs' mean transmission. The march sums the slabs as it
+passes the samples (`marchFieldTransmission`, held to the order-free definition `fieldTransmissionBySlabs` on
+depth-ordered rays to 1e-12), so no slab is stored and K costs nothing. With no cloud on a ray the factor is K / K,
+exactly 1. The star points keep mode 1's target (the whole ray's T and the clouds' front, S64), which no longer
+multiplies the frame. **K = 1024, from a measured convergence (A9)**: on the Milky Way's zoom stand in the field mode
+(e2e/captures.json milky_way-zoom; 128 × 128 rays through the region's table, its 44 clouds), the worst ray's
+summed light moves from K / 2 to K by 0.0114 at 64, 0.0058 at 128, 0.0027 at 256, 0.0013 at 512, **0.0009 at 1024**,
+0.0004 at 2048 — about 1 / K, an opaque cloud's edge crossing a slab's middle — while the frame's mean factor moves
+by under 1e-4 from K = 8 (`regionSlabs.test.ts` FIELD_SLABS_MEASURED, re-measured against a live API when asked).
+**Stated, not mended:** (i) the field's light is placed by the stars' layer alone — the ionized gas's thicker layers
+and the field's own diffuse dust between the slabs are not split by depth; (ii) where two clouds overlap on a ray a
+sample can arrive behind one already passed (the near-surface sort), and it then dims from the slabs already
+reached — the march's stated approximation for overlaps (#112's text), now the field's too; (iii) a ray running
+level through the layer, or a ray leaving it away from it, takes the whole ray's T, as before.
+
+**R2, each cloud at its own column (#167's region half).** `packObjects` reads each cloud's `/api/clouds`
+`cloud_dust_extinction_v` — the face-on mean A_V over its disc π `cloud_size`², the column D224 publishes and the
+galaxy-scale raster already draws — as a uniform sphere of that mean column: κ = (3/4) τ̄ / r (the chord's mean over
+the projected disc is (4/3) κ r), so the centre's column is 1.5 τ̄ (`kappaOfMeanColumn`). A cloud without the column
+is not drawn (B9). The interior noise (`cloudInterior`) is unchanged. The census scalar `cloud_extinction_v` is now
+read by no drawing; the stage's law and the column still disagree (#167 carried: its mend is the stage's).
+
+**The gates.** A synthetic cloud at the midplane, face-on, at 1000 mag dims a uniform field to the light in front of
+its first sample, 0.469 — about half — where the whole ray's T gave 0 (`regionSlabs.test.ts`); a cloud of the
+census's median column leaves the front half and the back half's T; with no cloud, with a missed cloud and with HII
+regions only the factor is exactly 1 on every ray tried. On screen (the field mode at milky_way-zoom's stand, 1024 px,
+the region's clouds removed by emptying the region's /api/clouds window): the frame's summed light with the clouds
+off is the same before and after to every digit (13 279.34, 12 219.86, 11 501.20 per channel at the display
+defaults; 106 234.70, 97 758.88, 92 009.64 at +3 stops), well inside 1e-6. The shader's text: S64's recovered byte
+for byte with S67's additions taken back, S67's pinned (5416 characters). vitest 425 passed (1 skipped: the live
+measurement), tsc -b, vite build; the picture test 15 passed and no capture moved, as none draws the region regime
+(the zoom captures are the star-first mode's; RegionVolume mounts in the field mode only), so nothing was
+regenerated. Eight frames read "the committed picture, byte for byte"; milky_way-physics-only reads "not the
+committed picture's bytes" against `frames.json`, whose record of it (765 251 B) is the frame from before 60232e8 —
+the committed PNG is 672 371 B, the bytes this run took, and the screenshot comparison passed: the record was not
+rewritten with the picture (found here, not this branch's to mend).
+
+**Before and after (the owner's Milky Way defaults, D227 T1; the field mode at the zoom stand).** Taken at the
+session-67 tip (60232e8) and on
+this branch, 1024 px, at exposure 0 (the frame's median luminance 10.35 of 255) and at +3 stops. The frame's
+summed light (linear, V): 12 193.85 before, 12 206.93 after, 12 219.86 with the region's clouds removed — the
+clouds took 0.213 % of it and now take 0.106 %, half, as midplane clouds should. The near-black fraction (pixels
+under a quarter of the frame's median luminance): 0.00161 → **0** (0 without clouds); at +3 stops 0.00105 → 0. The
+dark fraction (under 0.75 × the frame's median, goal_metrics' DARK_T taken on the whole frame, which is a zoom and
+has no disc geometry): 0.10592 → 0.10511 (0.10315 without clouds); at +3 stops 0.02526 → 0.02418 (0.02292). The
+8-bit mean 10.314 → 10.326 (10.342); at +3 stops 82.185 → 82.277 (82.346). The two clouds in the frame are black
+discs before and grey shadows after (the screenshot pair in the session's notes, `s67-clouds-before-after-e3.png`).
+The two changes are measured together; the slabs alone halve a midplane cloud's hold on the field, and the
+per-cloud columns move each cloud's central column from 2.97 mag to 1.5 × its own mean A_V.
+
+**The register.** #112 discharged (its star half at S64, its field half here); #167 carried, its region half done.
+The board 111 open, 51 discharged.
+
+**The whole-galaxy blobs, measured (2026-10-18, the lead's follow-up).** The owner still saw near-black cloud blobs
+at galaxy scale in the field mode: S64's cloud raster in the march, not the region regime. At the Milky Way's
+template camera at the owner's defaults, "clouds as extinction" on over off in linear light (a float read before
+tone mapping), over the disc pixels brighter than 40/255: the darkest keeps 0.033, the 0.1 % quantile 0.135, the 1 %
+quantile 0.288, 2.9 % of them lose more than half (in display 0.131 / 0.249 / 0.454, the lead's reading). The march
+dims only the light behind each slab (the piece loop, `composeStep` its twin; the twin's face-on floor over the raster
+0.012). The raster concentrates no cloud (a split cloud's central texel ~1.5x its mean; its 432 mag maximum is 23
+clouds overlapping face-on at R = 1.9 kpc, the census's own sum), and the one merged slab per texel is not darker
+than each cloud its own slab (1 % quantile 0.080 merged, 0.048 apart). **The cause is the clouds' published heights**:
+a sech² layer at `CLOUD_LAYER_SHARE` 0.5 of the thin disc's scale height (178 pc, "a stated guess with no source",
+#95), realised |z| median 197 pc, p90 524 pc, max 1.95 kpc; face-on from above, a slab 0.6-1.2 kpc up has 1-9 % of the
+stars' layer (h 356 pc) in front of it. A thinner layer is the model's mend, not built: the twin's floor is 0.10 at a
+share of 0.25, 0.25 at 0.125, 0.34 with every cloud at the midplane (the session's notes carry the table and the
+knock-ons - the render's HII layer reads the same height). Left to the lead's and the owner's ruling.
+
+**R3, the extinction strength (2026-10-18), on the owner's ruling.** The owner: "Yes, add an extinction-strength display
+slider as well; I rule it a display choice." One Tuning control, `extinctionStrength` ("extinction strength", group
+Components, linear 0-2, step 0.01, default 1), multiplies every optical depth the viewer draws, in either mode: the
+march's dust depth (`MarchLayers.dustDepth`, which both the diffuse dust and the clouds' raster read: `fieldLayers` and
+`brightestLayers`), the dust to each point and each knot (`PointDust.depthScale`, the points' shader's `dustTo` times
+`dustDepthScale`) and the region regime's clouds (each cloud's kappa as the table is uploaded, `scaleCloudDepths`, so
+the march's T, the field's slabs and the points' T take it alike). Never the dust's own light (that stays "dust
+intensity"). **An exception to rule D5's "a display intensity never scales a depth"**, by the owner's ruling; its
+`about` says so. At 1 every number is the model's and nothing moves: the picture test 15 passed with every frame the
+committed picture's bytes but milky_way-physics-only, whose `frames.json` record has been stale since 60232e8 (the
+same bytes as its committed PNG, as before); vitest 430 passed (`extinction.test.ts`: the layers at 0, 0.37 and 2,
+T at strength s is T^s, the region's table scaled in its clouds' kappa only and untouched at 1, the points' shader;
+`TUNING_DEFAULTS` pinned with it); the points' vertex shader re-pinned (8256 characters; S67's first text recovered
+byte for byte with the two lines taken back). On screen (the frame's linear light, G): the field mode at the template
+camera 30 241 at 0, 24 255 at 0.5, 21 888 at 1, 19 083 at 2; the star-first mode 50 789 / 38 476 / 34 710 at 0 / 1 / 2;
+the field mode's region regime at the zoom stand 22 752 / 15 071 / 11 062.
+
+### D229. S67: the clouds' layer from a read source — `MOLECULAR_LAYER_FWHM` 120 pc, the clouds' sech² scale height 34.04 pc at every radius and for every template (#95's height part discharged, #180 opened) (BUILD_III Phase V8, S67; the lead's ruling, an Opus builder)
+
+**The owner's words (2026-10-18).** "Read a source for the clouds' scale height and fix the layer in the model before I
+retune." D228 had measured the cause of the whole-galaxy clouds' near-black blobs: the clouds' published heights, a
+sech² layer at `CLOUD_LAYER_SHARE` 0.5 of the thin disc's scale height (177.8 pc Milky Way, 477 pc `ngc_4414`; "a stated
+guess with no source", #95), realised |z| to 1.95 kpc.
+
+**The reading** (a blind Opus reader, 2026-10-18; `docs/READING_CLOUD_LAYER.md`). The Milky Way's molecular layer at
+R0 is FWHM 120 ± 18 pc, roughly independent of R from 2 kpc to R0 (Bronfman et al. 1988 via Ferrière 2001 §II.A), 118 pc
+(Bronfman et al. 2000 §4.1, read), 136 ± 17 pc (Clemens, Sanders & Scoville 1988 via Ferrière), Malhotra 1994's σ_z
+58 pc at R0 (FWHM 137); massive clouds as thin as the CO layer or thinner (Stark & Lee 2005: ~35 pc below 2 × 10⁵ M☉);
+the layer flares outside R0 (Nakanishi & Sofue 2006, 160-186 pc at 8-11 kpc) and the sources conflict inside it
+(Marasco et al. 2017 falling, Malhotra and Nakanishi & Sofue rising); edge-on spirals' CO σ = 31-89 pc + 1-5 pc/kpc × R
+(Yim et al. 2014). Heyer & Dame 2015 was not read (403).
+
+**The ruling (the lead's).**
+1. *An absolute thickness, not a share of the stellar disc* (a share would mix the sech² and exponential shapes'
+   FWHM): the level-0 `Constant` `MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.A]` with the two
+   neighbours in its about, in the clouds stage's `reads_constants`. The cloud layer's sech²(z/2h) scale height is
+   the h whose FWHM that is: sech²(x) = 1/2 at x = artanh(1/√2), so FWHM = 4 artanh(1/√2) h = 3.5255 h and
+   h = 120 / 3.5254943 = **34.0378 pc**, derived in code (`clouds.SECH2_FWHM_PER_SCALE_HEIGHT`,
+   `clouds.cloud_layer_height(constants)`), with a test by hand (the profile's half maximum at ±FWHM/2,
+   `test_the_cloud_layer_s_half_maximum_is_at_half_the_measured_fwhm`). `CLOUD_LAYER_SHARE` and
+   `cloud_layer_height(h_thin)` are retired: the function keeps its name and takes the model's constants; the
+   clouds stage no longer requires `thin_disc_scale_height`.
+2. *One value at every radius and for every template*: `ngc_4414` takes the Milky Way's measured layer, disclosed
+   against Yim et al. 2014's edge-on CO widths, which bracket it. The flaring, the conflict inside R0 and the mass
+   dependence are **#180**, not built.
+3. *The draw is unchanged*: the same ring-first uniforms (`systems_seed, "cloud", ring, "height"`), z = 2h·artanh(2u−1),
+   the clip at ±0.999999 kept (14.5 h = 494 pc); every cloud keeps its sign and rank and moves by h_new / h_old -
+   0.1914 on the Milky Way, 0.07133 on `ngc_4414`. Cluster heights follow by copy.
+4. *The HII and lines layers keep reading the cloud layer* (`/api/render`'s `layers.halpha_hii` = `lines_hii`, and the
+   `clouds` entry's `clouds_scale_height`), now the new h from the model's constants, not the thin disc's height,
+   which left the two components' `fields`. Bronfman et al. 2000's OB layer (FWHM 73 pc, 0.62 of the molecular) is a
+   disclosed check, not a pin.
+
+**Measured.** The census's |z| (the whole disc, `/api/clouds`), before → after: the Milky Way (16 577 clouds) median
+196.7 → 37.64 pc, p90 523.7 → 100.2 pc, max 1953.5 → 373.9 pc (D228's probe read 196.7 / 523.7 / 1953.5 before); `ngc_4414`
+(6 530) median 530.0 → 37.81 pc, p90 1385.5 → 98.82 pc, max 5980.5 → 426.6 pc (the before by the exact ratio, the draw
+being the same uniforms). Over the rings holding more than 1 % of the peak molecular surface density the clouds' h over
+the gas layer's is now 0.34-1.60 (Milky Way) and 0.24-1.22 (`ngc_4414`), where it was 1.76-8.35 and 3.42-17.1 (#168's
+"3.8× / 5.6×" were S64's, their definition not recorded, and are stale). **On screen**, D228's harness (the session's
+notes, `s67-clouds-galaxy-probe`: the frame's linear pixels read before tone mapping by an uncommitted probe, applied
+and taken back), the Milky Way's field capture at the template camera and its display defaults, "clouds as extinction"
+on over off (switched on for the measurement only; the defaults keep it off), over the 248 428 disc pixels brighter
+than 40/255: the darkest pixel keeps **0.053** (D228: 0.033), the 0.1 % quantile **0.320** (0.135), the 1 % quantile
+**0.442** (0.288); 1.8 % of the disc pixels lose more than half (2.9 %), 10.9 % more than 5 %; in display 0.231 / 0.458 /
+0.601 (0.131 / 0.249 / 0.454); the frame's linear sum on / off 0.957. The clouds now sit in the stars' midplane, where
+half the stars' light is in front of them, not 0.6-1.2 kpc above most of it.
+
+**Specs unchanged**: `uv run python -m galaxy.specs` reads the same, line for line, before and after but for the
+timings - both models 12 pass / 20 fail / 5 not-yet-computable of 37, `ngc_4414`'s template checks 0 / 5 / 0.
+
+**Re-pins, each with its reason.** `tests/test_clouds.py` (positions and abundances): the median |z| from the new h
+(was 0.5 × `thin_disc_scale_height`), and the new by-hand test of the half maximum. `tests/test_render.py` (the
+nebular split): `layers["halpha_hii"]` = 0.120 / 3.5254943 kpc (was 0.5 × the thin disc's height / 1000), and the
+HII component's fields `["halpha_surface_brightness_hii", "gas_density_contrast"]` (was with `thin_disc_scale_height`
+last). `tests/layer_reference.py`: a by-decision carve-out in `normalise` (`_s67_cloud_layer`, naming D229) puts S55's
+words back - `layers.halpha_hii` / `lines_hii` and the `clouds` entry's `clouds_scale_height` as 0.5 × `layers.stars`
+(exact, a power of two) and `thin_disc_scale_height` back at the end of the two HII components' fields - so every other
+word of the S55 render header is still held. `tests/test_audit.py`: the debt pin (112, 51) and the carried row with
+#180. Nothing else moved: test_clouds, test_render, test_v6_clouds, test_clusters, test_v6_knots, test_bubbles,
+test_templates (EXIT=0, one skip, the refit) and test_layer, test_docs, test_audit, test_progress (EXIT=0), pytest's
+own exit codes to files; the full suite is the lead's.
+
+**The frames.** `npm --prefix frontend run picture:update` once: 15 passed, seven captures and both thumbnails rewritten
+(the captures move through the cloud raster and the HII layer; `ngc_4414-zoom.png` the most, 1 230 243 → 892 975
+bytes), the Milky Way's physics-only record in `frames.json`, stale since 60232e8, refreshed with them (its gpu_ms
+recorded while the targeted pytest run shared the machine); then `npm --prefix frontend run picture` once: 15 passed,
+every frame the committed bytes.
+
+**The register.** #95: the height's part discharged in its text, the debt carried for its other parts (the source's
+offset, the density gradient, the remnant state). #168: its ratios re-measured (above), the old ones marked stale.
+**#180** opened: the clouds' layer is one thickness at every radius, for every cloud and for every template. The board
+112 open, 51 discharged.
+
+### D230. S67: the galaxy-scale clouds flattened to their layer and stretched along the gas field's shear (BUILD_III Phase V8, S67; the lead's ruling and the owner's choice, an Opus side session)
+
+**The owner's words (2026-10-18).** "even a very low cloud extinction turns the milky way galaxy into many black orbs in
+the center, this doesn't seem right?", then "i thought cloud extinction is like a lane of dust, why is ours globe shaped
+orbs that seem to overlap with stars". Of the measured options (the session's notes, s67-orbs-findings and -2) the owner
+chose "Flatten big clouds (viewer)", "Smaller giant clouds (model)" and "Stretch clouds along arms" - not the young
+light's thin layer and not the resolved-only raster on its own. The model's size law is the lead's, built separately.
+
+**What was measured first (the template camera, field mode, the owner's defaults, linear light, clouds on over off).**
+The orbs are single giant clouds, 150-270 pc in radius (Σ fixed at 42 Msun/pc², r = sqrt(M / pi Σ)), drawn as uniform
+discs, opaque at any useful strength: their A_V is 5-25 mag inside 5 kpc under every dust-to-gas law tried. They
+go below the ~0.45 a midplane cloud should leave because the raster's slab took each cloud's radius as its
+vertical half-thickness (110-260 pc against a 34 pc layer, D229), and the dust's own light at the owner's x4 lies
+inside it. The clouds follow the arms as the lane's dust does (A_V x area-weighted placement 2.08, the lane's own 1 +
+rms² = 2.08) - their shape, not their place, made the orbs. The sampled stars are undimmed by any field dust (they draw
+on 0.1 % of disc pixels at this camera); what shows through an orb is the front of the stellar layer.
+
+**R1, the lead's ruling (an amendment of D224's R3).** Each cloud's vertical half-extent in the galaxy-scale raster's
+slab is capped at the clouds' published layer's half-maximum: the render header's `clouds.layers.clouds_scale_height` h
+(34.04 pc), HWHM = 2 ln(1 + sqrt 2) h = 1.7627 h = 60.0 pc (`SECH2_HWHM_PER_H`). Applied to each cloud's radius term in
+the slab (cloudOpacity.ts `cloudRaster`, `verticalCap`), not to the slab as a whole: the A_V-weighted spread of
+distinct clouds' published heights within a texel stays, since it is where their dust is; a texel holding one cloud is
+that cloud at its height, at most 60 pc thick each way. The face-on raster is unchanged to the bit (tested), every
+height untouched; the march, its twin `composeStep` and the points' `dustTo` all read the slab as built, so none of them
+changed and the twin's tests hold as they were. A variance-matched uniform slab (half-width sqrt 3 x the sech²'s rms,
+3.14 h = 107 pc) was the other well-defined bound; the half-maximum is the ruling's and the tighter.
+
+**R2, the owner's choice: each cloud an ellipse along the gas field's shear - a read source for the direction and the
+default ratio, a tuning control for its strength.** The gas fluctuation field (D221) is read at each point rotated by
+theta(R) = sense (twist + strain ln(R / R_r)); the Jacobian of that read is, in the local (radial, azimuthal) frame, the
+simple shear [[1, 0], [-k, 1]] with k = sense x strain, so a round feature of the field is, in the disc, an ellipse of
+shape [[1, k], [k, 1 + k²]]: axis ratio lambda+ = 1 + k²/2 + |k| sqrt(1 + k²/4), long axis along (k, lambda+ - 1)
+(`shearEllipse`, tested against the read's own finite-difference Jacobian). On the Milky Way the published strain gives
+lambda+ 5.83 inside 2 kpc, 3.95 at 4 kpc, 2.72 at R0 and 1.3 at 30 kpc. Each cloud is deposited as an ellipse of its own
+area pi r² (semi-axes r sqrt q and r / sqrt q, the same uniform-spheroid chord profile), q = lambda+ ^ e, e the tuning
+control **"cloud elongation"** (group March, 0-2, default **1**: the field's own shear, so the default's shape is the
+read source's; 0 round). A_V x area is conserved per cloud (tested to 1e-6), the ellipse's direction and axes' ratio
+are held by the deposit's second moments (the angle to 0.02 rad, the ratio to 5 % on 5 pc texels). With the randomness layer off the field's seed is null:
+no shear, every cloud round (the physics-only frame unchanged). A display choice in its exponent; recorded as such.
+
+**Measured, before and after (the same camera; linear light, clouds on over off).**
+
+| | darkest | 0.1 % | 1 % | dimmed > 5 % | < 0.45 | 60 largest orbs: darkest (median) / mean (median) |
+|---|---|---|---|---|---|---|
+| before | 0.053 | 0.320 | 0.442 | 10.9 % | 1.10 % | 0.339 / 0.553 |
+| R1 alone (elongation 0) | 0.070 | 0.364 | 0.510 | 10.2 % | 0.46 % | 0.412 / 0.626 |
+| R1 + R2 (the default) | 0.075 | 0.368 | 0.511 | 10.9 % | 0.43 % | 0.388 / 0.622 |
+
+In display (tone-mapped) the 1 % quantile goes 0.601 -> 0.657 and the darkest 0.230 -> 0.242. The clouds read as streaks
+along the spiral where they were discs (the crop in the session's notes, s67-d230). The darkest pixels are the HII
+knots inside their clouds (debt #181's points), unchanged by either.
+
+**The checks.** vitest 436 passed (cloudShape.test.ts: the cap's half-maximum, the face-on raster unchanged by the cap,
+the shear's shape against the read, A_V x area conserved, round to the bit at 0 and without the field, the ring lookup;
+TUNING_DEFAULTS pinned with cloudElongation 1); tsc -b; vite build. picture:update once: the Milky Way's five captures
+unchanged byte for byte (its defaults draw no clouds' layer); NGC 4414's four moved - field +0.85 % in display mean,
+1.72 % of pixels by >= 3/255; star-first +0.62 %, 1.86 %; thumbnail +0.93 %, 1.41 %; zoom stand +1.48 %, 38.6 % (the
+clouds resolve there); then the picture test once more: 15 passed, all nine frames the committed pictures byte for byte.
+
+### D231. S67: the clouds' size law from a read source — Lada & Dame 2020's X_CO-corrected Σ_GMC, 82 M☉ pc⁻² inside the solar circle and 35 outside it, the radius held at 150 pc with the mass kept, the dispersion at each cloud's own surface density (#182 opened) (BUILD_III Phase V8, S67; the lead's ruling on an Opus probe, an Opus builder)
+
+**The owner's choice (2026-10-18).** "Smaller giant clouds (model)", of the options measured for the whole-galaxy
+clouds' dark orbs (D230). Every cloud's radius was √(M/πΣ) at one `GMC_SURFACE_DENSITY` = 42 (Heyer et al. 2009's
+median), so with Rice et al. 2016's inner truncation at 10⁷ M☉ the inner Galaxy's largest clouds were 150-275 pc.
+
+**The reading** (a blind Opus reader, 2026-10-18; `docs/READING_CLOUD_SIZES.md`). Heyer et al.'s 42 is measured over
+R 4.1-8.1 kpc only, at a constant X_CO; Lada & Dame 2020, correcting X_CO for its radial gradient, find 82 ± 10 in the
+molecular ring and inside it (their 3-5 kpc mean 84.5) and "a single mass surface density of Σ_GMC = 35" outside it;
+their constant-X_CO 13 ± 4 at 9-14 kpc and eq. 1 (Σ = 54.5 − 3.7 R) are uncorrected. The Milky Way's largest clouds have
+R ~60-150 pc (Miville-Deschenes et al. 2017's largest ~150 pc, "comparable to the molecular disk's scale height").
+
+**The probe** (phase 1, the size law substituted alone, masses and streams unchanged; the session's notes,
+probe_s67/size). Eq. 1 made clouds larger (Σ < 42 beyond 3.4 kpc: max 305 pc); the 13 regime enlarged the outer clouds
+(to 176 pc at Rice's outer 1.5 × 10⁶); no Σ ≤ 82 brings a 10⁷ M☉ cloud under 150 pc (that needs Σ ≥ 141) - only a cap
+does; the mass function already truncates at Rice's M₀ (10⁷ inside R_SUN, 1.5 × 10⁶ outside).
+
+**The ruling (the lead's).**
+1. *Two regimes, a step*: `GMC_SURFACE_DENSITY_INNER` = 82 and `GMC_SURFACE_DENSITY_OUTER` = 35 M☉ pc⁻² (level 0,
+   `[verified: Lada & Dame 2020]`; Heyer et al.'s 42 in the inner one's about, superseded by the X_CO(R) correction),
+   at the cloud's birth radius against `R_SUN` - the one boundary the mass function's truncation uses (`law_for`);
+   R_SUN itself is outside. `GMC_SURFACE_DENSITY` is retired. Not the uncorrected 13, which enlarges the outer clouds.
+2. *The cap*: `GMC_RADIUS_MAX` = 150 pc (`[verified: Miville-Deschenes et al. 2017]`), the mass kept, so a capped
+   cloud's surface density rises (W43's ≈ 460 at R_eq ~70 pc a disclosed check that the giants are denser).
+3. *The dispersion at each cloud's own Σ = M/πR²* (Heyer et al. eq. 10, √(GM/5R)), so Mach follows. The test's Mach
+   range 20-35 was the model's own S32 number ("Measured at S32"), not a sourced window: re-pinned (max 39.86).
+4. *`ngc_4414` takes the same law at the same R*, consistent with the mass function's absolute R_SUN; disclosed - no
+   measured cloud census, PHANGS discs' ~100 (Rosolowsky et al. 2021) near the inner regime. At the same R/R_d the
+   inner mass function would meet Σ 35 inside 8.2 kpc (clouds to 440 pc under the probe's 13), a coupled change.
+5. *`cloud_extinction_v`*: its about meant "the census's one surface density", which no longer exists; it is computed at
+   the inner regime's 82 (`clouds.census_extinction_v`), the regime that holds 83 % of the Milky Way's cloud mass and
+   every cloud above 1.5 × 10⁶ M☉: 2.9696 → 5.7977 mag (82/42); the about says an outer uncapped cloud's is 2.47 and a
+   capped giant's more. No drawing reads it since D228 (region.ts reads `cloud_dust_extinction_v`; only a comment
+   names the scalar); `/api/clouds`' header still carries it.
+
+**Built.** `clouds.surface_density_at` and `clouds.cloud_size_law` (radius and effective Σ), read in
+`materialise_clouds`; the three constants in the clouds stage's `reads_constants`; the abouts of `cloud_size`,
+`cloud_velocity_dispersion`, `cloud_extinction_v`, the stage's docstring and `/api/clouds`' derived column's; the offset
+declaration in `layer/cloud_texture.py` re-read to the model. A test by hand
+(`test_the_size_law_by_hand_either_side_of_the_solar_circle_and_at_the_cap`): 10⁵ M☉ at 8.19 kpc 19.702 pc, at 8.20
+and 8.21 kpc 30.157 pc, 10⁷ M☉ at 4 kpc held at 150 pc with Σ 141.47 and σ_v 7.573 km/s, the A_V 5.7977.
+
+**Measured** (the census, layer off; before → after). Milky Way (16 577 clouds): radius median 12.9 → 12.1 pc, p90
+35.5 → 30.1, p99 129.5 → 95.2, max 272.7 → 150.0; > 75 pc 480 → 309, > 150 pc 117 → 0; inside 3 kpc median 15.4 → 11.0,
+p99 171.0 → 122.4, > 75 pc 174 → 99, > 150 pc 44 → 0; 39 clouds capped, all inside R_SUN, at Σ 82.4-138.9; outside R_SUN
+the largest 109 pc. `ngc_4414` (6 530): median 13.9 → 11.8, p90 46.1 → 34.6, p99 173.5 → 124.2, max 273.5 → 150.0, > 75
+pc 314 → 190, > 150 pc 96 → 0; 35 capped (one outside R_SUN, a 4.8 × 10⁶ M☉ cloud of a ring straddling it: the mass
+function reads the ring's mid-radius, Σ the birth radius, #182). The smallest cloud 8.71 → 6.23 pc; Mach 5.28-29.6 →
+5.05-39.86. Through the clouds' mean densities: the HII regions' Strömgren radius median 0.716 → 0.605 pc, n_e 193.7 →
+177.9 cm⁻³, log U −2.826 → −2.788; the Hα-weighted [O III] 0.781 → 0.775 and [N II] 0.082 → 0.078; the bubbles' median
+radius 8.766 → 8.349 pc, stalled 12 373 → 12 445, outgrowing their cloud 0.205 → 0.230, the porosity at R0 0.0104 →
+0.00439; the clusters' offsets inside smaller clouds: 1 581 → 1 376 in another radial ring, 133 → 119 in another cell
+ring, the largest 230 → 140 pc.
+
+**Specs**: `uv run python -m galaxy.specs` reads the same before and after but for row 37 (and its convergence sweeps)
+and the timings: row 37 −0.097717 → −0.097902, a recorded miss still (#117); both models 12 pass / 20 fail / 5
+not-yet-computable of 37, `ngc_4414`'s template checks 0 / 5 / 0; specs: OK, EXIT=0 both.
+
+**Re-pins, each with its reason in the file.** `tests/test_clouds.py` (the size law, the dispersion at each cloud's
+own Σ, the smallest cloud and the Mach range, the A_V; the new hand test); `tests/test_nebular.py` (the Strömgren
+radius, n_e and log U medians, the weighted [O III] and [N II], the 4 kpc ring's [O III]/Hα bound 0.6 → 0.7 on its
+0.605, the layer-on row-37 reading); `tests/test_bubbles.py` (median radius, stalled count, outgrown share, R0
+porosity); `tests/test_s45_diagnosis.py` (row 37's parts: G_age 0.267 → 0.247, its percentiles, the clamped 0.266 →
+0.246, G_U's percentiles, lu0 −2.112 → −2.030); `tests/test_layer.py` (`cloud_extinction_v` joins the layer-off
+reference's named list by this decision, on both templates; row 37's readings; the offset declaration's numbers);
+`tests/test_audit.py` (the debt pin (114, 51) and the carried row).
+
+**The register.** **#182** opened: the clouds' surface density is two regimes and a cap - no continuous Σ(R), the
+boundary a step at R_SUN (and read at the ring's mid-radius by the mass function, the birth radius by Σ), no mass
+dependence below the cap, `ngc_4414` the Milky Way's law. #167's text records the A_V's new surface density. The board
+114 open, 51 discharged.
+
+**The checks.** The targeted set - test_clouds, test_nebular, test_bubbles, test_clusters, test_v6_clouds,
+test_v6_knots, test_s45_diagnosis, test_audit_iii, test_audit_iv, test_layer, test_render, test_v7_header,
+test_hierarchy, test_v4, test_templates, test_docs, test_audit, test_progress - 390 passed, 1 skipped (the refit),
+EXIT=0, pytest's own exit code to a file; the full suite is the lead's. **The frames.** `npm --prefix frontend ci`;
+`picture:update` once: 15 passed, all nine captures rewritten - display mean / pixels moved by >= 3/255: Milky Way field
+−0.61 % / 2.80 %, stars −0.06 % / 23.4 % (a fine-grained shift, mean flat; not traced further), physics-only −0.16 % /
+0.31 %, zoom 0.00 % / 0.00 % (not byte-identical), thumbnail −0.01 % / 0.25 %; `ngc_4414` field +0.37 % / 1.41 %, stars
++1.15 % / 3.88 %, zoom +0.37 % / 10.4 %, thumbnail +0.22 % / 1.04 % - the captures move through the clouds' own columns
+and the HII regions; then `npm run picture` once: 15 passed, every frame the committed bytes.
+
+**T1, the owner's second paste (2026-10-19).** "update milky way default with this, then copy it over to 4414": the
+copy box lists only what differs from the template's own defaults, so the paste is laid over the first one - steps
+160 -> 96, field gain 2 -> 1.65, bloom 1.5 / 0.5 / 0.4 -> 2.25 / 0.35 / 0.45, the starlight 0.403 -> 0.55, the ionized
+gas 0.898 -> 1, the dust's own light 4 -> 1, the extinction strength 1.25 (D228's slider); the rest of the first paste
+kept (resolution 1, budget 2 000 000, floor 0.1, ACES, sprite 3 px, point gain 4, the cell outlines on, the clouds as
+extinction off) - and `ngc_4414` takes the same set (`TEMPLATE_TUNING`, one frozen object for both). The GPU light
+check on `ngc_4414` now runs at the plain display defaults as the ring gates do (the owner's defaults draw the cell
+outlines, whose lines added light to the points-only frame: 1.58 at the template camera); the physics-only ratio
+re-pinned 0.96717 -> 0.96427 (red), the display balance's. Every capture regenerated; the picture test 15 passed twice.
+Told to the owner with the frames: on `ngc_4414` the same set overexposes the bulge and blooms its HII knots into
+large green glows (point gain 4 and bloom 2.25 above 0.45 on the WFC3 set's bright knots), hiding D229-D231's dust.
+
+**T1, the owner's third paste (2026-10-19).** "ok use this for ngc4414 {"template":"ngc_4414","filters":"rgb",
+"exposure":0,"fieldGain":1.2,"bloomStrength":2,"spikes":true,"cloudsExtinction":true,"cloudRaster":3} then change the
+steps for both to 48", and, asked which filter set NGC 4414 should open on, "Switch to RGB". The copy box lists only
+what differs from the template's own defaults, so the paste is laid over the second: `ngc_4414` = that set with field
+gain 1.65 -> 1.2, bloom 2.25 -> 2, the spikes on, the clouds as extinction on, the cloud raster 5 -> 3 texels a cell;
+its exposure 0 is the absent entry of `TEMPLATE_EXPOSURE`. Both templates march 48 steps (was 96): `TEMPLATE_TUNING`
+holds two objects since. `spikes` acts only while the instrument's own set (WFC3) is shown, so on RGB it waits for the
+owner to switch sets. **NGC 4414 opens on RGB**: `templates.py`'s `filters` "wfc3" -> "rgb", the owner's override of
+D213's choice, recorded. The instrument stays as data and now names its own set: `Instrument.filters = "wfc3"`
+(a name, no source tag; null on the Milky Way), published as `/api/templates`' `instrument.filters`, read by
+`templates.ts` (null for a set the viewer does not hold), and GalaxyTab's physical reading keys on it (the template's
+`filters` the fallback), so the PSF and the spikes draw whenever the viewer is switched to WFC3. The readers followed:
+`captures.json`'s four `ngc_4414` captures on rgb; the GPU light check takes its pivots from the instrument's set and
+presses that set after landing (it passed: spikes on over off - 1 within 1.1e-6, the points-only frame over the drawn
+light within 4.1e-4 at the zoom stand, 6.8e-5 at the camera); re-pinned with their reasons: `test_templates.py` (the
+filters ("rgb", "rgb"), the instrument's set (None, "wfc3"), the route's instrument keys gain `filters`),
+`test_picture.py` (55, 5, "rgb"), the viewer's fixture and `templates.test.ts`, `tuning.test.ts` (the two sets). The
+physics-only ratio re-pinned 0.96427, 0.96617, 0.97222 -> 0.96478, 0.96660, 0.97249 (the Milky Way's steps 96 -> 48
+alone: +5.1e-4 / +4.3e-4 / +2.7e-4, inside the 1e-3 pin, re-taken so it stands on the display it judges). Specs: OK,
+every line the base's but the timings. The targeted set (test_templates, test_api, test_picture, test_viewer,
+test_docs, test_audit) 178 passed, 3 skipped, EXIT=0; vitest 436 passed, 1 skipped; `picture:update` once, 15 passed,
+nine captures rewritten (display mean / pixels moved by >= 3/255: Milky Way field +4.06 % / 13.9 %, stars +0.25 % /
+2.2 %, physics-only +4.24 % / 14.1 %, thumbnail +4.35 % / 11.3 %, zoom 0.00 % / 0.00 % (not byte-identical);
+`ngc_4414` field -40.3 % / 78.4 %, stars -24.3 % / 99.8 %, zoom -7.5 % / 99.8 %, thumbnail -51.7 % / 100 % - its new
+gain, bloom and set); `picture` once, 15 passed, every frame the committed bytes. Halving the steps brightens the
+Milky Way's march by about 4 %: the march is not converged in its step count at 48. **The march on the GPU**
+(`gpu_ms`, one timer query a capture: before (steps 96) -> the update run / the verify run): Milky Way field 26.03 ->
+76.62 / 27.52, stars 23.01 -> 49.87 / 23.02, physics-only 20.89 -> 19.50 / 16.76, thumbnail 3.96 -> 3.84 / 5.36, zoom
+21.28 -> 12.64 / 17.05; NGC 4414 field 69.44 -> 46.23 / 48.09, stars 57.07 -> 39.79 / 40.39, thumbnail 8.20 -> 6.99 /
+7.53, zoom 27.42 -> 19.22 / 19.31. One sample each is noisy (the Milky Way field's two runs differ threefold); NGC 4414's
+cut of about 30 % also carries its coarser cloud raster and the RGB set; the Milky Way's field is not measurably faster
+at 48 steps, so the step count is not what bounds its march.
+
+**T1, the Milky Way back to 96 steps (2026-10-19).** Told that at 48 steps the Milky Way's frame came out ~4 % brighter
+than at 96 (the march not settled face-on - the lead's earlier "steps barely matter face-on" was wrong) and no faster,
+the owner: "Put the Milky Way back to 96 steps, keep NGC 4414 at 48, and close S67." `TEMPLATE_TUNING.milky_way`
+steps 96; the physics-only ratio back to its 96-step pin (0.96427, 0.96617, 0.97222); the Milky Way's five captures
+regenerated; the picture test 15 passed twice.
+
+#### D227, the close (2026-10-19)
+
+**What V8 built (D227-D231, on `session-67`; an Opus lead, Opus agents, the owner at the tuning panel).** **T1, the
+display defaults per template, are the owner's**: `TEMPLATE_TUNING` in `tuning.ts`, two objects - the Milky Way's the
+first paste with the second laid over it, 96 steps; `ngc_4414` the same set with the third paste over it (field gain
+1.2, bloom 2, the spikes on, the clouds as extinction on, the cloud raster 3 texels a cell) at 48 steps - each a
+display choice declared where it is computed (A9), stored per template in the browser (an old single key read as the
+fallback, never written back), the copy box naming the template, its filter set and the exposure. **NGC 4414 opens on
+RGB**, the owner's override of D213; `Instrument.filters` keeps WFC3 as the instrument's own set. **T9 is physical**
+(`hstPsf.ts`, `docs/READING_HST_OPTICS.md`): where the view uses the instrument's set, a point is the obscured Airy
+at its pivot in parsecs through the template's distance, convolved with the instrument's pixel box, through S64's
+extent box (one at every scale); the Milky Way, with no instrument, keeps a declared display sprite; **the spikes a
+switch** on the owner's word (the pupil's FFT with vanes and pads, normalised to one). Beside them: the intensity
+sliders acting in the field mode, the bloom sliders' development-build bug (the pass read from the composer that
+renders), the GPU's time per capture (`gpu_ms`, a timer query, in `frames.json`), the surface-brightness gates A and
+B and the GPU light check in the picture spec, run at the plain display defaults. **On the owner's questions, the
+clouds:** D228 (the region regime's field dimmed only behind each cloud, K = 1 024 slabs; each cloud at its own
+column; the extinction-strength slider, the owner's ruled exception to D5), D229 (the clouds' layer from a reading,
+`MOLECULAR_LAYER_FWHM` 120 pc, h 34.04 pc), D230 (the galaxy-scale clouds flattened to that layer and stretched along
+the gas field's shear, "cloud elongation" 1), D231 (Σ_GMC 82 / 35 M☉ pc⁻² either side of R_SUN, the radius held at
+150 pc). The side branches - `s67-clouds` / `s67-clouds-galaxy` / `s67-orbs` (a side session's), `s67-layer`,
+`s67-size`, `s67-t1c` - came in by fast-forward. **The register: #120 and #112 discharged; #177-#185 opened** (the
+bulge's cusp in the march, the clamped box at a close stand, the instrument by its filter set and the inferred vanes,
+the clouds' one layer, the HII regions never a complex, the clouds' two Σ regimes and a cap, the knots without their
+clusters' starlight, one stellar height for every age, the sampled stars undimmed); **117 open = 11 permanent + 106
+carried, 51 discharged** (`tools/progress.py`).
+
+**The goal metrics' final table** (Phase V8's last item; `uv run python tools/goal_metrics.py <image> --table` on
+the committed frames at 8e6e064, linear light; the goal pictures read in the main checkout's `docs/goals/`, never
+copied; the S66 rows the same tool on `bfa5671`'s frames, the S53 rows D212's baseline as printed there). Face-on
+frames with the axis ratio given as 1; NGC 4414's at the template camera's cos 55° = 0.5736 and, below each, with
+the outline estimated; the goal at 0.512 as S67's probe and D212 did. The baseline's inclined rows are the default
+galaxy at 59.2°, not the `ngc_4414` template, which did not exist then; S66's `ngc_4414` frames were on the WFC3
+set, so their B − R is not RGB's.
+
+| Picture | a px | q | B−R in | B−R out | Δ(B−R) | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | arm / interarm, blue | dark fraction | slope | points in | points out |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| goal: Milky Way (a drawing) | 2006 | 1 (given) | −0.459 | −0.813 | −0.354 | 0.051 | 0.194 | 0.059 | 0.107 | 0.046 | 0.046 | 0.025 | 0.029 | 1.829 | 0.0066 | −1.99 | 518 | 139 |
+| S53 baseline (D212): face-on, field mode | 339 | 1 (given) | +0.483 | +0.123 | −0.360 | 0.002 | 0.026 | 0.002 | 0.091 | 0.002 | 0.002 | 0.002 | 0.042 | 1.58 | 0.0000 | −3.32 | 25 | 21 |
+| S66 (D226): `milky_way-field` | 342 | 1 (given) | +0.468 | +0.103 | −0.365 | 0.039 | 0.045 | 0.064 | 0.044 | 0.025 | 0.036 | 0.021 | 0.020 | 1.659 | 0.0221 | −1.03 | 600 | 1 855 |
+| **S67: `milky_way-field`** | 300 | 1 (given) | +0.662 | +0.328 | −0.334 | 0.057 | 0.054 | 0.056 | 0.050 | 0.028 | 0.038 | 0.029 | 0.021 | 1.628 | 0.0184 | −1.24 | 767 | 3 077 |
+| S53 baseline (D212): face-on, star-first mode | 367 | 1 (given) | +0.484 | +0.079 | −0.405 | 0.012 | 0.030 | 0.014 | 0.154 | 0.017 | 0.009 | 0.012 | 0.029 | 2.16 | 0.0005 | −0.61 | 1316 | 1108 |
+| S66: `milky_way-stars` | 367 | 1 (given) | +0.490 | +0.064 | −0.426 | 0.041 | 0.048 | 0.067 | 0.044 | 0.031 | 0.039 | 0.025 | 0.022 | 1.779 | 0.0137 | −0.61 | 1 012 | 1 322 |
+| **S67: `milky_way-stars`** | 494 | 1 (given) | −0.005 | −0.216 | −0.211 | 0.036 | 0.095 | 0.064 | 0.046 | 0.041 | 0.033 | 0.032 | 0.042 | 1.789 | 0.1123 | −3.56 | 181 | 84 |
+| S66: `milky_way-physics-only` | 339 | 1 (given) | +0.490 | +0.111 | −0.378 | 0.006 | 0.006 | 0.007 | 0.008 | 0.007 | 0.007 | 0.006 | 0.007 | 1.066 | 0.0194 | −1.25 | 336 | 547 |
+| **S67: `milky_way-physics-only`** | 295 | 1 (given) | +0.706 | +0.369 | −0.338 | 0.015 | 0.011 | 0.010 | 0.009 | 0.013 | 0.015 | 0.012 | 0.012 | 1.071 | 0.0000 | −2.11 | 702 | 867 |
+| goal: NGC 4414 (Hubble) | 664 | 0.512 | +0.508 | +0.234 | −0.274 | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 0.030 | 0.033 | 2.718 | 0.1572 | −2.09 | 97 | 311 |
+| S53 baseline (D212): inclined, field mode (default galaxy) | 420 | 0.552 | +0.360 | −0.028 | −0.389 | 0.091 | 0.039 | 0.043 | 0.037 | 0.024 | 0.027 | 0.018 | 0.015 | 1.63 | 0.0000 | −3.53 | 14 | 8 |
+| S66: `ngc_4414-field` (wfc3), q 0.5736 | 425 | 0.574 | +0.669 | +0.239 | −0.430 | 0.082 | 0.142 | 0.029 | 0.063 | 0.027 | 0.033 | 0.019 | 0.018 | 2.018 | 0.0196 | −1.22 | 379 | 815 |
+| **S67: `ngc_4414-field` (rgb), q 0.5736** | 288 | 0.574 | +0.328 | +0.516 | +0.187 | 0.112 | 0.198 | 0.054 | 0.045 | 0.040 | 0.034 | 0.026 | 0.025 | 2.852 | 0.0295 | −2.28 | 221 | 2 198 |
+| S67: `ngc_4414-field`, q estimated | 288 | 0.761 | +0.382 | +0.427 | +0.045 | 0.098 | 0.089 | 0.065 | 0.055 | 0.043 | 0.044 | 0.044 | 0.031 | 2.046 | 0.0229 | −1.93 | 424 | 2 132 |
+| S53 baseline (D212): inclined, star-first mode (default galaxy) | 444 | 0.551 | +0.383 | −0.044 | −0.427 | 0.111 | 0.051 | 0.070 | 0.057 | 0.036 | 0.039 | 0.027 | 0.016 | 2.01 | 0.0011 | −0.66 | 787 | 503 |
+| S66: `ngc_4414-stars` (wfc3), q 0.5736 | 404 | 0.574 | +0.667 | +0.270 | −0.397 | 0.088 | 0.142 | 0.027 | 0.059 | 0.032 | 0.033 | 0.020 | 0.017 | 2.120 | 0.0176 | −1.83 | 579 | 966 |
+| **S67: `ngc_4414-stars` (rgb), q 0.5736** | 497 | 0.574 | +0.081 | −0.220 | −0.301 | 0.061 | 0.115 | 0.049 | 0.045 | 0.071 | 0.039 | 0.038 | 0.081 | 2.170 | 0.0252 | −3.56 | 121 | 122 |
+| S67: `ngc_4414-stars`, q estimated | 497 | 0.634 | +0.067 | −0.233 | −0.300 | 0.056 | 0.106 | 0.052 | 0.046 | 0.071 | 0.046 | 0.040 | 0.072 | 2.055 | 0.0295 | −3.57 | 133 | 111 |
+
+**What the table says, read once and not acted on** (display targets, BUILD_III §9; nothing was tuned to them - the
+defaults are the owner's hand). *The Milky Way's field frame against the S53 baseline:* the power has spread over
+every m - the odd amplitudes 0.002 → 0.057 / 0.056 at m = 1 / 3, the drawing's 0.051 / 0.059 - but m = 2 is 0.054
+against the drawing's 0.194: the goal's two dominant arms are not there (the model's four-to-six-armed law, #138);
+the texture slope went from −3.32 (smooth) past the goal's −1.99 to −1.24 (S66's young-light grain, #176, kept at the
+owner's "Keep as is"); the dark fraction 0 → 0.018, now above the drawing's 0.0066; the inward reddening the goal's
+(Δ −0.334 against −0.354) on a disc about 1.1 mag redder in B − R than the drawing's blue-white, and redder than
+S66's by 0.19 at the owner's display set; the arms' blue contrast 1.58 → 1.628 against 1.83, unmoved since S63;
+compact sources 25 / 21 → 767 / 3 077, most of them outside the disc's mask (the grain reaches the frame's corners).
+*NGC 4414's field frame:* the arm-over-interarm 2.85 against Hubble's 2.72 and the slope −2.28 against −2.09 are near
+the goal; the dark fraction 0.030 against 0.157 is a fifth of it (the dust web reaches only the inner disc); A2 is
+0.198 at the camera's 0.5736 and 0.089 at the outline's own estimate, 0.761 - the outline is rounder than the disc
+because the bulge holds so much of the light, and the round bulge stretched by the disc's ratio reads as two-fold
+(the goal 0.068, flat at every m); the colour turns over - the inner annulus +0.33 against +0.51, the outer +0.52,
+redder outward where the goal and S66 redden inward (not traced; the outer annulus is faint). *The star-first frames are the display's, not the
+disc's:* at the owner's defaults (point gain 4, a 3 px sprite, bloom 2.25 above 0.45 on the Milky Way, 2 on NGC 4414,
+the cell outlines on) their points draw as bloomed discs over the cell outlines' grid, and the metrics read that -
+the Milky Way's dark fraction 0.112 and slope −3.56 are the grid and the gaps between blooms (the closer's look at the
+committed PNGs, recorded for the lead). **Against BUILD_III §0's "what will remain"** - the Milky Way "the same kind
+of picture, differing in hand-drawn irregularity"; NGC 4414 "right at a glance in colour, inclination, flocculence
+and mottling", with the dust web and complexes still procedural side by side: the Milky Way is there in kind and
+differs by more than irregularity (the arms' number, the colour's level, the grain); NGC 4414 is right in
+inclination and in its arms' contrast and texture slope, not yet at a glance in colour, flocculence or dust.
+
+**The frames beside the goals (the lead's reading of the committed frames, 2026-10-19).** **The Milky Way** (the
+field mode, the owner's defaults, the clouds off): a barred spiral with visible arms, a warm core and a bluer outer
+disc - the same kind of picture as the artist's impression, its arms less distinct and less irregular, no dust lanes
+drawn by default, the outer disc grainy. **NGC 4414** (now on RGB, its own defaults, the clouds on): an inclined disc
+with sheared dust streaks around the bulge (D229-D231 removed the black orbs) and pale HII knots; against Hubble's
+picture the bulge is too bright and compact, the outer disc lacks the dense flocculent arm segments and the blue
+star-forming complexes, and the dust web is confined to the inner disc.
+
+**The gates.** *Surface brightness* (the picture spec, the Milky Way face-on in the star-first mode, the dust and the
+ionized gas off, run at the plain display defaults): A (points off, against the render's stars and the bulge per
+ring) 1.359e-2 with the layer and 5.33e-3 without, B (points on, against the remainder, the bulge and the drawn points'
+own light, each sprite binned where its rays meet the plane) 5.16e-3 / 5.04e-3 at the defaults and 4.53e-3 / 4.99e-3
+at +1 stop and point gain 2, each ring 1-20 kpc held at 1.5e-2 (S66's per-ring bound); the ring 0-1 kpc 0.977-0.978
+in every state, held at 3e-2 as #177. *The GPU light check* (`ngc_4414` on the instrument's set): the spikes on over
+off within 1.1e-6 (held at 1e-4), the points-only frame against the drawn points' light 6.8e-5 at the camera and
+4.1e-4 at the zoom stand (held at 1e-3, 24 times under the clamp's smallest renormalisation). *The clouds:* with no
+cloud on a ray the field's slab factor exactly 1; at extinction strength 1 every frame the committed bytes; A_V × area
+conserved per cloud to 1e-6 under the elongation. The physics-only ratio at its 96-step pin 0.96427 / 0.96617 /
+0.97222. **The GPU's time** (`gpu_ms`, one timer query a capture, the final run): the Milky Way field 31.3 ms, stars
+22.3, physics-only 36.5, zoom 20.0, thumbnail 7.6; `ngc_4414` field 63.9, stars 103.9, zoom 16.9, thumbnail 40.4 -
+one sample each, noisy (the same capture has read threefold apart); ready times 4.5-29.6 s, the API's compute. Halving
+the Milky Way's steps brightened its march by about 4 % and saved no measurable time: the march is not converged at 48
+steps even face-on, so the Milky Way went back to 96. The picture test 15 passed, every frame the committed bytes;
+vitest 436 passed, 1 skipped; specs 12 / 20 / 5 of 37 unmoved, row 37 −0.097717 → −0.097902 (D231, a recorded miss).
+
+**Closing.** The full suite ran once at 8e6e064 (the final model and viewer, before these records), in a detached worktree with pytest's own exit code appended to its log: **EXIT=1 - 1 608 passed, 3 failed, 5 skipped, 1 xfailed**: `test_performance`'s per-cell pricing (the wall-clock flake of #67/#68's class, S45, S60, S63-S66; green alone after, EXIT=0) and two of `test_clustering_gate`'s as-measured snapshots of the young clusters, which D231 moved and its builder's file list had not named (a cluster's source offset is bounded by its cloud's size, and the giants shrank): the judged checks in both held (the slope inside its window, the flatness); re-pinned with the reason (clusters (-0.6686, 2.0928, 0.0208) -> (-0.6908, 2.1129, 0.0221); the square (-0.121, 1.278, 1.800, 1.202) -> (-0.154, 1.302, 1.838, 1.131)), the two re-run green.
+
+**For the owner, plainly (none awaited; their word first if they answer):** #172 (one mode at zoom, carried); #176 -
+the young light's speckle at the census's width, kept at their "Keep as is", its sampling half (a footprint average)
+still open; #164's mend (a spur's foot on the ridge doubles the crest); #159 (the lattice placement's cost on the
+whole-disc routes); #142, #145, #147; the 88-minute gate test; the stray "v" in the gateway's project file
+(`gateway/Galaxygen.AppHost/Galaxygen.AppHost.csproj`), still uncommitted; #183 - NGC 4414's knots draw pure green
+under WFC3 (every strong line in F555W), now hidden by the RGB default, not mended; #184 (one stellar height for every
+age, offered and not chosen); #185 (the field mode's sampled stars undimmed by the dust). **S68 is V9**, the
+generate-first edit panel (`BRIEF.md`).

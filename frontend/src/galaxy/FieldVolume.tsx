@@ -29,7 +29,7 @@ import {
 import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
 
 import { type Census, type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
-import { type CloudColumns, type CloudRaster, CLOUD_RASTER, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
+import { type CloudColumns, type CloudRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
@@ -38,6 +38,8 @@ import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SLAB_PIECES, starT
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
+import { gpuTimer } from "./gpuTimer";
+import { partRings, renderRings } from "./ringProfile";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
@@ -573,7 +575,7 @@ interface Props {
    * white point. The defaults are the values the view drew with before the panel.
    */
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin"> &
-    Partial<Pick<Tuning, "cloudRaster" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
+    Partial<Pick<Tuning, "cloudRaster" | "cloudElongation" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
   /**
@@ -659,6 +661,10 @@ export interface MarchStats {
   width: number;
   height: number;
   ms: number;
+  /** The GPU's time for the last march, ms, from a timer query (S67, D227 R6); null until one comes back. */
+  gpuMs?: number | null;
+  /** Whether the browser gives the timer query at all (EXT_disjoint_timer_query_webgl2). */
+  gpuAvailable?: boolean;
 }
 
 /**
@@ -704,6 +710,26 @@ export function FieldVolume({
   const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
   const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
+  // The render's own stars per ring (S67, D227 R5; rule B1: a read-only copy of what the viewer was sent):
+  // `window.__galaxygenRenderRings`, the surface-brightness gate's reference beside GalaxyView's ring probe.
+  useEffect(() => {
+    const R = frame?.header.grid.axes.R;
+    const phi = frame?.header.grid.axes.phi;
+    const white = light ? whiteOf(light.header) : null;
+    if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
+    const holder = window as unknown as Record<string, unknown>;
+    const a = light.arrays as Record<string, ArrayLike<number>>;
+    // Beside the whole (the lead's second pass on R5): the star-first remainder per ring.
+    const value = {
+      ...renderRings(R, phi.n, a.stars, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0),
+      unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
+      lMin,
+    };
+    holder.__galaxygenRenderRings = value;
+    return () => {
+      if (holder.__galaxygenRenderRings === value) delete holder.__galaxygenRenderRings;
+    };
+  }, [frame, light, lMin]);
 
   // Read when the material is built, so a mesh made after a steps change compiles once, with them.
   const stepsNow = useRef(steps);
@@ -910,11 +936,29 @@ export function FieldVolume({
   const gridR = frame?.header.grid.axes.R;
   const gridPhi = frame?.header.grid.axes.phi;
   const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
+  // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
+  // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
+  // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
+  // gas fluctuation field's shear (the header's gas_fluctuation strain, sense and edges), at the "cloud elongation"
+  // power. With the layer off the field's seed is null and the clouds stay round.
+  const cloudLayerH = light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
+  const gasEntry = light?.header.gas_fluctuation ?? null;
+  const elongation = tuning.cloudElongation ?? 0;
+  const rasterShape = useMemo(
+    (): RasterShape => ({
+      verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
+      shear: gasEntry && gasEntry.seed !== null && gasEntry.edges && gasEntry.ring && gasEntry.sense !== null
+        ? { edges: gasEntry.edges, strain: gasEntry.ring.strain, sense: gasEntry.sense }
+        : null,
+      elongation,
+    }),
+    [cloudLayerH, gasEntry, elongation],
+  );
   const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
     const c = clouds?.columns as Partial<CloudColumns> | undefined;
     if (!gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
     const started = performance.now();
-    const built: CloudRaster = cloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell);
+    const built: CloudRaster = cloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell, rasterShape);
     // The slab beside the A_V (S64, R3 as ruled): half floats, two a texel - each texel's clouds' mean height and
     // half-thickness, kpc - and the highest a slab reaches, which bounds the points' segment.
     const halves = new Uint16Array(built.slab.length);
@@ -933,7 +977,7 @@ export function FieldVolume({
     };
     (globalThis as { __galaxygenCloudRaster?: CloudRasterStats }).__galaxygenCloudRaster = stats;
     return { texture, slab, top, stats };
-  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(
     () => () => {
       raster?.texture.dispose();
@@ -960,6 +1004,9 @@ export function FieldVolume({
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
+  // The GPU's time for the march (S67, D227 R6; gpuTimer.ts): a timer query round its render call, read back frames later.
+  const timer = useMemo(() => gpuTimer(gl.getContext() as WebGL2RenderingContext), [gl]);
+  useEffect(() => () => timer.dispose(), [timer]);
 
   // The box lives in a scene of its own, marched into a lower-resolution float target.
   const offscreen = useMemo(() => {
@@ -1086,6 +1133,13 @@ export function FieldVolume({
   // Before the composer (priority 1) draws the frame: march again only if the camera, the
   // drawing size, the gain or a tuning choice changed. A still view costs nothing after its first frame.
   useFrame(({ camera }) => {
+    // The last march's GPU time, once the GPU has it (R6): the readout's and the picture test's (window.__galaxygenMarchGpu).
+    const gpuMs = timer.poll();
+    if (stats) {
+      stats.gpuMs = gpuMs;
+      stats.gpuAvailable = timer.available;
+    }
+    (window as unknown as Record<string, unknown>).__galaxygenMarchGpu = { available: timer.available, ms: gpuMs };
     if (!mesh || !offscreen) return;
     const gain = LIGHT_PER_LSUN_PC2 * fieldGain * 2 ** stops * weight;
     const buffer = gl.getDrawingBufferSize(DRAWING);
@@ -1152,7 +1206,9 @@ export function FieldVolume({
     gl.setClearColor(0x000000, 0);
     gl.clear(true, false, false);
     const started = performance.now();
+    timer.begin();
     gl.render(offscreen.scene, camera);
+    timer.end();
     const ms = performance.now() - started;
     gl.setRenderTarget(before);
     gl.setClearColor(0x000000, 1);

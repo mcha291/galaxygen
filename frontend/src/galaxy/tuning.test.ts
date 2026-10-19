@@ -13,7 +13,13 @@ import {
   STEPS,
   TUNING_CONTROLS,
   TUNING_DEFAULTS,
+  TEMPLATE_EXPOSURE,
+  TEMPLATE_TUNING,
   TUNING_STORAGE_KEY,
+  type Tuning,
+  defaultsFor,
+  exposureFor,
+  storageKeyFor,
   changed,
   loadTuning,
   positionOf,
@@ -57,6 +63,8 @@ describe("tuning defaults (D199)", () => {
       toneMapping: "agx",
       spriteSize: STAR_SPRITE_PX,
       pointGain: 1,
+      // S67 (D227 R3): the owner's spike switch, off until their tuning sets it (off: the obscured Airy).
+      spikes: false,
       compPoints: true,
       compStars: true,
       compGas: true,
@@ -67,6 +75,7 @@ describe("tuning defaults (D199)", () => {
       starsIntensity: 1,
       gasIntensity: 1,
       dustIntensity: 1,
+      extinctionStrength: 1, // S67, D228: the model's extinction, the owner's ruling's default
       cloudIntensity: 1,
       ageYoung: true,
       ageMiddle: true,
@@ -74,6 +83,7 @@ describe("tuning defaults (D199)", () => {
       // S64 (V6): the clouds as extinction, on; the raster at the finest 16 MiB holds on the render grid.
       cloudsExtinction: true,
       cloudRaster: 5,
+      cloudElongation: 1, // S67, D230: the gas field's own shear (R2, the owner's choice)
       // S64 (V6): the HII regions as knots and the clusters with their radius, both on.
       knots: true,
       clusterRadius: true,
@@ -212,6 +222,84 @@ describe("tuning storage", () => {
     expect(changed({ ...TUNING_DEFAULTS })).toEqual({});
     expect(changed({ ...TUNING_DEFAULTS, bloomStrength: 0.5 })).toEqual({ bloomStrength: 0.5 });
   });
+});
+
+describe("the display defaults per template (S67, D227 R4; T1)", () => {
+  // A map as the owner's paste would fill it: the Milky Way's bloom and points, NGC 4414's spikes and steps.
+  const MAP = { milky_way: { bloomStrength: 0.5, pointGain: 2 }, ngc_4414: { spikes: true, steps: 1000, bogus: 1 } as Partial<Tuning> };
+  const EXPOSURE = { ngc_4414: 1.5 };
+
+  // The third paste (2026-10-19): was one set for both - NGC 4414 gains its own values, and both march 48 steps (was 96).
+  it("carry the owner's pastes for both templates (2026-10-18, 2026-10-19 copied to NGC 4414, then the third: NGC 4414's own, steps 48)", () => {
+    expect(Object.keys(TEMPLATE_TUNING)).toEqual(["milky_way", "ngc_4414"]);
+    expect(TEMPLATE_EXPOSURE).toEqual({});
+    const owner = {
+      ...TUNING_DEFAULTS, resolution: 1, pixelBudget: 2_000_000, steps: 48, fieldGain: 1.65, fieldFloor: 0.1, bloomStrength: 2.25,
+      bloomRadius: 0.35, bloomThreshold: 0.45, toneMapping: "aces", spriteSize: 3, pointGain: 4, compCells: true,
+      starsIntensity: 0.55, gasIntensity: 1, dustIntensity: 1, extinctionStrength: 1.25, cloudsExtinction: false,
+    };
+    expect(defaultsFor("milky_way")).toEqual({ ...owner, steps: 96 }); // the owner: "Put the Milky Way back to 96 steps"
+    expect(defaultsFor("ngc_4414")).toEqual({
+      ...owner, fieldGain: 1.2, bloomStrength: 2, spikes: true, cloudsExtinction: true, cloudRaster: 3,
+    });
+    // Against the plain defaults the paste's five values are among what differs (the copy box's own reading).
+    expect(changed(defaultsFor("ngc_4414"))).toMatchObject({ fieldGain: 1.2, bloomStrength: 2, spikes: true, cloudRaster: 3, steps: 48 });
+    expect(defaultsFor(null)).toEqual(TUNING_DEFAULTS);
+    for (const name of ["milky_way", "ngc_4414", null]) expect(exposureFor(name)).toBe(0);
+  });
+
+  it("lay a template's own over TUNING_DEFAULTS, made valid; another template and none keep the plain ones", () => {
+    expect(defaultsFor("milky_way", MAP)).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.5, pointGain: 2 });
+    // Clamped and cleaned as stored choices are: steps to its range, an unknown key dropped.
+    expect(defaultsFor("ngc_4414", MAP)).toEqual({ ...TUNING_DEFAULTS, spikes: true, steps: 256 });
+    expect(defaultsFor("andromeda", MAP)).toEqual(TUNING_DEFAULTS);
+    expect(defaultsFor(null, MAP)).toEqual(TUNING_DEFAULTS);
+    expect(exposureFor("ngc_4414", EXPOSURE)).toBe(1.5);
+    expect(exposureFor("milky_way", EXPOSURE)).toBe(0);
+    expect(exposureFor("ngc_4414", { ngc_4414: Number.NaN })).toBe(0);
+  });
+
+  it("compare and reset against the template's defaults: changed() is what differs from them", () => {
+    const own = defaultsFor("milky_way", MAP);
+    expect(changed(own, own)).toEqual({});
+    expect(changed({ ...own, bloomStrength: 0.35 }, own)).toEqual({ bloomStrength: 0.35 }); // back at today's is a change here
+    expect(changed(own)).toEqual({ bloomStrength: 0.5, pointGain: 2 }); // against the plain defaults: the template's own
+  });
+
+  it("keep each template's choices under its own key, and the one key of before for no template", () => {
+    expect(storageKeyFor("m31")).toBe(`${TUNING_STORAGE_KEY}.m31`);
+    expect(storageKeyFor(null)).toBe(TUNING_STORAGE_KEY);
+    const s = memory();
+    saveTuning({ ...TUNING_DEFAULTS, steps: 128 }, s, "m31");
+    saveTuning({ ...TUNING_DEFAULTS, dither: false }, s, "m33");
+    expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.m31`)!)).toEqual({ steps: 128 });
+    expect(JSON.parse(s.store.get(`${TUNING_STORAGE_KEY}.m33`)!)).toEqual({ dither: false });
+    expect(s.store.has(TUNING_STORAGE_KEY)).toBe(false);
+    expect(loadTuning(s, "m31")).toEqual({ ...TUNING_DEFAULTS, steps: 128 });
+    expect(loadTuning(s, "m33")).toEqual({ ...TUNING_DEFAULTS, dither: false });
+    expect(loadTuning(s, "andromeda")).toEqual(TUNING_DEFAULTS);
+    // At the defaults a template's key is kept, empty, so the old key is not read for it again (the fallback below).
+    saveTuning({ ...TUNING_DEFAULTS }, s, "m31");
+    expect(s.store.get(`${TUNING_STORAGE_KEY}.m31`)).toBe("{}");
+  });
+
+  it("falls back to the old key for a template with no key of its own, read and never written back (the lead's second pass)", () => {
+    const s = memory();
+    // The owner's live tuning, stored before S67 under the one key.
+    s.store.set(TUNING_STORAGE_KEY, JSON.stringify({ bloomStrength: 0.6, spikes: true }));
+    expect(loadTuning(s, "m31")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    expect(loadTuning(s, "m33")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    // A save writes the template's own key; the old key is untouched, and from then on the template's own wins.
+    saveTuning({ ...TUNING_DEFAULTS, bloomStrength: 0.7 }, s, "m31");
+    expect(JSON.parse(s.store.get(TUNING_STORAGE_KEY)!)).toEqual({ bloomStrength: 0.6, spikes: true });
+    expect(loadTuning(s, "m31")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.7 });
+    // Saved back at the defaults, the template's key stays (empty) and the old key's values do not return.
+    saveTuning({ ...TUNING_DEFAULTS }, s, "m31");
+    expect(loadTuning(s, "m31")).toEqual(TUNING_DEFAULTS);
+    expect(loadTuning(s, "m33")).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+    // Over a template's own defaults, the old key's values are laid as any stored choices are.
+    expect(loadTuning(s, null)).toEqual({ ...TUNING_DEFAULTS, bloomStrength: 0.6, spikes: true });
+  });
 
   it("has the star-first picture's four on by default and the diagnostics off, nothing stored, and keeps a switched one (D205, D208)", () => {
     // The picture is the points over the field's remainder, its gas and its dust (D208); until then every layer
@@ -234,7 +322,12 @@ describe("tuning storage", () => {
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
     expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "clusterRadius", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading", "knots"]);
-    for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
+    // ...and, since S67 (D228, the owner's ruling), the extinction strength: linear from 0 to 2, at 1 the model's.
+    for (const c of group.filter((c) => !c.switch && c.key !== "extinctionStrength")) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
+    const strength = group.find((c) => c.key === "extinctionStrength")!;
+    expect(strength).toMatchObject({ kind: "range", min: 0, max: 2, step: 0.01 });
+    expect((strength as { log?: boolean }).log).toBeFalsy();
+    expect(strength.about).toContain("by the owner's ruling of 2026-10-18");
   });
 });
 

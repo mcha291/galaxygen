@@ -26,6 +26,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { type CaptureCamera, DEFAULT_FOV, type LensCamera, isLens, lensScale, orbitPosition, standOf } from "./capture";
 import { type NoiseProbeKind, type NoiseProbeRow, type NoiseProbeTables, runNoiseProbe } from "./noiseProbe";
 import { extent } from "./positions";
+import { screenRings } from "./ringProfile";
 import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
@@ -144,6 +145,7 @@ export function GalaxyView({
         {hdr && <HdrOutput tuning={tuning} />}
         <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
         <FrameProbe />
+        <RingProbe spriteSize={psf?.size ?? tuning.spriteSize} defaultSprite={psf === null} />
         <NoiseProbe />
         <CaptureProbe reach={reach} standRadius={standRadius} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
@@ -228,7 +230,6 @@ function ZoomBridge({ reach, standRadius, zoom, onView }: { reach: number; stand
 function HdrOutput({ tuning }: { tuning: ViewTuning }) {
   const latest = useRef(tuning);
   latest.current = tuning;
-  const bloom = useRef<UnrealBloomPass | null>(null);
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
@@ -240,8 +241,7 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
     // giants), and not by much. Bloom is also the fastest way to make an instrument look like
     // a screensaver (RENDER_PLAN R5).
     const t = latest.current;
-    bloom.current = new UnrealBloomPass(new Vector2(size.width, size.height), t.bloomStrength, t.bloomRadius, t.bloomThreshold);
-    c.addPass(bloom.current);
+    c.addPass(new UnrealBloomPass(new Vector2(size.width, size.height), t.bloomStrength, t.bloomRadius, t.bloomThreshold));
     c.addPass(new OutputPass()); // tone mapping and the sRGB encode, once
     return c;
   }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
@@ -262,7 +262,10 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
   // the output pass rebuilds its tone curve when the renderer's changes.
   const { bloomStrength, bloomRadius, bloomThreshold, toneMapping } = tuning;
   useEffect(() => {
-    const pass = bloom.current;
+    // The pass is read from the composer that renders, not kept in a ref filled inside the memo: in development
+    // React builds a memo twice and keeps one, so a ref set there could hold the discarded composer's pass and the
+    // sliders would move a bloom nobody draws (S67: the owner saw no change at any strength).
+    const pass = composer.passes.find((p): p is UnrealBloomPass => p instanceof UnrealBloomPass);
     if (!pass) return;
     pass.strength = bloomStrength;
     pass.radius = bloomRadius;
@@ -337,6 +340,60 @@ function FrameProbe() {
       if (holder.__galaxygenFrameSum === probe) delete holder.__galaxygenFrameSum;
     };
   }, [gl, scene, camera, advance]);
+  return null;
+}
+
+/**
+ * An instrument for the surface-brightness gate (S67, D227 R5; rule B1, the probe above's precedent):
+ * `window.__galaxygenRingProfile(edges)` draws the scene once into a float target at the drawing buffer's size, as
+ * `__galaxygenFrameSum` does, and sums each pixel's linear light times the sky's area it covers at the disc's plane in
+ * rings of galactocentric radius (`edges`, kpc; ringProfile.ts screenRings) - a read-only copy of what is on screen,
+ * which divided by the field's gain is L_sun over the white point, the render's own unit. It changes nothing drawn.
+ * Beside the rings (the fix pass, F1): the sprite the points are drawn with - its size in drawing-buffer pixels as
+ * FluxPoints sets it (the instrument's or the tuning's spriteSize, times the pixel ratio) and whether it is the default
+ * PSF's texture - so the gate bins each point's sprite at the size the page drew it.
+ */
+function RingProbe({ spriteSize, defaultSprite }: { spriteSize: number; defaultSprite: boolean }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
+  const advance = useThree((s) => s.advance);
+  useEffect(() => {
+    const holder = window as unknown as Record<string, unknown>;
+    const probe = (edges: number[]) => {
+      advance(performance.now());
+      const size = gl.getDrawingBufferSize(new Vector2());
+      const target = new WebGLRenderTarget(size.x, size.y, { type: FloatType, depthBuffer: false });
+      const before = gl.getRenderTarget();
+      const clear = gl.getClearColor(new Color());
+      const alpha = gl.getClearAlpha();
+      gl.setRenderTarget(target);
+      gl.setClearColor(0x000000, 1);
+      gl.clear();
+      gl.render(scene, camera);
+      const pixels = new Float32Array(size.x * size.y * 4);
+      gl.readRenderTargetPixels(target, 0, 0, size.x, size.y, pixels);
+      gl.setRenderTarget(before);
+      gl.setClearColor(clear, alpha);
+      target.dispose();
+      camera.updateMatrixWorld();
+      const e = camera.matrixWorld.elements;
+      // The camera's axes in the world: its local x (right), y (up) and -z (forward), as columns of its matrix.
+      const right: [number, number, number] = [e[0], e[1], e[2]];
+      const up: [number, number, number] = [e[4], e[5], e[6]];
+      const forward: [number, number, number] = [-e[8], -e[9], -e[10]];
+      const eye: [number, number, number] = [e[12], e[13], e[14]];
+      const tanHalfY = Math.tan((camera.fov * Math.PI) / 360);
+      // The camera it binned by, returned too (the lead's fourth pass): a point's screen ring can be traced against it.
+      const cam = { eye, forward, right, up, tanHalfY };
+      const sprite = { px: spriteSize * gl.getPixelRatio(), default: defaultSprite };
+      return { ...screenRings(pixels, size.x, size.y, cam, edges), width: size.x, height: size.y, camera: cam, sprite };
+    };
+    holder.__galaxygenRingProfile = probe;
+    return () => {
+      if (holder.__galaxygenRingProfile === probe) delete holder.__galaxygenRingProfile;
+    };
+  }, [gl, scene, camera, advance, spriteSize, defaultSprite]);
   return null;
 }
 

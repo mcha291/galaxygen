@@ -219,11 +219,17 @@ def test_row_37s_parts(models, default):
     assert d["G_Z_clamped"] == pytest.approx(1.259, abs=0.02)  # S45 diagnosis (D196)
     assert (d["oneside_Z"], d["outside_Z"]) == (0, 0)  # S45 diagnosis (D196): no fit-range region near a Z edge
     # S61 (D220): was 0.213 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_age"] == pytest.approx(0.267, abs=0.02)  # S45 diagnosis (D196)
+    # S67 (D231): was 0.267 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
+    # moves each region's density, so its ionization parameter and the grid's response to age and U at it
+    assert d["G_age"] == pytest.approx(0.247, abs=0.02)  # S45 diagnosis (D196)
     # S61 (D220): was (0.004, 0.074, 0.745) - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_age_pct"] == pytest.approx((0.005, 0.083, 0.973), abs=0.02)  # S45 diagnosis (D196)
+    # S67 (D231): was (0.005, 0.083, 0.973) - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
+    # moves each region's density, so its ionization parameter and the grid's response to age and U at it
+    assert d["G_age_pct"] == pytest.approx((0.004, 0.079, 0.908), abs=0.02)  # S45 diagnosis (D196)
     # S61 (D220): was 0.213 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_age_clamped"] == pytest.approx(0.266, abs=0.02)  # S45 diagnosis (D196)
+    # S67 (D231): was 0.266 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
+    # moves each region's density, so its ionization parameter and the grid's response to age and U at it
+    assert d["G_age_clamped"] == pytest.approx(0.246, abs=0.02)  # S45 diagnosis (D196)
     # S61 (D220): was 770 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["oneside_age"] == pytest.approx(702, abs=8)  # S45 diagnosis (D196); S51 (D210): was 759, the census redrawn on the gas's ridge
     # S45 diagnosis (D196): below the 0.5 Myr floor; S51 (D210): was 126, the census redrawn on the gas's ridge
@@ -231,7 +237,9 @@ def test_row_37s_parts(models, default):
     assert d["G_U"] == pytest.approx(-0.378, abs=0.02)  # S45 diagnosis (D196)
     # S45 diagnosis (D196). The 84th percentile: S55 (D214): was -0.177, read layer-off (0.019 of its 0.02 tolerance)
     # S61 (D220): was (-0.483, -0.450, -0.196) - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_U_pct"] == pytest.approx((-0.480, -0.428, -0.193), abs=0.02)
+    # S67 (D231): was (-0.480, -0.428, -0.193) - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
+    # moves each region's density, so its ionization parameter and the grid's response to age and U at it
+    assert d["G_U_pct"] == pytest.approx((-0.482, -0.450, -0.197), abs=0.02)
     assert (d["oneside_U"], d["outside_U"]) == (0, 0)  # S45 diagnosis (D196)
     # S45 diagnosis (D196); S51 (D210): was -0.0081, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0059 - the layer-off census drawn ring-first, a new draw (the same on and off since)
@@ -256,7 +264,9 @@ def test_row_37s_parts(models, default):
     # S61 (D220): was 6.365 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["la0"] == pytest.approx(6.321, abs=0.01)  # S45 diagnosis (D196); S51 (D210): was 6.288, the census redrawn on the gas's ridge
     # S61 (D220): was -2.145 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["lu0"] == pytest.approx(-2.112, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
+    # S67 (D231): was -2.112 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
+    # moves each region's density, so its ionization parameter and the grid's response to age and U at it
+    assert d["lu0"] == pytest.approx(-2.030, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0028 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["probe_ageU"] == pytest.approx(0.0042, abs=0.002)  # S45 diagnosis (D196): (i) Z frozen; S51 (D210): was -0.0016, the census redrawn on the gas's ridge
     assert d["probe_Z"] == pytest.approx(-0.1158, abs=0.002)  # S45 diagnosis (D196): (ii) age, U frozen; S51 (D210): was -0.1177, the census redrawn on the gas's ridge

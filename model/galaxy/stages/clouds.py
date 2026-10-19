@@ -20,9 +20,13 @@ source in the about line; nothing here is recalled (rule B9).**
   (RENDER_PHYSICS §7's redistribution rule for clouds) — the diffuse fraction is zero by
   construction, and Rice et al.'s finding that catalogued clouds hold 25% of the Milky Way's H₂ is
   what that construction stands against (debt #94).
-- *Size* — a constant surface density, Heyer et al. 2009's 42 M☉ pc⁻²: R = √(M/πΣ).
+- *Size* — R = √(M/πΣ) at Lada & Dame 2020's X_CO-corrected surface density, 82 M☉ pc⁻² inside the
+  solar circle and 35 outside it (a step at ``R_SUN`` and the cloud's birth radius, the mass function's
+  own boundary), held at Miville-Deschenes et al. 2017's largest radius, 150 pc, with the mass kept
+  (S67, D231; until then one Σ, Heyer et al. 2009's 42, measured at 4-8 kpc at a constant X_CO).
 - *Velocity dispersion* — Heyer et al. 2009's eq. 10, σ_v = (πGΣ/5)^½ R^½, the virial relation at
-  that surface density; the Mach number is σ_v over the sound speed of 10 K molecular gas.
+  each cloud's own surface density M/πR² (since D231: a capped giant's is above its regime's); the
+  Mach number is σ_v over the sound speed of 10 K molecular gas.
 - *Density PDF* — the renderer's log-normal width is σ_s² = ln(1 + b²ℳ²) (Federrath et al.); b is
   published as a scalar, and σ_s per cloud as a column so the renderer computes nothing (D5, A9).
 - *Age and state* — a steady population: age uniform over the 26 Myr lifetime Kawamura et al. 2009's
@@ -37,7 +41,7 @@ source in the about line; nothing here is recalled (rule B9).**
   four are the randomness layer's**: synthetic, published by its stage ``cloud_texture``
   (``galaxy/layer/cloud_texture.py``), drawn since S61 on the layer's own seed (``texture_seed``, D220
   item 5) and zero with the layer off; a census materialised here carries them through
-  ``galaxy.layer.compose``. The cloud's height, a sech² layer at half the thin disc's scale height, stays
+  ``galaxy.layer.compose``. The cloud's height, a sech² layer of the molecular layer's measured FWHM (S67, D229), stays
   this stage's seeded draw (debt #95): a sample of the cloud layer's vertical profile, drawn on the
   ring's stream and the same with the layer on or off - not a placement (D220 item 7).
 - *Where* — radius inverted from Σ_H₂ within the cell's ring; each cell's expected count, and each
@@ -118,16 +122,19 @@ CLUSTER_HOSTING_STATES: tuple[str, ...] = ("blown_open", "dispersing")
 # m_p = 1.67262192e-27 kg, read at S43].
 K_OVER_MH = 1.380649e-23 / 1.67262192e-27 / 1.0e6  # (km/s)^2 / K
 G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) times 1000
-# The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
-# source (debt #95) [inferred]. Named at S39 so the render's HII layer reads this one number (A9).
-CLOUD_LAYER_SHARE = 0.5
+# The clouds' layer (S67, D229): an absolute thickness read from the Milky Way's molecular layer, the level-0
+# constant MOLECULAR_LAYER_FWHM, not a share of the stellar disc (a share would mix the sech² and exponential
+# shapes' FWHM). Until S67 it was CLOUD_LAYER_SHARE 0.5 of the thin disc's scale height, a stated guess (#95).
+# The FWHM of sech²(z/2h) in units of h: sech²(x) = 1/2 at x = artanh(1/√2), so the half maximum is at
+# z = ±2h·artanh(1/√2) and the full width 4·artanh(1/√2) h = 3.5255 h.
+SECH2_FWHM_PER_SCALE_HEIGHT = 4.0 * math.atanh(1.0 / math.sqrt(2.0))
 # The clustering field's constants, which the census reads to place a cloud in its cell (S61, D220 part II as amended).
 CLUSTERING_CONSTANTS: tuple[str, ...] = tuple(_CLUSTERING_CONSTANTS.values())
 
 
-def cloud_layer_height(thin_disc_scale_height_pc: float) -> float:
-    """The clouds' sech² scale height, kpc, from the thin disc's (pc)."""
-    return CLOUD_LAYER_SHARE * float(thin_disc_scale_height_pc) / PC_PER_KPC
+def cloud_layer_height(constants: Mapping[str, Any]) -> float:
+    """The clouds' sech²(z/2h) scale height, kpc: the h whose FWHM is the molecular layer's (S67, D229)."""
+    return float(constants["MOLECULAR_LAYER_FWHM"]) / SECH2_FWHM_PER_SCALE_HEIGHT / PC_PER_KPC
 
 
 # --- the mass function ---------------------------------------------------------------------------
@@ -151,6 +158,22 @@ def mass_function_sample(u: np.ndarray, slope: float, m_min: float, m_max: float
 def cloud_radius_pc(mass: np.ndarray, surface_density: float) -> np.ndarray:
     """R = √(M / πΣ) in pc for a cloud of constant surface density Σ (M☉ pc⁻²)."""
     return np.sqrt(np.asarray(mass, dtype=float) / (math.pi * surface_density))
+
+
+def surface_density_at(radius_kpc: np.ndarray, c: Mapping[str, float]) -> np.ndarray:
+    """Σ_GMC (M☉ pc⁻²) at each galactocentric radius (kpc): Lada & Dame 2020's X_CO-corrected regimes, 82 inside the
+    solar circle and 35 outside it, a step at ``R_SUN`` - the boundary :func:`law_for` uses (S67, D231)."""
+    inside = np.asarray(radius_kpc, dtype=float) < float(c["R_SUN"])
+    return np.where(inside, float(c["GMC_SURFACE_DENSITY_INNER"]), float(c["GMC_SURFACE_DENSITY_OUTER"]))
+
+
+def cloud_size_law(mass: np.ndarray, radius_kpc: np.ndarray, c: Mapping[str, float]) -> tuple[np.ndarray, np.ndarray]:
+    """(radius pc, effective Σ M☉ pc⁻²) of clouds of these masses at these birth radii (S67, D231): R = √(M/πΣ) at
+    the regime's Σ (:func:`surface_density_at`), held at ``GMC_RADIUS_MAX`` with the mass kept, and the surface
+    density the cloud then has, M / πR² - the regime's own below the cap, higher above it."""
+    m = np.asarray(mass, dtype=float)
+    size = np.minimum(cloud_radius_pc(m, surface_density_at(radius_kpc, c)), float(c["GMC_RADIUS_MAX"]))
+    return size, m / (math.pi * size * size)
 
 
 def velocity_dispersion(radius_pc: np.ndarray, surface_density: float) -> np.ndarray:
@@ -424,12 +447,11 @@ def materialise_clouds(
         int(r): np.where((R >= rings[r]) & (R <= rings[r + 1]), sigma_h2 * R, 0.0)
         for r in np.unique(layout.ring)
     }
-    sigma = float(c["GMC_SURFACE_DENSITY"])
-    c_s = sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
+    c_s =sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
     b = float(c["TURBULENCE_FORCING_B"])
     phases = (float(c["GMC_PHASE_EMBEDDED"]), float(c["GMC_PHASE_BLOWN_OPEN"]), float(c["GMC_PHASE_DISPERSING"]))
     lifetime = sum(phases)
-    h_cloud = cloud_layer_height(fields["thin_disc_scale_height"])  # kpc, half the thin disc's [inferred]
+    h_cloud = cloud_layer_height(c)  # kpc, the molecular layer's measured FWHM (S67, D229)
     feh_gas = np.asarray(fields["feh_gas"], dtype=float)
     alpha_gas = np.asarray(fields["alpha_fe_gas"], dtype=float)
     width = 2.0 * math.pi / CELL_SECTORS
@@ -463,7 +485,9 @@ def materialise_clouds(
             )
         slope, m_min, m_max = law_for(0.5 * (lo + hi), c)
         mass = mass_function_sample(draw("mass"), slope, m_min, m_max)
-        size = cloud_radius_pc(mass, sigma)
+        # S67 (D231): the size at the regime's Σ at the birth radius, capped; σ_v at each cloud's own Σ = M/πR²
+        # (Heyer et al. 2009 eq. 10, √(GM/5R)), so a capped giant is faster and its Mach number higher.
+        size, sigma = cloud_size_law(mass, birth, c)
         disp = velocity_dispersion(size, sigma)
         mach = disp / c_s
         age = draw("age") * lifetime
@@ -559,8 +583,10 @@ CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "the randomness layer's clustering field, so the clouds gather into complexes below a "
                         "cell's scale (D220 part II); the sector is not moved by it.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
-                       "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
-                       "molecular layer's thickness was read (debt #95). A sample of the layer's vertical "
+                       "A sech² layer whose FWHM is the Milky Way's molecular layer, 120 pc (Bronfman et al. "
+                       "1988; scale height 34.04 pc), one value at every radius and for every template - "
+                       "the flaring and the massive clouds' thinner layer are not built (debt #180; S67, "
+                       "D229; until then half the thin disc's scale height, a guess). A sample of the layer's vertical "
                        "profile drawn on the ring's stream, the same with the layer on or off: not a placement "
                        "(D220 item 7).")
 CLOUD_MASS = _column("cloud_mass", "Cloud mass", "Msun",
@@ -570,11 +596,13 @@ CLOUD_MASS = _column("cloud_mass", "Cloud mass", "Msun",
                      "the ISM's molecular mass, to within the Poisson noise of the count.",
                      ramp=Ramp("magma", scale="log"))
 CLOUD_SIZE = _column("cloud_size", "Cloud radius", "pc",
-                     "√(M/πΣ) at one surface density for every cloud, Heyer et al. 2009's median; a renderer "
-                     "reads mass over this for the mean density.", ramp=Ramp("viridis", scale="log"))
+                     "√(M/πΣ) at Lada & Dame 2020's X_CO-corrected surface density at the cloud's birth radius - "
+                     "82 M☉ pc⁻² inside the solar circle, 35 outside it - held at 150 pc, the Milky Way's "
+                     "largest (Miville-Deschenes et al. 2017), with the mass kept (S67, D231); a renderer reads "
+                     "mass over this for the mean density.", ramp=Ramp("viridis", scale="log"))
 CLOUD_DISPERSION = _column("cloud_velocity_dispersion", "Velocity dispersion σ_v", "km/s",
-                           "Heyer et al. 2009's size-linewidth relation at the cloud's surface density and "
-                           "radius: the virial dispersion of a cloud that size.")
+                           "Heyer et al. 2009's size-linewidth relation at the cloud's own surface density, "
+                           "M/πR², and radius: the virial dispersion of a cloud that size, √(GM/5R).")
 CLOUD_MACH = _column("cloud_mach_number", "Mach number", "dimensionless",
                      "σ_v over the sound speed of 10 K molecular gas. It sets the width of the log-normal density "
                      "distribution the renderer synthesises the interior from: mean density alone is fog.")
@@ -608,10 +636,16 @@ CLOUD_EXTINCTION_V = FieldDecl(
     name="cloud_extinction_v", label="A cloud's central extinction A_V", unit="mag", kind=Kind.SCALAR,
     meaningful_zero=True, provenance="seeded",
     about=(
-        "The V-band extinction face-on through a cloud's centre: the column of a uniform sphere at the census's "
-        "one surface density (Heyer et al. 2009's 42 solar masses per square parsec, so it is the same for "
-        "every cloud - a scalar, not a column), 1.4 proton masses per hydrogen, times the grain table's V "
-        "cross-section per hydrogen (Draine 2003, the dust stage's own table): 3.0 mag. What a renderer darkens "
+        "The V-band extinction face-on through a cloud's centre: the column of a uniform sphere at the inner "
+        "regime's surface density (Lada & Dame 2020's 82 solar masses per square parsec inside the solar circle; "
+        "the centre column is 3/2 of the mean, so mass and radius cancel to the surface density alone and it is "
+        "the same for every uncapped cloud inside the solar circle - a scalar, not a column), 1.4 proton masses "
+        "per hydrogen, times the grain table's V cross-section per hydrogen (Draine 2003, the dust stage's own "
+        "table): 5.80 mag. Since S67 (D231) the census has two surface densities and a capped radius, so it is "
+        "no longer every cloud's: outside the solar circle (35) an uncapped cloud's is 2.47 mag, and a capped "
+        "giant's more, its surface density M/piR^2 (until D231 one surface density, Heyer et al. 2009's 42: "
+        "2.97 mag). No drawing reads it since D228: each cloud is drawn at its own column, `/api/clouds`' "
+        "`cloud_dust_extinction_v` (debt #167). What a renderer darkens "
         "a cloud by before it makes the interior log-normal at the published width, which keeps the mean column "
         "(RENDER_PHYSICS section 6); a cloud's centre is opaque at the pillars' scale, not at the disc's. "
         "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that "
@@ -678,13 +712,20 @@ def compute_clouds(ctx: Context) -> Mapping[str, Any]:
         "cloud_mass_total": float(np.sum(catalogue["cloud_mass"])),
         "cloud_forcing_parameter": float(c["TURBULENCE_FORCING_B"]),
         "cloud_lifetime": float(c["GMC_PHASE_EMBEDDED"]) + float(c["GMC_PHASE_BLOWN_OPEN"]) + float(c["GMC_PHASE_DISPERSING"]),
-        # S40 (V3): one A_V for every cloud, the census fixing one surface density; the centre column of a
-        # uniform sphere is 3/2 of the mean, so mass and radius cancel to Sigma alone.
-        "cloud_extinction_v": float(central_extinction_v(
-            np.array([1.0e5]), np.array([cloud_radius_pc(np.array([1.0e5]), float(c["GMC_SURFACE_DENSITY"]))[0]]),
-            float(c["HII_MASS_PER_HYDROGEN"]), _grain_v_extinction(),
-        )[0]),
+        # S40 (V3): one A_V, the census then fixing one surface density; since S67 (D231) the inner regime's.
+        "cloud_extinction_v": census_extinction_v(c),
     }
+
+
+def census_extinction_v(c: Mapping[str, float]) -> float:
+    """The stage's one central A_V (mag): an uncapped cloud of the inner regime's surface density (S67, D231; was the
+    census's one Σ, 42). The centre column of a uniform sphere is 3/2 of the mean, so mass and radius cancel to Σ
+    alone; the 10⁵ M☉ cloud is any uncapped cloud."""
+    sigma = float(c["GMC_SURFACE_DENSITY_INNER"])
+    return float(central_extinction_v(
+        np.array([1.0e5]), cloud_radius_pc(np.array([1.0e5]), sigma), float(c["HII_MASS_PER_HYDROGEN"]),
+        _grain_v_extinction(),
+    )[0])
 
 
 CLOUDS = IMPLEMENTATIONS.register(
@@ -700,14 +741,17 @@ CLOUDS = IMPLEMENTATIONS.register(
         reads_constants=(
             "HII_MASS_PER_HYDROGEN",  # S40: the cloud's column density per hydrogen, for its A_V
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
-            "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_SURFACE_DENSITY", "MOLECULAR_GAS_TEMPERATURE",
+            "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN",
+            "GMC_SURFACE_DENSITY_INNER", "GMC_SURFACE_DENSITY_OUTER", "GMC_RADIUS_MAX",  # S67 (D231): was one Σ, 42
+            "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
+            "MOLECULAR_LAYER_FWHM",  # S67 (D229): the clouds' layer, an absolute thickness (was half the thin disc's)
             *GAS_PATTERN_CONSTANTS,  # S57 (D216): the gas's own response places the clouds - its sound speed, and G
             *CLUSTERING_CONSTANTS,  # S61 (D220 part II): the clustering field's five numbers
         ),
         requires=(
-            "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
+            "gas_molecular_surface_density", "feh_gas", "alpha_fe_gas",  # S67 (D229): no longer the thin disc's height
             *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
             "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud is placed by in its cell
             *SPUR_READS,  # S62 (D221 item 7 as amended): the gas spurs, composed into the gas pattern the clouds are placed by

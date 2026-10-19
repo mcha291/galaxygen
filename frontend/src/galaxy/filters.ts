@@ -3,8 +3,8 @@
 // returns responses, and the viewer divides each channel by its white point and multiplies by the
 // exposure. Nothing here evaluates a spectrum (rule D5).
 
-import data from "./filters.json";
-import instruments from "./instruments.json";
+import data from "./filters.json" with { type: "json" };
+import instruments from "./instruments.json" with { type: "json" };
 
 /**
  * One filter's transmission, as the model's spectrum function takes it (stages/spectra.py). Å; air unless the

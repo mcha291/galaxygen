@@ -153,7 +153,8 @@ def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
     # 55 degrees through a 5 degree lens and the Hubble broadband set.
     milky_way, ngc = by_template["milky_way"][0], by_template["ngc_4414"][0]
     assert (milky_way["camera"]["inclination_deg"], milky_way["camera"]["fov_deg"], milky_way["filters"]) == (0, 45, "rgb")
-    assert (ngc["camera"]["inclination_deg"], ngc["camera"]["fov_deg"], ngc["filters"]) == (55, 5, "wfc3")
+    # S67 (D227 T1): was (55, 5, "wfc3") - the owner's "Switch to RGB": NGC 4414 opens on RGB, so its captures are taken there.
+    assert (ngc["camera"]["inclination_deg"], ngc["camera"]["fov_deg"], ngc["filters"]) == (55, 5, "rgb")
 
 
 def test_the_list_holds_each_template_once_at_a_zoomed_stand():
@@ -285,6 +286,9 @@ def test_the_record_beside_the_frames_describes_these_files():
         # The frame-time readout (S66, D226 R8): the seconds from the capture's start to its ready frame, written by
         # picture:update - the API's compute included (cold on the run's first capture), not the GPU's time per frame.
         assert isinstance(entry.get("ready_s"), (int, float)) and entry["ready_s"] > 0, f"{c['name']}: no ready_s"
+        # The GPU's time for the ready frame's last march (S67, D227 R6): a timer query's ms, or null where the browser
+        # gives no timer - present either way, so a missing number is said, not left out.
+        assert "gpu_ms" in entry and (entry["gpu_ms"] is None or entry["gpu_ms"] >= 0), f"{c['name']}: no gpu_ms"
     package = load(FRONTEND / "package.json")
     assert record["playwright"] == package["devDependencies"][PLAYWRIGHT], "the frames were written by another Playwright"
     # The tolerance the frames were written under is the one the spec compares with.

@@ -453,15 +453,52 @@ LEVEL0: dict[str, Constant] = {
         "[inferred]. With gamma near -1.6 the mass in clouds is set by the top of the function and moves "
         "6% for a factor of ten here; the count is set by this end and moves fourfold (debt #94).",
     ),
-    "GMC_SURFACE_DENSITY": Constant(
-        42.0,
+    # S67 (D231): GMC_SURFACE_DENSITY 42 retired for two regimes and a largest radius (docs/READING_CLOUD_SIZES.md).
+    "GMC_SURFACE_DENSITY_INNER": Constant(
+        82.0,
         "Msun/pc2",
-        "Mean mass surface density of a giant molecular cloud, from which its radius follows as "
-        "sqrt(M / pi Sigma): 'the median mass surface density of molecular hydrogen for this sample is "
-        "42 Msun/pc2' [verified: Heyer et al. 2009, ApJ 699, 1092, arXiv:0809.1397, abstract, read at "
-        "S32]. The named alternatives are Roman-Duval et al. 2010's median 144 (ApJ 723, 492, section "
-        "VI.3; their M = 228 R^2.36, eq. 13) and Solomon et al. 1987's 206, which Heyer et al. re-derive "
-        "downward; three sourced values, the largest homogeneous re-analysis chosen (rule B12).",
+        "Mass surface density of a giant molecular cloud inside the solar circle, from which its radius follows as "
+        "sqrt(M / pi Sigma): 82 +/- 10 Msun/pc2 in the molecular ring and inside it, after the CO-to-H2 factor's "
+        "radial gradient is corrected (X_CO(R)) [verified: Lada & Dame 2020, ApJ 898, 3, arXiv:2006.08632, read at "
+        "S67]; their 3-5 kpc mean 84.5 agrees, and PHANGS discs' ~100 (Rosolowsky et al. 2021) is a disclosed check, "
+        "not a pin. It supersedes Heyer et al. 2009's median 42 (ApJ 699, 1092, arXiv:0809.1397, the value until "
+        "S67), measured over R 4.1-8.1 kpc only at a constant X_CO - the uncorrected reading of the same region; "
+        "Roman-Duval et al. 2010's 144 within the 4-sigma 13CO contour is threshold-biased high. The regime's "
+        "boundary is R_SUN at the cloud's birth radius, the one boundary the mass function's truncation uses "
+        "(docs/READING_CLOUD_SIZES.md).",
+    ),
+    "GMC_SURFACE_DENSITY_OUTER": Constant(
+        35.0,
+        "Msun/pc2",
+        "Mass surface density of a giant molecular cloud outside the solar circle: 'a single mass surface density "
+        "of Sigma_GMC = 35' outside the molecular ring, after the X_CO(R) correction [verified: Lada & Dame 2020, "
+        "ApJ 898, 3, arXiv:2006.08632, read at S67]. Their constant-X_CO 13 +/- 4 at 9-14 kpc and their eq. 1 "
+        "(Sigma = 54.5 - 3.7 R) are the uncorrected readings, not entered (D231).",
+    ),
+    "GMC_RADIUS_MAX": Constant(
+        150.0,
+        "pc",
+        "The largest cloud radius: the Milky Way's whole-Galaxy 12CO catalogue holds radii to ~150 pc, 'comparable "
+        "to the molecular disk's scale height' [verified: Miville-Deschenes, Murray & Lee 2017, ApJ 834, 57, "
+        "arXiv:1610.05918, read at S67]. A cloud whose sqrt(M / pi Sigma) exceeds it is held at it with its mass "
+        "kept, so its surface density rises: W43's ~460 Msun/pc2 at R_eq ~70 pc and 7.1e6 Msun (Nguyen Luong et al. "
+        "2011) is a disclosed check that the giants are denser (D231).",
+    ),
+    "MOLECULAR_LAYER_FWHM": Constant(
+        120.0,
+        "pc",
+        "Full width at half maximum of the Milky Way's molecular (CO) layer, the clouds' layer: 'a FWHM of 120 "
+        "+/- 18 pc, roughly independent of R' from 2 kpc to the solar circle [verified: Bronfman et al. 1988, "
+        "ApJ 324, 248, read via Ferriere 2001, RMP 73, 1031, section II.A, at S67]. The neighbours: 118 pc FWHM "
+        "'for the layer of molecular gas traced by CO' [verified: Bronfman et al. 2000, A&A 358, 521, section "
+        "4.1, read at S67] and 136 +/- 17 pc at R0 [verified: Clemens, Sanders & Scoville 1988, ApJ 327, 139, "
+        "via Ferriere 2001 section II.A]; Malhotra 1994's Gaussian sigma_z 58 pc at R0 (FWHM 137) the high "
+        "reading (docs/READING_CLOUD_LAYER.md). An absolute thickness, not a share of the stellar disc (D229): "
+        "the clouds' sech^2(z/2h) scale height is the h whose FWHM this is, h = FWHM / (4 artanh(1/sqrt 2)) = "
+        "34.04 pc, derived in stages/clouds.py. One value at every radius and for every template: the layer's "
+        "flaring outside R0 (Nakanishi & Sofue 2006), the conflict inside it and the most massive clouds' "
+        "thinner layer (Stark & Lee 2005) are not built (debt #180); ngc_4414 takes the Milky Way's measured "
+        "layer, which Yim et al. 2014's edge-on CO widths (sigma 31-89 pc + 1-5 pc/kpc x R) bracket [inferred].",
     ),
     "MOLECULAR_GAS_TEMPERATURE": Constant(
         10.0,

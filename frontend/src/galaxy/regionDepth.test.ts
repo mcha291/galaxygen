@@ -19,28 +19,32 @@ import {
 
 // The gate of T5 (S64, RULING_S64 R9): one cloud on the line of sight, a star in front of it and a star behind it,
 // through the march's twin and the points' twin. The cloud is smooth (the layer off: no noise, no gradient, no
-// cavity), so its optical depth on the axis is the published central one exactly: A_V / (2.5 log10 e), the diameter
-// times kappa_V = tau_centre / (2 r). Its A_V is the census's (2.9696 mag); the extinction ratios are a synthetic
-// set, standing in for /api/render's per-channel A_lambda / A_V.
+// cavity), so its optical depth on the axis is its central one exactly: A_V / (2.5 log10 e), the diameter times
+// kappa_V. Since S67 (D228) a cloud carries its own published face-on mean column, and a uniform sphere's central
+// column is 1.5 times its mean: the clouds here publish a mean of 2/3 of 2.9696 mag, so the axis reads 2.9696 (the
+// census's law, the number these tests were written at). The extinction ratios are a synthetic set, standing in for
+// /api/render's per-channel A_lambda / A_V.
 const A_V = 2.9696;
+const MEAN_AV = (2 / 3) * A_V;
 const EXT: [number, number, number] = [1.3, 1.0, 0.75];
 const eye: [number, number, number] = [0, 0, 0];
 const axis: [number, number, number] = [1, 0, 0]; // the scene's +x: a cloud at azimuth 0, height 0 lies on it
 
-/** Clouds on the +x axis at these radii (kpc) and sizes (pc), smooth and without a host cluster. */
-function cloudsAt(radii: number[], sizes: number[]) {
+/** Clouds on the +x axis at these radii (kpc) and sizes (pc), smooth and without a host cluster, at one mean A_V. */
+function cloudsAt(radii: number[], sizes: number[], meanAv: number = MEAN_AV) {
   const n = radii.length;
   return {
     cloud_radius: radii, cloud_azimuth: Array(n).fill(0), cloud_height: Array(n).fill(0), cloud_size: sizes,
     cloud_mass: radii.map((_, i) => n - i), cloud_density_pdf_width: Array(n).fill(1.4), cloud_density_gradient: Array(n).fill(0),
     cloud_gradient_angle: Array(n).fill(0), cloud_cluster_index: Array(n).fill(-1), cell: Array(n).fill(300), index: radii.map((_, i) => i),
+    cloud_dust_extinction_v: Array(n).fill(meanAv),
   };
 }
 const march = (table: ReturnType<typeof packObjects>, weight = 1, dir = axis, origin = eye) =>
   marchTransmission(origin, dir, table.data, table.count, EXT, weight, null);
 
 describe("the depth-aware composite (T5): one cloud, a star in front and a star behind", () => {
-  const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, A_V);
+  const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] });
   const ray = march(table);
   const texel: [number, number, number, number] = [...ray.trans, ray.alpha];
 
@@ -82,7 +86,7 @@ describe("the depth-aware composite (T5): one cloud, a star in front and a star 
 
 describe("the front on other rays", () => {
   it("writes NO_FRONT where the ray meets no cloud, and the points then take nothing", () => {
-    const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, A_V);
+    const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] });
     const miss = march(table, 1, [0, 1, 0]);
     expect(miss).toEqual({ trans: [1, 1, 1], alpha: NO_FRONT });
     expect(NO_FRONT).toBeGreaterThan(0);
@@ -92,13 +96,13 @@ describe("the front on other rays", () => {
   });
 
   it("weights the entries by optical depth: two equal clouds give the midpoint, a heavier one pulls the front", () => {
-    const equal = march(packObjects(cloudsAt([6, 10], [20, 20]), { cluster_radius: [] }, A_V));
+    const equal = march(packObjects(cloudsAt([6, 10], [20, 20]), { cluster_radius: [] }));
     // equal tau (same A_V and size): the mean of the two entries, 5.98 and 9.98
     expect(Math.abs(-equal.alpha - 7.98)).toBeLessThan(1e-5);
     for (let k = 0; k < 3; k += 1) expect(Math.abs(equal.trans[k] / Math.exp((-2 * A_V / MAG_PER_TAU) * EXT[k]) - 1)).toBeLessThan(2e-6);
     // the same column per diameter, a larger cloud: tau on the axis is the central tau again (kappa scales as 1/r),
     // so a cloud's weight is its tau on the ray, not its size
-    const sized = march(packObjects(cloudsAt([6, 10], [20, 40]), { cluster_radius: [] }, A_V));
+    const sized = march(packObjects(cloudsAt([6, 10], [20, 40]), { cluster_radius: [] }));
     expect(Math.abs(-sized.alpha - (5.98 + 9.96) / 2)).toBeLessThan(1e-5);
     // a star between the two is behind the front (the tau-weighted mean): the stated approximation of one front
     expect(pointTransmission([...equal.trans, equal.alpha], 8.5)).toEqual(equal.trans);
@@ -106,7 +110,7 @@ describe("the front on other rays", () => {
   });
 
   it("puts the front at the camera when the camera is inside the cloud: every star is behind it", () => {
-    const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, A_V);
+    const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] });
     const inside = march(table, 1, axis, [8, 0, 0]);
     expect(inside.alpha).toBeLessThanOrEqual(0);
     expect(-inside.alpha).toBe(0);
@@ -116,7 +120,7 @@ describe("the front on other rays", () => {
   });
 
   it("fades T with the regime's weight and keeps the front", () => {
-    const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, A_V);
+    const table = packObjects(cloudsAt([8], [20]), { cluster_radius: [] });
     const full = march(table, 1);
     const half = march(table, 0.5);
     expect(half.alpha).toBe(full.alpha);
@@ -124,11 +128,11 @@ describe("the front on other rays", () => {
   });
 
   it("draws nothing from a missing optical depth (B9): a cloud with no A_V writes no front", () => {
-    const missing = march(packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, Number.NaN));
+    const missing = march(packObjects(cloudsAt([8], [20], Number.NaN), { cluster_radius: [] }));
     expect(missing.alpha).toBe(NO_FRONT);
     expect(pointTransmission([...missing.trans, missing.alpha], 12)).toEqual([1, 1, 1]);
     // and a cloud of no optical depth is no front either
-    expect(march(packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, 0)).alpha).toBe(NO_FRONT);
+    expect(march(packObjects(cloudsAt([8], [20], 0), { cluster_radius: [] })).alpha).toBe(NO_FRONT);
   });
 
   it("does not count HII regions or shells: they emit, the other pass's", () => {
@@ -136,8 +140,8 @@ describe("the front on other rays", () => {
       cluster_radius: [5], cluster_azimuth: [0], cluster_height: [0], hii_stromgren_radius: [30], hii_halpha_emissivity: [1e-20],
       bubble_radius: [40], bubble_shell_thickness: [5], bubble_shell_emissivity: [2e-21], cell: [300], index: [0],
     };
-    const both = march(packObjects(cloudsAt([8], [20]), clusters, A_V));
-    const alone = march(packObjects(cloudsAt([8], [20]), { cluster_radius: [] }, A_V));
+    const both = march(packObjects(cloudsAt([8], [20]), clusters));
+    const alone = march(packObjects(cloudsAt([8], [20]), { cluster_radius: [] }));
     expect(both).toEqual(alone);
   });
 });
@@ -147,7 +151,7 @@ describe("the twins and the shader text carry the same expressions", () => {
     const glsl = regionFragment(null);
     expect(glsl).toContain("float tauSum = 0.0;\n    float tauT0 = 0.0;");
     expect(glsl).toContain("trans *= exp(-tau * extRatio);\n        tauSum += tau;\n        tauT0 += tau * t0;");
-    expect(glsl).toContain("else gl_FragColor = vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : 1.0);");
+    expect(glsl).toContain("else if (mode == 1) gl_FragColor = vec4(mix(vec3(1.0), trans, weight), tauSum > 0.0 ? -tauT0 / tauSum : 1.0);");
     expect(glsl).toContain("t0 = max(-b - h, 0.0);\n    t1 = -b + h;\n    return t1 > t0;");
     const twin = marchTransmission.toString();
     expect(twin).toContain("tauSum += tau;");

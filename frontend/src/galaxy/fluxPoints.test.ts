@@ -12,24 +12,37 @@ import regimesSource from "./regimes.ts?raw";
 // march's step (regimes.ts composeStep, slabColumn) to the GLSL. The pin follows tuning.test.ts and region.test.ts:
 // a change to the points' shader is a change to this file, made knowingly.
 
-// S64's text, hashed when the review's pin was added (the review's own commit; LF line ends).
-const VERTEX_LENGTH = 6291;
-const VERTEX_SHA256 = "c47e7aaa901faee00621c8ff2bfd9088323ba616ab153f49c632e895facffed3";
-const FRAGMENT_LENGTH = 1269;
-const FRAGMENT_SHA256 = "0d28a2c493d5c139e316146d4c56723e685160e8fdff305da479e3f844fd602f";
+// S67's text (D227 R1): the instrument's image of a point - hstPsf.ts psfCorner and psfRect in both shaders, mode 3 in
+// the vertex (the box at psfHalf, the per-channel normaliser) and its pixel's share in the fragment. Was S64's, hashed
+// when the review's pin was added: vertex 6291 c47e7aaa901faee00621c8ff2bfd9088323ba616ab153f49c632e895facffed3,
+// fragment 1269 0d28a2c493d5c139e316146d4c56723e685160e8fdff305da479e3f844fd602f (LF line ends).
+// S67's second change (D228, the owner's ruling): the extinction strength - one uniform declared and the dust to each
+// point multiplied by it; with those two taken back the vertex is S67's first text (8207, ca2da355...), as below.
+const S67_VERTEX_LENGTH = 8207;
+const S67_VERTEX_SHA256 = "ca2da355803635aa0cd5ff548b49a56afea4f61cfcf6a38ee6cd1fcf168f5864";
+const VERTEX_LENGTH = 8256;
+const VERTEX_SHA256 = "2ce20fe75c5fb22978aefef37b15d1fab62da8e3d063a53a82649f37e51710e6";
+const FRAGMENT_LENGTH = 2410;
+const FRAGMENT_SHA256 = "e8f58add7f895054ffb63159f5754d6d6f4ea6fdac6071e1d868ba5174cbd3da";
 
 const sha256 = (text: string) => createHash("sha256").update(text.replace(/\r\n/g, "\n"), "utf-8").digest("hex");
 
 describe("the points' shader (FluxPoints, S64)", () => {
-  it("is the text S64 left, byte for byte", () => {
+  it("is the text S67 left, byte for byte", () => {
     expect(FLUX_POINTS_SHADER.vertex.length).toBe(VERTEX_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.vertex)).toBe(VERTEX_SHA256);
+    const before = FLUX_POINTS_SHADER.vertex.replace(/\r\n/g, "\n").replace("  uniform float dustDepthScale;\n", "").replace("return tau * dustDepthScale;", "return tau;");
+    expect(before.length).toBe(S67_VERTEX_LENGTH);
+    expect(sha256(before)).toBe(S67_VERTEX_SHA256);
     expect(FLUX_POINTS_SHADER.fragment.length).toBe(FRAGMENT_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.fragment)).toBe(FRAGMENT_SHA256);
     // what the pin covers, named: the dust to each point, the slab's column in it, the two profiles
     expect(FLUX_POINTS_SHADER.vertex).toContain("vec3 dustTo(vec3 p) {");
     expect(FLUX_POINTS_SHADER.vertex).toContain("float slabColumn(float y0, float y1, float lo, float hi, float ds) {");
     expect(FLUX_POINTS_SHADER.vertex).toContain("plummerRect(");
+    // S67: the PSF table's reader in both, and the physical mode's switch.
+    for (const text of [FLUX_POINTS_SHADER.vertex, FLUX_POINTS_SHADER.fragment]) expect(text).toContain("vec3 psfRect(vec2 lo, vec2 hi) {");
+    expect(FLUX_POINTS_SHADER.vertex).toContain("if (mode < 0.5 && physOn > 0.5) {");
   });
 });
 

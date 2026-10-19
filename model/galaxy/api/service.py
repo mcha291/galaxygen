@@ -193,7 +193,7 @@ ROUTES: tuple[Route, ...] = (
         "inputs: {controls: {name: value}, seeds: {name: value}, mergers: [event]} - every input resolved, the "
         "template's overrides on the registry's defaults, in the shapes /api/inputs uses - camera: {inclination_deg, "
         "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
-        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, label, unit, value, source}] - "
+        "name>, instrument: {distance_mpc, pixel_scale_arcsec, aperture_m, obscuration (linear, pupil radii), spider_width (pupil radii), spider_vanes, pads: [[V3, V2, radius]] (pupil radii), filters: <the instrument's own set, by name; its PSF draws while that set is shown>} (null: not read), pins: [{name, label, unit, value, source}] - "
         "measured facts of the galaxy's structure that replace what the model derives: value is true or false, "
         "the observed class, and name is the published field it decides (bar_present: barred or not) - "
         "fit: null | {targets: "
@@ -805,9 +805,16 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
             "fov_deg": template.camera.fov_deg,
         },
         "filters": template.filters,
+        # S67 (D227 R1): the telescope's numbers beside the distance and the pixel, each null where not read.
+        # S67 (D227 T1): and the instrument's own filter set, by name (null for none): the template's ``filters`` is
+        # the set it opens on, which since the owner's "Switch to RGB" need not be the instrument's.
         "instrument": {
-            "distance_mpc": template.instrument.distance_mpc,
-            "pixel_scale_arcsec": template.instrument.pixel_scale_arcsec,
+            **{
+                name: ([list(p) for p in value] if name == "pads" and value is not None else value)
+                for name in _tpl.INSTRUMENT_FIELDS
+                for value in (getattr(template.instrument, name),)
+            },
+            "filters": template.instrument.filters,
         },
         # S58 (D217 item 2): the measured structure the template states in place of a derivation, with its source.
         # S59 (D218): a pin carries its input's label and unit, so a client can state a measured number in words.
@@ -1371,11 +1378,9 @@ class Service:
                 "cloud_forcing_parameter": float(constants["TURBULENCE_FORCING_B"]),
                 "cloud_lifetime": float(constants["GMC_PHASE_EMBEDDED"] + constants["GMC_PHASE_BLOWN_OPEN"]
                                         + constants["GMC_PHASE_DISPERSING"]),
-                # S40 (V3): the census's one central A_V, for the region regime's cloud interiors.
-                "cloud_extinction_v": float(_clouds.central_extinction_v(
-                    np.array([1.0e5]), np.array([_clouds.cloud_radius_pc(np.array([1.0e5]), float(constants["GMC_SURFACE_DENSITY"]))[0]]),
-                    float(constants["HII_MASS_PER_HYDROGEN"]), _clouds._grain_v_extinction(),
-                )[0]),
+                # S40 (V3): the census's one central A_V; since S67 (D231) an uncapped cloud of the inner regime's
+                # surface density, the stage's own function (no drawing reads it since D228).
+                "cloud_extinction_v": _clouds.census_extinction_v(constants),
             },
             # S55 (D214 section 5, as ruled at gate G1, change 4): the shape of the noise a renderer synthesises a
             # cloud's interior from - its octave count, lacunarity and gain. **Three constants of the model, and
@@ -1796,12 +1801,14 @@ class Service:
             about["stars_unresolved"]["about"] += even
             components.append(("stars_unresolved", unresolved))
         line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
-        if "halpha_surface_brightness_hii" in f and h_thin is not None:
+        # The HII regions' layer is the clouds' (S39): since S67 (D229) the molecular layer's measured thickness, read
+        # from the model's constant MOLECULAR_LAYER_FWHM (was half the thin disc's scale height, a guess, #95).
+        if "halpha_surface_brightness_hii" in f and "MOLECULAR_LAYER_FWHM" in model.constants:
             hii = np.asarray(f["halpha_surface_brightness_hii"], dtype=float)
             components.append(("halpha_hii", hii[:, None, None] * placed_gas[..., None] * halpha_share))
-            layers["halpha_hii"] = _clouds.cloud_layer_height(float(f["thin_disc_scale_height"]))
+            layers["halpha_hii"] = _clouds.cloud_layer_height({k: c.value for k, c in model.constants.items()})
             about["halpha_hii"] = {
-                **line_about, "fields": ["halpha_surface_brightness_hii", *gas_fields, "thin_disc_scale_height"],
+                **line_about, "fields": ["halpha_surface_brightness_hii", *gas_fields],
                 "layer": "halpha_hii",
                 "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
                          f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "

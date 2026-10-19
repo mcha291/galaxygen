@@ -7,6 +7,7 @@ import type { ComparePicture } from "./galaxy/PictureBeside";
 import { Exposure } from "./galaxy/Exposure";
 import type { FilterSetName } from "./galaxy/filters";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
+import { exposureFor } from "./galaxy/tuning";
 import { type Preset } from "./galaxy/GalaxyView";
 import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
@@ -57,6 +58,8 @@ export function App() {
     if (!landed) return;
     setPreset(null);
     setFilterSet(landed.filters);
+    // S67 (D227 R4): and its exposure's default stops (tuning.ts exposureFor; 0 for a template with none).
+    setExposure(exposureFor(landed.name));
   }, [wf.selection]); // eslint-disable-line react-hooks/exhaustive-deps -- a landing, not every render of the same template
   // The switcher's choice: the workflow regenerates at the template's inputs (its own state, its own query), and
   // the view takes the template's stand and filters in the same update, so the canvas is made once.

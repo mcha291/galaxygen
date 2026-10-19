@@ -111,7 +111,18 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.96265, 0.96703, 0.97596] as const;
+export const DUSTY_LAYER_RATIO = [0.96427, 0.96617, 0.97222] as const;
+// S67 (D227 T1, the owner's return of the Milky Way to 96 steps): was [0.96478, 0.9666, 0.97249] at 48 steps - back to
+// the 96-step value measured at the second paste.
+// S67 (D227 T1, the owner's third paste of 2026-10-19): was [0.96427, 0.96617, 0.97222] - the march's steps 96 -> 48 on
+// the Milky Way (its only change in the paste): half the sub-steps through the same columns, so the two frames' light is
+// integrated more coarsely and the ratio moves by +5.1e-4, +4.3e-4, +2.7e-4 (inside DUSTY_RATIO_PIN, re-taken so the pin
+// stands on the display it judges); no model number moved by it.
+// S67 (D227 T1, the owner's paste of 2026-10-19): was [0.96717, 0.96839, 0.97315] - the display balance again (the
+// starlight 0.403 -> 0.55, the dust's own light 4 -> 1, the extinction strength 1.25); no model number moved by it.
+// S67 (D227 T1): was [0.96265, 0.96703, 0.97596] - the Milky Way's display defaults are the owner's paste (the
+// starlight at 0.403, the dust's own light at 4, the clouds as extinction off, ACES): the ratio of two frames' light
+// weighs the dust's glow against the starlight, so it moves with the display balance; no model number moved.
 // S66 (V7, D226 R2c): was [0.97275, 0.97786, 0.98691] at S64/S65 - the gas fluctuation map multiplies the dust's
 // placement and the spurs are drawn from their table: the same column per level-0 cell, clumped below the
 // cell, so by (ii) more light gets through (Jensen; the probe's +2.4 % at R_sun face-on). Predicted before the capture:
@@ -201,3 +212,85 @@ export const READY = {
   /** The longest the camera takes to stand where a template or the test put it: a canvas remade, not a model run. */
   standMs: 30_000,
 };
+
+/**
+ * The GPU light check for R1's path (S67's fix pass, F3; D227 R1, R3): NGC 4414 in the star-first mode at its own camera
+ * (29.3 pc a pixel) and at the zoom capture's stand (0.488 pc), per channel.
+ * - (i) **the spikes' switch moves no light**: the frame's summed linear light with the spikes on over off, every
+ *   component at its default, within `spikesTolerance` (ruled 1e-4). Measured at the fix pass (RTX 4070, 1024 px), on
+ *   over off - 1, red/green/blue, in two runs: 9.3e-6 / 7.7e-6 / 6.4e-6 and 4.9e-7 / 6.8e-7 / 8.5e-7 at the template's
+ *   camera, 3.6e-6 / 8.4e-6 / 1.85e-5 and 1.1e-6 / -1.3e-6 / -5.3e-7 at the zoom stand (the first run's server cold).
+ *   Part (ii) read the same to three figures in both runs.
+ * - (ii) **the points' light lands on screen**: with the field and the dust off (`released`, beside `beside`), the
+ *   points-only frame's sum against the drawn points' own light (`__galaxygenPointsShown`) as FluxPoints deposits it -
+ *   each point's flux times its gain over the sky's area a pixel covers at it, times the share of its box on screen (the
+ *   box the shader draws, by the table's or the Plummer's rectangle integrals) - within `pointsTolerance`, for both
+ *   switch states, over every point in front of the camera: the GPU draws a wide point whose centre is off the frame
+ *   (counted by centres alone the zoom frame read +1.04 % in red). Measured, frame over drawn - 1: at the template's
+ *   camera (7 661 points, no box clamped) -5.3e-5 / -2.0e-5 / -7.5e-6 with the spikes on, -5.1e-5 / -1.8e-5 / -6.0e-6
+ *   off; at the zoom stand (36 746 points, 33 958 boxes clamped to PROFILE_MAX_HALF, 2 861 clusters as Plummer spheres)
+ *   -3.57e-4 / -8.6e-5 / -4.5e-5 on, -3.58e-4 / -8.6e-5 / -4.5e-5 off.
+ *   **The tolerance, derived**: above the largest measured (3.6e-4, the zoom's red) by at least a factor two, so the
+ *   float32 rectangle differences it stands for do not fail it - the smallest power of ten above 7.2e-4, 1e-3; and far
+ *   below what the clamp's renormalisation carries (hstPsf.ts psfHalf: the 60 px box holds 0.958 / 0.971 / 0.976 of the
+ *   Airy and 0.940 / 0.952 / 0.958 of the spikes, so a box drawn without its 1/share would read 2.4-6.0 % low on the
+ *   clamped points, 92 % of the zoom's): 1e-3 is 24 times under the smallest of those, the blue Airy's 2.4e-2.
+ */
+export const GPU_LIGHT = {
+  template: "ngc_4414",
+  zoom: "ngc_4414-zoom",
+  spikes: "diffraction spikes",
+  released: ["starlight", "dust", "ionized gas"],
+  beside: "starlight",
+  spikesTolerance: 1e-4,
+  pointsTolerance: 1e-3,
+} as const;
+
+/**
+ * The surface-brightness gates (S67, BUILD_III V8; D227 R5 as ruled on the measurement; T1): the default template's
+ * face-on field in the star-first mode, the dust off (the conserving principle, as DUST_FREE) and the ionized gas off
+ * (its light is not the stars'), each ring of `widthKpc` out to `maxKpc` (the frame's inscribed circle), per channel, its
+ * light on screen (`__galaxygenRingProfile`, over the field's gain) with the layer and without:
+ * - **A**, the points ("stars") off: against the render's stars in the ring plus the march's bulge there
+ *   (`__galaxygenRenderRings`);
+ * - **B**, the points on: against the render's remainder in the ring plus the bulge plus the drawn points' own light
+ *   (`__galaxygenPointsShown`: the realised census, so the gate holds the drawing, not the draw), each point's display
+ *   sprite binned pixel by pixel where its pixels' rays meet the plane (ringProfile.ts spriteRings) - as the screen is:
+ *   at the size the page drew it (the ring probe's `sprite`, the fix pass F1) and each pixel turned back by the sky's
+ *   area at the plane over that at the point (F2).
+ * Each ring from `innerKpc` out within `tolerance`, S66's per-ring bound; the ring inside `innerKpc` within
+ * `innerTolerance`, a carried debt (#177 at the close): the march's bulge cusp, -2.3 % in every state.
+ *
+ * Measured at S67 (RTX 4070, 1024 px), the largest |ratio - 1| over 1-20 kpc and the three channels: A 1.359e-2 with
+ * the layer (8-9 kpc, B) and 5.33e-3 without; B 5.04e-3 with the layer and 5.01e-3 without - after the fix pass's F2
+ * (the area ratio) B 5.16e-3 with the layer and 5.04e-3 without (11-12 kpc, R), A unmoved. The ring 0-1 kpc 0.977-0.978
+ * in all four states. B binned by the points' own radii read up to 4.57e-2 off (the lead's fourth pass): the clusters
+ * stand off the plane (|height| median 233 pc, 90 % 740 pc, at most 2.75 kpc), so from the face-on camera 48 kpc away a
+ * cluster lands up to 7 px from its own radius at 15 kpc (the brightest of 15-16 kpc, 5 % of the ring at 525 pc up, in
+ * 16-17 on screen); bloom, the tone curve and the clusters' radius moved none of it (the probes read before both, and no
+ * cluster fills a pixel here).
+ */
+export const RING_GATE = {
+  widthKpc: 1,
+  maxKpc: 20,
+  innerKpc: 1,
+  tolerance: 1.5e-2,
+  innerTolerance: 3e-2,
+  released: ["dust", "ionized gas"],
+  beside: "starlight",
+  /**
+   * Since the fix pass (F7) the gates read the page's own gains (`__galaxygenPointsShown`: the field's, LIGHT_PER_LSUN_PC2
+   * x the field gain x 2^exposure, and the points', times the point gain) in place of a hard-coded 1/400, and run at each
+   * setting here, set through the page's exposure slider and the Tuning panel's point gain; the gains read are held to the
+   * setting's against FieldVolume's LIGHT_PER_LSUN_PC2. Measured at F7, the largest |ratio - 1| over 1-20 kpc: at the
+   * defaults as above; at exposure +1 and point gain 2, A 1.359e-2 on / 5.33e-3 off (unmoved: the field alone scales with
+   * the stop) and B 4.53e-3 on / 4.99e-3 off (the points' selection moves with the point gain).
+   */
+  settings: [
+    { name: "at the defaults", exposure: 0, pointGain: 1 },
+    { name: "exposure +1 stop, point gain 2", exposure: 1, pointGain: 2 },
+  ],
+  lightPerLsunPc2: 1 / 400,
+  /** The point gain's control (tuning.ts TUNING_CONTROLS pointGain): a log slider of 1000 positions from min to max. */
+  pointGainControl: { min: 0.25, max: 4 },
+} as const;

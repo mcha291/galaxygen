@@ -42,6 +42,23 @@ export interface PinTable {
   rows: (string | number | null)[][];
 }
 
+/**
+ * The instrument a template's picture would be taken with (templates.py Instrument): the distance and the detector's
+ * pixel, and since S67 (D227 R1) the telescope's aperture, linear obscuration, vane width (pupil radii), vane count and
+ * mirror pads ([V3, V2, radius], pupil radii) - hstPsf.ts opticsOf draws a point with them. Null where not read.
+ */
+export interface Instrument {
+  distance_mpc: number | null;
+  pixel_scale_arcsec: number | null;
+  aperture_m: number | null;
+  obscuration: number | null;
+  spider_width: number | null;
+  spider_vanes: number | null;
+  pads: [number, number, number][] | null;
+  /** The instrument's own filter set (S67, D227 T1): its PSF and spikes draw while it is shown; null for none or a set the viewer does not hold. */
+  filters: FilterSetName | null;
+}
+
 /** One template, as `/api/templates` publishes it. `inputs` is fully resolved: every control, every seed, the event list. */
 export interface Template {
   name: string;
@@ -54,7 +71,7 @@ export interface Template {
   /** The filter set the galaxy is first seen through: one of the viewer's own (filters.ts). */
   filters: FilterSetName;
   /** What the template states of the instrument; a number not read is null (rule B9). */
-  instrument: { distance_mpc: number | null; pixel_scale_arcsec: number | null };
+  instrument: Instrument;
   /** What the template states of the galaxy's structure in place of a derivation (S58, D217); none before S58. */
   pins: Pin[];
   /** Carried as published and not read here: the fit and the checks are the model's records. */
@@ -83,6 +100,23 @@ function numbers(value: unknown, what: string): Record<string, number> {
 }
 
 const numberOrNull = (v: unknown): number | null => (isNumber(v) ? v : null);
+
+/** The instrument as served, each number or null; a pad list only where every pad is three numbers (S67, D227 R1). */
+function instrumentOf(raw: Record<string, unknown>): Instrument {
+  const pads = Array.isArray(raw.pads) && raw.pads.every((p) => Array.isArray(p) && p.length === 3 && p.every(isNumber))
+    ? (raw.pads as [number, number, number][]).map((p) => [p[0], p[1], p[2]] as [number, number, number])
+    : null;
+  return {
+    distance_mpc: numberOrNull(raw.distance_mpc),
+    pixel_scale_arcsec: numberOrNull(raw.pixel_scale_arcsec),
+    aperture_m: numberOrNull(raw.aperture_m),
+    obscuration: numberOrNull(raw.obscuration),
+    spider_width: numberOrNull(raw.spider_width),
+    spider_vanes: numberOrNull(raw.spider_vanes),
+    pads,
+    filters: typeof raw.filters === "string" && (FILTER_SET_NAMES as string[]).includes(raw.filters) ? (raw.filters as FilterSetName) : null,
+  };
+}
 
 /** A served text that may be absent: a string as it came, null where the key is missing or null; anything else is no text. */
 const textOrNull = (v: unknown): string | null | undefined => (v === undefined || v === null ? null : typeof v === "string" ? v : undefined);
@@ -185,7 +219,7 @@ function parseTemplate(raw: unknown): Template {
     },
     camera: { inclination_deg, azimuth_deg, radius_kpc, fov_deg },
     filters: raw.filters as FilterSetName,
-    instrument: { distance_mpc: numberOrNull(instrument.distance_mpc), pixel_scale_arcsec: numberOrNull(instrument.pixel_scale_arcsec) },
+    instrument: instrumentOf(instrument),
     pins: parsePins(raw.pins, at),
     fit: raw.fit ?? null,
     checks: Array.isArray(raw.checks) ? raw.checks : [],

@@ -62,6 +62,8 @@ export interface Tuning {
   spriteSize: number;
   /** A multiplier on the points' light: REFERENCE_LUMINOSITY is divided by it. */
   pointGain: number;
+  /** Where a template's instrument draws a point (S67, D227 R3): the full pupil's image, spikes and pads, in place of the obscured Airy. */
+  spikes: boolean;
   // The star-first mode's component layers (D205, D208): the picture's four on by default (the stars, the
   // starlight, the ionized gas and the dust as it acts), the two diagnostics off.
   /** The mode's own picture, the stars in the cells in view above the frame's threshold as points: on by default, switched off to see a layer alone. */
@@ -80,6 +82,11 @@ export interface Tuning {
   starsIntensity: number;
   gasIntensity: number;
   dustIntensity: number;
+  /**
+   * Every optical depth the viewer draws, multiplied (S67, D228): a display choice by the owner's ruling of 2026-10-18,
+   * an exception to rule D5's "a display intensity never scales a depth". 1 is the model's extinction.
+   */
+  extinctionStrength: number;
   cloudIntensity: number;
   // The field mode's starlight by age (S63, D223): the render's three age parts, each a layer of the stellar
   // light, all on by default (their sum, the whole).
@@ -95,6 +102,8 @@ export interface Tuning {
   cloudsExtinction: boolean;
   /** The clouds' raster, texels per render cell on each axis (cloudOpacity.ts). */
   cloudRaster: number;
+  /** Each cloud's elongation along the gas field's shear, as a power of that shear's own axis ratio (S67, D230). */
+  cloudElongation: number;
   // The HII regions as knots and the clusters with their radius (S64, BUILD_III V6; RULING_S64 R5-R7).
   /** The field mode's HII regions drawn as knots, the field's HII layers scaled by each cell's undrawn share. */
   knots: boolean;
@@ -127,6 +136,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   toneMapping: "agx",
   spriteSize: STAR_SPRITE_PX,
   pointGain: 1,
+  spikes: false,
   compPoints: true,
   compStars: true,
   compGas: true,
@@ -137,12 +147,14 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   starsIntensity: 1,
   gasIntensity: 1,
   dustIntensity: 1,
+  extinctionStrength: 1,
   cloudIntensity: 1,
   ageYoung: true,
   ageMiddle: true,
   ageOld: true,
   cloudsExtinction: true,
   cloudRaster: CLOUD_RASTER,
+  cloudElongation: 1,
   knots: true,
   clusterRadius: true,
   gasInMarch: true,
@@ -250,12 +262,12 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
     about: "The colour temperature drawn white; asks the model for new responses (400 ms after the last move). A display choice.",
   },
   {
-    key: "bloomStrength", label: "bloom strength", group: "Bloom and tone", kind: "range", min: 0, max: 1.5, step: 0.05, unit: "",
-    about: "How much light above the threshold spreads. A display choice.",
+    key: "bloomStrength", label: "bloom strength", group: "Bloom and tone", kind: "range", min: 0, max: 4, step: 0.05, unit: "",
+    about: "How much light above the threshold spreads (S67: the range 0-4, was 0-1.5, on the owner's ask; the pass has no upper limit). It acts only on light above the threshold: lower that to see it. A display choice.",
   },
   {
     key: "bloomRadius", label: "bloom radius", group: "Bloom and tone", kind: "range", min: 0, max: 1, step: 0.05, unit: "",
-    about: "How far the bloom spreads. A display choice.",
+    about: "How far the bloom spreads. Held to 0-1: the pass blends its five blur levels by mix(f, 1.2 - f, radius), and past 1 the finest level's weight turns negative. A display choice.",
   },
   {
     key: "bloomThreshold", label: "bloom threshold", group: "Bloom and tone", kind: "range", min: 0, max: 3, step: 0.05, unit: "",
@@ -273,11 +285,25 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "spriteSize", label: "sprite size", group: "Points", kind: "range", min: 3, max: 25, step: 1, unit: "px", integer: true,
-    about: "The default star sprite's size on screen; a named instrument's sprite keeps its own. A display choice.",
+    about:
+      "The default star sprite's size on screen; a named instrument's sprite keeps its own, and where a template carries " +
+      "its instrument with a distance (NGC 4414 through WFC3) a point is drawn at its physical size instead (S67). A display choice.",
   },
   {
     key: "pointGain", label: "point gain", group: "Points", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
     about: "Divides the points' 100 L☉ reference luminosity: brighter or fainter stars against the field. A display choice.",
+  },
+  {
+    key: "spikes", label: "diffraction spikes", group: "Points", kind: "toggle",
+    about:
+      "Where a template carries its instrument (NGC 4414 through WFC3: HST at 17.7 Mpc), each point is drawn as the " +
+      "telescope's image of a point at its physical size. Off: the obscured Airy pattern (2.4 m, obscuration 0.33). On: the " +
+      "full pupil's image - the obscuration, four vanes 0.022 pupil radii wide and the primary's three pads, by a 2-D FFT of " +
+      "the pupil at load - normalised to the same light, so the switch moves none. Close in the box is clamped: at 0.488 " +
+      "pc a screen pixel (NGC 4414's zoom stand) the table's half-width is 314 px and the box 60, the light outside it " +
+      "returned inside by the box's share (0.958 of the red Airy, 0.940 of the red spikes), so the core is drawn 4.4 to " +
+      "6.4 % brighter in red and the spikes end at the box's square edge. The vanes stand at 45 degrees to the " +
+      "picture's axes, a display choice: the detector's own angle was not read. No effect without an instrument (S67, D227 R3). A display choice.",
   },
   {
     key: "compPoints", label: "stars", group: "Components", kind: "toggle", switch: true,
@@ -310,15 +336,19 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "starsIntensity", label: "starlight intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
-    about: "Multiplies the starlight volume, on the field's gain and the slider's stops. A display balance.",
+    about: "Multiplies the starlight volume, in either mode, on the field's gain and the slider's stops. A display balance.",
   },
   {
     key: "gasIntensity", label: "ionized gas intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
-    about: "Multiplies the ionized gas's light, on the field's gain and the slider's stops. A display balance.",
+    about: "Multiplies the ionized gas's light, in either mode, on the field's gain and the slider's stops. A display balance.",
   },
   {
     key: "dustIntensity", label: "dust intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
-    about: "Multiplies the dust's own light (as it acts) or its drawn depth (where it is); never its extinction. A display balance.",
+    about: "Multiplies the dust's own light (as it acts, in either mode) or its drawn depth (where it is, the star-first mode); never its extinction. A display balance.",
+  },
+  {
+    key: "extinctionStrength", label: "extinction strength", group: "Components", kind: "range", min: 0, max: 2, step: 0.01, unit: "×",
+    about: "Multiplies every optical depth the viewer draws - the diffuse dust's, the field march's cloud raster, the region's clouds and the dust to each point - in either mode; never the dust's own light (dust intensity). A display choice by the owner's ruling of 2026-10-18 (D228), and an exception to rule D5's \"a display intensity never scales a depth\": at 1 the extinction is the model's.",
   },
   {
     key: "cloudIntensity", label: "cloud marker brightness", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
@@ -362,6 +392,10 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "about 1 kpc across. A display choice.",
   },
   {
+    key: "cloudElongation", label: "cloud elongation", group: "March", kind: "range", min: 0, max: 2, step: 0.05, unit: "power",
+    about: "Each cloud's face-on shape in the clouds' raster (S67, D230, the owner's choice: \"Stretch clouds along arms\"): an ellipse of the cloud's own area, its long axis along the gas fluctuation field's local shear (the render header's gas_fluctuation strain per ring, D221), its axis ratio that shear's own, lambda+ = 1 + k^2/2 + |k| sqrt(1 + k^2/4) (5.8 inside 2 kpc, 2.7 at the Sun's radius on the Milky Way), raised to this power: 0 round, 1 the field's. Every cloud's A_V x area is conserved at any value; with the randomness layer off there is no field and the clouds are round. A display choice.",
+  },
+  {
     key: "cloudRaster", label: "cloud raster", group: "March", kind: "range", min: 1, max: CLOUD_RASTER, step: 1, integer: true, unit: "texels / cell",
     about:
       `The clouds' opacity raster, texels per render cell on each axis. The default, ${CLOUD_RASTER}, is the finest whose ` +
@@ -375,8 +409,88 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
 ];
 
-/** The storage key: a UI preference, not a generated object. */
+/** The storage key: a UI preference, not a generated object. Since S67 (D227 R4) one per template: `<key>.<template>`. */
 export const TUNING_STORAGE_KEY = "galaxygen.tuning";
+
+/**
+ * Each template's display defaults over TUNING_DEFAULTS (S67, D227 R4; T1): what the owner tuned on that template,
+ * pasted from the Tuning panel's copy box. Display choices (rule D5), each declared one where it is computed (A9); none
+ * picked to look like a goal. Both templates carry the owner's pastes (2026-10-18, 2026-10-19), and since the third
+ * (2026-10-19) each its own set.
+ */
+/**
+ * The owner's display defaults (S67, D227 T1): the paste of 2026-10-18 ("set these values as the default so i can
+ * adjust them after the fix finish"), with the paste of 2026-10-19 laid over it ("update milky way default with this,
+ * then copy it over to 4414") - the copy box lists only the choices that differ from the template's own defaults, so
+ * the second paste changes steps, field gain, the bloom, the three intensities and the extinction strength and keeps
+ * the rest of the first. Display choices, none physics (D5); the extinction strength the owner's ruled exception (D228).
+ */
+const OWNER_DEFAULTS_2026_10_19 = Object.freeze({
+  resolution: 1,
+  pixelBudget: 2_000_000,
+  steps: 96,
+  fieldGain: 1.65,
+  fieldFloor: 0.1,
+  bloomStrength: 2.25,
+  bloomRadius: 0.35,
+  bloomThreshold: 0.45,
+  toneMapping: "aces",
+  spriteSize: 3,
+  pointGain: 4,
+  compCells: true,
+  starsIntensity: 0.55,
+  gasIntensity: 1,
+  dustIntensity: 1,
+  extinctionStrength: 1.25,
+  cloudsExtinction: false,
+} satisfies Partial<Tuning>);
+
+/**
+ * The owner's third paste (S67, D227 T1, 2026-10-19): "ok use this for ngc4414 {"template":"ngc_4414","filters":"rgb",
+ * "exposure":0,"fieldGain":1.2,"bloomStrength":2,"spikes":true,"cloudsExtinction":true,"cloudRaster":3} then change the
+ * steps for both to 48", and, asked which filter set NGC 4414 should open on, "Switch to RGB". The copy box lists only
+ * what differs from the template's own defaults, so the paste is laid over NGC 4414's set above: its field gain, bloom,
+ * spikes, clouds as extinction and cloud raster; its exposure 0 is TEMPLATE_EXPOSURE's absent entry, its filter set the
+ * template's own (templates.py, now rgb). Steps 48 on both. `spikes` acts only while the template's instrument's own set
+ * (WFC3) is shown (GalaxyTab's physical reading, R1-R3): on RGB it waits for the owner to switch sets.
+ */
+const OWNER_STEPS_2026_10_19 = 48;
+// The owner, after the measurement (the Milky Way 4 % brighter at 48 than at 96, its march no faster): "Put the Milky
+// Way back to 96 steps, keep NGC 4414 at 48, and close S67."
+
+export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({
+  milky_way: Object.freeze({ ...OWNER_DEFAULTS_2026_10_19, steps: 96 }),
+  // "then copy it over to 4414" (the second paste), then the third paste laid over it. Its points keep the instrument's
+  // image (T9) while the WFC3 set is shown, so the sprite size does not reach them there.
+  ngc_4414: Object.freeze({
+    ...OWNER_DEFAULTS_2026_10_19,
+    steps: OWNER_STEPS_2026_10_19,
+    fieldGain: 1.2,
+    bloomStrength: 2,
+    spikes: true,
+    cloudsExtinction: true,
+    cloudRaster: 3,
+  } satisfies Partial<Tuning>),
+});
+/** Each template's default exposure, stops (S67, D227 R4: the photometric slider's start, App's state); 0 where absent. */
+export const TEMPLATE_EXPOSURE: Readonly<Record<string, number>> = Object.freeze({});
+
+/** A template's display defaults: TUNING_DEFAULTS with its own laid over, each made valid; the plain defaults for none. */
+export function defaultsFor(template: string | null | undefined, map: Readonly<Record<string, Readonly<Partial<Tuning>>>> = TEMPLATE_TUNING): Tuning {
+  const own = template ? map[template] : undefined;
+  return own ? sanitize(own, TUNING_DEFAULTS) : { ...TUNING_DEFAULTS };
+}
+
+/** A template's default exposure, stops. */
+export function exposureFor(template: string | null | undefined, map: Readonly<Record<string, number>> = TEMPLATE_EXPOSURE): number {
+  const v = template ? map[template] : undefined;
+  return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
+/** Where a template's tuning is kept: its own key, or the one key of before S67 with no template (an API without templates). */
+export function storageKeyFor(template: string | null | undefined): string {
+  return template ? `${TUNING_STORAGE_KEY}.${template}` : TUNING_STORAGE_KEY;
+}
 
 const controlOf = (key: string) => TUNING_CONTROLS.find((c) => c.key === key);
 
@@ -390,9 +504,9 @@ export function clampValue(control: TuningControl, value: unknown): number | boo
   return control.integer ? Math.round(clamped) : clamped;
 }
 
-/** Any object read as a Tuning: unknown keys dropped, bad values replaced by the default, numbers clamped. */
-export function sanitize(raw: unknown): Tuning {
-  const out: Tuning = { ...TUNING_DEFAULTS };
+/** Any object read as a Tuning: unknown keys dropped, bad values replaced by the default (`base`'s), numbers clamped. */
+export function sanitize(raw: unknown, base: Readonly<Tuning> = TUNING_DEFAULTS): Tuning {
+  const out: Tuning = { ...base };
   if (!raw || typeof raw !== "object") return out;
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     const control = controlOf(key);
@@ -403,32 +517,40 @@ export function sanitize(raw: unknown): Tuning {
   return out;
 }
 
-/** The stored tuning, or the defaults when there is none or storage is unavailable. */
-export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage()): Tuning {
+/** The stored tuning of a template (S67: its own key, over its own defaults), or its defaults when there is none or storage is unavailable. */
+export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage(), template: string | null = null): Tuning {
+  const base = defaultsFor(template);
   try {
-    const text = storage?.getItem(TUNING_STORAGE_KEY);
-    return text ? sanitize(JSON.parse(text)) : { ...TUNING_DEFAULTS };
+    // A template with no key of its own falls back to the one key of before S67 (the lead's second pass, D227): the
+    // choices made under it carry over, read and never written back - the first save writes the template's own key.
+    const own = storage?.getItem(storageKeyFor(template));
+    const text = own ?? (template ? storage?.getItem(TUNING_STORAGE_KEY) : null);
+    return text ? sanitize(JSON.parse(text), base) : base;
   } catch {
-    return { ...TUNING_DEFAULTS };
+    return base;
   }
 }
 
-/** Keeps only what differs from the defaults; nothing is stored at the defaults. */
-export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage()): void {
+/**
+ * Keeps only what differs from the template's defaults, under its own key. With no template nothing is stored at the
+ * defaults; a template's key is kept as "{}" there, so the old key (loadTuning's fallback) is not read again for it.
+ */
+export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage(), template: string | null = null): void {
   try {
-    const diff = changed(t);
-    if (Object.keys(diff).length === 0) storage?.removeItem(TUNING_STORAGE_KEY);
-    else storage?.setItem(TUNING_STORAGE_KEY, JSON.stringify(diff));
+    const diff = changed(t, defaultsFor(template));
+    const key = storageKeyFor(template);
+    if (Object.keys(diff).length === 0 && !template) storage?.removeItem(key);
+    else storage?.setItem(key, JSON.stringify(diff));
   } catch {
     // Private windows and blocked site data: the panel works for this visit without it.
   }
 }
 
-/** The entries that differ from the defaults: the combination to report. */
-export function changed(t: Tuning): Partial<Tuning> {
+/** The entries that differ from the defaults (a template's, since S67: defaultsFor): the combination to report. */
+export function changed(t: Tuning, defaults: Readonly<Tuning> = TUNING_DEFAULTS): Partial<Tuning> {
   const out: Record<string, unknown> = {};
   for (const control of TUNING_CONTROLS) {
-    if (t[control.key] !== TUNING_DEFAULTS[control.key]) out[control.key] = t[control.key];
+    if (t[control.key] !== defaults[control.key]) out[control.key] = t[control.key];
   }
   return out as Partial<Tuning>;
 }

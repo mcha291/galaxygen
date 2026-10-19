@@ -138,10 +138,33 @@ class Camera:
 
 @dataclass(frozen=True, slots=True)
 class Instrument:
-    """What an observer's picture of this galaxy would be taken at. ``None`` is "not read" (rule B9)."""
+    """What an observer's picture of this galaxy would be taken at. ``None`` is "not read" (rule B9).
+
+    Since S67 (D227 R1) the telescope too, where the template's filter set is a named instrument's: the aperture's
+    diameter, the secondary's linear obscuration and the spider's vane width (both in pupil radii), the number of
+    vanes, and the primary's mirror pads, each (V3, V2, radius) in pupil radii. The viewer draws a point as the PSF
+    these make, its angle turned into pc by ``distance_mpc``, convolved with the detector's pixel of
+    ``pixel_scale_arcsec`` (frontend/src/galaxy/hstPsf.ts). Each number read carries its source in the template's
+    ``sources``; an artist's impression carries none (the Milky Way's: all None, its points the display sprite).
+
+    ``filters`` (S67, D227 T1): the viewer's filter set whose curves are this instrument's, by name - the PSF and the
+    spikes draw a point while that set is shown. Until T1 the template's own ``filters`` said it; since the owner's
+    "Switch to RGB" NGC 4414 opens on RGB and its instrument still names WFC3. A name, not a number: no source tag."""
 
     distance_mpc: float | None
     pixel_scale_arcsec: float | None
+    aperture_m: float | None = None
+    obscuration: float | None = None
+    spider_width: float | None = None
+    spider_vanes: int | None = None
+    pads: tuple[tuple[float, float, float], ...] | None = None
+    filters: str | None = None
+
+
+# The instrument's numbers, in the order /api/templates publishes them (S67, D227 R1).
+INSTRUMENT_FIELDS: tuple[str, ...] = (
+    "distance_mpc", "pixel_scale_arcsec", "aperture_m", "obscuration", "spider_width", "spider_vanes", "pads",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -443,7 +466,7 @@ def numbers(template: Template) -> tuple[str, ...]:
     if template.mergers is not None:
         paths.append("inputs.mergers")
     paths += [f"camera.{n}" for n in ("inclination_deg", "azimuth_deg", "radius_kpc", "fov_deg")]
-    paths += [f"instrument.{n}" for n in ("distance_mpc", "pixel_scale_arcsec") if getattr(template.instrument, n) is not None]
+    paths += [f"instrument.{n}" for n in INSTRUMENT_FIELDS if getattr(template.instrument, n) is not None]
     return tuple(paths)
 
 
@@ -485,6 +508,7 @@ def resolve(template: Template, table: Mapping[str, Input] = INPUTS, accepted: t
 # --- the two templates ---------------------------------------------------------------------
 
 _READING = "READING_NGC_4414.md"
+_OPTICS = "READING_HST_OPTICS.md"
 # The edge of NGC 4414's inner disc, where its HI curve's gentle decline ends and the warped outer disc
 # begins: 240 arcsec at 17.7 Mpc [verified: READING_NGC_4414.md, rows 4-6; dB14 Sect. 3.2 "out to R ~ 240
 # arcsec"; 240 x 0.08581 kpc/arcsec = 20.6 kpc].
@@ -671,8 +695,22 @@ NGC_4414 = Template(
     seeds={"world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414, "texture_seed": 4414},
     mergers=(),
     camera=Camera(inclination_deg=55.0, azimuth_deg=0.0, radius_kpc=15.0, fov_deg=5.0),
-    filters="wfc3",
-    instrument=Instrument(distance_mpc=17.7, pixel_scale_arcsec=None),
+    # S67 (D227 T1): was "wfc3" (D213's choice) - the owner's override, 2026-10-19: asked which filter set NGC 4414
+    # should open on, "Switch to RGB". The instrument stays as data: its PSF and spikes draw whenever the viewer is
+    # switched to its own set, WFC3 (Instrument.filters).
+    filters="rgb",
+    # S67 (D227 R1): WFC3/UVIS, the instrument of D213's filter set, read in docs/READING_HST_OPTICS.md. The goal
+    # picture is WFPC2's (0.0996"/px), disclosed there and not changed: a template's instrument is its set's.
+    instrument=Instrument(
+        filters="wfc3",
+        distance_mpc=17.7,
+        pixel_scale_arcsec=0.04,
+        aperture_m=2.4,
+        obscuration=0.33,
+        spider_width=0.022,
+        spider_vanes=4,
+        pads=((0.8921, 0.0, 0.065), (-0.4615, 0.7555, 0.065), (-0.4564, -0.7606, 0.065)),
+    ),
     # S58 (D217 item 2): the observed class, unbarred, in place of the derived presence (which says barred: the
     # criterion's recorded miss on this galaxy). Not a fit - no control moves and no number is set - and the five
     # checks are judged on the pinned galaxy. A one-field flip restores the barred picture with nothing else changed.
@@ -929,6 +967,27 @@ NGC_4414 = Template(
         "instrument.distance_mpc": (
             f"[verified: {_READING}, row 1; F01 (Freedman et al. 2001, Table 4): mu_Z = 31.24, D_Z = 17.70 Mpc, "
             "Cepheids, metallicity-corrected; the bracket of the three Cepheid values is 16.6-19.1 Mpc]"
+        ),
+        # S67 (D227 R1): WFC3/UVIS and HST's optics, each read (or inferred) in READING_HST_OPTICS.md.
+        "instrument.pixel_scale_arcsec": (
+            f"[verified: {_OPTICS}, WFC3 Instrument Handbook section 1.3: 'pixel scale 0.04 arcsec/pix'; Appendix B.2 "
+            "gives 0.0396 (x) / 0.0393 (y) at UVIS1's centre - the nominal value is used, the < 2 % x/y difference not drawn]"
+        ),
+        "instrument.aperture_m": f"[verified: {_OPTICS}, HST Primer (Cycle 34, optical performance): aperture 2.4 m, f/24]",
+        "instrument.obscuration": (
+            f"[verified: {_OPTICS}, TinyTim's pupil table wfc3_uvis1.pup: '0.330 = OTA Secondary Mirror Radius', in pupil "
+            "radii (cpupil.c scales each by the pupil radius): the linear obscuration ratio]"
+        ),
+        "instrument.spider_width": (
+            f"[verified: {_OPTICS}, wfc3_uvis1.pup: '0.022 = OTA Spider Width', in pupil radii] [inferred] a full width "
+            "(about 26 mm): whether 0.022 is a full or a half width is not stated in the code read"
+        ),
+        "instrument.spider_vanes": (
+            f"[inferred] four: Hubble's pictures show four spikes; no official page read states the count ({_OPTICS})"
+        ),
+        "instrument.pads": (
+            f"[verified: {_OPTICS}, wfc3_uvis1.pup: 'OTA Pad 1 (V3, V2, Pad Radius)' 0.8921 0.0000 0.065, 'OTA Pad 2' "
+            "-0.4615 0.7555 0.065, 'OTA Pad 3' -0.4564 -0.7606 0.065, in pupil radii]"
         ),
     },
 )

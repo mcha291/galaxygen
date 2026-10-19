@@ -19,6 +19,11 @@ import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
 
 import type { LensCamera } from "../src/galaxy/capture";
+import { type PsfTable, imageDensity, opticsOf, psfRect, psfTable, pupilImage } from "../src/galaxy/hstPsf";
+import { PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF, plummerRect } from "../src/galaxy/plummer";
+import { type RingCamera, spriteRings } from "../src/galaxy/ringProfile";
+import { psfMean, spriteTexels } from "../src/galaxy/sprite";
+import { TUNING_DEFAULTS, TUNING_STORAGE_KEY } from "../src/galaxy/tuning";
 import {
   CHOOSING_VIEWPORT,
   DEFAULT_TEMPLATE,
@@ -28,11 +33,13 @@ import {
   DUST_FREE,
   DUST_ONLY,
   GPU_ARGS,
+  GPU_LIGHT,
   INPUT_ROUTES,
   LAYER_SUM_TOLERANCE,
   MODE_BUTTON,
   PHYSICS_ONLY_BUTTON,
   READY,
+  RING_GATE,
   SELECTION_TEXT,
   STAND_TOLERANCE,
   TOLERANCE,
@@ -70,6 +77,8 @@ interface FrameRecord {
   browser: string;
   /** Seconds from the capture's start to its ready frame (S66, D226 R8): the API's compute included, cold on the first. */
   ready_s?: number;
+  /** The GPU's time for the frame's last march, ms, from a timer query (S67, D227 R6); null where the browser gives none. */
+  gpu_ms?: number | null;
 }
 
 interface FramesFile {
@@ -95,6 +104,32 @@ declare global {
       picture(): { png: string; width: number; height: number };
     };
     __galaxygenFrameSum?: () => { sum: number[]; width: number; height: number };
+    /** The march's GPU time (S67, D227 R6; FieldVolume's timer query). */
+    __galaxygenMarchGpu?: { available: boolean; ms: number | null };
+    /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
+    __galaxygenRingProfile?: (edges: number[]) => {
+      rings: number[][];
+      pixels: number[];
+      outside: number[];
+      width: number;
+      height: number;
+      camera: RingCamera;
+      /** The points' sprite as drawn (F1): its size in drawing-buffer pixels, and whether it is the default PSF's texture. */
+      sprite: { px: number; default: boolean };
+    };
+    __galaxygenRenderRings?: { edges: number[]; light: number[][]; bulge: number[]; bulgeRings: number[][]; unresolved?: number[][] | null };
+    /** The points as drawn (S67, the lead's second pass on R5; GalaxyTab). */
+    __galaxygenPointsShown?: {
+      bright: { positions: Float32Array; flux: Float32Array } | null;
+      clusters: { positions: Float32Array; flux: Float32Array; extent?: Float32Array | null } | null;
+      fetch: unknown;
+      /** What FluxPoints draws them with (the fix pass, F3): the points' gain, the clusters' profile, the table's grid. */
+      gain: number;
+      /** The star-first march's gain: L_SUN per pc^2 to screen light, the field gain and the exposure's stops (F7). */
+      fieldGain: number;
+      clusterProfile: 0 | 1;
+      physical: { cells: number; cellPc: number } | null;
+    };
   }
 }
 
@@ -111,7 +146,8 @@ const PLAYWRIGHT = (createRequire(import.meta.url)("@playwright/test/package.jso
 const FRAMES_ABOUT =
   "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. " +
   "`file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it. " +
-  "`ready_s` (since S66, D226 R8) is the seconds from the capture's start to its ready frame - the page's load, the template's choice, the API's compute (cold on the run's first capture, cached after) and the march - the frame-time readout of BUILD_III V7, not the GPU's time per frame.";
+  "`ready_s` (since S66, D226 R8) is the seconds from the capture's start to its ready frame - the page's load, the template's choice, the API's compute (cold on the run's first capture, cached after) and the march - the frame-time readout of BUILD_III V7, not the GPU's time per frame. " +
+  "`gpu_ms` (since S67, D227 R6) is the GPU's time for the ready frame's last march, from a WebGL2 timer query (EXT_disjoint_timer_query_webgl2) round the march's render call - the field alone, not the points or the bloom - or null where the browser gives no timer.";
 
 /**
  * One /api request as it left the page: its route, the `layer` it asked with and the `template` it named (null: no
@@ -399,6 +435,9 @@ for (const capture of CAPTURES) {
     }
     const renderer = await rendererOf(page);
     const seconds = (Date.now() - started) / 1000;
+    // The GPU's time for the ready frame's last march (S67, D227 R6): FieldVolume's timer query, null without one.
+    const gpu = await page.evaluate(() => window.__galaxygenMarchGpu ?? null);
+    const gpuMs = gpu?.available && typeof gpu.ms === "number" ? Math.round(gpu.ms * 100) / 100 : null;
     const selection = capture.mode === "stars" ? ((await page.getByText(SELECTION_TEXT).textContent())?.match(/[\d,]+ stars: .*?(?=\. The field)/)?.[0] ?? "") : "";
 
     // The committed file, by its path from frontend/ (playwright.config.ts's snapshotPathTemplate).
@@ -410,10 +449,10 @@ for (const capture of CAPTURES) {
     const sha256 = createHash("sha256").update(shot.png).digest("hex");
     const against = !recorded ? "no committed picture yet" : recorded.sha256 === sha256 ? "the committed picture, byte for byte" : "not the committed picture's bytes";
     const through = template ? "chosen in the switcher" : "the default galaxy of an API without templates";
-    const facts = { capture: capture.name, template: capture.template, stand: capture.stand ?? null, through, file: capture.file, renderer, browser: `chromium ${browser.version()}`, playwright: PLAYWRIGHT, args: GPU_ARGS, seconds, bytes: shot.png.length, sha256, against, frameSum: shot.sum, selection };
+    const facts = { capture: capture.name, template: capture.template, stand: capture.stand ?? null, through, file: capture.file, renderer, browser: `chromium ${browser.version()}`, playwright: PLAYWRIGHT, args: GPU_ARGS, seconds, gpuMs, bytes: shot.png.length, sha256, against, frameSum: shot.sum, selection };
     await testInfo.attach("capture.json", { body: JSON.stringify(facts, null, 2), contentType: "application/json" });
     testInfo.annotations.push({ type: "renderer", description: renderer });
-    console.log(`${capture.name}: ${side} x ${side}, ${shot.png.length.toLocaleString("en")} B (${against}), ${through}, frame sum ${shot.sum}, ready and taken in ${seconds.toFixed(1)} s, ${renderer}${selection ? `; ${selection}` : ""}`);
+    console.log(`${capture.name}: ${side} x ${side}, ${shot.png.length.toLocaleString("en")} B (${against}), ${through}, frame sum ${shot.sum}, ready and taken in ${seconds.toFixed(1)} s, the march ${gpuMs === null ? "with no GPU timer" : `${gpuMs} ms on the GPU`}, ${renderer}${selection ? `; ${selection}` : ""}`);
 
     const updating = testInfo.config.updateSnapshots === "all" || testInfo.config.updateSnapshots === "changed";
     try {
@@ -501,6 +540,7 @@ for (const capture of CAPTURES) {
         renderer,
         browser: `chromium ${browser.version()}`,
         ready_s: Math.round(seconds * 10) / 10,
+        gpu_ms: gpuMs,
       });
     }
   });
@@ -536,6 +576,323 @@ test("the dust's column on screen: the layer in the march keeps the dust-only fr
   for (const r of ratio) expect(Math.abs(r - 1), `the dust-only frame's light moved by more than ${DUST_COLUMN_TOLERANCE} with the layer (${ratio.join(", ")})`).toBeLessThan(DUST_COLUMN_TOLERANCE);
   // Back on, for whatever runs after on this page's storage.
   for (const row of rows) await row.getByRole("button", { name: "on", exact: true }).click();
+});
+
+// The surface-brightness gates (S67, BUILD_III V8; D227 R5 as ruled on the measurement; settings.ts RING_GATE). The
+// default template face-on in the star-first mode, the dust and the ionized gas off, each ring of RING_GATE.widthKpc out
+// to the frame's inscribed circle, per channel, with the layer and without:
+//   A (T1's surface-brightness gate): the points off - the field's whole march - against the render's published stars
+//     per ring plus the march's bulge there;
+//   B (the drawing's closure): the points on, against the render's remainder per ring plus the bulge plus the drawn
+//     points' own light summed in that ring (`__galaxygenPointsShown`: the realised census, not its expectation).
+// Each ring 1-20 kpc within RING_GATE.tolerance (S66's per-ring bound); the ring 0-1 kpc within RING_GATE.innerTolerance,
+// a carried debt (#177 at the close): the march's bulge cusp, -2.3 % in every state.
+// Disclosed, not asserted: the realised cluster census carries 0.9436 / 0.9410 / 0.9346 of the render's young part over
+// the disc (tests/test_bright.py CLUSTERS_LIGHT_OVER_YOUNG, 0.93132 since S61: a seeded Poisson realisation of the
+// clouds that moves 3-5 % with every redraw since S51), and per 1 kpc ring the clusters stand off the young part by -7.3
+// to +5.2 % of the ring's light (17-18 kpc lowest, 15-16 highest at S67) - what the points-on rings measured against the
+// expectation; gate B takes the census as drawn, so it holds the drawing, not the draw.
+// Since the fix pass (F7) read on the page's own gains (`__galaxygenPointsShown`: the field's and the points'), at the
+// defaults and again at another exposure and point gain set through the page (RING_GATE.settings), so they hold under
+// any template's tuning.
+for (const setting of RING_GATE.settings) {
+test(`the surface-brightness gates, ${setting.name}: each ring's light on screen against the render's (A) and the drawing's closure (B)`, async ({ page }, testInfo) => {
+  const net = watchApi(page);
+  await page.setViewportSize(CHOOSING_VIEWPORT);
+  // The gates test the drawing, not the look: they run at the plain display defaults (TUNING_DEFAULTS), stored as the
+  // Milky Way's own tuning before the page loads, so the owner's per-template defaults (S67, D227 T1: field gain 2,
+  // point gain 4, the starlight at 0.403, the cell outlines on) do not enter the comparison with the render's light.
+  await page.addInitScript(([key, value]) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* no storage: the page draws its template's defaults and the gains' guard below says so */
+    }
+  }, [`${TUNING_STORAGE_KEY}.milky_way`, JSON.stringify(TUNING_DEFAULTS)] as const);
+  await page.goto("/");
+  await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenRingProfile, null, { timeout: READY.timeoutMs });
+  await press(page, MODE_BUTTON.stars);
+  await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
+  for (const label of RING_GATE.released) await release(page, label, RING_GATE.beside);
+  await expect(page.getByRole("button", { name: RING_GATE.beside, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await squareCanvas(page, 1024);
+  // The setting, through the page's own controls: the exposure slider and the Tuning panel's point gain.
+  if (setting.exposure !== 0 || setting.pointGain !== 1) {
+    await page.getByRole("slider", { name: "Exposure", exact: true }).fill(String(setting.exposure));
+    await page.getByRole("button", { name: DUST_ONLY.panel }).click();
+    const { min, max } = RING_GATE.pointGainControl;
+    await page.getByRole("slider", { name: "point gain", exact: true }).fill(String(Math.round((1000 * Math.log(setting.pointGain / min)) / Math.log(max / min))));
+  }
+  const bins = Array.from({ length: Math.round(RING_GATE.maxKpc / RING_GATE.widthKpc) + 1 }, (_, i) => i * RING_GATE.widthKpc);
+  const pixelKpc = (2 * 20) / 1024; // the frame: 40 kpc over 1024 px
+
+  // One state's rings: the screen's light per ring over the expectation per ring, per channel; with the points, the
+  // largest single point's share of its ring and its distance from the ring's nearest edge, px (a 9 px display sprite
+  // reaches 4.5 px across an edge).
+  const read = async (gate: "A" | "B", layer: string) => {
+    await settle(page, net, gate === "B" ? "stars" : "field");
+    const got = await page.evaluate(() => {
+      const ref = window.__galaxygenRenderRings!;
+      const shown = window.__galaxygenPointsShown;
+      const arr = (p?: { positions: Float32Array; flux: Float32Array } | null) => (p ? { positions: Array.from(p.positions), flux: Array.from(p.flux) } : null);
+      return { ref, screen: window.__galaxygenRingProfile!(ref.edges), bright: arr(shown?.bright), clusters: arr(shown?.clusters), gain: shown!.gain, fieldGain: shown!.fieldGain };
+    });
+    // The gains the page drew with (F7): the field's on the march, the points' on their sprites - the setting's, as set.
+    const gains = [got.fieldGain / RING_GATE.lightPerLsunPc2 / 2 ** setting.exposure, got.gain / got.fieldGain / setting.pointGain];
+    expect(farthest(gains), `gate ${gate}, layer ${layer}: the page's gains, ${setting.name} (${gains.join(", ")})`).toBeLessThan(1e-12);
+    expect(got.screen.rings.length, `gate ${gate}, layer ${layer}: the probes on one grid`).toBe(got.ref.light.length);
+    const points = gate === "B" ? [got.bright, got.clusters].filter((p): p is NonNullable<typeof p> => p !== null) : [];
+    // The drawn points' light where their sprites put it (the lead's fourth pass): each point through the probe's own
+    // camera, its display sprite's pixels each binned where its ray meets the plane (ringProfile.ts spriteRings) - a
+    // cluster hundreds of pc off the plane lands up to 7 px from its own radius at 15 kpc, and a 9 px sprite near an
+    // edge lands on both sides of it; binned by the points' own radii instead, gate B read up to 4.6 % off at S67.
+    // At the size the page drew the sprite (F1: the ring probe's reading of FluxPoints' spritePx), with the default PSF's
+    // texels - the only sprite this gate's template draws (R2), held so.
+    expect(got.screen.sprite.default, `gate ${gate}, layer ${layer}: the points drawn with the default sprite`).toBe(true);
+    const texels = spriteTexels(64);
+    const mean = psfMean(64);
+    const sprites = points.map((p) => spriteRings(p.positions, p.flux, got.screen.camera, got.screen.width, got.screen.height, got.screen.sprite.px, texels, 64, mean, got.ref.edges));
+    if (gate === "B") expect(points.length, "gate B: the drawn points are there to sum").toBe(2);
+    if (gate === "B") expect(got.ref.unresolved, "gate B: the render's remainder per ring").toBeTruthy();
+    const rows: { from: number; to: number; ratio: number[]; largest?: number[]; edgePx?: number }[] = [];
+    for (let b = 0; b + 1 < bins.length; b += 1) {
+      const [from, to] = [bins[b], bins[b + 1]];
+      // The render's rings wholly inside the bin (75 pc rings do not fall on every kpc): the screen, the render and the
+      // points are each summed over exactly that span, [lo, hi), the ring straddling an edge left out of all three.
+      const inside = got.ref.light.map((_, i) => got.ref.edges[i] >= from - 1e-9 && got.ref.edges[i + 1] <= to + 1e-9);
+      const lo = got.ref.edges[inside.indexOf(true)];
+      const hi = got.ref.edges[inside.lastIndexOf(true) + 1];
+      const sum = (rings: number[][] | null | undefined) => {
+        const out = [0, 0, 0];
+        if (rings) inside.forEach((wholly, i) => {
+          if (wholly) for (let k = 0; k < 3; k += 1) out[k] += rings[i][k];
+        });
+        return out;
+      };
+
+      // In the field's unit, L_sun over the white point: the screen over the field's gain, the points at their own gain.
+      const screen = sum(got.screen.rings).map((v) => v / got.fieldGain);
+      const bulge = sum(got.ref.bulgeRings);
+      const field = gate === "A" ? sum(got.ref.light) : sum(got.ref.unresolved);
+      const drawn = [0, 1, 2].map((k) => (sprites.reduce((s, rings) => s + sum(rings)[k], 0) * got.gain) / got.fieldGain);
+      const expected = field.map((v, k) => v + bulge[k] + drawn[k]);
+      const row: (typeof rows)[number] = { from, to, ratio: screen.map((v, k) => v / expected[k]) };
+      if (gate === "B") {
+        // The ring's brightest point: its light over the ring's expectation, per channel, and how near an edge it stands.
+        let best = -1;
+        let bestP: { p: NonNullable<typeof points[number]>; i: number } | null = null;
+        for (const p of points) {
+          for (let i = 0; i < p.flux.length / 3; i += 1) {
+            const radius = Math.hypot(p.positions[3 * i], p.positions[3 * i + 2]);
+            if (radius < lo || radius >= hi) continue;
+            const L = p.flux[3 * i] + p.flux[3 * i + 1] + p.flux[3 * i + 2];
+            if (L > best) [best, bestP] = [L, { p, i }];
+          }
+        }
+        if (bestP) {
+          const { p, i } = bestP;
+          const radius = Math.hypot(p.positions[3 * i], p.positions[3 * i + 2]);
+          row.largest = [0, 1, 2].map((k) => (p.flux[3 * i + k] * got.gain) / got.fieldGain / expected[k]);
+          row.edgePx = Math.min(radius - lo, hi - radius) / pixelKpc;
+        }
+      }
+      rows.push(row);
+    }
+    const fmt = (v: number[]) => v.map((x) => x.toFixed(5)).join("/");
+    console.log(`the surface-brightness gate ${gate}, layer ${layer}, ${setting.name}:${rows.map((r) => `${r.from}-${r.to} kpc ${fmt(r.ratio)}${r.largest ? ` (largest point ${fmt(r.largest)} at ${r.edgePx!.toFixed(1)} px from an edge)` : ""}`).join("; ")}`);
+    return rows;
+  };
+  const check = (gate: string, layer: string, rows: Awaited<ReturnType<typeof read>>) => {
+    for (const row of rows) {
+      const bound = row.from < RING_GATE.innerKpc ? RING_GATE.innerTolerance : RING_GATE.tolerance;
+      const worst = Math.max(...row.ratio.map((r) => Math.abs(r - 1)));
+      expect.soft(worst, `gate ${gate}, layer ${layer}, ${row.from}-${row.to} kpc: ${row.ratio.map((r) => r.toFixed(5)).join(", ")} against ${bound}${row.from < RING_GATE.innerKpc ? " (the bulge cusp, a carried debt)" : ""}`).toBeLessThanOrEqual(bound);
+    }
+  };
+  const measured: Record<string, unknown> = {};
+  // A: the points off, with the layer and without.
+  await release(page, "stars", RING_GATE.beside);
+  measured["A, layer on"] = await read("A", "on");
+  await press(page, PHYSICS_ONLY_BUTTON);
+  measured["A, layer off"] = await read("A", "off");
+  // B: the points on, without the layer and with it.
+  await press(page, "stars", RING_GATE.beside);
+  measured["B, layer off"] = await read("B", "off");
+  await release(page, PHYSICS_ONLY_BUTTON);
+  measured["B, layer on"] = await read("B", "on");
+  await testInfo.attach("rings.json", { body: JSON.stringify(measured, null, 2), contentType: "application/json" });
+  for (const [name, rows] of Object.entries(measured)) {
+    const [gate, layer] = name.split(", layer ");
+    check(gate, layer, rows as Awaited<ReturnType<typeof read>>);
+  }
+});
+}
+
+/** One point set as the page drew it, copied out of the page. */
+interface ShownPoints {
+  positions: number[];
+  flux: number[];
+  extent: number[] | null;
+}
+
+/**
+ * The light FluxPoints puts on screen for a point set (its vertex shader, statement for statement; the fix pass, F3):
+ * each point's flux times the gain over the sky's area one pixel covers at it, (1000 depth / f)^2 depth / dist; drawn as
+ * a Plummer sphere where the clusters' profile is on and 2 r_h fills a pixel, else as the instrument's image; in the box
+ * of whole pixels the shader draws (floor(c) - h, 2h + 1 a side, h clamped to PROFILE_MAX_HALF), each channel summing to
+ * one over the box (the 1/share the clamp discloses, hstPsf.ts psfHalf) - so what lands on the frame is the light times
+ * the share of the box inside it, by the profile's own rectangle integrals. `centred` counts only points whose centre
+ * is in the frame; `all` every point in front of the camera (a GPU may draw a wide point whose centre is off screen).
+ */
+function drawnLight(sets: { points: ShownPoints; cluster: boolean }[], cam: RingCamera, width: number, height: number, gain: number, clusterProfile: number, table: PsfTable) {
+  const f = height / (2 * cam.tanHalfY);
+  const dot = (a: readonly number[], b: readonly number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const centred = [0, 0, 0];
+  const all = [0, 0, 0];
+  let clamped = 0;
+  let plummer = 0;
+  let count = 0;
+  for (const { points, cluster } of sets) {
+    for (let p = 0; p < points.flux.length / 3; p += 1) {
+      const d = [0, 1, 2].map((k) => points.positions[3 * p + k] - cam.eye[k]);
+      const depth = dot(d, cam.forward);
+      if (!(depth > 0)) continue;
+      const side = (1000 * depth) / f;
+      const area = (side * side * depth) / Math.hypot(d[0], d[1], d[2]);
+      const cx = width / 2 + (f * dot(d, cam.right)) / depth;
+      const cy = height / 2 + (f * dot(d, cam.up)) / depth;
+      const extent = cluster && points.extent ? points.extent[p] : 0;
+      const asPlummer = cluster && clusterProfile > 0.5 && extent > 0 && 2 * extent >= side;
+      const scale = asPlummer ? extent / PLUMMER_HALF_MASS / side : side / table.cellPc;
+      const want = asPlummer ? PLUMMER_REACH * scale : (0.5 * table.cells * table.cellPc) / side;
+      const h = Math.min(PROFILE_MAX_HALF, Math.max(1, Math.ceil(want)));
+      if (Math.ceil(want) > PROFILE_MAX_HALF) clamped += 1;
+      if (asPlummer) plummer += 1;
+      count += 1;
+      const x0 = Math.floor(cx) - h;
+      const y0 = Math.floor(cy) - h;
+      const n = 2 * h + 1;
+      const [ax, bx, ay, by] = [Math.max(x0, 0), Math.min(x0 + n, width), Math.max(y0, 0), Math.min(y0 + n, height)];
+      const rect = (lx: number, hx: number, ly: number, hy: number): number[] =>
+        asPlummer ? [0, 1, 2].map(() => plummerRect(lx - cx, hx - cx, ly - cy, hy - cy, scale)) : psfRect(table, [(lx - cx) * scale, (ly - cy) * scale], [(hx - cx) * scale, (hy - cy) * scale]);
+      const box = rect(x0, x0 + n, y0, y0 + n);
+      const on = ax < bx && ay < by ? rect(ax, bx, ay, by) : [0, 0, 0];
+      const inFrame = cx >= 0 && cx < width && cy >= 0 && cy < height;
+      for (let k = 0; k < 3; k += 1) {
+        const light = (points.flux[3 * p + k] * gain) / area;
+        all[k] += (light * on[k]) / box[k];
+        if (inFrame) centred[k] += (light * on[k]) / box[k];
+      }
+    }
+  }
+  return { centred, all, count, clamped, plummer };
+}
+
+// The GPU light check for R1's path (S67's fix pass, F3; settings.ts GPU_LIGHT): NGC 4414 in the star-first mode, at its
+// own camera and at the zoom capture's stand. (i) The spikes' switch moves no light: the frame's sum with the spikes on
+// over off. (ii) The points' light lands on screen: with the field and the dust off, the points-only frame's sum over the
+// drawn points' own light as FluxPoints deposits it, the box's share on screen counted (drawnLight). Nothing is compared
+// as a picture here.
+test("the instrument's light on the GPU: the spikes' switch moves none, and the points-only frame holds the points' light", async ({ page }, testInfo) => {
+  test.setTimeout(900_000);
+  const net = watchApi(page);
+  await page.setViewportSize(CHOOSING_VIEWPORT);
+  const served = await page.request.get("/api/templates").then((r) => r.json() as Promise<{ templates: { name: string; label: string; camera: LensCamera; instrument: Record<string, unknown> & { filters?: string | null }; filters: string }[] }>);
+  const template = served.templates.find((t) => t.name === GPU_LIGHT.template)!;
+  const zoom = CAPTURES.find((c) => c.name === GPU_LIGHT.zoom)!;
+  expect(template, `${GPU_LIGHT.template} among the served templates`).toBeTruthy();
+  // The instrument's two tables, built here from what the page builds them from (the template's optics, its set's pivots).
+  const optics = opticsOf(template.instrument as unknown as Parameters<typeof opticsOf>[0])!;
+  expect(optics, `${GPU_LIGHT.template}: the optics read`).toBeTruthy();
+  // The instrument's own set (S67, D227 T1): the template opens on RGB since the owner's "Switch to RGB", so the set is
+  // the instrument's, pressed below after landing.
+  const instrumentSet = FILTER_LABELS[template.instrument.filters ?? template.filters];
+  expect(instrumentSet, `${GPU_LIGHT.template}: the instrument's own filter set among the viewer's`).toBeTruthy();
+  const pivots = (instrumentSet as unknown as { sources: { pivot: number }[] }).sources.map((s) => s.pivot);
+  const tables = { off: psfTable(optics, { pivots }), on: psfTable(optics, { pivots, density: imageDensity(pupilImage(optics)) }) };
+
+  // As the surface-brightness gates: the check tests the drawing, not the look, so it runs at the plain display defaults,
+  // stored as the template's own tuning before the page loads (S67, D227 T1: the owner's defaults draw the cell
+  // outlines, whose lines would add their own light to the points-only frame).
+  await page.addInitScript(([key, value]) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* no storage: the page draws its template's defaults */
+    }
+  }, [`${TUNING_STORAGE_KEY}.${GPU_LIGHT.template}`, JSON.stringify(TUNING_DEFAULTS)] as const);
+  await page.goto("/");
+  await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenRingProfile, null, { timeout: READY.timeoutMs });
+  await press(page, template.label);
+  await standsAt(page, template.camera);
+  await press(page, instrumentSet.label);
+  await press(page, MODE_BUTTON.stars);
+  await squareCanvas(page, 1024);
+  await page.getByRole("button", { name: DUST_ONLY.panel }).click();
+  const spikesRow = page.getByText(GPU_LIGHT.spikes, { exact: true }).locator("xpath=../..");
+  const spikes = async (state: "on" | "off") => {
+    await spikesRow.getByRole("button", { name: state, exact: true }).click();
+    await expect(spikesRow.getByRole("button", { name: state, exact: true })).toHaveAttribute("aria-pressed", "true");
+  };
+  const measured: Record<string, unknown> = {};
+  const stands: [string, LensCamera, Capture["stand"] | undefined][] = [
+    ["the template's camera", template.camera, undefined],
+    ["the zoom stand", { ...zoom.camera, radius_kpc: zoom.stand!.radius_kpc }, zoom.stand],
+  ];
+  for (const [where, camera, stand] of stands) {
+    if (stand) {
+      await page.evaluate(([c, t]) => window.__galaxygenCapture!.place(c, t), [camera, stand.target] as const);
+    }
+    await standsAt(page, camera);
+    // (i) Every component at its default: the spikes off, then on.
+    await spikes("off");
+    const off = lightOf(await settle(page, net, "stars"));
+    await spikes("on");
+    const on = lightOf(await settle(page, net, "stars"));
+    const switchRatio = over(on, off);
+    // (ii) The points alone, in both switch states (on first: it is pressed).
+    for (const label of GPU_LIGHT.released) await release(page, label, GPU_LIGHT.beside);
+    const alone: Record<string, unknown> = {};
+    for (const state of ["on", "off"] as const) {
+      await spikes(state);
+      const frame = lightOf(await settle(page, net, "stars"));
+      await standsAt(page, camera);
+      const got = await page.evaluate(() => {
+        const shown = window.__galaxygenPointsShown!;
+        const screen = window.__galaxygenRingProfile!([0, 1]);
+        const arr = (p?: { positions: Float32Array; flux: Float32Array; extent?: Float32Array | null } | null) =>
+          p ? { positions: Array.from(p.positions), flux: Array.from(p.flux), extent: p.extent ? Array.from(p.extent) : null } : null;
+        return { bright: arr(shown.bright), clusters: arr(shown.clusters), gain: shown.gain, clusterProfile: shown.clusterProfile, physical: shown.physical, camera: screen.camera, width: screen.width, height: screen.height };
+      });
+      const table = tables[state];
+      expect(got.physical, `${where}: the page draws the instrument's image (R1)`).toBeTruthy();
+      expect([got.physical!.cells, got.physical!.cellPc / table.cellPc], `${where}: the page's table and the test's on one grid`).toEqual([table.cells, 1]);
+      const sets = [
+        ...(got.clusters ? [{ points: got.clusters, cluster: true }] : []),
+        ...(got.bright ? [{ points: got.bright, cluster: false }] : []),
+      ];
+      expect(sets.length, `${where}: the drawn points are there to sum`).toBe(2);
+      const drawn = drawnLight(sets, got.camera, got.width, got.height, got.gain, got.clusterProfile, table);
+      // Held: over every point in front of the camera (the GPU draws a wide point whose centre is off the frame - at the
+      // zoom stand, counted by centres alone, the frame read 1 % over in red). Disclosed: over the centred points alone.
+      alone[state] = { frame, drawn, ratio: over(frame, drawn.all), centredOnly: over(frame, drawn.centred) };
+    }
+    for (const label of GPU_LIGHT.released) await press(page, label, GPU_LIGHT.beside);
+    await spikes("off");
+    measured[where] = { off, on, switchRatio, alone };
+    const dev = (r: number[]) => r.map((v) => (v - 1).toExponential(2)).join(", ");
+    const said = Object.entries(alone as Record<string, { ratio: number[]; centredOnly: number[]; drawn: ReturnType<typeof drawnLight> }>)
+      .map(([s, a]) => `spikes ${s}: points-only frame over the drawn light - 1 ${dev(a.ratio)} (centred points only ${dev(a.centredOnly)}), ${a.drawn.count} points, ${a.drawn.clamped} boxes clamped, ${a.drawn.plummer} as Plummer spheres`)
+      .join("; ");
+    console.log(`the instrument's light, ${where}: spikes on over off - 1 ${dev(switchRatio)}; ${said}`);
+  }
+  await testInfo.attach("gpu-light.json", { body: JSON.stringify(measured, null, 2), contentType: "application/json" });
+  for (const [where, m] of Object.entries(measured) as [string, { switchRatio: number[]; alone: Record<string, { ratio: number[] }> }][]) {
+    expect.soft(farthest(m.switchRatio), `${where}: the spikes' switch moved the frame's light, on over off ${five(m.switchRatio)}`).toBeLessThanOrEqual(GPU_LIGHT.spikesTolerance);
+    for (const [state, a] of Object.entries(m.alone)) {
+      expect.soft(farthest(a.ratio), `${where}, spikes ${state}: the points-only frame over the drawn points' light ${five(a.ratio)}`).toBeLessThanOrEqual(GPU_LIGHT.pointsTolerance);
+    }
+  }
 });
 
 // The switch on the wire, in every request shape the Galaxy view has (S55, D214: invariant I5; rule B13). The

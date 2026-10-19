@@ -55,7 +55,7 @@
       "template": "ngc_4414",
       "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "mode": "field",
-      "filters": "wfc3",
+      "filters": "rgb",
       "viewport": 1024,
       "file": "e2e/frames/ngc_4414-field.png"
     },
@@ -64,7 +64,7 @@
       "template": "ngc_4414",
       "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "mode": "stars",
-      "filters": "wfc3",
+      "filters": "rgb",
       "viewport": 1024,
       "file": "e2e/frames/ngc_4414-stars.png"
     },
@@ -73,7 +73,7 @@
       "template": "ngc_4414",
       "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "mode": "field",
-      "filters": "wfc3",
+      "filters": "rgb",
       "viewport": 256,
       "file": "public/templates/ngc_4414.png"
     },
@@ -93,7 +93,7 @@
       "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "stand": { "target": { "radius_kpc": 2.0, "azimuth_deg": 90 }, "radius_kpc": 0.25 },
       "mode": "stars",
-      "filters": "wfc3",
+      "filters": "rgb",
       "viewport": 1024,
       "file": "e2e/frames/ngc_4414-zoom.png"
     }

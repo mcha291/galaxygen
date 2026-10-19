@@ -121,8 +121,9 @@ path, the mean tilted along the published gradient, the cluster's Strömgren
 sphere carved out and the clumps above e^σ_s inside it left as pillars — each
 HII region as a sphere of the published emissivity per volume, each bubble and
 remnant as a shell of the published thickness and emissivity (§4's limb
-brightening for free), the clouds' transmission at the census's one central A_V
-(`cloud_extinction_v`); the field's HII component fades inside the window as
+brightening for free), the clouds' transmission at each cloud's own face-on mean
+A_V (`cloud_dust_extinction_v`, a uniform sphere of that mean column; until S67 the
+census's one central A_V, `cloud_extinction_v`, D228); the field's HII component fades inside the window as
 the spheres fade in (§7: no double counting). The routes name every row by
 (cell, index) — §5a's seed, realised. §7's catalogue-against-field holds for the
 clusters' Hα (0.980 over the disc, 0.974 over a level-1 sector, sixty level-1
@@ -227,10 +228,14 @@ the optical-depth-weighted entry distance −Σ τ t0 / Σ τ in its alpha (`NO_
 1, where no cloud's optical depth is met). The star points draw after the
 multiply quad and take T themselves, read once per star at the pixel holding its
 centre, only where the star is farther from the camera than the front (strictly:
-a star exactly at the front is drawn undimmed); the field
-is still multiplied by the whole ray's T, in front of a cloud as well (the
-stated approximation; the exact composite, T at K depth slabs, is not built)
-`[verified: frontend/src/galaxy/regionDepth.test.ts]`. FluxPoints' own dust is
+a star exactly at the front is drawn undimmed)
+`[verified: frontend/src/galaxy/regionDepth.test.ts]`. **Since S67 (D228) the
+field too is dimmed only behind a cloud**: a third pass multiplies it by the mean
+transmission of K = 1024 slabs of equal light along the ray, placed by the stars'
+layer (sech² at `layers.stars`), each slab dimmed by the clouds in front of its
+middle (K from a measured convergence; exactly 1 with no cloud on the ray)
+`[verified: frontend/src/galaxy/regionSlabs.test.ts]`; until S67 the field took
+the whole ray's T, in front of a cloud as well. FluxPoints' own dust is
 per point along its segment and was already depth-correct.
 
 **Since S64 (BUILD_III V6) the clouds are extinction at galaxy scale.** `/api/clouds`

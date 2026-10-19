@@ -4,7 +4,7 @@ import { AdditiveBlending, BufferAttribute, BufferGeometry, type PerspectiveCame
 
 import { DUST_SEGMENT_STEPS } from "./flux";
 import { DISC_LOOP_HALF, PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF } from "./plummer";
-import { type SpritePsf, psfMean, psfTexture } from "./psf";
+import { type PhysicalPsf, type SpritePsf, psfMean, psfTexture } from "./psf";
 import { RING_ROWS } from "./regimes";
 
 // The star-first mode's points (S50, D208): each a published flux on the field's own scale. A point's sprite
@@ -35,6 +35,8 @@ export interface PointDust {
   clouds?: Texture | null;
   slab?: Texture | null;
   cloudExt?: readonly [number, number, number];
+  /** The extinction strength (S67, D228, the owner's ruling): every depth to a point multiplied by it; 1 when absent. */
+  depthScale?: number;
 }
 
 // plummer.ts plummerCorner and plummerRect, line for line: the Plummer's share of its light over a rectangle.
@@ -46,6 +48,28 @@ const PROFILE_GLSL = /* glsl */ `
   }
   float plummerRect(vec2 lo, vec2 hi, float a) {
     return plummerCorner(hi.x, hi.y, a) - plummerCorner(lo.x, hi.y, a) - plummerCorner(hi.x, lo.y, a) + plummerCorner(lo.x, lo.y, a);
+  }
+`;
+
+// hstPsf.ts psfCorner and psfRect, line for line (S67, D227 R1): the instrument's PSF table's light between the centre and
+// u (cells from the centre, each axis), clamped to the table and bilinear between its nodes, per channel; a rectangle's
+// light is four corners.
+const PSF_GLSL = /* glsl */ `
+  uniform sampler2D psfTable;
+  uniform float psfCells;
+  vec3 psfCorner(vec2 u) {
+    vec2 g = clamp(u + 0.5 * psfCells, 0.0, psfCells);
+    vec2 i = min(floor(g), psfCells - 1.0);
+    vec2 f = g - i;
+    ivec2 a = ivec2(i);
+    vec3 c00 = texelFetch(psfTable, a, 0).rgb;
+    vec3 c10 = texelFetch(psfTable, a + ivec2(1, 0), 0).rgb;
+    vec3 c01 = texelFetch(psfTable, a + ivec2(0, 1), 0).rgb;
+    vec3 c11 = texelFetch(psfTable, a + ivec2(1, 1), 0).rgb;
+    return (c00 * (1.0 - f.x) + c10 * f.x) * (1.0 - f.y) + (c01 * (1.0 - f.x) + c11 * f.x) * f.y;
+  }
+  vec3 psfRect(vec2 lo, vec2 hi) {
+    return psfCorner(hi) - psfCorner(vec2(lo.x, hi.y)) - psfCorner(vec2(hi.x, lo.y)) + psfCorner(lo);
   }
 `;
 
@@ -61,6 +85,7 @@ const VERTEX = /* glsl */ `
   uniform float rHi;
   uniform float dustTop;
   uniform float dustOn;
+  uniform float dustDepthScale;
   uniform sampler2D cloudTex;
   uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
@@ -76,6 +101,12 @@ const VERTEX = /* glsl */ `
   varying vec2 vCentre;
   varying float vNorm;
   ${PROFILE_GLSL}
+  // The instrument's image of a point (S67, D227 R1): on where the template's optics apply; the table's pc per cell; each
+  // channel's normaliser, one over the table's light over the box.
+  uniform float physOn;
+  uniform float psfCellPc;
+  varying vec3 vNorm3;
+  ${PSF_GLSL}
   // plummer.ts discNorm: the disc's coverage summed over its box, or its area past the loop's bound.
   float discNorm(vec2 c, vec2 k0, float n, float r) {
     if (n > ${2 * DISC_LOOP_HALF + 1}.0) return 3.14159265 * r * r;
@@ -150,7 +181,7 @@ const VERTEX = /* glsl */ `
       vec3 clouds = cloudsOn > 0.5 ? textureLod(cloudTex, vec2(x, phi / 6.28318531), 0.0).r * cloudExt : vec3(0.0);
       tau += face * place * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;
     }
-    return tau;
+    return tau * dustDepthScale;
   }
 
   void main() {
@@ -172,12 +203,30 @@ const VERTEX = /* glsl */ `
         light = flux * gain / area;
         if (dustOn > 0.5) light *= exp(-dustTo(position));
       }
+      // As the instrument's image of a point (S67, D227 R1; hstPsf.ts): its whole light, dimmed alike, spread by the PSF.
+      if (mode < 0.5 && physOn > 0.5) {
+        mode = 3.0;
+        light = flux * gain / area;
+        if (dustOn > 0.5) light *= exp(-dustTo(position));
+      }
     }
     vLight = light;
     vMode = mode;
     gl_PointSize = spritePx;
     gl_Position = projectionMatrix * mv;
-    if (mode > 0.5) {
+    if (mode > 2.5) {
+      // The box of whole pixels round the point (plummer.ts profileBox at hstPsf.ts psfHalf), the table's cells per
+      // pixel, and each channel's light over the box, by which each pixel's share is divided (hstPsf.ts psfWeights).
+      vec2 c = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * bufferPx;
+      float scale = side / psfCellPc;
+      float h = clamp(ceil(0.5 * psfCells * psfCellPc / side), 1.0, ${PROFILE_MAX_HALF.toFixed(1)});
+      vec2 k0 = floor(c) - h;
+      float n = 2.0 * h + 1.0;
+      vBox = vec4(k0, n, scale);
+      vCentre = c;
+      vNorm3 = 1.0 / psfRect((k0 - c) * scale, (k0 + n - c) * scale);
+      gl_PointSize = n + 4.0;
+    } else if (mode > 0.5) {
       // The box of whole pixels round the point (plummer.ts profileBox), the profile's scale in pixels, and the light
       // over the box, by which each pixel's share is divided (plummer.ts profileWeights).
       vec2 c = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * bufferPx;
@@ -200,12 +249,21 @@ const FRAGMENT = /* glsl */ `
   varying vec4 vBox;
   varying vec2 vCentre;
   varying float vNorm;
+  varying vec3 vNorm3;
   ${PROFILE_GLSL}
+  ${PSF_GLSL}
   void main() {
     if (vMode < 0.5) {
       // The instrument's pattern per channel: the sprite's colour times its alpha (psf.ts), unit sum over the sprite.
       vec4 t = texture2D(sprite, gl_PointCoord);
       gl_FragColor = vec4(vLight * t.rgb * t.a, 1.0);
+      return;
+    }
+    if (vMode > 2.5) {
+      // The instrument's image (S67): this pixel's share of each channel's light over the box (hstPsf.ts psfWeights).
+      vec2 q = floor(gl_FragCoord.xy);
+      if (q.x < vBox.x || q.y < vBox.y || q.x >= vBox.x + vBox.z || q.y >= vBox.y + vBox.z) discard;
+      gl_FragColor = vec4(vLight * psfRect((q - vCentre) * vBox.w, (q + 1.0 - vCentre) * vBox.w) * vNorm3, 1.0);
       return;
     }
     // The profile (S64): this pixel's share of the light over the box (plummer.ts profileWeights); none outside it.
@@ -238,11 +296,16 @@ interface Props {
   extent?: Float32Array | null;
   /** 1 a Plummer sphere (the clusters), 2 a disc (the knots); 0 or absent, the sprite always. */
   profile?: 0 | 1 | 2;
+  /**
+   * The instrument's image of a point at its physical size (S67, D227 R1; psf.ts physicalPsf): where a template's optics
+   * apply, every point the profile does not draw is drawn with it, in place of the sprite. Null: the sprite (R2).
+   */
+  physical?: PhysicalPsf | null;
 }
 
 const BUFFER = new Vector2();
 
-export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0 }: Props) {
+export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null }: Props) {
   const gl = useThree((s) => s.gl);
   const points = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -266,12 +329,18 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         rHi: { value: 1 },
         dustTop: { value: 0 },
         dustOn: { value: 0 },
+        dustDepthScale: { value: 1 },
         cloudTex: { value: sprite },
         cloudSlab: { value: sprite },
         cloudExt: { value: new Vector3(0, 0, 0) },
         cloudsOn: { value: 0 },
         profile: { value: 0 },
         bufferPx: { value: new Vector2(1, 1) },
+        // Bound to the sprite until a table arrives: never read while physOn is 0.
+        physOn: { value: 0 },
+        psfTable: { value: sprite },
+        psfCells: { value: 1 },
+        psfCellPc: { value: 1 },
       },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
@@ -298,12 +367,19 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     uniforms.pxPerUnit.value = buffer.y / (2 * Math.tan((fov * Math.PI) / 360));
     uniforms.profile.value = profile;
     (uniforms.bufferPx.value as Vector2).set(buffer.x, buffer.y);
+    uniforms.physOn.value = physical ? 1 : 0;
+    if (physical) {
+      uniforms.psfTable.value = physical.texture;
+      uniforms.psfCells.value = physical.cells;
+      uniforms.psfCellPc.value = physical.cellPc;
+    }
     uniforms.spritePx.value = (psf?.size ?? spriteSize) * gl.getPixelRatio();
     uniforms.gain.value = gain;
     const mean = psf?.mean ?? DEFAULT_MEAN;
     (uniforms.spriteMean.value as Vector3).set(mean[0], mean[1], mean[2]);
     uniforms.sprite.value = psf?.texture ?? psfTexture();
     uniforms.dustOn.value = dust ? 1 : 0;
+    uniforms.dustDepthScale.value = dust?.depthScale ?? 1;
     if (dust) {
       uniforms.rings.value = dust.rings;
       uniforms.scatter.value = dust.scatter;
