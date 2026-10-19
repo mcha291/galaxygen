@@ -13607,7 +13607,7 @@ the Milky Way's steps brightened its march by about 4 % and saved no measurable 
 steps even face-on, so the Milky Way went back to 96. The picture test 15 passed, every frame the committed bytes;
 vitest 436 passed, 1 skipped; specs 12 / 20 / 5 of 37 unmoved, row 37 −0.097717 → −0.097902 (D231, a recorded miss).
 
-**Closing.** [SUITE LINE]
+**Closing.** The full suite ran once at 8e6e064 (the final model and viewer, before these records), in a detached worktree with pytest's own exit code appended to its log: **EXIT=1 - 1 608 passed, 3 failed, 5 skipped, 1 xfailed**: `test_performance`'s per-cell pricing (the wall-clock flake of #67/#68's class, S45, S60, S63-S66; green alone after, EXIT=0) and two of `test_clustering_gate`'s as-measured snapshots of the young clusters, which D231 moved and its builder's file list had not named (a cluster's source offset is bounded by its cloud's size, and the giants shrank): the judged checks in both held (the slope inside its window, the flatness); re-pinned with the reason (clusters (-0.6686, 2.0928, 0.0208) -> (-0.6908, 2.1129, 0.0221); the square (-0.121, 1.278, 1.800, 1.202) -> (-0.154, 1.302, 1.838, 1.131)), the two re-run green.
 
 **For the owner, plainly (none awaited; their word first if they answer):** #172 (one mode at zoom, carried); #176 -
 the young light's speckle at the census's width, kept at their "Keep as is", its sampling half (a footprint average)
