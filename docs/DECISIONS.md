@@ -13462,3 +13462,36 @@ outlines, whose lines added light to the points-only frame: 1.58 at the template
 re-pinned 0.96717 -> 0.96427 (red), the display balance's. Every capture regenerated; the picture test 15 passed twice.
 Told to the owner with the frames: on `ngc_4414` the same set overexposes the bulge and blooms its HII knots into
 large green glows (point gain 4 and bloom 2.25 above 0.45 on the WFC3 set's bright knots), hiding D229-D231's dust.
+
+**T1, the owner's third paste (2026-10-19).** "ok use this for ngc4414 {"template":"ngc_4414","filters":"rgb",
+"exposure":0,"fieldGain":1.2,"bloomStrength":2,"spikes":true,"cloudsExtinction":true,"cloudRaster":3} then change the
+steps for both to 48", and, asked which filter set NGC 4414 should open on, "Switch to RGB". The copy box lists only
+what differs from the template's own defaults, so the paste is laid over the second: `ngc_4414` = that set with field
+gain 1.65 -> 1.2, bloom 2.25 -> 2, the spikes on, the clouds as extinction on, the cloud raster 5 -> 3 texels a cell;
+its exposure 0 is the absent entry of `TEMPLATE_EXPOSURE`. Both templates march 48 steps (was 96): `TEMPLATE_TUNING`
+holds two objects since. `spikes` acts only while the instrument's own set (WFC3) is shown, so on RGB it waits for the
+owner to switch sets. **NGC 4414 opens on RGB**: `templates.py`'s `filters` "wfc3" -> "rgb", the owner's override of
+D213's choice, recorded. The instrument stays as data and now names its own set: `Instrument.filters = "wfc3"`
+(a name, no source tag; null on the Milky Way), published as `/api/templates`' `instrument.filters`, read by
+`templates.ts` (null for a set the viewer does not hold), and GalaxyTab's physical reading keys on it (the template's
+`filters` the fallback), so the PSF and the spikes draw whenever the viewer is switched to WFC3. The readers followed:
+`captures.json`'s four `ngc_4414` captures on rgb; the GPU light check takes its pivots from the instrument's set and
+presses that set after landing (it passed: spikes on over off - 1 within 1.1e-6, the points-only frame over the drawn
+light within 4.1e-4 at the zoom stand, 6.8e-5 at the camera); re-pinned with their reasons: `test_templates.py` (the
+filters ("rgb", "rgb"), the instrument's set (None, "wfc3"), the route's instrument keys gain `filters`),
+`test_picture.py` (55, 5, "rgb"), the viewer's fixture and `templates.test.ts`, `tuning.test.ts` (the two sets). The
+physics-only ratio re-pinned 0.96427, 0.96617, 0.97222 -> 0.96478, 0.96660, 0.97249 (the Milky Way's steps 96 -> 48
+alone: +5.1e-4 / +4.3e-4 / +2.7e-4, inside the 1e-3 pin, re-taken so it stands on the display it judges). Specs: OK,
+every line the base's but the timings. The targeted set (test_templates, test_api, test_picture, test_viewer,
+test_docs, test_audit) 178 passed, 3 skipped, EXIT=0; vitest 436 passed, 1 skipped; `picture:update` once, 15 passed,
+nine captures rewritten (display mean / pixels moved by >= 3/255: Milky Way field +4.06 % / 13.9 %, stars +0.25 % /
+2.2 %, physics-only +4.24 % / 14.1 %, thumbnail +4.35 % / 11.3 %, zoom 0.00 % / 0.00 % (not byte-identical);
+`ngc_4414` field -40.3 % / 78.4 %, stars -24.3 % / 99.8 %, zoom -7.5 % / 99.8 %, thumbnail -51.7 % / 100 % - its new
+gain, bloom and set); `picture` once, 15 passed, every frame the committed bytes. Halving the steps brightens the
+Milky Way's march by about 4 %: the march is not converged in its step count at 48. **The march on the GPU**
+(`gpu_ms`, one timer query a capture: before (steps 96) -> the update run / the verify run): Milky Way field 26.03 ->
+76.62 / 27.52, stars 23.01 -> 49.87 / 23.02, physics-only 20.89 -> 19.50 / 16.76, thumbnail 3.96 -> 3.84 / 5.36, zoom
+21.28 -> 12.64 / 17.05; NGC 4414 field 69.44 -> 46.23 / 48.09, stars 57.07 -> 39.79 / 40.39, thumbnail 8.20 -> 6.99 /
+7.53, zoom 27.42 -> 19.22 / 19.31. One sample each is noisy (the Milky Way field's two runs differ threefold); NGC 4414's
+cut of about 30 % also carries its coarser cloud raster and the RGB set; the Milky Way's field is not measurably faster
+at 48 steps, so the step count is not what bounds its march.

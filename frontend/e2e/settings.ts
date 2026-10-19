@@ -111,7 +111,11 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.96427, 0.96617, 0.97222] as const;
+export const DUSTY_LAYER_RATIO = [0.96478, 0.9666, 0.97249] as const;
+// S67 (D227 T1, the owner's third paste of 2026-10-19): was [0.96427, 0.96617, 0.97222] - the march's steps 96 -> 48 on
+// the Milky Way (its only change in the paste): half the sub-steps through the same columns, so the two frames' light is
+// integrated more coarsely and the ratio moves by +5.1e-4, +4.3e-4, +2.7e-4 (inside DUSTY_RATIO_PIN, re-taken so the pin
+// stands on the display it judges); no model number moved by it.
 // S67 (D227 T1, the owner's paste of 2026-10-19): was [0.96717, 0.96839, 0.97315] - the display balance again (the
 // starlight 0.403 -> 0.55, the dust's own light 4 -> 1, the extinction strength 1.25); no model number moved by it.
 // S67 (D227 T1): was [0.96265, 0.96703, 0.97596] - the Milky Way's display defaults are the owner's paste (the
