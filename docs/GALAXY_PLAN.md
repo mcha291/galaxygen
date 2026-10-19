@@ -159,7 +159,8 @@ affect; that is what decides which checkpoint each control belongs to. Staged
 previews with per-stage rerolls are a **requirement** here, not something
 discovered midway, so the audit that grounds them is a prerequisite rather than a
 by-product. The stage grouping in §3 is a **hypothesis to be checked against the
-audit**, not a decree.
+audit**, not a decree. *Since S68 (BUILD_III Phase V9, D232) the checkpoints are the edit panel's groups and the
+Science tab's previews, any group at any time, and the rerolls are per seed; the audit still places each input.*
 
 **A stub second model at S0.** The single largest risk in this build is that
 eight sessions of simple-model work rot the two-model boundary, and the advanced
@@ -254,6 +255,11 @@ invalidates 4–6 but not 1–2 (until S25 the pattern was stage 4 and rerolling
 spared star formation; since D174 star formation follows the pattern). This is the
 whole point of per-stage seeds and it falls out of the graph audit rather than
 being hand-wired.
+
+*Retired at S68 (BUILD_III Phase V9, D232; rule D1 as amended).* Nothing locks, confirms or reopens: every input
+is editable at any time in its group, "Generate" regenerates the galaxy whole from the inputs shown, and the
+previous galaxy stays on screen marked stale until the new one returns. The two paragraphs above are the first
+three builds' design, kept as history; the per-stage seeds and the graph audit that places each input stand.
 
 ---
 

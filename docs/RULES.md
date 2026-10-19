@@ -18,10 +18,11 @@ not reproducible here, it is tagged `[recall]` and says so. **No rule is tagged
 may depend on a later stage's output. Within a stage, iteration is permitted
 when **termination is guaranteed in advance** — a bisection on a monotone
 function, a fixed step count with a known error bound — and forbidden when it
-is a convergence loop whose step count depends on the data. *Justification: the
-staged workflow runs a prefix of the pipeline and stops, so a cycle between
-checkpoints makes a prefix uncomputable and the lock semantics of rule D1
-become a lie. A design constraint, not a performance one* `[inferred]`.
+is a convergence loop whose step count depends on the data. *Justification: a
+group's preview runs a prefix of the pipeline and stops (rule D4; the staged
+workflow did the same until D232), so a cycle between checkpoints makes a prefix
+uncomputable and a preview that claims to agree with its inputs (rule D1's first
+sentence) becomes a lie. A design constraint, not a performance one* `[inferred]`.
 *Precedent: `halo.py` solves the adiabatic contraction — the halo's response to
 the disc it holds — as a bisection on a monotone function, in one pass*
 `[verified: model/galaxy/stages/halo.py, contracted_halo]`. *Until S25 this rule
