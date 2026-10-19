@@ -170,7 +170,7 @@ export function App() {
   );
   const staleMark = stale && (
     <p className={styles.stale} role="status">
-      Stale · the galaxy on screen is the previous inputs'; the generated one is on its way
+      Stale · the previous galaxy, until the generated one arrives
     </p>
   );
 

@@ -360,8 +360,10 @@
   position: absolute;
   top: var(--space-4);
   left: 50%;
-  z-index: 3;
+  z-index: 1;
+  max-width: min(320px, calc(100% - 2 * var(--space-4)));
   transform: translateX(-50%);
+  text-align: center;
   margin: 0;
   padding: var(--space-2) var(--space-4);
   border: var(--hair) solid var(--status-caution);
@@ -369,7 +371,6 @@
   background: var(--status-caution-bg);
   color: var(--status-caution);
   font: var(--text-data);
-  white-space: nowrap;
   pointer-events: none;
 }
 
@@ -409,10 +410,6 @@
     max-height: var(--sheet-height);
   }
 
-  .stale {
-    white-space: normal;
-    width: calc(100% - 2 * var(--space-4));
-  }
 
   .previewTitle {
     left: var(--space-4);

@@ -107,7 +107,12 @@ export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = nu
           {wf.template.pins.map((p) => (
             <div key={p.name} className={styles.pin}>
               <div>{pinWords(p, fields)}</div>
-              {p.source && <div className={styles.source}>Source: {p.source}</div>}
+              {p.source && (
+                <details className={styles.about}>
+                  <summary>Source</summary>
+                  <span className={styles.source}>{p.source}</span>
+                </details>
+              )}
             </div>
           ))}
         </section>
