@@ -13495,3 +13495,9 @@ Milky Way's march by about 4 %: the march is not converged in its step count at 
 7.53, zoom 27.42 -> 19.22 / 19.31. One sample each is noisy (the Milky Way field's two runs differ threefold); NGC 4414's
 cut of about 30 % also carries its coarser cloud raster and the RGB set; the Milky Way's field is not measurably faster
 at 48 steps, so the step count is not what bounds its march.
+
+**T1, the Milky Way back to 96 steps (2026-10-19).** Told that at 48 steps the Milky Way's frame came out ~4 % brighter
+than at 96 (the march not settled face-on - the lead's earlier "steps barely matter face-on" was wrong) and no faster,
+the owner: "Put the Milky Way back to 96 steps, keep NGC 4414 at 48, and close S67." `TEMPLATE_TUNING.milky_way`
+steps 96; the physics-only ratio back to its 96-step pin (0.96427, 0.96617, 0.97222); the Milky Way's five captures
+regenerated; the picture test 15 passed twice.

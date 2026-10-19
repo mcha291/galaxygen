@@ -238,7 +238,7 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
       bloomRadius: 0.35, bloomThreshold: 0.45, toneMapping: "aces", spriteSize: 3, pointGain: 4, compCells: true,
       starsIntensity: 0.55, gasIntensity: 1, dustIntensity: 1, extinctionStrength: 1.25, cloudsExtinction: false,
     };
-    expect(defaultsFor("milky_way")).toEqual(owner);
+    expect(defaultsFor("milky_way")).toEqual({ ...owner, steps: 96 }); // the owner: "Put the Milky Way back to 96 steps"
     expect(defaultsFor("ngc_4414")).toEqual({
       ...owner, fieldGain: 1.2, bloomStrength: 2, spikes: true, cloudsExtinction: true, cloudRaster: 3,
     });
