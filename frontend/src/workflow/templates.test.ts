@@ -2,7 +2,7 @@ import * as flow from "@interface/flow.js";
 import { ApiError } from "@interface/transport.js";
 import { describe, expect, it } from "vitest";
 
-import { type FlowState, type InputDecl, reopen, runHash } from "./logic";
+import { type FlowState, type InputDecl, runHash } from "./logic";
 import live from "./pins.live.json";
 import fixture from "./templates.fixture.json";
 import {
@@ -22,7 +22,7 @@ import {
   templateQuery,
   thumbnailOf,
 } from "./templates";
-import { generateDefault, isGenerated, landOn, queryOf } from "./useWorkflow";
+import { landOn, queryOf } from "./useWorkflow";
 
 // The route's own pins, by template, as it serves them today: pins.live.json, written from /api/templates and held
 // to it by tests/test_viewer.py. The fixture states none; each template's are laid in here, so every test below
@@ -388,11 +388,10 @@ describe("template= on every request of a galaxy started from a template (S58)",
     expect(Object.keys(q)).not.toContain("bar_present");
   });
 
-  it("stands through Edit galaxy: a reopened checkpoint, a moved control, a re-rolled seed, another event list, another model", () => {
+  it("stands through Edit galaxy: a moved control, a re-rolled seed, another event list, another model", () => {
     const landed = landOn(fresh(), ngc);
-    const reopened = reopen(landed, 1).state;
-    expect(queryOf(reopened, "azimuthal", ngc).template).toBe("ngc_4414");
-    const moved = flow.setValue(reopened, "halo_mass", 2e12) as FlowState;
+    expect(queryOf(landed, "azimuthal", ngc).template).toBe("ngc_4414");
+    const moved = flow.setValue(landed, "halo_mass", 2e12) as FlowState;
     const rerolled = flow.reroll(moved, ["world_seed"], () => 7) as FlowState;
     const merged = flow.setValue(rerolled, EVENTS_INPUT, [{ time: 5, mass_ratio: 0.1, gas_fraction: 0.2 }]) as FlowState;
     expect(isEdited(merged, "azimuthal", ngc)).toBe(true);
@@ -403,7 +402,7 @@ describe("template= on every request of a galaxy started from a template (S58)",
   });
 
   it("a galaxy started from no template sends none: the query is the one sent before the templates, to the letter", () => {
-    const free = generateDefault(fresh());
+    const free = fresh();
     const q = queryOf(free, "azimuthal", null);
     expect(TEMPLATE_KEY in q).toBe(false);
     expect(q).toEqual({ ...(flow.query(free) as Record<string, unknown>), model: "azimuthal" });
@@ -445,18 +444,14 @@ describe("landing on a template (rule D1 as amended)", () => {
   const { templates } = parseTemplates(PAYLOAD);
   const [milkyWay, ngc] = templates;
 
-  it("milky_way is the default galaxy exactly: the state the defaults confirmed through reach, and the same query", () => {
+  it("milky_way is the default galaxy exactly: the published defaults, and the same query", () => {
     const landed = landOn(fresh(), milkyWay);
-    const defaults = generateDefault(fresh());
-    expect(flow.query(landed)).toEqual(flow.query(defaults));
-    expect(landed.confirmed).toBe(6);
-    expect(landed.current).toBe(6);
-    expect(isGenerated(landed)).toBe(true);
+    expect(flow.query(landed)).toEqual(flow.query(fresh()));
+    expect(Object.keys(landed).sort()).toEqual(["cat", "values"]); // no lock, no confirmation: inputs only
   });
 
-  it("another template lands generated on its own controls, seeds and event list", () => {
+  it("another template lands on its own controls, seeds and event list", () => {
     const landed = landOn(fresh(), ngc);
-    expect(isGenerated(landed)).toBe(true);
     expect(landed.values.disc_spin).toBe(0.0117);
     expect(landed.values.halo_mass).toBe(9.0e11);
     expect(landed.values.world_seed).toBe(4414);
@@ -482,18 +477,15 @@ describe("landing on a template (rule D1 as amended)", () => {
     expect(milkyWay.inputs.mergers[0].time).toBe(3.8);
   });
 
-  it("Edit galaxy starts from the template's inputs with the confirmations kept; reopening discards the later ones", () => {
+  it("Edit galaxy opens on the template's inputs: nothing changed is still the template", () => {
     const landed = landOn(fresh(), ngc);
-    expect(landed.confirmed).toBe(6); // "Edit galaxy" is a tab switch: nothing is touched
-    const { state, discarded } = reopen(landed, 4);
-    expect(discarded).toEqual([5, 6]);
-    expect(state.values.disc_spin).toBe(0.0117); // the controls open at the template's values
-    expect(state.values.world_seed).toBe(4414);
-    expect(isEdited(state, "azimuthal", ngc)).toBe(false); // reopened, nothing changed: still the template's inputs
+    expect(landed.values.disc_spin).toBe(0.0117); // the controls open at the template's values
+    expect(landed.values.world_seed).toBe(4414);
+    expect(isEdited(landed, "azimuthal", ngc)).toBe(false);
   });
 });
 
-describe("the fifth seed, texture_seed (S55, D214): the rail and the templates are data-driven", () => {
+describe("the fifth seed, texture_seed (S55, D214): the panel and the templates are data-driven", () => {
   const { templates } = parseTemplates(PAYLOAD);
   const [milkyWay, ngc] = templates;
 
@@ -501,7 +493,7 @@ describe("the fifth seed, texture_seed (S55, D214): the rail and the templates a
     const state = fresh();
     expect(state.cat.inputs.get("texture_seed")).toMatchObject({ kind: "seed", checkpoint: 3, default: 0 });
     expect(state.cat.checkpoints.find((c) => c.n === 3)?.inputs).toEqual(["pattern_seed", "texture_seed"]);
-    // What a reroll at the checkpoint draws: both of its seeds (the rail names each, Workflow.tsx).
+    // The group's seeds: the panel gives each its own reroll, by name (Workflow.tsx).
     expect(flow.seedsAt(state, 3)).toEqual(["pattern_seed", "texture_seed"]);
     expect(state.values.texture_seed).toBe(0);
   });
@@ -514,7 +506,7 @@ describe("the fifth seed, texture_seed (S55, D214): the rail and the templates a
   });
 
   it("is an input like the others: rerolled, the galaxy is no longer the template", () => {
-    const open = reopen(landOn(fresh(), ngc), 3).state;
+    const open = landOn(fresh(), ngc);
     const both = flow.reroll(open, flow.seedsAt(open, 3), (name: string) => (name === "texture_seed" ? 7 : 8)) as FlowState;
     expect([both.values.pattern_seed, both.values.texture_seed]).toEqual([8, 7]);
     const alone = flow.reroll(open, ["texture_seed"], () => 7) as FlowState;
@@ -532,13 +524,13 @@ describe("what the switcher shows", () => {
     expect(isEdited(landed, "azimuthal", ngc)).toBe(false);
     expect(isEdited(landed, "azimuthal", milkyWay)).toBe(true); // it is NGC 4414's inputs, not the Milky Way's
     expect(isEdited(landed, "basic", ngc)).toBe(true); // another model is another galaxy
-    const moved = flow.setValue(reopen(landed, 4).state, "infall_timescale", 5) as FlowState;
+    const moved = flow.setValue(landed, "infall_timescale", 5) as FlowState;
     expect(isEdited(moved, "azimuthal", ngc)).toBe(true);
     const back = flow.setValue(moved, "infall_timescale", 7) as FlowState;
     expect(isEdited(back, "azimuthal", ngc)).toBe(false); // put back: the template again
-    const rerolled = flow.reroll(reopen(landed, 5).state, ["systems_seed"], () => 7) as FlowState;
+    const rerolled = flow.reroll(landed, ["systems_seed"], () => 7) as FlowState;
     expect(isEdited(rerolled, "azimuthal", ngc)).toBe(true); // a re-rolled seed is an edit
-    const merged = flow.setValue(reopen(landed, 2).state, EVENTS_INPUT, [{ time: 5, mass_ratio: 0.1, gas_fraction: 0.2 }]) as FlowState;
+    const merged = flow.setValue(landed, EVENTS_INPUT, [{ time: 5, mass_ratio: 0.1, gas_fraction: 0.2 }]) as FlowState;
     expect(isEdited(merged, "azimuthal", ngc)).toBe(true);
   });
 

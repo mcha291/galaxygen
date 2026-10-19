@@ -1,5 +1,5 @@
-/* The step panel, sized as the design's: 10/12 px rows, a 22 px chip, 12.5 px
-   names, mono stage lines, and only the checkpoint in hand expanded. */
+/* The edit panel (V9, S68), sized as the design's: 10/12 px rows, 12.5 px names, mono stage lines; every group
+   open until folded, the Generate bar held at the top while the groups scroll under it. */
 .panel {
   overflow-x: hidden;
   overflow-y: auto;
@@ -12,6 +12,10 @@
 }
 
 .heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 10px 12px;
   border-bottom: var(--hair) solid var(--border-hair);
   font-size: 10.5px;
@@ -36,61 +40,11 @@
   font-size: 11px;
 }
 
-.checkpoint {
-  border-bottom: var(--hair) solid var(--border-hair);
-}
-
-.checkpoint[data-open] {
-  background: var(--void-2);
-}
-
 .head {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-}
-
-.chip {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  padding: 0;
-  border: var(--hair) solid var(--void-5);
-  border-radius: 2px;
-  background: var(--void-0);
-  color: var(--ink-3);
-  font: 500 11px / 1 var(--font-mono);
-  cursor: pointer;
-}
-
-.chip svg {
-  width: 12px;
-  height: 12px;
-}
-
-.chip[data-status="editing"] {
-  border-color: var(--magenta-3);
-  background: var(--void-4);
-  color: var(--magenta-3);
-}
-
-.chip[data-status="locked"] {
-  border-color: color-mix(in oklab, var(--aqua-5) 70%, var(--void-2));
-  background: color-mix(in oklab, var(--aqua-5) 25%, var(--void-0));
-  color: var(--aqua-3);
-}
-
-.chip[data-status="blocked"] {
-  color: var(--ink-4);
-}
-
-.chip:disabled {
-  cursor: not-allowed;
 }
 
 .title {
@@ -113,10 +67,6 @@
   line-height: 1.35;
   color: var(--ink-1);
   text-wrap: pretty;
-}
-
-.name[data-status="blocked"] {
-  color: var(--ink-3);
 }
 
 /* The design system's Badge: 18 px, mono label, hairline, tinted by tone. */
@@ -166,44 +116,12 @@
   color: var(--text-muted);
 }
 
-.caution {
-  margin-top: 5px;
-  padding: 6px 8px;
-  border-left: 2px solid var(--status-caution);
-  border-radius: 0 2px 2px 0;
-  background: var(--status-caution-bg);
-  color: var(--status-caution);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
 .body {
-  padding: 0 12px 12px 44px;
-}
-
-.seedOnly {
-  margin: 0 0 11px;
-  padding: 9px 10px;
-  border: var(--hair) solid var(--border-hair);
-  border-left: 2px solid var(--magenta-3);
-  border-radius: 2px;
-  background: var(--void-1);
-  color: var(--text-muted);
-  font-size: 11.5px;
-  text-wrap: pretty;
-}
-
-.seedOnly code {
-  font-family: var(--font-mono);
-  color: var(--text-primary);
+  padding: 0 12px 12px 34px;
 }
 
 .control {
   margin-bottom: 13px;
-}
-
-.control[data-disabled] {
-  opacity: 0.55;
 }
 
 .controlRow {
@@ -226,10 +144,6 @@
   font: 500 12px / 1.4 var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--magenta-3);
-}
-
-.control[data-disabled] .value {
-  color: var(--text-muted);
 }
 
 .unit {
@@ -275,18 +189,6 @@
   background: var(--magenta-3);
 }
 
-.slider:disabled {
-  cursor: not-allowed;
-}
-
-.slider:disabled::-webkit-slider-runnable-track {
-  background: var(--void-3);
-}
-
-.slider:disabled::-webkit-slider-thumb {
-  background: var(--border-strong);
-}
-
 .range {
   display: flex;
   justify-content: space-between;
@@ -319,25 +221,6 @@
   gap: 7px;
   align-items: center;
   margin-top: 2px;
-}
-
-.ask {
-  margin-top: 9px;
-  padding: 10px 11px;
-  border: var(--hair) solid var(--status-caution);
-  border-radius: 3px;
-  background: var(--status-caution-bg);
-  color: var(--status-caution);
-  font-size: 11.5px;
-  text-wrap: pretty;
-}
-
-.askOutside {
-  margin: 0 12px 12px 44px;
-}
-
-.ask p {
-  margin: 0 0 9px;
 }
 
 .events {
@@ -394,7 +277,7 @@
   cursor: pointer;
 }
 
-.remove:hover:not(:disabled) {
+.remove:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
 }
@@ -402,4 +285,131 @@
 .remove svg {
   width: var(--size-sm);
   height: var(--size-sm);
+}
+
+/* --- V9: the bar, the pins, the groups ------------------------------------------- */
+
+.close,
+.fold {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.close:hover,
+.fold:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.close svg,
+.fold svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Generate and Reset, and what differs from the galaxy on screen: held at the top while the groups scroll. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  border-bottom: var(--hair) solid var(--border-hair);
+  background: var(--void-2);
+}
+
+.state {
+  margin: 7px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.state[data-dirty] {
+  color: var(--status-caution);
+}
+
+.pins {
+  padding: 10px 12px;
+  border-bottom: var(--hair) solid var(--border-hair);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pinsHead {
+  margin-bottom: 5px;
+  font: 400 9.5px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pin + .pin {
+  margin-top: 6px;
+}
+
+.pin > div:first-child {
+  color: var(--text-primary);
+}
+
+.source {
+  font-size: 10.5px;
+  overflow-wrap: anywhere;
+}
+
+.group {
+  border-bottom: var(--hair) solid var(--border-hair);
+}
+
+.group[data-dirty] {
+  box-shadow: inset 2px 0 0 var(--status-caution);
+}
+
+.group[data-viewing] {
+  background: var(--void-2);
+}
+
+.head {
+  padding-left: 8px;
+}
+
+.look {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 6px;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-muted);
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.look[aria-pressed="true"] {
+  border-color: var(--magenta-5);
+  background: var(--surface-selected);
+  color: var(--magenta-2);
+}
+
+.look svg {
+  width: 11px;
+  height: 11px;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
 }

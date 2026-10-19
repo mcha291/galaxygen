@@ -338,6 +338,41 @@
   .busy::after { animation: none; width: 100%; opacity: 0.5; }
 }
 
+/* The edit panel over the Galaxy view (V9, S68): a drawer at the right, so the galaxy on screen - and its own
+   panel at the left - stay in view while the inputs change; Generate replaces what is drawn underneath. */
+.editDrawer {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  width: 320px;
+  max-width: calc(100% - 2 * var(--space-4));
+  max-height: calc(100% - 2 * var(--space-4));
+  overscroll-behavior: contain;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--void-2) 92%, transparent);
+  backdrop-filter: var(--blur-sm);
+}
+
+/* Rule D1 as amended: from a Generate until its answers have arrived, the galaxy on screen is the previous one. */
+.stale {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border: var(--hair) solid var(--status-caution);
+  border-radius: var(--radius-sm);
+  background: var(--status-caution-bg);
+  color: var(--status-caution);
+  font: var(--text-data);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* --- phones -------------------------------------------------------------------- */
 /* Below this width the design's side panels are wider than the screen. The top bar wraps
    its tabs onto a second row, the floating rail becomes a bottom sheet, and the overlays
@@ -363,6 +398,20 @@
     width: auto;
     max-width: none;
     max-height: var(--sheet-height);
+  }
+
+  .editDrawer {
+    top: auto;
+    left: var(--space-4);
+    bottom: var(--space-4);
+    width: auto;
+    max-width: none;
+    max-height: var(--sheet-height);
+  }
+
+  .stale {
+    white-space: normal;
+    width: calc(100% - 2 * var(--space-4));
   }
 
   .previewTitle {

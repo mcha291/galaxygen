@@ -60,8 +60,10 @@ interface Props {
   /** One of the three stands, or null: the view stands at the template's own camera (D213 ruling 5). */
   preset: Preset | null;
   onPreset(p: Preset | null): void;
-  /** "Edit galaxy": open the staged generation with the confirmations kept (D198). Discards nothing. */
+  /** "Edit galaxy" (V9, S68): open or close the edit panel over this view. Changes nothing until its Generate. */
   onEdit(): void;
+  /** The edit panel is open. */
+  editing?: boolean;
   /** The filter set the galaxy is seen through: the app's since S54, because a template brings its own. */
   filterSet: FilterSetName;
   onFilterSet(name: FilterSetName): void;
@@ -232,6 +234,7 @@ export function GalaxyTab({
   preset,
   onPreset,
   onEdit,
+  editing = false,
   filterSet,
   onFilterSet: setFilterSet,
   templates,
@@ -714,10 +717,11 @@ export function GalaxyTab({
           <div className={styles.pair}>
             <button
               type="button"
+              aria-pressed={editing}
               title={
                 template
-                  ? `Open the staged generation from ${templateLabel(template, edited)}'s inputs and reopen a checkpoint to change the galaxy`
-                  : "Open the staged generation and reopen a checkpoint to change the galaxy"
+                  ? `Every input of ${templateLabel(template, edited)} in its group, editable at any time: Generate regenerates the galaxy from them`
+                  : "Every input in its group, editable at any time: Generate regenerates the galaxy from them"
               }
               onClick={onEdit}
             >

@@ -1,7 +1,6 @@
-// The workflow's pure pieces. The checkpoint state machine itself is
-// interface/flow.js (rule D1, tested in tests/js/flow.test.mjs); this file adds
-// only what the panel needs on top of it, and nothing here touches React.
-import * as flow from "@interface/flow.js";
+// The workflow's pure pieces. The inputs and their groups are interface/flow.js (rule D1 as amended at D232,
+// tested in tests/js/flow.test.mjs); this file adds only what the panel needs on top of it - its types, the
+// sliders, the run hash and the numbers - and nothing here touches React.
 
 export interface InputDecl {
   name: string;
@@ -23,13 +22,10 @@ export interface Checkpoint {
   inputs: string[];
 }
 
+/** A set of inputs over a model's groups (interface/flow.js): the draft the panel edits, or the galaxy shown. */
 export interface FlowState {
   cat: { model: string; checkpoints: Checkpoint[]; inputs: Map<string, InputDecl>; order: string[] };
   values: Record<string, unknown>;
-  locked: Record<string, boolean>;
-  confirmed: number;
-  current: number;
-  previews: Record<string, unknown>;
 }
 
 export interface MergerEvent {
@@ -39,65 +35,9 @@ export interface MergerEvent {
   about?: string;
 }
 
-/**
- * What a checkpoint is, for the rail:
- * - `locked`: confirmed; its controls are disabled and still shown (D1)
- * - `editing`: the one open for edits
- * - `next`: the first unconfirmed one, reachable but not open
- * - `blocked`: needs the one before it confirmed first
- */
-export type Status = "locked" | "editing" | "next" | "blocked";
-
-export function statusOf(state: FlowState, n: number): Status {
-  if (n <= state.confirmed) return "locked";
-  if (n === state.current) return "editing";
-  if (n === state.confirmed + 1) return "next";
-  return "blocked";
-}
-
-/**
- * Reopen checkpoint n, and say which later checkpoints that discarded.
- *
- * flow.reopen drops their results; the panel also needs to *tell* the user which
- * confirmations were thrown away until they confirm those checkpoints again,
- * so it gets the list back rather than a silent state change.
- */
-export function reopenCost(state: FlowState, n: number): number[] {
-  const out: number[] = [];
-  for (let k = n + 1; k <= state.confirmed; k += 1) out.push(k);
-  return out;
-}
-
-export function reopen(state: FlowState, n: number): { state: FlowState; discarded: number[] } {
-  return { state: flow.reopen(state, n) as FlowState, discarded: reopenCost(state, n) };
-}
-
-/** Re-rolling a checkpoint's seed invalidates every later checkpoint and nothing earlier. */
-export function rerollCost(state: FlowState, n: number): number[] {
-  const last = state.cat.checkpoints.length;
-  return Array.from({ length: last - n }, (_, i) => n + 1 + i);
-}
-
 /** A fresh seed: a uniform non-negative 31-bit integer. Any integer is a valid seed. */
 export function drawSeed(random: () => number = Math.random): number {
   return Math.floor(random() * 2 ** 31);
-}
-
-/**
- * The first checkpoint at which two models run different stages.
- *
- * Switching models is an edit at that checkpoint: everything before it is the
- * same galaxy, everything from it on is not. Read from both models' /api/stages
- * rather than written down, so a third model needs nothing here.
- */
-export function firstDifference(a: Checkpoint[], b: Checkpoint[]): number | null {
-  const count = Math.max(a.length, b.length);
-  for (let i = 0; i < count; i += 1) {
-    const x = a[i];
-    const y = b[i];
-    if (!x || !y || x.stages.join() !== y.stages.join()) return (x ?? y).n;
-  }
-  return null;
 }
 
 // --- controls ---------------------------------------------------------------

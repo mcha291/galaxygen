@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { mustDiscard } from "./galaxy/layer";
 
@@ -19,6 +19,35 @@ export function failed<T>(previous: Loaded<T>, error: Error): Loaded<T> {
   return { state: "error", message: error.message, last: previous.state === "ready" && !mustDiscard(error) ? previous.value : null };
 }
 
+// The loads whose answer for their current key has not arrived yet (S68, rule D1 as amended): one token per
+// mounted loader that is waiting, so a view can say "the galaxy on screen is the previous one's" from a
+// "Generate" until every loader asking with the new query has answered - the loaders' own arrival, not a timer.
+const waiting = new Set<object>();
+const listeners = new Set<() => void>();
+const told = () => listeners.forEach((listener) => listener());
+
+/** How many mounted loaders are waiting on the answer for their current key. */
+export function pendingLoads(): number {
+  return waiting.size;
+}
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+const idle = () => () => undefined;
+const none = () => 0;
+
+/**
+ * pendingLoads(), as state: re-renders as it changes - only while `active`, so a view that is not waiting on a
+ * "Generate" is not re-rendered by every load the galaxy makes.
+ */
+export function usePendingLoads(active: boolean): number {
+  return useSyncExternalStore(active ? subscribe : idle, active ? pendingLoads : none, none);
+}
+
 /**
  * Load whatever `key` describes, once it has stopped changing for `settleMs`.
  *
@@ -30,8 +59,22 @@ export function failed<T>(previous: Loaded<T>, error: Error): Loaded<T> {
 export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS) {
   const [result, setResult] = useState<Loaded<T>>({ state: "idle" });
   const [busy, setBusy] = useState(false);
+  // The key the last answer (or failure) was for: until it is `key`, this loader is waiting (pendingLoads).
+  const [answered, setAnswered] = useState<string | null>(null);
   const loader = useRef(load);
   loader.current = load;
+  const waitingNow = key !== null && answered !== key;
+
+  useEffect(() => {
+    if (!waitingNow) return;
+    const token = {};
+    waiting.add(token);
+    told();
+    return () => {
+      waiting.delete(token);
+      told();
+    };
+  }, [waitingNow]);
 
   useEffect(() => {
     if (key === null) return;
@@ -39,10 +82,14 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
     const timer = setTimeout(() => {
       setBusy(true);
       loader.current(abort.signal)
-        .then((value) => setResult({ state: "ready", value }))
+        .then((value) => {
+          setResult({ state: "ready", value });
+          setAnswered(key);
+        })
         .catch((error: Error) => {
           if (abort.signal.aborted) return;
           setResult((r) => failed(r, error));
+          setAnswered(key);
         })
         .finally(() => {
           if (!abort.signal.aborted) setBusy(false);

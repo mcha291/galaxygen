@@ -14,11 +14,11 @@ import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
-import { useLoad } from "./useLoad";
+import { pendingLoads, useLoad, usePendingLoads } from "./useLoad";
 import { runHash } from "./workflow/logic";
 import { pinWords, templateLabel } from "./workflow/templates";
-import { EDIT_VIEW, type View, isGenerated, settleView, useWorkflow } from "./workflow/useWorkflow";
-import { WorkflowPanel } from "./workflow/Workflow";
+import { type View, useWorkflow } from "./workflow/useWorkflow";
+import { PRODUCES, WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
 
 // The star columns a user can paint the sample by (design brief §3), and photometric
@@ -28,12 +28,21 @@ const PAINT_CHOICES = [...COLOUR_FIELDS, PHOTOMETRIC];
 const PRESETS: Preset[] = ["oblique", "face-on", "edge-on"];
 
 type Tab = View;
+/** The Science tab's two looks at a group: its scene (the published fields drawn in 3D) or its plots. */
+type ScienceLook = "scene" | "plots";
+const SCIENCE_LOOKS: ScienceLook[] = ["scene", "plots"];
 
 export function App() {
   const wf = useWorkflow();
   const [meta, setMeta] = useState<FieldsPayload | null>(null);
   // The viewer lands on the default galaxy, generated on first load (D198, rule D1 as amended).
   const [tab, setTab] = useState<Tab>("galaxy");
+  // "Edit galaxy" (V9, S68): the edit panel as a drawer over the Galaxy view. In the Science tab it is the rail.
+  const [editing, setEditing] = useState(false);
+  // The group whose previews the Science tab shows - any group at any time, of the galaxy on screen (T18 by
+  // construction). Null for the first.
+  const [viewing, setViewing] = useState<number | null>(null);
+  const [scienceLook, setScienceLook] = useState<ScienceLook>("scene");
   const [field, setField] = useState<string>(PHOTOMETRIC);
   // Where the Galaxy view stands: one of the presets, or null for the template's own camera (D213 ruling 5).
   // "oblique" until a template is landed on, and for good where the API has none (one from before S54).
@@ -85,45 +94,51 @@ export function App() {
     setPhysicsOnlyState(on);
   };
 
+  // The model of the galaxy on screen: its fields are what every view draws. A model chosen in the panel is the
+  // draft's until "Generate" (rule D1 as amended).
+  const shownModel = wf.shown?.model ?? wf.model;
   useEffect(() => {
     const abort = new AbortController();
-    loadFields(wf.model, abort.signal).then(setMeta).catch(() => undefined);
+    loadFields(shownModel, abort.signal).then(setMeta).catch(() => undefined);
     return () => abort.abort();
-  }, [wf.model]);
+  }, [shownModel]);
 
-  // The workflow's query: the input vector, the model and - for a galaxy started from a template - `template=`,
-  // which brings the template's pins (S58; useWorkflow.ts queryOf). Every tab asks with it.
+  // The shown galaxy's query: the input vector, the model and - for a galaxy started from a template -
+  // `template=`, which brings the template's pins (S58; useWorkflow.ts queryOf). Every tab asks with it and none
+  // with the draft's, so an edit moves nothing on screen until "Generate" moves the whole galaxy.
   const query = wf.query;
   // What the Galaxy view asks the model with: the workflow's query and, under "physics only", `layer=off`. The
   // one place the parameter is added - the star sample below and every loader of the Galaxy tab take this query
-  // and no other. The staged Preview and the Science tab keep the workflow's own query: they show the model as
-  // it is generated, with the layer, whatever the switch says, and the hash line marks the switch on the Galaxy
-  // tab alone.
+  // and no other. The Science tab keeps the workflow's own query: it shows the model as generated, with the
+  // layer, whatever the switch says, and the hash line marks the switch on the Galaxy tab alone.
   const galaxyQuery = query ? layerQuery(query, physicsOnly) : null;
-  const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
-  const last = wf.state?.cat.checkpoints.length ?? 0;
-  // Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only.
-  const generated = isGenerated(wf.state);
+  // The group the Science tab previews: one of the shown galaxy's groups, the first until another is chosen.
+  const groups = wf.shown?.state.cat.checkpoints ?? [];
+  const current = groups.find((c) => c.n === viewing) ?? groups[0] ?? null;
   const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
 
-  // Reopening a checkpoint un-generates the galaxy, so the Galaxy tab closes to the Preview. A
-  // generated galaxy no longer pulls the Preview back to the Galaxy tab (D198): "Edit galaxy" lands
-  // on the Preview with every checkpoint still locked. Nothing settles before the declarations
-  // arrive, so the first load waits on the Galaxy tab while they are confirmed through.
+  // Stale (rule D1 as amended): from a "Generate" until every loader asking with the new query has answered
+  // (useLoad's pendingLoads - the loaders' own arrival, not a timer), the galaxy on screen is the previous one's
+  // and says so. Only a Generate marks it: a landing is the template's galaxy, with its own "Generating" line.
+  const [stale, setStale] = useState(false);
+  const waiting = usePendingLoads(stale);
   useEffect(() => {
-    if (wf.state) setTab((t) => settleView(t, generated));
-  }, [wf.state, generated]);
+    if (wf.generation > 0) setStale(true);
+  }, [wf.generation]);
+  useEffect(() => {
+    if (stale && pendingLoads() === 0) setStale(false);
+  }, [stale, waiting]);
 
   // The star sample runs every stage, so it is only asked for where stars are drawn: the Galaxy
-  // tab. The preview shows fields only, at every checkpoint including the last two.
-  // The staged preview keeps its three stands; while the Galaxy view is at a template's camera it shows the oblique one.
+  // tab. The Science tab shows fields only, in every group including the last two.
+  // The Science scene keeps its three stands; while the Galaxy view is at a template's camera it shows the oblique one.
   const previewPreset: Preset = preset ?? "oblique";
   const drawsStars = tab === "galaxy";
   const sampleKey = drawsStars && galaxyQuery ? JSON.stringify(galaxyQuery) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(galaxyQuery!, signal));
   const sample = galaxy.value;
 
-  const seed = wf.state?.values.world_seed;
+  const seed = wf.shown?.state.values.world_seed;
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
   // selector shows them; the default is the azimuthal one since S46 (D197).
   // The hash is the input vector's, the workflow's query: the layer's switch is not an input and does not move
@@ -131,17 +146,33 @@ export function App() {
   // query names the template the galaxy was started from, and the hash moves with it: the pins it brings are
   // inputs of the run, so the same controls under another template are another galaxy.
   const layerMark = physicsOnly && tab === "galaxy" ? ` · ${PHYSICS_ONLY}` : "";
-  const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}${layerMark}` : "";
-  // The template the galaxy is, in every tab: its label, and "edited" once an input or the model has changed.
-  const galaxyName = wf.template && wf.state ? templateLabel(wf.template, wf.edited) : "";
+  const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${shownModel}` : ""} · world_seed ${seed}${layerMark}` : "";
+  // The template the galaxy is, in every tab: its label, and "edited" once it was generated from changed inputs.
+  const galaxyName = wf.template && wf.shown ? templateLabel(wf.template, wf.edited) : "";
   // The template's pins, in the field declarations' words (S58, D217): they ride with every request the galaxy
   // makes, edited or not, so an edited galaxy's name says they still hold.
   const pinned = wf.template?.pins.map((p) => pinWords(p, meta?.fields)).join("; ") ?? "";
-  const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
-    { key: "preview", label: "Preview", title: generated ? "The staged generation: reopen a checkpoint to change the galaxy" : undefined },
-    { key: "science", label: "Science" },
-    { key: "galaxy", label: "Galaxy", disabled: !!wf.state && !generated, title: generated ? undefined : `Confirm all ${last} checkpoints to generate the galaxy` },
+  // Two tabs, both open at any time (V9): the galaxy, and every group's previews of it.
+  const tabs: { key: Tab; label: string; title?: string }[] = [
+    { key: "science", label: "Science", title: "Every group's published fields, previewed for the galaxy on screen" },
+    { key: "galaxy", label: "Galaxy" },
   ];
+  // The edit panel as the Science tab's rail: its groups choose the previews.
+  const rail = (
+    <WorkflowPanel
+      wf={wf}
+      tMax={meta?.grid.axes.t?.hi}
+      fields={meta?.fields}
+      className={styles.floatingRail}
+      viewing={current?.n ?? null}
+      onView={setViewing}
+    />
+  );
+  const staleMark = stale && (
+    <p className={styles.stale} role="status">
+      Stale · the galaxy on screen is the previous inputs'; the generated one is on its way
+    </p>
+  );
 
   const status = (
     <>
@@ -169,6 +200,7 @@ export function App() {
         </p>
       )}
       {galaxy.busy && sample && <div className={styles.busy} aria-hidden />}
+      {staleMark}
     </>
   );
 
@@ -204,6 +236,15 @@ export function App() {
           {hash}
         </span>
         <span className={styles.spacer} />
+        {tab === "science" && (
+          <div className={styles.segmented} role="group" aria-label="Science view">
+            {SCIENCE_LOOKS.map((look) => (
+              <button key={look} aria-pressed={scienceLook === look} onClick={() => setScienceLook(look)}>
+                {look}
+              </button>
+            ))}
+          </div>
+        )}
         <div className={styles.segmented} role="tablist" aria-label="View">
           {tabs.map((t) => (
             <button
@@ -211,7 +252,6 @@ export function App() {
               role="tab"
               aria-pressed={tab === t.key}
               aria-selected={tab === t.key}
-              disabled={t.disabled}
               title={t.title}
               onClick={() => setTab(t.key)}
             >
@@ -222,8 +262,11 @@ export function App() {
       </header>
 
       <main className={styles.main}>
-        <ErrorBoundary resetKey={`${tab}:${current?.n}:${wf.model}`}>
-          {tab === "preview" && (
+        <ErrorBoundary resetKey={`${tab}:${scienceLook}:${current?.n}:${shownModel}`}>
+          {/* The Science tab (V9): every group's previews of the galaxy on screen, any group at any time, nothing
+              regenerated to look (T18 by construction). The edit panel is its rail; a group's "previews" button
+              chooses what is drawn. */}
+          {tab === "science" && scienceLook === "scene" && (
             <div className={styles.canvasStage}>
               {current && meta && query && (
                 <CheckpointScene
@@ -235,12 +278,12 @@ export function App() {
                   charts={charts}
                 />
               )}
-              <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} className={styles.floatingRail} />
+              {rail}
 
               {current && (
                 <div className={styles.previewTitle}>
-                  <span className={styles.overlayLabel}>Preview · checkpoint {current.n}</span>
-                  <span className={styles.previewName}>{current.name}</span>
+                  <span className={styles.overlayLabel}>Science · {current.name}</span>
+                  <span className={styles.previewName}>{PRODUCES[current.n] ?? current.name}</span>
                 </div>
               )}
 
@@ -270,12 +313,13 @@ export function App() {
                   <p>Drag to orbit, scroll to zoom. The stars are drawn in the Galaxy tab.</p>
                 </div>
               )}
+              {staleMark}
             </div>
           )}
 
-          {tab === "science" && (
+          {tab === "science" && scienceLook === "plots" && (
             <div className={styles.scienceStage}>
-              <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} className={styles.floatingRail} />
+              {rail}
               <div className={styles.scienceBody}>
                 {current && panels && query && meta ? (
                   <ScienceView checkpoint={current} panels={panels} query={query} cmaps={meta.cmaps} />
@@ -283,6 +327,7 @@ export function App() {
                   <p className={styles.status}>Loading field declarations.</p>
                 )}
               </div>
+              {staleMark}
             </div>
           )}
 
@@ -302,7 +347,8 @@ export function App() {
                   onPhysicsOnly={setPhysicsOnly}
                   preset={preset}
                   onPreset={setPreset}
-                  onEdit={() => setTab(EDIT_VIEW)}
+                  editing={editing}
+                  onEdit={() => setEditing((e) => !e)}
                   filterSet={filterSet}
                   onFilterSet={setFilterSet}
                   templates={wf.templates}
@@ -312,6 +358,15 @@ export function App() {
                   selection={wf.selection}
                   picture={picture}
                   onPicture={pickPicture}
+                />
+              )}
+              {editing && (
+                <WorkflowPanel
+                  wf={wf}
+                  tMax={meta?.grid.axes.t?.hi}
+                  fields={meta?.fields}
+                  className={styles.editDrawer}
+                  onClose={() => setEditing(false)}
                 />
               )}
               {status}
