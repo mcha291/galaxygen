@@ -54,7 +54,7 @@ agents, one heavy, none started past 50 % of the 5-hour window, none while a wee
 - **A slider's position is not its value**: `fromSlider(toSlider(v)) ≠ v` made a round trip dirty; snap to the
   shown value's exact position.
 - **A detached verify_clone dies with its session**: S67's log was empty; read it before the session ends.
-- Still standing: one picture-test run at a time (port 8019); an agent worktree with its own `npm ci` needs no
-  junction; Bash under 8 KB; pytest's own exit code to a file; the register pin and its entries in one commit; the
-  suite's `test_hook` needs `tools/bootstrap.py` after the last agent worktree; layer off nothing may move;
-  nothing is tuned to a goal picture.
+- Still standing: one picture-test run at a time (port 8019); Bash under 8 KB; pytest's own exit code to a file;
+  **the register's count pin is `tests/test_audit.py` line 377 — re-pin it with the entries and re-run that test**
+  (S68's verify_clone of main failed on that line alone, 1 failed / 1 610 passed, re-pinned at S69's open); `test_hook`
+  needs `tools/bootstrap.py` after the last agent worktree; layer off nothing may move; nothing is tuned to a goal picture.
