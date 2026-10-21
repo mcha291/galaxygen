@@ -153,6 +153,12 @@ class FieldDecl:
     # go together - a neutral without the declaration, or the declaration without one, is refused.
     composed: bool = False
     neutral: float | None = None
+    # A placement column (S70, D234; Audit V F-3-1, #194, as ruled at gate G4, D233): a column of a placed catalogue
+    # that the randomness layer may move - where the object stands, or the texture the layer draws for it. **The
+    # census's placement set is its columns that say so**, and every other column of the class is the same bits with
+    # the layer on and off, object by object (BUILD_III section 1d, I1; ``tests/test_layer.py`` reads the set here).
+    # Only an object class's column takes it.
+    placement: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not IDENT.match(self.name):
@@ -182,6 +188,12 @@ class FieldDecl:
         self._check_domain(kind)
         self._check_values(kind)
         self._check_composed(kind)
+        if not isinstance(self.placement, bool):
+            raise DeclarationError(f"field {self.name}: placement is True or False, got {self.placement!r}")
+        if self.placement and kind.domain != "object":
+            raise DeclarationError(
+                f"field {self.name}: a placement column is a placed catalogue's column, not a {kind.value}"
+            )
 
     def _check_composed(self, kind: Kind) -> None:
         if not isinstance(self.composed, bool):
@@ -300,6 +312,7 @@ class FieldDecl:
             self.meaningful_zero,
             self.optional,
             self.provenance,
+            self.placement,
             self.stands_in_for,
             self.conserves,
             self.statistic,

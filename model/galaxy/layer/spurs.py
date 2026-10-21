@@ -11,7 +11,10 @@ gas's contrast (``galaxy/stages/spurs.py``, which also holds a spur's shape).
 flocculent disc's single pieces. Feathers are seen in 45 of 223 spirals, in 83 % of those whose primary dust lane is
 well defined and in none of 52 Scd-Sd galaxies [verified: La Vigne, Vogel & Ostriker 2006, ApJ 650, 818 =
 arXiv:astro-ph/0606761, abstract, Table 1 and section 4.3; docs/READING_SPURS.md row 3]: every chain of a
-non-flocculent disc carries them here, which is the 83 %'s side of the sample, declared.
+non-flocculent disc long enough for a first foot carries them here, which is the 83 %'s side of the sample, declared
+- a chain shorter than its first foot's draw (one uniform within one spacing of its start, 5-7 kpc at the Sun)
+carries none: S70 (D234; Audit V F-2-5) was "every chain of a non-flocculent disc carries them", and Audit V's mesh
+found a 2.3 kpc chain of the Milky Way template at seed 4242 with none.
 
 **The spacing along a chain** (item 7; the lead's ruling 1): 10 λ_J,sp, λ_J,sp = c_s² / (G Σ_peak), Σ_peak = the
 ring's gas column times the gas ridge's contrast at the foot (``SPUR_SPACING_JEANS``; Kim & Ostriker 2006), c_s the
@@ -28,7 +31,9 @@ rings that bracket the foot's radius, each at the azimuth where the foot's chain
 followed, ``Pieces.along``), linear in R between them - so the walk solves no ring between the grid's (a point read
 off the grid's rings would solve the mid-gap rings, about two seconds on the Milky Way template). Against the gas
 pattern's point function at the foot itself it differs by at most :data:`WALK_READ_DIFFERENCE` of the point
-function's value over the feet ``tests/test_spurs.py`` samples. The foot's contrast is the spur's height there:
+function's value, measured over every foot of two seeds on the production grid (S70, D234: was 0.052 over the ten feet
+``tests/test_spurs.py`` samples - Audit V F-2-4); the median foot reads within 1e-4, and where the few far ones lie
+is not explained here. The foot's contrast is the spur's height there:
 "the foot's peak equal to the ridge's crest contrast there".
 
 **The walk reads the gas at the stellar chain's polyline, not at the gas crest** (S62's review, finding 4; measured on
@@ -63,9 +68,13 @@ from galaxy.stages.spurs import SPUR_FIELDS
 
 FLOCCULENT = ARM_CLASSES[2]
 MAX_SPURS = 4096  # the most spurs one chain holds (rule A1): a 40 kpc chain at 10 pc spacing
-# The walk's read of g at a foot against the point function's, relative, the most over the sampled feet
-# (``tests/test_spurs.py``, the ten feet across the Milky Way template's disc, as measured at S62).
-WALK_READ_DIFFERENCE = 0.052
+# The walk's read of g at a foot against the point function's, relative: the most over EVERY foot (D117: measured
+# over N). S70 (D234; Audit V F-2-4): was 0.052, the most over ten sampled feet (``tests/test_spurs.py``, S62) - over
+# every foot the production grid reads 0.2698 (the Milky Way template at texture seed 4242, 44 feet, 6 over 0.052;
+# 0.0516 over 48 at its own seed 0) and Audit V's coarser mesh (130 rings) 0.4804 (seed 4242, 49 feet; 0.2553 over 40
+# at 777). The bound on the model's grid, and the coarser mesh's beside it (tests/test_audit_v.py holds both).
+WALK_READ_DIFFERENCE = 0.27
+WALK_READ_DIFFERENCE_COARSE = 0.49
 SPUR_CONSTANTS: tuple[str, ...] = ("SPUR_SPACING_JEANS", "SPUR_PITCH", "SPUR_LENGTH", "SPUR_WIDTH", "SPUR_FALL")
 PER_PC2_IN_KPC2 = 1.0e6  # M☉/pc² to M☉/kpc²
 
@@ -180,19 +189,25 @@ _STANDS_IN_FOR = (
 )
 _CONSERVES = (
     "Every ring's gas and every law: the spurs' excess is taken from the whole ring in proportion to its gas, so "
-    "the composed gas contrast averages to 1 on every ring (to 1e-13), and no radial field, no scalar and no "
+    "the composed gas contrast averages to 1 on every ring (to 2e-13: measured at most 9.97e-14 over every ring on "
+    "the production grid, both templates at four texture seeds, and 1.006e-13 on Audit V's mesh on NGC 4414, which "
+    "carries no spur - the gas pattern's own rounding; S70, D234, was 'to 1e-13', Audit V F-2-3), and no radial "
+    "field, no scalar and no "
     "expected count of any census moves - to 4.4e-16 (last-bit differences in 4-13 cells of hot_phase_porosity and "
     "three HII surface brightnesses on milky_way, the moved census summed in another order) - the clouds' and the "
     "clusters' sector shares on a ring do. It does not keep the interarm gas's share of a ring, which falls by the "
     "spurs' mean there: <S> at most 0.0092 of a ring. The walk reads the gas contrast at each foot on the two grid "
-    "rings either side, at the chain's polyline: within 0.052 of the point function's value there, relative (measured on the Milky "
-    "Way template's feet)."
+    "rings either side, at the chain's polyline: within 0.27 of the point function's value there, relative - measured "
+    "at S70 over every foot on the production grid (92 feet of the Milky Way template at texture seeds 0 and 4242: "
+    "at most 0.2698, 6 over 0.052, the median 2e-5), 0.4804 on Audit V's coarser mesh (S70, D234: was 'within 0.052 "
+    "... measured on the Milky Way template's feet', ten of them; Audit V F-2-4)."
 )
 _STATISTIC = (
     "One uniform draw per chain, where the first spur stands within one spacing of the chain's start - no source "
     "gives the phase, and none contradicts a random one (docs/READING_SPURS.md, Recommendation 1). Everything "
     "else is a law: the spacing 10 local Jeans lengths of the ridge's peak [verified: Kim & Ostriker 2006, "
-    "arXiv:astro-ph/0603751, abstract and section 6; La Vigne, Vogel & Ostriker 2006, arXiv:astro-ph/0606761, "
+    "arXiv:astro-ph/0603751, abstract and section 5.1 item 1 (no section 6; corrected at Audit V, S70); La Vigne, "
+    "Vogel & Ostriker 2006, arXiv:astro-ph/0606761, "
     "section 4.7: 10.4 in M51]; the pitch 63 degrees from the circle [verified: Elmegreen 1980, ApJ 242, 528, Table "
     "1]; the length 240 pc and the width 60 pc [verified: Schinnerer et al. 2017, arXiv:1701.02184, section 3.1.1]; "
     "the fall of 7 [verified: La Vigne et al. 2006, section 4.6: a factor 5-10]; spurs off chains only, none off a "

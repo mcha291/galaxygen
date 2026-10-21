@@ -13,7 +13,7 @@ reading; (2) massive clouds sit in a layer as thin as the CO layer or thinner (S
 outside R0 (Nakanishi & Sofue 2006, FWHM 160-186 pc at 8-11 kpc) and the sources conflict inside R0 (Marasco et al.
 2017 falling with R, Malhotra and Nakanishi & Sofue rising); (4) edge-on spirals' CO widths are σ = 31-89 pc plus 1-5
 pc/kpc × R (Yim et al. 2014). The layer is entered as an absolute thickness, the level-0 constant
-`MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.A]`; the clouds' scale height is the sech² h whose FWHM that is,
+`MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.B]` (was §II.A; *re-read at Audit V (S70)*); the clouds' scale height is the sech² h whose FWHM that is,
 h = FWHM / (4 artanh(1/√2)) = FWHM / 3.5255 = 34.04 pc (D229).
 
 ---
@@ -24,9 +24,9 @@ Conversions: a Gaussian's σ = FWHM / 2.3548 = HWHM / 1.1774; a sech²(z/2h) lay
 
 - **Malhotra 1994** (ApJ 433, 687; astro-ph/9404028). A Gaussian σ_z rising with R: ~10 pc at 2.6 kpc, 30-52 pc over
   3.4-7.2 kpc; the fit "extrapolates to give a scale height 58 pc at R⊙" (FWHM 137 pc); the gradient 5.5 pc/kpc.
-- **Clemens, Sanders & Scoville 1988** (ApJ 327, 139), read via Ferrière 2001 (RMP 73, 1031) §II.A: FWHM 136 ± 17 pc
+- **Clemens, Sanders & Scoville 1988** (ApJ 327, 139), read via Ferrière 2001 (RMP 73, 1031) §II.B: FWHM 136 ± 17 pc
   at R0, ∝ R^0.58.
-- **Bronfman et al. 1988** (ApJ 324, 248), read via Ferrière 2001 §II.A: "a FWHM of 120 ± 18 pc, roughly independent
+- **Bronfman et al. 1988** (ApJ 324, 248), read via Ferrière 2001 §II.B: "a FWHM of 120 ± 18 pc, roughly independent
   of R" from 2 kpc to R0. **The value entered** (`MOLECULAR_LAYER_FWHM`).
 - **Bronfman et al. 2000** (A&A 358, 521; astro-ph/0006104), Table 7 and §4.1: a mean half-width of 58-60 pc for
   R/R0 0.2-1.0, "118 pc (FWHM) for the layer of molecular gas traced by CO"; the OB stars' layer FWHM 73 pc, "62% the

@@ -505,7 +505,12 @@ BUBBLE_STALLED = FieldDecl(
 
 REMNANT_RADIUS = _remnant("remnant_radius", "Galactocentric radius", "kpc",
                           "Drawn in its cell's ring by the supernova rate times the remnant lifetime at each radius, "
-                          "so the census traces where remnants are, not only where supernovae go off.",
+                          "so the census traces where remnants are, not only where supernovae go off. **A carried "
+                          "defect** (S70, D234; Audit V F-2-7's sibling, debt #197): the ring's inversion runs over the "
+                          "whole grid, so its first step inside the ring starts at the grid point below it - measured "
+                          "at S70 on the production grid, layer off, 64 of the Milky Way template's 1 464 remnants "
+                          "(4.4 %) and 27 of NGC 4414's 594 (4.5 %) lie up to 61 and 71 pc inside their ring's inner "
+                          "edge; the clouds' draw was mended at S70 (clouds.ring_birth_radius), this one is not.",
                           ramp=Ramp("viridis"))
 REMNANT_AZIMUTH = _remnant("remnant_azimuth", "Azimuth", "rad",
                            "Uniform in its sector: the rates are axisymmetric, so the remnants of core collapses do "

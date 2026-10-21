@@ -612,8 +612,9 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
                 # derivation bars this disc, the pitch is the draw - give every number S55 drew, bit for bit.
                 # S59 (D218): was `if k != "bar_present"` - the template holds two pins since S59.
                 # S60 (D219 item 3): three - its observed arm class, which the layer's census alone reads.
-                assert set(templates.pinned(templates.TEMPLATES[template])) == {"bar_present", "pitch_angle", "arm_class"}
-                unpinned = {k: v for k, v in inputs_of(template).items() if k not in ("bar_present", "pitch_angle", "arm_class")}
+                # S70 (D234): was without "molecular_ring" - NGC 4414's own ring (#192), read by the clouds alone.
+                assert set(templates.pinned(templates.TEMPLATES[template])) == {"bar_present", "pitch_angle", "arm_class", "molecular_ring"}
+                unpinned = {k: v for k, v in inputs_of(template).items() if k not in ("bar_present", "pitch_angle", "arm_class", "molecular_ring")}
                 derived = run(the_model(prod), unpinned, only=names + ("bar_present",), layer=layer)
                 assert derived.fields["bar_present"] == "yes"
                 assert [n for n in names if layer_reference.value_digest(derived.fields[n]) != held[label][n]] == []

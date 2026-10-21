@@ -249,8 +249,9 @@ ROUTES: tuple[Route, ...] = (
         "synthesises a cloud's interior with (S55). After the census's own columns, cloud_dust_extinction_v (S64, "
         "V6): each cloud's face-on mean A_V from its own dust - its mass times the dust-to-gas ratio, times the A_V "
         "per unit of dust column, both read at its birth radius, over its disc's area - the ring's dust law applied to "
-        "the cloud's gas, derived here from published fields; the header's clouds.derived says so. precision=f4 sends "
-        "float32.",
+        "the cloud's gas, derived here from published fields; the header's clouds.derived says so. Then (S70) "
+        "cloud_axis_ratio and cloud_angle: the cloud's face-on ellipse along the gas fluctuation field's shear at its "
+        "radius, from the published strain (1 and 0, round, with the layer off). precision=f4 sends float32.",
         ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level", "precision"),
         "clouds",
     ),
@@ -1336,13 +1337,18 @@ class Service:
         # reads (the molecular gas) already run: no stage more.
         reads = self._reads(model, stage)
         reads += tuple(n for n in _v6_clouds.COLUMN_FIELDS if n not in reads)
+        # S70 (Audit V F-4-3): and the gas fluctuation field the clouds' shape reads (its strain, edges and sense), where
+        # the model publishes it - the render header's gas_fluctuation entry reads the same.
+        declared = self._declared(model)
+        gas_declared = all(n in declared for n in _v7.GAS_READS)
+        reads += tuple(n for n in (_v7.GAS_READS if gas_declared else ()) if n not in reads)
         out, ran = self.compute(model, inputs, reads, layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
         key = repr(("clouds", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
         census = self.cells.catalogue(
-            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"])),
+            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]), ring=out.inputs.get("molecular_ring")),
         )
         # A whole cloud: the census's own columns and the randomness layer's four (the embedded source's offset
         # and direction, the density gradient's steepness and direction - published by the layer's cloud_texture
@@ -1355,6 +1361,11 @@ class Service:
         # S64 (V6, R1): the cloud's own dust column, derived here from published fields, after the census's own columns.
         derived = {_v6_clouds.COLUMN: _v6_clouds.dust_extinction_v(
             out.fields, R, census["cloud_mass"], census["cloud_size"], census["cloud_birth_radius"])}
+        # S70 (Audit V F-4-3): and each cloud's face-on shape along the gas fluctuation field's shear at its placed
+        # radius - the field as the render header publishes it (compose.gas_fluctuation: None with the layer off, or
+        # where the model publishes no such field - every cloud round).
+        gas_field = _compose.gas_fluctuation(out.fields, constants, R) if gas_declared else None
+        derived.update(_v6_clouds.cloud_shape(gas_field, census["cloud_radius"]))
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
@@ -1369,7 +1380,7 @@ class Service:
                 "of": _catalogue.CELL_COUNT,
             },
             "clouds": {"materialised": int(census.size) if kept is None else kept, "seed": seed,
-                       "derived": {_v6_clouds.COLUMN: _v6_clouds.COLUMN_ABOUT}},
+                       "derived": {_v6_clouds.COLUMN: _v6_clouds.COLUMN_ABOUT, **_v6_clouds.SHAPE_ABOUT}},
             # Three of the stage's galaxy scalars, which rule D4 keeps off the viewer's scalars surface
             # (D148): a renderer that synthesises a cloud's interior reads b and the lifetime here. The
             # stage itself does not run for a window, so the realised mass total is /api/arrays' alone.
@@ -1434,7 +1445,7 @@ class Service:
         key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
 
         def draw(wanted: Sequence[int]) -> Any:
-            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]))
+            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]), ring=out.inputs.get("molecular_ring"))
             clusters = _clusters.materialise_clusters(clouds, out.fields, R, seed, constants)
             regions = _nebular.materialise_nebular(clusters, clouds, constants)  # S35: the region is the cluster's
             blown = _bubbles.materialise_bubbles(clusters, regions, constants)  # S36: and so is the bubble

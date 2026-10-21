@@ -292,6 +292,10 @@ def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     rel = np.abs(f["gas_spur_contrast"][sample] - point) / point
     assert rel.max() <= ls.WALK_READ_DIFFERENCE
     assert rel.max() == pytest.approx(0.0516, abs=5e-4)
+    # S70 (D234; Audit V F-2-4): and over EVERY foot, not ten - the bound is the population's (0.27, measured at seed
+    # 4242: 0.2698); at this template's own seed every foot's read is within 0.0516 too (48 feet).
+    every = np.abs(f["gas_spur_contrast"] / gp.unspurred_contrast_at(f["gas_spur_radius"], f["gas_spur_azimuth"]) - 1.0)
+    assert every.size == 48 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.0516, abs=5e-4)
 
 
 def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default_model):

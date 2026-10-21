@@ -399,19 +399,28 @@ _STANDS_IN_FOR = (
 # ``tests/test_clustering_gate.py`` holds the measurement to these numbers): |[Fe/H]_gas at the placed radius minus
 # at the radius the ring drew|, dex, over the 16 577 clouds - its median, 90th and 99th percentiles and maximum; the
 # ring's radius of the maximum (kpc); the clouds beyond 0.06 dex; and the [alpha/Fe] maximum, likewise.
-SPILL_FEH_DEX = {"median": 0.022, "p90": 0.063, "p99": 0.123, "max": 1.258}
+# S70 (D234): re-measured after the clouds' ring inversion on the ring's own interval (Audit V F-2-7: the birth radius
+# the spill is taken from) and the size law's three regimes (#192) - were p90 0.063, p99 0.123, 1863 beyond and 0.232.
+SPILL_FEH_DEX = {"median": 0.022, "p90": 0.062, "p99": 0.121, "max": 1.258}
 SPILL_FEH_MAX_AT_KPC = 23.6
-SPILL_FEH_BEYOND = (0.06, 1863, 16577)  # S62 (D221): was 1862 - the gas spurs move the clouds' placement
-SPILL_ALPHA_MAX_DEX = 0.232
+SPILL_FEH_BEYOND = (0.06, 1807, 16577)  # S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
+SPILL_ALPHA_MAX_DEX = 0.226  # S70 (D234): was 0.232 (F-2-7)
 
 _CONSERVES = (
     "Every cell's expected count of every census it places and every ring's realised total: it places a cloud "
     "inside the cloud's own cell after the ring's count, the sector allocation and every other draw are made, so "
     "no count, mass or light moves between cells or rings; every per-cloud law and every binner reads the radius "
     "the ring drew (`cloud_birth_radius`, `cluster_birth_radius`), so nothing published per ring or per radius "
-    "moves either. It does not keep where a cloud sits in its cell: a cloud's placed radius lies anywhere in its "
-    "level-0 ring (0.94 kpc wide on the production grid) and up to that from the radius its ring drew - measured "
-    "at S61 on the default galaxy, a median 275 pc and at most 976 pc - while the cloud's abundances and its "
+    "moves either. **A cloud's ring is the ring that drew it**, wherever a per-ring total or a per-radius law is "
+    "read: its index in the ring-first draw, the ring of the cell it is placed in and the ring its birth radius "
+    "lies in are one, asserted in the draw since S70 (D234; Audit V F-2-7: the ring's inversion had started from "
+    "the grid point below the ring, so 712 of the default galaxy's 16 577 clouds were born up to 71 pc inside "
+    "their ring's inner edge and were binned in the ring inside it; clouds.ring_birth_radius). It does not keep "
+    "where a cloud sits in its cell: a cloud's placed radius lies anywhere in that ring (0.935 kpc wide on the "
+    "production grid), so at most the ring's width from its birth radius - measured at S70 over every cloud, "
+    "46 214 of them (both templates, texture seeds 0 / 4414 and 4242, the production grid): at most 0.932 kpc, "
+    "the median 0.27 kpc; 0.927 kpc over Audit V's mesh's 39 264 (until S70: 'measured at S61 on the default "
+    "galaxy, a median 275 pc and at most 976 pc', a bound the inversion's 71 pc broke: 0.988) - while the cloud's abundances and its "
     "cluster's efficiency are read at the radius the ring drew. Measured at S61 (the default galaxy, layer on): "
     f"the gas's [Fe/H] at the placed radius differs from that at the ring's by a median {SPILL_FEH_DEX['median']} "
     f"dex, {SPILL_FEH_DEX['p90']} at the 90th percentile and {SPILL_FEH_DEX['p99']} at the 99th, at most "

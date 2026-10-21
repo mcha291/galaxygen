@@ -834,7 +834,7 @@ _MISSES: tuple[Miss, ...] = (
         debt=117,
         since="S44",
         reason=(
-            "-0.0977 dex/kpc against [-0.045, -0.005], 5.9 sigma below the window's floor and in the direction the "
+            "-0.0983 dex/kpc against [-0.045, -0.005], 6.0 sigma below the window's floor and in the direction the "
             "blind reader named as the killing one ('a model whose [N II]/Halpha follows N/H (about -0.06 to -0.08 "
             "dex/kpc) fails'). The reading's history: as built on the 8.69 scale the model read -0.0815; on the "
             "grid's own scale (D195, #121) it steepened to -0.1035 - the offset moved it out, not in; -0.1055 from "
@@ -844,7 +844,10 @@ _MISSES: tuple[Miss, ...] = (
             "by 0.0025 with it (6.7 to 6.4 sigma out); **-0.0977 (-0.097717) since S61, when the census was drawn "
             "ring-first (D220): each ring's clouds are drawn on the ring's stream before the layer places them, a new "
             "draw at the same expected counts, and the row moved by 0.0053 with it (6.4 to 5.9 sigma out)** - from "
-            "here it is the same number with the layer on or off, and does not move when a placement is redrawn. "
+            "here it is the same number with the layer on or off, and does not move when a placement is redrawn; "
+            "-0.0979 (-0.097902) from S67, the clouds' size law (D231); **-0.0983 (-0.098309) since S70 (D234): the "
+            "clouds' ring inversion on the ring's own interval (Audit V F-2-7; -0.098171 alone) and the source's three "
+            "Sigma_GMC regimes (#192, the owner's ruling D233) - 0.0004 further out, the same on and off**. "
             "The three readings since S44 differ by how the census was placed and drawn, not by any change to the "
             "nebular physics. **Diagnosed at S45 (D196, tests/test_s45_diagnosis.py, which reads the layer-off "
             "census since S55 and finds the same parts: the metallicity path's product -0.0957 layer-off, -0.0956 "

@@ -1,7 +1,7 @@
 """The clouds as extinction at whole-galaxy scale (S64, BUILD_III Phase V6; RULING_S64 R1-R2): API-side arithmetic
 on published fields, no stage and no constant on the wire (rule D4; the pattern of ``/api/clusters``' ``response``).
 
-Two answers, each a hook in its own route method of ``service.py``:
+Two answers, each a hook in its own route method of ``service.py`` (and since S70 the clouds' shape, below):
 
 - **The cloud's own dust column** (``/api/clouds``' ``cloud_dust_extinction_v``, :func:`dust_extinction_v`): the
   cloud's face-on MEAN A_V over its disc, from its own dust - its mass times the ring's dust-to-gas ratio, times the
@@ -15,6 +15,10 @@ Two answers, each a hook in its own route method of ``service.py``:
   1 - (the ring's REALISED clouds' dust) / (the ring's published dust mass). The clouds' dust is summed off the
   ring-first draw's own streams (D220: each ring's count, and each cloud's ``mass`` and ``radius`` uniforms on the
   ring's streams), so no census is materialised and nothing is placed: the same clouds layer on and off.
+- **The cloud's face-on shape** (``/api/clouds``' ``cloud_axis_ratio`` and ``cloud_angle``, :func:`cloud_shape`; S70,
+  Audit V F-4-3): the ellipse a round feature of the gas fluctuation field becomes under the field's local shear at
+  the cloud's placed radius, from the published strain, edges and sense - the formula the viewer applied itself from
+  S67 (D230 R2) to S70, moved here unchanged, so the shape is the model's and the viewer only reads it (rule D5).
 """
 
 from __future__ import annotations
@@ -27,7 +31,7 @@ import numpy as np
 
 from galaxy.core import seeds as _seeds
 from galaxy.stages import clouds as _clouds
-from galaxy.stages.systems import CELL_RINGS, cell_edges, invert_cdf
+from galaxy.stages.systems import CELL_RINGS, cell_edges
 
 COLUMN = "cloud_dust_extinction_v"
 SHARE = "dust_diffuse_share"
@@ -57,6 +61,69 @@ COLUMN_ABOUT: dict[str, Any] = {
              "surface density, 5.80 mag at the inner regime's 82 Msun/pc2 since D231 (2.97 at one 42 before), no "
              "metallicity - and the two disagree (at S64, on the 42: 6.3x this law's column at R = 2 kpc, 0.15x at R = 14 on the Milky Way; debt #167)",
 }
+
+
+# S70 (Audit V F-4-3, D233/D234): each cloud's face-on shape along the gas fluctuation field's shear - the formula the
+# viewer applied to the published strain since S67 (D230 R2; cloudOpacity.ts shearEllipse and strainAt), moved here
+# verbatim so the shape is the model's statement and the viewer reads it (rule D5). Two columns after the dust column.
+AXIS_RATIO = "cloud_axis_ratio"
+ANGLE = "cloud_angle"
+SHAPE_COLUMNS = (AXIS_RATIO, ANGLE)
+# Every column this route derives, in the order it sends them after the census's own (S64's, then S70's two).
+DERIVED_COLUMNS = (COLUMN, *SHAPE_COLUMNS)
+# The published terms the two read: the render header's gas_fluctuation entry carries each (edges, ring.strain, sense).
+SHAPE_TERMS = ["cloud_radius", "gas_fluctuation.edges", "gas_fluctuation.ring.strain", "gas_fluctuation.sense"]
+SHAPE_RULE = ("k = sense * strain[r], r = the level-0 ring of cloud_radius by edges (the last edge not above it, held to "
+              "the first and last rings); cloud_axis_ratio = (2 + k^2 + |k| sqrt(k^2 + 4)) / 2; "
+              "cloud_angle = atan2(cloud_axis_ratio - 1, k)")
+_SHAPE_ABOUT = (
+    "The gas fluctuation field is read at its point rotated by theta(R) = sense (twist + strain ln(R / R_r)) "
+    "(gas_fluctuation.GasFluctuationField.read_positions), whose local Jacobian in the (radial, azimuthal) frame is the "
+    "simple shear [[1, 0], [-k, 1]], k = sense x strain (dtheta / dlnR); a round feature of the field is the image of a "
+    "circle under its inverse, the ellipse [[1, k], [k, 1 + k^2]], of axis ratio lambda+ = (2 + k^2 + |k| sqrt(k^2 + "
+    "4)) / 2 and long axis along (k, lambda+ - 1) in (r-hat, phi-hat). Each term is published: the strain per level-0 "
+    "ring, the ring edges and the disc's sense in the render header's gas_fluctuation entry, the cloud's placed radius "
+    "here. SYNTHETIC (rule A10): the layer's - the shear of the gas fluctuation field, a function of the rotation curve "
+    "and the shear time's cap (gas_fluctuation.shear_strain), read at the radius the layer placed the cloud at "
+    "(cloud_radius) - and with the layer off, when the field is not published, 1 and 0: every cloud round. Derived "
+    "here, not by a stage (S70, Audit V F-4-3; the viewer's formula since S67, D230 R2, moved to the model unchanged); "
+    "the viewer draws the cloud's disc as an ellipse of the same area pi cloud_size^2 of axis ratio cloud_axis_ratio "
+    "raised to its own 'cloud elongation' power (a display control: 0 round, 1 the field's own anisotropy)"
+)
+SHAPE_ABOUT: dict[str, dict[str, Any]] = {
+    AXIS_RATIO: {
+        "unit": "dimensionless", "fields": SHAPE_TERMS, "rule": SHAPE_RULE,
+        "about": "the cloud's face-on axis ratio, long over short (>= 1; 1 is round), along the gas fluctuation "
+                 "field's local shear. " + _SHAPE_ABOUT,
+    },
+    ANGLE: {
+        "unit": "rad", "fields": SHAPE_TERMS, "rule": SHAPE_RULE,
+        "about": "the angle of the cloud's long axis from r-hat (outward) towards phi-hat (increasing azimuth) at the "
+                 "cloud, in (-pi, pi]; 0 for a round cloud. " + _SHAPE_ABOUT,
+    },
+}
+
+
+def shear_ellipse(k: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """``(lambda+, angle)`` of the shear ``[[1, 0], [-k, 1]]``'s round-feature ellipse: ``(2 + k^2 + |k| sqrt(k^2 +
+    4)) / 2`` and ``atan2(lambda+ - 1, k)`` - cloudOpacity.ts ``shearEllipse`` at exponent 1, term for term in its
+    order (k = 0 is round: 1 and 0)."""
+    k = np.asarray(k, dtype=float)
+    lam = (2.0 + k * k + np.abs(k) * np.sqrt(k * k + 4.0)) / 2.0
+    return lam, np.arctan2(lam - 1.0, k)
+
+
+def cloud_shape(field: Any, radius: np.ndarray) -> dict[str, np.ndarray]:
+    """Each cloud's ``cloud_axis_ratio`` and ``cloud_angle`` from the gas fluctuation field ``field`` (its published
+    edges, per-ring strain and sense; ``compose.gas_fluctuation``'s answer) at the cloud's ``cloud_radius``: the ring
+    by ``field.ring_of`` (cloudOpacity.ts ``strainAt``'s), ``k = sense * strain[ring]``. ``field`` None (the layer off:
+    no field is published) is every cloud round - 1 and 0."""
+    radius = np.asarray(radius, dtype=float)
+    if field is None:
+        return {AXIS_RATIO: np.ones(radius.shape), ANGLE: np.zeros(radius.shape)}
+    k = float(field.sense) * np.asarray(field.strain, dtype=float)[field.ring_of(radius)]
+    lam, angle = shear_ellipse(k)
+    return {AXIS_RATIO: lam, ANGLE: angle}
 
 
 def extinction_per_dust(fields: Mapping[str, Any]) -> np.ndarray:
@@ -109,7 +176,8 @@ def ring_cloud_dust(fields: Mapping[str, Any], R: np.ndarray, seed: int, constan
         )
         weight = np.where((R >= lo) & (R <= hi), sigma_h2 * R, 0.0)
         u = _seeds.rng(seed, "cloud", r, "radius").random(n)
-        birth = invert_cdf(u, R, weight) if weight.sum() > 0.0 else np.full(n, 0.5 * (lo + hi))
+        # S70 (D234; Audit V F-2-7): was invert_cdf(u, R, weight) - the clouds stage's draw on the ring's own interval.
+        birth = _clouds.ring_birth_radius(u, R, weight, lo, hi) if weight.sum() > 0.0 else np.full(n, 0.5 * (lo + hi))
         out[r] = float(np.sum(mass * np.interp(birth, R, dgr)))
     return out
 

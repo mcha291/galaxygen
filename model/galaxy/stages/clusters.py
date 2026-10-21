@@ -276,17 +276,22 @@ def _not_drawn(name: str) -> str:
     return f" **Not drawn by the viewer** (D191): {why}" if why else ""
 
 
-def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis")) -> FieldDecl:
+def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis"), placement: bool = False) -> FieldDecl:
+    # S70 (D234, Audit V F-3-1, #194): `placement` - a column the randomness layer may move (FieldDecl.placement);
+    # the census's placement set is cluster_radius and cluster_azimuth (its cloud's place plus the layer's offset).
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cluster",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name),
+                     placement=placement)
 
 
 CLUSTER_RADIUS = _column("cluster_radius", "Galactocentric radius", "kpc",
                          "Where its cloud's embedded source sits: the cloud's centre plus the source's offset, "
-                         "so a cluster lies inside the cloud that made it, where the ionization front starts.")
+                         "so a cluster lies inside the cloud that made it, where the ionization front starts.",
+                         placement=True)
 CLUSTER_AZIMUTH = _column("cluster_azimuth", "Azimuth", "rad",
                           "The embedded source's azimuth. The source's direction is read from the outward radial "
-                          "direction toward increasing azimuth, a convention the cloud census does not state.")
+                          "direction toward increasing azimuth, a convention the cloud census does not state.",
+                          placement=True)
 CLUSTER_BIRTH_RADIUS = _column("cluster_birth_radius", "Its cloud's galactocentric radius", "kpc",
                                "The radius the ring of the cloud that made it drew for that cloud (S61, D220 "
                                "part II as amended: until the layer placed clouds in their cells, the cloud's "

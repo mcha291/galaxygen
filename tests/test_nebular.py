@@ -163,9 +163,11 @@ def test_the_default_census_numbers(default, default_layer_off):
     # side of R_SUN and the 150 pc cap, was one 42): a region's density and its Stromgren sphere read its cloud's mean
     # density M / (4/3 pi R^3), the inner clouds' radius 0.72x (sqrt 42/82) and the outer ones' 1.10x (sqrt 42/35);
     # the census, its masses and its streams unchanged.
-    assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.605, abs=0.01)
-    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(177.9, rel=0.01)
-    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.788, abs=0.01)
+    # S70 (D234): were 0.605 pc, 177.9 cm^-3 and -2.788 - the size law's three regimes (#192, the owner's ruling D233:
+    # the clouds inside 4 kpc and in 7-8.2 kpc 1.53x larger, so less dense) and the clouds' ring inversion (F-2-7).
+    assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.759, abs=0.01)
+    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(153.7, rel=0.01)
+    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.835, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
     # S57 (D216): was 7775 (another draw); S56 (D215): was 7792 (another draw)
     # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
@@ -210,10 +212,12 @@ def test_the_default_census_numbers(default, default_layer_off):
     # slope reads -2.0338, the gradient -0.101488. Not judged; the judged, layer-off rows above did not move.
     # S61 (D220 item 4): were -2.0338 and -0.101488. The census is drawn ring-first: the same regions on and off, so
     # the layer-on readings are the layer-off ones, to rounding (the regions are summed in another order).
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.05571, abs=1e-5)  # S70 (D234): was -2.05555 - the clouds' ring inversion (F-2-7)
     # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities, so their [N II]/Halpha
     # (-0.097717 -> -0.097902, on and off alike); row 37 above a recorded miss still, 0.0002 further out.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.097902, abs=1e-6)
+    # S70 (D234): was -0.097902 - the clouds' ring inversion on its own interval (F-2-7) to -0.098171, then the three
+    # Sigma regimes (#192, the owner's ruling D233) to -0.098309; row 37 a recorded miss still, 0.0004 further out.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098309, abs=1e-6)
     for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
         assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
 
@@ -340,7 +344,9 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # S67 (D231): [O III] 0.781 -> 0.775 and [N II] 0.082 -> 0.078 - the clouds' size law moves each region's density
     # and ionization parameter (above), so its line ratios off the grid; the [S II] pair 0.0528 and 0.0409, inside the
     # tolerance.
-    assert weighted == pytest.approx({"oiii_5007": 0.775, "nii_6583": 0.078, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
+    # S70 (D234): [O III] 0.775 -> 0.772 and [N II] 0.078 -> 0.080 - the size law's three regimes (#192) and the clouds'
+    # ring inversion (F-2-7) move each region's density and U; the [S II] pair inside the tolerance.
+    assert weighted == pytest.approx({"oiii_5007": 0.772, "nii_6583": 0.080, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])

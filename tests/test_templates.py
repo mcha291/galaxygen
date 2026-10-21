@@ -66,7 +66,8 @@ B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} f
 # Local arm - and NGC 4414's its observed arm class, a name.
 MW_ARMS = tuple(row for row in templates.REID_2019_TABLE2 if row[0] in templates.MILKY_WAY_PINNED_ARMS)
 MW_PINS = {"bar_present": True, "sun_bar_angle": 30.0, "arm_pieces": MW_ARMS}
-NGC_PINS = {"bar_present": False, "pitch_angle": 28.9, "arm_class": "flocculent"}
+# S70 (D234; the owner's ruling D233 on #192): was without "molecular_ring" - NGC 4414 pins its own molecular ring.
+NGC_PINS = {"bar_present": False, "pitch_angle": 28.9, "arm_class": "flocculent", "molecular_ring": ((0.43, 4.29),)}
 assert len(MW_ARMS) == 6 and [row[0] for row in MW_ARMS] == ["Norma", "Sct-Cen", "Sgr-Car", "Local", "Perseus", "Outer"]
 
 
@@ -103,7 +104,8 @@ def test_two_templates_are_registered_and_the_default_leads():
         # S60 (D219 items 3 and 8): was two each - the Milky Way also pins its measured arms (a table), NGC 4414 its
         # observed arm class (a name).
         assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == (
-            ["bar_present", "sun_bar_angle", "arm_pieces"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class"]
+            # S70 (D234): NGC 4414 was without "molecular_ring" (its own ring, #192).
+            ["bar_present", "sun_bar_angle", "arm_pieces"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class", "molecular_ring"]
         )
     # S67 (D227 T1): was ("rgb", "wfc3") - the owner's "Switch to RGB": NGC 4414 opens on RGB, and its instrument
     # names its own set, WFC3, where the PSF and the spikes draw.
@@ -125,9 +127,10 @@ def test_milky_way_overrides_nothing_and_resolves_to_the_registry_s_defaults():
     resolved = templates.resolve(MILKY_WAY)
     # S59 (D218): was `== list(INPUTS)` - a pin the template does not state (the pitch) is not among its inputs.
     # S60 (D219): nor the arm class, which the Milky Way does not state either (the model derives it from the bar).
-    assert list(resolved) == [n for n in INPUTS if n not in ("pitch_angle", "arm_class")]
+    # S70 (D234): nor the molecular ring - the Milky Way's is the default, GMC_MOLECULAR_RING_INNER to _OUTER (#192).
+    assert list(resolved) == [n for n in INPUTS if n not in ("pitch_angle", "arm_class", "molecular_ring")]
     for name, inp in INPUTS.items():
-        if name in ("pitch_angle", "arm_class"):
+        if name in ("pitch_angle", "arm_class", "molecular_ring"):
             continue
         if inp.kind == "pin":
             # a pin has no default: the template's is the only one (S59: was `is True` - one of the two is a number)

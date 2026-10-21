@@ -1689,7 +1689,7 @@ def test_a_pin_is_a_class_a_named_class_a_number_or_a_table(prod):
     assert not {"arm_class", "arm_pieces"} & {i["name"] for kind in ("controls", "seeds", "events") for i in listed[kind]}
     # The wire: /api/templates serves each pin in its shape.
     served = {t["name"]: {p["name"]: p for p in t["pins"]} for t in api.handle("/api/templates").json()["templates"]}
-    assert set(served["milky_way"]) == {"bar_present", "sun_bar_angle", "arm_pieces"} and set(served["ngc_4414"]) == {"bar_present", "pitch_angle", "arm_class"}
+    assert set(served["milky_way"]) == {"bar_present", "sun_bar_angle", "arm_pieces"} and set(served["ngc_4414"]) == {"bar_present", "pitch_angle", "arm_class", "molecular_ring"}  # S70 (D234): was without the ring (#192)
     klass = served["ngc_4414"]["arm_class"]
     assert set(klass) == {"name", "label", "unit", "value", "source", "classes"} and klass["value"] == "flocculent" and klass["unit"] is None
     assert klass["classes"] == ["grand_design", "multi_armed", "flocculent"]

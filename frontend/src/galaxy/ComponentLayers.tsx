@@ -24,18 +24,22 @@ const OUTLINE_OPACITY = 0.55;
 const OUTLINE_ORDER = -2;
 const CLOUD_ORDER = -0.5;
 
-/** The level-0 cells' edges (32 rings × 32 sectors over the model's R extent) as one LineSegments in the disc plane. */
-export function CellOutlines({ lo, hi }: { lo: number; hi: number }) {
+/**
+ * The level-0 cells' edges (32 rings × 32 sectors) as one LineSegments in the disc plane, the circles at the model's
+ * published ring edges (components.ts publishedRingEdges; S70, Audit V F-4-2).
+ */
+export function CellOutlines({ ringEdges }: { ringEdges: readonly number[] }) {
+  const key = ringEdges.join(",");
   const lines = useMemo(() => {
     const geometry = new BufferGeometry();
-    geometry.setAttribute("position", new BufferAttribute(cellOutlines(lo, hi).positions, 3));
+    geometry.setAttribute("position", new BufferAttribute(cellOutlines(ringEdges).positions, 3));
     const material = new LineBasicMaterial({ transparent: true, opacity: OUTLINE_OPACITY, depthTest: false, depthWrite: false });
     material.color.setRGB(OUTLINE_GREY, OUTLINE_GREY, OUTLINE_GREY);
     const object = new LineSegments(geometry, material);
     object.renderOrder = OUTLINE_ORDER;
     object.frustumCulled = false;
     return object;
-  }, [lo, hi]);
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(
     () => () => {
       lines.geometry.dispose();

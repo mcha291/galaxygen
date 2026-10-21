@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SECH2_HWHM_PER_H, cloudRaster, shearEllipse, strainAt, texelArea } from "./cloudOpacity";
+import { SECH2_HWHM_PER_H, cloudEllipse, cloudRaster, texelArea } from "./cloudOpacity";
 import { composeStep } from "./regimes";
 
 // S67, D230: each cloud's deposit in the galaxy-scale raster - R1 its vertical half-extent capped at the clouds' layer's
@@ -45,47 +45,30 @@ describe("R1: a cloud's vertical extent capped at the clouds' layer (S67, D230)"
   });
 });
 
-describe("R2: a cloud's face-on ellipse along the gas field's shear (S67, D230)", () => {
-  it("is the image of a round feature under the field's read: the shear's shape from noise.ts's rotation", () => {
-    // The field is read at p rotated by theta(R) = sense (twist + strain ln(R / R_r)) (noise.ts gasReadPosition). Its
-    // Jacobian, by finite differences in doubles, maps a small circle of the field to an ellipse in the disc whose
-    // shape is (J^T J)^-1: its axis ratio and long axis are shearEllipse's.
-    const sense = -1, strain = -1.6, twist = 0.7, Rr = 2.84;
-    const read = (x: number, y: number) => {
-      const R = Math.hypot(x, y), th = sense * (twist + strain * Math.log(R / Rr));
-      return [x * Math.cos(th) + y * Math.sin(th), y * Math.cos(th) - x * Math.sin(th)];
-    };
-    const R = 3.3, phi = 0.4, x = R * Math.cos(phi), y = R * Math.sin(phi), d = 1e-6;
-    const fx = read(x + d, y), bx = read(x - d, y), fy = read(x, y + d), by = read(x, y - d);
-    const J = [[(fx[0] - bx[0]) / (2 * d), (fy[0] - by[0]) / (2 * d)], [(fx[1] - bx[1]) / (2 * d), (fy[1] - by[1]) / (2 * d)]];
-    // M = J^T J; the ellipse in the disc is {p : p^T M p = 1}: its long axis is M's small eigenvector
-    const m00 = J[0][0] ** 2 + J[1][0] ** 2, m01 = J[0][0] * J[0][1] + J[1][0] * J[1][1], m11 = J[0][1] ** 2 + J[1][1] ** 2;
-    const tr = m00 + m11, det = m00 * m11 - m01 * m01, disc = Math.sqrt(tr * tr / 4 - det);
-    const lmin = tr / 2 - disc, lmax = tr / 2 + disc;
-    const ratio = Math.sqrt(lmax / lmin);
-    const long = [m01, lmin - m00]; // (M - lmin) v = 0
-    const longAngle = Math.atan2(long[1], long[0]);
-    const { ratio: q, angle } = shearEllipse(sense * strain, 1);
-    expect(q).toBeCloseTo(ratio, 6);
-    // the long axis in the disc's (x, y) from shearEllipse's angle in (r-hat, phi-hat), modulo a half turn
-    const ours = phi + angle;
-    const diff = Math.abs(Math.sin(ours - longAngle));
-    expect(diff).toBeLessThan(1e-6);
-    // round at the exponent 0 and with no strain; lambda+ ^ e in between
-    expect(shearEllipse(1.6, 0).ratio).toBe(1);
-    expect(shearEllipse(0, 1).ratio).toBe(1);
-    expect(shearEllipse(1.6, 0.5).ratio).toBeCloseTo(Math.sqrt(q), 12);
+describe("R2: a cloud's face-on ellipse along the gas field's shear (S67, D230; the shape published since S70, F-4-3)", () => {
+  // Since S70 (Audit V F-4-3) the model publishes each cloud's axis ratio lambda+ and long axis angle (/api/clouds'
+  // cloud_axis_ratio and cloud_angle; tests/test_v6_clouds.py holds them to the field's own read by finite differences);
+  // the viewer raises the ratio to its elongation power. At the strain -2 and sense -1 of the S67 tests, k = 2: lambda+ =
+  // 3 + 2 sqrt 2, the long axis at atan2(lambda+ - 1, k) from r-hat - this file's own arithmetic.
+  const LAM = 3 + 2 * Math.SQRT2;
+  const ANGLE = Math.atan2(LAM - 1, 2);
+  const SHAPED = { ...GIANT, cloud_axis_ratio: [LAM], cloud_angle: [ANGLE] };
+
+  it("raises the published ratio to the elongation's power: round at 0 and for a round cloud, lambda+ ^ e between", () => {
+    expect(cloudEllipse(LAM, ANGLE, 1)).toEqual({ ratio: LAM, angle: ANGLE });
+    expect(cloudEllipse(LAM, ANGLE, 0).ratio).toBe(1);
+    expect(cloudEllipse(1, 0, 1).ratio).toBe(1);
+    expect(cloudEllipse(LAM, ANGLE, 0.5).ratio).toBeCloseTo(Math.sqrt(LAM), 12);
   });
 
   it("conserves each cloud's A_V x area, elongated as round, and lays it along the long axis", () => {
-    const shear = { edges: [0, 10], strain: [-2], sense: -1 };
     const round = cloudRaster(GIANT, RLO, RHI, W, H);
-    const long = cloudRaster(GIANT, RLO, RHI, W, H, { shear, elongation: 1 });
+    const long = cloudRaster(SHAPED, RLO, RHI, W, H, { elongation: 1 });
     expect(long.census).toBe(round.census);
     expect(Math.abs(held(long.av, W, H, RLO, RHI) / long.census - 1)).toBeLessThan(1e-6);
     expect(long.outside).toBe(0);
-    // the deposit's second moments: its long axis along shearEllipse's, its axes' ratio the shape's (5.83)
-    const { ratio, angle } = shearEllipse(2, 1);
+    // the deposit's second moments: its long axis along the published angle, its axes' ratio the published (5.83)
+    const ratio = LAM, angle = ANGLE;
     const dR = (RHI - RLO) / W, dP = (2 * Math.PI) / H;
     let sw = 0, sxx = 0, syy = 0, sxy = 0;
     const cx = 3 * Math.cos(1), cy = 3 * Math.sin(1);
@@ -104,14 +87,11 @@ describe("R2: a cloud's face-on ellipse along the gas field's shear (S67, D230)"
     expect(Math.sqrt(l1 / l2) / ratio).toBeLessThan(1.05);
   });
 
-  it("is round to the bit at the exponent 0 and with the field absent (the layer off)", () => {
+  it("is round to the bit at the exponent 0, without the columns, and for a published ratio of 1 (the layer off)", () => {
     const round = cloudRaster(GIANT, RLO, RHI, W, H);
-    expect(Array.from(cloudRaster(GIANT, RLO, RHI, W, H, { shear: { edges: [0, 10], strain: [-2], sense: -1 }, elongation: 0 }).av)).toEqual(Array.from(round.av));
-    expect(Array.from(cloudRaster(GIANT, RLO, RHI, W, H, { shear: null, elongation: 1 }).av)).toEqual(Array.from(round.av));
-  });
-
-  it("reads the strain of the ring the cloud sits in", () => {
-    const edges = [0, 1, 2, 3], strain = [-2, -1.8, -1.6];
-    expect([strainAt(0.5, edges, strain), strainAt(1, edges, strain), strainAt(2.5, edges, strain), strainAt(9, edges, strain)]).toEqual([-2, -1.8, -1.6, -1.6]);
+    expect(Array.from(cloudRaster(SHAPED, RLO, RHI, W, H, { elongation: 0 }).av)).toEqual(Array.from(round.av));
+    expect(Array.from(cloudRaster(GIANT, RLO, RHI, W, H, { elongation: 1 }).av)).toEqual(Array.from(round.av));
+    const off = { ...GIANT, cloud_axis_ratio: [1], cloud_angle: [0] };
+    expect(Array.from(cloudRaster(off, RLO, RHI, W, H, { elongation: 1 }).av)).toEqual(Array.from(round.av));
   });
 });

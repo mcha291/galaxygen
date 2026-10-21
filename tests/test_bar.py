@@ -1405,11 +1405,11 @@ def test_the_api_serves_an_unbarred_galaxy_with_nulls_for_the_bar_and_no_nan_any
         # S60 (D219 item 3): a third, its observed arm class (a named class, the new shape of pin): left out too.
         assert head["inputs"]["pitch_angle"] == 28.9 and head["inputs"]["arm_class"] == "flocculent", path
         spelled = {n: [json.dumps(v) if n == "mergers" else (str(int(v)) if n.endswith("_seed") else repr(v))]
-                   for n, v in head["inputs"].items() if n not in ("bar_present", "pitch_angle", "arm_class")}
+                   for n, v in head["inputs"].items() if n not in ("bar_present", "pitch_angle", "arm_class", "molecular_ring")}  # S70 (D234): was without the ring
         barred = api.handle(path, {**query, **spelled})  # the same disc with no pin: the criterion bars it
         assert barred.status == 200, (path, barred.body[:300])
         barred_head, barred_body = wire.decode(barred.body)
-        assert not {"bar_present", "pitch_angle", "arm_class"} & set(barred_head["inputs"]), path
+        assert not {"bar_present", "pitch_angle", "arm_class", "molecular_ring"} & set(barred_head["inputs"]), path  # S70 (D234): and the ring
 
         def nan_arrays(arrays) -> set[str]:
             return {n for n, a in arrays.items() if a.dtype.kind == "f" and bool(np.isnan(a).any())}

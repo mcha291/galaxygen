@@ -403,6 +403,22 @@ def arm_rows_defect(rows: tuple) -> str | None:
     return None
 
 
+# S70 (D234, the owner's ruling D233 on #192): the molecular ring's edges, one row of two galactocentric radii.
+MOLECULAR_RING_COLUMNS: tuple[tuple[str, str | None], ...] = (("inner", "kpc"), ("outer", "kpc"))
+
+
+def molecular_ring_defect(rows: tuple) -> str | None:
+    """The first defect of a molecular ring's table (``MOLECULAR_RING_COLUMNS``), in words, or None: one row, its
+    inner edge not negative and not past its outer edge. Equal edges are a ring of no width - no ring: the disc's
+    surface density at every radius."""
+    if len(rows) != 1:
+        return f"the ring is one row of two edges; got {len(rows)} rows"
+    inner, outer = rows[0]
+    if not 0.0 <= inner <= outer:
+        return f"the inner edge is not negative and not past the outer; got {inner!r} to {outer!r}"
+    return None
+
+
 # --- the closed input vector -------------------------------------------------
 # 7 controls, 4 seeds, 1 event list [verified: GALAXY_PLAN.md §8; GALAXY_INPUTS.md §3, §11]; a fifth seed,
 # texture_seed, since S55 [verified: DECISIONS.md D214 section 3; BUILD_III.md section 1c].
@@ -729,6 +745,26 @@ _INPUTS: tuple[Input, ...] = (
         columns=ARM_PIECE_COLUMNS,
         defect=arm_rows_defect,
         checkpoint_hypothesis=3,
+    ),
+    Input(
+        "molecular_ring",
+        "Molecular ring (a template's pin)",
+        "pin",
+        "A pin, not a control (S70, D234; the owner's ruling D233 on #192): where one named galaxy's molecular gas "
+        "is concentrated in a ring, as one row of two galactocentric radii in kpc, the ring's inner and outer "
+        "edges, with its source. A giant molecular cloud born inside the ring takes the ring's surface density "
+        "(GMC_SURFACE_DENSITY_RING), one born outside it - inside its inner edge or past its outer - the disc's "
+        "(GMC_SURFACE_DENSITY_DISC); the cloud's radius follows from its mass at that surface density. Given by "
+        "no template, the Milky Way's measured ring stands (GMC_MOLECULAR_RING_INNER to _OUTER, 4 to 7 kpc), the "
+        "model's default galaxy. Two equal edges are a ring of no width: no ring, the disc's surface density at "
+        "every radius. The inner edge is not negative and not past the outer; a row that is not so is refused, by "
+        "a template and by a run. It moves the clouds' sizes and what reads them, nothing else - the clouds' "
+        "count, masses and places are the same with any ring. No request offers it: the API takes it from "
+        "template=<name> alone, it has no default, and it does not count against the ceiling.",
+        default=None,
+        columns=MOLECULAR_RING_COLUMNS,
+        defect=molecular_ring_defect,
+        checkpoint_hypothesis=5,
     ),
 )
 

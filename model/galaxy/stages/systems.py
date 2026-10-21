@@ -121,10 +121,14 @@ CATALOGUE_SAMPLE = 20_000  # the clickable sample of GALAXY_PLAN.md §4, order 1
 # only by the azimuthal model) rather than by where the mass is (the density contrast). The number
 # is the arm's lifetime, not a crossing time (S57, D216 item 12): the arms turn with the disc, so
 # nothing crosses them, and a star stays in the arm it formed in until the arm itself dissolves -
-# swing-amplified arms live 100-160 Myr [verified: Grand, Kawata & Cropper 2012, arXiv:1112.0019;
-# Baba, Saitoh & Wada 2013, arXiv:1211.5401; docs/READING_GAS_SHOCK.md Part B rows A1, A3]. The
+# a transient arm lives about 120 Myr [verified: Grand, Kawata & Cropper 2012a, arXiv:1112.0019, abstract:
+# one arm's lifetime 'about 120 Myr'], and Baba, Saitoh & Wada 2013 print no lifetime in Myr - 'the
+# short-lived spiral arms can recurrently develop over many rotational periods' [verified: Baba, Saitoh
+# & Wada 2013, ApJ 763, 46, arXiv:1211.5401, abstract, re-read at Audit V, S70]. The range 100-160 Myr
+# (0.3-0.5 rotation periods) that stood here is the reader's, not printed by either (Audit V F-1A-5;
+# docs/READING_GAS_SHOCK.md Part B rows A1, A3). The
 # value is the one BUILD_II.md Phase 2 stated without a source (as "about one arm crossing", gas
-# mixing azimuthally on ~100 Myr), kept and re-sourced; it sits at the short end of the range. It is
+# mixing azimuthally on ~100 Myr), kept: inside Grand's about 120 Myr, an adopted value. It is
 # a cut, not a law: nothing in the model says how fast a young population leaves its arm, and a
 # decaying weight would be a second constant with no source either.
 YOUNG_STAR_AGE = 0.1  # Gyr
@@ -1420,20 +1424,27 @@ POPULATION = IMPLEMENTATIONS.register(
 
 # --- seeded half --------------------------------------------------------------
 
-def _column(name, label, unit, about, ramp=Ramp("viridis")):
+def _column(name, label, unit, about, ramp=Ramp("viridis"), placement=False):
+    # S70 (D234, Audit V F-3-1, #194): `placement` - a column the randomness layer may move (FieldDecl.placement);
+    # the sample's placement set is star_azimuth alone (a star's radius is its ring's draw, on and off).
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="star",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about, placement=placement)
 
 
 STAR_RADIUS = _column("star_radius", "Galactocentric radius", "kpc",
                       "Drawn by inverting the radial mass distribution the model published, so the "
-                      "sample traces the disc exactly rather than approximately.")
+                      "sample traces the disc exactly rather than approximately. **A carried defect** (S70, D234; "
+                      "Audit V F-2-7's sibling, debt #197): a level-0 star's ring draw inverts over the whole grid, "
+                      "so its first step inside the ring starts at the grid point below it - measured at S70 on the "
+                      "production grid, layer off, 955 of the Milky Way template's 20 003 sample stars (4.8 %) and 995 "
+                      "of NGC 4414's 20 004 (5.0 %) lie up to 70 pc inside their ring's inner edge, one grid step; "
+                      "the clouds' draw was mended at S70 (clouds.ring_birth_radius), this one is not.")
 STAR_AZIMUTH = _column("star_azimuth", "Azimuth", "rad",
                        "Drawn from the bar and arm density contrast at the star's radius, so stars "
                        "crowd into the arms and the bar. Where the model publishes where stars form "
                        "today (sfr_modulation, the azimuthal model), a star younger than about one arm "
                        "crossing, 100 Myr, is placed by that instead, and the young stars crowd into "
-                       "the arms more tightly than the old ones.")
+                       "the arms more tightly than the old ones.", placement=True)
 STAR_HEIGHT = _column("star_height", "Height above the plane", "kpc",
                       "Inverted from the sech² profile at the star's own population's scale height, "
                       "so the thick disc is genuinely thicker rather than tagged as such.")

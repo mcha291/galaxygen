@@ -75,24 +75,41 @@ applied to a realisation.**
    either. Each declares what it conserves (`FieldDecl.conserves`), and a declaration states what it does not
    keep, with the measured number. *(Amended at gate G1, D214: until then it read "it never changes a total".)*
 3. **Sourced statistics.** Its spectrum, contrast or correlation is a measured one, cited; its anisotropy comes from
-   the model's own shear. Each declares the statistic (`FieldDecl.statistic`).
+   the model's own shear. Each declares the statistic (`FieldDecl.statistic`), or an open debt naming the reading
+   ("none read (#95)"). *(Amended at S70, D234, on Audit V's F-3-14 as ruled at gate G4, D233: until then it read
+   "Each declares the statistic (`FieldDecl.statistic`)" - the declaration check has admitted "none read" beside a
+   debt's number since S55, and the four cloud-texture columns use it.)*
 4. **Labelled.** Each declares the physics it stands in for (`FieldDecl.stands_in_for`), so the day that physics is
    built the field is replaced, not layered over.
-5. **Evaluable at a point.** No stored grid is its definition: a region, a zoom level or a shader evaluates the same
-   function of position and seed (D60).
+5. **Evaluable at a point.** No stored grid a point cannot recompute: a region, a zoom level or a shader evaluates
+   the same function of position and seed (D60), and a number the run stores per cell (the clustering field's cell
+   mean, the gas field's cell normaliser) is a function of the seed and the cell that a point recomputes alone.
+   *(Amended at S70, D234, on Audit V's F-3-15 as ruled at gate G4, D233: until then it read "No stored grid is its
+   definition" - the clustering and gas fields are evaluated with stored per-cell normalisers; the test recomputing
+   one from (seed, cell) is `tests/test_layer.py`'s.)*
 
 ### 1d. The invariants (machine-checked from Phase R on)
 
-- **I1.** With the layer off, the model runs, and every field not declared composed — every scalar, every history,
-  every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical to the layer-on
-  run, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
+- **I1.** With the layer off, the model runs, and every field not declared composed and not synthetic, and not a
+  placed catalogue's placement column — every scalar, every history, every radial field, every φ-axis field
+  tabulated in a pattern's own frame, and every other column of a placed catalogue, object by object (each matched
+  on and off by its drawn ring and its place in the ring's draw; the placement columns are those whose
+  `FieldDecl.placement` says so) — is bit-identical to the layer-on run; a synthetic field is a realisation with
+  the layer on and its declared absence with it off (NaN, zero, or no row) *(amended at S70, D234, on Audit V's
+  F-3-1 and F-3-3 as ruled at gate G4, D233: until then it read "every field not declared composed — every scalar,
+  every history, every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical",
+  which read literally held `cloud_azimuth` to the bit, while the test compared no column of a placed catalogue at
+  all; `tests/test_layer.py` holds the per-object half at both templates, two seed pairs and a `texture_seed`
+  reroll)*, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
   which names the census it is computed from. Every composed field is its declared neutral value. After L1 the
   list is empty *(S61, D220: it is - its fourteen former entries are `RING_FIRST_STATISTICS`, each identical on
   and off to 1e-12 relative, six of them a few units in the last place apart because the objects are summed in
   another order; the realised per-ring totals of every placed census are the same, counts bit for bit)*. An *expected* total that is a sum of placement weights is equal within four units in the
   last place — the rounding of sums over the cells of weights that average to 1 to 1e-13; exact sums are not
   required *(amended at gate G2, S57, D216, as "one unit"; re-worded at S58 when the measured difference became
-  two, D217; rulings by Fable)*.
+  two, D217; rulings by Fable. S70, D234, Audit V F-3-11: the 1e-13 is asserted ring by ring since S70 - measured
+  at most 6.0e-15 for the clouds' sector weights and 2.2e-16 for the stars'; the totals measured 1 unit apart at the
+  production pair, 3 at a second seed pair and 4, the bound, between two texture seeds, all on the Milky Way)*.
 - **I2.** A census's expected counts per ring — the numbers the draws are given, summed round the ring — are
   identical with the layer on or off to 1e-12. Until L1 the realised counts, and every total summed over realised
   objects, differ between the two runs by re-draw noise (measured S55: cloud mass −1.9 % galaxy-wide, up to 19 %
@@ -102,9 +119,18 @@ applied to a realisation.**
 - **I3.** The acceptance table is judged on the layer-off run. No row reads a synthetic field. (Rows 35 and 37 read
   the HII census and moved with S51's redraw; under I3 they stop moving with placement.)
 - **I4.** No physics stage requires a synthetic or composed field; the census stages consume composed placement
-  weights only and are declared placement readers. Placement also reaches physics through the realised
-  catalogues: the stages that bin realised objects (`nebular`, `bubbles`, by `cluster_radius`) are a closed list
-  in the test, and from L1 what they bin per ring does not depend on placement.
+  weights and the layer's synthetic fields, for placement only, and are declared placement readers - what they
+  read from the layer moves only their placement columns (each column a census places declares
+  `FieldDecl.placement`; every other column of a placed catalogue is the same bits on and off, I1). Placement also
+  reaches physics through the realised catalogues: the stages that bin realised objects (`nebular`, `bubbles`, by
+  `cluster_birth_radius`) are a closed list in the test, no stage but a placement reader (or a layer stage) reads a
+  placement column, and from L1 what they bin per ring does not depend on placement. *(Amended at S70, D234, on
+  Audit V's F-3-7 and F-3-8 as ruled at gate G4, D233: until then it read "consume composed placement weights only"
+  - the clouds require 21 synthetic fields and the clusters `cloud_source_offset` - and "by `cluster_radius`", which
+  the binners stopped reading at S61, D220 item 6. Amended again at S70's fix pass, D234, on the independent
+  reviewer's reading: the first S70 text read "no stage reads a placement column of a catalogue it does not place",
+  stronger than the test and false for `clusters`, a placement reader that reads the clouds' `cloud_radius`,
+  `cloud_azimuth`, `cloud_source_offset` and `cloud_source_angle` and does not place clouds.)*
 - **I5.** The viewer and the API carry a switch: physics only, or physics with the layer.
 
 *I1, I2 and I4 were amended at gate G1 (S55, D214; ruling by Fable). As adopted they read: "every field without a φ

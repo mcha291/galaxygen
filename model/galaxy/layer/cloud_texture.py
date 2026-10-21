@@ -113,8 +113,13 @@ _STANDS_IN_FOR = (
 # What the two gradient columns keep: they lean a cloud's density and place nothing outside it.
 _CONSERVES_GRADIENT = (
     "The cloud's mass and the census's count: the column places a source and a lean inside a cloud and weighs "
-    "nothing. No ring's molecular mass, cloud count or cluster mass changes with it."
+    "nothing. No ring's molecular mass, cloud count or cluster mass changes with it. It does not keep a cloud's "
+    "density even across it: the lean is drawn uniform up to the whole contrast over one radius - measured at S70 "
+    "over the 16 577 clouds of the default galaxy (the production grid, the layer on), a median 0.499 and at most "
+    "0.99998, 8 268 clouds leaning by more than half the contrast."
 )
+# S70 (D234, Audit V F-3-13): the last sentence added - rule 2's "states what it does not keep, with the measured
+# number" was unmet here (until S70: "... No ring's molecular mass, cloud count or cluster mass changes with it.").
 # What the source's offset and direction keep, and what they do not, with the measured numbers (gate G1, change 5;
 # BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with the measured number").
 # Measured on the production grid at the default inputs, the layer on: first at S55 (1 610 of 12 930 clusters, 12.5 %
@@ -128,11 +133,14 @@ _CONSERVES_GRADIENT = (
 # ring-first and the binners came to read the cloud's radius (D220 items 1 and 6).
 # S67 (D231): re-read again when the clouds' size law (82 / 35 Msun/pc2, the 150 pc cap) shrank the inner clouds the
 # offset is drawn inside (was 230 pc, 248 pc, 1 581 of 12 710, 12.4 % and 36.1 %, 133).
+# S70 (D234): re-read again when the size law took the source's three regimes (#192: the clouds inside 4 kpc and in
+# 7-8.2 kpc grow by 1.53) and the ring's inversion its own interval (F-2-7) - was 146 pc, 1 376 of 12 710, 10.8 % and
+# 31.8 %, 119 (S67); the 140 pc radial reach did not move.
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S67 the offset moves a cluster by up to 140 pc in radius (its own length reaches 146 pc) "
-    "against a 75 pc radial step and puts 1 376 of 12 710 "
-    "clusters (10.8 %, 31.8 % of the cluster mass) in another radial ring and 119 in another cell ring than their "
+    "its cloud's ring: at S70 the offset moves a cluster by up to 140 pc in radius (its own length reaches 148 pc) "
+    "against a 75 pc radial step and puts 1 591 of 12 710 "
+    "clusters (12.5 %, 34.3 % of the cluster mass) in another radial ring and 132 in another cell ring than their "
     "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
     "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "
     "stream (D220 item 6 and part II; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
@@ -153,6 +161,7 @@ def _column(name: str, label: str, unit: str, about: str, law: str, conserves: s
     return FieldDecl(
         name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cloud", ramp=Ramp("viridis"), meaningful_zero=True,
         provenance="synthetic",
+        placement=True,  # S70 (D234, Audit V F-3-1, #194): the layer's texture of a placed cloud, in the census's set
         about=about + _SEED + _PER_CLOUD + (f" **Not drawn by the viewer** (D191): {why}" if why else ""),
         stands_in_for=_STANDS_IN_FOR, conserves=conserves, statistic=_STATISTIC.format(law=law),
     )

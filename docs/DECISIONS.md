@@ -13829,7 +13829,7 @@ in a detached worktree with pytest's own exit code appended to its log: **EXIT=1
 tests re-run alone after the register moved: `test_hook` 7 passed alone, EXIT=0; the pricing test under load EXIT=1, its quiet re-run in D234. S68's `verify_clone --ref main` (99abdc3; 6 h 03): 1 failed /
 1 610 passed / 5 skipped / 1 xfailed, specs OK — the one failure the register's count pin in `tests/test_audit.py` that
 S68's close did not re-pin, re-pinned at this session's open (116d7a9) and green; this session's `verify_clone --ref
-main`: [VERIFY]. Cold timings unchanged.
+main` (eca3c10): 1 failed / 1 641 passed / 5 skipped / 8 xfailed in 6 h 22, the pricing flake alone, specs OK - read at S70's close, D234. Cold timings unchanged.
 
 **For the owner, plainly (three answers owed before S70 moves a number; nothing else awaited):** the build's numbers
 hold — 665 citations re-read and none of the constants they feed differs from its page; the layer conserves what it
@@ -13843,3 +13843,228 @@ for it. The frames beside the goals did not move this session (nothing drawn cha
 they stand. **S70 is the fixes** (`BRIEF.md`); BUILD_IV follows at S71.
 
 **The owner's answer (2026-10-21, in chat, in these words): "Take the verdict's recommendations for #191 (redefine BAR_GAS_RATIO as the ratio of medians), #192 (the source's three Sigma_GMC regimes with a declared boundary per template) and #193 (keep 2.43 as the disclosed choice, 1.73 the named alternative)."** Recorded here, before S70 opens (D113). S70 enters them: `BAR_GAS_RATIO` redefined as Querejeta 2021 Table 3's ratio of medians (2.56; the about-line and `gas_pattern.py`'s use re-stated as a median statistic — if the code's use proves to be the means, the owner is asked again before 3.17 enters); Σ_GMC in three regimes by radius, 35 / 82 / 35 with the molecular ring's edges read from Lada & Dame 2020 and a boundary declared per template (`ngc_4414` no longer inheriting R_SUN) — a number moves (the clouds' sizes inside 4 kpc and between the ring and the Sun), so row 37 and the clustering snapshots are re-pinned with the reason and the frames regenerated with it stated; `CENSUS_CLUSTERING_WIDTH` 2.43 kept as the lead's disclosed choice with 1.73 the named alternative in `level0.py` (no number moves).
+
+### D234. S70, Audit V's fixes: the per-object invariant that compares every placed catalogue's columns on and off with declared placement sets (the audit's chief finding closed and proven by two breaks); the owner's three rulings entered — the bar's gas ratio as the median galaxy's ratio of means, the clouds' Σ in the source's three regimes behind a `molecular_ring` pin, the clustering width disclosed; a defect found in the ring draw and fixed for the clouds; the citations corrected; the layer's bounds measured over the population; the two viewer gaps closed; the register's drift corrected; #197–#198 opened, 129 open
+
+**What this session was (BUILD_III's board row 70, inserted at D233; B3: Audit V checked, S70 fixes).** A Fable lead
+on the owner's standing order, five Opus agents in worktrees (Builders A–D, a fix pass) and one Opus reviewer, each
+owning a disjoint file set, the lead cherry-picking or fast-forwarding their commits onto `session-70`; the order
+`AUDIT_V.md` §6's. **The owner's rulings** came first (D233's last paragraph, 2026-10-21): #191 redefine, #192 three
+regimes with a boundary per template, #193 keep 2.43 disclosed. Mid-run rulings by the lead, each recorded below as
+it was given: #191's reading, #192's mechanism, F-2-7 fixed not declared, the stars' and remnants' draws measured
+not fixed.
+
+**1. The invariants' tests (Builder A, the reviewer, the fix pass; `tests/test_layer.py` 70 → 89 tests, 499 → 668 s;
+`core/fielddoc.py`; the census stages' declarations; `BUILD_III.md` §1).** `FieldDecl.placement: bool` (refused on
+anything but an object column; in `contract()` after `provenance`; not served) declares the columns the layer may
+move: clouds `cloud_radius`, `cloud_azimuth` + the four texture columns; clusters `cluster_radius`, `cluster_azimuth`;
+stars `star_azimuth` (the radius does not move); bright stars radius and azimuth; planets none — each set exactly what
+was measured moving on and off. **The per-object test (#194, F-3-1)** matches each census's objects on and off by
+(drawn ring, place in the ring's draw) from the stages' own layouts (a cluster by its cloud, a planet by its star and
+place, a bright star re-selected by the stage's own call and named by ring and Γ rank), holds every column outside the
+set bit for bit (dtype, shape, bytes), refuses a padded set (every declared column must move; the sets pinned), and
+runs at both models on the production pair, `ngc_4414` SMALL, the Milky Way at seeds (3, 777) SMALL and a production
+`texture_seed` reroll. **Proven twice:** a one-ulp nudge to `cloud_velocity_dispersion` on the layer-on path (the
+builder) and a one-ulp nudge to one cluster's mass (the reviewer, carried into the HII and bubble columns) both failed
+it while the old walk, the realised totals, I2's expectations and the reroll test all passed. **The reviewer's hole,
+closed by the fix pass:** `cloud_cluster_index` had been compared as "has a cluster"; reversing the host indices within
+every cell on the layer-on path passed — now the index is resolved against `cl.cluster_indices` per cell over the
+layout's counts, and the same reversal fails at both models. The rest of §3: the walk, the realised totals and the
+objects at the second template and seed pair (F-3-2); the stars' expectation from the stage's own `ring_star_expected`
+(F-3-4; near-tautological, the realised totals carry the weight); `only_if[0]` in I3's names (F-3-5); the composing
+stages' non-composed outputs bit-identical on and off at the second template and seed (F-3-6, the cheaper close over
+the graph route); no stage but a placement reader or a layer stage requires a placement column (F-3-8, the text first
+written too strongly — `clusters` reads four cloud columns and places none — and reworded by the fix pass); the
+layer-read guard catches an alias, `setting(`/`words(` by attribute or bare name, `getattr(x, "layer")`, and pins the
+four hand-on sites and the eighteen echo calls (F-3-9); the stale docstring struck (F-3-10); `EXPECTED_TOTAL_UNITS = 2`
+"measured" → `EXPECTED_TOTAL_MARGIN = 4`, I1's bound, with the reroll measuring exactly 4 and seeds (3, 777) 3 — no
+unit to spare — and the "to 1e-13" clause now asserted per ring (measured 6.0e-15 clouds, 2.2e-16 stars; the second
+total's weights corrected by the fix pass to `BrightGalaxy.weights`, which include the young stars' `sfr_modulation`
+part) (F-3-11); `same_expected_total` under the reroll (F-3-12); "does not keep … <number>" in every synthetic
+declaration (the gradient columns: median 0.499, at most 0.99998 over 16 577 clouds) (F-3-13); one cell's clustering
+mean and gas normaliser recomputed alone from (seed, cell) to the bit (F-3-15). **Text:** I1 excepts synthetic fields
+and placement columns and states the per-object half; I4 reads "composed placement weights and the layer's synthetic
+fields, for placement only" and "no stage but a placement reader (or a layer stage) reads a placement column"; rule 3
+admits an open debt naming the reading; rule 5 "no stored grid a point cannot recompute"; old words kept as history.
+*Still let through, recorded:* the placement columns themselves (nothing holds a placed radius inside its drawn ring —
+F-2-7's fix does, for the clouds); the API's derived per-cloud columns (`cloud_dust_extinction_v`, `cloud_axis_ratio`,
+`cloud_angle`), functions of the placement columns held by `test_v6_clouds`' closures; a change made identically on
+both paths (outside I1); the saturation cut fires on no ring at any tested grid (**#198**).
+
+**2. The owner's rulings (Builder C; `level0.py`, `core/registry.py`, `stages/clouds.py`, `api/service.py`, `templates.py`).**
+- **#191** `BAR_GAS_RATIO` stays 2.6, redefined — on the lead's reading of the owner's "ratio of medians" when the code
+  proved to apply it as a ratio of spatial means on every ring (`gas_pattern.py:355-436`: the footprint flat on each
+  side, the lanes' excess on narrow arcs) — as *the median galaxy's ratio of mean Σ_mol inside the bar's footprint to
+  outside*: Querejeta 2021 Table 3's medians 11.51 / 4.492 = 2.56 over 1.5 kpc apertures, each aperture value itself a
+  spatial mean, so the population's median is the typical galaxy's ratio of means — what one template holds; the
+  population mean 20.92 / 6.589 = 3.17 the named alternative (D113). No number moved.
+- **#193** `CENSUS_CLUSTERING_WIDTH` 2.43 disclosed in level0 as the lead's choice (Grasha's slope put at Menon's
+  190 pc), 1.73 (the source's own 112 pc branch point, Table 4) the named alternative. No number moved.
+- **#192** Σ_GMC in the source's three regimes: `GMC_MOLECULAR_RING_INNER` 4.0 and `_OUTER` 7.0 kpc, unscaled as printed
+  (Lada & Dame 2020 §IV.2, §VI "between 4-7 kpc"; 82 ± 10 inside it "likely an upper limit", §V; densities "drop inward
+  of 4 kpc"; 8 kpc named as the alternative outer edge), `GMC_SURFACE_DENSITY_INNER/_OUTER` renamed `_RING` 82 and
+  `_DISC` 35; **the mechanism, ruled by the lead:** a template reaches a stage only through an input, so a new
+  table pin `molecular_ring` (one row, inner and outer in kpc; equal edges mean no ring) overrides the constants; the
+  Milky Way leaves it at the default and stays bit-identical to a run with no inputs; **`ngc_4414` pins (0.43, 4.29) kpc**
+  from Vallejo, Braine & Baudry 2002 (astro-ph/0202391: "the highly obscured molecular ring" at 5″–50″, no CO in the
+  nucleus, at the template's 17.7 Mpc) — the obscured radii the paper places the ring in, not radii read off a CO map,
+  tagged `[inferred]` and said so; Braine 1997 and Thornley & Mundy 1997 unreachable (ADS 405), seven fetches. The
+  stage reads the input (`molecular_ring()`, `surface_density_at` / `cloud_size_law` take the ring); `service.py` passes it
+  at both `materialise_clouds` calls; `pins.live.json` regenerated. *Not fixed, recorded:* the mass function's split
+  (`law_for`) still reads `R_SUN`, so `ngc_4414` inherits it there; `cloud_extinction_v` reads the ring's 82 and did not
+  move. **A number moved:** the clouds' sizes inside 4 kpc and between 7 kpc and the Sun grow by √(82/35) = 1.53
+  (median 12.13 → 13.40 pc, mean 17.22 → 20.04 on the Milky Way; 11.78 → 12.76, 18.44 → 20.30 on `ngc_4414`), the
+  re-pins below.
+
+**3. A defect found and fixed: the ring draw's inversion (F-2-7; Builder C on the lead's ruling).** The audit's bound
+"a cloud is placed at most 976 pc from the radius its ring drew" was exceeded because 712 of 16 577 production clouds
+(271 of 6 530 on `ngc_4414`) had a *birth* radius below the ring that drew them, by up to 70.8 pc (the grid step 75 pc):
+`invert_cdf`'s step table begins at the last zero-CDF grid point below the ring, so `np.interp` for the smallest u
+interpolates from outside it. The binners, the nebular ring ratios and row 37's census then counted those clouds one
+ring in, while layer on and off agreed with each other — no on/off test could see it; the drawn ring and the binned
+ring disagreed. **Ruled:** a cloud's ring is the ring that drew it wherever a per-ring total or per-radius law is read;
+`clouds.ring_birth_radius(u, R, weight, lo, hi)` inverts on the ring's own interval and asserts the result in [lo, hi)
+(no silent clip); `api/v6_clouds.py` calls it where it re-derives births; `systems.invert_cdf` itself is unchanged for the
+two age draws that rely on its step-to-interval meaning. **The two causes separated** (production grid, layer off; A
+neither, B the inversion alone, C both): Milky Way clouds / clusters 16 577 / 12 710 unchanged; row 35 −2.055551 →
+−2.055711 → −2.055711; row 37 −0.0979016 → −0.0981709 → −0.0983090; outliers 712 → 0 → 0; cloud size median / mean
+12.13 / 17.22 → same → 13.40 / 20.04 pc. `ngc_4414`: 6 530 / 5 029; row 35 −1.905206 → −1.905632 → −1.905632; row 37
+−0.039091 → −0.038930 → −0.038970; outliers 271 → 0 → 0; sizes 11.78 / 18.44 → same → 12.76 / 20.30. **The same
+defect in the star catalogue's level-0 radius (`systems.py:1083`) and the remnants' radius (`bubbles.py:305`) is
+measured and declared, not fixed (#197):** 955 of 20 003 Milky Way stars (4.8 %) and 995 of 20 004 on `ngc_4414`
+(5.0 %) up to 70 pc below their ring; 64 of 1 464 and 27 of 594 remnants (4.4 %, 4.5 %) up to 71 pc — a fix moves the
+whole catalogue, every frame and the catalogue's pins across the suite: a session of its own.
+
+**4. The citations (Builder C; `AUDIT_V.md` §1).** About-lines corrected: F-1A-2 (Fujii's fit unnumbered, §3.3 and
+the Fig. 9 caption), F-1A-3 ("always above 2" is Kim 2015's), F-1A-4 (the Ferrers clause struck), F-1A-5 (`YOUNG_STAR_AGE`:
+Grand's ~120 Myr, Baba's sentence quoted, 100–160 Myr labelled the reader's), F-1A-9, F-1B-1 (67 stage-2 galaxies, level0
+and `arm_pieces`), F-1B-4 (§5.1 item 1), F-1B-5 (§II.B), F-1B-8 a–e. Reading rows corrected and marked "re-read at
+Audit V (S70)": F-1A-6–14, F-1B-6 in READING_BAR, GAS_SHOCK, ARM_MODES, ARM_SEGMENTS, ARM_PIECES, SPURS, CLOUD_LAYER;
+Part B's DG16 → DG16b. F-1B-7's sources read once: Shetty & Ostriker 2006 (~5 λ_J) MATCH; Corder 2008 (475 / 420 /
+155 pc) MATCH; Bronfman 2000 (118 pc, §4.1) MATCH; Helfer 2003 — NGC 4414's map does include the NRAO 12 m single-dish
+data (Table 2, σ 0.36); HyperLeda UNREACHABLE (both mirrors refused), noted in `templates.py`.
+
+**5. The layer's bounds measured over the population (#196, #195; Builder C; `tests/test_audit_v.py`'s seven strict
+xfails now passing tests).** `WALK_READ_DIFFERENCE` 0.052 → 0.27 (every foot of 92 at the production grid, seeds 0 and
+4242, at most 0.2698, six over 0.052; 0.4804 on the audit mesh; `test_spurs` checks every foot, not ten). The gas cell
+mean off its lattice: 3 072 production cells over three runs, rms 4.3–5.2e-3, worst 3.71e-2, 40 cells over the old
+1.83e-2 (audit mesh worst 3.14e-2). The clouds' |placed − birth| after the fix: 46 214 production clouds at most 0.932 kpc
+(median 0.27; 0.927 over the audit mesh's 39 264); a cloud's ring is the ring that drew it, in the declarations. #195:
+realised power over budget 0.569 on the Milky Way (seed 0; 0.677 at 4242) and 0.847 on `ngc_4414` (seed 4414; 0.498 at
+4242) — the declaration gives the reason (the budget holds in expectation for designed pieces only; finite Gaussian
+ridges do not fill a ring's variance) and says filling it is the owner's; Builder A's 0.47 could not be reproduced under
+any statistic Builder C tried (0.557–0.573) and was replaced, `test_layer:2216` re-pinned; `stages/pieces.py:964`'s
+`ARM_RING_POWER` still says "agree on average" (not in C's files; S71's one line). F-2-3's gate 2e-13 (production max
+9.97e-14); F-2-5 "long enough for a first foot"; F-2-8's ring-1 slope −0.76 in the declaration. **#173's randomised-order
+run** added: the migration test alone under PYTHONHASHSEED 0 and 1 and the whole of `test_chemistry` in two shuffled
+orders — it passes, and costs 1 575 s under load, so it is gated behind `GALAXYGEN_AUDIT_ORDER=1` (five pytest
+processes) and run once at the close on 45e7f0e: 1 passed, EXIT=0 (beside two full suites; the migration test holds alone under both
+hash seeds and in both shuffled orders).
+
+**6. #128(b) (Builder C; `specs/templates.py`).** `layered_face_on_transmission` reads the dust the stage has laid in
+layers since S52 (it matches the mixed slab exactly at ratio 1, 2e-16, and tends to its limits at both extremes);
+`ngc_4414`'s `colour_b_v_face_on` check 0.6355279 → 0.6517106, still outside its window, recorded miss #136 with the new
+number; the Milky Way's face-on record B − V 0.572933 → 0.573877, M_V −20.668268 → −20.808910 (`test_render.py`).
+
+**7. The viewer's two gaps (Builder D; `components.ts`, `cloudOpacity.ts`, `api/v6_clouds.py`, `service.py`, `test_v6_clouds.py`,
+`RENDER_PHYSICS.md` §8).** F-4-3: `/api/clouds` publishes `cloud_axis_ratio` and `cloud_angle` — the viewer's old formula
+term for term (k = sense × strain at the cloud's ring by the published edges; λ₊ = (2 + k² + |k|√(k² + 4)) / 2; angle
+atan2(λ₊ − 1, k)), each with a `clouds.derived` entry naming unit, terms and rule, labelled SYNTHETIC (A10), 1 and 0
+with the layer off; `cloudOpacity.ts` keeps only `cloudEllipse`; `FieldVolume` stops reading the header's strain; a
+cold `/api/clouds` with no render before it now runs the gas-fluctuation stage (`ngc_4414` ~10.5 → 17 s under load,
+nothing extra after a render); three tests (the rule on the published strain to the bit; a finite-difference Jacobian
+of the field's read map giving the published ratio to 1e-6 and the long axis at every 40th cloud; round layer off,
+float32 when asked); **all nine captures byte for byte after it, `ngc_4414-field` included.** F-4-2: `cellOutlines(ringEdges)`
+from the render header's `gas_fluctuation.edges` (held per grid in `GalaxyTab`, since a layer-off render publishes none)
+or the bright table's `layout.ring_edges`, never an even division; the four star-first and zoom frames regenerated —
+the evidence the grid alone moved: identical star selections (2 820 / 2 632 / 24 483 / 32 112), frame sums moved
+equally in R, G and B (+9.69, +14.11, −10.65, −1.3e-4: grey, the outlines'), every differing pixel on the face-on frame
+within 15 px of an old or new circle or spoke; the physics-only dust-free check 1.00020 / 1.00027 / 1.00048 as before.
+*Recorded:* a page landing in star-first mode with physics only and the points off draws no outlines (neither edge
+source arrives; an API change outside the brief). F-4-5: one capture set with the dither off — mean |diff| 0.003–0.77
+levels per channel, frame sums within 0.7 %, the largest local differences where thin features meet the step on
+`ngc_4414-field` (0.29 % of pixels over 10 levels): sampling, as ruled; nothing changed. §8 gains D233's sentence.
+
+**8. The register (Builder B; `GALAXY_INPUTS.md` §11, `tests/test_audit.py`).** #137 struck (discharged in fact since
+S61; its few-ulp expected-total residue noted under #196); #39 re-written as live (the two-seed dependence dates from
+S27's `sfr_modulation` on `pattern_seed`, not S59 as D233 said — corrected here; the closer `spec.ensemble` varying the
+seeds independently); #114 narrowed to the field mode's region-regime cluster colours, #115 to the field mode's sample
+and the dissolved cluster as a point; #15 permanent for `basic` with row 22's tilt under #47; #128(b) widened; #21, #33,
+#43, #80, #87, #93 corrected; the deleted test citations of #11, #19, #26, #39, #42, #47 and #154 replaced — **#154
+pinned again** by a new test comparing the pieces table with the point reader at the production grid (default seeds:
+largest difference 1.070 at 3.34 kpc, worst ring 0.593 %, mean 0.034 %; pattern seed 3: 1.205, 1.175 %, 0.045 %; S59's
+segments read 1.201 / 0.586 % / 0.029 %; held at 2e-3, 5 s); the closers of #110, #159–#162, #166 re-pointed with the
+reason; #171's and #173's re-named; the 53–64 and 74–78 gaps explained at the register's head (S21's reservations,
+D116). Every touched entry "*(re-ruled at Audit V, S70, D234)*". At the close **#197 and #198 opened: 129 open = 11 +
+118, 52 discharged**, both pins re-pinned in the same commit.
+
+**The re-pins (each `# S70 (D234): was …` with its cause).** Row 35 −2.05555 → −2.05571 (the inversion alone); row 37
+−0.097902 → −0.098309 (the inversion, then #192; its recorded-miss text 6.0σ); nebular R_S 0.605 → 0.759 pc, n_e 177.9 →
+153.7, log U −2.788 → −2.835, [O III]/Hα 0.775 → 0.772, [N II]/Hα 0.078 → 0.080; bubbles' median radius 8.349 → 9.444 pc,
+stalled 12 445 → 12 391, porosity(R₀) 0.00439 → 0.0136; clusters' Q ratio 0.9397 → 0.9405, minimum mass 9.614 → 9.689;
+`test_s45_diagnosis` lu0 −2.030 → −2.125; the offsets 1 376 → 1 591 crossing a radial ring (share 0.1083 → 0.1252), mass
+share 0.3182 → 0.3427, 119 → 132 crossing a cell ring, largest 146.4 → 148.4 pc; the clustering gate's clusters
+(−0.6908, 2.1129, 0.0221) → (−0.6578, 2.0842, 0.0210), the square 1.131 → 1.148, spill p90 0.063 → 0.062, p99 0.123 →
+0.121, beyond 0.06 dex 1 863 → 1 807, α 0.232 → 0.226; `CLOUDS_SHARE_DISC` 0.4899973 → 0.4922158 and 0.6327142 →
+0.6379672 (the inversion alone — the "0.49" told to the owner at F-4-1 is now 0.492); the DIG fraction back on S55's bits
+for `ngc_4414`; the pin lists in `test_registry`, `test_run`, `test_templates`, `test_graph`, `test_pieces`, `test_modes`,
+`test_bar`, `test_layer`, `test_clouds`; the v6 column-order pins for the two new columns; `test_layer`'s S55 reference
+with `molecular_ring`. The specs' summary **12 / 20 / 5 of 37 unchanged**: rows 35 and 37 moved and keep their verdicts.
+**The frames:** all nine captures moved (the clouds' growth under #192 and their births under the draw fix move the
+dust's diffuse share, the clusters' places and the knots in every frame, the thumbnails included), regenerated once on
+the merged branch and byte for byte on the compare run after it. The goal metrics on the new frames against S67's
+(D227; `tools/goal_metrics.py --table`, face-on at q 1, `ngc_4414` at 0.5736):
+
+| frame | Δ(B−R) | A₁ | A₂ | A₃ | arm / interarm B | dark fraction | slope | points in / out |
+|---|---|---|---|---|---|---|---|---|
+| milky_way-field (S67) | −0.334 | 0.057 | 0.054 | 0.056 | 1.628 | 0.0184 | −1.24 | 767 / 3 077 |
+| **milky_way-field (S70)** | −0.342 | 0.054 | 0.055 | 0.055 | 1.620 | 0.0179 | −1.24 | 773 / 3 095 |
+| milky_way-physics-only (S67) | −0.338 | 0.015 | 0.011 | 0.010 | 1.071 | 0.0000 | −2.11 | 702 / 867 |
+| **milky_way-physics-only (S70)** | −0.343 | 0.012 | 0.010 | 0.009 | 1.073 | 0.0000 | −2.05 | 721 / 872 |
+| milky_way-stars (S67) | −0.211 | 0.036 | 0.095 | 0.064 | 1.789 | 0.1123 | −3.56 | 181 / 84 |
+| **milky_way-stars (S70)** | −0.213 | 0.036 | 0.095 | 0.066 | 1.782 | 0.1119 | −3.56 | 180 / 79 |
+| ngc_4414-field (S67) | +0.187 | 0.112 | 0.198 | 0.054 | 2.852 | 0.0295 | −2.28 | 221 / 2 198 |
+| **ngc_4414-field (S70)** | +0.177 | 0.112 | 0.196 | 0.057 | 2.843 | 0.0321 | −2.17 | 224 / 2 212 |
+| ngc_4414-stars (S67) | −0.301 | 0.061 | 0.115 | 0.049 | 2.170 | 0.0252 | −3.56 | 121 / 122 |
+| **ngc_4414-stars (S70)** | −0.314 | 0.065 | 0.105 | 0.054 | 2.113 | 0.0256 | −3.55 | 115 / 117 |
+
+Nothing drawn moved by more than its last digit or two except NGC 4414's dark fraction, 0.0295 → 0.0321: the grown
+clouds show as more dark flecks in the sheared streaks round its bulge. The lead's look (the goal pictures beside the
+frames): the Milky Way frame is the same picture as at S67 — a round white core under a warm disc, a tightly wound
+two-armed pattern opening into a grey-blue outer band, large coloured dots that are single sample stars, no lanes and no
+long bar; NGC 4414 is the same inclined disc with its sheared dust streaks, now flecked with small dark clouds, the
+bulge still too bright and compact, the knots still isolated dots. This session changed the model's bookkeeping, not
+its look; the residue is where §5 of `AUDIT_V.md` left it.
+
+**Closing.** The full suite ran at 45e7f0e (the final code and frames; the thumbnails and the re-pins below after it)
+in a detached worktree with pytest's own exit code appended to its log: **EXIT=1 — 1 666 passed, 6 skipped, 1 xfailed,
+9 failed** (4 h 40 min beside S69's suite and the #173 run): the picture record test (the two template thumbnails were
+committed after the run, d74f292; green alone), `test_hook` (the agent worktrees' rewritten `core.hooksPath`; green
+alone after `tools/bootstrap.py`), and **seven as-measured records in three files no builder owned** — the S66
+lesson's class — re-pinned by a re-pin pass with the cause and every judged gate held, no tolerance changed:
+`test_bright`'s cluster census over the young light (0.94372, 0.94097, 0.93468) → (0.94499, 0.94219, 0.93566) and
+0.93132 → 0.93208 (the 10 % bound held by 3.6 points); `test_region_synthesis`' sector ratio 0.8023 → 0.8036 (2 442
+clusters; the gate 0.196 against 0.339), the disc's 0.9119 → 0.9127, the small windows' r₁ 0.8501 → 0.8511, r₂ 0.7506 →
+0.7523, the many windows' z-mean 0.009 → 0.012, median 0.9698 → 0.9719, mean 0.9878 → 0.9888 (c_pop 5.1253 within
+1e-2 of 5.123, 100 % of windows inside 3σ); `test_v6_knots`' `DISC_RATIO` 0.92080 → 0.92156 (`milky_way`) and 1.08146 →
+1.08188 (`ngc_4414`, which now draws on its own `molecular_ring` pin), `RING_RANGE` (0.531, 1.428) → (0.535, 1.428),
+layer on and off agreeing to 1e-16; the three files whole 56 passed, EXIT=0. The pricing flake passed its quiet re-run.
+The S69 suite (c931f0a, the audit's code before any fix, run beside this session's builders): EXIT=1 — 1 640
+passed, 5 skipped, 8 xfailed, 2 failed (`test_hook`, the agent worktrees' rewritten `core.hooksPath`, green alone;
+the pricing flake under load — green on its quiet re-run here, with the picture record test, after the suites). S69's
+`verify_clone --ref main` (eca3c10, read before this session ended): 1 failed / 1 641 passed / 5 skipped / 8 xfailed in 6 h 22 - the pricing flake alone (azimuthal), specs OK, the clone sound; this session's `verify_clone --ref main` started detached after the merge, read at the next session's open and recorded there. Lessons: the measurement that finds a defect is the one the build never
+made (the clouds' drawn ring against their binned ring was invisible to every on/off test); a bound is a bound only
+over the population; a reviewer who breaks the test is worth the builder who writes it.
+
+**For the owner, plainly (nothing awaited; their word first if they answer):** every finding of Audit V is now fixed,
+disclosed or carried with its closer named, and their three rulings are in — the bar's ratio as the median galaxy's
+ratio of means (the code applies a ratio of means, so this is the reading that keeps 2.6 honest), the clouds in Lada &
+Dame's three regimes with NGC 4414's own ring from Vallejo, Braine & Baudry (an inferred span, said so), 2.43 kept and
+disclosed. One real defect came out of the audit's measurements and is fixed for the clouds: 4.3 % of them were born
+one ring too far in by an inversion that started outside the ring; the same defect in the stars' and remnants' draws
+(about 5 % of each, up to 70 pc) is measured and carried as #197, because fixing the stars moves every frame — a
+session of its own. Their Milky Way default's undrawn dust share is 0.492 (F-4-1). The frames did not change in look (every metric within its last digits; NGC 4414's dark flecks a little more
+numerous from the grown clouds): the Milky Way still has no long bar and no lanes, NGC 4414 still no blue complexes
+and a bulge too bright — the residue stands where Audit V's §5 described it, and nothing in BUILD_IV will move it.
+**Next: S71 = BUILD_IV's W3 (the gateway, theirs) in parallel; S72 W2 the bundles; #197 when they want the stars' draw
+fixed (`BRIEF.md`).**

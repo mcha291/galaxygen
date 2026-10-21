@@ -37,7 +37,7 @@ is their square (A3/A2 = 0.58 is a power ratio of 0.34).
 | 12 | A4 against A2; high m | some two-armed spirals have ⟨A2⟩ > 2⟨A4⟩; the two strongest patterns have large m = 4; m > 4 small, A6 about 0.1 or less for nearly all (relation symbol lost in extraction) | same | same | `[verified: Rix & Zaritsky 1995, arXiv:astro-ph/9505111, §3.1.3]` |
 | 13 | Three-armed cases | 3 of 18 (ESO-436, NGC 1376, NGC 7309) show significant m = 3 | same | visual plus A3 | `[verified: Rix & Zaritsky 1995, arXiv:astro-ph/9505111, §3.1.3]` |
 | 14 | A1 at 2.5 Rexp | sample mean 0.14 (0.11 without the largest); weak at 1–2 Rexp, A1 > 0.2 beyond in "a sizable fraction" | same | error-corrected A1 | `[verified: Rix & Zaritsky 1995, arXiv:astro-ph/9505111, §3.1.1]` |
-| 15 | Lopsided fraction | ⟨A1⟩ ≥ 0.2 in 16 of 60 (27 %); 14 of 43 (33 %) in the new sample; range 0.020–0.352 | 60 field spirals, I and K′, R > 1.5 Rexp | mean A1/A0 over the outer range | `[verified: Zaritsky & Rix 1997, arXiv:astro-ph/9608086, abstract and §2, https://arxiv.org/abs/astro-ph/9608086]` |
+| 15 | Lopsided fraction | ⟨A1⟩ ≥ 0.2 in 16 of 60 (27 %); 14 of 43 (33 %) in the new sample; range 0.020–0.352 | 60 field spirals, I and K′, between 1.5 and 2.5 Rexp (was "R > 1.5 Rexp"; *re-read at Audit V (S70)*) | mean A1/A0 over that range | `[verified: Zaritsky & Rix 1997, arXiv:astro-ph/9608086, abstract and §2, https://arxiv.org/abs/astro-ph/9608086]` |
 | 16 | ⟨A1⟩ statistics | mean 0.11; 34 % above the mean; 63 % above 0.05 | 149 OSUBGS galaxies, near-IR, inclination < 70°; 1.5–2.5 Rs | mean of a_1/Σ_0 over the range | `[verified: Bournaud et al. 2005, arXiv:astro-ph/0503314, §2.3, https://arxiv.org/abs/astro-ph/0503314]` |
 | 17 | Which m are present | only m = 2: 34 of 86 (~40 %); m = 2 & 3: 24 (~28 %); m = 1 & 2: 11 (~13 %); only m = 3: 3; only m = 4: 2; only m = 1: 1. m = 2 present in ~87 %, m = 3 in ~38 %, m = 1 in ~20 % | 86 isolated Sb–Sc galaxies, SDSS i band, whole disc | which reconstructed m-term images match visible arms; a census, not amplitudes | `[verified: Durbala et al. 2009, arXiv:0905.2340, §4.8 and Table 8, https://arxiv.org/abs/0905.2340]` |
 | 18 | Highest m needed | "fully reconstructed without including terms beyond m=6 and in most cases the first three terms suffice" | same | same | `[verified: Durbala et al. 2009, arXiv:0905.2340, §4.8]` |
@@ -72,7 +72,8 @@ is their square (A3/A2 = 0.58 is a power ratio of 0.34).
   grand-design 0.48 mixes bar and spiral.
 - **Kendall et al. 2011 and 2015.** Of 31 galaxies, 13 are non-grand-design in the near-IR ("without a
   predominating m=2 mode"). Amplitude "seems to follow the standard trend of increasing with radius" (NGC 3198)
-  and "increases approximately linearly with radius" (NGC 2403). NGC 7793: "more power is predicted to be in the
+  and "increases approximately linearly with radius" (NGC 2841, Kendall 2011 §3.1.4 - not NGC 2403; *re-read at Audit V
+  (S70)*). NGC 7793: "more power is predicted to be in the
   higher order Fourier components (m ≥ 4)" is stated as an expectation, not a measurement. Spiral lost after
   0.5 R25 in NGC 1566 and NGC 2403; NGC 628 traced beyond 0.9 R25.
 - **Rix & Zaritsky 1995.** "nearly half of the galaxies exhibit spiral arms with an arm-inter arm contrast ... of
