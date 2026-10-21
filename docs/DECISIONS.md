@@ -13829,7 +13829,7 @@ in a detached worktree with pytest's own exit code appended to its log: **EXIT=1
 tests re-run alone after the register moved: `test_hook` 7 passed alone, EXIT=0; the pricing test under load EXIT=1, its quiet re-run in D234. S68's `verify_clone --ref main` (99abdc3; 6 h 03): 1 failed /
 1 610 passed / 5 skipped / 1 xfailed, specs OK — the one failure the register's count pin in `tests/test_audit.py` that
 S68's close did not re-pin, re-pinned at this session's open (116d7a9) and green; this session's `verify_clone --ref
-main`: [VERIFY]. Cold timings unchanged.
+main` (eca3c10): 1 failed / 1 641 passed / 5 skipped / 8 xfailed in 6 h 22, the pricing flake alone, specs OK - read at S70's close, D234. Cold timings unchanged.
 
 **For the owner, plainly (three answers owed before S70 moves a number; nothing else awaited):** the build's numbers
 hold — 665 citations re-read and none of the constants they feed differs from its page; the layer conserves what it
