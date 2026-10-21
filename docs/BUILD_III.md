@@ -123,11 +123,14 @@ applied to a realisation.**
   read from the layer moves only their placement columns (each column a census places declares
   `FieldDecl.placement`; every other column of a placed catalogue is the same bits on and off, I1). Placement also
   reaches physics through the realised catalogues: the stages that bin realised objects (`nebular`, `bubbles`, by
-  `cluster_birth_radius`) are a closed list in the test, no stage reads a placement column of a catalogue it does
-  not place, and from L1 what they bin per ring does not depend on placement. *(Amended at S70, D234, on Audit V's
-  F-3-7 and F-3-8 as ruled at gate G4, D233: until then it read "consume composed placement weights only" - the
-  clouds require 21 synthetic fields and the clusters `cloud_source_offset` - and "by `cluster_radius`", which the
-  binners stopped reading at S61, D220 item 6.)*
+  `cluster_birth_radius`) are a closed list in the test, no stage but a placement reader (or a layer stage) reads a
+  placement column, and from L1 what they bin per ring does not depend on placement. *(Amended at S70, D234, on
+  Audit V's F-3-7 and F-3-8 as ruled at gate G4, D233: until then it read "consume composed placement weights only"
+  - the clouds require 21 synthetic fields and the clusters `cloud_source_offset` - and "by `cluster_radius`", which
+  the binners stopped reading at S61, D220 item 6. Amended again at S70's fix pass, D234, on the independent
+  reviewer's reading: the first S70 text read "no stage reads a placement column of a catalogue it does not place",
+  stronger than the test and false for `clusters`, a placement reader that reads the clouds' `cloud_radius`,
+  `cloud_azimuth`, `cloud_source_offset` and `cloud_source_angle` and does not place clouds.)*
 - **I5.** The viewer and the API carry a switch: physics only, or physics with the layer.
 
 *I1, I2 and I4 were amended at gate G1 (S55, D214; ruling by Fable). As adopted they read: "every field without a φ
