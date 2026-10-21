@@ -13786,7 +13786,7 @@ publishing a cloud's shape — and four display matters: the Milky Way's `clouds
 disc's dust undrawn and a ring edge visible at 4.72 kpc in the physics-only frame; starlight at 0.55 and extinction at
 1.25 in the committed defaults; the march's dither hash; sample stars at point gain 4 reading as cluster-sized dots. *The
 register (17, F-5-1 … F-5-17):* #137 discharged in fact (`CENSUS_STATISTICS` empty since S61); #39's trigger fired (a
-published quantity depends on two seeds since S59 while `spec.ensemble` ties every seed to k); #114 and #115 half closed;
+published quantity depends on two seeds since S27 (`sfr_modulation` on `pattern_seed`, 5809d9e; S59 made it the law at a point - S70's register pass corrected the date) while `spec.ensemble` ties every seed to k); #114 and #115 half closed;
 #15 ruled for a model that no longer exists; #128(b) understated (`ngc_4414`'s `colour_b_v_face_on` check reads the mixed
 slab the dust stage left at S52); stale text, row labels, constants and paths in #21, #80, #87, #93, #43, #33; deleted
 test files still cited by #11, #19, #26, #39, #42, #47 and **#154** (its 0.59 % / 1.20 pinned nowhere since S60); six
@@ -13825,8 +13825,8 @@ joins the suite (38 tests, 174 s). Lessons: a declared bound is a bound only if 
 blind to the decisions finds what the decisions hide; the register's count is pinned twice in `test_audit.py`.
 
 **Closing.** The full suite ran at c931f0a (the final code: the audit's test file in, the register pins not yet moved)
-in a detached worktree with pytest's own exit code appended to its log: [SUITE LINE]; the register pins and the docs
-tests re-run alone after the register moved: [RERUN]. S68's `verify_clone --ref main` (99abdc3; 6 h 03): 1 failed /
+in a detached worktree with pytest's own exit code appended to its log: **EXIT=1 - 1 640 passed, 5 skipped, 8 xfailed (the audit file's seven strict xfails and D221's), 2 failed** (6 h 20 min beside S70's builders, their picture tests and a second suite): `test_hook` (the agent worktrees rewrote `core.hooksPath` mid-run; green alone after `tools/bootstrap.py`) and `test_performance`'s per-cell pricing (the wall-clock flake of #67/#68's class; re-run alone beside S70's running suite it failed again on the other model - D234 records the quiet re-run); the register pins and the docs
+tests re-run alone after the register moved: `test_hook` 7 passed alone, EXIT=0; the pricing test under load EXIT=1, its quiet re-run in D234. S68's `verify_clone --ref main` (99abdc3; 6 h 03): 1 failed /
 1 610 passed / 5 skipped / 1 xfailed, specs OK — the one failure the register's count pin in `tests/test_audit.py` that
 S68's close did not re-pin, re-pinned at this session's open (116d7a9) and green; this session's `verify_clone --ref
 main`: [VERIFY]. Cold timings unchanged.
