@@ -2647,11 +2647,14 @@ def test_a_run_is_not_resumed_under_the_other_setting(small, prod):
 def test_the_template_checks_layer_off_are_the_numbers_d213_recorded():
     """The five checks of ``ngc_4414`` on the production grid, read layer-off as the rows are (I3). The four field
     checks are radial and are the bits they were; the colour reads the face-on render, whose frame sums each ring
-    round the ring, and moved in its thirteenth decimal (0.6355279197563419 layer-on). No verdict changed."""
+    round the ring, and moved in its thirteenth decimal (0.6355279197563419 layer-on). No verdict changed. S70 (D234,
+    #128(b)): the colour is read through the layered dust (``checks.face_on``), the geometry the dust stage has used
+    since S52 - a check moves, not a row; still a recorded miss (#136)."""
     results = {r.name: r for r in checks.evaluate(["ngc_4414"])["ngc_4414"]}
     assert {n: r.status for n, r in results.items()} == dict.fromkeys(results, "fail") and len(results) == 5
     assert results["curve_shape"].value == 0.6532426864889841
     assert results["star_formation_rate"].value == 0.6528663372411139
     assert results["hydrogen_mass"].value == 4803633219.748805
     assert results["absolute_magnitude_k"].value == -23.270507283088264
-    assert results["colour_b_v_face_on"].value == pytest.approx(0.6355279197563419, abs=1e-11)
+    # S70 (D234, #128(b)): was 0.6355279197563419 - the frame through the mixed slab, abandoned by the dust stage at S52.
+    assert results["colour_b_v_face_on"].value == pytest.approx(0.6517106309907312, abs=1e-11)

@@ -71,8 +71,10 @@ FIRST_CUT_M_V = -21.844831  # S49 (D204, #126): the light integrated along the i
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
 # S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
-FACE_ON_B_V = {"basic": 0.572933, "azimuthal": 0.572933}  # +0.0034 on the gate's. # S52 (D211): was 0.574638 (+0.0051)
-FACE_ON_M_V = {"basic": -20.668268, "azimuthal": -20.668268}  # 0.442 mag fainter. # S52 (D211): was -20.685591 (0.425)
+# S70 (D234, #128(b)): were 0.572933 and -20.668268 - the face-on frame read through the mixed slab; since S70 through
+# the stars' and the dust's own layers (specs.templates.face_on), the geometry the dust stage has used since S52.
+FACE_ON_B_V = {"basic": 0.573877, "azimuthal": 0.573877}  # +0.0044 on the gate's. # S52 (D211): was 0.574638 (+0.0051)
+FACE_ON_M_V = {"basic": -20.808910, "azimuthal": -20.808910}  # 0.302 mag fainter. # S52 (D211): was -20.685591 (0.425)
 
 
 def curves(name: str) -> str:
@@ -130,7 +132,8 @@ def test_the_frame_s_colour_and_magnitude_are_the_table_s(full, model):
     assert m_b - m_v == pytest.approx(MEASURED_B_V, abs=2e-6)
     assert m_v == pytest.approx(MEASURED_M_V, abs=2e-6)
     # The record (S39), not the gate: the same frame with the dust composed face-on, as the viewer draws a
-    # face-on disc — each cell's light through its mixed dust, (1 - T)/tau of itself, plus the scattered light
+    # face-on disc — each cell's light through its dust in its own layer (S70, D234: was its mixed dust, (1 - T)/tau of
+    # itself; specs.templates.layered_face_on_transmission), plus the scattered light
     # at the face-on phase factor, dimmed alike; the bulge left undimmed (a stated simplification).
     dimmed = frame_total(header, face_on(header, arrays))
     d_b, d_v = band_magnitude(dimmed[0], "B"), band_magnitude(dimmed[1], "V")

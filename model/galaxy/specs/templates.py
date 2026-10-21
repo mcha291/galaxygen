@@ -30,6 +30,7 @@ one computation, two readers.
 from __future__ import annotations
 
 import json
+import math
 import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -45,7 +46,9 @@ STATUSES = ("pass", "fail", "not-yet-computable")
 # alone. The four field checks are radial and are the same bits with the layer on or off. The colour check reads
 # the face-on render, whose frame sums each ring's light round the ring while the dust's depth is the ring's own,
 # so a placement that averages to 1 leaves it to rounding: ngc_4414's reads 0.6355279197562069 layer-off against
-# 0.6355279197563419 layer-on on the production grid, 1.4e-13 apart (measured at S55; tests/test_layer.py).
+# 0.6355279197563419 layer-on on the production grid, 1.4e-13 apart (measured at S55; tests/test_layer.py), in the
+# mixed slab. S70 (D234, #128(b)): the frame is read through the layered dust since (face_on), ngc_4414's layer-off
+# 0.6517106309907312, the Milky Way's 0.5738774 (were 0.6355279 and 0.5729334 in the mixed slab; measured at S70).
 JUDGED_LAYER = False
 JUDGED_SETTING = "off"
 
@@ -80,12 +83,64 @@ def frame_total(header: Mapping[str, Any], arrays: Mapping[str, Any]) -> np.ndar
     return (arrays["stars"] * cell_areas(header)[..., None]).sum(axis=(0, 1)) + np.asarray(header["bulge"])
 
 
-def face_on(header: Mapping[str, Any], arrays: Mapping[str, Any]) -> dict[str, Any]:
-    """The frame's stars with the dust composed face-on (S39): light mixed through its own dust leaves (1 − T)/τ
-    of itself, τ = −ln T the column's depth in each filter; the scattered light joins it at the face-on phase
-    factor; the thermal emission is added undimmed (optically thin)."""
-    tau = -np.log(arrays["dust_extinction"])[:, None, :]
-    own = np.where(tau > 1e-12, -np.expm1(-tau) / np.where(tau > 1e-12, tau, 1.0), 1.0)
+# S70 (D234; Audit V F-5-6, #128(b)): the face-on frame read through the dust in its own layer. The quadrature of
+# the stars' height, u = z / 2h★ on [−FACE_ON_SPAN, FACE_ON_SPAN] by the trapezoid at a step of at most
+# FACE_ON_STEP and a fortieth of the thinnest ring's ratio (the stars' share outside the span is 2e-35).
+FACE_ON_SPAN = 40.0
+FACE_ON_STEP = 2.0e-3
+
+
+def mixed_face_on_transmission(tau: np.ndarray) -> np.ndarray:
+    """The share of a column's starlight a face-on line of sight keeps when stars and dust are one uniform mixed
+    slab of extinction depth τ: (1 − e^−τ)/τ, 1 where there is no dust. The check's geometry from S39 until S70."""
+    tau = np.asarray(tau, dtype=float)
+    return np.where(tau > 1e-12, -np.expm1(-tau) / np.where(tau > 1e-12, tau, 1.0), 1.0)
+
+
+def layered_face_on_transmission(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+    """The share of a column's starlight a face-on line of sight keeps when the stars and the dust are two sech²
+    layers, the dust's scale height ``ratio`` times the stars' (S70, D234, #128(b)): the geometry the dust stage
+    heats in and the render names since S52 (D211). A star at u = z / 2h★ (its share ½ sech² u du) sees the dust
+    above it, A(u) = ½[1 − tanh(u / ratio)] of the column, so the frame keeps ∫ ½ sech²(u) exp(−τ A(u)) du
+    ``[inferred: derived here, as dust.layered_absorbed_fraction's A(s)]``. At ratio 1 it is the mixed slab's
+    (1 − e^−τ)/τ; a thin dust sheet (ratio → 0) keeps ½(1 + e^−τ); a thin star sheet (ratio → ∞) e^(−τ/2).
+    ``tau`` (R, F) and ``ratio`` (R, 1) broadcast; a NaN ratio (no dust layer) keeps the mixed slab's."""
+    tau = np.asarray(tau, dtype=float)
+    ratio = np.broadcast_to(np.asarray(ratio, dtype=float), tau.shape)
+    out = mixed_face_on_transmission(tau)
+    ok = (tau > 1e-12) & np.isfinite(ratio) & (ratio > 0.0)
+    if not ok.any():
+        return out
+    step = min(FACE_ON_STEP, float(ratio[ok].min()) / 40.0)
+    u = np.linspace(-FACE_ON_SPAN, FACE_ON_SPAN, int(math.ceil(2.0 * FACE_ON_SPAN / step)) + 1)
+    stars = 0.5 / np.cosh(u) ** 2
+    t, r = tau[ok][:, None], ratio[ok][:, None]
+    above = 0.5 * (1.0 - np.tanh(u[None, :] / r))
+    out[ok] = np.trapezoid(stars[None, :] * np.exp(-t * above), u, axis=-1)
+    return out
+
+
+def face_on_ratio(header: Mapping[str, Any], arrays: Mapping[str, Any]) -> np.ndarray | None:
+    """(R,) the dust's scale height over the stars' on each of the frame's rings, from the layers the render's header
+    names (S52, D211), or None where it names no dust layer of its own (the dust then in the stars' layer)."""
+    layers = header.get("layers") or {}
+    stars, dust = layers.get("stars"), layers.get("dust")
+    if not isinstance(stars, (int, float)) or not isinstance(dust, str) or dust not in arrays:
+        return None
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.asarray(arrays[dust], dtype=float) / float(stars)
+
+
+def face_on(header: Mapping[str, Any], arrays: Mapping[str, Any], layered: bool = True) -> dict[str, Any]:
+    """The frame's stars with the dust composed face-on (S39): each column's light keeps the share a face-on line of
+    sight lets through its dust, τ = −ln T the column's depth in each filter - since S70 (D234, #128(b)) with the
+    stars and the dust in their own layers at each ring's ratio of heights (:func:`layered_face_on_transmission`),
+    the geometry the dust stage has used since S52; until S70 one mixed slab, (1 − T)/τ (``layered=False``, kept
+    for the record). The scattered light joins it at the face-on phase factor; the thermal emission is added
+    undimmed (optically thin)."""
+    tau = -np.log(arrays["dust_extinction"])
+    ratio = face_on_ratio(header, arrays) if layered else None
+    own = (mixed_face_on_transmission(tau) if ratio is None else layered_face_on_transmission(tau, ratio[:, None]))[:, None, :]
     phase = header["components"]["dust_scattered"]["phase"]["factor"][-1]
     lit = (arrays["stars"] + phase * arrays["dust_scattered"]) * own + arrays["dust_thermal"][:, None, :]
     return {**arrays, "stars": lit}
@@ -180,8 +235,11 @@ CHECK_MISSES: Mapping[str, Mapping[str, CheckMiss]] = {
             debt=136,
             since="S54",
             reason=(
-                "0.636 against [0.72, 0.82]: the face-on frame through the dust is bluer than the catalogues' "
-                "face-on colour, as the default galaxy's is (0.57)."
+                "0.652 against [0.72, 0.82]: the face-on frame through the dust is bluer than the catalogues' "
+                "face-on colour, as the default galaxy's is (0.57). S70 (D234, #128(b)): was 0.636 - the frame read "
+                "through the mixed slab the dust stage left at S52; through the stars' and the dust's own layers it "
+                "is 0.016 redder and 0.21 mag brighter in V (measured, the mechanism not separated), still bluer "
+                "than the window."
             ),
             prediction=(
                 "The window is corrected to face-on by a formula in the axis ratio and still holds the face-on "
