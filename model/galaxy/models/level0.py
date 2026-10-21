@@ -461,26 +461,57 @@ LEVEL0: dict[str, Constant] = {
         "6% for a factor of ten here; the count is set by this end and moves fourfold (debt #94).",
     ),
     # S67 (D231): GMC_SURFACE_DENSITY 42 retired for two regimes and a largest radius (docs/READING_CLOUD_SIZES.md).
-    "GMC_SURFACE_DENSITY_INNER": Constant(
+    # S70 (D234, the owner's ruling D233 on #192): the source's three regimes by radius, 35 / 82 / 35 - was two split
+    # at R_SUN (GMC_SURFACE_DENSITY_INNER 82 inside the solar circle, GMC_SURFACE_DENSITY_OUTER 35 outside it).
+    "GMC_SURFACE_DENSITY_RING": Constant(
         82.0,
         "Msun/pc2",
-        "Mass surface density of a giant molecular cloud inside the solar circle, from which its radius follows as "
-        "sqrt(M / pi Sigma): 82 +/- 10 Msun/pc2 in the molecular ring and inside it, after the CO-to-H2 factor's "
-        "radial gradient is corrected (X_CO(R)) [verified: Lada & Dame 2020, ApJ 898, 3, arXiv:2006.08632, read at "
-        "S67]; their 3-5 kpc mean 84.5 agrees, and PHANGS discs' ~100 (Rosolowsky et al. 2021) is a disclosed check, "
-        "not a pin. It supersedes Heyer et al. 2009's median 42 (ApJ 699, 1092, arXiv:0809.1397, the value until "
-        "S67), measured over R 4.1-8.1 kpc only at a constant X_CO - the uncorrected reading of the same region; "
-        "Roman-Duval et al. 2010's 144 within the 4-sigma 13CO contour is threshold-biased high. The regime's "
-        "boundary is R_SUN at the cloud's birth radius, the one boundary the mass function's truncation uses "
-        "(docs/READING_CLOUD_SIZES.md).",
+        "Mass surface density of a giant molecular cloud born in the molecular ring (GMC_MOLECULAR_RING_INNER to "
+        "_OUTER, or a template's pinned molecular_ring), from which its radius follows as sqrt(M / pi Sigma): "
+        "'The average surface density within the molecular ring is found to be <Sigma_GMC> = 82 +/- 10', after the "
+        "CO-to-H2 factor's radial gradient is corrected (X_CO(R)), and the difference from the rest of the Galaxy "
+        "'is likely an upper limit' (cloud blending in the ring) [verified: Lada & Dame 2020, ApJ 898, 3, "
+        "arXiv:2006.08632, section V, https://ar5iv.labs.arxiv.org/html/2006.08632, re-read at Audit V, S70]; their "
+        "3-5 kpc mean 84.5 agrees, and PHANGS discs' ~100 (Rosolowsky et al. 2021) is a disclosed check, not a pin. "
+        "It supersedes Heyer et al. 2009's median 42 (ApJ 699, 1092, arXiv:0809.1397, the value until S67), "
+        "measured over R 4.1-8.1 kpc only at a constant X_CO - the uncorrected reading of the same region; "
+        "Roman-Duval et al. 2010's 144 within the 4-sigma 13CO contour is threshold-biased high. Read at the "
+        "cloud's birth radius (docs/READING_CLOUD_SIZES.md). Until S70 (D234) it was GMC_SURFACE_DENSITY_INNER, "
+        "applied at every radius inside R_SUN - the reader's extrapolation (Audit V F-1B-2).",
     ),
-    "GMC_SURFACE_DENSITY_OUTER": Constant(
+    "GMC_SURFACE_DENSITY_DISC": Constant(
         35.0,
         "Msun/pc2",
-        "Mass surface density of a giant molecular cloud outside the solar circle: 'a single mass surface density "
-        "of Sigma_GMC = 35' outside the molecular ring, after the X_CO(R) correction [verified: Lada & Dame 2020, "
-        "ApJ 898, 3, arXiv:2006.08632, read at S67]. Their constant-X_CO 13 +/- 4 at 9-14 kpc and their eq. 1 "
-        "(Sigma = 54.5 - 3.7 R) are the uncorrected readings, not entered (D231).",
+        "Mass surface density of a giant molecular cloud born outside the molecular ring, inside it and beyond it: "
+        "outside the molecular ring the GMC population 'can be described to relatively good precision by a "
+        "constant' Sigma_GMC of 35, after the X_CO(R) correction [verified: Lada & Dame 2020, ApJ 898, 3, "
+        "arXiv:2006.08632, abstract and section V, https://ar5iv.labs.arxiv.org/html/2006.08632, re-read at Audit "
+        "V, S70]. Inside the ring's inner edge the source's surface densities 'drop inward of 4 kpc' (section "
+        "IV.2.3) and its Galactic-centre values are 'almost certainly spurious' (the X-factor lower there): 35 is "
+        "entered there too, the Galaxy-wide value, not a measurement of the inner 4 kpc. Their constant-X_CO "
+        "13 +/- 4 at 9-14 kpc and their eq. 1 (Sigma = 54.5 - 3.7 R) are the uncorrected readings, not entered "
+        "(D231). Until S70 (D234) it was GMC_SURFACE_DENSITY_OUTER, applied outside R_SUN only.",
+    ),
+    "GMC_MOLECULAR_RING_INNER": Constant(
+        4.0,
+        "kpc",
+        "The molecular ring's inner edge, galactocentric: 'The broad peak in the distributions between 4-7 kpc "
+        "corresponds to the well-known molecular ring' (section IV.2), 'the well known molecular ring between 4-7 "
+        "kpc from the center of the Galaxy' (section VI) [verified: Lada & Dame 2020, ApJ 898, 3, "
+        "arXiv:2006.08632, sections IV.2 and VI, https://ar5iv.labs.arxiv.org/html/2006.08632, read at S70]. "
+        "Entered unscaled, as printed: the paper states no R0 (its solar-circle comparison is 'at 8.5 kpc', "
+        "section IV.3) and the model's R_SUN is 8.2. Sections IV.2.1 and IV.2.3 exclude 4-8 kpc in the fit of "
+        "the baseline - the named alternative for the outer edge. The Milky Way's edge and the model's default; "
+        "a template pins its own galaxy's ring (the pin molecular_ring), and NGC 4414 does (S70, D234).",
+    ),
+    "GMC_MOLECULAR_RING_OUTER": Constant(
+        7.0,
+        "kpc",
+        "The molecular ring's outer edge, galactocentric: 'between 4-7 kpc' (sections IV.2 and VI) [verified: "
+        "Lada & Dame 2020, ApJ 898, 3, arXiv:2006.08632, sections IV.2 and VI, "
+        "https://ar5iv.labs.arxiv.org/html/2006.08632, read at S70]; unscaled, as GMC_MOLECULAR_RING_INNER says. "
+        "Named alternative: 8 kpc, the 4-8 kpc the source excludes from its baseline fit (sections IV.2.1, "
+        "IV.2.3). The Milky Way's edge and the model's default; a template pins its own (molecular_ring).",
     ),
     "GMC_RADIUS_MAX": Constant(
         150.0,

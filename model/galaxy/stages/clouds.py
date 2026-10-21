@@ -20,10 +20,12 @@ source in the about line; nothing here is recalled (rule B9).**
   (RENDER_PHYSICS §7's redistribution rule for clouds) — the diffuse fraction is zero by
   construction, and Rice et al.'s finding that catalogued clouds hold 25% of the Milky Way's H₂ is
   what that construction stands against (debt #94).
-- *Size* — R = √(M/πΣ) at Lada & Dame 2020's X_CO-corrected surface density, 82 M☉ pc⁻² inside the
-  solar circle and 35 outside it (a step at ``R_SUN`` and the cloud's birth radius, the mass function's
-  own boundary), held at Miville-Deschenes et al. 2017's largest radius, 150 pc, with the mass kept
-  (S67, D231; until then one Σ, Heyer et al. 2009's 42, measured at 4-8 kpc at a constant X_CO).
+- *Size* — R = √(M/πΣ) at Lada & Dame 2020's X_CO-corrected surface density in three regimes by the
+  cloud's birth radius: 82 M☉ pc⁻² in the molecular ring and 35 inside it and beyond it (S70, D234, the
+  owner's ruling D233 on #192; the ring's edges the Milky Way's 4-7 kpc, or a template's pinned
+  ``molecular_ring`` - NGC 4414 pins its own), held at Miville-Deschenes et al. 2017's largest radius,
+  150 pc, with the mass kept (S67, D231: 82 inside ``R_SUN`` and 35 outside it until S70; until S67 one
+  Σ, Heyer et al. 2009's 42, measured at 4-8 kpc at a constant X_CO).
 - *Velocity dispersion* — Heyer et al. 2009's eq. 10, σ_v = (πGΣ/5)^½ R^½, the virial relation at
   each cloud's own surface density M/πR² (since D231: a capped giant's is above its regime's); the
   Mach number is σ_v over the sound speed of 10 K molecular gas.
@@ -160,19 +162,35 @@ def cloud_radius_pc(mass: np.ndarray, surface_density: float) -> np.ndarray:
     return np.sqrt(np.asarray(mass, dtype=float) / (math.pi * surface_density))
 
 
-def surface_density_at(radius_kpc: np.ndarray, c: Mapping[str, float]) -> np.ndarray:
-    """Σ_GMC (M☉ pc⁻²) at each galactocentric radius (kpc): Lada & Dame 2020's X_CO-corrected regimes, 82 inside the
-    solar circle and 35 outside it, a step at ``R_SUN`` - the boundary :func:`law_for` uses (S67, D231)."""
-    inside = np.asarray(radius_kpc, dtype=float) < float(c["R_SUN"])
-    return np.where(inside, float(c["GMC_SURFACE_DENSITY_INNER"]), float(c["GMC_SURFACE_DENSITY_OUTER"]))
+def molecular_ring(c: Mapping[str, float], pinned: Any = None) -> tuple[float, float]:
+    """(inner, outer) kpc: the molecular ring's edges - a template's pinned ``molecular_ring`` (its one row), or,
+    pinned by none, the Milky Way's measured ring, ``GMC_MOLECULAR_RING_INNER`` to ``_OUTER`` (S70, D234)."""
+    if pinned is None:
+        return float(c["GMC_MOLECULAR_RING_INNER"]), float(c["GMC_MOLECULAR_RING_OUTER"])
+    (inner, outer), = pinned
+    return float(inner), float(outer)
 
 
-def cloud_size_law(mass: np.ndarray, radius_kpc: np.ndarray, c: Mapping[str, float]) -> tuple[np.ndarray, np.ndarray]:
+def surface_density_at(radius_kpc: np.ndarray, c: Mapping[str, float], ring: tuple[float, float] | None = None) -> np.ndarray:
+    """Σ_GMC (M☉ pc⁻²) at each galactocentric radius (kpc): Lada & Dame 2020's X_CO-corrected regimes, 82 in the
+    molecular ring (``inner <= R < outer``) and 35 inside it and beyond it (S70, D234, the owner's ruling D233 on
+    #192; was 82 inside ``R_SUN`` and 35 outside it, S67 D231). ``ring`` is :func:`molecular_ring`'s, the Milky
+    Way's when None; equal edges hold no radius, so 35 everywhere."""
+    inner, outer = molecular_ring(c) if ring is None else ring
+    r = np.asarray(radius_kpc, dtype=float)
+    inside = (r >= inner) & (r < outer)
+    return np.where(inside, float(c["GMC_SURFACE_DENSITY_RING"]), float(c["GMC_SURFACE_DENSITY_DISC"]))
+
+
+def cloud_size_law(
+    mass: np.ndarray, radius_kpc: np.ndarray, c: Mapping[str, float], ring: tuple[float, float] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """(radius pc, effective Σ M☉ pc⁻²) of clouds of these masses at these birth radii (S67, D231): R = √(M/πΣ) at
-    the regime's Σ (:func:`surface_density_at`), held at ``GMC_RADIUS_MAX`` with the mass kept, and the surface
-    density the cloud then has, M / πR² - the regime's own below the cap, higher above it."""
+    the regime's Σ (:func:`surface_density_at`, its three regimes since S70 and ``ring`` its edges), held at
+    ``GMC_RADIUS_MAX`` with the mass kept, and the surface density the cloud then has, M / πR² - the regime's own
+    below the cap, higher above it."""
     m = np.asarray(mass, dtype=float)
-    size = np.minimum(cloud_radius_pc(m, surface_density_at(radius_kpc, c)), float(c["GMC_RADIUS_MAX"]))
+    size = np.minimum(cloud_radius_pc(m, surface_density_at(radius_kpc, c, ring)), float(c["GMC_RADIUS_MAX"]))
     return size, m / (math.pi * size * size)
 
 
@@ -422,6 +440,7 @@ def materialise_clouds(
     *,
     texture: bool = True,
     texture_seed: int | None = None,
+    ring: Any = None,
 ) -> Catalogue:
     """The clouds of ``cells`` (every cell when None), exactly the clouds a full sweep would give (D60).
 
@@ -433,8 +452,11 @@ def materialise_clouds(
     ``texture`` says whether the census carries the randomness layer's four columns (``TEXTURE_COLUMNS``): a
     whole cloud does, which is what the cluster census and the API read; the ``clouds`` stage publishes its own
     columns only and passes False, the layer's stage publishing the four (S55, D214 section 5). They are drawn on
-    ``texture_seed`` (D220 item 5), which a layer-on census with its texture must be given."""
+    ``texture_seed`` (D220 item 5), which a layer-on census with its texture must be given. ``ring`` is the run's
+    pinned ``molecular_ring`` (its rows as the run holds them) or None, the Milky Way's (S70, D234): it sets the
+    clouds' sizes and nothing else."""
     c = constants
+    edges = molecular_ring(c, ring)
     rings, sectors = cell_edges(R)
     placement = sector_placement(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
     pattern = placement[0]
@@ -487,7 +509,7 @@ def materialise_clouds(
         mass = mass_function_sample(draw("mass"), slope, m_min, m_max)
         # S67 (D231): the size at the regime's Σ at the birth radius, capped; σ_v at each cloud's own Σ = M/πR²
         # (Heyer et al. 2009 eq. 10, √(GM/5R)), so a capped giant is faster and its Mach number higher.
-        size, sigma = cloud_size_law(mass, birth, c)
+        size, sigma = cloud_size_law(mass, birth, c, edges)
         disp = velocity_dispersion(size, sigma)
         mach = disp / c_s
         age = draw("age") * lifetime
@@ -707,7 +729,9 @@ def compute_clouds(ctx: Context) -> Mapping[str, Any]:
     c = ctx.constants
     R = ctx.grid.R
     # The stage's own columns: the layer's four are cloud_texture's to publish (S55, D214 section 5).
-    catalogue = materialise_clouds(ctx.fields, R, int(ctx.seeds["systems_seed"]), c, texture=False)
+    catalogue = materialise_clouds(
+        ctx.fields, R, int(ctx.seeds["systems_seed"]), c, texture=False, ring=ctx.inputs.get("molecular_ring"),
+    )
     expected = expected_counts(ctx.fields, R, c)
     return {
         **catalogue,
@@ -721,10 +745,11 @@ def compute_clouds(ctx: Context) -> Mapping[str, Any]:
 
 
 def census_extinction_v(c: Mapping[str, float]) -> float:
-    """The stage's one central A_V (mag): an uncapped cloud of the inner regime's surface density (S67, D231; was the
-    census's one Σ, 42). The centre column of a uniform sphere is 3/2 of the mean, so mass and radius cancel to Σ
-    alone; the 10⁵ M☉ cloud is any uncapped cloud."""
-    sigma = float(c["GMC_SURFACE_DENSITY_INNER"])
+    """The stage's one central A_V (mag): an uncapped cloud of the molecular ring's surface density (S67, D231; was the
+    census's one Σ, 42; S70, D234: the ring's 82, the inner regime's until then - the number unmoved). The centre
+    column of a uniform sphere is 3/2 of the mean, so mass and radius cancel to Σ alone; the 10⁵ M☉ cloud is any
+    uncapped cloud."""
+    sigma = float(c["GMC_SURFACE_DENSITY_RING"])
     return float(central_extinction_v(
         np.array([1.0e5]), cloud_radius_pc(np.array([1.0e5]), sigma), float(c["HII_MASS_PER_HYDROGEN"]),
         _grain_v_extinction(),
@@ -741,11 +766,13 @@ CLOUDS = IMPLEMENTATIONS.register(
         compute=compute_clouds,
         placement_reader=True,  # S55 (D214, I4): a census, placed round each ring by the gas's own pattern
         reads_seeds=("systems_seed",),
+        reads_inputs=("molecular_ring",),  # S70 (D234): a template's molecular ring, or not given (read with .get)
         reads_constants=(
             "HII_MASS_PER_HYDROGEN",  # S40: the cloud's column density per hydrogen, for its A_V
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN",
-            "GMC_SURFACE_DENSITY_INNER", "GMC_SURFACE_DENSITY_OUTER", "GMC_RADIUS_MAX",  # S67 (D231): was one Σ, 42
+            "GMC_SURFACE_DENSITY_RING", "GMC_SURFACE_DENSITY_DISC", "GMC_RADIUS_MAX",  # S67 (D231): was one Σ, 42
+            "GMC_MOLECULAR_RING_INNER", "GMC_MOLECULAR_RING_OUTER",  # S70 (D234): was _INNER/_OUTER split at R_SUN
             "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",

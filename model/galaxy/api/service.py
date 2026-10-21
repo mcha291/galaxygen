@@ -1342,7 +1342,7 @@ class Service:
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
         key = repr(("clouds", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
         census = self.cells.catalogue(
-            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"])),
+            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]), ring=out.inputs.get("molecular_ring")),
         )
         # A whole cloud: the census's own columns and the randomness layer's four (the embedded source's offset
         # and direction, the density gradient's steepness and direction - published by the layer's cloud_texture
@@ -1434,7 +1434,7 @@ class Service:
         key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
 
         def draw(wanted: Sequence[int]) -> Any:
-            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]))
+            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]), ring=out.inputs.get("molecular_ring"))
             clusters = _clusters.materialise_clusters(clouds, out.fields, R, seed, constants)
             regions = _nebular.materialise_nebular(clusters, clouds, constants)  # S35: the region is the cluster's
             blown = _bubbles.materialise_bubbles(clusters, regions, constants)  # S36: and so is the bubble

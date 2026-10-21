@@ -755,6 +755,26 @@ NGC_4414 = Template(
                 "arm_class on ngc_4414]"
             ),
         ),
+        # S70 (D234; the owner's ruling D233 on #192): its own molecular ring, so the clouds' surface density is no
+        # longer split at the Milky Way's R_SUN. Read once, bounded (the lead's ruling): V02 names "the highly obscured
+        # molecular ring" and the radii it lies in, 5" to 50"; no radius of the CO map itself is printed, and
+        # Braine, Brouillet & Baudry 1997 and Thornley & Mundy 1997 were not reached. At the template's 17.7 Mpc
+        # (85.8 pc per arcsecond) 0.43 to 4.29 kpc; at V02's own 19.2 Mpc 0.47 to 4.65. Clouds born there take the
+        # Milky Way's ring value, 82 - Lada & Dame's, not NGC 4414's (a disclosed extrapolation); 35 elsewhere.
+        Pin(
+            name="molecular_ring",
+            value=((0.43, 4.29),),
+            source=(
+                "[verified: Vallejo, Braine & Baudry 2002, A&A, arXiv:astro-ph/0202391, abstract, sects. 3, 4, 4.3 and "
+                "5, https://ar5iv.labs.arxiv.org/html/astro-ph/0202391, read at S70: 'the highly obscured molecular "
+                "ring'; the M/L reaches about 4 'except for radii 5'' < r < 50''' (sect. 4) and is constant at r > 50'' "
+                "'outside of the star-forming molecular ring' (sect. 4.3); 'no molecular gas is present in the "
+                "nucleus' (sect. 3)] (docs/READING_NGC_4414.md, V02) [inferred: the ring's edges are the obscured "
+                "radii V02 places the molecular ring in, not radii read off the CO map; converted at the template's "
+                "17.7 Mpc, 85.8 pc per arcsecond] (the owner's ruling, DECISIONS.md D233: a boundary declared per "
+                "template; entered at S70)"
+            ),
+        ),
     ),
     fit=Fit(
         targets=(

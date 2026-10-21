@@ -273,6 +273,8 @@ def test_production_graphs_hold(prod):
             # S60 (D219 items 3 and 8): two more - the arm class, read by the bar stage, and the table of measured
             # arms, read by the layer's stage - both at the pattern's checkpoint.
             "arm_class": 3, "arm_pieces": 3,
+            # S70 (D234; #192): a sixth pin, the molecular ring, read by the clouds stage at its checkpoint.
+            "molecular_ring": 5,
         }
         # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's - and (the gate's follow-up,
         # item 2) the spread of a segment's pitch relative to the disc's, a law's number the winding's readers take.

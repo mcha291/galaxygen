@@ -49,6 +49,8 @@ PLAN_INPUTS = {
     # S60 (D219 items 3 and 8): two pins of new shapes - the observed arm class, one of three names, and the
     # measured arms of a galaxy, a table in the source's own columns.
     "arm_class", "arm_pieces",
+    # S70 (D234; the owner's ruling D233 on #192): a sixth pin, a table of one row - a galaxy's molecular ring.
+    "molecular_ring",
 }
 
 
@@ -62,11 +64,19 @@ def test_input_vector_is_closed():
     assert INPUT_KINDS == ("control", "seed", "events", "pin")
     # S59 (D218): was ["bar_present"] and 7 + 5 + 1 + 1 - two more pins, each a measured number with its unit.
     # S60 (D219 items 3 and 8): was three pins and 7 + 5 + 1 + 3 - a named class and a table join them.
-    assert [i.name for i in pins()] == ["bar_present", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
-    assert len(INPUTS) == 7 + 5 + 1 + 5
+    # S70 (D234): was five pins and 7 + 5 + 1 + 5 - the molecular ring joins them, a table of one row (#192).
+    assert [i.name for i in pins()] == ["bar_present", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
+    assert len(INPUTS) == 7 + 5 + 1 + 6
     # The four shapes a pin takes, told apart by the declaration: True or False, one of its named classes, a number
     # in its unit, or rows of its columns.
     assert [INPUTS[n].shape for n in ("bar_present", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces")] == ["class", "number", "number", "named", "table"]
+    # S70 (D234): the molecular ring is a table of one row, its inner edge not negative and not past its outer.
+    ring = INPUTS["molecular_ring"]
+    assert ring.shape == "table" and ring.columns == (("inner", "kpc"), ("outer", "kpc"))
+    assert ring.pinned([[4, 7]]) == ((4.0, 7.0),) and ring.pinned(((2.0, 2.0),)) == ((2.0, 2.0),)
+    for bad in (((5.0, 4.0),), ((-1.0, 4.0),), ((1.0, 2.0), (3.0, 4.0))):
+        with pytest.raises(RegistryError):
+            ring.pinned(bad)
 
 
 def test_a_pin_has_no_default_no_range_and_no_unit_and_is_not_a_control():

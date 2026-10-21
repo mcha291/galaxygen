@@ -51,14 +51,16 @@ def test_the_mass_function_arithmetic():
 
 
 def test_size_dispersion_and_mach_follow_the_sourced_relations(default):
-    """R = √(M/πΣ) at Lada & Dame 2020's 82 / 35 M☉ pc⁻² inside / outside R_SUN, held at 150 pc (S67, D231; was
-    Heyer's 42 for every cloud); σ_v = (πGΣ/5)^½ R^½ at each cloud's own Σ = M/πR² (Heyer et al. 2009 eq. 10);
+    """R = √(M/πΣ) at Lada & Dame 2020's 82 M☉ pc⁻² in the molecular ring (4-7 kpc) and 35 inside and beyond it, held
+    at 150 pc (S70, D234: was 82 / 35 inside / outside R_SUN, S67 D231; was Heyer's 42 for every cloud); σ_v = (πGΣ/5)^½ R^½ at each cloud's own Σ = M/πR² (Heyer et al. 2009 eq. 10);
     c_s(10 K) ≈ 0.19 km/s."""
     o, c = default
     F = o.fields
-    assert (c["GMC_SURFACE_DENSITY_INNER"], c["GMC_SURFACE_DENSITY_OUTER"], c["GMC_RADIUS_MAX"]) == (82.0, 35.0, 150.0)
+    # S70 (D234): was GMC_SURFACE_DENSITY_INNER / _OUTER split at R_SUN - the owner's ruling D233 on #192, three regimes.
+    assert (c["GMC_SURFACE_DENSITY_RING"], c["GMC_SURFACE_DENSITY_DISC"], c["GMC_RADIUS_MAX"]) == (82.0, 35.0, 150.0)
+    assert (c["GMC_MOLECULAR_RING_INNER"], c["GMC_MOLECULAR_RING_OUTER"]) == (4.0, 7.0)
     birth, mass, size = (np.asarray(F[k], dtype=float) for k in ("cloud_birth_radius", "cloud_mass", "cloud_size"))
-    regime = np.where(birth < c["R_SUN"], 82.0, 35.0)
+    regime = np.where((birth >= 4.0) & (birth < 7.0), 82.0, 35.0)  # S70 (D234): was np.where(birth < c["R_SUN"], 82.0, 35.0)
     assert np.allclose(size, np.minimum(np.sqrt(mass / (math.pi * regime)), 150.0))
     sigma = mass / (math.pi * size**2)  # each cloud's own: the regime's below the cap, above it for a capped giant
     assert np.allclose(sigma[size < 150.0], regime[size < 150.0]) and np.all(sigma[size >= 150.0] >= regime[size >= 150.0])
@@ -241,27 +243,39 @@ def test_the_cloud_layer_s_half_maximum_is_at_half_the_measured_fwhm():
     assert 2.0 * math.atanh(0.999999) == pytest.approx(14.51, abs=0.01)
 
 
-def test_the_size_law_by_hand_either_side_of_the_solar_circle_and_at_the_cap():
-    """S67 (D231), by hand: Lada & Dame 2020's X_CO-corrected Σ_GMC, 82 M☉ pc⁻² inside R_SUN and 35 outside it (a step
-    at the cloud's birth radius, R_SUN itself outside, as the mass function's ``law_for``), the radius held at 150 pc
-    (Miville-Deschenes et al. 2017) with the mass kept; and the constants are level 0's, with their sources."""
+def test_the_size_law_by_hand_either_side_of_the_molecular_ring_and_at_the_cap():
+    """S70 (D234; S67 D231 before it), by hand: Lada & Dame 2020's X_CO-corrected Σ_GMC in three regimes by the birth
+    radius, 82 M☉ pc⁻² in the molecular ring (4 to 7 kpc, the inner edge inside and the outer outside) and 35 inside
+    and beyond it - was 82 inside R_SUN and 35 outside it (the owner's ruling D233 on #192) - the radius held at 150 pc
+    (Miville-Deschenes et al. 2017) with the mass kept; a pinned ring moves the edges, equal edges are no ring; and
+    the constants are level 0's, with their sources."""
     from galaxy.models.level0 import LEVEL0
 
-    c = {k: float(LEVEL0[k].value) for k in ("R_SUN", "GMC_SURFACE_DENSITY_INNER", "GMC_SURFACE_DENSITY_OUTER", "GMC_RADIUS_MAX")}
-    assert c == {"R_SUN": 8.2, "GMC_SURFACE_DENSITY_INNER": 82.0, "GMC_SURFACE_DENSITY_OUTER": 35.0, "GMC_RADIUS_MAX": 150.0}
-    assert "Lada & Dame 2020" in LEVEL0["GMC_SURFACE_DENSITY_INNER"].about and "Heyer et al. 2009" in LEVEL0["GMC_SURFACE_DENSITY_INNER"].about
-    assert "Lada & Dame 2020" in LEVEL0["GMC_SURFACE_DENSITY_OUTER"].about
+    names = ("GMC_SURFACE_DENSITY_RING", "GMC_SURFACE_DENSITY_DISC", "GMC_MOLECULAR_RING_INNER", "GMC_MOLECULAR_RING_OUTER", "GMC_RADIUS_MAX")
+    c = {k: float(LEVEL0[k].value) for k in names}
+    # S70 (D234): was {"R_SUN": 8.2, "GMC_SURFACE_DENSITY_INNER": 82.0, "GMC_SURFACE_DENSITY_OUTER": 35.0, ...} - three regimes.
+    assert c == {"GMC_SURFACE_DENSITY_RING": 82.0, "GMC_SURFACE_DENSITY_DISC": 35.0, "GMC_MOLECULAR_RING_INNER": 4.0,
+                 "GMC_MOLECULAR_RING_OUTER": 7.0, "GMC_RADIUS_MAX": 150.0}
+    assert "Lada & Dame 2020" in LEVEL0["GMC_SURFACE_DENSITY_RING"].about and "Heyer et al. 2009" in LEVEL0["GMC_SURFACE_DENSITY_RING"].about
+    assert "Lada & Dame 2020" in LEVEL0["GMC_SURFACE_DENSITY_DISC"].about
+    assert all("between 4-7 kpc" in LEVEL0[k].about and "[verified: Lada & Dame 2020" in LEVEL0[k].about for k in names[2:4])
     assert "Miville-Deschenes" in LEVEL0["GMC_RADIUS_MAX"].about and "GMC_SURFACE_DENSITY" not in LEVEL0
-    mass = np.array([1.0e5, 1.0e5, 1.0e5, 1.0e7])
-    birth = np.array([8.19, 8.2, 8.21, 4.0])
+    assert "GMC_SURFACE_DENSITY_INNER" not in LEVEL0 and "GMC_SURFACE_DENSITY_OUTER" not in LEVEL0  # S70 (D234): renamed
+    mass = np.array([1.0e5, 1.0e5, 1.0e5, 1.0e5, 1.0e5, 1.0e5, 1.0e7])
+    birth = np.array([3.99, 4.0, 6.99, 7.0, 8.19, 8.21, 4.0])
     size, sigma = cl.cloud_size_law(mass, birth, c)
     # 1e5 / (pi 82) = 388.18 -> 19.702 pc; 1e5 / (pi 35) = 909.46 -> 30.157 pc; 1e7 / (pi 82) = 38 818 -> 197.0, held
-    # at 150 pc, so its Σ is 1e7 / (pi 150^2) = 141.47.
-    assert size == pytest.approx([19.702, 30.157, 30.157, 150.0], abs=1e-3)
-    assert sigma == pytest.approx([82.0, 35.0, 35.0, 141.47], abs=1e-2)
+    # at 150 pc, so its Σ is 1e7 / (pi 150^2) = 141.47. S70 (D234): was 19.702 at 8.19 kpc (inside R_SUN) and at 3.99.
+    assert size == pytest.approx([30.157, 19.702, 19.702, 30.157, 30.157, 30.157, 150.0], abs=1e-3)
+    assert sigma == pytest.approx([35.0, 82.0, 82.0, 35.0, 35.0, 35.0, 141.47], abs=1e-2)
+    # A template's ring (NGC 4414's 0.43-4.29 kpc) moves the edges; equal edges are no ring, 35 everywhere.
+    assert cl.cloud_size_law(mass[:1], birth[:1], c, (0.43, 4.29))[0] == pytest.approx([19.702], abs=1e-3)
+    assert np.all(cl.surface_density_at(birth, c, (5.0, 5.0)) == 35.0)
+    assert cl.molecular_ring(c, ((0.43, 4.29),)) == (0.43, 4.29) and cl.molecular_ring(c) == (4.0, 7.0)
     # σ_v at the capped giant's own Σ: (pi G 141.47 / 5 x 150)^1/2 = (G M / 5 R)^1/2 = (4.3009e-3 x 1e7 / 750)^1/2 = 7.573.
-    assert float(cl.velocity_dispersion(size[3:], sigma[3:])[0]) == pytest.approx(7.573, abs=1e-3)
+    assert float(cl.velocity_dispersion(size[6:], sigma[6:])[0]) == pytest.approx(7.573, abs=1e-3)  # S70 (D234): was size[3:], the giant now last of seven
     # The inner regime's central A_V is 82/42 of the 42's 2.9696: the column cancels to Σ alone.
+    # S70 (D234): the ring's 82 now (the inner regime's until then) - the number unmoved.
     assert cl.census_extinction_v(c | {"HII_MASS_PER_HYDROGEN": float(LEVEL0["HII_MASS_PER_HYDROGEN"].value)}) == pytest.approx(5.7977, abs=1e-3)
 
 
