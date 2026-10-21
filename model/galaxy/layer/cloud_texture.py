@@ -113,8 +113,13 @@ _STANDS_IN_FOR = (
 # What the two gradient columns keep: they lean a cloud's density and place nothing outside it.
 _CONSERVES_GRADIENT = (
     "The cloud's mass and the census's count: the column places a source and a lean inside a cloud and weighs "
-    "nothing. No ring's molecular mass, cloud count or cluster mass changes with it."
+    "nothing. No ring's molecular mass, cloud count or cluster mass changes with it. It does not keep a cloud's "
+    "density even across it: the lean is drawn uniform up to the whole contrast over one radius - measured at S70 "
+    "over the 16 577 clouds of the default galaxy (the production grid, the layer on), a median 0.499 and at most "
+    "0.99998, 8 268 clouds leaning by more than half the contrast."
 )
+# S70 (D234, Audit V F-3-13): the last sentence added - rule 2's "states what it does not keep, with the measured
+# number" was unmet here (until S70: "... No ring's molecular mass, cloud count or cluster mass changes with it.").
 # What the source's offset and direction keep, and what they do not, with the measured numbers (gate G1, change 5;
 # BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with the measured number").
 # Measured on the production grid at the default inputs, the layer on: first at S55 (1 610 of 12 930 clusters, 12.5 %
@@ -153,6 +158,7 @@ def _column(name: str, label: str, unit: str, about: str, law: str, conserves: s
     return FieldDecl(
         name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cloud", ramp=Ramp("viridis"), meaningful_zero=True,
         provenance="synthetic",
+        placement=True,  # S70 (D234, Audit V F-3-1, #194): the layer's texture of a placed cloud, in the census's set
         about=about + _SEED + _PER_CLOUD + (f" **Not drawn by the viewer** (D191): {why}" if why else ""),
         stands_in_for=_STANDS_IN_FOR, conserves=conserves, statistic=_STATISTIC.format(law=law),
     )

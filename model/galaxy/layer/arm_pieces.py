@@ -489,11 +489,17 @@ _CONSERVES = (
     "Every ring's mean density and every law: a piece adds its ridge to a ring less the ridge's own mean round "
     "that ring, so the composed density contrast averages to 1 on every ring exactly, and no radial field, no "
     "scalar, no budget of arm power and no expected count of any census moves. It does not keep a ring's "
-    "realised arm power at the budget: the budget is met on average over these draws, and one galaxy's rings "
-    "differ from it - by what the composed stage publishes beside it, ring by ring. It says which part of a "
+    "realised arm power at the budget: one galaxy's rings differ from it by what the composed stage publishes "
+    "beside it, ring by ring, and the census carries less than the budget - measured at S70 on the production "
+    "grid, the layer on, over the rings outside the bar with a budget, the realised power sums to 0.47 of the "
+    "budget on the Milky Way template (96 rings) and 0.85 on NGC 4414's (133 rings, its texture seed 4414); Audit "
+    "V's mesh read 0.53, 0.64 and 0.45 at other seeds (F-2-1, #195). It says which part of a "
     "ring holds an arm, and so where the censuses' objects are (their realised totals are another draw until "
     "L1, as for every placement)."
 )
+# S70 (D234, Audit V F-3-13): was "... at the budget: the budget is met on average over these draws, and one galaxy's
+# rings differ from it - by what the composed stage publishes beside it, ring by ring." - no number, and "on average"
+# was not what the draws do (F-2-1). The share's reason and its measurement over the population are #195's.
 _STATISTIC = (
     "A piece's azimuthal extent log-normal, median 60 degrees and log-width 0.35, drawn again outside 20-180 "
     "degrees - the reader's arithmetic on the 38 printed rows of one survey of four galaxies [verified: Honig & "

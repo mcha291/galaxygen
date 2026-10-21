@@ -1189,9 +1189,11 @@ def select_brightest(
 # --- declarations -------------------------------------------------------------------------------------
 
 
-def _column(name: str, label: str, unit: str, about: str, ramp: Ramp, zero: bool = True) -> FieldDecl:
+def _column(name: str, label: str, unit: str, about: str, ramp: Ramp, zero: bool = True, placement: bool = False) -> FieldDecl:
+    # S70 (D234, Audit V F-3-1, #194): `placement` - a column the randomness layer may move (FieldDecl.placement);
+    # the catalogue's placement set is bright_star_radius and bright_star_azimuth.
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="bright_star", ramp=ramp,
-                     meaningful_zero=zero, provenance="seeded", about=about)
+                     meaningful_zero=zero, provenance="seeded", about=about, placement=placement)
 
 
 BRIGHT_RADIUS = _column(
@@ -1199,14 +1201,14 @@ BRIGHT_RADIUS = _column(
     "Inside the star's finest cell, by inverting the surface density of stars of its own luminosity and age "
     "part across the cell's radial span, times R. With the randomness layer on, a star of 20 to 40.7 Myr stands "
     "anywhere in its level-0 cell instead, drawn jointly with its azimuth by the clustering field with the octaves "
-    "finer than its age allows dropped (D220 part II item 5): near where it formed.", Ramp("viridis"))
+    "finer than its age allows dropped (D220 part II item 5): near where it formed.", Ramp("viridis"), placement=True)
 BRIGHT_AZIMUTH = _column(
     "bright_star_azimuth", "Azimuth", "rad",
     "Inside the star's finest cell, by inverting the arm and bar density contrast at its radius; where the "
     "model publishes where stars form today, a star younger than about one arm crossing follows that instead, "
     "as the sampled catalogue's young stars do. With the randomness layer on, a star of 20 to 40.7 Myr is drawn "
     "jointly with its radius in its level-0 cell, by that law times the clustering field with the octaves finer "
-    "than its age allows dropped (D220 part II item 5).", Ramp("viridis"))
+    "than its age allows dropped (D220 part II item 5).", Ramp("viridis"), placement=True)
 BRIGHT_HEIGHT = _column(
     "bright_star_height", "Height above the plane", "kpc",
     "Inverted from the sech² profile at the scale height of the population (thin or thick) born at the "

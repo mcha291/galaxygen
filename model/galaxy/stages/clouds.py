@@ -554,9 +554,12 @@ def _not_drawn(name: str) -> str:
     return f" **Not drawn by the viewer** (D191): {why}" if why else ""
 
 
-def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis")) -> FieldDecl:
+def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis"), placement: bool = False) -> FieldDecl:
+    # S70 (D234, Audit V F-3-1, #194): `placement` - a column the randomness layer may move (FieldDecl.placement);
+    # the census's placement set is cloud_radius, cloud_azimuth and the layer's four texture columns.
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cloud",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name),
+                     placement=placement)
 
 
 CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
@@ -565,7 +568,7 @@ CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
                        "Since S61, with the randomness layer on, where the cloud stands: placed with its azimuth "
                        "jointly in its cell by the molecular law, the gas's contrast and the layer's clustering "
                        "field (D220 part II); the radius the ring drew is `cloud_birth_radius`, which it equals "
-                       "with the layer off.")
+                       "with the layer off.", placement=True)
 CLOUD_BIRTH_RADIUS = _column("cloud_birth_radius", "Radius its ring drew", "kpc",
                              "The radius drawn for the cloud on its ring's stream by inverting the molecular "
                              "surface density within the ring: the radius the cloud's abundances are read at and "
@@ -581,7 +584,7 @@ CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "uniformly round the ring (D220 item 2). Since S61, with the layer on, the azimuth and "
                         "the radius are placed together within the cell by the molecular law, the contrast and "
                         "the randomness layer's clustering field, so the clouds gather into complexes below a "
-                        "cell's scale (D220 part II); the sector is not moved by it.")
+                        "cell's scale (D220 part II); the sector is not moved by it.", placement=True)
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
                        "A sech² layer whose FWHM is the Milky Way's molecular layer, 120 pc (Bronfman et al. "
                        "1988; scale height 34.04 pc), one value at every radius and for every template - "

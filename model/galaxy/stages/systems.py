@@ -1420,9 +1420,11 @@ POPULATION = IMPLEMENTATIONS.register(
 
 # --- seeded half --------------------------------------------------------------
 
-def _column(name, label, unit, about, ramp=Ramp("viridis")):
+def _column(name, label, unit, about, ramp=Ramp("viridis"), placement=False):
+    # S70 (D234, Audit V F-3-1, #194): `placement` - a column the randomness layer may move (FieldDecl.placement);
+    # the sample's placement set is star_azimuth alone (a star's radius is its ring's draw, on and off).
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="star",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about, placement=placement)
 
 
 STAR_RADIUS = _column("star_radius", "Galactocentric radius", "kpc",
@@ -1433,7 +1435,7 @@ STAR_AZIMUTH = _column("star_azimuth", "Azimuth", "rad",
                        "crowd into the arms and the bar. Where the model publishes where stars form "
                        "today (sfr_modulation, the azimuthal model), a star younger than about one arm "
                        "crossing, 100 Myr, is placed by that instead, and the young stars crowd into "
-                       "the arms more tightly than the old ones.")
+                       "the arms more tightly than the old ones.", placement=True)
 STAR_HEIGHT = _column("star_height", "Height above the plane", "kpc",
                       "Inverted from the sech² profile at the star's own population's scale height, "
                       "so the thick disc is genuinely thicker rather than tagged as such.")
