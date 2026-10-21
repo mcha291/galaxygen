@@ -17,6 +17,14 @@ their constant-X_CO 13 ± 4 at 9-14 kpc and their eq. 1 (Σ = 54.5 − 3.7 R) ar
 function's truncation already uses), and `GMC_RADIUS_MAX` = 150 pc (`[verified: Miville-Deschenes et al. 2017]`),
 the mass kept, so a capped cloud's surface density rises.
 
+**S70 (D234; the owner's ruling D233 on #192, Audit V F-1B-2):** the two regimes split at `R_SUN` were the reader's
+extrapolation - the source gives 82 ± 10 for the molecular ring alone (4-7 kpc, §IV.2 and §VI; "likely an upper
+limit", §V) and 35 elsewhere, inside 4 kpc and between the ring and the Sun included. Entered since as the
+source's three regimes by the birth radius: `GMC_SURFACE_DENSITY_RING` = 82 in [`GMC_MOLECULAR_RING_INNER`,
+`GMC_MOLECULAR_RING_OUTER`) = [4, 7) kpc, `GMC_SURFACE_DENSITY_DISC` = 35 inside and beyond it (the two constants
+renamed from `_INNER` and `_OUTER`); a template pins its own ring (`molecular_ring`), NGC 4414's 0.43-4.29 kpc
+from Vallejo, Braine & Baudry 2002's obscured molecular ring (5″-50″ at 17.7 Mpc). *(re-read at Audit V, S70)*
+
 ---
 
 ## The reading (the reader's report, 2026-10-18)
@@ -38,7 +46,7 @@ the mass kept, so a capped cloud's surface density rises.
   13 ± 4, flat, at 9-14 kpc; eq. 1, Σ = 54.5 − 3.7 R (12CO at a constant X_CO, fitted outside 4-8 kpc). After the
   X_CO(R) correction: **82 ± 10 inside the molecular ring** and "a single mass surface density of **Σ_GMC = 35**"
   outside it; at 8-9 kpc CO gives 26.6 against extinction's 41-52. **The two values entered**
-  (`GMC_SURFACE_DENSITY_INNER`, `GMC_SURFACE_DENSITY_OUTER`).
+  (`GMC_SURFACE_DENSITY_INNER`, `GMC_SURFACE_DENSITY_OUTER`; since S70 `_RING` and `_DISC`, three regimes by radius).
 - **Rice et al. 2016** (ApJ 822, 52; arXiv:1602.02791). The inner Galaxy's mass function a truncated power law, γ −1.6,
   M₀ (1.0 ± 0.2) × 10⁷ M☉; the outer an untruncated −2.2 with M₀ 1.5 × 10⁶ (already the model's, S32).
 - **W43** (Nguyen Luong et al. 2011, A&A 529, A41): R_eq ~70 pc, 7.1 × 10⁶ M☉ (Σ ≈ 460). **Sgr B2** (Schmiedeke et al.

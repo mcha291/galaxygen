@@ -210,10 +210,12 @@ def test_the_default_census_numbers(default, default_layer_off):
     # slope reads -2.0338, the gradient -0.101488. Not judged; the judged, layer-off rows above did not move.
     # S61 (D220 item 4): were -2.0338 and -0.101488. The census is drawn ring-first: the same regions on and off, so
     # the layer-on readings are the layer-off ones, to rounding (the regions are summed in another order).
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.05571, abs=1e-5)  # S70 (D234): was -2.05555 - the clouds' ring inversion (F-2-7)
     # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities, so their [N II]/Halpha
     # (-0.097717 -> -0.097902, on and off alike); row 37 above a recorded miss still, 0.0002 further out.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.097902, abs=1e-6)
+    # S70 (D234): was -0.097902 - the clouds' ring inversion on its own interval (F-2-7) to -0.098171, then the three
+    # Sigma regimes (#192, the owner's ruling D233) to -0.098309; row 37 a recorded miss still, 0.0004 further out.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098309, abs=1e-6)
     for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
         assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
 
