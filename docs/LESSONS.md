@@ -1667,3 +1667,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   moved and put back read dirty. A position equal to the shown value's position snaps to the shown value exactly.
 - [close] A detached `verify_clone` dies with the session that started it (S67 → S68: the log was empty). Read the log
   before the session ends, or the next BRIEF says in words that the check is owed.
+- [close] The register's count is pinned twice in `tests/test_audit.py` (the tuple and the carried row's literal), not in
+  `test_progress` alone: S68's close re-ran the wrong tests and its `verify_clone` failed six hours later on that line.
+  Re-pin both in the commit that opens the debts and re-run `tests/test_audit.py -k register`.
+- [audit] A declared bound is a bound only if it was measured over the population (S69, Audit V): three of the layer's
+  "at most" numbers came from ten sampled feet, cells or clouds and were exceeded by a quarter to tenfold on the whole
+  set. Write "measured over N" (D117) and let the test that cites the number hold the population.
+- [audit] A reader blind to the decisions finds what the decisions hide (S69): the register's drift (a closer whose
+  session had passed, a deleted test file still cited, a trigger that had fired) was invisible to the sessions that
+  wrote the entries and plain to one that read only the code. Keep the audit's readers blind, and give the register
+  pass to one of them every build.
