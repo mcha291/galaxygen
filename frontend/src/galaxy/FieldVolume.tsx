@@ -939,20 +939,17 @@ export function FieldVolume({
   // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
   // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
   // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
-  // gas fluctuation field's shear (the header's gas_fluctuation strain, sense and edges), at the "cloud elongation"
-  // power. With the layer off the field's seed is null and the clouds stay round.
+  // gas fluctuation field's shear - each cloud's published cloud_axis_ratio and cloud_angle (/api/clouds, the model's
+  // since S70, Audit V F-4-3; until then this viewer derived them from the header's gas_fluctuation strain) - at the
+  // "cloud elongation" power. With the layer off the model publishes every cloud round (ratio 1).
   const cloudLayerH = light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
-  const gasEntry = light?.header.gas_fluctuation ?? null;
   const elongation = tuning.cloudElongation ?? 0;
   const rasterShape = useMemo(
     (): RasterShape => ({
       verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
-      shear: gasEntry && gasEntry.seed !== null && gasEntry.edges && gasEntry.ring && gasEntry.sense !== null
-        ? { edges: gasEntry.edges, strain: gasEntry.ring.strain, sense: gasEntry.sense }
-        : null,
       elongation,
     }),
-    [cloudLayerH, gasEntry, elongation],
+    [cloudLayerH, elongation],
   );
   const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
     const c = clouds?.columns as Partial<CloudColumns> | undefined;

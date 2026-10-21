@@ -53,6 +53,9 @@ ADDED_AT_S63 = ("stars_young", "stars_middle", "stars_old", "stars_placement", "
 # What S64 (V6, the clouds as extinction) sends that S55 did not: the render's share of each ring's dust that is diffuse
 # (with its header entry `clouds`) and the clouds' own dust column (with its entry in the clouds header's `derived`).
 ADDED_AT_S64 = ("dust_diffuse_share", "cloud_dust_extinction_v")
+# What S70 (Audit V F-4-3) sends that S55 did not: each cloud's face-on shape along the gas field's shear (with their
+# entries in the clouds header's `derived`, digested apart with S64's).
+ADDED_AT_S70 = ("cloud_axis_ratio", "cloud_angle")
 # What S64 (V6, the HII regions as knots) sends that S55 did not: the clusters' line_response (with filters=) and the
 # clusters header's entries `knots` and `line_response`; and the sentence each of the render's two HII abouts gains.
 ADDED_KNOTS = ("line_response", "knots")
@@ -192,6 +195,13 @@ def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[s
         if "axes" in header:
             header["axes"] = {k: v for k, v in header["axes"].items() if k not in ADDED_AT_S64}
     added += s64
+    # S70 (Audit V F-4-3): the clouds' shape, two columns after the dust column (their entries went with `derived`
+    # above), digested apart likewise and returned among the added.
+    s70 = [spec["name"] for spec in header.get("arrays", []) if spec["name"] in ADDED_AT_S70]
+    if s70:
+        header["columns"] = [c for c in header["columns"] if c not in ADDED_AT_S70]
+        header["arrays"] = [spec for spec in header["arrays"] if spec["name"] not in ADDED_AT_S70]
+    added += s70
     # S64 (V6, R5): the HII regions as knots - the clusters' line_response and its header entries, and the sentence the
     # render's halpha_hii and lines_hii abouts gain - digested apart likewise; the clusters' returned among the added.
     if "knots" in header:

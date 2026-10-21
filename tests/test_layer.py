@@ -509,7 +509,8 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             # S64 (V6, R5): and the clusters' knots entry, with their line_response where filters= is asked
             # (layer_reference.ADDED_KNOTS).
             knots = (["line_response"] if label.endswith("/clusters/filters") else []) + ["knots"]
-            assert got.get("added", []) == (["cloud_dust_extinction_v"] if "/clouds/" in label else knots if "/clusters/" in label else []), label
+            # S70 (D234): was ["cloud_dust_extinction_v"] - and the clouds' shape (Audit V F-4-3, ADDED_AT_S70).
+            assert got.get("added", []) == (list(v6c.DERIVED_COLUMNS) if "/clouds/" in label else knots if "/clusters/" in label else []), label
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue
@@ -557,7 +558,8 @@ def test_the_cloud_route_sends_its_columns_in_the_order_it_always_did(prod):
     header, arrays = Service(grid=SMALL).handle("/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.6").frame()
     # S64 (D224, R1): the route appends ONE column of its own after the stage's and the layer's - the cloud's dust
     # column, derived in the API from published fields (api/v6_clouds.COLUMN); it is not a stage's column.
-    assert header["columns"] == [*cl.WIRE_COLUMNS, v6c.COLUMN] and list(arrays) == [*cl.WIRE_COLUMNS, v6c.COLUMN, "cell", "index"]
+    # S70 (D234): was v6c.COLUMN alone - and the clouds' shape after it (Audit V F-4-3), the API's too.
+    assert header["columns"] == [*cl.WIRE_COLUMNS, *v6c.DERIVED_COLUMNS] and list(arrays) == [*cl.WIRE_COLUMNS, *v6c.DERIVED_COLUMNS, "cell", "index"]
 
 
 # --- I1: the layer off moves no law, no radial field and no total -------------------------------------------------
@@ -1669,7 +1671,8 @@ def test_i5_what_layer_off_serves():
     for header in (on_h, off_h):
         assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
         assert not [k for k in header["scalars"] if "interior" in k]
-        assert header["columns"] == [*cl.WIRE_COLUMNS, v6c.COLUMN]  # S64 (D224, R1): the API's derived dust column last
+        # S64 (D224, R1): the API's derived dust column after the census's; S70 (D234, F-4-3): was last, the shape follows
+        assert header["columns"] == [*cl.WIRE_COLUMNS, *v6c.DERIVED_COLUMNS]
     assert len(off["cloud_radius"]) > 20
     for name in cl.TEXTURE_COLUMNS:
         assert np.all(off[name] == 0.0) and np.any(on[name] != 0.0), name
