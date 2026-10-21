@@ -458,14 +458,17 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
         # the amplitudes the two radial laws made from them (the budget and the arm number the law counts).
         given = layer_reference.template_inputs(template)
         pins = {"bar_present", "pitch_angle", "arm_class"}
-        assert set(templates.pinned(templates.TEMPLATES[template])) == pins
+        # S70 (D234; #192): was `== pins` - the template pins its own molecular ring too; it sets the clouds' sizes alone
+        # and is kept on the unpinned run below, which shows the other three pins one by one.
+        assert set(templates.pinned(templates.TEMPLATES[template])) == pins | {"molecular_ring"}
         unpinned = run(prod[0].get(name), {k: v for k, v in given.items() if k not in pins}, layer=False)
         assert unpinned.fields["bar_present"] == "yes" and "bar_present" not in unpinned.inputs and out.inputs["bar_present"] is False
         assert "pitch_angle" not in unpinned.inputs and out.inputs["pitch_angle"] == 28.9
         assert "arm_class" not in unpinned.inputs and out.inputs["arm_class"] == "flocculent" and unpinned.fields["arm_class"] == "grand_design"
         # S61 (D220 item 10): was `== set()` - the unpinned run's census is the ring-first redraw too.
         # S67 (D231): and the clouds' one central A_V, the size law's inner surface density (pinned or not).
-        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == redrawn_at_s61(unpinned, held) | CLOUD_SIZE_LAW_BY_RULING
+        # S70 (D234): and `dig_halpha_fraction` lands on S55's bits on this census too (F-2-7, #192; see above).
+        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == (redrawn_at_s61(unpinned, held) - {"dig_halpha_fraction"}) | CLOUD_SIZE_LAW_BY_RULING
         differ = {n for n in out.fields if not same(out.fields[n], unpinned.fields[n])}
         assert differ == {"bar_present", *UNBARRED_BY_RULING, "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", *pt.AMPLITUDE_FIELDS,
                           *PITCH_PINNED_BY_RULING, "arm_class", "arm_design_count", "arm_power_budget"}

@@ -1011,7 +1011,7 @@ def test_the_migration_test_holds_alone_and_in_a_shuffled_order_under_two_hash_s
     for seed in ("0", "1"):
         alone = _pytest([MIGRATION_TEST], seed)
         assert alone.returncode == 0, (seed, alone.stdout[-2000:])
-    listed = _pytest(["--collect-only", "-q", "tests/test_chemistry.py"], "0")
+    listed = _pytest(["--collect-only", "tests/test_chemistry.py"], "0")  # the addopts' -q alone: one node id a line
     ids = [line.strip() for line in listed.stdout.splitlines() if line.startswith("tests/test_chemistry.py::")]
     assert len(ids) == 20 and any(i.startswith(MIGRATION_TEST) for i in ids), listed.stdout[-2000:]
     for shuffle, seed in ((173, "0"), (1730, "1")):
