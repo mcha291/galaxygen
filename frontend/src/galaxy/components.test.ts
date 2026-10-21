@@ -14,6 +14,7 @@ import {
   WHERE_STOPS,
   brightestLayers,
   cellOutlines,
+  publishedRingEdges,
   cloudColors,
   cloudMarkerPx,
   diagnosticOn,
@@ -189,17 +190,23 @@ describe("the dust diagnostic: painted through its declared ramp and scale (A9)"
 
 
 describe("the cell outlines", () => {
-  it("are the level-0 grid: 33 circles from R.lo to R.hi and 32 spokes, in the disc plane", () => {
-    const { positions, radii, circles, spokes } = cellOutlines(0.5, 30.5);
+  // S70 (Audit V F-4-2): the circles at the model's published level-0 edges - systems.cell_edges, linspace(R[0], R[-1],
+  // 33) on the grid's cell centres: 0.0375 ... 29.9625 kpc on the production grid (400 rings over 0-30 kpc) - never
+  // lo + (hi - lo) i / 32 over the grid's extent, which put them off the model's cells by up to 37.5 pc.
+  const R0 = 0.0375, R1 = 29.9625;
+  const EDGES = Array.from({ length: 33 }, (_, i) => R0 + ((R1 - R0) * i) / 32);
+
+  it("are the level-0 grid: a circle at each published edge and 32 spokes from the first edge to the last", () => {
+    const { positions, radii, circles, spokes } = cellOutlines(EDGES);
     expect([CELL_RINGS, CELL_SECTORS]).toEqual([32, 32]);
     expect(circles).toBe(33);
     expect(spokes).toBe(32);
-    expect(radii[0]).toBe(0.5);
-    expect(radii[32]).toBe(30.5);
-    for (let i = 0; i <= 32; i += 1) expect(radii[i]).toBeCloseTo(0.5 + (30 * i) / 32, 12);
+    expect(radii).toEqual(EDGES); // the published edges themselves, no arithmetic of the viewer's
+    expect(radii[0]).toBe(0.0375);
+    expect(radii[32]).toBe(29.9625);
     expect(positions.length).toBe((33 * CIRCLE_SEGMENTS + 32) * 6);
     for (let i = 1; i < positions.length; i += 3) expect(positions[i]).toBe(0);
-    // Each circle's vertices sit at its radius; each spoke runs from R.lo to R.hi along its sector edge.
+    // Each circle's vertices sit at its edge; each spoke runs from the first edge to the last along its sector edge.
     for (let c = 0; c < 33; c += 1) {
       const o = c * CIRCLE_SEGMENTS * 6;
       expect(Math.hypot(positions[o], positions[o + 2])).toBeCloseTo(radii[c], 5);
@@ -208,10 +215,28 @@ describe("the cell outlines", () => {
     for (let k = 0; k < 32; k += 1) {
       const o = (33 * CIRCLE_SEGMENTS + k) * 6;
       const phi = (2 * Math.PI * k) / 32;
-      expect(Math.hypot(positions[o], positions[o + 2])).toBeCloseTo(0.5, 5);
-      expect(Math.hypot(positions[o + 3], positions[o + 5])).toBeCloseTo(30.5, 5);
+      expect(Math.hypot(positions[o], positions[o + 2])).toBeCloseTo(R0, 5);
+      expect(Math.hypot(positions[o + 3], positions[o + 5])).toBeCloseTo(R1, 5);
       expect(Math.atan2(-positions[o + 5], positions[o + 3])).toBeCloseTo(phi > Math.PI ? phi - 2 * Math.PI : phi, 5);
     }
+  });
+
+  it("draw uneven published edges where they are, not where an even division would put them", () => {
+    const uneven = [...EDGES];
+    uneven[5] += 0.1;
+    const { positions } = cellOutlines(uneven);
+    const o = 5 * CIRCLE_SEGMENTS * 6;
+    expect(Math.hypot(positions[o], positions[o + 2])).toBeCloseTo(uneven[5], 5);
+  });
+
+  it("take the render's edges first, the bright table's with the layer off, and none that are not 33 increasing", () => {
+    const table = EDGES.map((e) => e + 1e-9);
+    expect(publishedRingEdges(EDGES, table)).toEqual(EDGES);
+    expect(publishedRingEdges(null, table)).toEqual(table);
+    expect(publishedRingEdges(undefined, undefined)).toBeNull();
+    expect(publishedRingEdges(EDGES.slice(1), null)).toBeNull();
+    expect(publishedRingEdges([...EDGES].reverse(), null)).toBeNull();
+    expect(publishedRingEdges([...EDGES.slice(0, 32), Number.NaN], table)).toEqual(table);
   });
 });
 

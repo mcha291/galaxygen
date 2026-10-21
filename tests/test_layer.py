@@ -509,7 +509,8 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             # S64 (V6, R5): and the clusters' knots entry, with their line_response where filters= is asked
             # (layer_reference.ADDED_KNOTS).
             knots = (["line_response"] if label.endswith("/clusters/filters") else []) + ["knots"]
-            assert got.get("added", []) == (["cloud_dust_extinction_v"] if "/clouds/" in label else knots if "/clusters/" in label else []), label
+            # S70 (D234): was ["cloud_dust_extinction_v"] - and the clouds' shape (Audit V F-4-3, ADDED_AT_S70).
+            assert got.get("added", []) == (list(v6c.DERIVED_COLUMNS) if "/clouds/" in label else knots if "/clusters/" in label else []), label
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue
@@ -557,7 +558,8 @@ def test_the_cloud_route_sends_its_columns_in_the_order_it_always_did(prod):
     header, arrays = Service(grid=SMALL).handle("/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.6").frame()
     # S64 (D224, R1): the route appends ONE column of its own after the stage's and the layer's - the cloud's dust
     # column, derived in the API from published fields (api/v6_clouds.COLUMN); it is not a stage's column.
-    assert header["columns"] == [*cl.WIRE_COLUMNS, v6c.COLUMN] and list(arrays) == [*cl.WIRE_COLUMNS, v6c.COLUMN, "cell", "index"]
+    # S70 (D234): was v6c.COLUMN alone - and the clouds' shape after it (Audit V F-4-3), the API's too.
+    assert header["columns"] == [*cl.WIRE_COLUMNS, *v6c.DERIVED_COLUMNS] and list(arrays) == [*cl.WIRE_COLUMNS, *v6c.DERIVED_COLUMNS, "cell", "index"]
 
 
 # --- I1: the layer off moves no law, no radial field and no total -------------------------------------------------
@@ -731,15 +733,22 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
 def test_i1_the_placement_weights_average_to_1_on_every_ring_to_1e_13(runs, variants, prod, case):
     """S70 (D234, Audit V F-3-11): I1's clause "the rounding of sums over the cells of weights that average to 1 to
     1e-13", asserted ring by ring (until S70 it was asserted nowhere; the nearest was the composed fields' ring means
-    at 1e-12 on SMALL). The weights an expected total sums: the clouds' sector weights (clouds.sector_placement) and
-    the star sample's (the stellar pattern's sector means, clipped at 0). Measured at S70 on the production run: at
-    most 6.0e-15 and 2.2e-16 off 1."""
+    at 1e-12 on SMALL). The weights the two expected totals sum: the clouds' sector weights
+    (clouds.sector_placement), which ``cloud_count_total`` sums, and the bright catalogue's two parts'
+    (``BrightGalaxy.weights``: the middle part's - the young stars' share placed by ``sfr_modulation`` through
+    ``young_reader`` - and the old part's, the stellar pattern's contrast), which ``bright_star_count_1e3`` sums
+    (``BrightGalaxy.expected``, bright.py). S70 fix pass (the independent reviewer): was the star sample's
+    stellar-pattern weights (``systems._sector_weights``) in the bright total's place - weights that total does not
+    sum, without the young stars' part. Measured at S70: the clouds' at most 6.0e-15 off 1 on the production run;
+    the bright parts' at most 2.2e-16 on SMALL at both templates (the reviewer's reading) - it holds, held here."""
     out = runs[DEFAULT_MODEL, True] if case == "production" else variants[case][0]
     F, R = out.fields, out.grid.R
-    _, clouds = cl.sector_placement(F, R, constants(prod[0].get(DEFAULT_MODEL)))
-    stars = np.maximum(sy._sector_weights(R, compose.stellar_pattern(F, R)), 0.0)
-    for weights in (clouds, stars):
-        assert weights.shape == (cl.CELL_RINGS, cl.CELL_SECTORS)
+    c = constants(prod[0].get(DEFAULT_MODEL))
+    _, clouds = cl.sector_placement(F, R, c)
+    g = br.BrightGalaxy(F, R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), c)
+    assert clouds.shape == (cl.CELL_RINGS, cl.CELL_SECTORS) and g.modulation is not None
+    assert np.asarray(g.weights).shape == (2, g.area.size, g.sector_lo.size)
+    for weights in (clouds, *np.asarray(g.weights)):
         assert float(np.abs(weights.mean(axis=1) - 1.0).max()) < 1e-13
 
 
@@ -856,8 +865,10 @@ REROLLED_TEXTURE = 987654321
 # The columns of a placed catalogue that name another row, not a property of the object: compared by what they name.
 # `cloud_cluster_index` is its cluster's index among its *cell's* clusters (clouds.cluster_indices), -1 for none - a
 # row reference into a cell the layer chooses, so its number differs on and off for about half the hosting clouds
-# while the cloud holds the same cluster. Held here: whether the cloud holds one, bit for bit, and that the cluster
-# it names is the one drawn for it. **Reported at S70 (D234)**: not a placement column and not declared one.
+# while the cloud holds the same cluster. Held here: whether the cloud holds one, bit for bit, on and off; and, in
+# each run, that the index names the cluster drawn for that cloud - it is resolved against the cell's drawn order
+# (object_names; S70 fix pass, the independent reviewer: until then "names the one drawn for it" was claimed here
+# and only `>= 0` compared). **Reported at S70 (D234)**: not a placement column and not declared one.
 ROW_REFERENCES = {"cloud_cluster_index": "cluster"}
 
 
@@ -891,6 +902,15 @@ def object_names(out, m) -> dict[str, np.ndarray]:
     assert clouds.index.size == len(F["cloud_mass"]) and int(clouds.index.max()) < 10**7
     cloud = clouds.ring * 10**7 + clouds.index
     hosts = np.asarray(F["cloud_cluster_index"]) >= 0
+    # S70 fix pass (the independent reviewer; ROW_REFERENCES): the reference resolved, run by run - each cloud's
+    # `cloud_cluster_index` is its cluster's place among the hosting clouds of its own cell, in the cell's drawn
+    # order (clouds.cluster_indices on the cell's `cloud_state` rows, the cells as this run's layout counts them),
+    # so the index names the cluster drawn for that cloud and no other in the cell. Until this pass only `>= 0` was
+    # compared, and an index the layer pointed at another cluster of the cell passed.
+    offsets = np.cumsum([0, *(n for _, n in clouds.counts)])
+    state = np.asarray(F["cloud_state"])
+    resolved = [cl.cluster_indices(state[o:o + n]) for o, (_, n) in zip(offsets, clouds.counts)]
+    assert offsets[-1] == state.size and same(np.concatenate(resolved), np.asarray(F["cloud_cluster_index"]))
     stars = sy.star_layout(F, out.grid.R, out.grid.t, seed, sy.CATALOGUE_SAMPLE,
                            migration=float(out.inputs["migration_efficiency"]), constants=c)
     assert stars.index.size == len(F["star_mass"]) and np.all(stars.level == 0)
@@ -941,8 +961,8 @@ def moved_columns(a, b, m) -> dict[str, set[str]]:
                 continue
             x, y = np.asarray(a.fields[n])[ia], np.asarray(b.fields[n])[ib]
             if n in ROW_REFERENCES:
-                # What the reference names: whether the cloud holds a cluster, and (by object_names) that the cluster
-                # in the cluster census's rows at that cloud's place is drawn for that cloud.
+                # What the reference names: whether the cloud holds a cluster; that the index names the cluster drawn
+                # for that cloud is asserted in each run by object_names, against the run's own layout.
                 x, y = x >= 0, y >= 0
             if not same(x, y):
                 moved[census].add(n)
@@ -999,7 +1019,10 @@ def test_i1_every_placed_object_keeps_every_column_outside_its_placement_set(run
     objects - clouds, clusters (with their HII regions and bubbles, columns of the cluster class), the star sample,
     its planets and the bright catalogue - matched on and off by their draw, and every column outside the census's
     declared placement set the same bits: a layer-on change to a cloud's velocity dispersion, its alpha or a star's
-    metallicity fails here (it passed I1's walk, I2's sums and rule 1 until S70)."""
+    metallicity fails here (it passed I1's walk, I2's sums and rule 1 until S70). The API's derived per-cloud
+    columns (``cloud_dust_extinction_v``, ``cloud_axis_ratio``, ``cloud_angle``; model/galaxy/api/v6_clouds.py) are
+    functions of the placement columns and the header's rule, declared nowhere as fields, and are held by
+    tests/test_v6_clouds.py's closure tests, not here."""
     hold_objects(runs[name, True], runs[name, False], prod[0].get(name))
 
 
@@ -1015,7 +1038,9 @@ def test_i1_every_placed_object_keeps_its_columns_at_another_template_seed_and_t
 def test_i1_the_walk_holds_at_another_template_and_seed(variants, case):
     """S70 (D234, Audit V F-3-2): I1's walk over every declared field at the second template and a second seed pair
     (it ran at the Milky Way's default seeds alone until S70). The bar's lanes are neutral in a galaxy with no bar,
-    and the pieces' cut may or may not fire."""
+    and the pieces' cut may or may not fire. The saturation cut (``arm_saturation``) fires on 0 of 48 rings at both
+    SMALL runs and nowhere at production, so the walk does not exercise it (measured by the independent reviewer at
+    S70; the lead records it as a debt)."""
     on, off = variants[case]
     unbarred = not np.isfinite(float(on.fields["bar_half_length"]))
     neutral = {"arm_piece_saturation"} | ({"star_formation_gas_contrast"} if unbarred else set())
@@ -1671,7 +1696,8 @@ def test_i5_what_layer_off_serves():
     for header in (on_h, off_h):
         assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
         assert not [k for k in header["scalars"] if "interior" in k]
-        assert header["columns"] == [*cl.WIRE_COLUMNS, v6c.COLUMN]  # S64 (D224, R1): the API's derived dust column last
+        # S64 (D224, R1): the API's derived dust column after the census's; S70 (D234, F-4-3): was last, the shape follows
+        assert header["columns"] == [*cl.WIRE_COLUMNS, *v6c.DERIVED_COLUMNS]
     assert len(off["cloud_radius"]) > 20
     for name in cl.TEXTURE_COLUMNS:
         assert np.all(off[name] == 0.0) and np.any(on[name] != 0.0), name
@@ -2524,11 +2550,27 @@ def test_no_module_of_the_model_constructs_a_pattern_object_by_its_class():
 SWITCH_WORDS = ("setting", "words")  # compose's two answers in words: "on" / "off", and a sentence that says it
 
 
+def says_the_word(node: ast.AST) -> bool:
+    """A call of compose's ``setting`` / ``words``: ``_compose.setting(f)``, or ``setting(f)`` after a bare-name import
+    (``from galaxy.layer.compose import setting``)."""
+    return isinstance(node, ast.Call) and (
+        (isinstance(node.func, ast.Attribute) and node.func.attr in SWITCH_WORDS)
+        or (isinstance(node.func, ast.Name) and node.func.id in SWITCH_WORDS))
+
+
+def reads_by_name(node: ast.AST) -> bool:
+    """``getattr(x, "layer")`` (with or without a default): the setting read by its name, which no attribute shows."""
+    return (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "getattr"
+            and len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and node.args[1].value == "layer")
+
+
 def names_the_switch(node: ast.AST) -> bool:
     # S70 (D234, Audit V F-3-9): and a call of compose's `setting(...)` or `words(...)` - `compose.setting(f) == "on"`
     # is a branch on the layer by another road, which the identifier alone did not see.
+    # S70 fix pass (the independent reviewer): was the attribute callee alone (`_compose.setting(f)`); a bare-name
+    # callee after `from galaxy.layer.compose import setting` and `getattr(ctx, "layer")` passed unseen.
     return any((isinstance(n, ast.Name) and n.id == "layer") or (isinstance(n, ast.Attribute) and n.attr == "layer")
-               or (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in SWITCH_WORDS)
+               or says_the_word(n) or reads_by_name(n)
                for n in ast.walk(node))
 
 
@@ -2537,8 +2579,40 @@ def names_the_switch(node: ast.AST) -> bool:
 # argument: the runner to the stages' context, the context to its view of the fields, the service to the runner);
 # every call of compose's `setting` / `words` is the API's echo (a header's value, a cache key's element, an about
 # line's words). An alias (`on = ctx.layer`), a read anywhere else or a call in another module fails here.
-PASSED_ON = {("api/service.py", "keyword"), ("core/stage.py", "Call"), ("core/stage.py", "keyword"), ("run.py", "keyword")}
+# S70 fix pass (the independent reviewer): was a set of (file, parent's node type) - any call in core/stage.py could
+# take `.layer` as an argument. Now each hand-on is named and counted: the keyword's name, or the callee a call
+# hands it to. The one call is core/stage.py's `FieldView(fields, stage, self.layer)` in `Context.__init__` (line
+# 181 at S70), the context giving its fields view the run's setting; any other callee there (a `float(ctx.layer)`,
+# a second FieldView) fails. A `getattr(..., "layer")` outside compose fails wherever it stands.
+PASSED_ON = {("api/service.py", "layer="): 1, ("core/stage.py", "FieldView()"): 1, ("core/stage.py", "layer="): 1,
+             ("run.py", "layer="): 1}
 ECHOED = {"api/service.py": {"Dict": 8, "Tuple": 5, "Assign": 1}, "api/v6_tiles.py": {"Dict": 2, "Tuple": 1, "BinOp": 1}}
+
+
+def touches(tree: ast.AST, name: str) -> tuple[dict[tuple[str, str], int], dict[str, int], list[str]]:
+    """One module's touches of the setting: its hand-ons ``{(module, "kw=" or "callee()"): count}``, its echoes
+    ``{parent's node type: count}``, and the reads that are neither (an alias, a test, a ``getattr`` by name)."""
+    parent = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+    passed: dict[tuple[str, str], int] = {}
+    echoed: dict[str, int] = {}
+    refused: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr == "layer" and isinstance(node.ctx, ast.Load):
+            up = parent[node]
+            if isinstance(up, ast.keyword) and up.arg is not None:
+                form = f"{up.arg}="
+            elif isinstance(up, ast.Call) and node in up.args:
+                form = f"{ast.unparse(up.func)}()"
+            else:
+                refused.append(f"{name}:{node.lineno}: `{ast.unparse(up)}` reads the setting outside compose")
+                continue
+            passed[name, form] = passed.get((name, form), 0) + 1
+        if reads_by_name(node):
+            refused.append(f"{name}:{node.lineno}: `{ast.unparse(node)}` reads the setting by name outside compose")
+        if says_the_word(node):
+            kind = type(parent[node]).__name__
+            echoed[kind] = echoed.get(kind, 0) + 1
+    return passed, echoed, refused
 
 
 def test_nothing_but_compose_branches_on_the_layer():
@@ -2575,32 +2649,33 @@ def test_outside_compose_the_setting_is_only_passed_on_and_echoed():
     """S70 (D234, Audit V F-3-9): the branch guard above sees a test that names the switch; this one sees every other
     touch. A read of ``.layer`` outside compose is the setting handed on and nothing else (its parent is a keyword or
     a call), and compose's ``setting`` / ``words`` are called by the API alone, as an echo. Both closed lists."""
-    passed: set[tuple[str, str]] = set()
+    passed: dict[tuple[str, str], int] = {}
     echoed: dict[str, dict[str, int]] = {}
+    refused: list[str] = []
     for path in model_sources():
         name = path.relative_to(PACKAGE).as_posix()
         if name == "layer/compose.py":
             continue
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        parent = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Attribute) and node.attr == "layer" and isinstance(node.ctx, ast.Load):
-                up = parent[node]
-                handed_on = isinstance(up, ast.keyword) or (isinstance(up, ast.Call) and node in up.args)
-                assert handed_on, f"{name}:{node.lineno}: `{ast.unparse(up)}` reads the setting outside compose"
-                passed.add((name, type(up).__name__))
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in SWITCH_WORDS:
-                where = echoed.setdefault(name, {})
-                kind = type(parent[node]).__name__
-                where[kind] = where.get(kind, 0) + 1
-    assert passed == PASSED_ON, sorted(passed ^ PASSED_ON)
+        handed, echoes, wrong = touches(ast.parse(path.read_text(encoding="utf-8")), name)
+        passed.update(handed)
+        refused += wrong
+        if echoes:
+            echoed[name] = echoes
+    assert refused == [], refused
+    assert passed == PASSED_ON, sorted(set(passed.items()) ^ set(PASSED_ON.items()))
     assert echoed == ECHOED, echoed
-    # The instrument sees an alias and a branch on the words (synthetic sources, parsed the same way).
-    alias = ast.parse("def f(ctx):\n    on = ctx.layer\n    return on\n")
-    up = {c: n for n in ast.walk(alias) for c in ast.iter_child_nodes(n)}
-    assert [type(up[n]).__name__ for n in ast.walk(alias) if isinstance(n, ast.Attribute) and n.attr == "layer"] == ["Assign"]
+    # The instrument sees an alias, a read by name, a bare-name echo, another callee and a branch on the words
+    # (synthetic sources, parsed the same way).
+    assert touches(ast.parse("def f(ctx):\n    on = ctx.layer\n    return on\n"), "x.py")[2] == ["x.py:2: `on = ctx.layer` reads the setting outside compose"]
+    assert len(touches(ast.parse("g(layer=getattr(ctx, 'layer', True))\n"), "x.py")[2]) == 1
+    assert touches(ast.parse("from galaxy.layer.compose import setting\nkey = (setting(f), 1)\n"), "x.py")[1] == {"Tuple": 1}
+    assert touches(ast.parse("x = FieldView(f, s, self.layer)\ny = float(ctx.layer)\n"), "core/stage.py")[0] == \
+        {("core/stage.py", "FieldView()"): 1, ("core/stage.py", "float()"): 1}
     branch = ast.parse("if _compose.setting(fields) == 'on':\n    pass\n").body[0]
     assert names_the_switch(branch.test) and not names_the_switch(ast.parse("x == 'on'").body[0].value)
+    for test in ("setting(fields) == 'on'", "not words(fields)", "getattr(ctx, 'layer')"):
+        assert names_the_switch(ast.parse(test).body[0].value), test
+    assert not names_the_switch(ast.parse("getattr(ctx, 'grid') is None").body[0].value)
 
 
 def test_fields_carry_the_setting_and_compose_refuses_a_mapping_that_does_not(small, prod):

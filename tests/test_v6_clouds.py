@@ -122,8 +122,9 @@ def test_gate_i_the_rings_dust_is_the_diffuse_share_plus_the_realised_clouds(ser
 def test_r1_the_clouds_dust_column_is_its_formula_on_published_fields(service, template, layer):
     R = service.grid.R
     h, c, _ = get(service, "/api/clouds", template=template, layer=layer)
-    assert h["columns"][-1] == "cloud_dust_extinction_v"
-    assert [x["name"] for x in h["arrays"]][-3:] == ["cloud_dust_extinction_v", "cell", "index"]
+    # S70 (D234): was the last column - Audit V F-4-3 appends the clouds' shape after it (test_s70_* below).
+    assert h["columns"][-3:] == ["cloud_dust_extinction_v", "cloud_axis_ratio", "cloud_angle"]
+    assert [x["name"] for x in h["arrays"]][-5:] == ["cloud_dust_extinction_v", "cloud_axis_ratio", "cloud_angle", "cell", "index"]
     f = fields(service, template, layer, ["dust_to_gas_ratio", "dust_extinction_v", "dust_surface_density"])
     sd = np.asarray(f["dust_surface_density"])
     per_dust = np.where(sd > 0, np.asarray(f["dust_extinction_v"]) / np.where(sd > 0, sd, 1.0), 0.0)
@@ -201,5 +202,85 @@ def test_f_the_s55_digest_reports_the_new_keys_added(service):
     # S64's key, then S66's four arrays and three header entries (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S66).
     assert "dust_diffuse_share" in got["added"] and got["added"][-1] == layer_reference.ADDED_AT_S66[-1]
     got = layer_reference.route_digest(service, "/api/clouds", {"layer": ["off"]})
-    assert got["added"] == ["cloud_dust_extinction_v"]
-    assert "cloud_dust_extinction_v" not in [x[0] for x in got["arrays"]]
+    # S70 (D234): was ["cloud_dust_extinction_v"] - and the clouds' shape (Audit V F-4-3, layer_reference.ADDED_AT_S70).
+    assert got["added"] == ["cloud_dust_extinction_v", "cloud_axis_ratio", "cloud_angle"]
+    assert not {"cloud_dust_extinction_v", "cloud_axis_ratio", "cloud_angle"} & {x[0] for x in got["arrays"]}
+
+
+# --- S70 (Audit V F-4-3, D233/D234): each cloud's face-on shape, published --------------------------------------------
+# The viewer drew each cloud as an ellipse along the gas fluctuation field's shear from S67 (D230 R2), by a formula it
+# applied itself to the render header's strain; since S70 /api/clouds publishes the two numbers. Checked here twice
+# with this file's own arithmetic: against the header's rule on the render header's own entry, and against the
+# field's read map itself (its rotation by theta(R), from the header's twist and strain) by finite differences.
+
+
+def ring_by_edges(edges, radius):
+    """The level-0 ring of each radius: the last edge not above it, held to the first and last rings."""
+    n = len(edges) - 1
+    return np.array([max(0, min(n - 1, int(np.sum(np.asarray(edges[1:-1]) <= r)))) for r in radius])
+
+
+@pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])
+def test_s70_the_clouds_shape_is_the_rule_on_the_render_headers_published_strain(service, template):
+    h, _, _ = get(service, "/api/render", template=template, layer="on", filters=RGB)
+    gas = h["gas_fluctuation"]
+    edges, strain, sense = np.asarray(gas["edges"]), np.asarray(gas["ring"]["strain"]), float(gas["sense"])
+    hc, c, _ = get(service, "/api/clouds", template=template, layer="on")
+    k = sense * strain[ring_by_edges(edges, c["cloud_radius"])]
+    lam = (2.0 + k * k + np.abs(k) * np.sqrt(k * k + 4.0)) / 2.0
+    assert np.array_equal(c["cloud_axis_ratio"], lam)
+    assert np.allclose(c["cloud_angle"], np.arctan2(lam - 1.0, k), rtol=0.0, atol=4e-16)
+    assert np.all(c["cloud_axis_ratio"] >= 1.0) and np.ptp(c["cloud_axis_ratio"]) > 0.0
+    # every term of the rule is published: the header names them and the render header carries each
+    for name in ("cloud_axis_ratio", "cloud_angle"):
+        about = hc["clouds"]["derived"][name]
+        assert about["fields"] == ["cloud_radius", "gas_fluctuation.edges", "gas_fluctuation.ring.strain", "gas_fluctuation.sense"]
+        assert "atan2(cloud_axis_ratio - 1, k)" in about["rule"] and "SYNTHETIC (rule A10)" in about["about"]
+    assert hc["clouds"]["derived"]["cloud_angle"]["unit"] == "rad"
+
+
+@pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])
+def test_s70_the_clouds_shape_is_the_image_of_a_round_feature_under_the_fields_read(service, template):
+    """The closure: the field is read at its point rotated by -theta(R), theta = sense (twist_r + strain_r ln(max(R,
+    edges[0]) / edges_r)) (the header's rule). Its Jacobian J by central differences maps a small circle of the field to
+    the ellipse {p : p^T J^T J p = 1} in the disc - axis ratio sqrt(l_max / l_min) of J^T J, long axis along its small
+    eigenvector - which is the published shape, at every 40th cloud away from a ring edge."""
+    h, _, _ = get(service, "/api/render", template=template, layer="on", filters=RGB)
+    gas = h["gas_fluctuation"]
+    edges, strain, twist, sense = (np.asarray(gas["edges"]), np.asarray(gas["ring"]["strain"]),
+                                   np.asarray(gas["ring"]["twist"]), float(gas["sense"]))
+    _, c, _ = get(service, "/api/clouds", template=template, layer="on")
+    checked = 0
+    for i in range(0, len(c["cloud_radius"]), 40):
+        R0, phi0 = float(c["cloud_radius"][i]), float(c["cloud_azimuth"][i])
+        r = int(ring_by_edges(edges, [R0])[0])
+        if not (edges[r] + 1e-4 < R0 < edges[r + 1] - 1e-4):
+            continue  # the differences would straddle a ring edge, where the read map's strain steps
+
+        def read(x, y, r=r):
+            R = math.hypot(x, y)
+            th = sense * (twist[r] + strain[r] * math.log(max(R, edges[0]) / edges[r]))
+            return (x * math.cos(th) + y * math.sin(th), y * math.cos(th) - x * math.sin(th))
+
+        x, y, d = R0 * math.cos(phi0), R0 * math.sin(phi0), 1e-6
+        fx, bx, fy, by = read(x + d, y), read(x - d, y), read(x, y + d), read(x, y - d)
+        J = np.array([[(fx[0] - bx[0]) / (2 * d), (fy[0] - by[0]) / (2 * d)], [(fx[1] - bx[1]) / (2 * d), (fy[1] - by[1]) / (2 * d)]])
+        m = J.T @ J
+        lo, hi = np.linalg.eigvalsh(m)
+        assert math.sqrt(hi / lo) == pytest.approx(float(c["cloud_axis_ratio"][i]), rel=1e-6), i
+        long = math.atan2(lo - m[0, 0], m[0, 1])  # (M - l_min) v = 0, v = (m01, l_min - m00)
+        assert abs(math.sin(phi0 + float(c["cloud_angle"][i]) - long)) < 1e-6, i
+        checked += 1
+    assert checked > 100
+
+
+@pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])
+def test_s70_the_clouds_are_round_with_the_layer_off_and_float32_on_request(service, template):
+    _, off, _ = get(service, "/api/clouds", template=template, layer="off")
+    assert np.all(off["cloud_axis_ratio"] == 1.0) and np.all(off["cloud_angle"] == 0.0)
+    h, _, _ = get(service, "/api/render", template=template, layer="off", filters=RGB)
+    assert h["gas_fluctuation"]["seed"] is None and h["gas_fluctuation"]["ring"] is None  # no field published, no shear
+    _, c8, _ = get(service, "/api/clouds", template=template, layer="on")
+    _, c4, _ = get(service, "/api/clouds", template=template, layer="on", precision="f4")
+    for name in ("cloud_axis_ratio", "cloud_angle"):
+        assert c4[name].dtype == np.float32 and np.array_equal(c4[name], c8[name].astype(np.float32)), name

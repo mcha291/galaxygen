@@ -599,6 +599,11 @@ Specifically forbidden:
 - colour applied for appearance rather than derived from the filter integral
 - a synthetic field tuned to a picture rather than to its cited statistic
 
+A per-component intensity other than 1 in a template's committed display defaults (the starlight at 0.55 beside gas
+and dust at 1, say) is not colour applied for appearance: it is an exposure chosen per component, declared and shown
+as a slider, each component still its own filter integral times one number, and the extinction strength's 1.25 is the
+owner's recorded exception (D228) — ruled so at Audit V's gate G4 (finding F-4-4) `[verified: DECISIONS.md D233]`.
+
 *Amended 2026-10-03 on the owner's word (BUILD_III §7, ruling 3; Appendix A)* `[verified: DECISIONS.md D212]`.
 **Until D212 this section read:** "Every visible feature traces to a published field or to a seeded draw from
 one, and the seed comes from the model, not from the frame", with a paragraph on noise textures as rule A4 read
