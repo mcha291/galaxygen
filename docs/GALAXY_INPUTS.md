@@ -705,9 +705,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **discharged** at S70 | **137** (the layer's realised totals the same on and off since L1's ring-first draw at S61, D220 — discharged in fact, struck at Audit V's register pass, D234) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196 | 116 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198 | 118 |
 
-So the board's **127 open** is 11 permanent and 116 carried, and no item is unruled. (S22
+So the board's **129 open** is 11 permanent and 118 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -740,7 +740,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -4427,8 +4427,10 @@ never been judged in twenty-three sessions.
    region of the summed ionising photons in the cell's gas (a Strömgren volume of the sum), drawn at its own radius.
 182. **The clouds' surface density is two regimes and a cap, not a law of radius or of mass** (S67, D231;
    `docs/READING_CLOUD_SIZES.md`; the owner's choice "Smaller giant clouds (model)"). A cloud's radius is √(M/πΣ) at
-   Lada & Dame 2020's X_CO-corrected Σ_GMC, `GMC_SURFACE_DENSITY_INNER` 82 M☉ pc⁻² inside `R_SUN` and
-   `GMC_SURFACE_DENSITY_OUTER` 35 outside it, a step at the cloud's birth radius, held at `GMC_RADIUS_MAX` 150 pc
+   Lada & Dame 2020's X_CO-corrected Σ_GMC — since S70 (#192, D234) `GMC_SURFACE_DENSITY_RING` 82 M☉ pc⁻² inside the
+   molecular ring (`GMC_MOLECULAR_RING_INNER` / `_OUTER` 4–7 kpc as printed, or a template's `molecular_ring` pin;
+   `ngc_4414` 0.43–4.29 kpc from Vallejo, Braine & Baudry 2002, `[inferred]`) and `GMC_SURFACE_DENSITY_DISC` 35
+   elsewhere; until S70 82 inside `R_SUN` and 35 outside it — a step at the cloud's birth radius, held at `GMC_RADIUS_MAX` 150 pc
    (Miville-Deschenes et al. 2017's largest) with the mass kept. Not built: a continuous Σ(R) (Lada & Dame's own
    regimes are the molecular ring and outside it, joined by no measured profile; their constant-X_CO eq. 1, Σ = 54.5 −
    3.7 R, is uncorrected); the boundary is a step, at the model's R_SUN rather than the ring's measured edge, and the mass
@@ -4523,6 +4525,20 @@ never been judged in twenty-three sessions.
    off by a few units in the last place (two measured at S59), held by `tests/test_layer.py`'s
    `same_expected_total` under the invariant's four — a margin, not a measured bound over the population, so it
    belongs with the three above (F-3-11 decides its wording). *(re-ruled at Audit V, S70, D234)*
+197. **The star catalogue's and the remnants' ring draws invert below the ring's inner edge** (S70, D234; F-2-7's
+   siblings, found when the clouds' draw was fixed). `systems.py:1083` (`STAR_RADIUS`, the level-0 radius) and
+   `bubbles.py:305` (`REMNANT_RADIUS`) call the shared `invert_cdf` whose step table begins at the last grid point below
+   the ring, so the first step interpolates from outside it: on the production grid, layer off, 955 of 20 003 Milky Way
+   stars (4.8 %) and 995 of 20 004 on `ngc_4414` (5.0 %) are born up to 70 pc below their ring; 64 of 1 464 and 27 of 594
+   remnants (4.4 %, 4.5 %), up to 71 pc. The clouds' draw was fixed at S70 (`clouds.ring_birth_radius`, 712 → 0 outliers;
+   rows 35 / 37 moved −2.05555 → −2.05571, −0.097902 → −0.098171 by it alone). **Carried.** What closes it: the same
+   inversion on the ring's own interval for both draws, in a session of its own — it moves the whole catalogue, every
+   frame and the catalogue's pins across the suite (D60's per-region determinism re-pinned with the reason).
+198. **The arm saturation cut is never exercised** (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
+   on 0 of 48 rings at both SMALL runs and on no ring at the production grid for either template, so the layer-off walk
+   and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes
+   it: a test that drives one ring past saturation on a synthetic pattern and reads the cut's effect, or — if no
+   admissible input reaches it — the cut retired as dead (S41's rule) with the reason.
 
 ---
 

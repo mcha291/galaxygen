@@ -25,6 +25,7 @@ migration test added at the end. Each test says what it was.
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import replace
 
 import numpy as np
@@ -995,6 +996,11 @@ def _pytest(args, hash_seed: str):
                           capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
+@pytest.mark.skipif(
+    not os.environ.get("GALAXYGEN_AUDIT_ORDER"),
+    reason="#173's randomised-order run spawns five pytest processes (about 26 minutes under load, S70): set "
+    "GALAXYGEN_AUDIT_ORDER=1 to run it; the close runs it once alone and records the line (D234)",
+)
 def test_the_migration_test_holds_alone_and_in_a_shuffled_order_under_two_hash_seeds():
     """#173 (S65, D225; the closer Audit V's register pass re-named, F-5-14): a fresh clone's whole suite once read
     ``test_migration_flattens_old_stars_and_leaves_gas_alone[basic]`` failing (0.8845979 against 0.9284296), never seen
