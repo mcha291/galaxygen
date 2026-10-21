@@ -137,6 +137,30 @@
           "multi_armed",
           "flocculent"
         ]
+      },
+      {
+        "name": "molecular_ring",
+        "label": "Molecular ring (a template's pin)",
+        "unit": null,
+        "value": {
+          "columns": [
+            {
+              "name": "inner",
+              "unit": "kpc"
+            },
+            {
+              "name": "outer",
+              "unit": "kpc"
+            }
+          ],
+          "rows": [
+            [
+              0.43,
+              4.29
+            ]
+          ]
+        },
+        "source": "[verified: Vallejo, Braine & Baudry 2002, A&A, arXiv:astro-ph/0202391, abstract, sects. 3, 4, 4.3 and 5, https://ar5iv.labs.arxiv.org/html/astro-ph/0202391, read at S70: 'the highly obscured molecular ring'; the M/L reaches about 4 'except for radii 5'' < r < 50''' (sect. 4) and is constant at r > 50'' 'outside of the star-forming molecular ring' (sect. 4.3); 'no molecular gas is present in the nucleus' (sect. 3)] (docs/READING_NGC_4414.md, V02) [inferred] (the ring's edges are the obscured radii V02 places the molecular ring in, not radii read off the CO map; converted at the template's 17.7 Mpc, 85.8 pc per arcsecond) (the owner's ruling, DECISIONS.md D233: a boundary declared per template; entered at S70)"
       }
     ]
   }
