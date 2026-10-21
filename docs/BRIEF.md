@@ -1,60 +1,60 @@
-# BRIEF — S69: BUILD_III's Audit V (gate G4; a Fable lead, Opus readers blind to the builders' reports)
+# BRIEF — S70: Audit V's fixes (an Opus lead; the verdict is `AUDIT_V.md` §6, the order is its last paragraph)
 
-**The state (2026-10-20).** S68 is merged (D232): Phase V9 — rule D1 amended to BUILD_IV Appendix A's text, the locks
-retired, the generate-first edit panel with a draft and a shown galaxy, the swap whole, the Science tab; the landing
-byte for byte, no model or API change. Register 122 open = 11 + 111, 51 discharged; next number **#191**, decisions
-from **D233**, board row 69, acceptance rows from 38. **The owner's standing order:** run the sessions back to back,
-stop only for a ruling that is theirs; re-read their latest word on models and the rationing rule (at most two
-agents, one heavy, none started past 50 % of the 5-hour window, none while a weekly window is past 80 %).
+**The state (2026-10-21).** S69 is merged (D233): Audit V — 61 findings, the verdict on each, no number moved (B3).
+Register 128 open = 11 + 117, 51 discharged; next number **#197**, decisions from **D234**, board row 70 is this
+session, acceptance rows from 38. **The owner's standing order:** run the sessions back to back, stop only for a ruling
+that is theirs; re-read their latest word on models and the rationing rule (two agents at once, one heavy; the 80 %
+weekly stop was waived for Audit V on 2026-10-21 — ask again before assuming it is waived here).
 
-## Build: Audit V (`BUILD_III.md` §5 "Audit V (S69) — gate G4"; the aim in `docs/AUDIT_V.md` §0, its first commit)
-- **The commission (BUILD_III's text):** Opus agents, blind to the builders' reports: every citation entered since
-  S51 read again; every synthetic field's conservation and statistic re-measured; I1–I5 re-derived, not re-run; a
-  picture traced feature by feature to a published field or a layer field; the register pass; the goal metrics
-  table set against §0's "what will remain". The lead assembles the findings. **Then G4:** Fable's verdict on each,
-  and the fixes ordered. **B3 holds:** the audit checks, the next session fixes; no model number moves; no frame is
-  regenerated.
-- **The aim** is drafted (S68's lead, from the plan's text alone; `docs/AUDIT_V.md` is committed on `session-69`
-  as its first commit, before any audited file is opened). Then the five strands as read-only Opus readers, one
-  strand or one slice each, two at a time at most: (1) the citations — the thirteen READING files since S51 (about
-  465 `[verified:` tags) and every constant that entered `level0.py`, `stages/`, `layer/` and `templates.py` since
-  tag `s50`, labelled MATCH / DIFFERS / ADOPTED-NOT-MEASURED / MISATTRIBUTED / UNREACHABLE, nothing from recall;
-  (2) the five synthetic stages' `conserves` / `stands_in_for` / `statistic` re-measured in `tests/test_audit_v.py`
-  (the one test file the audit adds) at a mesh and a `texture_seed` the build did not use; (3) what each
-  `test_i1_*` … `test_i5_*` in `tests/test_layer.py` actually asserts beside §1d's text; (4) the seven frames'
-  features traced to arrays, fields and provenance; (5) the register re-ruled line by line and the goal metrics
-  (D227) set against "what will remain".
-- **The lead's own part:** the findings list F1 … numbered by class; **G4** is the lead's verdict turn (Fable), at
-  most 80 lines, transcribed to D233; the fixes ordered into S70's BRIEF (BUILD_IV's W2 follows, or a fixes session
-  first if the verdict says so — the owner's call only where a fix would move a number).
-- **Gate:** every finding has a file and line and the sentence that would settle it; the counts re-derived against
-  `tools/progress.py`; `tests/test_audit_v.py` green; the suite once on the final state.
+## Build: the fixes, in `AUDIT_V.md` §6's order (B3: the audit checked, this session fixes; one commit per class)
+1. **The invariants' tests** (#194, F-3-1 first): each placed census's `FieldDecl`s gain a declared placement set (the
+   columns the layer may move); a test matches each census's objects by (drawn ring, index) on/off and under a texture
+   reroll and holds every other column bit for bit. Then F-3-2 (SMALL `ngc_4414` + one non-default seed pair), F-3-4
+   (the stars' expectation from the stage), F-3-5 (`only_if`), F-3-6 (a composing stage's non-composed outputs on/off at
+   a second template and seed), F-3-9 (the layer-read guard), F-3-12 (`same_expected_total`), F-3-13 ("does not keep" in
+   every synthetic declaration), F-3-15 (recompute one cell's normaliser from (seed, cell)). Text amendments in
+   `BUILD_III.md` §1 and the test's comments: F-3-3, F-3-7, F-3-8, F-3-10, F-3-11 (pin `EXPECTED_TOTAL_UNITS` to the
+   measured 1 or rename it a margin; assert the 1e-13 per ring or strike the clause); F-3-14's clause in rule 3.
+2. **The citations, one pass** (`AUDIT_V.md` §1; the readers' notes name every line): #193's disclosure in `level0.py`
+   with 1.73 as the named alternative; F-1A-4's clause struck; F-1A-2/3/5/9, F-1B-1/4/5/8 in the about-lines; the
+   reading rows F-1A-6–14, F-1B-6 corrected and marked "re-read at Audit V"; F-1B-7's five sources read once. **#191 and
+   #192 move a number and wait for the owner's answer** (D233's three questions); enter whichever is ruled, with the
+   affected pins re-pinned `# S70 (D234): was <old>` and the reason.
+3. **The viewer's two gaps:** F-4-2 the cell outlines from `gas_fluctuation.edges` (the four star-first captures move
+   by the grid alone — regenerate and say so); F-4-3 the clouds' axis ratio and angle as two columns of `/api/clouds`,
+   derived exactly as `cloudOpacity.ts` does today, the viewer reading them (no picture moves; the physics-only frame
+   byte for byte). F-4-5: one capture with dither off, recorded, nothing changed. §8 of `RENDER_PHYSICS.md` gains D233's
+   sentence on per-component intensities.
+4. **The register pass** (`AUDIT_V.md` §5; in ONE commit with `tests/test_audit.py`'s two pins): strike #137 (its ulp
+   residue noted under #196 or #194); re-write #39 as live; narrow #114, #115; re-rule #15 for `basic`; widen #128(b) and
+   re-read `ngc_4414`'s `colour_b_v_face_on` through the layered dust (a check, not a row); correct #21, #80, #87, #93,
+   #43, #33; give #154 a surviving pin; re-point #110, #159–#162, #166 to this session or re-rule carried with the reason;
+   re-name #171's and #173's closers (take #173's randomised-order run into `test_audit_v.py`); one sentence on 53–64.
+5. **#196's bounds measured over the population** at the production grid and two seeds, written "measured over N"
+   (D117), the declarations and `test_audit_v.py` holding them; #195's declaration says the measured share and why; the
+   xfails resolved or re-ruled with the measurement; F-2-5's wording; F-2-3's 2e-13; F-2-8's inner-ring slope entered.
+6. **Gate:** `tests/test_audit_v.py` green with no strict xfail left unexplained; `test_layer.py` green with the new
+   per-object test; the specs' 12 / 20 / 5 unmoved unless an owner's ruling moved a number (then the row named); the
+   picture test byte for byte except the four star-first captures F-4-2 moves; the suite once on the final state; the
+   register's counts re-derived and pinned in the same commit. **Agents:** one builder per class (1–2 at once, one heavy),
+   one reviewer of the invariants' test (it is the audit's chief finding — measure what it catches by breaking a column).
 
 ## Read
-- `BUILD_III.md` §0, §1d, §5 Audit V, §9; `AUDIT_IV.md` §0 and D193–D194 (the shape); D212, D214, D220–D221, D227,
-  D232; `tests/test_layer.py` (the invariants), `model/galaxy/layer/*.py` (the five synthetic stages), `docs/READING_*.md`.
+- `AUDIT_V.md` §6 then §1–§5 (every file:line the fixes need; the readers' notes are not in the repo); D233; `BUILD_III.md` §1.
 
-## Told to the owner (none awaited; if they answer, their word comes first)
-- (a) The edit panel is theirs to try at :5173: "Edit galaxy" opens every input at once, Generate redraws the whole
-  galaxy, nothing is locked; Reset to template puts the inputs back and does not regenerate by itself (one line
-  more if they want it to).
-- (b) The frames beside the goals are S67's exactly (nothing drawn moved at S68): the Milky Way the same kind of
-  picture as the drawing with fainter, more regular arms and no lanes by default; NGC 4414 an inclined disc with
-  sheared dust streaks, the bulge too bright and compact, the dust web inner only (D227's table).
-- (c) Carried, theirs: #172, #176, #164, #159, #142, #145, #147, the 88-minute gate test, the stray "v" in
-  `gateway/Galaxygen.AppHost/Galaxygen.AppHost.csproj` (uncommitted in their checkout), #183, #184, #185; S68's
-  #186 (the merger events' ranges are not on the wire, so a bad event fails at the API) and #188 (a template landing
-  shows bare stars until the field arrives).
-- (d) The weekly usage windows at S68's close (all-models 72 %, Fable 78 %; reset 2026-10-21 03:00 UTC): the
-  audit's readers start when the rationing rule allows.
+## Told to the owner (three answers owed before a number moves; nothing else awaited)
+- (a) #191 the bar's gas ratio: redefine as medians (nothing moves) or the means' 3.17? (b) #192 Σ_GMC: two regimes at the
+  Sun, or the source's three (82 for the molecular ring alone)? (c) #193: keep 2.43 disclosed, or the measured 1.73?
+- (d) Their Milky Way default (`cloudsExtinction: false`) leaves half the disc's dust undrawn and a ring edge at
+  4.7 kpc in the physics-only frame (F-4-1); the sample stars read as cluster-sized dots at point gain 4 (F-4-6).
+- (e) The frames did not move at S69; `AUDIT_V.md` §5's two sentences say where they stand beside the goals.
+- (f) Carried, theirs: #172, #176, #164, #159, #142, #145, #147, the 88-minute gate test, the gateway csproj's "v",
+  #183–#186, #188.
 
-## Traps learned at S68
-- **A draft-and-shown viewer is not whole until the swap is**: resource timings showed the loaders swapping one by
-  one under the stale mark (the new stars over the old light for 6 s); hold every answer until the last arrives.
-- **A slider's position is not its value**: `fromSlider(toSlider(v)) ≠ v` made a round trip dirty; snap to the
-  shown value's exact position.
-- **A detached verify_clone dies with its session**: S67's log was empty; read it before the session ends.
-- Still standing: one picture-test run at a time (port 8019); Bash under 8 KB; pytest's own exit code to a file;
-  **the register's count pin is `tests/test_audit.py` line 377 — re-pin it with the entries and re-run that test**
-  (S68's verify_clone of main failed on that line alone, 1 failed / 1 610 passed, re-pinned at S69's open); `test_hook`
-  needs `tools/bootstrap.py` after the last agent worktree; layer off nothing may move; nothing is tuned to a goal picture.
+## Traps learned at S69
+- **Blind readers find the drift**: keep the audit's readers away from DECISIONS/RESUMING/BRIEF/GALAXY_PLAN.
+- **A bound from ten samples is not a bound**: measure over the population before a declaration says "at most".
+- **The register's count is pinned twice in `tests/test_audit.py`** (the tuple and the carried row's literal): re-pin
+  both in the commit that moves the register and re-run `-k register` — S68's verify_clone failed on it.
+- Still standing: Bash under 8 KB; pytest's exit code to a file; one picture-test run at a time (:8019); an agent worktree
+  rewrites `core.hooksPath` (`tools/bootstrap.py` before the suite); layer off nothing may move; nothing is tuned to a goal picture.

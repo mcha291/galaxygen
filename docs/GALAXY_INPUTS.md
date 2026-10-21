@@ -697,9 +697,9 @@ defined here once and used in every entry below:
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190 | 111 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196 | 117 |
 
-So the board's **122 open** is 11 permanent and 111 carried, and no item is unruled. (S22
+So the board's **128 open** is 11 permanent and 117 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -732,7 +732,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -4312,6 +4312,35 @@ never been judged in twenty-three sessions.
 190. **The edit drawer covers the Galaxy view's regime caption** (S68, D232). While the panel is open at the right
    of the Galaxy view, the top-right caption (the regime and the window) sits under it. **Carried.** What closes it:
    the caption moves left of the drawer while it is open, or the drawer leaves the caption's margin.
+191. **`BAR_GAS_RATIO` 2.6 is a ratio of medians used as a ratio of means** (S69, Audit V F-1A-1, D233). Querejeta
+   2021 Table 3's medians give 11.51 / 4.492 = 2.56; its means 20.92 / 6.589 = 3.17; `gas_pattern.py` applies the
+   constant to the lanes' contrast as a ratio of means. **Carried; the owner's call** (D233): redefine the constant as the
+   ratio of medians (no number moves) or enter 3.17 (the lanes' contrast moves). S70 enters whichever is ruled.
+192. **The clouds' Σ_GMC regimes are the reader's extrapolation** (S69, F-1B-2, D233). Lada & Dame 2020 give 82 ± 10
+   M☉ pc⁻² for the molecular ring (4–7 kpc) alone, "likely an upper limit", and 35 everywhere else; the model uses 82 at
+   every radius inside R_SUN (D231) and `ngc_4414` inherits the Milky Way's R_SUN as its boundary unsaid. **Carried; the
+   owner's call**: three regimes by radius (35 / 82 / 35, the ring's edges read) and a declared boundary per template.
+193. **`CENSUS_CLUSTERING_WIDTH` 2.43 rests on a branch point the source puts at 112 pc** (S69, F-1B-3, D233). The
+   2.43 at 47.5 pc needs Grasha 2017a's two branches to meet at Menon's 190 pc; Table 4 (age ≤ 40 Myr, classes 1–3) puts
+   the meeting at 112 pc, which gives 1.73. `census_clustering.py` discloses "the lead's choice"; `level0.py` presents it
+   as verified. **Carried**: S70 writes the disclosure into level0 with 1.73 as the named alternative (D113); the number
+   moves only on the owner's word.
+194. **No test compares a placed catalogue's columns with the layer on and off** (S69, F-3-1, D233). I1's walk skips
+   the placed objects' columns and I2 sums counts and masses, so a layer-on change to `cloud_velocity_dispersion`,
+   `cloud_alpha` or a star's metallicity would pass I1, I2, I4 and the layer's rule 1 unseen; G1's reason (the objects do
+   not correspond) ended at L1's ring-first draw. **Carried**: S70's first test — each census's objects matched by (drawn
+   ring, index), every column outside its declared placement set bit for bit, on/off and under a texture reroll.
+195. **The arm pieces' power budget is met at about half** (S69, F-2-1, D233). `arm_pieces.py:492` says the budget "is
+   met on average over these draws"; the realised power over budget averages 0.53 / 0.63 (`milky_way`) and 0.45
+   (`ngc_4414`) at the audit's mesh, as the build's own `test_pieces` record (0.52–0.63) already read. **Carried**: the
+   declaration says the measured share and why (finite Gaussian ridges do not fill a ring's variance); filling the
+   budget would move a number and is the owner's.
+196. **Three of the layer's declared bounds were samples of ten** (S69, F-2-4, F-2-6, F-2-7, D233). The spur walk's
+   read difference 0.052 (measured up to 0.48 over all feet), the gas cell mean's worst 1.83e-2 off its lattice (2.71e-2
+   over 60 cells), the clouds' placed radius "at most 976 pc" from the drawn one (1.028 kpc, with 712 of 16 577
+   production clouds placed outside their drawn level-0 ring). **Carried**: S70 measures each over the whole population at
+   the production grid and two seeds, writes "measured over N" (D117), and `tests/test_audit_v.py` holds it; S70 also says
+   whether a cloud's ring is its drawn or its placed ring wherever a per-ring total is taken.
 
 ---
 

@@ -13731,3 +13731,113 @@ if they want it to). The frames beside the goals are S67's exactly (this phase d
 (still uncommitted in their checkout), #183, #184, #185, and now #186 and #188. **S69 is Audit V** (gate G4): its
 aim is drafted from the plan's text; its Opus readers wait on the weekly usage window (all-models 72 %, Fable 78 %
 at this close; the rationing rule stops spawns at 80 %; reset 2026-10-21 03:00 UTC).
+
+### D233. S69, Audit V (gate G4): the third build read again by six Opus agents blind to the decisions — 665 citation tags re-read with no constant's number differing from its source, the synthetic fields re-measured at a mesh and seeds the build never used, I1–I5 set against their tests, the seven frames traced with no invention, the register re-ruled; 61 findings, the lead's verdict on each; no number moved; the fixes are S70's, three rulings the owner's
+
+**The commission and the method (BUILD_III §5 "Audit V (S69) — gate G4"; D212's adoption; D222 placing it at S69).**
+The aim was written before any audited file was opened (`docs/AUDIT_V.md` §0, S69's first commit, drafted at S68 from
+the plan's text, the readings' tag counts and the layer tests' names alone) in the shape of Audits III and IV (D186,
+D194): five strands, each one question with its own read-only Opus reader, **blind to `DECISIONS.md`, `RESUMING.md`,
+`BRIEF.md` and `GALAXY_PLAN.md`** — reading code, tests, the READING files and the sources, judging what the repository
+*is*; a number checked only on a fetched page; nothing from recall; one Markdown note each in the lead's scratchpad; the
+lead (Fable, on the owner's word of 2026-10-21 to start despite the weekly usage windows, two agents at a time, one
+heavy) assembled `AUDIT_V.md` §1–§5 from the notes and wrote the verdict as §6. **B3 holds**: the audit checks, S70
+fixes; no model number, no frame and no pin moved in this session. The one file the audit adds is
+`tests/test_audit_v.py` (strand 2's builder, in a worktree, cherry-picked). The agents' cost: 0.21–0.46 M tokens each,
+2.0 M in all; the lead's own context 0.4 M.
+
+**What held (the headline).** Of **665 citation tags** across the thirteen readings since S51 (counted by the readers:
+GAS_PATTERN 119, ARM_MODES 37, GAS_SHOCK 69, BAR 78 keys, ARM_PIECES 157, ARM_SEGMENTS 27 keys, CLUSTERING 85 of its own
+labels, GAS_SPECTRA 23, SPURS 28, NGC_4414 27 keys, HST_OPTICS 12, CLOUD_LAYER and CLOUD_SIZES 3), **279 MATCH, 8 DIFFERS
+(all context or coverage), 1 ADOPTED, 1 MISATTRIBUTED, 376 UNREACHABLE** — nearly all of the last by the readers' budget,
+context-only sources not fetched; every tag that feeds a constant, a pin or a fit target was reached but one ADS scan
+(Shu, Milione & Roberts 1973, whose restatements MATCH) and the five about-line numbers of F-1B-7. **No constant's
+number differs from its source**; Reid 2019's Table 2 to the digit and R₀ 8.15; every NGC 4414 pin and fit target;
+the HST pupil; the bar's angle inside 28–33°. The synthetic fields conserve what they declare (cloud count exact, mass
+to 1e-12 per ring and per cell against a width-0 control, the gas column bit-identical, ring means to 3e-16 and 5e-14)
+and reproduce their statistics by the audit's own estimators (σ 1.7501 / 1.7506 against 1.75; the four cloud columns'
+laws within 5 SE over 39 264 clouds; the pieces' extents and pitch deviations within 3 SE once cut pieces are censored;
+the gas field's break indices equal, Mach and σ within 1e-3, the below-break slope −1.525 to −1.579 against −1.53; the
+spurs' spacing exactly 10 λ_J). Every feature of the seven frames traces to a published array, header entry or layer
+field: **no invention under D5 as amended.** The register's counts agree (122 / 51 at the open; 128 / 51 at this
+close): about 95 of 122 open items stand as written.
+
+**What the audit found (61 findings, `AUDIT_V.md` §1–§5; the verdict §6).** *Provenance and wording (22):*
+`BAR_GAS_RATIO` 2.6 is Querejeta 2021's ratio of medians used as a ratio of means (3.17 by the means; F-1A-1, **#191**);
+the clouds' Σ_GMC 82 is Lada & Dame's molecular-ring value applied to the whole solar circle, 35 their value elsewhere
+(F-1B-2, **#192**); `CENSUS_CLUSTERING_WIDTH` 2.43 rests on the branches meeting at 190 pc where Grasha's Table 4 puts
+them at 112 pc (1.73), disclosed in the layer stage and not in level0 (F-1B-3, **#193**); the Ferrers profile credited to
+the Sérsic decompositions the shape statistics come from (F-1A-4); `YOUNG_STAR_AGE`'s "100–160 Myr" not printed by its
+source (F-1A-5); a coverage of "155 galaxies" that is 67 (F-1B-1); an equation number, a clause under the wrong tag, two
+section numbers, a key collision, eight context slips in the readings and five wording items (F-1A-2/3/6–14, F-1B-4–8).
+*Tests that assert less than the text (15, F-3-1 … F-3-15):* chiefly **no placed catalogue's columns are compared with
+the layer on and off** (I1's walk skips them, I2 sums counts and masses; G1's reason ended at L1; **#194**); the walk at
+one template and one seed; the stars' expectation reconstructed in the test; `only_if` unread by I3's check; a composing
+stage's non-composed outputs untraced; the layer-read guard matching an identifier; the "one unit" / "four units" /
+"1e-13" wording against `EXPECTED_TOTAL_UNITS = 2`; rule 5 untested; I4's text stale on "only" and `cluster_radius`.
+*The synthetic fields (7, F-2-1 … F-2-8):* the arm pieces' power budget "met on average" is met at about half, as the
+build's own record read (**#195**); three declared bounds — the spur walk's 0.052, the cell mean's worst 1.83e-2, the
+placed radius's 976 pc — were samples of ten, exceeded by 0.48, 2.71e-2 and 1.028 kpc over the population, 712
+production clouds placed outside their drawn ring (**#196**); a chain without a spur; the inner ring's steeper spectrum;
+a 1.006e-13 against 1e-13. *The viewer (6, F-4-1 … F-4-6):* two gaps — the cell outlines drawn at even divisions of
+0–30 kpc, off the model's published level-0 edges by up to 37.5 pc (33 px in the Milky Way zoom, 67 in NGC 4414's), and
+the elongated clouds' axis ratio and angle a formula the viewer applies to the published strain with no route
+publishing a cloud's shape — and four display matters: the Milky Way's `cloudsExtinction: false` leaving 0.49 of the
+disc's dust undrawn and a ring edge visible at 4.72 kpc in the physics-only frame; starlight at 0.55 and extinction at
+1.25 in the committed defaults; the march's dither hash; sample stars at point gain 4 reading as cluster-sized dots. *The
+register (17, F-5-1 … F-5-17):* #137 discharged in fact (`CENSUS_STATISTICS` empty since S61); #39's trigger fired (a
+published quantity depends on two seeds since S59 while `spec.ensemble` ties every seed to k); #114 and #115 half closed;
+#15 ruled for a model that no longer exists; #128(b) understated (`ngc_4414`'s `colour_b_v_face_on` check reads the mixed
+slab the dust stage left at S52); stale text, row labels, constants and paths in #21, #80, #87, #93, #43, #33; deleted
+test files still cited by #11, #19, #26, #39, #42, #47 and **#154** (its 0.59 % / 1.20 pinned nowhere since S60); six
+closers whose sessions passed (#110, #159, #160, #161, #162, #166); #171 and #173 naming this audit; the 53–64 numbering
+gap unexplained; and the pictures showing less than §0 promised (the Milky Way's dominant mode m = 1 under a pinned bar,
+no lanes; NGC 4414's outer disc redder than its inner, no complexes).
+
+**The verdict (G4; `AUDIT_V.md` §6 in full).** Every finding is upheld as written except: F-3-14 (rule 3 admits "none
+read" beside a debt — a label, the rule gains the clause); F-4-4 (a per-component intensity in a template's committed
+defaults is an exposure choice per component, declared as a slider, and D228 is the owner's recorded exception —
+**not a breach of RENDER_PHYSICS §8**, which gains one sentence saying so); F-4-5 (the dither hash is sampling, declared,
+fixed by the pixel — dismissed as a breach, kept as a check with dither off); F-2-3 and F-2-8 (dismissed as defects, kept
+as records: the gate's tolerance becomes 2e-13 with the measurement; the inner ring's slope enters the declaration);
+F-5-16 and F-5-17 (the pictures' residue, not findings against the code; the star-first and zoom frames are display
+captures and the goal table says so). **Three findings would move a model number and are the owner's**: #191 (redefine
+the constant as the ratio of medians, or enter 3.17 — the lead recommends the redefinition), #192 (the source's three
+regimes 35 / 82 / 35 by radius with the ring's edges read, and a declared boundary per template — recommended), #193
+(whether the measured branch point replaces the lead's 2.43 — the disclosure is written either way). F-2-1 (#195) is a
+declaration failure, not a number failure: the declaration says the measured share and why; filling the budget is the
+owner's. **Told to the owner, no answer awaited:** F-4-1 (their Milky Way default leaves half the dust undrawn and a
+ring edge visible — their call, with the measurement), F-4-6 (the sample stars' look at point gain 4), the residue
+sentences of §5. *Justification:* an audit by the builders' own model (Opus) is rule B3's "check that takes your own
+path" only if the readers are blind to what the builders wrote — and the register's drift, invisible to every session
+that wrote an entry, was plain to a reader who saw only the code. *Chosen against:* fixing in the audit (S37 → S38 and
+S43 → S44 kept the counts honest; the same here); re-pinning the seven xfails away (each is a measurement, kept strict
+so the file is green and the gap is recorded); striking #137 and the fifteen stale entries now (B3: the register pass is
+S70's, in the commit that re-pins the counts).
+
+**The register:** #191–#196 opened; **128 open = 11 permanent + 117 carried**, 51 discharged; `tests/test_audit.py`'s
+two pins re-pinned in the same commit (S68's lesson). **The board:** row 69 ☑; **row 70 inserted, "Audit V's fixes"**
+(D233 §6's order: the per-object test and the invariants' test gaps first, the citation corrections in one pass, the
+two viewer gaps with their captures, the register pass, the bounds measured over the population, the dither check, the
+owner's rulings entered as given); BUILD_IV's rows move to 71–74 (W3 is the owner's branch regardless). `RULES.md`
+and `BUILD_III.md` §1 are not amended here (B3): S70 enters the text amendments the verdict names. `tests/test_audit_v.py`
+joins the suite (38 tests, 174 s). Lessons: a declared bound is a bound only if measured over the population; a reader
+blind to the decisions finds what the decisions hide; the register's count is pinned twice in `test_audit.py`.
+
+**Closing.** The full suite ran at c931f0a (the final code: the audit's test file in, the register pins not yet moved)
+in a detached worktree with pytest's own exit code appended to its log: [SUITE LINE]; the register pins and the docs
+tests re-run alone after the register moved: [RERUN]. S68's `verify_clone --ref main` (99abdc3; 6 h 03): 1 failed /
+1 610 passed / 5 skipped / 1 xfailed, specs OK — the one failure the register's count pin in `tests/test_audit.py` that
+S68's close did not re-pin, re-pinned at this session's open (116d7a9) and green; this session's `verify_clone --ref
+main`: [VERIFY]. Cold timings unchanged.
+
+**For the owner, plainly (three answers owed before S70 moves a number; nothing else awaited):** the build's numbers
+hold — 665 citations re-read and none of the constants they feed differs from its page; the layer conserves what it
+says. What the audit found is bookkeeping: readings cited to the wrong line, bounds that were samples, tests that check
+less than the plan promises, and a register that fell behind the sessions it names. Your three rulings: (1) the bar's
+gas ratio — redefine as the source's medians (nothing moves) or take the means' 3.17; (2) the clouds' surface density —
+keep two regimes split at the Sun, or the source's three (the molecular ring alone at 82); (3) the clustering width —
+keep 2.43 as your lead's choice, disclosed, or take the measured 1.73. And one thing to look at: your Milky Way default
+draws the dust without the clouds' share (half the disc's dust) and the physics-only frame shows a ring edge at 4.7 kpc
+for it. The frames beside the goals did not move this session (nothing drawn changed); §5's two sentences say where
+they stand. **S70 is the fixes** (`BRIEF.md`); BUILD_IV follows at S71.
