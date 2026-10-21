@@ -362,12 +362,19 @@ LEVEL0: dict[str, Constant] = {
     "BAR_GAS_RATIO": Constant(
         2.6,
         "dimensionless",
-        "The mean gas surface density inside the bar's footprint over the mean outside it on the same ring: "
-        "the medians of molecular gas surface density in PHANGS's bar and interarm environments, 11.51 against "
-        "4.492 Msun/pc2 in 1.5 kpc apertures (Table 3), a ratio of 2.56 entered as the ruling's 2.6 "
-        "[verified: Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491, Tables 2–3, §4.4, "
+        "The median galaxy's ratio of mean molecular gas surface density inside the bar's footprint to the mean "
+        "outside it on the same ring (redefined at Audit V, S70, D233/D234, #191; the number did not move): "
+        "Querejeta 2021 Table 3's medians of molecular gas surface density in PHANGS's bar and interarm "
+        "environments, 11.51 against 4.492 Msun/pc2 in 1.5 kpc apertures, a ratio of 2.56 entered as the "
+        "ruling's 2.6 [verified: Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491, Tables 2–3, §4.4, "
         "https://ar5iv.labs.arxiv.org/html/2109.04491 and https://arxiv.org/html/2109.04491] "
-        "(docs/READING_BAR.md B1.2 and B2, Q21; D217 item 8). A ratio between environments of whole galaxies, "
+        "(docs/READING_BAR.md B1.2 and B2, Q21; D217 item 8). Each aperture's value is itself a spatial mean, so "
+        "the median of the population is the typical galaxy's ratio of means - what one template holds. "
+        "gas_pattern.py applies it as a ratio of spatial means on every ring inside the bar (footprint_profiles "
+        "flat on each side; the lanes' excess on narrow arcs, the mean inside still the ratio times the mean "
+        "outside), so the statistic in the code and the statistic in the source agree. **The named alternative** "
+        "(D113): the ratio of the population means, 20.92 / 6.589 = 3.17 (the same Table 3 [verified: Querejeta "
+        "et al. 2021, A&A 656, A133, arXiv:2109.04491, Table 3]). A ratio between environments of whole galaxies, "
         "applied on every ring inside the bar (a debt); the sources dispute how empty a bar is off its lanes "
         "('bars are not always deserts').",
     ),
@@ -877,7 +884,12 @@ LEVEL0: dict[str, Constant] = {
         "fixes the shape. The statistic is the ratio of the two branches of the six-galaxy correlation of "
         "clusters up to 40 Myr, inner -0.85 +- 0.03 over outer -0.21 +- 0.02, meeting at 112 pc [verified: "
         "Grasha et al. 2017a, ApJ 840, 113, Table 4, classes 1-3; docs/READING_CLUSTERING.md 1.2]: the six "
-        "galaxies' pair-weighted average, their inner slopes running -0.4 to -1.7 one by one.",
+        "galaxies' pair-weighted average, their inner slopes running -0.4 to -1.7 one by one. **The amplitude "
+        "2.43 is the lead's choice, not a measurement** (D220 part II item 2; disclosed here at Audit V, S70, "
+        "D233/D234): it puts Grasha's slope -0.64 at Menon et al. 2021's 190 pc scale (CENSUS_CLUSTERING_SCALE), "
+        "two sources joined, where the source's own branches meet at 112 pc. **The named alternative** is the "
+        "source's own branch point: (47.5/112)^0.64 = 1.73 at 47.5 pc (Grasha et al. 2017a Table 4, age <= 40 "
+        "Myr, classes 1-3), 29 % below 2.43; kept at 2.43 by the owner's ruling (D233), the width 1.75 with it.",
     ),
     "CENSUS_CLUSTERING_POINTS": Constant(
         4,
