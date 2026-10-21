@@ -121,10 +121,14 @@ CATALOGUE_SAMPLE = 20_000  # the clickable sample of GALAXY_PLAN.md §4, order 1
 # only by the azimuthal model) rather than by where the mass is (the density contrast). The number
 # is the arm's lifetime, not a crossing time (S57, D216 item 12): the arms turn with the disc, so
 # nothing crosses them, and a star stays in the arm it formed in until the arm itself dissolves -
-# swing-amplified arms live 100-160 Myr [verified: Grand, Kawata & Cropper 2012, arXiv:1112.0019;
-# Baba, Saitoh & Wada 2013, arXiv:1211.5401; docs/READING_GAS_SHOCK.md Part B rows A1, A3]. The
+# a transient arm lives about 120 Myr [verified: Grand, Kawata & Cropper 2012a, arXiv:1112.0019, abstract:
+# one arm's lifetime 'about 120 Myr'], and Baba, Saitoh & Wada 2013 print no lifetime in Myr - 'the
+# short-lived spiral arms can recurrently develop over many rotational periods' [verified: Baba, Saitoh
+# & Wada 2013, ApJ 763, 46, arXiv:1211.5401, abstract, re-read at Audit V, S70]. The range 100-160 Myr
+# (0.3-0.5 rotation periods) that stood here is the reader's, not printed by either (Audit V F-1A-5;
+# docs/READING_GAS_SHOCK.md Part B rows A1, A3). The
 # value is the one BUILD_II.md Phase 2 stated without a source (as "about one arm crossing", gas
-# mixing azimuthally on ~100 Myr), kept and re-sourced; it sits at the short end of the range. It is
+# mixing azimuthally on ~100 Myr), kept: inside Grand's about 120 Myr, an adopted value. It is
 # a cut, not a law: nothing in the model says how fast a young population leaves its arm, and a
 # decaying weight would be a second constant with no source either.
 YOUNG_STAR_AGE = 0.1  # Gyr

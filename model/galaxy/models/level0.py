@@ -279,7 +279,8 @@ LEVEL0: dict[str, Constant] = {
         "speed at 2.2 scale lengths (the published disc_dominance): the time an N-body disc takes to form a bar "
         "(A_2,max > 0.2 and a bar longer than 1 kpc), fitted over live-halo models "
         "[verified: Fujii et al. 2018, MNRAS 477, 1451, arXiv:1712.00058, eqs 6, 9, 11, §3.3, "
-        "https://ar5iv.labs.arxiv.org/html/1712.00058] (eq. 11; docs/READING_BAR.md A1.4 and A2, F18). The fit's "
+        "https://ar5iv.labs.arxiv.org/html/1712.00058] (the fit is unnumbered, §3.3 and the Fig. 9 caption; eq. 11 "
+        "defines f_d - corrected at Audit V, S70; docs/READING_BAR.md A1.4 and A2, F18). The fit's "
         "errors are 0.146 +/- 0.079 Gyr and 1.38 +/- 0.17: fit errors, not a scatter between galaxies ('the "
         "scatter is large'). **Its Q-dependence is unmodelled**: at one f_d the same paper's models form a bar "
         "after 0.27 Gyr (Q_0 = 0.5) and after 8.8 Gyr (Q_0 = 2.0); the fit is at Q_0 = 1.2 and the model reads "
@@ -296,7 +297,8 @@ LEVEL0: dict[str, Constant] = {
         "dimensionless",
         "S in t_b = T0 exp(S / f_d) "
         "[verified: Fujii et al. 2018, MNRAS 477, 1451, arXiv:1712.00058, eqs 6, 9, 11, §3.3, "
-        "https://ar5iv.labs.arxiv.org/html/1712.00058] (eq. 11; docs/READING_BAR.md A1.4 and A2, F18). The fit's "
+        "https://ar5iv.labs.arxiv.org/html/1712.00058] (the fit is unnumbered, §3.3 and the Fig. 9 caption; eq. 11 "
+        "defines f_d - corrected at Audit V, S70; docs/READING_BAR.md A1.4 and A2, F18). The fit's "
         "errors are 0.146 +/- 0.079 Gyr and 1.38 +/- 0.17. With BAR_FORMATION_TIME_SCALE it gives 1.5 Gyr at "
         "f_d = 0.6, 7.5 Gyr at 0.35 and 14.5 Gyr at 0.30 (the paper's abstract: the epoch 'exceeds a Hubble time "
         "when the disk-mass fraction is ~0.35'). **Its Q-dependence is unmodelled**: 0.27 to 8.8 Gyr at one f_d "
@@ -317,18 +319,21 @@ LEVEL0: dict[str, Constant] = {
         3.0,
         "dimensionless",
         "The exponent c of the bar body's generalised ellipse, (|x|/a)^c + (|y|/b)^c = m^c: 2 is an ellipse, "
-        "above 2 boxy. Fitted bars are boxy, c about 3 and always above 2 "
+        "above 2 boxy. Fitted bars are boxy: the boxiness 'peaks at c = 3' "
         "[verified: Gadotti 2011, MNRAS 415, 3308, arXiv:1003.1719, §2–3.1, "
-        "https://ar5iv.labs.arxiv.org/html/1003.1719] (docs/READING_BAR.md A1.2 and A2, G11; Kim et al. 2015, "
-        "K15, carries the same boxiness).",
+        "https://ar5iv.labs.arxiv.org/html/1003.1719] (docs/READING_BAR.md A1.2 and A2, G11), and is always above 2 "
+        "in Kim et al. 2015 (K15) - the 'always above 2' is K15's, not Gadotti's (attribution corrected at Audit V, "
+        "S70).",
     ),
     "BAR_PROFILE_INDEX": Constant(
         2.0,
         "dimensionless",
         "The exponent n of the bar body's surface density along the generalised radius m, (1 - m^2)^n inside "
         "m = 1 and nothing outside: the Ferrers form with exponent 2, cut off at the bar's half-length, the "
-        "fitting function of the S4G decompositions the bar statistics come from, so no effective radius is "
-        "free [verified: Salo et al. 2015, ApJS 219, 4, arXiv:1503.06550, Table 2 and bar function, "
+        "fitting function of the S4G decompositions, so no effective radius is free. Two sourced choices, each "
+        "named to its own decomposition: the body's shape (axis ratio, boxiness) is Gadotti 2011's from SDSS "
+        "Sersic-bar fits, the profile Salo et al. 2015's Ferrers form, which prints no bar shape statistics (the "
+        "clause 'the decompositions the bar statistics come from' struck at Audit V, S70) [verified: Salo et al. 2015, ApJS 219, 4, arXiv:1503.06550, Table 2 and bar function, "
         "https://ar5iv.labs.arxiv.org/html/1503.06550] (docs/READING_BAR.md A1.2 and A2, S15). The measured "
         "profiles run from flat (early types, a bulge) to exponential (late types): one form is taken, chosen "
         "before a number was read (D217 item 4).",
@@ -518,7 +523,9 @@ LEVEL0: dict[str, Constant] = {
         "pc",
         "The largest cloud radius: the Milky Way's whole-Galaxy 12CO catalogue holds radii to ~150 pc, 'comparable "
         "to the molecular disk's scale height' [verified: Miville-Deschenes, Murray & Lee 2017, ApJ 834, 57, "
-        "arXiv:1610.05918, read at S67]. A cloud whose sqrt(M / pi Sigma) exceeds it is held at it with its mass "
+        "arXiv:1610.05918, read at S67]. The catalogue's radius is (R_max R_min^2)^(1/3) of its fitted ellipse, taken "
+        "here as a cap on the model's equal-area radius sqrt(M / pi Sigma) - two definitions of a radius, the "
+        "difference unmeasured (stated at Audit V, S70). A cloud whose sqrt(M / pi Sigma) exceeds it is held at it with its mass "
         "kept, so its surface density rises: W43's ~460 Msun/pc2 at R_eq ~70 pc and 7.1e6 Msun (Nguyen Luong et al. "
         "2011) is a disclosed check that the giants are denser (D231).",
     ),
@@ -527,10 +534,11 @@ LEVEL0: dict[str, Constant] = {
         "pc",
         "Full width at half maximum of the Milky Way's molecular (CO) layer, the clouds' layer: 'a FWHM of 120 "
         "+/- 18 pc, roughly independent of R' from 2 kpc to the solar circle [verified: Bronfman et al. 1988, "
-        "ApJ 324, 248, read via Ferriere 2001, RMP 73, 1031, section II.A, at S67]. The neighbours: 118 pc FWHM "
+        "ApJ 324, 248, read via Ferriere 2001, RMP 73, 1031, section II.B, at S67; the section corrected at Audit V, "
+        "S70]. The neighbours: 118 pc FWHM "
         "'for the layer of molecular gas traced by CO' [verified: Bronfman et al. 2000, A&A 358, 521, section "
-        "4.1, read at S67] and 136 +/- 17 pc at R0 [verified: Clemens, Sanders & Scoville 1988, ApJ 327, 139, "
-        "via Ferriere 2001 section II.A]; Malhotra 1994's Gaussian sigma_z 58 pc at R0 (FWHM 137) the high "
+        "4.1, read at S67; MATCH on arXiv:astro-ph/0006104 at S70, Audit V F-1B-7] and 136 +/- 17 pc at R0 [verified: Clemens, Sanders & Scoville 1988, ApJ 327, 139, "
+        "via Ferriere 2001 section II.B]; Malhotra 1994's Gaussian sigma_z 58 pc at R0 (FWHM 137) the high "
         "reading (docs/READING_CLOUD_LAYER.md). An absolute thickness, not a share of the stellar disc (D229): "
         "the clouds' sech^2(z/2h) scale height is the h whose FWHM this is, h = FWHM / (4 artanh(1/sqrt 2)) = "
         "34.04 pc, derived in stages/clouds.py. One value at every radius and for every template: the layer's "
@@ -874,7 +882,8 @@ LEVEL0: dict[str, Constant] = {
         "kpc",
         "The clustering field's coarsest lattice scale, the largest scale of the young clusters' hierarchy: 190 pc, "
         "the median of the five largest hierarchical scales measured in nearby discs (101, 110, 190, 450 and 845 "
-        "pc; four more galaxies give only limits, where one power law runs to the edge of the footprint) "
+        "pc; of the seven more galaxies four give lower limits, where one power law runs to the edge of the footprint, "
+        "two upper limits and one none - corrected at Audit V, S70) "
         "[verified: Menon et al. 2021, MNRAS, arXiv:2108.04387, Table 3; docs/READING_CLUSTERING.md 1.3]. Five of the "
         "twelve galaxies that table covers; bracketed by the 112 pc break of the six-galaxy average [verified: "
         "Grasha et al. 2017a, ApJ 840, 113, Table 4; READING_CLUSTERING.md 1.2] and the 210-300 pc of NGC 628 "
@@ -957,7 +966,8 @@ LEVEL0: dict[str, Constant] = {
         1.0,
         "dimensionless",
         "How much steeper the gas's two-dimensional column spectrum is below the gas layer's thickness than above "
-        "it: one power of k - a slab thinner than 1/k projects 'shallower than the 3D density spectrum by one' "
+        "it: one power of k - a slab thinner than 1/k projects 'shallower than the 3D density spectrum by one', "
+        "under the source's condition 'if there are no velocity fluctuations' (restored at Audit V, S70) "
         "[verified: Elmegreen & Scalo 2004, ARA&A 42, 211, arXiv:astro-ph/0404451, sect. 2.1; docs/READING_GAS_SPECTRA.md "
         "2.14] and the LMC's HI steepens by about one at its 80-100 pc break [verified: Elmegreen, Kim & "
         "Staveley-Smith 2001, ApJ 548, 749, arXiv:astro-ph/0010578, sect. 3.3; READING_GAS_SPECTRA.md 2.1]. The "
@@ -984,7 +994,9 @@ LEVEL0: dict[str, Constant] = {
         "READING_GAS_SPECTRA.md 2.10] - simulated boxes, no disc geometry. Their fits to Milky Way clouds give "
         "A = 0.16 (Taurus) and 0.12 (IC 5146) with b = 0.5; Federrath et al. 2010's compressive forcing is three "
         "times wider at M 5.5 (READING_GAS_SPECTRA.md 2.11). The measured galaxy widths (HI 0.19-0.51 dex, "
-        "Berkhuijsen & Fletcher 2015) are a disclosed check, not a target.",
+        "Berkhuijsen & Fletcher 2015) are a disclosed check, not a target. The model's Mach number, 8.9 (6 km/s over "
+        "the cold neutral medium's 0.675), lies 1 % past the simulated 0.4-8.8: an extrapolation of the fit, stated "
+        "at Audit V, S70.",
     ),
     "GAS_FLUCTUATION_WIDTH_B": Constant(
         0.3333333333333333,
@@ -1072,8 +1084,8 @@ LEVEL0: dict[str, Constant] = {
         "C_3.6 + 0.31, a peak-type contrast; the Milky Way's inner-Galaxy molecular mass ratio ~1.5 "
         "inside +/-10 km/s windows [verified: Colombo et al. 2022, A&A 658, A54, abstract, Sect. 5.3] "
         "- not the default, which is a class mean. One contrast for all the gas: the "
-        "HI's 1.22 at <= 2.5 kpc resolution (Table 2) is debt #130. Coverage: 17 of 27 PHANGS spirals "
-        "with molecular contrasts.",
+        "HI's 1.22 at <= 2.5 kpc resolution (Table 2) is debt #130. Coverage: the 17 grand designs of the 28 "
+        "PHANGS spirals with molecular contrasts (corrected at Audit V, S70: was '17 of 27').",
     ),
     "GAS_ARM_CONTRAST_OTHER": Constant(
         1.90,
@@ -1129,9 +1141,10 @@ LEVEL0: dict[str, Constant] = {
         "each segment's pitch is the galaxy's pitch plus an independent normal residual of this fraction of "
         "it, untruncated - 7.6 deg in a disc of pitch 13.5 deg, 16 deg at 28.9 - so tighter arms vary less in "
         "degrees. The measured variation of the pitch along an arm: sd of local pitch over mean 0.56 +- 0.25, "
-        "155 galaxies (0.47 for grand designs, 0.65 for multi-armed spirals; in degrees 7.2 +- 3.3) [verified: "
+        "over Savchenko 2020's 67 stage-2 galaxies (sections 3.3 and 4.2; of the 155 in the sample - coverage "
+        "corrected at Audit V, S70, the value stands) (0.47 for grand designs, 0.65 for multi-armed spirals; in degrees 7.2 +- 3.3) [verified: "
         "Savchenko, Marchuk, Mosenkov & Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; "
-        "docs/READING_ARM_SEGMENTS.md A1.1: \"sd of local pitch over mean 0.56 +- 0.25\", 155 galaxies]. A "
+        "docs/READING_ARM_SEGMENTS.md A1.1: \"sd of local pitch over mean 0.56 +- 0.25\", the 67 stage-2 galaxies]. A "
         "reversed segment is one drawn more than 1/0.56 of the spread below the mean: 3.7 % of segments at "
         "every pitch the tangent does not wrap (beside 3 reversed of the 38 printed rows of Honig & Reid 2015, "
         "8 %). **The absolute form was built first and withdrawn at the gate's follow-up**: a residual of "
@@ -1932,13 +1945,15 @@ LEVEL0: dict[str, Constant] = {
         "The spacing of gas spurs along an arm in local Jeans lengths of the arm's peak, lambda_J,sp = c_s^2 / (G "
         "Sigma_peak): 'the spur spacing is ~10 lambda_J,sp', 'three to five times larger' than in a thin disc, "
         "from two-dimensional thick-disc and three-dimensional stratified MHD models [verified: Kim & Ostriker "
-        "2006, ApJ 646, 213 = arXiv:astro-ph/0603751, abstract and section 6 item 1; docs/READING_SPURS.md "
+        "2006, ApJ 646, 213 = arXiv:astro-ph/0603751, abstract and section 5.1 item 1 (the paper has no section 6; "
+        "corrected at Audit V, S70); docs/READING_SPURS.md "
         "table rows 1g-1i]; M51's measured mean is 10.4 lambda_J along its primary dust lane with c_s = 7 km/s "
         "adopted [verified: La Vigne, Vogel & Ostriker 2006, ApJ 650, 818 = arXiv:astro-ph/0606761, sections 4.7 "
         "and 5] - 2 of the 45 feathered galaxies carry a Jeans ratio, and NGC 628's 1.7 is flagged an "
         "underestimate. Named alternatives: 2.5 lambda_J,sp in the razor-thin magnetised models [verified: Kim & "
         "Ostriker 2002, ApJ 570, 132 = arXiv:astro-ph/0111398, section 5.1], about 5 lambda_J of the arm in "
-        "global models [verified: Shetty & Ostriker 2006, arXiv:astro-ph/0605142, sections 5.1-5.2], 7.9 for "
+        "global models [verified: Shetty & Ostriker 2006, arXiv:astro-ph/0605142, sections 5.1-5.2: 'lambda_spur/lambda_J,arm "
+        "~ 5', clump spacings '~3 - 5 lambda_J,arm' - MATCH, read at S70, Audit V F-1B-7], 7.9 for "
         "the fastest-growing feathering mode in M51 [verified: Lee 2014, arXiv:1407.5215, eq. 34]. The choice "
         "between 10 and 2.5 is the owner's (D221 as amended).",
     ),
@@ -1959,7 +1974,8 @@ LEVEL0: dict[str, Constant] = {
         "The length of a gas spur from the ridge: M51's nine PAWS gas spurs, mean 6.5 arcsec at 7.6 Mpc, about "
         "240 pc [verified: Schinnerer et al. 2017, ApJ 836, 62 = arXiv:1701.02184, section 3.1.1; the parsecs "
         "are the reader's arithmetic, docs/READING_SPURS.md row 2d]; CO over 155, 420 and 475 pc in three spurs "
-        "of another M51 field [verified: Corder et al. 2008, arXiv:0811.2903]. Stellar spurs run 0.6-4.8 kpc "
+        "of another M51 field [verified: Corder et al. 2008, arXiv:0811.2903, section III: 'CO emission over a length of "
+        "475, 420 and 155 pc along Spurs 1, 2a and 3' - MATCH, read at S70, Audit V F-1B-7]. Stellar spurs run 0.6-4.8 kpc "
         "(Elmegreen 1980) and are not these.",
     ),
     "SPUR_WIDTH": Constant(

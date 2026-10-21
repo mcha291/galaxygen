@@ -42,7 +42,7 @@ agree" means two separate fetches gave the same digits. Full tags with URLs are 
 | \|φ\| against radius, statistically | "does not change with increasing radius ... for all types of spirals" | 391 | DG19 §6 |
 | Variation along the two main arms: max deviation from mean ÷ mean (window Fourier, SDSS) | > 20 % in "about 2/3"; < 10 % in "∼1/10"; pitch falls outward in 32 of 50 (64 % ± 11 %) | 50 gal. | SR13 |
 | Radial range traced | 0.74 ± 0.09 to 2.40 ± 0.25 inner-disc scale lengths | 50 | SR13 |
-| Variation along an arm: sd of local pitch ÷ mean (local pitch in a window of 1/3 of the arm) | 0.56 ± 0.25 all; 0.47 ± 0.24 grand design; 0.65 ± 0.24 multi-armed; absolute σ(ψ) = 7.2° ± 3.3° | 155 gal. | S20 |
+| Variation along an arm: sd of local pitch ÷ mean (local pitch in a window of 1/3 of the arm) | 0.56 ± 0.25 all; 0.47 ± 0.24 grand design; 0.65 ± 0.24 multi-armed; absolute σ(ψ) = 7.2° ± 3.3° | 67 stage-2 gal. of the 155 (§3.3, §4.2; was "155 gal.", *re-read at Audit V (S70)*) | S20 |
 | Method scatter, 1D vs 2D Fourier | "consistent within a small scatter of 2°" | — | YH19 |
 | 2DFFT error per galaxy | "2° to 4°"; variable pitch "more the exception than the rule" | — | D12 |
 
@@ -150,7 +150,8 @@ Width law: `w(R) = 336 + 36 (R[kpc] − 8.15) pc`. R0 = 8.15 ± 0.15 kpc, Θ0 = 
   not quantified. Agreement with literature −0.2° ± 0.7°; g vs r −0.33° ± 0.16°.
 - **S20** `[verified: Savchenko, Marchuk, Mosenkov & Grishunin 2020, MNRAS 493, 390 = arXiv:2001.09110, results,
   https://arxiv.org/pdf/2001.09110 and https://ar5iv.labs.arxiv.org/html/2001.09110; covers the variation statistics;
-  2 reads agree]`. 155 face-on SDSS spirals (20 F, 100 M, 35 G). Whole-sample mean pitch 14.8° ± 5.3°. Flocculent
+  2 reads agree]`. 155 face-on SDSS spirals (20 F, 100 M, 35 G); the variation statistics (0.56 ± 0.25) cover the 67
+  stage-2 galaxies of them, §3.3 and §4.2 (*re-read at Audit V (S70)*). Whole-sample mean pitch 14.8° ± 5.3°. Flocculent
   variation 0.39 ± 0.10 from 5 galaxies (one read). Per-class mean pitches: reads disagree, not used.
 - **L21** `[verified: Lingard et al. 2021, MNRAS 504, 3364 = arXiv:2105.04500, §2.3, §3.1,
   https://arxiv.org/pdf/2105.04500 and https://ar5iv.labs.arxiv.org/html/2105.04500; covers σ_gal; 2 reads agree]`.

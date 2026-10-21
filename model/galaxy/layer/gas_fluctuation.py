@@ -432,9 +432,10 @@ _CONSERVES = (
     "structures trail as the arms do). It moves no cloud."
 )
 _STATISTIC = (
-    "The 2-D column spectrum P(k) ~ k^-1.53 above the break (the clustering field's slope; the sources' THINGS median "
-    "-1.6, half the sample -1.9 to -1.5 [verified: Dutta et al. 2013, NewA 19, 89, Table 2; docs/READING_GAS_SPECTRA.md "
-    "2.4]; the Local Group's -2.2 to -2.7) and steeper by one below pi h [verified: Elmegreen & Scalo 2004, ARA&A 42, "
+    "The 2-D column spectrum P(k) ~ k^-1.53 above the break (the clustering field's slope; the THINGS sample's middle "
+    "half -1.9 to -1.5 and its mean -1.3 [verified: Dutta et al. 2013, NewA 19, 89, Table 2; docs/READING_GAS_SPECTRA.md "
+    "2.4] - its median -1.6 is the reader's arithmetic on that table, not a printed number (Audit V F-1B-8b, "
+    "S70); the Local Group's -2.2 to -2.7) and steeper by one below pi h [verified: Elmegreen & Scalo 2004, ARA&A 42, "
     "211, sect. 2.1; Elmegreen, Kim & Staveley-Smith 2001, ApJ 548, 749, sect. 3.3; Dutta et al. 2009, MNRAS 397, L60; "
     "READING_GAS_SPECTRA.md 2.1, 2.4, 2.14]; the log-normal width sigma^2 = 0.11 ln(1 + M^2/9) [verified: Burkhart & "
     "Lazarian 2012, ApJL 755, L19, eq. 3, Table 1; READING_GAS_SPECTRA.md 2.10] at M = 6 km/s over the cold neutral "

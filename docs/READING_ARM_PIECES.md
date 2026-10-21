@@ -296,7 +296,7 @@ Length
 - In the K' flocculent sample NGC 4041 and NGC 7177 have "short two-arm structures close to the ends of their bars";
   NGC 6384's arms end outside its nuclear bar and do not reach the centre; NGC 6643's "connect smoothly to the central
   regions" [verified: Elmegreen et al. 1999, Sect. 3].
-- Innermost HII-traced segments have mean radii 1.1-3.3 kpc [verified: Honig & Reid 2015, Tables 2-5]. In M51 the
+- Innermost HII-traced segments lie at 1.09-2.63 kpc per galaxy (was "mean radii 1.1-3.3 kpc"; *re-read at Audit V (S70)*) [verified: Honig & Reid 2015, Tables 2-5]. In M51 the
   fitted start of the arms lies 0.5 kpc further in in the FIR than in the UV [verified: Marchuk 2024, Sect. 6.3.3].
 - Bifurcations: Savchenko 2020 followed the brighter branch and discarded arms with equal branches or more than one
   split, noting splits mostly in M and F galaxies [verified: Sect. 3.2, 3.3]. No statistic anywhere.

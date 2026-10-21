@@ -40,7 +40,7 @@ separate fetches (or two sources) agreed, `×1` means a single fetch. Tags in th
 | Bar/T, H-band light (= mass at one M/L); T = bulge + disc + bar | range "∼0.03 to ∼0.47"; six above 0.3; mean flat Sa–Sb, declines "by about 0.1" Sb→Sc | 143 spirals, M_B ≤ −19.3, i ≤ 70° (83 barred) | [verified: W09, §5.5, ×2] |
 | Share of all stellar mass in the sample that is in bars (barred and unbarred galaxies together) | "∼10%" bars, ∼70% discs, ∼20% bulges | same sample S1 | [verified: W09, §5.2, ×2] |
 | Share of stellar mass in bars, all massive galaxies including ellipticals | 4% bars (32% E, 36% discs, 25% classical bulges, 3% pseudo-bulges) | ∼1000 SDSS galaxies, M⋆ > 10¹⁰ M☉ | [verified: G09, abstract, ×1 + search snippet] |
-| Effect of modelling the disc break on Bar/T at 3.6 µm | Bar/T falls "∼25%" in the median when the break is modelled | 144 S4G barred, b/a > 0.5 | [verified: K14, text; K15 repeats, ×2] |
+| Effect of modelling the disc break on Bar/T at 3.6 µm | Bar/T "can change up to 25 %" when the break is modelled - no direction printed (was "falls ∼25 % in the median"; *re-read at Audit V (S70)*: K15's words; K14, the primary, not fetched) | 144 S4G barred, b/a > 0.5 | [verified: K15, text; K14 not fetched] |
 | Milky Way: bulge-region stellar mass / total stellar mass | 0.3 ± 0.06; M_b⋆ = (1.4–1.7)×10¹⁰ M☉ | review | [verified: BHG16, §4.2.4, ×2] |
 | Milky Way: bar + bulge stellar mass (long bar and b/p bulge together) | 1.88 ± 0.12 ×10¹⁰ M☉ (inner disc in bar region 1.29 ± 0.12 ×10¹⁰) | M2M models | [verified: P17, abstract, ×1] |
 
@@ -102,7 +102,7 @@ bars in low-mass, blue, gas-rich discs are missed [verified: E18, abstract + §5
 | Mo, Mao & White 1998 | stable if `λ′ ≳ λ′_crit = √2 ε²_m,crit m_d f_c^(1/2) f_R^(−1) f_V^(−2)`, λ′ ≡ (j_d/m_d) λ; rough form "λ′ > m_d" | fraction of haloes with stable discs: "at most half" for m_d = 0.05, "about 90 percent" for m_d = 0.025 (j_d = m_d) | [verified: MMW98, eq. 37, §3.2–3.3, ×1 + a second paper's quotation of eq. 37] |
 | Toomre Q | `Q ≡ σ_R κ / (3.36 G Σ) > 1` (axisymmetric stability) | — | [verified: Se14, §II.9; YS15, ×2] |
 | Swing amplification X | `X ≡ κ² R / (2π G Σ m)`; large for 1 ≲ X ≲ 2 (F18) or 1 ≲ X ≲ 3 (Se14); gain ∼100 at X ≃ 2, Q ≃ 1.2, a few at Q ≃ 2 | — | [verified: F18 eq. 6; Se14 eqs 17–19, ×1 each] |
-| Disc fraction and time (Fujii) | `f_d ≡ (V_c,d/V_c,tot)²` at R = 2.2 R_d; `t_b = (0.146 ± 0.079) exp[(1.38 ± 0.17)/f_d]` Gyr; formed when A₂,max > 0.2 and R_b > 1 kpc; N_d = 8M, Q₀ = 1.2 | fit errors only; "the scatter is large"; at one f_d, t_b = 0.27 Gyr (Q₀ = 0.5) against 8.8 Gyr (Q₀ = 2.0) | [verified: F18, eq. 11 + §3.3, ×2; BH23 eq. 7 agrees] |
+| Disc fraction and time (Fujii) | `f_d ≡ (V_c,d/V_c,tot)²` at R = 2.2 R_d; `t_b = (0.146 ± 0.079) exp[(1.38 ± 0.17)/f_d]` Gyr; formed when A₂,max > 0.2 and R_b > 1 kpc; N_d = 8M, Q₀ = 1.2 | fit errors only; "the scatter is large"; at one f_d, t_b = 0.27 Gyr (Q₀ = 0.5) against 8.8 Gyr (Q₀ = 2.0) | [verified: F18, §3.3 and the Fig. 9 caption (the fit is unnumbered; eq. 11 defines f_d - *re-read at Audit V (S70)*), ×2; BH23 eq. 7 agrees] |
 | Disc fraction and time (Bland-Hawthorn) | `τ_bar/τ_H = exp[−13.9(f_disk − 0.250)]` (M_halo 5×10¹⁰), `exp[−14.1(f_disk − 0.310)]` (10¹¹), `exp[−13.0(f_disk − 0.328)]` (5×10¹¹ M☉); τ_H ≈ 13.78 Gyr; dividing line f_disk ≈ 0.3 | none stated; 21 dry + 4 gas models; f_gas = 0.1 slows onset by up to 50 % | [verified: BH23, eqs 1, 7–10, ×2] |
 | Local + global dominance (EAGLE) | `f_disc ≡ V₅₀/(G M⋆/r₅₀)^(1/2)`, `f_dec ≡ V₅₀/V_max,halo`; strong bars: f_disc < 1 and f_dec > 0.95 | 45 % of discs with f_disc < 1.1 stay unbarred; pair finds 82 % of strong bars, 11 % of those selected unbarred; 77 % of unbarred found by f_disc > 0.95, f_dec < 1 | [verified: Al17, §4, ×2] |
 | Q with central concentration C | boundary `Q²_min/4 + C²/2.89 = 1`; critical ELN value ∼1.0, critical τ_OP 0.14–0.24 | none | [verified: Wo24, eq. 17, ×1] |
@@ -313,9 +313,9 @@ it; R_CR = corotation.
 | Curvature, observed (K02) | 0 to 20 °/kpc, error ±3 °/kpc, 9 galaxies | Δα = change of tangent angle per kpc along the lane, from just outside the circumnuclear region to near the bar end | `[v:K02 curvature section]` 1× |
 | Curvature, observed (C09) | 0° to 111°, uncertainty ~15°, 55 galaxies, Q_b 0.089–0.730 | Δα = tangent-angle change per unit length × r(Q_b); dimensionless (degrees); constant-curvature stretch only | `[v:C09 §III–IV, Table 1]` 2× |
 | Curvature vs Q_b, observed | no fit; an upper envelope: "strong bars cannot have curved dust lanes" | populated lower-left, empty upper-right of (Δα, Q_b) | `[v:C09 §IV, Fig. 1]` 2× |
-| Curvature fit, SPH (C09) | Q_b − 0.087 (a/b) = (0.156 ± 0.020) − (0.119 ± 0.015) log₁₀Δα; ρ = 0.66 (0.58 with Q_b alone) | 238 simulated bars; a/b 1.5–4.5 | `[v:C09 §VI, eq. 3]` 2× |
+| Curvature fit, FTM (C09; was "SPH") | Q_b − 0.087 (a/b) = (0.156 ± 0.020) − (0.119 ± 0.015) log₁₀Δα; ρ = 0.66 (0.58 with Q_b alone) | 238 simulations, 88 with lanes (was "238 simulated bars"; *re-read at Audit V (S70)*); a/b 1.5–4.5 | `[v:C09 §VI, eq. 3]` 2× |
 | Curvature fit, grid hydro (KSK12) | Q_b + 0.10 ℛ = 0.87 − 0.37 log Δα | Δα as C09; ℛ = a/b here; a = 5 kpc, R_CR = 6 kpc, c_s = 10 km/s | `[v:KSK12 eq. 9–10]` 3× |
-| Mean curvature × a, observed (SM15) | 0.12 to 2.37 (10 S⁴G galaxies, Q_b 0.09–0.63) | κ = \|y″\|/(1+y′²)^{3/2}, mean along the lane, × bar semi-major axis; from outside the nuclear ring to the kink where the arms begin | `[v:SM15 Table 1]` 1× |
+| Mean curvature × a, observed (SM15) | 0.12 to 2.37 (10 S⁴G galaxies, Q_b 0.09–0.57; was 0.09–0.63, *re-read at Audit V (S70)*) | κ = \|y″\|/(1+y′²)^{3/2}, mean along the lane, × bar semi-major axis; from outside the nuclear ring to the kink where the arms begin | `[v:SM15 Table 1]` 1× |
 | Curvature vs strength, fast/slow (SM15) | fast bars (1 < ℛ < 1.4): inverse relation; slow bars (ℛ > 1.4): constant; 1.90 (fast) vs 0.95 (slow) at lowest ellipticity | ℛ = R_CR/a here; no fitted equation printed; unit of the two numbers not stated by the read | `[v:SM15 abstract + results]` 2× (numbers 2×) |
 | Lane offset from the bar axis | x_peak ≈ −2.5 kpc (early ridge) → ≈ −1 kpc (steady shock), model M30R25 | x = distance from the bar major axis of the density peak on the circle r = 1.5 kpc; bar along y; a = 5 kpc | `[v:KSK12 dust-lane section]` 1× (ar5iv) + 1× (definition) |
 | Peak surface density in the lane | Σ_peak ~ 100 M⊙ pc⁻² against Σ₀ = 10 M⊙ pc⁻² initial | at r = 1.5 kpc, at the shock's strongest phase (t ~ 0.13–0.15 Gyr) | `[v:KSK12 dust-lane section]` 1× (Σ₀ 1×) |
@@ -382,7 +382,7 @@ it; R_CR = corotation.
 | Radial reach, N-body | bar affects the arms within 1.5–2 bar radii; swing amplification explains them beyond | bar ~3 kpc, R_CR ≃ 4 kpc, Ω_b ≈ 47 km s⁻¹ kpc⁻¹ | `[v:Ba15 abstract, conclusions]` 2× |
 | Radius of spiral maximum | r_s ≈ 2 r_b on average | radii of the Q_s and Q_b maxima | `[v:Bu09 Table 7 text]` 2× |
 | Same, strongly barred | ⟨r(Q_b)/r(Q_s)⟩ = 0.57 ± 0.13 (7 galaxies, Q_b > 0.25) | as above | `[v:B04]` 1× |
-| Bar m = 2 amplitude | A₂^max 0.23–0.41, at 0.76–0.94 r_bar | stacked S⁴G bars by mass/type bin, 3.6 µm | `[v:DG16 Table 5, Fig. 18]` 1× |
+| Bar m = 2 amplitude | A₂^max 0.23–0.41, at 0.76–0.94 r_bar | stacked S⁴G bars by mass/type bin, 3.6 µm | `[v:DG16b Table 5, Fig. 18]` 1× (the key was DG16, Part A's DG16b - renamed at Audit V (S70)) |
 | Spiral m = 2 contrast | A₂s 0.063–1.220 (Q_s 0.031–0.497; Q_b 0.102–0.796) | maximum relative m = 2 intensity amplitude of the spiral after removing the bar; AAT 23 | `[v:Bu09]` 1× |
 | Time behaviour | m = 2 arm amplitude cycles with a period ~200 Myr; grand design "only when the spirals connect with the ends of the bar" | N-body | `[v:Ba15]` 1× |
 | Reconnection period | ≈ 63 Myr and ~125 Myr (model 1); ≈ 105 Myr (model 2) | bar meeting slower spiral modes | `[v:Hi20]` 1× |
@@ -407,8 +407,8 @@ Table 1, eq. 3, https://ar5iv.labs.arxiv.org/html/0910.5843 and https://arxiv.or
 rows. Δα is the K02 tangent-angle change per unit length multiplied by r(Q_b), "thus a dimensionless quantity";
 measured where curvature is constant, leaving out the innermost and outermost parts. Table 1 examples (1×): NGC
 1530 Q_b 0.730, Δα 4°; NGC 613 0.401, 0°; NGC 1068 0.094, 111°; NGC 1300 0.537, 63°; NGC 1365 0.490, 64°; NGC
-1097 0.279, 60°. The last three show how wide the spread is at high Q_b. Q_b uncertainty ~20 %. Simulations: 10⁵
-isothermal SPH particles, pattern speeds 10–40 km s⁻¹ kpc⁻¹, a/b 1.5–4.5; sound speed not printed.
+1097 0.279, 60°. The last three show how wide the spread is at high Q_b. Q_b uncertainty ~20 %. Simulations: FTM runs
+with 10⁵ isothermal particles (was "SPH"; 238 simulations, 88 with lanes; *re-read at Audit V (S70)*), pattern speeds 10–40 km s⁻¹ kpc⁻¹, a/b 1.5–4.5; sound speed not printed.
 
 **SM15** `[verified: Sánchez-Menguiano et al. 2015, MNRAS 450, 2670, arXiv:1504.02232, abstract, method, Table 1,
 https://ar5iv.labs.arxiv.org/html/1504.02232 and https://arxiv.org/abs/1504.02232]` Covers: the SM15 rows. Table
@@ -504,15 +504,17 @@ https://arxiv.org/abs/1004.5463 and https://ar5iv.labs.arxiv.org/html/1004.5463]
 Q_bar(r) = max|F_T(r,φ)|/⟨|F_R(r,φ)|⟩ from the bar-only density. "The correlation is very strong just beyond the
 bar, and stays statistically significant until ∼1.6 R_bar." Inside the range the spirals "are expected to share
 the … pattern speed of the bar"; beyond, "independent structures … a slower pattern speed … or … short-lived
-transient wave packets". No amplitude-against-radius table is printed. The brief's "about 1.5 bar lengths" is not
-on the page; 1.6 and 1.4 are.
+transient wave packets". No amplitude-against-radius table is printed. The brief's "about 1.5 bar lengths" is on
+the page after all: the Conclusions say "r ∼ 1.5 R_bar"; 1.6 and 1.4 are there too (*re-read at Audit V (S70)*: was
+"is not on the page").
 
 **DG19** `[verified: Díaz-García, Salo, Knapen & Herrera-Endoqui 2019, A&A 631, A94, arXiv:1908.04246, §5.1, §7,
 §9.3, Table 2, https://ar5iv.labs.arxiv.org/html/1908.04246]` Covers: its rows. "We do not find observational
 evidence that spiral arms are driven by stellar bars or by invariant manifolds." Pitch for 4 ≤ T < 6: barred 19.7°
 ± 0.6°, unbarred 19.8° ± 0.7° (1×). The bar–spiral strength link is read as a shared property of the disc.
 
-**DG16** `[verified: Díaz-García, Salo & Laurikainen 2016, A&A 596, A84, arXiv:1607.07317, §3–4, Table 5, Fig.
+**DG16b** (Part A's key for the same paper; this part called it DG16, which Part A gives to arXiv:1509.06743 - renamed
+at Audit V (S70)) `[verified: Díaz-García, Salo & Laurikainen 2016, A&A 596, A84, arXiv:1607.07317, §3–4, Table 5, Fig.
 18, https://arxiv.org/html/1607.07317]` 1×. 748 barred galaxies scaled to bar length and orientation and
 reflected "to make the spiral arms wind clockwise"; outer structure fades in the stacks. No A₂ values at 1.5 or 2
 r_bar are tabulated.

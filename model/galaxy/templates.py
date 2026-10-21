@@ -769,9 +769,9 @@ NGC_4414 = Template(
                 "5, https://ar5iv.labs.arxiv.org/html/astro-ph/0202391, read at S70: 'the highly obscured molecular "
                 "ring'; the M/L reaches about 4 'except for radii 5'' < r < 50''' (sect. 4) and is constant at r > 50'' "
                 "'outside of the star-forming molecular ring' (sect. 4.3); 'no molecular gas is present in the "
-                "nucleus' (sect. 3)] (docs/READING_NGC_4414.md, V02) [inferred: the ring's edges are the obscured "
+                "nucleus' (sect. 3)] (docs/READING_NGC_4414.md, V02) [inferred] (the ring's edges are the obscured "
                 "radii V02 places the molecular ring in, not radii read off the CO map; converted at the template's "
-                "17.7 Mpc, 85.8 pc per arcsecond] (the owner's ruling, DECISIONS.md D233: a boundary declared per "
+                "17.7 Mpc, 85.8 pc per arcsecond) (the owner's ruling, DECISIONS.md D233: a boundary declared per "
                 "template; entered at S70)"
             ),
         ),
@@ -914,7 +914,10 @@ NGC_4414 = Template(
             mismatch="28 % of the HI lies beyond 20.6 kpc; X_CO",
             source=(
                 f"[verified: {_READING}, rows 9 and 10 and section 3's total hydrogen: the HI window [3.8, 6.3] and the "
-                "H2 window [3.6, 8.4] x 10^9 Msun summed edge to edge; dB14, Pin18, H03 (Helfer et al. 2003, Table 4)]"
+                "H2 window [3.6, 8.4] x 10^9 Msun summed edge to edge; dB14, Pin18, H03 (Helfer et al. 2003, Table 4)] "
+                "[verified: Helfer et al. 2003, ApJS 145, 259 = arXiv:astro-ph/0304294, Table 2: NGC 4414's row carries "
+                "a sigma_12m of 0.36, 'where present ... single-dish OTF maps from the NRAO 12 m telescope were "
+                "incorporated' - its H2 flux is the combined map's, read at S70 (Audit V F-1B-7)]"
             ),
             statistic="scalar",
             field="hydrogen_mass_30kpc",
@@ -931,7 +934,8 @@ NGC_4414 = Template(
             mismatch="The window allows 0.15 mag of internal extinction",
             source=(
                 f"[verified: {_READING}, row 12 and window W-I; 2MRS (Huchra et al. 2012) K_s = 6.939 and "
-                "HyperLeda kt = 6.98 at the three Cepheid distances]"
+                "HyperLeda kt = 6.98 at the three Cepheid distances] (HyperLeda's page was unreachable at Audit V and "
+                "again at S70 - both mirrors refused the connection - so kt rests on the S54 reading; Audit V F-1B-7)"
             ),
             statistic="scalar",
             field="absolute_magnitude_k",
@@ -948,7 +952,8 @@ NGC_4414 = Template(
             mismatch="RC3's statistical correction to face-on",
             source=(
                 f"[verified: {_READING}, row 14 and window W-K; RC3 (B-V)_T0 = 0.77 and HyperLeda bvtc = 0.77, "
-                "corrected to face-on and still attenuated, +/- 0.05 from the observed totals' spread]"
+                "corrected to face-on and still attenuated, +/- 0.05 from the observed totals' spread] (HyperLeda's bvtc "
+                "unreachable at Audit V and at S70; RC3's 0.77 stands beside it; Audit V F-1B-7)"
             ),
             statistic="face_on_colour",
             standing="disclosed",
