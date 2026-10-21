@@ -181,14 +181,16 @@ def test_the_default_numbers(default):
     # S67 (D231): was 8.766 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one
     # 42): a bubble stalls against its region's pressure, which its cloud's mean density sets; the census, its masses
     # and streams unchanged.
-    assert float(np.median(radius)) == pytest.approx(8.349, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
+    # S70 (D234): was 8.349 - the size law's three regimes (#192: the clouds inside 4 kpc and in 7-8.2 kpc less dense, so
+    # the regions' pressure lower) and the clouds' ring inversion (F-2-7).
+    assert float(np.median(radius)) == pytest.approx(9.444, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
     # S57 (D216): was 12477 (another draw of the census); S56 (D215): was 12582 (another draw of the census)
     # S59 (D218 follow-up): was 12499; first pass 12496 (another draw of the census). S58 (D217): was 12503 (another draw of the census)
     # S60 (D219): was 12502 (another draw of the census, 76 more clusters)
     # S61 (D220): was 12575 (the ring-first census, a new draw: 206 fewer clusters)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12445  # S67 (D231): was 12373, the clouds' size law
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12391  # S70 (D234): was 12445 (#192, F-2-7). S67 (D231): was 12373, the clouds' size law
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -222,7 +224,9 @@ def test_the_default_numbers(default):
     # S67 (D231): was 0.0104 - the clouds' size law moves that ring's bubbles (an r^3-weighted sum, at the ring where
     # the regime steps from 82 to 35): 0.00439, 2.2 times the sixteen seeds' spread under their mean (S51); one
     # ring's draw, not judged.
-    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.00439, abs=0.001)
+    # S70 (D234): was 0.00439 - that ring's regime is 35 since #192 (its clouds 1.53x larger) and F-2-7 moves its clouds'
+    # birth radii: 0.0136, inside the sixteen seeds' spread (0.022 +/- 0.008, S51); one ring's draw, not judged.
+    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0136, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
     assert n_mid == pytest.approx(0.688, abs=0.002)
 

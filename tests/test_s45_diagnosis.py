@@ -266,7 +266,8 @@ def test_row_37s_parts(models, default):
     # S61 (D220): was -2.145 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     # S67 (D231): was -2.112 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
-    assert d["lu0"] == pytest.approx(-2.030, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
+    # S70 (D234): was -2.030 - the size law's three regimes (#192) and the clouds' ring inversion (F-2-7) move each region's U.
+    assert d["lu0"] == pytest.approx(-2.125, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0028 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["probe_ageU"] == pytest.approx(0.0042, abs=0.002)  # S45 diagnosis (D196): (i) Z frozen; S51 (D210): was -0.0016, the census redrawn on the gas's ridge
     assert d["probe_Z"] == pytest.approx(-0.1158, abs=0.002)  # S45 diagnosis (D196): (ii) age, U frozen; S51 (D210): was -0.1177, the census redrawn on the gas's ridge

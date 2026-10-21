@@ -1433,7 +1433,12 @@ def _column(name, label, unit, about, ramp=Ramp("viridis"), placement=False):
 
 STAR_RADIUS = _column("star_radius", "Galactocentric radius", "kpc",
                       "Drawn by inverting the radial mass distribution the model published, so the "
-                      "sample traces the disc exactly rather than approximately.")
+                      "sample traces the disc exactly rather than approximately. **A carried defect** (S70, D234; "
+                      "Audit V F-2-7's sibling, debt #197): a level-0 star's ring draw inverts over the whole grid, "
+                      "so its first step inside the ring starts at the grid point below it - measured at S70 on the "
+                      "production grid, layer off, 955 of the Milky Way template's 20 003 sample stars (4.8 %) and 995 "
+                      "of NGC 4414's 20 004 (5.0 %) lie up to 70 pc inside their ring's inner edge, one grid step; "
+                      "the clouds' draw was mended at S70 (clouds.ring_birth_radius), this one is not.")
 STAR_AZIMUTH = _column("star_azimuth", "Azimuth", "rad",
                        "Drawn from the bar and arm density contrast at the star's radius, so stars "
                        "crowd into the arms and the bar. Where the model publishes where stars form "

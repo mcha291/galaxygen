@@ -31,7 +31,7 @@ import numpy as np
 
 from galaxy.core import seeds as _seeds
 from galaxy.stages import clouds as _clouds
-from galaxy.stages.systems import CELL_RINGS, cell_edges, invert_cdf
+from galaxy.stages.systems import CELL_RINGS, cell_edges
 
 COLUMN = "cloud_dust_extinction_v"
 SHARE = "dust_diffuse_share"
@@ -176,7 +176,8 @@ def ring_cloud_dust(fields: Mapping[str, Any], R: np.ndarray, seed: int, constan
         )
         weight = np.where((R >= lo) & (R <= hi), sigma_h2 * R, 0.0)
         u = _seeds.rng(seed, "cloud", r, "radius").random(n)
-        birth = invert_cdf(u, R, weight) if weight.sum() > 0.0 else np.full(n, 0.5 * (lo + hi))
+        # S70 (D234; Audit V F-2-7): was invert_cdf(u, R, weight) - the clouds stage's draw on the ring's own interval.
+        birth = _clouds.ring_birth_radius(u, R, weight, lo, hi) if weight.sum() > 0.0 else np.full(n, 0.5 * (lo + hi))
         out[r] = float(np.sum(mass * np.interp(birth, R, dgr)))
     return out
 

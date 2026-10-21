@@ -241,7 +241,7 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # draw of the census: Q reads 0.9397 of the young light, -5.5 %; the realised cloud mass is 0.904 of the molecular
     # gas at the default seed (2.7 times its 3.5 % noise low; over 300 systems seeds 1.003 +- 0.034, as 1.002 +- 0.036 drawn cell by cell: no bias), and
     # the clusters' mass follows it. Q's own noise is 4.6 %, the tolerance 0.16.
-    assert ratio == pytest.approx(0.9397, abs=0.0005)
+    assert ratio == pytest.approx(0.9405, abs=0.0005)  # S70 (D234): was 0.9397 - the clouds' ring inversion (F-2-7) and the size law (#192)
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))
     # S60 (D219): was 1.008. S59 (D218 follow-up): was 1.010; first pass 1.035. S57 (D216): was 1.007; S56 (D215): was 1.063; S51 (D210): was 1.029
     # S61 (D220): was 1.015 (the clouds drawn ring-first, a new draw: the cloud mass 0.904 of the molecular gas)
@@ -286,7 +286,8 @@ def test_the_census_on_the_default_grid(default):
     # S61 (D220): was 12916 (the clouds drawn ring-first: each ring's count one Poisson draw on the ring's stream)
     assert mass.size == 12710 == int(_hosts(F).sum())
     # S61 (D220): were 9.289 and 2.652e5 (ring-first, a new draw)
-    assert mass.min() == pytest.approx(9.614, rel=1e-3) and mass.max() == pytest.approx(2.258e5, rel=1e-3)
+    # S70 (D234): the minimum was 9.614 - the clouds' ring inversion (F-2-7) moves the birth radius a cluster's efficiency is read at.
+    assert mass.min() == pytest.approx(9.689, rel=1e-3) and mass.max() == pytest.approx(2.258e5, rel=1e-3)
     # S51 (D210): median was 763.06 (763.42 then, inside the rel 1e-3), sum was 3.613e7
     # S56 (D215): median was 763.06 (763.42), sum was 3.733e7
     # S57 (D216): median was 764.08, sum was 3.537e7
