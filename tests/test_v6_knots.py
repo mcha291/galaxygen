@@ -38,9 +38,14 @@ HALPHA_BOX = json.dumps([{"name": "ha", "shape": "box", "centre": 6564.0, "width
 # The knots' Halpha over the field's whole-disc Halpha (sum of hii_halpha_luminosity over the trapezoid integral of
 # halpha_surface_brightness_hii * 2 pi R), measured at S64 (the probe's 0.921 and 1.081): a check on the census
 # against the field, recorded, never a target. Layer on and off alike (the ring-first draw).
-DISC_RATIO = {"milky_way": 0.9207954271231651, "ngc_4414": 1.0814612378969841}
+DISC_RATIO = {"milky_way": 0.9215601826222295, "ngc_4414": 1.081882028213476}
+# S70 (D234): was {"milky_way": 0.9207954271231651, "ngc_4414": 1.0814612378969841} - the clouds' three regimes (#192,
+# NGC 4414 on its own molecular ring) and the ring draw's fix (clouds.ring_birth_radius); the HII regions follow
+# their clouds.
 # The per-ring ratio's range over the lit rings (measured, recorded: the census's own heavy-tailed Poisson noise).
-RING_RANGE = {"milky_way": (0.531, 1.428), "ngc_4414": (0.371, 2.149)}
+# S70 (D234): milky_way was (0.531, 1.428) - the clouds' three regimes (#192) and the ring draw's fix; ngc_4414's
+# range moved inside the 1e-3 it is read to (0.371131, 2.149445).
+RING_RANGE = {"milky_way": (0.535, 1.428), "ngc_4414": (0.371, 2.149)}
 FORBIDDEN = ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")
 # The share of the field's HII Halpha in level-0 cells that name no knot (measured at S64, recorded): Halpha no knot
 # realised, which the knots replace when all are drawn (the rule gives such a cell 1 - d, d the disc's drawn share).
