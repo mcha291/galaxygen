@@ -237,18 +237,36 @@ export const CELL_SECTORS = 32;
 export const CIRCLE_SEGMENTS = 256;
 
 /**
- * The level-0 cells' edges as line segments in the disc plane (scene x = R cos φ, y = 0, z = −R sin φ):
- * `rings + 1` circles at radii evenly spaced from `lo` to `hi`, and `sectors` spokes from `lo` to `hi`
- * every 2π / sectors. Three floats per vertex, two vertices per segment, for a LineSegments.
+ * The level-0 ring edges the outlines are drawn at (S70, Audit V F-4-2): the model's published ones, never an even
+ * division of the grid's extent - the render header's `gas_fluctuation.edges`, or where that is null (the layer off)
+ * the bright table's layout `ring_edges` (both `systems.cell_edges`: linspace(R[0], R[-1], 33), 0.0375 … 29.9625 kpc
+ * on the production grid). Null when neither has come, or when what came is not 33 increasing finite edges: no
+ * outline is drawn rather than a guessed one.
+ */
+export function publishedRingEdges(...candidates: (ArrayLike<number> | null | undefined)[]): number[] | null {
+  for (const c of candidates) {
+    if (!c || c.length !== CELL_RINGS + 1) continue;
+    const edges = Array.from(c, Number);
+    if (edges.every((e, i) => Number.isFinite(e) && (i === 0 || e > edges[i - 1]))) return edges;
+  }
+  return null;
+}
+
+/**
+ * The level-0 cells' edges as line segments in the disc plane (scene x = R cos φ, y = 0, z = −R sin φ): a circle at
+ * each published ring edge `ringEdges` (the model's, publishedRingEdges - S70, F-4-2: until then the circles were
+ * evenly spaced over the grid's extent, off the model's cells by up to 37.5 pc), and `sectors` spokes from the first
+ * edge to the last every 2π / sectors (the model's sector edges, which are that even division). Three floats per
+ * vertex, two vertices per segment, for a LineSegments.
  */
 export function cellOutlines(
-  lo: number,
-  hi: number,
-  rings: number = CELL_RINGS,
+  ringEdges: ArrayLike<number>,
   sectors: number = CELL_SECTORS,
   segments: number = CIRCLE_SEGMENTS,
 ): { positions: Float32Array; radii: number[]; circles: number; spokes: number } {
-  const radii = Array.from({ length: rings + 1 }, (_, i) => lo + ((hi - lo) * i) / rings);
+  const radii = Array.from(ringEdges, Number);
+  const lo = radii[0];
+  const hi = radii[radii.length - 1];
   const drawn = radii; // an edge at r = 0 is the centre and draws as nothing: kept, so every grid has rings + 1
   const out = new Float32Array((drawn.length * segments + sectors) * 6);
   let o = 0;

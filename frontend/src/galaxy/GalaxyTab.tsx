@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   type BlackbodyTable,
@@ -17,7 +17,7 @@ import {
   loadRegion,
 } from "../api";
 import { CellOutlines, CloudMarkers } from "./ComponentLayers";
-import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, agesOf, brightestLayers, cloudColors, diagnosticOn, dustRamp, fieldLayers, marchWanted, rowsInWindow } from "./components";
+import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, agesOf, brightestLayers, cloudColors, diagnosticOn, dustRamp, fieldLayers, marchWanted, publishedRingEdges, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { type Template, pinWords, switcherItems, templateLabel } from "../workflow/templates";
@@ -380,6 +380,19 @@ export function GalaxyTab({
   // (below); the GPU clips the rest. Until a render has named the layer, and at level 0 (above 4 kpc, S64's frames),
   // every cell counts whole and is asked.
   const [starsLayer, setStarsLayer] = useState<number | null>(null);
+  // The cell outlines' ring edges (S70, Audit V F-4-2): the model's published level-0 edges - the render header's
+  // gas_fluctuation.edges, handed up by the field volume, or the bright table's layout - never an even division of the
+  // grid's extent. The edges are the grid's cells' (systems.cell_edges of its R axis), the same with the layer on or
+  // off, so the last the render published is held for this grid while a layer-off render publishes none; until one
+  // has come for this grid no outline is drawn.
+  const gridKey = R ? `${R.lo},${R.hi},${R.n}` : "";
+  const [heldRingEdges, setHeldRingEdges] = useState<{ grid: string; edges: number[] } | null>(null);
+  const onRingEdges = useCallback((edges: number[] | null) => {
+    if (edges) setHeldRingEdges({ grid: gridKey, edges });
+  }, [gridKey]);
+  const renderRingEdges = heldRingEdges && heldRingEdges.grid === gridKey ? heldRingEdges.edges : null;
+  const tableRingEdges = brightTable?.layout.ring_edges;
+  const ringEdges = useMemo(() => publishedRingEdges(renderRingEdges, tableRingEdges), [renderRingEdges, tableRingEdges]);
   const viewProjection = view?.camera.viewProjection;
   const pickCounts = useMemo(
     () =>
@@ -634,6 +647,7 @@ export function GalaxyTab({
             cloudsOn={tuning.cloudsExtinction}
             hiiShare={knotsShown ? knotsShown.share : null}
             onDust={setFieldDust}
+            onRingEdges={onRingEdges}
           />
         )}
         {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
@@ -656,6 +670,7 @@ export function GalaxyTab({
             lMin={lMin}
             onDust={setFieldDust}
             onStarsLayer={setStarsLayer}
+            onRingEdges={onRingEdges}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
           />
@@ -677,7 +692,7 @@ export function GalaxyTab({
         {brightPoints && (
           <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} physical={physical} />
         )}
-        {mode === "stars" && tuning.compCells && R && <CellOutlines lo={R.lo} hi={R.hi} />}
+        {mode === "stars" && tuning.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
         {mode === "stars" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
           <CloudMarkers positions={cloudLayer.positions} sizes={cloudLayer.sizes} colors={cloudLayer.colors} />
         )}

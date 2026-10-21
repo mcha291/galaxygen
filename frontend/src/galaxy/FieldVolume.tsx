@@ -598,6 +598,11 @@ interface Props {
    */
   onStarsLayer?: (h: number) => void;
   /**
+   * Handed the level-0 ring edges the render header's `gas_fluctuation` publishes (null with the layer off) whenever a
+   * render arrives (S70, Audit V F-4-2): where the star-first mode draws the cell outlines.
+   */
+  onRingEdges?: (edges: number[] | null) => void;
+  /**
    * The starlight by age (S63, D223): each part's multiplier. Where the render carries the three parts the stellar
    * layer is their sum at these switches; all on (the default) is the whole of the stars' light.
    */
@@ -689,6 +694,7 @@ export function FieldVolume({
   lMin = null,
   onDust,
   onStarsLayer,
+  onRingEdges,
   ages = ALL_AGES,
   onAges,
   clouds = null,
@@ -1055,6 +1061,12 @@ export function FieldVolume({
   useEffect(() => {
     if (typeof starsLayer === "number" && Number.isFinite(starsLayer) && starsLayer > 0) tellLayer.current?.(starsLayer);
   }, [starsLayer]);
+  const tellEdges = useRef(onRingEdges);
+  tellEdges.current = onRingEdges;
+  const gasEdges = light ? (light.header.gas_fluctuation?.edges ?? null) : undefined;
+  useEffect(() => {
+    if (gasEdges !== undefined) tellEdges.current?.(gasEdges);
+  }, [gasEdges]);
 
   const tellDust = useRef(onDust);
   tellDust.current = onDust;
