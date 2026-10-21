@@ -1677,3 +1677,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   session had passed, a deleted test file still cited, a trigger that had fired) was invisible to the sessions that
   wrote the entries and plain to one that read only the code. Keep the audit's readers blind, and give the register
   pass to one of them every build.
+- [catalogue] The measurement that finds a defect is the one the build never made (S70): the clouds' drawn ring
+  against their binned ring disagreed for 4.3 % of them because `invert_cdf`'s table began one grid point outside the
+  ring, and no on/off test could see it - both paths agreed with each other. When a declaration states a bound, the
+  test that cites it holds the population, not a sample, and compares the two sides of every "ring" it names.
+- [audit] A reviewer who breaks the test is worth the builder who writes it (S70): the per-object invariant passed its
+  author's own break and still let a reversed cluster index through until a reviewer tried a different column. Every
+  invariant test gets an independent break before it is trusted.
+- [close] A builder's "measured" number is re-measured by the next builder who touches it (S70: the arm pieces' power
+  share 0.47 could not be reproduced; 0.569 stands). A number two agents disagree on is the lead's to settle before it
+  is pinned, with both measurements in the record.
