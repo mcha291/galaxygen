@@ -4314,17 +4314,19 @@ never been judged in twenty-three sessions.
    the caption moves left of the drawer while it is open, or the drawer leaves the caption's margin.
 191. **`BAR_GAS_RATIO` 2.6 is a ratio of medians used as a ratio of means** (S69, Audit V F-1A-1, D233). Querejeta
    2021 Table 3's medians give 11.51 / 4.492 = 2.56; its means 20.92 / 6.589 = 3.17; `gas_pattern.py` applies the
-   constant to the lanes' contrast as a ratio of means. **Carried; the owner's call** (D233): redefine the constant as the
-   ratio of medians (no number moves) or enter 3.17 (the lanes' contrast moves). S70 enters whichever is ruled.
+   constant to the lanes' contrast as a ratio of means. **Carried; ruled by the owner 2026-10-21 (D233): redefine the
+   constant as the ratio of medians** (2.56; no number moves unless the code's use proves to be the means). S70 enters it.
 192. **The clouds' Σ_GMC regimes are the reader's extrapolation** (S69, F-1B-2, D233). Lada & Dame 2020 give 82 ± 10
    M☉ pc⁻² for the molecular ring (4–7 kpc) alone, "likely an upper limit", and 35 everywhere else; the model uses 82 at
-   every radius inside R_SUN (D231) and `ngc_4414` inherits the Milky Way's R_SUN as its boundary unsaid. **Carried; the
-   owner's call**: three regimes by radius (35 / 82 / 35, the ring's edges read) and a declared boundary per template.
+   every radius inside R_SUN (D231) and `ngc_4414` inherits the Milky Way's R_SUN as its boundary unsaid. **Carried; ruled
+   by the owner 2026-10-21 (D233): the source's three regimes by radius (35 / 82 / 35, the molecular ring's edges read)
+   and a declared boundary per template.** A number moves at S70 (the clouds' sizes inside 4 kpc and between the ring
+   and the Sun); row 37 and the clustering snapshots re-pinned with the reason.
 193. **`CENSUS_CLUSTERING_WIDTH` 2.43 rests on a branch point the source puts at 112 pc** (S69, F-1B-3, D233). The
    2.43 at 47.5 pc needs Grasha 2017a's two branches to meet at Menon's 190 pc; Table 4 (age ≤ 40 Myr, classes 1–3) puts
    the meeting at 112 pc, which gives 1.73. `census_clustering.py` discloses "the lead's choice"; `level0.py` presents it
-   as verified. **Carried**: S70 writes the disclosure into level0 with 1.73 as the named alternative (D113); the number
-   moves only on the owner's word.
+   as verified. **Carried; ruled by the owner 2026-10-21 (D233): 2.43 kept as the disclosed choice, 1.73 the named
+   alternative** — S70 writes the disclosure into level0 (D113); no number moves.
 194. **No test compares a placed catalogue's columns with the layer on and off** (S69, F-3-1, D233). I1's walk skips
    the placed objects' columns and I2 sums counts and masses, so a layer-on change to `cloud_velocity_dispersion`,
    `cloud_alpha` or a star's metallicity would pass I1, I2, I4 and the layer's rule 1 unseen; G1's reason (the objects do

@@ -17,9 +17,9 @@ weekly stop was waived for Audit V on 2026-10-21 — ask again before assuming i
    measured 1 or rename it a margin; assert the 1e-13 per ring or strike the clause); F-3-14's clause in rule 3.
 2. **The citations, one pass** (`AUDIT_V.md` §1; the readers' notes name every line): #193's disclosure in `level0.py`
    with 1.73 as the named alternative; F-1A-4's clause struck; F-1A-2/3/5/9, F-1B-1/4/5/8 in the about-lines; the
-   reading rows F-1A-6–14, F-1B-6 corrected and marked "re-read at Audit V"; F-1B-7's five sources read once. **#191 and
-   #192 move a number and wait for the owner's answer** (D233's three questions); enter whichever is ruled, with the
-   affected pins re-pinned `# S70 (D234): was <old>` and the reason.
+   reading rows F-1A-6–14, F-1B-6 corrected and marked "re-read at Audit V"; F-1B-7's five sources read once. **#191–#193
+   as the owner ruled** (D233's last paragraph): #192 moves the clouds' sizes — the affected pins (row 37, the clustering
+   snapshots, the frames) re-pinned `# S70 (D234): was <old>` with the reason; #191 and #193 move nothing.
 3. **The viewer's two gaps:** F-4-2 the cell outlines from `gas_fluctuation.edges` (the four star-first captures move
    by the grid alone — regenerate and say so); F-4-3 the clouds' axis ratio and angle as two columns of `/api/clouds`,
    derived exactly as `cloudOpacity.ts` does today, the viewer reading them (no picture moves; the physics-only frame
@@ -42,9 +42,9 @@ weekly stop was waived for Audit V on 2026-10-21 — ask again before assuming i
 ## Read
 - `AUDIT_V.md` §6 then §1–§5 (every file:line the fixes need; the readers' notes are not in the repo); D233; `BUILD_III.md` §1.
 
-## Told to the owner (three answers owed before a number moves; nothing else awaited)
-- (a) #191 the bar's gas ratio: redefine as medians (nothing moves) or the means' 3.17? (b) #192 Σ_GMC: two regimes at the
-  Sun, or the source's three (82 for the molecular ring alone)? (c) #193: keep 2.43 disclosed, or the measured 1.73?
+## Told to the owner (nothing awaited; their word first if they answer)
+- (a) **Ruled 2026-10-21 (D233):** #191 `BAR_GAS_RATIO` redefined as the ratio of medians; #192 the source's three Σ_GMC
+  regimes with a declared boundary per template (a number moves — re-pin with the reason); #193 2.43 kept, 1.73 named.
 - (d) Their Milky Way default (`cloudsExtinction: false`) leaves half the disc's dust undrawn and a ring edge at
   4.7 kpc in the physics-only frame (F-4-1); the sample stars read as cluster-sized dots at point gain 4 (F-4-6).
 - (e) The frames did not move at S69; `AUDIT_V.md` §5's two sentences say where they stand beside the goals.
