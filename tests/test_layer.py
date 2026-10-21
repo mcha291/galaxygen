@@ -2213,7 +2213,8 @@ def test_every_synthetic_declaration_says_what_it_does_not_keep_with_the_number(
         clause = DOES_NOT_KEEP.search(d.conserves)
         assert clause and re.search(r"\d", clause.group(1)), (n, d.conserves)
     # The four the audit named, by what their number says.
-    assert "0.47 of the budget" in synthetic["arm_piece_chain"].conserves and "#195" in synthetic["arm_piece_chain"].conserves
+    # S70 (D234, Builder C's population measurement): was "0.47 of the budget" - re-measured 0.569 (sum over sum, 96 rings).
+    assert "0.569 of the budget" in synthetic["arm_piece_chain"].conserves and "#195" in synthetic["arm_piece_chain"].conserves
     assert "at most 0.0092 of a ring" in synthetic["gas_spur_chain"].conserves
     for n in ("cloud_density_gradient", "cloud_gradient_angle"):
         assert "16 577 clouds" in synthetic[n].conserves and "at most 0.99998" in synthetic[n].conserves, n

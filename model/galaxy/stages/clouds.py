@@ -109,7 +109,6 @@ from galaxy.stages.systems import (
     CELL_SECTORS,
     Catalogue,
     cell_edges,
-    invert_cdf,
     sech2_height,
 )
 
@@ -218,6 +217,24 @@ def state_of(age_myr: np.ndarray, phases: Sequence[float]) -> np.ndarray:
 
 
 # --- the census ------------------------------------------------------------------------------------
+
+
+def ring_birth_radius(u: np.ndarray, R: np.ndarray, weight: np.ndarray, lo: float, hi: float) -> np.ndarray:
+    """The radii a level-0 ring [lo, hi) draws for uniforms ``u``, by inverting the CDF of ``weight`` (its density times
+    R on the grid radii, 0 outside the ring) on the ring's own interval (S70, D234; Audit V F-2-7): the table starts at
+    lo with nothing below it, so a grid point's weight fills the stretch from the last point before it, or from lo,
+    up to it. Until S70 the ring's draw was ``invert_cdf`` over the whole grid, whose first step inside the ring
+    interpolated from the grid point below lo: 712 of the Milky Way template's 16 577 clouds were born up to 71 pc
+    inside the ring's inner edge (one grid step, 75 pc), in the ring their binners then counted them in, not the
+    ring that drew them. A cloud's ring is the ring that drew it, everywhere a per-ring total or a per-radius law is
+    read, so every radius drawn here is asserted in [lo, hi) - a draw outside it is a defect, never clipped."""
+    keep = (R > lo) & (R <= hi)
+    x = np.concatenate(([float(lo)], R[keep]))
+    cdf = np.concatenate(([0.0], np.cumsum(np.asarray(weight, dtype=float)[keep])))
+    radius = np.interp(np.asarray(u, dtype=float), cdf / cdf[-1], x)
+    if not np.all((radius >= lo) & (radius < hi)):
+        raise ArithmeticError(f"a cloud of ring [{lo}, {hi}) was drawn at {radius[(radius < lo) | (radius >= hi)][:3]} kpc")
+    return radius
 
 
 def ring_molecular_mass(sigma_h2: np.ndarray, R: np.ndarray) -> np.ndarray:
@@ -491,7 +508,8 @@ def materialise_clouds(
 
         lo, hi = rings[ring], rings[ring + 1]
         weight = ring_weight[ring]
-        radius = invert_cdf(draw("radius"), R, weight) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
+        # S70 (D234; Audit V F-2-7): was invert_cdf(draw("radius"), R, weight) - inverted from the grid point below lo.
+        radius = ring_birth_radius(draw("radius"), R, weight, lo, hi) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
         # The radius the ring drew: what every per-object law below reads, and what the binners bin by (S61, D220
         # part II as amended) - so every per-ring and per-radius total is the same with the layer on or off.
         birth = radius
@@ -595,7 +613,12 @@ CLOUD_BIRTH_RADIUS = _column("cloud_birth_radius", "Radius its ring drew", "kpc"
                              "The radius drawn for the cloud on its ring's stream by inverting the molecular "
                              "surface density within the ring: the radius the cloud's abundances are read at and "
                              "its cluster is binned by, the same with the randomness layer on or off (S61, D220 "
-                             "part II as amended). The placed radius lies anywhere in the cloud's cell.")
+                             "part II as amended). The placed radius lies anywhere in the cloud's cell. **The "
+                             "cloud's ring is the ring that drew it** wherever a per-ring total or a per-radius law "
+                             "is read: this radius lies in [lo, hi) of that ring, asserted in the draw since S70 "
+                             "(D234; Audit V F-2-7) - until then the ring's inversion began at the grid point "
+                             "below the ring, and 712 of the default galaxy's 16 577 clouds (271 of NGC 4414's 6 530) "
+                             "were drawn up to 71 pc inside their ring, the ring their binners then counted them in.")
 CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "Drawn from the gas's own density contrast at the cloud's radius, inside its sector — a "
                         "steady response to the stellar arms, and the bar's two gas lanes inside the bar — so "

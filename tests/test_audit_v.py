@@ -15,6 +15,11 @@ and says what would have to be true for it to fail.
 A failing assertion is the audit's result, not a bug of this file: it is kept failing under
 ``xfail(strict=True)`` naming its finding (F-2-n), so the file is green and the gap is recorded. No tolerance here
 is looser than the declaration's or BUILD_III's; where neither states one, the test states its own and why.
+
+**S70 (D234, Audit V's fixes):** the seven strict xfails are resolved - F-2-4, F-2-6 and F-2-7 held at bounds measured
+over the whole population (every foot, every cell, every cloud) and declared so; F-2-1 at the declared share (#195);
+F-2-3 at the gate's 2e-13; F-2-5 and F-2-8 at the declarations' new wording; and #173's randomised-order run of the
+migration test added at the end. Each test says what it was.
 """
 
 from __future__ import annotations
@@ -238,22 +243,26 @@ F_2_1 = ("F-2-1: arm_pieces.py:492 (_CONSERVES) says the budget 'is met on avera
          "0.52-0.63).")
 
 
-@pytest.mark.xfail(strict=True, reason=F_2_1)
-def test_arm_pieces_meet_the_power_budget_on_average(audit):
-    """(b) ``conserves``' second sentence: "It does not keep a ring's realised arm power at the budget: the budget is
-    met on average over these draws". Re-derived: the summed realised power (the composed field's own variance, the
-    estimator checked above) over the summed budget, on the rings outside the bar, per run; each held within 0.2 of 1
-    (stated here: the declaration gives no number; 0.2 is twice the spread between this mesh's runs).
+# S70 (D234): was xfail(strict, F_2_1) holding "met on average" within 0.2 of 1 - the declaration (#195) now says the
+# measured share and why; this test holds what it says.
+def test_arm_pieces_carry_the_declared_share_of_the_power_budget(audit):
+    """(b) ``conserves``' second sentence as S70 wrote it (#195): "the census carries less than the budget - ... 0.569 of
+    the budget on the Milky Way template ... 0.847 on NGC 4414's ... 0.498 at 4242; Audit V's mesh read 0.53, 0.64 and
+    0.45". Re-derived: the summed realised power (the composed field's own variance) over the summed budget, on the
+    rings outside the bar, per run; each between 0.4 and 0.9 - inside the declared spread over seven runs (0.45 to
+    0.85) by 0.05 either way, and under the budget, as declared; and the declaration names the share, its reason and
+    the debt.
 
-    (c) ``stands_in_for``: the law's budget is the amplitude a swing-amplified disc carries; a realisation that
-    carries half of it on every draw is not the same disc's arms at another phase but weaker arms.
+    (c) ``stands_in_for``: the law's budget is the amplitude a swing-amplified disc carries; a realisation carrying
+    about half of it is weaker arms, now declared rather than said to be met on average.
 
-    Fails if: on any run the realised power over the budget is outside 0.8-1.2. It does (F-2-1)."""
+    Fails if: on any run the share is outside 0.4-0.9, or the declaration stops saying it."""
     ratios = {}
     for tpl, seed in LAYER_ON:
         var, _, budget = ring_power(audit[tpl, seed, True])
         ratios[tpl, seed] = math.fsum(var) / math.fsum(budget)
-    assert all(abs(r - 1.0) <= 0.2 for r in ratios.values()), ratios
+    assert all(0.4 <= r <= 0.9 for r in ratios.values()), ratios
+    assert "0.569 of the budget" in ap._CONSERVES and "#195" in ap._CONSERVES and "in expectation" in ap._CONSERVES
 
 
 def piece_table(out) -> dict[str, np.ndarray]:
@@ -478,25 +487,31 @@ F_2_7 = ("F-2-7: census_clustering.py:412-414 (_CONSERVES) 'a cloud's placed rad
          "both the ring's width (0.930 / 0.935 kpc) and the declared 976 pc.")
 
 
-@pytest.mark.xfail(strict=True, reason=F_2_7)
+# S70 (D234): was xfail(strict, F_2_7) - the ring's inversion now runs on the ring's own interval, so a cloud's birth
+# radius lies in the ring that drew it, and the declared reach is the ring's width, measured over every cloud.
 def test_census_clustering_places_each_cloud_within_the_declared_reach_of_its_drawn_radius(audit):
-    """(a) ``conserves``' statement of what it does not keep: "a cloud's placed radius lies anywhere in its level-0
-    ring (0.94 kpc wide on the production grid) and up to that from the radius its ring drew - measured at S61 on the
-    default galaxy, a median 275 pc and at most 976 pc". Measured on every layer-on run: the largest |placed radius -
-    drawn radius| held at 976 pc, the declared most; and the drawn radius in the level-0 ring the cloud is placed in
-    (what "up to that" needs).
+    """(a) ``conserves``' statement of what it does not keep, as S70 wrote it: "a cloud's placed radius lies anywhere in
+    that ring ... so at most the ring's width from its birth radius - measured at S70 over every cloud ... at most
+    0.932 kpc ...; 0.927 kpc over Audit V's mesh's 39 264", and "A cloud's ring is the ring that drew it". Measured on
+    every cloud of every layer-on run: the largest |placed radius - birth radius| under the ring's width on this mesh
+    (0.930 kpc) and at most the declared 0.927 measured here (to 1e-3), and the birth radius in the level-0 ring the
+    cloud is placed in (no cloud moved between rings) - 39 264 clouds.
 
     (c) ``stands_in_for``: fragmentation inside a cell; a cloud read by every per-radius law at a radius outside the
-    ring it stands in is the one place the stand-in's bookkeeping and its placement part.
+    ring it stands in was the one place the stand-in's bookkeeping and its placement parted (F-2-7, mended at S70).
 
-    Fails if: a cloud stands more than 976 pc from its drawn radius, or its drawn radius lies outside the level-0 ring
-    it is placed in. It does (F-2-7)."""
-    report = {}
+    Fails if: a cloud stands farther than the ring's width (or the declared 0.927 kpc) from its birth radius, or its
+    birth radius lies outside the level-0 ring it is placed in."""
+    report, total = {}, 0
+    width = float(EDGES[1] - EDGES[0])
     for tpl, seed in LAYER_ON:
         on = audit[tpl, seed, True]
         placed, drawn = arr(on, "cloud_radius"), arr(on, "cloud_birth_radius")
         report[tpl, seed] = (float(np.max(np.abs(placed - drawn))), int((ring_of(placed) != ring_of(drawn)).sum()), placed.size)
-    assert all(far <= 0.976 and moved == 0 for far, moved, _ in report.values()), report
+        total += placed.size
+    assert all(far < width and far <= 0.927 + 1e-3 and moved == 0 for far, moved, _ in report.values()), report
+    assert total == 39264, report
+    assert "A cloud's ring is the ring that drew it" in cc._CONSERVES and "0.932 kpc" in cc._CONSERVES
 
 
 def test_census_clustering_width_is_sigma_1_75_on_new_seeds(audit, K):
@@ -622,18 +637,22 @@ F_2_6 = ("F-2-6: gas_fluctuation.py:427-428 (_CONSERVES) bounds the cell mean of
          "and 4 cells exceed 1.83e-2 (rings 0 and 1: 2.47e-2, 2.71e-2) - the declared worst is a sample's, not a bound.")
 
 
-@pytest.mark.xfail(strict=True, reason=F_2_6)
+# S70 (D234): was xfail(strict, F_2_6) holding the ten-cell 1.83e-2 - the declaration now gives the bound measured over
+# every cell (3 072 on the production grid, 3 072 on this mesh); this test holds this mesh's population on all 1 024
+# cells of the worst run and the 60 sampled cells of every run.
 def test_gas_fluctuation_cell_mean_off_its_lattice_within_the_declared_error(audit, K):
-    """(a) ``conserves``' second clause: "it keeps the cell's mean exactly on that lattice only: at other points the
-    mean is off by the lattice's error - 9.7e-3 rms, 1.83e-2 at worst, at two points per 47.5 pc against a lattice four
-    times denser (ten cells, two seeds)". Re-measured on the lattice four times denser (eight points per 47.5 pc), built
-    here, on two cells of each of rings 0, 1, 2, 4, 8, 12, 16, 20, 24, 28, for every layer-on run (60 cells): the worst
-    |mean - 1| held at 1.83e-2, the declaration's worst.
+    """(a) ``conserves``' second clause as S70 wrote it: "at other points the mean is off by the lattice's error, at two
+    points per 47.5 pc against a lattice four times denser - measured at S70 over every cell ... 3.71e-2 at worst ...
+    (Audit V's mesh ...: 4.0e-3 to 4.7e-3 rms, 3.14e-2 at worst)". Re-measured on the lattice four times denser (eight
+    points per 47.5 pc), built here: on every one of the 1 024 cells of the Milky Way template at seed 4242 on this
+    mesh - its worst at 3.14e-2 (to 1e-4) and its rms in 4.0e-3 to 4.7e-3 - and on two cells of each of rings 0, 1,
+    2, 4, 8, 12, 16, 20, 24, 28 of every layer-on run (60 cells), each within the declared production worst 3.71e-2.
 
     (c) ``stands_in_for``: the diffuse gas a cell holds; a renderer evaluating the map anywhere but the table's lattice
-    moves this much of a cell's gas or dust, and the declaration's number is the bound a reader is given.
+    moves this much of a cell's gas or dust, and the declaration's number is now the bound a reader is given.
 
-    Fails if: any sampled cell's dense-lattice mean is off 1 by more than 1.83e-2."""
+    Fails if: a sampled cell's dense-lattice mean is off 1 by more than 3.71e-2, or the whole run's worst or rms is not
+    the declared."""
     finest = gf.l1_finest_frequency(K)
     dev = {}
     for tpl, seed in LAYER_ON:
@@ -641,11 +660,13 @@ def test_gas_fluctuation_cell_mean_off_its_lattice_within_the_declared_error(aud
         for r in GAS_CELL_RINGS:
             for s in (3, 19):
                 dev[tpl, seed, r, s] = abs(cell_mean(field, r, s, 8, finest) - 1.0)
-    values = np.array(list(dev.values()))
     worst = max(dev, key=dev.get)
-    report = {"worst": (worst, dev[worst]), "rms": float(np.sqrt(np.mean(values**2))), "over": int((values > 1.83e-2).sum()),
-              "by_ring": {r: round(max(v for k, v in dev.items() if k[2] == r), 4) for r in GAS_CELL_RINGS}}
-    assert dev[worst] <= 1.83e-2, report
+    assert dev[worst] <= 3.71e-2, (worst, dev[worst])
+    field = gas_field(audit["milky_way", 4242, True], K)
+    every = np.array([abs(cell_mean(field, r, s, 8, finest) - 1.0) for r in range(CELL_RINGS) for s in range(CELL_SECTORS)])
+    assert every.size == 1024 and float(every.max()) == pytest.approx(3.14e-2, abs=1e-4), float(every.max())
+    assert 4.0e-3 <= float(np.sqrt(np.mean(every**2))) <= 4.7e-3
+    assert "3.71e-2 at worst" in gf._CONSERVES and "3 072" in gf._CONSERVES
 
 
 def periodogram(field, ring, radii) -> tuple[np.ndarray, np.ndarray]:
@@ -718,18 +739,23 @@ F_2_8 = ("F-2-8: gas_fluctuation.py:435 (_STATISTIC) 'P(k) ~ k^-1.53 above the b
          "-1.72 (module docstring), the same steepening.")
 
 
-@pytest.mark.xfail(strict=True, reason=F_2_8)
-def test_gas_fluctuation_slope_above_the_break_is_the_declared_one(audit, K):
-    """(b) ``statistic``: "P(k) ~ k^-1.53 above the break". The shallow branch of the broken line fitted above, on ring 1
-    of both Milky Way seeds (wavelengths 96-700 pc above the fitted break, four octaves of the ladder at s = 1.53),
-    held within 0.2 of its 1-D projection, -0.53 (stated in the test above).
+# S70 (D234): was xfail(strict, F_2_8) holding -0.53 +- 0.2 - dismissed as a defect, kept as a record: the declaration
+# (gas_fluctuation._STATISTIC) now carries the inner ring's own value, which this test holds.
+def test_gas_fluctuation_slope_above_the_break_on_the_inner_ring_is_the_declared_one(audit, K):
+    """(b) ``statistic``: "P(k) ~ k^-1.53 above the break" and, since S70, "round the circles of ring 1 ... the realised
+    1-D slope above the fitted break is -0.76". The shallow branch of the broken line fitted above, on ring 1 of both
+    Milky Way seeds (wavelengths 96-700 pc above the fitted break), held within 0.1 of the declared inner-ring -0.76
+    (stated here: half the 0.2 the declared slope was held to, the inner ring's value being this mesh's own reading),
+    and steeper than the 1-D projection of -1.53, -0.53, by more than 0.1 - the record F-2-8 asks the declaration to
+    keep.
 
     (c) ``stands_in_for``: the cascade's inertial range above the disc's thickness; a steeper realised slope puts less
-    of the diffuse gas's structure at the hundred-parsec scales than THINGS' median does.
+    of the diffuse gas's structure at the hundred-parsec scales than THINGS' median does - declared, not hidden.
 
-    Fails if: the fitted slope is more than 0.2 from -0.53. It is (F-2-8)."""
+    Fails if: the fitted slope is more than 0.1 from -0.76, or within 0.1 of -0.53 (the record would be stale)."""
     shallow = gas_spectrum_fits(audit, K)["shallow"]
-    assert abs(shallow[0] + 0.53) <= 0.2, shallow
+    assert abs(shallow[0] + 0.76) <= 0.1 and shallow[0] < -0.63, shallow
+    assert "-0.76" in gf._STATISTIC and "ring 1" in gf._STATISTIC
 
 
 _SPECTRA: dict = {}
@@ -818,22 +844,22 @@ F_2_3 = ("F-2-3: spurs.py:183 (_CONSERVES) holds the composed gas contrast's rin
          "at this mesh, not the spurs'.")
 
 
-@pytest.mark.parametrize("tpl,seed", [("milky_way", 4242), ("milky_way", 777),
-                                      pytest.param("ngc_4414", 4242, marks=pytest.mark.xfail(strict=True, reason=F_2_3))])
+# S70 (D234): was ngc_4414 4242 under xfail(strict, F_2_3) - the gate's tolerance became 2e-13 with the measurement.
+@pytest.mark.parametrize("tpl,seed", [("milky_way", 4242), ("milky_way", 777), ("ngc_4414", 4242)])
 def test_gas_spurs_keep_every_ring_s_gas(audit, tpl, seed):
     """(a) ``conserves``: "the spurs' excess is taken from the whole ring in proportion to its gas, so the composed gas
-    contrast averages to 1 on every ring (to 1e-13)". Measured: the ring mean of ``gas_density_contrast`` over the 200
-    azimuth cells (math.fsum) within 1e-13 of 1; the ring's gas column bit-identical on and off; with the layer off no
+    contrast averages to 1 on every ring (to 2e-13)" (S70, D234: was 1e-13, F-2-3). Measured: the ring mean of
+    ``gas_density_contrast`` over the 200 azimuth cells (math.fsum) within 2e-13 of 1; the ring's gas column bit-identical on and off; with the layer off no
     spur and the contrast 1.
 
     (c) ``stands_in_for``: "a magneto-Jeans instability of the gas compressed in the arm" - it gathers the arm's gas
     into feathers and moves none between radii, which is the conservation measured.
 
-    Fails if: a ring's mean is off 1 by more than 1e-13, the gas column moves, or the layer-off run lays a spur."""
+    Fails if: a ring's mean is off 1 by more than 2e-13, the gas column moves, or the layer-off run lays a spur."""
     on, off = audit[tpl, seed, True], audit[tpl, None, False]
     assert np.asarray(on.fields["gas_surface_density"]).tobytes() == np.asarray(off.fields["gas_surface_density"]).tobytes()
     assert arr(off, "gas_spur_chain").size == 0 and np.all(arr(off, "gas_density_contrast") == 1.0)
-    assert np.max(np.abs(ring_means(arr(on, "gas_density_contrast")) - 1.0)) <= 1e-13
+    assert np.max(np.abs(ring_means(arr(on, "gas_density_contrast")) - 1.0)) <= 2e-13  # S70 (D234): was 1e-13 (F-2-3)
 
 
 def chain_arc_lengths(t, turn) -> dict[float, float]:
@@ -896,25 +922,27 @@ F_2_4 = ("F-2-4: spurs.py:68 (WALK_READ_DIFFERENCE = 0.052) and spurs.py:188 (_C
          "mesh, and by 0.27 (6 of 44 feet over 0.052) on the production grid at seed 4242.")
 
 
-@pytest.mark.xfail(strict=True, reason=F_2_4)
+# S70 (D234): was xfail(strict, F_2_4) holding the ten-foot 0.052 - the bound is now measured over every foot.
 def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K):
-    """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE``: "The walk reads the gas contrast at each foot on
-    the two grid rings either side, at the chain's polyline: within 0.052 of the point function's value there,
-    relative (measured on the Milky Way template's feet)". Re-measured at every foot of both Milky Way seeds: the
-    published foot contrast over the gas pattern's unspurred point function at the foot's own (R, phi) - the
-    reference the declaration names - held at 0.052.
+    """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S70 wrote them: "within 0.27 of the point
+    function's value there, relative - measured at S70 over every foot on the production grid ... 0.4804 on Audit V's
+    coarser mesh". Re-measured at every foot of both Milky Way seeds on this mesh: the published foot contrast over the
+    gas pattern's unspurred point function at the foot's own (R, phi) held at ``WALK_READ_DIFFERENCE_COARSE`` (0.49),
+    the declared bound on this coarser mesh (the production grid's 0.27 is held in tests/test_spurs.py over every
+    foot of the template's own seed); and the worst read here is the declared 0.4804 (to 1e-3).
 
-    (c) ``stands_in_for``: the spur's foot is "as dense as the gas is there"; a foot read 50 % off the ridge's own
-    density sets a Jeans length and a spacing for gas that is not there.
+    (c) ``stands_in_for``: the spur's foot is "as dense as the gas is there"; a foot read 48 % off the ridge's own
+    density sets a Jeans length and a spacing for gas that is not there - declared now, not hidden by a sample.
 
-    Fails if: any foot's read differs from the point function by more than 0.052 relative. It does (F-2-4)."""
+    Fails if: any foot's read differs from the point function by more than 0.49 relative on this mesh."""
     worst = {}
     for seed in SEEDS:
         on = audit["milky_way", seed, True]
         s = spur_rows(on)
         gas = compose.gas_pattern(on.fields, R_AUDIT, K)
         worst[seed] = float(np.max(np.abs(s["contrast"] / gas.unspurred_contrast_at(s["radius"], s["azimuth"]) - 1.0)))
-    assert all(w <= sp.WALK_READ_DIFFERENCE for w in worst.values()), worst
+    assert all(w <= sp.WALK_READ_DIFFERENCE_COARSE for w in worst.values()), worst
+    assert max(worst.values()) == pytest.approx(0.4804, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst
 
 
 F_2_5 = ("F-2-5: spurs.py:13-14 (module docstring, item 7) 'every chain of a non-flocculent disc carries them here'; "
@@ -922,18 +950,73 @@ F_2_5 = ("F-2-5: spurs.py:13-14 (module docstring, item 7) 'every chain of a non
          "first foot past its end. The rule (first foot uniform within one spacing) does not give every chain a spur.")
 
 
-@pytest.mark.xfail(strict=True, reason=F_2_5)
-def test_gas_spurs_every_chain_of_a_non_flocculent_disc_carries_them(audit):
-    """(b) The module's statement of where spurs are: "every chain of a non-flocculent disc carries them here, which is
-    the 83 %'s side of the sample, declared". Counted on both Milky Way seeds: the chains of the arm-piece table with
-    no row in the spur table.
+# S70 (D234): was xfail(strict, F_2_5) asserting "every chain ... carries them" - the module's wording is now "every
+# chain of a non-flocculent disc long enough for a first foot", which this test holds.
+def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, K):
+    """(b) The module's statement of where spurs are (S70, D234, Audit V F-2-5): "every chain of a non-flocculent disc
+    long enough for a first foot carries them here" - the first foot one uniform within one spacing of the chain's
+    start. Counted on both Milky Way seeds: a chain of the arm-piece table with no row in the spur table is shorter
+    (its polyline, integrated here) than the longest spacing any foot of that disc carries - the farthest a first
+    foot's draw can reach; every longer chain carries a spur.
 
-    (c) ``stands_in_for``: La Vigne et al.'s 83 % is of galaxies with a well-defined dust lane, not of arms; a short
-    chain shorter than one spacing (5-7 kpc at the Sun) cannot carry a feather in the physics either.
+    (c) ``stands_in_for``: La Vigne et al.'s 83 % is of galaxies with a well-defined dust lane, not of arms; a chain
+    shorter than one spacing (5-7 kpc at the Sun) cannot carry a feather in the physics either.
 
-    Fails if: some chain carries no spur. It does (F-2-5)."""
+    Fails if: a chain longer than the disc's longest spacing carries no spur."""
     bare = {}
     for seed in SEEDS:
         on = audit["milky_way", seed, True]
-        bare[seed] = sorted(set(np.unique(arr(on, "arm_piece_chain"))) - set(np.unique(arr(on, "gas_spur_chain"))))
-    assert not any(bare.values()), bare
+        s, t = spur_rows(on), piece_table(on)
+        lengths = chain_arc_lengths(t, -rotation_sense(float(on.fields["pitch_angle"])))
+        reach = float(np.max(s["spacing"]))
+        spurless = set(lengths) - set(np.unique(s["chain"]).tolist())
+        bare[seed] = {c: (round(lengths[c], 3), round(reach, 3)) for c in sorted(spurless)}
+        assert all(lengths[c] < reach for c in spurless), bare
+    assert any(bare.values()), bare  # Audit V's chain 7 (2.3 kpc, seed 4242) is still bare: the statement is needed
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# #173: the migration test's once-seen failure, run in a randomised order (S70, D234; Audit V F-5-14)
+# ---------------------------------------------------------------------------------------------------------------------
+
+MIGRATION_TEST = "tests/test_chemistry.py::test_migration_flattens_old_stars_and_leaves_gas_alone"
+
+
+def _pytest(args, hash_seed: str):
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    env = {**os.environ, "PYTHONHASHSEED": hash_seed}
+    return subprocess.run([sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-v", *args], cwd=root, env=env,
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+
+def test_the_migration_test_holds_alone_and_in_a_shuffled_order_under_two_hash_seeds():
+    """#173 (S65, D225; the closer Audit V's register pass re-named, F-5-14): a fresh clone's whole suite once read
+    ``test_migration_flattens_old_stars_and_leaves_gas_alone[basic]`` failing (0.8845979 against 0.9284296), never seen
+    before or since. Its two candidates told apart: (1) a hash-order dependence in the model - the test alone under
+    PYTHONHASHSEED 0 and 1; (2) state left by an earlier test in the same process - ``tests/test_chemistry.py`` whole,
+    its 20 tests in two orders shuffled here (``random.Random(173)`` and ``(1730)``), each under one of the two hash
+    seeds, the shuffled order checked to be the order run. A measurement, B3-safe: nothing of the model is touched.
+
+    Fails if: the migration test fails alone under either hash seed (candidate 1), or in a shuffled whole-file run
+    (candidate 2), or a run does not keep the order it was given."""
+    import random
+    import re
+
+    for seed in ("0", "1"):
+        alone = _pytest([MIGRATION_TEST], seed)
+        assert alone.returncode == 0, (seed, alone.stdout[-2000:])
+    listed = _pytest(["--collect-only", "-q", "tests/test_chemistry.py"], "0")
+    ids = [line.strip() for line in listed.stdout.splitlines() if line.startswith("tests/test_chemistry.py::")]
+    assert len(ids) == 20 and any(i.startswith(MIGRATION_TEST) for i in ids), listed.stdout[-2000:]
+    for shuffle, seed in ((173, "0"), (1730, "1")):
+        order = ids[:]
+        random.Random(shuffle).shuffle(order)
+        whole = _pytest(order, seed)
+        ran = re.findall(r"^(tests/test_chemistry\.py::\S+) (?:PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)", whole.stdout, re.M)
+        assert ran == order, (shuffle, ran[:5], order[:5])
+        assert whole.returncode == 0, (shuffle, seed, whole.stdout[-3000:])
