@@ -682,6 +682,13 @@ defined here once and used in every entry below:
 - **Carried** — still open and closable, with the mechanism or measurement that would close
   it named. Where the closer is itself a permanent debt, the entry says so.
 
+**The numbering has two gaps, and neither is a lost item** (S70, Audit V F-5-15, D234): S21 ran its two audits on
+sealed branches and reserved each its numbers before it started (D116, S11's lesson) — #51–#64 for aim (a)
+(`AUDIT_II_A.md`'s head, and `DECISIONS.md`'s Session 21 (a) head above D130: "Reserved numbers #51–#64 /
+D130–D143; this run uses #51, #52") and #65–#78
+for aim (b) (the run (b) head below); the runs used #51–#52 and #65–#73, so #53–#64 and #74–#78 were never
+items, as `tests/test_audit.py`'s register test has said of both blocks since S22.
+
 | verdict | items | count |
 |---|---|---|
 | **discharged** before S22 | 1, 6, 7, 9, 12, 13, 16, 18, 20, 24, 29, 30, 31, 35, 37, 38, 40, 41 | 18 |
@@ -696,10 +703,11 @@ defined here once and used in every entry below:
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
+| **discharged** at S70 | **137** (the layer's realised totals the same on and off since L1's ring-first draw at S61, D220 — discharged in fact, struck at Audit V's register pass, D234) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196 | 117 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196 | 116 |
 
-So the board's **128 open** is 11 permanent and 117 carried, and no item is unruled. (S22
+So the board's **127 open** is 11 permanent and 116 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -732,7 +740,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -917,8 +925,8 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    of gas, and v_c(R₀) is over-concentrated, which makes acceptance entry 3
    miss high by 5.1 km/s. **Prediction, stated so it can fail:** giving the gas
    its own much shallower profile at S2 brings the Sun's tangential velocity to
-   246.4 km/s, inside 248 ± 3 `[verified:
-   tests/test_disc.py::test_the_recorded_cause_of_the_row_3_miss]`. Registered
+   246.4 km/s, inside 248 ± 3 `[verified at S1: tests/test_disc.py::test_the_recorded_cause_of_the_row_3_miss,
+   deleted at S2 (944475d) when the gas took its own profile; no surviving pin (S70)]`. Registered
    in `spec.MISSES`; if S2 does not close it, the explanation is wrong.
    **S10 (run 2):** the gas has its own profile now and row 1 still passes for
    the wrong reason. Its target, 5 ± 1 × 10¹⁰, is rows 10 + 11 + 12 — it
@@ -992,6 +1000,10 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    The row stays red at every mesh, which is what keeps it honest (rule B5, #29); what is not honest is
    reading 0.03 km/s as a physical quantity — it is one part in 460 of the window's half-width, smaller
    than the disc solver's own correction at S18 (0.09) and smaller than the grid's effect on it.
+   **S70 (Audit V, F-5-12):** the S1 prediction's citation names a test deleted at S2 and is marked so above; what
+   pins row 3 today is `tests/test_s22_rulings.py::test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model`
+   and the bar's reading `tests/test_audit_ii_a.py::test_d121s_bar_prediction_ran_row_3_held_and_row_14_did_not`.
+   Still carried, on the bar (#21). *(re-ruled at Audit V, S70, D234)*
 
 12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
    S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
@@ -1117,6 +1129,14 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    that is what the advanced model is for. In the advanced model the prediction ran at S9 and held
    (−0.057 with the wind's radial dependence, −0.043 without), and what is left there is row 23, which
    is debt #28's kernel and not this debt's tilt.
+   **S70 (Audit V, F-5-5), re-ruled PERMANENT for `basic`.** The ruling above is for a model that no longer exists:
+   D170 retired the simple stages and made the advanced physics the model `basic` (`basic.py:3-8`), which the
+   default `azimuthal` extends, so "the simple model keeps both misses" has no object. What stays permanent is the scope statement for `basic`: the
+   gradient's tilt is made by one mechanism, the wind whose escape fraction follows the local escape velocity — its
+   size a result, not a lever a session may turn to land a row (rules A9, B5). Row 22's present miss is not this
+   debt's: it reads −0.0698 against −0.069 to −0.049 since S18's derived threshold, the inner gas the threshold
+   holds inside the fit window with the wind refitted, and it is carried under #47's text and `spec._MISSES` row
+   22 (`debt=47`); row 23 is #28's. *(re-ruled at Audit V, S70, D234)*
 16. ~~**`NET_YIELD` is an effective yield and is calibrated.**~~ **DISCHARGED by
    S9.** 0.011 against a nucleosynthetic 0.03–0.04, the difference being metal
    loss the simple model has no mechanism for. The advanced model has the
@@ -1290,7 +1310,7 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    2.11 kpc; the rest of that probe is under #49. What would land rows 5, 9 and 11 together is
    a thick disc extended *and* light, and at the observed scale lengths and masses row 9 is
    0.11 by arithmetic, so the three rows are one row.
-   **S21 (a) ran the reading** (`AUDIT_II_A.md` A-5, `[verified: tests/test_audit_ii_a.py::test_debt_19_a_cut_only_law_lands_rows_9_and_11_together_and_row_5_short]`): star formation off from 1.0 to 3.8 Gyr on the fast first infall
+   **S21 (a) ran the reading** (`AUDIT_II_A.md` A-5, `[verified at S21 (a): tests/test_audit_ii_a.py::test_debt_19_a_cut_only_law_lands_rows_9_and_11_together_and_row_5_short, deleted with the simple model at D170 (4a20490); no surviving pin (S70)]`): star formation off from 1.0 to 3.8 Gyr on the fast first infall
    leaves the early gas as gas at the merger, rows 8, 9, 10 and 11 are **inside together for the first
    time** (0.040, 0.115, 3.36e10, 6.72e9), and row 5 reads **1.61** — 0.2 short. The sentence above is
    now the reading: the split criterion. And moving the stars through the chemistry's kernel as well as
@@ -1306,6 +1326,11 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    model already replaced it with a chemical one (#20) and has no thick disc to apply it to (#27).
    **What a successor changes is the criterion, not a constant.** This debt, #27, #49 and half of #47
    are one missing mechanism — see the ruling on #49.
+   **S70 (Audit V, F-5-12):** S21 (a)'s cut-only probe ran on the simple model's merger-defined thick disc, and its
+   test went with that model at D170; nothing pins its four rows now, and the citation above says so. The ruling
+   stands as written (its rows are the retired split's); still carried, and parked while ruling 7 keeps `basic`
+   frozen (`AUDIT_V.md` §5).
+   *(re-ruled at Audit V, S70, D234)*
 
 20. ~~**The thin/thick split is defined by the merger, so it cannot be evidence
    about mergers.**~~ **DISCHARGED by S9 in the advanced model.** "Born before
@@ -1340,6 +1365,12 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    through it (#26). S20 probed the drain and it is "a rule with the answer in it" — a drain on the
    parked gas alone — so nothing was built. `disc_dominance` stays published and unread so the gap is
    visible, which is the honest form of this debt.
+   **S70 (Audit V, F-5-7): the verdict stands, its last reason is overtaken.** `disc_dominance` is no longer
+   unread: since S26 the swing window reads it (`pattern.swing_window`, `pattern.py:178`, the arms' number and
+   amplitude, D175) and since S58 the bar's clock does (`pattern.bar_formation_time`, `pattern.py:353`, D217). It
+   still does not enter the bar's *length*: `bar_half_length` is `BAR_LENGTH_RATIO` × R_d (`pattern.py:801`), so
+   the first link — disc dominance to bar length — is as unmodelled as S22 ruled, and that is what stays
+   permanent. *(re-ruled at Audit V, S70, D234)*
 22. **The pitch–shear relation has no lever in this model, so it cannot be
    falsified by it.** Measured, once, as ruling 3 asks: across the whole input
    space the shear rate moves only 0.829 → 0.967, buying 0.30° of pitch, while
@@ -1464,8 +1495,9 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    fraction removes a generation's fresh supernova metals before they mix, and
    the gas budget stays the sfh stage's — the wind's mass is taken to be the
    ejecta's, small against the accretion, so rows 1, 2, 3 and 20 are the same
-   in both models by construction `[verified: tests/test_models.py::
-   test_the_models_agree_upstream_of_chemistry_and_differ_below]`. A
+   in both models by construction `[verified at S9: tests/test_models.py::
+   test_the_models_agree_upstream_of_chemistry_and_differ_below, deleted with the file and the simple model at
+   D170 (4a20490); no surviving pin (S70)]`. A
    mass-loaded wind (η ≈ 1) would remove as much gas as forms stars and change
    every one of those rows; it is not modelled. One visible consequence: the
    gas-starved centre collects the late Ia iron of its old stars to [Fe/H] =
@@ -1555,6 +1587,12 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    history-integrated loading is larger than today's (the early potential is shallower), so the
    checkpoint-3 budget will read *below* g(f*) and the size of that gap is the derivation's honest
    error. What kills it is written in item 3.
+   **S70 (Audit V, F-5-12):** the two-model comparison the opening cites went with `tests/test_models.py` at D170,
+   and with one model there is nothing to compare: "the same in both models" is history. The wind still carries
+   metals and no mass in `basic` (the chemistry's `kept` fraction; the gas budget is `sfh`'s), which is what this
+   debt holds; the centre's iron is pinned by `tests/test_systems.py::test_metallicity_is_looked_up_not_drawn` and
+   `tests/test_audit.py::test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant`. Still carried,
+   parked while ruling 7 keeps `basic` frozen (`AUDIT_V.md` §5). *(re-ruled at Audit V, S70, D234)*
 
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
@@ -1822,6 +1860,10 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    no source that answers it. **The condition that makes it live is stated so it cannot be missed: the
    first stage to read `metallicity_history` inherits a zero point 24% high**, and the register is where
    that reader will look.
+   **S70 (Audit V, F-5-11):** the path above is stale — `galaxy/models/advanced.py` went at D170 and the factor is
+   `IA_METAL_TO_IRON` = 2.0 in `model/galaxy/models/basic.py:153`, still read by `chemistry_dtd` alone and still
+   pinned by the test cited; `metallicity_history` still has no reader outside `chemistry_dtd`, so the condition
+   above has not fired. Still carried. *(re-ruled at Audit V, S70, D234)*
 34. **The acceptance table reads nothing inside 4 kpc, so the model's worst
    number is invisible to it** (S10, beta). The gradient rows are fitted over
    R = 4–12 kpc; rows 3, 6 and 8 are evaluated at R₀; rows 1, 10, 11, 19 and 20
@@ -1964,9 +2006,9 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    **`world_seed` is read by no stage of either model**; its declaration says
    it seeds "the residual draws of stages 1–3 (e.g. the M_• residual of ruling
    10)" and no such stage exists, so it describes a future rather than the
-   model `[verified:
-   tests/test_spec.py::test_world_seed_is_read_by_no_stage_of_either_model,
-   ::test_the_ensemble_samples_the_diagonal_of_seed_space]`. `graph` reports it
+   model `[verified at S10:
+   tests/test_spec.py::test_world_seed_is_read_by_no_stage_of_either_model (replaced at S17 by the live pin
+   below), ::test_the_ensemble_samples_the_diagonal_of_seed_space (still in the tree, S70)]`. `graph` reports it
    unbound rather than failing, which is deliberate — but the ensemble varies
    it anyway. Both bite at the same moment: the bulge rows (13, 14, 18) debt
    #8 is waiting on are precisely the ones that would read `world_seed` beside
@@ -1989,6 +2031,18 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    **The trigger: the first published quantity that depends on two seeds makes this live in the same
    commit**, and the ensemble has to be a sample from that moment. Until then the diagonal is not
    wrong, it is merely not general, and saying which is the whole of the debt.
+   **S70 (Audit V, F-5-2), re-written as LIVE: the trigger has fired.** A published quantity has depended on two
+   seeds since the young stars were placed by where stars form today — `systems` places a star younger than
+   `YOUNG_STAR_AGE` by `sfr_modulation` (`systems.py:45, 120, 626`; Phase 2, S27, 5809d9e; the law at a point since
+   S59, D218), whose arms and bar are drawn on `pattern_seed` (`pattern.py:1102-1130`), beside the star's own
+   draws on `systems_seed` — so the star sample's and the bright catalogue's positions are a function of both,
+   and the S22 sentence "no published quantity depends on more than one seed" stopped being true at S27 without
+   this entry seeing it. `spec.ensemble` still sets every seed to k (`spec.py:1199-1202`), so an interaction
+   between the two is invisible to any statistical row that reads such a quantity. **No statistical row reads one
+   yet** (`AUDIT_V.md` §5), so nothing is wrong today. **Carried; what closes
+   it: `spec.ensemble` varies the seeds independently (a sample of seed space, not its diagonal) before any
+   statistical row reads a two-seed quantity** — in the commit that adds the row.
+   *(re-ruled at Audit V, S70, D234)*
 40. ~~**`determinism.check_reproducible` runs the model twice in one interpreter**~~
    **DISCHARGED by S12.** `determinism.check` and `report` also run each production
    model in two fresh interpreters under two `PYTHONHASHSEED`s and compare every
@@ -2061,7 +2115,8 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    stopped delivering a tenth of the budget as young gas (debt #29), and is a recorded
    miss. `SECULAR_HEATING` 20 → 177 pc (simple), 30 → 466 (advanced); `MERGER_HEATING`
    60–180 → 303–451 on the advanced row 6, 619–1747 on the simple row 7 `[verified:
-   tests/test_audit.py::test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models]`.
+   tests/test_audit.py::test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models, renamed at D170
+   test_debt_42_row_6_is_at_the_edge_of_its_window (one model; S70)]`.
    The rule stands: rows 6 and 7 judged together, both constants re-examined, when the
    valley opens.
    **S17: the simple model's row 6 crossed to the other edge and the advanced one went
@@ -2098,7 +2153,7 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    cost: the radial kick 1.47 → 1.09 kpc at R₀, row 5 1.17 → 1.09, row 9 0.051 → 0.0455, row 8
    0.013 → 0.016 — and row 3 251.03, out by 0.03, back under #11. Rows 6 and 7 are now inside
    together in the simple model on a cited number; in the advanced model both are #27's.
-   **S21 (a) read the citation** (`AUDIT_II_A.md` A-14, `[verified: tests/test_audit_ii_a.py::test_row_7_is_green_on_an_adopted_round_number_and_out_on_the_measured_one]`). Bensby, Feltzing & Lundström 2003's σ_W = 35 is their Table 1's
+   **S21 (a) read the citation** (`AUDIT_II_A.md` A-14, `[verified at S21 (a): tests/test_audit_ii_a.py::test_row_7_is_green_on_an_adopted_round_number_and_out_on_the_measured_one, replaced at D170 by ::test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6 — row 7 went with the simple model's thick disc (S70)]`). Bensby, Feltzing & Lundström 2003's σ_W = 35 is their Table 1's
    *adopted characteristic value* for a kinematic selection function, with no uncertainty; the measurement
    their Sect. 1 quotes is Soubiran, Bienaymé & Siebert 2003's (63 ± 6, 39 ± 4, 39 ± 4) `[verified: both
    papers read in full at S21 (a) from the publisher-identical PDFs; Bensby et al. 2003 has no arXiv
@@ -2120,6 +2175,14 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    The rule this debt has carried since S10 — rows 6 and 7 judged together when the valley opens, both
    heating constants re-examined — is unmet because the valley never opened (#27), and it is carried
    with the debt. The advanced row 6 lands at `MERGER_HEATING` ≈ 74, not "below 78" (A-11).
+   **S70 (Audit V, F-5-12):** two of the tests cited above were renamed or replaced at D170, when the simple model
+   and its row 7 went (the citations now say so); what pins this debt today is
+   `tests/test_audit.py::test_debt_42_row_6_is_at_the_edge_of_its_window` (row 6 at 356 against 350, a recorded miss
+   since S13), `::test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating` and
+   `tests/test_audit_ii_a.py::test_debt_42_row_6_lands_at_74_not_78` and
+   `::test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6` (the measured 39 ± 4: 112.3, row 3
+   250.97 in, row 6 368 out). "Rows 6 and 7 judged together" is now row 6 alone. Still carried, parked while
+   ruling 7 keeps `basic` frozen (`AUDIT_V.md` §5). *(re-ruled at Audit V, S70, D234)*
 
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
@@ -2127,7 +2190,7 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    extended accretion component (#18); whatever that component does to the
    infall at R₀ moves them. Levers, measured so the re-fit is one line: +10%
    `WIND_SPEED` is −0.064 dex at R₀, +10% `NET_YIELD` is +0.041 dex
-   `[verified: tests/test_audit.py::test_debt_43_the_two_solar_calibrations_and_their_levers]`;
+   `[verified: tests/test_audit.py::test_debt_43_the_two_solar_calibrations_and_their_levers (renamed at D170 ::test_debt_43_the_solar_calibration_and_its_lever, S70)]`;
    the larger step agrees to the curvature (800 → 1300 km/s is −0.32 dex at R₀,
    debt #26), and `AUDIT_RUN2.md` §4.3 has the same lever from the potential's
    side (±5% in v_esc is ∓0.03 dex). Rule B10 applies the day #18 closes;
@@ -2178,8 +2241,14 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    need a solar calibration: nucleosynthetic yields with a wind whose mass loading is decided rather
    than assumed, which is #26 and is permanent. So the debt is honest bookkeeping from here on, and the
    thing to carry forward is the lever, measured and current: +10% `WIND_SPEED` is −0.0595 dex at R₀ and
-   +10% `NET_YIELD` is +0.0414 `[verified: tests/test_audit.py::test_debt_43_the_two_solar_calibrations_and_their_levers,
+   +10% `NET_YIELD` is +0.0414 `[verified: tests/test_audit.py::test_debt_43_the_two_solar_calibrations_and_their_levers (renamed at D170 ::test_debt_43_the_solar_calibration_and_its_lever, S70),
    tightened at S22 to ±0.002 — debt #71]`.
+   **S70 (Audit V, F-5-10):** half of this entry's title is retired. `NET_YIELD` was the simple chemistry's
+   calibration and went with it at D170 (`basic.py:137` says so in `WIND_SPEED`'s about line); its levers and
+   refits above are history. What the debt holds is `WIND_SPEED` alone — 860.3 km/s, set by bisection to a solar
+   gas at R₀ on a history that misses rows 2 and 20 — and its lever, +10% is −0.0595 dex at R₀, pinned by
+   `tests/test_audit.py::test_debt_43_the_solar_calibration_and_its_lever` (the test renamed at D170). Still
+   carried, blocked on #26. *(re-ruled at Audit V, S70, D234)*
 
 44. ~~**Row 2 cannot see past `KS_NORM`'s own uncertainty**~~ **DISCHARGED at S22: the
    claim is measurably false and its replacement is recorded** (S10, the gamma
@@ -2387,7 +2456,7 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    reservoir (4.8e6 M☉ inside 4 kpc) and takes 2e10 out of the disc's accretion with it: row 10
    1.4e10, row 22 +0.15, row 4 −12. A bar does not stop the inner disc forming stars; a drain
    on the parked gas alone would be a rule with the answer in it. Still the bar's (#21).
-   **S21 (a): the advanced row 22 does not see the reservoir** (`AUDIT_II_A.md` A-7, `[verified: tests/test_audit_ii_a.py::test_the_advanced_row_22_does_not_see_the_inner_reservoir]`). The gradient is fitted over 4–12 kpc; the threshold
+   **S21 (a): the advanced row 22 does not see the reservoir** (`AUDIT_II_A.md` A-7, `[verified at S21 (a): tests/test_audit_ii_a.py::test_the_advanced_row_22_does_not_see_the_inner_reservoir, renamed at D170 ::test_row_22_does_not_see_the_inner_reservoir (S70)]`). The gradient is fitted over 4–12 kpc; the threshold
    capped at 5 M☉/pc² inside 4 kpc empties the reservoir to 4e8 and leaves the row at −0.0699; capped at
    the R₀ value everywhere inside R₀ it reads −0.0794; the constant 5 everywhere −0.0633. What steepened
    the row is the gas the threshold holds *inside the window* (22.8 at 4 kpc, 6.1 at 12, against 10.2 and
@@ -2405,6 +2474,12 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    statement that **row 20 is at its target partly for a wrong reason** — and its target has no width
    either (#17). What would discharge it is a threshold that knows the bar's region, derived rather
    than capped. The prediction it pre-committed to fired at S18 and its reading is #19's.
+   **S70 (Audit V, F-5-12, and #15's re-ruling): row 22's tilt is this debt's, in the one model.** The S21 (a)
+   test is renamed (the citation says so) and still reads −0.0699 / −0.0794 / −0.0633. With the simple model gone
+   (D170) "the advanced row 22" is row 22: −0.0698 against −0.069 to −0.049, a recorded miss in `spec._MISSES`
+   row 22 with `debt=47` since S18 — the gas the derived threshold holds inside the 4–12 kpc fit window with the
+   wind refitted, its pre-committed reading the wind's tilt (#26). #15 (re-ruled at S70 for `basic`) no longer
+   holds any part of it. Still carried. *(re-ruled at Audit V, S70, D234)*
 
 48. **The M_• residual's width is the classical one, for a bulge the model calls 83%
    pseudo** (S17, D121). Ruling 10 (§13) specifies the width "interpolated by the classical
@@ -2871,6 +2946,10 @@ never been judged in twenty-three sessions.
    1.3–1.5 scale lengths in S0–Sab and 0.6 in Sc–Sd (Erwin 2005), ∼1.25 (Díaz-García et al. 2016), and
    log a = 0.04 + 0.76 log h (Erwin 2019), which is 2.27 kpc at the model's 2.6 — against the 2.0 scale lengths
    and 5.21 kpc here. Left as it is at the gate; the bar's body, lanes and saturation now end at this length.
+   **S70 (Audit V, F-5-7):** "`disc_dominance` is published beside it and unused" is stale — the swing window reads
+   it (`pattern.py:178`, S26) and so does the bar's clock (`pattern.py:353`, S58); what stays true is the point
+   this entry made, that it does not enter the bar's length (`bar_half_length` = `BAR_LENGTH_RATIO` × R_d,
+   `pattern.py:801`; #21). Still carried, with its closer as written. *(re-ruled at Audit V, S70, D234)*
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
@@ -2952,7 +3031,8 @@ never been judged in twenty-three sessions.
    closable by reading one of the two fits (a constant table with a citation) and by the remnant
    integral's metallicity axis, which `budget` already carries. Prediction: the black-hole mass at
    [Fe/H] = −1 doubles and the remnant fraction moves by under 1% (black holes are 2.5% of it).
-87. **Row 30 is owed and was not entered: the local white-dwarf surface density** (S29, D178). The one
+87. **No acceptance row reads the local white-dwarf surface density** (S29, D178; headed "Row 30 is owed and was
+   not entered" until S70 — row 30 has been the core-collapse rate since S30, `spec.py:221`). The one
    remnant target read with an uncertainty is McKee, Parravano & Hollenbach 2015 Table 1: white dwarfs
    4.9 ± 0.8 of 33.4 ± 3 M☉ pc⁻² in stars and remnants at the Sun `[verified: read at S29]`. The model
    reads Σ_WD(R₀) = 4.757 of 32.068 (a share of 0.1483) — inside — but the number was read before any
@@ -2961,6 +3041,10 @@ never been judged in twenty-three sessions.
    blind to the pin or records why it may not. *Audit III (D186, A3-8):* it may not be entered blind — the pin
    is in the repository and the window is the source's own, so there is no choice a blind reader could make —
    and it can be entered *disclosed* once Σ_WD(R₀) is a published scalar (a code change). Still carried.
+   **S70 (Audit V, F-5-8):** the heading's "row 30" was a slot reserved at S29 and given to the core-collapse rate
+   at S30 (`ROW_CORE_COLLAPSE_RATE`, `spec.py:221`); a white-dwarf row, if entered, takes the next free number
+   (38 at S70). The pin is unmoved (`tests/test_remnants.py`, 4.757 of 32.068, `LOCAL_WD_SHARE` 0.1483).
+   *(re-ruled at Audit V, S70, D234)*
 88. **Row 31 passes on an unsourced yield: the model makes 1.87× the type Ia per unit mass formed that is
    measured** (S30, BUILD_II Phase 6, D179). `Y_FE_IA` = 0.0017 M☉ of Ia iron per unit mass formed has
    been `[recall: WAF17]` since S9; over Maoz & Graur 2017's 0.7 M☉ of iron per event `[verified:
@@ -3009,7 +3093,8 @@ never been judged in twenty-three sessions.
    driver, with metallicity second. **Carried**; closable by the sSFR form of the same paper if it is read,
    or by a per-radius calibration from resolved galaxies (KINGFISH), either a sourced relation replacing
    this one; what kills the reading: a Phase 9 PAH-band emission that lands at R₀ with 9.1%.
-93. **Row 32 is owed and was not entered: the dust temperature and the infrared luminosity** (S31, D180).
+93. **No acceptance row reads the dust temperature or the infrared luminosity** (S31, D180; headed "Row 32 is
+   owed and was not entered" until S70 — row 32 has been the globular-cluster system mass since S34, `spec.py:239`).
    Planck 2013 XI's whole-sky ⟨T_obs⟩ = 19.7 ± 1.4 K `[verified: Table 3, read at S31]` was read while
    sourcing β, before any row was ruled, so entering it now would be choosing with the answer known (D113,
    as #87); it is also a sky average seen from the Sun, not a disc profile. The Milky Way's total infrared
@@ -3019,6 +3104,12 @@ never been judged in twenty-three sessions.
    Planck's 19.7 ± 1.4 K is a whole-sky line-of-sight average seen from the Sun, not the face-on T_d(R) the
    model publishes, so by D177 the source names no field. Re-described: not a row owed but a reading kept;
    the infrared luminosity still wants a primary source. Still carried.
+   **S70 (Audit V, F-5-9):** two things above are stale. Row 32 went to the globular-cluster system mass at S34
+   (`ROW_GC_SYSTEM_MASS`, `spec.py:239`; its miss is #98), so a dust row takes the next free number (38 at S70).
+   And the model's numbers are S52's, not S31's: since the dust stage absorbs in the layered geometry (D211, #128)
+   it reads T_d(R₀) **18.52 K** (S31's 19.54; 18.82 under the slab at S50) and L_IR **1.2006 × 10¹⁰ L☉** (S31's
+   1.62 × 10¹⁰; the slab's 1.5675 × 10¹⁰), pinned in `tests/test_dust.py` and `tests/test_dust_layer.py`. Still
+   carried, as re-described by Audit III. *(re-ruled at Audit V, S70, D234)*
 94. **All the molecular gas is in clouds, drawn from a smallest mass no source fixed** (S32, BUILD_II Phase
    8, D181). The census puts every gram of the ISM's molecular gas into clouds between 10⁴ M☉ and the
    sourced truncation (Rice et al. 2016), so the mass in clouds integrates back to the molecular mass to
@@ -3263,6 +3354,13 @@ never been judged in twenty-three sessions.
    centred on the cloud and aligned with the scene); the volume mean is 1.016 / 0.993 / 0.888. Nothing more is
    published for a function about to be retired: **V7 (S64) discharges this** by replacing it with the layer's
    noise and its committed vectors.
+   **S70 (Audit V, F-5-13): named V7 (S66), which did not take it; carried, closer: the region's interior drawn
+   from the layer's noise.** V7 ran at S66, not S64 (P5 and V6b moved the board), and put the layer's noise twin in
+   the march for the diffuse dust and the young and middle light (D226) — not into the clouds' interiors, which
+   still draw the value noise this entry describes (`region.ts:41, 113, 167`, its GLSL twin, `RegionVolume.tsx`).
+   What closes it is unchanged: the region regime's cloud interior evaluated with the layer's noise (`noise.glsl.ts`)
+   at the cloud vector's σ_s, its committed vectors the test, and the viewer's own lattice constants retired. No
+   phase of BUILD_III or BUILD_IV now names it; the owner schedules it. *(re-ruled at Audit V, S70, D234)*
 111. **The region volume's display budget drops light the field has already given up** (S40, V3, D190). One march
    loops over at most 256 objects per pixel — the 128 heaviest clouds, the 64 brightest HII regions, the 64
    brightest shells — while a level-1 window (a view 1–4 kpc across asks `regionAround` for ±4 kpc of radius) holds
@@ -3336,6 +3434,14 @@ never been judged in twenty-three sessions.
    summed over the points (per-point medians 1.107 / 1.139 / 1.259): a single star is nearly one blackbody. The
    1.89 / 2.12 / 2.43 above was measured on the cluster census, and is an integrated population's. **Still
    carried** until the routes serve the response (`filters=` on the object routes) and the viewer draws it.
+   **S70 (Audit V, F-5-3), narrowed: the field mode's region-regime cluster colours alone.** The closer above has
+   been built for the star-first mode: `/api/clusters` and `/api/bright` take `filters=` and return `response`
+   (`service.py:262, 289`, S48) and the star-first points draw from it (`GalaxyTab.tsx:435, 442`). What still paints
+   by the blackbody share is the field mode's region regime, whose cluster points take their colour from
+   `cluster_light_temperature` and `cluster_luminosity` through the ramp (`GalaxyTab.tsx:336`, `lightColors`) — the
+   integrated population's factor of two (1.89 / 2.12 / 2.43, `tests/test_v4.py`) is that path's. **Carried; what
+   closes it:** the region regime's clusters drawn from the same `response` the star-first mode reads.
+   *(re-ruled at Audit V, S70, D234)*
 115. **The young population is on the screen twice in principle and once in practice: the cluster points and the
    sampled stars have no accounting between them, and a dissolved cluster is a point** (S41, V4, D191). The
    clusters are the whole young population — ΣQ / the light stage's young Q = 1.0088 (D182) — and carry 0.249 of
@@ -3350,6 +3456,15 @@ never been judged in twenty-three sessions.
    young stars a cell's clusters account for, or a `star_cluster_index`) so the sample excludes what the points
    carry; the dissolved clusters' light handed back to the sample rather than pointed; and #113's closure test
    summing the sample and the points against the render's `stars` over the same cells.
+   **S70 (Audit V, F-5-4), narrowed: the field mode's sample, and a dissolved cluster as a point.** The "drawn
+   twice" half is closed in the star-first mode by the age partition (`bright.py:58-60, 70-76`): the bright
+   catalogue holds no star younger than the cluster census's window (20 Myr), and `/api/render?l_min=` splits each
+   ring's light into what the cluster points carry, what the catalogue carries and what neither does, the three
+   the total exactly. What remains is the field mode's region-regime sample, which samples the young stars beside
+   the cluster points with no membership between them, and the dissolved half of the census (`cluster_bound`
+   = dissolved) still drawn as one point at every level. **Carried; what closes it:** the same partition applied to the
+   field mode's sample, and the dissolved clusters' light handed to the sample or drawn at their spread.
+   *(re-ruled at Audit V, S70, D234)*
 116. ~~**A cluster's extent is published and not drawn: every cluster is a point sprite at every level**~~
    **DISCHARGED at S64** (D224, R7, T6: the form ruled Plummer, a = r_h / 1.305; `plummer.ts` draws it in place of a
    cluster's point where 2 r_h fills a pixel, each pixel the profile's exact integral, the sprite summing to the light
@@ -3607,6 +3722,14 @@ never been judged in twenty-three sessions.
    **S58 (D217): the placement half has grown.** With the gas's lanes inside the bar, placing the dust round each
    ring would take 3.5 % off the disc's absorbed power in the layered geometry (0.965; +0.3 % at S57), 5 % in the
    slab, and a tenth at 2 kpc — measured in `tests/test_dust_layer.py`, still not applied.
+   **S70 (Audit V, F-5-6): (b) widened — a template check reads the mixed slab, not only a test.** The face-on
+   composition moved at S54 from `tests/test_render.py` into `specs/templates.py:83-91` (`face_on`: light mixed
+   through its own dust, (1 − T)/τ), read by `face_on_colour` (`:98-101`), which is `ngc_4414`'s template check
+   `colour_b_v_face_on` (`templates.py:922-936`, a disclosed check, `CheckMiss`): the check reads a geometry neither
+   the dust stage (layered since S52) nor the viewer uses, and #136's 0.636 against [0.72, 0.82] is read through it.
+   **S70's Builder C re-reads that check through the layered dust** (a check moves, not a row; old and new recorded
+   with the reason, #136 re-read with it); this entry names the check and does not change it. (a), (c) and (d)
+   carried as written. *(re-ruled at Audit V, S70, D234)*
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
@@ -3707,8 +3830,16 @@ never been judged in twenty-three sessions.
    read separately against a sourced face-on attenuation for an Sc disc (the catalogues' own A_B − A_V), which
    says whether the dust reddens too little or the stars are too blue. What kills the dust reading: a frame still
    under 0.72 with the catalogues' face-on reddening applied by hand.
-137. **The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first** (S55, D214,
-   gate G1). A census draws each cell's count on the cell's own stream at an expectation that already carries
+137. ~~**The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first**~~
+   **DISCHARGED at S70** (Audit V, F-5-1, D234; discharged in fact at S61). Its own closer — "L1's ring-first draw
+   … after which the list is empty and the realised ring totals are identical with the layer on or off" — was met
+   at S61 (D220): every census draws a ring's count and every per-object draw on the ring's stream before the layer
+   places them, and `CENSUS_STATISTICS` has been empty since (`tests/test_layer.py:115-118`, `assert
+   CENSUS_STATISTICS == {}`; the fourteen statistics it listed are `RING_FIRST_STATISTICS`, held on and off to
+   1e-12). The entry stayed open four sessions because no session re-read it (Audit V's register pass found it).
+   What is left is not this debt: two *expected* totals (`cloud_count_total`, `bright_star_count_1e3`) still differ
+   on and off by a few units in the last place — a sum over cells whose weights average to 1 only to rounding —
+   held by `same_expected_total` (F-3-11's margin) and noted under #196. Was: (S55, D214, gate G1). A census draws each cell's count on the cell's own stream at an expectation that already carries
    the composed weight, so switching the layer off re-draws which objects exist, not only where they are.
    Measured, layer off against on at the defaults: realised cloud mass −1.9 % galaxy-wide and up to 19 % in a cell
    ring; cluster mass −5.8 %; the census's HII Hα −8.1 %, up to 43 % in a ring; over six seeds −1.0 ± 1.7 %,
@@ -3727,6 +3858,7 @@ never been judged in twenty-three sessions.
    on-minus-off totals over seeds, which would make it a leak and not a redraw. **S56:** two *expected* totals
    (`cloud_count_total`, `bright_star_count_1e3`) now differ by one unit in the last place with the layer on and
    off — a sum over cells whose weights average to 1 only to rounding; held to one ulp by name, carried to G2.
+   *(re-ruled at Audit V, S70, D234)*
 138. **The arm-number law fails the observed arm-mode spectra** (S56, D215 ruling 12). The law is the local swing
    window: at each ring the power goes to the modes with 1 < X_m/Γ < 2, X_m = κ²R/(2πGΣm) on the checkpoint-1
    disc. Built correctly it gives the Milky Way template 0.08 / 0.21 / 0.24 / 0.25 / 0.22 of its arm power in
@@ -3935,7 +4067,8 @@ never been judged in twenty-three sessions.
    `sfr_modulation` is the same law at each cell's *mean* contrast, and the law is not linear: at cells the
    footprint's edge crosses the two differ — 1.20 in the modulation at one cell at 2.51 kpc, 0.59 % of the worst
    ring's young weight (1.08 % on another seed), 0.03 % on average, 0.015 % at worst on the 359 of 400 rings
-   whose footprint is uniform (pinned in `tests/test_segments.py`). The render places the 20–100 Myr light from
+   whose footprint is uniform (pinned in `tests/test_segments.py` until S60 deleted it, 7be85c8; pinned again at S70,
+   below). The render places the 20–100 Myr light from
    that table and interpolates every (R, φ) field between rings at fixed φ, which across a nearly circular
    segment misplaces a ring gap's young light by 16–91 % (the readers this session replaced in the censuses:
    7.7–37 % at fixed φ and 13–71 % wound, inside the bar). **Carried.** The remedy is named (Fable): "the
@@ -3954,6 +4087,13 @@ never been judged in twenty-three sessions.
    same bits, the quadrature's 3e-4 not worsened. **S60 (D219) built the cheaper form as the point function's normaliser
    tabulated in R (`pieces.ring_mean_table`), the gate's words entered at S61 (D220): the quadrature's part of this entry is
    met; the render's wound read and the table of the law's cell mean are still carried.**
+   **S70 (Audit V, F-5-12): the numbers pinned again.** The citation above names a file S60 deleted with the
+   segments, so from S60 to S70 nothing pinned the table's gap. `tests/test_audit.py::test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint_edge_crosses_a_cell`
+   re-measures S59's statistic on today's arms (a census of pieces since S60) at the production grid: the largest
+   difference at a cell's centre **1.070** at 3.34 kpc, a ring's misplaced weight **0.593 %** at worst and
+   **0.034 %** on average at the default seeds; **1.205** at 2.96 kpc, **1.175 %** and **0.045 %** at pattern seed
+   3 — within a few tenths of S59's 1.20 at 2.51 kpc, 0.59 % and 1.08 % on another seed, the worst cell and ring one
+   ring inside the bar's reach. Still carried, with its remedy as named. *(re-ruled at Audit V, S70, D234)*
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
@@ -4030,6 +4170,11 @@ never been judged in twenty-three sessions.
    Way and runs out of memory on `ngc_4414` at 1.1 L☉ (1.23 × 10⁸ stars in a sub-ring); `/api/bright` now refuses,
    before any draw, a tile request whose ring holds more stars above the threshold than `MAX_STARS` (5 × 10⁶; 310 B a
    star, so 1.5 GB and ~1 s), naming the count, the bound and #159.
+   **S70 (Audit V, F-5-13): named V7 (written "S65"; V7 ran at S66), which did not take it; carried, closer: the
+   one pass above** — a per-cell lattice computed once per run and shared by the placement, the cell-mean table
+   and the shader, or a coarser lattice with its error declared — on the owner's bound for the whole-disc calls
+   (D219 (c), still theirs). V7 was the layer in the viewer (D226), not the census routes' placement; the costs above were not re-measured at S70. No phase of
+   BUILD_III or BUILD_IV names it now. *(re-ruled at Audit V, S70, D234)*
 160. **The star sample and the bright catalogue place old stars by two rules that differ by 3.9e-3 per sector**
    (S61, D220; measured by the star sample's builder on ring 8, 7.52-8.45 kpc, young share 0.00367, no sector
    clipped). The sample allocates a young star by c-bar p and an old one by c-bar (1 - p) - the stellar contrast's
@@ -4040,6 +4185,12 @@ never been judged in twenty-three sessions.
    catalogue keeps the old part's contrast. **Carried.** One rule for both is V5/V6's (the field's light by age, the
    censuses at whole-galaxy scale), where the two catalogues are drawn beside each other; the test that compares
    them per sector is the star sample's.
+   **S70 (Audit V, F-5-13): named V5/V6 (S63, S64), which did not take it; carried, closer: one rule for both.**
+   V5 split the field's light by age and V6 drew the censuses at whole-galaxy scale (D223, D224), and the two rules
+   are still two: `bright.part_weights` (`bright.py:344-356`) places the old part by c̄ alone, the star sample's
+   `Placement` (`systems.py:793, 875`) by c̄ (1 − p). The mend is unchanged — one allocation for both catalogues,
+   with the per-sector comparison in the star sample's tests — and no phase of BUILD_III or BUILD_IV names it
+   now. *(re-ruled at Audit V, S70, D234)*
 161. **The per-cell conservation removes the hierarchy's power at scales near the cell's short side** (S61, D220
    part II; the reviewer's finding 2). The field's own two-point excess is its statistic to the digits - (r/190 pc)^-0.64,
    2.43 at 47.5 pc, 1 beyond 340 pc on 24 squares - but a cloud is placed by the field *within its cell* with the
@@ -4053,6 +4204,12 @@ never been judged in twenty-three sessions.
    expectations carry the hierarchy's coarse end and the ring keeps its total - a change to the sector allocation
    that moves every layer-on pin; L2's gas fluctuation (one noise, D220 II.6) or V6 (the censuses at whole-galaxy
    scale) is where it is drawn beside the finer octaves.
+   **S70 (Audit V, F-5-13): named L2 or V6 (S62, S64), which did not take it; carried, closer: the field's cell
+   means in the clouds' sector weights.** L2 built the gas fluctuation field as its own noise beside L1's (D221) and
+   V6 drew the censuses at whole-galaxy scale (D224); neither changed the sector allocation, and rule 2's unit mean
+   per level-0 cell still cuts the hierarchy's power below ~120 pc. The mend is as written above (a ring as the
+   unit, every layer-on pin moving with it), and no phase of BUILD_III or BUILD_IV names it now.
+   *(re-ruled at Audit V, S70, D234)*
 162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
    part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
    than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
@@ -4066,6 +4223,11 @@ never been judged in twenty-three sessions.
    2019 Table 2). **Carried.** The mend is named: the log-normal width falling with age on that amplitude series,
    beside the octaves' dropping - one function of age, sourced, in V5 (the field's light by age) where the young
    light is next drawn.
+   **S70 (Audit V, F-5-13): named V5 (S63), which did not take it; carried, closer: the log-normal width falling
+   with age.** V5 split the field's starlight into young, middle and old parts (D223) and V7 drew the middle part
+   split at the octave survival ages (D226) — the step this entry describes, made visible rather than mended. The
+   mend is unchanged: one sourced function of age for the width (Grasha et al. 2019's amplitude series) beside the
+   octaves' dropping. No phase of BUILD_III or BUILD_IV names it now. *(re-ruled at Audit V, S70, D234)*
 163. **The gas fluctuation field's per-cell normaliser table costs about 5 s a run** (S62, D221; the field builder's
    measurement). The table that gives the field unit mean per level-0 cell is evaluated on L1's lattice - 2 points per
    47.5 pc, 5.26 million points, six octaves of value noise in float64 - at 4.6-5.1 s cold; a sparser lattice breaks the
@@ -4103,6 +4265,10 @@ never been judged in twenty-three sessions.
    points; `_unresolved` repeats the same `part_masses` work. The field mode's own request is the recorded warm cost
    (0.39 → 0.90 s). **Carried.** Two mends, one pass: skip `_ages` under `l_min`, and cache the parts' anchors per run
    (0.13 s), which V7 or V8 takes with the render's other costs (#159, #163).
+   **S70 (Audit V, F-5-13): named V7 or V8 (S66, S67), which did not take it; carried, closer: the same two mends
+   in one pass** — skip `_ages` under `l_min` and cache the parts' anchors per run — beside #159's and #163's costs.
+   V7 was the layer in the viewer and V8 the display defaults (D226, D227–D231); BUILD_IV's smoothness phase (W5,
+   D222) is where a render's cost is next read, and the owner schedules it. *(re-ruled at Audit V, S70, D234)*
 167. **The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud** (S64, D224 stop
    condition 1; the probe's measurement). The census's `central_extinction_v` is solar dust per hydrogen at one surface
    density (Σ_GMC 42 M☉/pc²; since S67, D231, the inner regime's 82, 5.7977 mag), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
@@ -4153,6 +4319,11 @@ never been judged in twenty-three sessions.
    points carry it, and #113's closure, measured at S65, measured it. **Carried.** The mend is one pass, a model
    pass's or Audit V's, outside a viewer phase: an EEP-style interpolation (along equivalent evolutionary points) in
    `photometry.lookup`, which moves the star sample's light and every pin on it.
+   **S70 (Audit V, F-5-14): Audit V did not take it** (its aim, `AUDIT_V.md` §0, reads and measures; it moves no
+   number, B3) **and S70's fixes do not** (no ruling names it; the interpolation moves the star sample's light).
+   **Carried, closer re-named: a model pass of its own** — the EEP-style interpolation in `photometry.lookup`, with
+   the star sample's pins re-read in the same commit — on the owner's word, since it moves published numbers.
+   *(re-ruled at Audit V, S70, D234)*
 172. **The zoomed view is two pictures of one scene** (S65, D225; the probe's finding and the frames). Below 4 kpc the
    field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
    display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
@@ -4169,6 +4340,10 @@ never been judged in twenty-three sessions.
    registry the `basic` model's migration run reads), or a hash-order dependence in the model (PYTHONHASHSEED differs
    per process). **Carried.** The mend is one pass, Audit V's: run the file alone and whole with a randomised test
    order and a fixed hash seed, to tell the two apart.
+   **S70 (Audit V, F-5-14): Audit V's §0 did not take it; carried, closer re-named: the randomised-order run as a
+   test in `tests/test_audit_v.py`** (S70's Builder C, a measurement and B3-safe: the migration test run alone and
+   in a shuffled order with a fixed hash seed, its result recorded). The entry is discharged if that run separates
+   the two candidates and the cause is fixed, or narrowed to the surviving one. *(re-ruled at Audit V, S70, D234)*
 174. **The points' dust is the ring's placed column, not the modulated one** (S66, D226 R7). FluxPoints reads the
    dust along a point's segment from the march's textures in its own pinned shader, which does not include the
    noise: since V7 the field's dust is multiplied by the gas fluctuation map (σ 0.5) and the points' is not, so a
@@ -4343,6 +4518,11 @@ never been judged in twenty-three sessions.
    production clouds placed outside their drawn level-0 ring). **Carried**: S70 measures each over the whole population at
    the production grid and two seeds, writes "measured over N" (D117), and `tests/test_audit_v.py` holds it; S70 also says
    whether a cloud's ring is its drawn or its placed ring wherever a per-ring total is taken.
+   **S70 (Audit V's register pass, F-5-1): #137's residue is noted here,** the one bound of the layer's that #137
+   left behind when it was struck: two expected totals (`cloud_count_total`, `bright_star_count_1e3`) apart on and
+   off by a few units in the last place (two measured at S59), held by `tests/test_layer.py`'s
+   `same_expected_total` under the invariant's four — a margin, not a measured bound over the population, so it
+   belongs with the three above (F-3-11 decides its wording). *(re-ruled at Audit V, S70, D234)*
 
 ---
 
