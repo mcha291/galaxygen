@@ -399,10 +399,12 @@ _STANDS_IN_FOR = (
 # ``tests/test_clustering_gate.py`` holds the measurement to these numbers): |[Fe/H]_gas at the placed radius minus
 # at the radius the ring drew|, dex, over the 16 577 clouds - its median, 90th and 99th percentiles and maximum; the
 # ring's radius of the maximum (kpc); the clouds beyond 0.06 dex; and the [alpha/Fe] maximum, likewise.
-SPILL_FEH_DEX = {"median": 0.022, "p90": 0.063, "p99": 0.123, "max": 1.258}
+# S70 (D234): re-measured after the clouds' ring inversion on the ring's own interval (Audit V F-2-7: the birth radius
+# the spill is taken from) and the size law's three regimes (#192) - were p90 0.063, p99 0.123, 1863 beyond and 0.232.
+SPILL_FEH_DEX = {"median": 0.022, "p90": 0.062, "p99": 0.121, "max": 1.258}
 SPILL_FEH_MAX_AT_KPC = 23.6
-SPILL_FEH_BEYOND = (0.06, 1863, 16577)  # S62 (D221): was 1862 - the gas spurs move the clouds' placement
-SPILL_ALPHA_MAX_DEX = 0.232
+SPILL_FEH_BEYOND = (0.06, 1807, 16577)  # S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
+SPILL_ALPHA_MAX_DEX = 0.226  # S70 (D234): was 0.232 (F-2-7)
 
 _CONSERVES = (
     "Every cell's expected count of every census it places and every ring's realised total: it places a cloud "

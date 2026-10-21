@@ -60,7 +60,9 @@ WIDTH = "CENSUS_CLUSTERING_WIDTH"
 # judged window (|slope + 0.64| < 0.15) and flat beyond 380 pc (< 0.05).
 MEASURED = {
     "clouds": (-0.6396, 1.9798, 0.0212),
-    "clusters": (-0.6908, 2.1129, 0.0221),  # S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
+    # S70 (D234): was (-0.6908, 2.1129, 0.0221) - the clouds' ring inversion (F-2-7) and the size law's three regimes (#192:
+    # the clouds inside 4 kpc and in 7-8.2 kpc larger, so a cluster's source offset reaches further); the window holds.
+    "clusters": (-0.6578, 2.0842, 0.0210),  # S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
     # bounded by its cloud's size, and the giants shrank (the radius cap 150 pc, Sigma 82 inside R_SUN); the judged window holds.
 }
 # The templates, measured by hand with this file's construction at S61 (each run about 30 s, its control 10-20 s):
@@ -79,7 +81,8 @@ assert all(abs(v[0] - (-0.64)) < 0.15 and v[2] < 0.05 for t in TEMPLATES_MEASURE
 SQUARE_BEFORE = {"clouds": (-0.096, 1.17, 1.18, 1.17), "clusters<=10Myr": (-0.108, 1.18, 1.46, 1.10)}
 # S62 (D221): was {"clouds": (-0.163, 1.24, 2.01, 1.16), "clusters<=10Myr": (-0.141, 1.30, 1.60, 1.24)} - the gas
 # spurs place the clouds on the spurs' streaks too, and the young clusters with them.
-SQUARE_AFTER = {"clouds": (-0.170, 1.248, 2.088, 1.176), "clusters<=10Myr": (-0.154, 1.302, 1.838, 1.131)}
+# S70 (D234): the young clusters' last figure was 1.131 - F-2-7 and #192 (their offsets in larger clouds).
+SQUARE_AFTER = {"clouds": (-0.170, 1.248, 2.088, 1.176), "clusters<=10Myr": (-0.154, 1.302, 1.838, 1.148)}
 # S67 (D231): the young clusters' square was (-0.121, 1.278, 1.800, 1.202) - their offsets from their clouds shrink with
 # the clouds (the size law); the clouds' own square did not move.
 # The default galaxy's field alone in a flat 6.08 kpc square (exact expectation; points through the instrument).

@@ -408,6 +408,11 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     # sample's build: the star's 19 columns (the catalogue's 18 and the planets stage's star_planet_count), the
     # planet's 9 and the four statistics.
     assert len(redrawn) == 17 + 38 + 17 + 19 + 9 + 14 and not redrawn & named
+    if template == "ngc_4414":
+        # S70 (D234): `dig_halpha_fraction`, a ratio of two sums that is three tenths in any census to rounding, lands on
+        # S55's bits again on this template's census (0.30000000000000016) after the clouds' ring inversion (F-2-7) and
+        # the size law's three regimes (#192) - still a census statistic, still listed in RING_FIRST_STATISTICS.
+        redrawn = redrawn - {"dig_halpha_fraction"}
     assert moved == named | redrawn, sorted(moved ^ (named | redrawn))
     moved -= redrawn
     # S58 (D217): was `else set()` - `ngc_4414`'s four bar scalars are NaN by ruling (unbarred, as observed).
@@ -681,14 +686,17 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     assert set(CENSUS_STATISTICS) - moved_statistics == set(), sorted(set(CENSUS_STATISTICS) - moved_statistics)
     # S61 (D220 item 4): of the nine, these differ in their last bits (sums over the same objects in another order),
     # as measured; the cloud mass, the luminosity function's slope and the [N II] gradient are the same bits.
-    assert rounded == {"dig_halpha_fraction", "hot_phase_porosity",
+    # S70 (D234): was with "dig_halpha_fraction" - on and off its two sums now round alike (0.30000000000000004 both),
+    # the census moved by the clouds' ring inversion (F-2-7) and the size law's three regimes (#192).
+    assert rounded == {"hot_phase_porosity",
                        *(f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731"))}, sorted(rounded)
     # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
     # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.
     # S60 fourth pass: was (0.30000000000000016, 0.29999999999999993) - the layer-on value now the layer-off bits.
     # S61 (D220): was (0.29999999999999993, 0.29999999999999993) - the ring-first census, the same regions on and off
     # summed in another order: one rounding of three tenths each.
-    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.29999999999999993, 0.30000000000000016)
+    # S70 (D234): was (0.29999999999999993, 0.30000000000000016) - F-2-7 and #192, another rounding of three tenths.
+    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000004, 0.30000000000000004)
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():

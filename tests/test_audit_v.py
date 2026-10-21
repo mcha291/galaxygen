@@ -990,7 +990,8 @@ def _pytest(args, hash_seed: str):
 
     root = Path(__file__).resolve().parents[1]
     env = {**os.environ, "PYTHONHASHSEED": hash_seed}
-    return subprocess.run([sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-v", *args], cwd=root, env=env,
+    # -rA: the short summary names every test it ran, PASSED first, in the order run (the project's addopts hold -q).
+    return subprocess.run([sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-rA", *args], cwd=root, env=env,
                           capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
@@ -1017,6 +1018,6 @@ def test_the_migration_test_holds_alone_and_in_a_shuffled_order_under_two_hash_s
         order = ids[:]
         random.Random(shuffle).shuffle(order)
         whole = _pytest(order, seed)
-        ran = re.findall(r"^(tests/test_chemistry\.py::\S+) (?:PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)", whole.stdout, re.M)
-        assert ran == order, (shuffle, ran[:5], order[:5])
         assert whole.returncode == 0, (shuffle, seed, whole.stdout[-3000:])
+        ran = re.findall(r"^PASSED (tests/test_chemistry\.py::\S+)", whole.stdout, re.M)
+        assert ran == order, (shuffle, ran[:5], order[:5])

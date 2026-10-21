@@ -39,7 +39,9 @@ RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "patter
 # cell normalisers - and with the layer off the stage returns its neutral (the route may not branch on the layer, I5).
 # The disc's realised clouds' share of its dust and the first three rings' expected shares (S64's probe, measured;
 # recorded in D224, not targets: the realised share is the census's draw, the expected the ring's molecular fraction).
-CLOUDS_SHARE_DISC = {"milky_way": 0.4899973, "ngc_4414": 0.6327142}
+# S70 (D234): was {"milky_way": 0.4899973, "ngc_4414": 0.6327142} - the clouds' ring inversion on the ring's own interval
+# (Audit V F-2-7) moves the birth radius each cloud's dust-to-gas ratio is read at; the masses and #192's sizes do not enter.
+CLOUDS_SHARE_DISC = {"milky_way": 0.4922158, "ngc_4414": 0.6379672}
 EXPECTED_FIRST_THREE = {"milky_way": (0.8264951, 0.7385616, 0.6628994), "ngc_4414": (0.7907958, 0.6709560, 0.5524492)}
 
 
