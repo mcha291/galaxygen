@@ -136,7 +136,67 @@ and 1.90, Sellwood & Masters' 1/f_d ≲ m ≲ 2/f_d, Block 2004's 20° — all M
 - **F-1B-8** minor wording, no value moves: (a) `level0.py:917` drops Elmegreen & Scalo's condition "if there are no velocity fluctuations"; (b) `layer/gas_fluctuation.py:435` tags the THINGS median −1.6 as verified where it is derived arithmetic (the page prints the 50 % range −1.9 to −1.5 and a mean −1.3); (c) `level0.py:839` "four more galaxies give only limits" — Menon's Table 3 has four lower, two upper, one none; (d) `GMC_RADIUS_MAX` takes Miville-Deschênes's (R_max R_min²)^{1/3} radius as a cap on the equal-area radius; (e) the gas fluctuation's Mach 8.9 is 1 % past Burkhart & Lazarian's simulated 0.4–8.8.
 - Ten place-only slips (the value right, the section off) are listed in 1A's note §3 and are not counted.
 
-## 2. The synthetic fields re-measured (strand 2) — *[pending the builder's report; `tests/test_audit_v.py`]*
+## 2. The synthetic fields re-measured (strand 2; one Opus builder in a worktree; `tests/test_audit_v.py`, the one file the audit adds)
+
+Mesh `GridSpec(n_R=130, n_t=450, n_z=9, n_phi=200)` (no test used it), `texture_seed` 4242 and 777 on `milky_way` and
+4242 on `ngc_4414` (neither pinned anywhere), layer on, layer off, and a control with `CENSUS_CLUSTERING_WIDTH` 0; the
+azimuthal model. **31 passed, 7 strict xfails, none failed, 174 s.** Every tolerance the declarations do not state is the
+builder's own and is written in the test's docstring (5 SE pooled, 3 SE fitted, ±0.15 / ±0.21 on a slope, 1 % on a
+power, 0.2 on a spectral index); each test says what would have to be true for it to fail; each stage's `stands_in_for`
+is read as a sentence under (c).
+
+- **cloud_texture:** per level-0 ring by birth radius, cloud count exact and cloud and cluster mass within 1e-12 on vs
+  off; offset ≤ size everywhere; the four columns 0 with the layer off. Pooled over 39 264 clouds: offset/size 0.7517
+  (law 3/4), its cube 0.5026 (1/2), gradient 0.4980 (0.5), angle 3.1441 (π); a reroll moves every column.
+- **arm_pieces:** ring means of `pattern_density_contrast` within 3e-16 of 1 (1e-12 gate), no negative cell, the laws
+  bit-identical on and off; the builder's own variance of the composed field matches `arm_ring_power` within 0.3–0.5 %;
+  his chain-crossing count equals `arm_chain_count` on every ring and is ≥ ⌈design count⌉ past the bar; extents as a
+  censored truncated log-normal (cut pieces right-censored): median 64.0° (declared 60), log-width 0.44 (0.35), inside
+  3 SE — uncensored the uncut pieces read 54.8°, because long pieces are the ones cut; pitch deviation (n 87) mean 0.115
+  (law 0.047), sd 0.574 (0.514), inside 3 SE; `ngc_4414` flocculent, one piece per chain, extents 37–105°, mean 76.4°
+  (law 71); chain lengths against 273 ± 143 pass on few uncensored chains.
+- **census_clustering:** per-cell cloud counts exact and masses within 1e-12 against the width-0 control (against
+  layer-off the cells legitimately differ — the sector allocation follows the composed pattern; per-ring totals by
+  birth radius exact); the published cell mean equals the builder's 2-point lattice mean within 1e-9 and holds within
+  3.4e-2 on a 4-point lattice; σ = std(ln f) 1.7501 / 1.7506 against 1.75; the pair-count ratio against the control:
+  slope over 47.5–190 pc −0.581 / −0.495 (`milky_way`), −0.468 (`ngc_4414`) against −0.64 (passes at ±0.15 / ±0.21, on
+  the lenient side); excess at 47.5 pc 2.42 / 2.20 / 2.03 (declared 2.43); ratio over 380–760 pc 0.976 / 0.967 / 0.996
+  (declared 1), with a dip to 0.88–0.93 at 224–447 pc the declaration does not mention.
+- **gas_fluctuation:** the mean on each cell's own 2-point lattice within 2.5e-14 of 1, the map 1 and the fields NaN
+  layer off; a periodogram round circles (an unsheared cut: expected 1-D slopes −0.53 above and −1.53 below the break):
+  ring 1 −0.760 / −1.525, break 96 pc against πh 89; ring 8 −1.579 below, break 241 pc against πh 341; ring 12 −1.524;
+  the break indices equal the published; Mach 8.8953 and σ 0.50097 match the builder's own sound speed and the
+  Burkhart–Lazarian relation within 1e-3; the Gaussian sum's std within 3 % of 1; strain −2 to 1e-12 where uncapped
+  and within 2 % of his Oort A where capped; twist its integral to 1e-12.
+- **gas_spurs:** the ring mean of `gas_density_contrast` 5e-14 / 9e-14 on `milky_way` (declared 1e-13); the gas column
+  bit-identical on and off; λ_J = c_s²/(GΣ_peak) within 1e-9, the spacing exactly 10 λ_J, Σ_peak = column × contrast,
+  consecutive feet one spacing apart (1e-12); the last foot inside the chain's length (integrated independently, 1e-6)
+  and one more spacing past the end; every spur on an arm chain; `ngc_4414` none.
+
+**Findings (each a strict xfail naming it; F-2-2 does not exist — the extent test passed once censoring was used).**
+- **F-2-1** DIFFERS `layer/arm_pieces.py:492`: "the budget is met on average over these draws" — realised power over
+  budget averages 0.530 / 0.627 (`milky_way`) and 0.445 (`ngc_4414`), about half; the build's own `test_pieces` record
+  reads a median 0.52–0.63, so the declaration contradicts the build's own measurement.
+- **F-2-3** marginal `spurs.py:183`: the gas contrast's ring mean declared to 1e-13; `ngc_4414` at 4242 measures
+  1.006e-13 (no spurs there: the gas pattern's own rounding at this mesh).
+- **F-2-4** DIFFERS `spurs.py:68, 188`: `WALK_READ_DIFFERENCE` 0.052 bounds the foot's read against the point function;
+  over all feet it reaches 0.48 (4242) / 0.26 (777) on the audit mesh and 0.27 on the production grid, 6 of 44 feet over
+  0.052 — the declared number came from ten sampled feet.
+- **F-2-5** statement gap `spurs.py:13-14`: "every chain of a non-flocculent disc carries them" — chain 7 (2.3 kpc) of
+  `milky_way` 4242 has none, its first foot's draw past its end.
+- **F-2-6** DIFFERS `gas_fluctuation.py:427-428`: the cell mean off its lattice declared "9.7e-3 rms, 1.83e-2 at worst";
+  on an 8-point lattice over 60 cells rms 7.4e-3 but worst 2.71e-2 (777, ring 1), four cells on rings 0–1 over 1.83e-2 —
+  a sample of ten cells presented as a bound.
+- **F-2-7** DIFFERS `census_clustering.py:412-414`: the placed radius declared "up to 0.94 kpc from the radius its ring
+  drew … at most 976 pc"; 1 114 of 16 387 clouds (audit mesh) and 712 of 16 577 (production) have a drawn radius outside
+  the level-0 ring they are placed in, by up to 0.177 kpc (production 0.071), and the placed radius lies up to 1.028 kpc
+  (production 0.988) from the drawn one — past both the ring width and 976 pc.
+- **F-2-8** DIFFERS, small `gas_fluctuation.py:435`: the slope above the break declared k^−1.53 (−0.53 on a cut); ring 1
+  fits −0.760, 0.23 off — the same steepening as the build's own 2-D fit of −1.72 at R = 1 kpc.
+- Not measured, or weak: the spurs' "interarm share falls at most 0.0092" (no spur-free composed field is published);
+  "the first spur within one spacing of the start" (its spacing comes from the walk read F-2-4 doubts); spacings of
+  6 600–7 400 kpc on feet where the gas column is near zero (the law's honest output, worth a line); the chain-length
+  test rests on few uncensored chains; the pair-count tolerances were set after a first look and are lenient.
 
 ## 3. I1–I5 re-derived, not re-run (strand 3; one Opus reader, read-only, `tests/test_layer.py` 70 tests collected)
 
@@ -233,3 +293,124 @@ inclination and the dominant yellow core are right and the fine streaky dust rea
 and faint, ringed by a dozen isolated green-white and pink point knots (#183), with no blue-white complexes and an outer
 disc redder than the inner — right at a glance in inclination and the core, partly in mottling, not yet in colour or
 in the complexes §0 expected to read merely as procedural.
+
+## 6. Gate G4 — the lead's verdict (Fable, 2026-10-21; transcribed to D233; the fixes are S70's, B3)
+
+**Read first.** Five strands, six Opus agents, 61 findings. **The build's numbers hold:** of 665 citation tags
+re-read, no constant's number differs from its source; every pin and fit target matches; no feature of the seven frames
+is an invention. **What the audit found is provenance and wording** (two constants adopted where their about-lines say
+measured, four misattributions, eight context slips), **tests that assert less than the plan's text** (the placed
+catalogues' columns uncompared on and off, the walk run at one template and one seed), **two viewer gaps**, and **a
+register that drifted** behind the sessions it names. The verdict on each class follows; a finding not named is upheld
+as written and goes to S70 as a wording or test fix.
+
+**Upheld as written — a number or a definition is wrong about its source (S70 fixes; the owner rules where a model
+number would move).**
+- F-1A-1 `BAR_GAS_RATIO` 2.6: *upheld.* The constant is used as a ratio of means and cites a ratio of medians. Two
+  honest closes: redefine the constant and its about-line as the ratio of medians (no number moves), or enter the means'
+  3.17 (a number moves, the bar's lanes contrast changes). **The owner's call**; the lead recommends the redefinition,
+  because `gas_pattern.py` applies it to a ridge whose contrast is itself a median-like statistic — S70 states which
+  statistic the code's use is and matches the source's.
+- F-1B-2 `GMC_SURFACE_DENSITY_INNER` 82 inside R_SUN: *upheld.* Lada & Dame give 82 for the molecular ring (4–7 kpc)
+  alone and 35 everywhere else; the model's two regimes are the reader's extrapolation. A number moves if fixed (the
+  clouds' sizes in 0–4 kpc and 7–8.2 kpc grow), and D231 was built on the owner's questions. **The owner's call**; the
+  lead recommends the source's three regimes (35 / 82 / 35 by radius) with the ring's edges read, and `ngc_4414`'s
+  boundary declared (it has no R_SUN).
+- F-1B-3 `CENSUS_CLUSTERING_WIDTH` 2.43: *upheld* as a disclosure failure, not a number failure. The layer stage
+  already says "the lead's choice"; the level0 note must say the same and name the source's 1.73 as the alternative
+  (D113: a named ruleset). No number moves unless the owner asks for the measured branch point.
+- F-1A-5 `YOUNG_STAR_AGE`'s "100–160 Myr": *upheld.* Quote Baba 2013 and Grand 2012a as printed; the range is the
+  reader's and is labelled so; 0.1 Gyr stays (it is within both).
+- F-1A-4 the Ferrers profile's provenance: *upheld.* Strike the clause; the body keeps Gadotti's shape and the Ferrers
+  profile as two sourced choices, each named to its own decomposition. No number moves.
+- F-1A-2, F-1A-3, F-1B-1, F-1B-4, F-1B-5, F-1A-9, F-1B-8 (a–e): *upheld*, wording and places; S70 enters them in one
+  pass, each about-line and reading row corrected to what the page prints.
+- F-1A-6, 7, 8, 10, 11, 12, 13, 14, F-1B-6: *upheld* as reading-note corrections (no constant reads them); S70 corrects
+  the rows and marks each "re-read at Audit V".
+- F-1B-7 (five unreachable about-line numbers): *carried* as one debt — the body of each source read once, the
+  about-line then MATCH or corrected.
+
+**Upheld — the tests assert less than the text (S70 adds the tests; the text is amended where the test is right).**
+- F-3-1 is **the audit's chief finding**: a per-object comparison of every placed census on and off and under a
+  texture reroll, matched by (drawn ring, index), every column outside a declared placement set bit for bit. *Upheld;
+  S70's first test.* The declared placement set is written into each census's `FieldDecl` (which columns the layer may
+  move) so the test reads it, not a list in the test.
+- F-3-2 (one template, one seed): *upheld*; parametrise over SMALL `ngc_4414` and one non-default seed pair.
+- F-3-4 (the stars' expectation reconstructed in the test): *upheld*; read the stage's own input.
+- F-3-5 (`only_if` unread): *upheld*; one line.
+- F-3-6 (a composing stage's non-composed outputs): *upheld*; the test of those outputs on/off at a second template and
+  seed is the cheaper close; the graph propagation is S70's to judge after measuring the cost.
+- F-3-9 (the layer-read guard): *upheld*; flag `.layer` reads outside `compose` and `setting` / `words` outside the API.
+- F-3-12 (1e-12 where four ulp is the rule): *upheld*; `same_expected_total`.
+- F-3-13 (the "does not keep" clause unasserted for four columns): *upheld*; assert it in every synthetic declaration.
+- F-3-15 (rule 5 untested; the stored per-cell normalisers): *upheld as a gap in the text, not the code.* The
+  normaliser is a function of (seed, cell) recomputable at a point; S70 writes the test that recomputes one and amends
+  rule 5 to "no stored grid a point cannot recompute".
+- F-3-3, F-3-7, F-3-8, F-3-10, F-3-11: *upheld as text and comment amendments* — I1 excepts the placement columns and
+  the synthetic fields in words; I4 says "and the layer's synthetic fields, for placement only"; "by `cluster_radius`"
+  becomes `cluster_birth_radius`; the stale docstring and the "one unit" comments go; `EXPECTED_TOTAL_UNITS` is renamed a
+  margin or pinned to the measured 1; the "to 1e-13" clause is asserted per ring or struck from the text.
+- F-3-14 (rule 3 admits "none read"): *dismissed as a rule failure, upheld as a label.* #95 is an open debt and the
+  plan allows a debt to stand in for a statistic; the rule's text gains the clause "or an open debt naming the reading".
+
+**The viewer (S70 fixes the two gaps; the display questions are the owner's).**
+- F-4-2 (the cell outlines off the model's edges by 37.5 pc): *upheld*; draw from `gas_fluctuation.edges`; the
+  star-first captures move by the grid alone and are regenerated with that stated.
+- F-4-3 (the clouds' shape computed by the viewer): *upheld as a D5 gap.* The formula is a model statement applied by
+  the viewer; it moves into the model as two columns of `/api/clouds` (`cloud_axis_ratio`, `cloud_angle`), derived from
+  the published strain exactly as the viewer does today, so no picture moves.
+- F-4-1 (the Milky Way's `cloudsExtinction: false` leaves 0.49 of the disc's dust undrawn and a ring edge visible):
+  *the owner's display default (D227), not a defect*; **told to the owner** with the measurement, their call.
+- F-4-4 (starlight 0.55, extinction 1.25 in the committed defaults against §8): *ruled*: §8 forbids colour applied for
+  appearance; a per-component intensity is an exposure choice per component, declared and visible as a slider, and
+  D228 is the owner's recorded exception for the extinction. **Not a breach**; §8 gains one sentence saying so, so the
+  next audit does not ask again.
+- F-4-5 (the dither hash as the viewer's seed): *dismissed as a breach* (sampling, declared, fixed by the pixel) and
+  *upheld as a check*: S70 captures once with dither off and records that the frames differ only below the step.
+- F-4-6 (sample stars reading as cluster-sized dots at point gain 4): a label; **told to the owner** beside F-4-1.
+
+**The register (S70's register pass; no count moves until then).**
+- F-5-1 #137: *discharged in fact* — strike it at S70 with the one-ulp residue noted under #? (the expected totals'
+  margin, F-3-11).
+- F-5-2 #39: *upheld* — the trigger fired; the entry is re-written as live ("a published quantity depends on two seeds
+  since S59; `spec.ensemble` must vary the seeds independently before a statistical row reads one"), carried.
+- F-5-3 #114, F-5-4 #115: *upheld*; narrowed to the field mode's remaining path.
+- F-5-5 #15: *upheld*; re-ruled permanent for `basic` with row 22's tilt moved under #47.
+- F-5-6 #128(b): *upheld, and widened*: `ngc_4414`'s `colour_b_v_face_on` check reads a geometry the model abandoned at
+  S52 — S70 re-reads the check through the layered dust (a check moves, not a row; #136 re-read then).
+- F-5-7 … F-5-13: *upheld* as entry corrections (stale text, labels, constants, paths, deleted test citations, closers
+  whose sessions passed re-pointed to S70 or re-ruled carried with the reason); #154's numbers get a surviving pin.
+- F-5-14 #171, #173: #173's randomised-order run is taken into strand 2's file at S70 (a measurement, B3-safe);
+  #171 stays carried with its closer re-named.
+- F-5-15 (53–64 unexplained): *upheld*; one sentence in the register's head says what the block was.
+- F-5-16, F-5-17: *not findings against the code* — the pictures' residue, recorded in §5 for the owner; the four
+  star-first and zoom frames are display captures, not goal comparisons, and the goal table says so.
+
+**The synthetic fields (strand 2): the layer conserves what it says and reproduces its statistics; its *stated bounds*
+were samples.**
+- F-2-1 (the arm pieces' power budget met at half): *upheld as a declaration failure.* The realised power is about half
+  the budget by construction (the Gaussian ridges of a finite census do not fill a ring's variance) and the build's own
+  record said so; the declaration says "met on average". **No number moves**: S70 rewrites the declaration to the
+  measured share with its reason, or derives the factor; the owner is told the arms carry half the law's power and may
+  ask for the budget to be filled (a number would then move — their call).
+- F-2-4, F-2-6, F-2-7 (the walk read 0.052, the cell mean's worst 1.83e-2, the placed radius 976 pc — each a sample
+  of ten presented as a bound): *upheld, one class.* S70 replaces each with a measured bound over the whole population
+  at the production grid and two seeds, written as "measured over N" (D117), and the test holds it. F-2-7's clouds
+  placed outside their drawn level-0 ring is also a question for I2's per-ring accounting: S70 says whether a cloud's
+  ring is its drawn ring or its placed ring everywhere a per-ring total is taken (F-3-1's test will catch a mismatch).
+- F-2-5 (a chain with no spur): *upheld as wording*; "every chain long enough for a first foot".
+- F-2-8 (the inner ring's steeper spectrum): *dismissed as a defect, upheld as a record*: the steepening is the model's
+  own 2-D fit at 1 kpc; the declaration gains the inner-ring value. F-2-3 (1.006e-13 against 1e-13 on a flocculent
+  disc): *dismissed*; the gate's tolerance becomes 2e-13 with the measurement, nothing else.
+- The pair-count slopes passing on the lenient side (−0.47 to −0.58 against −0.64) are *recorded, not ruled*: the
+  statistic was derived from the source's (r/190 pc)^−0.64 at D220 and the realisation is flatter by 0.06–0.17; S70
+  measures it over more seeds before anyone says it differs.
+
+**The order for S70 (one Opus session, "the fixes", as S38 and S44 were):** (1) F-3-1's per-object test with the
+placement sets declared, then F-3-2/4/5/6/9/12/13/15 and the text amendments 3/7/8/10/11; (2) the citation corrections
+in one pass (every about-line and reading row named above), F-1B-3's disclosure, F-1A-4's clause; (3) the two viewer
+gaps F-4-2 and F-4-3 with their captures regenerated and the reason stated; (4) the register pass (F-5-1 … F-5-15,
+#154's pin, #137 struck, the counts re-derived and the pins in `test_audit.py` re-pinned in the same commit); (5) the
+dither check F-4-5; (6) `tests/test_audit_v.py` kept green with any strand-2 xfail resolved or ruled. **Owner's rulings
+owed before S70 moves a number:** F-1A-1 (redefine or 3.17), F-1B-2 (the three regimes), and whether F-1B-3's measured
+branch point replaces the lead's 2.43. **Told to the owner, no answer awaited:** F-4-1, F-4-6, the residue sentences.
