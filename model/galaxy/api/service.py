@@ -44,7 +44,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
-from urllib.parse import parse_qsl
 
 import numpy as np
 
@@ -53,8 +52,9 @@ from galaxy.api import v6_clouds as _v6_clouds  # S64 (V6, R1-R2): the clouds as
 from galaxy.api import v6_tiles as _v6_tiles  # S64 (V6, R8): bright stars by tiles, their table, the remainder alone
 from galaxy.api import v6_knots as _v6_knots  # S64 (V6, R5-R6): the HII regions as knots, their lines and the field's share
 from galaxy.api import v7_layer as _v7  # S66 (V7, R4-R6): the layer's fields on the render's header, the spurs' pieces
+from galaxy.api import bundle as _bundle  # S72 (BUILD_IV W2): the template bundles, under the model's hash
 from galaxy.api import wire
-from galaxy.api.version import CLIENT, SERVER, content_hash
+from galaxy.api.version import CLIENT, MODEL, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
 from galaxy.core.fielddoc import SCALES, SYNTHETIC_DECLARATIONS, FieldDecl, Palette, Ramp
 from galaxy.core.grids import DEFAULT, Grid, GridSpec
@@ -383,6 +383,9 @@ class Response:
     media: str
     body: bytes
     stages: tuple[str, ...] = ()  # what this request executed: rule D4's instrument
+    # Where the bytes came from (S72): "model", computed by this request's handler, or "bundle", read from a
+    # template bundle under the model's hash - the same bytes either way (the export's --check asserts it).
+    source: str = "model"
 
     @property
     def ok(self) -> bool:
@@ -584,12 +587,12 @@ class Query:
     __slots__ = ("_pairs",)
 
     def __init__(self, raw: str | Mapping[str, Sequence[str]] | None = None) -> None:
-        pairs: list[tuple[str, str]] = []
-        if isinstance(raw, str):
-            pairs = list(parse_qsl(raw.lstrip("?"), keep_blank_values=True))
-        elif raw is not None:
-            pairs = [(k, str(v)) for k, vs in raw.items() for v in (vs if not isinstance(vs, str) else [vs])]
-        self._pairs = pairs
+        # One decoding for the routes and for the bundles' keys (S72, rule B13): bundle.pairs is it.
+        self._pairs = _bundle.pairs(raw)
+
+    def pairs(self) -> tuple[tuple[str, str], ...]:
+        """Every (name, value) as given, in order: what a bundle's key reads its raw parameters from (S72)."""
+        return tuple(self._pairs)
 
     def one(self, name: str, default: str | None = None) -> str | None:
         found = [v for k, v in self._pairs if k == name]
@@ -897,6 +900,7 @@ class Service:
         cache: int = 2,
         client=CLIENT,
         server=SERVER,
+        bundles: Path | str | None = None,
     ) -> None:
         if models is None or impls is None or table is None:
             p_models, p_impls, p_table = production()
@@ -909,6 +913,11 @@ class Service:
         self.grid = grid.build() if isinstance(grid, GridSpec) else grid
         self.client = client
         self.server = server
+        self._model_hash: str | None = None
+        # S72 (BUILD_IV W2): the template bundles, every manifest read now and checked against this model's hash - a
+        # bundle built from other bytes raises bundle.BundleMismatch here, at startup (a mismatch is an error, not a
+        # fallback). Ruling 11: the galaxy cache below stays, for every request no bundle holds.
+        self.bundles = None if bundles is None else _bundle.Index(Path(bundles), self)
         self.cache_size = max(0, int(cache))
         self._cache: dict[str, Galaxy] = {}
         self.cells = CellCache()
@@ -922,12 +931,25 @@ class Service:
         # a startup failure, not a 404 discovered by whoever calls it.
         self._handlers = {r.path: getattr(self, "_" + r.handler) for r in ROUTES}
 
+    @property
+    def model_hash(self) -> str:
+        """The content hash of the model package this service runs (``version.MODEL``), taken once: the key every
+        bundle is checked against. /api/version recomputes it per request (B2); this is the server's own reading."""
+        if self._model_hash is None:
+            self._model_hash = content_hash(MODEL)["hash"]
+        return self._model_hash
+
     # --- plumbing ------------------------------------------------------------
 
     def handle(self, path: str, query: str | Mapping[str, Sequence[str]] | None = None) -> Response:
         """Answer one request. Never raises for a bad request; returns its status."""
         route = path.rstrip("/") or "/"
         handler = self._handlers.get(route)
+        if handler is not None and self.bundles is not None:
+            # A bundle hit runs nothing (D4): no handler, no stage, no galaxy cached. /api/version is never held.
+            found = self.bundles.find(route, query)
+            if found is not None:
+                return Response(200, found[0], found[1], (), "bundle")
         try:
             if handler is not None:
                 return handler(Query(query))
@@ -1094,9 +1116,13 @@ class Service:
     def _version(self, q: Query) -> Response:
         viewer = content_hash(self.client)
         server = content_hash(self.server, suffixes=(".py",))
+        # S72 (BUILD_IV W2, D3 at the boundary): every file of the model package, the hash a template bundle is
+        # keyed on; recomputed per request as the others are (B2).
+        model = content_hash(MODEL)
         return _json({
             "viewer": viewer,
             "api": {k: v for k, v in server.items() if k != "files"},
+            "model": {k: v for k, v in model.items() if k != "files"},
             "wire": wire.FORMAT,
             "models": list(self.models.names()),
         })
@@ -1229,7 +1255,7 @@ class Service:
             "grid": grid,
             "fields": list(wanted),
             "scalars": scalars,
-            "stages": list(ran),
+            "stages": list(out.needs),
             "sampling": {"t_stride": stride, "t_first": int(steps[0]) if steps is not None else 0, "precision": precision},
         }
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
@@ -1311,7 +1337,7 @@ class Service:
             },
             "stars": {"requested": stars, "materialised": int(catalogue.size), "seed": seed},
             "columns": columns,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, catalogue[c]) for c in columns]), ran)
 
@@ -1407,7 +1433,7 @@ class Service:
             # asked for, the number a renderer divides the field by. With layer=off the seed and the means are null.
             "census_clustering": _census_clustering.header(out.fields, constants, parents),
             "columns": [*columns, *derived],
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         arrays = [(c, census[c]) for c in columns] + list(derived.items()) + [("cell", census["cell"]), ("index", census["index"])]
         if precision == "f4":
@@ -1486,7 +1512,7 @@ class Service:
                 ),
             },
             "columns": columns,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         arrays = [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]
         if curves is not None:
@@ -1553,7 +1579,7 @@ class Service:
             # population integral /api/arrays serves when the stage runs.
             "scalars": {"remnant_count_total": float(_bubbles.remnant_expected(out.fields, R, constants).sum())},
             "columns": columns,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
@@ -1676,7 +1702,7 @@ class Service:
             "columns": columns,
             "scalars": scalars,
             "seed": seed,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         arrays = [(c, np.asarray(rows[c])) for c in columns]
         if curves is not None:
@@ -2102,7 +2128,7 @@ class Service:
             "white": white,
             "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
                                                 "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         if resolved is not None:
             header["resolved"] = resolved
@@ -2353,7 +2379,7 @@ class Service:
             "belts": [dict(b) for b in found],
             "columns": columns,
             "stars": {"requested": stars, "seed": seeds["systems_seed"], "planets_seed": seeds["planets_seed"]},
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, system[c]) for c in columns]), ran)
 

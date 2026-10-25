@@ -31,6 +31,7 @@ import re
 import shutil
 import struct
 import subprocess
+import urllib.parse
 from pathlib import Path
 
 import pytest
@@ -356,6 +357,39 @@ def test_the_viewer_draws_the_committed_frames():
     """The real run: build the viewer, serve it on port 8019, capture each camera and compare with its frame."""
     npm = shutil.which("npm")
     assert npm, "GALAXYGEN_PICTURE=1 but npm is not on PATH"
-    proc = subprocess.run([npm, "--prefix", "frontend", "run", "picture"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1500)
+    # S72 (BUILD_IV W2, the lead's R6): with GALAXY_BUNDLES naming a bundle directory, the server the run starts
+    # mounts it (galaxy.api reads the variable) and logs each answer's source; the frames must stay byte for byte
+    # and every /api answer but /api/version and /api must have come from a bundle - the viewer cannot tell.
+    bundles = os.environ.get("GALAXY_BUNDLES")
+    env = dict(os.environ)
+    log = None
+    if bundles:
+        log = E2E / ".output" / "sources.jsonl"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.unlink(missing_ok=True)
+        env["GALAXY_SOURCE_LOG"] = str(log)
+    proc = subprocess.run([npm, "--prefix", "frontend", "run", "picture"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1500, env=env)
     assert proc.returncode == 0, proc.stdout[-6000:] + proc.stderr[-2000:]
     assert f"{len(taken()) + WIRE_TESTS} passed" in proc.stdout, proc.stdout[-2000:]
+    if log is not None:
+        assert log.is_file(), f"no source log at {log}: a server already on the port was reused, without the bundles"
+        answers = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
+        stands = {c["name"] for c in captures() if c.get("stand")}
+        capture, asked, missed, zoom = None, 0, {}, {}
+        for a in answers:  # each capture's answers follow its marker, /api/version?capture=<name> (picture.spec.ts)
+            path = a["path"].rstrip("/")
+            if path == "/api/version":
+                marked = dict(urllib.parse.parse_qsl(a.get("query", ""))).get("capture")
+                capture = marked or capture
+                continue
+            if not path.startswith("/api") or path == "/api" or a["source"] == "bundle":
+                asked += path.startswith("/api") and path != "/api"
+                continue
+            # R1 (S72): nothing below 4 kpc is bundled - the owner rules on the levels - so a zoom stand's misses are
+            # recorded, not failed.
+            where = zoom if capture in stands else missed
+            where.setdefault(f"{capture}: {path}", 0)
+            where[f"{capture}: {path}"] += 1
+            asked += 1
+        print(f"bundle misses at the zoom stands (R1, not bundled), by capture and route: {zoom}")
+        assert asked and not missed, f"{sum(missed.values())} /api answers outside the zoom stands were computed: {missed}"

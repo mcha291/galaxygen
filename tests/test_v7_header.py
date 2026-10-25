@@ -236,7 +236,7 @@ def test_the_render_s_stages_differ_from_s65_s_only_by_gas_fluctuation():
     for name, q in EIGHT.items():
         got = api.handle("/api/render", {**q, "filters": [curves]})
         assert got.status == 200, (name, got.body[:300])
-        stages = list(wire.decode(got.body)[0].get("stages") or [])
+        stages = list(got.stages)  # what ran (X-Galaxy-Stages); the body's stages is the closure since S72
         if "level" in q or "l_min" in q:
             assert stages == [], (name, stages)
             continue

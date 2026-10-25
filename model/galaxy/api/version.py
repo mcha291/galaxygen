@@ -24,6 +24,10 @@ DIGEST_BYTES = 16  # 32 hex characters: short enough to read aloud, long enough 
 HERE = Path(__file__).resolve().parent
 CLIENT = HERE.parents[2] / "interface"  # the viewer's own bytes (D3), at the repository's interface/
 SERVER = HERE  # the API's own bytes, so a stale *server* is visible too
+# The model's own bytes (S72, BUILD_IV W2): every file of the galaxy package - its code, model/galaxy/data/*.npz and
+# the layer's committed vectors - with __pycache__ left out. A template bundle is keyed on this hash alone (it holds
+# the api/ files too), so a bundle built from other bytes than the ones serving it is refused, never read (D3).
+MODEL = HERE.parent
 
 
 def _files(root: Path, suffixes: Iterable[str] | None) -> list[Path]:

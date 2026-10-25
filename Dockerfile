@@ -27,8 +27,20 @@ RUN uv sync --frozen --no-dev
 
 COPY --from=frontend /src/frontend/dist /app/web
 
+# The template bundles (S72, BUILD_IV W2): every answer the viewer asks of each template, computed here by the model
+# this image runs, so the bundles' hash is always the image's own ("a template's bundle can never be older than the
+# model that serves it", BUILD_IV 2b) and the server refuses them at startup if it were not. The default scope: what
+# the viewer asks at galaxy scale, both templates, both layer settings (nothing below 4 kpc; per-cell levels are the
+# owner's ruling). BUNDLES=0 builds an image without them (an empty directory: every request is computed, as before).
+ARG BUNDLES=1
+COPY frontend/src/galaxy/filters.json frontend/src/galaxy/instruments.json frontend/src/galaxy/
+COPY tools/export_template.py tools/
+RUN if [ "$BUNDLES" = "1" ]; then \
+      /app/.venv/bin/python tools/export_template.py --out /app/bundles; \
+    else mkdir -p /app/bundles; fi
+
 # galaxy.api reads these; Container Apps sends traffic to PORT.
-ENV GALAXY_HOST=0.0.0.0 PORT=8000 GALAXY_CLIENT=/app/web PATH="/app/.venv/bin:$PATH"
+ENV GALAXY_HOST=0.0.0.0 PORT=8000 GALAXY_CLIENT=/app/web GALAXY_BUNDLES=/app/bundles PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
 RUN useradd --system --uid 10001 galaxy

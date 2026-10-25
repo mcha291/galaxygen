@@ -561,7 +561,9 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     assert "light" in got.stages and "nebular" in got.stages
     assert "systems" not in got.stages and "planets" not in got.stages  # no catalogue is materialised
     header, arrays = wire.decode(got.body)
-    assert header["stages"] == list(got.stages)
+    # The body names the closure the answer needs (S72: whatever ran before); X-Galaxy-Stages what this request ran.
+    assert set(got.stages) <= set(header["stages"]) and {"light", "nebular"} <= set(header["stages"])
+    assert not {"systems", "planets"} & set(header["stages"])
     for name in ("stars", "halpha_hii", "lines_hii", "dust_scattered"):
         assert arrays[name].shape == (48, 36, 3) and header["axes"][name] == ["R", "phi", "filter"], name
     for name in ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"):
@@ -1197,8 +1199,11 @@ def test_without_l_min_the_render_is_the_one_it_was(full, model):
             plain = got
         else:
             header, arrays = wire.decode(got.body)
-    assert header["stages"] == [] and set(arrays) - {"stars_unresolved"} == set(wire.decode(plain.body)[1])
-    stripped = {k: v for k, v in header.items() if k != "resolved"}
+    assert got.stages == () and set(arrays) - {"stars_unresolved"} == set(wire.decode(plain.body)[1])
+    # Since S72 the header's stages is the closure each answer needs: l_min= may read more, never less.
+    plain_stages = wire.decode(plain.body)[0]["stages"]
+    assert set(plain_stages) <= set(header["stages"])
+    stripped = {k: v for k, v in header.items() if k != "resolved"} | {"stages": plain_stages}
     stripped["components"] = {k: v for k, v in header["components"].items() if k != "stars_unresolved"}
     stripped["axes"] = {k: v for k, v in header["axes"].items() if k != "stars_unresolved"}
     assert plain.body == wire.encode(stripped, [(k, v) for k, v in arrays.items() if k != "stars_unresolved"])

@@ -10,6 +10,9 @@ is the two headers that matter.
 - ``X-Galaxy-Stages``. Every response says which stages it ran, so rule D4 is
   answerable from outside the process and from a browser's network panel — a
   metadata endpoint that touched a stage cannot hide behind being fast.
+- ``X-Galaxy-Source`` (S72, BUILD_IV W2): ``bundle`` when a template bundle answered (no stage ran, so
+  ``X-Galaxy-Stages`` is empty), ``model`` when the request was computed. Caching stays ``no-store`` here: what a
+  gateway in front caches is its decision, keyed on the model's hash (D3 as amended).
 
 A POST is the same request with its query in the body (S42): a form-encoded body
 is appended to the URL's query and handled exactly as a GET. It exists because
@@ -96,6 +99,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(response.body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Galaxy-Stages", ",".join(response.stages))
+        self.send_header("X-Galaxy-Source", response.source)  # S72: "bundle" or "model", the same bytes either way
         self.end_headers()
         if body:
             self.wfile.write(response.body)
