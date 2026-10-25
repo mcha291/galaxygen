@@ -31,6 +31,7 @@ import re
 import shutil
 import struct
 import subprocess
+import urllib.parse
 from pathlib import Path
 
 import pytest
@@ -373,9 +374,22 @@ def test_the_viewer_draws_the_committed_frames():
     if log is not None:
         assert log.is_file(), f"no source log at {log}: a server already on the port was reused, without the bundles"
         answers = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
-        asked = [a for a in answers if a["path"].startswith("/api") and a["path"].rstrip("/") not in ("/api", "/api/version")]
-        missed: dict[str, int] = {}
-        for a in asked:
-            if a["source"] != "bundle":
-                missed[a["path"]] = missed.get(a["path"], 0) + 1
-        assert asked and not missed, f"{sum(missed.values())} of {len(asked)} /api answers were computed, by route: {missed}"
+        stands = {c["name"] for c in captures() if c.get("stand")}
+        capture, asked, missed, zoom = None, 0, {}, {}
+        for a in answers:  # each capture's answers follow its marker, /api/version?capture=<name> (picture.spec.ts)
+            path = a["path"].rstrip("/")
+            if path == "/api/version":
+                marked = dict(urllib.parse.parse_qsl(a.get("query", ""))).get("capture")
+                capture = marked or capture
+                continue
+            if not path.startswith("/api") or path == "/api" or a["source"] == "bundle":
+                asked += path.startswith("/api") and path != "/api"
+                continue
+            # R1 (S72): nothing below 4 kpc is bundled - the owner rules on the levels - so a zoom stand's misses are
+            # recorded, not failed.
+            where = zoom if capture in stands else missed
+            where.setdefault(f"{capture}: {path}", 0)
+            where[f"{capture}: {path}"] += 1
+            asked += 1
+        print(f"bundle misses at the zoom stands (R1, not bundled), by capture and route: {zoom}")
+        assert asked and not missed, f"{sum(missed.values())} /api answers outside the zoom stands were computed: {missed}"

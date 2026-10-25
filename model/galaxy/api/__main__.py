@@ -27,7 +27,10 @@ def _logged(handle, path: Path):
 
     def logged(route, query=None):
         response = handle(route, query)
-        line = json.dumps({"path": route, "status": response.status, "source": response.source, "bytes": len(response.body)})
+        entry = {"path": route, "status": response.status, "source": response.source, "bytes": len(response.body)}
+        if route.rstrip("/") == "/api/version" and isinstance(query, str) and query:
+            entry["query"] = query[:200]  # the picture test's capture marker (its answers follow it)
+        line = json.dumps(entry)
         with lock, path.open("a", encoding="utf-8", newline="\n") as f:
             f.write(line + "\n")
         return response

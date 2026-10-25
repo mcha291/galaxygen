@@ -361,6 +361,9 @@ for (const capture of CAPTURES) {
     const filters = FILTER_LABELS[capture.filters];
     if (!filters) throw new Error(`${capture.name}: no filter set ${capture.filters} among the viewer's (src/galaxy/filters.json, instruments.json)`);
     const started = Date.now();
+    // S72 (BUILD_IV W2, R6): a marker in the server's source log (GALAXY_SOURCE_LOG) - the answers after it are this
+    // capture's. Asked by the runner, not the page: the viewer's own requests are unchanged.
+    await page.request.get(`/api/version?capture=${encodeURIComponent(capture.name)}`);
     const net = watchApi(page);
     const side = capture.viewport;
     // Chosen at a size where every control is on screen; the canvas comes to the capture's size afterwards.

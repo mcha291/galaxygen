@@ -24,6 +24,7 @@ from galaxy.api import http as api_http
 from galaxy.api import wire
 from galaxy.api.service import ROUTES, ApiError, Response, Service
 from galaxy.api.version import MODEL, content_hash
+from galaxy.core.grids import DEFAULT, GridSpec
 
 RGB = filter_sets()["rgb"]
 TEMPLATE = "milky_way"
@@ -185,8 +186,9 @@ def test_a_request_outside_the_bundle_is_computed(exported):
 
 def test_version_and_the_index_are_never_written_or_answered_from_a_bundle(service, exported, tmp_path):
     fake = Response(200, "application/json", b'{"stale": true}')
-    with pytest.raises(bundle.BundleError, match="has no key"):
-        bundle.write(tmp_path, TEMPLATE, "on", service, [("/api/version", {}, fake)])
+    for route in ("/api/version", "/api"):
+        with pytest.raises(bundle.BundleError, match="has no key"):
+            bundle.write(tmp_path, TEMPLATE, "on", service, [(route, {}, fake)])
     root, _, _ = exported
     served = Service(bundles=root)
     for route in ("/api/version", "/api"):
@@ -206,6 +208,18 @@ def test_a_bundle_from_another_model_is_refused_naming_both_hashes(exported, tmp
     message = str(refused.value)
     assert stale in message and manifest["model_hash"] in message and str(path.parent) in message
     assert not isinstance(refused.value, ApiError), "a startup failure, not a request's 4xx"
+
+
+def test_a_bundle_built_on_another_grid_is_refused_naming_the_grid(exported):
+    """Q3 (S72): the same model bytes on another mesh compute other answers; the manifest's grid and models are
+    checked after its hash."""
+    root, manifest, _ = exported
+    other = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+    assert manifest["grid"] == repr(DEFAULT) and manifest["grid"] != repr(other)
+    assert manifest["models"] == list(Service().models.names())
+    with pytest.raises(bundle.BundleMismatch) as refused:
+        Service(grid=other, bundles=root)
+    assert "grid" in str(refused.value) and repr(other) in str(refused.value) and manifest["grid"] in str(refused.value)
 
 
 def test_the_manifest_is_the_files(exported, service):

@@ -198,6 +198,12 @@ def js_query(params: Mapping[str, Any] | Sequence[tuple[str, Any]]) -> str:
 
 # --- the format: the writer and the reader ------------------------------------------------------------------------
 
+def served(service: Any) -> dict[str, Any]:
+    """What else a bundle's answers depend on besides the model's bytes (the lead's Q3 at S72): the grid the service
+    computes on, as ``Service.compute`` keys a galaxy on it, and the models it registers."""
+    return {"grid": repr(service.grid.spec), "models": list(service.models.names())}
+
+
 def directory(root: Path, template: str, layer: str) -> Path:
     if layer not in LAYERS:
         raise ValueError(f"layer {layer!r} is not one of {LAYERS}")
@@ -230,7 +236,7 @@ def write(root: Path, template: str, layer: str, service: Any,
             "media": response.media, "stages": list(response.stages),
         }
     manifest = {
-        "format": FORMAT, "model_hash": service.model_hash, "template": template, "layer": layer,
+        "format": FORMAT, "model_hash": service.model_hash, **served(service), "template": template, "layer": layer,
         "built_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "entries": list(entries.values()),
     }
@@ -280,6 +286,12 @@ class Index:
                     f"bundle {path.parent} was built from model {manifest.get('model_hash')} and this server's model "
                     f"is {live}: rebuild it with tools/export_template.py (a mismatch is an error, not a fallback)"
                 )
+            for name, value in served(service).items():  # the hash first, then what the same bytes may be run on
+                if manifest.get(name) != value:
+                    raise BundleMismatch(
+                        f"bundle {path.parent} was built on {name} {manifest.get(name)!r} and this server's {name} is "
+                        f"{value!r}: its answers are another service's (a mismatch is an error, not a fallback)"
+                    )
             for e in manifest["entries"]:
                 body = path.parent / ENTRIES / e["key"]
                 try:
