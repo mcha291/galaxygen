@@ -43,7 +43,7 @@ HISTORY = {"t_samples": 200, "precision": "f4"}
 STAR_SAMPLE = 20_000
 # The star-first view's point budget at its slider's default (GalaxyTab.tsx: 10^(2 + 3 x 500/1000), rounded).
 POINT_BUDGET = round(10 ** 3.5)
-# The tile threshold a zoomed view asks at, per level, Lsun before the grid snaps it: S65's measured picks of the
+# The tile threshold a zoomed view asks at, per level, Lsun (the table's grid value nearest it is sent): S65's picks of the
 # viewer's rule at a 1 kpc view (level 1: 2239, 10^3.35) and a 0.25 kpc view (level 2: 224, 10^2.35)
 # [verified: tools/timings.py, the "bright: one tile" rows' comments]; level 3 has no measured pick and takes level 2's.
 # Level 0 is the galaxy-scale pick, computed from the table by the viewer's rule (galaxy_threshold).
@@ -111,12 +111,11 @@ def galaxy_threshold(table: Any, budget: int = POINT_BUDGET, cells: Sequence[int
 
 
 def snapped(table: Any, l_min: float) -> float:
-    """The grid threshold the route answers a tile at (snapped up to the 0.05 dex grid, v6_tiles): the viewer sends
-    the table's own value, so the plan does."""
+    """The table's grid threshold nearest ``l_min`` in log: the viewer sends the table's own value (thresholds[k]),
+    never a number of its own, and ZOOMED_L_MIN's are readings of grid values rounded (2239 is 10^3.35, 2238.72)."""
     _, arrays = table
     grid = arrays["threshold"].astype(float)
-    above = [g for g in grid if g >= l_min * (1 - 1e-12)]
-    return float(above[0]) if above else float(grid[-1])
+    return float(min(grid, key=lambda g: abs(math.log10(g) - math.log10(l_min))))
 
 
 def plan(template: str, layer: str, levels: Sequence[int], service: Any,
