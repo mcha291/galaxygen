@@ -176,6 +176,9 @@ describe("a template's pins (S58, D217 item 2)", () => {
       "Barred: no (as observed)",
       "Spiral arm pitch angle: 28.9° (as observed)",
       "Arm class: flocculent (as observed)",
+      // S70 (D234): NGC 4414's own molecular ring, pinned from Vallejo, Braine & Baudry 2002; the fixture carried it
+      // from S70 and this expectation did not (found at S72 - vitest was not run at S70's close).
+      "Molecular ring (a template's pin): 1 row by inner: 0.43 (as observed)",
     ]);
   });
 
