@@ -356,6 +356,26 @@ def test_the_viewer_draws_the_committed_frames():
     """The real run: build the viewer, serve it on port 8019, capture each camera and compare with its frame."""
     npm = shutil.which("npm")
     assert npm, "GALAXYGEN_PICTURE=1 but npm is not on PATH"
-    proc = subprocess.run([npm, "--prefix", "frontend", "run", "picture"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1500)
+    # S72 (BUILD_IV W2, the lead's R6): with GALAXY_BUNDLES naming a bundle directory, the server the run starts
+    # mounts it (galaxy.api reads the variable) and logs each answer's source; the frames must stay byte for byte
+    # and every /api answer but /api/version and /api must have come from a bundle - the viewer cannot tell.
+    bundles = os.environ.get("GALAXY_BUNDLES")
+    env = dict(os.environ)
+    log = None
+    if bundles:
+        log = E2E / ".output" / "sources.jsonl"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.unlink(missing_ok=True)
+        env["GALAXY_SOURCE_LOG"] = str(log)
+    proc = subprocess.run([npm, "--prefix", "frontend", "run", "picture"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1500, env=env)
     assert proc.returncode == 0, proc.stdout[-6000:] + proc.stderr[-2000:]
     assert f"{len(taken()) + WIRE_TESTS} passed" in proc.stdout, proc.stdout[-2000:]
+    if log is not None:
+        assert log.is_file(), f"no source log at {log}: a server already on the port was reused, without the bundles"
+        answers = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
+        asked = [a for a in answers if a["path"].startswith("/api") and a["path"].rstrip("/") not in ("/api", "/api/version")]
+        missed: dict[str, int] = {}
+        for a in asked:
+            if a["source"] != "bundle":
+                missed[a["path"]] = missed.get(a["path"], 0) + 1
+        assert asked and not missed, f"{sum(missed.values())} of {len(asked)} /api answers were computed, by route: {missed}"

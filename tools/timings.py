@@ -65,16 +65,18 @@ def bundle_root() -> Path | None:
 
 
 def bundled_render(root: Path) -> str:
-    """The canonical query of a bundle's whole render through the viewer's broadband set, layer on: what a template's
-    landing view asks first. Read from the manifests, so the row measures an entry the bundle holds."""
+    """The query of a bundle's whole render through the viewer's broadband set, layer on, as the viewer sent it: what
+    a template's landing view asks first. Read from the manifests, so the row measures an entry the bundle holds."""
+    from urllib.parse import parse_qsl
+
     from galaxy.api import bundle
 
-    rgb = bundle.canonical("/api/render", {"filters": _RGB}).split("?", 1)[1]
-    want = next(p for p in rgb.split("&") if p.startswith("filters="))
+    rgb = json.loads(_RGB)
     for path in bundle.manifests(root):
         for e in bundle.read_manifest(path)["entries"]:
-            pairs = e["query"].split("&")
-            if e["route"] == "/api/render" and want in pairs and "layer=on" in pairs and not any(p.startswith(("only=", "l_min=")) for p in pairs):
+            q = dict(parse_qsl(e["query"], keep_blank_values=True))
+            if e["route"] == "/api/render" and "filters" in q and json.loads(q["filters"]) == rgb \
+                    and q.get("layer", "on") == "on" and "only" not in q and "l_min" not in q:
                 return e["query"]
     raise SystemExit(f"no whole rgb render in the bundles at {root}")
 

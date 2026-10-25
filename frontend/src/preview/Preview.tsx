@@ -52,9 +52,10 @@ export function Preview({ checkpoint, panels, query, cmaps }: Props) {
         <span className="gx-label">Science ·</span>
         <span className={styles.name}>{checkpoint.name}</span>
         {frame && (
-          // `stages` is what the server ran for this request (rule D4); a cached galaxy runs none.
+          // `ran` is what the server ran for this request (X-Galaxy-Stages, rule D4); a cached galaxy or a bundle runs
+          // none. The body's own `stages` is the closure the answer needs (S72), the same whatever was cached.
           <span className={styles.stages}>
-            {frame.header.stages.length ? `ran ${frame.header.stages.join(" · ")}` : "served from cache, no stage ran"}
+            {frame.ran?.length ? `ran ${frame.ran.join(" · ")}` : "served from cache, no stage ran"}
           </span>
         )}
         {busy && <span className="gx-label">Recomputing</span>}

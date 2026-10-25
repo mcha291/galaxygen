@@ -590,6 +590,10 @@ class Query:
         # One decoding for the routes and for the bundles' keys (S72, rule B13): bundle.pairs is it.
         self._pairs = _bundle.pairs(raw)
 
+    def pairs(self) -> tuple[tuple[str, str], ...]:
+        """Every (name, value) as given, in order: what a bundle's key reads its raw parameters from (S72)."""
+        return tuple(self._pairs)
+
     def one(self, name: str, default: str | None = None) -> str | None:
         found = [v for k, v in self._pairs if k == name]
         if len(found) > 1:
@@ -913,7 +917,7 @@ class Service:
         # S72 (BUILD_IV W2): the template bundles, every manifest read now and checked against this model's hash - a
         # bundle built from other bytes raises bundle.BundleMismatch here, at startup (a mismatch is an error, not a
         # fallback). Ruling 11: the galaxy cache below stays, for every request no bundle holds.
-        self.bundles = None if bundles is None else _bundle.Index(Path(bundles), self.model_hash)
+        self.bundles = None if bundles is None else _bundle.Index(Path(bundles), self)
         self.cache_size = max(0, int(cache))
         self._cache: dict[str, Galaxy] = {}
         self.cells = CellCache()
@@ -1251,7 +1255,7 @@ class Service:
             "grid": grid,
             "fields": list(wanted),
             "scalars": scalars,
-            "stages": list(ran),
+            "stages": list(out.needs),
             "sampling": {"t_stride": stride, "t_first": int(steps[0]) if steps is not None else 0, "precision": precision},
         }
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
@@ -1333,7 +1337,7 @@ class Service:
             },
             "stars": {"requested": stars, "materialised": int(catalogue.size), "seed": seed},
             "columns": columns,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, catalogue[c]) for c in columns]), ran)
 
@@ -1429,7 +1433,7 @@ class Service:
             # asked for, the number a renderer divides the field by. With layer=off the seed and the means are null.
             "census_clustering": _census_clustering.header(out.fields, constants, parents),
             "columns": [*columns, *derived],
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         arrays = [(c, census[c]) for c in columns] + list(derived.items()) + [("cell", census["cell"]), ("index", census["index"])]
         if precision == "f4":
@@ -1508,7 +1512,7 @@ class Service:
                 ),
             },
             "columns": columns,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         arrays = [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]
         if curves is not None:
@@ -1575,7 +1579,7 @@ class Service:
             # population integral /api/arrays serves when the stage runs.
             "scalars": {"remnant_count_total": float(_bubbles.remnant_expected(out.fields, R, constants).sum())},
             "columns": columns,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
@@ -1698,7 +1702,7 @@ class Service:
             "columns": columns,
             "scalars": scalars,
             "seed": seed,
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         arrays = [(c, np.asarray(rows[c])) for c in columns]
         if curves is not None:
@@ -2124,7 +2128,7 @@ class Service:
             "white": white,
             "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
                                                 "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         if resolved is not None:
             header["resolved"] = resolved
@@ -2375,7 +2379,7 @@ class Service:
             "belts": [dict(b) for b in found],
             "columns": columns,
             "stars": {"requested": stars, "seed": seeds["systems_seed"], "planets_seed": seeds["planets_seed"]},
-            "stages": list(ran),
+            "stages": list(out.needs),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, system[c]) for c in columns]), ran)
 

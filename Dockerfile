@@ -29,14 +29,14 @@ COPY --from=frontend /src/frontend/dist /app/web
 
 # The template bundles (S72, BUILD_IV W2): every answer the viewer asks of each template, computed here by the model
 # this image runs, so the bundles' hash is always the image's own ("a template's bundle can never be older than the
-# model that serves it", BUILD_IV 2b) and the server refuses them at startup if it were not. Levels 0-1 of the bright
-# tiles, both templates, both layer settings. BUNDLES=0 builds an image without them (an empty directory: every
-# request is computed, as before W2).
+# model that serves it", BUILD_IV 2b) and the server refuses them at startup if it were not. The default scope: what
+# the viewer asks at galaxy scale, both templates, both layer settings (nothing below 4 kpc; per-cell levels are the
+# owner's ruling). BUNDLES=0 builds an image without them (an empty directory: every request is computed, as before).
 ARG BUNDLES=1
 COPY frontend/src/galaxy/filters.json frontend/src/galaxy/instruments.json frontend/src/galaxy/
 COPY tools/export_template.py tools/
 RUN if [ "$BUNDLES" = "1" ]; then \
-      /app/.venv/bin/python tools/export_template.py --out /app/bundles --levels 0,1; \
+      /app/.venv/bin/python tools/export_template.py --out /app/bundles; \
     else mkdir -p /app/bundles; fi
 
 # galaxy.api reads these; Container Apps sends traffic to PORT.

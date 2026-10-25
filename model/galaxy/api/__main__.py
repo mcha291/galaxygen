@@ -8,8 +8,10 @@ frontend and its template bundles on ``0.0.0.0`` without a different entry point
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
+import threading
 from pathlib import Path
 
 from galaxy.api.bundle import BundleError
@@ -17,6 +19,20 @@ from galaxy.api.http import HOST, PORT, serve
 from galaxy.api.service import Service
 from galaxy.api.version import CLIENT, content_hash
 from galaxy.specs import utf8_stdout
+
+
+def _logged(handle, path: Path):
+    """``handle``, recording each answer's path, status, source and size as a JSON line in ``path`` (S72, W2)."""
+    lock = threading.Lock()
+
+    def logged(route, query=None):
+        response = handle(route, query)
+        line = json.dumps({"path": route, "status": response.status, "source": response.source, "bytes": len(response.body)})
+        with lock, path.open("a", encoding="utf-8", newline="\n") as f:
+            f.write(line + "\n")
+        return response
+
+    return logged
 
 
 def main() -> int:
@@ -36,6 +52,13 @@ def main() -> int:
         default=Path(os.environ["GALAXY_BUNDLES"]) if os.environ.get("GALAXY_BUNDLES") else None,
         help="directory of template bundles (tools/export_template.py) to answer from; default $GALAXY_BUNDLES or none",
     )
+    parser.add_argument(
+        "--source-log",
+        type=Path,
+        default=Path(os.environ["GALAXY_SOURCE_LOG"]) if os.environ.get("GALAXY_SOURCE_LOG") else None,
+        help="append one JSON line per request (path, status, source, bytes): the picture test's record of which "
+        "answers came from a bundle; default $GALAXY_SOURCE_LOG or none",
+    )
     parser.add_argument("--verbose", action="store_true", help="log every request")
     args = parser.parse_args()
 
@@ -46,6 +69,8 @@ def main() -> int:
     except BundleError as e:  # a bundle from another model is a startup failure, not a fallback (BUILD_IV 2b)
         print(f"galaxy.api: {type(e).__name__}: {e}", file=sys.stderr)
         return 2
+    if args.source_log is not None:
+        service.handle = _logged(service.handle, args.source_log)  # the instance's own: the handler calls it
     viewer = content_hash(service.client)
     print(f"viewer {args.client}: {viewer['hash']} ({viewer['count']} files, {viewer['bytes']} B)")
     if service.bundles is None:

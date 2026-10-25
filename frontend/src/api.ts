@@ -126,11 +126,14 @@ export interface Frame {
   header: {
     grid: { axes: Record<string, Axis> };
     scalars: Record<string, number>;
+    /** The stages this answer needs, in execution order: a function of the request alone (S72), whatever ran. */
     stages: string[];
     [key: string]: unknown;
   };
   /** f8 fields as Float64Array, f4 as Float32Array; categorical (i8) ones as BigInt64Array. */
   arrays: Record<string, Float64Array | Float32Array | BigInt64Array>;
+  /** What the server ran for this request (X-Galaxy-Stages, rule D4): none for a cached galaxy or a bundle. */
+  ran?: string[];
 }
 
 /**
@@ -141,7 +144,7 @@ export interface Frame {
 export async function loadArrays(names: string[], query: Query = {}, signal?: AbortSignal, sampling?: Sampling): Promise<Frame> {
   const params = sampling ? { ...query, t_samples: sampling.tSamples, precision: sampling.precision } : query;
   const got = await arrays(names, params, { signal });
-  return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"] };
+  return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"], ran: got.stages as string[] };
 }
 
 /** The whole-galaxy star sample for one input vector: every cell, STAR_SAMPLE stars in all. */
