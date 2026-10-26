@@ -14,11 +14,13 @@ import {
   loadBrightTiles,
   loadClouds,
   loadClusters,
+  loadLayer,
   loadRegion,
   loadRemainder,
   loadRemnants,
   loadRender,
   loadSample,
+  sameGalaxy,
 } from "./api";
 import { LayerMismatch, layerQuery, onLayerFault } from "./galaxy/layer";
 import { templateQuery } from "./workflow/templates";
@@ -57,6 +59,8 @@ beforeEach(() => {
     const at = new URL(target, "http://viewer.test");
     const params = init.method === "POST" ? new URLSearchParams(init.body) : at.searchParams;
     sent.push({ route: at.pathname, method: init.method, params });
+    // The one JSON route that takes an input vector (S73, #199): its body is its header.
+    if (at.pathname === "/api/layer") return new Response(JSON.stringify(echo(params)), { status: 200, headers: { "content-type": "application/json" } });
     return new Response(frameOf(echo(params)), { status: 200, headers: { "content-type": "application/octet-stream" } });
   });
 });
@@ -71,6 +75,7 @@ const REQUESTS: Record<string, { route: string; ask(query: Query): Promise<unkno
   "the render (FieldVolume, field mode)": { route: "/api/render", ask: (q) => loadRender(CURVES as never, 5800, q) },
   "the render's remainder under the points (FieldVolume via loadRender, star-first mode)": { route: "/api/render", ask: (q) => loadRemainder(CURVES as never, 5800, q, 12.5) },
   "a region's render (RegionVolume)": { route: "/api/render", ask: (q) => loadRender(CURVES as never, 5800, { ...q, ...WINDOW, level: 2 }) },
+  "the layer's tables (FieldVolume, once per galaxy; S73)": { route: "/api/layer", ask: (q) => loadLayer(q) },
   "the bright stars by tiles (GalaxyTab, star-first mode)": { route: "/api/bright", ask: (q) => loadBrightTiles(TILES, 2511.886431509577, CURVES as never, 5800, q) },
   "the bright stars by level-k tiles (GalaxyTab, star-first mode below 4 kpc; S65)": { route: "/api/bright", ask: (q) => loadBrightTiles([4176, 4181], 223.872113856834, CURVES as never, 5800, q, undefined, 2) },
   "the level-k cells' expected counts (GalaxyTab, star-first mode below 4 kpc; S65)": { route: "/api/bright", ask: (q) => loadBrightCounts([4176, 4181], 2, q) },
@@ -224,6 +229,34 @@ describe("the bright stars by tiles and the remainder alone on the wire", () => 
     await loadRender(CURVES as never, 5800, { ...QUERY, ...WINDOW, level: 2 });
     await loadRender(CURVES as never, 5800, { ...QUERY, ...WINDOW, level: 2 });
     expect(sent).toHaveLength(5);
+  });
+});
+
+// S73 (#199): the layer's galaxy-wide tables come once per galaxy from /api/layer, not on every render's header, and
+// the march reads them only beside a render of the same galaxy.
+describe("the layer's tables, once per galaxy", () => {
+  it("asks /api/layer once per query, held as the whole render is", async () => {
+    const first = await loadLayer(QUERY);
+    await loadLayer(QUERY); // the other mode's march: the same answer, held
+    expect(sent.map((s) => s.route)).toEqual(["/api/layer"]);
+    expect(first.layer).toBe("on");
+    await loadLayer(layerQuery(QUERY, true));
+    expect(sent.map((s) => [s.route, s.params.get("layer")])).toEqual([
+      ["/api/layer", null],
+      ["/api/layer", "off"],
+    ]);
+  });
+
+  it("pairs a layer answer with a render of the same model, inputs and setting, and no other", () => {
+    const inputs = { halo_mass: 1.1e12, world_seed: 0 };
+    const layer = { model: "basic", layer: "on", inputs, gas_fluctuation: null, census_clustering: null, spurs: null, stages: [] };
+    const render = (header: Record<string, unknown>) => ({ header: { model: "basic", layer: "on", inputs, ...header } });
+    expect(sameGalaxy(layer, render({}))).toBe(true);
+    expect(sameGalaxy(layer, render({ layer: "off" }))).toBe(false);
+    expect(sameGalaxy(layer, render({ inputs: { ...inputs, world_seed: 1 } }))).toBe(false);
+    expect(sameGalaxy(layer, render({ model: "azimuthal" }))).toBe(false);
+    expect(sameGalaxy(null, render({}))).toBe(false);
+    expect(sameGalaxy(layer, null)).toBe(false);
   });
 });
 

@@ -222,13 +222,13 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "placement; a column map says nothing of height, and drawn through the layer it would smear each feature by h tan i " +
       "along the view, " +
       "multiplying the dust's placement - its depth, its thermal light and the diagnostic, not its scattered light - " +
-      "from the render header's gas_fluctuation (every number the model's; unit mean over every level-0 cell). Off reads " +
+      "from the galaxy's gas_fluctuation table (/api/layer; every number the model's; unit mean over every level-0 cell). Off reads " +
       "the placement's cell means alone; with the layer off it is never drawn (S66, V7, D226 R3). A display choice.",
   },
   {
     key: "spursInMarch", label: "spurs in the march", group: "March", kind: "toggle",
     about:
-      "The gas spurs evaluated from the render header's spurs table (stages/spurs.py's point function, every " +
+      "The gas spurs evaluated from the galaxy's spurs table (/api/layer; stages/spurs.py's point function, every " +
       "parameter the model's), their sum read once per ray as a thin screen at the ray's crossing of the midplane (a " +
       "column map says nothing of height, and drawn through the layer it would smear each feature by h tan i along the " +
       "view), composed per sub-step as (1 - <S>(R)) times the placement without them plus S: a spur 60 pc wide that " +
@@ -238,8 +238,8 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
     key: "clumpsInMarch", label: "young light clustered in the march", group: "March", kind: "toggle",
     about:
       "The field mode's young starlight and the middle part's light that keeps 1, 2 or 3 clustering octaves, each " +
-      "multiplied by the clustering field's k-octave map over its level-0 cell's k-octave mean (the render " +
-      "header's census_clustering), the map read once per ray as a thin screen at the ray's crossing of the midplane, the value multiplying each sub-step's " +
+      "multiplied by the clustering field's k-octave map over its level-0 cell's k-octave mean (the galaxy's " +
+      "census_clustering table, /api/layer), the map read once per ray as a thin screen at the ray's crossing of the midplane, the value multiplying each sub-step's " +
       "placement; a column map says nothing of height, and drawn through the layer it would smear each feature by h tan i " +
       "along the view, so each cell keeps its light. Off draws them placed by their weights alone (S66, V7, " +
       "D226 R5). A display choice.",
@@ -393,7 +393,7 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "cloudElongation", label: "cloud elongation", group: "March", kind: "range", min: 0, max: 2, step: 0.05, unit: "power",
-    about: "Each cloud's face-on shape in the clouds' raster (S67, D230, the owner's choice: \"Stretch clouds along arms\"): an ellipse of the cloud's own area, its long axis along the gas fluctuation field's local shear (the render header's gas_fluctuation strain per ring, D221), its axis ratio that shear's own, lambda+ = 1 + k^2/2 + |k| sqrt(1 + k^2/4) (5.8 inside 2 kpc, 2.7 at the Sun's radius on the Milky Way), raised to this power: 0 round, 1 the field's. Every cloud's A_V x area is conserved at any value; with the randomness layer off there is no field and the clouds are round. A display choice.",
+    about: "Each cloud's face-on shape in the clouds' raster (S67, D230, the owner's choice: \"Stretch clouds along arms\"): an ellipse of the cloud's own area, its long axis along the gas fluctuation field's local shear (the gas_fluctuation strain per ring, D221), its axis ratio that shear's own, lambda+ = 1 + k^2/2 + |k| sqrt(1 + k^2/4) (5.8 inside 2 kpc, 2.7 at the Sun's radius on the Milky Way), raised to this power: 0 round, 1 the field's. Every cloud's A_V x area is conserved at any value; with the randomness layer off there is no field and the clouds are round. A display choice.",
   },
   {
     key: "cloudRaster", label: "cloud raster", group: "March", kind: "range", min: 1, max: CLOUD_RASTER, step: 1, integer: true, unit: "texels / cell",

@@ -238,7 +238,7 @@ export const CIRCLE_SEGMENTS = 256;
 
 /**
  * The level-0 ring edges the outlines are drawn at (S70, Audit V F-4-2): the model's published ones, never an even
- * division of the grid's extent - the render header's `gas_fluctuation.edges`, or where that is null (the layer off)
+ * division of the grid's extent - `/api/layer`'s `gas_fluctuation.edges` (the render header's until S73), or where that is null (the layer off)
  * the bright table's layout `ring_edges` (both `systems.cell_edges`: linspace(R[0], R[-1], 33), 0.0375 … 29.9625 kpc
  * on the production grid). Null when neither has come, or when what came is not 33 increasing finite edges: no
  * outline is drawn rather than a guessed one.
