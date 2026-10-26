@@ -14068,3 +14068,244 @@ numerous from the grown clouds): the Milky Way still has no long bar and no lane
 and a bulge too bright — the residue stands where Audit V's §5 described it, and nothing in BUILD_IV will move it.
 **Next: S71 = BUILD_IV's W3 (the gateway, theirs) in parallel; S72 W2 the bundles; #197 when they want the stars' draw
 fixed (`BRIEF.md`).**
+
+### D235. S72, BUILD_IV Phase W2: the template bundles — every galaxy-scale answer the viewer asks of a template computed once and served from files, byte-identical, under the hash of the model's bytes; the body's `stages` found to record the cache's state and changed to the stage closure; the levels below 4 kpc measured and left to the owner's ruling; #199–#201, 132 open
+
+**The commission.** The owner, 2026-10-26, in chat: "read the briefs and start working on the next sessions, continuing
+until the context is getting full enough that its time to start in a new session. you're the fable lead agent
+orchestrating the project. spawn subagents as needed to carry out the implementation, and since fable usage is
+limited, use opus subagents on work that doesn't benefit much from fable capabilities." `BRIEF.md` after S70 named
+S72 = Phase W2 (`BUILD_IV.md` §2b, §4b, §5, §7 rulings 6 and 11) and said to ask before starting W2 unless the owner's
+word said to go on; this is that word. Row 71 (W3, the gateway) stays the owner's; branch `worktree-session-70-gateway`
+(09147c9) is unmerged and untouched. A Fable lead; an Opus probe, an Opus builder and an Opus reviewer, each in its own
+worktree, two at once at most (D190–D192's rationing; the 5-hour window 2 → 20 % across the session, the weekly 41 →
+44 %). The gateway's `Galaxygen.AppHost.csproj` carried an uncommitted stray `v` in the owner's working tree from
+before the session; left as found, not committed, reported.
+
+**What the plan asked and what the probe found first (Opus, `[measured]` unless tagged).** The plan: an export tool
+runs the model once per template and writes every metadata route, every published array, `/api/render` per shipped
+set, the censuses and `/api/region` per cell at the levels the ruling allows; the service answers from a bundle when
+template, layer, query and content hash match, byte-identical, the gate asserting it on every entry; ruling 6's size
+bound set after a probe measures the bundle. The probe wrapped `Service.handle` behind the built viewer on :8031 and
+drove the real page through the capture list's cameras, stands and switches (112 requests logged with path, query,
+bytes, sha256, stages), then costed every route in fresh processes and sampled the per-cell levels. Seven findings
+shaped the build:
+
+1. **The viewer's request shape.** Every input-taking request carries the full input vector — seven controls, five
+   seeds, `mergers` as JSON including each event's `about` prose — then `model=azimuthal`, then `template=<name>`;
+   `layer` is omitted when on and `layer=off` follows the template when off; the metadata routes carry `model=`;
+   `/api/version` is never asked. The whole-disc censuses are sent with an explicit window
+   (`r_min=0&r_max=30&phi_min=0&phi_max=6.283185307179586&level=0`), and the binary headers echo the window, so a
+   request without one differs in bytes (the defaults echo 0.0375 and 29.9625). Only the 1024-cell tile requests go as
+   POST (7.6 KB URLs). The Milky Way never asks `/api/clouds` at galaxy scale (`cloudsExtinction: false`, F-4-1).
+2. **Star-first.** `bright?table=1` (633 KB), one tile request naming all 1 024 level-0 cells at
+   `l_min=35481.33892335753` (Milky Way) / `25118.86431509577` (NGC 4414), then the remainder render
+   `only=remainder&l_min=<the same string>`. The tile snaps `l_min` (three spellings, identical bodies); the remainder
+   render does not — it echoes `resolved.l_min` and its light moves in the last digits — and the strings are
+   JavaScript's spellings of the table's own doubles (1258.9254117941662 where Python's `10**3.1` is …675).
+3. **The body is not a function of the request.** All eight binary handlers wrote `"stages": list(ran)` into the
+   header: a cold answer lists what ran, its warm repeat says `[]`. Across fresh processes every body of fourteen routes
+   was sha256-identical; cold against warm differed only in that key (15 of 731 bodies in the Milky Way layer-on cost
+   run; the clusters route returned three sizes in the walk by what was cached). Nothing else varied: no timestamp,
+   no random id, no key order, no refusal (#159 never fired, level 3 at 70.8 L☉ included); NaN in the region and
+   remnant columns, so bytes are compared, never `np.array_equal`.
+4. **Window against cells.** For `region`, `clouds`, `clusters`, `remnants` and `render`, two windows meeting the same
+   cells give identical payload columns; only `region`'s header echoes the window. Tiles compose: a multi-cell
+   answer's columns are the one-cell answers concatenated (20 of 20 columns at levels 0 and 2), its header's `arrays`,
+   `cells`, `count`, `light`, `tile` differ.
+5. **The cost.** Metadata 11 entries, 655 KB. Whole-galaxy entries per (template, layer) with all five sets: Milky Way
+   on 105.6 MB / 52 s, off 105.2 / 18; NGC 4414 on 85.0 / 38, off 84.5 / 17 (render 9.4 MB × 5, clusters 4.8 MB × 5,
+   arrays 28.8 MB, region sample 2.9, clouds 1.8). Per level-k entry (Milky Way on): a tile 6 KB at the landing's
+   threshold, 98 KB at 1 kpc, 30 KB at level 1, 80 KB at level 2, 83 KB at level 3 (70.8 L☉, 0.24 s); one cell's
+   region at 10⁶ stars 136–198 KB (0.41 s), clouds 10–12 KB, clusters 11–14 KB, remnants 3.3 KB, **render 126 KB of
+   which 125 784 B are header** — the layer's galaxy-wide tables (`census_clustering` 63 KB, `gas_fluctuation` 25 KB,
+   `spurs` 11 KB) repeated on every windowed render, 31.6 KB with the layer off (#199). The viewer's region regime
+   snaps its windows to a lattice: 53 701 windows and 97 646 (window, level) pairs per galaxy below 4 kpc. The totals
+   over the four (template × layer), one threshold per tile, rgb only below galaxy scale `[extrapolated from 12–16
+   tiles and 8–16 cells per level]`:
+
+   | part | entries | bytes | compute |
+   |---|---|---|---|
+   | whole-galaxy entries | 1 656 | 380 MB | 125 s |
+   | level 0 whole | 28 672 | 1.32 GB | 1.00 h |
+   | level 1 whole | 98 304 | 4.94 GB | 3.76 h |
+   | **levels 0–1 whole** | **128 632** | **6.64 GB** | **4.80 h** |
+   | level 2 whole, extra | | +22.6 GB | +17.2 h |
+   | level 3 whole, extra | | +89.9 GB | +77.9 h |
+
+   The thresholds multiply it: the viewer picks one of 153 grid thresholds per frame, and the remainder render needs
+   an entry per (threshold, set).
+6. **The hash.** `/api/version` hashed `interface/` and `model/galaxy/api/*.py` (1.0 ms); the model's outputs depend
+   on every file under `model/galaxy` (85 files, 5.5 MB: 81 `.py`, `data/parsec_isochrones.npz` 3.24 MB,
+   `data/nebular_lines.npz`, `layer/vectors.json`) and on nothing read from outside it; hashing all of them costs
+   16–17 ms. `git ls-files --eol` shows every text file `w/lf` under `* text=auto eol=lf`, so a Windows checkout and
+   the image hash the same bytes.
+7. **The merger prose is in every key and every body** (`inputs`, 1 396 B of header): editing a merger's description
+   changes every answer's bytes. True before S72; disclosed.
+
+**The lead's rulings (R1–R7), on the probe's findings, before the builder's second pass.**
+**R1, the scope:** the whole-galaxy entries only — what the viewer asks at galaxy scale, for both templates and both
+layer settings: the metadata routes with `model=`; the arrays the viewer asks (the landing's single field and the
+Science tab's multi-field sets as the frontend builds them, `t_samples=200&precision=f4`); `/api/render` for every
+shipped set (`rgb`, `sho`, `hoo`, `wfc3`, `wfc3n`) at `white=6500&precision=f4` and, per set, the remainder render at
+the landing's threshold; `/api/blackbody` per set; `clusters` (per set), `clouds`, `remnants` and `region
+stars=20000` in the viewer's own shape with its whole-disc window; `bright?table=1` and the 1024-cell tile per set at
+the landing's threshold. The per-cell levels stay behind `--levels`, none by default: **nothing below 4 kpc is
+bundled at S72**, and the owner rules on the levels from the table above (ruling 6; ruling 15 stands meanwhile: the
+deepest zoom wakes the model). **R2, the key is semantic:** sha256 over the request's meaning read by the service's
+own parsers — the route; the model and template it resolves to; the layer's bool; the resolved input overrides
+(`Service._overrides`: controls as floats, seeds as ints, events parsed); every other route parameter as its raw
+string, `filters` re-serialised canonically — so spelling and order never matter; a request the service would refuse
+has no key and is computed, which answers it with the service's own error. **R3, the body is a function of the
+request alone:** the eight handlers' header `stages` becomes the stage closure the answer requires (`Outputs.needs`,
+taken in `run()` before `resume=` prunes what already ran); `X-Galaxy-Stages` keeps `list(ran)` — rule D4's instrument
+is the transport's, as it always was in `http.py`. `Preview.tsx`'s "ran … / served from cache" line reads the HTTP
+header through `loadArrays`. No stage, field or number moved: a wire header's meaning did. **R4, the export
+reproduces the viewer's spelling** where a body echoes it: the full input vector in the viewer's order and
+JavaScript's number form (`js_number`, `js_json`, `js_query` in `bundle.py`: ECMAScript's `Number::toString` and
+`URLSearchParams` serialisation — `7` not `7.0`, `1e-7` not `1e-07`, `~` as `%7E`), the whole-disc window strings,
+`l_min` as the JavaScript spelling of the table's threshold chosen by the viewer's rule (ported from `brightTiles.ts`);
+a committed fixture of the walk's 35 galaxy-scale requests (`tests/fixtures/s72_viewer_requests.json`, the filters by
+set name) is reproduced string for string by the plan — the ported pick gives the two logged thresholds exactly. **R5,
+the hash:** `content_hash` over every file under `model/galaxy` but `__pycache__`, published by `/api/version` as
+`model` (recomputed per request, B2; 16 ms), taken once by the service for the check. **R6, the gate's instrument:**
+`tests/test_picture.py`'s real run, with `GALAXY_BUNDLES` naming a bundle, mounts it in the server it starts, logs each
+answer's source (`--source-log`), and asserts that every `/api` answer of a capture without a stand came from the
+bundle and the frames stay byte for byte; the zoom stands' misses are printed, not failed (R1); `picture.spec.ts` asks
+`/api/version?capture=<name>` from the runner before each capture as the log's marker. **R7:** the image's export runs
+R1's scope. On the builder's questions: the zoom stands exempted as above; **composing a windowed answer from per-cell
+entries in the reader is not S72's** (a reader that writes `arrays`, `cells`, `count`, `light` headers is a reader that
+computes; the owner's ruling on the levels decides whether it is wanted); the manifest records the grid's spec and
+the registered model names and the reader refuses either differing (the hash covers code, not the grid a `Service`
+was built on).
+
+**The build (Opus; `model/galaxy/api/bundle.py` new, `service.py`, `http.py`, `__main__.py`, `version.py`,
+`v6_tiles.py`, `run.py`, `tools/export_template.py` new, `tools/timings.py`, `tests/test_bundle.py` new, the fixture,
+`test_api.py`, `test_render.py`, `test_v7_header.py`, `test_picture.py`, `frontend/src/api.ts`, `Preview.tsx`,
+`e2e/picture.spec.ts`, `Dockerfile`, `.dockerignore`).** A bundle is `<bundles>/<template>/<layer>/manifest.json`
+plus `entries/<key>` (the body, no extension); the manifest (`galaxy-bundle/1`) names `model_hash`, `grid`,
+`models`, `built_at` and each entry's route, the query as sent, key, bytes, sha256, media and `ran_at_export`.
+`Service(bundles=)` reads every manifest at construction: the hash first (`BundleMismatch` naming both — "a mismatch
+is an error, not a fallback", §2b), then grid and models, then every entry's size and digest (`BundleError` naming the
+entry; 1.19 s cold, 0.27 s warm over 285 MB); a directory with no manifest is refused. `handle()` asks the index
+before any handler: a hit is `Response(200, media, body, stages=(), source="bundle")`, the galaxy cache, `CellCache`
+and `BrightCache` untouched; `/api/version` and `/api` are never held; a body unreadable at hit time is printed to
+stderr and the model answers. `http.py` sends `X-Galaxy-Source` beside `X-Galaxy-Stages`; `Cache-Control` stays
+`no-store` (what a gateway caches is its decision, D3). `python -m galaxy.api --bundles` (default `$GALAXY_BUNDLES`)
+prints the model hash and the bundle counts, exit 2 on a `BundleError`. `tools/export_template.py --out DIR
+[--template] [--layer] [--levels] [--only] [--dry-run]` plans R1's entries (one function, `plan()`), computes each
+through `service.handle`, refuses any non-200, writes the bundle and prints the table; `--check DIR` recomputes every
+entry in a fresh process in a replay order different from the export's (layer off before on, each bundle's entries
+last-planned first) and exits 1 on a byte's difference. `tools/timings.py` gains `bundle: render hit` and `bundle:
+miss` (an `Endpoint.bundles` flag; "no bundle" when none is mounted). The `Dockerfile` copies the tool and the two
+filter JSONs into the runtime stage and always runs the export into `/app/bundles` (about 100 s) with
+`GALAXY_BUNDLES` set, so an image's bundles are its own model's by construction (§2b); `.dockerignore` re-includes
+the one tool. Root `.gitignore` already ignores `bundles/`.
+
+**The review (Opus, independent: the diff read whole, then experiments), and the fix pass.** One defect: the image
+could not build — `.dockerignore` excluded `tools` and the `Dockerfile` copied a file under it (F1, fixed; the image is
+not built on this machine — W4's). Gaps closed: the server checked an entry's size only, so a byte flipped in place
+or a body swapped with another of the same size was served as truth (F2: per-entry sha256, verified at startup; the
+duplicate checks compare digests); a body file deleted under a running server gave a 500 (F3: stderr and the model
+answers); a failing source-log write turned every answer into a 500 — the cause of the gate's first picture failure,
+the e2e runner having emptied the log's directory after the server started (F4, and the directory made on every
+write); a mounted directory with no manifest was accepted silently (F5: refused). Notes taken: the docstrings claimed
+the body echoes a window's bounds and `l_min` "as given" — the headers echo the parsed floats (`r_min=7` and `7.0`,
+`l_min=35481.33892335753` and `3.548133892335753e4`, `cells=261,262` and `262,261` give identical bodies), so the raw
+key is more specific than the body and can only cost a miss, never a wrong answer (F6, the words corrected); the
+manifest's per-entry `stages` recorded what the export happened to run (F2's rename); the plan bundles entries no
+walk verified (#200) and the whole-disc remnants the viewer never asks at galaxy scale (kept, the plan's text names
+the censuses; a comment says so); the read-back test proves the reader and identity rests on `--check` (F8's reversed
+order; the reviewer's own cold / warm / evicted / `cache=0` comparisons agree); every byte under `model/galaxy` moves
+the hash, the server's own entry point included (a one-line comment re-exported 285 MB twice this session — D3 as
+written, the right default, and a close that touches `model/` re-exports before the picture opt-in); `js_json(NaN)`
+wrote `NaN` where `JSON.stringify` writes `null` (fixed); two request shapes end in a 500 before and after S72 (#201).
+**Verified sound by the reviewer:** the key — same key and identical live bodies for `layer` absent / `on`, `model=`
+given / omitted with a template, seeds `0` / `00`, `1.1e12` / `1100000000000`, re-spaced merger JSON, filters with an
+escape, a trailing zero, sorted keys, a duplicate key; different keys, correctly, for `layer=off`, `fields=a&fields=b`
+against `a,b`, `a,b` against `b,a` (the bodies differ), a control omitted (the server's template overrides hold only
+the pins, so an omitted control is another galaxy); a repeated `layer` or `template`, a bad template, an out-of-range
+input → no key, the model's own 400 / 404; no two keys share a body; no collision with differing bodies. Byte identity
+against the bundle's files in a fresh service and in another order in a second process: arrays cold and warm; the
+remainder render after arrays and again after eviction by three galaxies at `cache=2`; the bright table; the
+whole-disc tiles, clusters, clouds and region on and off, cold and after small windows warmed the cell and bright
+caches; a `cache=0` service — all identical. `needs` taken before the pruning, read by every body (`ran` 3 against 0
+and 8 against 11, the same bytes). D4 on a hit: GET and POST hits identical with empty `X-Galaxy-Stages`; after hits
+on four routes `_cache`, `cells`, `bright`, `_bright_galaxies` all empty; `/api/nope`, files and `/api/version`
+(`?capture=` accepted) never reach the index. The manifest checks each raise at construction naming the field. The
+fixture: every excluded walk line is a zoom stand (level 2, `r_min` 7.75 or 1.5, the 10⁶-star windows, the two
+level-2 remainders); `js_number` equals Node's `String(x)` on 19 values (0.1+0.2, 1e21, 1e-7, 2⁵³, 5e-324, −0, …).
+The index is read-only after construction, safe under the threaded server.
+
+**The gate, at the merged state (9e8d960).** The export of both templates at both layer settings: **198 entries,
+285 MB, 101 s** (the Milky Way on 65 entries 85.8 MB 33 s compute, off 34 / 78.2 MB / 10 s; NGC 4414 on 65 / 70.0 MB /
+24 s, off 34 / 62.5 MB / 10 s; 171 distinct keys, the metadata and blackbody shared) —
+
+| route | MW on | MW off | NGC on | NGC off |
+|---|---|---|---|---|
+| templates / fields / stages / inputs | 1 each: 25 930 / 444 042 / 43 288 / 12 171 B | same | same | same |
+| blackbody (5 sets) | 5, 113 985 B | same | same | same |
+| arrays | 32, 7 117 984 B, 9.9 s | 1, 2 144 B | 32, 7 087 384 B, 6.7 s | 1, 1 192 B |
+| render (5 whole + 5 remainder) | 10, 47 090 944 B, 12.0 s | 10, 46 619 384 B, 8.1 s | 10, 47 043 640 B, 11.7 s | 10, 46 608 784 B, 8.1 s |
+| clouds | 1, 1 766 792 B, 3.1 s | 1, 1 746 448 B | 1, 718 904 B, 1.6 s | 1, 698 584 B |
+| clusters (5 sets) | 5, 24 024 496 B, 5.4 s | 5, 24 024 696 B | 5, 9 569 416 B, 1.9 s | 5, 9 569 416 B |
+| remnants | 1, 172 120 B | 1, 172 120 B | 1, 72 048 B | 1, 72 048 B |
+| region stars=20000 | 1, 2 890 680 B, 1.5 s | 1, 2 890 672 B | 1, 2 888 784 B | 1, 2 888 792 B |
+| bright (table + 5 tiles) | 6, 2 123 824 B, 0.9 s | 6, 2 123 824 B | 6, 2 024 152 B | 6, 2 024 152 B |
+
+`--check` in the reversed replay order: **198 of 198 byte-identical** (99–103 s; three times this session at three
+hashes, every time 198 / 198; the builder's pre-R3 run at levels 0–1 — 26 047 entries, 992 MB, 386 s — found 11 of
+26 047 differing, all `/api/arrays` bodies 8–24 B apart in the `stages` key, finding 3 confirmed and removed by R3).
+The picture run with the bundles mounted: **15 passed, the frames byte for byte; 253 `/api` answers, 234 from the
+bundle, 0 misses outside the zoom stands, 19 at them** — `milky_way-zoom`: bright 2, render 1; `ngc_4414-zoom`:
+bright 4, render 4, clouds 2, remnants 2, region 2, clusters 2 (below 4 kpc, R1). Two of the gate's own instruments
+had to be fixed to run it (the lessons): the source log's directory, and the pytest wrapper's "N passed" count,
+which expected captures + 1 since S66 while the spec has held 15 tests since S67 — no close since had run the picture
+test through pytest. The timings rows (a fresh process each, at the merged state; the build column holds the index's construction
+with F2's digest check, 0.266 s over 285 MB): **`bundle: render hit` cold 0.00273 s, warm 0.00278 s, 9 393 336 B, no
+stage; `bundle: miss` cold 14.23 s, warm 0.769 s, 9 391 520 B, 22 stages; `version` cold 0.0204 s / warm 0.0204 s,
+1 301 B** (the viewer's hash, the api's and now the model's 85 files; 0.0243 / 0.0018 before the model's was added — the
+16 ms the probe measured). No stage's cost changed; the full cold table is not re-run.
+
+**Found in passing, fixed by the lead with the reason in the file.** `frontend/src/workflow/templates.test.ts`
+expected three pin lines for NGC 4414 and the fixture carried four since S70's `molecular_ring` pin (vitest was not
+run at S70's close); the picture wrapper's count, above. Both would have failed the next person to run them.
+
+**Rules.** D3 gains BUILD_IV Appendix A's sentence now — *every cache between the model and the viewer, in the API or
+in front of it, is keyed on that hash* — because the first such cache exists at S72; D5's sentence waits for W3's
+merge as the appendix says. D4 is unchanged in substance: a hit runs nothing and the transport says so. No model
+rule, stage, field, number, row or pin moved; the layer off nothing moved (the layer-off bundles are the same
+mechanism on the same bytes).
+
+**The register.** #199 (the windowed render's header carries the galaxy's layer tables: 125 784 of 126 064 B per
+level-2 cell; what closes it, the tables published once per galaxy and named by the hash), #200 (the plan's entries
+no walk verified: the Science tab's 31 arrays sets per layer-on bundle, the four non-rgb sets' 20 entries per bundle,
+the whole-disc remnants and the Milky Way's clouds — a miss, never a wrong answer; what closes it, a logged walk of
+the Science tab and each set, the fixture extended), #201 (two request shapes end in a 500: a merger `"time": 1e999`
+and a `filters` JSON nested past the recursion limit; before S72). **132 open = 11 + 121, 52 discharged.** Both pins
+in `tests/test_audit.py` re-pinned with the cause.
+
+**Closing.** The full suite ran detached at 1c0289a (the final code but one identifier; `GALAXYGEN_AUDIT_ORDER=1`, #173's
+randomised order included) with its exit line appended to its log: **EXIT=1 — 1 694 passed, 5 skipped, 1 xfailed,
+2 failed** in 4 h 59 min (14:01 → 19:00; the pieces' gate test in it): `test_docs`' tag-record row, which C2e writes on
+`main` after the merge (green once it is), and `test_layer`'s I5 instrument, which found the bundle module's
+`directory()` branching on a parameter named `layer` — the setting's label, "on" or "off", not the switch; renamed
+`setting` at 0df2c2f, the two I5 tests and `test_bundle` green alone (EXIT=0 each). After that rename, the model hash
+having moved, the gate ran once more at the final code: the export 198 entries in 122.8 s, `--check` 198 of 198
+byte-identical in 121.4 s (a loaded machine; 101 / 100 s unloaded), the picture file whole with the bundles mounted —
+15 passed in the browser, the frames byte for byte, every stand-less capture's `/api` answers from the bundle, the 19
+zoom-stand misses as before — EXIT=0. Vitest 448 passed (the pin-lines expectation fixed). S70's `verify_clone --ref
+main` (ad08858) was started detached at S70's close and its log was not found by this session (the scratch directory
+is the session's; the S67 → S68 lesson again): not read, said so. This session's `verify_clone --ref main` starts
+detached after the merge, its log at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s72\verify_s72.log`,
+to be read at the next open. The merge is gated on the suite's own exit line and the two failures' causes above, both
+settled before it.
+
+**For the owner: one ruling owed, nothing else awaited.** Ruling 6's levels and size bound, from the table above.
+The lead's recommendation: ship the whole-galaxy scope alone (285 MB, 101 s in the image build; the landing, the
+template switch, the star-first mode and the physics-only switch never run the model — 234 of 253 answers in the
+picture run), leave every zoom below 4 kpc to the model (ruling 15 as it stands, W5 measuring the step), and do not
+ship levels 0–1 (6.6 GB, 4.8 h to export, in an image or beside it) — the deepest-zoom alternatives (the model kept
+warm; a composing reader for the tiles, which compose; the ring-first draw published for the viewer) are each a
+ruling of their own and none is assumed. #197 (the stars' and remnants' ring draws), #195 and F-4-1 stand as the
+BRIEF left them; W3 is theirs.

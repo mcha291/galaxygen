@@ -702,10 +702,8 @@ def test_a_post_is_the_get_with_its_query_in_the_body():
             return e.code, e.read(), ""
 
     try:
-        def same(a: bytes, b: bytes) -> bool:  # the answer, less which stages this request had to run (a warm cache)
-            (ha, xa), (hb, xb) = wire.decode(a), wire.decode(b)
-            ha.pop("stages"), hb.pop("stages")
-            return ha == hb and xa.keys() == xb.keys() and all(np.array_equal(xa[k], xb[k]) for k in xa)
+        def same(a: bytes, b: bytes) -> bool:  # the whole answer: since S72 a body is the request's, whatever was cached
+            return a == b
 
         with urllib.request.urlopen(base + "/api/arrays?fields=halo_virial_mass,stellar_surface_density") as r:
             got = r.read()

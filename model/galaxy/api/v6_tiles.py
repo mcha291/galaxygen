@@ -442,7 +442,7 @@ def remainder(service: Service, q: Query) -> Response:
         },
         "white": white,
         "resolved": resolved,
-        "stages": list(ran),
+        "stages": list(out.needs),
     }
     arrays = [(REMAINDER_PARTS[p], parts[p]) for p in REMAINDER_PARTS]
     return _respond(header, arrays, precision, ran)

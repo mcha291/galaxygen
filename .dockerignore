@@ -10,6 +10,8 @@ frontend/dist
 docs
 tests
 tools
+# The bundle export runs in the image (S72, BUILD_IV W2): its one tool is re-included.
+!tools/export_template.py
 *.md
 !README.md
 .env

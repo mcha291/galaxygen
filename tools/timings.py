@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -49,6 +50,35 @@ class Endpoint:
     route: str
     query: str = ""
     about: str = ""
+    # S72 (BUILD_IV W2): "hit" or "miss" measures the request with a template bundle mounted (Service(bundles=...),
+    # the directory GALAXY_BUNDLES names or bundles/ at the root); a hit's query is read from the bundle's manifest.
+    bundles: str = ""
+
+
+def bundle_root() -> Path | None:
+    """The bundles a bundle row measures with: $GALAXY_BUNDLES, else bundles/ at the root; None if neither holds one."""
+    from galaxy.api import bundle
+
+    raw = os.environ.get("GALAXY_BUNDLES")
+    root = Path(raw) if raw else ROOT / "bundles"
+    return root if root.is_dir() and bundle.manifests(root) else None
+
+
+def bundled_render(root: Path) -> str:
+    """The query of a bundle's whole render through the viewer's broadband set, layer on, as the viewer sent it: what
+    a template's landing view asks first. Read from the manifests, so the row measures an entry the bundle holds."""
+    from urllib.parse import parse_qsl
+
+    from galaxy.api import bundle
+
+    rgb = json.loads(_RGB)
+    for path in bundle.manifests(root):
+        for e in bundle.read_manifest(path)["entries"]:
+            q = dict(parse_qsl(e["query"], keep_blank_values=True))
+            if e["route"] == "/api/render" and "filters" in q and json.loads(q["filters"]) == rgb \
+                    and q.get("layer", "on") == "on" and "only" not in q and "l_min" not in q:
+                return e["query"]
+    raise SystemExit(f"no whole rgb render in the bundles at {root}")
 
 
 ENDPOINTS: tuple[Endpoint, ...] = (
@@ -162,6 +192,12 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("render: whole, layer off", "/api/render",
              urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "layer": "off"}),
              "as the whole rgb render, every component even round its ring"),
+    # The template bundles (S72, BUILD_IV W2): the landing view's render read from a bundle (no stage runs), and a
+    # request no bundle holds with the bundles mounted - a miss costs what the model costs ("render: whole, rgb").
+    Endpoint("bundle: render hit", "/api/render", "",
+             "the whole rgb render of a template, read from its bundle under the model's hash", bundles="hit"),
+    Endpoint("bundle: miss", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4"}),
+             "the whole rgb render without template=, which no bundle holds, computed beside the bundles", bundles="miss"),
 )
 
 
@@ -172,12 +208,22 @@ def measure(endpoint: Endpoint) -> dict:
 
     imported = time.perf_counter() - start
 
+    query = endpoint.query
+    root = None
+    if endpoint.bundles:
+        root = bundle_root()
+        if root is None:  # nothing to measure against: say so, do not fail the run
+            return {"name": endpoint.name, "route": endpoint.route, "query": query, "about": endpoint.about,
+                    "skipped": "no bundle", "import_s": imported, "stages": []}
+        if endpoint.bundles == "hit":
+            query = bundled_render(root)
+
     start = time.perf_counter()
-    service = Service()
+    service = Service(bundles=root)  # with bundles: every manifest read and checked against the model's hash
     built = time.perf_counter() - start
 
     start = time.perf_counter()
-    cold = service.handle(endpoint.route, endpoint.query)
+    cold = service.handle(endpoint.route, query)
     cold_s = time.perf_counter() - start
 
     # Debt #37: the interpreter's first seeded draw costs ~10 ms of numpy setup and lands
@@ -190,15 +236,19 @@ def measure(endpoint: Endpoint) -> dict:
     probe_s = time.perf_counter() - start
 
     start = time.perf_counter()
-    warm = service.handle(endpoint.route, endpoint.query)
+    warm = service.handle(endpoint.route, query)
     warm_s = time.perf_counter() - start
 
     if not cold.ok or not warm.ok:
-        raise SystemExit(f"{endpoint.route}?{endpoint.query} returned {cold.status}: {cold.body[:200]!r}")
+        raise SystemExit(f"{endpoint.route}?{query} returned {cold.status}: {cold.body[:200]!r}")
+    if endpoint.bundles and cold.source != ("bundle" if endpoint.bundles == "hit" else "model"):
+        raise SystemExit(f"{endpoint.name}: answered from {cold.source}, which is not what the row measures")
     return {
         "name": endpoint.name,
         "route": endpoint.route,
-        "query": endpoint.query,
+        "query": query,
+        "source": cold.source,
+        "bundles": str(root) if root is not None else None,
         "about": endpoint.about,
         "import_s": imported,
         "build_s": built,
@@ -230,6 +280,9 @@ def table(rows: list[dict]) -> str:
     head = f"{'endpoint':<22} {'cold s':>8} {'warm s':>8} {'c/w':>6} {'bytes':>10}  stages"
     lines = [head, "-" * len(head)]
     for r in rows:
+        if r.get("skipped"):
+            lines.append(f"{r['name']:<22} {r['skipped']}")
+            continue
         stages = ",".join(r["stages"]) or "-"
         name = r["name"] + ("*" if r.get("first_draw_in_cold") else "")
         lines.append(
@@ -238,7 +291,7 @@ def table(rows: list[dict]) -> str:
     imports = [r["import_s"] for r in rows]
     lines.append("")
     if any(r.get("first_draw_in_cold") for r in rows):
-        paid = [r["probe_s"] for r in rows if not r.get("first_draw_in_cold")]
+        paid = [r["probe_s"] for r in rows if not r.get("first_draw_in_cold") and "probe_s" in r]
         size = f", about {1e3 * min(paid):.0f} ms here" if paid else ""
         lines.append(
             "* cold includes the interpreter's first seeded draw, numpy's bit-generator setup"

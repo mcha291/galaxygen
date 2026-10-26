@@ -1687,3 +1687,24 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A builder's "measured" number is re-measured by the next builder who touches it (S70: the arm pieces' power
   share 0.47 could not be reproduced; 0.569 stands). A number two agents disagree on is the lead's to settle before it
   is pinned, with both measurements in the record.
+
+## From S72 (the template bundles; a Fable lead on the owner's word, an Opus probe, a builder, a reviewer)
+
+- [api] A body that records what the server happened to do is not a function of the request: every binary header
+  wrote `"stages": list(ran)`, so a cold answer and its warm repeat differed in bytes and no cache could hold the
+  answer. The record of what ran belongs on the transport (`X-Galaxy-Stages`); the body says what the answer needs
+  (the stage closure). Before adding a field to a published body, ask whether two requests with the same meaning
+  could write it differently.
+- [api] A key over a request's spelling is the viewer's spelling: the browser sends its full input vector in
+  JavaScript's number form, in its own parameter order, with `layer` omitted when on. Key a cache on what the server
+  parses (the resolved inputs, the layer's bool, the route's own parameters) and reproduce the viewer's strings only
+  where a body echoes them - and measure which parameters a body echoes before writing the reason down (the reviewer
+  found the headers echo parsed floats, not the raw strings the docstring claimed).
+- [close] A gate's instrument is tested by the gate: the first picture run with a bundle mounted failed on the
+  instrument (the e2e runner emptied the directory the source log was in), the second on a stale count in the
+  pytest wrapper that no close since S66 had run through pytest. Run the whole file the gate will run, not the one
+  test, before calling the mechanism at fault.
+- [infra] Every byte under `model/galaxy` is in the bundle's hash, including the server's own entry point: a one-line
+  comment in `__main__.py` invalidated 285 MB of bundles twice in one session. That is D3 as written and the right
+  default; it means the export is part of every image build, never a cached artefact, and a close that touches
+  `model/` re-exports before it re-runs the picture opt-in.

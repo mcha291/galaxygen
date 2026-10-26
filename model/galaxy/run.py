@@ -72,6 +72,9 @@ class Outputs:
     order: tuple[str, ...]  # implementation ids whose fields are present, in execution order
     ran: tuple[str, ...] = ()  # what this call executed; differs from order under resume=
     layer: bool = True  # whether the run composed the randomness layer (S55, D214): what ``fields`` carry
+    # The closure this call asked for (S72): every stage its ``only=`` needs, in execution order, whether it ran now
+    # or was resumed - a function of the request alone, where ``ran`` depends on what was computed before.
+    needs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # The fields carry the run's setting wherever they go (a catalogue is materialised from them later, by
@@ -232,6 +235,7 @@ def run(
 
     graph = _graph.build(model, impls, table)
     plan = graph.order if only is None else graph.needed_for(only)
+    needs = tuple(st.id for st in plan)  # before resume= prunes what is already there (S72)
     # Inputs are owed by the stages that actually run: pruning a stage prunes
     # its inputs too, so a partial run cannot be stopped by an UNSET default
     # that nothing on its path reads.
@@ -272,4 +276,4 @@ def run(
             decls[decl.name] = decl
     ran = tuple(s.id for s in plan)
     order = tuple(st.id for st in graph.order if st.id in set(done) | set(ran))
-    return Outputs(model.name, g, resolved, fields, decls, order, ran, layer)
+    return Outputs(model.name, g, resolved, fields, decls, order, ran, layer, needs)
