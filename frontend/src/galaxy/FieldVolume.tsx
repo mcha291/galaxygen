@@ -30,15 +30,16 @@ import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts }
 
 import {
   type Census,
+  type DrawnPair,
   type FieldsPayload,
   type Frame,
   type LayerAnswer,
   type Query,
   type RenderFrame,
+  drawnPair,
   loadArrays,
   loadLayer,
   loadRender,
-  sameGalaxy,
 } from "../api";
 import { type CloudColumns, type CloudRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
 import type { CellLayout } from "./brightTiles";
@@ -727,13 +728,19 @@ export function FieldVolume({
   const unresolved = lMin != null && lMin > 0;
   const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
-  const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
+  const latest = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
   // The randomness layer's tables (S73, #199): /api/layer once per galaxy, keyed on the shown query as the render is
-  // (so a Generate's swap holds it with the rest, D232), and read only beside a render of the same galaxy - the model,
-  // the resolved inputs and the layer setting each answer states (api.ts sameGalaxy). Until then the march waits.
+  // (so a Generate's swap holds it with the rest, D232), and drawn only beside a render of the same galaxy - the model,
+  // the template, the resolved inputs and the layer setting each answer states (api.ts sameGalaxy). Between a new
+  // galaxy's two answers the last matched pair stays drawn (drawnPair; the review's G1): the old galaxy whole, as
+  // before S73 the old render stayed until the new one came - never a blank, never one galaxy's light on another's tables.
   const layerKey = lit ? JSON.stringify(["layer", query]) : null;
   const layered = useLoad<LayerAnswer>(layerKey, (signal) => loadLayer(query, signal)).value ?? null;
-  const tablesOf = sameGalaxy(layered, light) ? layered : null;
+  const matched = useRef<DrawnPair<RenderFrame> | null>(null);
+  const pair = drawnPair(layered, latest, matched.current);
+  matched.current = pair;
+  const light = pair?.light ?? null;
+  const tablesOf = pair?.layer ?? null;
   // The render's own stars per ring (S67, D227 R5; rule B1: a read-only copy of what the viewer was sent):
   // `window.__galaxygenRenderRings`, the surface-brightness gate's reference beside GalaxyView's ring probe.
   useEffect(() => {

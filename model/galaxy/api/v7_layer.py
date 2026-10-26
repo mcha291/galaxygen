@@ -52,8 +52,10 @@ LAYER_ROUTE = "/api/layer"
 ENTRIES = ("gas_fluctuation", "census_clustering", "spurs")
 LAYER_TABLES_ABOUT = (
     "the randomness layer's galaxy-wide tables the march reads - the gas fluctuation field, the clustering field's "
-    "k-octave cell means and the gas spurs (S66, V7, D226) - are /api/layer's answer to the same inputs, template and "
-    "layer setting as this render: fetched once per galaxy, never carried by a render (S73, #199)"
+    "k-octave cell means and the gas spurs (S66, V7, D226) - are /api/layer's answer, asked with this render's own "
+    "model, template, layer setting and inputs (this header's model, template, layer and inputs, each as a query "
+    "parameter of that name; the template's pins come with its name): fetched once per galaxy, never carried by a "
+    "render (S73, #199)"
 )
 # What places the dust round a ring where the render places it by a pattern (the gas's own contrast, or the stars'
 # where a model publishes no gas pattern): the spurs' entry is that placement's, so it exists only where the dust is.
