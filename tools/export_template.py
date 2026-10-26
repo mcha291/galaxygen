@@ -247,8 +247,10 @@ def plan(template: str, layer: str, service: Any, levels: Sequence[int] = (), on
         out.append(("/api/clouds", base | {"precision": "f4"} | whole_disc))
         for s in sets:
             out.append(("/api/clusters", base | {"filters": curves[s]} | white | whole_disc))
-        # The whole-disc remnants: the plan's text names the censuses, but S72's walk never logged this request at
-        # galaxy scale (the viewer asks remnants only for a region window); kept, unverified against a viewer.
+        # The whole-disc remnants: the plan's text names the censuses, but neither S72's walk nor S73's (#200: every set,
+        # both modes, both layers, the Science tab, the clouds' switches) logged it - the viewer asks remnants only in
+        # RegionVolume, for the stars regime's window round the view's target (GalaxyTab.tsx `area`), never the whole
+        # disc. Kept (a bundle may serve another client), the one planned entry no viewer sends.
         out.append(("/api/remnants", base | whole_disc))
         out.append(("/api/region", base | _js({"stars": STAR_SAMPLE})))
 

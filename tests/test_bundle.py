@@ -341,7 +341,9 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
     """Every galaxy-scale request the probe's walk logged is in the plan of its galaxy, byte for byte, and the
     landing thresholds are the viewer's pick from the table (MW 10^4.55, NGC 10^4.40 as the walk logged them)."""
     doc = _logged()
-    assert FIXTURE.stat().st_size < 100_000 and len(doc["requests"]) > 30
+    # S73 (#200): the walk of every set, the physics-only switch under each, the Science tab and the clouds' switches
+    # grew it from 35 to 171 meanings (166 KB, the 1024-cell tiles 6 KB each); the bound is the lead's ~250 KB.
+    assert FIXTURE.stat().st_size < 250_000 and len(doc["requests"]) > 170
     picks = {}
     for galaxy in ("milky_way/on", "ngc_4414/on"):  # the table is computed for the pick; the off layer asks the same
         template = galaxy.split("/")[0]
