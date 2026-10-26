@@ -1708,3 +1708,21 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   comment in `__main__.py` invalidated 285 MB of bundles twice in one session. That is D3 as written and the right
   default; it means the export is part of every image build, never a cached artefact, and a close that touches
   `model/` re-exports before it re-runs the picture opt-in.
+
+## From S73 (the bundles' three debts; a Fable lead on the owner's word, two Opus builders, a walker, a reviewer)
+
+- [api] A galaxy-wide table on a per-window answer is paid once per window: the layer's three tables rode on every
+  windowed render (125 KB over 280 B of payload) because V7 put them where the first reader looked. Publish what is
+  a function of the galaxy alone on a route of its own, keyed as every input route is, and let the per-window answer
+  name it; measure the residue (the abouts and the per-ring tables, 26 KB here) and record it rather than chase it.
+- [viewer] Two loaders for one picture need a pairing rule, not a null: the first `/api/layer` build drew nothing
+  between the two answers (4-5 s cold) where S68's swap had kept the old galaxy on screen. Keep the last matched pair
+  drawn until a new pair matches, and pair on everything that names a galaxy (model, template, layer, inputs: pins
+  are not inputs, and a template's pins change its tables).
+- [api] A fix of a 500 is reviewed as the class, not the shape: #201 named two; the reviewer's sweep of forty shapes
+  found a third class (a negative seed, a 500 only on the routes whose stages read it) and a defect in the lead's own
+  HEAD guard (the 500's bytes rebound the HEAD/GET switch and broke keep-alive). A guard's test drives the failure
+  through the socket it guards.
+- [close] A walk is the proof that a plan reproduces a viewer, in both directions: the forward check (every logged
+  request planned) passed at S72 with 35 requests; S73's 171 found the plan already right and turned the check round
+  (every planned entry logged, but a named list), so a plan that drifts fails loudly instead of missing silently.
