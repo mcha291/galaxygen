@@ -165,10 +165,16 @@ ENDPOINTS: tuple[Endpoint, ...] = (
              "the k-octave cell means, cold 12.8 -> 20.1 s, warm 0.80 -> 1.63 s, 17.38 -> 18.66 MB in f8; the "
              "middle part's window anchors cached with the run, warm 1.65-2.11 -> 1.45-1.58 s on a loaded machine; "
              "their four responses cached with the run and the curves too, 1.49-1.82 -> 1.16-1.26 s, the rest the "
-             "three age parts' responses (each request, as at S63) and the unspurred cell means)"),
+             "three age parts' responses (each request, as at S63) and the unspurred cell means; S73, #199: the three "
+             "tables moved to /api/layer - the header 124 -> 26 KB, the gas fluctuation stage no longer run here)"),
     Endpoint("render: one region", "/api/render",
              urlencode({"filters": _RGB, "r_min": 7, "r_max": 9, "phi_min": 0, "phi_max": 0.4, "level": 2}),
              "90 level-2 cells' means"),
+    # S73 (#199): the layer's galaxy-wide tables, once per galaxy - what the render's header carried from S66 to S72.
+    Endpoint("layer: tables", "/api/layer", "",
+             "gas_fluctuation, census_clustering and spurs as JSON (about 100 KB); cold runs the layer's stages and what "
+             "the gas pattern is built from, never the light, the dust or a census; warm is the k-octave cell means' "
+             "cache and the spurs' ring mean"),
     # S48's wiring: the field's remainder under 10^3 Lsun beside the stars (bright.resolve, four more responses).
     Endpoint("render: unresolved", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000}),
              "as the whole rgb render, plus stars_unresolved and the closure"),

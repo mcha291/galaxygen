@@ -123,7 +123,7 @@ export interface PlaneFields {
    */
   unspurred?: ArrayLike<number> | null;
   /**
-   * The spurs' mean round each render ring, per R cell (the render header's `spurs.share`, S66 V7, D226 R4): what
+   * The spurs' mean round each render ring, per R cell (`/api/layer`'s `spurs.share`, S66 V7, D226 R4; S73): what
    * the spurs drawn from their table replace of the placement, (1 - share) g + S. Held in the diffuse gas row's spare channel;
    * missing, or not a number at a ring, is no spur there: 0.
    */

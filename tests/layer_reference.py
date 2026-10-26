@@ -65,6 +65,9 @@ ADDED_KNOTS = ("line_response", "knots")
 # `ages`, digested apart since S63).
 ADDED_AT_S66 = ("gas_fluctuation", "census_clustering", "spurs")
 ADDED_ARRAYS_AT_S66 = ("dust_placement_unspurred", "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1")
+# What S73 (#199) sends in place of S66's three header entries, which moved to /api/layer (a route S55 did not have):
+# the render header's `layer_tables`, naming the route - digested apart likewise and returned among the added.
+ADDED_AT_S73 = ("layer_tables",)
 
 
 def _sha(raw: bytes) -> str:
@@ -226,7 +229,11 @@ def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[s
     s66 = [key for key in ADDED_AT_S66 if key in header and "components" in header]
     for key in s66:
         header.pop(key)
-    added += s66_arrays + s66
+    # S73 (#199): the three entries are /api/layer's; the render's header names the route instead.
+    s73 = [key for key in ADDED_AT_S73 if key in header and "components" in header]
+    for key in s73:
+        header.pop(key)
+    added += s66_arrays + s66 + s73
     components = header.get("components", {})
     if "halpha_hii" in components:
         from galaxy.api import v6_knots

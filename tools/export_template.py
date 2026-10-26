@@ -181,8 +181,9 @@ def plan(template: str, layer: str, service: Any, levels: Sequence[int] = (), on
 
     metadata: /api/templates; /api/stages, /api/fields, /api/inputs with model=; /api/blackbody per shipped set (no
     template: it runs no stage). arrays: the Galaxy view's (fields=bulge_scale_radius) and, with the layer on (the
-    Science tab sends no layer switch), the Science tab's sets (:func:`science_arrays`). render: per set, the whole
-    render (white, f4) and the star-first remainder at the landing threshold. census: over GalaxyTab.tsx's wholeDisc
+    Science tab sends no layer switch), the Science tab's sets (:func:`science_arrays`). render: the layer's tables
+    (/api/layer, once; S73), per set the whole render (white, f4) and the star-first remainder at the landing
+    threshold. census: over GalaxyTab.tsx's wholeDisc
     window (r_min, r_max from the grid, phi 0..2 pi, level 0) - clouds f4, clusters per set with white, remnants - and
     /api/region's whole-galaxy sample (stars=20000). bright: the table (table=1, f4) and the landing's one tile request
     per set, every level-0 cell at the landing threshold; with ``levels``, single-cell tiles at those levels.
@@ -235,6 +236,8 @@ def plan(template: str, layer: str, service: Any, levels: Sequence[int] = (), on
     landing = None if l_min is None else js_number(l_min)
 
     if "render" in groups:
+        # S73 (#199): the layer's tables, once per galaxy - the query every loader spreads, nothing else (api.ts loadLayer).
+        out.append(("/api/layer", dict(base)))
         for s in sets:
             out.append(("/api/render", base | white | {"precision": "f4", "filters": curves[s]}))
         for s in sets:

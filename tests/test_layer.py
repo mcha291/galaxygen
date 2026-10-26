@@ -263,7 +263,8 @@ def answer(response) -> tuple[dict, list[tuple[str, str, tuple, bytes]]]:
     """A response as what it says: its header less ``stages`` (what a request ran depends on what the service
     already held, not on what was asked) and every array's name, dtype, shape and bytes, in the body's order."""
     assert response.ok, response.status
-    header, arrays = wire.decode(response.body)
+    # /api/layer (S73, #199) answers JSON: its body is its header, and it sends no array.
+    header, arrays = (response.json(), {}) if response.media == "application/json" else wire.decode(response.body)
     return ({k: v for k, v in header.items() if k != "stages"},
             [(n, a.dtype.str, a.shape, a.tobytes()) for n, a in arrays.items()])
 
@@ -530,7 +531,9 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
         # the neutral placement itself - and the middle part's kept-octave windows, the same bits on and off) and its
         # header's gas_fluctuation, census_clustering and spurs entries, their values null with the layer off -
         # digested apart likewise (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S66).
-        s66 = [*layer_reference.ADDED_ARRAYS_AT_S66, *layer_reference.ADDED_AT_S66]
+        # S73 (#199): the three header entries moved to /api/layer; the render's header names it in layer_tables,
+        # digested apart likewise (layer_reference.ADDED_AT_S73).
+        s66 = [*layer_reference.ADDED_ARRAYS_AT_S66, *layer_reference.ADDED_AT_S73]
         assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
                                          + (["stars_middle_placement"] if not label.startswith("basic/") else [])
                                          + ["dust_diffuse_share"] + s66)
@@ -1630,8 +1633,9 @@ def test_i4_compose_refuses_a_stage_that_is_not_a_reader_at_run_time(prod):
 
 # --- I5: the API's half of the switch ------------------------------------------------------------------------------
 
+# S73 (#199): and /api/layer, the layer's galaxy-wide tables (JSON; `answer` reads its body as its header).
 INPUT_ROUTES = ("/api/arrays", "/api/region", "/api/system", "/api/clouds", "/api/clusters", "/api/remnants",
-                "/api/bright", "/api/render")
+                "/api/bright", "/api/render", "/api/layer")
 SECTOR = "r_min=7&r_max=9&phi_min=0&phi_max=0.6"
 B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} for b, c in (("B", 4400.0), ("V", 5500.0))])
 QUERIES = {
@@ -1643,6 +1647,7 @@ QUERIES = {
     "/api/remnants": {"r_min": ["7"], "r_max": ["9"], "phi_min": ["0"], "phi_max": ["0.6"]},
     "/api/bright": {"n": ["400"]},
     "/api/render": {"filters": [B_V]},
+    "/api/layer": {},
 }
 
 
@@ -2201,7 +2206,7 @@ def test_the_cloud_interior_s_noise_is_three_constants_of_the_model(runs, prod):
         assert not re.search(r"CLOUD_INTERIOR", json.dumps(header))
     for path in INPUT_ROUTES:
         if path != "/api/clouds":
-            assert "cloud_interior" not in svc.handle(path, QUERIES[path]).frame()[0], path
+            assert "cloud_interior" not in answer(svc.handle(path, QUERIES[path]))[0], path
     for path in ("/api", "/api/fields", "/api/stages", "/api/inputs", "/api/templates"):
         text = svc.handle(path).body.decode("utf-8")
         assert "CLOUD_INTERIOR" not in text and '"constants"' not in text, path
