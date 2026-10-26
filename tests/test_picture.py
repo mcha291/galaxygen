@@ -370,7 +370,13 @@ def test_the_viewer_draws_the_committed_frames():
         env["GALAXY_SOURCE_LOG"] = str(log)
     proc = subprocess.run([npm, "--prefix", "frontend", "run", "picture"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1500, env=env)
     assert proc.returncode == 0, proc.stdout[-6000:] + proc.stderr[-2000:]
-    assert f"{len(taken()) + WIRE_TESTS} passed" in proc.stdout, proc.stdout[-2000:]
+    # The spec holds one test per capture, the wire test and the checks added since S66 (the dust's column, the
+    # surface-brightness gates per setting, the GPU light check): at least the captures and the wire test passed, and
+    # nothing failed or was skipped. Until S72 this line expected exactly captures + 1 and was never run through pytest
+    # after S66 (the closes ran `npm run picture` directly): found at S72's gate.
+    passed = re.search(r"(?m)^\s*(\d+) passed", proc.stdout)
+    assert passed and int(passed.group(1)) >= len(taken()) + WIRE_TESTS, proc.stdout[-2000:]
+    assert not re.search(r"(?m)^\s*\d+ (failed|flaky|skipped|did not run)", proc.stdout), proc.stdout[-2000:]
     if log is not None:
         assert log.is_file(), f"no source log at {log}: a server already on the port was reused, without the bundles"
         answers = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
