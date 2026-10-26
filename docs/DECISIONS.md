@@ -14427,6 +14427,16 @@ no longer runs `gas_fluctuation`, and its header is 98 KB lighter); `render: one
 `bundle: miss` 11.00 / 0.908 s; `version` 0.0209 / 0.0214 s. Vitest 454 passed, 1 skipped; `tsc -b` and `vite build`
 clean.
 
+**Closing.** The full suite ran detached at the final code (5525daf; `GALAXYGEN_AUDIT_ORDER=1`) with its exit line
+appended to its log: **EXIT=1 — 1 721 passed, 5 skipped, 1 xfailed, 2 failed** in about 5 h (17:0x → 22:04, beside
+no other run): `test_docs`' tag-record row, which C2e writes on `main` after the merge, and `test_performance`'s
+per-cell pricing on `basic` (0.892 against 0.922: the wall-clock flake of #67/#68's class, as at S69 and S70) — green
+alone on its quiet re-run (2 passed, EXIT=0). The I5 instrument tests, green alone after the merges, passed in the
+suite. S72's `verify_clone --ref main` (c5cb1ff, started detached at S72's close): its log is at
+`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s72\verify_s72.log`, read at this session's close and
+recorded in the next open if unfinished. This session's starts detached after the merge beside it as `-s73`. The
+merge is gated on the suite's own exit line and the two failures' causes, both settled.
+
 **The register.** #199, #200 and #201 discharged with their closers' measurements in the entry; nothing opened.
 **129 open = 11 + 118, 55 discharged.** Both pins in `tests/test_audit.py` re-pinned with the cause, the discharged
 row at S73 added, the carried row shortened. No model rule, stage, field, number, row or pin moved; the layer off
