@@ -58,7 +58,7 @@ MILKY_WAY = templates.TEMPLATES["milky_way"]
 NGC_4414 = templates.TEMPLATES["ngc_4414"]
 # The routes that take inputs: every one whose handler lays a request's inputs over the registry's.
 INPUT_ROUTES = ("/api/arrays", "/api/region", "/api/system", "/api/clouds", "/api/clusters", "/api/remnants",
-                "/api/bright", "/api/render")
+                "/api/bright", "/api/render", "/api/layer")  # S73 (#199): the layer's tables
 SECTOR = "r_min=7&r_max=9&phi_min=0&phi_max=0.4"
 B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} for b, c in (("B", 4400.0), ("V", 5500.0))])
 # S60 (D219 items 3 and 8): each template holds three pins. The Milky Way's third is its measured arms - the rows of

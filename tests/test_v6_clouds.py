@@ -34,9 +34,9 @@ CASES = [(t, layer) for t in ("milky_way", "ngc_4414") for layer in ("on", "off"
 # adds none.
 RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
                  "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs", "vertical_alpha",
-                 "ism", "dust", "clouds", "gas_fluctuation", "cloud_texture", "clusters", "nebular"]
-# S66 (D226 R6; the review's M1): the render runs gas_fluctuation on every request - its header carries the field's
-# cell normalisers - and with the layer off the stage returns its neutral (the route may not branch on the layer, I5).
+                 "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular"]
+# S66 (D226 R6; the review's M1): the render ran gas_fluctuation on every request - its header carried the field's
+# cell normalisers. S73 (#199): the field's table is /api/layer's, and the render runs the stages above, without it.
 # The disc's realised clouds' share of its dust and the first three rings' expected shares (S64's probe, measured;
 # recorded in D224, not targets: the realised share is the census's draw, the expected the ring's molecular fraction).
 # S70 (D234): was {"milky_way": 0.4899973, "ngc_4414": 0.6327142} - the clouds' ring inversion on the ring's own interval
@@ -60,6 +60,13 @@ def get(service, path, **q):
         assert r.status == 200, r.body[:400]
         _held[key] = (*wire.decode(r.body), r)
     return _held[key]
+
+
+def layer_tables(service, template, layer="on"):
+    """/api/layer's answer (S73, #199): the layer's tables, the render header's from S66 to S72."""
+    r = service.handle("/api/layer", {"template": [template], "layer": [layer]})
+    assert r.status == 200, r.body[:400]
+    return r.json()
 
 
 def fields(service, template, layer, names):
@@ -201,8 +208,10 @@ def test_e_the_header_states_the_rule_and_ships_the_array(service):
 def test_f_the_s55_digest_reports_the_new_keys_added(service):
     q = {"layer": ["off"], "filters": [layer_reference.curves()]}
     got = layer_reference.route_digest(service, "/api/render", q)
-    # S64's key, then S66's four arrays and three header entries (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S66).
-    assert "dust_diffuse_share" in got["added"] and got["added"][-1] == layer_reference.ADDED_AT_S66[-1]
+    # S64's key, then S66's four arrays and - since S73 in place of S66's three header entries - the header's
+    # layer_tables (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S73).
+    assert "dust_diffuse_share" in got["added"] and got["added"][-1] == layer_reference.ADDED_AT_S73[-1]
+    assert not set(layer_reference.ADDED_AT_S66) & set(got["added"])
     got = layer_reference.route_digest(service, "/api/clouds", {"layer": ["off"]})
     # S70 (D234): was ["cloud_dust_extinction_v"] - and the clouds' shape (Audit V F-4-3, layer_reference.ADDED_AT_S70).
     assert got["added"] == ["cloud_dust_extinction_v", "cloud_axis_ratio", "cloud_angle"]
@@ -224,8 +233,7 @@ def ring_by_edges(edges, radius):
 
 @pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])
 def test_s70_the_clouds_shape_is_the_rule_on_the_render_headers_published_strain(service, template):
-    h, _, _ = get(service, "/api/render", template=template, layer="on", filters=RGB)
-    gas = h["gas_fluctuation"]
+    gas = layer_tables(service, template)["gas_fluctuation"]  # the render header's until S73 (#199)
     edges, strain, sense = np.asarray(gas["edges"]), np.asarray(gas["ring"]["strain"]), float(gas["sense"])
     hc, c, _ = get(service, "/api/clouds", template=template, layer="on")
     k = sense * strain[ring_by_edges(edges, c["cloud_radius"])]
@@ -233,7 +241,7 @@ def test_s70_the_clouds_shape_is_the_rule_on_the_render_headers_published_strain
     assert np.array_equal(c["cloud_axis_ratio"], lam)
     assert np.allclose(c["cloud_angle"], np.arctan2(lam - 1.0, k), rtol=0.0, atol=4e-16)
     assert np.all(c["cloud_axis_ratio"] >= 1.0) and np.ptp(c["cloud_axis_ratio"]) > 0.0
-    # every term of the rule is published: the header names them and the render header carries each
+    # every term of the rule is published: the header names them and /api/layer carries each (S73; the render's before)
     for name in ("cloud_axis_ratio", "cloud_angle"):
         about = hc["clouds"]["derived"][name]
         assert about["fields"] == ["cloud_radius", "gas_fluctuation.edges", "gas_fluctuation.ring.strain", "gas_fluctuation.sense"]
@@ -247,8 +255,7 @@ def test_s70_the_clouds_shape_is_the_image_of_a_round_feature_under_the_fields_r
     edges[0]) / edges_r)) (the header's rule). Its Jacobian J by central differences maps a small circle of the field to
     the ellipse {p : p^T J^T J p = 1} in the disc - axis ratio sqrt(l_max / l_min) of J^T J, long axis along its small
     eigenvector - which is the published shape, at every 40th cloud away from a ring edge."""
-    h, _, _ = get(service, "/api/render", template=template, layer="on", filters=RGB)
-    gas = h["gas_fluctuation"]
+    gas = layer_tables(service, template)["gas_fluctuation"]
     edges, strain, twist, sense = (np.asarray(gas["edges"]), np.asarray(gas["ring"]["strain"]),
                                    np.asarray(gas["ring"]["twist"]), float(gas["sense"]))
     _, c, _ = get(service, "/api/clouds", template=template, layer="on")
@@ -280,8 +287,8 @@ def test_s70_the_clouds_shape_is_the_image_of_a_round_feature_under_the_fields_r
 def test_s70_the_clouds_are_round_with_the_layer_off_and_float32_on_request(service, template):
     _, off, _ = get(service, "/api/clouds", template=template, layer="off")
     assert np.all(off["cloud_axis_ratio"] == 1.0) and np.all(off["cloud_angle"] == 0.0)
-    h, _, _ = get(service, "/api/render", template=template, layer="off", filters=RGB)
-    assert h["gas_fluctuation"]["seed"] is None and h["gas_fluctuation"]["ring"] is None  # no field published, no shear
+    gas = layer_tables(service, template, "off")["gas_fluctuation"]
+    assert gas["seed"] is None and gas["ring"] is None  # no field published, no shear
     _, c8, _ = get(service, "/api/clouds", template=template, layer="on")
     _, c4, _ = get(service, "/api/clouds", template=template, layer="on", precision="f4")
     for name in ("cloud_axis_ratio", "cloud_angle"):

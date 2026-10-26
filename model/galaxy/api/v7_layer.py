@@ -1,7 +1,11 @@
-"""The randomness layer's fields on /api/render's header (S66, BUILD_III Phase V7; RULING_S66 R4-R6): what the viewer
-needs to evaluate the gas fluctuation field, the clustering field and the gas spurs in its march - each map read once
-per ray as a thin screen at the ray's crossing of the midplane (D226 R3/R5 as amended) - every number the model's, read off the run's published fields and the model's constants (rule D5 as amended, D220's
+"""The randomness layer's galaxy-wide tables (S66, BUILD_III Phase V7; RULING_S66 R4-R6), published by ``/api/layer``
+once per galaxy since S73 (#199; on ``/api/render``'s header from S66 to S72, where every windowed render repeated
+them): what the viewer needs to evaluate the gas fluctuation field, the clustering field and the gas spurs in its
+march - each map read once per ray as a thin screen at the ray's crossing of the midplane (D226 R3/R5 as amended) -
+every number the model's, read off the run's published fields and the model's constants (rule D5 as amended, D220's
 precedent: a function the model publishes, evaluated with every parameter the model's). No stage and no constant here.
+The render keeps the arrays (the placement without the spurs, the middle part's kept windows) and names the route in
+its header's ``layer_tables`` (:data:`LAYER_TABLES`).
 
 - **gas_fluctuation** (:func:`gas_fluctuation_entry`): the seed, the field's form, the ring table (break index, sigma,
   strain, twist, normaliser), the ladder's weights for every break index (``GasFluctuationField.amplitudes``) and the
@@ -10,17 +14,18 @@ precedent: a function the model publishes, evaluated with every parameter the mo
 - **census_clustering** (:func:`clustering_entry`): the field's form and seed, the octaves' survival ages, and the
   k-octave maps' means per level-0 cell for k = 1, 2, 3 on the field's table lattice (R5c), so that the field mode's
   young and middle starlight are modulated by a map over its own cell mean whatever the clouds toggle.
-- **spurs** (:func:`spurs_entry`): the gas spurs' table and their ring mean per render ring, and beside the placed gas
-  the placement without them (``dust_placement_unspurred``): g' = (1 - <S>(R)) g + S, S read once per ray at the midplane (R4).
+- **spurs** (:func:`spurs_entry`): the gas spurs' table and their ring mean per grid ring; the render sends beside the
+  placed gas the placement without them (:func:`unspurred_placement`, ``dust_placement_unspurred``):
+  g' = (1 - <S>(R)) g + S, S read once per ray at the midplane (R4).
 
 With the layer off every value is None, the keys kept (I5): the viewer's maps are then exactly 1.
 
-**The render's stages** (review M1): ``/api/render`` asks for the gas fluctuation stage's fields on every request,
-layer off included, so its header's ``stages`` lists ``gas_fluctuation`` where S65's did not (the only change on the
-eight requests the review compared). With the layer on the stage is needed: the entry carries its cell normalisers.
-With the layer off it returns its neutral (measured under 1 ms in a cold render) and the route does not branch on the
-layer (I5). The middle part's four windows - their anchors and their responses through the request's curves -
-are cached with the run (:func:`window_anchors`, :func:`window_responses`).
+**The stages** (review M1; S73): ``/api/layer`` asks for the gas fluctuation stage's fields on every request, layer
+off included (:func:`reads`): with the layer on the entry carries its cell normalisers; with it off the stage returns
+its neutral and the route does not branch on the layer (I5). From S66 to S72 the render asked for them so that its
+header could carry the entries; since S73 it does not, and runs S65's stages again. The middle part's four windows -
+their anchors and their responses through the request's curves - are the render's, cached with the run
+(:func:`window_anchors`, :func:`window_responses`).
 """
 
 from __future__ import annotations
@@ -37,10 +42,50 @@ from galaxy.layer import compose as _compose
 from galaxy.layer import gas_fluctuation as _gas
 from galaxy.stages import bright as _bright
 from galaxy.stages import pieces as _pieces
+from galaxy.stages.gas_pattern import GAS_PATTERN_READS
 from galaxy.stages.spurs import SPUR_FIELDS
 
 GAS_READS = tuple(d.name for d in _gas.PUBLISHES)
 CLUSTERING_READS = (_l1.CENSUS_CLUSTERING_SEED.name, _l1.CENSUS_CLUSTERING_CELL_MEAN.name)
+# S73 (#199): where the three tables live - /api/layer, once per galaxy - in the order its answer carries them.
+LAYER_ROUTE = "/api/layer"
+ENTRIES = ("gas_fluctuation", "census_clustering", "spurs")
+LAYER_TABLES_ABOUT = (
+    "the randomness layer's galaxy-wide tables the march reads - the gas fluctuation field, the clustering field's "
+    "k-octave cell means and the gas spurs (S66, V7, D226) - are /api/layer's answer to the same inputs, template and "
+    "layer setting as this render: fetched once per galaxy, never carried by a render (S73, #199)"
+)
+# What places the dust round a ring where the render places it by a pattern (the gas's own contrast, or the stars'
+# where a model publishes no gas pattern): the spurs' entry is that placement's, so it exists only where the dust is.
+DUST_PLACED_BY = ("gas_density_contrast", "pattern_density_contrast")
+
+
+def layer_tables() -> dict[str, Any]:
+    """The render header's ``layer_tables`` (S73, #199): the route that carries the three tables and their names."""
+    return {"route": LAYER_ROUTE, "entries": list(ENTRIES), "about": LAYER_TABLES_ABOUT}
+
+
+def published_entries(declared: Mapping[str, Any]) -> dict[str, bool]:
+    """Which of the three entries the model publishes, from its declarations alone (no stage runs): the two fields
+    where it publishes their stages' fields, the spurs where it publishes their table and places the dust by a
+    pattern - the render's own conditions from S66 to S72 (its placement and :func:`spurs_entry`'s)."""
+    return {
+        "gas_fluctuation": all(n in declared for n in GAS_READS),
+        "census_clustering": all(n in declared for n in CLUSTERING_READS),
+        "spurs": "dust_extinction_v" in declared and any(n in declared for n in DUST_PLACED_BY)
+                 and all(n in declared for n in SPUR_FIELDS),
+    }
+
+
+def reads(declared: Mapping[str, Any]) -> tuple[str, ...]:
+    """What ``/api/layer`` asks the run for (rule D4): each published entry's fields - the gas fluctuation stage's, the
+    clustering field's seed and cell means, the spurs' table and what the gas pattern is built from - and nothing
+    else, layer off included (the route does not branch on the layer, I5)."""
+    which = published_entries(declared)
+    names = [*(GAS_READS if which["gas_fluctuation"] else ()), *(CLUSTERING_READS if which["census_clustering"] else ())]
+    if which["spurs"]:
+        names += [*SPUR_FIELDS, *(n for n in GAS_PATTERN_READS if n in declared)]
+    return tuple(dict.fromkeys(names))
 KEPT = (1, 2, 3)  # the octave counts the young starlight keeps (bright.octaves_kept): each a cell-mean table
 UNSPURRED = "dust_placement_unspurred"
 MIDDLE_KEPT = {3: "stars_middle_kept3", 2: "stars_middle_kept2", 1: "stars_middle_kept1"}
@@ -144,14 +189,13 @@ def clustering_entry(declared: bool, fields: Any, constants: Mapping[str, Any], 
     return entry
 
 
-def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
-                phi_edges: np.ndarray) -> tuple[dict[str, Any] | None, np.ndarray | None]:
-    """(the header's ``spurs``, the placement without the spurs on the grid) - or (None, None) where the model
-    publishes no spurs' table or the render places no dust by the gas. With the layer off the entry's values are None
-    and no array is made (the route ships the neutral placement itself). The unspurred placement is the gas pattern's exact cell means without the spurs, floored
-    at zero as ``dust_placement`` is; on a pattern without spurs it is ``placed_gas`` to the bit (tested)."""
+def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray) -> dict[str, Any] | None:
+    """``/api/layer``'s ``spurs`` (the render header's from S66 to S72): the gas spurs' table, their ring mean on the
+    grid's rings ``R``, the constants and the rule - or None where the model publishes no spurs' table (the caller
+    asks only where the dust is placed by a pattern, :func:`published_entries`). With the layer off the entry's values
+    are None, the keys kept."""
     if any(n not in fields for n in SPUR_FIELDS):
-        return None, None
+        return None
     entry: dict[str, Any] = {
         "rows": None, "turn": None, "share": None, "reach": _pieces.REACH, "fwhm_per_sigma": _pieces.FWHM_PER_SIGMA,
         "constants": {k: float(constants[k]) for k in ("SPUR_PITCH", "SPUR_LENGTH", "SPUR_WIDTH", "SPUR_FALL")},
@@ -161,7 +205,7 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
 
     shape = _compose.gas_pattern(fields, R, constants)  # None with the layer off: no spur is composed then
     if shape is None:
-        return entry, None
+        return entry
     columns = {"chain": "gas_spur_chain", "radius": "gas_spur_radius", "azimuth": "gas_spur_azimuth",
                "contrast": "gas_spur_contrast", "pitch": "gas_spur_pitch", "length": "gas_spur_length",
                "width": "gas_spur_width", "fall": "gas_spur_fall"}
@@ -171,9 +215,20 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray,
     entry["turn"] = -float(rotation_sense(float(fields["pitch_angle"])))  # GasPattern.from_fields' sense for psi
     spurs = shape.spurs
     entry["share"] = _floats(np.zeros(np.size(R)) if spurs is None else spurs.ring_mean(np.asarray(R, dtype=float)))
-    if shape.flat:
-        return entry, None
-    return entry, np.maximum(shape.unspurred_cell_means(R, phi_edges), 0.0)
+    return entry
+
+
+def unspurred_placement(fields: Any, constants: Mapping[str, Any], R: np.ndarray, phi_edges: np.ndarray) -> np.ndarray | None:
+    """The render's ``dust_placement_unspurred`` on the grid: the gas pattern's exact cell means without the spurs,
+    floored at zero as ``dust_placement`` is - or None where no spur is composed (no spurs' table, the layer off, a flat
+    pattern), where the route sends the placement itself. On a pattern without spurs it is ``placed_gas`` to the bit
+    (tested). The same gas pattern :func:`spurs_entry` reads its table's share off (``compose.gas_pattern``)."""
+    if any(n not in fields for n in SPUR_FIELDS):
+        return None
+    shape = _compose.gas_pattern(fields, R, constants)
+    if shape is None or shape.flat:
+        return None
+    return np.maximum(shape.unspurred_cell_means(R, phi_edges), 0.0)
 
 
 # The middle part's window anchors per run (S66 fix pass, review M1): bright.window_anchors is 0.2-0.7 s of history on
@@ -269,7 +324,7 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
         "rest": "stars_middle less the three kept arrays: the middle part's stars older than every octave's survival "
                 "age, placed as stars_middle is and modulated by nothing (bright.octaves_kept: 0 octaves)",
         "rule": "each kept part k is placed as stars_middle is (its weight) and multiplied by the clustering field's "
-                "k-octave map over its level-0 cell's k-octave mean (census_clustering.cell_mean[k], "
+                "k-octave map over its level-0 cell's k-octave mean (" + LAYER_ROUTE + "'s census_clustering.cell_mean[k], "
                 "census_clustering.rule), the map " + THIN_SCREEN + " (V7, D226 R5 as amended)",
         "closure": {
             "factor": departure,

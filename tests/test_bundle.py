@@ -358,7 +358,8 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
         assert planned[galaxy] and len(planned[galaxy]) == len(entries), "no request planned twice"
         prefix = doc["prefixes"][galaxy]
         inputs = [q for q in planned[galaxy] if "template=" in q]
-        assert all(q.split("?", 1)[1].startswith(prefix + "&") for q in inputs), galaxy
+        # S73 (#199): /api/layer asks the prefix alone - the query every loader spreads and nothing after it.
+        assert all(q.split("?", 1)[1].startswith(prefix + "&") or q.split("?", 1)[1] == prefix for q in inputs), galaxy
     anywhere = set().union(*planned.values())
     for r in doc["requests"]:
         sent = r["path"] + "?" + _sent(doc, r)
@@ -371,7 +372,11 @@ def test_the_plan_names_every_group_and_only_routes_that_exist(service):
     planned = {route for route, _ in entries}
     assert planned <= {r.path for r in ROUTES} and not planned & bundle.NEVER
     assert planned == {"/api/stages", "/api/fields", "/api/inputs", "/api/templates", "/api/blackbody", "/api/arrays",
-                       "/api/render", "/api/clouds", "/api/clusters", "/api/remnants", "/api/region", "/api/bright"}
+                       "/api/render", "/api/layer", "/api/clouds", "/api/clusters", "/api/remnants", "/api/region", "/api/bright"}
+    # S73 (#199): the layer's tables once per bundle, asked with the query every loader spreads and nothing else.
+    layers = [q for r, q in entries if r == "/api/layer"]
+    assert len(layers) == 1 and layers[0]["template"] == TEMPLATE and "layer" not in layers[0]
+    assert set(layers[0]) == {k for k in next(q for r, q in entries if r == "/api/region")} - {"stars"}
     keys = [bundle.key(service, r, q) for r, q in entries]
     assert None not in keys and len(keys) == len(set(keys)), "every entry has a key, and no two share one"
     sets = filter_sets()

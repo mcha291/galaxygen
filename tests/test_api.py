@@ -770,3 +770,46 @@ def test_float32_arrays_keep_every_later_offset_aligned():
     header, arrays = wire.decode(wire.encode({}, [("a", np.ones(3, np.float32)), ("b", np.arange(2.0))]))
     assert [spec["offset"] % 8 for spec in header["arrays"]] == [0, 0]
     assert arrays["a"].dtype == np.float32 and np.array_equal(arrays["b"], [0.0, 1.0])
+
+
+# --- S73 (#199): the layer's tables by a route of their own -----------------------------------------------------------
+
+
+def test_the_layer_route_answers_json_and_says_what_it_ran_over_the_socket():
+    """/api/layer is JSON with X-Galaxy-Stages as every route has it: cold, what ran is the body's closure; asked
+    again, nothing ran and the bytes are the same (rule D4, B2)."""
+    server = api_http.make_server("127.0.0.1", 0, service())
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/api/layer?layer=off") as r:
+            assert r.headers["Content-Type"] == "application/json"
+            ran, body = r.headers["X-Galaxy-Stages"].split(","), r.read()
+        got = json.loads(body)
+        assert got["stages"] == ran and "gas_fluctuation" in ran and got["layer"] == "off"
+        assert not {"light", "dust", "clouds", "clusters", "nebular"} & set(ran)
+        with urllib.request.urlopen(f"http://{host}:{port}/api/layer?layer=off") as r:
+            assert r.headers["X-Galaxy-Stages"] == "" and r.read() == body
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_the_layer_route_takes_the_input_vector_as_every_input_route_does(api):
+    """The tables are a galaxy's: another seed is another field, an input the model has not is a 404 and a bad value
+    a 400, and the answer names the galaxy as the render's header does (model, inputs, layer)."""
+    a = api.handle("/api/layer").json()
+    b = api.handle("/api/layer", {"texture_seed": ["7"]}).json()
+    assert a["gas_fluctuation"]["seed"] != b["gas_fluctuation"]["seed"] and b["inputs"]["texture_seed"] == 7
+    assert a["model"] == DEFAULT_MODEL and a["template"] is None and a["layer"] == "on"
+    assert set(a) == {"model", "template", "inputs", "layer", "gas_fluctuation", "census_clustering", "spurs", "stages"}
+    assert api.handle("/api/layer", {"no_such_input": ["1"]}).status == 404
+    assert api.handle("/api/layer", {"halo_mass": ["oops"]}).status == 400
+    listed = {r["path"]: r for r in api.handle("/api").json()["routes"]}
+    assert listed["/api/layer"]["params"] == ["model", "template", "layer"]
+    render = api.handle("/api/render", {"filters": [json.dumps([{"name": "V", "shape": "gaussian", "centre": 5500.0, "fwhm": 900.0}])]})
+    header = render.frame()[0]
+    assert header["layer_tables"]["route"] == "/api/layer" and header["inputs"] == a["inputs"]
+    assert not {"gas_fluctuation", "census_clustering", "spurs"} & set(header)
