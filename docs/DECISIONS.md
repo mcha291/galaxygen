@@ -14432,9 +14432,10 @@ appended to its log: **EXIT=1 — 1 721 passed, 5 skipped, 1 xfailed, 2 failed**
 no other run): `test_docs`' tag-record row, which C2e writes on `main` after the merge, and `test_performance`'s
 per-cell pricing on `basic` (0.892 against 0.922: the wall-clock flake of #67/#68's class, as at S69 and S70) — green
 alone on its quiet re-run (2 passed, EXIT=0). The I5 instrument tests, green alone after the merges, passed in the
-suite. S72's `verify_clone --ref main` (c5cb1ff, started detached at S72's close): its log is at
-`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s72\verify_s72.log`, read at this session's close and
-recorded in the next open if unfinished. This session's starts detached after the merge beside it as `-s73`. The
+suite. S72's `verify_clone --ref main` (the clone at 581dc16, started detached at S72's close, read at this
+session's close): **1 failed / 1 694 passed / 6 skipped / 1 xfailed in 5 h 52, specs OK** — the pricing flake alone
+(`azimuthal`), the clone sound. This session's starts detached after the merge beside it
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s73\verify_s73.log`), to be read at the next open. The
 merge is gated on the suite's own exit line and the two failures' causes, both settled.
 
 **The register.** #199, #200 and #201 discharged with their closers' measurements in the entry; nothing opened.
