@@ -207,10 +207,12 @@ def served(service: Any) -> dict[str, Any]:
     return {"grid": repr(service.grid.spec), "models": list(service.models.names())}
 
 
-def directory(root: Path, template: str, layer: str) -> Path:
-    if layer not in LAYERS:
-        raise ValueError(f"layer {layer!r} is not one of {LAYERS}")
-    return Path(root) / template / layer
+def directory(root: Path, template: str, setting: str) -> Path:
+    """``<root>/<template>/<setting>``: the bundle's place, the setting its directory's name ("on" or "off") - a label
+    checked against the two names, not the switch read (invariant I5: nothing but compose branches on the layer)."""
+    if setting not in LAYERS:
+        raise ValueError(f"layer {setting!r} is not one of {LAYERS}")
+    return Path(root) / template / setting
 
 
 def write(root: Path, template: str, layer: str, service: Any,
