@@ -14414,6 +14414,19 @@ added: header under 40 000 B, arrays under 2 000 B). Verified sound: byte identi
 the two loaders keyed on the shown query, a stale answer of the cache of two blocked by `sameGalaxy`, the plan's
 `/api/layer` string the viewer's by reading (then by the walk), every route timed, the route texts true.
 
+**The gate, at the final code (5525daf; the docs after it).** The export of both templates at both layer settings:
+**202 entries (66 / 35 / 66 / 35), 296 MB, 115.5 s** on a loaded machine (the Milky Way on 85.4 MB, off 78.2;
+NGC 4414 on 69.7, off 62.5 — each on-bundle 1.0 MB smaller than S72's by the render headers, plus `/api/layer`'s
+100 KB); `--check` **202 of 202 byte-identical** (115.3 s; the early run on the first merge 202 / 202 too). The
+picture file whole with the bundles mounted: **15 passed in the browser, the frames byte for byte; 253 `/api`
+answers, 253 from the bundle at the stand-less captures including every `/api/layer` (10 on at 101 559 B, 5 at
+93 274 B, 4 off at 5 425 B), the same 19 zoom-stand misses as at S72** — EXIT=0. The timings rows (a fresh process
+each): `render: whole, rgb` cold 10.60 s / warm 0.852 s / 9 293 688 B (14.23 s cold, 9 391 520 B at S72 — the render
+no longer runs `gas_fluctuation`, and its header is 98 KB lighter); `render: one region` 10.48 / 0.754 s, 61 536 B
+(159 368 B before); `layer: tables` 8.64 / 0.017 s, 99 733 B; `bundle: render hit` 0.00327 / 0.00338 s, 9 294 040 B;
+`bundle: miss` 11.00 / 0.908 s; `version` 0.0209 / 0.0214 s. Vitest 454 passed, 1 skipped; `tsc -b` and `vite build`
+clean.
+
 **The register.** #199, #200 and #201 discharged with their closers' measurements in the entry; nothing opened.
 **129 open = 11 + 118, 55 discharged.** Both pins in `tests/test_audit.py` re-pinned with the cause, the discharged
 row at S73 added, the carried row shortened. No model rule, stage, field, number, row or pin moved; the layer off
