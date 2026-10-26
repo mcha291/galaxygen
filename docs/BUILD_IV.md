@@ -3,7 +3,9 @@
 **Status: ADOPTED 2026-10-14 (the owner: "adopt the plan with your recommendations except for 12, scaffold the
 project for me"); recorded as D222.** Written the same day on the owner's word ("please create a plan to implement
 this") and, on the owner's question whether it could keep to deployment alone, split before adoption: **this build
-is W2–W5, deployment only**; the edit panel (W1) is BUILD_III's Phase V9 (S68) and the zoomed-in point layer is its
+is W2–W5, deployment only**. **W2 built at S72 (D235, 2026-10-26): `tools/export_template.py`, the reader in
+`galaxy.api.bundle` under the model's hash, the whole-galaxy scope (ruling 6's levels await the owner's ruling on the
+probe's table in D235; nothing below 4 kpc is bundled); W3 remains the owner's.** The edit panel (W1) is BUILD_III's Phase V9 (S68) and the zoomed-in point layer is its
 Phase V6b (S65). Every §7 recommendation was adopted except 12, where the owner's word is: an agent scaffolds the
 gateway, the features are the owner's. The scaffold is in `gateway/` (D222). Board rows: **W3 S70 (in parallel
 from adoption), W2 S71, W4 S72, W5 S73.** Everything here is `[inferred]` design unless tagged. Numbers quoted
