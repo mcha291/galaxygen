@@ -244,7 +244,11 @@ demonstration of the routes (BUILD_IV §7 ruling 2 (a)); `tests/test_viewer.py` 
 forgotten in one of them* (see B13) `[inferred]`.
 
 **D3. The API publishes a content hash of the viewer's own bytes**, so "am I
-running the new code" is a glance rather than an investigation.
+running the new code" is a glance rather than an investigation. *Every cache between the model and the viewer, in the
+API or in front of it, is keyed on that hash.* *The sentence is BUILD_IV Appendix A's, entered at S72 when the first
+such cache was built — the template bundles, keyed on the hash of every byte under `model/galaxy` that `/api/version`
+publishes as `model`; a bundle built from other bytes is refused at startup, never read* `[verified: DECISIONS.md
+D235]`. **Until S72 the rule was its first sentence alone.** D5's sentence of the same appendix enters at W3's merge.
 
 **D4. No endpoint runs more of the pipeline than its answer requires.** Metadata
 endpoints must not touch stages. *Justification: this class of defect is
