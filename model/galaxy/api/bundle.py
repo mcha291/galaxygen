@@ -81,7 +81,7 @@ def pairs(query: Query) -> list[tuple[str, str]]:
 def _filters(raw: str) -> str:
     try:
         parsed = json.loads(raw)
-    except ValueError:
+    except (ValueError, RecursionError):  # not JSON, or nested past the parser's stack (#201): the raw string
         return raw
     return json.dumps(parsed, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
@@ -107,8 +107,8 @@ def request(service: Any, route: str, query: Query) -> dict[str, Any] | None:
             out["template"] = None if template is None else template.name
             out["layer"] = service._layer(q)
             out["inputs"] = _service._inputs_json(service._overrides(model, q))
-    except (_service.ApiError, RunError, ValueError, TypeError):
-        return None
+    except (_service.ApiError, RunError, ValueError, TypeError, OverflowError, RecursionError):
+        return None  # no key: the request falls through to the model, which answers its own 400 (#201)
     params: dict[str, list[str]] = {}
     for name, value in q.pairs():
         if name == "model" and "model" in declared.params:

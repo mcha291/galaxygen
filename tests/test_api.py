@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -563,6 +564,99 @@ def test_the_event_list_is_settable_and_validated(api):
     assert api.handle("/api/arrays", "fields=last_major_merger_time&mergers=notjson").status == 400
     assert api.handle("/api/arrays", 'fields=last_major_merger_time&mergers=[{"time":5}]').status == 400
     assert api.handle("/api/arrays", 'fields=last_major_merger_time&mergers=[{"time":5,"mass_ratio":9,"gas_fraction":0.4}]').status == 400
+
+
+# #201 (S72's reviewer): two request shapes that ended in http.py's "internal error" 500. Each is the caller's
+# JSON, refused at the parse with a 400 that names the field; a handler's own bug stays a 500 (handle is unchanged).
+DEEP = "[" * 100_000 + "]" * 100_000  # json.loads raises RecursionError, not JSONDecodeError
+
+
+def _merger(field: str, value: str) -> str:
+    event = {"time": "5", "mass_ratio": "0.3", "gas_fraction": "0.4"} | {field: value}
+    return "[{" + ",".join(f'"{k}":{v}' for k, v in event.items()) + "}]"
+
+
+UNPARSEABLE = [
+    # (route, query, words the error must contain)
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "1e999")},
+     "mergers: time must be a finite number, got inf"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "NaN")},
+     "mergers: time must be a finite number, got nan"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("mass_ratio", "Infinity")},
+     "mergers: mass_ratio must be a finite number, got inf"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("gas_fraction", "-Infinity")},
+     "mergers: gas_fraction must be a finite number, got -inf"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "1" + "0" * 400)},
+     "mergers: int too large to convert to float"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": DEEP}, "mergers: the JSON is nested too deeply"),
+    ("/api/blackbody", {"white": "6500", "filters": DEEP}, "filters: the JSON is nested too deeply"),
+    ("/api/blackbody", {"white": "6500", "filters": '[{"shape":"box","centre":1' + "0" * 400 + ',"width":10}]'},
+     "filters: a number is too large to be a float"),
+    ("/api/blackbody", {"white": "6500", "filters": '[{"shape":"box","centre":1' + "0" * 5000 + ',"width":10}]'},
+     "filters= must be a JSON list of curves"),
+]
+
+
+def _refused(r: Response, words: str) -> None:
+    assert r.status == 400, (r.status, r.body[:200])
+    assert words in r.json()["error"], r.json()
+
+
+@pytest.mark.parametrize("route, query, words", UNPARSEABLE, ids=[w for _, _, w in UNPARSEABLE])
+def test_a_request_the_json_parser_cannot_hold_is_a_400_naming_the_field(api, route, query, words):
+    _refused(api.handle(route, query), words)
+
+
+def test_with_a_bundle_mounted_the_unparseable_requests_are_still_400s(tmp_path):
+    """The bundle's key reads the request with the service's parsers before any handler runs: a refusal there is no
+    key (the request falls through to the model's own 400), and the filters' canonicalisation never raises."""
+    from galaxy.api import bundle
+
+    plain = service()
+    bundle.write(tmp_path, "milky_way", "on", plain, [("/api/templates", {}, plain.handle("/api/templates", {}))])
+    served = service(bundles=tmp_path)
+    assert served.handle("/api/templates").source == "bundle"
+    for route, query, words in UNPARSEABLE:
+        k = bundle.key(served, route, query)  # never raises
+        if "mergers" in query:
+            assert k is None  # an input the service refuses: no key
+        _refused(served.handle(route, query), words)  # filters= is keyed (raw, where it is not JSON) and misses
+
+
+def test_over_the_socket_the_unparseable_requests_are_400s_not_500s():
+    """The server's own answer to the two S72 shapes: the infinite merger time as a GET, the deep filters as a POST
+    (its query, percent-encoded, is past any URL's length and well inside MAX_BODY)."""
+    server = api_http.make_server("127.0.0.1", 0, service())
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    base = f"http://{host}:{port}"
+
+    def ask(path: str, query: dict[str, str], post: bool = False) -> tuple[int, dict]:
+        encoded = urllib.parse.urlencode(query)
+        if post:
+            assert len(encoded) < api_http.MAX_BODY
+            req = urllib.request.Request(base + path, data=encoded.encode("ascii"), method="POST",
+                                         headers={"Content-Type": api_http.FORM})
+        else:
+            req = urllib.request.Request(base + path + "?" + encoded)
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read())
+
+    try:
+        route, query, words = UNPARSEABLE[0]
+        status, body = ask(route, query)
+        assert status == 400 and words in body["error"], (status, body)
+        route, query, words = UNPARSEABLE[6]
+        status, body = ask(route, query, post=True)
+        assert status == 400 and words in body["error"], (status, body)
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
 
 
 def test_reserved_parameters_cannot_shadow_an_input():

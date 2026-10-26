@@ -407,11 +407,19 @@ def _parse_filters(q: Query) -> list[Any]:
             "(RENDER_PHYSICS section 2a)"
         )
     try:
-        return _spectra.parse_curves(json.loads(raw))
-    except json.JSONDecodeError as e:
+        parsed = json.loads(raw)
+    except ValueError as e:  # JSONDecodeError, or an integer past Python's digit limit
         raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
+    except RecursionError:
+        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500.
+        raise BadRequest("filters: the JSON is nested too deeply") from None
+    try:
+        return _spectra.parse_curves(parsed)
     except _spectra.CurveError as e:
         raise BadRequest(f"filters=: {e}") from None
+    except OverflowError:
+        # An integer too large for a float (10**400 is valid JSON) escapes the curve parser's number check (#201).
+        raise BadRequest("filters: a number is too large to be a float") from None
 
 
 def _white_point(q: Query, curves: Sequence[Any]) -> dict[str, Any] | None:
@@ -2537,8 +2545,11 @@ def _events(name: str, raw: str) -> tuple[MergerEvent, ...]:
     """An event list arrives as JSON, because it is a list of records, not a scalar."""
     try:
         parsed = json.loads(raw)
-    except json.JSONDecodeError as e:
+    except ValueError as e:  # JSONDecodeError, or an integer past Python's digit limit
         raise BadRequest(f"{name} must be a JSON array of events: {e}") from None
+    except RecursionError:
+        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500.
+        raise BadRequest(f"{name}: the JSON is nested too deeply") from None
     if not isinstance(parsed, list):
         raise BadRequest(f"{name} must be a JSON array of events, got {type(parsed).__name__}")
     events: list[MergerEvent] = []
@@ -2549,15 +2560,16 @@ def _events(name: str, raw: str) -> tuple[MergerEvent, ...]:
         if unknown:
             raise BadRequest(f"{name}: unknown event keys {sorted(unknown)}")
         try:
-            events.append(
-                MergerEvent(
-                    float(entry["time"]), float(entry["mass_ratio"]), float(entry["gas_fraction"]),
-                    str(entry.get("about", "")),
-                )
-            )
+            numbers = [float(entry[field]) for field in ("time", "mass_ratio", "gas_fraction")]
+            # JSON's 1e999 parses to inf and its NaN literal to nan (#201): MergerEvent's range checks pass
+            # time=inf (0 <= inf), and the answer's header could not then be written, so each is refused here.
+            for field, value in zip(("time", "mass_ratio", "gas_fraction"), numbers):
+                if not math.isfinite(value):
+                    raise BadRequest(f"{name}: {field} must be a finite number, got {value!r}")
+            events.append(MergerEvent(*numbers, str(entry.get("about", ""))))
         except KeyError as e:
             raise BadRequest(f"{name}: an event is missing {e}") from None
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:  # OverflowError: an integer too large for a float
             raise BadRequest(f"{name}: {e}") from None
     return tuple(events)
 
