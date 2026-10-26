@@ -4,11 +4,13 @@ A bundle answers a request only when the request means what an entry's means and
 serving model's own bytes; then it runs nothing (D4) and sends the bytes the model sent (the export's --check asserts
 that over whole manifests; here a small hand-made bundle asserts it entry by entry). Everything else is computed. The
 plan is checked against the requests a real viewer made (tests/fixtures/s72_viewer_requests.json), string for string,
-because a body echoes some parameters as given.
+because the key keeps route parameters raw (it cannot know which a route parses as numbers), so only the viewer's own
+spelling is sure to hit.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import threading
@@ -58,6 +60,7 @@ def test_numbers_and_queries_are_written_as_a_browser_writes_them():
     for value, written in cases.items():
         assert bundle.js_number(value) == written, value
     assert bundle.js_json([{"a": 1.0, "b": "x☉"}, None, True]) == '[{"a":1,"b":"x☉"},null,true]'
+    assert bundle.js_json([float("nan"), float("inf"), -float("inf"), 2.5]) == "[null,null,null,2.5]"  # as JSON.stringify
     assert bundle.js_value([1.0, 2]) == "1,2"
     assert bundle.js_query({"a": "x y~*-._/", "b": 2.0}) == "a=x+y%7E*-._%2F&b=2"
     assert bundle.js_query({"m": "10⁸ M☉"}) == "m=10%E2%81%B8+M%E2%98%89"
@@ -73,7 +76,7 @@ def test_the_key_is_what_the_service_reads_not_how_it_is_spelled(service, base):
     assert k == bundle.key(service, "/api/arrays", base | {"infall_timescale": "7.0", "fields": "halo_virial_mass"})
     assert k != bundle.key(service, "/api/arrays", base | {"infall_timescale": "7.5", "fields": "halo_virial_mass"})
     assert k != bundle.key(service, "/api/arrays", {"fields": "halo_virial_mass"}), "no template: no pin, another galaxy"
-    # A raw parameter is its string: the body echoes a window's bounds as given.
+    # A raw parameter is its string (the body echoes the parsed value, so another spelling is a miss, not a wrong answer).
     w = {"r_min": "0", "r_max": "30", "phi_min": "0", "phi_max": "6.283185307179586", "level": "0"}
     assert bundle.key(service, "/api/remnants", base | w) != bundle.key(service, "/api/remnants", base | w | {"r_min": "0.0"})
     # A request the service refuses has no key, and is computed: it answers with its own error.
@@ -232,9 +235,57 @@ def test_the_manifest_is_the_files(exported, service):
     files = sorted(p.name for p in (path.parent / bundle.ENTRIES).iterdir())
     assert files == sorted(e["key"] for e in manifest["entries"])
     for e in manifest["entries"]:
-        assert (path.parent / bundle.ENTRIES / e["key"]).stat().st_size == e["bytes"]
+        body = (path.parent / bundle.ENTRIES / e["key"]).read_bytes()
+        assert len(body) == e["bytes"] and hashlib.sha256(body).hexdigest() == e["sha256"]
         assert bundle.key(service, e["route"], e["query"]) == e["key"], "the recorded query is the request"
-    assert [e["stages"] for e in manifest["entries"] if e["route"] == "/api/stages"] == [[]]
+        assert "stages" not in e, "what the export ran is ran_at_export, not the answer's stages"
+    assert [e["ran_at_export"] for e in manifest["entries"] if e["route"] == "/api/stages"] == [[]]
+
+
+def test_a_body_changed_in_place_is_refused_at_construction(exported, tmp_path):
+    """F2 (S72 review): one byte flipped, the size the same - the digest names the entry, its route and both sums."""
+    root, manifest, _ = exported
+    copy = tmp_path / "bundles"
+    shutil.copytree(root, copy)
+    e = next(e for e in manifest["entries"] if e["route"] == "/api/render")
+    path = copy / TEMPLATE / "on" / bundle.ENTRIES / e["key"]
+    raw = bytearray(path.read_bytes())
+    raw[len(raw) // 2] ^= 0x01
+    path.write_bytes(bytes(raw))
+    with pytest.raises(bundle.BundleError) as refused:
+        Service(bundles=copy)
+    message = str(refused.value)
+    assert e["key"] in message and "/api/render" in message and e["sha256"] in message
+    assert hashlib.sha256(bytes(raw)).hexdigest() in message
+
+
+def test_a_body_gone_under_a_running_server_is_computed(exported, small, tmp_path, capsys):
+    """F3: the answer is the model's, the response says so, and one line on stderr names the entry."""
+    root, _, live = exported
+    copy = tmp_path / "bundles"
+    shutil.copytree(root, copy)
+    served = Service(bundles=copy)
+    route, query = small[2]  # the one-stage array
+    k = bundle.key(served, route, query)
+    (copy / TEMPLATE / "on" / bundle.ENTRIES / k).unlink()
+    got = served.handle(route, query)
+    assert got.ok and got.source == "model" and got.body == live[k].body
+    assert f"bundle entry {copy / TEMPLATE / 'on' / bundle.ENTRIES / k} unreadable" in capsys.readouterr().err
+
+
+def test_a_directory_with_no_manifest_is_refused(tmp_path):
+    """F5: a mounted directory that holds no bundle is a startup failure, not a server that silently computes."""
+    with pytest.raises(bundle.BundleError, match="no manifest under"):
+        Service(bundles=tmp_path)
+
+
+def test_an_unwritable_source_log_never_costs_the_answer(service, tmp_path, capsys):
+    """F4: the picture test's log is written after the answer; a failed write prints a line and the answer stands."""
+    from galaxy.api.__main__ import _logged
+
+    got = _logged(service.handle, tmp_path)("/api/templates")  # a directory: it cannot be opened to append
+    assert got.ok and got.json()["templates"]
+    assert "source log" in capsys.readouterr().err
 
 
 def test_a_damaged_bundle_is_refused(exported, tmp_path):

@@ -33,9 +33,12 @@ def _logged(handle, path: Path):
         line = json.dumps(entry)
         # The e2e runner empties its output directory (frontend/e2e/.output) once the run starts, after this server
         # is up: the directory is made again on every write, so a log placed there survives the wipe (S72's gate).
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with lock, path.open("a", encoding="utf-8", newline="\n") as f:
-            f.write(line + "\n")
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with lock, path.open("a", encoding="utf-8", newline="\n") as f:
+                f.write(line + "\n")
+        except OSError as e:  # the record is the test's, the answer the viewer's: a failed write never costs the answer
+            print(f"galaxy.api: source log {path} unwritable: {e}", file=sys.stderr)
         return response
 
     return logged

@@ -11,16 +11,21 @@ serves from it). This tool builds a ``Service()`` with no bundles, asks it every
 ``service.handle``, refuses the export if any answer is not a 200, and writes each body and the manifest.
 ``--check`` is the gate's instrument: a fresh service recomputes every entry of an existing bundle from the query
 string the manifest records - the viewer's own spelling, parsed as a GET's - and the table says how many are
-byte-identical; any difference, or a bundle from another model hash, exits 1.
+byte-identical; any difference, or a bundle from another model hash, exits 1. **It replays in another order than the
+export's**, so identity cannot rest on the export's warm cache: the export runs template by template, layer on before
+off, each bundle's entries in plan order; the check runs the bundles in path order (each template's layer off before
+on) and each bundle's entries last-planned first (a tile or a remainder on a cold galaxy before its render). It prints
+the order it ran.
 
 **What is bundled is :func:`plan` alone** (the lead's ruling R1 at S72; the owner rules the size bound with the
 probe's table): what the viewer asks at galaxy scale, each request in the viewer's own spelling - the whole input
 vector as ``flow.query`` lays it out, then ``model=`` and ``template=``, ``layer=off`` only under "physics only", then
 the route's parameters in the order its loader spreads them (frontend/src/api.ts, interface/transport.js), numbers as
 a browser writes them and the filter sets as ``JSON.stringify`` writes them (``bundle.js_number``, ``bundle.js_json``).
-The key is the request's meaning, so another spelling would still hit; but a body echoes a window's bounds and a
-remainder's l_min as given, so those strings must be the viewer's, and tests/test_bundle.py checks the plan against
-the requests a real viewer made (tests/fixtures/s72_viewer_requests.json). Per-cell bright tiles (``--levels``) are
+The key is the request's meaning, but its route parameters are raw strings (the key does not know which a route
+parses as numbers; a raw key can only cost a miss, never a wrong answer), so the plan spells them as the viewer does
+for its requests to hit, and tests/test_bundle.py checks the plan against the requests a real viewer made
+(tests/fixtures/s72_viewer_requests.json). Per-cell bright tiles (``--levels``) are
 opt-in and are not what the viewer sends (it asks the cells in view in one request): nothing below 4 kpc is bundled.
 """
 
@@ -239,6 +244,8 @@ def plan(template: str, layer: str, service: Any, levels: Sequence[int] = (), on
         out.append(("/api/clouds", base | {"precision": "f4"} | whole_disc))
         for s in sets:
             out.append(("/api/clusters", base | {"filters": curves[s]} | white | whole_disc))
+        # The whole-disc remnants: the plan's text names the censuses, but S72's walk never logged this request at
+        # galaxy scale (the viewer asks remnants only for a region window); kept, unverified against a viewer.
         out.append(("/api/remnants", base | whole_disc))
         out.append(("/api/region", base | _js({"stars": STAR_SAMPLE})))
 
@@ -310,14 +317,17 @@ def export(service: Any, out: Path, template: str, layer: str, levels: Sequence[
 
 
 def check(root: Path, service: Any) -> tuple[list[list[Any]], bool]:
-    """Recompute every entry of every bundle under ``root`` live and compare bytes. Returns rows of
-    [bundle, route, entries, identical, differing] and whether all were identical under this model's hash."""
+    """Recompute every entry of every bundle under ``root`` live and compare bytes, in the replay order the module's
+    docstring states (bundles in path order, entries last-planned first). Returns rows of [bundle, route, entries,
+    identical, differing] and whether all were identical under this model's hash."""
     from galaxy.api import bundle
 
     rows: list[list[Any]] = []
     ok = True
     for path in bundle.manifests(root):
         manifest = bundle.read_manifest(path)
+        print(f"replaying {manifest['template']}/{manifest['layer']}: {len(manifest['entries'])} entries, last-planned first")
+        manifest["entries"] = list(reversed(manifest["entries"]))
         where = f"{manifest['template']}/{manifest['layer']}"
         if manifest["model_hash"] != service.model_hash:
             print(f"{where}: built from model {manifest['model_hash']}, this model is {service.model_hash}")

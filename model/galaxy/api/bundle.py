@@ -10,9 +10,11 @@ the request each answers and the content hash of the model that computed them::
 parsers so that spelling and order never matter: the route; the model and the template it resolves to; the layer's
 setting; the input overrides the service would compute with (``Service._overrides``: the template's, then the
 query's, controls as floats, seeds as ints, events parsed); and every other parameter as its raw string - ``filters``
-re-serialised canonically (sorted keys, no spaces), since it is parsed as JSON - because the body echoes those as given
-(a window's r_min, a remainder's l_min). A request the service would refuse has no key and is computed, which answers
-it with the service's own error. Nothing is defaulted: a window spelled otherwise, or absent, is another request.
+re-serialised canonically (sorted keys, no spaces), since it is parsed as JSON. The rest stay raw because the key does
+not know which parameters a route parses as numbers (the headers echo the parsed values: r_min=7 and 7.0 answer alike),
+and a raw key can only cost a miss, never a wrong answer; the viewer's own spelling, which the export plans in, hits.
+A request the service would refuse has no key and is computed, which answers it with the service's own error.
+Nothing is defaulted: a window spelled otherwise, or absent, is another request.
 
 **The hash is the guard** (rule D3, restated at the boundary: *every cache between the model and the viewer is keyed
 on that hash*). A manifest names the hash of ``model/galaxy`` it was built from (``version.MODEL``); the service
@@ -32,6 +34,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import sys
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
@@ -159,8 +162,8 @@ def js_number(x: float | int) -> str:
 
 def js_json(value: Any) -> str:
     """JSON.stringify(value) for JSON-shaped data: keys in their order, no spaces, numbers by :func:`js_number`."""
-    if value is None:
-        return "null"
+    if value is None or (isinstance(value, float) and not math.isfinite(value)):
+        return "null"  # JSON.stringify writes NaN and the infinities as null
     if isinstance(value, (bool, int, float)):
         return js_number(value)
     if isinstance(value, str):
@@ -213,9 +216,11 @@ def directory(root: Path, template: str, layer: str) -> Path:
 def write(root: Path, template: str, layer: str, service: Any,
           answers: Iterable[tuple[str, Any, Any]]) -> dict[str, Any]:
     """Write one bundle: each ``(route, query, response)`` - a 200 :class:`~galaxy.api.service.Response` - as its body
-    under its key, then the manifest (sorted keys, indent 1, LF). The manifest's ``query`` is the request as sent: a
-    string as given, a mapping as a browser serialises it (:func:`js_query`). Refuses a response that is not a 200,
-    a request with no key, and two answers to one key with different bytes. Returns the manifest."""
+    under its key, then the manifest (sorted keys, indent 1, LF). Each entry records its body's sha256 and size, and
+    ``ran_at_export``: the stages the export's own request happened to run (what its cache did not hold, often none -
+    not the closure, which the body's header names). The manifest's ``query`` is the request as sent: a string as
+    given, a mapping as a browser serialises it (:func:`js_query`). Refuses a response that is not a 200, a request
+    with no key, and two answers to one key with different bytes. Returns the manifest."""
     out = directory(root, template, layer)
     (out / ENTRIES).mkdir(parents=True, exist_ok=True)
     entries: dict[str, dict[str, Any]] = {}
@@ -226,14 +231,16 @@ def write(root: Path, template: str, layer: str, service: Any,
         k = key(service, route, query)
         if k is None:
             raise BundleError(f"{route}?{sent[:200]} has no key: the service would refuse it, or never bundles the route")
+        digest = hashlib.sha256(response.body).hexdigest()
         if k in entries:
-            if entries[k]["bytes"] != len(response.body):
-                raise BundleError(f"{route}?{sent[:200]} was planned twice and answered differently")
+            if entries[k]["sha256"] != digest:
+                raise BundleError(f"{route}?{sent[:200]} was planned twice and answered differently "
+                                  f"({entries[k]['sha256']} then {digest})")
             continue
         (out / ENTRIES / k).write_bytes(response.body)
         entries[k] = {
-            "route": _route(route), "query": sent, "key": k, "bytes": len(response.body),
-            "media": response.media, "stages": list(response.stages),
+            "route": _route(route), "query": sent, "key": k, "bytes": len(response.body), "sha256": digest,
+            "media": response.media, "ran_at_export": list(response.stages),
         }
     manifest = {
         "format": FORMAT, "model_hash": service.model_hash, **served(service), "template": template, "layer": layer,
@@ -263,11 +270,14 @@ def read_manifest(path: Path) -> dict[str, Any]:
 
 
 class Index:
-    """Every entry of every bundle under a root, by key, checked against the serving model's hash at construction.
+    """Every entry of every bundle under a root, by key, checked at construction: the serving model's hash, its grid
+    and models, then each entry's size (cheap) and its body's sha256 (every file read once - the startup cost
+    tools/timings.py's bundle rows carry in their build column). Any mismatch is a :class:`BundleError` there, never a
+    wrong answer later.
 
     Bodies stay on disk and are read on each hit (tools/timings.py's "bundle: render hit" row measures the read of a
     9.4 MB render); the page cache holds what is read often, and a second copy in this process would be a cache of
-    a cache."""
+    a cache. A body that cannot be read when asked for (deleted under a running server) is computed instead."""
 
     __slots__ = ("root", "service", "bundles", "_entries")
 
@@ -275,11 +285,14 @@ class Index:
         self.root = Path(root)
         self.service = service
         self.bundles: list[dict[str, Any]] = []
-        self._entries: dict[str, tuple[str, Path, int]] = {}
+        self._entries: dict[str, tuple[str, Path, str]] = {}
         if not self.root.is_dir():
             raise BundleError(f"bundles {self.root} is not a directory")
+        found = manifests(self.root)
+        if not found:
+            raise BundleError(f"no manifest under {self.root}: a bundles directory holds <template>/<layer>/{MANIFEST}")
         live = service.model_hash
-        for path in manifests(self.root):
+        for path in found:
             manifest = read_manifest(path)
             if manifest.get("model_hash") != live:
                 raise BundleMismatch(
@@ -294,17 +307,21 @@ class Index:
                     )
             for e in manifest["entries"]:
                 body = path.parent / ENTRIES / e["key"]
+                where = f"bundle {path.parent}: entry {e['key']} ({e['route']})"
                 try:
                     size = body.stat().st_size
                 except OSError:
-                    raise BundleError(f"bundle {path.parent}: entry {e['key']} ({e['route']}) is missing") from None
+                    raise BundleError(f"{where} is missing") from None
                 if size != e["bytes"]:
-                    raise BundleError(f"bundle {path.parent}: entry {e['key']} holds {size} B, the manifest says {e['bytes']}")
+                    raise BundleError(f"{where} holds {size} B, the manifest says {e['bytes']}")
+                digest = hashlib.sha256(body.read_bytes()).hexdigest()
+                if digest != e.get("sha256"):
+                    raise BundleError(f"{where} has sha256 {digest}, the manifest says {e.get('sha256')}")
                 held = self._entries.get(e["key"])
-                if held is not None and held[2] != size:
-                    raise BundleError(f"{e['route']} entry {e['key']} is in two bundles with different bytes")
+                if held is not None and held[2] != digest:
+                    raise BundleError(f"{where} is in two bundles with different bytes ({held[2]} and {digest})")
                 if held is None and _route(e["route"]) not in NEVER:
-                    self._entries[e["key"]] = (e["media"], body, size)
+                    self._entries[e["key"]] = (e["media"], body, digest)
             self.bundles.append({k: manifest[k] for k in ("template", "layer", "model_hash", "built_at")}
                                 | {"entries": len(manifest["entries"]), "path": str(path.parent)})
 
@@ -312,7 +329,8 @@ class Index:
         return len(self._entries)
 
     def find(self, route: str, query: Query) -> tuple[str, bytes] | None:
-        """``(media, body)`` for a request a bundle holds, else None. /api/version and the index are never held."""
+        """``(media, body)`` for a request a bundle holds, else None (computed). /api/version and the index are never
+        held; a body that cannot be read now is computed, and says so on stderr."""
         if not self._entries:
             return None
         k = key(self.service, route, query)
@@ -320,4 +338,8 @@ class Index:
         if held is None:
             return None
         media, body, _ = held
-        return media, body.read_bytes()
+        try:
+            return media, body.read_bytes()
+        except OSError as e:
+            print(f"galaxy.api: bundle entry {body} unreadable: {e}; computing", file=sys.stderr)
+            return None
