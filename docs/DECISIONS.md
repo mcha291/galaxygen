@@ -14261,10 +14261,11 @@ bundle, 0 misses outside the zoom stands, 19 at them** — `milky_way-zoom`: bri
 bright 4, render 4, clouds 2, remnants 2, region 2, clusters 2 (below 4 kpc, R1). Two of the gate's own instruments
 had to be fixed to run it (the lessons): the source log's directory, and the pytest wrapper's "N passed" count,
 which expected captures + 1 since S66 while the spec has held 15 tests since S67 — no close since had run the picture
-test through pytest. The timings rows (a fresh process each; the model hash in the build column): **`bundle: render
-hit` cold 0.00285 s, warm 0.00283 s, 9 393 336 B, no stage; `bundle: miss` cold 14.24 s, warm 0.747 s, 9 391 520 B,
-22 stages; `version` cold 0.48 s / warm 0.020 s, 1 301 B** (the viewer's hash, the api's and now the model's; the
-first request pays the interpreter's file reads). No stage's cost changed; the full cold table is not re-run.
+test through pytest. The timings rows (a fresh process each, at the merged state; the build column holds the index's construction
+with F2's digest check, 0.266 s over 285 MB): **`bundle: render hit` cold 0.00273 s, warm 0.00278 s, 9 393 336 B, no
+stage; `bundle: miss` cold 14.23 s, warm 0.769 s, 9 391 520 B, 22 stages; `version` cold 0.0204 s / warm 0.0204 s,
+1 301 B** (the viewer's hash, the api's and now the model's 85 files; 0.0243 / 0.0018 before the model's was added — the
+16 ms the probe measured). No stage's cost changed; the full cold table is not re-run.
 
 **Found in passing, fixed by the lead with the reason in the file.** `frontend/src/workflow/templates.test.ts`
 expected three pin lines for NGC 4414 and the fixture carried four since S70's `molecular_ring` pin (vitest was not
