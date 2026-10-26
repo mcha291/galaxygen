@@ -254,6 +254,19 @@ def test_the_route_s_entries_are_the_v7_functions_on_the_render_s_run(api, templ
     assert list(got) == ["model", "template", "inputs", "layer", *v7_layer.ENTRIES, "stages"]
     header, _ = render(api, template, layer)
     assert (got["model"], got["template"], got["layer"], got["inputs"]) == (header["model"], template, layer, header["inputs"])
+    # The review's G2: the render echoes the template too - its pins are not inputs and move the tables.
+    assert header["template"] == template
+
+
+def test_a_template_s_pins_move_the_tables_and_the_render_names_the_template(api):
+    """The Milky Way template's pins (its arms among them) are not among the inputs, yet they move the spurs' table:
+    the render's header names the template (null without one) so a viewer pairs /api/layer's answer by it (G2)."""
+    plain = api.handle("/api/layer", {}).json()
+    named = tables(api, "milky_way")
+    assert plain["template"] is None and named["template"] == "milky_way"
+    assert plain["spurs"]["rows"] != named["spurs"]["rows"]
+    curves = json.dumps(FILTERS["sets"]["rgb"]["curves"])
+    assert wire.decode(api.handle("/api/render", {"filters": [curves]}).body)[0]["template"] is None
 
 
 @pytest.mark.parametrize("layer", ["on", "off"])

@@ -2121,8 +2121,12 @@ class Service:
         if all(n in f for n in RENDER_BULGE):
             points = np.array([float(f[f"bulge_sed_{b.lower()}"]) for b in _spectra.SED_BANDS])
             bulge = [_number(v) for v in _spectra.stellar_response(points, np.array(float(f["bulge_light_temperature"])), curves)]
+        template = self._template(q)
         header = {
             "model": model.name,
+            # S73 (#199, the review's G2): the template the request named, or null - its pins are not among the inputs
+            # and move the layer's tables (the Milky Way's spurs), so a client pairs /api/layer's answer by it too.
+            "template": None if template is None else template.name,
             "inputs": _inputs_json(out.inputs),
             "layer": _compose.setting(out.fields),
             "set": q.one("set"),

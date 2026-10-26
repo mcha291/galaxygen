@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   type Query,
+  drawnPair,
   forgetRenders,
   loadArrays,
   loadBrightCounts,
@@ -255,8 +256,34 @@ describe("the layer's tables, once per galaxy", () => {
     expect(sameGalaxy(layer, render({ layer: "off" }))).toBe(false);
     expect(sameGalaxy(layer, render({ inputs: { ...inputs, world_seed: 1 } }))).toBe(false);
     expect(sameGalaxy(layer, render({ model: "azimuthal" }))).toBe(false);
+    // the review's G2: a template's pins are not inputs, and they move the tables - the template must match too
+    expect(sameGalaxy(layer, render({ template: "milky_way" }))).toBe(false);
+    expect(sameGalaxy({ ...layer, template: "milky_way" }, render({ template: "milky_way" }))).toBe(true);
+    expect(sameGalaxy({ ...layer, template: null }, render({ template: null }))).toBe(true);
     expect(sameGalaxy(null, render({}))).toBe(false);
     expect(sameGalaxy(layer, null)).toBe(false);
+  });
+
+  it("keeps drawing the last matched pair until a new pair matches (the review's G1: no blank, no half-and-half)", () => {
+    const tables = (seed: number) => ({ model: "basic", template: null, layer: "on", inputs: { world_seed: seed }, gas_fluctuation: null, census_clustering: null, spurs: null, stages: [] });
+    const frame = (seed: number) => ({ header: { model: "basic", template: null, layer: "on", inputs: { world_seed: seed } } });
+    const oldLayer = tables(0);
+    const oldLight = frame(0);
+    const first = drawnPair(oldLayer, oldLight, null);
+    expect(first).toEqual({ layer: oldLayer, light: oldLight });
+    // the same answers again: the very pair held (a stable identity for the mesh's memo)
+    expect(drawnPair(oldLayer, oldLight, first)).toBe(first);
+    // a new galaxy's render has come and its tables have not: the old galaxy stays whole
+    const newLight = frame(1);
+    expect(drawnPair(oldLayer, newLight, first)).toBe(first);
+    // the new tables before the new render, or nothing yet: still the old pair
+    const newLayer = tables(1);
+    expect(drawnPair(newLayer, oldLight, first)).toBe(first);
+    expect(drawnPair(null, null, first)).toBe(first);
+    // both have come: the new pair, and nothing of the old
+    expect(drawnPair(newLayer, newLight, first)).toEqual({ layer: newLayer, light: newLight });
+    // before any pair has matched nothing is drawn
+    expect(drawnPair(oldLayer, newLight, null)).toBeNull();
   });
 });
 

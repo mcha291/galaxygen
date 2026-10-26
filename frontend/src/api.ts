@@ -324,8 +324,8 @@ export interface SpursEntry {
 /**
  * `/api/layer` (S73, #199): the randomness layer's galaxy-wide tables, once per galaxy - what the render's header
  * carried from S66 to S72 and every windowed render repeated. Each entry is null where the model publishes none, and
- * with the layer off its values are null (its keys kept). `model`, `inputs` and `layer` say which galaxy the tables
- * are of: the march draws them with a render of the same galaxy and no other (`sameGalaxy`).
+ * with the layer off its values are null (its keys kept). `model`, `template`, `inputs` and `layer` say which galaxy
+ * the tables are of: the march draws them with a render of the same galaxy and no other (`sameGalaxy`, `drawnPair`).
  */
 export interface LayerAnswer {
   model: string;
@@ -335,6 +335,10 @@ export interface LayerAnswer {
   gas_fluctuation: GasFluctuationEntry | null;
   census_clustering: ClusteringEntry | null;
   spurs: SpursEntry | null;
+  /**
+   * What this request ran, X-Galaxy-Stages - not the body's `stages` (the closure): the transport's `get` lays the
+   * HTTP header over the body's key. Nothing reads it.
+   */
   stages: string[];
   [key: string]: unknown;
 }
@@ -368,23 +372,48 @@ export function loadLayer(query: Query = {}, signal?: AbortSignal): Promise<Laye
 }
 
 /**
- * Whether a layer answer and a render are of one galaxy: the same model, the same resolved inputs and the same layer
- * setting, as each response states them (the swap's rule D1 at the march: never one galaxy's tables on another's
- * light, even for the moment between their two answers outside a swap).
+ * Whether a layer answer and a render are of one galaxy: the same model, the same template (its pins are not among
+ * the inputs, and they move the tables: the Milky Way's spurs), the same resolved inputs and the same layer setting,
+ * as each response states them (the swap's rule D1 at the march: never one galaxy's tables on another's light, even
+ * for the moment between their two answers outside a swap).
  */
 export function sameGalaxy(layer: LayerAnswer | null | undefined, render: { header: Record<string, unknown> } | null | undefined): boolean {
   if (!layer || !render) return false;
   const h = render.header;
   return (
     layer.model === h.model &&
+    (layer.template ?? null) === ((h.template as string | null | undefined) ?? null) &&
     (layer.layer ?? "on") === ((h.layer as string | undefined) ?? "on") &&
     JSON.stringify(layer.inputs) === JSON.stringify(h.inputs)
   );
 }
 
+/** A render and the layer's tables of its galaxy: what the march draws together. */
+export interface DrawnPair<R> {
+  light: R;
+  layer: LayerAnswer;
+}
+
+/**
+ * The pair the march draws (S73, the review's G1): the newest answers where they are of one galaxy, else the last
+ * pair that was - so between a new galaxy's two answers the old galaxy stays on screen whole, as useLoad keeps an old
+ * value rather than blanking, and never one galaxy's light with another's tables (D1). `last` is returned itself when
+ * nothing new matched, or when the match is the very pair it holds (a stable identity for the mesh's memo).
+ */
+export function drawnPair<R extends { header: Record<string, unknown> }>(
+  layer: LayerAnswer | null | undefined,
+  light: R | null | undefined,
+  last: DrawnPair<R> | null,
+): DrawnPair<R> | null {
+  if (!layer || !light || !sameGalaxy(layer, light)) return last;
+  return last && last.layer === layer && last.light === light ? last : { light, layer };
+}
+
 /** One render (S38): each published component's response per cell in each filter of the set sent. */
 export interface RenderFrame {
   header: {
+    /** The template the request named, or null (S73, the review's G2): what `sameGalaxy` pairs /api/layer by too. */
+    template?: string | null;
     set: string | null;
     filters: Curve[];
     window: {

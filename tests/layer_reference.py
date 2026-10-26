@@ -66,8 +66,9 @@ ADDED_KNOTS = ("line_response", "knots")
 ADDED_AT_S66 = ("gas_fluctuation", "census_clustering", "spurs")
 ADDED_ARRAYS_AT_S66 = ("dust_placement_unspurred", "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1")
 # What S73 (#199) sends in place of S66's three header entries, which moved to /api/layer (a route S55 did not have):
-# the render header's `layer_tables`, naming the route - digested apart likewise and returned among the added.
-ADDED_AT_S73 = ("layer_tables",)
+# the render header's `layer_tables`, naming the route, and its `template` (the name asked, or null: what a client
+# pairs the route's answer by, the review's G2) - digested apart likewise and returned among the added.
+ADDED_AT_S73 = ("template", "layer_tables")
 
 
 def _sha(raw: bytes) -> str:
