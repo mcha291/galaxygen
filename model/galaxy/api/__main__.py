@@ -31,8 +31,8 @@ def _logged(handle, path: Path):
         if route.rstrip("/") == "/api/version" and isinstance(query, str) and query:
             entry["query"] = query[:200]  # the picture test's capture marker (its answers follow it)
         line = json.dumps(entry)
-        # Playwright empties its outputDir (frontend/e2e/.output) once the run starts, after this server is up: the
-        # directory is made again on every write, so a log placed there survives the wipe (found at S72's gate).
+        # The e2e runner empties its output directory (frontend/e2e/.output) once the run starts, after this server
+        # is up: the directory is made again on every write, so a log placed there survives the wipe (S72's gate).
         path.parent.mkdir(parents=True, exist_ok=True)
         with lock, path.open("a", encoding="utf-8", newline="\n") as f:
             f.write(line + "\n")
