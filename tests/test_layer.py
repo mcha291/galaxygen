@@ -2602,7 +2602,8 @@ def names_the_switch(node: ast.AST) -> bool:
 # a second FieldView) fails. A `getattr(..., "layer")` outside compose fails wherever it stands.
 PASSED_ON = {("api/service.py", "layer="): 1, ("core/stage.py", "FieldView()"): 1, ("core/stage.py", "layer="): 1,
              ("run.py", "layer="): 1}
-ECHOED = {"api/service.py": {"Dict": 8, "Tuple": 5, "Assign": 1}, "api/v6_tiles.py": {"Dict": 2, "Tuple": 1, "BinOp": 1}}
+# S73 (D236): api/service.py's ninth Dict echo is /api/layer's own "layer" key (`_layer_tables`).
+ECHOED = {"api/service.py": {"Dict": 9, "Tuple": 5, "Assign": 1}, "api/v6_tiles.py": {"Dict": 2, "Tuple": 1, "BinOp": 1}}
 
 
 def touches(tree: ast.AST, name: str) -> tuple[dict[tuple[str, str], int], dict[str, int], list[str]]:

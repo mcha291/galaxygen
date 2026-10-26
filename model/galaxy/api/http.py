@@ -79,8 +79,8 @@ class Handler(BaseHTTPRequestHandler):
             response = self.service.handle(path, query)
         except Exception as e:  # pragma: no cover - a bug in a handler, not a bad request
             print(f"galaxy.api: {type(e).__name__}: {e}", file=sys.stderr)
-            body = json.dumps({"error": "internal error", "type": type(e).__name__}).encode("utf-8")
-            response = Response(500, JSON, body)
+            payload = json.dumps({"error": "internal error", "type": type(e).__name__}).encode("utf-8")
+            response = Response(500, JSON, payload)  # not `body`: that is the HEAD/GET switch (S73, the review)
         try:
             self._send(response, body=body)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):

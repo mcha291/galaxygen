@@ -594,6 +594,12 @@ UNPARSEABLE = [
      "filters: a number is too large to be a float"),
     ("/api/blackbody", {"white": "6500", "filters": '[{"shape":"box","centre":1' + "0" * 5000 + ',"width":10}]'},
      "filters= must be a JSON list of curves"),
+    # S73 (the review): a negative seed was a 500 on the routes whose stages read it and a 200 elsewhere; JSON true
+    # passed float() as 1.0.
+    ("/api/layer", {"texture_seed": "-1"}, "texture_seed='-1' is not a seed"),
+    ("/api/region", {"stars": "10", "pattern_seed": "-1"}, "pattern_seed='-1' is not a seed"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "true")},
+     "mergers: time must be a number, not a boolean"),
 ]
 
 
@@ -907,3 +913,34 @@ def test_the_layer_route_takes_the_input_vector_as_every_input_route_does(api):
     header = render.frame()[0]
     assert header["layer_tables"]["route"] == "/api/layer" and header["inputs"] == a["inputs"]
     assert not {"gas_fluctuation", "census_clustering", "spurs"} & set(header)
+
+
+def test_a_head_that_hits_a_500_sends_no_body_and_keeps_the_connection(tmp_path):
+    """S73 (the review of the lead's #201 fix): the 500's bytes once rebound `_answer`'s HEAD/GET switch, so a HEAD
+    whose handler raised wrote a body after its headers and the next request on the connection read it as a status
+    line. A HEAD answers headers alone; the GET after it on the same HTTP/1.1 connection parses."""
+    import http.client
+
+    class Broken:
+        def handle(self, path, query=None):
+            raise RuntimeError("a handler bug, not a bad request")
+
+    server = api_http.make_server("127.0.0.1", 0, Broken())  # type: ignore[arg-type]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host, port = server.server_address[:2]
+        conn = http.client.HTTPConnection(host, port, timeout=10)
+        conn.request("HEAD", "/api/version")
+        head = conn.getresponse()
+        assert head.status == 500
+        assert head.read() == b""
+        conn.request("GET", "/api/version")
+        got = conn.getresponse()
+        assert got.status == 500
+        assert json.loads(got.read())["type"] == "RuntimeError"
+        conn.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

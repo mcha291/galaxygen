@@ -1047,6 +1047,10 @@ class Service:
                     out[name] = int(raw)
                 except ValueError:
                     raise BadRequest(f"{name}={raw!r} is not an integer seed") from None
+                if out[name] < 0:
+                    # core/seeds.py refuses a negative seed inside the run (SeedError), which the routes whose
+                    # stages read that seed answered as a 500 and the others as a 200 (S73, #201's class).
+                    raise BadRequest(f"{name}={raw!r} is not a seed: a seed is a non-negative integer")
             else:
                 out[name] = _events(name, raw)
         return out
@@ -2596,6 +2600,9 @@ def _events(name: str, raw: str) -> tuple[MergerEvent, ...]:
         unknown = set(entry) - {"time", "mass_ratio", "gas_fraction", "about"}
         if unknown:
             raise BadRequest(f"{name}: unknown event keys {sorted(unknown)}")
+        for field in ("time", "mass_ratio", "gas_fraction"):
+            if isinstance(entry.get(field), bool):  # JSON true is not 1 (float(True) is; S73, the review)
+                raise BadRequest(f"{name}: {field} must be a number, not a boolean")
         try:
             numbers = [float(entry[field]) for field in ("time", "mass_ratio", "gas_fraction")]
             # JSON's 1e999 parses to inf and its NaN literal to nan (#201): MergerEvent's range checks pass
