@@ -49,7 +49,7 @@ export interface NoiseProbeRow {
   f?: number[];
 }
 
-/** The fields' entries, as the render header carries them, for the kinds that read tables (gasSum to spurSum). */
+/** The fields' entries, as /api/layer carries them (the render header until S73), for the kinds that read tables (gasSum to spurSum). */
 export interface NoiseProbeTables {
   gas?: GasFluctuationEntry | null;
   clustering?: ClusteringEntry | null;

@@ -27,7 +27,7 @@ so g = 1.22, 2.43, 4.86 on the Milky Way's pixel and 1.62, 3.24, 6.49 on NGC 441
 - R5d, the clustered light: per level-0 ring, the young part's light (its ring light times dust_placement, read
   bilinearly as the march reads its texture) times m_3 / cell_mean_3 over the same without; each of the middle part's
   kept shares (times stars_middle_placement) times m_k / cell_mean_k (the maps census_clustering.ClusteringField.maps,
-  the means the render header's census_clustering.cell_mean).
+  the means /api/layer's census_clustering.cell_mean - the render header's until S73).
 - the 3-octave map's pixel mean per level-0 cell over the header's cell mean (the lattice's sanity).
 
 The lattice: the `<template>-field` capture's own (frontend/e2e/captures.json): `viewport` square pixels over twice the
@@ -156,14 +156,18 @@ def frames() -> dict:
         header, arrays = wire.decode(got.body)
         win = header["window"]["R"]
         R = win["lo"] + (np.arange(win["n"]) + 0.5) * win["width"]
-        g = header["gas_fluctuation"]
+        # The layer's tables: /api/layer's since S73 (#199), the render header's until then - the same entries.
+        layer = api.handle("/api/layer", {"template": [template]})
+        assert layer.status == 200, layer.body[:300]
+        tables = layer.json()
+        g = tables["gas_fluctuation"]
         params = {"edges": np.asarray(g["edges"], float), "sense": float(g["sense"]),
                   **{k: np.asarray(g["ring"][k], float) for k in ("break_octave", "sigma", "strain", "twist")}}
         gas = gf.field_of(int(g["seed"]), params, C, np.asarray(g["cell_normaliser"], float))
-        rows = header["spurs"]["rows"]
+        rows = tables["spurs"]["rows"]
         spurs = Spurs(rows["radius"], rows["azimuth"], rows["contrast"], rows["pitch"], rows["length"], rows["width"],
-                      rows["fall"], float(header["spurs"]["turn"])) if rows and rows["radius"] else None
-        clustering = ClusteringField.of(header["census_clustering"]["seed"], C)
+                      rows["fall"], float(tables["spurs"]["turn"])) if rows and rows["radius"] else None
+        clustering = ClusteringField.of(tables["census_clustering"]["seed"], C)
         pixel, _ = capture(template)
         weights = gas.amplitudes()
         gas_v = gas.sigma ** 2 * np.sum(weights[gas.break_octave.astype(int)] ** 2, axis=1)
@@ -173,7 +177,7 @@ def frames() -> dict:
         a2[-1] *= top ** 2
         clump_v = {k: clustering.sigma ** 2 * norm ** 2 * float(a2[:k].sum()) for k in (1, 2, 3)}
         clump_grain = {k: clustering.scale / 2 ** (k - 1) / pixel for k in (1, 2, 3)}
-        out[template] = {"header": header, "arrays": arrays, "R": R, "gas": gas, "spurs": spurs, "clustering": clustering,
+        out[template] = {"header": header, "tables": tables, "arrays": arrays, "R": R, "gas": gas, "spurs": spurs, "clustering": clustering,
                          "pixel": pixel, "gas_v": gas_v, "gas_grain": gas_grain, "clump_v": clump_v,
                          "clump_grain": clump_grain}
     return out
@@ -182,7 +186,7 @@ def frames() -> dict:
 def dust_column(f: dict, p: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """R2b at one offset: (rings, departure per ring, one-draw scatter per ring, the whole frame's departure)."""
     a, R = f["arrays"], f["R"]
-    share = np.asarray(f["header"]["spurs"]["share"], float)
+    share = np.asarray(f["tables"]["spurs"]["share"], float)
     place = bilinear(np.asarray(a["dust_placement_unspurred"], float).reshape(R.size, -1), R, p["r"], p["phi"])
     if f["spurs"] is not None:
         place = (1.0 - np.interp(p["r"], R, share)) * place + f["spurs"].at(p["r"], p["phi"])
@@ -204,7 +208,7 @@ def clustered_light(f: dict, p: dict) -> dict:
     clump texture - (rings, departure per ring with its k-octave map over its cell mean, one-draw scatter per ring)."""
     a, h, R = f["arrays"], f["header"], f["R"]
     phi_n = np.asarray(a["dust_placement"]).size // R.size
-    means = {int(k): np.asarray(v, float) for k, v in h["census_clustering"]["cell_mean"].items()}
+    means = {int(k): np.asarray(v, float) for k, v in f["tables"]["census_clustering"]["cell_mean"].items()}
     maps = dict(zip((1, 2, 3), f["clustering"].maps(p["x"], p["y"], (1, 2, 3))))
     kept = h["ages"]["middle_kept"]
     middle_weight = np.asarray(a[kept["weight"]], float).reshape(R.size, phi_n)
@@ -286,7 +290,7 @@ def test_the_3_octave_map_s_pixel_mean_per_cell_is_near_the_header_s_cell_mean(f
     Held under 6e-2, the probe's 5.0e-2 worst on its own 4-point lattice."""
     f = frames[template]
     p = lattice(f, 0.0, 0.0)
-    mean3 = np.asarray(f["header"]["census_clustering"]["cell_mean"]["3"], float)
+    mean3 = np.asarray(f["tables"]["census_clustering"]["cell_mean"]["3"], float)
     m3 = f["clustering"].maps(p["x"], p["y"], (3,))[0]
     count = np.bincount(p["cell"], None, 1024)
     seen = count > 0

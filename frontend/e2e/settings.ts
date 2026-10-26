@@ -42,7 +42,8 @@ export const PHYSICS_ONLY_BUTTON = "physics only";
  * declarations, the templates and the blackbody table). Under "physics only" every request to one of them carries
  * `layer=off`; with the switch released none carries a `layer` parameter at all.
  */
-export const INPUT_ROUTES = ["/api/arrays", "/api/region", "/api/system", "/api/render", "/api/clouds", "/api/clusters", "/api/remnants", "/api/bright"];
+// S73 (#199): and /api/layer, the layer's galaxy-wide tables the march reads, asked once per galaxy beside the render.
+export const INPUT_ROUTES = ["/api/arrays", "/api/region", "/api/system", "/api/render", "/api/layer", "/api/clouds", "/api/clusters", "/api/remnants", "/api/bright"];
 
 // --- what the layer may do to the frame's light (S55, D214: invariant I5; split by principle at S58, D217's follow-up) ---
 // The spec reads the layer-off capture's view both ways through `__galaxygenFrameSum`: the frame's summed linear

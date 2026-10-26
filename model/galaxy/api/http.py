@@ -74,15 +74,15 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._answer(parts.path, "&".join(q for q in (parts.query, extra) if q))
 
-    def _answer(self, path: str, query: str) -> None:
+    def _answer(self, path: str, query: str, body: bool = True) -> None:
         try:
             response = self.service.handle(path, query)
         except Exception as e:  # pragma: no cover - a bug in a handler, not a bad request
             print(f"galaxy.api: {type(e).__name__}: {e}", file=sys.stderr)
-            body = json.dumps({"error": "internal error", "type": type(e).__name__}).encode("utf-8")
-            response = Response(500, JSON, body)
+            payload = json.dumps({"error": "internal error", "type": type(e).__name__}).encode("utf-8")
+            response = Response(500, JSON, payload)  # not `body`: that is the HEAD/GET switch (S73, the review)
         try:
-            self._send(response)
+            self._send(response, body=body)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             # The viewer aborted the request (its view moved on before the answer came): the
             # answer has nowhere to go, and a traceback for that is not an error report.
@@ -90,8 +90,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_HEAD(self) -> None:  # noqa: N802
         parts = urlsplit(self.path)
-        response = self.service.handle(parts.path, parts.query)
-        self._send(response, body=False)
+        self._answer(parts.path, parts.query, body=False)  # S73 (#201): the same guard as a GET's, headers only
 
     def _send(self, response: Response, body: bool = True) -> None:
         self.send_response(response.status)

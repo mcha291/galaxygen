@@ -256,8 +256,9 @@ export async function loadRemnants(window: RegionWindowQuery, query: Query, sign
 }
 
 /**
- * The render header's `gas_fluctuation` (S66, V7, D226 R6): the gas fluctuation field, every number the model's
- * (galaxy.layer.gas_fluctuation). With the layer off every value but the form's numbers and the rule is null.
+ * `/api/layer`'s `gas_fluctuation` (S66, V7, D226 R6; on the render's header until S73, #199): the gas fluctuation
+ * field, every number the model's (galaxy.layer.gas_fluctuation). With the layer off every value but the form's
+ * numbers and the rule is null.
  */
 export interface GasFluctuationEntry {
   seed: number | null;
@@ -279,7 +280,7 @@ export interface GasFluctuationEntry {
   rule: string;
 }
 
-/** The render header's `census_clustering` (S66, V7, D226 R5c, R6): the clustering field and its k-octave cell means. */
+/** `/api/layer`'s `census_clustering` (S66, V7, D226 R5c, R6; S73): the clustering field and its k-octave cell means. */
 export interface ClusteringEntry {
   seed: number | null;
   scale: number;
@@ -298,7 +299,7 @@ export interface ClusteringEntry {
   rule: string;
 }
 
-/** The render header's `spurs` (S66, V7, D226 R4): the gas spurs' table, their ring mean per render ring, the rule. */
+/** `/api/layer`'s `spurs` (S66, V7, D226 R4; S73): the gas spurs' table, their ring mean per grid ring, the rule. */
 export interface SpursEntry {
   rows: {
     chain: number[];
@@ -320,9 +321,99 @@ export interface SpursEntry {
   rule: string;
 }
 
+/**
+ * `/api/layer` (S73, #199): the randomness layer's galaxy-wide tables, once per galaxy - what the render's header
+ * carried from S66 to S72 and every windowed render repeated. Each entry is null where the model publishes none, and
+ * with the layer off its values are null (its keys kept). `model`, `template`, `inputs` and `layer` say which galaxy
+ * the tables are of: the march draws them with a render of the same galaxy and no other (`sameGalaxy`, `drawnPair`).
+ */
+export interface LayerAnswer {
+  model: string;
+  template?: string | null;
+  layer?: string;
+  inputs: unknown;
+  gas_fluctuation: GasFluctuationEntry | null;
+  census_clustering: ClusteringEntry | null;
+  spurs: SpursEntry | null;
+  /**
+   * What this request ran, X-Galaxy-Stages - not the body's `stages` (the closure): the transport's `get` lays the
+   * HTTP header over the body's key. Nothing reads it.
+   */
+  stages: string[];
+  [key: string]: unknown;
+}
+
+// The JSON answer held to the request as every binary route is (`route`): its body is its header.
+const layerTables = route("/api/layer", async (_: null, params: Query, options?: Options) => {
+  const body = (await wire.layer(params, options)) as unknown;
+  return { header: body, arrays: {} };
+});
+
+/**
+ * The layer answers held (S73), as the whole renders are: the field mode's and the star-first mode's marches read
+ * the same tables of a query, so a mode switch asks nothing again. Two: the galaxy and the one before it.
+ */
+const LAYERS_HELD = 2;
+const layerAnswers = new Map<string, Promise<LayerAnswer>>();
+
+/** The layer's tables for one input vector (S73): one request per galaxy, keyed as the render is on the query. */
+export function loadLayer(query: Query = {}, signal?: AbortSignal): Promise<LayerAnswer> {
+  const key = JSON.stringify(query);
+  let held = layerAnswers.get(key);
+  if (held) {
+    layerAnswers.delete(key);
+  } else {
+    held = layerTables(null, query).then((got) => got.header as LayerAnswer);
+    held.catch(() => layerAnswers.delete(key));
+  }
+  layerAnswers.set(key, held);
+  while (layerAnswers.size > LAYERS_HELD) layerAnswers.delete(layerAnswers.keys().next().value as string);
+  return untilAborted(held, signal);
+}
+
+/**
+ * Whether a layer answer and a render are of one galaxy: the same model, the same template (its pins are not among
+ * the inputs, and they move the tables: the Milky Way's spurs), the same resolved inputs and the same layer setting,
+ * as each response states them (the swap's rule D1 at the march: never one galaxy's tables on another's light, even
+ * for the moment between their two answers outside a swap).
+ */
+export function sameGalaxy(layer: LayerAnswer | null | undefined, render: { header: Record<string, unknown> } | null | undefined): boolean {
+  if (!layer || !render) return false;
+  const h = render.header;
+  return (
+    layer.model === h.model &&
+    (layer.template ?? null) === ((h.template as string | null | undefined) ?? null) &&
+    (layer.layer ?? "on") === ((h.layer as string | undefined) ?? "on") &&
+    JSON.stringify(layer.inputs) === JSON.stringify(h.inputs)
+  );
+}
+
+/** A render and the layer's tables of its galaxy: what the march draws together. */
+export interface DrawnPair<R> {
+  light: R;
+  layer: LayerAnswer;
+}
+
+/**
+ * The pair the march draws (S73, the review's G1): the newest answers where they are of one galaxy, else the last
+ * pair that was - so between a new galaxy's two answers the old galaxy stays on screen whole, as useLoad keeps an old
+ * value rather than blanking, and never one galaxy's light with another's tables (D1). `last` is returned itself when
+ * nothing new matched, or when the match is the very pair it holds (a stable identity for the mesh's memo).
+ */
+export function drawnPair<R extends { header: Record<string, unknown> }>(
+  layer: LayerAnswer | null | undefined,
+  light: R | null | undefined,
+  last: DrawnPair<R> | null,
+): DrawnPair<R> | null {
+  if (!layer || !light || !sameGalaxy(layer, light)) return last;
+  return last && last.layer === layer && last.light === light ? last : { light, layer };
+}
+
 /** One render (S38): each published component's response per cell in each filter of the set sent. */
 export interface RenderFrame {
   header: {
+    /** The template the request named, or null (S73, the review's G2): what `sameGalaxy` pairs /api/layer by too. */
+    template?: string | null;
     set: string | null;
     filters: Curve[];
     window: {
@@ -351,12 +442,12 @@ export interface RenderFrame {
      * Since S66 (V7, D226 R4), with the layer on, `dust_unspurred` names the placement without the gas spurs.
      */
     placement?: { dust?: string; dust_unspurred?: string } | null;
-    /** The gas fluctuation field the march reads once per ray at the midplane (S66, V7, D226 R3 as amended, R6); its values null with the layer off. */
-    gas_fluctuation?: GasFluctuationEntry | null;
-    /** The clustering field's form and its k-octave cell means (S66, V7, D226 R5c, R6); null values with the layer off. */
-    census_clustering?: ClusteringEntry | null;
-    /** The gas spurs' table and ring mean (S66, V7, D226 R4); null values with the layer off. */
-    spurs?: SpursEntry | null;
+    /**
+     * Where the layer's tables are (S73, #199): `/api/layer`, asked with the same query, carries the entries named
+     * here once per galaxy - the gas fluctuation field, the clustering field's cell means and the gas spurs the
+     * march reads (S66, V7, D226), on this header from S66 to S72.
+     */
+    layer_tables?: { route: string; entries: string[]; about: string };
     /** What each component reads and is; the scattered light's phase table rides here (S39). */
     components?: { dust_scattered?: { phase?: { cos_view: number[]; factor: number[] } } } & Record<string, unknown>;
     [key: string]: unknown;
@@ -391,9 +482,10 @@ const REGION_PARAMS = ["r_min", "r_max", "phi_min", "phi_max", "level"];
 const WHOLE_RENDERS_HELD = 2;
 const wholeRenders = new Map<string, Promise<RenderFrame>>();
 
-/** Drop the held whole renders (tests: each stands its own API up). */
+/** Drop the held whole renders and layer answers (tests: each stands its own API up). */
 export function forgetRenders(): void {
   wholeRenders.clear();
+  layerAnswers.clear();
 }
 
 function untilAborted<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {

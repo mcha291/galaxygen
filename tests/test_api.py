@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -565,6 +566,105 @@ def test_the_event_list_is_settable_and_validated(api):
     assert api.handle("/api/arrays", 'fields=last_major_merger_time&mergers=[{"time":5,"mass_ratio":9,"gas_fraction":0.4}]').status == 400
 
 
+# #201 (S72's reviewer): two request shapes that ended in http.py's "internal error" 500. Each is the caller's
+# JSON, refused at the parse with a 400 that names the field; a handler's own bug stays a 500 (handle is unchanged).
+DEEP = "[" * 100_000 + "]" * 100_000  # json.loads raises RecursionError, not JSONDecodeError
+
+
+def _merger(field: str, value: str) -> str:
+    event = {"time": "5", "mass_ratio": "0.3", "gas_fraction": "0.4"} | {field: value}
+    return "[{" + ",".join(f'"{k}":{v}' for k, v in event.items()) + "}]"
+
+
+UNPARSEABLE = [
+    # (route, query, words the error must contain)
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "1e999")},
+     "mergers: time must be a finite number, got inf"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "NaN")},
+     "mergers: time must be a finite number, got nan"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("mass_ratio", "Infinity")},
+     "mergers: mass_ratio must be a finite number, got inf"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("gas_fraction", "-Infinity")},
+     "mergers: gas_fraction must be a finite number, got -inf"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "1" + "0" * 400)},
+     "mergers: int too large to convert to float"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": DEEP}, "mergers: the JSON is nested too deeply"),
+    ("/api/blackbody", {"white": "6500", "filters": DEEP}, "filters: the JSON is nested too deeply"),
+    ("/api/blackbody", {"white": "6500", "filters": '[{"shape":"box","centre":1' + "0" * 400 + ',"width":10}]'},
+     "filters: a number is too large to be a float"),
+    ("/api/blackbody", {"white": "6500", "filters": '[{"shape":"box","centre":1' + "0" * 5000 + ',"width":10}]'},
+     "filters= must be a JSON list of curves"),
+    # S73 (the review): a negative seed was a 500 on the routes whose stages read it and a 200 elsewhere; JSON true
+    # passed float() as 1.0.
+    ("/api/layer", {"texture_seed": "-1"}, "texture_seed='-1' is not a seed"),
+    ("/api/region", {"stars": "10", "pattern_seed": "-1"}, "pattern_seed='-1' is not a seed"),
+    ("/api/arrays", {"fields": "last_major_merger_time", "mergers": _merger("time", "true")},
+     "mergers: time must be a number, not a boolean"),
+]
+
+
+def _refused(r: Response, words: str) -> None:
+    assert r.status == 400, (r.status, r.body[:200])
+    assert words in r.json()["error"], r.json()
+
+
+@pytest.mark.parametrize("route, query, words", UNPARSEABLE, ids=[w for _, _, w in UNPARSEABLE])
+def test_a_request_the_json_parser_cannot_hold_is_a_400_naming_the_field(api, route, query, words):
+    _refused(api.handle(route, query), words)
+
+
+def test_with_a_bundle_mounted_the_unparseable_requests_are_still_400s(tmp_path):
+    """The bundle's key reads the request with the service's parsers before any handler runs: a refusal there is no
+    key (the request falls through to the model's own 400), and the filters' canonicalisation never raises."""
+    from galaxy.api import bundle
+
+    plain = service()
+    bundle.write(tmp_path, "milky_way", "on", plain, [("/api/templates", {}, plain.handle("/api/templates", {}))])
+    served = service(bundles=tmp_path)
+    assert served.handle("/api/templates").source == "bundle"
+    for route, query, words in UNPARSEABLE:
+        k = bundle.key(served, route, query)  # never raises
+        if "mergers" in query:
+            assert k is None  # an input the service refuses: no key
+        _refused(served.handle(route, query), words)  # filters= is keyed (raw, where it is not JSON) and misses
+
+
+def test_over_the_socket_the_unparseable_requests_are_400s_not_500s():
+    """The server's own answer to the two S72 shapes: the infinite merger time as a GET, the deep filters as a POST
+    (its query, percent-encoded, is past any URL's length and well inside MAX_BODY)."""
+    server = api_http.make_server("127.0.0.1", 0, service())
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    base = f"http://{host}:{port}"
+
+    def ask(path: str, query: dict[str, str], post: bool = False) -> tuple[int, dict]:
+        encoded = urllib.parse.urlencode(query)
+        if post:
+            assert len(encoded) < api_http.MAX_BODY
+            req = urllib.request.Request(base + path, data=encoded.encode("ascii"), method="POST",
+                                         headers={"Content-Type": api_http.FORM})
+        else:
+            req = urllib.request.Request(base + path + "?" + encoded)
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read())
+
+    try:
+        route, query, words = UNPARSEABLE[0]
+        status, body = ask(route, query)
+        assert status == 400 and words in body["error"], (status, body)
+        route, query, words = UNPARSEABLE[6]
+        status, body = ask(route, query, post=True)
+        assert status == 400 and words in body["error"], (status, body)
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
 def test_reserved_parameters_cannot_shadow_an_input():
     assert not RESERVED & set(INPUTS), "a reserved parameter would make that input unreachable"
     assert {"model", "fields", "stars"} <= RESERVED
@@ -770,3 +870,77 @@ def test_float32_arrays_keep_every_later_offset_aligned():
     header, arrays = wire.decode(wire.encode({}, [("a", np.ones(3, np.float32)), ("b", np.arange(2.0))]))
     assert [spec["offset"] % 8 for spec in header["arrays"]] == [0, 0]
     assert arrays["a"].dtype == np.float32 and np.array_equal(arrays["b"], [0.0, 1.0])
+
+
+# --- S73 (#199): the layer's tables by a route of their own -----------------------------------------------------------
+
+
+def test_the_layer_route_answers_json_and_says_what_it_ran_over_the_socket():
+    """/api/layer is JSON with X-Galaxy-Stages as every route has it: cold, what ran is the body's closure; asked
+    again, nothing ran and the bytes are the same (rule D4, B2)."""
+    server = api_http.make_server("127.0.0.1", 0, service())
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/api/layer?layer=off") as r:
+            assert r.headers["Content-Type"] == "application/json"
+            ran, body = r.headers["X-Galaxy-Stages"].split(","), r.read()
+        got = json.loads(body)
+        assert got["stages"] == ran and "gas_fluctuation" in ran and got["layer"] == "off"
+        assert not {"light", "dust", "clouds", "clusters", "nebular"} & set(ran)
+        with urllib.request.urlopen(f"http://{host}:{port}/api/layer?layer=off") as r:
+            assert r.headers["X-Galaxy-Stages"] == "" and r.read() == body
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_the_layer_route_takes_the_input_vector_as_every_input_route_does(api):
+    """The tables are a galaxy's: another seed is another field, an input the model has not is a 404 and a bad value
+    a 400, and the answer names the galaxy as the render's header does (model, inputs, layer)."""
+    a = api.handle("/api/layer").json()
+    b = api.handle("/api/layer", {"texture_seed": ["7"]}).json()
+    assert a["gas_fluctuation"]["seed"] != b["gas_fluctuation"]["seed"] and b["inputs"]["texture_seed"] == 7
+    assert a["model"] == DEFAULT_MODEL and a["template"] is None and a["layer"] == "on"
+    assert set(a) == {"model", "template", "inputs", "layer", "gas_fluctuation", "census_clustering", "spurs", "stages"}
+    assert api.handle("/api/layer", {"no_such_input": ["1"]}).status == 404
+    assert api.handle("/api/layer", {"halo_mass": ["oops"]}).status == 400
+    listed = {r["path"]: r for r in api.handle("/api").json()["routes"]}
+    assert listed["/api/layer"]["params"] == ["model", "template", "layer"]
+    render = api.handle("/api/render", {"filters": [json.dumps([{"name": "V", "shape": "gaussian", "centre": 5500.0, "fwhm": 900.0}])]})
+    header = render.frame()[0]
+    assert header["layer_tables"]["route"] == "/api/layer" and header["inputs"] == a["inputs"]
+    assert not {"gas_fluctuation", "census_clustering", "spurs"} & set(header)
+
+
+def test_a_head_that_hits_a_500_sends_no_body_and_keeps_the_connection(tmp_path):
+    """S73 (the review of the lead's #201 fix): the 500's bytes once rebound `_answer`'s HEAD/GET switch, so a HEAD
+    whose handler raised wrote a body after its headers and the next request on the connection read it as a status
+    line. A HEAD answers headers alone; the GET after it on the same HTTP/1.1 connection parses."""
+    import http.client
+
+    class Broken:
+        def handle(self, path, query=None):
+            raise RuntimeError("a handler bug, not a bad request")
+
+    server = api_http.make_server("127.0.0.1", 0, Broken())  # type: ignore[arg-type]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host, port = server.server_address[:2]
+        conn = http.client.HTTPConnection(host, port, timeout=10)
+        conn.request("HEAD", "/api/version")
+        head = conn.getresponse()
+        assert head.status == 500
+        assert head.read() == b""
+        conn.request("GET", "/api/version")
+        got = conn.getresponse()
+        assert got.status == 500
+        assert json.loads(got.read())["type"] == "RuntimeError"
+        conn.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

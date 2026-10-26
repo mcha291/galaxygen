@@ -51,7 +51,7 @@ from galaxy import templates as _tpl  # the named galaxies (S54); Service._templ
 from galaxy.api import v6_clouds as _v6_clouds  # S64 (V6, R1-R2): the clouds as extinction
 from galaxy.api import v6_tiles as _v6_tiles  # S64 (V6, R8): bright stars by tiles, their table, the remainder alone
 from galaxy.api import v6_knots as _v6_knots  # S64 (V6, R5-R6): the HII regions as knots, their lines and the field's share
-from galaxy.api import v7_layer as _v7  # S66 (V7, R4-R6): the layer's fields on the render's header, the spurs' pieces
+from galaxy.api import v7_layer as _v7  # S66 (V7, R4-R6): the layer's tables (/api/layer since S73), the spurs' pieces
 from galaxy.api import bundle as _bundle  # S72 (BUILD_IV W2): the template bundles, under the model's hash
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, MODEL, SERVER, content_hash
@@ -337,11 +337,9 @@ ROUTES: tuple[Route, ...] = (
         "once its realised clouds (summed off the census's ring streams, no census materialised) hold theirs - the "
         "viewer multiplies the dust's depth by it and draws the clouds' own column, /api/clouds' "
         "cloud_dust_extinction_v, in the clouds' layer; the header's clouds states the rule and the closure. "
-        "The randomness layer (S66, V7): the header's gas_fluctuation, census_clustering and spurs carry the two "
-        "fields and the gas spurs, every number the model's and each entry's rule (null values with layer=off), "
-        "each map " + _v7.THIN_SCREEN + " (D226 as amended). The render runs the gas_fluctuation stage on every "
-        "request, layer off included (its header's stages say so): with the layer on its cell normalisers are the "
-        "entry's; with it off the stage returns its neutral and the route does not branch on the layer (I5). The "
+        "The randomness layer (S66, V7): the two fields and the gas spurs the viewer's march reads are /api/layer's, "
+        "once per galaxy (S73, #199: on this header from S66 to S72, repeated by every windowed render); the header's "
+        "layer_tables names that route and its entries. The "
         "middle part's four kept windows - their anchors and their responses through the request's curves - are "
         "cached with the run and the filter set, so a warm request recomputes only the three age parts' responses. "
         "dust_placement_unspurred the dust's placement without "
@@ -351,6 +349,21 @@ ROUTES: tuple[Route, ...] = (
         "stars_unresolved exactly; the header's remainder states the rule.",
         ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
         "render",
+    ),
+    Route(
+        "/api/layer",
+        "The randomness layer's galaxy-wide tables (S73, #199), as /api/render's header carried them from S66 to S72, "
+        "once per galaxy: JSON {model, template, inputs, layer, gas_fluctuation, census_clustering, spurs, stages}. "
+        "gas_fluctuation the gas fluctuation field (its seed, form, ring table, ladder weights and level-0 cell "
+        "normalisers), census_clustering the clustering field's form, its octaves' survival ages and its k-octave maps' "
+        "means per level-0 cell, spurs the gas spurs' table and their mean round each grid ring - every number the "
+        "model's, each entry with its rule; each map " + _v7.THIN_SCREEN + " (D226 as amended). An entry is null where "
+        "the model publishes none (the spurs: where it places no dust by a pattern); with layer=off its values are "
+        "null, its keys kept. Runs the layer's stages those tables read and nothing else (rule D4; its stages the "
+        "closure, X-Galaxy-Stages what ran): the gas fluctuation stage on every request, layer off included, where it "
+        "returns its neutral - the route does not branch on the layer (I5).",
+        ("model", "template", "layer"),
+        "layer_tables",
     ),
 )
 
@@ -407,11 +420,19 @@ def _parse_filters(q: Query) -> list[Any]:
             "(RENDER_PHYSICS section 2a)"
         )
     try:
-        return _spectra.parse_curves(json.loads(raw))
-    except json.JSONDecodeError as e:
+        parsed = json.loads(raw)
+    except ValueError as e:  # JSONDecodeError, or an integer past Python's digit limit
         raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
+    except RecursionError:
+        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500.
+        raise BadRequest("filters: the JSON is nested too deeply") from None
+    try:
+        return _spectra.parse_curves(parsed)
     except _spectra.CurveError as e:
         raise BadRequest(f"filters=: {e}") from None
+    except OverflowError:
+        # An integer too large for a float (10**400 is valid JSON) escapes the curve parser's number check (#201).
+        raise BadRequest("filters: a number is too large to be a float") from None
 
 
 def _white_point(q: Query, curves: Sequence[Any]) -> dict[str, Any] | None:
@@ -1026,6 +1047,10 @@ class Service:
                     out[name] = int(raw)
                 except ValueError:
                     raise BadRequest(f"{name}={raw!r} is not an integer seed") from None
+                if out[name] < 0:
+                    # core/seeds.py refuses a negative seed inside the run (SeedError), which the routes whose
+                    # stages read that seed answered as a 500 and the others as a 200 (S73, #201's class).
+                    raise BadRequest(f"{name}={raw!r} is not a seed: a seed is a non-negative integer")
             else:
                 out[name] = _events(name, raw)
         return out
@@ -1364,7 +1389,7 @@ class Service:
         reads = self._reads(model, stage)
         reads += tuple(n for n in _v6_clouds.COLUMN_FIELDS if n not in reads)
         # S70 (Audit V F-4-3): and the gas fluctuation field the clouds' shape reads (its strain, edges and sense), where
-        # the model publishes it - the render header's gas_fluctuation entry reads the same.
+        # the model publishes it - /api/layer's gas_fluctuation entry reads the same (the render header's until S73).
         declared = self._declared(model)
         gas_declared = all(n in declared for n in _v7.GAS_READS)
         reads += tuple(n for n in (_v7.GAS_READS if gas_declared else ()) if n not in reads)
@@ -1388,7 +1413,7 @@ class Service:
         derived = {_v6_clouds.COLUMN: _v6_clouds.dust_extinction_v(
             out.fields, R, census["cloud_mass"], census["cloud_size"], census["cloud_birth_radius"])}
         # S70 (Audit V F-4-3): and each cloud's face-on shape along the gas fluctuation field's shear at its placed
-        # radius - the field as the render header publishes it (compose.gas_fluctuation: None with the layer off, or
+        # radius - the field as /api/layer publishes it (compose.gas_fluctuation: None with the layer off, or
         # where the model publishes no such field - every cloud round).
         gas_field = _compose.gas_fluctuation(out.fields, constants, R) if gas_declared else None
         derived.update(_v6_clouds.cloud_shape(gas_field, census["cloud_radius"]))
@@ -1762,12 +1787,11 @@ class Service:
             wanted += [n for n in self._reads(model, bright) if n in _bright.RESOLVE_READS and n not in wanted]
         inputs = self._overrides(model, q)
         layer = self._layer(q)
-        # S66 (V7, R4-R6): what the header's gas_fluctuation and census_clustering entries read - the two fields' stages,
-        # where the model publishes them. With the layer off they realise nothing (their neutral) and are not read.
-        gas_declared = all(n in declared for n in _v7.GAS_READS)
-        clustering_declared = all(n in declared for n in _v7.CLUSTERING_READS)
-        wanted += [n for n in (*(_v7.GAS_READS if gas_declared else ()), *(_v7.CLUSTERING_READS if clustering_declared else ()))
-                   if n not in wanted]
+        # S66 (V7, R5): whether the model publishes the clustering field, which splits the middle part by kept octaves
+        # (from declarations: the split reads the constants and the history, not the field). Since S73 (#199) the
+        # layer's tables are /api/layer's, so the render no longer asks for the two fields' stages (D4): its stages
+        # are S65's again.
+        clustering_declared = _v7.published_entries(declared)["census_clustering"]
         out, ran = self.compute(model, inputs, wanted, layer)
         f = out.fields
         R_axis, phi_axis = out.grid.axes["R"], out.grid.axes["phi"]
@@ -1931,10 +1955,9 @@ class Service:
                         "is already a share of the placed starlight. It averages to 1 round every ring" + even,
                 }},
             }
-        # The spurs' pieces (S66, V7, R4): the spurs' table and ring mean, and the placement without them, so that the
-        # viewer composes the spurs (their sum read once per ray at the midplane) - where the dust is placed by the gas's
-        # own contrast.
-        spurs_entry, unspurred = (None, None) if placement is None else _v7.spurs_entry(f, constants, R, phi_axis.edges)
+        # The spurs' pieces (S66, V7, R4): the placement without them, so that the viewer composes the spurs (their sum
+        # read once per ray at the midplane, from /api/layer's spurs table since S73) - where the dust is placed.
+        unspurred = None if placement is None else _v7.unspurred_placement(f, constants, R, phi_axis.edges)
         if placement is not None:
             # Where no spur is composed (the layer off: the neutral placement; a flat pattern) it is the placement itself.
             unspurred = placed_gas if unspurred is None else unspurred
@@ -1943,7 +1966,7 @@ class Service:
                 "unit": "dimensionless", "fields": [*gas_fields, *_v7.SPUR_FIELDS],
                 "about": "the gas's own density contrast at each (R, phi) cell over its ring's mean without the gas "
                          "spurs: the gas pattern's exact cell means of its response and the bar's lanes, floored at zero "
-                         "as dust_placement is. Composed with the spurs' table (the header's spurs) it is dust_placement: "
+                         "as dust_placement is. Composed with the spurs' table (/api/layer's spurs) it is dust_placement: "
                          "(1 - share(R)) times it plus the spurs' cell means (stages/spurs.Spurs.compose_cells); with no "
                          "spur laid it is dust_placement to the bit (S66, V7, D226)" + even,
             }
@@ -2098,8 +2121,12 @@ class Service:
         if all(n in f for n in RENDER_BULGE):
             points = np.array([float(f[f"bulge_sed_{b.lower()}"]) for b in _spectra.SED_BANDS])
             bulge = [_number(v) for v in _spectra.stellar_response(points, np.array(float(f["bulge_light_temperature"])), curves)]
+        template = self._template(q)
         header = {
             "model": model.name,
+            # S73 (#199, the review's G2): the template the request named, or null - its pins are not among the inputs
+            # and move the layer's tables (the Milky Way's spurs), so a client pairs /api/layer's answer by it too.
+            "template": None if template is None else template.name,
             "inputs": _inputs_json(out.inputs),
             "layer": _compose.setting(out.fields),
             "set": q.one("set"),
@@ -2118,11 +2145,9 @@ class Service:
             # The clouds as extinction (S64, V6): the diffuse share's array, its rule, the clouds' route, column and
             # layer, the closure - or null where the model publishes no dust or no clouds.
             "clouds": clouds_entry,
-            # The randomness layer's two fields and the gas spurs, for the viewer's march (S66, V7, D226 R4-R6): every
-            # number the model's and the rule the viewer evaluates; the values null with the layer off, the keys kept.
-            "gas_fluctuation": _v7.gas_fluctuation_entry(gas_declared, f, constants, R),
-            "census_clustering": _v7.clustering_entry(clustering_declared, f, constants, R),
-            "spurs": spurs_entry,
+            # The randomness layer's two fields and the gas spurs, for the viewer's march (S66, V7, D226 R4-R6): since S73
+            # (#199) /api/layer's, once per galaxy, at every window and level alike - this names the route.
+            "layer_tables": _v7.layer_tables(),
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,
@@ -2133,6 +2158,34 @@ class Service:
         if resolved is not None:
             header["resolved"] = resolved
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
+    def _layer_tables(self, q: Query) -> Response:
+        """The randomness layer's galaxy-wide tables (S73, #199): the three entries /api/render's header carried from
+        S66 to S72, built by the same functions (``api/v7_layer.py``, rule B13) on the run's fields, once per galaxy.
+
+        The run is asked for what the entries read and nothing else (:func:`v7_layer.reads`, rule D4) - the layer's
+        stages and what the gas pattern is built from - with the request's layer setting; the route does not branch on
+        the layer (I5): with it off the entry functions return their null values, the keys kept."""
+        model = self._model(q)
+        declared = self._declared(model)
+        inputs = self._overrides(model, q)
+        layer = self._layer(q)
+        which = _v7.published_entries(declared)
+        out, ran = self.compute(model, inputs, _v7.reads(declared), layer)
+        f = out.fields
+        R = out.grid.R
+        constants = {k: c.value for k, c in model.constants.items()}
+        template = self._template(q)
+        return _json({
+            "model": model.name,
+            "template": None if template is None else template.name,
+            "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(f),
+            "gas_fluctuation": _v7.gas_fluctuation_entry(which["gas_fluctuation"], f, constants, R),
+            "census_clustering": _v7.clustering_entry(which["census_clustering"], f, constants, R),
+            "spurs": _v7.spurs_entry(f, constants, R) if which["spurs"] else None,
+            "stages": list(out.needs),
+        }, stages=ran)
 
     def _ages(
         self, model: Model, f: Mapping[str, Any], curves: Sequence[Any], per_ring: np.ndarray, placed: np.ndarray,
@@ -2537,8 +2590,11 @@ def _events(name: str, raw: str) -> tuple[MergerEvent, ...]:
     """An event list arrives as JSON, because it is a list of records, not a scalar."""
     try:
         parsed = json.loads(raw)
-    except json.JSONDecodeError as e:
+    except ValueError as e:  # JSONDecodeError, or an integer past Python's digit limit
         raise BadRequest(f"{name} must be a JSON array of events: {e}") from None
+    except RecursionError:
+        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500.
+        raise BadRequest(f"{name}: the JSON is nested too deeply") from None
     if not isinstance(parsed, list):
         raise BadRequest(f"{name} must be a JSON array of events, got {type(parsed).__name__}")
     events: list[MergerEvent] = []
@@ -2548,16 +2604,20 @@ def _events(name: str, raw: str) -> tuple[MergerEvent, ...]:
         unknown = set(entry) - {"time", "mass_ratio", "gas_fraction", "about"}
         if unknown:
             raise BadRequest(f"{name}: unknown event keys {sorted(unknown)}")
+        for field in ("time", "mass_ratio", "gas_fraction"):
+            if isinstance(entry.get(field), bool):  # JSON true is not 1 (float(True) is; S73, the review)
+                raise BadRequest(f"{name}: {field} must be a number, not a boolean")
         try:
-            events.append(
-                MergerEvent(
-                    float(entry["time"]), float(entry["mass_ratio"]), float(entry["gas_fraction"]),
-                    str(entry.get("about", "")),
-                )
-            )
+            numbers = [float(entry[field]) for field in ("time", "mass_ratio", "gas_fraction")]
+            # JSON's 1e999 parses to inf and its NaN literal to nan (#201): MergerEvent's range checks pass
+            # time=inf (0 <= inf), and the answer's header could not then be written, so each is refused here.
+            for field, value in zip(("time", "mass_ratio", "gas_fraction"), numbers):
+                if not math.isfinite(value):
+                    raise BadRequest(f"{name}: {field} must be a finite number, got {value!r}")
+            events.append(MergerEvent(*numbers, str(entry.get("about", ""))))
         except KeyError as e:
             raise BadRequest(f"{name}: an event is missing {e}") from None
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:  # OverflowError: an integer too large for a float
             raise BadRequest(f"{name}: {e}") from None
     return tuple(events)
 

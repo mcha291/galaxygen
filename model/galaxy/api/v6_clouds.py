@@ -71,7 +71,8 @@ ANGLE = "cloud_angle"
 SHAPE_COLUMNS = (AXIS_RATIO, ANGLE)
 # Every column this route derives, in the order it sends them after the census's own (S64's, then S70's two).
 DERIVED_COLUMNS = (COLUMN, *SHAPE_COLUMNS)
-# The published terms the two read: the render header's gas_fluctuation entry carries each (edges, ring.strain, sense).
+# The published terms the two read: /api/layer's gas_fluctuation entry carries each (edges, ring.strain, sense) - the
+# render header's from S66 to S72 (S73, #199).
 SHAPE_TERMS = ["cloud_radius", "gas_fluctuation.edges", "gas_fluctuation.ring.strain", "gas_fluctuation.sense"]
 SHAPE_RULE = ("k = sense * strain[r], r = the level-0 ring of cloud_radius by edges (the last edge not above it, held to "
               "the first and last rings); cloud_axis_ratio = (2 + k^2 + |k| sqrt(k^2 + 4)) / 2; "
@@ -82,7 +83,7 @@ _SHAPE_ABOUT = (
     "simple shear [[1, 0], [-k, 1]], k = sense x strain (dtheta / dlnR); a round feature of the field is the image of a "
     "circle under its inverse, the ellipse [[1, k], [k, 1 + k^2]], of axis ratio lambda+ = (2 + k^2 + |k| sqrt(k^2 + "
     "4)) / 2 and long axis along (k, lambda+ - 1) in (r-hat, phi-hat). Each term is published: the strain per level-0 "
-    "ring, the ring edges and the disc's sense in the render header's gas_fluctuation entry, the cloud's placed radius "
+    "ring, the ring edges and the disc's sense in /api/layer's gas_fluctuation entry, the cloud's placed radius "
     "here. SYNTHETIC (rule A10): the layer's - the shear of the gas fluctuation field, a function of the rotation curve "
     "and the shear time's cap (gas_fluctuation.shear_strain), read at the radius the layer placed the cloud at "
     "(cloud_radius) - and with the layer off, when the field is not published, 1 and 0: every cloud round. Derived "

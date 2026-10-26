@@ -1,7 +1,8 @@
 /**
  * The randomness layer's noise in float32 (S66, BUILD_III Phase V7; D226 R1, R9a): the TypeScript twin of the GLSL
  * include `noise.glsl.ts`, operation for operation, and the preparation of the tables the march uploads - pure
- * functions of the render header's entries (`gas_fluctuation`, `census_clustering`, `spurs`), no React, no three.
+ * functions of the layer's entries (`gas_fluctuation`, `census_clustering`, `spurs`: `/api/layer`'s since S73, the
+ * render header's before), no React, no three.
  *
  * Every float operation is rounded to float32 (`Math.fround`), in the model's own order (galaxy/layer/noise.py,
  * gas_fluctuation.py, census_clustering.py, stages/spurs.py: each function names the Python it twins); the integers
@@ -217,7 +218,7 @@ export function reduceTwist(twist: number): number {
   return twist - TWO_PI * Math.round(twist / TWO_PI);
 }
 
-/** The gas field's tables from the render header's entry, or null with the layer off (its seed null) or off-form. */
+/** The gas field's tables from /api/layer's entry, or null with the layer off (its seed null) or off-form. */
 export function prepareGas(entry: GasFluctuationEntry | null | undefined, reduce = true): GasTables | null {
   if (!entry || entry.seed === null || !entry.ring || !entry.edges || !entry.weights || !entry.cell_normaliser || entry.sense === null) return null;
   if (entry.octaves !== GAS_OCTAVES || entry.edges.length !== CELL_RINGS + 1 || entry.cell_normaliser.length !== CELL_RINGS * CELL_SECTORS) return null;
@@ -317,7 +318,7 @@ export interface ClusteringTables extends OctaveSum {
   octaveAgesMyr: number[];
 }
 
-/** The clustering tables from the render header's entry, or null with the layer off or off-form (three octaves). */
+/** The clustering tables from /api/layer's entry, or null with the layer off or off-form (three octaves). */
 export function prepareClustering(entry: ClusteringEntry | null | undefined): ClusteringTables | null {
   if (!entry || entry.seed === null || !entry.cell_mean || entry.octaves !== 3) return null;
   compiledLacunarity("census_clustering", entry.lacunarity);

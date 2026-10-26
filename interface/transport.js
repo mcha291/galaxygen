@@ -176,6 +176,10 @@ export const render = (curves, params = {}, options) =>
 export const blackbody = (curves, params = {}, options) =>
   get("/api/blackbody", { ...params, filters: JSON.stringify(curves) }, options);
 
+/** The randomness layer's galaxy-wide tables (S73, #199): gas_fluctuation, census_clustering and spurs, once per
+ * galaxy - what /api/render's header carried until S73. JSON; takes the input vector and the layer's switch. */
+export const layer = (params = {}, options) => get("/api/layer", params, options);
+
 /** The censuses of one window (S32-S36): clouds, clusters (with their HII regions and bubbles) and remnants. */
 export const clouds = (window = {}, params = {}, options) =>
   frame("/api/clouds", { ...params, ...window }, options);

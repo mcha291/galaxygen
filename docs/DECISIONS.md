@@ -14309,3 +14309,136 @@ ship levels 0–1 (6.6 GB, 4.8 h to export, in an image or beside it) — the de
 warm; a composing reader for the tiles, which compose; the ring-first draw published for the viewer) are each a
 ruling of their own and none is assumed. #197 (the stars' and remnants' ring draws), #195 and F-4-1 stand as the
 BRIEF left them; W3 is theirs.
+
+### D236. S73, the bundles' three debts on the owner's word: `/api/layer` publishes the randomness layer's galaxy-wide tables once per galaxy and every render's header drops them (#199); a logged walk of the whole viewer verifies the bundle plan in both directions (#200); the requests that ended in a 500 answer 400 at the parse (#201); 129 open, 55 discharged
+
+**The commission.** The owner, 2026-10-26, after S72's close: "Run a session here on #200 (the Science-tab and
+filter-set walk, the fixture extended), #201 (the two 500s as 400s) and #199 (the windowed render's header),
+inserting its board row; I rule on the levels and W3 later." Row 73 inserted ahead of W4 and W5 (now rows 74 and 75;
+the board 76 rows). A Fable lead; two Opus builders in parallel (#201 light, #199 heavy), then an Opus walker for
+#200 after #199's viewer change (the walk must log the viewer as it will be) beside an Opus reviewer of the two
+pieces; a fix pass by the lead and a follow-up by the #199 builder on the review. Branch `session-73`, two agents at
+once throughout (D190–D192).
+
+**#201 — the 500s (builder A; `service.py` `_events`, `_parse_filters`; `bundle.py` `_filters`, `request()`;
+`tests/test_api.py`).** Reproduced first: a merger `"time": 1e999` raised `ValueError` from the JSON writer (the
+range check passes `inf`: `0.0 <= inf`); a 100 000-deep `filters=` raised `RecursionError`, and so did a 100 000-deep
+`mergers=`; `"time": NaN` was already a 400 with the wrong reason. Each is refused at the parse, by name: a
+non-finite event number (`math.isfinite` on time, mass_ratio, gas_fraction), a JSON nested too deeply (`RecursionError`
+caught at the `json.loads` of either), an integer of more than 4 300 digits (`json.loads` raises a plain `ValueError`,
+not a `JSONDecodeError`) and a 401-digit integer (`float()` raises `OverflowError`, which `stages/spectra.py`'s
+`_finite` does not catch — handled in the API; the stage's own catch is noted, not changed). The bundle key's
+canonicalisation never raises (`_filters` returns the raw string on `RecursionError`; `request()` treats
+`OverflowError` and `RecursionError` as "no key", so the model answers its own 400). The reviewer then found the
+class not closed: **a negative seed** reached `core/seeds.py`'s `SeedError` inside the run — a 500 on the routes whose
+stages read that seed, a 200 on the others (`texture_seed=-1`: `/api/layer`, `region`, `system`, `clouds` 500,
+`arrays` 200) — refused in `_overrides` with the reason (the lead); JSON `true` passed `float()` as 1.0 — a boolean
+where a number is due is refused; and **the lead's own HEAD fix** (a HEAD through `_answer`'s guard, so a handler bug
+on a HEAD answers 500 instead of dropping the connection) had rebound the HEAD/GET switch to the 500's bytes, so a
+HEAD that hit a 500 wrote a body and the next request on the keep-alive connection read it as a status line —
+renamed, with a socket test (a HEAD that raises, then a GET on the same connection, both parse). The reviewer's
+sweep of forty more shapes (`stars=-1`, `cells` of 10⁶ ids, `precision=f2`, `white=1e999`, `l_min=nan`, `level=1e30`,
+a control named with a null byte, 1 MiB of `&`, `filters` of 10⁵ curves, …) found no other 500; the slow 200s
+(10⁵ merger events 2.5 s; 1 MiB of `&` on `/api/layer` 6.4 s, the galaxy's compute) and the lax 200s (`time: true`
+closed; `about: [1]`, `set=junk`, `r_min=9&r_max=7`, `phi_min=±1e300`) are noted, not opened. `UNPARSEABLE` in
+`tests/test_api.py` holds twelve shapes, each run through `Service.handle`, with a tiny bundle mounted, and over the
+socket (the deep filters as a POST: 600 KB percent-encoded, under `MAX_BODY`).
+
+**#199 — `/api/layer` (builder B; `service.py` `_layer_tables`, `v7_layer.py` `layer_tables`, `published_entries`,
+`reads`, `unspurred_placement`; `tools/timings.py`, `tools/export_template.py`; `frontend/src/api.ts`,
+`FieldVolume.tsx`, `interface/transport.js`; `tests/test_v7_header.py` rewritten, `test_render.py`, `test_v6_clouds.py`,
+`test_v7_layer.py`, `test_layer.py`, `test_templates.py`, `layer_reference.py`, `test_bundle.py`).** The lead's ruling
+before the build: a route of their own, not the whole render's header — one definition of where the tables live.
+`/api/layer` takes model, template and the layer switch (the full input vector as every input route), computes
+exactly the fields the three entries need (`v7_layer.reads`: the gas field's, the clustering's, the spurs' with the
+gas pattern's) through the same v7 functions the render used, and answers `{model, template, inputs, layer,
+gas_fluctuation, census_clustering, spurs, stages}` — with the layer off the entries are the null-valued dicts the
+render carried, text-identical. Every `/api/render`, at every window and level, drops the three keys and carries
+`layer_tables: {route, entries, about}` (the about says the request is this render's own model, template, layer
+setting and inputs, the template's pins coming with its name); the arrays stay (`dust_placement_unspurred` through
+`unspurred_placement`, the kept-octave windows, every component). **Measured** (the builder, then the reviewer against
+581dc16 from a `git archive` of the old tree): the 18 entries (default, `milky_way`, `ngc_4414` × on, off × 3) equal
+as parsed objects and as sorted text, cold and warm; every one of the 21 arrays of the whole, `l_min` and level-2
+renders sha256-equal before and after (12 renders; `dust_placement`, `stars_middle_kept3`,
+`dust_placement_unspurred` named); the whole rgb render's header 124 312 → 26 320 B (26 832 with G2's `template`
+key; S66 had recorded 22 → 123 KB), the Milky Way's 126 128 → 26 664; a level-2 cell's render 126 344 → 26 880 B
+(`ngc_4414` 117 832 → 25 704; layer off 31 848 → 28 512); `render: one region` (90 cells) 159 368 → 61 376 B. **D4:**
+the render's stages are S65's list exactly — `gas_fluctuation` no longer runs for a render (it ran only for the
+header's entry; cold `render: whole, rgb` 18.3 → 11.8 s on the default galaxy, 15.5 → 10.6 on the Milky Way, the
+reviewer's measurement) — and `/api/layer` cold runs the fourteen stages the entries need (halo … gas_fluctuation;
+none of light, dust, clouds, clusters, nebular), after a render only `gas_fluctuation` (5.8–9.2 s on, ~2 ms off);
+`layer: tables` cold 8.63 s, warm 0.016 s, 99 733 B (5 425 B off). **I5:** the route echoes the setting and does not
+branch on it (`test_nothing_but_compose_branches_on_the_layer`, `test_outside_compose_the_setting_is_only_passed_on_
+and_echoed` with the closed list's count 8 → 9 for the new echo). **The viewer** loads `/api/layer` with `useLoad`
+keyed on the shown query, so a Generate holds and publishes it with the render (D232); `sameGalaxy` pairs a layer
+answer with a light render on model, template, layer setting and inputs — the render header gains `template`
+(G2: pins are not inputs, and the Milky Way's pins change the spurs table) — and `drawnPair` keeps the last matched
+pair drawn until a new pair matches (G1: the first build blanked the field for 4–5 s cold between the two answers
+outside a swap, where S68's rule kept the old galaxy on screen; if `/api/layer` fails for a new galaxy the old one
+stays drawn, the loader's error shown as every loader's is). RegionVolume never read the tables: the region regime
+simply stops downloading ~100 KB per window. The noise probe reads the committed fixtures, unaffected. `tsc -b`,
+`vite build`, vitest 448 → 454 (a test of the pairing). The `layer: tables` timings row; the plan's `/api/layer` per
+template and layer. **The residue, measured by the reviewer (a level-2 cell, `milky_way`, rgb, f4):** body 26 816 B,
+the wire header 26 528 B over 288 B of arrays — `components` 7 199 B (`lines_hii` 1 798, `dust_scattered` 1 642,
+`halpha_hii` 1 212), `clouds` 5 815 (its per-ring table 3 636 B, galaxy-wide, repeated per window; the about 1 072),
+`ages` 5 280 (`middle_kept` 1 932), `arrays` 1 572, `inputs` 1 309, `placement` 1 294, the rest under 700 each. About
+95 × the payload, the galaxy-wide abouts and two per-ring tables; a further move is a ruling of its own and is not
+opened — the entry's text names it.
+
+**#200 — the walk (the walker; `tests/fixtures/s72_viewer_requests.json`, `tests/test_bundle.py`,
+`tools/export_template.py`'s comment).** The built viewer served on :8041 through a wrapper of `Service.handle`
+logging path, full query (the POST body appended as `http.py` hands it on), bytes, sha256 and source, no bundle
+mounted; two Playwright walks per template, each situation marked with `/api/version?walk=<name>` (172 marks):
+the landing and the template switch; field mode under rgb, sho, hoo, wfc3 and wfc3n and back; star-first under
+each; physics only in star-first under each and in field mode under each; the layer back on; the Science tab's
+every group's previews, every history button, the preview charts on and off on every scene; then "clouds as
+extinction" and star-first's "molecular clouds" flipped and back, layer on and off. **380 answers, 171 distinct
+meanings by `bundle.key`, every one in its galaxy's plan string for string — the plan needed no change**; all 35 of
+S72's requests seen again; nothing windowed. The fixture keeps its name, shape and S72 entries and grows 35 → 171
+(166 122 B; a top-level `walks` field records what each walk covered); the Milky Way's whole-disc `/api/clouds` is
+now verified (sent when either clouds switch is on, both layers). The only planned entries the viewer never sent:
+the four whole-disc `/api/remnants` — `RegionVolume` asks remnants for the stars regime's window round the view's
+target alone, never the whole disc; kept by the plan's text, named in the test. The test now holds both
+directions (the lead, on the walker's suggestion): every logged request planned, every planned entry logged but
+those four — a plan that drifts from the viewer fails there, never as a silent miss; and only `/api/layer` may ask
+the prefix alone (the review's G3).
+
+**The review (Opus, independent; `git diff 581dc16 042070e`).** Defects: the closed echo list stale (D1, 8 → 9);
+the lead's HEAD 500 body (D2); negative seeds (D3) — each fixed above. Gaps: the field's blank between answers (G1)
+and `sameGalaxy` blind to the template (G2) — fixed by the builder; the relaxed prefix assertion (G3) — tightened.
+Notes: `LayerAnswer.stages` is `X-Galaxy-Stages` (the transport overrides the body's closure; nothing reads it) —
+said in the comment; `spur_sum.json`'s about named the render header — corrected; the pre-existing lax 200s above;
+`test_v7_header.py`'s rewrite weakens no old pin (every number pinned before is pinned from the route with the
+same value; the stages pin went from "S65 plus gas_fluctuation" to "S65 exactly", stronger; a level-2 size bound
+added: header under 40 000 B, arrays under 2 000 B). Verified sound: byte identity against 581dc16 (above), D4, I5,
+the two loaders keyed on the shown query, a stale answer of the cache of two blocked by `sameGalaxy`, the plan's
+`/api/layer` string the viewer's by reading (then by the walk), every route timed, the route texts true.
+
+**The gate, at the final code (5525daf; the docs after it).** The export of both templates at both layer settings:
+**202 entries (66 / 35 / 66 / 35), 296 MB, 115.5 s** on a loaded machine (the Milky Way on 85.4 MB, off 78.2;
+NGC 4414 on 69.7, off 62.5 — each on-bundle 1.0 MB smaller than S72's by the render headers, plus `/api/layer`'s
+100 KB); `--check` **202 of 202 byte-identical** (115.3 s; the early run on the first merge 202 / 202 too). The
+picture file whole with the bundles mounted: **15 passed in the browser, the frames byte for byte; 253 `/api`
+answers, 253 from the bundle at the stand-less captures including every `/api/layer` (10 on at 101 559 B, 5 at
+93 274 B, 4 off at 5 425 B), the same 19 zoom-stand misses as at S72** — EXIT=0. The timings rows (a fresh process
+each): `render: whole, rgb` cold 10.60 s / warm 0.852 s / 9 293 688 B (14.23 s cold, 9 391 520 B at S72 — the render
+no longer runs `gas_fluctuation`, and its header is 98 KB lighter); `render: one region` 10.48 / 0.754 s, 61 536 B
+(159 368 B before); `layer: tables` 8.64 / 0.017 s, 99 733 B; `bundle: render hit` 0.00327 / 0.00338 s, 9 294 040 B;
+`bundle: miss` 11.00 / 0.908 s; `version` 0.0209 / 0.0214 s. Vitest 454 passed, 1 skipped; `tsc -b` and `vite build`
+clean.
+
+**Closing.** The full suite ran detached at the final code (5525daf; `GALAXYGEN_AUDIT_ORDER=1`) with its exit line
+appended to its log: **EXIT=1 — 1 721 passed, 5 skipped, 1 xfailed, 2 failed** in about 5 h (17:0x → 22:04, beside
+no other run): `test_docs`' tag-record row, which C2e writes on `main` after the merge, and `test_performance`'s
+per-cell pricing on `basic` (0.892 against 0.922: the wall-clock flake of #67/#68's class, as at S69 and S70) — green
+alone on its quiet re-run (2 passed, EXIT=0). The I5 instrument tests, green alone after the merges, passed in the
+suite. S72's `verify_clone --ref main` (c5cb1ff, started detached at S72's close): its log is at
+`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s72\verify_s72.log`, read at this session's close and
+recorded in the next open if unfinished. This session's starts detached after the merge beside it as `-s73`. The
+merge is gated on the suite's own exit line and the two failures' causes, both settled.
+
+**The register.** #199, #200 and #201 discharged with their closers' measurements in the entry; nothing opened.
+**129 open = 11 + 118, 55 discharged.** Both pins in `tests/test_audit.py` re-pinned with the cause, the discharged
+row at S73 added, the carried row shortened. No model rule, stage, field, number, row or pin moved; the layer off
+nothing moved (the layer-off entries are the same functions' nulls). Rule D4 is kept in substance by both routes;
+no rule amended.

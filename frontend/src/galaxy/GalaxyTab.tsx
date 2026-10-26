@@ -380,8 +380,8 @@ export function GalaxyTab({
   // (below); the GPU clips the rest. Until a render has named the layer, and at level 0 (above 4 kpc, S64's frames),
   // every cell counts whole and is asked.
   const [starsLayer, setStarsLayer] = useState<number | null>(null);
-  // The cell outlines' ring edges (S70, Audit V F-4-2): the model's published level-0 edges - the render header's
-  // gas_fluctuation.edges, handed up by the field volume, or the bright table's layout - never an even division of the
+  // The cell outlines' ring edges (S70, Audit V F-4-2): the model's published level-0 edges - /api/layer's
+  // gas_fluctuation.edges (S73; the render header's before), handed up by the field volume, or the bright table's layout - never an even division of the
   // grid's extent. The edges are the grid's cells' (systems.cell_edges of its R axis), the same with the layer on or
   // off, so the last the render published is held for this grid while a layer-off render publishes none; until one
   // has come for this grid no outline is drawn.

@@ -28,7 +28,19 @@ import {
 
 import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
 
-import { type Census, type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
+import {
+  type Census,
+  type DrawnPair,
+  type FieldsPayload,
+  type Frame,
+  type LayerAnswer,
+  type Query,
+  type RenderFrame,
+  drawnPair,
+  loadArrays,
+  loadLayer,
+  loadRender,
+} from "../api";
 import { type CloudColumns, type CloudRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
@@ -598,8 +610,9 @@ interface Props {
    */
   onStarsLayer?: (h: number) => void;
   /**
-   * Handed the level-0 ring edges the render header's `gas_fluctuation` publishes (null with the layer off) whenever a
-   * render arrives (S70, Audit V F-4-2): where the star-first mode draws the cell outlines.
+   * Handed the level-0 ring edges `/api/layer`'s `gas_fluctuation` publishes (null with the layer off; the render
+   * header's until S73) whenever a render and its galaxy's tables are there (S70, Audit V F-4-2): where the star-first
+   * mode draws the cell outlines.
    */
   onRingEdges?: (edges: number[] | null) => void;
   /**
@@ -715,7 +728,19 @@ export function FieldVolume({
   const unresolved = lMin != null && lMin > 0;
   const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
-  const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
+  const latest = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
+  // The randomness layer's tables (S73, #199): /api/layer once per galaxy, keyed on the shown query as the render is
+  // (so a Generate's swap holds it with the rest, D232), and drawn only beside a render of the same galaxy - the model,
+  // the template, the resolved inputs and the layer setting each answer states (api.ts sameGalaxy). Between a new
+  // galaxy's two answers the last matched pair stays drawn (drawnPair; the review's G1): the old galaxy whole, as
+  // before S73 the old render stayed until the new one came - never a blank, never one galaxy's light on another's tables.
+  const layerKey = lit ? JSON.stringify(["layer", query]) : null;
+  const layered = useLoad<LayerAnswer>(layerKey, (signal) => loadLayer(query, signal)).value ?? null;
+  const matched = useRef<DrawnPair<RenderFrame> | null>(null);
+  const pair = drawnPair(layered, latest, matched.current);
+  matched.current = pair;
+  const light = pair?.light ?? null;
+  const tablesOf = pair?.layer ?? null;
   // The render's own stars per ring (S67, D227 R5; rule B1: a read-only copy of what the viewer was sent):
   // `window.__galaxygenRenderRings`, the surface-brightness gate's reference beside GalaxyView's ring probe.
   useEffect(() => {
@@ -756,7 +781,7 @@ export function FieldVolume({
     const layers = light?.header.layers;
     // The render covers the whole grid; a frame from another grid (a model switch in flight) waits, and
     // so does a render without the layers its components are spread through.
-    if (!frame || !R || !phi || !light || !white || !layers?.stars || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) {
+    if (!frame || !R || !phi || !light || !tablesOf || !white || !layers?.stars || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) {
       return null;
     }
     const a = light.arrays;
@@ -767,16 +792,17 @@ export function FieldVolume({
     // (the mend: only=remainder's per-part arrays split by kept octaves as the field's are).
     const parts = unresolved ? null : (ageParts(light.header, a) as AgePart[] | null);
     const n = { R: R.n, phi: phi.n, filter: white.length };
-    // The randomness layer's tables (S66, V7; D226 R6): every number the render header's, null with the layer off.
+    // The randomness layer's tables (S66, V7; D226 R6): every number the model's, null with the layer off - since S73
+    // (#199) /api/layer's, the same entries the render's header carried until then.
     const tables: LayerTables = {
-      gas: prepareGas(light.header.gas_fluctuation),
-      clustering: prepareClustering(light.header.census_clustering),
-      spurs: prepareSpurs(light.header.spurs),
+      gas: prepareGas(tablesOf.gas_fluctuation),
+      clustering: prepareClustering(tablesOf.census_clustering),
+      spurs: prepareSpurs(tablesOf.spurs),
       unspurred: false,
     };
     const unspurredName = light.header.placement?.dust_unspurred;
     const unspurred = unspurredName && unspurredName in a ? a[unspurredName] : null;
-    const spurShare = light.header.spurs?.share ?? null;
+    const spurShare = tablesOf.spurs?.share ?? null;
     tables.unspurred = Boolean(unspurred && spurShare && spurShare.length === R.n);
     // The young light can be clustered where the render splits the middle part and the layer's cells are there (R5).
     const middle = parts?.find((p) => p.key === "middle");
@@ -934,7 +960,7 @@ export function FieldVolume({
     box.userData.tables = tables;
     box.frustumCulled = false;
     return box;
-  }, [frame, light, unresolved]);
+  }, [frame, light, tablesOf, unresolved]);
 
   // The clouds' raster (S64, V6; RULING_S64 R4): the whole disc's census over the plane's polar extent at the "cloud
   // raster" tuning value's texels per render cell a side (never past the 16 MiB budget for this grid), built once per
@@ -1063,7 +1089,7 @@ export function FieldVolume({
   }, [starsLayer]);
   const tellEdges = useRef(onRingEdges);
   tellEdges.current = onRingEdges;
-  const gasEdges = light ? (light.header.gas_fluctuation?.edges ?? null) : undefined;
+  const gasEdges = light && tablesOf ? (tablesOf.gas_fluctuation?.edges ?? null) : undefined;
   useEffect(() => {
     if (gasEdges !== undefined) tellEdges.current?.(gasEdges);
   }, [gasEdges]);
