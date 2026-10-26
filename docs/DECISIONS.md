@@ -14285,6 +14285,22 @@ the Science tab and each set, the fixture extended), #201 (two request shapes en
 and a `filters` JSON nested past the recursion limit; before S72). **132 open = 11 + 121, 52 discharged.** Both pins
 in `tests/test_audit.py` re-pinned with the cause.
 
+**Closing.** The full suite ran detached at 1c0289a (the final code but one identifier; `GALAXYGEN_AUDIT_ORDER=1`, #173's
+randomised order included) with its exit line appended to its log: **EXIT=1 — 1 694 passed, 5 skipped, 1 xfailed,
+2 failed** in 4 h 59 min (14:01 → 19:00; the pieces' gate test in it): `test_docs`' tag-record row, which C2e writes on
+`main` after the merge (green once it is), and `test_layer`'s I5 instrument, which found the bundle module's
+`directory()` branching on a parameter named `layer` — the setting's label, "on" or "off", not the switch; renamed
+`setting` at 0df2c2f, the two I5 tests and `test_bundle` green alone (EXIT=0 each). After that rename, the model hash
+having moved, the gate ran once more at the final code: the export 198 entries in 122.8 s, `--check` 198 of 198
+byte-identical in 121.4 s (a loaded machine; 101 / 100 s unloaded), the picture file whole with the bundles mounted —
+15 passed in the browser, the frames byte for byte, every stand-less capture's `/api` answers from the bundle, the 19
+zoom-stand misses as before — EXIT=0. Vitest 448 passed (the pin-lines expectation fixed). S70's `verify_clone --ref
+main` (ad08858) was started detached at S70's close and its log was not found by this session (the scratch directory
+is the session's; the S67 → S68 lesson again): not read, said so. This session's `verify_clone --ref main` starts
+detached after the merge, its log at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s72\verify_s72.log`,
+to be read at the next open. The merge is gated on the suite's own exit line and the two failures' causes above, both
+settled before it.
+
 **For the owner: one ruling owed, nothing else awaited.** Ruling 6's levels and size bound, from the table above.
 The lead's recommendation: ship the whole-galaxy scope alone (285 MB, 101 s in the image build; the landing, the
 template switch, the star-first mode and the physics-only switch never run the model — 234 of 253 answers in the
