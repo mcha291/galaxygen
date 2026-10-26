@@ -704,8 +704,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S64 | **116** (a cluster's half-mass radius drawn as a Plummer profile where it fills a pixel, D224; #112's star half too, its field half carried) | 1 |
 | **discharged** at S67 | **112, 120** (the region's field dimmed slab by slab, only behind each cloud, D228 - #112's star half at S64; the instrument's image of a point at its physical size where a template carries an instrument, the spikes a switch, D227) | 2 |
 | **discharged** at S70 | **137** (the layer's realised totals the same on and off since L1's ring-first draw at S61, D220 — discharged in fact, struck at Audit V's register pass, D234) | 1 |
+| **discharged** at S73 | **199, 200, 201** (the layer's tables once per galaxy by `/api/layer`; the bundle plan verified against a logged walk in both directions; the 500s answered 400 at the parse — D236) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201 | 121 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198 | 118 |
 
 So the board's **129 open** is 11 permanent and 118 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
@@ -740,7 +741,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234; S72, the template bundles, opened #199–#201 — the windowed render's header carrying the galaxy's layer tables, the bundle plan's unverified entries, two request shapes that end in a 500, D235.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234; S72, the template bundles, opened #199–#201 — the windowed render's header carrying the galaxy's layer tables, the bundle plan's unverified entries, two request shapes that end in a 500, D235; S73, on the owner's word, discharged all three — `/api/layer`, the logged walk, the 400s at the parse, D236.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -4539,7 +4540,14 @@ never been judged in twenty-three sessions.
    and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes
    it: a test that drives one ring past saturation on a synthetic pattern and reads the cut's effect, or — if no
    admissible input reaches it — the cut retired as dead (S41's rule) with the reason.
-199. **A windowed render carries the whole galaxy's layer tables in its header** (S72, D235; the bundle probe). A
+199. ~~**A windowed render carries the whole galaxy's layer tables in its header**~~ (S72, D235; the bundle probe).
+   **DISCHARGED at S73 (D236).** The three tables are published once per galaxy by `/api/layer` (model, template,
+   layer; the same v7 functions, the 18 entries byte-identical to what the render's header carried, the 21 render
+   arrays sha256-equal before and after) and every render's header carries `layer_tables` naming the route
+   instead: the whole rgb render's header 124 312 → 26 832 B, a level-2 cell's render 126 344 → 26 880 B; the
+   render no longer runs `gas_fluctuation` (D4). The residue, measured: the windowed header is still ~26 KB over
+   288 B of payload — `components` 7.2 KB, `clouds` 5.8 KB (its per-ring table 3.6 KB galaxy-wide), `ages` 5.3 KB,
+   the abouts and rules; a further move is a ruling of its own, not opened. *The entry as it read:* A
    `/api/render` for one level-2 cell is 126 064 B of which 125 784 B are header: `census_clustering` (63 KB),
    `gas_fluctuation` (25 KB) and `spurs` (11 KB), the galaxy-wide tables V7 put on the render's header (D226), repeated
    on every windowed render (31.6 KB with the layer off); the viewer's region regime asks 53 701 distinct windows per
@@ -4547,7 +4555,14 @@ never been judged in twenty-three sessions.
    **Carried.** What closes it: the layer's tables published once per galaxy (the whole render's header, or a route of
    their own) and the windowed render naming them by the content hash - a wire change, D4-neutral, measured before and
    after on `render: one region`.
-200. **The bundle plan's entries that no walk verified** (S72, D235; the reviewer). `tests/fixtures/s72_viewer_requests.json`
+200. ~~**The bundle plan's entries that no walk verified**~~ (S72, D235; the reviewer).
+   **DISCHARGED at S73 (D236).** A logged walk of the real viewer (both templates; each shipped set in field and
+   star-first modes; the physics-only switch under each; the Science tab's every preview and history; the clouds'
+   two switches; 380 answers, 171 distinct meanings by `bundle.key`) found every one of them in the plan string for
+   string — the plan needed no change; the fixture grew 35 → 171 entries (166 KB) and the test holds both
+   directions: every logged request planned, every planned entry logged but the four whole-disc remnants (the
+   viewer asks remnants for the stars regime's window alone; kept by the plan's text, named in the test). *The
+   entry as it read:* `tests/fixtures/s72_viewer_requests.json`
    holds the 35 galaxy-scale requests the real viewer sent on an rgb walk, and `tools/export_template.py`'s plan
    reproduces each string for string; the plan's other entries - the Science tab's `/api/arrays` sets (about 30 per
    layer-on bundle, their field order part of the key) and the four non-rgb sets' blackbody, render, remainder,
@@ -4556,7 +4571,14 @@ never been judged in twenty-three sessions.
    meaning; the body is the model's either way). **Carried.** What closes it: a walk that opens the Science tab and
    presses each shipped set, logged through `--source-log`, the fixture extended to it, and the picture opt-in's hit
    assertion covering those captures.
-201. **Two request shapes end in a 500, not a 400** (S72, D235; the reviewer; before S72). `Service.handle` catches
+201. ~~**Two request shapes end in a 500, not a 400**~~ (S72, D235; the reviewer; before S72).
+   **DISCHARGED at S73 (D236).** Refused at the parse with the reason: a non-finite event number (`1e999`, `NaN`,
+   `Infinity`), a JSON nested past the recursion limit (`mergers` or `filters`), an integer too long for a float
+   or for the JSON parser, a boolean where a number is due, a negative seed (which `core/seeds.py` refused inside
+   the run — a 500 on the routes whose stages read it, a 200 elsewhere); the bundle key's parse never raises; a
+   HEAD goes through the same guard as a GET and a HEAD that hits a 500 sends no body. Pinned in
+   `tests/test_api.py` (`UNPARSEABLE`, over `Service.handle`, with a bundle mounted and over the socket). *The entry
+   as it read:* `Service.handle` catches
    `ApiError` and `RunError` only: a merger event with `"time": 1e999` raises `ValueError` from the JSON writer ("Out of
    range float values are not JSON compliant") and a `filters=` JSON nested past the recursion limit raises
    `RecursionError`, each answered as `{"error": "internal error"}` by `http.py`. With a bundle mounted the raise comes
