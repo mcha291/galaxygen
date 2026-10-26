@@ -361,12 +361,22 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
         prefix = doc["prefixes"][galaxy]
         inputs = [q for q in planned[galaxy] if "template=" in q]
         # S73 (#199): /api/layer asks the prefix alone - the query every loader spreads and nothing after it.
-        assert all(q.split("?", 1)[1].startswith(prefix + "&") or q.split("?", 1)[1] == prefix for q in inputs), galaxy
+        assert all(
+            q.split("?", 1)[1].startswith(prefix + "&") or (q.startswith("/api/layer?") and q.split("?", 1)[1] == prefix)
+            for q in inputs
+        ), galaxy
     anywhere = set().union(*planned.values())
     for r in doc["requests"]:
         sent = r["path"] + "?" + _sent(doc, r)
         pool = anywhere if r["galaxy"] is None else planned[r["galaxy"]]
         assert sent in pool, sent[:300]
+    # S73 (#200, the walker's guard): the reverse holds too - every planned entry is one the viewer sent on some walk,
+    # but the whole-disc remnants (RegionVolume asks remnants for the stars regime's window alone; the plan keeps them
+    # because BUILD_IV's text names the censuses). A plan that drifts from the viewer fails here, not as a silent miss.
+    sent_all = {r["path"] + "?" + _sent(doc, r) for r in doc["requests"]}
+    unsent = sorted(q for q in anywhere if q not in sent_all)
+    assert all(q.startswith("/api/remnants?") for q in unsent), unsent[:3]
+    assert len(unsent) == 4, unsent
 
 
 def test_the_plan_names_every_group_and_only_routes_that_exist(service):
