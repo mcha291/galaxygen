@@ -27,11 +27,19 @@ Repository layout:
 
 Package layout is described in `model/galaxy/__init__.py`.
 
-Deployment: `Dockerfile` builds `frontend/` and serves it from `galaxy.api` on
-one origin; `.github/workflows/image.yml` publishes it to ghcr.io per commit;
-`infra/main.bicep` is the Azure Container Apps setup, sized for the free grants
-(scale to zero, one 0.5 vCPU / 1 GiB replica), and
-`infra/deploy.ps1 -ResourceGroup <name> -Tag <commit>` rolls out that image.
+Deployment (BUILD_IV, D239): two images per commit from `.github/workflows/image.yml` —
+`Dockerfile.model` is the model's API with its template bundles exported at build time
+(`ghcr.io/mcha291/galaxygen-model:<commit>`, labelled with its `model.hash`) and
+`gateway/Dockerfile` is the built frontend behind the .NET gateway
+(`ghcr.io/mcha291/galaxygen-gateway:<commit>`); CI runs both before it publishes them
+(`infra/smoke.sh`: every bundle's hash equals the live `model.hash`, the landing's answers
+come from the bundles, the gateway's pin is verified and its cache hit asks the model
+nothing). `infra/main.bicep` is the Azure Container Apps setup — the gateway app with
+external ingress, the model app internal, both scaling to zero, Table and Blob Storage for
+the share links — sized for the free grants, and
+`infra/deploy.ps1 -ResourceGroup <name> -Tag <commit>` rolls both images out, reading the
+model image's hash for the gateway's pin. The root `Dockerfile` still builds the one-origin
+image (the API serving the built frontend) for local use.
 Locally, `uv run python -m galaxy.api --client frontend/dist` serves the built UI.
 
 Models are declared one file each in `model/galaxy/models/` (two today: `basic.py`,
