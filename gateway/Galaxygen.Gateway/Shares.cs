@@ -50,18 +50,39 @@ public sealed class MemoryShareStore : IShareStore
     }
 }
 
-/// <summary>Answers in the gateway's memory, at most Cache:ResultEntries of them, the oldest dropped first.</summary>
+/// <summary>Answers in the gateway's memory, at most Cache:ResultEntries of them and Cache:ResultMegabytes of bytes
+/// (S74, G-1), the oldest dropped first; an answer larger than the whole bound is not kept.</summary>
 public sealed class MemoryResultStore(IOptions<GatewayOptions> options) : IResultStore
 {
-    private readonly ConcurrentDictionary<string, ModelResult> _results = new(StringComparer.Ordinal);
-    private readonly ConcurrentQueue<string> _order = new();
+    private readonly Dictionary<string, ModelResult> _results = new(StringComparer.Ordinal);
+    private readonly Queue<string> _order = new();
+    private readonly Lock _lock = new();
+    private long _bytes;
     public string Kind => "memory";
-    public Task<ModelResult?> GetAsync(string key, CancellationToken cancel) => Task.FromResult(_results.GetValueOrDefault(key));
+
+    /// <summary>Bytes of answers held now.</summary>
+    public long Bytes { get { lock (_lock) return _bytes; } }
+
+    public Task<ModelResult?> GetAsync(string key, CancellationToken cancel)
+    {
+        lock (_lock) return Task.FromResult(_results.GetValueOrDefault(key));
+    }
 
     public Task PutAsync(string key, ModelResult result, CancellationToken cancel)
     {
-        if (_results.TryAdd(key, result)) _order.Enqueue(key);
-        while (_results.Count > options.Value.Cache.ResultEntries && _order.TryDequeue(out var oldest)) _results.TryRemove(oldest, out _);
+        var cache = options.Value.Cache;
+        var limit = cache.ResultMegabytes * 1024L * 1024L;
+        if (result.Body.Length > limit) return Task.CompletedTask;
+        lock (_lock)
+        {
+            if (!_results.TryAdd(key, result)) return Task.CompletedTask; // a repeat neither replaces nor counts twice
+            _order.Enqueue(key);
+            _bytes += result.Body.Length;
+            while ((_results.Count > cache.ResultEntries || _bytes > limit) && _order.TryDequeue(out var oldest))
+            {
+                if (_results.Remove(oldest, out var dropped)) _bytes -= dropped.Body.Length;
+            }
+        }
         return Task.CompletedTask;
     }
 }
@@ -109,7 +130,8 @@ public sealed class TableShareStore(TableServiceClient service) : IShareStore
     }
 }
 
-/// <summary>Answers in Azure Blob Storage, one blob per key; the status and stages ride in the blob's metadata.</summary>
+/// <summary>Answers in Azure Blob Storage, one blob per key; the status and the model's headers ride in the blob's
+/// metadata. Nothing here deletes a blob: the container's lifecycle rule (a TTL) is W4's, set on the storage account.</summary>
 public sealed class BlobResultStore(BlobServiceClient service) : IResultStore
 {
     public const string Container = "results";
@@ -130,7 +152,8 @@ public sealed class BlobResultStore(BlobServiceClient service) : IResultStore
             var got = (await container.GetBlobClient(key).DownloadContentAsync(cancel)).Value;
             var meta = got.Details.Metadata;
             var status = meta.TryGetValue("status", out var s) && int.TryParse(s, out var n) ? n : 200;
-            return new ModelResult(status, got.Details.ContentType, meta.TryGetValue("stages", out var stages) ? stages : null, got.Content.ToArray());
+            string? Meta(string name) => meta.TryGetValue(name, out var value) ? value : null;
+            return new ModelResult(status, got.Details.ContentType, Meta("stages"), got.Content.ToArray(), Meta("source"), Meta("cachecontrol"));
         }
         catch (RequestFailedException e) when (e.Status == 404)
         {
@@ -142,7 +165,9 @@ public sealed class BlobResultStore(BlobServiceClient service) : IResultStore
     {
         var container = await _container.Value;
         var metadata = new Dictionary<string, string> { ["status"] = result.Status.ToString() };
-        if (result.Stages is not null) metadata["stages"] = result.Stages;
+        if (!string.IsNullOrEmpty(result.Stages)) metadata["stages"] = result.Stages;
+        if (!string.IsNullOrEmpty(result.Source)) metadata["source"] = result.Source;
+        if (!string.IsNullOrEmpty(result.CacheControl)) metadata["cachecontrol"] = result.CacheControl;
         await container.GetBlobClient(key).UploadAsync(BinaryData.FromBytes(result.Body), new BlobUploadOptions
         {
             HttpHeaders = new BlobHttpHeaders { ContentType = result.ContentType },
@@ -164,9 +189,14 @@ public static class ShareEndpoints
             if (query is null) return Results.Problem(error, statusCode: 400);
             if (query.Pairs.Count == 0) return Results.Problem("a share needs a query: at least the template", statusCode: 400);
 
-            string? hash = null;
-            try { hash = await version.CurrentAsync(cancel); }
-            catch (Exception) when (!cancel.IsCancellationRequested) { } // the record does not need the model awake
+            // The record's hash is for the record only; the last one read, or the pin, is taken without waiting on
+            // the model (S74, G-10), and only when none is known yet is the model asked, on its short timeout.
+            var hash = version.Known;
+            if (hash is null)
+            {
+                try { hash = await version.CurrentAsync(cancel); }
+                catch (Exception) when (!cancel.IsCancellationRequested) { } // the record does not need the model awake
+            }
 
             var record = new ShareRecord(query.Digest(), query.Canonical, hash, clock.GetUtcNow());
             await store.PutAsync(record, cancel);
@@ -175,19 +205,26 @@ public static class ShareEndpoints
         }).RequireRateLimiting(Policies.Share);
 
         share.MapGet("/{id}", async (string id, IShareStore store, CancellationToken cancel) =>
-            await store.GetAsync(id, cancel) is { } record ? Results.Ok(record.View()) : Results.NotFound());
+            ShareIds.Valid(id) && await store.GetAsync(id, cancel) is { } record ? Results.Ok(record.View()) : Results.NotFound());
 
         // A shared galaxy's model route: the record's query with the request's own parameters beneath it (the
-        // record's keys win, so a link cannot be edited by its URL), answered from the store when it holds this
-        // exact query under the current hash, and from the model otherwise, which then fills the store.
+        // record's keys win, so a link cannot be edited by its URL; any other key must be one the route itself
+        // declares), answered from the store when it holds this exact query under the current hash, and from the
+        // model otherwise, which then fills the store.
         share.MapGet("/{id}/{route}", async (string id, string route, HttpRequest request, IShareStore store, IResultStore results,
-            ModelClient model, ModelVersion version, IOptions<GatewayOptions> options, CancellationToken cancel) =>
+            ModelClient model, ModelVersion version, ModelGate gate, IOptions<GatewayOptions> options, CancellationToken cancel) =>
         {
-            if (!ModelRoutes.Galaxy.Contains(route)) return Results.NotFound();
+            if (!ShareIds.Valid(id) || !ModelRoutes.Parameters.TryGetValue(route, out var own)) return Results.NotFound();
             if (await store.GetAsync(id, cancel) is not { } record) return Results.NotFound();
             var extra = GalaxyQuery.FromRequest(request.Query, options.Value.Limits.QueryBytes, out var error);
             if (extra is null) return Results.Problem(error, statusCode: 400);
-            var query = GalaxyQuery.Parse(record.Query).Under(extra);
+            var shared = GalaxyQuery.Parse(record.Query);
+            if (extra.Pairs.Keys.FirstOrDefault(k => !own.Contains(k) && !shared.Pairs.ContainsKey(k)) is { } stray)
+            {
+                return Results.Problem($"'{stray}' is not a parameter of /api/{route}: a shared galaxy's inputs are its record's " +
+                    $"(this route takes {(own.Count == 0 ? "none" : string.Join(", ", own.Order(StringComparer.Ordinal)))})", statusCode: 400);
+            }
+            var query = shared.Under(extra);
 
             string hash;
             try { hash = await version.CurrentAsync(cancel); }
@@ -197,17 +234,39 @@ public static class ShareEndpoints
             }
 
             var key = ResultKey.For(hash, id, route, query);
-            if (await results.GetAsync(key, cancel) is { } kept) return kept.ToHttp("hit");
+            if (await results.GetAsync(key, cancel) is { } kept) return kept.ToHttp(ModelResult.Hit);
+
+            // A miss reaches the model: an input-taking route waits for its one permit, as the viewer's own requests do.
+            using var lease = ModelRoutes.Generating.Contains(route) ? await gate.AcquireAsync(cancel) : null;
+            if (lease is { IsAcquired: false }) return ModelGate.Refusal();
+            await version.VerifyAsync(cancel);
+            try { hash = await version.CurrentAsync(cancel); }
+            catch (Exception) when (!cancel.IsCancellationRequested)
+            {
+                return Results.Problem("the model's content hash could not be read", statusCode: 503);
+            }
+            key = ResultKey.For(hash, id, route, query); // a pin found wrong on the way moves the key to the live hash
+
             ModelResult fresh;
             try { fresh = await model.GetAsync(route, query, cancel); }
             catch (Exception) when (!cancel.IsCancellationRequested)
             {
                 return Results.Problem("the model could not be reached", statusCode: 502);
             }
-            if (fresh.Ok) await results.PutAsync(key, fresh, cancel);
-            return fresh.ToHttp("miss");
+            if (fresh.Ok && version.Known == hash) await results.PutAsync(key, fresh, cancel);
+            return fresh.ToHttp(ModelResult.Miss);
         });
 
         return share;
     }
+}
+
+/// <summary>A share id is the query's digest: 12 characters of base64url. Anything else is not a link, and is
+/// answered 404 before any store is asked (S74, N-1: never a 500 from the Table SDK on a key it refuses).</summary>
+public static partial class ShareIds
+{
+    [System.Text.RegularExpressions.GeneratedRegex("^[A-Za-z0-9_-]{12}$")]
+    private static partial System.Text.RegularExpressions.Regex Pattern();
+
+    public static bool Valid(string id) => Pattern().IsMatch(id);
 }

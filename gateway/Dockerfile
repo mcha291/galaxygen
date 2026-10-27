@@ -4,7 +4,7 @@
 #   docker build -f gateway/Dockerfile -t galaxygen-gateway .
 #
 # The Python model is its own image (the root Dockerfile) and is reached at Gateway__Model__BaseUrl.
-# W2's template bundles are copied in at /app/bundles once the export tool exists (TODO(W2)).
+# No template bundle is copied here: since S72 the model answers a bundled request itself (S74, D-3).
 
 FROM node:24-slim AS frontend
 WORKDIR /src
@@ -25,8 +25,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 COPY --from=frontend /src/frontend/dist /app/web
 ENV ASPNETCORE_URLS=http://+:8080 \
-    Gateway__Frontend__Path=/app/web \
-    Gateway__Bundles__Path=/app/bundles
+    Gateway__Frontend__Path=/app/web
 EXPOSE 8080
 USER $APP_UID
 ENTRYPOINT ["dotnet", "Galaxygen.Gateway.dll"]
