@@ -14552,3 +14552,159 @@ per-region determinism pins re-pin across the suite with the reason, the bundles
 are re-read. It is a correctness fix of the model's objects (no physics law changes; the ring's own density is
 sampled correctly), so it belongs before the deployment phases if the frames deployed are to be the fixed ones, and
 after any ruling that would move the catalogue anyway. The owner's word on when.
+
+### D238. S74, the gateway's review: W3 read against the plan and run against the live model; every cache was keyed on the wrong hash and stale physics was served after a model-only change — fixed with fifteen other findings; D5's gateway sentence entered; the proxied path gets the one-at-a-time rule; #203 opened, 131 open
+
+**The commission.** The owner, 2026-10-27: "merge as built and schedule a review session" (D237's row 74), then "Yes,
+run S74, the gateway's review, here now as BRIEF.md lays it out." A Fable lead; an Opus reviewer reading the code
+blind to its README against `BUILD_IV.md` §2c, §5 Phase W3's gate, §7 rulings 4, 5, 7 and Appendix A; an Opus runner
+driving the gateway on :8060 against the live model on :8050 with S73's bundles mounted (the model hash unchanged
+since S73: 4f0c8401…; 175 distinct keys served); then one Opus builder for the fixes under the lead's rulings, and
+the runner once more. Branch `session-74`; two agents at once throughout.
+
+**The review's findings (defects first; file:line in the reviewer's report, the numbers the runner's).**
+**D-1, the hash.** `ModelClient.cs` composed every key as `api.hash + "." + viewer.hash` — `api` is
+`model/galaxy/api/*.py` alone and `viewer` is `interface/`; since S72 (D235) the hash an answer depends on is
+`/api/version`'s `model`, every byte under `model/galaxy`. A stage, a constant or a data file change left every
+gateway key unchanged: the output cache (60 min), the share links' Blob store (no TTL: forever), the memory result
+store (until eviction). The tests pinned the defect (`"a1.v1"`; the stub published no `model`). **Measured:** with a
+scratch copy of `model/galaxy` carrying one extra file (model.hash 4f0c… → 30d7…, `api` and `viewer` unchanged) the
+gateway kept serving the landing render (Age 1 408 → 1 444 s) and a non-bundled arrays answer, and both share links
+answered `hit` with the old bytes; the model saw only `/api/version`. **D-2,** a pinned `Gateway:Model:ContentHash`
+was never checked against the live model: a wrong pin keyed every cache wrong, silently, and new answers refilled
+under it. **D-3,** the `/bundles` static mount (`public, max-age=31536000, immutable` on paths carrying no hash — a
+D3 breach) and `Gateway:Bundles:Path` were dead since S72 (the API answers a bundled request before any handler;
+nothing in the gateway read a bundle file; `/healthz`'s `bundles` always false; the Dockerfile's `TODO(W2)` stale).
+**D-4,** `/api/version/` with a trailing slash was cached for 60 min (the never-cache check matched exact strings;
+the model strips the slash): the check itself could be served stale. **D-5,** ruling 5's "one generate at a time"
+held only behind `POST /jobs`, which the viewer never calls (no client change, the gate says): a viewer Generate
+goes `/api/*` through YARP to the threaded Python server with no concurrency bound — the model could be asked for N
+renders at once, which the plan's reason forbids. **D-6,** the standard resilience handler retried on timeout, 5xx
+and 408 with a 250 s total: a route timing out at 120 s was resent while the model's first thread kept computing
+(two expensive computations; a 500 computed twice; ruling 5's 120 s exceeded). Gaps: the share route's `Under()`
+let a request add any key the record lacked, so any client could fill the Blob store under any id (G-1); finished
+jobs kept whole bodies in memory bounded by count only (G-2); ruling 4's stateless fallback and "opens warm" exist
+only on gateway routes no viewer calls (G-3, #203); `QueryBytes` 16 384 below the viewer's ~20 KB WFC3 filters
+(G-4); the route allowlist lacked `layer`, `templates`, `blackbody` (G-5); `ModelResult.ToHttp` dropped
+`X-Galaxy-Source` and `Cache-Control`, a store hit replayed the fill-time `X-Galaxy-Stages` with no gateway marker
+(G-6; the runner: a cached non-bundled arrays answer with Age 0 still said `stages='halo'`); the frontend's static
+files had no `Cache-Control` and the SPA fallback answered a missing `/assets/*.js` with index.html (G-7); the
+window counted output-cache hits, every `/jobs/{id}` poll and the SPA fallback — the runner's polling of two jobs
+at 4 s exhausted 60/min (12 polls 429), and a limited client got a blank 429 for `/` (G-8); every cacheable GET
+waited on the hash read behind a 250 s pipeline (G-10); cancelled queued jobs kept their channel slot (G-13); the
+AppHost bound the model to the owner's 8017 (G-15); a share id with `/ # ? \` made the Table SDK throw (N-1).
+**What held:** D5 and §2c's "may not" — no physics, no colour table, nothing derived from the model's numbers, the
+only parsed body `/api/version`'s two strings; bodies unchanged everywhere (no compression, YARP streaming); POST
+form bodies through unchanged under Kestrel's 30 MB; `/api` and `/api/version` never cached (but D-4); the output
+cache keyed on path, every query key and the hash with locking; the queue a bounded channel with a
+`BackgroundService`, linked cancellation, DELETE and SSE; the sliding window 60 / 60 s per address; the 70 tests
+(31 feature, 20 parts, 16 query, 3 gateway) with an unrealistic stub; CI on `gateway/**` only; the gateway's own
+Dockerfile building the frontend. **The runner's first pass, the gate line by line:** the frontend's full flow
+through the gateway with no client change **met** (Playwright: landing, NGC 4414 and back, star-first, physics only
+on and off, field, zoom, Edit → reroll → Generate — 49 `/api` answers all 200, 23 from the gateway's cache, no 429,
+`ORIGIN` ""; the landing's time to ready 13.0 s through the gateway against 13.2 direct, 11 `/api` requests all
+bundle hits, the 9.3 MB render 1.66 s in the browser either way; Generate 33.5 s, six cold routes at 18–30 s each);
+`/api/version` through equals the model's **met** (2 790 B byte-identical); the limiter and queue **met as built**
+(12 render jobs at once: 11 × 202, the 12th 429 with `retryAfterSeconds: 5`; job 2 ran the instant job 1 finished;
+the 60/min window's first 429 at request 61, recovery 60.1 s later) and **not met literally** (the gate's "429 on the
+second concurrent generate" is ruling 5's queue of ten; G-12); a share link **met** (15 of 15 inputs round-trip; the
+first open a `miss` computed in 14.1 s, the second a `hit` in 22 ms with no model request; the id 12 chars, a
+made-up id 404); every cache key contains the hash **not met for the model's hash** (D-1, measured). A gateway
+output-cache hit on the 9.3 MB render (45 ms) is no faster than the model's own bundle hit (33 ms); a hit on a 2 KB
+arrays answer 3.9 against 15.4 ms.
+
+**The lead's rulings for the fix pass (the owner may re-rule the two marked).** The version key is `model.hash`
+alone; a `/api/version` without it is refused (the gateway requires the S72+ API) and nothing is served from any
+cache until one is read. A pin is compared at every version read; on a mismatch an error is logged, the pin is
+dropped for the rest of the process, the live hash keys from then on, an answer computed under the wrong pin is
+not stored, and `/healthz` answers 503 with `pin_mismatch`, `hash.pin`, `hash.live`. The `/bundles` mount and its
+configuration go. Paths are normalised before any route comparison. **The proxied input-taking routes (`arrays`,
+`region`, `system`, `clouds`, `clusters`, `remnants`, `bright`, `render`, `layer`; GET or POST) pass a concurrency
+gate of 1 in flight and a queue of 64, oldest first, 429 with `Retry-After` past it; output-cache hits never queue;
+`/share/{id}/{route}` misses and jobs take the same permit** `[the lead's ruling, to re-rule: ruling 5's numbers
+were the jobs']`. No retries on model routes: one attempt, its timeout the total (120 s); the version read on its
+own 10 s. A share route accepts only the record's keys and the route's own declared parameters (from
+`service.ROUTES`), 400 otherwise; ids validated by shape (`^[A-Za-z0-9_-]{12}$`, 404 otherwise); the memory result
+store bounded by bytes (64 MB). Jobs bounded by bytes (64 MB), evicted on a one-minute timer, cancelled queued jobs
+freeing their place at once. `QueryBytes` 131 072 (an eighth of the API's `MAX_BODY`). The allowlist every API route
+but `/api` and `/api/version`. `X-Galaxy-Source` and `Cache-Control` passed as the model sent them; a hit carries
+`X-Gateway-Cache: hit` with `X-Galaxy-Stages` empty (D4's header is the transport's truth), a miss `miss`. `/assets/*`
+immutable, index.html and the fallback `no-cache`, the fallback 404 on `/assets/*` and `/api/*`. The window after
+the output cache, counting only `/api`, `POST /jobs` and `/share/{id}/{route}`, with `Retry-After`. The AppHost on
+8027. D5's Appendix A sentence entered in `RULES.md` at this session (G-14: RULES had said "at W3's merge" and W3
+merged at S71 without it). Ruling 4's viewer half is #203 and `VIEWER_TASKS.md` T20, a phase of its own after W4.
+
+**The fixes (the builder; `gateway/`: `ModelClient.cs`, `ModelPipeline.cs` new — `ModelGate`, `Label`, `Observe` —,
+`Caching.cs`, `Shares.cs`, `Jobs.cs`, `Program.cs`, `GatewayOptions.cs`, `StaticRoots.cs`, `Proxy.cs`, the AppHost,
+the Dockerfile, the tests, the README).** As ruled, with these particulars: the pin is checked on the viewer's own
+`/api/version` passing through (the body copied as it goes, sent unchanged) and by `VerifyAsync` before any request
+reaches the model, at most once per `VersionSeconds`; there is no read at startup, so a pinned gateway at zero
+replicas learns of a mismatch at the first request that reaches the model (a deviation, recorded); the pipeline
+order is Label, output cache, rate limiter, gate; the model client runs a pipeline with no retry strategy (Polly
+rejects a retry count below one) and one timeout; `ModelRoutes.Parameters` holds each route's declared parameters;
+the queue counts jobs in the Queued state under a lock (the channel unbounded), positions by a sequence number,
+which also fixed the previously skipped same-tick test; output-cache replays are labelled by an `OnStarting`
+callback outside the cache that reads the `Age` header (a gateway 429 on `/api` also says `miss`, a wart). **106
+tests, 0 failed, 0 skipped** (69 + 1 skipped before; the lead's own `dotnet build -c Release` 0 errors and `dotnet
+test` 106 passed on the merged branch): the 20 KB POST forwarded unchanged (the stub echoes its length), two
+concurrent proxied renders with the second waiting, 429 with `Retry-After` past the queue, a hit never waiting, a
+share miss taking the permit, `/api/version/` reaching the model twice, the key moving with `model` and not with
+`api` or `viewer`, the pin's match, mismatch and unreadable-model paths, a version without `model.hash`, the static
+headers and the fallback, share parameters per route and ids by shape, a cancelled job freeing its place, the byte
+bounds, the version read's own timeout against a silent listener. The README rewritten to the code: eight claims
+removed (the bundle serving, `Gateway:Bundles:Path`, the 16 KB bound, "exactly as it sent them"), the `model.hash`
+section (S72+ required, the pin verified, 32 hex, what a mismatch does), every route with its headers, a Limits
+section saying what each limit counts, and "Left to W4": the Blob TTL, `TrustForwardedFor`, Azure Monitor (OTLP
+only), trimming, the memory stores lost on restart, share routes GET-only (a named instrument's ~20 KB curves
+cannot ride a GET's request line; the viewer's own long queries go to `/api` as a POST).
+
+**The runner's second pass, on the fixed gateway (the viewer built to a scratch `dist`, the same JS hash; the model
+on :8050 from S73's bundles, the gateway on :8060; every number from the scripts in the runner's scratch).** **The
+hash:** unpinned, after the model's `model.hash` moved (4f0c… → 30d7…, `api` and `viewer` unchanged) the landing
+render was still a `hit` for the rest of the 30 s version window (Age 404, the last read under 30 s earlier) and
+then a `miss` computed in 16.8 s under the new key; both share links recomputed (`miss` 14.8 s and 2.5 s) and were
+warm again after; `/healthz` live = keyed = 30d7. Pinned to the old hash against the new model: the first request
+that reached the model logged the mismatch ("the pinned model hash 4f0c… is not the live model's 30d7…: the pin is
+dropped"), `/healthz` answered 503 with `pin_mismatch: true` and both hashes, the stale render was not served again
+(a `miss`, 19.4 s), and the 503 stands until restart as ruled; a hit before that first contact is served under the
+pin by design (a hit asks nothing). **Headers:** a replay of the landing arrays `X-Gateway-Cache: hit`, Age 0,
+`X-Galaxy-Stages` empty, `X-Galaxy-Source: bundle`, `Cache-Control: no-store`, the model asked nothing; an unbundled
+arrays replay `hit` with `stages` emptied where the first said `halo`; a share's second open `hit` in 30 ms;
+`/api/version/` twice reached the model twice. A foreign share parameter 400, a record key in the URL ignored, a
+malformed id 404. **The permit:** six different unbundled renders fired 10 ms apart — in flight never above 1
+(197 `/healthz` samples), waiting 6 → 0, the answers one at a time at 16.6, 35.1, 50.3, 66.4, 83.0 and 98.5 s (one
+cold render each); a cached landing render fired 3 s in answered in 50 ms (a hit never queues); 69 cheap unbundled
+arrays behind one slow render, from three source addresses to keep the window out of it: 64 held and answered at
+181.5–182.2 s, the 65th–69th refused in 1.7 s with `Retry-After: 5` — the 66th concurrent request. **A cost measured
+and recorded for W5:** a bundled request NOT yet in the gateway's cache waits behind the gate like a compute
+(NGC 4414's layer-off render, a millisecond answer at the model, took 95.3 s behind the six renders) — the gate cannot
+tell a bundle hit from a compute before asking; once asked it is a gateway hit for the cache's lifetime; W5's "eager
+warm of the gateway" (§5 Phase W5) is the remedy, from the bundles' manifests. **The window:** 70 cached
+`/api/templates` — 1 miss and 69 hits, no 429 (hits are free); 70 `/api/version` — the first 429 the 61st counted
+request, `Retry-After: 10`; while limited `/`, `/index.html`, `/assets/*`, an SPA route, `/healthz`, `GET /jobs/{id}`,
+`/jobs/{id}/result`, `GET /share/{id}` and a cached answer all 200, `POST /jobs` 429; recovery 58.1 s. **Static:**
+`/assets/*.js` immutable, `/`, `/index.html` and an SPA route `no-cache`, `/assets/missing.js` 404, `/api/nope` the
+model's 404 (not index.html). **The viewer's flow:** 55 requests (47 `/api`: 41 bundle, 6 model, 15 gateway hits),
+all 200, no 429; the landing 12 987 ms through the gateway against 12 988 direct; **Generate 42.2 s against 33.5 s
+in the first pass — its six model routes now run one at a time behind the permit, the longest (`/api/layer`) waiting
+38.5 s against 25.8** `[the cost of the lead's D-5 ruling; the owner's to weigh]`. **A share carrying the WFC3 set**
+(11 599 chars of JSON, 14 681 B form-encoded): `POST /share` with the filters in the record 201; its render opened
+from a short URL `miss` 16.3 s (the gateway POSTs to the model) then `hit` 48 ms, the bytes equal to the model's; the
+same curves in the share URL's own query 414 from Kestrel's 8 KB request line (the viewer's own long queries go to
+`/api` as a POST and are never cached — a known limit, W4's). One wart found and fixed after: `/healthz` said
+`pinned: true` after the pin was dropped (it reported the configuration); it now says whether a pin is in force and
+adds `pin_configured`.
+
+**Closing.** `dotnet build -c Release` 0 errors and `dotnet test` **107 passed, 0 failed, 0 skipped** on the merged
+branch (the lead's own run). The full Python suite ran detached at the final Python code (nothing under `model/` or
+`tests/` moved this session but the register's pins; `GALAXYGEN_AUDIT_ORDER=1`): **EXIT=1 — 1 722 passed, 5 skipped,
+1 xfailed, 1 failed** in 6 h 43 (19:51 → 02:34): `test_docs`' tag-record row alone, which C2e writes on `main` after
+the merge; the pricing test passed this time. S71's `verify_clone --ref main` (b9cdae4), read at this close: **1 failed
+/ 1 721 passed / 6 skipped / 1 xfailed in 6 h 07, specs OK** — `test_performance`'s per-cell pricing on `azimuthal`,
+the wall-clock flake alone; the clone sound. This session's starts detached after the merge
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s74\verify_s74.log`), to be read at the next open. The merge
+is gated on the suite's own exit line and the one failure's cause. No model rule, stage, field, number, row or pin
+moved; the layer off nothing moved; D5 gained its gateway sentence. **For the owner:** three re-rulings stand unless
+they say otherwise (the proxied gate 1 / 64; jobs sharing the model's permit; a pin mismatch lasting until restart),
+and Generate through the gateway now takes 42 s where it took 33.5 unlimited — the cost of one computation at a time
+on a replica that could not afford two. Next: S75, W4, the deployment (`BRIEF.md`).

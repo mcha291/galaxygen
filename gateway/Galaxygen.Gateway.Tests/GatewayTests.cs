@@ -27,17 +27,15 @@ public sealed class GatewayTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task The_sliding_window_returns_429_past_its_permit()
+    public async Task The_sliding_window_never_counts_the_health_route()
     {
-        // Two requests a window, then the third is refused (BUILD_IV §7 ruling 5's shape at a small number).
+        // The window counts only what may reach the model (S74, G-8; FeatureTests counts /api against it).
         using var factory = _factory.WithWebHostBuilder(host =>
-            host.UseSetting("Gateway:Limits:PermitPerWindow", "2")
+            host.UseSetting("Gateway:Limits:PermitPerWindow", "1")
                 .UseSetting("Gateway:Limits:WindowSeconds", "60"));
         using var client = factory.CreateClient();
 
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/healthz")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/healthz")).StatusCode);
-        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync("/healthz")).StatusCode);
+        for (var i = 0; i < 3; i++) Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/healthz")).StatusCode);
     }
 
     [Fact]

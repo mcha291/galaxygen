@@ -10,8 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Galaxygen.Gateway.Tests;
 
 /// <summary>
-/// BUILD_IV Phase W3's gate, as far as it is the gateway's own: /api/version passes through, every cache key
-/// carries the model's hash, the queue serves one job at a time and refuses past its length, a share link
+/// BUILD_IV Phase W3's gate, as far as it is the gateway's own, with S74's review fixes: /api/version passes through,
+/// every cache key carries the model's hash (model.hash, and only it), a pin is checked, one input-taking request
+/// computes at the model at a time, the queue serves one job at a time and refuses past its length, a share link
 /// round-trips its query and opens warm on its second load. Each test runs the gateway against a stub model.
 /// </summary>
 public sealed class FeatureTests : IAsyncLifetime
@@ -28,8 +29,12 @@ public sealed class FeatureTests : IAsyncLifetime
             host.UseSetting("Gateway:Model:BaseUrl", _model.Url);
             host.UseSetting("Gateway:Model:VersionSeconds", "0"); // read the hash on every request: a changed hash is seen at once
             host.UseSetting("Gateway:Limits:PermitPerWindow", "10000");
+            host.UseSetting("Gateway:Frontend:Path", ""); // no frontend unless a test gives one
             foreach (var (key, value) in settings) host.UseSetting(key, value);
         });
+
+    private static string Header(HttpResponseMessage response, string name) =>
+        response.Headers.TryGetValues(name, out var values) ? string.Join(",", values) : "<absent>";
 
     // --- Proxying and the cache --------------------------------------------------------------------------------
 
@@ -40,30 +45,71 @@ public sealed class FeatureTests : IAsyncLifetime
         using var client = gateway.CreateClient();
 
         var first = await client.GetFromJsonAsync<JsonElement>("/api/version");
+        Assert.Equal("model0", first.GetProperty("model").GetProperty("hash").GetString());
         Assert.Equal("api0", first.GetProperty("api").GetProperty("hash").GetString());
 
-        _model.ApiHash = "api1";
+        _model.ModelHash = "model1";
         var second = await client.GetFromJsonAsync<JsonElement>("/api/version");
-        Assert.Equal("api1", second.GetProperty("api").GetProperty("hash").GetString());
+        Assert.Equal("model1", second.GetProperty("model").GetProperty("hash").GetString());
     }
 
     [Fact]
-    public async Task A_model_route_is_answered_once_per_query_and_hash()
+    public async Task Api_version_with_a_trailing_slash_is_never_cached()
     {
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
 
-        var body = await client.GetStringAsync("/api/arrays?template=milky_way&fields=sigma");
-        Assert.Equal("GLXY arrays?template=milky_way&fields=sigma", body);
-        await client.GetStringAsync("/api/arrays?template=milky_way&fields=sigma");
+        var first = await client.GetFromJsonAsync<JsonElement>("/api/version/");
+        _model.ModelHash = "model1";
+        var second = await client.GetFromJsonAsync<JsonElement>("/api/version/");
+        Assert.Equal("model0", first.GetProperty("model").GetProperty("hash").GetString());
+        Assert.Equal("model1", second.GetProperty("model").GetProperty("hash").GetString());
+        Assert.Equal(2, _model.CallsTo("version"));
+        Assert.Contains("/api/version", ModelCachePolicy.Uncached);
+    }
+
+    [Fact]
+    public async Task A_model_route_is_answered_once_per_query_and_model_hash()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+
+        Assert.Equal("GLXY arrays?template=milky_way&fields=sigma", await StubModel.Text(client, "/api/arrays?template=milky_way&fields=sigma"));
+        await StubModel.Text(client, "/api/arrays?template=milky_way&fields=sigma");
         Assert.Equal(1, _model.CallsTo("arrays")); // the second came from the cache
 
-        await client.GetStringAsync("/api/arrays?template=milky_way&fields=gas");
+        await StubModel.Text(client, "/api/arrays?template=milky_way&fields=gas");
         Assert.Equal(2, _model.CallsTo("arrays")); // another query is another key
 
-        _model.ApiHash = "api1"; // a redeploy
-        await client.GetStringAsync("/api/arrays?template=milky_way&fields=sigma");
+        _model.ApiHash = "api1"; // the API's files and the viewer's moved, the model's bytes did not:
+        _model.ViewerHash = "viewer1";
+        await StubModel.Text(client, "/api/arrays?template=milky_way&fields=sigma");
+        Assert.Equal(2, _model.CallsTo("arrays")); // the same key
+
+        _model.ModelHash = "model1"; // a stage, a constant, a data file changed: a redeploy
+        await StubModel.Text(client, "/api/arrays?template=milky_way&fields=sigma");
         Assert.Equal(3, _model.CallsTo("arrays")); // the old answer is not served under the new hash
+    }
+
+    [Fact]
+    public async Task A_proxied_answer_carries_the_models_headers_and_a_replay_says_it_ran_nothing()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+
+        using var miss = await client.GetAsync("/api/clouds?template=a");
+        Assert.Equal("miss", Header(miss, "X-Gateway-Cache"));
+        Assert.Equal("disc,stars", Header(miss, "X-Galaxy-Stages"));
+        Assert.Equal("model", Header(miss, "X-Galaxy-Source"));
+        Assert.True(miss.Headers.CacheControl?.NoStore);
+
+        using var hit = await client.GetAsync("/api/clouds?template=a");
+        Assert.Equal("hit", Header(hit, "X-Gateway-Cache"));
+        Assert.Equal("", Header(hit, "X-Galaxy-Stages")); // nothing ran for this request (D4)
+        Assert.Equal("model", Header(hit, "X-Galaxy-Source"));
+        Assert.True(hit.Headers.CacheControl?.NoStore);
+        Assert.Equal(await miss.Content.ReadAsByteArrayAsync(), await hit.Content.ReadAsByteArrayAsync());
+        Assert.Equal(1, _model.CallsTo("clouds"));
     }
 
     [Fact]
@@ -76,19 +122,37 @@ public sealed class FeatureTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_cache_key_carries_the_hash()
+    public void Every_key_carries_the_model_hash_and_only_it()
     {
-        // The key builder, read: the policy puts the hash in the vary-by values and every query key in the key.
+        // The key builder, read (D3 as amended): /api/version's model.hash is the key's hash; api and viewer are not in it.
+        static JsonElement Version(string model, string api, string viewer) => JsonSerializer.SerializeToElement(
+            new { viewer = new { hash = viewer }, api = new { hash = api }, model = new { hash = model } });
+
+        var base0 = ModelVersion.Compose(Version("m0", "a0", "v0"));
+        Assert.Equal("m0", base0);
+        Assert.Equal(base0, ModelVersion.Compose(Version("m0", "a1", "v0")));
+        Assert.Equal(base0, ModelVersion.Compose(Version("m0", "a0", "v1")));
+        Assert.NotEqual(base0, ModelVersion.Compose(Version("m1", "a0", "v0")));
+
+        // The output cache's key: every query parameter and the hash in the vary-by values.
         var context = new OutputCacheContext { HttpContext = new DefaultHttpContext() };
-        ModelCachePolicy.Vary(context, "abc.def");
-        Assert.Equal("abc.def", context.CacheVaryByRules.VaryByValues[ModelCachePolicy.HashKey]);
+        ModelCachePolicy.Vary(context, base0);
+        Assert.Equal("m0", context.CacheVaryByRules.VaryByValues[ModelCachePolicy.HashKey]);
         Assert.Equal("*", context.CacheVaryByRules.QueryKeys.ToString());
 
-        // And a share link's stored answer, keyed under the hash first.
+        // A share link's stored answer, keyed under the hash first, and moved by it.
         var query = GalaxyQuery.Parse("template=milky_way");
-        Assert.StartsWith("abc.def/", ResultKey.For("abc.def", "id", "arrays", query));
-        Assert.NotEqual(ResultKey.For("abc.def", "id", "arrays", query), ResultKey.For("abc.xyz", "id", "arrays", query));
-        await Task.CompletedTask;
+        Assert.StartsWith("m0/", ResultKey.For(base0, "id", "arrays", query));
+        Assert.NotEqual(ResultKey.For("m0", "id", "arrays", query), ResultKey.For("m1", "id", "arrays", query));
+    }
+
+    [Fact]
+    public async Task A_jobs_record_carries_the_model_hash()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var id = await Post(client, new { template = "a" });
+        Assert.Equal("model0", (await Until(client, id, "done")).GetProperty("hash").GetString());
     }
 
     [Fact]
@@ -97,9 +161,26 @@ public sealed class FeatureTests : IAsyncLifetime
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
         var form = () => new FormUrlEncodedContent([new("template", "milky_way")]);
-        Assert.Equal("GLXY arrays?template=milky_way", await (await client.PostAsync("/api/arrays", form())).Content.ReadAsStringAsync());
+        Assert.Equal("GLXY arrays?template=milky_way", await StubModel.Text(await client.PostAsync("/api/arrays", form())));
         await client.PostAsync("/api/arrays", form());
         Assert.Equal(2, _model.CallsTo("arrays"));
+    }
+
+    [Fact]
+    public async Task A_long_render_body_is_forwarded_unchanged()
+    {
+        // The viewer's sampled filter curves: a form body of about 20 KB, as a POST (S42).
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var filters = string.Join(",", Enumerable.Range(0, 2400).Select(i => (i * 0.37).ToString("F3")));
+        using var form = new FormUrlEncodedContent([new("template", "milky_way"), new("filters", filters)]);
+        var sent = (await form.ReadAsStringAsync()).Length;
+        Assert.True(sent > 20_000, $"the body is {sent} bytes");
+
+        using var response = await client.PostAsync("/api/render", form);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(sent.ToString(), Header(response, "X-Stub-Body-Length"));
+        Assert.Equal($"GLXY render?filters={filters}&template=milky_way", await StubModel.Text(response));
     }
 
     [Fact]
@@ -119,20 +200,48 @@ public sealed class FeatureTests : IAsyncLifetime
         using var client = gateway.CreateClient();
         _model.VersionStatus = 500; // the model publishes no hash: no key can be made (D3)
 
-        Assert.Equal("GLXY arrays?template=a", await client.GetStringAsync("/api/arrays?template=a"));
-        Assert.Equal("GLXY arrays?template=a", await client.GetStringAsync("/api/arrays?template=a"));
+        Assert.Equal("GLXY arrays?template=a", await StubModel.Text(client, "/api/arrays?template=a"));
+        Assert.Equal("GLXY arrays?template=a", await StubModel.Text(client, "/api/arrays?template=a"));
         Assert.Equal(2, _model.CallsTo("arrays"));
     }
 
     [Fact]
-    public async Task A_pinned_hash_keys_the_cache_without_reading_the_version()
+    public async Task A_version_without_the_model_hash_is_refused_and_keys_nothing()
     {
-        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        await using var gateway = Gateway();
         using var client = gateway.CreateClient();
-        await client.GetStringAsync("/api/arrays?template=a");
-        await client.GetStringAsync("/api/arrays?template=a");
+        _model.OmitModelHash = true; // an API before S72: api and viewer only
+
+        await StubModel.Text(client, "/api/arrays?template=a");
+        await StubModel.Text(client, "/api/arrays?template=a");
+        Assert.Equal(2, _model.CallsTo("arrays")); // no cache serves anything until a model hash is read
+
+        var health = await client.GetFromJsonAsync<JsonElement>("/healthz");
+        Assert.Contains("S72", health.GetProperty("hash").GetProperty("error").GetString());
+        Assert.Equal(JsonValueKind.Null, health.GetProperty("hash").GetProperty("keyed").ValueKind);
+
+        _model.OmitModelHash = false;
+        await StubModel.Text(client, "/api/arrays?template=a");
+        await StubModel.Text(client, "/api/arrays?template=a");
+        Assert.Equal(3, _model.CallsTo("arrays")); // read once, kept once
+    }
+
+    // --- The pin -----------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task A_pinned_hash_keys_the_cache_and_a_hit_never_asks_the_model()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "model0"));
+        using var client = gateway.CreateClient();
+        await StubModel.Text(client, "/api/arrays?template=a"); // a miss: the pin is checked on the way
+        await StubModel.Text(client, "/api/arrays?template=a"); // a hit: nothing asked
+        await StubModel.Text(client, "/api/arrays?template=a");
         Assert.Equal(1, _model.CallsTo("arrays"));
-        Assert.Equal(0, _model.CallsTo("version"));
+        Assert.Equal(1, _model.CallsTo("version"));
+
+        var health = await client.GetAsync("/healthz");
+        Assert.Equal(HttpStatusCode.OK, health.StatusCode);
+        Assert.False((await health.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("pin_mismatch").GetBoolean());
     }
 
     [Fact]
@@ -142,6 +251,164 @@ public sealed class FeatureTests : IAsyncLifetime
         var version = gateway.Services.GetRequiredService<ModelVersion>();
         Assert.Equal("pinned", await version.CurrentAsync(CancellationToken.None));
         Assert.Equal(0, _model.CallsTo("version"));
+    }
+
+    [Fact]
+    public async Task Healthz_tells_a_configured_pin_from_one_in_force()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        using var client = gateway.CreateClient();
+
+        var before = await client.GetFromJsonAsync<JsonElement>("/healthz");
+        Assert.True(before.GetProperty("pinned").GetBoolean());
+        Assert.True(before.GetProperty("pin_configured").GetBoolean());
+
+        await StubModel.Text(client, "/api/arrays?template=a"); // the check on the way drops the pin
+        var health = await client.GetAsync("/healthz");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, health.StatusCode);
+        var body = await health.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(body.GetProperty("pinned").GetBoolean()); // no pin in force
+        Assert.True(body.GetProperty("pin_configured").GetBoolean()); // though the configuration names one
+        Assert.True(body.GetProperty("pin_mismatch").GetBoolean());
+    }
+
+    [Fact]
+    public async Task A_pin_the_live_model_contradicts_is_dropped_and_healthz_answers_503()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        using var client = gateway.CreateClient();
+
+        await StubModel.Text(client, "/api/arrays?template=a"); // keyed under the pin, which the check on the way refutes
+        var health = await client.GetAsync("/healthz");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, health.StatusCode);
+        var body = await health.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(body.GetProperty("pin_mismatch").GetBoolean());
+        Assert.Equal("pinned", body.GetProperty("hash").GetProperty("pin").GetString());
+        Assert.Equal("model0", body.GetProperty("hash").GetProperty("live").GetString());
+        Assert.Equal("model0", body.GetProperty("hash").GetProperty("keyed").GetString());
+
+        // The answer made under the wrong pin was not kept; from now on the live hash keys.
+        await StubModel.Text(client, "/api/arrays?template=a");
+        await StubModel.Text(client, "/api/arrays?template=a");
+        Assert.Equal(2, _model.CallsTo("arrays"));
+        Assert.Equal("model0", await gateway.Services.GetRequiredService<ModelVersion>().CurrentAsync(default));
+    }
+
+    [Fact]
+    public async Task The_viewers_own_version_read_checks_the_pin()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        using var client = gateway.CreateClient();
+
+        var version = await client.GetFromJsonAsync<JsonElement>("/api/version");
+        Assert.Equal("model0", version.GetProperty("model").GetProperty("hash").GetString()); // passed through as it was
+        Assert.Equal(1, _model.CallsTo("version")); // read once, by the viewer; the gateway looked on the way
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await client.GetAsync("/healthz")).StatusCode);
+    }
+
+    // --- One request at the model at a time (D-5) ---------------------------------------------------------------
+
+    [Fact]
+    public async Task Two_concurrent_proxied_renders_run_one_after_the_other()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        _model.Hold();
+
+        var first = client.GetAsync("/api/render?template=a");
+        await Eventually(() => _model.CallsTo("render") == 1);
+        var second = client.GetAsync("/api/render?template=b");
+        await Eventually(async () =>
+            (await client.GetFromJsonAsync<JsonElement>("/healthz")).GetProperty("limits").GetProperty("model").GetProperty("waiting").GetInt32() == 1);
+        Assert.False(second.IsCompleted);
+        Assert.Equal(1, _model.CallsTo("render")); // the second waits at the gateway, not at the model
+
+        // A metadata route is not queued behind it.
+        var stages = client.GetAsync("/api/stages");
+        await Eventually(() => _model.CallsTo("stages") == 1);
+
+        _model.Release();
+        Assert.Equal(HttpStatusCode.OK, (await first).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await second).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await stages).StatusCode);
+        Assert.Equal(2, _model.CallsTo("render"));
+    }
+
+    [Fact]
+    public async Task Past_the_model_queue_a_request_is_429_with_retry_after()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:ModelQueue", "1"));
+        using var client = gateway.CreateClient();
+        _model.Hold();
+
+        var running = client.GetAsync("/api/region?template=a");
+        await Eventually(() => _model.CallsTo("region") == 1);
+        var waiting = client.GetAsync("/api/region?template=b");
+        await Eventually(async () =>
+            (await client.GetFromJsonAsync<JsonElement>("/healthz")).GetProperty("limits").GetProperty("model").GetProperty("waiting").GetInt32() == 1);
+
+        using var refused = await client.GetAsync("/api/region?template=c");
+        Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
+        Assert.Equal(TimeSpan.FromSeconds(ModelGate.RetryAfterSeconds), refused.Headers.RetryAfter?.Delta);
+
+        _model.Release();
+        Assert.Equal(HttpStatusCode.OK, (await running).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await waiting).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_cache_hit_never_waits_for_the_model()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:ModelQueue", "0"));
+        using var client = gateway.CreateClient();
+        await StubModel.Text(client, "/api/render?template=warm");
+        _model.Hold();
+
+        var running = client.GetAsync("/api/render?template=a");
+        await Eventually(() => _model.CallsTo("render") == 2);
+        using var hit = await client.GetAsync("/api/render?template=warm").WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(HttpStatusCode.OK, hit.StatusCode);
+        Assert.Equal("hit", Header(hit, "X-Gateway-Cache"));
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync("/api/render?template=cold")).StatusCode);
+
+        _model.Release();
+        Assert.Equal(HttpStatusCode.OK, (await running).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_share_links_miss_waits_for_the_same_permit()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:ModelQueue", "0"));
+        using var client = gateway.CreateClient();
+        var id = await Share(client, new { template = "milky_way" });
+        _model.Hold();
+
+        var running = client.GetAsync("/api/render?template=a");
+        await Eventually(() => _model.CallsTo("render") == 1);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync($"/share/{id}/render")).StatusCode);
+
+        _model.Release();
+        await running;
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/share/{id}/render")).StatusCode);
+    }
+
+    // --- The window (G-8) ----------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task The_window_counts_only_what_may_reach_the_model_and_says_when_to_retry()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:PermitPerWindow", "2"));
+        using var client = gateway.CreateClient();
+
+        await StubModel.Text(client, "/api/arrays?template=a"); // counted: 1
+        for (var i = 0; i < 5; i++) await StubModel.Text(client, "/api/arrays?template=a"); // hits: free
+        for (var i = 0; i < 5; i++) Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/healthz")).StatusCode); // free
+        await StubModel.Text(client, "/api/arrays?template=b"); // counted: 2
+
+        using var refused = await client.GetAsync("/api/arrays?template=c");
+        Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
+        Assert.True(refused.Headers.RetryAfter?.Delta > TimeSpan.Zero);
+        Assert.Equal(2, _model.CallsTo("arrays"));
     }
 
     // --- The edit queue ----------------------------------------------------------------------------------------
@@ -158,12 +425,14 @@ public sealed class FeatureTests : IAsyncLifetime
         Assert.Equal($"/jobs/{id}", posted.Headers.Location!.ToString());
 
         var done = await Until(client, id, "done");
-        Assert.StartsWith("api0.", done.GetProperty("hash").GetString());
+        Assert.Equal("model0", done.GetProperty("hash").GetString());
 
         var result = await client.GetAsync($"/jobs/{id}/result");
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-        Assert.Equal("disc,stars", result.Headers.GetValues("x-galaxy-stages").Single());
-        Assert.Equal("GLXY arrays?fields=sigma%2Cgas&seed_disc=7&template=milky_way", await result.Content.ReadAsStringAsync());
+        Assert.Equal("disc,stars", Header(result, "X-Galaxy-Stages"));
+        Assert.Equal("model", Header(result, "X-Galaxy-Source"));
+        Assert.True(result.Headers.CacheControl?.NoStore);
+        Assert.Equal("GLXY arrays?fields=sigma%2Cgas&seed_disc=7&template=milky_way", await StubModel.Text(result));
     }
 
     [Fact]
@@ -183,13 +452,32 @@ public sealed class FeatureTests : IAsyncLifetime
 
         var refused = await client.PostAsJsonAsync("/jobs/", new { query = new { template = "c" } });
         Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
+        Assert.NotNull(refused.Headers.RetryAfter);
         Assert.Equal(1, _model.CallsTo("arrays")); // one generate in flight, not two
 
         Assert.Equal(HttpStatusCode.Conflict, (await client.GetAsync($"/jobs/{waiting}/result")).StatusCode);
         _model.Release();
         await Until(client, running, "done");
         await Until(client, waiting, "done");
-        Assert.Equal("GLXY arrays?template=b", await client.GetStringAsync($"/jobs/{waiting}/result"));
+        Assert.Equal("GLXY arrays?template=b", await StubModel.Text(client, $"/jobs/{waiting}/result"));
+    }
+
+    [Fact]
+    public async Task A_cancelled_queued_job_frees_its_place_at_once()
+    {
+        await using var gateway = Gateway(("Gateway:Limits:GenerateQueue", "1"));
+        using var client = gateway.CreateClient();
+        _model.Hold();
+        var running = await Post(client, new { template = "a" });
+        await Until(client, running, "running");
+        var waiting = await Post(client, new { template = "b" });
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.PostAsJsonAsync("/jobs/", new { query = new { template = "c" } })).StatusCode);
+
+        Assert.Equal(HttpStatusCode.Accepted, (await client.DeleteAsync($"/jobs/{waiting}")).StatusCode);
+        var again = await Post(client, new { template = "d" }); // the cancelled job's place, while the first still runs
+        _model.Release();
+        await Until(client, again, "done");
+        Assert.Equal("cancelled", (await client.GetFromJsonAsync<JsonElement>($"/jobs/{waiting}")).GetProperty("state").GetString());
     }
 
     [Fact]
@@ -242,6 +530,7 @@ public sealed class FeatureTests : IAsyncLifetime
         using var client = gateway.CreateClient();
         var posted = await client.PostAsJsonAsync("/jobs/", new { route = "nonsense", query = new { } });
         Assert.Equal(HttpStatusCode.BadRequest, posted.StatusCode); // not a route a job runs
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/jobs/", new { route = "version", query = new { } })).StatusCode);
 
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/jobs/", new { query = new Dictionary<string, string> { ["bad key"] = "1" } })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/jobs/nope")).StatusCode);
@@ -287,11 +576,22 @@ public sealed class FeatureTests : IAsyncLifetime
         var id = await Post(client, new { template });
         await Until(client, id, "done");
         Assert.Equal("POST", _model.LastMethod);
-        Assert.Equal($"GLXY arrays?template={template}", await client.GetStringAsync($"/jobs/{id}/result"));
+        Assert.Equal($"GLXY arrays?template={template}", await StubModel.Text(client, $"/jobs/{id}/result"));
 
         var shortId = await Post(client, new { template = "a" });
         await Until(client, shortId, "done");
         Assert.Equal("GET", _model.LastMethod);
+    }
+
+    [Fact]
+    public async Task A_job_takes_a_query_the_size_of_the_viewers_filter_curves()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var filters = string.Join(",", Enumerable.Range(0, 3000).Select(i => (i * 0.37).ToString("F3")));
+        Assert.True(filters.Length > 20_000);
+        var posted = await client.PostAsJsonAsync("/jobs/", new { route = "render", query = new { template = "a", filters } });
+        Assert.Equal(HttpStatusCode.Accepted, posted.StatusCode); // under G-4's 131072 bytes, over the old 16384
     }
 
     [Fact]
@@ -304,7 +604,7 @@ public sealed class FeatureTests : IAsyncLifetime
         Assert.Equal("render", view.GetProperty("route").GetString());
         var id = view.GetProperty("id").GetString()!;
         await Until(client, id, "done");
-        Assert.Equal("GLXY render?template=a", await client.GetStringAsync($"/jobs/{id}/result"));
+        Assert.Equal("GLXY render?template=a", await StubModel.Text(client, $"/jobs/{id}/result"));
     }
 
     [Fact]
@@ -325,12 +625,8 @@ public sealed class FeatureTests : IAsyncLifetime
         var first = await Post(client, new { template = "a" });
         await Until(client, first, "done");
         var second = await Post(client, new { template = "b" });
-        await Until(client, second, "done");
-        var third = await Post(client, new { template = "c" }); // queueing it evicts down to one finished
-        await Until(client, third, "done");
-
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/jobs/{first}")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/jobs/{second}")).StatusCode);
+        await Eventually(async () => (await client.GetAsync($"/jobs/{first}")).StatusCode == HttpStatusCode.NotFound
+            && (await client.GetAsync($"/jobs/{second}")).StatusCode == HttpStatusCode.OK); // evicted as the second finished
     }
 
     // --- Share links --------------------------------------------------------------------------------------------
@@ -359,15 +655,20 @@ public sealed class FeatureTests : IAsyncLifetime
         Assert.Equal("0.3", pairs.GetProperty("bar_strength").GetString());
 
         var cold = await client.GetAsync($"/share/{id}/arrays?fields=sigma");
-        Assert.Equal("miss", cold.Headers.GetValues("x-gateway-cache").Single());
+        Assert.Equal("miss", Header(cold, "X-Gateway-Cache"));
+        Assert.Equal("disc,stars", Header(cold, "X-Galaxy-Stages"));
         var warm = await client.GetAsync($"/share/{id}/arrays?fields=sigma");
-        Assert.Equal("hit", warm.Headers.GetValues("x-gateway-cache").Single());
-        Assert.Equal(await cold.Content.ReadAsStringAsync(), await warm.Content.ReadAsStringAsync());
-        Assert.Equal("disc,stars", warm.Headers.GetValues("x-galaxy-stages").Single());
+        Assert.Equal("hit", Header(warm, "X-Gateway-Cache"));
+        Assert.Equal(await cold.Content.ReadAsByteArrayAsync(), await warm.Content.ReadAsByteArrayAsync());
+        Assert.Equal("", Header(warm, "X-Galaxy-Stages")); // nothing ran for the hit (D4)
+        Assert.Equal("model", Header(warm, "X-Galaxy-Source")); // as the model sent it
+        Assert.True(warm.Headers.CacheControl?.NoStore);
         Assert.Equal(1, _model.CallsTo("arrays"));
 
-        _model.ApiHash = "api1"; // a redeploy: the link computes again
-        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/arrays?fields=sigma")).Headers.GetValues("x-gateway-cache").Single());
+        _model.ApiHash = "api1"; // not a redeploy of the model's bytes: still warm
+        Assert.Equal("hit", Header(await client.GetAsync($"/share/{id}/arrays?fields=sigma"), "X-Gateway-Cache"));
+        _model.ModelHash = "model1"; // a redeploy: the link computes again
+        Assert.Equal("miss", Header(await client.GetAsync($"/share/{id}/arrays?fields=sigma"), "X-Gateway-Cache"));
     }
 
     [Fact]
@@ -375,13 +676,40 @@ public sealed class FeatureTests : IAsyncLifetime
     {
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
-        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
-            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+        var id = await Share(client, new { template = "milky_way" });
 
-        var body = await client.GetStringAsync($"/share/{id}/arrays?template=ngc_4414&fields=sigma");
-        Assert.Equal("GLXY arrays?fields=sigma&template=milky_way", body);
+        Assert.Equal("GLXY arrays?fields=sigma&template=milky_way", await StubModel.Text(client, $"/share/{id}/arrays?template=ngc_4414&fields=sigma"));
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/share/{id}/version")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/share/nope")).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_share_link_takes_only_its_routes_own_parameters()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        var id = await Share(client, new { template = "milky_way" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/share/{id}/arrays?bar_strength=0.9")).StatusCode); // an input the record lacks
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/share/{id}/arrays?r_min=1")).StatusCode); // region's, not arrays'
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/share/{id}/layer?level=1")).StatusCode);
+        Assert.Equal(0, _model.CallsTo("arrays") + _model.CallsTo("layer"));
+
+        Assert.Equal("GLXY region?r_max=4&r_min=1&template=milky_way", await StubModel.Text(client, $"/share/{id}/region?r_min=1&r_max=4"));
+        Assert.Equal("GLXY render?filters=u%2Cg&level=2&template=milky_way", await StubModel.Text(client, $"/share/{id}/render?filters=u,g&level=2"));
+        Assert.Equal("GLXY layer?template=milky_way", await StubModel.Text(client, $"/share/{id}/layer"));
+    }
+
+    [Fact]
+    public async Task A_share_id_of_the_wrong_shape_is_not_found()
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        foreach (var id in new[] { "nope", "abc%27def%21ghi", "ABCDEFGHIJK%2F", "ABCDEFGHIJKLM", "ABCDEFGHIJKL" })
+        {
+            Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/share/{id}")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/share/{id}/arrays")).StatusCode);
+        }
     }
 
     [Fact]
@@ -390,7 +718,9 @@ public sealed class FeatureTests : IAsyncLifetime
         await using var gateway = Gateway(("Gateway:Limits:SharesPerHour", "1"));
         using var client = gateway.CreateClient();
         Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/share/", new { query = new { template = "a" } })).StatusCode);
-        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.PostAsJsonAsync("/share/", new { query = new { template = "b" } })).StatusCode);
+        using var refused = await client.PostAsJsonAsync("/share/", new { query = new { template = "b" } });
+        Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
+        Assert.NotNull(refused.Headers.RetryAfter);
     }
 
     [Fact]
@@ -422,22 +752,32 @@ public sealed class FeatureTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_share_takes_the_known_hash_without_asking_the_model()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "model0"));
+        using var client = gateway.CreateClient();
+        var created = await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } });
+        Assert.Equal("model0", (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("hash").GetString());
+        Assert.Equal(0, _model.CallsTo("version"));
+    }
+
+    [Fact]
     public async Task A_shared_galaxys_error_is_passed_on_and_not_kept()
     {
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
-        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
-            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+        var id = await Share(client, new { template = "milky_way" });
 
         _model.GalaxyStatus = 500;
         var first = await client.GetAsync($"/share/{id}/arrays");
         Assert.Equal(HttpStatusCode.InternalServerError, first.StatusCode);
-        Assert.Equal("miss", first.Headers.GetValues("x-gateway-cache").Single());
+        Assert.Equal("miss", Header(first, "X-Gateway-Cache"));
+        Assert.Equal(1, _model.CallsTo("arrays")); // not retried (D-6)
 
         _model.GalaxyStatus = 200;
         var second = await client.GetAsync($"/share/{id}/arrays");
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
-        Assert.Equal("miss", second.Headers.GetValues("x-gateway-cache").Single()); // the error was not stored
+        Assert.Equal("miss", Header(second, "X-Gateway-Cache")); // the error was not stored
     }
 
     [Fact]
@@ -445,12 +785,11 @@ public sealed class FeatureTests : IAsyncLifetime
     {
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
-        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
-            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+        var id = await Share(client, new { template = "milky_way" });
 
-        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/arrays?fields=sigma")).Headers.GetValues("x-gateway-cache").Single());
-        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/arrays?fields=gas")).Headers.GetValues("x-gateway-cache").Single());
-        Assert.Equal("miss", (await client.GetAsync($"/share/{id}/render?fields=sigma")).Headers.GetValues("x-gateway-cache").Single());
+        Assert.Equal("miss", Header(await client.GetAsync($"/share/{id}/arrays?fields=sigma"), "X-Gateway-Cache"));
+        Assert.Equal("miss", Header(await client.GetAsync($"/share/{id}/arrays?fields=gas"), "X-Gateway-Cache"));
+        Assert.Equal("miss", Header(await client.GetAsync($"/share/{id}/render?filters=u"), "X-Gateway-Cache"));
         Assert.Equal(3, _model.CallsTo("arrays") + _model.CallsTo("render"));
     }
 
@@ -459,26 +798,73 @@ public sealed class FeatureTests : IAsyncLifetime
     {
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
-        var id = (await (await client.PostAsJsonAsync("/share/", new { query = new { template = "milky_way" } }))
-            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+        var id = await Share(client, new { template = "milky_way" });
 
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync($"/share/{id}/arrays?bad%20key=1")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/share/nope/arrays")).StatusCode);
         Assert.Equal(0, _model.CallsTo("arrays"));
     }
 
+    // --- The frontend (G-7) -------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task The_frontend_is_served_with_its_cache_headers_and_the_fallback_never_answers_assets()
+    {
+        var dist = Directory.CreateTempSubdirectory("gateway-dist-");
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(dist.FullName, "index.html"), "<!doctype html><title>galaxygen</title>");
+            dist.CreateSubdirectory("assets");
+            await File.WriteAllTextAsync(Path.Combine(dist.FullName, "assets", "index-AbC123.js"), "console.log(1)");
+            await using var gateway = Gateway(("Gateway:Frontend:Path", dist.FullName));
+            using var client = gateway.CreateClient();
+
+            foreach (var page in new[] { "/", "/index.html", "/galaxy/edit" })
+            {
+                using var response = await client.GetAsync(page);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Contains("galaxygen", await response.Content.ReadAsStringAsync());
+                Assert.True(response.Headers.CacheControl?.NoCache, page);
+            }
+
+            using var asset = await client.GetAsync("/assets/index-AbC123.js");
+            Assert.Equal(HttpStatusCode.OK, asset.StatusCode);
+            Assert.Equal("public, max-age=31536000, immutable", asset.Headers.CacheControl?.ToString());
+
+            Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/assets/index-gone.js")).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/assets/gone")).StatusCode);
+            Assert.Equal("GLXY arrays?template=a", await StubModel.Text(client, "/api/arrays?template=a")); // /api stays the model's
+
+            var health = await client.GetFromJsonAsync<JsonElement>("/healthz");
+            Assert.True(health.GetProperty("frontend").GetBoolean());
+        }
+        finally
+        {
+            dist.Delete(recursive: true);
+        }
+    }
+
     // --- Health and the client's address ------------------------------------------------------------------------
 
     [Fact]
-    public async Task Healthz_names_the_stores_the_pin_and_the_queue()
+    public async Task Healthz_names_the_stores_the_pin_the_limits_and_the_queue()
     {
-        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "model0"));
         using var client = gateway.CreateClient();
         var health = await client.GetFromJsonAsync<JsonElement>("/healthz");
         Assert.Equal(_model.Url, health.GetProperty("model").GetString());
         Assert.True(health.GetProperty("pinned").GetBoolean());
+        Assert.False(health.GetProperty("pin_mismatch").GetBoolean());
+        Assert.False(health.GetProperty("frontend").GetBoolean());
+        Assert.False(health.TryGetProperty("bundles", out _)); // the gateway reads no bundle (D-3)
         Assert.Equal("memory", health.GetProperty("shares").GetString());
         Assert.Equal("memory", health.GetProperty("results").GetString());
+        var limits = health.GetProperty("limits");
+        Assert.Equal(10000, limits.GetProperty("window").GetProperty("permit").GetInt32());
+        Assert.Equal(60, limits.GetProperty("window").GetProperty("seconds").GetInt32());
+        Assert.Equal(1, limits.GetProperty("model").GetProperty("concurrent").GetInt32());
+        Assert.Equal(64, limits.GetProperty("model").GetProperty("queue").GetInt32());
+        Assert.Equal(131072, limits.GetProperty("query_bytes").GetInt32());
         Assert.Equal(0, health.GetProperty("jobs").GetProperty("queued").GetInt32());
         Assert.Equal(0, health.GetProperty("jobs").GetProperty("running").GetInt32());
 
@@ -498,7 +884,7 @@ public sealed class FeatureTests : IAsyncLifetime
 
         async Task<HttpStatusCode> From(string address)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "/healthz");
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/version");
             request.Headers.Add("X-Forwarded-For", address);
             return (await client.SendAsync(request)).StatusCode;
         }
@@ -516,8 +902,8 @@ public sealed class FeatureTests : IAsyncLifetime
     {
         await using var gateway = Gateway(("Gateway:Limits:PermitPerWindow", "1"));
         using var client = gateway.CreateClient();
-        using var first = new HttpRequestMessage(HttpMethod.Get, "/healthz") { Headers = { { "X-Forwarded-For", "203.0.113.1" } } };
-        using var second = new HttpRequestMessage(HttpMethod.Get, "/healthz") { Headers = { { "X-Forwarded-For", "203.0.113.2" } } };
+        using var first = new HttpRequestMessage(HttpMethod.Get, "/api/version") { Headers = { { "X-Forwarded-For", "203.0.113.1" } } };
+        using var second = new HttpRequestMessage(HttpMethod.Get, "/api/version") { Headers = { { "X-Forwarded-For", "203.0.113.2" } } };
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(first)).StatusCode);
         Assert.Equal(HttpStatusCode.TooManyRequests, (await client.SendAsync(second)).StatusCode);
     }
@@ -531,10 +917,19 @@ public sealed class FeatureTests : IAsyncLifetime
         return (await posted.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString()!;
     }
 
-    private static async Task Eventually(Func<bool> condition)
+    private static async Task<string> Share(HttpClient client, object query)
+    {
+        var created = await client.PostAsJsonAsync("/share/", new { query });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        return (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString()!;
+    }
+
+    private static Task Eventually(Func<bool> condition) => Eventually(() => Task.FromResult(condition()));
+
+    private static async Task Eventually(Func<Task<bool>> condition)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (!condition())
+        while (!await condition())
         {
             if (DateTime.UtcNow > deadline) throw new TimeoutException("the condition never held");
             await Task.Delay(10);

@@ -8,9 +8,10 @@ using Microsoft.Extensions.Options;
 namespace Galaxygen.Gateway;
 
 // The edit queue (BUILD_IV §2c): a generate request returns a job id at once; a BackgroundService consumes a
-// bounded Channel<GenerateJob> and runs each against the model; the client polls /jobs/{id} or reads its events.
-// One model replica runs one expensive job at a time (Limits:ConcurrentGenerates), the rest wait in a queue of
-// Limits:GenerateQueue, and a job past that is refused with 429 rather than left to time out.
+// Channel<GenerateJob> and runs each against the model; the client polls /jobs/{id} or reads its events. At most
+// Limits:ConcurrentGenerates jobs run at once and Limits:GenerateQueue wait (a cancelled job stops counting at once);
+// past that POST /jobs is refused with 429 rather than left to time out. A job that computes also holds the model's
+// one permit (ModelGate), shared with the viewer's own proxied requests. The viewer itself does not use /jobs.
 
 public enum JobState { Queued, Running, Done, Failed, Cancelled }
 
@@ -24,7 +25,8 @@ public sealed record JobView(
 
 public sealed class GenerateJob
 {
-    private readonly object _lock = new();
+    private static long _sequence;
+    private readonly Lock _lock = new();
     private TaskCompletionSource _changed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public GenerateJob(string id, string route, GalaxyQuery query, DateTimeOffset created)
@@ -33,17 +35,23 @@ public sealed class GenerateJob
         Route = route;
         Query = query;
         Created = created;
+        Sequence = Interlocked.Increment(ref _sequence);
     }
 
     public string Id { get; }
     public string Route { get; }
     public GalaxyQuery Query { get; }
     public DateTimeOffset Created { get; }
+
+    /// <summary>The order jobs were made in, which a clock's tick cannot tie.</summary>
+    public long Sequence { get; }
     public CancellationTokenSource Cancel { get; } = new();
 
     public JobState State { get; private set; } = JobState.Queued;
     public DateTimeOffset? Started { get; private set; }
     public DateTimeOffset? Finished { get; private set; }
+
+    /// <summary>The model's hash (/api/version's model.hash) the job ran under.</summary>
     public string? Hash { get; private set; }
     public ModelResult? Result { get; private set; }
     public string? Error { get; private set; }
@@ -79,34 +87,39 @@ public sealed class GenerateJob
 /// <summary>The jobs the gateway knows: the queue's channel, and every job by id until it is evicted.</summary>
 public sealed class JobQueue
 {
+    /// <summary>How often finished jobs are evicted besides as jobs are queued and finish (S74, G-2).</summary>
+    public static readonly TimeSpan EvictionPeriod = TimeSpan.FromMinutes(1);
+
     private readonly ConcurrentDictionary<string, GenerateJob> _jobs = new(StringComparer.Ordinal);
-    private readonly Channel<GenerateJob> _channel;
+    private readonly Channel<GenerateJob> _channel = Channel.CreateUnbounded<GenerateJob>();
+    private readonly Lock _enqueue = new();
+    private readonly Lock _evict = new();
+    private readonly int _length;
     private readonly int _retain;
+    private readonly long _bytes;
     private readonly TimeProvider _clock;
 
     public JobQueue(IOptions<GatewayOptions> options, TimeProvider clock)
     {
-        var limits = options.Value.Limits;
-        _channel = Channel.CreateBounded<GenerateJob>(new BoundedChannelOptions(Math.Max(1, limits.GenerateQueue))
-        {
-            FullMode = BoundedChannelFullMode.Wait, // TryWrite refuses when full; nothing is dropped silently
-            SingleReader = limits.ConcurrentGenerates == 1,
-        });
+        _length = Math.Max(1, options.Value.Limits.GenerateQueue);
         _retain = options.Value.Jobs.Retain;
+        _bytes = options.Value.Jobs.ResultMegabytes * 1024L * 1024L;
         _clock = clock;
     }
 
     public ChannelReader<GenerateJob> Reader => _channel.Reader;
 
-    /// <summary>Queues a job; null when the queue is full.</summary>
+    /// <summary>Queues a job; null when Limits:GenerateQueue jobs already wait. The count is of jobs still queued, so a
+    /// cancelled one frees its place at once rather than when a reader reaches it (S74, G-13).</summary>
     public GenerateJob? TryEnqueue(string route, GalaxyQuery query)
     {
-        var job = new GenerateJob(Guid.NewGuid().ToString("N")[..16], route, query, _clock.GetUtcNow());
-        _jobs[job.Id] = job;
-        if (!_channel.Writer.TryWrite(job))
+        GenerateJob job;
+        lock (_enqueue)
         {
-            _jobs.TryRemove(job.Id, out _);
-            return null;
+            if (_jobs.Values.Count(j => j.State == JobState.Queued) >= _length) return null;
+            job = new GenerateJob(Guid.NewGuid().ToString("N")[..16], route, query, _clock.GetUtcNow());
+            _jobs[job.Id] = job;
+            _channel.Writer.TryWrite(job); // unbounded: the count above is the bound
         }
         Evict();
         return job;
@@ -117,16 +130,28 @@ public sealed class JobQueue
     /// <summary>How many queued jobs are ahead of this one, counting from one; null once it has left the queue.</summary>
     public int? Position(GenerateJob job) => job.State != JobState.Queued
         ? null
-        : 1 + _jobs.Values.Count(other => other.State == JobState.Queued && other.Created < job.Created);
+        : 1 + _jobs.Values.Count(other => other.State == JobState.Queued && other.Sequence < job.Sequence);
 
     public (int Queued, int Running) Counts() =>
         (_jobs.Values.Count(j => j.State == JobState.Queued), _jobs.Values.Count(j => j.State == JobState.Running));
 
-    /// <summary>Keeps at most Jobs:Retain finished jobs, the oldest finished forgotten first; a live job is never evicted.</summary>
-    private void Evict()
+    /// <summary>Keeps at most Jobs:Retain finished jobs and Jobs:ResultMegabytes of their results, the oldest finished
+    /// forgotten first; a live job is never evicted. Runs as a job is queued, as one finishes, and each minute.</summary>
+    public void Evict()
     {
-        var finished = _jobs.Values.Where(j => j.Terminal).OrderBy(j => j.Finished).ToList();
-        foreach (var job in finished.Take(Math.Max(0, finished.Count - _retain))) _jobs.TryRemove(job.Id, out _);
+        lock (_evict)
+        {
+            var finished = _jobs.Values.Where(j => j.Terminal).OrderBy(j => j.Finished).ThenBy(j => j.Sequence).ToList();
+            var count = finished.Count;
+            var bytes = finished.Sum(j => (long)(j.Result?.Body.Length ?? 0));
+            foreach (var job in finished)
+            {
+                if (count <= _retain && bytes <= _bytes) break;
+                _jobs.TryRemove(job.Id, out _);
+                count--;
+                bytes -= job.Result?.Body.Length ?? 0;
+            }
+        }
     }
 
     /// <summary>The job's views, from now until it ends, each one that differs from the last: what
@@ -147,13 +172,14 @@ public sealed class JobQueue
     }
 }
 
-/// <summary>Runs the queue: Limits:ConcurrentGenerates readers, each one job at a time against the model.</summary>
+/// <summary>Runs the queue: Limits:ConcurrentGenerates readers, each one job at a time against the model; and the
+/// eviction of finished jobs each minute.</summary>
 public sealed class JobWorker(
-    JobQueue queue, IServiceProvider services, ModelVersion version, IOptions<GatewayOptions> options,
+    JobQueue queue, IServiceProvider services, ModelVersion version, ModelGate gate, IOptions<GatewayOptions> options,
     TimeProvider clock, ILogger<JobWorker> log) : BackgroundService
 {
     protected override Task ExecuteAsync(CancellationToken stopping) =>
-        Task.WhenAll(Enumerable.Range(0, Math.Max(1, options.Value.Limits.ConcurrentGenerates)).Select(_ => Read(stopping)));
+        Task.WhenAll(Enumerable.Range(0, Math.Max(1, options.Value.Limits.ConcurrentGenerates)).Select(_ => Read(stopping)).Append(Evict(stopping)));
 
     private async Task Read(CancellationToken stopping)
     {
@@ -161,15 +187,31 @@ public sealed class JobWorker(
         {
             if (job.Terminal) continue; // cancelled while it waited
             await Run(job, stopping);
+            queue.Evict();
+        }
+    }
+
+    private async Task Evict(CancellationToken stopping)
+    {
+        using var timer = new PeriodicTimer(JobQueue.EvictionPeriod, clock);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stopping)) queue.Evict();
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested)
+        {
         }
     }
 
     private async Task Run(GenerateJob job, CancellationToken stopping)
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(stopping, job.Cancel.Token);
-        if (!job.Move(JobState.Running, clock.GetUtcNow())) return;
         try
         {
+            // An input-taking route waits for the model's permit, still queued, beside the viewer's own requests.
+            using var lease = ModelRoutes.Generating.Contains(job.Route) ? await Permit(linked.Token) : null;
+            if (!job.Move(JobState.Running, clock.GetUtcNow())) return;
+            await version.VerifyAsync(linked.Token);
             var hash = await version.CurrentAsync(linked.Token);
             var result = await services.GetRequiredService<ModelClient>().GetAsync(job.Route, job.Query, linked.Token);
             job.Move(result.Ok ? JobState.Done : JobState.Failed, clock.GetUtcNow(), hash, result,
@@ -191,6 +233,19 @@ public sealed class JobWorker(
                 : "the model could not be reached");
         }
     }
+
+    /// <summary>The model's permit for a job: when the gate's queue is full the job keeps its place in its own queue
+    /// and asks again each second, rather than failing.</summary>
+    private async Task<System.Threading.RateLimiting.RateLimitLease> Permit(CancellationToken cancel)
+    {
+        while (true)
+        {
+            var lease = await gate.AcquireAsync(cancel);
+            if (lease.IsAcquired) return lease;
+            lease.Dispose();
+            await Task.Delay(TimeSpan.FromSeconds(1), clock, cancel);
+        }
+    }
 }
 
 public static class JobEndpoints
@@ -207,18 +262,14 @@ public static class JobEndpoints
             if (query is null) return Results.Problem(error, statusCode: 400);
 
             var job = queue.TryEnqueue(route, query);
-            if (job is null)
-            {
-                return Results.Problem("the generate queue is full; try again shortly", statusCode: StatusCodes.Status429TooManyRequests,
-                    extensions: new Dictionary<string, object?> { ["retryAfterSeconds"] = 5 });
-            }
+            if (job is null) return new QueueFull();
             return Results.Accepted($"/jobs/{job.Id}", job.View(queue.Position(job)));
         });
 
         jobs.MapGet("/{id}", (string id, JobQueue queue) =>
             queue.Find(id) is { } job ? Results.Ok(job.View(queue.Position(job))) : Results.NotFound());
 
-        // The answer, exactly as the model gave it; a job not finished yet is a conflict, with its state.
+        // The answer, exactly as the model gave it, its headers with it; a job not finished yet is a conflict.
         jobs.MapGet("/{id}/result", (string id, JobQueue queue) => queue.Find(id) switch
         {
             null => Results.NotFound(),
@@ -235,12 +286,22 @@ public static class JobEndpoints
         jobs.MapDelete("/{id}", (string id, JobQueue queue, TimeProvider clock) =>
         {
             if (queue.Find(id) is not { } job) return Results.NotFound();
-            if (job.State == JobState.Queued) job.Move(JobState.Cancelled, clock.GetUtcNow());
+            if (job.State == JobState.Queued) job.Move(JobState.Cancelled, clock.GetUtcNow()); // its place is free now
             job.Cancel.Cancel(); // a running job's model request is abandoned; the worker records the cancel
             return Results.Accepted($"/jobs/{job.Id}", job.View(null));
         });
 
         return jobs;
+    }
+
+    private sealed class QueueFull : IResult
+    {
+        public Task ExecuteAsync(HttpContext context)
+        {
+            context.Response.Headers.RetryAfter = ModelGate.RetryAfterSeconds.ToString();
+            return Results.Problem("the generate queue is full; try again shortly", statusCode: StatusCodes.Status429TooManyRequests,
+                extensions: new Dictionary<string, object?> { ["retryAfterSeconds"] = ModelGate.RetryAfterSeconds }).ExecuteAsync(context);
+        }
     }
 
     private static async IAsyncEnumerable<SseItem<JobView>> Events(IAsyncEnumerable<JobView> views, [EnumeratorCancellation] CancellationToken cancel)

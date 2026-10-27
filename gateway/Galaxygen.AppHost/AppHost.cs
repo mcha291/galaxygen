@@ -10,8 +10,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // The Python model: the repository root's Dockerfile, which also builds the frontend into the image.
 // The API listens on PORT (8000 in the image) and /api is its route table (a metadata-only readiness check).
+// Host port 8027, not 8017: 8017 is the owner's own model server, run by hand (S74, G-15).
 var model = builder.AddDockerfile("model", "../..", "Dockerfile")
-    .WithHttpEndpoint(port: 8017, targetPort: 8000, name: "http")
+    .WithHttpEndpoint(port: 8027, targetPort: 8000, name: "http")
     .WithHttpHealthCheck("/api");
 
 // Share links' storage: Azurite locally (a container, so Docker again), the storage account when deployed. The

@@ -1736,3 +1736,19 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A branch merged "as built" on the owner's word is still built and tested before the merge (dotnet build
   and test: 69 passed), and what was NOT done is written in the row (not run against the live model, not read against
   the plan) with the review scheduled as its own row - the merge records the state, the review earns the tick.
+
+## From S74 (the gateway's review; a Fable lead, an Opus reviewer blind to the README, a runner, a builder)
+
+- [infra] A cache keyed on "the content hash" is keyed on whichever hash the builder found first: the gateway took
+  `api` and `viewer` from `/api/version` because those were the keys when it was built, and S72's `model` - the one
+  every answer depends on - never reached it. A key-builder test that asserts "a hash is in the key" proves nothing;
+  it asserts WHICH hash, and that the others do not move it. When a hash's meaning changes (D235), grep every reader.
+- [infra] A rule enforced on a route the client never calls is not enforced: the one-generate-at-a-time limiter sat
+  behind `POST /jobs` while the unchanged viewer sent its generates through the proxy. Measure the client's real path
+  before crediting a limit, and put the limit where the traffic is.
+- [close] Review a merged-as-built branch in three readings: the code blind to its README (what it does), the runner
+  against the live model (what it does under load and across a redeploy), then the README against both (what it
+  claims). The README's seven false claims were invisible to any one reading alone.
+- [infra] A resilience handler's defaults retry what must never be retried: a model route that times out keeps
+  computing on the server, so the retry doubles the work. Expensive, idempotent-looking computations get one attempt
+  and a total timeout equal to the attempt's.

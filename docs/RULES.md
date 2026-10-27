@@ -259,4 +259,7 @@ publishes — its form, its parameters, its seed and its committed test vectors 
 vector's interior; it adds no structure, no parameter and no seed of its own. Replacing the viewer means
 reimplementing against the same endpoints and the same vectors. *Amended 2026-10-03 on the owner's word*
 `[verified: DECISIONS.md D212]`. **Until D212 the rule read: … persists no generated object. Replacing the
-viewer means reimplementing against the same endpoints.**
+viewer means reimplementing against the same endpoints.** *A gateway in front of the API is held to the same: it
+serves what the model published, keyed by the model's content hash, and computes nothing.* *BUILD_IV Appendix A's
+sentence, entered at S74, the gateway's review, on the merge of the review's fixes* `[verified: DECISIONS.md D238]`.
+**Until S74 the rule ended at the sentence before.**
