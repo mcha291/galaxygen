@@ -1726,3 +1726,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A walk is the proof that a plan reproduces a viewer, in both directions: the forward check (every logged
   request planned) passed at S72 with 35 requests; S73's 171 found the plan already right and turned the check round
   (every planned entry logged, but a named list), so a plan that drifts fails loudly instead of missing silently.
+
+## From S71's close (the owner's five answers; a Fable lead, one Opus builder)
+
+- [viewer] A display fix is settled by the audit's own settle test, run, not by the fix's success: F-4-1's circle at
+  4.72 kpc survived the clouds' extinction switch (15.5 % -> 15.8 %), which separated the display half (fixed) from
+  the model half (the diffuse share one number per level-0 ring, #202). Run the settle test the audit wrote before
+  calling a finding closed, and open the half it leaves.
+- [close] A branch merged "as built" on the owner's word is still built and tested before the merge (dotnet build
+  and test: 69 passed), and what was NOT done is written in the row (not run against the live model, not read against
+  the plan) with the review scheduled as its own row - the merge records the state, the review earns the tick.
