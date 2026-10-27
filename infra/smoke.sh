@@ -3,21 +3,26 @@
 # anything the deployment relies on. CI runs it between the build and the push (.github/workflows/image.yml); the
 # owner can run it once Docker exists locally:
 #
-#   docker build -f Dockerfile.model -t galaxygen-model:smoke .
+#   docker build -f Dockerfile.model -t galaxygen-model:smoke --label org.galaxygen.model_hash=<hash> .
 #   docker build -f gateway/Dockerfile -t galaxygen-gateway:smoke .
-#   bash infra/smoke.sh galaxygen-model:smoke galaxygen-gateway:smoke
+#   bash infra/smoke.sh galaxygen-model:smoke galaxygen-gateway:smoke <hash>
 #
-# What it shows: the bundles inside the model image carry the model.hash the running image publishes (else the
-# server would refuse them, and the pin would be wrong); the landing's first answers come from the bundles; the
-# gateway pinned to that hash is healthy, serves a bundled answer as a miss and then as a hit with the same bytes,
-# and the hit asks the model nothing (its request log does not grow); a gateway pinned to another hash reports 503
-# at /healthz once a request reaches the model. The hash goes to $GITHUB_OUTPUT as model_hash for the image label.
+# <hash> is the content hash of model/galaxy computed from the checkout before the build (image.yml does it), so the
+# image is labelled before it is tested and the tested image is the one pushed.
+#
+# What it shows: the running image publishes the expected model.hash and carries it as its label; the bundles inside
+# it carry that hash too (else the server would refuse them, and the pin would be wrong); the landing's first answers
+# come from the bundles; the gateway pinned to that hash is healthy, serves a bundled answer as a miss and then as a
+# hit with the same bytes; the miss reaches the model (its request log gains an /api/render line) and the hit asks it nothing (the log does
+# not grow); a gateway pinned to another hash reports 503 at /healthz once a request reaches the model. The hash goes
+# to $GITHUB_OUTPUT as model_hash for the job's summary.
 # Needs docker, curl, jq, sha256sum.
 
 set -euo pipefail
 
-MODEL_IMAGE=${1:?usage: smoke.sh MODEL_IMAGE GATEWAY_IMAGE}
-GATEWAY_IMAGE=${2:?usage: smoke.sh MODEL_IMAGE GATEWAY_IMAGE}
+MODEL_IMAGE=${1:?usage: smoke.sh MODEL_IMAGE GATEWAY_IMAGE EXPECTED_HASH}
+GATEWAY_IMAGE=${2:?usage: smoke.sh MODEL_IMAGE GATEWAY_IMAGE EXPECTED_HASH}
+EXPECTED=${3:?usage: smoke.sh MODEL_IMAGE GATEWAY_IMAGE EXPECTED_HASH}
 NET=galaxygen-smoke
 MODEL=galaxygen-smoke-model
 GW=galaxygen-smoke-gateway
@@ -64,10 +69,16 @@ expect_header() {
 }
 model_lines() { docker logs "$MODEL" 2>&1 | wc -l; }
 
-# wait_for URL SECONDS: until the URL answers at all (any status).
+# wait_for URL SECONDS CONTAINER: until the URL answers at all (any status); at once a failure if the container
+# has stopped.
 wait_for() {
-  local url=$1 limit=$2 t=0
+  local url=$1 limit=$2 container=$3 t=0
   until curl -s -o /dev/null "$url"; do
+    if [ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != true ]; then
+      echo "--- last log lines of $container" >&2
+      docker logs --tail 20 "$container" >&2 2>&1 || true
+      fail "$container is not running"
+    fi
     t=$((t + 2))
     [ "$t" -le "$limit" ] || fail "$url did not answer in $limit s"
     sleep 2
@@ -80,13 +91,17 @@ docker network create "$NET" >/dev/null
 # --- The model, as Container Apps runs it (the image's own environment, --verbose for the request log) ---------
 docker run -d --name "$MODEL" --network "$NET" --network-alias model -p 18000:8000 "$MODEL_IMAGE" \
   python -m galaxy.api --verbose >/dev/null
-wait_for "$MODEL_URL/api" 600
+wait_for "$MODEL_URL/api" 600 "$MODEL"
 
 get version "$MODEL_URL/api/version"
 [ "$(code version)" = 200 ] || fail "/api/version answered $(code version)"
 HASH=$(jq -r '.model.hash // empty' "$WORK/version")
 [[ "$HASH" =~ ^[0-9a-f]{32}$ ]] || fail "/api/version's model.hash is '$HASH', not 32 hex"
 echo "live model.hash $HASH"
+[ "$HASH" = "$EXPECTED" ] || fail "the image publishes model.hash $HASH, the checkout's is $EXPECTED"
+LABEL=$(docker image inspect -f '{{index .Config.Labels "org.galaxygen.model_hash"}}' "$MODEL_IMAGE")
+[ "$LABEL" = "$HASH" ] || fail "the image's label org.galaxygen.model_hash is '$LABEL', the live hash $HASH"
+echo "the image's label and the checkout's hash agree with it"
 
 # Every bundle manifest in the image must carry the live hash.
 mkdir -p "$WORK/manifests"
@@ -128,7 +143,7 @@ docker run -d --name "$GW" --network "$NET" -p 18080:8080 \
   -e Gateway__Model__ContentHash="$HASH" \
   -e Gateway__Limits__TrustForwardedFor=false \
   "$GATEWAY_IMAGE" >/dev/null
-wait_for "$GW_URL/healthz" 120
+wait_for "$GW_URL/healthz" 120 "$GW"
 get healthz "$GW_URL/healthz"
 [ "$(code healthz)" = 200 ] || fail "gateway /healthz answered $(code healthz)"
 [ "$(jq -r '.pinned' "$WORK/healthz")" = true ] || fail "gateway not pinned: $(cat "$WORK/healthz")"
@@ -138,12 +153,17 @@ get healthz "$GW_URL/healthz"
 get gw_index "$GW_URL/"
 [ "$(code gw_index)" = 200 ] || fail "gateway / answered $(code gw_index)"
 
+sleep 1 # the log driver's copy of what came before
+start=$(model_lines)
 get gw_render_1 "$GW_URL/api/render?$RENDER_Q"
 [ "$(code gw_render_1)" = 200 ] || fail "gateway render answered $(code gw_render_1)"
 expect_header gw_render_1 X-Gateway-Cache miss
 expect_header gw_render_1 X-Galaxy-Source bundle
 sleep 1 # the log driver's copy of the miss's lines
 before=$(model_lines)
+asked=$(docker logs "$MODEL" 2>&1 | tail -n +"$((start + 1))" | grep -c '/api/render' || true)
+echo "model log lines before the miss $start, after it $before ($asked with /api/render)"
+[ "$asked" -ge 1 ] || fail "the gateway's miss added no /api/render line to the model's log: the instrument sees nothing"
 get gw_render_2 "$GW_URL/api/render?$RENDER_Q"
 sleep 1
 after=$(model_lines)
@@ -168,7 +188,7 @@ docker run -d --name "$GW2" --network "$NET" -p 18081:8080 \
   -e Gateway__Model__ContentHash="$WRONG" \
   -e Gateway__Limits__TrustForwardedFor=false \
   "$GATEWAY_IMAGE" >/dev/null
-wait_for "$GW2_URL/healthz" 120
+wait_for "$GW2_URL/healthz" 120 "$GW2"
 get wrong_healthz "$GW2_URL/healthz"
 [ "$(code wrong_healthz)" = 200 ] || fail "wrong-pin gateway answered $(code wrong_healthz) before any model contact"
 get wrong_templates "$GW2_URL/api/templates" # an empty cache: this one reaches the model and checks the pin

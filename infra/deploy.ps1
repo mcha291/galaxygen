@@ -6,20 +6,26 @@
   .github/workflows/image.yml builds both images on every push, smoke-tests them together and pushes them tagged
   with the short commit; the model image carries the label org.galaxygen.model_hash, the /api/version model.hash it
   publishes. This script only creates or updates the Azure side (infra/main.bicep): it reads that label from
-  ghcr.io anonymously (unless -ModelHash is given) and pins the gateway to it, so a cached answer never wakes the
-  model. Re-running with a new tag rolls out new revisions.
+  ghcr.io anonymously and pins the gateway to it, so a cached answer never wakes the model. The label is the truth:
+  a -ModelHash that differs from it is refused unless -Force is given. Re-running with a new tag rolls out new
+  revisions.
 
-  The first run recreates the environment: when an app named -Name exists in a Failed state, or in an environment
-  that is not the one the template makes ("<Name>-env"), or with -Recreate, the apps and the environment are
-  deleted first (it says what before deleting). The Log Analytics workspace and the storage account are kept.
+  The environment is recreated (the apps in it and the environment deleted first, said before deleting) only when
+  an environment named "<Name>-env" exists without workload profiles - a consumption-only environment, whose type
+  the template cannot change - or with -Recreate. A Failed app alone deletes nothing: it needs -Recreate. The Log
+  Analytics workspace and the storage account are kept.
 
-  -Preview does everything read-only: the checks, the label, what would be deleted, and az deployment group
-  what-if in place of the deployment.
+  -Preview does everything read-only: the checks (a disabled subscription is a warning), the label, what would be
+  deleted, and az deployment group what-if in place of the deployment (skipped, with the reason, when the
+  subscription is disabled or the resource group does not exist).
 
 .EXAMPLE
   az login
   ./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag add6034 -Preview
-  ./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag add6034
+  # The first run of the two-app deployment: today's Failed app and its environment are replaced.
+  ./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag add6034 -Recreate
+  # Every later run, a new tag rolling out new revisions:
+  ./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag 1c5500c
 #>
 param(
   [Parameter(Mandatory)] [string] $ResourceGroup,
@@ -31,6 +37,7 @@ param(
   [string] $GatewayTag = '',
   [string] $ModelHash = '',
   [switch] $Recreate,
+  [switch] $Force,
   [switch] $Preview
 )
 
@@ -47,12 +54,15 @@ $modelRepo = "$Owner/galaxygen-model"
 $gatewayRepo = "$Owner/galaxygen-gateway"
 $modelImage = "ghcr.io/${modelRepo}:$ModelTag"
 $gatewayImage = "ghcr.io/${gatewayRepo}:$GatewayTag"
+$ignoreCase = [StringComparison]::OrdinalIgnoreCase
 
 function Invoke-Az {
   $out = & az @args
   if ($LASTEXITCODE -ne 0) { throw "az $($args -join ' ') failed ($LASTEXITCODE)" }
   $out
 }
+
+function Test-Same([string] $A, [string] $B) { [string]::Equals($A, $B, $ignoreCase) }
 
 # --- The images on ghcr.io, read anonymously (they are public) ----------------------------------------------------
 function Get-RegistryJson([string] $Url, [hashtable] $Headers) {
@@ -87,10 +97,15 @@ function Get-ImageConfig([string] $Repo, [string] $Reference) {
 }
 
 Write-Host "1/5 the subscription"
+# The containerapp commands below need the extension current; once, before any of them.
+Invoke-Az extension add --name containerapp --upgrade --only-show-errors
 $subscription = Invoke-Az account show --query id --output tsv
 $state = Invoke-Az rest --method get --url "https://management.azure.com/subscriptions/${subscription}?api-version=2022-12-01" --query state --output tsv
-if ($state -ne 'Enabled') {
-  throw "subscription $subscription is $state (read only): re-enable it in the Azure portal (a free trial that ended needs an upgrade to pay-as-you-go) and run this again"
+$disabled = -not (Test-Same $state 'Enabled')
+if ($disabled) {
+  $message = "subscription $subscription is $state (read only): re-enable it in the Azure portal (a free trial that ended needs an upgrade to pay-as-you-go) and run this again"
+  if (-not $Preview) { throw $message }
+  Write-Warning $message
 }
 
 Write-Host "2/5 the images: $modelImage, $gatewayImage"
@@ -103,40 +118,52 @@ if (-not $ModelHash) {
     throw "$modelImage carries no label org.galaxygen.model_hash (built before W4, or not by image.yml): pass -ModelHash, the image's /api/version model.hash"
   }
   $ModelHash = $label
-} elseif ($label -and $label -ne $ModelHash) {
-  Write-Warning "-ModelHash $ModelHash is not the image's label ${label}: the gateway will answer 503 at /healthz once it reaches the model"
+} elseif ($label -and -not (Test-Same $label $ModelHash)) {
+  $message = "-ModelHash $ModelHash is not the image's label ${label}: the gateway would answer 503 at /healthz once it reaches the model"
+  if (-not $Force) { throw "$message (the label is the truth; -Force deploys the given hash anyway)" }
+  Write-Warning "$message (-Force)"
 }
-if ($ModelHash -notmatch '^[0-9a-f]{32}$') { throw "model hash '$ModelHash' is not 32 hex characters" }
+if ($ModelHash -cnotmatch '^[0-9a-f]{32}$') { throw "model hash '$ModelHash' is not 32 lowercase hex characters" }
 Write-Host "    model.hash $ModelHash (the gateway's pin)"
 
 Write-Host "3/5 resource group $ResourceGroup in $Location"
-$exists = Invoke-Az group exists --name $ResourceGroup
-if ($exists -eq 'true') {
+$groupExists = Test-Same (Invoke-Az group exists --name $ResourceGroup) 'true'
+if ($groupExists) {
   $envName = "$Name-env"
-  $apps = Invoke-Az containerapp list --resource-group $ResourceGroup --query "[].{name:name, state:properties.provisioningState, env:properties.managedEnvironmentId}" --output json | Out-String | ConvertFrom-Json
-  $envs = Invoke-Az containerapp env list --resource-group $ResourceGroup --query "[].name" --output json | Out-String | ConvertFrom-Json
-  $ours = @($apps | Where-Object { $_.name -eq $Name -or $_.name -eq "$Name-model" })
-  $front = $ours | Where-Object { $_.name -eq $Name } | Select-Object -First 1
+  $apps = @(Invoke-Az containerapp list --resource-group $ResourceGroup --query "[].{name:name, state:properties.provisioningState, env:properties.managedEnvironmentId}" --output json | Out-String | ConvertFrom-Json)
+  $envs = @(Invoke-Az containerapp env list --resource-group $ResourceGroup --query "[].{name:name, profiles:properties.workloadProfiles}" --output json | Out-String | ConvertFrom-Json)
+  $ourEnv = $envs | Where-Object { Test-Same $_.name $envName } | Select-Object -First 1
+  $front = $apps | Where-Object { Test-Same $_.name $Name } | Select-Object -First 1
   $why = $null
   if ($Recreate) { $why = '-Recreate' }
-  elseif ($front -and $front.state -eq 'Failed') { $why = "app $Name is in a Failed state" }
-  elseif ($front -and -not $front.env.EndsWith("/managedEnvironments/$envName")) { $why = "app $Name lives in $($front.env), not $envName" }
+  elseif ($ourEnv -and @($ourEnv.profiles | Where-Object { $_ }).Count -eq 0) {
+    $why = "environment $envName is consumption-only (no workload profiles), a type the template cannot change"
+  }
   if ($why) {
-    Write-Host "    recreating ($why): deleting app(s) $(($ours | ForEach-Object { $_.name }) -join ', ') and environment(s) $(($envs | Where-Object { $_ -eq $envName -or ($front -and $front.env.EndsWith('/' + $_)) }) -join ', ')"
+    # Our two apps, and any other app in the environment (an environment with apps in it cannot be deleted).
+    $doomed = @($apps | Where-Object {
+        (Test-Same $_.name $Name) -or (Test-Same $_.name "$Name-model") -or
+        ($ourEnv -and $_.env -and $_.env.EndsWith("/managedEnvironments/$envName", $ignoreCase))
+      })
+    $appList = ($doomed | ForEach-Object { $_.name }) -join ', '
+    if (-not $appList) { $appList = 'none' }
+    $envList = 'none'
+    if ($ourEnv) { $envList = $ourEnv.name }
+    Write-Host "    recreating ($why): deleting app(s) $appList and environment $envList"
     if ($Preview) {
       Write-Host '    (preview: nothing deleted)'
     } else {
-      foreach ($app in $ours) {
+      foreach ($app in $doomed) {
         Write-Host "    az containerapp delete $($app.name)"
         Invoke-Az containerapp delete --resource-group $ResourceGroup --name $app.name --yes --output none
       }
-      foreach ($e in $envs) {
-        if ($e -eq $envName -or ($front -and $front.env.EndsWith("/$e"))) {
-          Write-Host "    az containerapp env delete $e"
-          Invoke-Az containerapp env delete --resource-group $ResourceGroup --name $e --yes --output none
-        }
+      if ($ourEnv) {
+        Write-Host "    az containerapp env delete $($ourEnv.name)"
+        Invoke-Az containerapp env delete --resource-group $ResourceGroup --name $ourEnv.name --yes --output none
       }
     }
+  } elseif ($front -and (Test-Same $front.state 'Failed')) {
+    Write-Host "    app $Name is in a Failed state: run again with -Recreate to delete the apps and $envName and create them anew"
   }
 } elseif ($Preview) {
   Write-Host '    (preview: the group does not exist and is not created)'
@@ -151,9 +178,15 @@ $deploy = @(
   '--parameters', "name=$Name", "location=$Location", "modelImage=$modelImage", "gatewayImage=$gatewayImage", "modelHash=$ModelHash"
 )
 if ($Preview) {
-  Write-Host "4/5 what-if (preview)"
-  Invoke-Az deployment group what-if @deploy
-  Write-Host "5/5 preview done: nothing changed"
+  if ($disabled) {
+    Write-Host '4/5 what-if skipped: the subscription is disabled, and ARM refuses to validate a deployment on it'
+  } elseif (-not $groupExists) {
+    Write-Host "4/5 what-if skipped: resource group $ResourceGroup does not exist (a run without -Preview creates it)"
+  } else {
+    Write-Host '4/5 what-if (preview)'
+    Invoke-Az deployment group what-if @deploy
+  }
+  Write-Host '5/5 preview done: nothing changed'
   return
 }
 

@@ -37,19 +37,15 @@ param gatewayImage string
 @maxLength(32)
 param modelHash string
 
-// Consumption pairs are 0.25 vCPU / 0.5Gi to 2 vCPU / 4Gi in steps of 0.25 vCPU, memory twice the vCPU.
-@description('The model\'s vCPU. Measured S75: a seed change with two galaxies cached peaks at 1.2 GB working set, 1.6 GB committed.')
-@allowed(['0.25', '0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0'])
-param modelCpu string = '1.0'
+// Sizes as '<vCPU>-<memory>': Consumption takes 0.25 vCPU / 0.5Gi to 2 vCPU / 4Gi in steps of 0.25 vCPU, memory
+// twice the vCPU, so only the valid pairs are allowed.
+@description('The model\'s vCPU and memory. Measured S75: a seed change with two galaxies cached peaks at 1.2 GB working set, 1.6 GB committed.')
+@allowed(['0.25-0.5Gi', '0.5-1Gi', '0.75-1.5Gi', '1.0-2Gi', '1.25-2.5Gi', '1.5-3Gi', '1.75-3.5Gi', '2.0-4Gi'])
+param modelSize string = '1.0-2Gi'
 
-@allowed(['0.5Gi', '1Gi', '1.5Gi', '2Gi', '2.5Gi', '3Gi', '3.5Gi', '4Gi'])
-param modelMemory string = '2Gi'
-
-@allowed(['0.25', '0.5', '0.75', '1.0'])
-param gatewayCpu string = '0.5'
-
-@allowed(['0.5Gi', '1Gi', '1.5Gi', '2Gi'])
-param gatewayMemory string = '1Gi'
+@description('The gateway\'s vCPU and memory.')
+@allowed(['0.25-0.5Gi', '0.5-1Gi', '0.75-1.5Gi', '1.0-2Gi'])
+param gatewaySize string = '0.5-1Gi'
 
 @description('Days a share link\'s stored answer is kept in the results container after it was last written.')
 @minValue(1)
@@ -173,12 +169,14 @@ resource model 'Microsoft.App/containerApps@2024-03-01' = {
           // --verbose: one log line per request, so the logs show whether a visit reached the model (W4's gate).
           command: ['python', '-m', 'galaxy.api', '--verbose']
           resources: {
-            cpu: json(modelCpu)
-            memory: modelMemory
+            cpu: json(split(modelSize, '-')[0])
+            memory: split(modelSize, '-')[1]
           }
           probes: [
             {
-              // /api is the route table: metadata only, no stage runs (rule D4).
+              // /api is the route table: metadata only, no stage runs (rule D4). Its GET every 10 s while a replica
+              // runs is logged too, so W5's instrument ("the model's logs show no request") filters out the lines
+              // whose path is /api alone or whose agent is kube-probe.
               type: 'Readiness'
               httpGet: { path: '/api', port: 8000 }
               periodSeconds: 10
@@ -224,8 +222,8 @@ resource gateway 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'gateway'
           image: gatewayImage
           resources: {
-            cpu: json(gatewayCpu)
-            memory: gatewayMemory
+            cpu: json(split(gatewaySize, '-')[0])
+            memory: split(gatewaySize, '-')[1]
           }
           env: [
             { name: 'Gateway__Model__BaseUrl', value: 'http://${model.properties.configuration.ingress.fqdn}' }
@@ -237,9 +235,11 @@ resource gateway 'Microsoft.App/containerApps@2024-03-01' = {
           ]
           probes: [
             {
-              // /healthz answers 503 on a pin mismatch (the image's model.hash is not the pin), which takes the
-              // replica out of rotation by design: a gateway keyed on the wrong hash serves nothing rather than
-              // stale answers. The fix is a redeploy with the right modelHash.
+              // /healthz answers 503 on a pin mismatch (the image's model.hash is not the pin). After one the gateway
+              // keys on the live hash, so its answers stay correct; the 503 is the pin's loud failure, because a
+              // gateway running unpinned wakes the model for every cache fill, which is what the pin exists to
+              // prevent. It takes the one replica out of rotation until a redeploy with the right modelHash (the
+              // lead's ruling, D239; the owner may re-rule it).
               type: 'Readiness'
               httpGet: { path: '/healthz', port: 8080 }
               periodSeconds: 10
