@@ -1,6 +1,10 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.6.1">
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Galaxygen.Gateway\Galaxygen.Gateway.csproj" />
   </ItemGroup>
 

@@ -14443,3 +14443,112 @@ merge is gated on the suite's own exit line and the two failures' causes, both s
 row at S73 added, the carried row shortened. No model rule, stage, field, number, row or pin moved; the layer off
 nothing moved (the layer-off entries are the same functions' nulls). Rule D4 is kept in substance by both routes;
 no rule amended.
+
+### D237. S71's close on the owner's five answers of 2026-10-27: ruling 6 entered (the whole-galaxy bundle scope alone); the gateway (W3) merged as built with its review scheduled as row 74 and W4 after it; the Milky Way draws its clouds as extinction (F-4-1 fixed, the frames regenerated); the stray edit in the gateway's csproj restored; #197 explained
+
+**The commission.** Asked "what are the things waiting on me?", the owner answered the five in order: "1. accept
+your recommendation 2. merge as built and schedule a review session 3. do this afterwards 4. elaborate on this
+please 5. fix these for me please" — ruling 6, W3, W4, #197 and the two working-tree items (the csproj's stray `v`,
+F-4-1). A Fable lead; one Opus builder for F-4-1. Branch `session-71`: row 71 is W3's, the owner's row, closed here
+by the merge of their branch on their word.
+
+**1. Ruling 6 (BUILD_IV §7).** The bundles hold the whole-galaxy scope alone — every galaxy-scale answer the viewer
+asks of a template, 202 entries, about 285 MB, about 100 s in the image build (D235's table; D236's walk proved the
+scope the viewer's in both directions); no per-cell level ships (levels 0–1 would be 6.64 GB and 4.80 h to export,
+level 2 +22.6 GB, level 3 +89.9 GB); every zoom below 4 kpc wakes the model, ruling 15 as it stands, W5 measuring
+the step. The size bound per template is its whole-galaxy bundle: about 85 MB with the layer on, 78 MB off. Entered
+in `BUILD_IV.md`'s answer paragraph and status line; `--levels` stays as the instrument it is.
+
+**2 and 3. W3 merged as built; the review is row 74; W4 is row 75 after it, W5 row 76.** Branch
+`worktree-session-70-gateway` (57c66a6 "initial gateway work", 5873606 "Gateway tests: the query, the parts, and
+the failure paths (17 → 70)"; 16 files under `gateway/` only, +2 106 / −78: `Caching.cs`, `GalaxyQuery.cs`,
+`Jobs.cs`, `ModelClient.cs`, `Shares.cs`, `Program.cs` rewired, `GatewayOptions.cs`, the AppHost, four test files
+and a `StubModel`, the README's configuration table — the output cache keyed on the model's hash read from
+`/api/version` or pinned by `Gateway:Model:ContentHash`, the sliding window per client address, one generate at a
+time with a queue of ten, share links at twenty an hour over a 16 KB query bound, `TrustForwardedFor` off until
+W4). Before the merge, on this machine (.NET SDK 10.0.301): `dotnet build -c Release` 0 warnings 0 errors in 8.6 s;
+`dotnet test --no-build` **69 passed, 1 skipped, 0 failed** (13 s; the skip is a same-tick queue-position case).
+Not run: the gateway against the live model, Aspire, the frontend through it; not read against §2c and Appendix A —
+**that is row 74, the review session**, whose gate is row 74's text (the keys' hash, the 429 and the queue, a share
+link's round trip, the full flow with no client change, `/api/version` through equals the model's, a bundle hit's
+`X-Galaxy-Source` passed through, D5's sentence entered on the review's merge). Merged into `session-71` at 669cfe4
+with no conflict (the branch's base 01c4d4e, main's S72 and S73 touching nothing under `gateway/`).
+
+**5a. The csproj.** `gateway/Galaxygen.AppHost/Galaxygen.AppHost.csproj` carried an uncommitted stray `v` after
+`</Project>` in the owner's working tree since before S72 (invalid XML; reported at D235 and D236, left as found);
+restored with `git checkout --` on the owner's word, before the merge above (the branch changes the same file).
+
+**5b. F-4-1 — the Milky Way draws its clouds as extinction (the builder).** The one display default: `TEMPLATE_TUNING.milky_way` gains
+`cloudsExtinction: true` over the owner's paste of 2026-10-19 (kept as pasted; D227), so the Milky Way draws its
+clouds' own column (`cloud_dust_extinction_v`, rasterised keeping each cloud's A_V × area, D228) as NGC 4414 does —
+the frame now carries the whole disc's dust where it carried the diffuse share alone, 1 − 0.4922158 = 0.508 of it
+(`clouds.rings.clouds_share_disc`, pinned in `tests/test_v6_clouds.py`). All five Milky Way captures moved (the
+switch feeds the field mode's march and the star-first march, and every Milky Way view now loads the whole-disc
+`/api/clouds` — in the bundle plan since S73's walk); NGC 4414's four are byte-identical (sha256 before and after).
+One pin moved, with its cause in `frontend/e2e/settings.ts`: `DUSTY_LAYER_RATIO` (physics only over layered, R / G /
+B) 0.96427 / 0.96617 / 0.97222 → 0.96641 / 0.97054 / 0.97765 (+0.0021 / +0.0044 / +0.0054, past its 1e-3 pin; the
+physics-only frame drawn twice differs by 0) — both frames now carry the clouds' column; the layered frame stays the
+brighter (the transfer principle holds) by less, blue most, which the builder reads as the layered clouds standing in
+the gas arms where the young blue light is placed while the physics-only clouds stand evenly in their sectors
+`[the builder's reading]`. Unmoved: the dust-free check 1.00020 / 1.00027 / 1.00048 (S69's record), the dust-column
+gate 0.999697 against 3e-3 (1.000553 before), the ring gates and `GPU_LIGHT` (at the plain defaults or on NGC
+4414). `picture:update` 15 passed (byte-identical on the second run), `npm run picture` 15 passed, vitest 454
+passed, `tests/test_picture.py` and `test_goal_metrics.py` 56 passed. Ready times rose 1–3 s per Milky Way capture
+(the clouds' raster): field 24.2 → 26.6 s, stars 11.5 → 14.6, physics-only 8.4 → 9.2, thumbnail 4.4 → 5.5, zoom 17.3
+→ 20.0; NGC 4414's within noise. **The goal metrics** (`tools/goal_metrics.py --table --axis-ratio 1`; the goal
+row −0.354 / 0.0515 / 0.1943 / 0.0594 / 1.829 / 0.0066 / −1.99 / 518 : 139):
+
+| frame | Δ(B−R) | A₁ | A₂ | A₃ | arm / interarm B | dark fraction | slope | points in / out |
+|---|---|---|---|---|---|---|---|---|
+| milky_way-field (S70) | −0.342 | 0.054 | 0.055 | 0.055 | 1.620 | 0.0179 | −1.24 | 773 / 3 095 |
+| **milky_way-field (S71)** | −0.340 | 0.059 | 0.054 | 0.056 | 1.641 | 0.0311 | −1.04 | 717 / 3 066 |
+| milky_way-physics-only (S70) | −0.343 | 0.012 | 0.010 | 0.009 | 1.073 | 0.0000 | −2.05 | 721 / 872 |
+| **milky_way-physics-only (S71)** | −0.357 | 0.005 | 0.004 | 0.004 | 1.044 | 0.0204 | −1.24 | 532 / 866 |
+| milky_way-stars (S70) | −0.213 | 0.036 | 0.095 | 0.066 | 1.782 | 0.1119 | −3.56 | 180 / 79 |
+| **milky_way-stars (S71)** | −0.335 | 0.049 | 0.107 | 0.074 | 2.025 | 0.1597 | −3.45 | 185 / 74 |
+| milky_way-zoom (S70) | +0.046 | 0.346 | 0.239 | 0.052 | 15.54 | 0.1714 | −0.03 | 154 / 32 |
+| **milky_way-zoom (S71)** | +0.055 | 0.344 | 0.238 | 0.052 | 13.60 | 0.1707 | −0.15 | 149 / 34 |
+
+The stars frame's colour moved to the goal's (−0.213 → −0.335 against −0.354) and its arm contrast past it (1.78 →
+2.03 against 1.83); the field frame barely moved; the dark fraction rose everywhere (0.018 → 0.031 in the field
+frame, against the goal's 0.007 — the flecks are darker and more numerous than the goal's lanes are). **The lead's
+look (the frame beside the artist's Milky Way):** the same round white core under a warm beige disc; the inner and
+middle disc (2–9 kpc) now flecked with hundreds of short dark dashes stretched along the winding, thicker along and
+between the arms — the first hint of lanes, not lanes; the arms a little better set off against the darker gaps,
+the disc a little dimmer and greyer inside 6 kpc, several pink knots covered; the outer grey-blue band and its blue
+speckle as before. Against the goal the arms are still too many and too faint, there is no long bar, and the dark
+structure is dashes where the goal has two continuous lanes. The physics-only frame is peppered with round dots (no
+field to stretch them, the layer off). **The audit's settle test, run:** F-4-1 said "capture with clouds as
+extinction on; if the circle goes, it is the display default's" — it did not go: the physics-only frame's median
+luminance steps 15.5 % before and 15.8 % after across 4.60–4.70 → 4.74–4.84 kpc (`ringstep.py`, 25.6 px per kpc), so
+the circle is `dust_diffuse_share`'s own step between level-0 rings 5 and 6 (0.478 → 0.692 at 4.725 kpc), the
+model-side half the test separated: **#202 opened**, carried; what closes it, the share continuous in R.
+
+**The gate and the close.** The picture file whole with S73's bundles mounted (the model hash unchanged by this
+close: nothing under `model/` moved) on the merged state: 15 passed in the browser, the regenerated frames byte for
+byte, 267 `/api` answers from the bundle at the stand-less captures — the Milky Way's whole-disc `/api/clouds` among
+them (15 on, 5 off) — the 19 zoom-stand misses as before; vitest 454 passed, 1 skipped. The full suite ran detached
+at the final code (64d1533; the docs after it): **EXIT=1 — 1 721 passed, 5 skipped, 1 xfailed, 2 failed** in 6 h
+(09:48 → 15:49): `test_docs`' tag-record row, written on `main` after the merge, and `test_performance`'s per-cell
+pricing (`azimuthal`; the fixed-cost clause this time, 3.0e-6 × 40 003 against 0.5 × 0.234 — the wall-clock class of
+#67/#68, as at S69, S70, S72 and S73), green alone on its quiet re-run (2 passed, EXIT=0). S73's `verify_clone --ref
+main` (3486c3c), read at this open: **OK — 1 722 passed, 6 skipped, 1 xfailed in 6 h 03, specs OK**, no flake. This
+close's starts detached after the merge
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s71\verify_s71.log`), to be read at the next open. Row 71
+ticked with what was not done written in it; the review is row 74. No model rule, stage, field, number, row or
+pin of the model moved; the layer off nothing moved; one display default and one e2e pin moved with their reasons.
+
+**4. #197, for the owner (the explanation asked for, as given in chat; no action).** #197 is the star catalogue's and the remnants' ring draws
+inverting below their ring's inner edge. S70 found the defect in the clouds and fixed it there: every placed census
+draws an object's birth radius by inverting a cumulative table along its ring (`invert_cdf`), and the table's steps
+began at the last grid point *outside* the ring, so the first step interpolated from below the ring's inner edge —
+4.3 % of the clouds were born one ring too far in. The stars (`systems.py`, `STAR_RADIUS`) and the remnants
+(`bubbles.py`, `REMNANT_RADIUS`) call the same inversion: on the production grid, layer off, 955 of 20 003 Milky Way
+stars (4.8 %) and 995 of 20 004 on NGC 4414 (5.0 %) are born up to 70 pc below their ring, and 64 of 1 464 and 27 of
+594 remnants (4.4 %, 4.5 %), up to 71 pc. The fix is the clouds' fix applied to both — the inversion on the ring's
+own interval — and is small in code; what makes it a session of its own is what it moves: every star of the
+catalogue redraws, so every frame changes (the sample stars, the bright tiles, the region regime's points), D60's
+per-region determinism pins re-pin across the suite with the reason, the bundles re-export, and the goal metrics
+are re-read. It is a correctness fix of the model's objects (no physics law changes; the ring's own density is
+sampled correctly), so it belongs before the deployment phases if the frames deployed are to be the fixed ones, and
+after any ruling that would move the catalogue anyway. The owner's word on when.

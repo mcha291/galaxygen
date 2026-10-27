@@ -7,7 +7,7 @@ namespace Galaxygen.Gateway.Tests;
 
 /// <summary>
 /// The gateway through the test host, with no model behind it: what the scaffold promises, asserted.
-/// The owner's features (W3) replace the 501s below with their own tests as they land.
+/// The features (the queue, share links, the cache) are FeatureTests', against a stub model.
 /// </summary>
 public sealed class GatewayTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -24,16 +24,6 @@ public sealed class GatewayTests : IClassFixture<WebApplicationFactory<Program>>
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("\"status\":\"ok\"", body);
         Assert.Contains("\"model\":", body);
-    }
-
-    [Fact]
-    public async Task Jobs_and_share_are_scaffolded_not_built()
-    {
-        using var client = _factory.CreateClient();
-        Assert.Equal(HttpStatusCode.NotImplemented, (await client.PostAsync("/jobs/", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotImplemented, (await client.GetAsync("/jobs/abc")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotImplemented, (await client.PostAsync("/share/", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotImplemented, (await client.GetAsync("/share/abc")).StatusCode);
     }
 
     [Fact]

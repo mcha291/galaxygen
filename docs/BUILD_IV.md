@@ -4,8 +4,9 @@
 project for me"); recorded as D222.** Written the same day on the owner's word ("please create a plan to implement
 this") and, on the owner's question whether it could keep to deployment alone, split before adoption: **this build
 is W2–W5, deployment only**. **W2 built at S72 (D235, 2026-10-26): `tools/export_template.py`, the reader in
-`galaxy.api.bundle` under the model's hash, the whole-galaxy scope (ruling 6's levels await the owner's ruling on the
-probe's table in D235; nothing below 4 kpc is bundled); W3 remains the owner's.** The edit panel (W1) is BUILD_III's Phase V9 (S68) and the zoomed-in point layer is its
+`galaxy.api.bundle` under the model's hash, the whole-galaxy scope — ruling 6 answered 2026-10-27 (D237): that scope
+alone, nothing below 4 kpc bundled; its debts closed at S73 (D236); W3 merged as built at S71's close (D237), its
+review row 74.** The edit panel (W1) is BUILD_III's Phase V9 (S68) and the zoomed-in point layer is its
 Phase V6b (S65). Every §7 recommendation was adopted except 12, where the owner's word is: an agent scaffolds the
 gateway, the features are the owner's. The scaffold is in `gateway/` (D222). Board rows: **W3 S70 (in parallel
 from adoption), W2 S71, W4 S72, W5 S73.** Everything here is `[inferred]` design unless tagged. Numbers quoted
@@ -314,7 +315,13 @@ conditional one opens if W2's byte identity cannot be met (§3d of BUILD_III app
 **Answered 2026-10-14 (D222): "adopt the plan with your recommendations except for 12, scaffold the project for
 me."** Every recommendation in the last column stands as the ruling, except 12, whose ruling is the owner's words:
 an agent scaffolds W3 and the features are the owner's. Rulings 2, 3 and 13 travel with the work they concern to
-BUILD_III (its §7 rulings 13–15); 14's sentence is entered in BUILD_III's V6 text.
+BUILD_III (its §7 rulings 13–15); 14's sentence is entered in BUILD_III's V6 text. **Ruling 6 answered 2026-10-27
+(D237), on D235's table: "accept your recommendation" — the bundles hold the whole-galaxy scope alone (every
+galaxy-scale answer the viewer asks: 202 entries, about 285 MB, about 100 s in the image build); no per-cell level
+ships (levels 0–1 would be 6.64 GB and 4.80 h to export, level 2 +22.6 GB, level 3 +89.9 GB); every zoom below 4 kpc
+wakes the model (ruling 15 as it stands, W5 measuring the step). The size bound per template is therefore its
+whole-galaxy bundle, about 85 MB with the layer on and 78 MB off. Ruling 12's W3 was merged as built the same day
+on the owner's word, with a review session scheduled (row 74).**
 
 | # | Question | Options | Recommendation |
 |---|---|---|---|
