@@ -14524,6 +14524,20 @@ luminance steps 15.5 % before and 15.8 % after across 4.60–4.70 → 4.74–4.8
 the circle is `dust_diffuse_share`'s own step between level-0 rings 5 and 6 (0.478 → 0.692 at 4.725 kpc), the
 model-side half the test separated: **#202 opened**, carried; what closes it, the share continuous in R.
 
+**The gate and the close.** The picture file whole with S73's bundles mounted (the model hash unchanged by this
+close: nothing under `model/` moved) on the merged state: 15 passed in the browser, the regenerated frames byte for
+byte, 267 `/api` answers from the bundle at the stand-less captures — the Milky Way's whole-disc `/api/clouds` among
+them (15 on, 5 off) — the 19 zoom-stand misses as before; vitest 454 passed, 1 skipped. The full suite ran detached
+at the final code (64d1533; the docs after it): **EXIT=1 — 1 721 passed, 5 skipped, 1 xfailed, 2 failed** in 6 h
+(09:48 → 15:49): `test_docs`' tag-record row, written on `main` after the merge, and `test_performance`'s per-cell
+pricing (`azimuthal`; the fixed-cost clause this time, 3.0e-6 × 40 003 against 0.5 × 0.234 — the wall-clock class of
+#67/#68, as at S69, S70, S72 and S73), green alone on its quiet re-run (2 passed, EXIT=0). S73's `verify_clone --ref
+main` (3486c3c), read at this open: **OK — 1 722 passed, 6 skipped, 1 xfailed in 6 h 03, specs OK**, no flake. This
+close's starts detached after the merge
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s71\verify_s71.log`), to be read at the next open. Row 71
+ticked with what was not done written in it; the review is row 74. No model rule, stage, field, number, row or
+pin of the model moved; the layer off nothing moved; one display default and one e2e pin moved with their reasons.
+
 **4. #197, for the owner (the explanation asked for, as given in chat; no action).** #197 is the star catalogue's and the remnants' ring draws
 inverting below their ring's inner edge. S70 found the defect in the clouds and fixed it there: every placed census
 draws an object's birth radius by inverting a cumulative table along its ring (`invert_cdf`), and the table's steps
