@@ -1,5 +1,9 @@
-# Builds the deployable image and publishes it to GitHub Container Registry,
-# tagged with the short commit (and `latest` on main). Public images on ghcr.io
+# The deployment's two images (BUILD_IV Phase W4): the model (Dockerfile.model, the API and its bundles) and the
+# gateway (gateway/Dockerfile, the frontend and the .NET gateway). Both are built and loaded locally first,
+# smoke-tested together (infra/smoke.sh: the bundles' hash is the live model.hash, the landing comes from the
+# bundles, the pinned gateway serves a hit that asks the model nothing, a wrong pin is a 503), and pushed only if
+# that passes - tagged with the short commit, and `latest` on main. The model image carries the hash it published
+# as the label org.galaxygen.model_hash, which infra/deploy.ps1 reads to pin the gateway. Public images on ghcr.io
 # cost nothing to store or pull, which keeps the Azure side on its free grants.
 name: image
 on:
@@ -10,24 +14,66 @@ permissions:
   contents: read
   packages: write
 jobs:
-  build:
+  images:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - id: tag
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        # ghcr.io wants a lowercase owner.
+        run: |
+          echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+
+      # Built once each, loaded into the runner's Docker for the smoke test. Separate cache scopes, so one image's
+      # cache never evicts the other's; the push below rebuilds from the same layers (the bundles' export included),
+      # so what is pushed is what was tested, plus the label.
+      - name: build the model image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.model
+          load: true
+          tags: galaxygen-model:smoke
+          cache-from: type=gha,scope=model
+          cache-to: type=gha,mode=max,scope=model
+      - name: build the gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: gateway/Dockerfile
+          load: true
+          tags: galaxygen-gateway:smoke
+          cache-from: type=gha,scope=gateway
+          cache-to: type=gha,mode=max,scope=gateway
+
+      - id: smoke
+        name: smoke-test the two images together
+        run: bash infra/smoke.sh galaxygen-model:smoke galaxygen-gateway:smoke
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - name: push the model image
+        uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile.model
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/galaxygen:${{ steps.tag.outputs.short }}
-            ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}/galaxygen:latest', github.repository_owner) || '' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ steps.tag.outputs.owner }}/galaxygen-model:${{ steps.tag.outputs.short }}
+            ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}/galaxygen-model:latest', steps.tag.outputs.owner) || '' }}
+          labels: org.galaxygen.model_hash=${{ steps.smoke.outputs.model_hash }}
+          cache-from: type=gha,scope=model
+      - name: push the gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: gateway/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.tag.outputs.owner }}/galaxygen-gateway:${{ steps.tag.outputs.short }}
+            ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}/galaxygen-gateway:latest', steps.tag.outputs.owner) || '' }}
+          cache-from: type=gha,scope=gateway

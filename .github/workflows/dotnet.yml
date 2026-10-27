@@ -1,5 +1,5 @@
 # The gateway's tests (BUILD_IV Phase W3): restore, build and test the .NET solution on every change to it.
-# The deployable gateway image is Phase W4's (image.yml gains a second job then).
+# The deployable gateway image is built, smoke-tested with the model image and pushed by image.yml (Phase W4).
 name: dotnet
 on:
   push:
