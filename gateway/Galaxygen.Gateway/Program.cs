@@ -181,7 +181,8 @@ app.MapGet("/healthz", (IOptions<GatewayOptions> opts, JobQueue queue, ModelGate
         status = mismatch ? "pin_mismatch" : "ok",
         frontend = frontend is not null,
         model = settings.Model.BaseUrl,
-        pinned = version.Pin is not null,
+        pinned = version.Pin is not null && !mismatch, // a pin in force: false once a mismatch dropped it
+        pin_configured = version.Pin is not null,
         pin_mismatch = mismatch,
         hash = new { pin = version.Pin, live = version.Live, keyed = version.Known, error = version.Error },
         limits = new

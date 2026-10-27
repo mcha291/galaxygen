@@ -254,6 +254,25 @@ public sealed class FeatureTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Healthz_tells_a_configured_pin_from_one_in_force()
+    {
+        await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
+        using var client = gateway.CreateClient();
+
+        var before = await client.GetFromJsonAsync<JsonElement>("/healthz");
+        Assert.True(before.GetProperty("pinned").GetBoolean());
+        Assert.True(before.GetProperty("pin_configured").GetBoolean());
+
+        await StubModel.Text(client, "/api/arrays?template=a"); // the check on the way drops the pin
+        var health = await client.GetAsync("/healthz");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, health.StatusCode);
+        var body = await health.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(body.GetProperty("pinned").GetBoolean()); // no pin in force
+        Assert.True(body.GetProperty("pin_configured").GetBoolean()); // though the configuration names one
+        Assert.True(body.GetProperty("pin_mismatch").GetBoolean());
+    }
+
+    [Fact]
     public async Task A_pin_the_live_model_contradicts_is_dropped_and_healthz_answers_503()
     {
         await using var gateway = Gateway(("Gateway:Model:ContentHash", "pinned"));
