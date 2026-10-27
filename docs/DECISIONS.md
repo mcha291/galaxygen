@@ -14694,3 +14694,17 @@ same curves in the share URL's own query 414 from Kestrel's 8 KB request line (t
 `/api` as a POST and are never cached — a known limit, W4's). One wart found and fixed after: `/healthz` said
 `pinned: true` after the pin was dropped (it reported the configuration); it now says whether a pin is in force and
 adds `pin_configured`.
+
+**Closing.** `dotnet build -c Release` 0 errors and `dotnet test` **107 passed, 0 failed, 0 skipped** on the merged
+branch (the lead's own run). The full Python suite ran detached at the final Python code (nothing under `model/` or
+`tests/` moved this session but the register's pins; `GALAXYGEN_AUDIT_ORDER=1`): **EXIT=1 — 1 722 passed, 5 skipped,
+1 xfailed, 1 failed** in 6 h 43 (19:51 → 02:34): `test_docs`' tag-record row alone, which C2e writes on `main` after
+the merge; the pricing test passed this time. S71's `verify_clone --ref main` (b9cdae4), read at this close: **1 failed
+/ 1 721 passed / 6 skipped / 1 xfailed in 6 h 07, specs OK** — `test_performance`'s per-cell pricing on `azimuthal`,
+the wall-clock flake alone; the clone sound. This session's starts detached after the merge
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s74\verify_s74.log`), to be read at the next open. The merge
+is gated on the suite's own exit line and the one failure's cause. No model rule, stage, field, number, row or pin
+moved; the layer off nothing moved; D5 gained its gateway sentence. **For the owner:** three re-rulings stand unless
+they say otherwise (the proxied gate 1 / 64; jobs sharing the model's permit; a pin mismatch lasting until restart),
+and Generate through the gateway now takes 42 s where it took 33.5 unlimited — the cost of one computation at a time
+on a replica that could not afford two. Next: S75, W4, the deployment (`BRIEF.md`).
