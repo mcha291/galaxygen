@@ -133,6 +133,7 @@ the row is written with its SHA at once.
 | 72 | `s72` | `c5cb1ff26592` | **applied** 2026-10-26 at S72's own close (C2e; D235); the SHA written on `main` in the commit after the merge; row 71 (W3) is the owner's and untagged |
 | 73 | `s73` | `8293f93e2b70` | **applied** 2026-10-26 at S73's own close (C2e; D236); the SHA written on `main` in the commit after the merge |
 | 71 | `s71` | `147103268237` | **applied** 2026-10-27 at S71's close (C2e; D237): the owner's W3 merged as built, ruling 6, F-4-1's display half; closed after S72 and S73 because the row was the owner's; the SHA written on `main` in the commit after the merge |
+| 74 | `s74` | `cbbda4506369` | **applied** 2026-10-27 at S74's own close (C2e; D238); the SHA written on `main` in the commit after the merge |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
