@@ -1,55 +1,60 @@
-# BRIEF — after S74: the gateway is reviewed and fixed; the next agent session is S75, Phase W4, the deployment (row 75)
+# BRIEF — after S75: W4 prepared and verified in CI, nothing deployed (the subscription is disabled); next is the owner's deploy, then S76, Phase W5 (row 76)
 
-**The state (2026-10-27).** S74 (D238) read W3 against the plan and ran it against the live model: every cache was
-keyed on `api` + `viewer` instead of `model.hash` and served stale physics after a model-only change; fixed with the
-pin verified (`/healthz` 503 on a mismatch), the dead `/bundles` mount gone, `/api/version/` never cached, a
-concurrency gate of 1 in flight / 64 queued on the proxied input-taking routes (hits never queue), no retries, share
-parameters allowlisted and ids by shape, byte-bounded stores, `X-Gateway-Cache` on hits with `X-Galaxy-Stages`
-empty, immutable `/assets`, a no-cache fallback, the 60/min window after the cache counting only model-bound
-requests; 106 gateway tests; `gateway/README.md` rewritten to the code (read it: it is the gateway's own account).
-D5's gateway sentence is in `RULES.md`. Register 131 open = 11 + 120, 55 discharged; next number **#204**, decisions
-from **D239**, board rows 75 (W4) / 76 (W5), acceptance rows from 38. The owner's word of 2026-10-27 covers W4 ("do
-this afterwards"); the rationing rule holds (two agents, one heavy; `get_usage` before each spawn).
+**The state (2026-10-28).** S75 (D239) built the deployment and verified what a machine without Docker and a
+subscription without write access could: `Dockerfile.model` (the API and its bundles, labelled with its `model.hash`)
+and `gateway/Dockerfile` (the frontend and the gateway) are built, run and smoke-tested together in
+`.github/workflows/image.yml` before the push (`infra/smoke.sh`: the bundles' hash the live hash, the landing's three
+answers `X-Galaxy-Source: bundle` in 1 ms each, the pinned gateway's `miss` then `hit` with the model's log unchanged,
+a wrong pin a 503), then pushed as `ghcr.io/mcha291/galaxygen-model:<short sha>` and `galaxygen-gateway:<short sha>`
+(public; `latest` on main). `infra/main.bicep` has the two Container Apps in one Consumption environment (the gateway
+external on 8080 with readiness on `/healthz`; the model internal on 8000 with readiness on `/api`, `--verbose`; both
+0–1; 1 vCPU / 2 GiB and 0.5 / 1 GiB as `modelSize` / `gatewaySize`), Table `shares` + Blob `results` with a 30-day
+lifecycle TTL, the gateway's env from `gateway/README.md`'s keys; `infra/deploy.ps1` reads the live subscription state,
+the pin from the image's label, recreates the old environment only on `-Recreate` (or when its type cannot change),
+and stops on a wrong `-ModelHash` unless `-Force`. `dotnet test` 107. Register 133 open = 11 + 122, 55 discharged;
+next number **#206**, decisions from **D240**, board row 76 (W5), acceptance rows from 38. Zero-traffic cost ~$0 (D239).
 
-## Build: S75 — Phase W4, the deployment (`BUILD_IV.md` §2d, §5 Phase W4, §7 rulings 8, 9; row 75)
-- **Two images from CI:** `Dockerfile.model` (today's root `Dockerfile` less the frontend stage; it already runs
-  `tools/export_template.py` into `/app/bundles` with `GALAXY_BUNDLES` set — **unbuilt on this machine so far: build it
-  first, `docker build -f Dockerfile.model .`, and confirm `/api/version`'s `model` hash inside equals the bundles'
-  and the landing is served from them**) and `gateway/Dockerfile` (the frontend build and the gateway; publish
-  untrimmed as it is, trimming is a later step); both tagged with the short commit in `.github/workflows/image.yml`.
-- **Bicep and `deploy.ps1`:** two Container Apps in one environment — the gateway with external ingress, the model
-  with internal ingress only, both scale 0–1 (ruling 9: minimum replicas zero); Table and Blob Storage for the share
-  links (the Blob container's lifecycle TTL — W4's, D238); the gateway's health probe on `/healthz` (it answers 503 on
-  a pin mismatch — a probe reads it) and the model's on `/api`; `Gateway:Model:BaseUrl` the model app's internal
-  FQDN; `Gateway:Model:ContentHash` pinned to the image's `model.hash` so a cache hit never wakes the model (the
-  gateway verifies it at the first model contact); `Gateway:Limits:TrustForwardedFor` on behind the ingress; the
-  suspended environment deleted and recreated by the first run (`infra/main.bicep`, the owner's `galaxygen-rg`).
-- **Costs:** the month's projected cost at zero traffic written down from the Bicep's sizes (the free grant per
-  subscription; a warm replica all month costs several times it).
-- **Gate:** the deployed site serves the landing from the bundles with the model replica at zero (the model's logs
-  show no request); an edit wakes the model and returns through the proxy's gate (the viewer does not use `/jobs`:
-  #203); a share link opens on another device; `README.md` and `VIEWER_TASKS.md` T19 updated; `dotnet test` and the
-  Python suite green. The owner runs `deploy.ps1` (their subscription, their credentials): an agent prepares and
-  verifies locally, the owner deploys — say so in the decision.
+## What waits on the owner (before any agent session can do W5)
+- **The subscription** reads `Disabled` (a free trial at its spending limit; `az rest` on the subscription, not the
+  CLI's cached `az account show`). Re-enable it in the portal (upgrade to pay-as-you-go), then from a checkout whose
+  `image` run is green: `./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag <short sha> -Recreate` — it deletes the
+  old app `galaxygen` and `galaxygen-env` (the hostname changes), creates the environment, the storage account,
+  `galaxygen-model` and `galaxygen`, and prints the URL. `-Preview` runs the same path read-only.
+- **Rulings D239 asks for:** the sizes; the results TTL (30 days); the readiness probe on `/healthz` taking the one
+  gateway replica out of rotation on a pin mismatch (a loud outage, against a gateway that stays up unpinned);
+  **#205**'s remedy — a gateway at zero replicas starts with an empty cache, so the first visit after a quiet spell
+  wakes the model for the landing (W5's eager warm, a Blob-backed output cache, or a warm gateway against ruling 9).
+- The re-rulings of D238 stand (the proxied gate 1 / 64; jobs sharing the permit; a pin mismatch until restart);
+  #197, #202, #203 / T20 each a session of its own.
 
-## What waits on the owner
-- **Re-rulings from D238** (standing unless they say otherwise): the proxied path's gate of 1 in flight / 64 queued
-  (ruling 5's numbers were the jobs'); jobs sharing the model's permit; a pin mismatch lasting until restart.
-- **#197** (the stars' and remnants' ring draws), **#202** (the diffuse share's per-ring step), **#203 / T20** (share
-  links and the queue in the viewer): each a session of its own; #197 and #202 before W4 if the deployed frames are to
-  be the fixed ones.
+## Build: S76 — Phase W5, smoothness measured (`BUILD_IV.md` §5 Phase W5, §7 ruling 10; row 76)
+- **First, #204's three gate sentences on the deployed site** (the model's logs through
+  `az containerapp logs show -n galaxygen-model -g galaxygen-rg --type console`, filtering the readiness probe's
+  `GET /api` and `kube-probe`): the landing from the bundles with no model request *while the gateway is warm*; an
+  edit (Generate) waking the model and returning through the proxy's gate (`X-Gateway-Cache: miss`, one at a time);
+  a share link (`POST /share` by hand, since the viewer does not call it, #203) opened on another device.
+- **The probe:** Playwright against the deployed URL — first paint, template switch (Milky Way ↔ NGC 4414), one zoom
+  step below 4 kpc (the model wakes: ruling 15), cold (both apps at zero: wait past the idle cooldown, ~5 min) and
+  warm, five runs each, a table with medians; the gateway's `/healthz` sampled for `in_flight` / `waiting`; the model's
+  cold start (image pull + the bundle index's digest check, 0.27 s on this machine for 285 MB) measured on its own.
+  Compare with ruling 10's bound: 1 s warm, 5 s cold.
+- **Then whatever the table says is slow and the bound forbids** (§5 Phase W5): an eager warm of the gateway from the
+  bundles' manifests at start (#205), a prefetch of the neighbouring level's cells, a smaller level-3 encoding, a CDN in
+  front of the bundles; each measured before and after, in the decision. Nothing in `model/` moves (the pin).
+- **Gate:** the table inside the bound, with the before numbers, in D240; the Python suite and `dotnet test` green.
 
 ## Read
-- `BUILD_IV.md` §2d, §5 Phase W4, §7 rulings 8–10; D222, D235, D238; `gateway/README.md`; `infra/main.bicep`,
-  `infra/deploy.ps1`, `Dockerfile`, `gateway/Dockerfile`, `.github/workflows/image.yml` and `dotnet.yml`; the memory
-  file on the Azure deploy (ghcr.io images, `galaxygen-rg`, the environment suspended since 2026-10-14).
+- `BUILD_IV.md` §5 Phase W5, §7 rulings 9, 10, 15; D238, D239 (the cost table, the review's eleven findings);
+  `gateway/README.md`; `infra/` (bicep, deploy.ps1, smoke.sh), `.github/workflows/image.yml`; the Azure memory file.
 
-## Traps (S72–S74's stand; D235–D238)
-- Every byte under `model/galaxy` is in the bundle's and the gateway's hash: a close that touches `model/`
-  re-exports before the picture opt-in; the gateway must be pointed at an API that publishes `model` (S72+).
-- The owner's servers run in their Terminal panel on 8017 / 8018 / 5173; agents use 8050+ (the AppHost now 8027).
-- `tools/bootstrap.py` before the suite (~6 h; the pricing test flakes under load, green alone); pytest's exit code
-  to a file; Bash under 8 KB; an agent worktree is cut from `main` (`git merge --ff-only session-NN` first); the
-  register's two pins in `tests/test_audit.py` plus the carried and discharged rows; vitest and the picture test at
-  every close that touches the frontend or a template; a detached `verify_clone`'s log read before the session ends
-  (S71's and S74's at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s7N\verify_s7N.log`).
+## Traps (S72–S75's stand; D235–D239)
+- No Docker here: images build and run in CI only (`gh workflow run image.yml --ref <branch>`, `gh run watch`); the
+  gateway is checked locally by `dotnet run` against `uv run python -m galaxy.api --port 8050`. Every byte under
+  `model/galaxy` is in the hash: a change there is a new model image and a new pin, and the gateway's `/healthz` is
+  503 until redeployed with it. `az account show` lies about a disabled subscription (read `az rest`).
+- The owner's servers run in their Terminal panel on 8017 / 8018 / 5173; agents use 8050+ (the AppHost 8027).
+- `tools/bootstrap.py` after the last agent worktree and before the suite (~6 h; the pricing test flakes under load,
+  green alone); pytest's exit code to a file; Bash under 8 KB; agent worktrees are cut from `main` (`git merge
+  --ff-only session-NN` first); the register's count pin in `tests/test_audit.py` moves with every entry; a detached
+  `verify_clone`'s log is 0 bytes until it ends (block-buffered) — S75's at
+  `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s75\verify_s75.log`, read before the session ends.
