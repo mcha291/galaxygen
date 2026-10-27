@@ -1,4 +1,4 @@
-# Only what the image builds from: model/, interface/, frontend/, pyproject, uv.lock.
+# Only what the images build from: model/, interface/, frontend/, gateway/, pyproject, uv.lock (all three Dockerfiles).
 .git
 .github
 .claude
@@ -7,6 +7,10 @@
 **/__pycache__
 **/node_modules
 frontend/dist
+# The gateway's local build output: the image restores and publishes from source (gateway/Dockerfile); its
+# appsettings*.json and launchSettings.json stay in the context.
+gateway/**/bin
+gateway/**/obj
 docs
 tests
 tools
