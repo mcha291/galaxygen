@@ -74,6 +74,7 @@ Debts in full: about 5 to 6.
 | T17 | **The design system as designed**: 20 of 21 components unported; the tabs differ from the mockup (Science / Galaxy + the edit panel since V9, Preview / Science / Galaxy before, against Workflow / Galaxy / System / Science) | The owner's ruling on the structure | vitest on the panels; the build | 1–2 |
 | T18 | ~~**View a locked checkpoint without reopening it** (S46: `flow.goTo` treats going back as reopening; "Edit galaxy" lands on checkpoint 6's scene)~~ **Discharged by construction at V9 (S68, D232)**: no checkpoint locks; the Science tab previews any group of the galaxy on screen | A change to the shared `interface/flow.js` | `tests/test_viewer.py`'s flow tests | 0.25 |
 | T19 | **Deploy**: `./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag <short sha>`; CI builds the image on every push | The owner's action | — | minutes |
+| T20 | **Share links and the queue in the viewer** (S74, D238, #203): a route that reads a share id (`GET /share/{id}`) into the edit panel's draft and lands on it as a template does (BUILD_IV §2b, ruling 4); Generate posting to the gateway's `POST /jobs` and streaming `/jobs/{id}/events` instead of calling `/api/*` itself; a "Share" action creating the link. The gateway's side exists; the viewer calls none of it | A phase of its own after W4; the owner's call | — | 1 session |
 
 Additions in full: about 4.5 to 6. Everything in §2 and §3: about 10 to 12.
 
