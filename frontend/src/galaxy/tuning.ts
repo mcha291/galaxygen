@@ -458,8 +458,15 @@ const OWNER_STEPS_2026_10_19 = 48;
 // The owner, after the measurement (the Milky Way 4 % brighter at 48 than at 96, its march no faster): "Put the Milky
 // Way back to 96 steps, keep NGC 4414 at 48, and close S67."
 
+// S71 (F-4-1, the owner's word of 2026-10-27): was cloudsExtinction false on the Milky Way (the paste of 2026-10-18, kept
+// by the second) - with the switch off the clouds' own column (/api/clouds' cloud_dust_extinction_v) was not drawn and
+// the field kept only the diffuse share (dust_diffuse_share), so 0.492 of the disc's dust (the render header's
+// clouds.rings.clouds_share_disc, 0.4922158, tests/test_v6_clouds.py CLOUDS_SHARE_DISC; D234) was missing from every
+// Milky Way frame, which drew 0.508 of it, and the level-0 ring edge at 4.72 kpc showed (Audit V, F-4-1). Now the Milky
+// Way draws its clouds as extinction, as NGC 4414 already does: the diffuse share and the clouds' column together, the
+// whole of the disc's dust. A display choice (D5).
 export const TEMPLATE_TUNING: Readonly<Record<string, Readonly<Partial<Tuning>>>> = Object.freeze({
-  milky_way: Object.freeze({ ...OWNER_DEFAULTS_2026_10_19, steps: 96 }),
+  milky_way: Object.freeze({ ...OWNER_DEFAULTS_2026_10_19, steps: 96, cloudsExtinction: true } satisfies Partial<Tuning>),
   // "then copy it over to 4414" (the second paste), then the third paste laid over it. Its points keep the instrument's
   // image (T9) while the WFC3 set is shown, so the sprite size does not reach them there.
   ngc_4414: Object.freeze({
