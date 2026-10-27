@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace Galaxygen.Gateway.Tests;
@@ -103,7 +104,7 @@ public sealed class PartsTests
         Assert.Null(queue.Find("nope"));
     }
 
-    [Fact(Skip = "Open finding: JobQueue.Position orders by Created, so two jobs queued in the same clock tick both report position 1")]
+    [Fact] // the review's open finding, fixed at S74: positions follow the order jobs were made in, not the clock
     public void Two_jobs_queued_in_the_same_tick_have_distinct_positions()
     {
         var queue = new JobQueue(Options(), new ManualClock()); // the clock does not move between the two
@@ -150,6 +151,36 @@ public sealed class PartsTests
         Assert.Matches("^[0-9a-f]{16}$", job.Id);
     }
 
+    [Fact]
+    public void A_cancelled_queued_job_stops_counting_against_the_queue_at_once()
+    {
+        var clock = new ManualClock();
+        var queue = new JobQueue(Options(o => o.Limits.GenerateQueue = 1), clock);
+        var waiting = queue.TryEnqueue("arrays", Query("t=1"))!;
+        Assert.Null(queue.TryEnqueue("arrays", Query("t=2")));
+        waiting.Move(JobState.Cancelled, clock.Now); // still in the channel, unread
+        Assert.NotNull(queue.TryEnqueue("arrays", Query("t=3")));
+    }
+
+    [Fact]
+    public void Finished_jobs_are_forgotten_past_their_bytes_oldest_first()
+    {
+        var clock = new ManualClock();
+        var queue = new JobQueue(Options(o => o.Jobs.ResultMegabytes = 1), clock);
+        var megabyte = new byte[1024 * 1024];
+        var older = queue.TryEnqueue("arrays", Query("t=1"))!;
+        var newer = queue.TryEnqueue("arrays", Query("t=2"))!;
+        clock.Advance(TimeSpan.FromSeconds(1));
+        older.Move(JobState.Done, clock.Now, result: new ModelResult(200, "x", null, megabyte));
+        clock.Advance(TimeSpan.FromSeconds(1));
+        newer.Move(JobState.Done, clock.Now, result: new ModelResult(200, "x", null, megabyte));
+
+        queue.Evict(); // what the worker runs as a job finishes and each minute
+        Assert.Null(queue.Find(older.Id));
+        Assert.NotNull(queue.Find(newer.Id));
+        Assert.Equal(TimeSpan.FromMinutes(1), JobQueue.EvictionPeriod);
+    }
+
     // --- The memory stores --------------------------------------------------------------------------------------
 
     [Fact]
@@ -177,6 +208,41 @@ public sealed class PartsTests
         Assert.Null(await store.GetAsync("a", default));
         Assert.Equal([2], (await store.GetAsync("b", default))!.Body);
         Assert.Equal([3], (await store.GetAsync("c", default))!.Body);
+    }
+
+    [Fact]
+    public async Task The_memory_result_store_is_bounded_by_bytes_too()
+    {
+        var store = new MemoryResultStore(Options(o => { o.Cache.ResultEntries = 100; o.Cache.ResultMegabytes = 1; }));
+        ModelResult Half(byte b) => new(200, "application/octet-stream", null, Enumerable.Repeat(b, 512 * 1024).ToArray());
+        await store.PutAsync("a", Half(1), default);
+        await store.PutAsync("b", Half(2), default);
+        await store.PutAsync("c", Half(3), default); // three halves are over a megabyte: the oldest goes
+        Assert.Null(await store.GetAsync("a", default));
+        Assert.NotNull(await store.GetAsync("b", default));
+        Assert.NotNull(await store.GetAsync("c", default));
+        Assert.Equal(1024 * 1024, store.Bytes);
+
+        await store.PutAsync("huge", new ModelResult(200, "x", null, new byte[1024 * 1024 + 1]), default);
+        Assert.Null(await store.GetAsync("huge", default)); // larger than the whole bound: not kept, nothing evicted for it
+        Assert.NotNull(await store.GetAsync("b", default));
+    }
+
+    [Fact]
+    public async Task A_store_hit_says_nothing_ran_and_keeps_the_models_other_headers()
+    {
+        var result = new ModelResult(200, "application/octet-stream", "disc,stars", [1, 2, 3], "bundle", "no-store");
+        var context = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider() };
+        context.Response.Body = new MemoryStream();
+        await result.ToHttp(ModelResult.Hit).ExecuteAsync(context);
+        Assert.Equal("", context.Response.Headers[ModelRoutes.StagesHeader].ToString());
+        Assert.Equal("bundle", context.Response.Headers[ModelRoutes.SourceHeader].ToString());
+        Assert.Equal("no-store", context.Response.Headers.CacheControl.ToString());
+        Assert.Equal("hit", context.Response.Headers[ModelResult.CacheHeader].ToString());
+
+        context = new Microsoft.AspNetCore.Http.DefaultHttpContext { Response = { Body = new MemoryStream() } };
+        await result.ToHttp(ModelResult.Miss).ExecuteAsync(context);
+        Assert.Equal("disc,stars", context.Response.Headers[ModelRoutes.StagesHeader].ToString());
     }
 
     [Fact]
@@ -213,40 +279,48 @@ public sealed class PartsTests
     // --- The model's hash ---------------------------------------------------------------------------------------
 
     [Fact]
-    public void The_hash_joins_the_apis_and_the_viewers()
+    public void The_hash_is_the_models_alone()
     {
-        var version = JsonDocument.Parse("""{"api": {"hash": "a1"}, "viewer": {"hash": "v1"}}""").RootElement;
-        Assert.Equal("a1.v1", ModelVersion.Compose(version));
+        var version = JsonDocument.Parse("""{"api": {"hash": "a1"}, "viewer": {"hash": "v1"}, "model": {"hash": "m1"}}""").RootElement;
+        Assert.Equal("m1", ModelVersion.Compose(version));
     }
 
     [Theory]
-    [InlineData("""{"api": {"hash": ""}, "viewer": {"hash": "v1"}}""")]
-    [InlineData("""{"api": {"hash": "a1"}, "viewer": {"hash": null}}""")]
-    public void A_version_without_a_hash_is_refused(string json) =>
-        Assert.Throws<FormatException>(() => ModelVersion.Compose(JsonDocument.Parse(json).RootElement));
+    [InlineData("""{"api": {"hash": "a1"}, "viewer": {"hash": "v1"}}""")] // an API before S72
+    [InlineData("""{"model": {"hash": ""}}""")]
+    [InlineData("""{"model": {"hash": null}}""")]
+    [InlineData("""{"model": {}}""")]
+    [InlineData("""{"model": "m1"}""")]
+    [InlineData("""[]""")]
+    public void A_version_without_the_model_hash_is_refused(string json) =>
+        Assert.Contains("S72", Assert.Throws<FormatException>(() => ModelVersion.Compose(JsonDocument.Parse(json).RootElement)).Message);
 
-    [Fact]
-    public void A_version_missing_its_parts_is_refused() =>
-        Assert.Throws<KeyNotFoundException>(() => ModelVersion.Compose(JsonDocument.Parse("""{"api": {}}""").RootElement));
+    private static (ServiceProvider Provider, ModelVersion Version) Version(StubModel model, ManualClock clock, Action<GatewayOptions> set)
+    {
+        var options = Options(set);
+        var services = new ServiceCollection();
+        services.AddSingleton(options);
+        services.AddHttpClient<ModelClient>(http => http.BaseAddress = new Uri(model.Url));
+        var provider = services.BuildServiceProvider();
+        return (provider, new ModelVersion(provider, options, clock, NullLogger<ModelVersion>.Instance));
+    }
 
     [Fact]
     public async Task A_read_hash_is_trusted_for_its_seconds_then_read_again()
     {
         await using var model = await StubModel.StartAsync();
-        var services = new ServiceCollection();
-        services.AddHttpClient<ModelClient>(http => http.BaseAddress = new Uri(model.Url));
-        await using var provider = services.BuildServiceProvider();
         var clock = new ManualClock();
-        var version = new ModelVersion(provider, Options(o => o.Model.VersionSeconds = 30), clock);
+        var (provider, version) = Version(model, clock, o => o.Model.VersionSeconds = 30);
+        await using var _ = provider;
 
-        Assert.Equal("api0.viewer0", await version.CurrentAsync(default));
-        model.ApiHash = "api1"; // a redeploy the gateway has not seen yet
+        Assert.Equal("model0", await version.CurrentAsync(default));
+        model.ModelHash = "model1"; // a redeploy the gateway has not seen yet
         clock.Advance(TimeSpan.FromSeconds(29));
-        Assert.Equal("api0.viewer0", await version.CurrentAsync(default));
+        Assert.Equal("model0", await version.CurrentAsync(default));
         Assert.Equal(1, model.CallsTo("version"));
 
         clock.Advance(TimeSpan.FromSeconds(1));
-        Assert.Equal("api1.viewer0", await version.CurrentAsync(default));
+        Assert.Equal("model1", await version.CurrentAsync(default));
         Assert.Equal(2, model.CallsTo("version"));
     }
 
@@ -254,14 +328,107 @@ public sealed class PartsTests
     public async Task Callers_at_once_read_the_hash_once()
     {
         await using var model = await StubModel.StartAsync();
-        var services = new ServiceCollection();
-        services.AddHttpClient<ModelClient>(http => http.BaseAddress = new Uri(model.Url));
-        await using var provider = services.BuildServiceProvider();
-        var version = new ModelVersion(provider, Options(o => o.Model.VersionSeconds = 30), new ManualClock());
+        var (provider, version) = Version(model, new ManualClock(), o => o.Model.VersionSeconds = 30);
+        await using var _ = provider;
 
         var hashes = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => version.CurrentAsync(default).AsTask()));
-        Assert.All(hashes, h => Assert.Equal("api0.viewer0", h));
+        Assert.All(hashes, h => Assert.Equal("model0", h));
         Assert.Equal(1, model.CallsTo("version"));
+    }
+
+    [Fact]
+    public async Task A_pin_is_checked_once_per_period_and_dropped_on_a_mismatch()
+    {
+        await using var model = await StubModel.StartAsync();
+        var clock = new ManualClock();
+        var (provider, version) = Version(model, clock, o => { o.Model.ContentHash = " model0 "; o.Model.VersionSeconds = 30; });
+        await using var _ = provider;
+
+        Assert.Equal("model0", version.Known); // trimmed, and known without a read
+        await version.VerifyAsync(default);
+        await version.VerifyAsync(default);
+        Assert.Equal(1, model.CallsTo("version")); // checked once within the period
+        Assert.False(version.PinMismatch);
+
+        model.ModelHash = "model1"; // redeployed without the pin following it
+        clock.Advance(TimeSpan.FromSeconds(30));
+        await version.VerifyAsync(default);
+        Assert.True(version.PinMismatch);
+        Assert.Equal("model1", version.Live);
+        Assert.Equal("model1", version.Known);
+        Assert.Equal("model1", await version.CurrentAsync(default)); // the live hash keys from now on
+    }
+
+    [Fact]
+    public async Task A_model_that_cannot_be_read_leaves_the_pin_standing()
+    {
+        await using var model = await StubModel.StartAsync();
+        var (provider, version) = Version(model, new ManualClock(), o => o.Model.ContentHash = "model0");
+        await using var _ = provider;
+        model.VersionStatus = 503;
+        await version.VerifyAsync(default); // never throws
+        Assert.False(version.PinMismatch);
+        Assert.Equal("model0", await version.CurrentAsync(default));
+    }
+
+    [Fact]
+    public async Task A_version_read_has_its_own_short_timeout()
+    {
+        // A model that takes the connection and never answers.
+        using var silent = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        silent.Start();
+        var port = ((System.Net.IPEndPoint)silent.LocalEndpoint).Port;
+        var options = Options(o => o.Model.VersionTimeoutSeconds = 1);
+        var services = new ServiceCollection();
+        services.AddSingleton(options);
+        services.AddHttpClient<ModelClient>(http => http.BaseAddress = new Uri($"http://127.0.0.1:{port}"));
+        await using var provider = services.BuildServiceProvider();
+        var client = provider.GetRequiredService<ModelClient>();
+        var started = DateTime.UtcNow;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.ReadVersionAsync(default));
+        Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void The_viewers_version_passing_through_is_read_without_throwing()
+    {
+        var clock = new ManualClock();
+        var version = new ModelVersion(new ServiceCollection().BuildServiceProvider(), Options(o => o.Model.ContentHash = "pinned"), clock,
+            NullLogger<ModelVersion>.Instance);
+        version.TryObserve("not json"u8);
+        version.TryObserve("""{"api": {"hash": "a"}}"""u8);
+        Assert.False(version.PinMismatch);
+        Assert.NotNull(version.Error);
+        version.TryObserve("""{"model": {"hash": "live"}}"""u8);
+        Assert.True(version.PinMismatch);
+        Assert.Null(version.Error);
+    }
+
+    // --- The routes ---------------------------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("/api/version/", "/api/version")]
+    [InlineData("/api/version//", "/api/version")]
+    [InlineData("/api/", "/api")]
+    [InlineData("/", "/")]
+    [InlineData("", "/")]
+    [InlineData("/assets/x.js", "/assets/x.js")]
+    public void A_path_is_compared_without_its_trailing_slash(string path, string normalized) =>
+        Assert.Equal(normalized, ModelRoutes.Normalize(new Microsoft.AspNetCore.Http.PathString(path.Length == 0 ? null : path)));
+
+    [Fact]
+    public void The_route_table_is_the_apis_but_its_index_and_version()
+    {
+        string[] api = ["templates", "arrays", "region", "system", "clouds", "clusters", "remnants", "bright", "blackbody", "render", "layer", "stages", "fields", "inputs"];
+        Assert.Equal(api.Order(), ModelRoutes.Galaxy.Order());
+        Assert.Subset(new HashSet<string>(ModelRoutes.Galaxy), new HashSet<string>(ModelRoutes.Generating));
+        Assert.DoesNotContain("blackbody", ModelRoutes.Generating);
+        Assert.DoesNotContain("templates", ModelRoutes.Generating);
+        Assert.Contains("filters", ModelRoutes.Parameters["render"]);
+        Assert.DoesNotContain("template", ModelRoutes.Parameters["render"]); // the galaxy's own keys are the record's
+        Assert.Equal("render", ModelRoutes.ApiRoute("/api/render"));
+        Assert.Null(ModelRoutes.ApiRoute("/api"));
+        Assert.Null(ModelRoutes.ApiRoute("/api/render/x"));
     }
 
     // --- The static roots ---------------------------------------------------------------------------------------
