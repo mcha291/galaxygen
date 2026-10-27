@@ -1,58 +1,55 @@
-# BRIEF — after S71's close: the next agent session is S74, the gateway's review (row 74); then W4 (75), W5 (76)
+# BRIEF — after S74: the gateway is reviewed and fixed; the next agent session is S75, Phase W4, the deployment (row 75)
 
-**The state (2026-10-27).** The owner answered S73's five open items (D237): ruling 6 is entered (the bundles hold the
-whole-galaxy scope alone, 202 entries, ~285 MB; nothing below 4 kpc; W5 measures the zoom step); **W3, the gateway,
-is merged as built** from branch `worktree-session-70-gateway` (`gateway/`: `Caching.cs`, `GalaxyQuery.cs`, `Jobs.cs`,
-`ModelClient.cs`, `Shares.cs`, `Program.cs`, 70 xunit tests against a stub model; `dotnet build -c Release` clean and
-`dotnet test` 69 passed / 1 skipped before the merge; never run against the live model, never read against the plan);
-the Milky Way now draws its clouds as extinction (F-4-1's display half; every Milky Way frame regenerated, D237's
-table); the stray csproj edit is gone. Register 130 open = 11 + 119, 55 discharged; next number **#203**, decisions
-from **D238**, board rows 74 / 75 / 76, acceptance rows from 38. The owner's word covers S74 ("schedule a review
-session") and W4 after it ("do this afterwards"); the rationing rule holds (two agents, one heavy; `get_usage`
-before each spawn).
+**The state (2026-10-27).** S74 (D238) read W3 against the plan and ran it against the live model: every cache was
+keyed on `api` + `viewer` instead of `model.hash` and served stale physics after a model-only change; fixed with the
+pin verified (`/healthz` 503 on a mismatch), the dead `/bundles` mount gone, `/api/version/` never cached, a
+concurrency gate of 1 in flight / 64 queued on the proxied input-taking routes (hits never queue), no retries, share
+parameters allowlisted and ids by shape, byte-bounded stores, `X-Gateway-Cache` on hits with `X-Galaxy-Stages`
+empty, immutable `/assets`, a no-cache fallback, the 60/min window after the cache counting only model-bound
+requests; 106 gateway tests; `gateway/README.md` rewritten to the code (read it: it is the gateway's own account).
+D5's gateway sentence is in `RULES.md`. Register 131 open = 11 + 120, 55 discharged; next number **#204**, decisions
+from **D239**, board rows 75 (W4) / 76 (W5), acceptance rows from 38. The owner's word of 2026-10-27 covers W4 ("do
+this afterwards"); the rationing rule holds (two agents, one heavy; `get_usage` before each spawn).
 
-## Build: S74 — the gateway's review (row 74; `BUILD_IV.md` §2c's table, §5 Phase W3's gate, Appendix A's D3 and D5)
-- **Read it against the plan first** (an Opus reviewer blind to the builder's README, then the lead): the gateway
-  runs no physics and holds no colour table; every cache key contains the model's hash (a test reads the key builder
-  — `Caching.cs`; `ModelClient.cs` reads `/api/version`'s `model` hash or the pinned `Gateway:Model:ContentHash`:
-  the key must use `model`, the hash of every byte of `model/galaxy` since S72, not `api` or `viewer`); the limiter's
-  429 on the second concurrent generate and the queue serving it after; a share link round-trips its inputs (the
-  query bound 16 KB — the viewer's full input vector with the merger prose is ~1.4 KB, a WFC3 render's filters ~20 KB:
-  does a share carry filters? it should not); `/api/version` through the gateway equals the model's; a bundle hit
-  passed through with its `X-Galaxy-Source: bundle` (the API answers it in 3 ms; `Cache-Control: no-store` from the
-  API, the gateway's output cache keyed on the hash is its own decision, D3); D5's Appendix A sentence entered on the
-  review's merge ("a gateway in front of the API is held to the same: it serves what the model published, keyed by
-  the model's content hash, and computes nothing").
-- **Then run it**: `dotnet run --project gateway/Galaxygen.Gateway` against `uv run python -m galaxy.api --port 8017
-  --bundles <dir> --client frontend/dist` (export the bundles first: `uv run python tools/export_template.py --out
-  <dir>`, ~100 s); the frontend's full flow through the gateway with no client change (`interface/transport.js`'s
-  `ORIGIN` stays empty); the picture test cannot drive the gateway (it starts its own server on :8019) — a Playwright
-  walk through the gateway's port, as S73's walker did (its spec and `logserve.py` are described in D236), with the
-  gateway's logs showing the cache's hits and misses.
-- **Fix what the review finds** in the same session (Opus builder), `dotnet test` and the Python suite green;
-  `.github/workflows/dotnet.yml` runs on changes under `gateway/`. The Aspire app host needs Docker Desktop (the
-  model container from the root `Dockerfile`, whose export step is unbuilt here) — W4's; say so if not run.
-- **Gate:** every line of §5 Phase W3's gate measured or named as not met; D5's sentence in `RULES.md`; D238.
+## Build: S75 — Phase W4, the deployment (`BUILD_IV.md` §2d, §5 Phase W4, §7 rulings 8, 9; row 75)
+- **Two images from CI:** `Dockerfile.model` (today's root `Dockerfile` less the frontend stage; it already runs
+  `tools/export_template.py` into `/app/bundles` with `GALAXY_BUNDLES` set — **unbuilt on this machine so far: build it
+  first, `docker build -f Dockerfile.model .`, and confirm `/api/version`'s `model` hash inside equals the bundles'
+  and the landing is served from them**) and `gateway/Dockerfile` (the frontend build and the gateway; publish
+  untrimmed as it is, trimming is a later step); both tagged with the short commit in `.github/workflows/image.yml`.
+- **Bicep and `deploy.ps1`:** two Container Apps in one environment — the gateway with external ingress, the model
+  with internal ingress only, both scale 0–1 (ruling 9: minimum replicas zero); Table and Blob Storage for the share
+  links (the Blob container's lifecycle TTL — W4's, D238); the gateway's health probe on `/healthz` (it answers 503 on
+  a pin mismatch — a probe reads it) and the model's on `/api`; `Gateway:Model:BaseUrl` the model app's internal
+  FQDN; `Gateway:Model:ContentHash` pinned to the image's `model.hash` so a cache hit never wakes the model (the
+  gateway verifies it at the first model contact); `Gateway:Limits:TrustForwardedFor` on behind the ingress; the
+  suspended environment deleted and recreated by the first run (`infra/main.bicep`, the owner's `galaxygen-rg`).
+- **Costs:** the month's projected cost at zero traffic written down from the Bicep's sizes (the free grant per
+  subscription; a warm replica all month costs several times it).
+- **Gate:** the deployed site serves the landing from the bundles with the model replica at zero (the model's logs
+  show no request); an edit wakes the model and returns through the proxy's gate (the viewer does not use `/jobs`:
+  #203); a share link opens on another device; `README.md` and `VIEWER_TASKS.md` T19 updated; `dotnet test` and the
+  Python suite green. The owner runs `deploy.ps1` (their subscription, their credentials): an agent prepares and
+  verifies locally, the owner deploys — say so in the decision.
 
 ## What waits on the owner
-- **#197** (the stars' and remnants' ring draws; a session of its own — explained in D237 §4) and **#202** (the
-  diffuse dust share one number per level-0 ring: the circle at 4.72 kpc in every Milky Way frame; what closes it is
-  the share continuous in R — a model-side change, no number, the frames regenerated). Their word on when; both
-  before W4 if the deployed frames are to be the fixed ones.
-- The Milky Way's frames moved (D237's table): the stars frame's colour reached the goal's, the dark fraction rose
-  to 0.031 against the goal's 0.007 — the flecks are darker and more numerous than the goal's two lanes. The owner's
-  look at the tuning panel decides whether the extinction strength slider (D228) comes down.
+- **Re-rulings from D238** (standing unless they say otherwise): the proxied path's gate of 1 in flight / 64 queued
+  (ruling 5's numbers were the jobs'); jobs sharing the model's permit; a pin mismatch lasting until restart.
+- **#197** (the stars' and remnants' ring draws), **#202** (the diffuse share's per-ring step), **#203 / T20** (share
+  links and the queue in the viewer): each a session of its own; #197 and #202 before W4 if the deployed frames are to
+  be the fixed ones.
 
 ## Read
-- `BUILD_IV.md` §2c, §5 (W3's gate), §7 (rulings 4, 5, 6, 12), Appendix A; D222, D235–D237; `gateway/README.md`
-  (the configuration table); `RULES.md` D2–D5; `model/galaxy/api/http.py` (the headers), `bundle.py`.
+- `BUILD_IV.md` §2d, §5 Phase W4, §7 rulings 8–10; D222, D235, D238; `gateway/README.md`; `infra/main.bicep`,
+  `infra/deploy.ps1`, `Dockerfile`, `gateway/Dockerfile`, `.github/workflows/image.yml` and `dotnet.yml`; the memory
+  file on the Azure deploy (ghcr.io images, `galaxygen-rg`, the environment suspended since 2026-10-14).
 
-## Traps (S72–S73's stand; see D235–D236)
-- Every byte under `model/galaxy` is in the bundle's hash: a close that touches `model/` re-exports before the
-  picture opt-in (`GALAXYGEN_PICTURE=1 GALAXY_BUNDLES=<dir> uv run pytest tests/test_picture.py`; :8019, one at a time).
-- `tools/bootstrap.py` before the suite (~5 h with the pieces' gate; the pricing test flakes under load, green alone);
-  pytest's exit code to a file; Bash under 8 KB; an agent worktree is cut from `main` (`git merge --ff-only
-  session-NN` first); the register's two pins in `tests/test_audit.py` plus the carried and discharged rows in
-  GALAXY_INPUTS.md §11; vitest and the picture test at every close that touches the frontend or a template; the
-  owner's servers in their Terminal panel; a detached `verify_clone`'s log read before the session ends (S73's was
-  green: 1 722 passed; S71's close's at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s71\verify_s71.log`).
+## Traps (S72–S74's stand; D235–D238)
+- Every byte under `model/galaxy` is in the bundle's and the gateway's hash: a close that touches `model/`
+  re-exports before the picture opt-in; the gateway must be pointed at an API that publishes `model` (S72+).
+- The owner's servers run in their Terminal panel on 8017 / 8018 / 5173; agents use 8050+ (the AppHost now 8027).
+- `tools/bootstrap.py` before the suite (~6 h; the pricing test flakes under load, green alone); pytest's exit code
+  to a file; Bash under 8 KB; an agent worktree is cut from `main` (`git merge --ff-only session-NN` first); the
+  register's two pins in `tests/test_audit.py` plus the carried and discharged rows; vitest and the picture test at
+  every close that touches the frontend or a template; a detached `verify_clone`'s log read before the session ends
+  (S71's and S74's at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s7N\verify_s7N.log`).
