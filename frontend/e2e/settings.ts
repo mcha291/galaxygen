@@ -112,7 +112,17 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.96427, 0.96617, 0.97222] as const;
+export const DUSTY_LAYER_RATIO = [0.96641, 0.97054, 0.97765] as const;
+// S71 (F-4-1, the owner's word of 2026-10-27): was [0.96427, 0.96617, 0.97222] - the Milky Way's display default draws
+// its clouds as extinction (tuning.ts TEMPLATE_TUNING.milky_way cloudsExtinction false -> true), so both frames now carry
+// the clouds' own column (0.492 of the disc's dust, undrawn before) beside the diffuse share. Measured (physics only over
+// layered, the RTX 4070 of frames.json, the physics-only frame taken twice the same to 0): 0.96641, 0.97054, 0.97765 -
+// moved by +0.00214, +0.00437, +0.00543, past the pin in every channel, most in blue. The layered frame is still the
+// brighter (ratio under 1, principle (ii) holds), by less: with the layer on the clouds stand in the gas arms (the
+// clustering field and the gas pattern, D220/D210), where the young blue light is placed too (D223), so they cover more
+// of the light there than in the physics-only frame, where each stands uniform in its sector - the covering outweighs
+// part of the clumping's gain, the bluer the more (the builder's reading of the move, not a separate measurement). No model
+// number moved by it.
 // S67 (D227 T1, the owner's return of the Milky Way to 96 steps): was [0.96478, 0.9666, 0.97249] at 48 steps - back to
 // the 96-step value measured at the second paste.
 // S67 (D227 T1, the owner's third paste of 2026-10-19): was [0.96427, 0.96617, 0.97222] - the march's steps 96 -> 48 on
