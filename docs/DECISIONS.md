@@ -14852,3 +14852,17 @@ deployment creates `galaxygen-logs` (kept), `galaxygen-env`, the storage account
 `galaxygen` (public), printing the new URL; the pin is read from the image. (iii) Rulings this entry asks for: the
 model's size (1 vCPU / 2 GiB) and the gateway's (0.5 / 1 GiB); the results TTL 30 days; the readiness probe on
 `/healthz` taking the site down on a pin mismatch; #205's remedy in W5. The three re-rulings of D238 stand.
+
+**Closing.** `dotnet test` 107 passed, 0 failed. The full Python suite ran detached from 07:36 at the final
+Python-visible code (nothing under `model/` moved; the register's two entries and `tests/test_audit.py`'s count pin
+were entered during the run — the trap the machine's memory names): **EXIT=1 — 1 721 passed, 5 skipped, 1 xfailed,
+2 failed in 6 h 24** (07:36 → 14:00, beside S74's verify_clone for its first ninety minutes): `test_audit`'s
+register-count test, collected with the old pin before the re-pin and reading the new register after it (green alone
+after the re-pin, twice), and `test_docs`' tag-record row, which C2e writes on `main` after the merge; the pricing test
+passed. S74's `verify_clone --ref main` (37ee706), read at this close: **1 722 passed / 6 skipped / 1 xfailed in
+5 h 20, specs OK, EXIT=0** — the clone sound, the pricing flake absent. This session's starts detached after the merge
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-verify-s75\verify_s75.log`), to be read at the next open. The merge
+is gated on the suite's own exit line and the two failures' causes. No model rule, stage, field, number, row or pin
+moved; nothing under `model/galaxy` (the hash 4f0c8401… stands); the register +2. The rationing windows at the close:
+5-hour 51 %, weekly all models 74 %, weekly Fable 89 %. Next: the owner re-enables the subscription and deploys
+(above), then S76, W5 (`BRIEF.md`).
