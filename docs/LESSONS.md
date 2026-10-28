@@ -1752,3 +1752,22 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] A resilience handler's defaults retry what must never be retried: a model route that times out keeps
   computing on the server, so the retry doubles the work. Expensive, idempotent-looking computations get one attempt
   and a total timeout equal to the attempt's.
+
+## From S75 (W4, the deployment prepared; a Fable lead, an Opus builder in two passes, an Opus reviewer)
+
+- [infra] The CLI's cached account is not the subscription's state: `az account show` said Enabled while a live read
+  (`az rest` on the subscription) said Disabled with a free trial's spending limit on, and `deployment group validate`
+  named it (ReadOnlyDisabledSubscription). Read the live state before planning anything that writes to a cloud, and
+  make the deploy script do the same first.
+- [infra] A gate the machine cannot run moves to where it can: with no Docker here, the image checks (the bundles' hash
+  against the live model's, the landing from the bundles, the pin's hit and its 503) run in the workflow before the
+  push, and what is pushed is the tested image itself (tag and push), never a rebuild that a cache miss could change.
+- [infra] A cache that lives in a replica dies with it: a scale-to-zero gateway's output cache is empty at every cold
+  start, so "the landing from the bundles with the model at zero" holds only while a gateway replica is warm. A pin
+  saves the hash read, not the answers; say which a mechanism saves before crediting it with a gate.
+- [infra] A recreate rule in a deploy script is read twice: once for the case it is meant for (the suspended
+  environment) and once for every later run (a bad image leaving an app Failed would have deleted the environment and
+  changed the public URL). Automatic deletion only for a state the template cannot change; everything else a switch.
+- [close] An infrastructure review with neither Docker nor Azure still earned its turn by reading: a recreate test that
+  could never fire, a probe comment with the wrong reason, a vacuous "the log did not grow" check, a push that was a
+  second build. Review the files against the plan and the gateway's own account, not against the builder's report.

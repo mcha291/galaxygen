@@ -1,7 +1,11 @@
-# galaxygen: the API and the built frontend in one image, one origin.
+# galaxygen: the API and the built frontend in one image, one origin - for local use (and the AppHost's model).
 #
 #   docker build -t galaxygen .            (locally, if Docker is installed)
-#   az acr build -r <registry> -t galaxygen:<tag> .   (in Azure, no local Docker)
+#
+# The deployment (BUILD_IV W4) uses two other images, both built by .github/workflows/image.yml:
+#   Dockerfile.model     the API and its bundles alone, the internal container app
+#   gateway/Dockerfile   the built frontend and the .NET gateway, the external one
+# This one is not built in CI and not deployed.
 #
 # Stage 1 builds frontend/ into static files. It needs interface/ beside it: the
 # app imports transport.js, ramp.js and friends from there, and Vite bundles them.

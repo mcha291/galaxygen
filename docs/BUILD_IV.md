@@ -156,7 +156,9 @@ hash. Rules D2–D5 are restated at the boundary in Appendix A.
   minimum replicas stay zero (ruling 9). Table and Blob Storage for share links.
 - **Two images from CI**: `Dockerfile.model` (today's, less the frontend stage) and `gateway/Dockerfile` (the
   frontend build and the gateway); both tagged with the short commit. The bundles are built into the gateway's
-  image by the export tool run against the model image at build time.
+  image by the export tool run against the model image at build time. [S75, D239: since S72 (D235) and S74 (D-3)
+  the model answers a bundled request itself, so the bundles live in the model image (`Dockerfile.model`) and the
+  gateway's image carries the frontend alone]
 - **`infra/main.bicep` and `deploy.ps1`** gain the second app, the storage and the two image parameters; the
   suspended environment is deleted and recreated by the first run.
 - **Smoothness is measured on the deployed site** (Phase W5): time to switch templates, time to the next zoom

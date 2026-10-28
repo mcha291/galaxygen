@@ -3,7 +3,8 @@
 #
 #   docker build -f gateway/Dockerfile -t galaxygen-gateway .
 #
-# The Python model is its own image (the root Dockerfile) and is reached at Gateway__Model__BaseUrl.
+# The Python model is its own image (Dockerfile.model at the root) and is reached at Gateway__Model__BaseUrl.
+# Published untrimmed (trimming is a later step). .github/workflows/image.yml builds, smoke-tests and pushes it.
 # No template bundle is copied here: since S72 the model answers a bundled request itself (S74, D-3).
 
 FROM node:24-slim AS frontend

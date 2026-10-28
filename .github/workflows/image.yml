@@ -1,6 +1,11 @@
-# Builds the deployable image and publishes it to GitHub Container Registry,
-# tagged with the short commit (and `latest` on main). Public images on ghcr.io
-# cost nothing to store or pull, which keeps the Azure side on its free grants.
+# The deployment's two images (BUILD_IV Phase W4): the model (Dockerfile.model, the API and its bundles) and the
+# gateway (gateway/Dockerfile, the frontend and the .NET gateway). Both are built and loaded locally first,
+# smoke-tested together (infra/smoke.sh: the image's live model.hash is the checkout's and its label's, the bundles
+# carry it, the landing comes from the bundles, the pinned gateway serves a hit that asks the model nothing, a wrong
+# pin is a 503), and only then are the tested images themselves pushed - tagged with the short commit, and `latest`
+# on main. The model image carries the hash as the label org.galaxygen.model_hash, which infra/deploy.ps1 reads to
+# pin the gateway. Public images on ghcr.io cost nothing to store or pull, which keeps the Azure side on its free
+# grants.
 name: image
 on:
   push:
@@ -10,24 +15,71 @@ permissions:
   contents: read
   packages: write
 jobs:
-  build:
+  images:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - id: tag
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        # ghcr.io wants a lowercase owner.
+        run: |
+          echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      # The label is known before the build: the content hash of model/galaxy, from the checkout, as the server
+      # computes it (galaxy.api.version). The smoke test then checks the running image publishes the same.
+      - uses: astral-sh/setup-uv@v6
+      - id: hash
+        name: the model's content hash
+        run: |
+          uv sync --frozen --no-dev
+          hash=$(uv run --frozen --no-dev python -c "from galaxy.api.version import MODEL, content_hash; print(content_hash(MODEL)['hash'])")
+          echo "model.hash $hash"
+          echo "model_hash=$hash" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+      # Built once each, loaded into the runner's Docker for the smoke test, and those images are what is pushed.
+      # Separate cache scopes, so one image's cache never evicts the other's.
+      - name: build the model image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.model
+          load: true
+          tags: galaxygen-model:smoke
+          labels: org.galaxygen.model_hash=${{ steps.hash.outputs.model_hash }}
+          cache-from: type=gha,scope=model
+          cache-to: type=gha,mode=max,scope=model
+      - name: build the gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: gateway/Dockerfile
+          load: true
+          tags: galaxygen-gateway:smoke
+          cache-from: type=gha,scope=gateway
+          cache-to: type=gha,mode=max,scope=gateway
+
+      - id: smoke
+        name: smoke-test the two images together
+        run: bash infra/smoke.sh galaxygen-model:smoke galaxygen-gateway:smoke "${{ steps.hash.outputs.model_hash }}"
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/galaxygen:${{ steps.tag.outputs.short }}
-            ${{ github.ref == 'refs/heads/main' && format('ghcr.io/{0}/galaxygen:latest', github.repository_owner) || '' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: push the tested images
+        env:
+          OWNER: ${{ steps.tag.outputs.owner }}
+          SHORT: ${{ steps.tag.outputs.short }}
+          LATEST: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          for image in galaxygen-model galaxygen-gateway; do
+            tags="$SHORT"
+            if [ "$LATEST" = true ]; then tags="$tags latest"; fi
+            for t in $tags; do
+              docker tag "$image:smoke" "ghcr.io/$OWNER/$image:$t"
+              docker push "ghcr.io/$OWNER/$image:$t"
+            done
+          done
+          echo "pushed galaxygen-model and galaxygen-gateway :$SHORT (latest: $LATEST), model.hash ${{ steps.smoke.outputs.model_hash }}" >> "$GITHUB_STEP_SUMMARY"

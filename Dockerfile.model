@@ -1,0 +1,41 @@
+# The model image (BUILD_IV Phase W4): the Python API and its template bundles, no frontend. Deployed as the
+# internal container app; the gateway image (gateway/Dockerfile) serves the viewer and proxies /api here.
+#
+#   docker build -f Dockerfile.model -t galaxygen-model .
+#
+# The root Dockerfile is the one-origin image (the API serving the built frontend itself) for local use.
+# .github/workflows/image.yml builds this one, smoke-tests it with infra/smoke.sh and pushes it with the label
+# org.galaxygen.model_hash: the /api/version model.hash the running container published, which deploy.ps1 pins.
+
+FROM python:3.14-slim AS runtime
+COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /usr/local/bin/uv
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
+WORKDIR /app
+
+COPY pyproject.toml uv.lock README.md ./
+COPY model/ model/
+RUN uv sync --frozen --no-dev
+
+# galaxy.api will not start without a viewer directory holding an index.html (its --client check), and changing that
+# would move the model's hash. The reference client interface/ (about 100 KB, the server's own default) stands in: on
+# this image's internal-only origin nobody browses it, and the viewer people see is the gateway's.
+COPY interface/ interface/
+
+# The template bundles (S72, BUILD_IV W2): every answer the viewer asks of each template, computed here by the model
+# this image runs, so the bundles' hash is always the image's own ("a template's bundle can never be older than the
+# model that serves it", BUILD_IV 2b) and the server refuses them at startup if it were not. The default scope: what
+# the viewer asks at galaxy scale, both templates, both layer settings (nothing below 4 kpc; ruling 6, D237).
+COPY frontend/src/galaxy/filters.json frontend/src/galaxy/instruments.json frontend/src/galaxy/
+COPY tools/export_template.py tools/
+RUN /app/.venv/bin/python tools/export_template.py --out /app/bundles
+
+# galaxy.api reads these; Container Apps sends traffic to PORT. Unbuffered, so the request log (--verbose, which the
+# deployment passes) reaches the container's log as it happens.
+ENV GALAXY_HOST=0.0.0.0 PORT=8000 GALAXY_CLIENT=/app/interface GALAXY_BUNDLES=/app/bundles PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
+EXPOSE 8000
+
+RUN useradd --system --uid 10001 galaxy
+USER galaxy
+
+CMD ["python", "-m", "galaxy.api"]
