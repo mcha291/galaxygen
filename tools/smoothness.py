@@ -261,9 +261,9 @@ def fmt(ms: float | None) -> str:
 
 
 def table(merged: dict[str, dict[str, Any]]) -> str:
-    rows = ["| state | step | ready s median (range) [n ok] | api wait s | client s | after last /api s | /api reqs "
+    rows = ["| state | step | ready s median (range) [n ok] | api wait s | client s | after last /api s | long tasks s | /api reqs "
             "| longest /api (route, s, KB, cache/source) | healthz max in_flight/waiting | model lines (by source) "
-            "| bound |", "|" + "---|" * 11]
+            "| bound |", "|" + "---|" * 12]
     for state, data in merged.items():
         for step in STEPS:
             got = [s for r in data["runs"] for s in r["steps"] if s["step"] == step]
@@ -288,7 +288,7 @@ def table(merged: dict[str, dict[str, Any]]) -> str:
             over = sum(1 for x in ready if x > bound)
             rng = f"{min(ready) / 1000:.2f}-{max(ready) / 1000:.2f}" if ready else "-"
             rows.append(f"| {state} | {step} | {fmt(med(ready))} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
-                        f"| {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {med([s['api_requests'] for s in ok])} "
+                        f"| {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
                         f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
     return "\n".join(rows)
 

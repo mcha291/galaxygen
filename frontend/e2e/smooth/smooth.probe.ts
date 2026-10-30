@@ -58,7 +58,7 @@ interface Target {
 }
 /** The two instruments, as GalaxyView publishes them (typed here, not in a global, so picture.spec.ts's stays its own). */
 type Probes = {
-  __galaxygenCapture?: { place(view: LensCamera, target?: Target): void };
+  __galaxygenCapture?: { place(view: LensCamera, target?: Target): void; where(): LensCamera };
   __galaxygenFrameSum?: () => { sum: number[] };
 };
 
@@ -223,7 +223,11 @@ interface StepResult {
   longest: { route: string; method: string; ms: number; bytes: number | null; cache: string | null; source: string | null; query: number } | null;
   healthz: { samples: number; errors: number; inFlight: number; waiting: number; statuses: number[] };
   probes: { count: number; interval_ms_median: number | null; cost_ms_median: number | null };
+  /** The main thread's long tasks (over 50 ms) before the ready instant: their count and summed ms, and the longest. */
+  long_tasks: { count: number; ms: number; longest: number };
   requests: Asked[];
+  /** Each probe: ms from the step's start, the frame sum's three channels, the camera's inclination, azimuth, radius. */
+  trace: number[][];
 }
 
 const median = (xs: number[]) => {
@@ -249,6 +253,7 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
   let confirmed: number | null = null;
   const probeAt: number[] = [];
   const probeCost: number[] = [];
+  const trace: number[][] = [];
   try {
     await act();
   } catch (e) {
@@ -262,20 +267,24 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
       error = `not ready in ${READY.timeoutMs} ms: ${net.inflight} /api requests in flight, frame sum ${runKey || "unlit"}`;
       break;
     }
-    let probe: { at: number; done: number; sum: number[] | null };
+    let probe: { at: number; done: number; sum: number[] | null; stand: number[] | null };
     try {
       probe = await page.evaluate(() => {
         const at = Date.now();
-        const f = (window as unknown as Probes).__galaxygenFrameSum;
+        const w = window as unknown as Probes;
+        const f = w.__galaxygenFrameSum;
         const sum = f ? f().sum : null;
-        return { at, done: Date.now(), sum };
+        const c = w.__galaxygenCapture?.where();
+        const stand = c ? [c.inclination_deg, c.azimuth_deg, c.radius_kpc] : null;
+        return { at, done: Date.now(), sum, stand };
       });
     } catch {
       // A navigation still committing, or the canvas remade: no frame to read this time.
-      probe = { at: Date.now(), done: Date.now(), sum: null };
+      probe = { at: Date.now(), done: Date.now(), sum: null, stand: null };
     }
     probeAt.push(probe.at);
     probeCost.push(probe.done - probe.at);
+    trace.push([probe.at - t0, ...(probe.sum ?? []).map((v) => Number(v.toPrecision(7))), ...(probe.stand ?? []).map((v) => Number(v.toPrecision(6)))]);
     const lit = !!probe.sum && probe.sum.some((v) => v > 0);
     const key = lit ? probe.sum!.join(",") : "";
     if (!lit) runKey = "";
@@ -299,6 +308,14 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
   await sleep(100);
   const asked = net.asked.slice(from).map((a) => ({ ...a, start: a.start - t0, response: a.response === null ? null : a.response - t0, end: a.end === null ? null : a.end - t0 }));
   const ready = confirmed === null ? null : runStart - t0;
+  const until = t0 + (ready ?? Date.now() - t0);
+  const tasks = (
+    await page
+      .evaluate(() => (window as unknown as { __smoothLongTasks?: number[][] }).__smoothLongTasks ?? [])
+      .catch(() => [] as number[][])
+  )
+    .filter(([at]) => at >= t0 && at < until)
+    .map(([at, ms]) => [at - t0, Math.round(ms)]);
   const before = ready === null ? asked : asked.filter((a) => a.start < ready);
   const api = before.filter((a) => a.api);
   const other = before.filter((a) => !a.api);
@@ -332,7 +349,9 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     longest,
     healthz: seen,
     probes: { count: probeAt.length, interval_ms_median: median(intervals), cost_ms_median: median(probeCost) },
+    long_tasks: { count: tasks.length, ms: tasks.reduce((s, x) => s + x[1], 0), longest: Math.max(0, ...tasks.map((x) => x[1])) },
     requests: asked,
+    trace,
   };
 }
 
@@ -371,6 +390,18 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     const tag = `smooth-${STATE}-${n}`;
     // A fresh context per run: no cookies, no storage, an empty HTTP cache (the page's files are fetched again).
     const context = await browser.newContext({ viewport: CHOOSING_VIEWPORT, deviceScaleFactor: 1 });
+    // The main thread's long tasks, kept for the split (a browser instrument; the viewer is not touched).
+    await context.addInitScript(() => {
+      const kept: number[][] = [];
+      (window as unknown as { __smoothLongTasks: number[][] }).__smoothLongTasks = kept;
+      try {
+        new PerformanceObserver((list) => {
+          for (const e of list.getEntries()) kept.push([performance.timeOrigin + e.startTime, e.duration]);
+        }).observe({ type: "longtask", buffered: true });
+      } catch {
+        /* no long-task timing in this browser */
+      }
+    });
     const page = await context.newPage();
     const net = watch(page);
     const steps: StepResult[] = [];
@@ -405,7 +436,7 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     }
     runs.push({ run: n, renderer, steps });
     await context.close();
-    for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)} s (api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
+    for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)} s (api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}, long tasks ${fmt(s.long_tasks.ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
   }
 
   mkdirSync(dirname(OUT), { recursive: true });
