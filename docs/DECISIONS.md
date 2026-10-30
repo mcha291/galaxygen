@@ -14866,3 +14866,49 @@ is gated on the suite's own exit line and the two failures' causes. No model rul
 moved; nothing under `model/galaxy` (the hash 4f0c8401… stands); the register +2. The rationing windows at the close:
 5-hour 51 %, weekly all models 74 %, weekly Fable 89 %. Next: the owner re-enables the subscription and deploys
 (above), then S76, W5 (`BRIEF.md`).
+
+### D240. S76, BUILD_IV Phase W5: smoothness measured — the probe built and run here through the gateway, the deployed table owed (the subscription still disabled at the open)
+
+**The commission.** `BRIEF.md` after S75 and the owner's standing word of 2026-10-31 ("read the docs and resume
+work; spawn Opus subagents for what does not need Fable"): a Fable lead, Opus builders and readers, two agents at
+once at most. Read at the open: the subscription still `Disabled` (`az rest`; `quotaId` FreeTrial, `spendingLimit`
+On), the resource group as S75 left it (`galaxygen` Failed, no `galaxygen-model`), so no deploy has happened and
+the deployed half of W4's gate (#204) and W5's deployed table cannot be taken; the `ci` workflow has failed on every
+one of its last hundred runs (the finding below, found at this open — nothing in the record names it). The windows
+at the open: 5-hour 2 %, weekly all models 10 %, weekly Fable 11 %.
+
+**Why the phase runs now at all.** W5's probe measures a template switch, a zoom step and the first paint; the
+client's share of each is the same code the deployed site serves, run in the same browser on the same machine, and
+the gateway and the model run here as they do there, less the network and a replica's wake. A step over ruling 10's
+bound here is over it deployed (the deployment adds time, never subtracts it), so the fixes W5 names can be ordered,
+built and measured here; only the deployed numbers stay owed.
+
+**The rulings, before any number.**
+- **R1, the probe.** A Playwright harness of its own under `frontend/e2e/smooth/` with its own config and the
+  script `npm --prefix frontend run smooth`, parameterised by the site's URL (`GALAXYGEN_URL`; the model's and the
+  gateway's local URLs beside it for the restarts), so the one run is taken again on the deployed site when it
+  exists. It reads the viewer's own instruments and nothing else: readiness through `__galaxygenFrameSum` as the
+  picture test reads it (`e2e/settings.ts` READY), the template through the switcher's buttons, the zoom through
+  `__galaxygenCapture.place` at the zoom captures' stands. It measures (a) the first paint — navigation to the
+  landing's first ready frame; (b) a template switch, Milky Way → NGC 4414 and back, each to its ready frame;
+  (c) one zoom step, the star-first mode at the 0.25 kpc stand of `milky_way-zoom`, which asks level-2 tiles and so
+  wakes the model (ruling 15). Five runs of each; the table holds the median and the spread. Every run also records
+  the step's split: the time the page waited on `/api` answers on the critical path — their count, bytes, route,
+  `X-Gateway-Cache` and `X-Galaxy-Source` — against the client's own work after the last answer, because the split
+  says where a fix belongs (the viewer, the gateway, or the model's wake). `/healthz` is sampled through each run
+  for `in_flight` and `waiting`.
+- **R2, the states.** Each step in three states, five runs each: *warm* — the gateway's cache filled by an
+  earlier run, the model warm; *gateway-cold* — the gateway restarted with its cache empty against a warm model,
+  #205's case; *model-cold* — both restarted: the model's process start, the bundle index's digest check, the
+  first answer. The deployed cold adds the image pull and the replica's start, which only the deployed run can
+  measure (#204). The model's cold start is timed on its own as well, process start to the first `/api` answer.
+- **R3, the stand.** S74's: the model on :8050 from this checkout's bundles (exported with
+  `tools/export_template.py` to a directory outside the repository), `--client frontend/dist`; the gateway on
+  :8060 pinned to the live `model.hash` with `Frontend:Path` the built viewer; the owner's ports (8017, 8018,
+  5173) untouched. The viewer is `vite build`'s output, as deployed.
+- **R4, the bound and the fixes.** Ruling 10's bound: 1 s warm, 5 s cold, per step. Whatever the table puts over
+  it is fixed in the order the split orders, each fix measured before and after in this entry; the fixes live in the
+  viewer or the gateway. Nothing under `model/` moves; nothing under `model/galaxy/api` either unless the table
+  shows no fix outside it, and then the entry says so with the hash change it costs (a new model image and pin).
+- **R5, what this entry cannot say.** The deployed table. #204 stands; the probe's run on the deployed site is the
+  first thing after the owner's deploy, and the table it gives is appended here.
