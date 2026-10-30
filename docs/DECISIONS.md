@@ -14912,3 +14912,106 @@ built and measured here; only the deployed numbers stay owed.
   shows no fix outside it, and then the entry says so with the hash change it costs (a new model image and pin).
 - **R5, what this entry cannot say.** The deployed table. #204 stands; the probe's run on the deployed site is the
   first thing after the owner's deploy, and the table it gives is appended here.
+
+**The probe, as built (one Opus builder, four commits).** `frontend/e2e/smooth/smooth.probe.ts` on its own config
+`playwright.smooth.config.ts` (`npm --prefix frontend run smooth`; the file named `.probe.ts` so the picture
+config's `**/*.spec.ts` never lists it — 15 tests in 2 files before and after), parameterised by `GALAXYGEN_URL`,
+`GALAXYGEN_RUNS`, `GALAXYGEN_STATE`, `GALAXYGEN_HEALTHZ`, `GALAXYGEN_OUT` and `GALAXYGEN_MODEL_URL` (begin/end
+markers sent to the model as `/api/version?capture=…`, never through the gateway, so its window never counts them).
+Every run a fresh browser context; steps (b) and (c) reuse (a)'s landing page. The ready instant is the page-clock
+time of the first probe of the final still run, settle's criteria deciding that the view is ready; the instrument's
+own confirmation (0.76–2.0 s later) is excluded. Probes every 50 ms (measured 62–63 ms: a probe costs 13–39 ms and
+none runs inside a main-thread long task). Per step: every `/api` request (route, query bytes, start / response /
+end, status, bytes, `X-Gateway-Cache`, `X-Galaxy-Source`), the api wait (the union of in-flight time before ready),
+the client share (ready − api wait), the time after the last answer, the longest request, `/healthz`'s
+`limits.model.in_flight` / `waiting` maxima at 250 ms, the main thread's long tasks (a `PerformanceObserver` from
+`addInitScript`; the viewer untouched), a per-probe trace of frame sum and camera. `tools/smoothness.py` (stdlib)
+exports the bundles when missing (103 s, 284 MB), builds the viewer, publishes the gateway once and runs its dll
+(a restart 0.56 s), starts the model as the image does (the venv's Python, `--source-log`), stands the pair on
+:8050 / :8060 pinned to the live hash (8051 / 8061 when taken, never a stranger's port), and runs the states:
+*model-cold* restarts both before every run, *gateway-cold* the gateway before every run, *warm* five runs back to
+back; it cuts the model's source log per step by the markers and prints the table. The rule-D2 gate (no second
+`fetch(` in tracked code) caught the probe's first draft: it asks through Playwright's request context now.
+
+**The table (this machine, RTX 4070 through ANGLE D3D11, Chromium headless; seconds, the median of five and the
+range; `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s76\smooth\`).**
+
+| state | step | ready | api wait | client | long tasks | longest `/api` | over the bound |
+|---|---|---|---|---|---|---|---|
+| model-cold | first paint | 10.38 (10.35–10.45) | 1.53 | 8.84 | 9.12 | render 1.48 s, 9.1 MB, miss / bundle | 5 / 5 (5 s) |
+| model-cold | switch → NGC 4414 | 3.89 (3.48–4.09) | 0.43 | 3.44 | 3.00 | layer 0.41 s, miss / bundle | 0 / 5 |
+| model-cold | switch back | 2.22 (2.18–2.67) | 0.05 | 2.18 | 1.45 | — | 0 / 5 |
+| model-cold | star-first | 2.94 (2.75–3.02) | 1.56 | 1.37 | 1.46 | bright 1.68 s, miss / bundle | 0 / 5 |
+| model-cold | **zoom** | **23.90 (23.68–24.17)** | 22.72 | 1.25 | 0 | **bright 13.26 s, 243 KB, miss / model** | 5 / 5 |
+| gateway-cold | first paint | 10.39 (10.38–10.47) | 1.52 | 8.87 | 9.11 | layer 1.47 s, miss / bundle | 5 / 5 |
+| gateway-cold | switch → NGC 4414 | 3.89 (3.68–4.07) | 0.41 | 3.48 | 3.02 | layer 0.40 s | 0 / 5 |
+| gateway-cold | zoom | 1.88 (1.79–2.02) | 0.74 | 1.15 | 0 | render 0.58 s, miss / model | 0 / 5 |
+| warm | first paint | 4.22 (4.21–10.30) | 1.52 | 2.72 | 2.90 | render 1.49 s, 9.1 MB, hit / bundle | 5 / 5 (1 s) |
+| warm | switch → NGC 4414 | 1.56 (1.45–3.87) | 0.42 | 1.14 | 0.75 | render 0.39 s, hit | 5 / 5 |
+| warm | switch back | 2.24 (2.18–2.29) | 0.04 | 2.18 | 1.44 | clusters 0.06 s, hit | 5 / 5 |
+| warm | star-first | 2.81 (2.63–2.95) | 0.04 | 2.81 | 1.46 | bright POST 0.03 s | 5 / 5 |
+| warm | zoom | 1.22 (1.13–1.29) | 0.04 | 1.18 | 0 | bright 0.05 s, hit | 5 / 5 |
+
+Read with it: the landing asks 11 `/api` answers, 19.40 MB as transferred, every one `bundle` (gateway-cold 10 miss
++ 1 hit, warm 11 hits; the render 9.29 MB, clusters 4.80, region 2.89, clouds 1.77), and 8 page files, 1.75 MB (the
+script 1.43). The model's cold start alone 1.06–1.08 s to its first answer (the bundle index's digest check done at
+0.65–0.75 s); the gateway's 0.56–0.58 s. The model-cold zoom's three requests run strictly in series — bright 13.3 s,
+bright 8.0 s (1.87 MB), render 1.7 s, all `model` — against 0.01 / 0.17 / 0.58 s on a warm model: ~21.6 s is the
+galaxy's own computation plus the level-2 ring draw, which no bundle holds (ruling 6). The warm first paint's run 1
+read 10.30 s against 4.22 for runs 2–5 (long tasks 9.13 against 2.87 s): Chromium's GPU process keeps compiled
+programs across contexts of one browser, so a *first visit* pays the shader's compile, ~6 s, in every state — the
+cold rows are what a new visitor sees. Gateway-cold against warm moved nothing locally (a bundled miss costs
+milliseconds); #205's deployed value is the replica's wake, which only the deployed run shows. `/healthz`:
+`in_flight` never above 1, `waiting` at most 2 (bundle misses queued behind the permit on the cold switch); no 429.
+**Every warm step is over ruling 10's 1 s, and the first paint and the model-cold zoom over its 5 s cold.** The
+builder's CPU profile of an unminified build (a diagnostic, not committed) named the client's work: `cloudRaster`
+(`cloudOpacity.ts`, called from `FieldVolume.tsx`) rebuilt on every remount — 2.75 s on the landing, 0.60 on the NGC
+switch, 1.72 on the switch back, 1.37 on star-first, the 1.45–1.8 s long tasks of those rows; the march shader's
+synchronous program link — three.js's first use blocks 6.3 s on the landing (the single 5.7–5.9 s long task) and
+2.35 s on the first switch; the warm zoom's 1.18 s all debounce — three dependent loads each waiting out a settle
+(`BRIGHT_SETTLE_MS` 250 for the counts, 250 for the tiles, `SETTLE_MS` 350 for the render; the requests start at
+0.38, 0.66 and 1.09 s); the 1.5 s of api left on the warm landing the 9.3 MB render's transfer and parse (the gateway
+sends no content encoding, by the sizes).
+
+**The rulings on the fixes (R4: in the split's order, in the viewer or the gateway, each measured before and after).**
+- **F1.** `cloudRaster`'s result cached across remounts, keyed on the clouds answer's identity and the raster's shape
+  (the tuning's `cloudRaster`, `cloudElongation` and the grid); no Worker in this pass (the named alternative if the
+  cache is not enough). The frames byte for byte.
+- **F2.** The march program compiled off the critical path: `renderer.compileAsync` (three r186 has it) with
+  `KHR_parallel_shader_compile`, started as soon as the renderer exists, while the landing's `/api` answers are in
+  flight; the GLSL text unchanged (the snapshot `fieldFragment.*.glsl` pins it; shrinking or sharing the program is
+  out of this pass). Where the material cannot be compiled before its first frame, the first frame waits as today.
+- **F3.** A settle is for the user's input only: a load that an answer triggers (the counts → the tiles → the render)
+  starts at once. The request meanings do not change (S73's fixture holds, `tests/test_bundle.py`); only their timing.
+- **F4.** Response compression in the gateway (`ResponseCompression`: brotli, then gzip; `Vary: Accept-Encoding`) on
+  `/api` answers and the page's files, ordered against the output cache so that a cached body is compressed on its
+  way out (or cached per encoding — the builder states which, with a test that a hit is still a hit and the bytes
+  decode to the model's). Local gain is the parse, not the wire; the deployed gain is the wire (19.4 MB a landing).
+- **F5, not built.** The model-cold zoom (23.9 s) is the model's own computation of the galaxy: ruling 15 (a) fails on
+  the number. The remedies are the owner's: an eager warm of the model after the landing has drawn (a request that
+  must not take the permit while the landing's misses queue; it wakes the replica on every visit, so it costs under
+  ruling 9), or ruling 15 (b), a warm replica (paid), or (c) the ring-first draw published to the viewer. Recorded
+  with #205 for the deployed numbers; nothing in `model/` moves.
+- **F6, deferred.** A smaller render encoding (`precision=f4` exists since S64) changes the bundle plan's meanings and
+  may move the frames; measured after F4 on the deployed site, not here.
+- **The gate for the pass:** the probe's three states again; the picture test's 15 captures byte for byte (`npm run
+  picture`); vitest, `typecheck`, `typecheck:e2e`, `dotnet test`, `tests/test_bundle.py`, `test_api.py`, `test_docs.py`
+  green; the shader snapshot test unchanged.
+
+**A finding at the open, outside the phase: the `ci` workflow has been red since 2026-10-03.** An Opus reader of
+the runs (read-only): of the last 500 runs 137 succeeded and the most recent 340 all failed; the last success was
+`90d198b` on `session-55` at 17:36 UTC and the first failure `7d6d2b9` an hour later — the commit that entered
+`tests/layer_reference_s54.json`'s sha256 digests, captured on this machine, and `tests/test_layer.py`. The latest
+run on `main` (671cf9f): 23 failed, 1 699 passed in 4 h 19; the `galaxy.specs` step has therefore not run in CI since
+that day. The causes: 18 tests are bit-exact pins of this machine's floating point (digests, exact equalities to one
+or two ulp, record tuples: `test_layer` 10, `test_pieces` 3, `test_gas_pattern`, `test_gas_response`, `test_modes`,
+`test_templates`); 4 in `test_api.py` are the deep-JSON case — here Python 3.14 overflows its 2 MB main-thread stack
+inside `json.loads` and the service says "nested too deeply", the runner's 8 MB stack parses the 100 000 levels and the
+validator refuses with another message; both answer 400, and **the deployed model image is Linux, so it answers as CI
+does, not as this machine** (#201's "nested too deeply" wording is a Windows artefact); 1 in `test_gas_fluctuation`
+moves 2.3e-3 on Linux, past the float32 bound its neighbour states, and 1 in `test_pieces` finds a unit step at a
+midpoint — the two that deserve a reading, not a tolerance. Nothing in the record says CI's numbers differ or that it
+is red, and D24's own text warns against living with one. Opened as **#206**; the remedy is a session of its own,
+the owner's call: a `machine_pinned` marker skipped under `CI`, a depth cap at the parse so both platforms answer the
+same 400 (a `model/galaxy/api` change: a new hash), `.python-version` pinned to a patch, the two numeric cases read,
+and the four-hour suite moved off every push.
