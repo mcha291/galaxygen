@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -119,6 +120,48 @@ public sealed class FeatureTests : IAsyncLifetime
         using var client = gateway.CreateClient();
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/fail?x=1")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/fail?x=1")).StatusCode);
+    }
+
+    // S76 (BUILD_IV W5, D240 F4): the answers are compressed on their way out of the cache, which stores the identity body.
+    [Theory]
+    [InlineData("br")]
+    [InlineData("gzip")]
+    public async Task A_compressed_answer_decodes_to_the_models_bytes_and_a_hit_is_still_a_hit(string encoding)
+    {
+        await using var gateway = Gateway();
+        using var client = gateway.CreateClient();
+        static async Task<byte[]> Decoded(HttpResponseMessage response, string encoding)
+        {
+            await using var body = await response.Content.ReadAsStreamAsync();
+            await using Stream decoder = encoding == "br" ? new BrotliStream(body, CompressionMode.Decompress) : new GZipStream(body, CompressionMode.Decompress);
+            using var bytes = new MemoryStream();
+            await decoder.CopyToAsync(bytes);
+            return bytes.ToArray();
+        }
+        HttpRequestMessage Asked(bool compressed)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "/api/render?template=a");
+            if (compressed) request.Headers.AcceptEncoding.ParseAdd(encoding);
+            return request;
+        }
+
+        using var miss = await client.SendAsync(Asked(true));
+        Assert.Equal("miss", Header(miss, "X-Gateway-Cache"));
+        Assert.Equal([encoding], miss.Content.Headers.ContentEncoding);
+        Assert.Contains("Accept-Encoding", miss.Headers.Vary);
+        var model = await Decoded(miss, encoding);
+
+        using var hit = await client.SendAsync(Asked(true));
+        Assert.Equal("hit", Header(hit, "X-Gateway-Cache"));
+        Assert.Equal([encoding], hit.Content.Headers.ContentEncoding);
+        Assert.Equal(model, await Decoded(hit, encoding));
+
+        using var plain = await client.SendAsync(Asked(false)); // a client that asks for none is sent the identity body, from the cache
+        Assert.Equal("hit", Header(plain, "X-Gateway-Cache"));
+        Assert.Empty(plain.Content.Headers.ContentEncoding);
+        Assert.Equal(model, await plain.Content.ReadAsByteArrayAsync());
+        Assert.Equal([.. StubModel.Prefix, .. System.Text.Encoding.ASCII.GetBytes("GLXY render?template=a")], model);
+        Assert.Equal(1, _model.CallsTo("render"));
     }
 
     [Fact]

@@ -5,6 +5,7 @@
 // bundle (since S72 the model answers a bundled request itself), and keys every cache on the model's content hash,
 // /api/version's model.hash (rules D3 and D5 as amended; BUILD_IV Appendix A).
 
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -12,6 +13,7 @@ using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Galaxygen.Gateway;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -137,9 +139,26 @@ builder.Services.AddOutputCache(cache =>
     cache.AddPolicy(ModelCachePolicy.Name, new ModelCachePolicy());
 });
 
+// --- Response compression (S76, BUILD_IV W5, D240 F4): brotli, then gzip, on the model's answers and the page's files.
+// The landing is 19.4 MB of /api answers (S76's probe), most of it float arrays, which the wire carries as sent. It sits
+// outermost (below), so the output cache inside it stores the identity body and every answer - a hit too - is
+// compressed on its way out at the fastest level; the cache's key, the window and the gate are unchanged. On over HTTPS
+// as well: no answer here carries a secret or a cookie for a compression oracle to read.
+builder.Services.AddResponseCompression(compression =>
+{
+    compression.EnableForHttps = true;
+    compression.Providers.Add<BrotliCompressionProvider>();
+    compression.Providers.Add<GzipCompressionProvider>();
+    compression.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        ["application/octet-stream", "text/javascript", "image/svg+xml"]); // the model's frames (wire.py MEDIA), Vite's scripts, the icon
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(brotli => brotli.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(gzip => gzip.Level = CompressionLevel.Fastest);
+
 var app = builder.Build();
 
 if (options.Limits.TrustForwardedFor) app.UseForwardedHeaders();
+app.UseResponseCompression(); // outermost of what answers: the files, the cache's hits and the model's misses (S76, F4)
 
 // --- Serving: the frontend's build as static files, first and never counted ---------------------------------------
 // Frontend:Path is the Vite build (frontend/dist). Its /assets/ files carry their content hash in their names, so
