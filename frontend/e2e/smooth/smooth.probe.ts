@@ -28,7 +28,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { type Page, type Request, expect, test } from "@playwright/test";
+import { type APIRequestContext, type Page, type Request, expect, request, test } from "@playwright/test";
 
 import { CHOOSING_VIEWPORT, DEFAULT_TEMPLATE, MODE_BUTTON, READY, SELECTION_TEXT } from "../settings";
 
@@ -45,6 +45,11 @@ const HEALTHZ_MS = 250;
 /** The template switched to and back from. */
 const OTHER = "ngc_4414";
 const ZOOM_CAPTURE = "milky_way-zoom";
+/**
+ * The probe's own requests (/healthz, the templates, the markers): Playwright's request context, never the page's, so
+ * the page's own requests are the viewer's alone (and rule D2's one transport stays the client's only network call).
+ */
+let side: APIRequestContext;
 
 interface LensCamera {
   inclination_deg: number;
@@ -148,11 +153,11 @@ function sampleHealth() {
   let first: unknown = null;
   const once = async () => {
     try {
-      const answer = await fetch(HEALTHZ);
+      const answer = await side.get(HEALTHZ);
       const body = (await answer.json()) as { limits?: { model?: { in_flight?: number; waiting?: number } } };
       if (first === null) first = body;
       seen.samples += 1;
-      if (!seen.statuses.includes(answer.status)) seen.statuses.push(answer.status);
+      if (!seen.statuses.includes(answer.status())) seen.statuses.push(answer.status());
       seen.inFlight = Math.max(seen.inFlight, body.limits?.model?.in_flight ?? 0);
       seen.waiting = Math.max(seen.waiting, body.limits?.model?.waiting ?? 0);
     } catch {
@@ -174,7 +179,7 @@ function sampleHealth() {
 async function mark(label: string) {
   if (!MODEL_URL) return;
   try {
-    await fetch(`${MODEL_URL}/api/version?capture=${encodeURIComponent(label)}`);
+    await side.get(`${MODEL_URL}/api/version?capture=${encodeURIComponent(label)}`);
   } catch {
     /* the marker is the runner's convenience; a lost one costs only the per-step count */
   }
@@ -366,7 +371,8 @@ test.use({ viewport: CHOOSING_VIEWPORT });
 
 test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   test.setTimeout(RUNS * 20 * 60_000);
-  const templates = (await (await fetch(`${SITE}/api/templates`)).json()) as { default: string; templates: { name: string; label: string }[] };
+  side = await request.newContext();
+  const templates = (await (await side.get(`${SITE}/api/templates`)).json()) as { default: string; templates: { name: string; label: string }[] };
   const labelOf = (name: string) => {
     const t = templates.templates.find((x) => x.name === name);
     if (!t) throw new Error(`the site serves no template ${name}`);
@@ -378,8 +384,8 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   if (!zoom?.stand) throw new Error(`captures.json has no stand for ${ZOOM_CAPTURE}`);
   const zoomCamera: LensCamera = { ...zoom.camera, radius_kpc: zoom.stand.radius_kpc };
   const zoomTarget = zoom.stand.target;
-  const healthz = await fetch(HEALTHZ).then(
-    async (r) => ({ status: r.status, body: (await r.json()) as unknown }),
+  const healthz = await side.get(HEALTHZ).then(
+    async (r) => ({ status: r.status(), body: (await r.json()) as unknown }),
     (e) => ({ status: 0, body: String(e) }),
   );
   console.log(`healthz once: ${JSON.stringify(healthz)}`);
@@ -388,7 +394,7 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   for (let i = 0; i < RUNS; i += 1) {
     const n = RUN_BASE + i;
     const tag = `smooth-${STATE}-${n}`;
-    // A fresh context per run: no cookies, no storage, an empty HTTP cache (the page's files are fetched again).
+    // A fresh context per run: no cookies, no storage, an empty HTTP cache (the page's files are asked again).
     const context = await browser.newContext({ viewport: CHOOSING_VIEWPORT, deviceScaleFactor: 1 });
     // The main thread's long tasks, kept for the split (a browser instrument; the viewer is not touched).
     await context.addInitScript(() => {
@@ -464,4 +470,5 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     );
   }
   console.log(`\n${lines.join("\n")}\n\nwritten ${OUT}`);
+  await side.dispose();
 });
