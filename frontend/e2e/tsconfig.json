@@ -10,5 +10,5 @@
     "isolatedModules": true,
     "types": ["node"]
   },
-  "include": ["*.ts", "../playwright.config.ts"]
+  "include": ["*.ts", "smooth/*.ts", "../playwright.config.ts", "../playwright.smooth.config.ts"]
 }
