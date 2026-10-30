@@ -10,6 +10,7 @@ import {
   HalfFloatType,
   LinearFilter,
   Matrix4,
+  PerspectiveCamera,
   NearestFilter,
   Mesh,
   PlaneGeometry,
@@ -24,6 +25,7 @@ import {
   Vector3,
   Vector4,
   WebGLRenderTarget,
+  type WebGLRenderer,
 } from "three";
 
 import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
@@ -52,7 +54,7 @@ import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { gpuTimer } from "./gpuTimer";
 import { partRings, renderRings } from "./ringProfile";
-import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
+import { STEPS, TEMPLATE_TUNING, type Tuning, TUNING_DEFAULTS } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
   type ClusteringTables,
@@ -685,6 +687,60 @@ export interface MarchStats {
   gpuAvailable?: boolean;
 }
 
+// --- the march's programs compiled off the critical path (S76, BUILD_IV W5, D240 F2) ------------------------------
+// The march's program takes seconds to build (S76's probe: 6.3 s for 96 steps and 2.3 s for 48 on ANGLE/Direct3D 11,
+// one long task in three.js's first use of the program), and the mesh that uses it is made only once the render has
+// answered. So as soon as the renderer exists a stand-in mesh with the same program - the same vertex and fragment
+// text (fieldFragment, unchanged), the same material options, a box, drawn into a float target as the march is - is
+// compiled with compileAsync (KHR_parallel_shader_compile where the browser has it), while the landing's answers are in
+// flight; the real material then finds the program in three.js's cache. The stand-ins are held for the renderer's
+// life, so the program is never released between them. Nothing is drawn with them. Where the program is not ready by
+// the first frame, that frame waits on it as before.
+
+const precompiled = new WeakMap<WebGLRenderer, Map<number, Mesh>>();
+
+/** The step counts the templates open on (tuning.ts TEMPLATE_TUNING), and the default. */
+const TEMPLATE_STEPS = [...new Set([STEPS, ...Object.values(TEMPLATE_TUNING).map((t) => t.steps ?? STEPS)])];
+
+/** Compile the march's program for each step count, `first` before the rest, without drawing. */
+export function precompileMarch(gl: WebGLRenderer, first: number, rest: readonly number[] = TEMPLATE_STEPS): Promise<void> {
+  let held = precompiled.get(gl);
+  if (!held) {
+    held = new Map();
+    precompiled.set(gl, held);
+  }
+  const compile = (steps: number): Promise<unknown> => {
+    if (held.has(steps)) return Promise.resolve();
+    const material = new ShaderMaterial({
+      uniforms: {},
+      vertexShader: VERTEX,
+      fragmentShader: fieldFragment(steps),
+      side: BackSide,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const mesh = new Mesh(new BoxGeometry(1, 1, 1), material);
+    mesh.frustumCulled = false;
+    held.set(steps, mesh);
+    const scene = new Scene();
+    scene.add(mesh);
+    gl.extensions.get("KHR_parallel_shader_compile");
+    // The program's parameters are read with a float target bound, as the march draws into one (offscreen.target).
+    const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
+    const before = gl.getRenderTarget();
+    gl.setRenderTarget(target);
+    try {
+      return gl.compileAsync(scene, new PerspectiveCamera()).catch(() => undefined);
+    } finally {
+      gl.setRenderTarget(before);
+      target.dispose();
+    }
+  };
+  return compile(first)
+    .then(() => Promise.all(rest.filter((s) => s !== first).map(compile)))
+    .then(() => undefined);
+}
+
 /**
  * The field regime: the whole galaxy's light as a volume, ray-marched per pixel through
  * the published components (RENDER_PLAN R3, R4, M4; BUILD_II V1, V2). No particles and no sample:
@@ -1034,6 +1090,10 @@ export function FieldVolume({
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
+  // S76 (D240 F2): the march's program built while the render is still on its way (precompileMarch, above).
+  useEffect(() => {
+    void precompileMarch(gl, stepsNow.current);
+  }, [gl]);
   // The GPU's time for the march (S67, D227 R6; gpuTimer.ts): a timer query round its render call, read back frames later.
   const timer = useMemo(() => gpuTimer(gl.getContext() as WebGL2RenderingContext), [gl]);
   useEffect(() => () => timer.dispose(), [timer]);
