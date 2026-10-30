@@ -41,7 +41,7 @@ import {
   loadLayer,
   loadRender,
 } from "../api";
-import { type CloudColumns, type CloudRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, cloudRaster, finestRaster } from "./cloudOpacity";
+import { type CloudColumns, type CloudRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster } from "./cloudOpacity";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
@@ -987,7 +987,8 @@ export function FieldVolume({
     const c = clouds?.columns as Partial<CloudColumns> | undefined;
     if (!gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
     const started = performance.now();
-    const built: CloudRaster = cloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell, rasterShape);
+    // S76 (D240 F1): kept across remounts by the census's content and the shape - a remount with the same answer is the same raster.
+    const built: CloudRaster = keptCloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell, rasterShape);
     // The slab beside the A_V (S64, R3 as ruled): half floats, two a texel - each texel's clouds' mean height and
     // half-thickness, kpc - and the highest a slab reaches, which bounds the points' segment.
     const halves = new Uint16Array(built.slab.length);

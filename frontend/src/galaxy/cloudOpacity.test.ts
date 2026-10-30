@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { CLOUD_RASTER, CLOUD_RASTER_BUDGET_BYTES, MAG_PER_DEPTH, RENDER_GRID, cloudDepthScale, cloudRaster, finestRaster, shareAt, texelArea } from "./cloudOpacity";
+import {
+  CLOUD_RASTER,
+  CLOUD_RASTER_BUDGET_BYTES,
+  KEPT_RASTERS,
+  MAG_PER_DEPTH,
+  RENDER_GRID,
+  cloudDepthScale,
+  cloudRaster,
+  finestRaster,
+  keptCloudRaster,
+  rasterKey,
+  shareAt,
+  texelArea,
+} from "./cloudOpacity";
 import { depthOf } from "./regimes";
 
 // S64 (BUILD_III V6; RULING_S64 R4): the clouds' raster conserves what the census gives it - each cloud's A_V x area -
@@ -132,5 +145,32 @@ describe("the clouds' raster (S64, V6)", () => {
     expect(shareAt([0.4, Number.NaN, -1], 1)).toBe(1);
     expect(shareAt([0.4, Number.NaN, -1], 2)).toBe(1);
     expect(shareAt(null, 3)).toBe(1);
+  });
+});
+
+describe("the raster kept across remounts (S76, D240 F1)", () => {
+  it("returns the kept raster for the same census content and shape, in a new object as a second answer would be", () => {
+    const first = keptCloudRaster(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 });
+    const again = keptCloudRaster(structuredClone(THREE), 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 });
+    expect(again).toBe(first);
+    const fresh = cloudRaster(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 });
+    expect(Array.from(first.av)).toEqual(Array.from(fresh.av));
+    expect(Array.from(first.slab)).toEqual(Array.from(fresh.slab));
+  });
+  it("builds again when a column's value, a radius, the texels, the cap or the elongation differ", () => {
+    const base = rasterKey(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 });
+    const moved = { ...THREE, cloud_height: [0.05, -0.1, 0.2000001] };
+    expect(rasterKey(moved, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0.5, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0, 10, 20, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0, 10, 10, 64, { verticalCap: 0.07, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 0.5 })).not.toBe(base);
+    expect(rasterKey({ ...THREE, cloud_axis_ratio: [1, 2, 3] }, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(new Proxy(THREE, {}), 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).toBe(base);
+  });
+  it("keeps at most KEPT_RASTERS, the oldest dropped first", () => {
+    const first = keptCloudRaster(THREE, 0, 10, 10, 64);
+    for (let k = 1; k <= KEPT_RASTERS; k += 1) keptCloudRaster(THREE, 0, 10 + k, 10, 64);
+    expect(keptCloudRaster(THREE, 0, 10, 10, 64)).not.toBe(first);
   });
 });

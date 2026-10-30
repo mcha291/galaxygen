@@ -273,6 +273,61 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
   return { av, width, height, rLo, rHi, census, held, outside, split, slab };
 }
 
+// --- the raster kept across remounts (S76, BUILD_IV W5, D240 F1) ------------------------------------------------
+// The raster is the census's alone, at a shape: the same census at the same shape is the same raster, bit for bit
+// (cloudRaster is a pure function). Building it takes 1.4-2.7 s of the main thread on the Milky Way (S76's probe), and
+// the field remakes it whenever its component remounts - the star-first mode's own march, a template switch and back
+// (the census answered again, the same bytes in a new object). So the last few rasters are kept here, keyed on the
+// census's content (every column the raster reads, its bits) and the shape (the radii, the texels, the cap, the
+// elongation): a remount with the same answer takes the kept one.
+
+/** How many rasters are kept: the two templates, each with and without the layer. Each is at most the 16 MiB budget plus its slab. */
+export const KEPT_RASTERS = 4;
+
+const kept = new Map<string, CloudRaster>();
+
+/** Two 32-bit hashes (FNV-1a and a multiplicative mix) over each value's float64 bits, with the column's length. */
+function columnKey(values: ArrayLike<number> | undefined, scratch: DataView): string {
+  if (!values) return "-";
+  let a = 0x811c9dc5;
+  let b = 0x9e3779b9 ^ values.length;
+  for (let k = 0; k < values.length; k += 1) {
+    scratch.setFloat64(0, Number(values[k]));
+    for (let w = 0; w < 2; w += 1) {
+      const word = scratch.getUint32(4 * w);
+      a = Math.imul(a ^ word, 0x01000193);
+      b = Math.imul(b ^ word, 0x85ebca6b);
+      b ^= b >>> 13;
+    }
+  }
+  return `${values.length}:${(a >>> 0).toString(16)}:${(b >>> 0).toString(16)}`;
+}
+
+/** The raster's cache key: the census's content and the shape it is drawn at. */
+export function rasterKey(clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape = {}): string {
+  const scratch = new DataView(new ArrayBuffer(8));
+  const columns = [
+    clouds.cloud_radius, clouds.cloud_azimuth, clouds.cloud_size, clouds.cloud_dust_extinction_v, clouds.cloud_height,
+    clouds.cloud_axis_ratio, clouds.cloud_angle,
+  ].map((c) => columnKey(c, scratch));
+  return [...columns, rLo, rHi, width, height, shape.verticalCap ?? Infinity, shape.elongation ?? 0].join("|");
+}
+
+/** cloudRaster, or the raster kept from an earlier call with the same census content and shape (the same bits). */
+export function keptCloudRaster(clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape = {}): CloudRaster {
+  const key = rasterKey(clouds, rLo, rHi, width, height, shape);
+  const hit = kept.get(key);
+  if (hit) {
+    kept.delete(key); // most recent last
+    kept.set(key, hit);
+    return hit;
+  }
+  const built = cloudRaster(clouds, rLo, rHi, width, height, shape);
+  kept.set(key, built);
+  while (kept.size > KEPT_RASTERS) kept.delete(kept.keys().next().value as string);
+  return built;
+}
+
 /**
  * Each display channel's optical depth per magnitude of A_V: the header's `extinction_ratio` (A_lambda / A_V at each
  * filter's reference wavelength, the grain model's) over 1.0857 - the diffuse dust's own conversion, so the clouds'
