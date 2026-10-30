@@ -783,7 +783,14 @@ export function FieldVolume({
   const frame = loaded.value ?? null;
   const unresolved = lMin != null && lMin > 0;
   const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
+  // S76 (D240 F3): the threshold is the tiles' answer, so a key moved by it alone is asked at once; a set, a white or a
+  // galaxy the user moved still waits the settle.
+  const rendered = useLoad<RenderFrame>(
+    renderKey,
+    (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null),
+    undefined,
+    lit ? JSON.stringify([filterSet, whiteKelvin, query]) : undefined,
+  );
   const latest = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
   // The randomness layer's tables (S73, #199): /api/layer once per galaxy, keyed on the shown query as the render is
   // (so a Generate's swap holds it with the rest, D232), and drawn only beside a render of the same galaxy - the model,

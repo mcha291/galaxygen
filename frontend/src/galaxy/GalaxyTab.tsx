@@ -360,6 +360,9 @@ export function GalaxyTab({
     () => (seen && brightTable ? cellsIn(seen, brightTable.layout, tileLevel) : null),
     [brightTable, tileLevel, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  // What the user moves in the star-first loads (S76, D240 F3): the camera's footprint and level, the point budget, the
+  // galaxy and the set - not the answers (the table's layout, the counts, the stars' layer) the keys also carry.
+  const tilesInput = JSON.stringify([seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max, tileLevel, query]);
   const countRows = useRef(new CountRows()).current;
   const countsGalaxy = JSON.stringify(query);
   const countsKey = pointsOn && tilesSeen && tileLevel > 0 ? JSON.stringify(["brightCounts", tileLevel, tilesSeen, countsGalaxy]) : null;
@@ -367,6 +370,7 @@ export function GalaxyTab({
     countsKey,
     (signal) => levelCounts(countRows, countsGalaxy, tileLevel, tilesSeen!, (cells, level, s) => loadBrightCounts(cells, level, query, s), signal),
     BRIGHT_SETTLE_MS,
+    tilesInput,
   );
   // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
   // in view has its row (B9: no pick over a cell not held).
@@ -427,6 +431,7 @@ export function GalaxyTab({
         tileWhites, signal, tileLevel,
       ),
     BRIGHT_SETTLE_MS,
+    JSON.stringify([tilesInput, brightestN, filterSet, whiteKelvin]),
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster

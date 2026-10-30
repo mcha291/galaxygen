@@ -141,14 +141,24 @@ const subscribe = (listener: () => void) => {
  * key aborts the request in flight rather than racing it. `key === null` means
  * there is nothing to load yet. During a swap (above) the answer is held until
  * every other waiting loader has answered, and then published with theirs.
+ *
+ * `input` (S76, BUILD_IV W5, D240 F3: a settle is for the user's input only): the part of the key the user moves - the
+ * camera, a slider, the galaxy - with what an answer contributes left out. The settle is then counted from the last
+ * change of `input`, not of the key: a key an answer moved (the counts naming the tiles, the tiles naming the render's
+ * threshold) after the user has been still for `settleMs` is asked at once, and one moved while the user moves still
+ * waits out the rest of the settle. Without `input` every key waits `settleMs`, as before. Only the timing moves: the
+ * key, and so the request, is the same.
  */
-export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS) {
+export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string) {
   const [result, setResult] = useState<Loaded<T>>({ state: "idle" });
   const [busy, setBusy] = useState(false);
   // This loader's token in the store: the same object for the loader's life (a state, never a memo).
   const [token] = useState<Token>(() => ({}));
   const loader = useRef(load);
   loader.current = load;
+  // When the user's part of the key last changed (the loader's mount counts as one): read in the effect, never a dependency.
+  const inputSeen = useRef<{ input: string | undefined; at: number } | null>(null);
+  if (inputSeen.current === null || inputSeen.current.input !== input) inputSeen.current = { input, at: performance.now() };
 
   useEffect(() => {
     if (key === null) return;
@@ -156,6 +166,8 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
     const abort = new AbortController();
     // An answer for this key: published now, or held until the swap completes.
     const answer = (publish: () => void, failure: string | null) => loads.answer(token, publish, failure);
+    const seen = inputSeen.current;
+    const wait = seen && seen.input !== undefined ? Math.max(0, settleMs - (performance.now() - seen.at)) : settleMs;
     const timer = setTimeout(() => {
       setBusy(true);
       loader.current(abort.signal)
@@ -167,7 +179,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
         .finally(() => {
           if (!abort.signal.aborted) setBusy(false);
         });
-    }, settleMs);
+    }, wait);
     return () => {
       clearTimeout(timer);
       abort.abort();
