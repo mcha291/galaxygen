@@ -42,6 +42,7 @@ import {
   loadArrays,
   loadLayer,
   loadRender,
+  sameRun,
 } from "../api";
 import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster } from "./cloudOpacity";
 import type { CellLayout } from "./brightTiles";
@@ -1049,7 +1050,12 @@ export function FieldVolume({
   // gas fluctuation field's shear - each cloud's published cloud_axis_ratio and cloud_angle (/api/clouds, the model's
   // since S70, Audit V F-4-3; until then this viewer derived them from the header's gas_fluctuation strain) - at the
   // "cloud elongation" power. With the layer off the model publishes every cloud round (ratio 1).
-  const cloudLayerH = light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
+  // S78: built only once the census, the grid (the arrays) and the drawn render are of one run (api.ts sameRun): before
+  // the render has come - or, on a switch, while the drawn pair is still the last galaxy's - the shape would be another's
+  // and the raster built twice (1.6 s of the landing's main thread, 0.34 s of a switch's). Until then no clouds' layer
+  // is drawn, as before any raster exists.
+  const rasterRun = Boolean(clouds && light && frame && sameRun(clouds, light) && sameRun(clouds, frame));
+  const cloudLayerH = rasterRun && light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
   const elongation = tuning.cloudElongation ?? 0;
   const rasterShape = useMemo(
     (): RasterShape => ({
@@ -1060,7 +1066,7 @@ export function FieldVolume({
   );
   const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
     const c = clouds?.columns as Partial<CloudColumns> | undefined;
-    if (!gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
+    if (!rasterRun || !gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
     const started = performance.now();
     // S76 (D240 F1): kept across remounts by the census's content and the shape - a remount with the same answer is the
     // same raster. The slab beside the A_V (S64, R3 as ruled) comes packed (the review's G6: only what is read here is
@@ -1077,7 +1083,7 @@ export function FieldVolume({
     };
     (globalThis as { __galaxygenCloudRaster?: CloudRasterStats }).__galaxygenCloudRaster = stats;
     return { texture, slab, top, stats };
-  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rasterRun, clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(
     () => () => {
       raster?.texture.dispose();

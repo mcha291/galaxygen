@@ -22,6 +22,7 @@ import {
   loadRender,
   loadSample,
   sameGalaxy,
+  sameRun,
 } from "./api";
 import { LayerMismatch, layerQuery, onLayerFault } from "./galaxy/layer";
 import { templateQuery } from "./workflow/templates";
@@ -262,6 +263,24 @@ describe("the layer's tables, once per galaxy", () => {
     expect(sameGalaxy({ ...layer, template: null }, render({ template: null }))).toBe(true);
     expect(sameGalaxy(null, render({}))).toBe(false);
     expect(sameGalaxy(layer, null)).toBe(false);
+  });
+
+  it("holds a census to the render and the grid of its own run before its raster is built (S78)", () => {
+    const inputs = { halo_mass: 1.1e12, world_seed: 0 };
+    const census = { header: { model: "basic", layer: "on", inputs, level: 0 } };
+    const answer = (header: Record<string, unknown>) => ({ header: { model: "basic", layer: "on", inputs, ...header } });
+    // the render names its template and the census does not: the run is model, inputs and layer
+    expect(sameRun(census, answer({ template: "milky_way" }))).toBe(true);
+    expect(sameRun(census, answer({ grid: {} }))).toBe(true);
+    // the switch: the drawn render still the last galaxy's
+    expect(sameRun(census, answer({ inputs: { ...inputs, halo_mass: 6.1e11 } }))).toBe(false);
+    expect(sameRun(census, answer({ layer: "off" }))).toBe(false);
+    expect(sameRun(census, answer({ model: "azimuthal" }))).toBe(false);
+    // a header without the key is an API from before the switch: on
+    expect(sameRun({ header: { model: "basic", inputs } }, answer({}))).toBe(true);
+    // the landing: no render yet
+    expect(sameRun(census, null)).toBe(false);
+    expect(sameRun(null, answer({}))).toBe(false);
   });
 
   it("keeps drawing the last matched pair until a new pair matches (the review's G1: no blank, no half-and-half)", () => {
