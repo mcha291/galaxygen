@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
   BackSide,
@@ -44,7 +44,9 @@ import {
   loadRender,
   sameRun,
 } from "../api";
-import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster } from "./cloudOpacity";
+import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster, keptRasterHit, rasterKey } from "./cloudOpacity";
+import { type RasterArrival, listenRaster, rasterWorkerAvailable, startRaster } from "./cloudRasterClient";
+import { rasterRequest } from "./cloudRasterJob";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
@@ -653,7 +655,12 @@ export interface CloudRasterStats {
   height: number;
   perCell: number;
   bytes: number;
+  /** The build's time, ms: the worker's own (S78, R5), the main thread's where there is none, or the kept raster's lookup. */
   ms: number;
+  /** Built in the worker (S78, R5), or on the main thread / taken from the kept rasters. */
+  worker: boolean;
+  /** From the job's post to the worker's answer on the main side, ms; 0 when not built in the worker. */
+  roundTripMs: number;
   census: number;
   held: number;
   outside: number;
@@ -841,6 +848,62 @@ export function FieldVolume({
       if (Object.getOwnPropertyDescriptor(holder, "__galaxygenRenderRings")?.get === get) delete holder.__galaxygenRenderRings;
     };
   }, [frame, light, lMin]);
+
+  // The clouds' raster (S64, V6; RULING_S64 R4): the whole disc's census over the plane's polar extent at the "cloud
+  // raster" tuning value's texels per render cell a side (never past the 16 MiB budget for this grid), built once per
+  // census and grid. The viewer's own resolution: what each cloud deposits is conserved whatever it is.
+  const gridR = frame?.header.grid.axes.R;
+  const gridPhi = frame?.header.grid.axes.phi;
+  const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
+  // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
+  // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
+  // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
+  // gas fluctuation field's shear - each cloud's published cloud_axis_ratio and cloud_angle (/api/clouds, the model's
+  // since S70, Audit V F-4-3; until then this viewer derived them from the header's gas_fluctuation strain) - at the
+  // "cloud elongation" power. With the layer off the model publishes every cloud round (ratio 1).
+  // S78: built only once the census, the grid (the arrays) and the drawn render are of one run (api.ts sameRun): before
+  // the render has come - or, on a switch, while the drawn pair is still the last galaxy's - the shape would be another's
+  // and the raster built twice (1.6 s of the landing's main thread, 0.34 s of a switch's). Until then no clouds' layer
+  // is drawn, as before any raster exists.
+  const rasterRun = Boolean(clouds && light && frame && sameRun(clouds, light) && sameRun(clouds, frame));
+  const cloudLayerH = rasterRun && light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
+  const elongation = tuning.cloudElongation ?? 0;
+  const rasterShape = useMemo(
+    (): RasterShape => ({
+      verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
+      elongation,
+    }),
+    [cloudLayerH, elongation],
+  );
+  // S76 (D240 F1): kept across remounts by the census's content and the shape - a remount with the same answer is the
+  // same raster, taken here at once. The slab beside the A_V (S64, R3 as ruled) comes packed (the review's G6: only
+  // what is read is kept): half floats, two a texel - each texel's clouds' mean height and half-thickness, kpc - and the
+  // highest a slab reaches, which bounds the points' segment.
+  // S78 (R5): on a miss the raster is built in a worker (cloudRasterClient.ts), asked for here - before the mesh's own
+  // build below, in the same render - so the two overlap; the answer is kept and arrives as `arrival`. Where there is
+  // no Worker it is built here, on this thread, as before.
+  const rasterWant = useMemo((): { key: string; perCell: number; now: RasterArrival | null } | null => {
+    const c = clouds?.columns as Partial<CloudColumns> | undefined;
+    if (!rasterRun || !gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
+    const census = c as CloudColumns;
+    const width = gridR.n * perCell;
+    const height = gridPhi.n * perCell;
+    const started = performance.now();
+    if (!rasterWorkerAvailable()) {
+      const built = keptCloudRaster(census, gridR.lo, gridR.hi, width, height, rasterShape, DataUtils.toHalfFloat);
+      return { key: "", perCell, now: { key: "", raster: built, ms: performance.now() - started, roundTripMs: 0, worker: false } };
+    }
+    const key = rasterKey(census, gridR.lo, gridR.hi, width, height, rasterShape);
+    const hit = keptRasterHit(key);
+    if (hit) return { key, perCell, now: { key, raster: hit, ms: performance.now() - started, roundTripMs: 0, worker: false } };
+    startRaster(key, () => rasterRequest(census, gridR.lo, gridR.hi, width, height, rasterShape));
+    return { key, perCell, now: null };
+  }, [rasterRun, clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [arrival, setArrival] = useState<RasterArrival | null>(null);
+  useEffect(() => {
+    if (!rasterWant || rasterWant.now) return undefined;
+    return listenRaster(rasterWant.key, setArrival);
+  }, [rasterWant]);
 
   // Read when the material is built.
   const filteringNow = useRef(filtering);
@@ -1045,52 +1108,23 @@ export function FieldVolume({
     return box;
   }, [frame, light, tablesOf, unresolved]);
 
-  // The clouds' raster (S64, V6; RULING_S64 R4): the whole disc's census over the plane's polar extent at the "cloud
-  // raster" tuning value's texels per render cell a side (never past the 16 MiB budget for this grid), built once per
-  // census and grid. The viewer's own resolution: what each cloud deposits is conserved whatever it is.
-  const gridR = frame?.header.grid.axes.R;
-  const gridPhi = frame?.header.grid.axes.phi;
-  const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
-  // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
-  // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
-  // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
-  // gas fluctuation field's shear - each cloud's published cloud_axis_ratio and cloud_angle (/api/clouds, the model's
-  // since S70, Audit V F-4-3; until then this viewer derived them from the header's gas_fluctuation strain) - at the
-  // "cloud elongation" power. With the layer off the model publishes every cloud round (ratio 1).
-  // S78: built only once the census, the grid (the arrays) and the drawn render are of one run (api.ts sameRun): before
-  // the render has come - or, on a switch, while the drawn pair is still the last galaxy's - the shape would be another's
-  // and the raster built twice (1.6 s of the landing's main thread, 0.34 s of a switch's). Until then no clouds' layer
-  // is drawn, as before any raster exists.
-  const rasterRun = Boolean(clouds && light && frame && sameRun(clouds, light) && sameRun(clouds, frame));
-  const cloudLayerH = rasterRun && light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
-  const elongation = tuning.cloudElongation ?? 0;
-  const rasterShape = useMemo(
-    (): RasterShape => ({
-      verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
-      elongation,
-    }),
-    [cloudLayerH, elongation],
-  );
+  // The raster's textures (its build: rasterWant, above the mesh): made once the raster is here - at once when it was
+  // kept or built on this thread, when the worker answers otherwise. Until then no clouds' layer is drawn.
+  const rasterBuilt = rasterWant?.now ?? (arrival && rasterWant && arrival.key === rasterWant.key ? arrival : null);
   const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
-    const c = clouds?.columns as Partial<CloudColumns> | undefined;
-    if (!rasterRun || !gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
-    const started = performance.now();
-    // S76 (D240 F1): kept across remounts by the census's content and the shape - a remount with the same answer is the
-    // same raster. The slab beside the A_V (S64, R3 as ruled) comes packed (the review's G6: only what is read here is
-    // kept): half floats, two a texel - each texel's clouds' mean height and half-thickness, kpc - and the highest a slab
-    // reaches, which bounds the points' segment.
-    const built: KeptRaster = keptCloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell, rasterShape, DataUtils.toHalfFloat);
+    if (!rasterBuilt || !rasterWant) return null;
+    const built: KeptRaster = rasterBuilt.raster;
     const { halves, top } = built;
-    const ms = performance.now() - started;
     const texture = rasterTexture(new DataTexture(built.av, built.width, built.height, RedFormat, FloatType));
     const slab = rasterTexture(new DataTexture(halves, built.width, built.height, RGFormat, HalfFloatType));
     const stats = {
-      width: built.width, height: built.height, perCell, bytes: built.av.byteLength + halves.byteLength, ms,
+      width: built.width, height: built.height, perCell: rasterWant.perCell, bytes: built.av.byteLength + halves.byteLength, ms: rasterBuilt.ms,
+      worker: rasterBuilt.worker, roundTripMs: rasterBuilt.roundTripMs,
       census: built.census, held: built.held, outside: built.outside, split: built.split,
     };
     (globalThis as { __galaxygenCloudRaster?: CloudRasterStats }).__galaxygenCloudRaster = stats;
     return { texture, slab, top, stats };
-  }, [rasterRun, clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rasterBuilt]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(
     () => () => {
       raster?.texture.dispose();

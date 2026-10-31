@@ -7,6 +7,7 @@
 import { DataUtils } from "three";
 import { describe, expect, it } from "vitest";
 
+import { syntheticCensus } from "./cloudCensus.fixture";
 import { type CloudColumns, type CloudRaster, type RasterShape, SPLIT_SAMPLES, cloudEllipse, cloudRaster, packRaster, texelArea } from "./cloudOpacity";
 
 /** cloudRaster as it was before the hoist (cloudOpacity.ts at de6344f), verbatim but for its name. */
@@ -147,35 +148,9 @@ function referenceRaster(clouds: CloudColumns, rLo: number, rHi: number, width: 
   return { av, width, height, rLo, rHi, census, held, outside, split, slab };
 }
 
-/** A deterministic census (mulberry32): `n` clouds across and past [rLo, rHi), at every size and shape. */
-function census(n: number, seed: number, rLo: number, rHi: number, f4: boolean): CloudColumns {
-  let t = seed >>> 0;
-  const rand = () => {
-    t = (t + 0x6d2b79f5) >>> 0;
-    let x = Math.imul(t ^ (t >>> 15), 1 | t);
-    x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-  const make = () => (f4 ? new Float32Array(n) : new Float64Array(n));
-  const c = {
-    cloud_radius: make(), cloud_azimuth: make(), cloud_size: make(), cloud_dust_extinction_v: make(), cloud_height: make(),
-    cloud_axis_ratio: make(), cloud_angle: make(),
-  };
-  for (let k = 0; k < n; k += 1) {
-    const kind = k % 10;
-    // radii: most inside, some at the centre, some past either edge
-    c.cloud_radius[k] = kind === 0 ? 0.05 + 0.3 * rand() : kind === 1 ? rHi - 0.2 + 0.6 * rand() : rLo + (rHi - rLo) * rand();
-    // azimuths: anywhere, and some just either side of phi = 0
-    c.cloud_azimuth[k] = kind === 2 ? 2 * Math.PI - 0.01 * rand() : kind === 3 ? 0.01 * rand() : 2 * Math.PI * rand();
-    // sizes, pc: from far under a texel to many texels across
-    c.cloud_size[k] = kind === 4 ? 2 + 10 * rand() : kind === 5 ? 300 + 600 * rand() : 20 + 150 * rand();
-    c.cloud_dust_extinction_v[k] = kind === 6 && rand() < 0.3 ? (rand() < 0.5 ? 0 : Number.NaN) : 0.05 + 3 * rand();
-    c.cloud_height[k] = (rand() - 0.5) * 0.2;
-    c.cloud_axis_ratio[k] = kind === 7 ? 1 : 1 + 4 * rand();
-    c.cloud_angle[k] = (rand() - 0.5) * 2 * Math.PI;
-  }
-  return c;
-}
+// The census (mulberry32, `n` clouds across and past [rLo, rHi), at every size and shape): cloudCensus.fixture.ts,
+// shared with the worker's test (S78, R5).
+const census = syntheticCensus;
 
 function expectSameBits(got: CloudRaster, want: CloudRaster) {
   for (const k of ["width", "height", "rLo", "rHi", "census", "held", "outside", "split"] as const) expect(Object.is(got[k], want[k]), k).toBe(true);

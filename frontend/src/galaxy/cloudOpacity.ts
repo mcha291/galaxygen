@@ -376,13 +376,31 @@ export function keptCloudRaster(
   capBytes: number = KEPT_RASTER_BYTES,
 ): KeptRaster {
   const key = rasterKey(clouds, rLo, rHi, width, height, shape);
+  const hit = keptRasterHit(key);
+  if (hit) return hit;
+  return keepRaster(key, packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf), capBytes);
+}
+
+/** The raster kept under `key` (rasterKey), made the most recently asked; undefined if none is kept. */
+export function keptRasterHit(key: string): KeptRaster | undefined {
   const hit = kept.get(key);
   if (hit) {
     kept.delete(key); // most recent last
     kept.set(key, hit);
-    return hit;
   }
-  const packed = packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf);
+  return hit;
+}
+
+/**
+ * A packed raster kept under `key` (S78, R5: what the clouds' raster worker answers is kept here on the main side, as
+ * keptCloudRaster keeps what it builds), the oldest dropped first while more than `capBytes` are held. Returns it.
+ */
+export function keepRaster(key: string, packed: KeptRaster, capBytes: number = KEPT_RASTER_BYTES): KeptRaster {
+  const was = kept.get(key);
+  if (was) {
+    keptBytes -= bytesOf(was);
+    kept.delete(key);
+  }
   kept.set(key, packed);
   keptBytes += bytesOf(packed);
   while (keptBytes > capBytes && kept.size > 0) {
