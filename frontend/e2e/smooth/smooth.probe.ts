@@ -45,6 +45,8 @@ const MODEL_URL = (process.env.GALAXYGEN_MODEL_URL ?? "").replace(/\/+$/, "");
 /** How often the frame sum is probed, ms: the picture test's cadence, and the ready bracket's width at most. */
 const PROBE_MS = READY.probeMs;
 const HEALTHZ_MS = 250;
+/** How long probing goes on past settle's confirmation, ms, to see the frame hold (S76's review, G8). */
+const CONFIRM_TAIL_MS = 1000;
 /** The template switched to and back from. */
 const OTHER = "ngc_4414";
 const ZOOM_CAPTURE = "milky_way-zoom";
@@ -214,6 +216,11 @@ interface StepResult {
   ready_lo_ms: number | null;
   /** When settle's criteria first held, ms from the step's start (the instrument's confirmation). */
   confirmed_ms: number | null;
+  /**
+   * The CONFIRM_TAIL_MS after the confirmation (S76's review, G8): the probes taken, and whether the frame sum changed in
+   * that time (and when, ms from the step's start) - a flag on the step's readiness, starred in the table.
+   */
+  after_confirm: { probes: number; changed: boolean; first_change_ms: number | null };
   /** The first lit frame, ms from the step's start. */
   first_lit_ms: number | null;
   error: string | null;
@@ -283,11 +290,8 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
   const deadline = t0 + READY.timeoutMs;
   const quietNeeded = READY.quietMs + (READY.stillProbes - 1) * READY.probeMs;
   const stillNeeded = READY.stillProbes * READY.probeMs;
-  while (error === null) {
-    if (Date.now() > deadline) {
-      error = `not ready in ${READY.timeoutMs} ms: ${net.inflight} /api requests in flight, frame sum ${runKey || "unlit"}`;
-      break;
-    }
+  /** One probe: the frame sum and the camera, recorded in the trace with the probe's cost; its sum as a key ("" unlit). */
+  const readFrame = async () => {
     let probe: { at: number; done: number; sum: number[] | null; stand: number[] | null };
     const asked = Date.now();
     try {
@@ -309,7 +313,15 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     roundTrip.push(Date.now() - asked);
     trace.push([probe.at - t0, ...(probe.sum ?? []).map((v) => Number(v.toPrecision(7))), ...(probe.stand ?? []).map((v) => Number(v.toPrecision(6)))]);
     const lit = !!probe.sum && probe.sum.some((v) => v > 0);
-    const key = lit ? probe.sum!.join(",") : "";
+    return { at: probe.at, lit, key: lit ? probe.sum!.join(",") : "" };
+  };
+  while (error === null) {
+    if (Date.now() > deadline) {
+      error = `not ready in ${READY.timeoutMs} ms: ${net.inflight} /api requests in flight, frame sum ${runKey || "unlit"}`;
+      break;
+    }
+    const probe = await readFrame();
+    const { lit, key } = probe;
     if (!lit) runKey = "";
     else if (key !== runKey) {
       runKey = key;
@@ -326,6 +338,23 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     }
     const wait = probe.at + PROBE_MS - Date.now();
     if (wait > 0) await sleep(wait);
+  }
+  // S76's review (G8): probing goes on for CONFIRM_TAIL_MS past the confirmation, and any change of the frame sum in
+  // that time is flagged - a view that moved after settle's criteria held was not ready when they said so.
+  const tail = { probes: 0, changed: false, first_change_ms: null as number | null };
+  if (confirmed !== null) {
+    const stop = confirmed + CONFIRM_TAIL_MS;
+    while (Date.now() < stop) {
+      const wait = Math.min(lastAt + PROBE_MS, stop) - Date.now();
+      if (wait > 0) await sleep(wait);
+      const probe = await readFrame();
+      lastAt = probe.at;
+      tail.probes += 1;
+      if (probe.key !== runKey && !tail.changed) {
+        tail.changed = true;
+        tail.first_change_ms = probe.at - t0;
+      }
+    }
   }
   const seen = health.stop();
   await mark(`${label}-end`);
@@ -358,6 +387,7 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     ready_ms: ready,
     ready_lo_ms: ready === null ? null : Math.max(0, runBefore - t0),
     confirmed_ms: confirmed === null ? null : confirmed - t0,
+    after_confirm: tail,
     first_lit_ms: firstLit === null ? null : firstLit - t0,
     error,
     api_wait_ms: ready === null ? null : apiWait,
@@ -470,7 +500,7 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     }
     runs.push({ run: n, renderer, steps });
     await context.close();
-    for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)} s [from ${fmt(s.ready_lo_ms)}] (probe ${s.probes.cost_ms_median ?? "-"} ms a call; api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}, long tasks ${fmt(s.long_tasks.ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
+    for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)}${s.after_confirm.changed ? `* (the frame changed at ${fmt(s.after_confirm.first_change_ms)} s, after the confirmation)` : ""} s [from ${fmt(s.ready_lo_ms)}] (probe ${s.probes.cost_ms_median ?? "-"} ms a call; api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}, long tasks ${fmt(s.long_tasks.ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
   }
 
   mkdirSync(dirname(OUT), { recursive: true });
@@ -494,7 +524,7 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     const pick = (f: (s: StepResult) => number | null) => ok.map(f).filter((x): x is number => x !== null);
     const long = ok.map((s) => s.longest).filter((l) => !!l).sort((a, b) => b!.ms - a!.ms)[0];
     lines.push(
-      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
+      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))}${ok.some((s) => s.after_confirm.changed) ? `* (${ok.filter((s) => s.after_confirm.changed).length} moved after)` : ""} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
     );
   }
   const costs = runs.flatMap((r) => r.steps.flatMap((s) => s.probes.costs));

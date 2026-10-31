@@ -288,7 +288,10 @@ def table(merged: dict[str, dict[str, Any]]) -> str:
             over = sum(1 for x in ready if x > bound)
             rng = f"{min(ready) / 1000:.2f}-{max(ready) / 1000:.2f}" if ready else "-"
             lo = fmt(pick("ready_lo_ms"))
-            rows.append(f"| {state} | {step} | {fmt(med(ready))} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
+            # G8: a run whose frame sum changed in the second after the confirmation is starred, with how many did.
+            moved = sum(1 for s in ok if s.get("after_confirm", {}).get("changed"))
+            star = f"* ({moved} moved after)" if moved else ""
+            rows.append(f"| {state} | {step} | {fmt(med(ready))}{star} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
                         f"| {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
                         f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
     return "\n".join(rows) + "\n\n" + probe_cost(merged)
@@ -309,7 +312,8 @@ def probe_cost(merged: dict[str, dict[str, Any]]) -> str:
     return (f"the probe: every {every:.0f} ms (median interval); its own cost {c:.0f} ms a call in the page (median of "
             f"{len(costs)}, 90th percentile {cs[int(0.9 * (len(cs) - 1))]:.0f}, at most {cs[-1]:.0f}), round trip "
             f"{med(trips):.0f} ms: a duty cycle of {100 * c / every:.0f} % of the page's main thread. The ready column is the "
-            f"bracket's upper end (the first probe of the final still run), its lower end beside it (the last probe that differed).")
+            f"bracket's upper end (the first probe of the final still run), its lower end beside it (the last probe that differed); "
+            f"* marks a step whose frame sum changed in the second probed after settle's criteria held.")
 
 
 def main(argv: list[str] | None = None) -> int:
