@@ -1217,8 +1217,10 @@ def test_an_anchor_past_a_free_end_is_held_between_its_neighbours_by_hand():
     assert key[0, 1] == 2.5 and key[0, 2] == 2.5 and key[0, 0] == 1.5
 
 
-@pytest.mark.machine_pinned  # S77 (#206): a record that this machine's rounding decides
-@pytest.mark.parametrize("leg", (*LEGS, "default"))
+# S77 (#206): the Milky Way leg alone is machine_pinned - its record is one this machine's rounding decides and the
+# runner's draw lands elsewhere; the other legs' records hold there, so CI keeps their structural asserts. Ids unchanged.
+@pytest.mark.parametrize("leg", [pytest.param(leg, id=leg, marks=[pytest.mark.machine_pinned] if leg == "milky_way" else [])
+                                 for leg in (*LEGS, "default")])
 def test_the_carried_map_never_folds(prod, leg):
     """The gate's sixth follow-up, item 2, and its eighth, item 2: past its join a joined chain's anchor follows
     the chain it met, and past a free end (or a measured arm's turn back in radius) an anchor is continued no
