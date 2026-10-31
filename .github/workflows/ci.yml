@@ -1,12 +1,21 @@
-# CI runs the suite and the executable specs on every push (rules A6, D2: machine-checked).
+# CI runs the suite and the executable specs (rules A6, D2: machine-checked; D24).
+# S77 (#206): the whole suite takes about four hours on the runner, so it runs on every
+# push to main, on dispatch and nightly; every other push and every pull request runs a
+# fast subset. Tests marked machine_pinned (bit-exact pins of the capturing machine's
+# floating point) skip under CI=true, which GitHub sets (tests/conftest.py).
 # Editing this file needs a token with workflow permission; a Contents-only
 # fine-grained token cannot push changes to .github/workflows/ (see LESSONS.md).
 name: ci
 on:
   push:
+    branches: ["**"]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 17 * * *"
 jobs:
   test:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,3 +23,11 @@ jobs:
       - run: uv sync --frozen
       - run: uv run pytest
       - run: uv run python -m galaxy.specs
+  fast:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run pytest tests/test_docs.py tests/test_progress.py tests/test_hook.py tests/test_graph.py tests/test_api.py tests/test_bundle.py
