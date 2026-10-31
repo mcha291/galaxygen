@@ -585,6 +585,7 @@ def test_regression_the_published_s55_fields_are_the_m_4_oracle(prod):
     assert set(held) == set(TEMPLATES) and all(set(v) == {"m4", "m2"} for v in held.values())
 
 
+@pytest.mark.machine_pinned  # S77 (#206): sha256 digests of this machine's bits
 def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
     """"The arm number's draw retires ... and no other stream's path changes": the pitch, the fast-bar ratio (through
     the corotation radius and the pattern speed) and the two amplitudes are S55's bits, on the default seed and on

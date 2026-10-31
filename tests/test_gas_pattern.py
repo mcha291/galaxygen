@@ -878,6 +878,7 @@ def suite_gate(prod) -> dict:
     return _RUNS["suite_gate"]
 
 
+@pytest.mark.machine_pinned  # S77 (#206): readings as measured on this machine
 def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     """The readings of the gate's sweep as last pinned (S59, D218 follow-up): the record's three galaxies at their
     drawn pitch, the worst of the 240, which galaxies have a ring on its floor, and the crests' sides. The pieces'

@@ -819,6 +819,7 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
 EXPECTED_FLOCCULENT: tuple = (35, 1, 43.8, 103.6)
 
 
+@pytest.mark.machine_pinned  # S77 (#206): a record that this machine's rounding decides
 def test_no_chain_crosses_any_chain_on_300_texture_seeds_of_the_milky_way(prod):
     """The gate's fourth follow-up, A, on 300 texture seeds of the Milky Way template (the reviewer of the third
     pass found Norma's continuation crossing Norma's own 19.5-degree stretch on 6 of 300): no chain crosses any
@@ -844,6 +845,7 @@ EXPECTED_JOINS_300: tuple = (0, 4.0, 10)
 # --- the gate ------------------------------------------------------------------------------------------------------
 
 
+@pytest.mark.machine_pinned  # S77 (#206): a record that this machine's rounding decides
 def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     """D219's gate: "Ring means 1 to 1e-12 on cells; expected ring power = budget to 1e-10 by the analytic
     expectation, the realised power per ring published and its scatter pinned; min ≥ 0 on every suite seed by the
@@ -1215,6 +1217,7 @@ def test_an_anchor_past_a_free_end_is_held_between_its_neighbours_by_hand():
     assert key[0, 1] == 2.5 and key[0, 2] == 2.5 and key[0, 0] == 1.5
 
 
+@pytest.mark.machine_pinned  # S77 (#206): a record that this machine's rounding decides
 @pytest.mark.parametrize("leg", (*LEGS, "default"))
 def test_the_carried_map_never_folds(prod, leg):
     """The gate's sixth follow-up, item 2, and its eighth, item 2: past its join a joined chain's anchor follows

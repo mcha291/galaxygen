@@ -480,6 +480,7 @@ TIGHT = {
 }
 
 
+@pytest.mark.machine_pinned  # S77 (#206): the rounding residue as measured on this machine
 @pytest.mark.parametrize("name", list(TIGHT))
 def test_a_tightly_wound_ring_converges_on_its_rounding_floor(name):
     """Gate G3 item 2: a cell is converged when |r_k| ≤ max(RESIDUAL_TOLERANCE, F_k),
