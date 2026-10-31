@@ -4675,7 +4675,9 @@ never been judged in twenty-three sessions.
    within 1.7 pc, under the derived bound 4.96e-6. No chain end goes untapered where the law says it tapers: the
    taper is intact, and the near-circular piece's rate is #208's. The dispatched full run on the branch
    (41191405818): RUN_RESULT. Over texture seeds 0–299 of the Milky Way and 0–49 of the other two templates here:
-   SWEEP_RESULT. *The entry as it read:* `tests/test_pieces.py`'s
+   400 draws, no edge and no midpoint past the taper's rate (the largest step 0.88 of its bound), 343 pairs of breaks
+   closer than the probe and every one the ends of one chain (each Milky Way draw holds one — a pinned kink's two
+   bits), seed 49 alone past the old 1e-6 and none past the old 1e-5. *The entry as it read:* `tests/test_pieces.py`'s
    `test_the_count_is_continuous_but_where_a_chain_ends_untapered[milky_way]` claims the count of crossing chains
    steps only at an untapered end — a join, a measured arm's turn-back — or where the crossing set empties, and finds
    those ends by coincidences at 1e-9 / 1e-8. On the runner's draw of the same seed (Linux's floating point: a
@@ -4695,7 +4697,9 @@ never been judged in twenty-three sessions.
    ln R — 1.7 pc at 11.66 kpc, where the grid's rings are 150 pc apart. The count's taper runs along the chain over one
    width (the law, as ruled), so in radius the chain enters at 1/sin p times a radial piece's rate: N goes 5 → 6, and
    the bounded width and B with it, within those 1.7 pc — continuous, and a step between neighbouring rings on any
-   grid; the ring's arm material lies in one arc. Over the sweep of S79: SWEEP_PITCH. The pitch's lower tail is the
+   grid; the ring's arm material lies in one arc. Over S79's sweep (texture seeds 0–299 of the Milky Way, 0–49 of the other two) the smallest drawn pitch is
+   0.0086° (seed 208); 16 of 300 Milky Way draws and 2 of 50 of NGC 4414's hold a piece under 0.1°, 120 of the 400 one
+   under 1°. The pitch's lower tail is the
    draw's and no source read bounds it (Savchenko 2020 measures the pitch's variation along an arm, not its floor).
    **Carried.** What closes it: the owner's floor on the drawn pitch — #142 names the same remedy for the disc's pitch,
    "the owner's to order with a read source" — or a reading that a near-circular arc is what the sources' pitch scatter

@@ -15305,7 +15305,12 @@ stepped, joins, jump) is `test_the_count_s_steps_are_the_record_s`, `EXPECTED_ST
 census's joins differ on the runner, `EXPECTED_JOINS_300`'s (0, 4, 9) there against (0, 4, 10) here), the other legs in
 CI as before; the continuity test's mark lifted on all three legs. `untapered_ends` retired. Nothing drawn changes.
 
-**The sweep here** (texture seeds 0–299 of the Milky Way, 0–49 of `ngc_4414` and of the default): SWEEP_RESULT.
+**The sweep here** (texture seeds 0–299 of the Milky Way, 0–49 of `ngc_4414` and of the default; 400 draws in 35 min):
+no edge and no midpoint past the taper's rate, the largest step 0.88 of its bound (seed 263); 343 pairs of breaks closer
+than the probe, every one the ends of one chain — each of the 300 Milky Way draws holds at least one, a pinned kink's
+two bits — and none between two chains; seed 49 alone past the old 1e-6, none past the old midpoint 1e-5; every Milky
+Way draw steps once (Norma's kink), no other template's draw at all. The smallest drawn pitch 0.0086° (seed 208); 18 of
+the 400 draws hold a piece under 0.1° and 120 one under 1° — #208's tail.
 
 **The runs.** The push of 1482088: `fast` green (41191405570). Dispatched on it, the full `test` job (41191405818):
 RUN_RESULT.
