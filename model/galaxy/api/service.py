@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import threading
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
@@ -411,6 +412,29 @@ class Response:
         return wire.decode(self.body)
 
 
+# S77 (#206): how deep a request's JSON may nest, read before it is parsed. The API's deepest legitimate shape is a
+# list of objects of lists - filters= with a sampled curve, depth 3. Without the cap the answer to a deeper list was
+# the platform's: Windows' 2 MB main-thread stack overflows inside json.loads (RecursionError, #201's 400), Linux's
+# 8 MB parses 100 000 levels and the validator refuses the result with another message. The cap answers both alike.
+JSON_DEPTH_CAP = 64
+_JSON_STRING = re.compile(r'"[^"\\]*(?:\\.[^"\\]*)*"?', re.DOTALL)  # a string literal; unterminated, to the end
+
+
+def json_nesting(raw: str) -> int:
+    """The deepest nesting of ``[`` and ``{`` in ``raw`` outside its string literals (``\\"`` stays inside its string,
+    an unterminated string runs to the end), read without parsing: no stack, so the same number on every platform."""
+    bare = _JSON_STRING.sub('""', raw).encode("utf-8")
+    codes = np.frombuffer(bare, dtype=np.uint8)
+    step = ((codes == 0x5B) | (codes == 0x7B)).astype(np.int64) - ((codes == 0x5D) | (codes == 0x7D))
+    return int(np.cumsum(step).max(initial=0))
+
+
+def nested_too_deeply(raw: str) -> bool:
+    """True when ``raw`` nests deeper than :data:`JSON_DEPTH_CAP` - the guard before every ``json.loads`` of a
+    request's text (filters=, an event list, the bundle's key); fewer openers than the cap cannot nest past it."""
+    return raw.count("[") + raw.count("{") > JSON_DEPTH_CAP and json_nesting(raw) > JSON_DEPTH_CAP
+
+
 def _parse_filters(q: Query) -> list[Any]:
     """filters=: the viewer's curves, parsed by the model's spectrum module, or a 400 saying why not."""
     raw = q.one("filters")
@@ -419,12 +443,15 @@ def _parse_filters(q: Query) -> list[Any]:
             "filters= is the viewer's filter set as a JSON list of curves; the model holds no filter set "
             "(RENDER_PHYSICS section 2a)"
         )
+    if nested_too_deeply(raw):  # S77 (#206): the same 400 on every platform, before the parser's stack decides
+        raise BadRequest("filters: the JSON is nested too deeply")
     try:
         parsed = json.loads(raw)
     except ValueError as e:  # JSONDecodeError, or an integer past Python's digit limit
         raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
     except RecursionError:
-        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500.
+        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500. Since S77
+        # the depth guard above answers first; this stays as the backstop.
         raise BadRequest("filters: the JSON is nested too deeply") from None
     try:
         return _spectra.parse_curves(parsed)
@@ -2588,12 +2615,15 @@ def _inputs_json(inputs: Mapping[str, Any]) -> dict[str, Any]:
 
 def _events(name: str, raw: str) -> tuple[MergerEvent, ...]:
     """An event list arrives as JSON, because it is a list of records, not a scalar."""
+    if nested_too_deeply(raw):  # S77 (#206): the same 400 on every platform, before the parser's stack decides
+        raise BadRequest(f"{name}: the JSON is nested too deeply")
     try:
         parsed = json.loads(raw)
     except ValueError as e:  # JSONDecodeError, or an integer past Python's digit limit
         raise BadRequest(f"{name} must be a JSON array of events: {e}") from None
     except RecursionError:
-        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500.
+        # A list nested past the parser's stack (#201): the caller's JSON, so a 400, not the server's 500. Since S77
+        # the depth guard above answers first; this stays as the backstop.
         raise BadRequest(f"{name}: the JSON is nested too deeply") from None
     if not isinstance(parsed, list):
         raise BadRequest(f"{name} must be a JSON array of events, got {type(parsed).__name__}")

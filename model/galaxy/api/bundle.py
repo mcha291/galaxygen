@@ -79,6 +79,10 @@ def pairs(query: Query) -> list[tuple[str, str]]:
 
 
 def _filters(raw: str) -> str:
+    from galaxy.api.service import nested_too_deeply  # the service imports this module; the reverse waits until called
+
+    if nested_too_deeply(raw):  # S77 (#206): past the parse's cap, the raw string, as on every platform
+        return raw
     try:
         parsed = json.loads(raw)
     except (ValueError, RecursionError):  # not JSON, or nested past the parser's stack (#201): the raw string

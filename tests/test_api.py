@@ -568,7 +568,9 @@ def test_the_event_list_is_settable_and_validated(api):
 
 # #201 (S72's reviewer): two request shapes that ended in http.py's "internal error" 500. Each is the caller's
 # JSON, refused at the parse with a 400 that names the field; a handler's own bug stays a 500 (handle is unchanged).
-DEEP = "[" * 100_000 + "]" * 100_000  # json.loads raises RecursionError, not JSONDecodeError
+# Until S77 json.loads raised RecursionError on it here (a 2 MB stack) and parsed it on Linux (8 MB); since S77 (#206)
+# the depth guard refuses it before the parse on both.
+DEEP = "[" * 100_000 + "]" * 100_000
 
 
 def _merger(field: str, value: str) -> str:
@@ -663,6 +665,48 @@ def test_over_the_socket_the_unparseable_requests_are_400s_not_500s():
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def test_the_depth_guard_fires_past_the_cap_and_not_at_it(api):
+    """S77 (#206): every parse of a request's JSON reads its depth first and refuses past ``JSON_DEPTH_CAP`` with
+    #201's words, so the answer is the parse's and not the platform's stack. At the cap the list parses and the
+    validator answers in its own words; one level more is "nested too deeply" before the parser runs."""
+    from galaxy.api import bundle
+    from galaxy.api.service import JSON_DEPTH_CAP, json_nesting, nested_too_deeply
+
+    assert JSON_DEPTH_CAP == 64
+    at, past = "[" * JSON_DEPTH_CAP + "]" * JSON_DEPTH_CAP, "[" * (JSON_DEPTH_CAP + 1) + "]" * (JSON_DEPTH_CAP + 1)
+    assert json_nesting(at) == JSON_DEPTH_CAP and not nested_too_deeply(at)
+    assert json_nesting(past) == JSON_DEPTH_CAP + 1 and nested_too_deeply(past)
+    for route, field, base, own in (("/api/blackbody", "filters", {"white": "6500"}, "filters=: curve 0 is not an object"),
+                                    ("/api/arrays", "mergers", {"fields": "last_major_merger_time"},
+                                     "mergers: each event is an object with time, mass_ratio, gas_fraction")):
+        _refused(api.handle(route, base | {field: past}), f"{field}: the JSON is nested too deeply")
+        got = api.handle(route, base | {field: at})
+        _refused(got, own)
+        assert "nested too deeply" not in got.json()["error"]
+    # Objects count as lists do, and closing brackets bring the depth down: 64 levels twice in a row is 64.
+    assert json_nesting('{"a":' * 65 + "1" + "}" * 65) == 65 and json_nesting(at + "," + at) == JSON_DEPTH_CAP
+    # The bundle's key keeps a too-deep filters= raw (no key of a parse), as it kept #201's RecursionError.
+    assert bundle._filters(past) == past and bundle._filters("[1, 2]") == "[1,2]"
+
+
+def test_the_depth_guard_counts_no_bracket_inside_a_string(api):
+    """A string literal's brackets are text, escaped quotes included (``\\"`` does not end the string); an unterminated
+    string runs to the end. A curve named with a thousand brackets is a curve."""
+    from galaxy.api.service import json_nesting, nested_too_deeply
+
+    name = "[" * 500 + '\\"' + "{" * 500 + "\\\\"
+    curve = '[{"name":"' + name + '","shape":"box","centre":5500,"width":1000}]'
+    assert json.loads(curve)[0]["name"] == "[" * 500 + '"' + "{" * 500 + "\\"
+    assert json_nesting(curve) == 2 and not nested_too_deeply(curve)
+    got = api.handle("/api/blackbody", {"white": "6500", "filters": curve})
+    assert got.status == 200, got.body[:200]
+    assert json_nesting('["a\\"]"]') == 1 and json_nesting('"[[[') == 0 and json_nesting('[["x"],"]]]"]') == 2
+    # The walk's deepest JSON is a sampled curve's list of objects of lists (the viewer's WFC3 sets): 3, far under 64.
+    from export_template import filter_sets
+
+    assert max(json_nesting(json.dumps(curves)) for curves in filter_sets().values()) == 3
 
 
 def test_reserved_parameters_cannot_shadow_an_input():
