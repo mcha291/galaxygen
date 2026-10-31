@@ -1771,3 +1771,25 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] An infrastructure review with neither Docker nor Azure still earned its turn by reading: a recreate test that
   could never fire, a probe comment with the wrong reason, a vacuous "the log did not grow" check, a push that was a
   second build. Review the files against the plan and the gateway's own account, not against the builder's report.
+
+## From S76 (W5, smoothness measured locally; a Fable lead, one Opus builder in two passes, an Opus reader)
+
+- [viewer] An instrument's own delay is not the user's wait: the picture test's "ready" is a 1.5 s network quiet plus
+  three still probes, so a probe that reports settle's completion time reads every step ~2 s long. Decide THAT the
+  view is ready by the instrument's criteria and report WHEN it became ready by the first probe of the final still
+  run, and state the probe's resolution.
+- [viewer] "Warm" is a property of the browser as much as of the servers: Chromium's GPU process keeps compiled
+  programs across contexts of one browser, so the first paint in a fresh browser read 10.3 s against 4.2 s in the
+  same browser's later runs, in every server state. A cold measurement needs a fresh browser per run; a returning
+  visitor's number is the warm row, a new visitor's the cold one.
+- [viewer] A split before a fix: the probe recorded, per step, the union of `/api` in-flight time against the client's
+  own work after the last answer, and the main thread's long tasks. The table said the client owned every warm step
+  and the model owned one cold step, and a CPU profile then named the functions; the fixes were ordered by those
+  numbers, not by where the plan expected the cost to be.
+- [api] A 400's wording can be the machine's: the deep-JSON case says "nested too deeply" here because Python 3.14
+  overflows a 2 MB main-thread stack inside `json.loads`, and "curve 0 is not an object" on an 8 MB stack that parses
+  all 100 000 levels. The deployed image is Linux and answers as the runner does. Cap the depth at the parse so the
+  answer is the code's, not the stack's.
+- [close] A red CI is a finding whoever finds it: the `ci` workflow had failed on every push for four weeks, taking
+  four hours each, and the specs had not run on the runner in that time, with nothing in the record saying so. At
+  every open read the workflow's last conclusion beside the branch's; a machine check nobody reads is none.

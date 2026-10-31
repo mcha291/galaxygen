@@ -706,9 +706,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S70 | **137** (the layer's realised totals the same on and off since L1's ring-first draw at S61, D220 — discharged in fact, struck at Audit V's register pass, D234) | 1 |
 | **discharged** at S73 | **199, 200, 201** (the layer's tables once per galaxy by `/api/layer`; the bundle plan verified against a logged walk in both directions; the 500s answered 400 at the parse — D236) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203 | 120 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 206 | 123 |
 
-So the board's **129 open** is 11 permanent and 118 carried, and no item is unruled. (S22
+So the board's **134 open** is 11 permanent and 123 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4613,7 +4613,9 @@ never been judged in twenty-three sessions.
    (`infra/smoke.sh`: the bundles' hash the live `model.hash`, the landing's three answers from the bundles, the
    pinned gateway's hit asking the model nothing, a wrong pin a 503). **Carried.** What closes it: the owner
    re-enables the subscription and runs `infra/deploy.ps1`; W5's probe (row 76) measures the three gate sentences
-   on the deployed site and records them in its decision.
+   on the deployed site and records them in its decision. S76 (D240) built that probe (`npm --prefix frontend run
+   smooth` with `GALAXYGEN_URL`, or `tools/smoothness.py --url`) and ran it locally; the deployed run is the first
+   thing after the deploy, and its table is appended to D240.
 205. **A gateway at zero replicas wakes the model for the landing: its output cache is empty at every cold start**
    (S75, D239). The gate's "the model replica at zero" holds only while a gateway replica is warm (an entry lives
    `Cache:ExpirationMinutes`, 60): after both apps scale to zero, the first visit starts the gateway with nothing
@@ -4621,7 +4623,28 @@ never been judged in twenty-three sessions.
    bundles (milliseconds each, after the replica's start). The pin saves the hash read, not the answers. **Carried.**
    What closes it: W5's eager warm (§5 Phase W5: the gateway filling its cache from the bundles' manifests at start,
    which still wakes the model once per gateway start) or a warm gateway (paid; ruling 9 says zero), chosen on the
-   deployed site's numbers; the owner's call.
+   deployed site's numbers; the owner's call. S76's local probe (D240): a gateway restarted with an empty cache against
+   a warm model moved no step (a bundled miss costs milliseconds), so what this debt costs deployed is the model
+   replica's wake alone, unmeasured here; the model-cold zoom (23 s, the galaxy computed in a fresh process) is F5's,
+   ruled with it.
+206. **The `ci` workflow has been red since 2026-10-03 and the specs have not run in CI since** (S76, D240). The
+   first failure is `7d6d2b9` on `session-55`, the commit that entered `tests/layer_reference_s54.json`'s sha256
+   digests and `tests/test_layer.py`; every one of the 340 runs since has failed, the latest on `main` (671cf9f)
+   23 failed of 1 722 in 4 h 19, and `uv run python -m galaxy.specs`, the step after pytest, has not run on the
+   runner since. Eighteen of the failures are bit-exact pins of this machine's floating point (digests, equalities to
+   an ulp or two, record tuples — `test_layer` 10, `test_pieces` 3, `test_gas_pattern`, `test_gas_response`,
+   `test_modes`, `test_templates`); four in `test_api.py` are the deep-JSON case, where this machine's 2 MB
+   main-thread stack overflows inside `json.loads` ("nested too deeply") and the runner's 8 MB stack parses the
+   100 000 levels and refuses them with another message — both 400, and the deployed model image is Linux, so it
+   answers as CI does (#201's wording is this machine's); one in `test_gas_fluctuation` moves 2.3e-3 on Linux, past
+   the float32 bound its neighbour states, and one in `test_pieces` finds a unit step at a midpoint — the two that
+   want a reading, not a tolerance. Nothing in the record said so (D24 set CI up as the machine check and argued
+   against living with a red one). **Carried.** What closes it: a session of its own, the owner's call — a
+   `machine_pinned` marker skipped under `CI` for the eighteen (bit-exact by design, B5: no tolerance), a depth cap at
+   the parse so both platforms answer the same 400 (a `model/galaxy/api` change, so a new hash and pin),
+   `.python-version` pinned to a patch (the runner took 3.14.10 against 3.14.4 here), the two numeric cases read,
+   and the four-hour suite off every push (nightly or on dispatch) with a fast subset per push; then CI green and
+   the specs running on the runner again.
 
 ---
 

@@ -15015,3 +15015,69 @@ is red, and D24's own text warns against living with one. Opened as **#206**; th
 the owner's call: a `machine_pinned` marker skipped under `CI`, a depth cap at the parse so both platforms answer the
 same 400 (a `model/galaxy/api` change: a new hash), `.python-version` pinned to a patch, the two numeric cases read,
 and the four-hour suite moved off every push.
+
+**The fixes, as built (the same builder, one commit each with its before / after; the lead read the hunks).**
+*F1* — `cloudOpacity.ts` `keptCloudRaster` / `rasterKey`: the raster kept across remounts under a key of two 32-bit
+hashes over each census column's float64 bits with their lengths (radius, azimuth, size, A_V, height, axis ratio,
+angle) plus the raster's bounds, texel counts, vertical cap and elongation — content, not the answer object, because
+switching back answers `/api/clouds` again as a new object with the same bytes; four kept, the oldest dropped; three
+vitest tests (a hit the same object and bits as a fresh build, each key part moving the key, the eviction).
+Gateway-cold: switch back 2.21 → 0.73 s (long tasks 1.46 → 0.09), star-first 2.94 → 1.45. *F2* — `FieldVolume.tsx`
+`precompileMarch`: as soon as the renderer exists, a stand-in mesh with the same vertex and fragment text (`fieldFragment`
+unchanged — the `s66` snapshot has no diff) and the same options is compiled through `compileAsync` into a half-float
+target with `KHR_parallel_shader_compile`, the current step count first and the templates' (96, 48) after, the stand-ins
+held for the renderer's life so the program is never released; the real material finds it in three's cache. Fresh
+browser: first paint 10.39 → 6.87 s (long tasks 9.18 → 5.64), the switch 3.79 → 2.88; the compile now starts ~0.7 s
+after navigation, when the canvas exists, and still takes ~5.8 s — the cold landing is bound by it. *F3* —
+`useLoad.ts` takes the user's part of the key (`input`) and counts the settle from its last change, so a key an answer
+moved after the user has been still is asked at once; `GalaxyTab`'s counts and tiles and `FieldVolume`'s render pass
+theirs; the keys and requests unchanged (the same 3 and 4 per step, the same query lengths, `test_bundle` green). The
+first draft keyed on whether the input changed and the tiles then compared against an old camera; counting from the
+input's last change fixed it. Warm-model zoom 1.95 → 1.09 s (the chain 1.22 → 0.46), star-first 1.43 → 0.91. *F4* —
+`Program.cs` `AddResponseCompression` (brotli then gzip at the fastest level, over HTTPS too — no answer carries a
+secret or a cookie — the default types plus `application/octet-stream`, `text/javascript`, `image/svg+xml`),
+`UseResponseCompression` outermost, so the output cache stores the identity body and every answer, a hit too, is
+compressed on its way out; an xunit theory per encoding (a miss then a hit compressed, `X-Gateway-Cache` right with
+`Vary: Accept-Encoding`, the decoded bytes the stub model's, an identity request served the identity body from the
+cache, one model call); `dotnet test` 107 → 109. The landing's transfer 19.40 → 9.85 MB of `/api` (the render 9.29 →
+3.08, clusters 4.80 → 3.71, region 2.89 → 1.81, clouds 1.77 → 1.08) and the page's files 1.75 → 0.82 MB; a 9.3 MB
+render hit through the gateway 36 ms identity, 13–32 brotli; the ready time unchanged here (the wire is free locally).
+F5 and F6 not built, as ruled. `model.hash` 4f0c8401… before and after; nothing under `model/` moved.
+
+**The gate for the pass.** The probe's three states again; `npm run picture` **15 passed, all nine frames the
+committed picture byte for byte** (DUSTY 0.96641 / 0.97054 / 0.97765 held); vitest 457 passed, 1 skipped;
+`typecheck` and `typecheck:e2e` clean; `dotnet build` 0 errors, `dotnet test` 109; `tests/test_bundle.py`,
+`test_api.py`, `test_docs.py` 104 passed; the shader snapshot unchanged; every started process stopped, the owner's
+ports untouched.
+
+**The table after (seconds, the median of five; before → after; `smooth-before\` beside it).**
+
+| state | first paint | switch → NGC | switch back | star-first | zoom |
+|---|---|---|---|---|---|
+| model-cold | 10.38 → **6.88** (over 5 s) | 3.89 → 2.87 | 2.22 → 0.67 | 2.94 → 0.94 | 23.90 → **22.98** (over 5 s) |
+| gateway-cold | 10.39 → **6.90** (over) | 3.89 → 2.88 | 2.21 → 0.66 | 2.94 → 0.94 | 1.88 → 1.12 |
+| warm | 4.22 → **4.25** (over 1 s) | 1.56 → **1.50** (over) | 2.24 → 0.98 | 2.81 → 0.92 (one run 1.00) | 1.22 → 0.45 |
+
+`in_flight` ≤ 1, `waiting` ≤ 2, no 429; the model's cold start 1.06–1.08 s unchanged.
+
+**What stays over the bound, and why (R4's order; each with its remedy and who rules it).** (i) *The cold first
+paint, 6.9 s against 5:* the march program's compile, ~5.8 s on ANGLE / Direct3D 11, now the whole of the landing's
+critical path; the clouds' first raster (~2.1 s) already runs inside its shadow. The remedy is a smaller or a shared
+program, which F2 excluded because the GLSL text is a pinned snapshot (`fieldFragment.s66.glsl`) — a re-baseline with
+its reason and the picture test byte for byte is the gate; or a renderer created before the star sample arrives. (ii)
+*The warm first paint, 4.25 s against 1:* the shader cached, what remains is the render's arrival and parse (1.5–1.9 s,
+9.3 MB decoded) and ~2.9 s of long tasks, the first clouds' raster on a fresh page, which F1 cannot cache; the named
+next steps the raster in a Worker (F1's alternative) and F6's smaller render encoding. (iii) *The warm switch, 1.50 s
+against 1:* ~0.6 s NGC 4414's own first raster and 0.44 s its render's arrival — the same two. (iv) *The model-cold
+zoom, 23.0 s against 5:* the model's own computation of the galaxy and the level-2 ring draw in a fresh process,
+F5 — ruling 15 (a) fails on the number; the owner chooses among an eager warm after the landing (wakes the replica
+on every visit: a cost under ruling 9), a warm replica (15 b, paid), or the draw published to the viewer (15 c).
+Against a warm model the zoom is 1.12 s cold and 0.45 warm, inside. The switch back and star-first are inside by a
+hair (0.98, 0.92 — the builder noted the step count's 300 ms debounce at 48 → 96 as the likely remainder, unverified).
+(v) *Unmeasured:* the deployed wire, where F4's halving of the landing's bytes is the gain, the replica's wake (#205),
+the image pull — #204's run, the first thing after the owner's deploy.
+
+**The register.** +1: **#206** (the `ci` workflow red since 2026-10-03; above) — 134 open = 11 permanent + 123 carried,
+55 discharged; #204 and #205 carried with S76's local numbers added to their text's reach (the deployed run owed).
+No model rule, stage, field, number, row or pin moved; nothing under `model/galaxy`; `VIEWER_TASKS.md` gains the
+smoothness remainder as T29.
