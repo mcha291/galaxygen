@@ -122,46 +122,88 @@ public sealed class FeatureTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/fail?x=1")).StatusCode);
     }
 
-    // S76 (BUILD_IV W5, D240 F4): the answers are compressed on their way out of the cache, which stores the identity body.
-    [Theory]
-    [InlineData("br")]
-    [InlineData("gzip")]
-    public async Task A_compressed_answer_decodes_to_the_models_bytes_and_a_hit_is_still_a_hit(string encoding)
+    // S76 (BUILD_IV W5, D240 F4; the review's G2): the compression runs inside the output cache, so a body is compressed
+    // once, on its miss, and stored per encoding (the key varies by Accept-Encoding); a hit is served as stored. Each
+    // encoding asked in turn - a miss then a hit - is one model call each: three in all, and a request asking for no
+    // encoding is never sent a compressed body, before or after the compressed ones are stored.
+    [Fact]
+    public async Task A_body_is_compressed_once_on_its_miss_and_stored_per_encoding()
     {
         await using var gateway = Gateway();
         using var client = gateway.CreateClient();
+        var expected = (byte[])[.. StubModel.Prefix, .. System.Text.Encoding.ASCII.GetBytes("GLXY render?template=a")];
         static async Task<byte[]> Decoded(HttpResponseMessage response, string encoding)
         {
             await using var body = await response.Content.ReadAsStreamAsync();
-            await using Stream decoder = encoding == "br" ? new BrotliStream(body, CompressionMode.Decompress) : new GZipStream(body, CompressionMode.Decompress);
+            await using Stream decoder = encoding switch
+            {
+                "br" => new BrotliStream(body, CompressionMode.Decompress),
+                "gzip" => new GZipStream(body, CompressionMode.Decompress),
+                _ => body,
+            };
             using var bytes = new MemoryStream();
             await decoder.CopyToAsync(bytes);
             return bytes.ToArray();
         }
-        HttpRequestMessage Asked(bool compressed)
+        HttpRequestMessage Asked(string encoding)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "/api/render?template=a");
-            if (compressed) request.Headers.AcceptEncoding.ParseAdd(encoding);
+            if (encoding != "identity") request.Headers.AcceptEncoding.ParseAdd(encoding);
             return request;
         }
 
-        using var miss = await client.SendAsync(Asked(true));
-        Assert.Equal("miss", Header(miss, "X-Gateway-Cache"));
-        Assert.Equal([encoding], miss.Content.Headers.ContentEncoding);
-        Assert.Contains("Accept-Encoding", miss.Headers.Vary);
-        var model = await Decoded(miss, encoding);
+        var calls = 0;
+        foreach (var encoding in new[] { "br", "gzip", "identity" })
+        {
+            foreach (var expectCache in new[] { "miss", "hit" })
+            {
+                using var answer = await client.SendAsync(Asked(encoding));
+                Assert.Equal(HttpStatusCode.OK, answer.StatusCode);
+                Assert.Equal(expectCache, Header(answer, "X-Gateway-Cache"));
+                if (encoding == "identity") Assert.Empty(answer.Content.Headers.ContentEncoding);
+                else Assert.Equal([encoding], answer.Content.Headers.ContentEncoding);
+                Assert.Contains("Accept-Encoding", answer.Headers.Vary);
+                Assert.Equal(expected, await Decoded(answer, encoding));
+            }
+            calls += 1;
+            Assert.Equal(calls, _model.CallsTo("render")); // one model call per distinct encoding: its miss
+        }
+        Assert.Equal(3, _model.CallsTo("render"));
 
-        using var hit = await client.SendAsync(Asked(true));
-        Assert.Equal("hit", Header(hit, "X-Gateway-Cache"));
-        Assert.Equal([encoding], hit.Content.Headers.ContentEncoding);
-        Assert.Equal(model, await Decoded(hit, encoding));
-
-        using var plain = await client.SendAsync(Asked(false)); // a client that asks for none is sent the identity body, from the cache
+        // And a client asking for no encoding, once every encoding is stored, is still sent the identity body.
+        using var plain = await client.SendAsync(Asked("identity"));
         Assert.Equal("hit", Header(plain, "X-Gateway-Cache"));
         Assert.Empty(plain.Content.Headers.ContentEncoding);
-        Assert.Equal(model, await plain.Content.ReadAsByteArrayAsync());
-        Assert.Equal([.. StubModel.Prefix, .. System.Text.Encoding.ASCII.GetBytes("GLXY render?template=a")], model);
-        Assert.Equal(1, _model.CallsTo("render"));
+        Assert.Equal(expected, await plain.Content.ReadAsByteArrayAsync());
+        Assert.Equal(3, _model.CallsTo("render"));
+    }
+
+    [Fact]
+    public async Task The_page_files_are_compressed_below_the_cache()
+    {
+        var root = Directory.CreateTempSubdirectory("galaxygen-files-");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root.FullName, "assets"));
+            var script = string.Concat(Enumerable.Repeat("console.log('galaxygen');\n", 200));
+            await File.WriteAllTextAsync(Path.Combine(root.FullName, "assets", "app-0000.js"), script);
+            await File.WriteAllTextAsync(Path.Combine(root.FullName, "index.html"), "<!doctype html><title>g</title>" + new string(' ', 2000));
+            await using var gateway = Gateway(("Gateway:Frontend:Path", root.FullName));
+            using var client = gateway.CreateClient();
+            foreach (var path in new[] { "/assets/app-0000.js", "/", "/some/route" })
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, path);
+                request.Headers.AcceptEncoding.ParseAdd("gzip");
+                using var answer = await client.SendAsync(request);
+                Assert.Equal(HttpStatusCode.OK, answer.StatusCode);
+                Assert.Equal(["gzip"], answer.Content.Headers.ContentEncoding);
+                Assert.Equal("<absent>", Header(answer, "X-Gateway-Cache"));
+            }
+        }
+        finally
+        {
+            root.Delete(recursive: true);
+        }
     }
 
     [Fact]
@@ -182,6 +224,7 @@ public sealed class FeatureTests : IAsyncLifetime
         ModelCachePolicy.Vary(context, base0);
         Assert.Equal("m0", context.CacheVaryByRules.VaryByValues[ModelCachePolicy.HashKey]);
         Assert.Equal("*", context.CacheVaryByRules.QueryKeys.ToString());
+        Assert.Equal("Accept-Encoding", context.CacheVaryByRules.HeaderNames.ToString()); // G2: stored per encoding
 
         // A share link's stored answer, keyed under the hash first, and moved by it.
         var query = GalaxyQuery.Parse("template=milky_way");
