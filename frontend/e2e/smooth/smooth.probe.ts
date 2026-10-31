@@ -555,14 +555,22 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   writeFileSync(OUT, `${JSON.stringify({ about, runs }, null, 1)}\n`, "utf-8");
 
   const names = [...new Set(runs.flatMap((r) => r.steps.map((s) => s.step)))];
-  const lines = [`| ${STATE} | ready s, median (range) [lower end] | api wait s (long tasks inside it) | client s (lower bound) | /api reqs | longest /api |`, "|---|---|---|---|---|---|"];
-  for (const name of names) {
-    const got = runs.map((r) => r.steps.find((s) => s.step === name)).filter((s): s is StepResult => !!s);
+  const lines = [`| ${STATE} | runs | ready s, median (range) [lower end] | api wait s (long tasks inside it) | client s (lower bound) | /api reqs | longest /api |`, "|---|---|---|---|---|---|---|"];
+  // S76's review (G7): run 1 on its own row (a fresh browser's shader compile; on a site scaled to zero, the replica's
+  // wake) beside the median of the rest.
+  const firstRun = runs.filter((r) => r.run === 1);
+  const restRuns = runs.filter((r) => r.run !== 1);
+  const groups: [string, typeof runs][] = [];
+  if (firstRun.length) groups.push(["run 1", firstRun]);
+  if (restRuns.length) groups.push([restRuns.length > 1 ? `runs ${restRuns[0].run}-${restRuns[restRuns.length - 1].run}` : `run ${restRuns[0].run}`, restRuns]);
+  for (const name of names) for (const [which, these] of groups) {
+    const got = these.map((r) => r.steps.find((s) => s.step === name)).filter((s): s is StepResult => !!s);
+    if (!got.length) continue;
     const ok = got.filter((s) => s.ready_ms !== null);
     const pick = (f: (s: StepResult) => number | null) => ok.map(f).filter((x): x is number => x !== null);
     const long = ok.map((s) => s.longest).filter((l) => !!l).sort((a, b) => b!.ms - a!.ms)[0];
     lines.push(
-      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))}${ok.some((s) => s.after_confirm.changed) ? `* (${ok.filter((s) => s.after_confirm.changed).length} moved after)` : ""} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} (${fmt(median(pick((s) => s.api_long_tasks_ms)))}) | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
+      `| ${name} | ${which} | ${fmt(median(pick((s) => s.ready_ms)))}${ok.some((s) => s.after_confirm.changed) ? `* (${ok.filter((s) => s.after_confirm.changed).length} moved after)` : ""} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} (${fmt(median(pick((s) => s.api_long_tasks_ms)))}) | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
     );
   }
   const costs = runs.flatMap((r) => r.steps.flatMap((s) => s.probes.costs));

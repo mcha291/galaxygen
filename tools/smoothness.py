@@ -2,7 +2,9 @@
 
     uv run python tools/smoothness.py --bundles <dir>                  # the local stand, three states, five runs each
     uv run python tools/smoothness.py --bundles <dir> --no-build       # the viewer already built (frontend/dist)
-    uv run python tools/smoothness.py --url https://<site>             # the deployed site: the warm state only
+    uv run python tools/smoothness.py --url https://<site>             # the deployed site, one state (default "warm")
+    uv run python tools/smoothness.py --url https://<site> --state replica-cold --runs 5
+                                       # run 1 on a site scaled to zero holds the replica's wake: its own row in the table
 
 The probe is ``frontend/e2e/smooth/smooth.probe.ts`` (``npm --prefix frontend run smooth``); this script stands what
 it measures and restarts it between runs. Locally (R3, S74's stand): the viewer built by ``vite build``; the model
@@ -281,41 +283,70 @@ def starts_label(state: str, step: str, runs: list[dict[str, Any]]) -> str:
     return f" + starts {g:.2f} s (gateway; median)"
 
 
+def bound_of(state: str) -> float:
+    """Ruling 10's bound for a state's label, ms: the cold one for any label naming a cold state, else the warm one."""
+    return BOUND["cold" if "cold" in state else "warm"] * 1000
+
+
+def groups(runs: list[dict[str, Any]]) -> list[tuple[str, list[dict[str, Any]]]]:
+    """Run 1 on its own row beside the rest (S76's review, G7): in a fresh browser run 1 pays the shader's compile
+    (Chromium keeps compiled programs across the contexts of one browser), and on a scaled-to-zero site the replica's
+    wake; the median of runs 2..N is the steady state."""
+    first = [r for r in runs if r.get("run") == 1]
+    rest = [r for r in runs if r.get("run") != 1]
+    out = []
+    if first:
+        out.append(("run 1", first))
+    if rest:
+        nums = sorted(r.get("run", 0) for r in rest)
+        out.append((f"runs {nums[0]}-{nums[-1]}" if len(nums) > 1 else f"run {nums[0]}", rest))
+    return out
+
+
 def table(merged: dict[str, dict[str, Any]]) -> str:
-    rows = ["| state | step | ready s median, from the bracket's lower end (range) [n ok] | api wait s | long tasks inside the api wait s | client s (lower bound) | after last /api s | long tasks s | /api reqs "
+    rows = ["| state | step | runs | ready s median, from the bracket's lower end (range) [n ok] | api wait s | long tasks inside the api wait s | client s (lower bound) | after last /api s | long tasks s | /api reqs "
             "| longest /api (route, s, KB, cache/source) | healthz max in_flight/waiting | model lines (by source) "
-            "| bound |", "|" + "---|" * 13]
+            "| bound |", "|" + "---|" * 14]
     for state, data in merged.items():
         for step in STEPS:
-            got = [s for r in data["runs"] for s in r["steps"] if s["step"] == step]
-            if not got:
-                continue
-            ok = [s for s in got if s["ready_ms"] is not None]
-            ready = [s["ready_ms"] for s in ok]
-            pick = lambda k: med([s.get(k) for s in ok if s.get(k) is not None])  # noqa: E731
-            longest = max((s["longest"] for s in ok if s["longest"]), key=lambda x: x["ms"], default=None)
-            lng = "-" if not longest else (f"{longest['route']} {longest['ms'] / 1000:.2f}, "
-                                           f"{(longest['bytes'] or 0) / 1024:.0f}, {longest['cache']}/{longest['source']}")
-            hz_in = max((s["healthz"]["inFlight"] for s in got), default=0)
-            hz_w = max((s["healthz"]["waiting"] for s in got), default=0)
-            ml = [s.get("model", {}) for s in got]
-            lines = med([m.get("lines", 0) for m in ml])
-            src: dict[str, int] = {}
-            for m in ml:
-                for k, v in m.get("by_source", {}).items():
-                    src[k] = src.get(k, 0) + v
-            src_s = ", ".join(f"{k} {v}" for k, v in sorted(src.items(), key=lambda kv: str(kv[0])))
-            bound = BOUND["warm" if state == "warm" else "cold"] * 1000
-            over = sum(1 for x in ready if x > bound)
-            rng = f"{min(ready) / 1000:.2f}-{max(ready) / 1000:.2f}" if ready else "-"
-            lo = fmt(pick("ready_lo_ms"))
-            # G8: a run whose frame sum changed in the second after the confirmation is starred, with how many did.
-            moved = sum(1 for s in ok if s.get("after_confirm", {}).get("changed"))
-            star = f"* ({moved} moved after)" if moved else ""
-            rows.append(f"| {state} | {step}{starts_label(state, step, data['runs'])} | {fmt(med(ready))}{star} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
-                        f"| {fmt(pick('api_long_tasks_ms'))} | {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
-                        f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
+            for which, runs in groups(data["runs"]):
+                row = table_row(state, step, which, runs)
+                if row:
+                    rows.append(row)
     return "\n".join(rows) + "\n\n" + probe_cost(merged)
+
+
+def table_row(state: str, step: str, which: str, runs: list[dict[str, Any]]) -> str | None:
+    """One row: one state's step over a group of its runs (run 1, or the median of the rest)."""
+    got = [s for r in runs for s in r["steps"] if s["step"] == step]
+    if not got:
+        return None
+    ok = [s for s in got if s["ready_ms"] is not None]
+    ready = [s["ready_ms"] for s in ok]
+    pick = lambda k: med([s.get(k) for s in ok if s.get(k) is not None])  # noqa: E731
+    longest = max((s["longest"] for s in ok if s["longest"]), key=lambda x: x["ms"], default=None)
+    lng = "-" if not longest else (f"{longest['route']} {longest['ms'] / 1000:.2f}, "
+                                   f"{(longest['bytes'] or 0) / 1024:.0f}, {longest['cache']}/{longest['source']}")
+    hz_in = max((s["healthz"]["inFlight"] for s in got), default=0)
+    hz_w = max((s["healthz"]["waiting"] for s in got), default=0)
+    ml = [s.get("model", {}) for s in got]
+    lines = med([m.get("lines", 0) for m in ml])
+    src: dict[str, int] = {}
+    for m in ml:
+        for k, v in m.get("by_source", {}).items():
+            src[k] = src.get(k, 0) + v
+    src_s = ", ".join(f"{k} {v}" for k, v in sorted(src.items(), key=lambda kv: str(kv[0])))
+    bound = bound_of(state)
+    over = sum(1 for x in ready if x > bound)
+    rng = f"{min(ready) / 1000:.2f}-{max(ready) / 1000:.2f}" if ready else "-"
+    lo = fmt(pick("ready_lo_ms"))
+    # G8: a run whose frame sum changed in the second after the confirmation is starred, with how many did.
+    moved = sum(1 for s in ok if s.get("after_confirm", {}).get("changed"))
+    star = f"* ({moved} moved after)" if moved else ""
+    return (f"| {state} | {step}{starts_label(state, step, runs)} | {which} | {fmt(med(ready))}{star} from {lo} ({rng}) [{len(ok)}/{len(got)}] "
+            f"| {fmt(pick('api_wait_ms'))} | {fmt(pick('api_long_tasks_ms'))} | {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} "
+            f"| {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
+            f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
 
 
 def probe_cost(merged: dict[str, dict[str, Any]]) -> str:
@@ -342,10 +373,15 @@ def probe_cost(merged: dict[str, dict[str, Any]]) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--bundles", type=Path, help="the template bundles (exported here if missing or empty)")
-    parser.add_argument("--url", help="a deployed site: the warm state only, nothing stood or restarted")
+    parser.add_argument("--url", help="a deployed site: one state, nothing stood or restarted (--state names it, --runs "
+                                      "counts it). Nothing is asked of the site before the probe's first step, so run 1 on a "
+                                      "site scaled to zero holds the replica's wake (and the image pull, if any); the table "
+                                      "gives run 1 its own row beside the median of runs 2..N")
+    parser.add_argument("--state", default="warm", help="with --url: the label of the state measured (default warm; a "
+                                                        "label naming 'cold' is judged against the cold bound)")
     parser.add_argument("--out", type=Path, help="where results and logs go (default <bundles>/../smooth)")
-    parser.add_argument("--runs", type=int, default=5)
-    parser.add_argument("--states", default=",".join(STATES), help="comma-separated, in the order run")
+    parser.add_argument("--runs", type=int, default=5, help="runs per state (default 5); run 1 is reported on its own row")
+    parser.add_argument("--states", default=",".join(STATES), help="the local stand: comma-separated, in the order run")
     parser.add_argument("--no-build", action="store_true", help="use frontend/dist as it is")
     args = parser.parse_args(argv)
     if not args.url and not args.bundles:
@@ -359,10 +395,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.url:
         site = args.url.rstrip("/")
-        status, body = get(f"{site}/healthz")
-        log(f"healthz {status}: {body[:600].decode('utf-8', 'replace')}")
-        merged["warm"] = probe(out, site, "warm", args.runs, 1)
+        # G4/G7: nothing asked before the probe (a /healthz here would wake a scaled-to-zero replica before run 1).
+        merged[args.state] = probe(out, site, args.state, args.runs, 1)
+        status, body = get(f"{site}/healthz", 30.0)
+        log(f"healthz after the runs {status}: {body[:600].decode('utf-8', 'replace')}")
         summary["site"] = site
+        summary["states"] = [args.state]
     else:
         if not args.bundles.is_dir() or not any(args.bundles.iterdir()):
             log(f"exporting the bundles to {args.bundles} (both templates, both layer settings)")
