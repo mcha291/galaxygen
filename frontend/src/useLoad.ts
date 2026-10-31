@@ -134,6 +134,36 @@ const subscribe = (listener: () => void) => {
 };
 
 /**
+ * When the user's part of a loader's key (`input`, below) last changed - the settle's clock (S76, D240 F3; the review's
+ * G3), kept per loader out of React so it is tested as it is (useLoad.test.ts). `see` is told the input on every render:
+ * a changed input is a move of the user's, and the loader's first render counts as one. A `null` input names nothing
+ * yet - its cells wait on an answer (the bright table's layout) - so its first naming is that answer's doing and keeps
+ * the last move's time. `undefined` is a loader without an input: every key waits the whole settle, as before F3.
+ */
+export class InputClock {
+  private input: string | null | undefined = undefined;
+  private at = 0;
+  private seen = false;
+
+  see(input: string | null | undefined, now: number): void {
+    if (!this.seen) {
+      this.seen = true;
+      this.input = input;
+      this.at = now;
+      return;
+    }
+    if (input === this.input) return;
+    if (this.input !== null) this.at = now;
+    this.input = input;
+  }
+
+  /** How long a key asked at `now` waits: the rest of the settle since the user's last move (0 once it has passed). */
+  wait(settleMs: number, now: number): number {
+    return this.input === undefined ? settleMs : Math.max(0, settleMs - (now - this.at));
+  }
+}
+
+/**
  * Load whatever `key` describes, once it has stopped changing for `settleMs`.
  *
  * The previous value stays available (`last`, and `busy` says a newer one is on
@@ -147,18 +177,19 @@ const subscribe = (listener: () => void) => {
  * change of `input`, not of the key: a key an answer moved (the counts naming the tiles, the tiles naming the render's
  * threshold) after the user has been still for `settleMs` is asked at once, and one moved while the user moves still
  * waits out the rest of the settle. Without `input` every key waits `settleMs`, as before. Only the timing moves: the
- * key, and so the request, is the same.
+ * key, and so the request, is the same. `input` must name everything the user moves that the key reads - the view
+ * itself where the key reads the view (the review's G3), else a move with the input standing is asked at once.
  */
-export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string) {
+export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string | null) {
   const [result, setResult] = useState<Loaded<T>>({ state: "idle" });
   const [busy, setBusy] = useState(false);
   // This loader's token in the store: the same object for the loader's life (a state, never a memo).
   const [token] = useState<Token>(() => ({}));
   const loader = useRef(load);
   loader.current = load;
-  // When the user's part of the key last changed (the loader's mount counts as one): read in the effect, never a dependency.
-  const inputSeen = useRef<{ input: string | undefined; at: number } | null>(null);
-  if (inputSeen.current === null || inputSeen.current.input !== input) inputSeen.current = { input, at: performance.now() };
+  // When the user's part of the key last changed (InputClock): read in the effect, never a dependency.
+  const [clock] = useState(() => new InputClock());
+  clock.see(input, performance.now());
 
   useEffect(() => {
     if (key === null) return;
@@ -166,8 +197,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
     const abort = new AbortController();
     // An answer for this key: published now, or held until the swap completes.
     const answer = (publish: () => void, failure: string | null) => loads.answer(token, publish, failure);
-    const seen = inputSeen.current;
-    const wait = seen && seen.input !== undefined ? Math.max(0, settleMs - (performance.now() - seen.at)) : settleMs;
+    const wait = clock.wait(settleMs, performance.now());
     const timer = setTimeout(() => {
       setBusy(true);
       loader.current(abort.signal)
@@ -187,7 +217,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
       // moves (this cleanup and the next run, in one commit) does not end it early.
       loads.drop(token);
     };
-  }, [key, settleMs, token]);
+  }, [key, settleMs, token, clock]);
 
   const value = result.state === "ready" ? result.value : result.state === "error" ? result.last : null;
   return { value, busy, error: result.state === "error" ? result.message : null };
