@@ -1,9 +1,11 @@
 // The compile probe's capture (S78, T29): the march's program text exactly as the viewer hands it to WebGL.
 // Bundled by compile.probe.ts (vite, this frontend's own config) into one script for a blank page, it builds a
 // renderer with react-three-fiber's defaults (GalaxyView's Canvas: alpha, antialias, high-performance) and runs the
-// viewer's own precompileMarch for one step count, recording every shaderSource call: three's prefix (the version,
-// the precision lines, the defines, the gl_FragColor and texture2D renames) and FieldVolume's VERTEX and
-// fieldFragment(steps), as three r186's WebGLProgram assembles them for that ShaderMaterial into a float target.
+// viewer's own precompileMarch, recording every shaderSource call: three's prefix (the version, the precision lines,
+// the defines, the gl_FragColor and texture2D renames) and FieldVolume's VERTEX and fieldFragment(), as three r186's
+// WebGLProgram assembles them for that ShaderMaterial into a float target. Until S78's fix the text had the step count
+// compiled in, and the call took it (precompileMarch(gl, steps, [])); since then one program serves every count, and
+// `steps` names the probe's row only.
 // Typechecked with the viewer (tsconfig.json includes it): it imports FieldVolume.tsx.
 
 import { ACESFilmicToneMapping, SRGBColorSpace, WebGLRenderer } from "three";
@@ -39,7 +41,8 @@ async function capture(steps: number): Promise<Captured> {
   gl.outputColorSpace = SRGBColorSpace;
   gl.toneMapping = ACESFilmicToneMapping;
   const started = performance.now();
-  await precompileMarch(gl, steps, []);
+  void steps;
+  await precompileMarch(gl);
   const ms = performance.now() - started;
   proto.createShader = create;
   proto.shaderSource = source;

@@ -274,7 +274,7 @@ export function GalaxyTab({
     setTuningState({ of: templateName, t });
     saveTuning(t, undefined, templateName);
   };
-  // A new step count recompiles the march's shader and a new white point asks the model again: both wait for the slider to settle.
+  // A new step count re-marches the view (two uniforms since S78, T29) and a new white point asks the model again: both wait for the slider to settle.
   const steps = useDebounced(tuning.steps, 300);
   const whiteKelvin = useDebounced(tuning.whiteKelvin, 400);
   const fieldTuning = { ...tuning, steps, whiteKelvin };

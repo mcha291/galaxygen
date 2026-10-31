@@ -205,7 +205,7 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   },
   {
     key: "steps", label: "steps", group: "March", kind: "range", min: 32, max: 256, step: 16, unit: "", integer: true,
-    about: "Ray-march steps along each line of sight. A display choice; recompiles the shader (300 ms after the last move).",
+    about: "Ray-march steps along each line of sight. A display choice; re-marches the view (300 ms after the last move).",
   },
   {
     key: "subMax", label: "sub-samples cap", group: "March", kind: "range", min: 1, max: SUB_SAMPLES_MAX, step: 1, unit: "", integer: true,
