@@ -480,7 +480,10 @@ TIGHT = {
 }
 
 
-@pytest.mark.parametrize("name", list(TIGHT))
+# S77 (#206): the eps 1.28 case alone is machine_pinned - its residual, the rounding residue as measured on this
+# machine, lands 13 % lower on the runner; the other two hold there, so CI keeps their asserts. Ids unchanged.
+@pytest.mark.parametrize("name", [pytest.param(name, id=name, marks=[pytest.mark.machine_pinned] if name == "eps 1.28, total 67" else [])
+                                  for name in TIGHT])
 def test_a_tightly_wound_ring_converges_on_its_rounding_floor(name):
     """Gate G3 item 2: a cell is converged when |r_k| ≤ max(RESIDUAL_TOLERANCE, F_k),
     F_k = 2 (ε²/h²)(½ ulp(φ_{k−1}) + ulp(φ_k) + ½ ulp(φ_{k+1})) - the residual of the exact discrete solution

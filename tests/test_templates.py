@@ -518,12 +518,20 @@ def tiling_error(inputs: dict) -> tuple[float, float]:
     return _TILING[key]
 
 
-@pytest.mark.parametrize("route, query", [
-    ("/api/arrays", "fields=stellar_surface_density,stellar_mass_total"),
-    ("/api/clouds", SECTOR),
-    ("/api/region", SECTOR),
+# S77 (#206): one list, so that one case alone can carry the machine_pinned mark - the layer-on clouds window, the only
+# one whose header scalar differs between the two requests and so reaches "the header's totals, reproduced to the
+# bit" (an equality to the last place between two paths of this machine's summation; Linux's lands an ulp apart).
+# The ids are the two stacked lists' as they were.
+@pytest.mark.parametrize("route, query, layer", [
+    pytest.param(route, query, layer, id=f"{'layer off' if layer else 'layer on'}-{route}-{query}",
+                 marks=[pytest.mark.machine_pinned] if (route, layer) == ("/api/clouds", "") else [])
+    for layer in ("", "&layer=off")
+    for route, query in (
+        ("/api/arrays", "fields=stellar_surface_density,stellar_mass_total"),
+        ("/api/clouds", SECTOR),
+        ("/api/region", SECTOR),
+    )
 ])
-@pytest.mark.parametrize("layer", ["", "&layer=off"], ids=["layer on", "layer off"])
 def test_naming_the_default_template_is_naming_none(route, query, layer):
     """Ruling 2 (D213) was "one point in input space - one cache entry, the same bytes". **As the gate rewords it at
     S58 (D217 item 2 and its follow-up): "the same bytes on every field; the inputs carry the pin, so a second

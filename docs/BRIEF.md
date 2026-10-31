@@ -1,56 +1,53 @@
-# BRIEF — after S76: W5 measured and fixed locally, the deployed run owed; next is the owner's deploy and the probe on the deployed site
+# BRIEF — after S77: CI green again, the model's hash moved; next is the owner's deploy (a new image and pin) and the probe on the deployed site
 
-**The state (2026-10-31).** S76 (D240) built W5's probe and ran it here because the subscription still reads
-`Disabled` (`az rest`, not `az account show`): `frontend/e2e/smooth/smooth.probe.ts` on its own config
-(`npm --prefix frontend run smooth`, `GALAXYGEN_URL`, `GALAXYGEN_RUNS`, `GALAXYGEN_STATE`, `GALAXYGEN_OUT`,
-`GALAXYGEN_MODEL_URL`) and `tools/smoothness.py` (`--bundles DIR` stands the model with its bundles on :8050 and the
-gateway pinned on :8060 and runs the states model-cold / gateway-cold / warm, five runs each; `--url <site>` runs the
-warm state against a deployed site). The ready instant is the first still probe; every step records its split (the
-`/api` wait against the client's own work), the longest request, `/healthz`, the main thread's long tasks. Fixes F1–F4
-(D240) brought the switch back, star-first and zoom inside ruling 10's 1 s warm; the cold first paint (6.9 s: the
-march program's ~5.8 s compile, a pinned GLSL), the warm first paint (4.25 s: the 9.3 MB render's parse, the first
-clouds' raster) and the model-cold zoom (23 s: the galaxy computed in a fresh process, F5) are still over — T29 in
-`VIEWER_TASKS.md`. The picture test's 15 captures byte for byte; vitest 457; `dotnet test` 109; the model's hash
-4f0c8401… unchanged. Register 134 open = 11 + 123, 55 discharged; next number **#207**, decisions from **D241**, board
-row 77 (none planned), acceptance rows from 38. **#206**: the `ci` workflow has failed on every push since 2026-10-03
-(18 machine-bound pins, the deep-JSON 400's wording the stack size's, two numeric cases to read) and the specs have not
-run on the runner since — a session of its own, the owner's call.
+**The state (2026-10-31).** S76 (D240) built W5's probe and ran it here (the subscription still `Disabled` by `az rest`):
+`frontend/e2e/smooth/smooth.probe.ts` on its own config (`npm --prefix frontend run smooth`; `GALAXYGEN_URL`, `_RUNS`,
+`_STATE`, `_OUT`, `_MODEL_URL`) and `tools/smoothness.py` (`--bundles DIR` stands the model with its bundles on :8050 and
+the gateway pinned on :8060 and runs model-cold / gateway-cold / warm, five runs each, run 1 on its own row; `--url <site>`
+runs one state against a deployed site). F1–F4 and the review's second pass (D240) brought the switch back, star-first and
+zoom inside ruling 10's 1 s warm; the first paint (cold ≈ 7 s: the march program's compile; warm ≈ 4 s: the 9 MB render's
+parse and the first raster), the switch to NGC 4414 warm (≈ 1.8 s) and the model-cold zoom (≈ 24 s: the galaxy computed
+in a fresh process, F5) are over — T29. S77 (D241) made the `ci` workflow green (#206 discharged): the machine pins marked
+`machine_pinned` and skipped under `CI`, `JSON_DEPTH_CAP` 64 at every parse, Python 3.14.4, the full suite on `main` /
+nightly / dispatch with a fast job elsewhere. **The model's hash is f1fbbb17eff3c1dc003abcd38117cb1f** (was 4f0c8401…):
+the next deploy builds a new model image and pins the gateway to it. Register 134 open = 11 + 123, 56 discharged; next
+number **#208**, decisions from **D242**, board row 78 (none planned), acceptance rows from 38.
 
 ## What waits on the owner
-- **The subscription and the deploy** (D239 (i)–(ii), unchanged): re-enable it in the portal, then from a checkout
-  whose `image` run is green `./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag <short sha> -Recreate`.
+- **The subscription and the deploy** (D239 (i)–(ii)): re-enable it in the portal, then from a checkout of `main` whose
+  `image` run is green (`gh workflow run image.yml --ref main`; the images carry the new hash)
+  `./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag <short sha> -Recreate`; `/healthz` 200 says the pin matches.
 - **Then the deployed run of the probe, the first thing after:** `uv run python tools/smoothness.py --url https://<site>`
-  (or `GALAXYGEN_URL=https://<site> npm --prefix frontend run smooth`) — the warm state; a cold run by hand after the
-  idle cooldown (~5 min with both apps at zero), noting the replica's wake and the image pull; #204's three gate
-  sentences through `az containerapp logs show -n galaxygen-model -g galaxygen-rg --type console` (filter the
-  readiness probe's `GET /api` and `kube-probe`); the table appended to D240 and #204 / #205 ruled on it.
-- **Rulings:** F5, the model-cold zoom — an eager warm of the model after the landing (wakes the replica on every
-  visit, a cost under ruling 9), a warm replica (ruling 15 b, paid), or the ring-first draw published to the viewer
-  (15 c); #205's remedy with it; D239's sizes, the 30-day TTL and the `/healthz` readiness probe on a pin mismatch;
-  the re-rulings of D238 stand. #206's session; T29's order (the shader program first); T20; #197, #202, #203.
+  (the warm state; `--state replica-cold --runs 5` after the idle cooldown, ~5 min with both apps at zero, run 1 holding
+  the replica's wake and the image pull); #204's three gate sentences through `az containerapp logs show -n galaxygen-model
+  -g galaxygen-rg --type console` (filter the readiness probe's `GET /api` and `kube-probe`); the table appended to D240
+  and #204 / #205 ruled on it.
+- **Rulings:** F5, the model-cold zoom — an eager warm after the landing (wakes the replica on every visit, ruling 9), a
+  warm replica (15 b, paid), or the ring-first draw published to the viewer (15 c); #205's remedy with it; D239's sizes,
+  TTL and readiness probe; D241's two — CI's full suite off every branch push (D24 amended), and whether the pins get a
+  per-platform capture; T29's order (the shader program first); T20; #197, #202, #203; #207's reading.
 
 ## What an agent session can do without the deploy (each the owner's word)
-- **#206, CI green:** a `machine_pinned` marker skipped under `CI` for the eighteen (bit-exact by design, no tolerance);
-  a depth cap at the parse so both platforms answer the same 400 (`model/galaxy/api`: a new hash and pin);
-  `.python-version` to a patch; `test_gas_fluctuation`'s 2.3e-3 and `test_pieces`' midpoint step read; the four-hour
-  suite off every push with a fast subset per push. The reader's logs: `C:\Users\SEMAPH~1\AppData\Local\Temp\claude\ci_reader\`.
 - **T29, the landing inside the bound:** the march program smaller or shared (re-baselining `fieldFragment.s66.glsl`'s
   snapshot with the reason; the picture test byte for byte is the gate), the first raster in a Worker, F6's `precision=f4`
-  render (the bundle plan's meanings and the frames to re-check). Measure each with `npm run smooth` before and after.
+  render (the bundle plan's meanings and the frames to re-check). Measure with `tools/smoothness.py --bundles` before
+  and after, the machine quiet (a run beside the suite is not comparable: S76's second pass).
+- **#207:** the continuity test's hard ends found by chain identity, not a 1e-9 coincidence; run on the runner's draw
+  through a dispatched full `ci` run; seed 49's 2.47e-6 step read.
 
 ## Read
-- D240 (the rulings R1–R5, the two tables, F1–F6, the CI finding); `BUILD_IV.md` §5 Phase W5, §7 rulings 9, 10, 15;
-  `gateway/README.md`; `frontend/e2e/smooth/smooth.probe.ts`'s header; `tools/smoothness.py`'s docstring.
+- D240 (R1–R5, the tables, F1–F6, the review and its second pass), D241 (#206's rulings R1–R6); `BUILD_IV.md` §5 W5,
+  §7 rulings 9, 10, 15; `gateway/README.md`; `smooth.probe.ts`'s header; `tools/smoothness.py`'s docstring; `ci.yml`'s head.
 
-## Traps (S72–S76's stand)
-- No Docker here (images build and run in CI: `gh workflow run image.yml --ref <branch>`); every byte under
-  `model/galaxy` is in the hash — a change there is a new model image and pin; `az account show` lies.
-- The probe: "warm" is the browser's too (Chromium keeps compiled programs across contexts of one browser — a cold
-  number needs a fresh browser per run, which `tools/smoothness.py` gives); the instrument's own quiet wait is not the
-  user's; rule D2's gate refuses a second `fetch(` in any tracked JS/TS, e2e included (ask through Playwright's
-  request context); the model's stdout is block-buffered when piped (`PYTHONUNBUFFERED`); the gateway's dll runs from
-  its publish directory (the content root is the cwd); `/api/version` lines inside a step are the gateway's pin check.
-- The owner's servers run in their Terminal panel on 8017 / 8018 / 5173; agents use 8050+ (the probe 8050 / 8060,
-  8051 / 8061 when taken; the picture test 8019; the AppHost 8027). `tools/bootstrap.py` before the suite (~3–6 h; the
-  pricing test flakes under load, green alone); pytest's exit code to a file; Bash under 8 KB; the register's count pin
-  in `tests/test_audit.py` and its pinned carried row move with every entry (S75's #204–#205 had missed the row).
+## Traps (S72–S77's stand)
+- No Docker here (images build in CI); every byte under `model/galaxy` is in the hash — a change there is a new model
+  image and pin; `az account show` lies, `az rest` tells. `CI=true` skips the `machine_pinned` cases: a green `ci` run
+  says nothing about this machine's bits, which the close's own suite checks.
+- The probe: "warm" is the browser's too (a cold number needs a fresh browser per run); the instrument's cost is stated
+  beside the table (7 % duty cycle at 264 ms); rule D2's gate refuses a second `fetch(` in tracked JS/TS (ask through
+  Playwright's request context); the model's stdout is block-buffered when piped (`PYTHONUNBUFFERED`); the gateway's dll
+  runs from its publish directory; `/api/version` lines inside a step are the gateway's pin check.
+- The owner's servers run in their Terminal panel on 8017 / 8018 / 5173; agents use 8050+ (the probe 8050 / 8060, 8051 /
+  8061 when taken; the picture test 8019; the AppHost 8027). `tools/bootstrap.py` before the suite (~3–5 h; the pricing
+  test flakes under load, green alone); pytest's exit code to a file; Bash under 8 KB; the register's count pin in
+  `tests/test_audit.py` and its pinned carried row move with every entry.

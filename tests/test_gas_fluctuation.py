@@ -418,6 +418,7 @@ def close(want, got, path: str = "") -> list[str]:
     return [] if want == got else [f"{path}: {want!r} != {got!r}"]
 
 
+@pytest.mark.machine_pinned  # S77 (#206): the float32 path's libm rounding, as stored here
 def test_the_vectors_are_what_the_evaluator_computes_from_their_inputs():
     """The section of ``layer/vectors.json`` rebuilt from its own stored inputs (the seed, the model's numbers, the
     ring table, float32-exact) is the stored section to 1e-12: the evaluator reproduces every vector. Regenerating

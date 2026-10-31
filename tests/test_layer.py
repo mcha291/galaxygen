@@ -389,6 +389,7 @@ COMPOSED_FIELDS = {"pattern_density_contrast", "gas_density_contrast", "star_for
 COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ring_power": 0.0, **{f"arm_mode_power_{m}": 0.0 for m in range(2, 7)}}
 
 
+@pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
 @pytest.mark.parametrize("template", layer_reference.TEMPLATES)
 @pytest.mark.parametrize("name", MODELS)
 def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_list(runs, reference, prod, name, template):
@@ -490,6 +491,7 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
         assert out.inputs["texture_seed"] == 4414
 
 
+@pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
 def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(reference):
     """Every input route asked with ``layer=off``, a window and the whole disc, both models and a template: each
     array of the body is the reference's bytes in the reference's order, and the header is the reference's less
@@ -669,6 +671,7 @@ def walk_i1(on, off, name: str, neutral_on: frozenset[str] = frozenset(),
     return moved_statistics, rounded
 
 
+@pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
 @pytest.mark.parametrize("name", MODELS)
 def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(runs, name):
     """I1 as amended at gate G1, walked from the declarations: a field is composed because it says so, and what it
@@ -766,6 +769,7 @@ def test_i1_the_placement_weights_average_to_1_on_every_ring_to_1e_13(runs, vari
         assert float(np.abs(weights.mean(axis=1) - 1.0).max()) < 1e-13
 
 
+@pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
 @pytest.mark.parametrize("name", MODELS)
 def test_the_clouds_expected_total_s_layer_on_bits_as_measured(runs, name):
     """The layer-on bits of ``cloud_count_total`` as measured on the final model (S60, D219: one unit in the last
@@ -2742,6 +2746,7 @@ def test_a_run_is_not_resumed_under_the_other_setting(small, prod):
 # --- the templates' checks, read layer-off -------------------------------------------------------------------------
 
 
+@pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
 def test_the_template_checks_layer_off_are_the_numbers_d213_recorded():
     """The five checks of ``ngc_4414`` on the production grid, read layer-off as the rows are (I3). The four field
     checks are radial and are the bits they were; the colour reads the face-on render, whose frame sums each ring

@@ -26,3 +26,7 @@ packages = ["model/galaxy"]
 addopts = "-q --no-header -ra"
 testpaths = ["tests"]
 pythonpath = ["model"]
+# S77 (#206): tests/conftest.py skips these when the environment sets CI (GitHub sets CI=true).
+markers = [
+    "machine_pinned: a bit-exact pin of the capturing machine's floating point, by design (B5: no tolerance); skipped under CI",
+]
