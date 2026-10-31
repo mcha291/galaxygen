@@ -1797,3 +1797,16 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   main thread, so every "after" was late by a share of the probe's own cost and a fix's gain blurred by it.
   Probe at the coarsest interval the question allows, report the ready instant as a bracket, and print the
   instrument's duty cycle beside the table; a number taken beside a running suite is a different machine's.
+
+## From S77 (#206, the `ci` workflow green again; a Fable lead, one Opus builder in a worktree beside S76's suite)
+
+- [infra] A pin is this machine's, and a tolerance is not the answer to another machine's ulp: mark the bit-exact
+  tests as what they are (`machine_pinned`) and skip them where the machine differs, so B5 holds here and CI stays a
+  check of everything else. Mark the parameter that fails, not the test, so the legs that pass keep running.
+- [api] Read a request's depth before the parser does: a cap counted without a stack answers the same on a 2 MB and
+  an 8 MB stack. The platform's limit was the answer's wording until the code owned it.
+- [close] A suite that takes four hours on the runner does not belong on every push: run it where the record changes
+  (`main`, nightly, on dispatch) and a fast subset of the contracts everywhere else, so the green is read, not waited
+  for. A red workflow nobody reads is the same as none (S76's finding, the lesson's other half).
+- [infra] Count what you claim: #206 said "eighteen" and listed seventeen; the collection under the mark (19 cases,
+  one of them #207's) is the number of record, not the prose's.
