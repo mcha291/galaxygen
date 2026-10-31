@@ -219,6 +219,17 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     const weight: number[] = [];
     let w = 0;
     const m = SPLIT_SAMPLES;
+    // S78: each sample azimuth's cosine and sine depend on (j, b) alone - computed once per cloud here, by the same
+    // expression, not again for every (i, a) (71 % of the raster's time): the same doubles, so the same raster.
+    const cosB = new Float64Array((j1 - j0 + 1) * m);
+    const sinB = new Float64Array((j1 - j0 + 1) * m);
+    for (let j = j0; j <= j1; j += 1) {
+      for (let b = 0; b < m; b += 1) {
+        const pb = (j + (b + 0.5) / m) * dPhi;
+        cosB[(j - j0) * m + b] = Math.cos(pb);
+        sinB[(j - j0) * m + b] = Math.sin(pb);
+      }
+    }
     for (let i = i0; i <= i1; i += 1) {
       for (let j = j0; j <= j1; j += 1) {
         let got = 0;
@@ -226,9 +237,8 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
           const ra = rLo + (i + (a + 0.5) / m) * dR;
           if (!(ra > 0)) continue;
           for (let b = 0; b < m; b += 1) {
-            const pb = (j + (b + 0.5) / m) * dPhi;
-            const dx = ra * Math.cos(pb) - x;
-            const dy = ra * Math.sin(pb) - y;
+            const dx = ra * cosB[(j - j0) * m + b] - x;
+            const dy = ra * sinB[(j - j0) * m + b] - y;
             // round: the S64 expression, to the bit; an ellipse: its own axes
             const rho2 = q === 1 ? (dx * dx + dy * dy) / (s * s) : ((dx * e1x + dy * e1y) / along) ** 2 + ((dy * e1x - dx * e1y) / across) ** 2;
             if (rho2 < 1) got += Math.sqrt(1 - rho2) * ra;
