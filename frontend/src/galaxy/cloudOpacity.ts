@@ -280,11 +280,55 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
 // (the census answered again, the same bytes in a new object). So the last few rasters are kept here, keyed on the
 // census's content (every column the raster reads, its bits) and the shape (the radii, the texels, the cap, the
 // elongation): a remount with the same answer takes the kept one.
+//
+// S76's review (G6): what is kept is only what the field reads after the build - the A_V texels, the slab already in
+// half floats with the highest a slab reaches, and the raster's counts for its stats - never the float32 slab the
+// halves are made from (twice the A_V's bytes: the four kept Milky Way rasters held ~173 MB). The cache is capped by
+// bytes, the oldest dropped first; a raster bigger than the cap alone is not kept.
 
-/** How many rasters are kept: the two templates, each with and without the layer. Each is at most the 16 MiB budget plus its slab. */
-export const KEPT_RASTERS = 4;
+/** What the field draws from a raster (FieldVolume): its A_V and its slab as half floats, and its counts. */
+export interface KeptRaster {
+  av: Float32Array;
+  /** The slab (CloudRaster.slab) as half floats, two a texel: each texel's clouds' mean height and half-thickness, kpc. */
+  halves: Uint16Array;
+  /** The highest a slab reaches, |mean height| + half-thickness, kpc: bounds the points' segment. */
+  top: number;
+  width: number;
+  height: number;
+  census: number;
+  held: number;
+  outside: number;
+  split: number;
+}
 
-const kept = new Map<string, CloudRaster>();
+/** The kept rasters' bytes at most (A_V and halves): three Milky Way rasters of 2000 x 1800 texels at 28.8 MB each. */
+export const KEPT_RASTER_BYTES = 96 * 1024 * 1024;
+
+const kept = new Map<string, KeptRaster>();
+let keptBytes = 0;
+
+const bytesOf = (r: KeptRaster) => r.av.byteLength + r.halves.byteLength;
+
+/** The bytes the kept rasters hold now. */
+export function keptRasterBytes(): number {
+  return keptBytes;
+}
+
+/** The float-to-half conversion the slab's texture is made with: three's DataUtils.toHalfFloat, passed in (no three.js here). */
+export type ToHalf = (value: number) => number;
+
+/** A built raster as the field draws it: the slab to half floats (`toHalf`), and the highest it reaches. */
+export function packRaster(built: CloudRaster, toHalf: ToHalf): KeptRaster {
+  const halves = new Uint16Array(built.slab.length);
+  let top = 0;
+  for (let k = 0; k < built.slab.length; k += 2) {
+    halves[k] = toHalf(built.slab[k]);
+    halves[k + 1] = toHalf(built.slab[k + 1]);
+    if (built.slab[k + 1] > 0) top = Math.max(top, Math.abs(built.slab[k]) + built.slab[k + 1]);
+  }
+  const { av, width, height, census, held, outside, split } = built;
+  return { av, halves, top, width, height, census, held, outside, split };
+}
 
 /** Two 32-bit hashes (FNV-1a and a multiplicative mix) over each value's float64 bits, with the column's length. */
 function columnKey(values: ArrayLike<number> | undefined, scratch: DataView): string {
@@ -313,8 +357,14 @@ export function rasterKey(clouds: CloudColumns, rLo: number, rHi: number, width:
   return [...columns, rLo, rHi, width, height, shape.verticalCap ?? Infinity, shape.elongation ?? 0].join("|");
 }
 
-/** cloudRaster, or the raster kept from an earlier call with the same census content and shape (the same bits). */
-export function keptCloudRaster(clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape = {}): CloudRaster {
+/**
+ * cloudRaster packed for the field (packRaster), or the one kept from an earlier call with the same census content and
+ * shape (the same bits). At most `capBytes` are kept, the least recently asked dropped first.
+ */
+export function keptCloudRaster(
+  clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape, toHalf: ToHalf,
+  capBytes: number = KEPT_RASTER_BYTES,
+): KeptRaster {
   const key = rasterKey(clouds, rLo, rHi, width, height, shape);
   const hit = kept.get(key);
   if (hit) {
@@ -322,10 +372,15 @@ export function keptCloudRaster(clouds: CloudColumns, rLo: number, rHi: number, 
     kept.set(key, hit);
     return hit;
   }
-  const built = cloudRaster(clouds, rLo, rHi, width, height, shape);
-  kept.set(key, built);
-  while (kept.size > KEPT_RASTERS) kept.delete(kept.keys().next().value as string);
-  return built;
+  const packed = packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf);
+  kept.set(key, packed);
+  keptBytes += bytesOf(packed);
+  while (keptBytes > capBytes && kept.size > 0) {
+    const oldest = kept.keys().next().value as string;
+    keptBytes -= bytesOf(kept.get(oldest)!);
+    kept.delete(oldest);
+  }
+  return packed;
 }
 
 /**
