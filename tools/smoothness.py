@@ -101,6 +101,8 @@ class Proc:
 
     def stop(self) -> None:
         if self.p.poll() is None:
+            # The tree by taskkill. A Windows Job object (kill-on-close) would also reap a child orphaned by a crash of
+            # this script; noted by S76's review, not built.
             subprocess.run(["taskkill", "/PID", str(self.p.pid), "/T", "/F"], capture_output=True)
             try:
                 self.p.wait(timeout=20)
@@ -236,8 +238,15 @@ def model_lines(source_log: Path) -> dict[str, dict[str, Any]]:
         return {}
     steps: dict[str, dict[str, Any]] = {}
     open_label = None
-    for line in source_log.read_text(encoding="utf-8").splitlines():
-        e = json.loads(line)
+    for line in source_log.read_text(encoding="utf-8", errors="replace").splitlines():
+        # A line cut short (the model stopped mid-write, the last line of a killed process) is skipped, not fatal:
+        # losing it costs one step's count, never table.md or summary.json (S76's review).
+        try:
+            e = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(e, dict):
+            continue
         q = e.get("query", "")
         if q.startswith("capture=smooth-"):
             label = q[len("capture="):]
