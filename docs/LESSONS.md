@@ -1793,3 +1793,7 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A red CI is a finding whoever finds it: the `ci` workflow had failed on every push for four weeks, taking
   four hours each, and the specs had not run on the runner in that time, with nothing in the record saying so. At
   every open read the workflow's last conclusion beside the branch's; a machine check nobody reads is none.
+- [viewer] An instrument loads what it measures: a frame-sum readback every 50 ms took 20–60 % of the page's
+  main thread, so every "after" was late by a share of the probe's own cost and a fix's gain blurred by it.
+  Probe at the coarsest interval the question allows, report the ready instant as a bracket, and print the
+  instrument's duty cycle beside the table; a number taken beside a running suite is a different machine's.

@@ -15081,3 +15081,96 @@ the image pull — #204's run, the first thing after the owner's deploy.
 55 discharged; #204 and #205 carried with S76's local numbers added to their text's reach (the deployed run owed).
 No model rule, stage, field, number, row or pin moved; nothing under `model/galaxy`; `VIEWER_TASKS.md` gains the
 smoothness remainder as T29.
+
+**The independent review (an Opus reviewer, read-only, blind to the builder's reports, the code against R1–R5 and
+F1–F6; twelve findings, none that changes what is drawn) and the lead's rulings on them, built as a second pass.**
+(1) *The probe loads the page it measures:* `__galaxygenFrameSum` every 50 ms draws a frame, draws it again into a
+float target and reads 18.4 MB back (a GPU sync) — 13–39 ms each, 20–60 % of the main thread between tasks — so
+every number is late, never early (the "inside" verdicts stand; the split and each fix's gain are good to ~0.1–0.3 s
+at best). **G1:** the probe at the picture test's 250 ms, the ready instant reported as a bracket (the last probe
+that differed, the first of the final still run) with the probe's own cost beside the table; the frame sum is the
+only instrument of the drawn state, so its cost is stated, not hidden. (2) *Every cache hit is compressed again* at
+the gateway, ~19 MB a landing per visitor, unbounded, on a 0.5 vCPU replica unmeasured. **G2:** the compression inside
+the output cache — `UseOutputCache` outermost with the policy varying by `Accept-Encoding`, so a body is compressed
+once and stored per encoding; the xunit theory re-stated (one model call per encoding, the identity entry its own).
+(3) *F3's `tilesInput` carries the footprint's bounds but the tiles' key reads the view projection*: with the
+footprint pinned (`whole`, or clamped at the rim) an orbit at level ≥ 1 moves the key while the input stands, and
+the tiles fire on every view report with no settle, each cancelling the last; the counts' input carries raw float
+bounds, so their settle restarts on reports that move no cell. The probe cannot see it (`place` jumps, no drag).
+**G3:** the view report in `tilesInput` and the cell set (`tilesSeen`) in the counts' input; a vitest on `useLoad`
+that a moving input keeps the settle and a still one fires at once. (4) *The cold rows are not a cold replica's
+wait:* the probe asked `/api/templates` through the gateway before run 1 (the "1 hit"), the runner asked `/api` and
+`/api/version` first, and the processes' starts (1.07 + 0.56 s) are outside the step. **G4:** the templates' labels
+from `e2e/settings.ts`, nothing asked through the gateway before the step; the model-cold row's label carries the
+starts (the table says so; the replica's wake stays deployed-only). (5) *The api wait is the union of every request
+in flight, not the critical path:* client work under an unrelated answer counts as api (the cold landing's long tasks
+9.12 s against a client column of 8.84). **G5:** the long-task time overlapping the api spans reported beside the
+split; the client column named a lower bound. (6) *F1 holds up to ~173 MB:* four rasters with their float slabs,
+of which `FieldVolume` reads only `halves` and `top`. **G6:** keep `{av, halves, top}` (~22 MB each on the Milky
+Way), the cap by bytes. (7) *`--url` runs only "warm" and run 1 (the replica's wake, the shader) vanishes into the
+median.* **G7:** run 1 reported on its own in every state, and a state label with `--url`. (8) *Probing stops at
+confirmation;* a later change is unseen. **G8:** probe ~1 s past confirmation and flag any change. (9) an unguarded
+`json.loads` per log line (a cut last line loses the table) — guarded; (10) `taskkill /T` could in principle follow
+a reused parent PID — noted, a Job object the named alternative, not built; (11) the Canvas is re-keyed per template,
+so the programs compile again in each renderer — cheap under Chromium's program cache, noted for browsers without
+one; (12) wording: the stand adds `--verbose --source-log` to the image's command; the per-fix before / after in the
+commits were medians of two runs (the tables above are of five); "`in_flight` never above 1" is "never seen above 1
+at 250 ms". What held: the ready instant and the union as R1 says, the steps timed from before the action; the
+stand-in program's cache key the march's in three r186 (the same shader text, no defines, `flipSided` alike, both
+compiled with a target bound, `KHR_parallel_shader_compile` used by `compileAsync` and polled); F3 without `input`
+as before; F4's order right and the cache's identity body proven by the test; BREACH moot (no cookie, no auth, every
+id minted by its own request); nothing found that changes what is drawn.
+
+**The table of record (the second pass, G1–G8 built; the machine quiet after the suite exited; this machine, RTX 4070 through ANGLE D3D11, Chromium headless; seconds; run 1 in a fresh browser on its own, then the median of runs 2–5 and their range; the bound ruling 10's; `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s76\smooth-final\`).**
+
+| state | step | ready, run 1 | ready, runs 2–5 (range) | api wait | client (lower bound) | long tasks | longest `/api` | over the bound |
+|---|---|---|---|---|---|---|---|---|
+| model-cold | first paint | **7.71** | **7.75** (7.59–7.79) | 2.16 | 5.61 | 6.34 | render 2.19 s, 3005 KB, miss / bundle | 5 / 5 (5 s) |
+| model-cold | switch → NGC 4414 | 3.14 | 3.15 (3.10–3.22) | 0.52 | 2.63 | 2.31 | layer 0.50 s, 40 KB, miss / bundle | 0 / 5 (5 s) |
+| model-cold | switch back | 0.86 | 0.85 (0.84–0.86) | 0.07 | 0.77 | 0.07 | region 0.07 s, 1769 KB, hit / bundle | 0 / 5 (5 s) |
+| model-cold | star-first | 0.86 | 0.83 (0.60–0.86) | 0.15 | 0.67 | 0.09 | bright 0.12 s, 242 KB, miss / bundle | 0 / 5 (5 s) |
+| model-cold | zoom | **26.90** | **27.43** (27.03–28.52) | 26.93 | 0.47 | 0.00 | bright 16.53 s, 219 KB, miss / model | 5 / 5 (5 s) |
+| gateway-cold | first paint | **7.67** | **7.67** (7.65–7.71) | 1.89 | 5.78 | 6.27 | render 1.72 s, 3005 KB, miss / bundle | 5 / 5 (5 s) |
+| gateway-cold | switch → NGC 4414 | 3.11 | 3.15 (3.10–3.17) | 0.52 | 2.61 | 2.30 | render 0.47 s, 2683 KB, miss / bundle | 0 / 5 (5 s) |
+| gateway-cold | switch back | 0.85 | 0.84 (0.84–0.86) | 0.07 | 0.78 | 0.07 | clusters 0.07 s, 3626 KB, hit / bundle | 0 / 5 (5 s) |
+| gateway-cold | star-first | 0.84 | 0.83 (0.60–0.84) | 0.13 | 0.68 | 0.08 | bright 0.12 s, 242 KB, miss / bundle | 0 / 5 (5 s) |
+| gateway-cold | zoom | 1.30 | 1.31 (1.30–1.32) | 0.86 | 0.45 | 0.00 | render 0.67 s, 12 KB, miss / model | 0 / 5 (5 s) |
+| warm | first paint | **7.47** | **4.47** (4.39–4.52) | 1.68 | 2.79 | 3.18 | render 1.62 s, 3003 KB, hit / bundle | 5 / 5 (1 s) |
+| warm | switch → NGC 4414 | **3.06** | **1.64** (1.59–1.68) | 0.47 | 1.17 | 0.84 | render 0.45 s, 2682 KB, hit / bundle | 5 / 5 (1 s) |
+| warm | switch back | 0.84 | 0.84 (0.82–0.86) | 0.07 | 0.76 | 0.07 | clusters 0.07 s, 3626 KB, hit / bundle | 0 / 5 (1 s) |
+| warm | star-first | 0.87 | 0.83 (0.60–0.85) | 0.03 | 0.80 | 0.08 | bright 0.04 s, 197 KB, miss / bundle | 0 / 5 (1 s) |
+| warm | zoom | 0.53 | 0.53 (0.52–0.53) | 0.05 | 0.48 | 0.00 | bright 0.02 s, 1228 KB, hit / model | 0 / 5 (1 s) |
+
+starts: model 1.06 s (median of 5), gateway 0.58 s (median of 10)
+hash 4f0c84010f258601fb80b1a99e7dbbd4
+the probe: every 264 ms (median interval); its own cost 19 ms a call in the page (median of 1528, 90th percentile 26, at most 111), round trip 20 ms: a duty cycle of 7 % of the page's main thread.
+
+The processes' starts, outside every step and carried on the cold rows' labels: the model 1.06 s to its first `/api`
+answer (median of five), the gateway 0.58 s (median of ten). The probe: every 264 ms, its own cost 19 ms a call in the
+page (median of 1 528; 90th percentile 26, at most 111), round trip 20 ms — a 7 % duty cycle of the page's main thread.
+`in_flight` never seen above 1, `waiting` above 2, no 429. **Reading.** Against the bound: warm, the switch back (0.84),
+star-first (0.83) and zoom (0.53) are inside ruling 10's 1 s in every run; the first paint (4.47; run 1 in a fresh
+browser 7.47) and the switch to NGC 4414 (1.64; run 1 3.06) are over in every run — both the client's own work (the
+client column 2.79 and 1.17 against api waits of 1.68 and 0.47, the long tasks 3.18 and 0.84). Cold, the first paint is
+7.7 s in both states (over 5 s; the march program's compile and the render's parse, the api wait 1.9–2.2 of it), the
+switch 3.15, the rest inside; the model-cold zoom 27.4 s (26.9 of it the `/api/bright` miss computed by the model,
+16.5 s for the longest answer: F5, the owner's), the gateway-cold zoom 1.31 inside. Run 1 pays the shader in every
+state: 7.5–7.7 s whatever the servers' warmth, so a returning visitor's first paint is the warm row's 4.5 and a new
+visitor's the cold one's. The second pass's own table, taken beside the running suite, was within 0.3 s of this one on
+every step but the model-cold zoom (24.7 there) — the model's computation is the step that reads the machine's load.
+Against pass 1's "after" (6.88 / 2.87 / 0.67 / 0.94 / 22.98 model-cold; 4.25 / 1.50 / 0.98 / 0.92 / 0.45 warm): the
+switch back, star-first and zoom are as they were to the probe's resolution; the first paint reads 0.2–0.9 s later
+in both tables of the second pass, which this entry does not attribute (the probe's bracket is at most 0.26 s of it;
+the G3 and G6 changes touch neither the program's compile nor the render's parse; the GPU process's compile is the
+unmeasured variable) — pass 1's within-pass gains stand as recorded, and the record's numbers are T29's to beat.
+
+**The close.** The full suite in the main checkout, backgrounded with its exit status appended, over the pass-1 tree
+while the second pass was built in its worktree: **1 722 passed, 6 skipped, 1 xfailed, EXIT=0** (the pricing test
+green inside the run this time; the tag row with its `TBD` SHA passes as S75's did). `session-76` then fast-forwarded
+onto the review branch (nine commits, nothing under `model/galaxy`, the hash 4f0c8401… unchanged) and the quick set
+re-run on the merged tree: `test_api`, `test_docs`, `test_bundle`, `test_progress`, the register pin; vitest **461
+passed, 1 skipped** (457 + the second pass's four: `InputClock`, the kept raster's key and cap); `dotnet test` **109**.
+The second pass's own table was taken beside the running suite and is not comparable; the table above is the one of
+record, taken after the suite exited with nothing else running. #206 went to a session of its own at once, on the
+owner's word of this day ("complete ones that can finish while waiting for the full suite"): S77, D241, built on
+`session-77` beside this suite and merged after it.
