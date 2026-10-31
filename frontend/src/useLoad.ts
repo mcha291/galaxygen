@@ -200,8 +200,13 @@ export class InputClock {
  * waits out the rest of the settle. Without `input` every key waits `settleMs`, as before. Only the timing moves: the
  * key, and so the request, is the same. `input` must name everything the user moves that the key reads - the view
  * itself where the key reads the view (the review's G3), else a move with the input standing is asked at once.
+ *
+ * `firstAtOnce` (S78): the first key is asked at once (InputClock) unless this is false - for a key that reads the
+ * view (a region's window, the star-first mode's cells and tiles), whose loader can mount while the view is moving: a
+ * zoom into the region regime, a camera placed as the mode opens. Asked at once, its first key would be a frame of
+ * the drag, a request no settled view makes; it settles as every other key.
  */
-export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string | null) {
+export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string | null, firstAtOnce = true) {
   const [result, setResult] = useState<Loaded<T>>({ state: "idle" });
   const [busy, setBusy] = useState(false);
   // This loader's token in the store: the same object for the loader's life (a state, never a memo).
@@ -218,7 +223,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
     const abort = new AbortController();
     // An answer for this key: published now, or held until the swap completes.
     const answer = (publish: () => void, failure: string | null) => loads.answer(token, publish, failure);
-    const wait = clock.wait(settleMs, performance.now(), key);
+    const wait = clock.wait(settleMs, performance.now(), firstAtOnce ? key : undefined);
     const timer = setTimeout(() => {
       clock.fired();
       setBusy(true);
@@ -239,7 +244,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
       // moves (this cleanup and the next run, in one commit) does not end it early.
       loads.drop(token);
     };
-  }, [key, settleMs, token, clock]);
+  }, [key, settleMs, token, clock, firstAtOnce]);
 
   const value = result.state === "ready" ? result.value : result.state === "error" ? result.last : null;
   return { value, busy, error: result.state === "error" ? result.message : null };
