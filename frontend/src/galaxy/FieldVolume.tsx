@@ -825,15 +825,20 @@ export function FieldVolume({
     if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
     const holder = window as unknown as Record<string, unknown>;
     const a = light.arrays as Record<string, ArrayLike<number>>;
-    // Beside the whole (the lead's second pass on R5): the star-first remainder per ring.
-    const value = {
-      ...renderRings(R, phi.n, a.stars, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0),
-      unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
-      lMin,
-    };
-    holder.__galaxygenRenderRings = value;
+    const bulgeScale = frame.header.scalars.bulge_scale_radius ?? 0;
+    // S78: read lazily - computed on the first read and kept (the same object every read after), so a page no gate
+    // reads (every landing) spends none of its main thread on it (10-97 ms a render).
+    let value: Record<string, unknown> | null = null;
+    const get = () =>
+      (value ??= {
+        ...renderRings(R, phi.n, a.stars, white, light.header.bulge, bulgeScale),
+        // Beside the whole (the lead's second pass on R5): the star-first remainder per ring.
+        unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
+        lMin,
+      });
+    Object.defineProperty(holder, "__galaxygenRenderRings", { get, configurable: true, enumerable: true });
     return () => {
-      if (holder.__galaxygenRenderRings === value) delete holder.__galaxygenRenderRings;
+      if (Object.getOwnPropertyDescriptor(holder, "__galaxygenRenderRings")?.get === get) delete holder.__galaxygenRenderRings;
     };
   }, [frame, light, lMin]);
 
@@ -881,13 +886,16 @@ export function FieldVolume({
     const middle = parts?.find((p) => p.key === "middle");
     const kept = parts && middle?.weight && tables.clustering && tables.gas ? (keptParts(light.header, a) as AgedStars["kept"]) : null;
     const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, kept, shown: "" } : null;
+    // Split for the clustered march (S66, R5): fillStars below writes every texel of the stellar layer from the split, so
+    // the parts' sum is not computed for it only to be overwritten (S78: 160-240 ms of the landing's main thread).
+    const clumped = Boolean(aged?.kept) && clumpsNow.current;
     const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
       // The stars' light: the whole component, or under the star-first mode's threshold the remainder no point
       // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
       // A frame that carries the age parts draws their sum at the switches; one from before them draws `stars`.
-      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : aged ? agedLight(a, aged.parts, agesNow.current, n) : a.stars,
+      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : aged ? (clumped ? null : agedLight(a, aged.parts, agesNow.current, n)) : a.stars,
       // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
       hii: summed(a.halpha_hii, a.lines_hii),
       dig: summed(a.halpha_dig, a.lines_dig),
@@ -946,7 +954,6 @@ export function FieldVolume({
     const planeTex = polar(data);
     const clumpTex = [0, 1, 2].map(() => polar(new Float32Array(width * height * 4)));
     if (aged) {
-      const clumped = Boolean(aged.kept) && clumpsNow.current;
       if (clumped) fillStars(aged, agesNow.current, true, planeTex, clumpTex);
       aged.shown = `${agesKey(agesNow.current)},${clumped}`;
     }

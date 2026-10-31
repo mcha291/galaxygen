@@ -515,6 +515,32 @@ describe("the starlight by age", () => {
     expect(clumps[2][c * 3 + 2]).toBeCloseTo(kept1[2] * sfr[c], 12);
     expect(rest[c * 3]).toBeCloseTo(old[0] * contrast[c] + (middle[0] - kept3[0] - kept2[0] - kept1[0]) * sfr[c], 12);
   });
+
+  // S78 (R4): split for the clustered march, the mesh asks planeTexture for no stellar layer (stars null) and fillStars
+  // writes it whole from clumpedLight's rest - the same bits as the parts' sum written first and then overwritten.
+  it("leaves the stellar layer to the clustered fill when asked with none: every texture the same bits", () => {
+    const parts = partsOf(keptHeader, keptArrays)!;
+    const kept = keptParts(keptHeader, keptArrays)!;
+    const place = new Float64Array(R.n * phi.n).map((_, c) => 0.5 + (c % 7) / 7);
+    for (const gains of [ALL_AGES, { young: 0, middle: 1, old: 1 }, { young: 1, middle: 1, old: 0 }]) {
+      const fields = { R, phi, hii, dig, extinction, scattered, thermal, dustPlacement: place, white };
+      const before = planeTexture({ ...fields, stars: agedLight(keptArrays, parts, gains, n) });
+      const now = planeTexture({ ...fields, stars: null });
+      expect(now.data.length).toBe(before.data.length);
+      expect(now.data.every((v) => v === 0)).toBe(true);
+      for (const k of ["scatter", "hii", "rings"] as const) {
+        expect(now[k].length).toBe(before[k].length);
+        expect(now[k].every((v, q) => Object.is(v, before[k][q])), k).toBe(true);
+      }
+      expect([now.width, now.height, now.cell]).toEqual([before.width, before.height, before.cell]);
+      // fillStars's clustered path: the plane's data set from the rest's texels, the whole array
+      const rest = starTexels(R.n, phi.n, clumpedLight(keptArrays, parts, kept, gains, n).rest, white);
+      expect(rest.length).toBe(before.data.length);
+      before.data.set(rest);
+      now.data.set(rest);
+      expect(now.data.every((v, q) => Object.is(v, before.data[q]))).toBe(true);
+    }
+  });
 });
 
 // S66 (V7, D226 R4, R5c): the march's tables beside the plane textures, every number the render's.

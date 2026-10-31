@@ -86,9 +86,11 @@ export interface PlaneFields {
   phi: Axis;
   /**
    * The stellar component's response per (R, φ) cell and filter, row-major over (R, φ, filter),
-   * L☉/pc² through each filter (/api/render's `stars`); non-finite means no light is drawn there.
+   * L☉/pc² through each filter (/api/render's `stars`); non-finite means no light is drawn there. Null (S78): the
+   * caller fills the stellar layer itself - FieldVolume's clustered march, whose fillStars writes every texel of
+   * `data` - and `data` comes back zeros of the same size, its texels never computed only to be overwritten.
    */
-  stars: ArrayLike<number>;
+  stars: ArrayLike<number> | null;
   /** The HII regions' Hα per (R, φ, filter), placed by the model (`halpha_hii`). */
   hii?: ArrayLike<number>;
   /** The diffuse gas's Hα per (R, filter) (`halpha_dig`). */
@@ -177,7 +179,7 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
   const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, diffuseShare, unspurred, spurShare, white } = fields;
   const nPhi = phi.n;
   const nF = white.length;
-  const data = starTexels(R.n, nPhi, stars, white);
+  const data = stars ? starTexels(R.n, nPhi, stars, white) : new Float32Array(R.n * nPhi * 4);
   const scatter = new Float32Array(R.n * nPhi * 4);
   const line = new Float32Array(R.n * nPhi * 4);
   const rings = new Float32Array(R.n * RING_ROWS.count * 4);
