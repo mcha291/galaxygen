@@ -11,7 +11,8 @@
     "test": "vitest run",
     "picture": "npm run build && playwright test",
     "picture:update": "npm run build && playwright test --update-snapshots=all",
-    "typecheck:e2e": "tsc -p e2e"
+    "typecheck:e2e": "tsc -p e2e",
+    "smooth": "playwright test -c playwright.smooth.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

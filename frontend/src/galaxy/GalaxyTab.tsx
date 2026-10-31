@@ -360,13 +360,30 @@ export function GalaxyTab({
     () => (seen && brightTable ? cellsIn(seen, brightTable.layout, tileLevel) : null),
     [brightTable, tileLevel, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const countRows = useRef(new CountRows()).current;
+  // What the user moves in the star-first loads (S76, D240 F3; the review's G3), not the answers (the counts, the stars'
+  // layer) the keys also carry. The counts' key reads the cells in view, so their input is that set with its level and the
+  // galaxy - a view report that moves no cell does not restart their settle. The tiles' key also reads the view projection
+  // (frustumWeights -> tileK, tileFetch), so their input adds the view report itself, the point budget, the set and the
+  // white: an orbit with the footprint pinned (the whole disc, or clamped at the rim) moves their key and their input
+  // together, and the tiles wait the settle as the user moves. Null while the cells wait on the table's layout (an answer):
+  // the input's first naming is then not a move of the user's (useLoad.ts InputClock).
   const countsGalaxy = JSON.stringify(query);
+  const viewProjection = view?.camera.viewProjection;
+  const countsInput = useMemo(
+    () => (tilesSeen ? JSON.stringify([tileLevel, tilesSeen, countsGalaxy]) : null),
+    [tilesSeen, tileLevel, countsGalaxy],
+  );
+  const tilesInput = useMemo(
+    () => (countsInput === null ? null : JSON.stringify([countsInput, viewProjection ?? null, brightestN, filterSet, whiteKelvin])),
+    [countsInput, viewProjection, brightestN, filterSet, whiteKelvin],
+  );
+  const countRows = useRef(new CountRows()).current;
   const countsKey = pointsOn && tilesSeen && tileLevel > 0 ? JSON.stringify(["brightCounts", tileLevel, tilesSeen, countsGalaxy]) : null;
   const levelLoad = useLoad<CellCounts>(
     countsKey,
     (signal) => levelCounts(countRows, countsGalaxy, tileLevel, tilesSeen!, (cells, level, s) => loadBrightCounts(cells, level, query, s), signal),
     BRIGHT_SETTLE_MS,
+    countsInput,
   );
   // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
   // in view has its row (B9: no pick over a cell not held).
@@ -393,7 +410,6 @@ export function GalaxyTab({
   const renderRingEdges = heldRingEdges && heldRingEdges.grid === gridKey ? heldRingEdges.edges : null;
   const tableRingEdges = brightTable?.layout.ring_edges;
   const ringEdges = useMemo(() => publishedRingEdges(renderRingEdges, tableRingEdges), [renderRingEdges, tableRingEdges]);
-  const viewProjection = view?.camera.viewProjection;
   const pickCounts = useMemo(
     () =>
       tileCounts && tilesSeen && tileLevel > 0 && starsLayer && viewProjection && brightTable
@@ -427,6 +443,7 @@ export function GalaxyTab({
         tileWhites, signal, tileLevel,
       ),
     BRIGHT_SETTLE_MS,
+    tilesInput,
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster

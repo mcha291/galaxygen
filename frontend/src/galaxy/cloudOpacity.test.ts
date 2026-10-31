@@ -1,6 +1,22 @@
+import { DataUtils } from "three";
 import { describe, expect, it } from "vitest";
 
-import { CLOUD_RASTER, CLOUD_RASTER_BUDGET_BYTES, MAG_PER_DEPTH, RENDER_GRID, cloudDepthScale, cloudRaster, finestRaster, shareAt, texelArea } from "./cloudOpacity";
+import {
+  CLOUD_RASTER,
+  CLOUD_RASTER_BUDGET_BYTES,
+  KEPT_RASTER_BYTES,
+  MAG_PER_DEPTH,
+  RENDER_GRID,
+  cloudDepthScale,
+  cloudRaster,
+  finestRaster,
+  keptCloudRaster,
+  keptRasterBytes,
+  packRaster,
+  rasterKey,
+  shareAt,
+  texelArea,
+} from "./cloudOpacity";
 import { depthOf } from "./regimes";
 
 // S64 (BUILD_III V6; RULING_S64 R4): the clouds' raster conserves what the census gives it - each cloud's A_V x area -
@@ -132,5 +148,54 @@ describe("the clouds' raster (S64, V6)", () => {
     expect(shareAt([0.4, Number.NaN, -1], 1)).toBe(1);
     expect(shareAt([0.4, Number.NaN, -1], 2)).toBe(1);
     expect(shareAt(null, 3)).toBe(1);
+  });
+});
+
+describe("the raster kept across remounts (S76, D240 F1)", () => {
+  const toHalf = DataUtils.toHalfFloat;
+  it("returns the kept raster for the same census content and shape, in a new object as a second answer would be", () => {
+    const first = keptCloudRaster(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 }, toHalf);
+    const again = keptCloudRaster(structuredClone(THREE), 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 }, toHalf);
+    expect(again).toBe(first);
+    // What is kept is what the field reads, the same bits as a fresh build packed: the A_V, the slab's halves, its top.
+    const fresh = packRaster(cloudRaster(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 }), toHalf);
+    expect(Array.from(first.av)).toEqual(Array.from(fresh.av));
+    expect(Array.from(first.halves)).toEqual(Array.from(fresh.halves));
+    expect(first.top).toBe(fresh.top);
+    expect(first.top).toBeGreaterThan(0);
+    expect([first.width, first.height, first.census, first.held, first.outside, first.split]).toEqual([fresh.width, fresh.height, fresh.census, fresh.held, fresh.outside, fresh.split]);
+    // The float32 slab the halves are made from is not kept (the review's G6).
+    expect(Object.keys(first).sort()).toEqual(["av", "census", "halves", "height", "held", "outside", "split", "top", "width"]);
+  });
+  it("builds again when a column's value, a radius, the texels, the cap or the elongation differ", () => {
+    const base = rasterKey(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 });
+    const moved = { ...THREE, cloud_height: [0.05, -0.1, 0.2000001] };
+    expect(rasterKey(moved, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0.5, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0, 10, 20, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0, 10, 10, 64, { verticalCap: 0.07, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(THREE, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 0.5 })).not.toBe(base);
+    expect(rasterKey({ ...THREE, cloud_axis_ratio: [1, 2, 3] }, 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).not.toBe(base);
+    expect(rasterKey(new Proxy(THREE, {}), 0, 10, 10, 64, { verticalCap: 0.06, elongation: 1 })).toBe(base);
+  });
+  it("keeps at most the cap's bytes, the least recently asked dropped first, and never one raster over the cap alone", () => {
+    expect(KEPT_RASTER_BYTES).toBe(96 * 1024 * 1024);
+    // A 10 x 64 raster kept is 640 float32 A_V and 1280 half floats: 5120 bytes. A cap of two and a half holds two.
+    const one = 10 * 64 * (4 + 2 * 2);
+    const cap = 2.5 * one;
+    const a = keptCloudRaster(THREE, 0, 21, 10, 64, {}, toHalf, cap);
+    const b = keptCloudRaster(THREE, 0, 22, 10, 64, {}, toHalf, cap);
+    expect(a.av.byteLength + a.halves.byteLength).toBe(one);
+    expect(keptCloudRaster(THREE, 0, 21, 10, 64, {}, toHalf, cap)).toBe(a); // a asked again: b is now the oldest
+    keptCloudRaster(THREE, 0, 23, 10, 64, {}, toHalf, cap); // c: over the cap, b dropped
+    expect(keptRasterBytes()).toBeLessThanOrEqual(cap);
+    expect(keptCloudRaster(THREE, 0, 21, 10, 64, {}, toHalf, cap)).toBe(a);
+    const b2 = keptCloudRaster(THREE, 0, 22, 10, 64, {}, toHalf, cap);
+    expect(b2).not.toBe(b);
+    expect(Array.from(b2.halves)).toEqual(Array.from(b.halves)); // built again, the same bits
+    // A cap under one raster keeps nothing: the next ask builds afresh, and nothing is held.
+    const lone = keptCloudRaster(THREE, 0, 24, 10, 64, {}, toHalf, one / 2);
+    expect(keptRasterBytes()).toBe(0);
+    expect(keptCloudRaster(THREE, 0, 24, 10, 64, {}, toHalf, one / 2)).not.toBe(lone);
   });
 });

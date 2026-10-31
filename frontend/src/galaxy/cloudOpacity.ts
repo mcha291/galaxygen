@@ -273,6 +273,116 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
   return { av, width, height, rLo, rHi, census, held, outside, split, slab };
 }
 
+// --- the raster kept across remounts (S76, BUILD_IV W5, D240 F1) ------------------------------------------------
+// The raster is the census's alone, at a shape: the same census at the same shape is the same raster, bit for bit
+// (cloudRaster is a pure function). Building it takes 1.4-2.7 s of the main thread on the Milky Way (S76's probe), and
+// the field remakes it whenever its component remounts - the star-first mode's own march, a template switch and back
+// (the census answered again, the same bytes in a new object). So the last few rasters are kept here, keyed on the
+// census's content (every column the raster reads, its bits) and the shape (the radii, the texels, the cap, the
+// elongation): a remount with the same answer takes the kept one.
+//
+// S76's review (G6): what is kept is only what the field reads after the build - the A_V texels, the slab already in
+// half floats with the highest a slab reaches, and the raster's counts for its stats - never the float32 slab the
+// halves are made from (twice the A_V's bytes: the four kept Milky Way rasters held ~173 MB). The cache is capped by
+// bytes, the oldest dropped first; a raster bigger than the cap alone is not kept.
+
+/** What the field draws from a raster (FieldVolume): its A_V and its slab as half floats, and its counts. */
+export interface KeptRaster {
+  av: Float32Array;
+  /** The slab (CloudRaster.slab) as half floats, two a texel: each texel's clouds' mean height and half-thickness, kpc. */
+  halves: Uint16Array;
+  /** The highest a slab reaches, |mean height| + half-thickness, kpc: bounds the points' segment. */
+  top: number;
+  width: number;
+  height: number;
+  census: number;
+  held: number;
+  outside: number;
+  split: number;
+}
+
+/** The kept rasters' bytes at most (A_V and halves): three Milky Way rasters of 2000 x 1800 texels at 28.8 MB each. */
+export const KEPT_RASTER_BYTES = 96 * 1024 * 1024;
+
+const kept = new Map<string, KeptRaster>();
+let keptBytes = 0;
+
+const bytesOf = (r: KeptRaster) => r.av.byteLength + r.halves.byteLength;
+
+/** The bytes the kept rasters hold now. */
+export function keptRasterBytes(): number {
+  return keptBytes;
+}
+
+/** The float-to-half conversion the slab's texture is made with: three's DataUtils.toHalfFloat, passed in (no three.js here). */
+export type ToHalf = (value: number) => number;
+
+/** A built raster as the field draws it: the slab to half floats (`toHalf`), and the highest it reaches. */
+export function packRaster(built: CloudRaster, toHalf: ToHalf): KeptRaster {
+  const halves = new Uint16Array(built.slab.length);
+  let top = 0;
+  for (let k = 0; k < built.slab.length; k += 2) {
+    halves[k] = toHalf(built.slab[k]);
+    halves[k + 1] = toHalf(built.slab[k + 1]);
+    if (built.slab[k + 1] > 0) top = Math.max(top, Math.abs(built.slab[k]) + built.slab[k + 1]);
+  }
+  const { av, width, height, census, held, outside, split } = built;
+  return { av, halves, top, width, height, census, held, outside, split };
+}
+
+/** Two 32-bit hashes (FNV-1a and a multiplicative mix) over each value's float64 bits, with the column's length. */
+function columnKey(values: ArrayLike<number> | undefined, scratch: DataView): string {
+  if (!values) return "-";
+  let a = 0x811c9dc5;
+  let b = 0x9e3779b9 ^ values.length;
+  for (let k = 0; k < values.length; k += 1) {
+    scratch.setFloat64(0, Number(values[k]));
+    for (let w = 0; w < 2; w += 1) {
+      const word = scratch.getUint32(4 * w);
+      a = Math.imul(a ^ word, 0x01000193);
+      b = Math.imul(b ^ word, 0x85ebca6b);
+      b ^= b >>> 13;
+    }
+  }
+  return `${values.length}:${(a >>> 0).toString(16)}:${(b >>> 0).toString(16)}`;
+}
+
+/** The raster's cache key: the census's content and the shape it is drawn at. */
+export function rasterKey(clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape = {}): string {
+  const scratch = new DataView(new ArrayBuffer(8));
+  const columns = [
+    clouds.cloud_radius, clouds.cloud_azimuth, clouds.cloud_size, clouds.cloud_dust_extinction_v, clouds.cloud_height,
+    clouds.cloud_axis_ratio, clouds.cloud_angle,
+  ].map((c) => columnKey(c, scratch));
+  return [...columns, rLo, rHi, width, height, shape.verticalCap ?? Infinity, shape.elongation ?? 0].join("|");
+}
+
+/**
+ * cloudRaster packed for the field (packRaster), or the one kept from an earlier call with the same census content and
+ * shape (the same bits). At most `capBytes` are kept, the least recently asked dropped first.
+ */
+export function keptCloudRaster(
+  clouds: CloudColumns, rLo: number, rHi: number, width: number, height: number, shape: RasterShape, toHalf: ToHalf,
+  capBytes: number = KEPT_RASTER_BYTES,
+): KeptRaster {
+  const key = rasterKey(clouds, rLo, rHi, width, height, shape);
+  const hit = kept.get(key);
+  if (hit) {
+    kept.delete(key); // most recent last
+    kept.set(key, hit);
+    return hit;
+  }
+  const packed = packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf);
+  kept.set(key, packed);
+  keptBytes += bytesOf(packed);
+  while (keptBytes > capBytes && kept.size > 0) {
+    const oldest = kept.keys().next().value as string;
+    keptBytes -= bytesOf(kept.get(oldest)!);
+    kept.delete(oldest);
+  }
+  return packed;
+}
+
 /**
  * Each display channel's optical depth per magnitude of A_V: the header's `extinction_ratio` (A_lambda / A_V at each
  * filter's reference wavelength, the grain model's) over 1.0857 - the diffuse dust's own conversion, so the clouds'

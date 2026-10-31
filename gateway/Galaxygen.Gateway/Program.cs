@@ -5,6 +5,7 @@
 // bundle (since S72 the model answers a bundled request itself), and keys every cache on the model's content hash,
 // /api/version's model.hash (rules D3 and D5 as amended; BUILD_IV Appendix A).
 
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -12,6 +13,7 @@ using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Galaxygen.Gateway;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -137,14 +139,40 @@ builder.Services.AddOutputCache(cache =>
     cache.AddPolicy(ModelCachePolicy.Name, new ModelCachePolicy());
 });
 
+// --- Response compression (S76, BUILD_IV W5, D240 F4): brotli, then gzip, on the model's answers and the page's files.
+// The landing is 19.4 MB of /api answers (S76's probe), most of it float arrays, which the wire carries as sent. It sits
+// INSIDE the output cache (below; S76's review, G2): a body is compressed once, on the miss, and the cache stores it per
+// encoding - ModelCachePolicy varies the key by the request's Accept-Encoding - so a hit is served as stored and never
+// compressed again, and a client that asks for no encoding is never sent a compressed body. The window and the gate are
+// unchanged. On over HTTPS as well: no answer here carries a secret or a cookie for a compression oracle to read.
+builder.Services.AddResponseCompression(compression =>
+{
+    compression.EnableForHttps = true;
+    compression.Providers.Add<BrotliCompressionProvider>();
+    compression.Providers.Add<GzipCompressionProvider>();
+    compression.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        ["application/octet-stream", "text/javascript", "image/svg+xml"]); // the model's frames (wire.py MEDIA), Vite's scripts, the icon
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(brotli => brotli.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(gzip => gzip.Level = CompressionLevel.Fastest);
+
 var app = builder.Build();
 
 if (options.Limits.TrustForwardedFor) app.UseForwardedHeaders();
 
-// --- Serving: the frontend's build as static files, first and never counted ---------------------------------------
+// --- The model's path: label, cache, compression, window, then the gate (ModelPipeline; S74, D-5 and G-8) -------
+// The output cache answers a hit before the window counts it or the gate queues it, and before the compression: a
+// hit's body was compressed when it was stored (S76's review, G2). Nothing above the cache answers a request.
+app.Use(ModelPipeline.Label);
+app.UseOutputCache();
+app.UseResponseCompression(); // the misses on their way into the cache, the files and the SPA fallback below (S76, F4/G2)
+
+// --- Serving: the frontend's build as static files, never counted and never cached (no policy names them) -----------
 // Frontend:Path is the Vite build (frontend/dist). Its /assets/ files carry their content hash in their names, so
 // they are immutable for a year; index.html is not, so it is revalidated on every load (S74, G-7). Absent on a
-// developer's machine, the gateway serves only its own routes and the API, and says so at /healthz.
+// developer's machine, the gateway serves only its own routes and the API, and says so at /healthz. Since S76's
+// review (G2) they are served below the output cache, which passes them through untouched (only the proxied /api
+// routes carry its policy), so that the compression above them still covers them.
 var frontend = StaticRoots.Resolve(app.Environment, options.Frontend.Path);
 StaticFileOptions? files = null;
 if (frontend is not null)
@@ -159,10 +187,7 @@ if (frontend is not null)
     app.UseStaticFiles(files);
 }
 
-// --- The model's path: label, cache, window, then the gate (ModelPipeline; S74, D-5 and G-8) ----------------------
-// The output cache answers a hit before the window counts it or the gate queues it.
-app.Use(ModelPipeline.Label);
-app.UseOutputCache();
+// The window and the gate, below the files: a file is answered before either is reached, as before.
 app.UseRateLimiter();
 app.Use(ModelPipeline.Bound);
 

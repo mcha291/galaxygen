@@ -204,6 +204,14 @@ export const CHOOSING_VIEWPORT = { width: 1280, height: 900 };
 export const DEFAULT_TEMPLATE = "milky_way";
 
 /**
+ * The templates' labels as the switcher shows them, by name (/api/templates' `label`; model/galaxy templates). The
+ * smoothness probe presses the switcher by these, so that nothing is asked of the site before a step begins (S76's
+ * review, G4: asking /api/templates through the gateway first warmed the cold rows); it checks them against
+ * /api/templates after its runs, and a label that moved fails it there (a press by a wrong label fails its step first).
+ */
+export const TEMPLATE_LABEL: Readonly<Record<string, string>> = { milky_way: "Milky Way", ngc_4414: "NGC 4414" };
+
+/**
  * How closely the view must stand at the capture's camera, read back from the camera itself: a thousandth of a
  * degree (face-on stands 0.0006 degrees off the axis, capture.ts MIN_INCLINATION) and a millionth of a
  * kiloparsec of framing radius. The lens is compared exactly.

@@ -54,10 +54,16 @@ public sealed class ModelCachePolicy : IOutputCachePolicy
         context.AllowCacheStorage = true;
     }
 
-    /// <summary>What goes into the key: every query parameter and the hash.</summary>
+    /// <summary>The request header the key varies by besides the query (S76's review, G2): the compression runs inside
+    /// the cache, so a stored body is in the encoding its request accepted, and is served only to that header's value.
+    /// A request with no Accept-Encoding has a key of its own and is sent the identity body.</summary>
+    public const string EncodingHeader = "Accept-Encoding";
+
+    /// <summary>What goes into the key: every query parameter, the accepted encoding and the hash.</summary>
     public static void Vary(OutputCacheContext context, string hash)
     {
         context.CacheVaryByRules.QueryKeys = "*";
+        context.CacheVaryByRules.HeaderNames = EncodingHeader;
         context.CacheVaryByRules.VaryByValues[HashKey] = hash;
         context.Tags.Add(hash);
     }
