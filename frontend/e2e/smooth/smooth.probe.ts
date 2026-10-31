@@ -192,16 +192,28 @@ async function mark(label: string) {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** The union of [start, end) intervals, as disjoint intervals in order. */
+function union(spans: [number, number][]): [number, number][] {
+  const sorted = spans.filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+  const out: [number, number][] = [];
+  for (const [a, b] of sorted) {
+    const last = out[out.length - 1];
+    if (last && a <= last[1]) last[1] = Math.max(last[1], b);
+    else out.push([a, b]);
+  }
+  return out;
+}
+
 /** The union of [start, end) intervals, ms. */
 function covered(spans: [number, number][]) {
-  const sorted = spans.filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+  return union(spans).reduce((s, [a, b]) => s + (b - a), 0);
+}
+
+/** How much of the intervals `xs` lies inside the union of `within`, ms. */
+function overlap(xs: [number, number][], within: [number, number][]) {
+  const u = union(within);
   let total = 0;
-  let to = -Infinity;
-  for (const [a, b] of sorted) {
-    if (b <= to) continue;
-    total += b - Math.max(a, to);
-    to = b;
-  }
+  for (const [a, b] of union(xs)) for (const [c, d] of u) total += Math.max(0, Math.min(b, d) - Math.max(a, c));
   return total;
 }
 
@@ -226,7 +238,15 @@ interface StepResult {
   error: string | null;
   /** Time with at least one /api request in flight before the ready instant, ms: the server and network share. */
   api_wait_ms: number | null;
-  /** The ready instant less api_wait_ms: the client's own work (and its idle gaps, the debounces among them). */
+  /**
+   * The main thread's long-task time inside the api wait's spans (S76's review, G5): the api wait is the union of the
+   * requests in flight, not the critical path, and this much of it the client was also working.
+   */
+  api_long_tasks_ms: number | null;
+  /**
+   * The ready instant less api_wait_ms: the client's own work (and its idle gaps, the debounces among them) - a LOWER
+   * bound, since api_long_tasks_ms of client work ran inside the api wait and is not counted here.
+   */
   client_ms: number | null;
   /** The last /api answer's end before the ready instant, ms from the step's start, and the client's work after it. */
   last_api_end_ms: number | null;
@@ -376,6 +396,8 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
   const limit = ready ?? Date.now() - t0;
   const spans = (xs: Asked[]) => xs.map((a): [number, number] => [Math.max(0, a.start), Math.min(a.end ?? limit, limit)]);
   const apiWait = covered(spans(api));
+  const taskSpans = tasks.map(([at, ms]): [number, number] => [Math.max(0, at), Math.min(at + ms, limit)]);
+  const apiTasks = overlap(taskSpans, spans(api));
   const lastEnd = api.length ? Math.max(...api.map((a) => Math.min(a.end ?? limit, limit))) : null;
   const longest = api
     .filter((a) => a.end !== null)
@@ -391,6 +413,7 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     first_lit_ms: firstLit === null ? null : firstLit - t0,
     error,
     api_wait_ms: ready === null ? null : apiWait,
+    api_long_tasks_ms: ready === null ? null : Math.round(apiTasks),
     client_ms: ready === null ? null : ready - apiWait,
     last_api_end_ms: lastEnd,
     after_last_api_ms: ready === null || lastEnd === null ? null : ready - lastEnd,
@@ -517,14 +540,14 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   writeFileSync(OUT, `${JSON.stringify({ about, runs }, null, 1)}\n`, "utf-8");
 
   const names = [...new Set(runs.flatMap((r) => r.steps.map((s) => s.step)))];
-  const lines = [`| ${STATE} | ready s, median (range) [lower end] | api wait s | client s | /api reqs | longest /api |`, "|---|---|---|---|---|---|"];
+  const lines = [`| ${STATE} | ready s, median (range) [lower end] | api wait s (long tasks inside it) | client s (lower bound) | /api reqs | longest /api |`, "|---|---|---|---|---|---|"];
   for (const name of names) {
     const got = runs.map((r) => r.steps.find((s) => s.step === name)).filter((s): s is StepResult => !!s);
     const ok = got.filter((s) => s.ready_ms !== null);
     const pick = (f: (s: StepResult) => number | null) => ok.map(f).filter((x): x is number => x !== null);
     const long = ok.map((s) => s.longest).filter((l) => !!l).sort((a, b) => b!.ms - a!.ms)[0];
     lines.push(
-      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))}${ok.some((s) => s.after_confirm.changed) ? `* (${ok.filter((s) => s.after_confirm.changed).length} moved after)` : ""} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
+      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))}${ok.some((s) => s.after_confirm.changed) ? `* (${ok.filter((s) => s.after_confirm.changed).length} moved after)` : ""} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} (${fmt(median(pick((s) => s.api_long_tasks_ms)))}) | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
     );
   }
   const costs = runs.flatMap((r) => r.steps.flatMap((s) => s.probes.costs));

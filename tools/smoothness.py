@@ -261,9 +261,9 @@ def fmt(ms: float | None) -> str:
 
 
 def table(merged: dict[str, dict[str, Any]]) -> str:
-    rows = ["| state | step | ready s median, from the bracket's lower end (range) [n ok] | api wait s | client s | after last /api s | long tasks s | /api reqs "
+    rows = ["| state | step | ready s median, from the bracket's lower end (range) [n ok] | api wait s | long tasks inside the api wait s | client s (lower bound) | after last /api s | long tasks s | /api reqs "
             "| longest /api (route, s, KB, cache/source) | healthz max in_flight/waiting | model lines (by source) "
-            "| bound |", "|" + "---|" * 12]
+            "| bound |", "|" + "---|" * 13]
     for state, data in merged.items():
         for step in STEPS:
             got = [s for r in data["runs"] for s in r["steps"] if s["step"] == step]
@@ -271,7 +271,7 @@ def table(merged: dict[str, dict[str, Any]]) -> str:
                 continue
             ok = [s for s in got if s["ready_ms"] is not None]
             ready = [s["ready_ms"] for s in ok]
-            pick = lambda k: med([s[k] for s in ok if s[k] is not None])  # noqa: E731
+            pick = lambda k: med([s.get(k) for s in ok if s.get(k) is not None])  # noqa: E731
             longest = max((s["longest"] for s in ok if s["longest"]), key=lambda x: x["ms"], default=None)
             lng = "-" if not longest else (f"{longest['route']} {longest['ms'] / 1000:.2f}, "
                                            f"{(longest['bytes'] or 0) / 1024:.0f}, {longest['cache']}/{longest['source']}")
@@ -292,7 +292,7 @@ def table(merged: dict[str, dict[str, Any]]) -> str:
             moved = sum(1 for s in ok if s.get("after_confirm", {}).get("changed"))
             star = f"* ({moved} moved after)" if moved else ""
             rows.append(f"| {state} | {step} | {fmt(med(ready))}{star} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
-                        f"| {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
+                        f"| {fmt(pick('api_long_tasks_ms'))} | {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
                         f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
     return "\n".join(rows) + "\n\n" + probe_cost(merged)
 
@@ -313,7 +313,9 @@ def probe_cost(merged: dict[str, dict[str, Any]]) -> str:
             f"{len(costs)}, 90th percentile {cs[int(0.9 * (len(cs) - 1))]:.0f}, at most {cs[-1]:.0f}), round trip "
             f"{med(trips):.0f} ms: a duty cycle of {100 * c / every:.0f} % of the page's main thread. The ready column is the "
             f"bracket's upper end (the first probe of the final still run), its lower end beside it (the last probe that differed); "
-            f"* marks a step whose frame sum changed in the second probed after settle's criteria held.")
+            f"* marks a step whose frame sum changed in the second probed after settle's criteria held. The api wait is the "
+            f"union of the time any /api request was in flight, not the critical path: the long tasks inside it were client "
+            f"work too, so the client column (ready less the api wait) is a lower bound on the client's share.")
 
 
 def main(argv: list[str] | None = None) -> int:
