@@ -15259,3 +15259,249 @@ S76's run covered everything but these commits, the dispatched run on the runner
 (`ci` 41173776182, the `test` job; `image` 41173776123 beside it, building the images that carry the new hash), which the
 next open reads along with S77's `verify_clone`. The old workflow's last run, on S76's merge (41173556007), will finish
 red as #206 described — the last of its kind.
+
+### D242. S78, T29: the landing inside ruling 10's bound where the client's own work owns it — the march program's loop bounds uniforms (the compile 6.8 → 0.8 s, the arithmetic unchanged, the per-frame cost the same), the clouds' raster built once and three times faster and in a Worker, a loader's first key asked at once, the mesh's wasted texture work skipped; F6 closed by measurement; #208 the last tenths; the tables of record beside D240's
+
+**The commission.** `BRIEF.md` after S77 and the coordinator's brief of 2026-10-31: a Fable lead, Opus builders in
+worktrees (two at once at most, one heavy), T29 in the order it lists — the shader program first — each fix measured
+before and after with `tools/smoothness.py` on the machine quiet, the picture test byte for byte the gate for anything
+that touches a shader or a raster, vitest / `typecheck` / `typecheck:e2e` / `dotnet test` green; nothing under
+`model/galaxy` (the hash f1fbbb17… is the image's pin); F5, the model-cold zoom, the owner's and untouched. Read at the
+open: `main` de6344f; the s76 bundles at 4f0c8401… refused by the model (D241 moved the hash), re-exported in 149.6 s
+(234 MB, `galaxygen-s78\bundles`); S77's `verify_clone --ref main` still running its suite on this machine from 13:50
+local (one core), so no probe table taken before 19:28 was on a quiet machine — D240's table of record is the before the
+brief names, and the before was taken again here on the same stand; a sibling session on #207 open the same day (the
+numbering settled in the shared notes: S78 merges first and keeps D242 / #208 / row 78; the #207 session's close becomes
+D243 / #209 at its merge). The windows at the open: 5-hour 16 %, weekly all models 17 %, Fable 20 %.
+
+**The rulings, before any number.**
+- **R1, the profile first (B6).** An Opus reader attributes the warm landing's and the warm switch's critical paths
+  second by second — a CDP profile and a trace on an unminified build, the model direct on :8052 with the bundles, three
+  profiled runs and three plain — before any fix is named; each fix is ruled on its share and built only where nothing
+  drawn changes (the picture test's fifteen captures byte for byte).
+- **R2, the shader.** The program's compile is measured per variant of its text by an instrument of its own before the
+  text moves; the variant chosen has the same operations in the same order; the snapshot is re-baselined with the reason
+  written in the test; the picture test byte for byte; and the per-frame GPU cost is measured old against new, kept busy,
+  before the ruling — a rolled loop may march slower than an unrolled one, and T14's budget is the march's.
+- **R3, the fixes.** Each a commit of its own with its before / after on the builder's stand; the request set unchanged
+  (S73's fixture, and the whole picture walk's requests logged before and after); the frames byte for byte; the lead
+  reads the hunks and cherry-picks.
+- **R4, the tables.** Before (de6344f's viewer, built from the main checkout) and after (session-78) on the same stand,
+  the same bundles, back to back, the conditions stated; ruling 10's bound, 1 s warm and 5 s cold per step; run 1 in a
+  fresh browser on its own row (D240 G7).
+- **R5, the Worker.** The raster's Worker (F1's named alternative) is built only after R1–R4 are measured and only if the
+  landing is still over; it runs the same functions on the same bits, falls back to the main thread where there is no
+  Worker, and is used only where its overlap can pay (R5b, on the measurement).
+
+**Read at this open, owed by D241 (the coordinator's readings, 2026-10-31).** (1) S77's `verify_clone --ref main`
+(de6344f): **EXIT=1** — pytest 1 failed / 1 723 passed / 6 skipped / 1 xfailed in 5 h 38, the one failure the known
+pricing flake `tests/test_performance.py::test_the_catalogue_is_priced_per_cell[basic]` (marginal 3.20e-6 × 40 003 =
+0.128 against 0.5 × 0.232 = 0.116; the clone ran beside S78's builders and the #207 session's sweep), re-run alone on
+`main` 2 passed, EXIT=0; steps 1–4 and 6 (the specs) ok. (2) `image` 41173776123 on 2e9639e green: the f1fbbb17 images
+pushed. (3) `main`'s own `ci` run 41173776182 (2e9639e, the `test` job) **red**: 2 failed / 1 703 passed / 25 skipped /
+1 xfailed in 1 h 43 — `test_gas_response.py::test_a_tightly_wound_ring_converges_on_its_rounding_floor[eps 1.03, total
+77]` (the residual 9.4879e-11 against the pinned 7.81e-11 ± 1e-12; S77 marked the eps 1.28 case alone) and
+`test_layer.py::test_rows_35_and_37_on_the_layer_on_census_as_measured` (`same(on, off)` on row 37's
+`nii_halpha_gradient_hii` false by one ulp, −0.0983089574578779 against −0.09830895745787792; the approx asserts before
+it passed; no marker). Both also failed in the old workflow's last run (41173556007, on the S76 merge) and both passed in
+S77's dispatched run 41157239318: **the runner fleet is not one machine** — two of three runners land these two off by an
+ulp. S78 marks both `machine_pinned` (19 → 21 cases; the register's pin untouched by markers; D241's per-platform ruling
+still the owner's); `ci` on `main` / nightly will be red on most runs until the merge carries them.
+
+**The profile (an Opus reader, read-only: a CDP profile at 200 µs and a trace round the landing and the switch, an
+unminified build, the model direct on :8052 with the bundles, three profiled runs and three plain, the probe's cost
+~3 %; `ATTRIBUTION.md` and `summary.md` under its worktree's `frontend/e2e/.output/profile/`, its scripts committed on
+its branch, not merged).** The warm landing is bimodal: 3.1–3.6 s with one clouds' raster, 5.1–5.4 s with two (four of
+six runs). `FieldVolume.tsx`'s raster memo keys on the raster's shape, whose vertical cap comes from the drawn render's
+clouds layer — null until `/api/layer` has answered, and on a switch the previous template's for a while — so the census
+is rasterised once at the wrong shape (the slab differs; checked) and once at its own, 1.6 s wasted on the landing and
+0.34 s on the switch; and that first build's long task holds the render's and the layer's bodies unread (the render
+asked at ~0.93 s ends at ~2.40 s, exactly when the task ends), which D240 read as "1.5 s of transfer and parse": the
+transport's `decode` is zero-copy views (5 ms), the answers 2–46 ms each. The drawn raster itself 1.6 s, 71 % of it
+`Math.cos(pb)` / `Math.sin(pb)` — a function of the inner loop's index recomputed for every outer iteration (the
+hoist, measured in Node on the real census: 1 022–1 348 → 300–361 ms, A_V and slab bit-identical). The mesh's CPU
+0.62 s: `agedLight` + `starTexels` 160–240 ms computed and then overwritten whole by `fillStars` when the stars are
+drawn clumped, `clumpedLight` 270–330, the `__galaxygenRenderRings` effect 10–65 (97 on the switch). Settles 0.55 s:
+`InputClock.wait` returns the whole settle when no `input` is given, so each loader's first key waits 350 ms on mount,
+and the landing chains three (App's sample, GalaxyTab's, FieldVolume's). The instrument 0.2 s + the 250 ms cadence's
+bracket 0.27; React and star colours 0.11; GPU uploads 24 ms (16 `texSubImage2D`, 42.7 MB); the swap holds nothing on a
+landing. The switch 1.83 s: the drawn raster 0.37, the wasted one 0.34, the mesh 0.35, the probe 0.2, the settle after
+the click 0.19, and 0.18 of browser work — GalaxyView's Canvas `key` carries `epoch`, so a switch builds a new WebGL2
+context, relinks every program (35 ms) and re-uploads every texture (a fresh camera by design, D213 ruling 5: keeping
+the Canvas may move the frames, the owner's). **F6 has no room:** the viewer already asks `precision=f4` on `/api/render`
+and `/api/clouds` (the render's 9.27 MB all f4); region and clusters ignore the parameter and the bundles hold no such
+key. Projected: the landing ~1.6 s with the four fixes, ~1.0–1.2 with the field's loads beside the sample and the
+raster in a Worker; the switch ~0.8–0.9.
+
+**The shader (one Opus builder, heavy; two commits + the march probe).** *The instrument first (R2):*
+`frontend/e2e/compile/compile.probe.ts` on `playwright.compile.config.ts` (`npm run compile`), no server: `capture.ts`,
+bundled by vite from the frontend's own config, runs the viewer's own `precompileMarch` on a blank page and records what
+three r186 hands to `shaderSource`, so the measured text is the viewer's, three's prefix included; variants are exact
+text edits of that capture (an edit that does not match once reads "not applicable"); each measurement a fresh browser
+(`GPU_ARGS` + `--disable-gpu-shader-disk-cache`), a raw WebGL2 context, compile to `COMPILE_STATUS`, link to
+`LINK_STATUS`, a first draw into a 1 × 1 half-float target to `readPixels`; `GALAXYGEN_COMPILE_HLSL=1` writes ANGLE's
+translated HLSL from a separate untimed browser. *The table (RTX 4070, ANGLE Direct3D11 vs_5_0 ps_5_0; total ms, median
+of 3 and range; almost all of it link time):*
+
+| variant | 96 steps | 48 | 24 | 12 |
+|---|---|---|---|---|
+| v0, the s66 text | 6 814 (6 712–7 169) | 2 798 (2 727–3 129) | 1 715 (1 655–1 765) | 1 344 (1 322–1 410) |
+| v1, the step loop's bound a uniform `steps` (one text for every count) | 1 063 (1 022–1 155) | | | |
+| v2, v1 + the sub-samples' loop `j < n` — **chosen** | 969 (895–1 073) | | | |
+| v3, v2 + the pieces' bound a uniform | 909 (906–970) | | | |
+| v4, only `j < n` | 6 195 | 2 889 | | |
+| v5, only the pieces' bound a uniform | 7 294 | 2 900 | | |
+| **after the fix** | **798 (764–833)** | 809 | 813 | 813 |
+
+*The cause:* ANGLE emits no `[loop]` attribute (`LOOP` is empty unless `ANGLE_ENABLE_LOOP_FLATTEN` is set), so FXC
+unrolls the constant-bound step loop with its 8 sub-samples and 20 pieces a step — ~31 ms of link per step; the ~0.8 s
+left is the rest of the shader at any count; the inner loops alone hardly matter (v4, v5). D199's "a GLSL loop needs a
+constant bound" was WebGL1's rule; three r186 is WebGL2 only. *The fix (R2, the arithmetic unchanged):* `fieldFragment()`
+takes no count; `uniform int steps` bounds the loop and `uniform float invSteps` is the ratio's exponent — the value
+ANGLE had folded `1.0 / float(96)` to, 0.010416667, is the float nearest 1/96 (bits 3c2aaaab; 48 steps 3caaaaab), which
+three uploads as the float32 of `1 / steps`, pinned in `tuning.test.ts`; `j < n` replaces `j < 8` + `if (j >= n) break`
+(the same iterations); every statement inside the loops as it was. The uniforms are set in the frame loop beside
+`subMax`; the "new step count is a new shader" effect is gone; `precompileMarch(gl)` compiles the one stand-in (the same
+text and options, so three's cache serves the material) and records `window.__galaxygenCompile = { started, ms }`
+(6 715 → 862 ms at 96 steps in the capture page, 2 852 → 786 at 48; in the built viewer 810 / 1 971 / 2 342 ms in three
+fresh browsers, the larger two overlapping the page's other work). The snapshot re-baselined as `fieldFragment.s78.glsl`
+(S66's in git) with the reason in `tuning.test.ts`. *The per-frame cost, measured before the ruling (the lead's order; the
+builder's `march_gpu`, now `frontend/e2e/compile/march.probe.ts`, `npm run march`):* the GPU drops its clocks between
+spaced marches, so a single sample after a pause reads 5 or 50 ms on one thumbnail and the picture test's one-sample
+`gpu_ms` (227 → 259 ms on `milky_way-field`) was clock noise; nudging the camera every animation frame for 200 frames
+and dropping the first 20 readings holds the spread to ±1 %. Three rounds alternating old / new, fresh browsers, both
+trees served at once (:8019 / :8056), the timer available in 54 of 54 runs, the march at 1024 × 1024 (the templates'
+resolution 1 under the 2 M pixel budget), 96 steps on the Milky Way and 48 on NGC 4414; ms median, new / old:
+`milky_way-field` 23.6 / 23.6 (1.000), `-stars` 19.8 (0.999), `-physics-only` 18.9 (1.000), `-thumbnail` 4.5 / 4.6
+(0.985), `ngc_4414-field` 36.1 (1.001), `-stars` 29.4 (1.000), `-thumbnail` 5.2 / 5.3 (0.992), `milky_way-zoom` 18.7
+(0.999), `ngc_4414-zoom` 15.6 (1.001) — the rolled loops march at the unrolled ones' speed (the driver's compiler
+re-unrolls or the march is bound by its texture reads), every capture 16–36 ms against T14's ~100 ms. **Ruled in.**
+The picture test 15 passed, all nine captures the committed picture byte for byte; vitest 461 / 1 skipped; `typecheck`
+and `typecheck:e2e` clean.
+
+**The landing's fixes (a second Opus builder; the lead's R1–R4 on the profile, one commit each, plus a follow-up the
+request log demanded; measured on the builder's own stand, the model direct on :8054, medians of 3: landing 3 061 ms
+(4 509 in a second series with two rasters), switch 1 817 / 1 667 before).** *R1, the raster built once:* `api.ts
+sameRun(a, b)` — the same `model`, the same `layer` (a missing one counts as on) and the same resolved `inputs` as the
+headers echo them (`/api/clouds` names no template: its census is the run's alone); the raster memo requires
+`sameRun(clouds, light) && sameRun(clouds, frame)` and returns null otherwise, so no clouds' layer is drawn until the
+census, the grid and the drawn render are of one run (as before any raster exists); the headers of clouds, render,
+arrays and layer fetched for both templates carry identical `inputs`; rasters built per landing 2 → 1 in every run, the
+F1 key unchanged; `api.test.ts` cases. Landing 3 155, switch 1 296. *R2, the hoist:* `cloudRaster`'s `cos` / `sin` of
+each cloud's sample azimuths into a per-cloud table, the same expressions; `cloudOpacity.hoist.test.ts` keeps de6344f's
+function verbatim as the reference and asserts `Object.is` on every float of `av`, `slab`, the counts, the packed
+`halves` and `top`, on synthetic censuses (f4 and f8, three shapes, an off-centre raster with odd texel counts, every
+branch reached; no census fixture exists); in Node on the real answers, bit-identical, Milky Way 2000 × 1800 977 → 284
+ms, NGC 4414 585 → 218. Landing 1 854, switch 1 027. *R3, a loader's first key at once:* `InputClock.wait` is told the
+key and `fired()` when the timer fires; until a request has gone out the first non-null key waits 0 (a StrictMode re-run
+of the same key too), every later key settles as D240 F3 says; three `useLoad.test.ts` cases; the swap untouched.
+Landing 1 170, switch 620. *The follow-up (R3b):* the builder logged every `/api` request of the whole picture walk
+before and after through an uncommitted hook — asked at once, every loader's first key added two distinct keys the
+baseline never sent, a level-2 counts request and a tiles POST, from view-keyed loaders mounting while the view moves
+(a zoom into the region regime, a camera placed as star-first opens): a frame of the drag. So `useLoad` takes
+`firstAtOnce` (default true) and seven loaders keyed on the view pass false — GalaxyTab's region, region clusters,
+star-first counts and tiles; RegionVolume's clouds, remnants and render. With it the walk's distinct keys are 56 against
+55: the one left is a level-2 counts request for NGC 4414 (1 564 cells), a view key that appears because answers now
+arrive before the test places its camera (F3's null-naming rule), not a first key; every galaxy-scale key equals the
+baseline's, so S73's fixture keeps its meaning. The walk's total requests 264 → 303: loaders the test mounts and drops
+within a settle now send their existing keys, aborted on unmount (a bundle hit's cost; deployed, a gateway hit). *R4,
+the mesh's wasted work:* `regimes.ts planeTexture` takes `stars: null` and returns zeros of the same size; the mesh
+passes null under the clustered fill, where `fillStars` writes every texel (`regimes.test.ts`: scatter, HII and rings
+`Object.is`-equal, the data set from `clumpedLight`'s rest identical under three age switches); `__galaxygenRenderRings`
+a caching getter computing on first read, the same object after, removed on cleanup only if still its own. Landing
+1 122–1 227 over two series, switch 733–747 (R4's gain inside the probe cadence's noise; the profile's 0.2–0.3 s). Final
+1 133 / 764; at every step the final frame sums equal the baseline's and the request sets (11 on the landing, 6 on the
+switch) unchanged. The builder's gates: vitest 470 / 1 skipped (40 files), `typecheck` and `typecheck:e2e` clean, the
+picture test 15 passed, no frame rewritten.
+
+**The raster in a Worker (the same builder, R5 and R5b; two commits).** `cloudRaster.worker.ts` (a 4.9 kB chunk vite
+emits beside the app) runs `cloudRasterJob.ts`'s `rasterJob` = `packRaster(cloudRaster(…), toHalfFloat)` — the same
+functions imported from `cloudOpacity.ts`, `toHalfFloat` from `three/src/extras/DataUtils.js` so the chunk carries no
+three — on the seven census columns (each sliced into its own buffer, ~0.5 MB, transferred: a column can be a view into
+the whole answer, which a structured clone would copy entire), the grid and the shape, and posts the `KeptRaster` back
+with `av` and `halves` transferred (14.4 MB each on the Milky Way). `cloudRasterClient.ts`: one worker made on the first
+miss and kept for the page's life, one job running and one waiting (a newer request replaces the waiting one; a running
+job's answer is dropped when nothing listens), a failed worker sends every later job to the main thread; `keepRaster` /
+`keptRasterHit` factored out of F1's cache, whose bytes accounting is unchanged, so a kept hit (a remount, a switch back)
+is taken synchronously with no round trip. `FieldVolume`'s `rasterWant` sits above the mesh's memo, so the job is posted
+in the same render, before the mesh's build; until the answer arrives the field draws without the clouds' layer, as
+before any raster exists; without `Worker` (vitest, SSR) the synchronous path as before. Proofs (`cloudRasterJob.test.ts`):
+the worker's `toHalf` equals three's `DataUtils.toHalfFloat` on 220 000+ values (every half, the midpoints ± one float32
+ulp, the denormal and overflow edges, ±Infinity, NaNs, 50 000 random float32 patterns and 50 000 doubles); `rasterJob` on
+a request structured-cloned to the worker and back equals `keptCloudRaster` under `Object.is` per element (the hoist test's
+censuses, now `cloudCensus.fixture.ts`); the queue against a stand-in Worker (one worker, replace, drop, keep, a switch back
+synchronous, the failed-worker fallback). *Measured (R5):* landing pooled over six fresh contexts 1 064 → 910 ms (the
+raster's 250–256 ms in the worker, its round trip 337–491 ms waiting on the mesh's build: the overlap), the first lit
+frame ~600 → ~270–330 ms — but the switch 736 → 861: NGC 4414's raster is 80 ms (1200 × 1080 texels), nothing to
+overlap, and the answer costs an extra commit and a second march. **R5b:** `WORKER_RASTER_TEXELS` 2 000 000 in
+`cloudOpacity.ts` with `rasterInWorker(width, height, available)` — a raster under it is built on the main thread through
+`keptCloudRaster` (the Milky Way's 3.6 M texels go to the worker, NGC 4414's 1.3 M stay; a vitest at, below and above
+the threshold and with no Worker). Measured against 0f8047e's viewer (medians of 3): landing 996 → 853 ms, switch 571 →
+565; the landing's raster 277–291 ms in the worker (round trip 371–389), the switch's 98–113 on the main thread,
+`worker: false`. `__galaxygenCloudRaster` carries `worker` and `roundTripMs`.
+
+**The gate for the pass (the merged tree, session-78 at 997a01d).** The picture test with the bundles **15 passed, all
+nine captures the committed picture byte for byte** (`DUSTY` 0.96641 / 0.97054 / 0.97765 held) — run on the shader
+commits alone, on the four fixes alone, on the shader + fixes together, on the Worker and on R5b; vitest **481 passed,
+1 skipped** (41 files: 461 + the hoist's reference test, `sameRun`, `useLoad`'s first-key cases, `planeTexture`'s null,
+the worker's four); `typecheck` and `typecheck:e2e` clean; `dotnet test` **109** (the gateway untouched); `test_docs`,
+`test_progress` green; the shader snapshot re-pinned on purpose as `fieldFragment.s78.glsl`; every process stopped, the
+owner's ports untouched; `model.hash` f1fbbb17… before and after.
+
+**The tables of record.** The same stand (`tools/smoothness.py --bundles`: the model with S78's bundles on :8050, the
+gateway pinned on :8060, the viewer `vite build`'s output), the same bundles (re-exported at f1fbbb17…), this machine
+(RTX 4070 through ANGLE D3D11, Chromium headless), back to back; *before* = `main`'s viewer at de6344f, *after* = session-78
+at 997a01d; seconds, run 1 in a fresh browser on its own, then the median of runs 2–5 and their range; the bound ruling
+10's. The first pair (19:13–19:30, `smooth-before` / `smooth-after`) was taken with S77's `verify_clone` suite on one
+core until 19:28 — the before whole, the after's first six minutes — and the before reproduced D240's quiet record within
+0.1 s on every step but the model-cold zoom (the model's computation, F5's); the pair of record below
+(`smooth-before-quiet` / `smooth-after-final`, 2026-11-01 07:02–07:19 local) was taken with nothing else running.
+
+| state | step | before: run 1 | before: runs 2–5 (range) | after: run 1 | after: runs 2–5 (range) | after: api wait | after: client (lower bound) | after: long tasks | over the bound (after) |
+|---|---|---|---|---|---|---|---|---|---|
+| model-cold | first paint (+ starts 1.64 s: model 1.06, gateway 0.58) | 7.50 | 7.79 (7.59–8.18) | 2.03 | **2.13** (1.85–2.38) | 0.31 | 1.80 | 1.06 | 0 / 4 (5 s) |
+| model-cold | switch → NGC 4414 | 3.10 | 3.08 (3.06–3.77) | 0.89 | 0.73 (0.59–0.87) | 0.12 | 0.60 | 0.18 | 0 / 4 (5 s) |
+| model-cold | switch back | 0.83 | 0.74 (0.58–0.86) | 0.61 | 0.55 (0.55–0.56) | 0.06 | 0.49 | 0.06 | 0 / 4 (5 s) |
+| model-cold | star-first | 0.82 | 0.72 (0.59–0.87) | 0.42 | 0.66 (0.41–0.66) | 0.11 | 0.54 | 0.07 | 0 / 4 (5 s) |
+| model-cold | zoom | 26.45 | 27.41 (26.17–28.78) | 26.61 | **26.18** (26.03–26.76) | 25.67 | 0.50 | 0.00 | 4 / 4 (5 s) — F5 |
+| gateway-cold | first paint (+ the gateway's start 0.57 s) | 7.57 | 7.63 (7.47–7.72) | 1.85 | **2.54** (1.82–3.05) | 0.66 | 1.81 | 1.39 | 0 / 4 (5 s) |
+| gateway-cold | switch → NGC 4414 | 3.08 | 3.09 (3.05–3.15) | 0.59 | 0.73 (0.58–0.86) | 0.12 | 0.60 | 0.17 | 0 / 4 (5 s) |
+| gateway-cold | switch back | 0.82 | 0.84 (0.84–0.85) | 0.57 | 0.56 (0.55–0.58) | 0.07 | 0.50 | 0.09 | 0 / 4 (5 s) |
+| gateway-cold | star-first | 0.84 | 0.84 (0.60–0.84) | 0.41 | 0.43 (0.41–0.67) | 0.10 | 0.33 | 0.07 | 0 / 4 (5 s) |
+| gateway-cold | zoom | 1.30 | 1.30 (1.29–1.31) | 1.30 | 1.30 (1.28–1.32) | 0.85 | 0.45 | 0.00 | 0 / 4 (5 s) |
+| warm | first paint | 7.39 | 4.42 (2.90–4.46) | 1.85 | **0.79** (0.79–0.79) | 0.17 | 0.62 | 0.08 | 0 / 4 (1 s); run 1 over |
+| warm | switch → NGC 4414 | 3.09 | 1.61 (1.58–1.62) | 0.58 | **0.85** (0.59–0.87) | 0.10 | 0.75 | 0.18 | 0 / 4 (1 s) |
+| warm | switch back | 0.84 | 0.84 (0.82–0.86) | 0.58 | 0.57 (0.55–0.57) | 0.06 | 0.50 | 0.12 | 0 / 4 (1 s) |
+| warm | star-first | 0.86 | 0.84 (0.82–0.87) | 0.42 | 0.62 (0.58–0.66) | 0.03 | 0.59 | 0.07 | 0 / 4 (1 s) |
+| warm | zoom | 0.52 | 0.53 (0.52–0.53) | 0.53 | 0.52 (0.52–0.53) | 0.05 | 0.47 | 0.00 | 0 / 4 (1 s) |
+
+The processes' starts, outside every step and carried on the cold rows' labels: the model 1.06 s to its first `/api` answer (median of five), the gateway 0.57–0.58 (median of ten); `model.hash` f1fbbb17eff3c1dc003abcd38117cb1f. The probe: every 264 ms (median interval); its own cost 22 ms a call in the page before (median of 1 516; 90th percentile 43, at most 129) and after (1 531; 46; 491), round trip 25 / 22 ms — a duty cycle of 8 % of the page's main thread in both; `in_flight` never seen above 1 and `waiting` above 2, no 429.
+
+**Reading.** Warm, every step is inside ruling 10's 1 s in every one of runs 2–5: the first paint **0.79 s in all four** (the bracket 0.52–0.79; before 4.42, whose range 2.90–4.46 is the profile's bimodal landing — one raster or two), the switch to NGC 4414 0.85 (0.59–0.87; before 1.61), the switch back 0.57 (0.84), star-first 0.62 (0.84), the zoom 0.52 (0.53). Run 1, a fresh browser: the first paint 1.85 (before 7.39) — the program's ~0.8 s build on a renderer that has never seen it, over 1 s as any first visit is, and 5.5 s less than before; the switch 0.58. Cold, the first paint 2.13 model-cold (1.85–2.38; before 7.79) and 2.54 gateway-cold (1.82–3.05; before 7.63), inside 5 s in every run, the long tasks 1.06–1.39 s (the build, the first raster's textures and the mesh on a fresh page); the cold switch 0.73 (3.08); the model-cold zoom 26.2 s against 5, F5 (the model's computation of the galaxy and the level-2 ring draw in a fresh process: 25.7 of it the `/api/bright` miss), the gateway-cold zoom 1.30 inside. The before table reproduces D240's record (4.47 / 1.64 / 7.75 / 7.67 → 4.42 / 1.61 / 7.79 / 7.63); the first after table, taken at 0f8047e before the Worker and beside the suite's last minutes, read the warm first paint 1.11 (0.94–1.32, two of four over) — R5/R5b's Worker and the quiet machine take it to 0.79 in every run. The client's work after the last answer on the warm landing is now ~0.6 s (api wait 0.17, long tasks 0.08): the mesh's build overlapped by the raster's worker, React's commits and the chain of loads after the sample.
+
+**What stays over the bound, and what is left under it (R4's order; each with its remedy and who rules it).** (i) *The
+model-cold zoom, 26.2 s against 5:* F5, the owner's (ruling 15: an eager warm after the landing, a warm replica, or the
+ring-first draw published); against a warm model the zoom is 1.30 cold and 0.52 warm; nothing in `model/` moves.
+(ii) *A first visit's first paint, 1.85 s warm-servers in a fresh browser:* the program's ~0.8 s build on a renderer that
+has never seen it (6.8 s before) plus the fresh page's first raster and mesh; inside the 5 s a new visitor's cold bound
+allows, over the 1 s a returning visitor's warm row meets — the bound's own two readings (D240). (iii) *Under the bound,
+named for the record — **#208**:* the client's ~0.6 s of own work left on the warm landing (the field's loads asked only
+after the star sample has answered and the Galaxy tab mounted, ~0.3 s of the chain; the mesh's build ~0.35 s, overlapped
+by the raster's worker but still the critical path's; React's commits; three's `checkShaderErrors` 15–27 ms), the
+switch's new WebGL2 context (~0.15 s: the Canvas re-keyed per template is a fresh camera by design, D213 ruling 5, so
+keeping it may move the frames — the owner's), and R3's side effect (loaders the picture walk mounts and drops within a
+settle now send their existing keys: 303 requests against 264). (iv) *Unmeasured:* the deployed wire and the replica's
+wake (#204, #205), where F4's compressed bytes and the client's ~0.8 s now meet the network — the first thing after the
+owner's deploy.
+
+**The register.** +1: **#208** (above) — 135 open = 11 permanent + 124 carried, 56 discharged. No model rule, stage,
+field, number, row or pin moved; nothing under `model/galaxy`; T29 marked done in `VIEWER_TASKS.md` with its remainder
+pointed at #208 and F5; F6 closed by measurement in its text. Two more `machine_pinned` marks (21 cases): the readings
+above. The #207 session's branch `session-78-207` (the arm count's continuity test read by chain identity; its dispatched
+run 41191405818 green, 1 708 passed; its 400-seed sweep clean) awaits the owner's merge and renumbers to D243 / #209
+behind this entry, as both sessions' notes in the shared folder agreed.
+
+**Lessons** in `LESSONS.md` (S78's block): the constant bound unrolled, the memo keyed on a late value, the hoist proved by
+the old loop, the first key and the view-keyed loaders, the GPU's clock state, the two sessions' numbering.
+
+**The close.** [CLOSE]

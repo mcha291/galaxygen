@@ -1810,3 +1810,29 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   for. A red workflow nobody reads is the same as none (S76's finding, the lesson's other half).
 - [infra] Count what you claim: #206 said "eighteen" and listed seventeen; the collection under the mark (19 cases,
   one of them #207's) is the number of record, not the prose's.
+
+## From S78 (T29, the landing inside ruling 10's bound; a Fable lead, three Opus builders in worktrees and an Opus profiler)
+
+- [viewer] A constant loop bound is an invitation to unroll: ANGLE marks no loop `[loop]`, so Direct3D's compiler unrolled
+  the march's 96 steps (each with 8 sub-samples and 20 pieces) and the program took 6.8 s to link — the whole of a first
+  visit's landing. A uniform bound compiled in 0.8 s at every step count, marched at the same speed per frame (0.985–1.001
+  of the old, nine captures) and drew the same bytes. Measure the compile per variant of the text before pinning a
+  shader, and keep the instrument (`npm run compile`).
+- [viewer] A memo keyed on a value that arrives later is built twice: the clouds' raster keyed on the drawn render's
+  layer height, null until `/api/layer` answered, so every landing rasterised the census once at the wrong shape and once
+  at its own — and the first build's long task held the render's body unread, which D240 read as "1.5 s of transfer".
+  Gate a derived value on every input being of one run, and attribute a wait to the main thread before the wire.
+- [viewer] Hoist what depends on the inner index out of the outer loop: 71 % of the raster's time was `cos` and `sin` of a
+  value that changed only with the inner loop, recomputed per outer iteration. The hoist is the same expression, so the
+  bits are the same — prove it with the old loop kept verbatim in the test as the reference.
+- [viewer] A settle is for the user's moves; a loader's first key has none before it: three loaders in a chain each
+  waited the whole 350 ms on mount. But a loader keyed on the view can mount while the view moves, and asked at once its
+  first key is a frame of the drag: the picture walk's request log (every request, before and after) found two keys
+  no settled view makes, and the rule was narrowed to loaders not keyed on the view. Log the requests of a fixed walk
+  before and after any change to when a loader asks.
+- [viewer] A single GPU timer sample after a pause reads the clock state, not the shader: the same march read 5 and 50 ms
+  on one thumbnail across pages, and a one-sample "regression" of 227 → 259 ms vanished when the GPU was kept busy
+  (a nudge every animation frame, the first readings dropped: ±1 %). `frames.json`'s `gpu_ms` is a first march after a
+  settle; the march probe (`npm run march`) is the per-frame cost.
+- [close] Two sessions open on one day both take "the next number": write the claim into the shared notes at the open,
+  and let the later merge renumber (the #207 session's note and this one's settled D242 / #208 for S78 by that rule).
