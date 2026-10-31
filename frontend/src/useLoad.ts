@@ -139,11 +139,18 @@ const subscribe = (listener: () => void) => {
  * a changed input is a move of the user's, and the loader's first render counts as one. A `null` input names nothing
  * yet - its cells wait on an answer (the bright table's layout) - so its first naming is that answer's doing and keeps
  * the last move's time. `undefined` is a loader without an input: every key waits the whole settle, as before F3.
+ *
+ * S78: the first key a loader asks is asked at once - nothing before it can be a drag, so there is nothing to settle
+ * (on the landing three loaders in a chain each waited the whole settle on mount). `wait` is told the key: until a
+ * request has gone out (`fired`) the first non-null key waits 0; every later key settles as above.
  */
 export class InputClock {
   private input: string | null | undefined = undefined;
   private at = 0;
   private seen = false;
+  /** The first non-null key this loader was asked for (null: none yet), and whether any request has gone out. */
+  private first: string | null = null;
+  private asked = false;
 
   see(input: string | null | undefined, now: number): void {
     if (!this.seen) {
@@ -157,14 +164,28 @@ export class InputClock {
     this.input = input;
   }
 
-  /** How long a key asked at `now` waits: the rest of the settle since the user's last move (0 once it has passed). */
-  wait(settleMs: number, now: number): number {
+  /**
+   * How long a key asked at `now` waits: the rest of the settle since the user's last move (0 once it has passed) - or 0
+   * for the loader's first key (`key`, S78), until its request has gone out. A cleanup and re-run of the same effect
+   * before the timer fires (StrictMode's) asks the first key again, at once.
+   */
+  wait(settleMs: number, now: number, key?: string): number {
+    if (key !== undefined && !this.asked) {
+      if (this.first === null) this.first = key;
+      if (key === this.first) return 0;
+    }
     return this.input === undefined ? settleMs : Math.max(0, settleMs - (now - this.at));
+  }
+
+  /** A request has gone out: from now every key settles. */
+  fired(): void {
+    this.asked = true;
   }
 }
 
 /**
- * Load whatever `key` describes, once it has stopped changing for `settleMs`.
+ * Load whatever `key` describes, once it has stopped changing for `settleMs` - the loader's first key at once (S78,
+ * InputClock).
  *
  * The previous value stays available (`last`, and `busy` says a newer one is on
  * its way) so a view keeps showing the old galaxy rather than blanking; a newer
@@ -197,8 +218,9 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
     const abort = new AbortController();
     // An answer for this key: published now, or held until the swap completes.
     const answer = (publish: () => void, failure: string | null) => loads.answer(token, publish, failure);
-    const wait = clock.wait(settleMs, performance.now());
+    const wait = clock.wait(settleMs, performance.now(), key);
     const timer = setTimeout(() => {
+      clock.fired();
       setBusy(true);
       loader.current(abort.signal)
         .then((value) => answer(() => setResult({ state: "ready", value }), null))
