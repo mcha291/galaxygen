@@ -1394,6 +1394,7 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
     assert spec.ROW_NII_HALPHA_GRADIENT in spec.MISSES and spec.ROW_HII_LF_SLOPE not in spec.MISSES
 
 
+@pytest.mark.machine_pinned  # S78 (D242): the same-bits assert below - on two of three runners (main's ci run 41173776182 and 41173556007) row 37's layer-on reading differs from the layer-off one by one ulp (-0.0983089574578779 against -0.09830895745787792); S77's dispatched run landed it. The approx asserts hold everywhere.
 def test_rows_35_and_37_on_the_layer_on_census_as_measured(runs):
     """The layer-on census's readings of rows 35 and 37 as measured on the final model (S60, D219), for the record
     and not judged (I3: the rows are judged layer-off, in test_i3). Placed by the arms' census they are another
