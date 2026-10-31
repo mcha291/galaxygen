@@ -1,4 +1,4 @@
-# BRIEF — after S77: CI green again, the model's hash moved; next is the owner's deploy (a new image and pin) and the probe on the deployed site
+# BRIEF — after S77 (and S79's #207): CI green again, the model's hash moved; next is the owner's deploy (a new image and pin) and the probe on the deployed site
 
 **The state (2026-10-31).** S76 (D240) built W5's probe and ran it here (the subscription still `Disabled` by `az rest`):
 `frontend/e2e/smooth/smooth.probe.ts` on its own config (`npm --prefix frontend run smooth`; `GALAXYGEN_URL`, `_RUNS`,
@@ -10,8 +10,10 @@ parse and the first raster), the switch to NGC 4414 warm (≈ 1.8 s) and the mod
 in a fresh process, F5) are over — T29. S77 (D241) made the `ci` workflow green (#206 discharged): the machine pins marked
 `machine_pinned` and skipped under `CI`, `JSON_DEPTH_CAP` 64 at every parse, Python 3.14.4, the full suite on `main` /
 nightly / dispatch with a fast job elsewhere. **The model's hash is f1fbbb17eff3c1dc003abcd38117cb1f** (was 4f0c8401…):
-the next deploy builds a new model image and pins the gateway to it. Register 134 open = 11 + 123, 56 discharged; next
-number **#208**, decisions from **D242**, board row 78 (none planned), acceptance rows from 38.
+the next deploy builds a new model image and pins the gateway to it. S79 (D242, a side session, no row) read #207 on the
+runner's draw and discharged it — the continuity test's hard ends by identity, its bound the taper's own rate — and opened
+#208 (the per-piece pitch draw has no floor). Register 134 open = 11 + 123, 57 discharged; next
+number **#209**, decisions from **D243**, board row 78 (none planned), acceptance rows from 38.
 
 ## What waits on the owner
 - **The subscription and the deploy** (D239 (i)–(ii)): re-enable it in the portal, then from a checkout of `main` whose
@@ -25,15 +27,13 @@ number **#208**, decisions from **D242**, board row 78 (none planned), acceptanc
 - **Rulings:** F5, the model-cold zoom — an eager warm after the landing (wakes the replica on every visit, ruling 9), a
   warm replica (15 b, paid), or the ring-first draw published to the viewer (15 c); #205's remedy with it; D239's sizes,
   TTL and readiness probe; D241's two — CI's full suite off every branch push (D24 amended), and whether the pins get a
-  per-platform capture; T29's order (the shader program first); T20; #197, #202, #203; #207's reading.
+  per-platform capture; T29's order (the shader program first); T20; #197, #202, #203; #208 with #142 (a floor on the pitch).
 
 ## What an agent session can do without the deploy (each the owner's word)
 - **T29, the landing inside the bound:** the march program smaller or shared (re-baselining `fieldFragment.s66.glsl`'s
   snapshot with the reason; the picture test byte for byte is the gate), the first raster in a Worker, F6's `precision=f4`
   render (the bundle plan's meanings and the frames to re-check). Measure with `tools/smoothness.py --bundles` before
   and after, the machine quiet (a run beside the suite is not comparable: S76's second pass).
-- **#207:** the continuity test's hard ends found by chain identity, not a 1e-9 coincidence; run on the runner's draw
-  through a dispatched full `ci` run; seed 49's 2.47e-6 step read.
 
 ## Read
 - D240 (R1–R5, the tables, F1–F6, the review and its second pass), D241 (#206's rulings R1–R6); `BUILD_IV.md` §5 W5,

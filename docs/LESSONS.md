@@ -1810,3 +1810,17 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   for. A red workflow nobody reads is the same as none (S76's finding, the lesson's other half).
 - [infra] Count what you claim: #206 said "eighteen" and listed seventeen; the collection under the mark (19 cases,
   one of them #207's) is the number of record, not the prose's.
+
+## From S79 (#207, the arm count's continuity test read on the runner's draw; a side session beside S78)
+
+- [infra] Two floats that agree to the bit on one machine are two on another: a test that reads "one point" off the
+  equality of two computed values (a kink's two ends, a probe that must not cross a break) is a machine pin in disguise,
+  and so is the midpoint between two breaks that another machine splits. Read identity — which chain, which column,
+  which row of the pin — and compare a float only with the bits it was made from.
+- [field] A fixed threshold on a continuous quantity is a slope nobody derived: "a part in 1e10 moves the count by
+  under 1e-6" assumed a rate under 1e4 per unit ln R, and a piece of 0.01 degrees runs 5 600 of arc per unit ln R, so
+  its taper enters a ring within parsecs. Derive the bound from the mechanism's own rate — it was a hundred times
+  tighter where the assumption held and right where it did not — and record what the rate itself implies (#208).
+- [audit] A failing assert names its constant: the runner's log said `< 1e-05`, the midpoint's bound, and the entry
+  said "the first assert". Read the message's number before writing which claim failed; the two readings point at
+  different mechanisms.

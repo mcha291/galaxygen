@@ -15259,3 +15259,62 @@ S76's run covered everything but these commits, the dispatched run on the runner
 (`ci` 41173776182, the `test` job; `image` 41173776123 beside it, building the images that carry the new hash), which the
 next open reads along with S77's `verify_clone`. The old workflow's last run, on S76's merge (41173556007), will finish
 red as #206 described — the last of its kind.
+
+
+### D242. S79, debt #207: the arm count's continuity test reads its hard ends by identity and its bound from the taper's own rate, and runs on the runner's draw; #207 discharged, #208 opened
+
+**The commission.** S77's open item for an agent (`BRIEF.md`: "#207: the continuity test's hard ends found by chain
+identity, not a 1e-9 coincidence; run on the runner's draw through a dispatched full `ci` run; seed 49's 2.47e-6 step
+read"), given on 2026-10-31 by the lead session to a side session beside S78 (T29), on `session-78-207` cut from `main`
+at de6344f (S77's close); the model pinned — nothing under `model/galaxy` touched, every byte there being in the hash
+(D235) — and rule B5: no tolerance widened. Numbered S79 here so that the two side sessions do not share a name; no
+board row (none ruled), no tag.
+
+**The reading, before any change.** (1) *The runner's failure* (run 40641693964 on `main` at 671cf9f, 2026-10-28) was
+the test's *second* assert — `assert … < 1e-05`, the midpoint probe — not the first, as #207's entry said (D241 had it
+right: "the midpoint step"). A probe of a part in 1e9 from a midpoint sees a unit step only by crossing a break, so two
+breaks lay within 2e-9 of each other with a hard end between them: Norma's kink. Its two stretches (Reid's row:
+pitches −1.0 then 19.5 degrees about the kink at 4.46 kpc) both END there; `pinned_pieces` makes the kink as
+`log(4.46) − 0 · tan` for both, but the table holds each stretch's start, and `Pieces` makes each end as
+`log(exp(x_start)) + Δβ |tan p|` — two different sums, which land on one double here (1.4951487660319727: one break)
+and on two an ulp apart on the runner's libm (two breaks, the midpoint between them probed across the kink). Here the
+same pair stands at 8.769 kpc for a drawn chain's kink (two breaks 4.4e-16 apart), where the probe crossed harmlessly:
+a kink is continuous. (2) *Seed 49.* The Milky Way's `texture_seed` 49 births chain 11 at 11.6625 kpc with a first
+piece of pitch 0.0103 degrees, extent 0.82 rad, radial reach 1.5e-4 in ln R; its weight a part in 1e10 past the start
+is 2.47e-6 = 1e-10 · R/(w_law sin p) — the taper's own rate, read along the chain (1/sin p = 5 600 of arc per unit ln R);
+the chain enters at weight 0 and reaches 1 within 1.7 pc, the grid's rings 150 pc apart there. The law's taper is
+intact; the test's fixed 1e-6 assumed a slope the law never promised. The same seed's chain 13 (0.0706 degrees) steps
+3.6e-7, under the old number by luck. (3) *The default draws.* On the three templates every edge that is no hard end
+moves by 1e-9 to 8.5e-9 at a part in 1e10, under a derived bound of 8e-9 to 6.3e-8; the one step is Norma's kink,
+−0.819 (chain 0's weight; 2 → 1 crossing chains); the three joins (7.42, 10.31, 13.08 kpc) move by under 5e-9 — the
+ninth follow-up's taper at a join holds — and the edges where the crossing set empties move by nothing more (the floor
+of 1 is on every ring a chain reaches since the eleventh follow-up), so that exemption is gone too.
+
+**As built (`tests/test_pieces.py`, two commits on `session-78-207`).** `hard_ends(p, pinned_rows)`: the join column's
+flagged ends and, for a pin row whose two pitches differ in sign, both stretches' outer ends where the inner stretch
+leads (Norma) or both inner ends where it trails, the chain the row's index in the pin — every value one of
+`Pieces.breaks`' own bits, so an edge is hard by `np.isin`'s equality. `taper_rate(sp, lo, hi)`: per piece crossing
+either radius, Δln R · R/(w_law |sin p|) + the radius' own move + |Δw_law|/w_law, summed — each step of the count's
+arithmetic (the greatest of a chain's pieces, the sum over chains, the floor at 1) moves by no more than its arguments.
+`chains_read` for the messages (each chain's weight below and above). The continuity test asserts |step| ≤ the bound at
+every edge that is not hard and, between consecutive edges, |moved| ≤ the bound where the probe stays between the two
+breaks; a pair of breaks closer than the probe must be the ends of one chain by identity (a kink's two bits, a turn, a
+continuation's start on its stretch's), the message naming the pieces and chains otherwise. The record (edges,
+stepped, joins, jump) is `test_the_count_s_steps_are_the_record_s`, `EXPECTED_STEPS` unchanged — (55, 1, 3, 0.349),
+(61, 0, 1, 0.0), (31, 0, 1, 0.0) — its Milky Way leg `machine_pinned` (one break or two is this machine's rounding; the
+census's joins differ on the runner, `EXPECTED_JOINS_300`'s (0, 4, 9) there against (0, 4, 10) here), the other legs in
+CI as before; the continuity test's mark lifted on all three legs. `untapered_ends` retired. Nothing drawn changes.
+
+**The sweep here** (texture seeds 0–299 of the Milky Way, 0–49 of `ngc_4414` and of the default): SWEEP_RESULT.
+
+**The runs.** The push of 1482088: `fast` green (41191405570). Dispatched on it, the full `test` job (41191405818):
+RUN_RESULT.
+
+**What this is not.** No tolerance widened: the bound is 1e-8–6e-8 at the templates' pitches against the 1e-6 it
+replaces, and what the gate's sentence says at a near-circular piece; no pinned number moved (the three records stand);
+nothing under `model/galaxy` changed. The reading does not make the *record* bit-independent — one break or two, which
+pieces meet — so it stays pinned here. That a chain can enter a ring's count within parsecs is the law's, not the
+test's: #208, for the owner (the remedy #142 already names).
+
+**The register.** −1, +1: **#207 discharged** (its "first assert" corrected to the midpoint's); **#208 opened** (the
+per-piece pitch draw has no floor) — 134 open = 11 permanent + 123 carried, 57 discharged.
