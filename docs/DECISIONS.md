@@ -15251,3 +15251,11 @@ here (C2). The owner may re-rule either.
 56 discharged. `model.hash` 4f0c84010f258601fb80b1a99e7dbbd4 → **f1fbbb17eff3c1dc003abcd38117cb1f**: the next deploy
 builds a new model image and pins the gateway to it (`BRIEF.md`); the bundles re-export in the image build (D235).
 Nothing drawn changes; no stage, field, number or row moved.
+
+**After the merge (2e9639e on `main`, tag s77).** The fast six green on the merged checkout (`test_docs`, `test_progress`,
+`test_hook`, `test_graph`, `test_api`, `test_bundle`: 130 passed); the full suite was not run here on the merged tree —
+S76's run covered everything but these commits, the dispatched run on the runner covered these commits before the merge
+(disjoint files, a clean merge), and the push of the merge started the new workflow's own full run on `main`
+(`ci` 41173776182, the `test` job; `image` 41173776123 beside it, building the images that carry the new hash), which the
+next open reads along with S77's `verify_clone`. The old workflow's last run, on S76's merge (41173556007), will finish
+red as #206 described — the last of its kind.
