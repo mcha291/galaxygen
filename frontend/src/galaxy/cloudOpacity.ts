@@ -381,6 +381,21 @@ export function keptCloudRaster(
   return keepRaster(key, packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf), capBytes);
 }
 
+/**
+ * The least raster, in texels (width x height), built in the clouds' raster worker (S78, R5b: the worker only where
+ * the overlap can pay). Measured at S78 (profile.mjs, 0f8047e against 99a6263): the Milky Way's 2000 x 1800 = 3.6 M
+ * texels took 250-280 ms on the main thread and, in the worker, overlapped the field mesh's build (the landing's
+ * median ready 1064 -> 910 ms over six runs); NGC 4414's 1200 x 1080 = 1.3 M took 80 ms, with no build to overlap, and
+ * the worker cost an extra commit and march (the switch's median 736 -> 861 ms). Below this a raster is built on the
+ * main thread through keptCloudRaster, as where there is no Worker.
+ */
+export const WORKER_RASTER_TEXELS = 2_000_000;
+
+/** Whether a raster of width x height texels is built in the worker: one is `available` and it is not under WORKER_RASTER_TEXELS. */
+export function rasterInWorker(width: number, height: number, available: boolean): boolean {
+  return available && width * height >= WORKER_RASTER_TEXELS;
+}
+
 /** The raster kept under `key` (rasterKey), made the most recently asked; undefined if none is kept. */
 export function keptRasterHit(key: string): KeptRaster | undefined {
   const hit = kept.get(key);

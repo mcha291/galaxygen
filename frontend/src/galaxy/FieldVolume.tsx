@@ -44,7 +44,7 @@ import {
   loadRender,
   sameRun,
 } from "../api";
-import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster, keptRasterHit, rasterKey } from "./cloudOpacity";
+import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster, keptRasterHit, rasterInWorker, rasterKey } from "./cloudOpacity";
 import { type RasterArrival, listenRaster, rasterWorkerAvailable, startRaster } from "./cloudRasterClient";
 import { rasterRequest } from "./cloudRasterJob";
 import type { CellLayout } from "./brightTiles";
@@ -889,7 +889,8 @@ export function FieldVolume({
     const width = gridR.n * perCell;
     const height = gridPhi.n * perCell;
     const started = performance.now();
-    if (!rasterWorkerAvailable()) {
+    // S78 (R5b): only a raster big enough for the overlap to pay goes to the worker (WORKER_RASTER_TEXELS).
+    if (!rasterInWorker(width, height, rasterWorkerAvailable())) {
       const built = keptCloudRaster(census, gridR.lo, gridR.hi, width, height, rasterShape, DataUtils.toHalfFloat);
       return { key: "", perCell, now: { key: "", raster: built, ms: performance.now() - started, roundTripMs: 0, worker: false } };
     }

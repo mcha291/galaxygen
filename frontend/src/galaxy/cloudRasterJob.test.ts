@@ -11,7 +11,7 @@ import { toHalfFloat } from "three/src/extras/DataUtils.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { syntheticCensus } from "./cloudCensus.fixture";
-import { type CloudColumns, type KeptRaster, type RasterShape, keptCloudRaster, rasterKey } from "./cloudOpacity";
+import { type CloudColumns, type KeptRaster, type RasterShape, WORKER_RASTER_TEXELS, keptCloudRaster, rasterInWorker, rasterKey } from "./cloudOpacity";
 import { type RasterAnswer, type RasterMessage, RASTER_COLUMNS, answerTransfer, rasterJob, rasterRequest } from "./cloudRasterJob";
 
 const f32 = new Float32Array(1);
@@ -130,6 +130,19 @@ describe("the worker's job across the boundary is keptCloudRaster's raster to th
     expect(transfer.length).toBe(5);
     expect("cloud_axis_ratio" in request.clouds).toBe(false);
     expectSameRaster(rasterJob(request), keptCloudRaster(viewed, 0, 20, 40, 36, {}, DataUtils.toHalfFloat, 0));
+  });
+});
+
+describe("which rasters go to the worker (S78, R5b: only where the overlap can pay)", () => {
+  it("below WORKER_RASTER_TEXELS on this thread, at or above it in the worker, and never without one", () => {
+    expect(WORKER_RASTER_TEXELS).toBe(2_000_000);
+    expect(rasterInWorker(2000, 1800, true)).toBe(true); // the Milky Way's, 3.6 M
+    expect(rasterInWorker(1200, 1080, true)).toBe(false); // NGC 4414's, 1.3 M
+    expect(rasterInWorker(2000, 1000, true)).toBe(true); // exactly at it
+    expect(rasterInWorker(1999, 1000, true)).toBe(false); // one row of texels under it
+    expect(rasterInWorker(2001, 1000, true)).toBe(true);
+    expect(rasterInWorker(2000, 1800, false)).toBe(false);
+    expect(rasterInWorker(1200, 1080, false)).toBe(false);
   });
 });
 
