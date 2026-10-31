@@ -86,6 +86,12 @@ public static class ModelPipeline
                     headers[ModelResult.CacheHeader] = ModelResult.Hit;
                     headers[ModelRoutes.StagesHeader] = "";
                 }
+                // Every /api answer varies by the accepted encoding (S76's review, G2: the cache stores one body per
+                // encoding), the identity one too - the compression says so only on the bodies it compresses.
+                if (!headers.Vary.Any(v => v is not null && v.Contains(ModelCachePolicy.EncodingHeader, StringComparison.OrdinalIgnoreCase)))
+                {
+                    headers.Append(Microsoft.Net.Http.Headers.HeaderNames.Vary, ModelCachePolicy.EncodingHeader);
+                }
                 return Task.CompletedTask;
             });
         }
