@@ -19,10 +19,13 @@
 //
 // The ready instant. `settle` waits READY.quietMs (1.5 s) of network quiet and three still frame sums 250 ms apart
 // before it calls a view ready: that is the instrument's confirmation, not the user's wait. Here the frame sum is
-// probed every PROBE_MS (each probe's own cost adds to that; the results record the intervals), settle's criteria
-// decide THAT the view is ready (no /api in flight and none begun or ended for quietMs + (stillProbes - 1) x probeMs
-// after the step began, the sum lit and unchanged for stillProbes x probeMs), and the ready instant is the page-clock
-// time of the first probe of that final still run: when the frame first took the value it then held.
+// probed at the picture test's own cadence, READY.probeMs (S76's review, G1: every 50 ms the probe - a frame drawn,
+// re-drawn into a float target and 18.4 MB read back, 13-39 ms a call - loaded the page it measured), settle's
+// criteria decide THAT the view is ready (no /api in flight and none begun or ended for quietMs + (stillProbes - 1) x
+// probeMs after the step began, the sum lit and unchanged for stillProbes x probeMs), and the ready instant is a
+// BRACKET: from the last probe whose sum differed (or the step's start) to the first probe of that final still run,
+// when the frame was first seen at the value it then held. The results carry both ends; the table reads the upper.
+// The probe's own cost is measured on every call (in the page, and the round trip) and stated with the table.
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -39,8 +42,8 @@ const STATE = process.env.GALAXYGEN_STATE ?? "warm";
 const HEALTHZ = process.env.GALAXYGEN_HEALTHZ ?? `${SITE}/healthz`;
 const OUT = resolve(process.env.GALAXYGEN_OUT ?? fileURLToPath(new URL(`../.output/smooth/${STATE}.json`, import.meta.url)));
 const MODEL_URL = (process.env.GALAXYGEN_MODEL_URL ?? "").replace(/\/+$/, "");
-/** How often the frame sum is probed, ms: the ready instant's nominal resolution. */
-const PROBE_MS = 50;
+/** How often the frame sum is probed, ms: the picture test's cadence, and the ready bracket's width at most. */
+const PROBE_MS = READY.probeMs;
 const HEALTHZ_MS = 250;
 /** The template switched to and back from. */
 const OTHER = "ngc_4414";
@@ -202,8 +205,13 @@ function covered(spans: [number, number][]) {
 
 interface StepResult {
   step: string;
-  /** The ready instant, ms from the step's start; null when the view never became ready. */
+  /**
+   * The ready instant's upper bound, ms from the step's start: the first probe of the final still run, when the frame
+   * was first seen at the value it then held; null when the view never became ready. The split below is read to it.
+   */
   ready_ms: number | null;
+  /** The ready instant's lower bound: the last probe whose sum differed from the final one (0, the step's start, if none). */
+  ready_lo_ms: number | null;
   /** When settle's criteria first held, ms from the step's start (the instrument's confirmation). */
   confirmed_ms: number | null;
   /** The first lit frame, ms from the step's start. */
@@ -227,7 +235,11 @@ interface StepResult {
   statuses: Record<string, number>;
   longest: { route: string; method: string; ms: number; bytes: number | null; cache: string | null; source: string | null; query: number } | null;
   healthz: { samples: number; errors: number; inFlight: number; waiting: number; statuses: number[] };
-  probes: { count: number; interval_ms_median: number | null; cost_ms_median: number | null };
+  /**
+   * The probes: how many, their interval, and their own cost - in the page (the frame drawn, re-drawn into a float
+   * target and read back: main-thread time the page does not spend on the step), and the round trip from the runner.
+   */
+  probes: { count: number; interval_ms_median: number | null; cost_ms_median: number | null; cost_ms_max: number | null; round_trip_ms_median: number | null; costs: number[] };
   /** The main thread's long tasks (over 50 ms) before the ready instant: their count and summed ms, and the longest. */
   long_tasks: { count: number; ms: number; longest: number };
   requests: Asked[];
@@ -254,10 +266,14 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
   let error: string | null = null;
   let runKey = "";
   let runStart = 0;
+  // The probe before the current still run began: the ready bracket's lower end (the step's start if none).
+  let runBefore = t0;
+  let lastAt = t0;
   let firstLit: number | null = null;
   let confirmed: number | null = null;
   const probeAt: number[] = [];
   const probeCost: number[] = [];
+  const roundTrip: number[] = [];
   const trace: number[][] = [];
   try {
     await act();
@@ -273,6 +289,7 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
       break;
     }
     let probe: { at: number; done: number; sum: number[] | null; stand: number[] | null };
+    const asked = Date.now();
     try {
       probe = await page.evaluate(() => {
         const at = Date.now();
@@ -288,7 +305,8 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
       probe = { at: Date.now(), done: Date.now(), sum: null, stand: null };
     }
     probeAt.push(probe.at);
-    probeCost.push(probe.done - probe.at);
+    if (probe.sum) probeCost.push(probe.done - probe.at);
+    roundTrip.push(Date.now() - asked);
     trace.push([probe.at - t0, ...(probe.sum ?? []).map((v) => Number(v.toPrecision(7))), ...(probe.stand ?? []).map((v) => Number(v.toPrecision(6)))]);
     const lit = !!probe.sum && probe.sum.some((v) => v > 0);
     const key = lit ? probe.sum!.join(",") : "";
@@ -296,7 +314,9 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     else if (key !== runKey) {
       runKey = key;
       runStart = probe.at;
+      runBefore = lastAt;
     }
+    lastAt = probe.at;
     if (lit && firstLit === null) firstLit = probe.at;
     const now = Date.now();
     const quiet = net.inflight === 0 && now - Math.max(net.last, t0) >= quietNeeded;
@@ -336,6 +356,7 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
   return {
     step: label.split("-").pop()!,
     ready_ms: ready,
+    ready_lo_ms: ready === null ? null : Math.max(0, runBefore - t0),
     confirmed_ms: confirmed === null ? null : confirmed - t0,
     first_lit_ms: firstLit === null ? null : firstLit - t0,
     error,
@@ -353,7 +374,14 @@ async function step(page: Page, net: Net, label: string, act: () => Promise<void
     statuses: count(api.map((a) => String(a.status))),
     longest,
     healthz: seen,
-    probes: { count: probeAt.length, interval_ms_median: median(intervals), cost_ms_median: median(probeCost) },
+    probes: {
+      count: probeAt.length,
+      interval_ms_median: median(intervals),
+      cost_ms_median: median(probeCost),
+      cost_ms_max: probeCost.length ? Math.max(...probeCost) : null,
+      round_trip_ms_median: median(roundTrip),
+      costs: probeCost,
+    },
     long_tasks: { count: tasks.length, ms: tasks.reduce((s, x) => s + x[1], 0), longest: Math.max(0, ...tasks.map((x) => x[1])) },
     requests: asked,
     trace,
@@ -442,7 +470,7 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     }
     runs.push({ run: n, renderer, steps });
     await context.close();
-    for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)} s (api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}, long tasks ${fmt(s.long_tasks.ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
+    for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)} s [from ${fmt(s.ready_lo_ms)}] (probe ${s.probes.cost_ms_median ?? "-"} ms a call; api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}, long tasks ${fmt(s.long_tasks.ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
   }
 
   mkdirSync(dirname(OUT), { recursive: true });
@@ -459,16 +487,21 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   writeFileSync(OUT, `${JSON.stringify({ about, runs }, null, 1)}\n`, "utf-8");
 
   const names = [...new Set(runs.flatMap((r) => r.steps.map((s) => s.step)))];
-  const lines = [`| ${STATE} | ready s, median (range) | api wait s | client s | /api reqs | longest /api |`, "|---|---|---|---|---|---|"];
+  const lines = [`| ${STATE} | ready s, median (range) [lower end] | api wait s | client s | /api reqs | longest /api |`, "|---|---|---|---|---|---|"];
   for (const name of names) {
     const got = runs.map((r) => r.steps.find((s) => s.step === name)).filter((s): s is StepResult => !!s);
     const ok = got.filter((s) => s.ready_ms !== null);
     const pick = (f: (s: StepResult) => number | null) => ok.map(f).filter((x): x is number => x !== null);
     const long = ok.map((s) => s.longest).filter((l) => !!l).sort((a, b) => b!.ms - a!.ms)[0];
     lines.push(
-      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))} (${range(pick((s) => s.ready_ms))})${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
+      `| ${name} | ${fmt(median(pick((s) => s.ready_ms)))} (${range(pick((s) => s.ready_ms))}) [${fmt(median(pick((s) => s.ready_lo_ms)))}]${ok.length < got.length ? ` ${got.length - ok.length} failed` : ""} | ${fmt(median(pick((s) => s.api_wait_ms)))} | ${fmt(median(pick((s) => s.client_ms)))} | ${median(ok.map((s) => s.api_requests)) ?? "-"} | ${long ? `${long.route} ${fmt(long.ms)} s` : "-"} |`,
     );
   }
-  console.log(`\n${lines.join("\n")}\n\nwritten ${OUT}`);
+  const costs = runs.flatMap((r) => r.steps.flatMap((s) => s.probes.costs));
+  const cost = median(costs);
+  console.log(
+    `\n${lines.join("\n")}\n\nthe probe: every ${PROBE_MS} ms, ${cost === null ? "-" : cost.toFixed(0)} ms a call in the page (median of ${costs.length}, ` +
+      `at most ${costs.length ? Math.max(...costs) : "-"}): a duty cycle of ${cost === null ? "-" : ((100 * cost) / PROBE_MS).toFixed(0)} %\n\nwritten ${OUT}`,
+  );
   await side.dispose();
 });

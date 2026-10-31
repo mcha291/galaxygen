@@ -261,7 +261,7 @@ def fmt(ms: float | None) -> str:
 
 
 def table(merged: dict[str, dict[str, Any]]) -> str:
-    rows = ["| state | step | ready s median (range) [n ok] | api wait s | client s | after last /api s | long tasks s | /api reqs "
+    rows = ["| state | step | ready s median, from the bracket's lower end (range) [n ok] | api wait s | client s | after last /api s | long tasks s | /api reqs "
             "| longest /api (route, s, KB, cache/source) | healthz max in_flight/waiting | model lines (by source) "
             "| bound |", "|" + "---|" * 12]
     for state, data in merged.items():
@@ -287,10 +287,29 @@ def table(merged: dict[str, dict[str, Any]]) -> str:
             bound = BOUND["warm" if state == "warm" else "cold"] * 1000
             over = sum(1 for x in ready if x > bound)
             rng = f"{min(ready) / 1000:.2f}-{max(ready) / 1000:.2f}" if ready else "-"
-            rows.append(f"| {state} | {step} | {fmt(med(ready))} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
+            lo = fmt(pick("ready_lo_ms"))
+            rows.append(f"| {state} | {step} | {fmt(med(ready))} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
                         f"| {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
                         f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
-    return "\n".join(rows)
+    return "\n".join(rows) + "\n\n" + probe_cost(merged)
+
+
+def probe_cost(merged: dict[str, dict[str, Any]]) -> str:
+    """The probe's own cost (S76's review, G1): ms a call in the page, median over every probe of every step, and the
+    duty cycle it is of the probe's interval - the share of the page's main thread the instrument takes."""
+    costs = [c for d in merged.values() for r in d["runs"] for s in r["steps"] for c in s["probes"].get("costs", [])]
+    trips = [s["probes"].get("round_trip_ms_median") for d in merged.values() for r in d["runs"] for s in r["steps"]]
+    trips = [t for t in trips if t is not None]
+    intervals = [s["probes"].get("interval_ms_median") for d in merged.values() for r in d["runs"] for s in r["steps"]]
+    every = med([i for i in intervals if i is not None]) or 250.0
+    if not costs:
+        return "the probe's cost: no probe recorded"
+    c = med(costs)
+    cs = sorted(costs)
+    return (f"the probe: every {every:.0f} ms (median interval); its own cost {c:.0f} ms a call in the page (median of "
+            f"{len(costs)}, 90th percentile {cs[int(0.9 * (len(cs) - 1))]:.0f}, at most {cs[-1]:.0f}), round trip "
+            f"{med(trips):.0f} ms: a duty cycle of {100 * c / every:.0f} % of the page's main thread. The ready column is the "
+            f"bracket's upper end (the first probe of the final still run), its lower end beside it (the last probe that differed).")
 
 
 def main(argv: list[str] | None = None) -> int:
