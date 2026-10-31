@@ -4674,7 +4674,8 @@ never been judged in twenty-three sessions.
    law's rate, which in radius is 1/sin p = 5 600 times a radial piece's — 2.47e-6 a part in 1e10 past the start, 1
    within 1.7 pc, under the derived bound 4.96e-6. No chain end goes untapered where the law says it tapers: the
    taper is intact, and the near-circular piece's rate is #208's. The dispatched full run on the branch
-   (41191405818): RUN_RESULT. Over texture seeds 0–299 of the Milky Way and 0–49 of the other two templates here:
+   (41191405818): green — 1708 passed, 25 skipped, 1 xfailed in 3 h 15; the continuity test's three legs ran
+   on the runner's draw, unmarked, and passed, the record's Milky Way leg skipped under its mark. Over texture seeds 0–299 of the Milky Way and 0–49 of the other two templates here:
    400 draws, no edge and no midpoint past the taper's rate (the largest step 0.88 of its bound), 343 pairs of breaks
    closer than the probe and every one the ends of one chain (each Milky Way draw holds one — a pinned kink's two
    bits), seed 49 alone past the old 1e-6 and none past the old 1e-5. *The entry as it read:* `tests/test_pieces.py`'s

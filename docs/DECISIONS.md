@@ -15313,7 +15313,10 @@ Way draw steps once (Norma's kink), no other template's draw at all. The smalles
 the 400 draws hold a piece under 0.1° and 120 one under 1° — #208's tail.
 
 **The runs.** The push of 1482088: `fast` green (41191405570). Dispatched on it, the full `test` job (41191405818):
-RUN_RESULT.
+green at 13:21 UTC — 1708 passed, 25 skipped, 1 xfailed in 3 h 15 (11 686 s). The continuity test's three legs ran on the
+runner's draw without a mark and passed (the Linux census, Norma's kink on two doubles there); the record's Milky Way leg
+(`tests/test_pieces.py:1934`) skipped under `machine_pinned`, as the mark says. #207's reading is bit-independent on both
+machines.
 
 **What this is not.** No tolerance widened: the bound is 1e-8–6e-8 at the templates' pitches against the 1e-6 it
 replaces, and what the gate's sentence says at a near-circular piece; no pinned number moved (the three records stand);
