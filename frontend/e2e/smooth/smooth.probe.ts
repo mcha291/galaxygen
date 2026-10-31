@@ -33,7 +33,7 @@ import { fileURLToPath } from "node:url";
 
 import { type APIRequestContext, type Page, type Request, expect, request, test } from "@playwright/test";
 
-import { CHOOSING_VIEWPORT, DEFAULT_TEMPLATE, MODE_BUTTON, READY, SELECTION_TEXT } from "../settings";
+import { CHOOSING_VIEWPORT, DEFAULT_TEMPLATE, MODE_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL } from "../settings";
 
 const SITE = (process.env.GALAXYGEN_URL ?? "http://127.0.0.1:8060").replace(/\/+$/, "");
 const RUNS = Number(process.env.GALAXYGEN_RUNS ?? 5);
@@ -453,23 +453,20 @@ test.use({ viewport: CHOOSING_VIEWPORT });
 test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
   test.setTimeout(RUNS * 20 * 60_000);
   side = await request.newContext();
-  const templates = (await (await side.get(`${SITE}/api/templates`)).json()) as { default: string; templates: { name: string; label: string }[] };
+  // S76's review (G4): nothing is asked of the site before a step begins - the labels are the e2e settings' and the zoom's
+  // stand captures.json's; /api/templates and /healthz are asked once after the runs. (The markers, asked of the model
+  // directly round each step, are the runner's cut of its source log: /api/version, never through the gateway.)
   const labelOf = (name: string) => {
-    const t = templates.templates.find((x) => x.name === name);
-    if (!t) throw new Error(`the site serves no template ${name}`);
-    return t.label;
+    const label = TEMPLATE_LABEL[name];
+    if (!label) throw new Error(`e2e/settings.ts TEMPLATE_LABEL names no template ${name}`);
+    return label;
   };
-  const home = labelOf(templates.default ?? DEFAULT_TEMPLATE);
+  const home = labelOf(DEFAULT_TEMPLATE);
   const away = labelOf(OTHER);
   const zoom = CAPTURES.captures.find((c) => c.name === ZOOM_CAPTURE);
   if (!zoom?.stand) throw new Error(`captures.json has no stand for ${ZOOM_CAPTURE}`);
   const zoomCamera: LensCamera = { ...zoom.camera, radius_kpc: zoom.stand.radius_kpc };
   const zoomTarget = zoom.stand.target;
-  const healthz = await side.get(HEALTHZ).then(
-    async (r) => ({ status: r.status(), body: (await r.json()) as unknown }),
-    (e) => ({ status: 0, body: String(e) }),
-  );
-  console.log(`healthz once: ${JSON.stringify(healthz)}`);
 
   const runs: { run: number; renderer: string | null; steps: StepResult[] }[] = [];
   for (let i = 0; i < RUNS; i += 1) {
@@ -526,15 +523,33 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     for (const s of steps) console.log(`run ${n} ${s.step}: ready ${fmt(s.ready_ms)}${s.after_confirm.changed ? `* (the frame changed at ${fmt(s.after_confirm.first_change_ms)} s, after the confirmation)` : ""} s [from ${fmt(s.ready_lo_ms)}] (probe ${s.probes.cost_ms_median ?? "-"} ms a call; api ${fmt(s.api_wait_ms)}, client ${fmt(s.client_ms)}, long tasks ${fmt(s.long_tasks.ms)}), ${s.api_requests} /api${s.error ? `, ERROR ${s.error}` : ""}`);
   }
 
+  // After the runs (G4): /healthz once, and the labels pressed checked against the site's own.
+  const healthz = await side.get(HEALTHZ).then(
+    async (r) => ({ status: r.status(), body: (await r.json()) as unknown }),
+    (e) => ({ status: 0, body: String(e) }),
+  );
+  console.log(`healthz once, after the runs: ${JSON.stringify(healthz)}`);
+  const served = await side.get(`${SITE}/api/templates`).then(
+    async (r) => ((await r.json()) as { default?: string; templates: { name: string; label: string }[] }),
+    () => null,
+  );
+  const labels = {
+    pressed: { [DEFAULT_TEMPLATE]: home, [OTHER]: away },
+    served: served ? Object.fromEntries(served.templates.filter((t) => t.name === DEFAULT_TEMPLATE || t.name === OTHER).map((t) => [t.name, t.label])) : null,
+    served_default: served?.default ?? null,
+  };
+
   mkdirSync(dirname(OUT), { recursive: true });
   const about = {
     site: SITE,
     state: STATE,
     healthz: HEALTHZ,
     probe_ms: PROBE_MS,
+    confirm_tail_ms: CONFIRM_TAIL_MS,
     ready: READY,
     zoom: { capture: ZOOM_CAPTURE, camera: zoomCamera, target: zoomTarget },
-    healthz_once: healthz,
+    healthz_once_after: healthz,
+    labels,
     taken: new Date().toISOString(),
   };
   writeFileSync(OUT, `${JSON.stringify({ about, runs }, null, 1)}\n`, "utf-8");
@@ -557,4 +572,8 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
       `at most ${costs.length ? Math.max(...costs) : "-"}): a duty cycle of ${cost === null ? "-" : ((100 * cost) / PROBE_MS).toFixed(0)} %\n\nwritten ${OUT}`,
   );
   await side.dispose();
+  if (labels.served) {
+    expect(labels.served, "e2e/settings.ts TEMPLATE_LABEL against the site's /api/templates").toEqual(labels.pressed);
+    expect(labels.served_default ?? DEFAULT_TEMPLATE).toBe(DEFAULT_TEMPLATE);
+  }
 });

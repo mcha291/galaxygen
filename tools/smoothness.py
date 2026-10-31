@@ -168,7 +168,9 @@ class Stand:
         argv = [sys.executable, "-m", "galaxy.api", "--port", str(self.mport), "--client", str(FRONTEND / "dist"),
                 "--bundles", str(self.args.bundles), "--verbose", "--source-log", str(self.source_log)]
         self.model = Proc("model", argv, self.out / "model.log", ROOT, env)
-        first = wait_for(lambda: get(f"{self.model_url}/api", 1.0)[0] == 200, "the model's /api", 180, self.model)
+        wait_for(lambda: get(f"{self.model_url}/api", 1.0)[0] == 200, "the model's /api", 180, self.model)
+        # G4: the process's start to its first /api answer, from the Popen (Proc.started), as the row labels it.
+        first = time.perf_counter() - self.model.started
         cold = {"first_api_s": round(first, 3), "bundles_line_s": self.model.first("; bundles "),
                 "listening_line_s": self.model.first("galaxy.api on http")}
         status, body = get(f"{self.model_url}/api/version")
@@ -190,7 +192,9 @@ class Stand:
             h = json.loads(body)
             return status == 200 and h.get("pinned") is True and h.get("frontend") is True
 
-        took = wait_for(ready, "the gateway's /healthz", 60, self.gateway)
+        wait_for(ready, "the gateway's /healthz", 60, self.gateway)
+        # G4: the process's start to /healthz 200 (pinned, the frontend found), from the Popen.
+        took = time.perf_counter() - self.gateway.started
         self.gateway_starts.append(round(took, 3))
         log(f"gateway up on :{self.gport} in {took:.2f} s, pinned {self.hash}")
         return took
@@ -260,6 +264,23 @@ def fmt(ms: float | None) -> str:
     return "-" if ms is None else f"{ms / 1000:.2f}"
 
 
+def starts_label(state: str, step: str, runs: list[dict[str, Any]]) -> str:
+    """The cold rows' first paint with the processes' starts beside it (S76's review, G4): the probe's clock starts at
+    the navigation, after the runner has started the processes and seen them answer (the model's /api and /api/version,
+    the gateway's /healthz - readiness checks, not the step's), so a new visitor's wait on a cold stand is the first
+    paint plus these: the model's process start to its first /api answer, the gateway's start to /healthz 200."""
+    if step != "first_paint":
+        return ""
+    st = [r["starts"] for r in runs if r.get("starts")]
+    if not st:
+        return ""
+    g = med([x["gateway_s"] for x in st])
+    if state == "model-cold" and all("model_s" in x for x in st):
+        m = med([x["model_s"] for x in st])
+        return f" + starts {m + g:.2f} s (model {m:.2f}, gateway {g:.2f}; medians)"
+    return f" + starts {g:.2f} s (gateway; median)"
+
+
 def table(merged: dict[str, dict[str, Any]]) -> str:
     rows = ["| state | step | ready s median, from the bracket's lower end (range) [n ok] | api wait s | long tasks inside the api wait s | client s (lower bound) | after last /api s | long tasks s | /api reqs "
             "| longest /api (route, s, KB, cache/source) | healthz max in_flight/waiting | model lines (by source) "
@@ -291,7 +312,7 @@ def table(merged: dict[str, dict[str, Any]]) -> str:
             # G8: a run whose frame sum changed in the second after the confirmation is starred, with how many did.
             moved = sum(1 for s in ok if s.get("after_confirm", {}).get("changed"))
             star = f"* ({moved} moved after)" if moved else ""
-            rows.append(f"| {state} | {step} | {fmt(med(ready))}{star} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
+            rows.append(f"| {state} | {step}{starts_label(state, step, data['runs'])} | {fmt(med(ready))}{star} from {lo} ({rng}) [{len(ok)}/{len(got)}] | {fmt(pick('api_wait_ms'))} "
                         f"| {fmt(pick('api_long_tasks_ms'))} | {fmt(pick('client_ms'))} | {fmt(pick('after_last_api_ms'))} | {fmt(med([s['long_tasks']['ms'] for s in ok]))} | {med([s['api_requests'] for s in ok])} "
                         f"| {lng} | {hz_in}/{hz_w} | {lines} ({src_s}) | {over}/{len(ready)} over {bound / 1000:.0f} s |")
     return "\n".join(rows) + "\n\n" + probe_cost(merged)
@@ -374,11 +395,14 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     for i in range(1, args.runs + 1):
                         stand.stop_gateway()
+                        starts: dict[str, float] = {}
                         if state == "model-cold":
                             stand.stop_model()
-                            stand.start_model()
-                        stand.start_gateway()
+                            starts["model_s"] = stand.start_model()["first_api_s"]
+                        starts["gateway_s"] = round(stand.start_gateway(), 3)
                         got = probe(out, stand.site, state, 1, i, stand.model_url)
+                        for r in got["runs"]:
+                            r["starts"] = starts  # G4: the processes' starts before this run, the runner's own readiness checks
                         runs += got["runs"]
                         exits.append(got["exit"])
                 merged[state] = {"runs": runs, "exits": exits}
