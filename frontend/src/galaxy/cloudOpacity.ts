@@ -219,6 +219,17 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
     const weight: number[] = [];
     let w = 0;
     const m = SPLIT_SAMPLES;
+    // S78: each sample azimuth's cosine and sine depend on (j, b) alone - computed once per cloud here, by the same
+    // expression, not again for every (i, a) (71 % of the raster's time): the same doubles, so the same raster.
+    const cosB = new Float64Array((j1 - j0 + 1) * m);
+    const sinB = new Float64Array((j1 - j0 + 1) * m);
+    for (let j = j0; j <= j1; j += 1) {
+      for (let b = 0; b < m; b += 1) {
+        const pb = (j + (b + 0.5) / m) * dPhi;
+        cosB[(j - j0) * m + b] = Math.cos(pb);
+        sinB[(j - j0) * m + b] = Math.sin(pb);
+      }
+    }
     for (let i = i0; i <= i1; i += 1) {
       for (let j = j0; j <= j1; j += 1) {
         let got = 0;
@@ -226,9 +237,8 @@ export function cloudRaster(clouds: CloudColumns, rLo: number, rHi: number, widt
           const ra = rLo + (i + (a + 0.5) / m) * dR;
           if (!(ra > 0)) continue;
           for (let b = 0; b < m; b += 1) {
-            const pb = (j + (b + 0.5) / m) * dPhi;
-            const dx = ra * Math.cos(pb) - x;
-            const dy = ra * Math.sin(pb) - y;
+            const dx = ra * cosB[(j - j0) * m + b] - x;
+            const dy = ra * sinB[(j - j0) * m + b] - y;
             // round: the S64 expression, to the bit; an ellipse: its own axes
             const rho2 = q === 1 ? (dx * dx + dy * dy) / (s * s) : ((dx * e1x + dy * e1y) / along) ** 2 + ((dy * e1x - dx * e1y) / across) ** 2;
             if (rho2 < 1) got += Math.sqrt(1 - rho2) * ra;
@@ -366,13 +376,46 @@ export function keptCloudRaster(
   capBytes: number = KEPT_RASTER_BYTES,
 ): KeptRaster {
   const key = rasterKey(clouds, rLo, rHi, width, height, shape);
+  const hit = keptRasterHit(key);
+  if (hit) return hit;
+  return keepRaster(key, packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf), capBytes);
+}
+
+/**
+ * The least raster, in texels (width x height), built in the clouds' raster worker (S78, R5b: the worker only where
+ * the overlap can pay). Measured at S78 (profile.mjs, 0f8047e against 99a6263): the Milky Way's 2000 x 1800 = 3.6 M
+ * texels took 250-280 ms on the main thread and, in the worker, overlapped the field mesh's build (the landing's
+ * median ready 1064 -> 910 ms over six runs); NGC 4414's 1200 x 1080 = 1.3 M took 80 ms, with no build to overlap, and
+ * the worker cost an extra commit and march (the switch's median 736 -> 861 ms). Below this a raster is built on the
+ * main thread through keptCloudRaster, as where there is no Worker.
+ */
+export const WORKER_RASTER_TEXELS = 2_000_000;
+
+/** Whether a raster of width x height texels is built in the worker: one is `available` and it is not under WORKER_RASTER_TEXELS. */
+export function rasterInWorker(width: number, height: number, available: boolean): boolean {
+  return available && width * height >= WORKER_RASTER_TEXELS;
+}
+
+/** The raster kept under `key` (rasterKey), made the most recently asked; undefined if none is kept. */
+export function keptRasterHit(key: string): KeptRaster | undefined {
   const hit = kept.get(key);
   if (hit) {
     kept.delete(key); // most recent last
     kept.set(key, hit);
-    return hit;
   }
-  const packed = packRaster(cloudRaster(clouds, rLo, rHi, width, height, shape), toHalf);
+  return hit;
+}
+
+/**
+ * A packed raster kept under `key` (S78, R5: what the clouds' raster worker answers is kept here on the main side, as
+ * keptCloudRaster keeps what it builds), the oldest dropped first while more than `capBytes` are held. Returns it.
+ */
+export function keepRaster(key: string, packed: KeptRaster, capBytes: number = KEPT_RASTER_BYTES): KeptRaster {
+  const was = kept.get(key);
+  if (was) {
+    keptBytes -= bytesOf(was);
+    kept.delete(key);
+  }
   kept.set(key, packed);
   keptBytes += bytesOf(packed);
   while (keptBytes > capBytes && kept.size > 0) {

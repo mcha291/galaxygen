@@ -8,8 +8,11 @@
   uniform float rHi;
   // One texel's radial width, kpc (regimes.ts PlaneTexture.cell): the sub-steps' in-plane length.
   uniform float planeCell;
-  // The most sub-samples a step reads (the Tuning panel's cap, D199), at most the loop's 8.
+  // The most sub-samples a step reads (the Tuning panel's cap, D199), at most 8 (the frame loop clamps it).
   uniform float subMax;
+  // The march's steps along the ray (the Tuning panel's, D199) and 1 / steps as a float (S78, T29).
+  uniform int steps;
+  uniform float invSteps;
   // 1 offsets each step by the pixel's fixed fraction; 0 reads each sub-step at its middle (D199).
   uniform float dither;
   uniform float halfHeight;
@@ -429,7 +432,7 @@ float layerSpurSum(float R, float phi, int count) {
     // screen, coarse where it is far and small. Even steps along a 60 kpc ray pass straight
     // over a disc 0.3 kpc thick a few hundred parsecs away.
     float tStart = max(tNear, 0.01);
-    float ratio = pow(max(tFar, tStart * 1.0001) / tStart, 1.0 / float(96));
+    float ratio = pow(max(tFar, tStart * 1.0001) / tStart, invSteps);
     // A per-pixel offset turns banding into fine noise: into each step for the bulge's point sample, and
     // into each sub-step for the layers' reads. Fixed by the pixel, never by the frame.
     float jitter = dither > 0.5 ? fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) : 0.5;
@@ -449,7 +452,7 @@ float layerSpurSum(float R, float phi, int count) {
     float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;
     float screenSpurs = spursOn > 0.5 ? layerSpurSum(screenRP.x, screenRP.y, spurCount) : 0.0;
     vec3 screenClumps = youngClump > 0.5 ? clusterRatios(screenXY) : vec3(1.0);
-    for (int k = 0; k < 96; k++) {
+    for (int k = 0; k < steps; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
       vec3 p = origin + dir * (a + jitter * ds);
@@ -463,8 +466,7 @@ float layerSpurSum(float R, float phi, int count) {
       vec3 p1 = p0 + dir * ds;
       int n = int(clamp(ceil(length(p1.xz - p0.xz) / planeCell), 1.0, subMax));
       float sub = ds / float(n);
-      for (int j = 0; j < 8; j++) {
-        if (j >= n) break;
+      for (int j = 0; j < n; j++) {
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
         vec3 bulgeSub = bulge * starsGain / float(n);

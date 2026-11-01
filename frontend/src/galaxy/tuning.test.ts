@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "./FieldVolume";
 import { NOISE_GLSL } from "./noise.glsl";
-import pinned from "./fieldFragment.s66.glsl?raw";
+import pinned from "./fieldFragment.s78.glsl?raw";
 import { WHITE_KELVIN } from "./filters";
 import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SLAB_PIECES, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
@@ -120,9 +120,13 @@ describe("tuning defaults (D199)", () => {
     // (noise.glsl.ts), each map read once per ray as a thin screen at the ray's midplane crossing (D226 as amended)
     // and its value multiplying each sub-step - the gas map times the placement, the spurs from their
     // table, the young and kept light times the clustering maps over their cell means - each behind a uniform that is 0
-    // under "physics only", so that the S64 statements run unchanged there.
+    // under "physics only", so that the S64 statements run unchanged there. S78 (T29, the program's compile time)
+    // re-pinned it on purpose (fieldFragment.s78.glsl; S66's is in git): the loop bounds made dynamic so that Direct3D's
+    // compiler does not unroll them (ANGLE marks no loop [loop]; the 96-step program took 6.8 s to build, 1 s since) - the
+    // step loop runs to the uniform steps and the sub-samples' loop to n itself - and the steps' exponent the uniform
+    // invSteps, 1 / steps as a float, the value the constant 1.0 / float(96) was folded to: the arithmetic unchanged, the
+    // same operations in the same order, and one program for every step count.
     const now = fieldFragment();
-    expect(fieldFragment(STEPS)).toBe(now);
     expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
     // What the tuning panel and the component switches reach are uniforms, and at the field's defaults each is
     // the identity: the sub-samples' cap, the dither, the layers' multipliers and the dust's depth switch.
@@ -158,9 +162,17 @@ describe("tuning defaults (D199)", () => {
     expect(now).toContain("if (spursOn > 0.5) place = (1.0 - readSpurShare(rp.x)) * readPolar(hii, rp).a + screenSpurs;");
     expect(now).toContain("if (youngClump > 0.5) starsLight += clumpedLight(screenClumps, rp) * starsGain;");
     expect(now.match(/layerGasMap\(/g)).toHaveLength(2); // its definition and the one call, before the step loop
-    expect(now.indexOf("layerGasMap(screenXY)")).toBeLessThan(now.indexOf(`for (int k = 0; k < ${STEPS}; k++)`));
-    expect(fieldFragment(128)).toContain("k < 128; k++");
-    expect(fieldFragment(128)).toContain("1.0 / float(128)");
+    expect(now.indexOf("layerGasMap(screenXY)")).toBeLessThan(now.indexOf("for (int k = 0; k < steps; k++)"));
+    // S78 (T29): the steps are uniforms, and no loop of the march is bounded by a constant it then breaks out of.
+    for (const name of ["int steps", "float invSteps"]) expect(now).toContain(`uniform ${name};`);
+    expect(now).toContain("float ratio = pow(max(tFar, tStart * 1.0001) / tStart, invSteps);");
+    expect(now).toContain("for (int j = 0; j < n; j++) {");
+    expect(now).not.toContain("if (j >= n) break;");
+    expect(now).not.toContain(`k < ${STEPS}; k++`);
+    // The reciprocal three uploads (a float) is the float the constant 1.0 / float(steps) was folded to, at the counts the
+    // templates open on: 0.010416667 at 96, 0.020833334 at 48 (ANGLE's literals in the translated shader).
+    expect(Math.fround(1 / 96)).toBe(Math.fround(0.010416667));
+    expect(Math.fround(1 / 48)).toBe(Math.fround(0.020833334));
   });
 
   it("leave the field's weight at every zoom bit for bit the S40 formula", () => {

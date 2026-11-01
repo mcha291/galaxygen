@@ -388,6 +388,23 @@ export function sameGalaxy(layer: LayerAnswer | null | undefined, render: { head
   );
 }
 
+/**
+ * Whether two answers are of one run, as their headers state it (S78): the same model, the same resolved inputs and
+ * the same layer setting - what every route that takes inputs echoes (/api/clouds names no template: its census is the
+ * run's alone). The field builds the clouds' raster only from a census, a grid and a render of one run, so a census is
+ * never rasterised at another galaxy's shape (the render's clouds layer) and then again at its own.
+ */
+export function sameRun(a: { header: Record<string, unknown> } | null | undefined, b: { header: Record<string, unknown> } | null | undefined): boolean {
+  if (!a || !b) return false;
+  const p = a.header;
+  const q = b.header;
+  return (
+    p.model === q.model &&
+    ((p.layer as string | undefined) ?? "on") === ((q.layer as string | undefined) ?? "on") &&
+    JSON.stringify(p.inputs) === JSON.stringify(q.inputs)
+  );
+}
+
 /** A render and the layer's tables of its galaxy: what the march draws together. */
 export interface DrawnPair<R> {
   light: R;

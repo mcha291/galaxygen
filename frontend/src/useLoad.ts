@@ -139,11 +139,18 @@ const subscribe = (listener: () => void) => {
  * a changed input is a move of the user's, and the loader's first render counts as one. A `null` input names nothing
  * yet - its cells wait on an answer (the bright table's layout) - so its first naming is that answer's doing and keeps
  * the last move's time. `undefined` is a loader without an input: every key waits the whole settle, as before F3.
+ *
+ * S78: the first key a loader asks is asked at once - nothing before it can be a drag, so there is nothing to settle
+ * (on the landing three loaders in a chain each waited the whole settle on mount). `wait` is told the key: until a
+ * request has gone out (`fired`) the first non-null key waits 0; every later key settles as above.
  */
 export class InputClock {
   private input: string | null | undefined = undefined;
   private at = 0;
   private seen = false;
+  /** The first non-null key this loader was asked for (null: none yet), and whether any request has gone out. */
+  private first: string | null = null;
+  private asked = false;
 
   see(input: string | null | undefined, now: number): void {
     if (!this.seen) {
@@ -157,14 +164,28 @@ export class InputClock {
     this.input = input;
   }
 
-  /** How long a key asked at `now` waits: the rest of the settle since the user's last move (0 once it has passed). */
-  wait(settleMs: number, now: number): number {
+  /**
+   * How long a key asked at `now` waits: the rest of the settle since the user's last move (0 once it has passed) - or 0
+   * for the loader's first key (`key`, S78), until its request has gone out. A cleanup and re-run of the same effect
+   * before the timer fires (StrictMode's) asks the first key again, at once.
+   */
+  wait(settleMs: number, now: number, key?: string): number {
+    if (key !== undefined && !this.asked) {
+      if (this.first === null) this.first = key;
+      if (key === this.first) return 0;
+    }
     return this.input === undefined ? settleMs : Math.max(0, settleMs - (now - this.at));
+  }
+
+  /** A request has gone out: from now every key settles. */
+  fired(): void {
+    this.asked = true;
   }
 }
 
 /**
- * Load whatever `key` describes, once it has stopped changing for `settleMs`.
+ * Load whatever `key` describes, once it has stopped changing for `settleMs` - the loader's first key at once (S78,
+ * InputClock).
  *
  * The previous value stays available (`last`, and `busy` says a newer one is on
  * its way) so a view keeps showing the old galaxy rather than blanking; a newer
@@ -179,8 +200,13 @@ export class InputClock {
  * waits out the rest of the settle. Without `input` every key waits `settleMs`, as before. Only the timing moves: the
  * key, and so the request, is the same. `input` must name everything the user moves that the key reads - the view
  * itself where the key reads the view (the review's G3), else a move with the input standing is asked at once.
+ *
+ * `firstAtOnce` (S78): the first key is asked at once (InputClock) unless this is false - for a key that reads the
+ * view (a region's window, the star-first mode's cells and tiles), whose loader can mount while the view is moving: a
+ * zoom into the region regime, a camera placed as the mode opens. Asked at once, its first key would be a frame of
+ * the drag, a request no settled view makes; it settles as every other key.
  */
-export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string | null) {
+export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Promise<T>, settleMs = SETTLE_MS, input?: string | null, firstAtOnce = true) {
   const [result, setResult] = useState<Loaded<T>>({ state: "idle" });
   const [busy, setBusy] = useState(false);
   // This loader's token in the store: the same object for the loader's life (a state, never a memo).
@@ -197,8 +223,9 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
     const abort = new AbortController();
     // An answer for this key: published now, or held until the swap completes.
     const answer = (publish: () => void, failure: string | null) => loads.answer(token, publish, failure);
-    const wait = clock.wait(settleMs, performance.now());
+    const wait = clock.wait(settleMs, performance.now(), firstAtOnce ? key : undefined);
     const timer = setTimeout(() => {
+      clock.fired();
       setBusy(true);
       loader.current(abort.signal)
         .then((value) => answer(() => setResult({ state: "ready", value }), null))
@@ -217,7 +244,7 @@ export function useLoad<T>(key: string | null, load: (signal: AbortSignal) => Pr
       // moves (this cleanup and the next run, in one commit) does not end it early.
       loads.drop(token);
     };
-  }, [key, settleMs, token, clock]);
+  }, [key, settleMs, token, clock, firstAtOnce]);
 
   const value = result.state === "ready" ? result.value : result.state === "error" ? result.last : null;
   return { value, busy, error: result.state === "error" ? result.message : null };
