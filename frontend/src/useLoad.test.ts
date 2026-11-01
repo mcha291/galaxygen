@@ -38,6 +38,39 @@ describe("the settle's clock", () => {
     }
   });
 
+  it("asks a loader's first key at once and settles every later one (S78), without an input", () => {
+    const clock = new InputClock();
+    clock.see(undefined, 0);
+    expect(clock.wait(SETTLE, 0, "galaxy a")).toBe(0);
+    // StrictMode's cleanup and re-run before the timer fires: the same first key, still at once
+    expect(clock.wait(SETTLE, 1, "galaxy a")).toBe(0);
+    clock.fired();
+    clock.see(undefined, 500);
+    expect(clock.wait(SETTLE, 500, "galaxy b")).toBe(SETTLE);
+    // the first key again, after its request went out: a move like any other
+    expect(clock.wait(SETTLE, 900, "galaxy a")).toBe(SETTLE);
+  });
+
+  it("asks the first key at once with an input too, and every later key by the input's clock (S78; F3 unchanged)", () => {
+    const clock = new InputClock();
+    clock.see("view a", 0);
+    expect(clock.wait(SETTLE, 0, "tiles 1")).toBe(0);
+    clock.fired();
+    // the counts answer and the tiles' key moves, the input standing: the rest of the settle since the mount
+    clock.see("view a", 120);
+    expect(clock.wait(SETTLE, 120, "tiles 2")).toBe(130);
+    // the user moves: the whole settle
+    clock.see("view b", 400);
+    expect(clock.wait(SETTLE, 400, "tiles 3")).toBe(SETTLE);
+  });
+
+  it("settles a second key asked before the first one's request went out", () => {
+    const clock = new InputClock();
+    clock.see(undefined, 0);
+    expect(clock.wait(SETTLE, 0, "galaxy a")).toBe(0);
+    expect(clock.wait(SETTLE, 10, "galaxy b")).toBe(SETTLE); // the key moved before the timer fired
+  });
+
   it("does not count an input's first naming after null as a move: the cells waited on an answer, not on the user", () => {
     const clock = new InputClock();
     clock.see(null, 0); // the bright table not yet answered: no cells to name

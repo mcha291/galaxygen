@@ -18,7 +18,7 @@ import {
 } from "../api";
 import { CellOutlines, CloudMarkers } from "./ComponentLayers";
 import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, agesOf, brightestLayers, cloudColors, diagnosticOn, dustRamp, fieldLayers, marchWanted, publishedRingEdges, rowsInWindow } from "./components";
-import { useLoad } from "../useLoad";
+import { SETTLE_MS, useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { type Template, pinWords, switcherItems, templateLabel } from "../workflow/templates";
 import { DEFAULT_FOV } from "./capture";
@@ -274,7 +274,7 @@ export function GalaxyTab({
     setTuningState({ of: templateName, t });
     saveTuning(t, undefined, templateName);
   };
-  // A new step count recompiles the march's shader and a new white point asks the model again: both wait for the slider to settle.
+  // A new step count re-marches the view (two uniforms since S78, T29) and a new white point asks the model again: both wait for the slider to settle.
   const steps = useDebounced(tuning.steps, 300);
   const whiteKelvin = useDebounced(tuning.whiteKelvin, 400);
   const fieldTuning = { ...tuning, steps, whiteKelvin };
@@ -319,12 +319,13 @@ export function GalaxyTab({
   }, [sample, area?.r_min, area?.r_max, area?.phi_min, area?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
   const regionStars = area ? regionSampleSize(STAR_SAMPLE, inWindow, REGION_TARGET_STARS, REGION_MAX_STARS) : 0;
   const regionKey = area ? JSON.stringify([area, regionStars, query]) : null;
-  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal));
+  // Keyed on the view (a zoom mounts it mid-drag): its first key settles too (S78, useLoad's firstAtOnce).
+  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal), SETTLE_MS, undefined, false);
   const detail = region.value && regionKey ? region.value : null;
   // The region's clusters (V3's volume, V4's points, S41): loaded once at the level the view asks for.
   const level = area && view ? levelFor(view.across) : 0;
   const clustersKey = area ? JSON.stringify([area, level, query]) : null;
-  const regionClusters = useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal)).value ?? null;
+  const regionClusters = useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false).value ?? null;
   const shownClusters = area && regionClusters ? regionClusters : null;
   const clusterPositions = useMemo(() => {
     if (!shownClusters) return null;
@@ -384,6 +385,7 @@ export function GalaxyTab({
     (signal) => levelCounts(countRows, countsGalaxy, tileLevel, tilesSeen!, (cells, level, s) => loadBrightCounts(cells, level, query, s), signal),
     BRIGHT_SETTLE_MS,
     countsInput,
+    false, // the cells in view: the camera may be moving as the mode opens (S78)
   );
   // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
   // in view has its row (B9: no pick over a cell not held).
@@ -444,6 +446,7 @@ export function GalaxyTab({
       ),
     BRIGHT_SETTLE_MS,
     tilesInput,
+    false, // the tiles in view, likewise (S78)
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster

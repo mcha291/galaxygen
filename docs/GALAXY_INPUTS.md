@@ -708,9 +708,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S77 | **206** (the `ci` workflow green again: the machine pins marked `machine_pinned` and skipped under `CI`, `JSON_DEPTH_CAP` at every parse, the suite on `main` / nightly / dispatch, D241) | 1 |
 | **discharged** at S79 | **207** (the continuity test's hard ends by identity and its bound the taper's own rate, read on the runner's draw, D243) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 208 | 123 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 208, 209 | 124 |
 
-So the board's **134 open** is 11 permanent and 123 carried, and no item is unruled. (S22
+So the board's **135 open** is 11 permanent and 124 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4691,6 +4691,24 @@ never been judged in twenty-three sessions.
    skips it, not widened. **Carried.** What closes it: the hard-end reading made bit-independent (a join found by chain
    identity, not by a 1e-9 coincidence) and the test run on the runner's draw through the full `ci` job; the seed-49
    step read; if the step is the model's, a debt of its own on the pieces' taper.
+208. **The landing's last tenths: what S78 left on the viewer's landing and switch, each with its remedy** (S78,
+   D242). After S78's fixes the probe reads every warm step inside ruling 10's 1 s in every run (the first paint 0.79 s,
+   runs 2–5; the switch 0.85; run 1 in a fresh browser 1.85, paying the program's ~0.8 s build) and the cold first paint
+   2.1–2.5 against 5 — the bound is met on this machine, and what remains is the client's ~0.6 s of own work after the
+   last answer, attributed by S78's profile: (a) the field's loads (`arrays`, `render`, `layer`, `clouds`) wait for the
+   star sample's answer and the Galaxy tab's mount before they are asked (~0.3 s of the chain: ask them beside the
+   sample as soon as the shown query exists — `App.tsx` / `GalaxyTab.tsx`, the request set unchanged); (b) the mesh's
+   build (`planeTexture`, `clumpedLight`, ~0.35 s on the main thread, overlapped by the raster's Worker since R5 but
+   still the critical path's); (c) three's `checkShaderErrors` (12–14 `getProgramInfoLog` calls, 15–27 ms: off in
+   production); (d) on the switch, the Canvas re-keyed per template (`epoch`) builds a new WebGL2 context, relinks every
+   program and re-uploads every texture (~0.15 s) — keeping the Canvas and placing the camera is the remedy, but the
+   camera is fresh by design (D213 ruling 5) and the frames may move: the owner's; (e) a side effect of R3: loaders the
+   picture walk mounts and drops within a settle now send their existing keys before they unmount (303 requests against
+   264 on the walk, the distinct keys 56 against 55; aborted on unmount, a bundle hit's cost here and a gateway hit's
+   deployed) — the remedy a first key deferred past the mount's own tick, measured against the landing it would delay.
+   **Carried.** What closes it: the remedies the owner wants built (a, c, e the viewer's alone; d a display ruling), each
+   measured with the probe before and after, the frames byte for byte; or the deployed run (#204) reading the same
+   steps on the wire and the owner's word that nothing more is owed.
 209. **The per-piece pitch draw has no floor: a piece of nearly no pitch moves a ring's count at an unbounded rate in
    radius** (S79, D243). A drawn piece's pitch is p(1 + 0.56 z), z drawn again while the pitch it makes is not positive
    (D219, the gate's sixth follow-up), so it can land arbitrarily near zero: on the Milky Way template at `texture_seed`

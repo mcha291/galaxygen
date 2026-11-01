@@ -25,7 +25,7 @@ import {
 } from "three";
 
 import { type Census, type Query, type RenderFrame, loadClouds, loadRemnants, loadRender } from "../api";
-import { useLoad } from "../useLoad";
+import { SETTLE_MS, useLoad } from "../useLoad";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
 import { type FilterSetName, WHITE_KELVIN, curvesOf, whiteOf } from "./filters";
 import { echoedLayer } from "./layer";
@@ -113,10 +113,12 @@ interface Props {
 export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN, onInterior, extinction = 1 }: Props) {
   const place = { ...window, level };
   const key = JSON.stringify([place, query]);
-  const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal)).value ?? null;
-  const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal)).value ?? null;
+  // Keyed on the window the view looks at, mounted as a zoom crosses into the regime: the first key settles too (S78,
+  // useLoad's firstAtOnce).
+  const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal), SETTLE_MS, undefined, false).value ?? null;
+  const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal), SETTLE_MS, undefined, false).value ?? null;
   const renderKey = JSON.stringify([filterSet, whiteKelvin, place, query]);
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, { ...query, ...place }, signal)).value ?? null;
+  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, { ...query, ...place }, signal), SETTLE_MS, undefined, false).value ?? null;
 
   const built = useMemo(() => {
     if (!clouds || !clusters || !remnants || !rendered) return null;

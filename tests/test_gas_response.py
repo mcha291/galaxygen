@@ -480,9 +480,15 @@ TIGHT = {
 }
 
 
-# S77 (#206): the eps 1.28 case alone is machine_pinned - its residual, the rounding residue as measured on this
-# machine, lands 13 % lower on the runner; the other two hold there, so CI keeps their asserts. Ids unchanged.
-@pytest.mark.parametrize("name", [pytest.param(name, id=name, marks=[pytest.mark.machine_pinned] if name == "eps 1.28, total 67" else [])
+# S77 (#206): the eps 1.28 case alone was machine_pinned - its residual, the rounding residue as measured on this
+# machine, lands 13 % lower on the runner. S78 (D242): the eps 1.03 case too - on two of three runners of main's own ci
+# run (41173776182, 41173556007) its residual read 9.49e-11 against the pinned 7.81e-11 while S77's dispatched run
+# (41157239318) landed it; the runner fleet is not one machine, and a residual at the rounding floor is that machine's
+# (the docstring). The eps 0.95 case holds on every runner seen, so CI keeps its assert. Ids unchanged.
+MACHINE_PINNED_TIGHT = ("eps 1.03, total 77", "eps 1.28, total 67")
+
+
+@pytest.mark.parametrize("name", [pytest.param(name, id=name, marks=[pytest.mark.machine_pinned] if name in MACHINE_PINNED_TIGHT else [])
                                   for name in TIGHT])
 def test_a_tightly_wound_ring_converges_on_its_rounding_floor(name):
     """Gate G3 item 2: a cell is converged when |r_k| ≤ max(RESIDUAL_TOLERANCE, F_k),

@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
   BackSide,
@@ -42,8 +42,11 @@ import {
   loadArrays,
   loadLayer,
   loadRender,
+  sameRun,
 } from "../api";
-import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster } from "./cloudOpacity";
+import { type CloudColumns, type KeptRaster, CLOUD_RASTER, type RasterShape, SECH2_HWHM_PER_H, cloudDepthScale, finestRaster, keptCloudRaster, keptRasterHit, rasterInWorker, rasterKey } from "./cloudOpacity";
+import { type RasterArrival, listenRaster, rasterWorkerAvailable, startRaster } from "./cloudRasterClient";
+import { rasterRequest } from "./cloudRasterJob";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
@@ -54,7 +57,7 @@ import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { gpuTimer } from "./gpuTimer";
 import { partRings, renderRings } from "./ringProfile";
-import { STEPS, TEMPLATE_TUNING, type Tuning, TUNING_DEFAULTS } from "./tuning";
+import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
   type ClusteringTables,
@@ -237,8 +240,13 @@ const VERTEX = /* glsl */ `
 // dust reduced: the share is the model's, the switch is display. Inside the region regime's window the clouds' layer
 // fades as its own cloud interiors fade in, as the field's HII does (no double counting).
 //
-// The steps are compiled in (a GLSL loop needs a constant bound): a new count is a new shader (D199).
-export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
+// The steps are uniforms since S78 (T29), one program for every count: compiled in (D199, "a GLSL loop needs a constant
+// bound", true of WebGL1 and not of GLSL ES 3.00), the step loop was unrolled by Direct3D's compiler - ANGLE marks no
+// loop [loop] - and the program took 6.8 s to build at 96 steps and 2.8 s at 48 (the compile probe, e2e/compile). The
+// sub-samples' loop runs to n itself, not to SUB_SAMPLES_MAX with a break. The arithmetic is the same operations in the
+// same order: the steps' exponent is the uniform invSteps, 1 / steps as a float - the value the constant 1.0 / float(96)
+// was folded to (0.010416667, the float nearest 1/96) - and every statement in the loops is as it was.
+export const fieldFragment = (): string => /* glsl */ `
   uniform sampler2D plane;
   uniform sampler2D scatter;
   uniform sampler2D hii;
@@ -248,8 +256,11 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform float rHi;
   // One texel's radial width, kpc (regimes.ts PlaneTexture.cell): the sub-steps' in-plane length.
   uniform float planeCell;
-  // The most sub-samples a step reads (the Tuning panel's cap, D199), at most the loop's ${SUB_SAMPLES_MAX}.
+  // The most sub-samples a step reads (the Tuning panel's cap, D199), at most ${SUB_SAMPLES_MAX} (the frame loop clamps it).
   uniform float subMax;
+  // The march's steps along the ray (the Tuning panel's, D199) and 1 / steps as a float (S78, T29).
+  uniform int steps;
+  uniform float invSteps;
   // 1 offsets each step by the pixel's fixed fraction; 0 reads each sub-step at its middle (D199).
   uniform float dither;
   uniform float halfHeight;
@@ -442,7 +453,7 @@ ${NOISE_GLSL}
     // screen, coarse where it is far and small. Even steps along a 60 kpc ray pass straight
     // over a disc 0.3 kpc thick a few hundred parsecs away.
     float tStart = max(tNear, 0.01);
-    float ratio = pow(max(tFar, tStart * 1.0001) / tStart, 1.0 / float(${steps}));
+    float ratio = pow(max(tFar, tStart * 1.0001) / tStart, invSteps);
     // A per-pixel offset turns banding into fine noise: into each step for the bulge's point sample, and
     // into each sub-step for the layers' reads. Fixed by the pixel, never by the frame.
     float jitter = dither > 0.5 ? fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) : 0.5;
@@ -462,7 +473,7 @@ ${NOISE_GLSL}
     float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;
     float screenSpurs = spursOn > 0.5 ? layerSpurSum(screenRP.x, screenRP.y, spurCount) : 0.0;
     vec3 screenClumps = youngClump > 0.5 ? clusterRatios(screenXY) : vec3(1.0);
-    for (int k = 0; k < ${steps}; k++) {
+    for (int k = 0; k < steps; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
       vec3 p = origin + dir * (a + jitter * ds);
@@ -476,8 +487,7 @@ ${NOISE_GLSL}
       vec3 p1 = p0 + dir * ds;
       int n = int(clamp(ceil(length(p1.xz - p0.xz) / planeCell), 1.0, subMax));
       float sub = ds / float(n);
-      for (int j = 0; j < ${SUB_SAMPLES_MAX}; j++) {
-        if (j >= n) break;
+      for (int j = 0; j < n; j++) {
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
         vec3 bulgeSub = bulge * starsGain / float(n);
@@ -645,7 +655,12 @@ export interface CloudRasterStats {
   height: number;
   perCell: number;
   bytes: number;
+  /** The build's time, ms: the worker's own (S78, R5), the main thread's where there is none, or the kept raster's lookup. */
   ms: number;
+  /** Built in the worker (S78, R5), or on the main thread / taken from the kept rasters. */
+  worker: boolean;
+  /** From the job's post to the worker's answer on the main side, ms; 0 when not built in the worker. */
+  roundTripMs: number;
   census: number;
   held: number;
   outside: number;
@@ -687,58 +702,62 @@ export interface MarchStats {
   gpuAvailable?: boolean;
 }
 
-// --- the march's programs compiled off the critical path (S76, BUILD_IV W5, D240 F2) ------------------------------
-// The march's program takes seconds to build (S76's probe: 6.3 s for 96 steps and 2.3 s for 48 on ANGLE/Direct3D 11,
-// one long task in three.js's first use of the program), and the mesh that uses it is made only once the render has
-// answered. So as soon as the renderer exists a stand-in mesh with the same program - the same vertex and fragment
-// text (fieldFragment, unchanged), the same material options, a box, drawn into a float target as the march is - is
-// compiled with compileAsync (KHR_parallel_shader_compile where the browser has it), while the landing's answers are in
-// flight; the real material then finds the program in three.js's cache. The stand-ins are held for the renderer's
-// life, so the program is never released between them. Nothing is drawn with them. Where the program is not ready by
-// the first frame, that frame waits on it as before.
+// --- the march's program compiled off the critical path (S76, BUILD_IV W5, D240 F2) -------------------------------
+// The march's program took seconds to build (S76's probe: 6.3 s for 96 steps and 2.3 s for 48 on ANGLE/Direct3D 11,
+// one long task in three.js's first use of the program; about 1 s since S78, T29, with the steps a uniform), and the
+// mesh that uses it is made only once the render has answered. So as soon as the renderer exists a stand-in mesh with
+// the same program - the same vertex and fragment text (fieldFragment, unchanged), the same material options, a box,
+// drawn into a float target as the march is - is compiled with compileAsync (KHR_parallel_shader_compile where the
+// browser has it), while the landing's answers are in flight; the real material then finds the program in three.js's
+// cache. Since S78 one program serves every step count, so there is one stand-in. It is held for the renderer's life,
+// so the program is never released. Nothing is drawn with it. Where the program is not ready by the first frame, that
+// frame waits on it as before.
 
-const precompiled = new WeakMap<WebGLRenderer, Map<number, Mesh>>();
+/**
+ * The stand-in's build as measured (S78, T29), `window.__galaxygenCompile`: `started`, performance.now() at the
+ * compileAsync call, and `ms` from there to its resolution - for the smoothness probe to read beside the landing.
+ */
+export interface MarchCompile {
+  started: number;
+  ms: number;
+}
 
-/** The step counts the templates open on (tuning.ts TEMPLATE_TUNING), and the default. */
-const TEMPLATE_STEPS = [...new Set([STEPS, ...Object.values(TEMPLATE_TUNING).map((t) => t.steps ?? STEPS)])];
+const precompiled = new WeakMap<WebGLRenderer, Mesh>();
 
-/** Compile the march's program for each step count, `first` before the rest, without drawing. */
-export function precompileMarch(gl: WebGLRenderer, first: number, rest: readonly number[] = TEMPLATE_STEPS): Promise<void> {
-  let held = precompiled.get(gl);
-  if (!held) {
-    held = new Map();
-    precompiled.set(gl, held);
+/** Compile the march's program (one for every step count since S78) without drawing. */
+export function precompileMarch(gl: WebGLRenderer): Promise<void> {
+  if (precompiled.has(gl)) return Promise.resolve();
+  const material = new ShaderMaterial({
+    uniforms: {},
+    vertexShader: VERTEX,
+    fragmentShader: fieldFragment(),
+    side: BackSide,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const mesh = new Mesh(new BoxGeometry(1, 1, 1), material);
+  mesh.frustumCulled = false;
+  precompiled.set(gl, mesh);
+  const scene = new Scene();
+  scene.add(mesh);
+  gl.extensions.get("KHR_parallel_shader_compile");
+  // The program's parameters are read with a float target bound, as the march draws into one (offscreen.target).
+  const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
+  const before = gl.getRenderTarget();
+  gl.setRenderTarget(target);
+  const started = performance.now();
+  try {
+    return gl
+      .compileAsync(scene, new PerspectiveCamera())
+      .then(() => {
+        const record: MarchCompile = { started, ms: performance.now() - started };
+        (globalThis as { __galaxygenCompile?: MarchCompile }).__galaxygenCompile = record;
+      })
+      .catch(() => undefined);
+  } finally {
+    gl.setRenderTarget(before);
+    target.dispose();
   }
-  const compile = (steps: number): Promise<unknown> => {
-    if (held.has(steps)) return Promise.resolve();
-    const material = new ShaderMaterial({
-      uniforms: {},
-      vertexShader: VERTEX,
-      fragmentShader: fieldFragment(steps),
-      side: BackSide,
-      depthTest: false,
-      depthWrite: false,
-    });
-    const mesh = new Mesh(new BoxGeometry(1, 1, 1), material);
-    mesh.frustumCulled = false;
-    held.set(steps, mesh);
-    const scene = new Scene();
-    scene.add(mesh);
-    gl.extensions.get("KHR_parallel_shader_compile");
-    // The program's parameters are read with a float target bound, as the march draws into one (offscreen.target).
-    const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
-    const before = gl.getRenderTarget();
-    gl.setRenderTarget(target);
-    try {
-      return gl.compileAsync(scene, new PerspectiveCamera()).catch(() => undefined);
-    } finally {
-      gl.setRenderTarget(before);
-      target.dispose();
-    }
-  };
-  return compile(first)
-    .then(() => Promise.all(rest.filter((s) => s !== first).map(compile)))
-    .then(() => undefined);
 }
 
 /**
@@ -813,21 +832,81 @@ export function FieldVolume({
     if (!R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return;
     const holder = window as unknown as Record<string, unknown>;
     const a = light.arrays as Record<string, ArrayLike<number>>;
-    // Beside the whole (the lead's second pass on R5): the star-first remainder per ring.
-    const value = {
-      ...renderRings(R, phi.n, a.stars, white, light.header.bulge, frame.header.scalars.bulge_scale_radius ?? 0),
-      unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
-      lMin,
-    };
-    holder.__galaxygenRenderRings = value;
+    const bulgeScale = frame.header.scalars.bulge_scale_radius ?? 0;
+    // S78: read lazily - computed on the first read and kept (the same object every read after), so a page no gate
+    // reads (every landing) spends none of its main thread on it (10-97 ms a render).
+    let value: Record<string, unknown> | null = null;
+    const get = () =>
+      (value ??= {
+        ...renderRings(R, phi.n, a.stars, white, light.header.bulge, bulgeScale),
+        // Beside the whole (the lead's second pass on R5): the star-first remainder per ring.
+        unresolved: a.stars_unresolved ? partRings(R, phi.n, a.stars_unresolved, null, white) : null,
+        lMin,
+      });
+    Object.defineProperty(holder, "__galaxygenRenderRings", { get, configurable: true, enumerable: true });
     return () => {
-      if (holder.__galaxygenRenderRings === value) delete holder.__galaxygenRenderRings;
+      if (Object.getOwnPropertyDescriptor(holder, "__galaxygenRenderRings")?.get === get) delete holder.__galaxygenRenderRings;
     };
   }, [frame, light, lMin]);
 
-  // Read when the material is built, so a mesh made after a steps change compiles once, with them.
-  const stepsNow = useRef(steps);
-  stepsNow.current = steps;
+  // The clouds' raster (S64, V6; RULING_S64 R4): the whole disc's census over the plane's polar extent at the "cloud
+  // raster" tuning value's texels per render cell a side (never past the 16 MiB budget for this grid), built once per
+  // census and grid. The viewer's own resolution: what each cloud deposits is conserved whatever it is.
+  const gridR = frame?.header.grid.axes.R;
+  const gridPhi = frame?.header.grid.axes.phi;
+  const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
+  // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
+  // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
+  // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
+  // gas fluctuation field's shear - each cloud's published cloud_axis_ratio and cloud_angle (/api/clouds, the model's
+  // since S70, Audit V F-4-3; until then this viewer derived them from the header's gas_fluctuation strain) - at the
+  // "cloud elongation" power. With the layer off the model publishes every cloud round (ratio 1).
+  // S78: built only once the census, the grid (the arrays) and the drawn render are of one run (api.ts sameRun): before
+  // the render has come - or, on a switch, while the drawn pair is still the last galaxy's - the shape would be another's
+  // and the raster built twice (1.6 s of the landing's main thread, 0.34 s of a switch's). Until then no clouds' layer
+  // is drawn, as before any raster exists.
+  const rasterRun = Boolean(clouds && light && frame && sameRun(clouds, light) && sameRun(clouds, frame));
+  const cloudLayerH = rasterRun && light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
+  const elongation = tuning.cloudElongation ?? 0;
+  const rasterShape = useMemo(
+    (): RasterShape => ({
+      verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
+      elongation,
+    }),
+    [cloudLayerH, elongation],
+  );
+  // S76 (D240 F1): kept across remounts by the census's content and the shape - a remount with the same answer is the
+  // same raster, taken here at once. The slab beside the A_V (S64, R3 as ruled) comes packed (the review's G6: only
+  // what is read is kept): half floats, two a texel - each texel's clouds' mean height and half-thickness, kpc - and the
+  // highest a slab reaches, which bounds the points' segment.
+  // S78 (R5): on a miss the raster is built in a worker (cloudRasterClient.ts), asked for here - before the mesh's own
+  // build below, in the same render - so the two overlap; the answer is kept and arrives as `arrival`. Where there is
+  // no Worker it is built here, on this thread, as before.
+  const rasterWant = useMemo((): { key: string; perCell: number; now: RasterArrival | null } | null => {
+    const c = clouds?.columns as Partial<CloudColumns> | undefined;
+    if (!rasterRun || !gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
+    const census = c as CloudColumns;
+    const width = gridR.n * perCell;
+    const height = gridPhi.n * perCell;
+    const started = performance.now();
+    // S78 (R5b): only a raster big enough for the overlap to pay goes to the worker (WORKER_RASTER_TEXELS).
+    if (!rasterInWorker(width, height, rasterWorkerAvailable())) {
+      const built = keptCloudRaster(census, gridR.lo, gridR.hi, width, height, rasterShape, DataUtils.toHalfFloat);
+      return { key: "", perCell, now: { key: "", raster: built, ms: performance.now() - started, roundTripMs: 0, worker: false } };
+    }
+    const key = rasterKey(census, gridR.lo, gridR.hi, width, height, rasterShape);
+    const hit = keptRasterHit(key);
+    if (hit) return { key, perCell, now: { key, raster: hit, ms: performance.now() - started, roundTripMs: 0, worker: false } };
+    startRaster(key, () => rasterRequest(census, gridR.lo, gridR.hi, width, height, rasterShape));
+    return { key, perCell, now: null };
+  }, [rasterRun, clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [arrival, setArrival] = useState<RasterArrival | null>(null);
+  useEffect(() => {
+    if (!rasterWant || rasterWant.now) return undefined;
+    return listenRaster(rasterWant.key, setArrival);
+  }, [rasterWant]);
+
+  // Read when the material is built.
   const filteringNow = useRef(filtering);
   filteringNow.current = filtering;
   const metaNow = useRef(meta);
@@ -871,13 +950,16 @@ export function FieldVolume({
     const middle = parts?.find((p) => p.key === "middle");
     const kept = parts && middle?.weight && tables.clustering && tables.gas ? (keptParts(light.header, a) as AgedStars["kept"]) : null;
     const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, kept, shown: "" } : null;
+    // Split for the clustered march (S66, R5): fillStars below writes every texel of the stellar layer from the split, so
+    // the parts' sum is not computed for it only to be overwritten (S78: 160-240 ms of the landing's main thread).
+    const clumped = Boolean(aged?.kept) && clumpsNow.current;
     const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
       // The stars' light: the whole component, or under the star-first mode's threshold the remainder no point
       // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
       // A frame that carries the age parts draws their sum at the switches; one from before them draws `stars`.
-      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : aged ? agedLight(a, aged.parts, agesNow.current, n) : a.stars,
+      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : aged ? (clumped ? null : agedLight(a, aged.parts, agesNow.current, n)) : a.stars,
       // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
       hii: summed(a.halpha_hii, a.lines_hii),
       dig: summed(a.halpha_dig, a.lines_dig),
@@ -936,7 +1018,6 @@ export function FieldVolume({
     const planeTex = polar(data);
     const clumpTex = [0, 1, 2].map(() => polar(new Float32Array(width * height * 4)));
     if (aged) {
-      const clumped = Boolean(aged.kept) && clumpsNow.current;
       if (clumped) fillStars(aged, agesNow.current, true, planeTex, clumpTex);
       aged.shown = `${agesKey(agesNow.current)},${clumped}`;
     }
@@ -957,6 +1038,9 @@ export function FieldVolume({
         rHi: { value: R.hi },
         planeCell: { value: cell },
         subMax: { value: SUB_SAMPLES_MAX },
+        // The steps (S78, T29): set in the frame loop with the rest of the panel's values.
+        steps: { value: STEPS },
+        invSteps: { value: 1 / STEPS },
         dither: { value: 1 },
         halfHeight: { value: halfHeight },
         // The model's layers (the render header): a missing one is height 0, which draws nothing. The dust's
@@ -1002,7 +1086,7 @@ export function FieldVolume({
         ...Object.fromEntries(Object.entries(scalars).map(([k, v]) => [k, { value: v }])),
       },
       vertexShader: VERTEX,
-      fragmentShader: fieldFragment(stepsNow.current),
+      fragmentShader: fieldFragment(),
       side: BackSide, // the far faces, so it draws with the camera outside the box or inside it
       depthTest: false,
       depthWrite: false,
@@ -1025,47 +1109,23 @@ export function FieldVolume({
     return box;
   }, [frame, light, tablesOf, unresolved]);
 
-  // The clouds' raster (S64, V6; RULING_S64 R4): the whole disc's census over the plane's polar extent at the "cloud
-  // raster" tuning value's texels per render cell a side (never past the 16 MiB budget for this grid), built once per
-  // census and grid. The viewer's own resolution: what each cloud deposits is conserved whatever it is.
-  const gridR = frame?.header.grid.axes.R;
-  const gridPhi = frame?.header.grid.axes.phi;
-  const perCell = gridR && gridPhi ? Math.max(1, Math.min(Math.round(tuning.cloudRaster ?? CLOUD_RASTER), finestRaster(gridR.n, gridPhi.n))) : 0;
-  // What shapes each cloud's deposit (S67, D230): R1, its vertical half-extent capped at the clouds' published layer's
-  // half-maximum (the render header's clouds.layers.clouds_scale_height h, HWHM = 1.7627 h: 60 pc on the Milky Way) - a
-  // cloud bigger than the layer is drawn flattened, its face-on A_V x area unchanged; R2, its face-on ellipse along the
-  // gas fluctuation field's shear - each cloud's published cloud_axis_ratio and cloud_angle (/api/clouds, the model's
-  // since S70, Audit V F-4-3; until then this viewer derived them from the header's gas_fluctuation strain) - at the
-  // "cloud elongation" power. With the layer off the model publishes every cloud round (ratio 1).
-  const cloudLayerH = light ? cloudsOf(light)?.layers?.clouds_scale_height ?? null : null;
-  const elongation = tuning.cloudElongation ?? 0;
-  const rasterShape = useMemo(
-    (): RasterShape => ({
-      verticalCap: cloudLayerH && cloudLayerH > 0 ? SECH2_HWHM_PER_H * cloudLayerH : Infinity,
-      elongation,
-    }),
-    [cloudLayerH, elongation],
-  );
+  // The raster's textures (its build: rasterWant, above the mesh): made once the raster is here - at once when it was
+  // kept or built on this thread, when the worker answers otherwise. Until then no clouds' layer is drawn.
+  const rasterBuilt = rasterWant?.now ?? (arrival && rasterWant && arrival.key === rasterWant.key ? arrival : null);
   const raster = useMemo((): { texture: DataTexture; slab: DataTexture; top: number; stats: CloudRasterStats } | null => {
-    const c = clouds?.columns as Partial<CloudColumns> | undefined;
-    if (!gridR || !gridPhi || !perCell || !c?.cloud_dust_extinction_v || !c.cloud_radius || !c.cloud_azimuth || !c.cloud_size || !c.cloud_height) return null;
-    const started = performance.now();
-    // S76 (D240 F1): kept across remounts by the census's content and the shape - a remount with the same answer is the
-    // same raster. The slab beside the A_V (S64, R3 as ruled) comes packed (the review's G6: only what is read here is
-    // kept): half floats, two a texel - each texel's clouds' mean height and half-thickness, kpc - and the highest a slab
-    // reaches, which bounds the points' segment.
-    const built: KeptRaster = keptCloudRaster(c as CloudColumns, gridR.lo, gridR.hi, gridR.n * perCell, gridPhi.n * perCell, rasterShape, DataUtils.toHalfFloat);
+    if (!rasterBuilt || !rasterWant) return null;
+    const built: KeptRaster = rasterBuilt.raster;
     const { halves, top } = built;
-    const ms = performance.now() - started;
     const texture = rasterTexture(new DataTexture(built.av, built.width, built.height, RedFormat, FloatType));
     const slab = rasterTexture(new DataTexture(halves, built.width, built.height, RGFormat, HalfFloatType));
     const stats = {
-      width: built.width, height: built.height, perCell, bytes: built.av.byteLength + halves.byteLength, ms,
+      width: built.width, height: built.height, perCell: rasterWant.perCell, bytes: built.av.byteLength + halves.byteLength, ms: rasterBuilt.ms,
+      worker: rasterBuilt.worker, roundTripMs: rasterBuilt.roundTripMs,
       census: built.census, held: built.held, outside: built.outside, split: built.split,
     };
     (globalThis as { __galaxygenCloudRaster?: CloudRasterStats }).__galaxygenCloudRaster = stats;
     return { texture, slab, top, stats };
-  }, [clouds, gridR?.lo, gridR?.hi, gridR?.n, gridPhi?.n, perCell, rasterShape]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rasterBuilt]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(
     () => () => {
       raster?.texture.dispose();
@@ -1094,7 +1154,7 @@ export function FieldVolume({
   const size = useThree((state) => state.size);
   // S76 (D240 F2): the march's program built while the render is still on its way (precompileMarch, above).
   useEffect(() => {
-    void precompileMarch(gl, stepsNow.current);
+    void precompileMarch(gl);
   }, [gl]);
   // The GPU's time for the march (S67, D227 R6; gpuTimer.ts): a timer query round its render call, read back frames later.
   const timer = useMemo(() => gpuTimer(gl.getContext() as WebGL2RenderingContext), [gl]);
@@ -1204,16 +1264,6 @@ export function FieldVolume({
     if (mesh) tellDepth.current?.((mesh.userData.dustPaint as DustPaintShown | undefined) ?? null);
   }, [mesh]);
 
-  // A new step count is a new shader (the loop's bound is compiled in); the caller debounces it.
-  useEffect(() => {
-    if (!mesh) return;
-    const material = mesh.material as ShaderMaterial;
-    const source = fieldFragment(steps);
-    if (material.fragmentShader === source) return;
-    material.fragmentShader = source;
-    material.needsUpdate = true;
-  }, [mesh, steps]);
-
   // The plane textures' sampling, set in place: no new textures, no new shader.
   useEffect(() => {
     if (!mesh) return;
@@ -1289,6 +1339,11 @@ export function FieldVolume({
     (uniforms.regionWindow.value as Vector4).set(w?.r_min ?? 0, w?.r_max ?? 0, w?.phi_min ?? 0, w?.phi_max ?? 0);
     uniforms.hiiFade.value = region ? hiiFade : 0;
     uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
+    // A new step count is two uniforms (S78, T29), not a new shader: the count and its reciprocal, which three uploads
+    // as a float - the float nearest 1 / steps, as the constant 1.0 / float(steps) was folded when it was compiled in.
+    const marchSteps = Math.max(1, Math.round(steps));
+    uniforms.steps.value = marchSteps;
+    uniforms.invSteps.value = 1 / marchSteps;
     uniforms.dither.value = dither ? 1 : 0;
     uniforms.starsGain.value = shown.stars;
     uniforms.gasGain.value = shown.gas;

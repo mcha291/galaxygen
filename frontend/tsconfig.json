@@ -14,5 +14,5 @@
     "types": ["vite/client", "node"],
     "paths": { "@interface/*": ["../interface/*"] }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "e2e/compile/capture.ts"]
 }
