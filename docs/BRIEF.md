@@ -10,10 +10,10 @@ parse and the first raster), the switch to NGC 4414 warm (≈ 1.8 s) and the mod
 in a fresh process, F5) are over — T29. S77 (D241) made the `ci` workflow green (#206 discharged): the machine pins marked
 `machine_pinned` and skipped under `CI`, `JSON_DEPTH_CAP` 64 at every parse, Python 3.14.4, the full suite on `main` /
 nightly / dispatch with a fast job elsewhere. **The model's hash is f1fbbb17eff3c1dc003abcd38117cb1f** (was 4f0c8401…):
-the next deploy builds a new model image and pins the gateway to it. S79 (D242, a side session, no row) read #207 on the
+the next deploy builds a new model image and pins the gateway to it. S79 (D243, a side session, no row) read #207 on the
 runner's draw and discharged it — the continuity test's hard ends by identity, its bound the taper's own rate — and opened
-#208 (the per-piece pitch draw has no floor). Register 134 open = 11 + 123, 57 discharged; next
-number **#209**, decisions from **D243**, board row 78 (none planned), acceptance rows from 38.
+#209 (the per-piece pitch draw has no floor). Register 134 open = 11 + 123, 57 discharged; next
+number **#210**, decisions from **D244**, board row 78 (none planned), acceptance rows from 38.
 
 ## What waits on the owner
 - **The subscription and the deploy** (D239 (i)–(ii)): re-enable it in the portal, then from a checkout of `main` whose
@@ -27,7 +27,7 @@ number **#209**, decisions from **D243**, board row 78 (none planned), acceptanc
 - **Rulings:** F5, the model-cold zoom — an eager warm after the landing (wakes the replica on every visit, ruling 9), a
   warm replica (15 b, paid), or the ring-first draw published to the viewer (15 c); #205's remedy with it; D239's sizes,
   TTL and readiness probe; D241's two — CI's full suite off every branch push (D24 amended), and whether the pins get a
-  per-platform capture; T29's order (the shader program first); T20; #197, #202, #203; #208 with #142 (a floor on the pitch).
+  per-platform capture; T29's order (the shader program first); T20; #197, #202, #203; #209 with #142 (a floor on the pitch).
 
 ## What an agent session can do without the deploy (each the owner's word)
 - **T29, the landing inside the bound:** the march program smaller or shared (re-baselining `fieldFragment.s66.glsl`'s

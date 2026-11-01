@@ -15261,7 +15261,7 @@ next open reads along with S77's `verify_clone`. The old workflow's last run, on
 red as #206 described — the last of its kind.
 
 
-### D242. S79, debt #207: the arm count's continuity test reads its hard ends by identity and its bound from the taper's own rate, and runs on the runner's draw; #207 discharged, #208 opened
+### D243. S79, debt #207: the arm count's continuity test reads its hard ends by identity and its bound from the taper's own rate, and runs on the runner's draw; #207 discharged, #209 opened
 
 **The commission.** S77's open item for an agent (`BRIEF.md`: "#207: the continuity test's hard ends found by chain
 identity, not a 1e-9 coincidence; run on the runner's draw through a dispatched full `ci` run; seed 49's 2.47e-6 step
@@ -15310,7 +15310,7 @@ no edge and no midpoint past the taper's rate, the largest step 0.88 of its boun
 than the probe, every one the ends of one chain — each of the 300 Milky Way draws holds at least one, a pinned kink's
 two bits — and none between two chains; seed 49 alone past the old 1e-6, none past the old midpoint 1e-5; every Milky
 Way draw steps once (Norma's kink), no other template's draw at all. The smallest drawn pitch 0.0086° (seed 208); 18 of
-the 400 draws hold a piece under 0.1° and 120 one under 1° — #208's tail.
+the 400 draws hold a piece under 0.1° and 120 one under 1° — #209's tail.
 
 **The runs.** The push of 1482088: `fast` green (41191405570). Dispatched on it, the full `test` job (41191405818):
 green at 13:21 UTC — 1708 passed, 25 skipped, 1 xfailed in 3 h 15 (11 686 s). The continuity test's three legs ran on the
@@ -15322,7 +15322,7 @@ machines.
 replaces, and what the gate's sentence says at a near-circular piece; no pinned number moved (the three records stand);
 nothing under `model/galaxy` changed. The reading does not make the *record* bit-independent — one break or two, which
 pieces meet — so it stays pinned here. That a chain can enter a ring's count within parsecs is the law's, not the
-test's: #208, for the owner (the remedy #142 already names).
+test's: #209, for the owner (the remedy #142 already names).
 
-**The register.** −1, +1: **#207 discharged** (its "first assert" corrected to the midpoint's); **#208 opened** (the
+**The register.** −1, +1: **#207 discharged** (its "first assert" corrected to the midpoint's); **#209 opened** (the
 per-piece pitch draw has no floor) — 134 open = 11 permanent + 123 carried, 57 discharged.

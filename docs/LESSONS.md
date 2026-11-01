@@ -1820,7 +1820,7 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [field] A fixed threshold on a continuous quantity is a slope nobody derived: "a part in 1e10 moves the count by
   under 1e-6" assumed a rate under 1e4 per unit ln R, and a piece of 0.01 degrees runs 5 600 of arc per unit ln R, so
   its taper enters a ring within parsecs. Derive the bound from the mechanism's own rate — it was a hundred times
-  tighter where the assumption held and right where it did not — and record what the rate itself implies (#208).
+  tighter where the assumption held and right where it did not — and record what the rate itself implies (#209).
 - [audit] A failing assert names its constant: the runner's log said `< 1e-05`, the midpoint's bound, and the entry
   said "the first assert". Read the message's number before writing which claim failed; the two readings point at
   different mechanisms.
