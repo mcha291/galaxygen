@@ -27,6 +27,7 @@ import { compareCaption } from "./compare";
 import { PHOTOMETRIC, lightColors, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
+import { wholeDiscOf } from "./fieldLoads";
 import { type AgePart, FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
@@ -351,7 +352,8 @@ export function GalaxyTab({
   // 4 kpc levelFor is 0 and every request is S64's.
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
   const R = meta.grid.axes.R;
-  const wholeDisc = { r_min: R?.lo ?? 0, r_max: rMax, phi_min: 0, phi_max: 2 * Math.PI, level: 0 };
+  // The whole disc (fieldLoads.ts, S80: the window App asks the clouds' census ahead with is this one).
+  const wholeDisc = wholeDiscOf(meta);
   const seen = mode === "stars" && view ? footprint(view.camera.viewProjection, rMax) : null;
   const pointsOn = mode === "stars" && tuning.compPoints;
   const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;

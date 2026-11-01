@@ -28,7 +28,7 @@ import {
   type WebGLRenderer,
 } from "three";
 
-import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
+import { ALL_AGES, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
 
 import {
   type Census,
@@ -50,6 +50,7 @@ import { rasterRequest } from "./cloudRasterJob";
 import type { CellLayout } from "./brightTiles";
 import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
+import { fieldArrayNames, fieldLit } from "./fieldLoads";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SLAB_PIECES, starTexels, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
@@ -101,8 +102,8 @@ const COMPOSITE_FRAGMENT = /* glsl */ `
   }
 `;
 
-// The bulge's scale radius comes from the arrays; every component, its layer and its colour from /api/render.
-const SCALARS: string[] = [...FIELD_SCALARS];
+// The bulge's scale radius comes from the arrays (fieldLoads.ts fieldArrayNames); every component, its layer and its
+// colour from /api/render.
 
 /** Each age part's switch (S63, D223): its light's multiplier in the stellar layer, 0 off and 1 on. */
 export interface AgeGains {
@@ -794,9 +795,9 @@ export function FieldVolume({
   const gasInMarch = tuning.gasInMarch ?? true;
   const spursInMarch = tuning.spursInMarch ?? true;
   const clumpsInMarch = tuning.clumpsInMarch ?? true;
-  const declared = (name: string) => meta.fields.find((f) => f.name === name);
-  const names = SCALARS.filter((n) => declared(n));
-  const lit = Boolean(declared("disc_surface_brightness") && declared("disc_light_temperature"));
+  // The arrays' names and whether the light is declared: fieldLoads.ts's (S80), the same App asks them ahead with.
+  const names = fieldArrayNames(meta);
+  const lit = fieldLit(meta);
   const key = lit ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value ?? null;

@@ -5,9 +5,10 @@ import { PHOTOMETRIC } from "./galaxy/colors";
 import { PHYSICS_ONLY, layerQuery, onLayerFault } from "./galaxy/layer";
 import type { ComparePicture } from "./galaxy/PictureBeside";
 import { Exposure } from "./galaxy/Exposure";
+import { askFieldAhead } from "./galaxy/fieldLoads";
 import type { FilterSetName } from "./galaxy/filters";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
-import { exposureFor } from "./galaxy/tuning";
+import { exposureFor, loadTuning } from "./galaxy/tuning";
 import { type Preset } from "./galaxy/GalaxyView";
 import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
@@ -67,12 +68,15 @@ export function App() {
   // A template landed on - the first load, or one chosen in the switcher - brings its camera and its filter
   // set (rule D1 as amended; D213 rulings 5 and 7). What the user changes after that is theirs until the next.
   const landed = wf.template;
+  // The landing whose stand and filters this view has taken (S80: the field's head start, below, waits for it).
+  const [viewOf, setViewOf] = useState(-1);
   useEffect(() => {
     if (!landed) return;
     setPreset(null);
     setFilterSet(landed.filters);
     // S67 (D227 R4): and its exposure's default stops (tuning.ts exposureFor; 0 for a template with none).
     setExposure(exposureFor(landed.name));
+    setViewOf(wf.selection);
   }, [wf.selection]); // eslint-disable-line react-hooks/exhaustive-deps -- a landing, not every render of the same template
   // The switcher's choice: the workflow regenerates at the template's inputs (its own state, its own query), and
   // the view takes the template's stand and filters in the same update, so the canvas is made once.
@@ -151,6 +155,20 @@ export function App() {
   const sampleKey = drawsStars && galaxyQuery ? JSON.stringify(galaxyQuery) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(galaxyQuery!, signal));
   const sample = galaxy.value;
+  // The field's loads asked beside the sample (S80, #208 (a)): until the sample has answered the Galaxy tab is not
+  // mounted, and the loads its field mode makes on its mount - the arrays, the whole render, the layer's tables and the
+  // clouds' census (fieldLoads.ts) - were asked only then, after the sample's answer and the tab's mount (~0.3 s of the
+  // landing's chain, D242's profile). So while the tab waits on the sample they are asked here, each the very request
+  // its loader will make (the same function, the same arguments), which takes it on its mount (api.ts askAhead): the
+  // same requests, earlier. Asked only for the shown query (galaxyQuery), only for the model whose declarations are
+  // here, only once the landing's filter set has been taken (viewOf; the tuning is the one the tab will read), and a
+  // task after the sample's own request, which stays the first.
+  const tabWaits = sampleKey !== null && !sample && meta !== null && meta.model === shownModel && (!landed || viewOf === wf.selection);
+  useEffect(() => {
+    if (!tabWaits || !meta || !galaxyQuery) return;
+    const timer = setTimeout(() => askFieldAhead(meta, galaxyQuery, filterSet, loadTuning(undefined, landed?.name ?? null)), 0);
+    return () => clearTimeout(timer);
+  }, [tabWaits, sampleKey]); // eslint-disable-line react-hooks/exhaustive-deps -- asked once per query the tab waits on
 
   const seed = wf.shown?.state.values.world_seed;
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
