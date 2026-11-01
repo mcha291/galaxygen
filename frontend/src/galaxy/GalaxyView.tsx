@@ -29,6 +29,7 @@ import { extent } from "./positions";
 import { screenRings } from "./ringProfile";
 import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
+import { galaxyRenderer } from "./renderer";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
 import styles from "./GalaxyView.module.css";
@@ -136,7 +137,7 @@ export function GalaxyView({
         key={`${standKey}:${fov}:${epoch}:${hdr}`} // a preset, a template's stand or a lens is a fresh camera; orbiting from there is the user's
         camera={{ position, fov, near: planes.near, far: planes.far }}
         dpr={[1, 2]}
-        gl={{ alpha: true, antialias: true }}
+        gl={galaxyRenderer} // alpha and antialias, three's shader checks off in a production build (renderer.ts, S80)
       >
         {children}
         {layers.map((layer, i) => (
