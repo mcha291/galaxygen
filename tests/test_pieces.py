@@ -1798,73 +1798,161 @@ def test_the_pieces_are_a_table_served_whole_and_no_catalogue(prod):
 # --- no step in the count but where a chain ends untapered (the second follow-up, item 3) -----------------------------
 
 
-def untapered_ends(table: np.ndarray) -> np.ndarray:
-    """The radii, kpc, at which a chain stops crossing rings with no taper, from the table alone: an end of a piece
-    that meets another chain (``arm_piece_join``), and a kink at which two pieces of one chain both end or both
-    start - a measured arm that turns back in radius."""
-    out = []
-    ends = []  # (chain, ln R, azimuth, outer?)
-    for row in table:
-        x0, y0, x1, y1 = line_of(row[2:6])
-        ends += [(row[0], x0, y0, False), (row[0], x1, y1, True)]
-        if row[7] == 1.0:
-            out.append(math.exp(x0))
-        if row[7] == 2.0:
-            out.append(math.exp(x1))
-    for i, (chain, x, y, outer) in enumerate(ends):
-        for other, u, v, kind in ends[i + 1:]:
-            if other == chain and kind == outer and abs(u - x) < 1e-9 and abs(math.remainder(v - y, 2.0 * math.pi)) < 1e-9:
-                out.append(math.exp(x))
-    return np.array(sorted(out))
+def hard_ends(p: pc.Pieces, pinned_rows) -> np.ndarray:
+    """The ln R of every break at which a chain ends with no taper, read **by identity** - the table's own columns
+    and the template's pin, no float compared with another (S78, #207; until then two ends within 1e-9 of one
+    another were read as one point, which held or not by the draw's bits). **A join** is the end ``arm_piece_join``
+    flags: the piece's inner end for 1, its outer for 2. **A measured arm that turns back in radius** is a pin row
+    whose two stretches' pitches differ in sign: ``arm_pieces.pinned_pieces`` enters a stretch of positive pitch by
+    its high-β end and one of pitch ≤ 0 by its low-β end, so the two stretches both END at the kink where the inner
+    stretch leads (pitch ≤ 0 below the kink, > 0 above: Norma's −1 then 19.5 degrees) and both START there where it
+    trails; the row's chain is its index in the pin (the pin's chains are numbered first, in the pin's order: the
+    census's docstring) and its stretches the chain's pinned pieces. Every value returned is one of ``p.breaks``'
+    own bits, so an edge is hard by equality - on any machine."""
+    hard = [float(p.x_start[j]) for j in range(p.count) if p.join[j] == pc.JOIN_INNER]
+    hard += [float(p.x_end[j]) for j in range(p.count) if p.join[j] == pc.JOIN_OUTER]
+    for chain, (_, lo, hi, kink, _, below, above) in enumerate(pinned_rows):
+        if not (lo < kink < hi) or (below > 0.0) == (above > 0.0):
+            continue  # one stretch, or a kink the chain runs through end to start: its taper runs along the chain
+        stretches = np.flatnonzero((p.chain == chain) & (p.pinned == 1.0))
+        assert stretches.size == 2, (chain, stretches)
+        hard += [float(v) for v in (p.x_end if above > 0.0 else p.x_start)[stretches]]
+    return np.array(sorted(hard))
 
 
-# S77 (#207): the hard-end reading at 1e-9 / 1e-8 depends on the draw's bits - a 0.99999997 step on the runner's draw none of its categories explain, 2.47e-6 at a chain start on seed 49 here; to be re-read, not widened
-@pytest.mark.parametrize("template", [pytest.param(t, id=t, marks=[pytest.mark.machine_pinned] if t == "milky_way" else [])
-                                      for t in ("milky_way", "ngc_4414", "default")])
+def taper_rate(sp: pc.ArmPattern, lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
+    """The most the count may move from radius ``lo`` to ``hi`` (kpc, elementwise) **by the taper's own rate** - the
+    gate's words ("no ring-to-ring step in B above the taper's own rate"), derived, in place of the 1e-6 this test
+    asked until S78 (#207). A chain's weight is min(1, s/w_law), s the arc length in kpc from the ring to the chain's
+    nearer end along it; along a piece the arc length per unit ln R is 1/|sin p| (Δβ/|cos p| over Δβ|tan p|), so
+    between the two radii a piece's weight moves by at most Δln R · R/(w_law |sin p|), plus the radius' own move
+    (the weight at most 1) and the law's (|Δw_law|/w_law); the count takes the greatest of a chain's pieces, sums
+    the chains and floors at 1, each a step that moves by no more than its arguments, so the pieces crossing either
+    radius, summed, bound it. **A piece of nearly no pitch runs far round the disc for little radius**, and its
+    weight rises at 1/sin p times a radial piece's: a chain whose first piece has a pitch of 0.0103 degrees
+    (``texture_seed`` 49, chain 11, 11.66 kpc) weighs 2.47e-6 a part in 1e10 past its start and 1 within 1.7 pc -
+    the law's taper over one width of arc, read in radius. At the templates' pitches of 8-20 degrees the bound is
+    1e-8 to 6e-8 at an edge: a hundred times under the number it replaces."""
+    p = sp.pieces
+    lo, hi = np.asarray(lo, dtype=float), np.asarray(hi, dtype=float)
+    dx, rel = np.log(hi / lo), hi / lo - 1.0
+    w_lo, w_hi = sp.law_width_at(lo), sp.law_width_at(hi)
+    w_min = np.minimum(w_lo, w_hi)
+    slots = np.concatenate([p.slots(lo), p.slots(hi)], axis=-1)
+    out = np.zeros(lo.shape)
+    for i in range(lo.size):
+        crossing = np.unique(slots[i][slots[i] < p.count])
+        out[i] = sum(dx[i] * hi[i] / (w_min[i] * p.sin_abs[j]) + rel[i] + abs(w_hi[i] - w_lo[i]) / w_min[i] for j in crossing)
+    return out
+
+
+def chains_read(sp: pc.ArmPattern, r: float) -> dict:
+    """{chain: taper weight} of the chains crossing the ring at ``r``, as ``ring_state`` reads them - for a message."""
+    p = sp.pieces
+    slots = p.slots(np.array([r]))[0]
+    x, w_law = math.log(r), float(sp.law_width_at(np.array([r]))[0])
+    out: dict = {}
+    for s in slots[slots < p.count]:
+        t = (x - p.x_start[s]) / (p.x_end[s] - p.x_start[s]) * p.length[s]
+        along = min(t + p.before_end[s], p.length[s] - t + p.after_end[s]) * r
+        out[int(p.chain_of[s])] = round(max(out.get(int(p.chain_of[s]), 0.0), min(1.0, along / w_law)), 9)
+    return out
+
+
+def count_edges(prod, template: str):
+    """(the pattern, its pieces, the breaks inside the grid as ln R, the same as radii, the hard breaks): what the
+    two tests below read, once per template."""
+    o = template_run(prod, template) if template != "default" else run(the_model(prod), None, only=PATTERN)
+    R = o.grid.R
+    sp = compose.stellar_pattern(o.fields, R)
+    p = sp.pieces
+    edges = np.exp(p.breaks)
+    inside = (edges > R[0]) & (edges < R[-1])
+    rows = () if template == "default" else inputs_of(template).get("arm_pieces", ())
+    return sp, p, p.breaks[inside], edges[inside], hard_ends(p, rows)
+
+
+@pytest.mark.parametrize("template", ("milky_way", "ngc_4414", "default"))
 def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template):
     """The gate's second follow-up, item 3: "The count on a ring is the sum over crossing chains of their taper
     weights, so B and the bounded width are continuous in R"; its gate: "the count continuous (no ring-to-ring step
     in B above the taper's own rate)". Read at every radius where the set of crossing pieces changes - a start,
-    a kink, an end - a part in 1e10 inside and outside it: **the count does not step at a chain's free start or
-    end (its weight is 0 there) nor at a kink (the taper runs along the chain)** - but where the crossing set becomes
-    empty or stops being so, where since the fourth follow-up N steps between 0 and 1 and the field does not - and so neither do the width and
-    B, which are continuous functions of it and of the law wherever the count is not 0.
+    a kink, an end - a part in 1e10 inside and outside it: **the count moves by no more than the taper's own rate
+    over that part** (:func:`taper_rate`, derived from the pieces crossing) **at a chain's free start or end (its
+    weight is 0 there), at a kink (the taper runs along the chain), at a join (since the gate's ninth follow-up a
+    joined end tapers as a free one for the count) and where the crossing set empties or fills (the floor of 1 is
+    on every ring a chain reaches, the eleventh follow-up)** - and so neither do the width and B, continuous
+    functions of it and of the law wherever the count is not 0. Between two such radii the count is continuous
+    too: a part in 1e9 of radius moves it by no more than the taper's rate over that part.
 
-    **It does step where a chain ends with no taper, as ruled**: at a join ("joined, without taper") the chain's
-    weight goes from what it was to nothing, and at the turn of a measured arm that kinks back in radius. Those
-    radii are found from the table by this file's own reading and every step is at one of them; they are counted
-    and the largest relative step in B across one is recorded. Said plainly: "B continuous in R" does not hold
-    at a join; the two sentences of the ruling meet there, and the build follows both - no taper at a join, the
-    count a sum of taper weights."""
-    o = template_run(prod, template) if template != "default" else run(the_model(prod), None, only=PATTERN)
-    F, R = o.fields, o.grid.R
-    sp = compose.stellar_pattern(F, R)
-    table = table_of(F)
-    edges = np.exp(sp.pieces.breaks)
-    edges = edges[(edges > R[0]) & (edges < R[-1])]
-    step = sp.count_at(edges * (1.0 + 1e-10)) - sp.count_at(edges * (1.0 - 1e-10))
-    hard = untapered_ends(table)
-    at_hard = np.array([hard.size > 0 and float(np.abs(hard / r - 1.0).min()) < 1e-8 for r in edges])
-    # ... and, since the fourth follow-up (B: the count is at least 1 on a ring any chain crosses), the radii at which the
-    # crossing set becomes empty or stops being so: there N steps between 0 and 1, and B between 0 and sqrt(budget/v),
-    # while the field does not (the chain's weight is 0 there).
-    crossing_below, crossing_above = sp.pieces.chains_crossing(edges * (1.0 - 1e-10)), sp.pieces.chains_crossing(edges * (1.0 + 1e-10))
-    at_hard |= (crossing_below == 0) | (crossing_above == 0)
-    assert np.abs(step[~at_hard]).max(initial=0.0) < 1e-6
-    # ... and between two such radii the count is continuous: a part in 1e9 of radius moves it by a part in 1e6 at most.
+    **It does step where a chain ends with no taper, as ruled**: at the turn of a measured arm that kinks back in
+    radius, where the chain leaves the ring at full weight (Norma's kink at 4.46 kpc: both stretches end there,
+    #156's class; the count falls by the chain's weight, 0.82 on the default draw), and at a join were a joined
+    end not tapered - it is, so no join steps. **Those radii are read from the table by identity**
+    (:func:`hard_ends`: the join column, and the pin rows' pitch signs for a turn), and every step is at one of
+    them. **S78 (#207):** until then the hard ends were two ends within 1e-9 of one another and the step's bound a
+    fixed 1e-6, both read off the draw's bits: on the runner's Linux draw the kink's two ends landed on two doubles
+    an ulp apart, two breaks closer than the midpoint probe, which crossed the kink and read its 0.99999997 as a
+    step between two radii; here ``texture_seed`` 49's chain 11 begins with a piece of pitch 0.0103 degrees, whose
+    weight is 2.47e-6 a part in 1e10 past its start - the taper's own rate, 1/sin p times a radial piece's. Two
+    breaks closer than the probe are now demanded to be the ends of one chain (a kink's two bits, a turn, a
+    continuation's start on its stretch's), by identity, and the probe between them is not taken; no tolerance
+    moved, the bound tighter a hundredfold where the pitch is a spiral's. The record of the steps is the next
+    test's, pinned on this machine."""
+    sp, p, x_edges, edges, hard = count_edges(prod, template)
+    lo, hi = edges * (1.0 - 1e-10), edges * (1.0 + 1e-10)
+    step = sp.count_at(hi) - sp.count_at(lo)
+    at_hard = np.isin(x_edges, hard)
+    bound = taper_rate(sp, lo, hi)
+    over = [(float(edges[i]), float(step[i]), float(bound[i]), chains_read(sp, lo[i]), chains_read(sp, hi[i]))
+            for i in np.flatnonzero(~at_hard & (np.abs(step) > bound))]
+    assert not over, f"the count steps past the taper's own rate at an edge that is no hard end (R, step, bound, chains below, above): {over}"
+    # ... and between two such radii the count is continuous: a part in 1e9 of radius moves it by no more than the
+    # taper's rate over that part. The probe stays between the two breaks: a pair closer than it is one point of the
+    # census to the probe, and must be so by identity - the ends standing on the two breaks are one chain's.
     between = 0.5 * (edges[1:] + edges[:-1])
-    assert np.abs(sp.count_at(between * (1.0 + 1e-9)) - sp.count_at(between)).max(initial=0.0) < 1e-5
-    stepped = np.abs(step) > 1e-6
-    budget = sp.amplitude_at(edges * (1.0 - 1e-10)), sp.amplitude_at(edges * (1.0 + 1e-10))
+    probe = between * (1.0 + 1e-9)
+    clear = probe < edges[1:]
+    for k in np.flatnonzero(~clear):
+        pair = x_edges[k:k + 2]
+        standing = np.flatnonzero(np.isin(p.x_start[:p.count], pair) | np.isin(p.x_end[:p.count], pair))
+        chains = sorted(set(p.chain[standing].tolist()))
+        assert len(chains) == 1, (f"two breaks closer than the probe, ln R {pair[0]!r} and {pair[1]!r}, are ends of "
+                                  f"{len(chains)} chains {chains} (pieces {standing.tolist()}): not one point of the census")
+    moved = np.abs(sp.count_at(probe[clear]) - sp.count_at(between[clear]))
+    bound = taper_rate(sp, between[clear], probe[clear])
+    over = [(float(between[clear][i]), float(moved[i]), float(bound[i]), chains_read(sp, between[clear][i]))
+            for i in np.flatnonzero(moved > bound)]
+    assert not over, f"the count moves past the taper's own rate between two edges (R, moved, bound, chains): {over}"
+
+
+# S77 (#206, R1b; S78, #207): the Milky Way leg alone is machine_pinned - the record is one this machine's rounding
+# decides: whether a kink's two ends land on one double or two is one break or two (Norma's: one here, two on the
+# runner), and which pieces meet is the draw's bits (the runner's census over 300 seeds has other joins:
+# EXPECTED_JOINS_300's (0, 4, 9) there against (0, 4, 10) here). The other two legs' records have agreed on the
+# runner on every run and stay in CI.
+@pytest.mark.parametrize("template", [pytest.param(t, id=t, marks=[pytest.mark.machine_pinned] if t == "milky_way" else [])
+                                      for t in ("milky_way", "ngc_4414", "default")])
+def test_the_count_s_steps_are_the_record_s(prod, template):
+    """The record of the test above on each template's default draw: the radii where the crossing set changes,
+    those at which the count steps past the taper's own rate (every one a hard end, by the test above), the
+    galaxy's joins, and the largest relative step of B at one of them where there is an amplitude on both sides.
+    Pinned since S60's fourth pass; split from the continuity test at S78 (#207) so that the structural claim runs
+    on every machine and the record on the one whose bits it holds."""
+    sp, p, x_edges, edges, hard = count_edges(prod, template)
+    lo, hi = edges * (1.0 - 1e-10), edges * (1.0 + 1e-10)
+    step = sp.count_at(hi) - sp.count_at(lo)
+    stepped = np.abs(step) > taper_rate(sp, lo, hi)
+    assert np.all(np.isin(x_edges[stepped], hard))
+    budget = sp.amplitude_at(lo), sp.amplitude_at(hi)
     both = stepped & (budget[0] > 0.0) & (budget[1] > 0.0)
     jump = float(np.abs(budget[1][both] / budget[0][both] - 1.0).max(initial=0.0))
-    record = (int(edges.size), int(stepped.sum()), sp.pieces.joins, round(jump, 3))
-    # (radii where the crossing set changes, those at which the count steps, the galaxy's joins, the largest
-    #  relative step of B at one of them where there is an amplitude on both sides)
+    record = (int(edges.size), int(stepped.sum()), p.joins, round(jump, 3))
     assert record == EXPECTED_STEPS.get(template), repr(record)
 
 
 # S60 fourth pass (re-pinned on the final model): EXPECTED_STEPS was {"milky_way": (64, 6, 4, 0.349), "ngc_4414": (63, 4, 2, 0.155), "default": (31, 2, 1, 0.015)}  # S60 fourth pass: was {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
+# S78 (#207): "stepped" is a step past the taper's own rate, until then past 1e-6; the records did not move.
 EXPECTED_STEPS: dict = {"milky_way": (55, 1, 3, 0.349), "ngc_4414": (61, 0, 1, 0.0), "default": (31, 0, 1, 0.0)}
 
 

@@ -1,4 +1,4 @@
-# BRIEF — after S78: the landing inside ruling 10's bound where the client owns it; next is the owner's deploy and the probe on the deployed site
+# BRIEF — after S78 and S79 (#207): the landing inside the bound, the continuity test read on the runner; next is the owner's deploy and the probe on the deployed site
 
 **The state (2026-10-31).** S78 (D242) took T29. The viewer's warm landing read 4.5 s against ruling 10's 1 s and a
 first visit 7.3–7.7 s against 5; an Opus profile attributed it (the march program's 6.8 s link — Direct3D unrolling the
@@ -14,8 +14,9 @@ clustered fill, and the raster in a Worker. **The tables of record are in D242**
 zoom 0.52; model-cold first paint 7.49 → 2.13, gateway-cold 7.66 → 2.54; the model-cold zoom 24 s is F5, the
 owner's. F6 (`precision=f4`) is closed by measurement: the render and the clouds already ask `f4`. Nothing drawn
 changed (the picture test's 15 captures byte for byte); nothing under `model/galaxy` (the hash f1fbbb17… stands).
-Register **135 open = 11 + 124, 56 discharged**; next number **#209**, decisions from **D243**, board row 79; the #207
-session's branch `session-78-207` (its own D243 / #209 at its merge) awaits the owner.
+S79 (D243, the #207 side session, no row) read #207 on the runner's draw and discharged it — the continuity test's hard
+ends by identity, its bound the taper's own rate; 400 draws swept — and opened #209 (the per-piece pitch draw has no
+floor). Register **135 open = 11 + 124, 57 discharged**; next number **#210**, decisions from **D244**, board row 79.
 
 ## What waits on the owner
 - **The subscription and the deploy** (D239 (i)–(ii)): re-enable it in the portal, then from a checkout of `main` whose
@@ -26,9 +27,8 @@ session's branch `session-78-207` (its own D243 / #209 at its merge) awaits the 
   `az containerapp logs show -n galaxygen-model -g galaxygen-rg --type console`; the table appended to D240 / D242 and
   #204 / #205 ruled on it. The deployed wire now carries F4's compressed bytes and the client's work is ~1 s.
 - **Rulings:** F5, the model-cold zoom (24 s: an eager warm after the landing, a warm replica, or the ring-first draw
-  published — ruling 15); #208 (D242: the landing's last tenths — the field's loads asked beside the sample, the switch's context kept, three's shader checks off in production, R3's extra requests on the walk); the #207 session's merge
-  (`session-78-207`, its full `ci` run and the 400-seed sweep read first); D241's two (CI's full suite off every branch
-  push; per-platform pins); T20; #197, #202, #203.
+  published — ruling 15); #208 (D242: the landing's last tenths — the field's loads asked beside the sample, the switch's context kept, three's shader checks off in production, R3's extra requests on the walk); #209 with #142 (a floor on the
+  drawn pitch); D241's two (CI's full suite off every branch push; per-platform pins); T20; #197, #202, #203.
 
 ## What an agent session can do without the deploy (each the owner's word)
 - **#208's remedies** (D242 names them with their estimated gains): the field's loads asked beside the star sample
@@ -38,8 +38,8 @@ session's branch `session-78-207` (its own D243 / #209 at its merge) awaits the 
 - **The march's cost (T14):** `npm --prefix frontend run march` is the per-frame instrument now (16–36 ms a re-march at 1024²).
 
 ## Read
-- D242 (R1–R5, the profile, the compile table, the fixes' before / after, the tables of record, #208), D240 (the probe,
-  F1–F6), D241 (#206's rulings); `BUILD_IV.md` §5 W5, §7 rulings 9, 10, 15; `frontend/e2e/compile/*.probe.ts`'s
+- D243 (#207's reading, the sweep, #209), D242 (R1–R5, the profile, the compile table, the fixes, the tables of record,
+  #208), D240 (the probe, F1–F6), D241 (#206's rulings); `BUILD_IV.md` §5 W5, §7 rulings 9, 10, 15; `frontend/e2e/compile/*.probe.ts`'s
   headers; `smooth.probe.ts`'s header; `tools/smoothness.py`'s docstring; `gateway/README.md`; `ci.yml`'s head.
 
 ## Traps (S72–S78's stand)

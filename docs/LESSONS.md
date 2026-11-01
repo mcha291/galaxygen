@@ -1836,3 +1836,17 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   settle; the march probe (`npm run march`) is the per-frame cost.
 - [close] Two sessions open on one day both take "the next number": write the claim into the shared notes at the open,
   and let the later merge renumber (the #207 session's note and this one's settled D242 / #208 for S78 by that rule).
+
+## From S79 (#207, the arm count's continuity test read on the runner's draw; a side session beside S78)
+
+- [infra] Two floats that agree to the bit on one machine are two on another: a test that reads "one point" off the
+  equality of two computed values (a kink's two ends, a probe that must not cross a break) is a machine pin in disguise,
+  and so is the midpoint between two breaks that another machine splits. Read identity — which chain, which column,
+  which row of the pin — and compare a float only with the bits it was made from.
+- [field] A fixed threshold on a continuous quantity is a slope nobody derived: "a part in 1e10 moves the count by
+  under 1e-6" assumed a rate under 1e4 per unit ln R, and a piece of 0.01 degrees runs 5 600 of arc per unit ln R, so
+  its taper enters a ring within parsecs. Derive the bound from the mechanism's own rate — it was a hundred times
+  tighter where the assumption held and right where it did not — and record what the rate itself implies (#209).
+- [audit] A failing assert names its constant: the runner's log said `< 1e-05`, the midpoint's bound, and the entry
+  said "the first assert". Read the message's number before writing which claim failed; the two readings point at
+  different mechanisms.
