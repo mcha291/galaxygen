@@ -4,7 +4,7 @@
 // leave the browser - the same set with the head start as without it, one request per key.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type FieldsPayload, type Query, forgetRenders, loadArrays, loadClouds, loadLayer, loadRender } from "../api";
+import { type FieldsPayload, type Query, forgetRenders, loadArrays, loadBlackbody, loadClouds, loadLayer, loadRender } from "../api";
 import { askFieldAhead, fieldArrayNames, fieldLit, wholeDiscOf } from "./fieldLoads";
 import { curvesOf } from "./filters";
 import { type Tuning, defaultsFor } from "./tuning";
@@ -47,17 +47,22 @@ beforeEach(() => {
     await gate;
     if (init.signal?.aborted) throw new DOMException("aborted", "AbortError");
     const header = { layer: params.get("layer") ?? "on" };
-    if (at.pathname === "/api/layer") return new Response(JSON.stringify(header), { status: 200, headers: { "content-type": "application/json" } });
+    // The JSON routes (the layer, and since S81 the blackbody table) answer JSON; the binary ones a galaxy-bin/1 frame.
+    if (at.pathname === "/api/layer" || at.pathname === "/api/blackbody") return new Response(JSON.stringify(header), { status: 200, headers: { "content-type": "application/json" } });
     return new Response(frameOf(header), { status: 200, headers: { "content-type": "application/octet-stream" } });
   });
 });
 afterEach(() => vi.unstubAllGlobals());
 
-/** What the Galaxy tab's field mode asks on its mount (FieldVolume's three loaders and GalaxyTab's census), as they ask it. */
+/**
+ * What the Galaxy tab's field mode asks on its mount (FieldVolume's three loaders, GalaxyTab's census and, since S81, its
+ * blackbody table), as they ask it.
+ */
 async function mount(tuning: Tuning, filterSet: "rgb" | "sho" = "rgb", signal?: AbortSignal) {
   const names = fieldArrayNames(META);
   const asks: Promise<unknown>[] = [loadArrays(names, QUERY, signal), loadRender(curvesOf(filterSet), tuning.whiteKelvin, QUERY, signal, null), loadLayer(QUERY, signal)];
   if (tuning.cloudsExtinction) asks.push(loadClouds(wholeDiscOf(META), QUERY, signal, "f4"));
+  asks.push(loadBlackbody(curvesOf(filterSet), tuning.whiteKelvin, signal));
   return Promise.all(asks);
 }
 
@@ -75,7 +80,7 @@ describe("the field's loads asked ahead of the Galaxy tab's mount (S80, #208 a)"
     expect(tuning.cloudsExtinction).toBe(true);
     await mount(tuning);
     const alone = sent.map((s) => s.request).sort();
-    expect(alone.map((r) => r.split("?")[0])).toEqual(["/api/arrays", "/api/clouds", "/api/layer", "/api/render"]);
+    expect(alone.map((r) => r.split("?")[0])).toEqual(["/api/arrays", "/api/blackbody", "/api/clouds", "/api/layer", "/api/render"]);
 
     sent = [];
     forgetRenders();
@@ -87,7 +92,7 @@ describe("the field's loads asked ahead of the Galaxy tab's mount (S80, #208 a)"
 
   it("asks no census where the clouds are not drawn as extinction, and nothing for a model with no light", async () => {
     askFieldAhead(META, QUERY, "rgb", { ...tuning, cloudsExtinction: false });
-    expect(sent.map((s) => s.request.split("?")[0]).sort()).toEqual(["/api/arrays", "/api/layer", "/api/render"]);
+    expect(sent.map((s) => s.request.split("?")[0]).sort()).toEqual(["/api/arrays", "/api/blackbody", "/api/layer", "/api/render"]);
     sent = [];
     forgetRenders();
     askFieldAhead({ ...META, fields: [] }, QUERY, "rgb", tuning);
@@ -133,5 +138,35 @@ describe("the field's loads asked ahead of the Galaxy tab's mount (S80, #208 a)"
     askFieldAhead(META, QUERY, "sho", tuning);
     await mount(tuning, "sho");
     expect(sent.filter((s) => s.request.startsWith("/api/render")).length).toBe(1);
+  });
+
+  it("asks the blackbody table the tab's mount asks (S81): one request per filter set and white point, taken once", async () => {
+    const blackbodies = () => sent.filter((s) => s.request.startsWith("/api/blackbody")).map((s) => s.request);
+    // the mount alone, through each set at two white points: the requests the head start must match
+    const alone: string[] = [];
+    for (const filterSet of ["rgb", "sho"] as const) {
+      for (const whiteKelvin of [tuning.whiteKelvin, 5000]) {
+        sent = [];
+        forgetRenders();
+        await loadBlackbody(curvesOf(filterSet), whiteKelvin);
+        alone.push(...blackbodies());
+        sent = [];
+        forgetRenders();
+        askFieldAhead(META, QUERY, filterSet, { ...tuning, whiteKelvin });
+        expect(blackbodies()).toEqual(alone.slice(-1));
+        const table = await loadBlackbody(curvesOf(filterSet), whiteKelvin);
+        expect(table).toEqual({ layer: "on" });
+        expect(blackbodies()).toEqual(alone.slice(-1)); // the mount's loader took the head start: nothing asked again
+        await loadBlackbody(curvesOf(filterSet), whiteKelvin);
+        expect(blackbodies().length).toBe(2); // and only it: a later ask is a request of its own, as before
+      }
+    }
+    expect(new Set(alone).size).toBe(4);
+    // another white point than the head start's (the slider moved before the tab mounted) asks its own, the head start untaken
+    sent = [];
+    forgetRenders();
+    askFieldAhead(META, QUERY, "rgb", tuning);
+    await loadBlackbody(curvesOf("rgb"), 5000);
+    expect(blackbodies()).toEqual([alone[0], alone[1]]);
   });
 });

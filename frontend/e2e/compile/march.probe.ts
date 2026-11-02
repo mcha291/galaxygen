@@ -27,6 +27,10 @@
 //   GALAXYGEN_MARCH_ROUNDS  rounds over the nine captures, each in a fresh browser (default 3)
 //   GALAXYGEN_MARCH_FRAMES  nudged frames per capture (default 200)
 //   GALAXYGEN_MARCH_LABEL   the results' name: e2e/.output/compile/<label>.{json,md} (default march_gpu)
+//   GALAXYGEN_MARCH_TUNING  a JSON object of Tuning panel values laid over every captured template's own (S81, T14), as
+//                           the panel stores them (localStorage, galaxygen.tuning.<template>) before the page loads: the
+//                           nudges move the camera every frame, so the march runs at the moving cap (subMoving) - e.g.
+//                           '{"settleMs":0}' measures the full cap, '{"subMoving":4}' another moving cap; default none.
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -40,6 +44,7 @@ const SITE = (process.env.GALAXYGEN_URL ?? "http://127.0.0.1:8019").replace(/\/+
 const ROUNDS = Number(process.env.GALAXYGEN_MARCH_ROUNDS ?? 3);
 const FRAMES = Number(process.env.GALAXYGEN_MARCH_FRAMES ?? 200);
 const LABEL = process.env.GALAXYGEN_MARCH_LABEL ?? "march_gpu";
+const TUNING = process.env.GALAXYGEN_MARCH_TUNING ? (JSON.parse(process.env.GALAXYGEN_MARCH_TUNING) as Record<string, unknown>) : null;
 /** The first readings of each capture dropped: the GPU coming up to its clocks. */
 const WARM = 20;
 const FRONTEND = fileURLToPath(new URL("../..", import.meta.url));
@@ -69,6 +74,7 @@ type Probes = {
   __galaxygenCapture?: { place(view: LensCamera, target?: Target): void };
   __galaxygenFrameSum?: () => { sum: number[] };
   __galaxygenMarchGpu?: { available: boolean; ms: number | null };
+  __galaxygenMarchSub?: { sub: number; full: number; moving: boolean };
 };
 interface Reading {
   round: number;
@@ -77,6 +83,8 @@ interface Reading {
   readings: number;
   seconds: number;
   march: string | null;
+  /** The sub-samples cap the march used on the last nudged frame (S81, T14; FieldVolume's __galaxygenMarchSub). */
+  sub: number | null;
 }
 
 const CAPTURES = (JSON.parse(readFileSync(resolve(FRONTEND, "e2e/captures.json"), "utf8")) as { captures: Capture[] }).captures;
@@ -167,7 +175,7 @@ async function measure(page: Page, capture: Capture, round: number): Promise<Rea
   const available = await page.evaluate(() => (window as unknown as Probes).__galaxygenMarchGpu?.available ?? null);
   const run = await page.evaluate(
     ([c, t, frames]) =>
-      new Promise<{ seen: number[]; seconds: number }>((done) => {
+      new Promise<{ seen: number[]; seconds: number; sub: number | null }>((done) => {
         const probes = window as unknown as Probes;
         const seen: number[] = [];
         let prev = probes.__galaxygenMarchGpu?.ms ?? null;
@@ -181,7 +189,7 @@ async function measure(page: Page, capture: Capture, round: number): Promise<Rea
           }
           i += 1;
           if (i > frames) {
-            done({ seen, seconds: (performance.now() - t0) / 1000 });
+            done({ seen, seconds: (performance.now() - t0) / 1000, sub: probes.__galaxygenMarchSub?.sub ?? null });
             return;
           }
           probes.__galaxygenCapture?.place({ ...c, azimuth_deg: c.azimuth_deg + 0.01 * i }, t);
@@ -194,7 +202,7 @@ async function measure(page: Page, capture: Capture, round: number): Promise<Rea
   await page.getByRole("button", { name: DUST_ONLY.panel }).click();
   await page.waitForTimeout(600);
   const march = await page.evaluate(() => document.body.innerText.match(/march: \d+×\d+ px/)?.[0] ?? null);
-  return { round, available, samples: run.seen.slice(WARM), readings: run.seen.length, seconds: run.seconds, march };
+  return { round, available, samples: run.seen.slice(WARM), readings: run.seen.length, seconds: run.seconds, march, sub: run.sub };
 }
 
 test("the march's GPU time per re-march, per capture, on one site", async () => {
@@ -206,10 +214,19 @@ test("the march's GPU time per re-march, per capture, on one site", async () => 
     try {
       for (const capture of CAPTURES) {
         const context = await browser.newContext({ viewport: CHOOSING_VIEWPORT, deviceScaleFactor: 1 });
+        if (TUNING) {
+          const templates = [...new Set(CAPTURES.map((c) => c.template))];
+          await context.addInitScript(
+            ([names, values]) => {
+              for (const name of names) window.localStorage.setItem(`galaxygen.tuning.${name}`, JSON.stringify(values));
+            },
+            [templates, TUNING] as const,
+          );
+        }
         try {
           const r = await measure(await context.newPage(), capture, round);
           (results[capture.name] ??= []).push(r);
-          console.log(`round ${round} ${capture.name}: ${r.samples.length} readings kept, median ${r.samples.length ? median(r.samples).toFixed(2) : "-"} ms, ${r.march ?? "march size unread"}, timer ${r.available}`);
+          console.log(`round ${round} ${capture.name}: ${r.samples.length} readings kept, median ${r.samples.length ? median(r.samples).toFixed(2) : "-"} ms, ${r.march ?? "march size unread"}, timer ${r.available}, sub-samples ${r.sub ?? "-"}`);
         } finally {
           await context.close();
         }
@@ -221,22 +238,22 @@ test("the march's GPU time per re-march, per capture, on one site", async () => 
   const lines = [
     `# The march's GPU time per re-march (${LABEL})`,
     "",
-    `Site ${SITE}; ${ROUNDS} rounds, ${FRAMES} nudged frames a capture, the first ${WARM} readings dropped; ms.`,
+    `Site ${SITE}; ${ROUNDS} rounds, ${FRAMES} nudged frames a capture, the first ${WARM} readings dropped; ms; tuning ${TUNING ? JSON.stringify(TUNING) : "the templates' own"}.`,
     "",
-    "| capture | median | p10-p90 | readings | per-round medians | march target | timer |",
-    "|---|---|---|---|---|---|---|",
+    "| capture | median | p10-p90 | readings | per-round medians | march target | sub-samples | timer |",
+    "|---|---|---|---|---|---|---|---|",
   ];
   for (const capture of CAPTURES) {
     const rows = results[capture.name] ?? [];
     const all = rows.flatMap((r) => r.samples);
     const cell = (x: number) => x.toFixed(1);
     lines.push(
-      `| ${capture.name} | ${all.length ? cell(median(all)) : "-"} | ${all.length ? `${cell(quantile(all, 0.1))}-${cell(quantile(all, 0.9))}` : "-"} | ${all.length} | ${rows.map((r) => (r.samples.length ? cell(median(r.samples)) : "-")).join(", ")} | ${rows[0]?.march ?? "-"} | ${rows.map((r) => r.available).join(", ")} |`,
+      `| ${capture.name} | ${all.length ? cell(median(all)) : "-"} | ${all.length ? `${cell(quantile(all, 0.1))}-${cell(quantile(all, 0.9))}` : "-"} | ${all.length} | ${rows.map((r) => (r.samples.length ? cell(median(r.samples)) : "-")).join(", ")} | ${rows[0]?.march ?? "-"} | ${rows.map((r) => r.sub ?? "-").join(", ")} | ${rows.map((r) => r.available).join(", ")} |`,
     );
   }
   const table = `${lines.join("\n")}\n`;
   console.log(table);
   writeFileSync(resolve(OUT, `${LABEL}.md`), table);
-  writeFileSync(resolve(OUT, `${LABEL}.json`), JSON.stringify({ site: SITE, rounds: ROUNDS, frames: FRAMES, warm: WARM, args: GPU_ARGS, results }, null, 2));
+  writeFileSync(resolve(OUT, `${LABEL}.json`), JSON.stringify({ site: SITE, rounds: ROUNDS, frames: FRAMES, warm: WARM, args: GPU_ARGS, tuning: TUNING, results }, null, 2));
   for (const capture of CAPTURES) expect(results[capture.name]?.flatMap((r) => r.samples).length ?? 0, `${capture.name}: no timer readings past the first ${WARM} (too few frames? GALAXYGEN_MARCH_FRAMES)`).toBeGreaterThan(0);
 });

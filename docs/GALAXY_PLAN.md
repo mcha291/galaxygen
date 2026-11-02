@@ -121,7 +121,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > and its listing was pasted under D161 (S42's close, D192). The board said so until then,
 > which is the whole purpose of the column.
 
-**Open debts:** 135 (`GALAXY_INPUTS.md` §11). **Discharged:** 57.
+**Open debts:** 134 (`GALAXY_INPUTS.md` §11). **Discharged:** 58.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
@@ -362,7 +362,7 @@ and every session pays it — eleven times over. `[inferred]`
 | **`BRIEF.md` replaces reading this plan.** Written by the previous session, ~40 lines | The plan is read once, at S0 |
 | **Lessons are tagged by stage type**; a session reads only its tags | 27 untagged lessons is a per-session tax on all of them |
 | **The acceptance table lives in `spec.py`, never in prose read at runtime** | A session runs the spec and reads pass/fail, not 24 rows |
-| **Tests run quiet; only failures print.** Affected subset mid-session, full suite once at close where a byte under `model/galaxy` changed; a viewer-only session closes on its fast gates and CI's run on `main` (D245) | A suite printing 339 passing test names is pure waste |
+| **Tests run quiet; only failures print.** Affected subset mid-session; at close the fast gates, the local full suite on the owner's word where the model, a fixture or a pin changed, CI's full suite nightly (D245, D246) | A suite printing 339 passing test names is pure waste |
 | **Never read a file you are about to overwrite** | Common and invisible |
 | **Bundle verification is a fixed script, not an exploration** | It is the same six commands every time |
 

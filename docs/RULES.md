@@ -218,10 +218,11 @@ plan.** ~40 lines: what to build, which files, the gate, known traps.
 **C6. The acceptance table lives in `spec.py`, never in prose read at runtime.**
 A session runs it and reads pass/fail.
 
-**C7. Tests run quiet, and the close's gate is the change's.** Affected subset mid-session. At close, a session
-that changed a byte under `model/galaxy` runs the full suite once, locally (CI skips this machine's pins); a
-session that changed none closes on the viewer's gates and the docs tests, CI's full run on `main` its suite
-(D245). `verify_clone` only where the suite did not run on the tree merged, or `main` moved in between.
+**C7. Tests run quiet, and the close's gate is the change's.** Affected subset mid-session. At close every session
+runs the fast gates (vitest, the typechecks, the picture test, the docs and register tests); where a byte under
+`model/galaxy`, a fixture, a pin or `tests/conftest.py` changed, the lead asks the owner to run the full suite here
+(CI skips this machine's pins) and the merge waits on its EXIT line; CI's full suite runs nightly and on dispatch,
+every push the fast job (D245, D246). `verify_clone` on the owner's word.
 
 **C8. Never read a file you are about to overwrite.**
 

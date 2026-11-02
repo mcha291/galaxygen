@@ -6,7 +6,7 @@
 
 import { FIELD_SCALARS } from "@interface/ages.js";
 
-import { type FieldsPayload, type Query, askArraysAhead, askCloudsAhead, askLayerAhead, askRenderAhead } from "../api";
+import { type FieldsPayload, type Query, askArraysAhead, askBlackbodyAhead, askCloudsAhead, askLayerAhead, askRenderAhead } from "../api";
 import { type FilterSetName, curvesOf } from "./filters";
 import type { Tuning } from "./tuning";
 
@@ -33,9 +33,11 @@ export function wholeDiscOf(meta: FieldsPayload): { r_min: number; r_max: number
 /**
  * Ask, now, what the Galaxy tab will ask on its mount in the field mode: the field volume's arrays, its whole render
  * (no threshold: the field mode has none) through `filterSet` at the tuning's white point, the layer's tables, and -
- * where the tuning draws the clouds as extinction - the whole disc's census. `query` is the Galaxy view's (App's
- * galaxyQuery), `tuning` the one the tab will read for the template (tuning.ts loadTuning). Nothing is asked for a
- * model that declares no light, as the volume asks nothing then.
+ * where the tuning draws the clouds as extinction - the whole disc's census; and (S81) the blackbody table the tab asks on
+ * its mount for the stars' and the clusters' colours, through the same set at the same white point (GalaxyTab's
+ * `loadBlackbody(curvesOf(filterSet), whiteKelvin)`). `query` is the Galaxy view's (App's galaxyQuery), `tuning` the one
+ * the tab will read for the template (tuning.ts loadTuning). Nothing is asked for a model that declares no light, as
+ * the volume asks nothing then.
  */
 export function askFieldAhead(meta: FieldsPayload, query: Query, filterSet: FilterSetName, tuning: Tuning): void {
   if (!fieldLit(meta)) return;
@@ -43,4 +45,5 @@ export function askFieldAhead(meta: FieldsPayload, query: Query, filterSet: Filt
   askRenderAhead(curvesOf(filterSet), tuning.whiteKelvin, query);
   askLayerAhead(query);
   if (tuning.cloudsExtinction) askCloudsAhead(wholeDiscOf(meta), query, "f4");
+  askBlackbodyAhead(curvesOf(filterSet), tuning.whiteKelvin, query);
 }

@@ -52,13 +52,16 @@ import { evenLayout } from "./knots";
 import { useLoad } from "../useLoad";
 import { fieldArrayNames, fieldLit } from "./fieldLoads";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SLAB_PIECES, starTexels, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { DUST_CUTS, marchHalfHeight, RING_ROWS, SLAB_PIECES, starTexels, SUB_SAMPLES_MAX, type RegionWindow } from "./regimes";
+import { type MeshArrival, listenMesh, meshWorkerAvailable, startMesh } from "./meshTexelsClient";
+import { type MeshRequest, meshRequest, meshTexels } from "./meshTexelsJob";
+import type { Axis } from "../preview/axes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { gpuTimer } from "./gpuTimer";
 import { partRings, renderRings } from "./ringProfile";
-import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
+import { MOVING_SETTLE_MS, STEPS, SUB_SAMPLES_MOVING, type Tuning, TUNING_DEFAULTS, marchSubSamples } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
   type ClusteringTables,
@@ -165,6 +168,47 @@ interface LayerTables {
   spurs: SpurTables | null;
   /** Whether the render names the placement without the spurs and their ring mean: what the per-sub-step spurs read. */
   unspurred: boolean;
+}
+
+/**
+ * What the mesh is built from (S81, #208 (b)): the frame, the render and the layer's tables it reads, and the choices
+ * made of them - keyed on them - with its texels when they were built here (no Worker), else null until the worker's
+ * answer (meshTexelsClient.ts).
+ */
+interface MeshPlan {
+  key: string;
+  R: Axis;
+  phi: Axis;
+  white: number[];
+  layers: NonNullable<RenderFrame["header"]["layers"]>;
+  frame: Frame;
+  light: RenderFrame;
+  tables: LayerTables;
+  aged: AgedStars | null;
+  clumped: boolean;
+  /** The age switches the texels were filled at. */
+  gains: AgeGains;
+  now: MeshArrival | null;
+}
+
+/** The mesh's last texels build (S81): its own time, ms, the post-to-answer time, and whether a worker built it. */
+export interface MeshTexelsStats {
+  ms: number;
+  roundTripMs: number;
+  worker: boolean;
+}
+
+/** A number per object, for keys made of what an answer is (the same object, the same number). */
+const ids = new WeakMap<object, number>();
+let lastId = 0;
+function idOf(object: object): number {
+  let id = ids.get(object);
+  if (id === undefined) {
+    lastId += 1;
+    id = lastId;
+    ids.set(object, id);
+  }
+  return id;
 }
 
 /** A float texture read at its own texels (nearest, clamped): the layer's tables, never blended with a neighbour's. */
@@ -600,7 +644,7 @@ interface Props {
    * white point. The defaults are the values the view drew with before the panel.
    */
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin"> &
-    Partial<Pick<Tuning, "cloudRaster" | "cloudElongation" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
+    Partial<Pick<Tuning, "cloudRaster" | "cloudElongation" | "gasInMarch" | "spursInMarch" | "clumpsInMarch" | "subMoving" | "settleMs">>;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
   /**
@@ -791,6 +835,9 @@ export function FieldVolume({
   hiiShare = null,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
+  // T14 (S81): the cut while the camera moves; a caller with no such choice gets the defaults.
+  const subMoving = tuning.subMoving ?? SUB_SAMPLES_MOVING;
+  const settleMs = tuning.settleMs ?? MOVING_SETTLE_MS;
   // The randomness layer's switches in the march (S66, V7): on unless the tuning says off.
   const gasInMarch = tuning.gasInMarch ?? true;
   const spursInMarch = tuning.spursInMarch ?? true;
@@ -917,7 +964,12 @@ export function FieldVolume({
   const clumpsNow = useRef(clumpsInMarch);
   clumpsNow.current = clumpsInMarch;
 
-  const mesh = useMemo(() => {
+  // The mesh in two halves (S81, #208 (b)): its plan - what the build reads, from the frame, the render and the layer's
+  // tables, as the mesh read them until S81 - and its texels (meshTexelsJob.ts meshTexels: planeTexture and the clustered
+  // fill), built in a worker (meshTexelsClient.ts) so the landing's and a switch's mesh build (~60 ms, the landing's one
+  // long task on a production build) leaves the main thread; where there is no Worker, built here in the plan, as before.
+  // The textures and the material are made from the texels once they are here (the mesh, below).
+  const meshPlan = useMemo((): MeshPlan | null => {
     const R = frame?.header.grid.axes.R;
     const phi = frame?.header.grid.axes.phi;
     const white = light ? whiteOf(light.header) : null;
@@ -951,33 +1003,69 @@ export function FieldVolume({
     const middle = parts?.find((p) => p.key === "middle");
     const kept = parts && middle?.weight && tables.clustering && tables.gas ? (keptParts(light.header, a) as AgedStars["kept"]) : null;
     const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, kept, shown: "" } : null;
-    // Split for the clustered march (S66, R5): fillStars below writes every texel of the stellar layer from the split, so
-    // the parts' sum is not computed for it only to be overwritten (S78: 160-240 ms of the landing's main thread).
+    // Split for the clustered march (S66, R5): the job's clustered fill writes every texel of the stellar layer from the
+    // split, so the parts' sum is not computed for it only to be overwritten (S78: 160-240 ms of the landing's main thread).
     const clumped = Boolean(aged?.kept) && clumpsNow.current;
-    const { data, scatter, hii, rings, width, height, cell } = planeTexture({
+    const gains = agesNow.current;
+    const ask: Omit<MeshRequest, "arrays"> = {
       R,
       phi,
+      white,
       // The stars' light: the whole component, or under the star-first mode's threshold the remainder no point
       // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
       // A frame that carries the age parts draws their sum at the switches; one from before them draws `stars`.
-      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : aged ? (clumped ? null : agedLight(a, aged.parts, agesNow.current, n)) : a.stars,
-      // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
-      hii: summed(a.halpha_hii, a.lines_hii),
-      dig: summed(a.halpha_dig, a.lines_dig),
-      extinction: a.dust_extinction,
-      scattered: a.dust_scattered,
-      thermal: a.dust_thermal,
+      stars:
+        unresolved && a.stars_unresolved
+          ? { from: "array", name: "stars_unresolved" }
+          : aged
+            ? clumped
+              ? { from: "clumped", parts: aged.parts, kept: aged.kept!, gains }
+              : { from: "aged", parts: aged.parts, gains }
+            : { from: "array", name: "stars" },
+      // Every line in each layer (S42), Halpha plus the others the render carries (lines_hii, lines_dig), and the dust's
+      // three components: the job reads them by the route's names (meshTexelsJob.ts).
       // The dust's layer (D206): the render's per-ring heights where the header names them, else its one height.
-      dustHeight: typeof layers.dust === "string" ? a[layers.dust] : layers.dust,
+      dustHeight: layers.dust ?? null,
       // The dust round each ring (D207): the render's placement where the header names one, else an even ring.
-      dustPlacement: light.header.placement?.dust ? a[light.header.placement.dust] : null,
+      dustPlacement: light.header.placement?.dust || null,
       // The share of each ring's dust left diffuse by its realised clouds (S64, V6): where the header names one.
-      diffuseShare: cloudsOf(light) ? a[cloudsOf(light)!.array] : null,
+      diffuseShare: cloudsOf(light)?.array ?? null,
       // The placement without the spurs and their ring mean (S66, V7, R4): where the render names them.
-      unspurred: tables.unspurred ? unspurred : null,
+      unspurred: tables.unspurred ? unspurredName! : null,
       spurShare: tables.unspurred ? spurShare : null,
-      white,
-    });
+    };
+    // Keyed on what it reads: the frame, the render and the tables (by identity), the threshold's use, the switches.
+    const key = [idOf(frame), idOf(light), idOf(tablesOf), unresolved ? 1 : 0, agesKey(gains), clumped].join("|");
+    const plan = { key, R, phi, white, layers, frame, light, tables, aged, clumped, gains };
+    if (!meshWorkerAvailable()) {
+      const started = performance.now();
+      const texels = meshTexels({ ...ask, arrays: a });
+      return { ...plan, now: { key, texels, ms: performance.now() - started, roundTripMs: 0, worker: false } };
+    }
+    startMesh(key, () => meshRequest(ask, a));
+    return { ...plan, now: null };
+  }, [frame, light, tablesOf, unresolved]);
+  const [meshArrival, setMeshArrival] = useState<MeshArrival | null>(null);
+  useEffect(() => {
+    if (!meshPlan || meshPlan.now) return undefined;
+    return listenMesh(meshPlan.key, setMeshArrival);
+  }, [meshPlan]);
+  const texelsHere = meshPlan?.now ?? (meshArrival && meshPlan && meshArrival.key === meshPlan.key ? meshArrival : null);
+  const ready = useMemo(() => (meshPlan && texelsHere ? { plan: meshPlan, arrival: texelsHere } : null), [meshPlan, texelsHere]);
+  // Until a new plan's texels arrive the last mesh stays drawn - the last galaxy whole, as the last render stayed drawn
+  // until the new one came (never a blank between two) - and none is drawn without a plan, as before.
+  const lastReady = useRef<typeof ready>(null);
+  if (ready) lastReady.current = ready;
+  else if (!meshPlan) lastReady.current = null;
+  const shownBuild = ready ?? lastReady.current;
+
+  const mesh = useMemo(() => {
+    if (!shownBuild) return null;
+    const { plan, arrival } = shownBuild;
+    const { R, phi, white, layers, frame, light, tables, aged, clumped, gains } = plan;
+    const a = light.arrays;
+    const { data, scatter, hii, rings, width, height, cell, clumps } = arrival.texels;
+    (globalThis as { __galaxygenMeshTexels?: MeshTexelsStats }).__galaxygenMeshTexels = { ms: arrival.ms, roundTripMs: arrival.roundTripMs, worker: arrival.worker };
     // The dust diagnostic's levels (D205): each ring's place on its declared ramp in its declared scale, kept in
     // the depth row's spare channel, which the field's march never reads.
     let paint: DustPaintShown | null = null;
@@ -1016,12 +1104,11 @@ export function FieldVolume({
     const phase = table && table.length === PHASE_POINTS ? table.map(Number) : new Array<number>(PHASE_POINTS).fill(1);
 
     // The stellar layer and, for the clustered march, the young and kept shares in three more polar textures (S66, R5).
+    // The texels came split where the march clusters the young light (the job's clustered fill, fillStars's own), else
+    // the clump textures are zeros and not read.
     const planeTex = polar(data);
-    const clumpTex = [0, 1, 2].map(() => polar(new Float32Array(width * height * 4)));
-    if (aged) {
-      if (clumped) fillStars(aged, agesNow.current, true, planeTex, clumpTex);
-      aged.shown = `${agesKey(agesNow.current)},${clumped}`;
-    }
+    const clumpTex = [0, 1, 2].map((k) => polar(clumps?.[k] ?? new Float32Array(width * height * 4)));
+    if (aged) aged.shown = `${agesKey(gains)},${clumped}`;
     const { gas, clustering, spurs } = tables;
     const scalars: Record<string, number> = {
       uGasSeed: 0, uGasInvScale: 0, uGasSense: 0, uGasEdge0: 0, uClusterSeed: 0, uClusterInvScale: 0, uClusterGain: 0,
@@ -1108,7 +1195,7 @@ export function FieldVolume({
     box.userData.tables = tables;
     box.frustumCulled = false;
     return box;
-  }, [frame, light, tablesOf, unresolved]);
+  }, [shownBuild]);
 
   // The raster's textures (its build: rasterWant, above the mesh): made once the raster is here - at once when it was
   // kept or built on this thread, when the worker answers otherwise. Until then no clouds' layer is drawn.
@@ -1279,6 +1366,9 @@ export function FieldVolume({
     }
   }, [mesh, filtering]);
 
+  // The camera as the last frame saw it, and when it last moved (T14, S81; the frame loop below).
+  const cameraMotion = useRef({ view: new Matrix4(), projection: new Matrix4(), movedAt: -Infinity, seen: false });
+
   // Before the composer (priority 1) draws the frame: march again only if the camera, the
   // drawing size, the gain or a tuning choice changed. A still view costs nothing after its first frame.
   useFrame(({ camera }) => {
@@ -1289,6 +1379,20 @@ export function FieldVolume({
       stats.gpuAvailable = timer.available;
     }
     (window as unknown as Record<string, unknown>).__galaxygenMarchGpu = { available: timer.available, ms: gpuMs };
+    // T14 (S81): the camera's motion frame to frame, watched whether or not there is a mesh yet. A frame whose camera
+    // differs from the frame before's (its place or its lens) moves it; the march reads at most `subMoving` sub-samples
+    // until the camera has been still for `settleMs`, then the full cap again - a change of the settings key, so the
+    // still view is marched once more at the full count and every frame at rest is the one it was without the cut.
+    camera.updateMatrixWorld();
+    const now = performance.now();
+    const motion = cameraMotion.current;
+    if (motion.seen && (!motion.view.equals(camera.matrixWorld) || !motion.projection.equals(camera.projectionMatrix))) motion.movedAt = now;
+    motion.view.copy(camera.matrixWorld);
+    motion.projection.copy(camera.projectionMatrix);
+    motion.seen = true;
+    const cut = marchSubSamples(subMax, subMoving, settleMs, now - motion.movedAt);
+    const sub = cut.sub;
+    (window as unknown as Record<string, unknown>).__galaxygenMarchSub = cut;
     if (!mesh || !offscreen) return;
     const gain = LIGHT_PER_LSUN_PC2 * fieldGain * 2 ** stops * weight;
     const buffer = gl.getDrawingBufferSize(DRAWING);
@@ -1296,14 +1400,13 @@ export function FieldVolume({
     const width = Math.max(1, Math.round(buffer.x * scale));
     const height = Math.max(1, Math.round(buffer.y * scale));
     const last = offscreen.last;
-    camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
     // The randomness layer's switches (S66, V7): each 1 only where its tables are there (the layer on) and it is on.
     const tables = mesh.userData.tables as LayerTables;
     const spursDrawn = Boolean(tables.spurs && tables.spurs.count > 0 && tables.unspurred && spursInMarch);
     const layerOn = [tables.gas && gasInMarch ? 1 : 0, spursDrawn ? 1 : 0, clumped ? 1 : 0];
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
+    const settings = `${steps},${sub},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -1339,7 +1442,8 @@ export function FieldVolume({
     uniforms.gain.value = gain;
     (uniforms.regionWindow.value as Vector4).set(w?.r_min ?? 0, w?.r_max ?? 0, w?.phi_min ?? 0, w?.phi_max ?? 0);
     uniforms.hiiFade.value = region ? hiiFade : 0;
-    uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
+    // The panel's cap at rest, the moving cap while the camera moves (T14, above).
+    uniforms.subMax.value = sub;
     // A new step count is two uniforms (S78, T29), not a new shader: the count and its reciprocal, which three uploads
     // as a float - the float nearest 1 / steps, as the constant 1.0 / float(steps) was folded when it was compiled in.
     const marchSteps = Math.max(1, Math.round(steps));
