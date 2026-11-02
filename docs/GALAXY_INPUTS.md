@@ -4342,6 +4342,24 @@ never been judged in twenty-three sessions.
    3 — within a few tenths of S59's 1.20 at 2.51 kpc, 0.59 % and 1.08 % on another seed, the worst cell and ring one
    ring inside the bar's reach. Still carried, with its remedy as named. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the table's half built as named; the render's wound read carried.** `sfr_modulation` is now the
+   young stars' own reader's mean over each grid cell (`sfh_azimuthal.modulation_cells`: `systems.Modulation`'s
+   `sector_means_at` on the grid's φ edges, the point function integrated piecewise between its breaks by a Gauss
+   rule), divided by its mean round the ring — the plain ring mean the field was always divided by, here taking out
+   the reader's quadrature normaliser's 1.5e-4 — so the ring means are 1 to 3e-16 and the rate still integrates back.
+   The stage reads the gas pattern's own reads and constants in place of `star_formation_gas_contrast`. Measured on
+   the production grid: the table against the reader's cell means **2.7e-4 in a cell, 0.0074 % of the worst ring's
+   young weight** on the Milky Way template (the old table 0.622 and 0.438 %), 9.4e-5 and 0.0004 % on `ngc_4414`
+   (0.0196, 0.040 %); at the defaults 2.6e-4 (S70's statistic of the table against the reader at the cells' centres
+   now reads the point function's own spread inside a cell, 0.923 and 0.51 %, which no grid holds;
+   `tests/test_audit.py`'s #154 test holds both). The cost, measured: the stage's table 0.80 s on the Milky Way
+   template and 0.36 s on `ngc_4414` (the law at a cell's mean was a few milliseconds). What moves with it: the
+   viewer's young light and every reader of the table (the bright catalogue's middle part), another realisation of
+   the same budget; tests re-pinned with the reason (`test_sfh_azimuthal.py`, `test_pieces.py`, `test_audit.py`).
+   **Still carried: the render's half** — the render interpolates every (R, φ) field between rings at a fixed φ,
+   which across a nearly circular piece misplaces a ring gap's young light (16–91 % at S59): "a wound read in the
+   render", the api's code under the model's hash, for S87 — and the azimuth drawn from 25 samples across a sector
+   (1.5e-2 from the function's CDF at worst).
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N

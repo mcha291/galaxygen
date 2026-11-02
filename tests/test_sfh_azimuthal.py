@@ -24,8 +24,9 @@ from galaxy.run import run
 from galaxy.specs import graph, spec
 from galaxy.stages import systems
 from galaxy.stages.pieces import ArmPattern  # S60 (D219): was galaxy.stages.pattern
+from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.sfh import SFH
-from galaxy.stages.sfh_azimuthal import SFH_AZIMUTHAL, SFR_MODULATION, sfr_modulation
+from galaxy.stages.sfh_azimuthal import SFH_AZIMUTHAL, SFR_MODULATION, modulation_cells, sfr_modulation
 from helpers import TINY, decl, impls, model, stage
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
@@ -80,7 +81,10 @@ def test_sfh_azimuthal_extends_sfh_and_adds_one_optional_field():
     # S51 (D210): the gas's own contrast, not the stellar one (was pattern_density_contrast).
     # S58 (D217 follow-up): was {"gas_density_contrast"} - the gas's contrast as the star formation law reads it,
     # the bar's lanes spread over the bar's footprint; the same numbers outside every bar's reach.
-    assert set(SFH_AZIMUTHAL.requires) - set(SFH.requires) == {"star_formation_gas_contrast"}
+    # S86 (BUILD_V M1, #154): was {"star_formation_gas_contrast"} - the cells' mean contrast; the table is the cell
+    # means of the young stars' point reader since, built from the gas pattern's own reads and constants.
+    assert set(SFH_AZIMUTHAL.requires) - set(SFH.requires) == set(GAS_PATTERN_READS) - set(SFH.requires)
+    assert set(GAS_PATTERN_CONSTANTS) <= set(SFH_AZIMUTHAL.reads_constants)
     # Rule D5: no constant's name in what the viewer reads.
     assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", SFR_MODULATION.about + SFH_AZIMUTHAL.about)
 
@@ -444,7 +448,16 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     assert (float(footprint_gas[past].max()), float(R[past][int(np.argmax(footprint_gas[past].max(axis=1)))])) == pytest.approx((2.0730, 7.4625), abs=2e-4)
     assert float(laned_gas.max()) == pytest.approx(6.6569, abs=2e-4)  # S59 (D218 follow-up): was 6.6786; S59 (D218): was 6.6640
     built = np.asarray(F["sfr_modulation"])
-    assert built.tobytes() == sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], footprint_gas, index).tobytes()
+    # S86 (BUILD_V M1, #154): the table is the cell means of the young stars' point reader (`modulation_cells`), to the
+    # bit; was the law at each cell's mean contrast - `sfr_modulation` on `footprint_gas`, kept as `cell_law` and read
+    # beside it: 0.622 apart at worst inside the half-length (3.04 kpc, where the footprint's edge crosses a cell),
+    # 0.0031 past it (a cell's arm profile under a law steeper than linear).
+    constants = {k: c.value for k, c in azimuthal.constants.items()}
+    assert built.tobytes() == modulation_cells(F, R, edges, constants, F["gas_surface_density"], F["sf_threshold_surface_density"], index).tobytes()
+    cell_law = sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], footprint_gas, index)
+    a_ = float(F["bar_half_length"])
+    assert float(np.abs(built - cell_law)[R < a_].max()) == pytest.approx(0.6221, abs=2e-3)
+    assert float(np.abs(built - cell_law)[R >= a_].max()) == pytest.approx(0.00313, abs=2e-4)
     laned = sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], laned_gas, index)
     band = (R >= 2.0) & (R <= 3.3)
     here = int(np.argmin(np.abs(R - 8.0)))
@@ -461,11 +474,15 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # S59 (D218): was (0.1490, 0.2804), (0.1000, 0.5204), (7.4075, 4.3125), 0.4015 and 5.4391
     # S59 (D218 follow-up): was (0.1490, 0.3429), (0.1000, 0.4992), (7.9268, 4.6875) and 5.4414; 0.4014 as it was
     # S60 fourth pass: was (0.1490, 0.3189), (0.1000, 0.5055), (7.8290, 4.6125), 0.4014 and 5.4401
-    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1000, 0.2448), abs=2e-4)
-    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5215), abs=2e-4)
-    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((6.0626, 4.8375), abs=2e-3)
-    assert float(top[here]) == float(_top_tenth(laned)[here]) == pytest.approx(0.2778, abs=2e-4)
-    assert built[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(3.1733, abs=2e-4)
+    # S86 (#154): were (0.1000, 0.2448), (0.1000, 0.5215), (6.0626, 4.8375) and 3.1733 - the law at the cells' mean
+    # contrast; the point reader's cell means read these (at R0 the top tenth the same to 1e-4).
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1000, 0.2439), abs=2e-4)
+    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5205), abs=2e-4)
+    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((6.0567, 4.8375), abs=2e-3)
+    assert float(top[here]) == pytest.approx(float(_top_tenth(laned)[here]), abs=1e-4) and float(top[here]) == pytest.approx(0.2778, abs=2e-4)
+    # S86 (#154): was `built[past].tobytes() == laned[past].tobytes()` - the two cell laws on one field past the
+    # half-length; the cell-law alternative on the laned field is still that field's bits there (the next line).
+    assert cell_law[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(3.1731, abs=2e-4)
     assert float(np.abs(built.mean(axis=1) - 1.0).max()) < 1e-12 and built.min() >= 0.0
     # An unbarred galaxy has no lanes and no footprint: one field, twice.
     n = run(azimuthal, templates.overrides(templates.TEMPLATES["ngc_4414"]), only=only)

@@ -484,27 +484,45 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
     absolute difference of the two profiles each over its own mean - worst and averaged over the rings, at the
     default seeds and at pattern seed 3. S59 pinned these in ``tests/test_segments.py`` (1.201 at 2.5125 kpc,
     0.586 %, 0.029 % on average; "1.08 % on another seed"), which went at S60 (7be85c8) with the segments; the arms
-    have been a census of pieces since, and the same statistic reads within a few tenths of S59's."""
+    have been a census of pieces since, and the same statistic reads within a few tenths of S59's.
+
+    **S86 (BUILD_V M1): the table is the reader's cell means since S86** (``sfh_azimuthal.modulation_cells``: the
+    point reader integrated over each cell, ``Modulation.sector_means_at``, renormalised round the ring). The
+    statistic of S59 and S70 compared the reader *at the cells' centres* with the table, so on today's table it
+    reads what no grid holds - the point function's own variation inside a cell (0.923 at 4.39 kpc, 0.51 % of the
+    worst ring; 0.998, 0.93 % at pattern seed 3), the footprint's edge and an arm's crest now, not two laws. The
+    debt's own statistic is the table against the reader's **cell means**: **2.6e-4 in a cell at worst** (5.5e-5 at
+    pattern seed 3) - the renormalisation's size, the reader's normaliser being a quadrature - and **under 1e-3 % of
+    any ring's young weight** (S70: 1.07 and 0.59 %)."""
     from galaxy.stages import systems
 
     reads = ("sfr_modulation", "gas_surface_density", "sf_threshold_surface_density", "star_formation_gas_contrast", "bar_half_length")
     constants = {k: c.value for k, c in default_model.constants.items()}
-    for inputs, want in (
-        (None, (1.0699, 3.3375, 0.5927, 0.0340)),  # S70 (D234): was S59's (1.201, 2.5125, 0.586, 0.029), on the segments
-        ({"pattern_seed": 3}, (1.2048, 2.9625, 1.1751, 0.0451)),
+    for inputs, want, cells in (
+        # S70 (D234): was S59's (1.201, 2.5125, 0.586, 0.029), on the segments. S86 (#154): was (1.0699, 3.3375,
+        # 0.5927, 0.0340) - the law at the cells' mean contrast against the reader at the centres.
+        (None, (0.9230, 4.3875, 0.5104, 0.0381), 2.63e-4),
+        ({"pattern_seed": 3}, (0.9979, 4.1625, 0.9263, 0.0556), 5.5e-5),  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)
     ):
         o = run(default_model, inputs, only=reads)
-        R, phi = o.grid.R, o.grid.phi
+        R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
         table = np.asarray(o.fields["sfr_modulation"])
-        at = systems.young_reader(o.fields, R, constants).at(R, phi)
-        apart = np.abs(at - table)
-        a, b = at / at.mean(axis=1, keepdims=True), table / table.mean(axis=1, keepdims=True)
-        weight = 100.0 * 0.5 * np.abs(a - b).mean(axis=1)
-        ring = int(np.unravel_index(int(np.argmax(apart)), apart.shape)[0])
-        got = (float(apart.max()), float(R[ring]), float(weight.max()), float(weight.mean()))
+        reader = systems.young_reader(o.fields, R, constants)
+
+        def statistic(ref: np.ndarray) -> tuple[tuple[float, float, float, float], np.ndarray, int]:
+            apart = np.abs(ref - table)
+            a, b = ref / ref.mean(axis=1, keepdims=True), table / table.mean(axis=1, keepdims=True)
+            weight = 100.0 * 0.5 * np.abs(a - b).mean(axis=1)
+            ring = int(np.unravel_index(int(np.argmax(apart)), apart.shape)[0])
+            return (float(apart.max()), float(R[ring]), float(weight.max()), float(weight.mean())), weight, ring
+
+        got, weight, ring = statistic(reader.at(R, phi))
         assert got == pytest.approx(want, abs=2e-3), (inputs, got)
-        # The worst cell and the worst ring are one ring, inside the bar's reach: the footprint's edge, as at S59.
+        # The worst cell and the worst ring are one ring, inside the bar's reach, as at S59.
         assert ring == int(np.argmax(weight)) and float(R[ring]) < float(o.fields["bar_half_length"]), (inputs, ring)
+        # S86 (#154): the table against the reader's own cell means - the debt's statistic, closed.
+        means, weight, _ = statistic(reader.sector_means_at(R, edges))
+        assert means[0] == pytest.approx(cells, rel=0.05) and means[2] < 1e-3, (inputs, means)
 
 
 # --- gamma's probes (session-10-gamma, tests/test_calibration.py), ported at S11 -----
