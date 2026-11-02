@@ -4217,6 +4217,20 @@ never been judged in twenty-three sessions.
    **Carried.** What closes it: a measured A₂ against radius in bar lengths for barred two-armed spirals; a
    sourced inner cut-off for arm modes in unbarred discs.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **re-read on the pieces; one finding gone, both closers unread.** *The bar-driven arm* is built as
+   geometry since S60 — a barred grand design's two chains start at the bar's ends (D219 item 3: "#149's bar-driven
+   arms as geometry") — at the ring's budget like every chain; no driven amplitude against r/a is read (`READING_BAR.md`
+   B5: "Not found in anything read: … the driven m = 2 amplitude against r/R_bar"). *The unbarred centre*, measured on
+   today's model, layer on: the six-armed mode's 10–70 pc wavelength is gone with the modes — a piece is 0.27 kpc wide
+   (FWHM) at the centre of `ngc_4414` and 0.40 kpc on the default galaxy, wider than the 75 pc ring step. The arms
+   still run to the centre: the law's budget is flat inward (0.063 on `ngc_4414` and 0.081 on the default galaxy
+   pinned unbarred, from the innermost ring), three and four chains cross 0.1 kpc, and the contrast's rms there is
+   0.086 on `ngc_4414` (its peak 0.40 at 3.56 kpc, 2.03 scale lengths) and **0.507 on the default galaxy pinned
+   unbarred — that disc's largest, at 0.11 kpc**, where `READING_ARM_MODES.md`'s statements 10 and 14 (amplitude
+   rising outward; the arms' contribution peaking at 1–2 scale lengths and "falling to zero at centre", Chugunov et
+   al. 2024) fail. A shape with its peak's place is read (Chugunov's 1–2 h); an inner cut-off's form is not. Still
+   carried — S87's reading list: Chugunov et al. 2024's arm profiles (§6–7, the fitted arms' inner ends) for a sourced
+   inner taper, and a driven A₂(r/a) (Salo et al. 2010's figures, Bu09).
 150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
    S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
