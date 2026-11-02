@@ -4218,7 +4218,12 @@ never been judged in twenty-three sessions.
    shape (b/a 0.4, boxiness 3 — the peak's place as a function of them, measured), the light share's half (the inner
    disc's light per unit mass at checkpoint 4 against the body's mass taken from checkpoint 1's disc), and a read
    distribution of b/a (K18's 0.31 ± 0.12 is strong bars only; MD07's ellipse-fit 0.48–0.54 ± 0.12–0.13 reads 20 %
-   low against a 2D fit, G11).
+   low against a 2D fit, G11). *The shape probed at S86* (the body's own m = 2 profile on the Milky Way template's
+   disc, nothing published moved): the peak's place goes nearly as the axis ratio — at the model's exponent 2,
+   0.27 / 0.34 / 0.41 / 0.50 a for b/a 0.25 / 0.31 / 0.4 / 0.5 (boxiness 3), boxiness adding 0.01–0.03 a; with a flat
+   profile (exponent 0.3) 0.50 / 0.60 / 0.68 / 0.76 a, and 0.80 a at b/a 0.5 and boxiness 4. Only a flat, round,
+   boxy body reaches the stacks' range: the miss is the body's thinness and exponent together, a reading of what the
+   stacks' bars are (DG16b's sample's b/a and profile) before any constant moves.
 147. **The bar's gas lanes are a template with one number that has no source** (S58, D217 items 6–8 and the
    follow-up). Two arcs on the leading side from the bar's end to a tenth of its length, curvature κ·a 1.15
    (the median of ten galaxies; the strength law is an envelope with a wide spread, so no draw), the ring's gas
