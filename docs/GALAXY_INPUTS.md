@@ -4375,6 +4375,15 @@ never been judged in twenty-three sessions.
    case the other way. Built if the owner's look at the frames finds the step.
    *Amended by the twelfth follow-up:* since the eleventh follow-up the height tapers over the LAW's width, so the
    class is a kink within one law width of a free end - up to 1.8 times the bounded width on the default galaxy's
+   *S86 (M1):* **re-measured on today's census; the choice is a ruling, not a reading.** Realised ring power
+   (`arm_ring_power`) over the budget, 16th / 50th / 84th percentiles over the rings that carry a budget and a chain
+   outside the bar's half-length: **the Milky Way template 0.37 / 0.57 / 0.73** (96 rings), **the default galaxy
+   0.39 / 0.42 / 0.62** (96), **`ngc_4414` 0.45 / 0.78 / 1.11** (133); besides, 48 and 69 rings of the two barred
+   galaxies carry a budget and no chain (inside the bar's reach, where no chain is born: D219's follow-up, item 2) and
+   none of `ngc_4414`'s. No source can choose between the two closed forms — both are the census's own statistics,
+   and neither reads a realised power — so the entry's remedy is a change of the budget's one formula by ruling.
+   **Proposed to the gate: permanent**, a declared design (D219 item 4: the independent form, "exact per ring is
+   refused"), the shortfall stated here and on `arm_power_budget`'s about line, the law honoured layer-off.
    outer disc; the default's seed 4 steps by 0.0019 at 12.375 kpc that way (0.38 of the continuity bound at 8 192
    azimuths, a true step). The test's wedge geometry reads `law_width_at`.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
