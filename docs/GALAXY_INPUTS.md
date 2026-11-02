@@ -3027,6 +3027,15 @@ never been judged in twenty-three sessions.
    the old disc's (age gradients across arms in resolved young clusters or populations). No reader in the repository
    holds one. The cut's own fading is #162's (M2, the young stars' fading as a step). Still carried; on S87's reading
    list.
+   *S87 (M1):* **read: no reader prints the age at which a population's arm contrast decays.**
+   `READING_GAS_SHOCK.md` Part D (D1; a re-reading, no web access). Closest: clusters under ~30 Myr sit on a live
+   disc's arms (Wada et al. 2011, a simulation) and an arm lives ~120 Myr (Grand et al. 2012) — the cut's present
+   source; observed ages across arms are places, not contrasts (Shabani et al. 2018's <10 / 10–50 / 50–200 Myr bins:
+   a gradient in NGC 1566, none in M51a or NGC 628; Martínez-García et al. 2009's colour gradients in 10 of 13); the
+   nearest observed fade is the young clusters' clustering, homogeneous after ~40–60 Myr (Grasha et al. 2017a) and
+   random after ~100 Myr in M51 (Grasha et al. 2019) — a hierarchy's fade, #162's, which brackets the 0.1 Gyr and
+   is not its statistic. Nothing moved. Still carried; the owner's reading an arm–interarm contrast per age bin of
+   resolved young populations (LEGUS / PHANGS-HST catalogues against an arm mask).
 82. **Rows 25–28 cannot be judged: the source's magnitudes are not stated extinction-corrected and the
    model's light is intrinsic** (S28, BUILD_II Phase 3, D177). BHG16 Table 2 quotes M_B −20.70, M_V
    −21.37, B − V 0.73, Υ_V 1.70 for the Galaxy `[verified: arXiv:1602.07702 Table 2, read at S28]`,
@@ -4202,6 +4211,12 @@ never been judged in twenty-three sessions.
    compression is #141's level B, out of every batch. Still carried: its first closer is #141's (proposed permanent
    at S86), its second a reading — the dynamic-arm simulations' gas ridge widths over the arm spacing, if any prints
    one — on S87's list.
+   *S87 (M1):* **read: no co-rotating arm's gas width in the repository.** `READING_GAS_SHOCK.md` Part D (D2): the
+   live-disc simulations print infall from both sides at Mach ~2 and density changes over ~100 Myr, no width; the
+   widths the readers hold are a steady shock's (Kim & Ostriker 2002, Kim, Kim & Ostriker 2010), one galaxy's
+   measured gas arm (Egusa et al. 2017), maser arms (Reid et al. 2019) and PHANGS's ridge masks. The second closer
+   is not met; the first is #141's (permanent, S86). Still carried; the owner's reading a live-disc simulation's
+   gas profile across an arm (Baba et al. 2015's dynamic models, Wada et al. 2011) as FWHM over the spacing.
 145. **The bar's presence is a criterion that bars nearly everything, and is wrong for the one unbarred galaxy the
    build holds** (S58, D217 items 1–2). Barred where Fujii et al. 2018's formation time, 0.146 exp(1.38/f_d) Gyr
    with f_d the disc's share of V² at 2.2 scale lengths, is under the disc's age `[verified: Fujii et al. 2018,
