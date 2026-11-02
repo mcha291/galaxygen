@@ -16191,3 +16191,101 @@ S84 waits on a ruling and the pass waits on nothing; BUILD_V's rule 2 is kept (n
 rows 86–92 keep their named membership and gain the pass's additions as §2a; a batch's lead reads §2a as the list.
 
 **The register.** 126 open = 33 permanent + 93 carried, 68 discharged. Next number #212.
+
+
+### D252. The owner's word of 2026-11-02 ("Yes, all five"): BUILD_V §6 rulings 2–6 taken as recommended — the tabs kept and the mockup's components ported (S84), the reference client retired (#189 discharged), the pin lifted per batch (S86–S88), Audit VI at the end, the deploy whenever
+
+**The word.** Asked at S85's close for BUILD_V's five open rulings (§6, rows 2–6, each with the lead's recommendation),
+the owner answered "Yes, all five" on 2026-11-02. Each recommendation is now the ruling, recorded here as S84's first
+commit on `session-84` (cut from `main` at 894e19b, S85's close; "rulings first, as the first commit", as S44 ran).
+
+**The rulings.** (2) **T17's structure: keep the tabs as they stand since V9** — Science / Galaxy with the edit panel
+as the Galaxy view's drawer and the Science tab's rail — **and port the mockup's components onto them**; the design's
+Workflow / Galaxy / System / Science structure is not built. S84 (BUILD_V row 84) builds it: the `_ds` design system's
+20 unported components (`docs/design/_ds/…/_ds_manifest.json`: Badge, Card, Dialog, IconButton, Tabs, Tag, Tooltip,
+DataTable, Meter, Readout, StarIcon and its tables, StatusDot, Checkbox, Input, Select, Switch — `Button` is ported
+since S46) where the built panels have the same thing by hand, the tokens unchanged (byte-identical since the design,
+RENDER_PLAN_II §1c). (3) **#189: the reference client's generate is retired, not finished.** `interface/` is a plain
+demonstration of the routes (BUILD_IV §7 ruling 2 (a), RULES D1 as amended at D232) and `tests/test_viewer.py` pins
+what it is; the "drawing…" placeholder while a group's load is in flight and the uneditable merger list are the
+retired client's and no row finishes them. **#189 is discharged by this ruling** (the register 125 open = 33 permanent
++ 92 carried, 69 discharged; the count pin and the carried row move with it, D1's sentence in `RULES.md` already reads
+so). (4) **The pin is lifted per batch, not per item**: in M1 (S86–S88), M2 (S89–S90) and M3 (S91–S92) every change
+under `model/galaxy` is allowed, the hash moves once at each batch's close (D3 as amended at D235), the affected subset
+runs mid-session, and the full suite runs once per batch on the owner's run before the merge (D246). (5) **Audit VI at
+the end** (row 93): one Fable session reads what the three batches did, blind against their sources and the register,
+as Audit V read BUILD_III. (6) **The deploy falls wherever the owner takes it** (T19, the subscription when its cost
+suits); nothing in rows 82–93 waits on it, and the deployed probe (#204, #205, F5, S80's (a)) follows it.
+
+**What it unblocks.** S84 now, on ruling 2; S86 on ruling 4 after S84. The rulings still open are the owner's and no
+session's: #211 / T11 (the JWST set's pins, held on `s83-robust`), #210 (the zoom capture's session), the confirmations
+of S80's (a) and S81's Worker, the subscription. No number moved; nothing under `model/galaxy`; no capture moved.
+
+
+### D253. S84, BUILD_V row 84: T17 — the design system as designed, on the kept tabs: the 20 unported components ported to `frontend/src/ui/` and the panels' chrome drawn with them; every capture byte for byte, two bar heights held to the pixel
+
+**The commission.** BUILD_V row 84 (D248) on ruling 2 (D252: keep the tabs as they stand since V9, port the mockup's
+components onto them). An Opus lead on `session-84` (cut from `main` at 894e19b, S85's close; D252 its first commit
+588201e), a Fable close; 22 commits, nothing pushed by the builder, nothing under `model/galaxy`, `interface/`, `docs/`
+or `tests/` (the picture spec's driver lines apart). The design record read: the `_ds` readme (the voice, the
+foundations), `_ds_manifest.json` (21 components) and `_ds_bundle.js` (their only source), the mockup
+`Galaxygen.dc.html` with `support.js`, `DESIGN_BRIEF.md`, the screenshots; the ported pattern `ui/Button.tsx` (S46).
+
+**The port** (`frontend/src/ui/`, each a typed component with a CSS Module on the tokens alone and a vitest): Badge and
+Tag (a7f59f2, with `cx.ts` and the test kit `testing.ts` — react-dom/server markup, the stylesheet read as text, a check
+that no colour literal stands outside the tokens); IconButton and Card (a396e84); Dialog (7dd6019: Escape closes, Tab
+held inside by `trappedFocus`, focus returned on close, portalled to the body, `alertdialog` available); Tabs (d2713ee:
+arrow keys, Home and End, a roving tabindex by `tabKeyTarget`) and Tooltip (the described-by link, hover and focus,
+Escape hides); DataTable (70d8401, typed by row; column headers; selectable rows focusable, Enter or Space by
+`selectsRow`; `dense` and a `wrap` column option added for the panels, f0b6607 / 076b5bb); Meter (f92bc0e, a
+progressbar, `meterPercent` clamps the fill), Readout and StatusDot (an `accent` tone added for the mockup's regime tone);
+StarIcon with SPRITE_URL, SPECTRAL_COLORS, CORES and MODIFIERS (2fae539; `starLayers` builds the z-order; the sprite was
+already `frontend/public/stellar-icons-modernist.svg` and the test holds it equal to `docs/design`'s copy — it carries
+no `mo-cls-*` symbols, so a class letter draws nothing until the sprite gains them); Checkbox and Switch (674ec6a, a
+native checkbox underneath, role="switch"; the native box widened to the whole control, f24ea34); Input and Select
+(da2d570). With these every one of the manifest's 21 is in the app. Vitest names a CSS Module's classes
+`_name_hash`; the kit maps them back to the stylesheet's names.
+
+**The panels** (chrome only; the tab structure, the drawer and rail at `drawerLayout.ts`'s 320 px, the landing, Generate
+and every loader as they were): `App.tsx` — Tabs for the view switch, StatusDot leading every status line and the
+stale / landing / failed mark (13114f6); `ErrorBoundary` — an alert Dialog with Retry, the inline line the alert once it
+is closed, its own test (5a79a8e); `Workflow.tsx` — IconButton (close, fold, remove an event), Badge ("changed"), Select
+(the model), Input for the merger events' three numbers (2174dd8); `TuningPanel.tsx` — Switch for every toggle, Select
+for the plane filtering and the tone mapping, Button for Reset all (f99db93); `FieldLegend` — Tag for the palette's
+categories, coloured from the API's palette; `Exposure` — Tooltip (c996975); `GalaxyTab.tsx` — StatusDot for the regime
+(idle / accent / nominal as the mockup tones it), a dense DataTable for the picked object, IconButton to close (65904a0);
+`ComparePane.tsx` — Input for the band, scale and distance, Select for the unit (f3623bc); `Published` — Readouts;
+`GalaxyView` — StatusDot on the lost-context line (54427ed). *Left as drawn, with the reason:* the edit panel's control
+rows (the mockup's own drawing; the design has no slider), the aria-pressed chip groups of the Galaxy tab and the compare
+pane (no segmented control in the design; the picture spec drives the mode chips by role), the Science plots (no table
+drawn), the footer's preview-charts toggle (below). Card, Checkbox, Meter and StarIcon are ported and placed nowhere:
+no panel draws a card, a checkbox list, a determinate meter or a system view (D209 removed it).
+
+**The captures, and the two fixes.** The picture test after the shell's commit failed every capture (3 638–7 373
+pixels, the points only; the context spec with it). The lead bisected before changing anything else: `milky_way-field`
+taken from a build of the base and of HEAD (Playwright's own web server) — the base byte for byte, HEAD not; with the
+footer alone undone, byte for byte again. **The cause: the picture spec sizes the window so the canvas is 1024 px
+square, so the top and bottom bars' heights are inside every capture's viewport**; the footer's Switch stood 1.7 px
+lower than the button it replaced (a 16.8 px line against 18.5), which moved the canvas's CSS box, hence the camera's
+aspect, by a fraction of a pixel, and every point with it. The footer keeps its button (2b087d2, the comment in
+`App.tsx` says why). The two 256 px thumbnails then still differed (9 502 and 4 863 pixels): below 640 px the top bar
+wraps its tabs onto a row of their own, and the Tabs' row stood 0.4 px taller than the segmented switch's 24 px and two
+hairlines; the row is held at that height on phones (113b4ea, `App.module.css`). **No capture was re-taken.** The picture
+spec's two Tuning-driven tests now set the switches by role ("switch", `setChecked`), the same states in the same order.
+
+**The register.** The viewer's five (#111, #170, #177, #183, #185) are left: each is render physics or the march (the
+region budget, the knots' line response, the bulge cusp's footprint, a knot's starlight, the sampled stars' dust) and
+none touches the chrome the port changed — a line in each entry says so. T16's four limits are left: three are
+behaviour (the right pane's tuning at mount, its budget the default, the probes the last pane's), the fourth (the drawer
+over the right pane's bar) is placement, the owner's (D250 point 4). No entry opened; 125 open = 33 + 92, 69 discharged.
+
+**The gates** (D245; the builder's run and the close's run agree): vitest 67 files, 617 passed and 1 skipped;
+`typecheck`, `typecheck:e2e` and the build EXIT=0; the picture test 14 passed with eight captures "the committed picture,
+byte for byte" and `ngc_4414-zoom` "not the committed picture's bytes" (#210, as before this session); `progress.py`
+79/79; the docs tests 73 passed. Each panel looked at on a build served on :8050 (stopped); the owner's ports untouched.
+
+**The lead's rulings.** (1) The footer's toggle stays a button and the tabs' phone row is pinned to the old height
+rather than re-capturing: a chrome port owes the picture unchanged, and a bar's height is part of the picture's
+geometry. (2) The components with no place (Card, Checkbox, Meter, StarIcon) stay ported and unused: the manifest is
+the design, the panels decide what they draw. (3) The viewer's five register items are a viewer pass of their own on the
+owner's word, as §2a says, not this row's. T17 is struck in `VIEWER_TASKS.md`; next is S86 (M1) on ruling 4.

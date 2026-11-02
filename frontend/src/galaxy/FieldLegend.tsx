@@ -2,6 +2,7 @@ import { legendStops, paintOf } from "@interface/ramp.js";
 import { useMemo } from "react";
 
 import type { FieldDecl, FieldsPayload } from "../api";
+import { Tag } from "../ui/Tag";
 import { formatNumber } from "../workflow/logic";
 import styles from "./GalaxyTab.module.css";
 
@@ -32,12 +33,12 @@ export function FieldLegend({ decl, values, cmaps }: { decl: FieldDecl; values: 
         <span className={styles.muted}>{palette ? "palette" : `${paint.cmap} · ${paint.scale}`}</span>
       </div>
       {palette ? (
+        // Each category a Tag (T17, S84) with its palette colour - the API's declaration, not the viewer's - as the key.
         <div className={styles.categories}>
           {paint.categories.map((c, k) => (
-            <span key={c}>
-              <i style={{ background: `rgb(${paint.colors[k].join(" ")})` }} />
+            <Tag key={c} color={`rgb(${paint.colors[k].join(" ")})`}>
               {c}
-            </span>
+            </Tag>
           ))}
         </div>
       ) : (

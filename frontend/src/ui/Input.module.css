@@ -1,0 +1,98 @@
+/* The design system's Input (components/forms/Input.jsx): a mono micro-label, a frame on the inset with the line
+   hairline and a 3 px radius, the focus hairline and ring on the frame, coral-4 when the value is at fault. */
+.block {
+  display: block;
+  min-width: 0;
+}
+
+.disabled {
+  opacity: 0.4;
+}
+
+.disabled * {
+  cursor: not-allowed;
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--space-3);
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.frame {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-inset);
+  transition: var(--transition-control);
+}
+
+.frame:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.invalid,
+.invalid:focus-within {
+  border-color: var(--coral-4);
+}
+
+.sm {
+  height: var(--control-sm);
+  padding: 0 var(--space-3);
+}
+
+.md {
+  height: var(--control-md);
+}
+
+.lg {
+  height: var(--control-lg);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--text-primary);
+  font: var(--weight-regular) var(--size-sm) / 1.2 var(--font-ui);
+}
+
+/* The frame carries the ring; the field inside draws none of its own. */
+.input:focus-visible {
+  box-shadow: none;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.sm .input {
+  font-size: var(--size-xs);
+}
+
+.affix {
+  color: var(--text-faint);
+  font: var(--weight-regular) var(--size-xs) / 1 var(--font-mono);
+  white-space: nowrap;
+}
+
+.note {
+  margin-top: var(--space-2);
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}
+
+.fault {
+  color: var(--coral-2);
+}

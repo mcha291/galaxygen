@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -51,7 +52,19 @@ import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
 import { regimePlace } from "./drawerLayout";
 import { starLoads } from "./regionStars";
+import { type Column, DataTable } from "../ui/DataTable";
+import { IconButton } from "../ui/IconButton";
+import { StatusDot, type StatusTone } from "../ui/StatusDot";
 import styles from "./GalaxyTab.module.css";
+
+// The picked object's published numbers (T17, S84): the design system's DataTable at the telemetry density.
+const PICKED_COLUMNS: Column<SummaryRow>[] = [
+  { key: "label", label: "Quantity", muted: true, wrap: true },
+  { key: "value", label: "Value", mono: true, align: "right", width: "58%" },
+];
+// The regime caption's StatusDot, as the mockup tones it (Galaxygen.dc.html regimeTone): the field idle, the sampled
+// points the accent, the stars nominal; the star-first mode draws stars.
+const REGIME_TONES: StatusTone[] = ["idle", "accent", "nominal"];
 
 // The regime caption's class by where it stands: left of the edit drawer while that is open (S82, #190).
 const regimeClass = {
@@ -1040,16 +1053,11 @@ export function GalaxyTab({
           <div className={styles.section}>
             <div className={styles.zoomHead}>
               <span className={styles.label}>{picked.title}</span>
-              <button type="button" className={styles.tuningDefault} title="Close" onClick={() => setPicked(null)}>
-                close
-              </button>
+              <IconButton label="Close" size="sm" onClick={() => setPicked(null)}>
+                <X aria-hidden />
+              </IconButton>
             </div>
-            {picked.rows.map((r) => (
-              <div key={r.label} className={styles.zoomHead}>
-                <span className={styles.muted}>{r.label}</span>
-                <span className={styles.value}>{r.value}</span>
-              </div>
-            ))}
+            <DataTable dense columns={PICKED_COLUMNS} rows={picked.rows} rowKey="label" aria-label={picked.title} className={styles.picked} />
             <p className={styles.muted}>The model's published numbers for this object.</p>
           </div>
         )}
@@ -1148,7 +1156,7 @@ export function GalaxyTab({
         <div className={styles.regimeHead}>
           <span className={styles.muted}>{mode === "field" ? `regime ${REGIMES.indexOf(regime) + 1} of 3` : "mode 2 of 2"}</span>
           <span className={styles.regimeName}>{mode === "field" ? regime.name : "Star-first"}</span>
-          <span className={styles.dot} />
+          <StatusDot tone={mode === "field" ? REGIME_TONES[REGIMES.indexOf(regime)] : "nominal"} />
         </div>
         <p className={styles.regimeWhat}>
           {mode === "stars"

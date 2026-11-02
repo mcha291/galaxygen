@@ -1,4 +1,5 @@
 import { type FieldDecl, type Frame, type Query, loadArrays } from "../api";
+import { Readout } from "../ui/Readout";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import styles from "../App.module.css";
@@ -26,14 +27,17 @@ export function Published({ scalars, query }: { scalars: FieldDecl[]; query: Que
         const v = values?.[f.name];
         const categorical = (f.categories?.length ?? 0) > 0;
         const unit = f.unit === "dimensionless" || categorical ? "" : String(f.unit_display ?? f.unit);
+        // Each value the design system's Readout (T17, S84): the micro-label, the value in light mono, its unit attached.
         return (
           <div key={f.name} className={styles.stat} title={String(f.about ?? "")}>
-            <div className={styles.statKey}>{f.label}</div>
-            <div className={styles.statValue}>
-              {/* A category scalar rides in the header as its label ("yes", "bimodal_narrow"), not as an index. */}
-              <span>{v === undefined || v === null ? "—" : categorical ? (f.categories![v] ?? String(v)) : formatNumber(v, 4)}</span>
-              {unit && <span className={styles.statUnit}>{unit}</span>}
-            </div>
+            <Readout
+              align="right"
+              size="sm"
+              label={f.label}
+              // A category scalar rides in the header as its label ("yes", "bimodal_narrow"), not as an index.
+              value={v === undefined || v === null ? "—" : categorical ? (f.categories![v] ?? String(v)) : formatNumber(v, 4)}
+              unit={unit || undefined}
+            />
           </div>
         );
       })}

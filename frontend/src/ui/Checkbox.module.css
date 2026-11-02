@@ -1,0 +1,84 @@
+/* The design system's Checkbox (components/forms/Checkbox.jsx): a 16 px box on the inset, magenta when checked with
+   the tick knocked out in --void-0; the label in the primary ink, a faint description under it. */
+.checkbox {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  cursor: pointer;
+}
+
+.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* The native box, kept for the keyboard and the reader: transparent over the whole control, so a press anywhere on
+   it is a press on the box. Never removed. */
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.box {
+  display: grid;
+  flex: 0 0 16px;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-inset);
+  transition: var(--transition-control);
+}
+
+.checkbox:hover .box {
+  border-color: var(--border-strong);
+}
+
+.on,
+.checkbox:hover .on {
+  border-color: var(--magenta-3);
+  background: var(--magenta-3);
+}
+
+.input:focus-visible + .box {
+  box-shadow: var(--shadow-focus);
+}
+
+.tick {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: var(--void-0);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.bar {
+  width: 8px;
+  height: 2px;
+  background: var(--void-0);
+}
+
+.text {
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--size-sm);
+  color: var(--text-primary);
+}
+
+.description {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}

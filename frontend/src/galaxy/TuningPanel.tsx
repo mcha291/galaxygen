@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 
+import { Button } from "../ui/Button";
+import { Select } from "../ui/Select";
+import { Switch } from "../ui/Switch";
 import type { MarchStats } from "./FieldVolume";
 import { gpuWords } from "./gpuTimer";
 import {
@@ -91,11 +94,18 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
               {TUNING_CONTROLS.filter((c) => c.group === group && !c.switch).map((control) => {
                 const value = tuning[control.key];
                 const fallback = defaults[control.key];
+                // A toggle is the design system's Switch (T17, S84), named by its label; a choice of a few its Select.
                 return (
                   <div key={control.key} className={styles.tuningRow} title={control.about}>
                     <div className={styles.zoomHead}>
-                      <span className={styles.tuningName}>{control.label}</span>
-                      <span className={styles.value}>{describe(control, value)}</span>
+                      {control.kind === "toggle" ? (
+                        <Switch label={control.label} checked={value === true} onChange={(on) => set(control.key, on)} className={styles.tuningSwitch} />
+                      ) : (
+                        <>
+                          <span className={styles.tuningName}>{control.label}</span>
+                          <span className={styles.value}>{describe(control, value)}</span>
+                        </>
+                      )}
                       {value !== fallback && (
                         <button
                           type="button"
@@ -130,23 +140,16 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
                           onChange={(e) => set(control.key, Number(e.target.value))}
                         />
                       ))}
-                    {control.kind === "toggle" && (
-                      <div className={styles.pair}>
-                        {[true, false].map((on) => (
-                          <button key={String(on)} type="button" aria-pressed={value === on} onClick={() => set(control.key, on)}>
-                            {on ? "on" : "off"}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                     {control.kind === "select" && (
-                      <div className={styles.chips}>
-                        {control.options.map((o) => (
-                          <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => set(control.key, o.value)}>
-                            {o.label}
-                          </button>
-                        ))}
-                      </div>
+                      <Select
+                        size="sm"
+                        mono
+                        className={styles.tuningSelect}
+                        aria-label={control.label}
+                        options={control.options}
+                        value={String(value)}
+                        onChange={(e) => set(control.key, e.target.value)}
+                      />
                     )}
                   </div>
                 );
@@ -157,10 +160,10 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
             <div className={styles.muted} title="The march target's size, the last re-march's CPU-side time (the render call) and, since S67, the GPU's time for it from a timer query (EXT_disjoint_timer_query_webgl2), where the browser gives one">
               march: {march.width}×{march.height} px, {march.ms.toFixed(1)} ms CPU, {gpuWords(march.gpuMs, march.gpuAvailable ?? false)}
             </div>
-            <div className={styles.pair}>
-              <button type="button" disabled={Object.keys(diff).length === 0} onClick={() => onChange({ ...defaults })}>
+            <div className={styles.tuningActions}>
+              <Button disabled={Object.keys(diff).length === 0} onClick={() => onChange({ ...defaults })}>
                 Reset all
-              </button>
+              </Button>
             </div>
             <textarea
               className={styles.tuningCopy}

@@ -570,12 +570,13 @@ test("the dust's column on screen: the layer in the march keeps the dust-only fr
   await squareCanvas(page, 1024);
   // With the points off there is no selection to wait for: the view settles as the field mode's does.
   const withMap = await settle(page, net, "field");
-  // The Tuning panel's switches, through the panel as a user would: each row's "off".
+  // The Tuning panel's switches, through the panel as a user would: each one off (the design system's Switch since
+  // S84, T17: a switch named by its label, where each row had an "on" and an "off" button).
   await page.getByRole("button", { name: DUST_ONLY.panel }).click();
-  const rows = DUST_ONLY.toggles.map((label) => page.getByText(label, { exact: true }).locator("xpath=../.."));
+  const rows = DUST_ONLY.toggles.map((label) => page.getByRole("switch", { name: label, exact: true }));
   for (const row of rows) {
-    await row.getByRole("button", { name: "off", exact: true }).click();
-    await expect(row.getByRole("button", { name: "off", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await row.setChecked(false);
+    await expect(row).not.toBeChecked();
   }
   const without = await settle(page, net, "field");
   const ratio = over(lightOf(withMap), lightOf(without));
@@ -583,7 +584,7 @@ test("the dust's column on screen: the layer in the march keeps the dust-only fr
   expect(withMap.png.equals(without.png), "the layer drew nothing different").toBe(false);
   for (const r of ratio) expect(Math.abs(r - 1), `the dust-only frame's light moved by more than ${DUST_COLUMN_TOLERANCE} with the layer (${ratio.join(", ")})`).toBeLessThan(DUST_COLUMN_TOLERANCE);
   // Back on, for whatever runs after on this page's storage.
-  for (const row of rows) await row.getByRole("button", { name: "on", exact: true }).click();
+  for (const row of rows) await row.setChecked(true);
 });
 
 // The surface-brightness gates (S67, BUILD_III V8; D227 R5 as ruled on the measurement; settings.ts RING_GATE). The
@@ -868,10 +869,11 @@ test("the instrument's light on the GPU: the spikes' switch moves none, and the 
   await press(page, MODE_BUTTON.stars);
   await squareCanvas(page, 1024);
   await page.getByRole("button", { name: DUST_ONLY.panel }).click();
-  const spikesRow = page.getByText(GPU_LIGHT.spikes, { exact: true }).locator("xpath=../..");
+  // The spikes' switch in the Tuning panel (the design system's Switch since S84, T17).
+  const spikesSwitch = page.getByRole("switch", { name: GPU_LIGHT.spikes, exact: true });
   const spikes = async (state: "on" | "off") => {
-    await spikesRow.getByRole("button", { name: state, exact: true }).click();
-    await expect(spikesRow.getByRole("button", { name: state, exact: true })).toHaveAttribute("aria-pressed", "true");
+    await spikesSwitch.setChecked(state === "on");
+    await expect(spikesSwitch).toBeChecked({ checked: state === "on" });
   };
   const measured: Record<string, unknown> = {};
   const stands: [string, LensCamera, Capture["stand"] | undefined][] = [

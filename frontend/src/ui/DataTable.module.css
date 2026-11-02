@@ -1,0 +1,87 @@
+/* The design system's DataTable (components/data/DataTable.jsx): fixed layout, --space-4 cells on hairlines, the
+   header a mono micro-label on the line border, the hovered row a void step lighter, the selected one magenta-tinted
+   with the 2 px magenta rule at its left. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.cell {
+  padding: var(--space-4);
+  overflow: hidden;
+  border-bottom: var(--hair) solid var(--border-hair);
+  color: var(--text-body);
+  font: var(--weight-regular) var(--size-sm) / 1.35 var(--font-ui);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The telemetry density: the 2 px step the spacing scale keeps for dense tables. */
+.dense .cell {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--size-xs);
+}
+
+.dense .head {
+  font-size: var(--size-2xs);
+}
+
+.wrap {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.left {
+  text-align: left;
+}
+
+.right {
+  text-align: right;
+}
+
+.center {
+  text-align: center;
+}
+
+.head {
+  border-bottom-color: var(--border-line);
+  color: var(--text-muted);
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.row {
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.selectable {
+  cursor: pointer;
+}
+
+.hover {
+  background: var(--surface-hover);
+}
+
+.selected {
+  background: var(--surface-selected);
+  box-shadow: inset 2px 0 0 var(--magenta-3);
+}
+
+.empty {
+  padding: var(--space-9);
+  color: var(--text-faint);
+  font-size: var(--size-sm);
+  text-align: center;
+}

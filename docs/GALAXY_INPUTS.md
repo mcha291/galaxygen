@@ -710,10 +710,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S81 | **208** (the landing's last tenths: the head start and the shader checks at S80, the mesh's Worker at S81, (d) by ruling, (e) by measurement — D244, D246, D247) | 1 |
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
+| **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 189, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 93 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 92 |
 
-So the board's **126 open** is 33 permanent and 93 carried, and no item is unruled (S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **125 open** is 33 permanent and 92 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3420,6 +3421,7 @@ never been judged in twenty-three sessions.
    points carry the cluster's *stellar* light (`cluster_luminosity`), not its region's Hα, and the field's HII
    still fades by the regime's weight; the light past the 64th region is dropped as before. The remedy stands.
    *S85 register pass (D251):* **the viewer's** — the region volume's kept share handed to the field's HII fade is the viewer's composition (a viewer pass; S84 with T17's panels or the owner's viewer pass).
+   *S84 (D253):* T17's port did not reach it (chrome only; the HII fade is the march's composition) — the owner's viewer pass.
 112. ~~**The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
    them, a star in front included**~~ (S40, V3, D190). **Discharged at S67 (D228): the field's half mended.** The
    region march's third pass multiplies the field by each depth slab's own transmission: the field's light along a ray
@@ -4406,6 +4408,7 @@ never been judged in twenty-three sessions.
    display colours, not on the field's scale the knots use. **Carried.** The mend is one pass each: the knots in the
    star-first mode by their `line_response`, and the region regime's clusters on the field's scale.
    *S85 register pass (D251):* **the viewer's** — the knots in the star-first mode by their `line_response` is the viewer's; the second half (the region regime's clusters on the field's scale) was done at S82 (#172, the catalogue position).
+   *S84 (D253):* T17's port did not reach it (chrome only; the knots' line response is the render's) — the owner's viewer pass.
 171. **The star sample's luminosity function is not the catalogue's: its bright end is 0.14 of the table's at 10³ L☉**
    (S65, D225; the probe's measurement). `photometry.lookup` interpolates between isochrones at fixed initial mass and
    drops the short evolved phases, so the count of old sample stars above L, over the sampling fraction s times the
@@ -4487,6 +4490,7 @@ never been judged in twenty-three sessions.
    Held at 3e-2 and named in the test. **Carried.** What closes it: the bulge's light integrated over each pixel's
    footprint (its projected profile is closed-form) instead of point-sampled in the march.
    *S85 register pass (D251):* **the viewer's** — the bulge's light integrated over each pixel's footprint is the march's: a viewer pass.
+   *S84 (D253):* T17's port did not reach it (chrome only; the footprint is the march's) — the owner's viewer pass.
 178. ~~**At a close stand the instrument's image is clamped to a 121-pixel box, its outside light returned to the inside**~~
    (S67, D227 R1, R3; the review). At `ngc_4414`'s zoom stand (0.488 pc a pixel) the PSF table's half-width is 314 px
    and S64's box path clamps it at 60: the light outside, 4.2 % (red, Airy) to 6.0 % (red, with the spikes), is put
@@ -4573,6 +4577,7 @@ never been judged in twenty-three sessions.
    HII layers (D224's closure), consistent with D226's clustering map, an exact per-cell closure gate; about one
    builder pass and a review; it changes the Milky Way's young-light grain too.
    *S85 register pass (D251):* **the viewer's** — each knot's cluster drawn at the knot with its starlight through the set is the viewer's composition (a builder pass and a review; it changes the Milky Way's young-light grain).
+   *S84 (D253):* T17's port did not reach it (chrome only; a knot's starlight is the render's) — the owner's viewer pass.
 184. **One stellar layer height for every age: the young light is drawn in the old disc's thick layer** (S67, D230's
    measurement). `/api/render` publishes one `layers.stars` (356 pc on `milky_way`) for the young, middle and old
    parts alike, so the young light's clumps lie half in front of the clouds (now in their 34 pc layer, D229) and its
@@ -4588,6 +4593,7 @@ never been judged in twenty-three sessions.
    3/255 or more), but it grows where the sample's weight is high (views ~13-24 kpc across). **Carried.** What closes
    it: the sampled stars take the field's column to each point as FluxPoints does (`dustTo`, the march's textures).
    *S85 register pass (D251):* **the viewer's** — the sampled stars taking the field's column is `FluxPoints`' `dustTo`: a viewer pass (below 4 kpc the catalogue's points already take it since S82).
+   *S84 (D253):* T17's port did not reach it (chrome only; `dustTo` is the points' draw) — the owner's viewer pass.
 186. **The merger events' field ranges are not on the wire** (S68, D232; the review's F6). `/api/inputs` gives the
    `mergers` input only its default; the ranges (`mass_ratio must be in (0, 1]`, the time, the gas fraction) live in
    the API's own check in `service.py`, so the viewer cannot refuse a bad event before sending it, and a Generate with
@@ -4612,11 +4618,14 @@ never been judged in twenty-three sessions.
    with its own template's display tuning (`drawnTuning`, `LOAD_TUNING_KEYS`); seven cases; live, warm, Milky Way ->
    NGC 4414: ~420 ms of bare stars -> the old picture under the landing line until the swap (~270 ms), the same six
    requests. *Disclosed:* ~210 ms of blank frames while the remade canvas compiles (the remount, #208 (d) as ruled).
-189. **The reference client's generate is not whole** (S68, D232). `interface/app.js` shows "drawing…" instead of
+189. ~~**The reference client's generate is not whole**~~ (S68, D232). `interface/app.js` shows "drawing…" instead of
    the previous picture when a Generate lands while a group's load is in flight, and its merger list is still not
    editable (as before V9). **Carried.** What closes it: the held answer its `shown` query already allows; an events
    editor in the reference client.
    *S85 register pass (D251):* **the owner's word** — BUILD_V ruling 3 (retire the reference client's generate to a route demonstration): the owner's word.
+   **DISCHARGED at S84 (D252), by ruling:** BUILD_V §6 ruling 3 taken as recommended on 2026-11-02 — the reference client
+   is retired to a plain demonstration of the routes (BUILD_IV §7 ruling 2 (a), RULES D1 as amended at D232); its held
+   picture and its merger editor are not to be finished, and `tests/test_viewer.py` pins what it is.
 190. ~~**The edit drawer covers the Galaxy view's regime caption**~~ (S68, D232). While the panel is open at the right
    of the Galaxy view, the top-right caption (the regime and the window) sits under it. **DISCHARGED at S82 (D249).**
    The caption moves left of the drawer while it is open (`drawerLayout.ts regimePlace`: `besideDrawer`, or

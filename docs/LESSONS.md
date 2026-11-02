@@ -1948,3 +1948,22 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **A plan's order bends for a ruling only where nothing depends on the bent step.** S84 waited on BUILD_V's
   ruling 2; S85 depended on nothing S84 does, so it ran first and the decision says so. A step the next one builds on
   would have waited.
+
+## From S84 (BUILD_V row 84, T17 the design system ported; an Opus lead, a Fable close)
+
+- [viewer] **A chrome change is not capture-neutral if it changes a bar's height.** The picture spec sizes the window
+  so the canvas is 1024 px square, so the top and bottom bars' heights are inside every capture's viewport — a
+  fraction of a pixel in either one moves the canvas's aspect and every point in every frame, the phone layout the
+  256 px thumbnails run at included. Keep the bars' heights exactly as they were, or treat the change as a re-capture
+  with the reason for the owner.
+- [viewer] **Bisect one capture against a build of the base before touching anything.** Every capture failing at
+  once after a chrome commit looked like a renderer fault; one frame taken from an export of the base commit and of
+  HEAD, served by Playwright's own web server, named the footer in about ten minutes and the fix was one kept
+  button. Re-capturing on the first failure would have written the fault into the committed pictures.
+- [viewer] **A component tested in node is a markup function plus pure behaviour.** The vitest environment is node, so
+  a ported component renders to markup by react-dom/server and its keyboard behaviour is a pure function the test
+  calls (`trappedFocus`, `tabKeyTarget`, `selectsRow`, `meterPercent`); the stylesheet is read as text and held to
+  the tokens by a no-colour-literal check. No browser in the unit tests, and every component still has one.
+- [close] **Rulings first, as the first commit.** The owner's five rulings went onto `session-84` as D252 before any
+  code, with the register's one discharge and its pins in the same commit, so the row's builder started from a tree
+  whose records already said what was ruled; S44's pattern, kept.

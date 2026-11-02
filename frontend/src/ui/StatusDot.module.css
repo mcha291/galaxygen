@@ -1,0 +1,49 @@
+/* The design system's StatusDot (components/data/StatusDot.jsx): an 8 px dot in the status colour and a mono
+   micro-label; --radius-full belongs to it alone. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.nominal {
+  background: var(--status-nominal);
+}
+
+.caution {
+  background: var(--status-caution);
+}
+
+.fault {
+  background: var(--status-fault);
+}
+
+.archive {
+  background: var(--status-archive);
+}
+
+.idle {
+  background: var(--ink-4);
+}
+
+.accent {
+  background: var(--magenta-3);
+}
+
+.pulse {
+  box-shadow: var(--glow-nominal);
+}
+
+.label {
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

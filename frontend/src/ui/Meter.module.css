@@ -1,0 +1,53 @@
+/* The design system's Meter (components/data/Meter.jsx): a mono label and value over a square-ended bar on the
+   inset surface, filled in the tone's colour. */
+.meter {
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.label {
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.value {
+  font: var(--weight-regular) var(--size-xs) / 1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-body);
+}
+
+.track {
+  overflow: hidden;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-xs);
+  background: var(--surface-inset);
+}
+
+.fill {
+  height: 100%;
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+.accent {
+  background: var(--magenta-3);
+}
+
+.nominal {
+  background: var(--aqua-3);
+}
+
+.caution {
+  background: var(--amber-3);
+}
+
+.fault {
+  background: var(--coral-3);
+}
