@@ -36,6 +36,8 @@ describe("Checkbox (the design system's components/forms/Checkbox.jsx)", () => {
 
   it("rings the box when the hidden input has the keyboard's focus, and holds no colour of its own", () => {
     expect(cssRule(css, ".input:focus-visible + .box")).toContain("box-shadow: var(--shadow-focus);");
+    expect(cssRule(css, ".input")).toMatch(/inset: 0;[\s\S]*opacity: 0;/);
+    expect(cssRule(css, ".input")).not.toContain("pointer-events");
     expect(cssRule(css, ".on,\n.checkbox:hover .on")).toContain("background: var(--magenta-3);");
     expect(colourLiterals(css)).toEqual([]);
   });

@@ -35,6 +35,9 @@ describe("Switch (the design system's components/forms/Switch.jsx)", () => {
     expect(cssRule(css, ".on,\n.switch:hover .on")).toContain("background: var(--magenta-4);");
     expect(cssRule(css, ".on .knob")).toContain("var(--magenta-1)");
     expect(cssRule(css, ".input:focus-visible + .track")).toContain("box-shadow: var(--shadow-focus);");
+    // The native box lies transparent over the whole control: a press anywhere on it is a press on the box.
+    expect(cssRule(css, ".input")).toMatch(/inset: 0;[\s\S]*opacity: 0;/);
+    expect(cssRule(css, ".input")).not.toContain("pointer-events");
     expect(colourLiterals(css)).toEqual([]);
   });
 });
