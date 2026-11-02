@@ -1,6 +1,21 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { InputClock, ViewMark, beginSwap, endSwap, heldLoads, loads, pendingLoads, swapPart, swapState } from "./useLoad";
+import {
+  HANDOVER_MS,
+  InputClock,
+  ViewMark,
+  beginLanding,
+  beginSwap,
+  endSwap,
+  handOver,
+  handed,
+  heldLoads,
+  loads,
+  pendingLoads,
+  swapPart,
+  swapState,
+  takeHanded,
+} from "./useLoad";
 
 // The settle's clock (S76, D240 F3; the review's G3), driven as useLoad drives it: `see` on every render with the
 // loader's input, `wait` when a new key is asked. The times are the page's clock, ms.
@@ -121,7 +136,7 @@ describe("a Generate's swap", () => {
     loads.answer(field, () => published.push("field"));
     expect(published.sort()).toEqual(["field", "stars"]);
     expect(heldLoads()).toBe(0);
-    expect(swapState()).toEqual({ swapping: false, failure: null });
+    expect(swapState()).toEqual({ swapping: false, failure: null, landing: false });
   });
 
   it("with one loader asking, its answer completes the swap at once", () => {
@@ -143,7 +158,7 @@ describe("a Generate's swap", () => {
     loads.answer(stars, () => published.push("stars"));
     loads.answer(field, () => published.push("field failed"), "HTTP 400: mass_ratio out of range");
     expect(published.sort()).toEqual(["field failed", "stars"]);
-    expect(swapState()).toEqual({ swapping: false, failure: "HTTP 400: mass_ratio out of range" });
+    expect(swapState()).toEqual({ swapping: false, failure: "HTTP 400: mass_ratio out of range", landing: false });
   });
 
   it("drops what a loader held when its key moves again, and does not end the swap inside the commit", async () => {
@@ -174,7 +189,7 @@ describe("a Generate's swap", () => {
     loads.answer(stars, () => published.push("stars"), "failed");
     endSwap();
     expect(published).toEqual(["stars"]);
-    expect(swapState()).toEqual({ swapping: false, failure: null });
+    expect(swapState()).toEqual({ swapping: false, failure: null, landing: false });
     loads.drop(field);
   });
 });
@@ -205,7 +220,7 @@ describe("a loader whose key follows another's answer (S82, #187)", () => {
     expect(swapState().swapping).toBe(true);
     loads.answer(tiles, () => published.push("tiles"));
     expect(published.sort()).toEqual(["field", "table", "tiles"]); // one publish, every dependent answer in
-    expect(swapState()).toEqual({ swapping: false, failure: null });
+    expect(swapState()).toEqual({ swapping: false, failure: null, landing: false });
   });
 
   it("before S82 it was a second, partial update: unregistered, the swap published without it", async () => {
@@ -294,5 +309,84 @@ describe("the camera's loads in a swap (S82, #187)", () => {
     expect(swapPart({ ...at, role: { view: "view c" }, moved: true })).toEqual({ free: true, after: false, settling: false });
     // a loader not keyed on the view is never freed by a move
     expect(swapPart({ ...at, role: {}, moved: true }).free).toBe(false);
+  });
+});
+
+// S82 (#188): a template landing over a galaxy on screen is a swap of its own - the old picture stays, marked, until
+// the template's loaders have answered - and what the old canvas's loaders were published by it is handed over to the
+// new canvas's loaders of the same key, so the new canvas neither asks again nor waits blank on the wire.
+describe("a template landing (S82, #188)", () => {
+  it("is no swap on the app's first landing (nothing on screen), and a swap of its own over a galaxy on screen", () => {
+    beginLanding(false);
+    expect(swapState()).toEqual({ swapping: false, failure: null, landing: false });
+    beginLanding(true);
+    expect(swapState()).toEqual({ swapping: true, failure: null, landing: true });
+  });
+
+  it("keeps the old galaxy's field drawn until the new one's answers are in, then hands it to the new canvas", () => {
+    const field = {}; // the old canvas's field volume, now asking the new template's arrays
+    const stars = {}; // the star sample
+    const drawn: string[] = ["old field", "old stars"];
+    const published: [string, boolean][] = [];
+    beginLanding(true);
+    loads.wait(field);
+    loads.wait(stars);
+    // The new field answers first: held - the old field is still what is drawn (the bare stars of #188 are gone).
+    loads.answer(field, (landing) => published.push(["new field", landing]));
+    expect(published).toEqual([]);
+    expect(drawn).toEqual(["old field", "old stars"]);
+    expect(swapState()).toMatchObject({ swapping: true, landing: true });
+    // The sample answers: the whole swap, told it was a landing's.
+    loads.answer(stars, (landing) => published.push(["new stars", landing]));
+    expect(published.sort()).toEqual([
+      ["new field", true],
+      ["new stars", true],
+    ]);
+    expect(swapState()).toEqual({ swapping: false, failure: null, landing: false });
+    // The canvas is made afresh at the template's stand: the old field volume, unmounted, hands its answer over...
+    const now = performance.now();
+    handOver('["arrays","ngc_4414"]', "new field", now);
+    // ... and the new one starts from it, asking nothing, and takes it so no other loader does.
+    expect(handed('["arrays","ngc_4414"]', now)).toBe("new field");
+    takeHanded('["arrays","ngc_4414"]');
+    expect(handed('["arrays","ngc_4414"]', now)).toBeUndefined();
+  });
+
+  it("hands over only just after a landing's publish, and nothing past the next swap", () => {
+    const stars = {};
+    beginLanding(true);
+    loads.wait(stars);
+    loads.answer(stars, () => undefined);
+    const now = performance.now();
+    handOver("k", 1, now + HANDOVER_MS + 1); // an unmount long after the landing (a tab left): no part of it
+    expect(handed("k", now)).toBeUndefined();
+    handOver("k", 2, now);
+    expect(handed("k", now + HANDOVER_MS + 1)).toBeUndefined(); // closed
+    expect(handed("k", now)).toBe(2);
+    beginSwap(); // the next Generate empties it
+    expect(handed("k", performance.now())).toBeUndefined();
+    endSwap();
+  });
+
+  it("stays a landing's through a Generate pressed during it, and makes a Generate under way moot", async () => {
+    const field = {};
+    const published: string[] = [];
+    beginLanding(true);
+    beginSwap(); // a Generate while the landing's loaders are out: the landing's camera still waits on it
+    expect(swapState().landing).toBe(true);
+    endSwap();
+    // A Generate under way, then a landing: the landing's own swap, the Generate's failure forgotten.
+    const stars = {};
+    beginSwap();
+    loads.wait(field);
+    loads.wait(stars);
+    loads.answer(field, () => published.push("generated field, failed"), "HTTP 400");
+    expect(swapState().failure).toBe("HTTP 400");
+    beginLanding(true);
+    expect(swapState()).toEqual({ swapping: true, failure: null, landing: true });
+    loads.drop(field); // its key moves to the template's query: what it held for the generated one is dropped
+    await tick();
+    expect(published).toEqual([]);
+    loads.drop(stars);
   });
 });

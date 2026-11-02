@@ -29,7 +29,6 @@ export function failed<T>(previous: Loaded<T>, error: Error): Loaded<T> {
 // failure, which the view says until the next Generate or landing. Outside a swap - the landing, a pan, a
 // display setting - nothing is held and every loader publishes as it always has. A loader whose key did not
 // change is not waiting, and is unaffected.
-
 //
 // S82 (#187): the loaders whose key follows another loader's answer (the star-first mode's counts and tiles after the
 // bright table, the field's remainder after the tiles' threshold) are in the swap from its start: while what they
@@ -40,14 +39,24 @@ export function failed<T>(previous: Loaded<T>, error: Error): Loaded<T> {
 // and holds nothing, its answer published with the swap if it comes first and on its own after - and if the swap ends
 // before it answers, what it showed of the previous galaxy is taken down then (never one galaxy's field under
 // another's points, rule D1).
+//
+// S82 (#188): a template landing over a galaxy on screen is a swap too, with its own line (`landing`): the previous
+// picture stays, its camera with it (App.tsx), until every loader of the new template has answered, then the whole
+// swap, as a Generate's. Its canvas is then made afresh at the template's stand (D213 ruling 5), so what the old
+// canvas's loaders were published by the landing's swap is handed over to the new canvas's loaders of the same key
+// (`handOver`, `handed`): nothing is asked twice, and the new canvas does not wait on the wire for what the old one had.
+// The first landing of the app (nothing on screen) is no swap, as before.
 
 /** A mounted loader's place in the store: a token, plus the publication of an answer it holds. */
 type Token = object;
-type Publish = () => void;
+/** Publish a held answer; told whether the swap that held it was a landing's (#188's hand-over). */
+type Publish = (landing: boolean) => void;
 const waiting = new Set<Token>();
 const held = new Map<Token, Publish>();
 /** Loaders keyed on the view that the camera freed during this swap and that have not answered: taken down at its end. */
 const roaming = new Map<Token, () => void>();
+/** What a landing's swap published to loaders then unmounted with the old canvas, by key (#188): taken once. */
+const handovers = new Map<string, unknown>();
 const listeners = new Set<() => void>();
 
 /** What a view reads of the swap: whether one is under way, and what failed in the last. */
@@ -55,8 +64,10 @@ export interface Swap {
   swapping: boolean;
   /** The first failure's message among the last swap's answers; null when every one arrived. */
   failure: string | null;
+  /** The swap is a template landing's over a galaxy on screen (#188), not a Generate's alone. */
+  landing: boolean;
 }
-let swap: Swap = { swapping: false, failure: null };
+let swap: Swap = { swapping: false, failure: null, landing: false };
 /** Counts the swaps begun: a loader keyed on the view reads the view it stood at when this one began (ViewMark). */
 let generation = 0;
 
@@ -77,12 +88,14 @@ export function heldLoads(): number {
  * camera freed that has still not answered takes down what it showed of the previous galaxy (#187).
  */
 function flush(failure: string | null = swap.failure) {
+  const landing = swap.landing;
   const publish = [...held.values()];
   const takeDown = [...roaming.values()];
   held.clear();
   roaming.clear();
-  swap = { swapping: false, failure };
-  publish.forEach((p) => p());
+  swap = { swapping: false, failure, landing: false };
+  if (landing) landed(performance.now()); // #188: the new canvas's loaders may start from what this publishes
+  publish.forEach((p) => p(landing));
   takeDown.forEach((down) => down());
   told();
 }
@@ -98,18 +111,34 @@ export function settleSwap(): void {
   settle();
 }
 
-/** A "Generate": from now until every waiting loader has answered, answers are held (see above). */
-export function beginSwap(): void {
+/**
+ * A "Generate" - or, with `landing`, a template landing over a galaxy on screen (#188): from now until every waiting
+ * loader has answered, answers are held (see above). A Generate begun during a landing's swap keeps it a landing's:
+ * the landing's camera still waits on it.
+ */
+export function beginSwap(landing = false): void {
   generation += 1;
   roaming.clear();
-  swap = { swapping: true, failure: null };
+  handovers.clear();
+  swap = { swapping: true, failure: null, landing: landing || (swap.swapping && swap.landing) };
   told();
 }
 
-/** A landing (or anything that makes the swap moot): publish what is held now and forget the last failure. */
+/** Anything that makes the swap moot: publish what is held now and forget the last failure. */
 export function endSwap(): void {
   if (!swap.swapping && swap.failure === null && held.size === 0) return; // nothing to end: the snapshot stands
   flush(null);
+}
+
+/**
+ * A template landing (useWorkflow.ts land; #188). Over a galaxy on screen it is a swap of its own (`landing`): the old
+ * picture stays until the template's loaders have answered, then the whole swap, as a Generate's; a Generate under way
+ * is moot (its held answers dropped as their loaders take the template's keys, its failure forgotten). With nothing
+ * on screen - the app's first landing - it is as it always was: no swap, and any ended.
+ */
+export function beginLanding(onScreen: boolean): void {
+  if (onScreen) beginSwap(true);
+  else endSwap();
 }
 
 /** How many swaps have begun (a loader keyed on the view reads where it stood when the last began). */
@@ -145,7 +174,7 @@ export const loads = {
       onHold?.();
       settle();
     } else {
-      publish();
+      publish(false);
       told();
     }
   },
@@ -156,6 +185,40 @@ export const loads = {
     queueMicrotask(settle);
   },
 };
+
+/**
+ * How long after a landing's swap is published its hand-over stands (#188), ms: the canvas is made afresh in the
+ * frames after it, and a loader unmounted later (a tab left, a mode switched) is no part of the landing.
+ */
+export const HANDOVER_MS = 2000;
+/** When the last landing's swap was published (performance.now()), or null: no hand-over is open. */
+let landedAt: number | null = null;
+const handing = (now: number) => landedAt !== null && now - landedAt < HANDOVER_MS;
+
+/** A landing's swap has just been published (the loaders' publications say so): its hand-over opens now. */
+export function landed(now: number): void {
+  landedAt = now;
+}
+
+/**
+ * #188's hand-over: a loader unmounted with the old canvas, holding what a landing's swap published to it, leaves it
+ * here under its key; the new canvas's loader asking the same key first starts from it (`handed`) and asks nothing,
+ * taking it (`takeHanded`) so no other does. Open for HANDOVER_MS after the landing's publish; emptied when the next
+ * swap begins.
+ */
+export function handOver(key: string, value: unknown, now: number): void {
+  if (handing(now)) handovers.set(key, value);
+}
+
+/** What was handed over for `key`, without taking it; undefined where nothing was, or the hand-over has closed. */
+export function handed<T>(key: string, now: number): T | undefined {
+  return handing(now) ? (handovers.get(key) as T | undefined) : undefined;
+}
+
+/** Take what was handed over for `key`: no other loader starts from it. */
+export function takeHanded(key: string): void {
+  handovers.delete(key);
+}
 
 /** The swap's current state (what useSwap renders from). */
 export function swapState(): Swap {
@@ -312,9 +375,26 @@ export function useLoad<T>(
   firstAtOnce = true,
   role: SwapRole = {},
 ) {
-  const [result, setResult] = useState<Loaded<T>>({ state: "idle" });
+  // #188: a loader of a canvas made afresh by a landing starts from what the old canvas's loader of the same key was
+  // published by the landing's swap (handed over at its unmount), and asks nothing for that key.
+  const [start] = useState(() => {
+    const value = key === null ? undefined : handed<T>(key, performance.now());
+    return value === undefined ? null : { key: key as string, value };
+  });
+  const handedKey = useRef<string | null>(start?.key ?? null);
+  const [result, setResult] = useState<Loaded<T>>(() => (start ? { state: "ready", value: start.value } : { state: "idle" }));
   // The newest answer and its key, held or published (#187): what `next` and `answered` read. A failure's value is null.
-  const [latest, setLatest] = useState<{ key: string; value: T | null } | null>(null);
+  const [latest, setLatest] = useState<{ key: string; value: T | null } | null>(start);
+  // What the last landing's swap published here, if that was the last publish (#188): handed over at the unmount.
+  const landedHere = useRef<{ key: string; value: T } | null>(null);
+  useEffect(
+    () => () => {
+      if (landedHere.current) handOver(landedHere.current.key, landedHere.current.value, performance.now());
+    },
+    [],
+  );
+  // The swap in which this loader last asked at once for a landing (#188), so later keys in it settle as usual.
+  const landingAsked = useRef(-1);
   const [busy, setBusy] = useState(false);
   // This loader's token in the store: the same object for the loader's life (a state, never a memo).
   const [token] = useState<Token>(() => ({}));
@@ -336,11 +416,20 @@ export function useLoad<T>(
   useEffect(() => {
     // Nothing to load - unless the key waits on what it follows, inside a swap: then it holds the swap unnamed (#187).
     if (key === null && !after) return;
+    // Started from a landing's hand-over (#188): that key's answer is here already, so it is not asked again. Taken,
+    // so no other loader starts from it; a return to the key later asks as any key does.
+    if (key !== handedKey.current) handedKey.current = null;
+    else if (!after && key !== null) {
+      takeHanded(key);
+      clock.fired(); // as if its first key had been asked: every later key settles (InputClock)
+      return;
+    }
     // Freed by the camera: it asks and holds nothing; if the swap ends before it answers, what it showed of the
     // previous galaxy is taken down (rule D1: never one galaxy's loads under another's).
     const takeDown = () => {
       setResult({ state: "idle" });
       setLatest(null);
+      landedHere.current = null;
     };
     loads.wait(token, freed.current ? { takeDown } : undefined);
     // What this key follows has not answered for the swap: wait on it, ask nothing yet (#187).
@@ -351,15 +440,22 @@ export function useLoad<T>(
     const answer = (value: T | null, publish: () => void, failure: string | null) =>
       loads.answer(
         token,
-        () => {
+        (landing) => {
           publish();
           setLatest({ key, value });
+          landedHere.current = landing && value !== null ? { key, value } : null;
         },
         failure,
         () => setLatest({ key, value }),
       );
-    const wait = clock.wait(settleMs, performance.now(), firstAtOnce ? key : undefined);
+    // A key a landing moved is asked at once (#188), as the fresh canvas's first key was before the landing held the
+    // old one (S78); later keys in the same swap settle as usual. A view's key settles as it always has.
+    const now = swapState();
+    const generationNow = swapGeneration();
+    const landingKey = now.swapping && now.landing && firstAtOnce && landingAsked.current !== generationNow;
+    const wait = landingKey ? 0 : clock.wait(settleMs, performance.now(), firstAtOnce ? key : undefined);
     const timer = setTimeout(() => {
+      if (landingKey) landingAsked.current = generationNow;
       clock.fired();
       setBusy(true);
       loader.current(abort.signal)

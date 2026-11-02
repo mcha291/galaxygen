@@ -77,6 +77,12 @@ interface Props {
   onTemplate(name: string): void;
   /** Counts the landings on a template: a new count is a fresh camera at the template's stand. */
   selection: number;
+  /**
+   * The camera drawn (S82, #188): while a landing's swap is under way, the previous landing's - its count, its preset and
+   * its template's stand and lens - so the previous picture stays on its canvas until the template's answers are in;
+   * then the landing's own. Absent, the live ones (`selection`, `preset`, `template`).
+   */
+  camera?: { selection: number; preset: Preset | null; template: Template | null };
   /** "Compare with a picture" (T16 ii): a picture chosen from disk, set beside the render; null without one. */
   picture: ComparePicture | null;
   onPicture(file: File | null): void;
@@ -243,15 +249,18 @@ export function GalaxyTab({
   edited,
   onTemplate,
   selection,
+  camera,
   picture,
   onPicture,
   physicsOnly,
   onPhysicsOnly,
 }: Props) {
+  // The camera drawn (#188): the previous landing's while a landing's swap is under way, else the live one.
+  const drawn = camera ?? { selection, preset, template };
   // The zoom slider's ask belongs to the camera it was made of: a template chosen or a preset pressed is a fresh
   // camera at its own stand, and an ask made of the one before it must not move it (it did, for the presets,
   // until S54: the slider's last position outlived the camera).
-  const cameraKey = `${selection}:${preset}`;
+  const cameraKey = `${drawn.selection}:${drawn.preset}`;
   const [zoomAsk, setZoomAsk] = useState<{ of: string; zoom: number } | null>(null);
   const zoom = zoomAsk?.of === cameraKey ? zoomAsk.zoom : undefined;
   const setZoom = (value: number) => setZoomAsk({ of: cameraKey, zoom: value });
@@ -261,7 +270,7 @@ export function GalaxyTab({
   const [interiorNote, setInteriorNote] = useState<string | null>(null);
   // The template's camera and lens (D213 ruling 5): the view stands there while no preset is chosen, and keeps
   // the lens under a preset. Without templates (an API from before S54) the presets and the 45° lens, as before.
-  const fov = template?.camera.fov_deg ?? DEFAULT_FOV;
+  const fov = drawn.template?.camera.fov_deg ?? DEFAULT_FOV;
   const stands = switcherItems(templates, template?.name ?? null, edited, import.meta.env.BASE_URL);
   // The Tuning panel's display choices (D199): a UI preference kept in localStorage, today's values by default. Since
   // S67 (D227 R4) per template: each has its own defaults (tuning.ts defaultsFor) and its own stored choices, read
@@ -658,10 +667,10 @@ export function GalaxyTab({
         layers={layers}
         pickable={pickable}
         reach={reach}
-        preset={preset}
-        stand={template?.camera ?? null}
+        preset={drawn.preset}
+        stand={drawn.template?.camera ?? null}
         fov={fov}
-        epoch={selection}
+        epoch={drawn.selection}
         zoom={zoom}
         onView={setView}
         hdr

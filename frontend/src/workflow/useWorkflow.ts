@@ -2,7 +2,7 @@ import * as flow from "@interface/flow.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { loadDeclarations, loadTemplates, type Query } from "../api";
-import { beginSwap, endSwap } from "../useLoad";
+import { beginLanding, beginSwap } from "../useLoad";
 import { type FlowState, drawSeed } from "./logic";
 import { type Template, type Templates, applyTemplate, isEdited, templateOf, templateQuery } from "./templates";
 
@@ -154,11 +154,17 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
   const [selection, setSelection] = useState(0);
   // A template waiting for its model's declarations: landed on, or reset to, when they arrive.
   const pending = useRef<Pending>(null);
+  // Whether a galaxy is on screen, for a landing (S82, #188): the landing then holds it until the template's arrives.
+  const onScreen = useRef(false);
+  onScreen.current = shown !== null;
 
   // What a landing sets, wherever it happens: the draft and the galaxy shown, both at the template's inputs.
   const land = useCallback((fresh: FlowState, template: Template) => {
     const landed = landOn(fresh, template);
-    endSwap(); // a landing makes a Generate under way moot: what it held is published, its failure forgotten
+    // A landing makes a Generate under way moot (its failure forgotten). Over a galaxy on screen it is a swap of its own
+    // (S82, #188): the previous picture stays, marked as landing the template, until every loader has answered the
+    // template's query, then the whole swap. The app's first landing has nothing on screen: no swap, as before.
+    beginLanding(onScreen.current);
     setState(landed);
     setShown({ state: landed, model: template.model });
     setChosen(template.name);
