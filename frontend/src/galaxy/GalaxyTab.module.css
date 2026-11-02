@@ -350,11 +350,9 @@
   color: var(--magenta-3);
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--magenta-3);
+/* The picked object's numbers (the design system's DataTable, dense), under its title. */
+.picked {
+  margin-top: var(--space-2);
 }
 
 .regimeWhat {
