@@ -3877,6 +3877,15 @@ never been judged in twenty-three sessions.
    by the ism stage's molecular fraction where that stage runs (checkpoint 4 or later: no cycle) — once the atomic
    dispersion is read from a source (it is `[recall]` here: HI dispersions about 10 km/s), the cost (a second solve,
    about the first's) measured. Still carried.
+   *S87 (M1):* **read first, as the S86 design requires: no source in the repository gives the atomic gas's
+   velocity dispersion, so the second response is not built.** `READING_GAS_PATTERN.md` Reading D (D3): Corbelli
+   et al. 2018 say M33's "HI dispersion stays flat" with no number in the text read; `GAS_DISPERSION`'s own about
+   line carries "the Milky Way's HI reads 7-10 at R_0" as `[recall]`; every other 10 km/s in the readers is a
+   simulation's sound speed or a drift velocity. A `[recall]` dispersion would make the second response a
+   recalled number's (A3, B9), which the design ruled out. Nothing moved; the probe's numbers (S86: the ratio of
+   means 1.362 at 10 km/s on the Milky Way template, 4.8 % under the molecular response's) stand as the size of
+   what a build would do. Still carried; the owner's reading a measured HI dispersion with its radial behaviour
+   (the THINGS / HERACLES dispersion maps, named in Reading D as `[recall — NOT READ]`).
 131. **The gas contrast's galaxy-to-galaxy scatter is unread, so the contrast has no residual** (S51, D210 as amended).
    `gas_arm_contrast` is its derived class mean — 1.90 for the non-grand-design spirals to 2.73 for the grand designs, by
    the two-fold pattern's amplification weight — with no draw. The spread the source gives, 1.37–5.79 for the grand
