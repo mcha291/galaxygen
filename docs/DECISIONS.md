@@ -16140,3 +16140,54 @@ last pane's, the drawer over the right pane's bar) go to S84's lead with T17's p
 chrome, or stay as lines. (6) The brief's 6.5 m corrected by the builder from the paper: the decision carries 6.628 m.
 
 **The register.** #211 opened: **131 open = 11 permanent + 120 carried, 63 discharged**. No number of the model's moved.
+
+
+### D251. S85, BUILD_V row 85: the register pass — every carried item ruled permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's; five S70 entries discharged on evidence
+
+**The commission.** BUILD_V row 85 (D248, rule 2 of §1: the register pass before any model batch — "one docs-only session
+rules each of the model items *permanent* or *a defect in a batch*, so each batch builds what is actually wrong"). A
+Fable lead alone on `session-85` (cut from `main` at c41e195, S83's close), run before S84 because S84 (T17) waits on
+BUILD_V ruling 2 and the pass depends on nothing S84 does; no builder, nothing under `model/galaxy`, nothing in the
+viewer. The 120 carried entries were read whole (a script listed each with its origin and its "what closes it"; the
+entries without a Carried marker read in full), `RESEARCH_AREAS.md` beside the arms' items, BUILD_V's rows 86–92 as the
+batches' named membership; each ruling is written into its entry as "*S85 register pass (D251):* **…** — reason", and
+`BUILD_V.md` §2a holds the assignment as lists.
+
+**The dispositions.** *Permanent, 22 more (33 in all):* #3, #11, #19, #26, #27, #28, #33, #39, #42, #43, #47, #49, #52,
+#70, #87, #90, #93, #99, #132, #133, #134, #195 — fourteen are the frozen history's (the owner's ruling 7 keeps `basic`
+frozen, `AUDIT_V.md` §5: the first infall, the wind's mass, the valley's burst, the kernel's widths, the heating constants,
+the solar calibration, the gas inside R₀, the spheroid's fit, the satellites' share — each re-opened by the owner's word
+and no batch), three are the template fit the owner kept (D215: no second fit), three are rows no ruling owes (the
+white dwarfs, the habitable zone, the dust temperature), one an instrument no row reads (#39, the ensemble's diagonal),
+one a scope (#3's abundance matching), one a declaration (#195's half budget, the owner's to fill). *Discharged on
+evidence, 5:* #191, #192, #193, #194, #196 — each "S70 enters it" and S70 did (the register pass read `level0.py`'s
+`BAR_GAS_RATIO` about, `clouds.py`'s three regimes, `census_clustering.py`'s disclosure, `tests/test_layer.py`'s I1–I5
+invariants, `tests/test_audit_v.py`'s "measured over every"), and Audit V's own pass at S70 struck #137 only. *M1, the
+arms and the bar, 25:* #80, #81, #129, #130, #131, #138, #139, #141–#149, #152–#157, #186, #198, #209 — the rows' list plus
+the bar's ratio (#80), the young-star cut's crossing time (#81), the gas response's width, HI contrast and scatter
+(#129–#131, derived with the forcing since D216), the saturation cut (#198) and the merger ranges moved at S82 (#186).
+*M2, the clouds, the dust and the gas, 25:* #82, #91, #92, #94, #95, #109, #110, #128, #136, #158–#165, #167–#169,
+#180–#182, #197, #202 — the rows' list plus the dust stage's eight-band power, PAH form, attenuated magnitude and
+scattering geometry (#82, #91, #92, #109), the clouds' sources (#94, #95, #110) and the frame's dust terms (#136). *M3, the
+populations and the ionized gas, 29:* #83–#86, #88, #89, #96–#98, #100–#103, #113–#115, #117–#119, #124, #125, #127, #135,
+#166, #171, #174–#176, #184 — the rows' list plus the wind's Γ_e, the return fraction, the remnants' metallicity and census
+(#83, #85, #86, #102, #103), the Ia yield and the spheroid's Ia (#88, #89), the clusters' mass function and survivors
+(#96–#98), the light tables' curves, quadrature and Υ_K (#125, #127, #135), the gas-phase gradient with #117 (#124) and
+the render's age cost (#166). *The viewer's, 5:* #111, #170, #177, #183, #185 — a viewer pass with S84's panels or on the
+owner's word; #170's second half was done at S82 (#172). *The owner's word, 8:* #107 (a library download), #179 (WFPC2),
+#189 (ruling 3), #203 (T20), #204, #205 (the deploy), #210 (the zoom capture), #211 (the JWST set). *Audit VI, 1:* #173.
+No item is unruled; no entry's text before the ruling was changed; no number moved.
+
+**The gates.** The docs and register tests after the edits (`tools/progress.py`, `tests/test_docs.py`, `test_progress.py`,
+`test_audit.py` with the count pin (131, 63) → (126, 68) and the permanent and carried rows re-pinned, `test_hook.py`,
+`test_graph.py`): EXIT=0. No frontend change, so the fast gates' vitest and picture test were not run (D245: a docs-only
+close).
+
+**The lead's rulings.** (1) The frozen history's fourteen are permanent *while ruling 7 stands*: the word "permanent" here
+means the owner's, not the model's — each entry says the owner's word re-opens it; a batch may not. (2) The five S70
+discharges are the register pass's own finding: a "carried; S70 enters it" entry whose work was done is a bookkeeping
+miss of Audit V's pass, struck now with the code line as evidence. (3) The pass ran before S84 (the plan's order) because
+S84 waits on a ruling and the pass waits on nothing; BUILD_V's rule 2 is kept (no model batch has started). (4) BUILD_V's
+rows 86–92 keep their named membership and gain the pass's additions as §2a; a batch's lead reads §2a as the list.
+
+**The register.** 126 open = 33 permanent + 93 carried, 68 discharged. Next number #212.

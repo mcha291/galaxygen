@@ -46,6 +46,15 @@ the local full suite runs on the owner's word, asked once per model batch; CI's 
 Thirteen sessions, three full suites, the deploy whenever the owner takes it. Rows 86–92's membership is the register
 pass's to settle (S85): a batch takes what S85 rules a defect, in the order above; an item ruled permanent leaves it.
 
+## 2a. The register pass's assignment (S85, D251)
+
+Every carried item ruled, none unruled. **Permanent** (22 more, 33 in all): #3, #11, #19, #26, #27, #28, #33, #39, #42, #43, #47, #49, #52, #70, #87, #90, #93, #99, #132, #133, #134, #195 — the frozen
+history's (the owner's ruling 7), the fit the owner kept (D215), a row no ruling owes, an instrument no row reads, a scope.
+**Discharged on evidence** (5): #191, #192, #193, #194, #196 — entered at S70 and never struck. **M1, the arms and the bar** (25):
+#80, #81, #129, #130, #131, #138, #139, #141, #142, #143, #144, #145, #146, #147, #148, #149, #152, #153, #154, #155, #156, #157, #186, #198, #209. **M2, the clouds, the dust and the gas** (25): #82, #91, #92, #94, #95, #109, #110, #128, #136, #158, #159, #160, #161, #162, #163, #164, #165, #167, #168, #169, #180, #181, #182, #197, #202. **M3, the populations and the ionized gas**
+(29): #83, #84, #85, #86, #88, #89, #96, #97, #98, #100, #101, #102, #103, #113, #114, #115, #117, #118, #119, #124, #125, #127, #135, #166, #171, #174, #175, #176, #184. **The viewer's** (5, a viewer pass with S84 or on the owner's word): #111, #170, #177, #183, #185.
+**The owner's word** (8): #107, #179, #189, #203, #204, #205, #210, #211. **Audit VI** (1): #173.
+
 ## 3. Parallelism and pacing
 
 - **Two agents at once, one heavy** (the owner's rationing): a session's two builders own disjoint files; the lead
