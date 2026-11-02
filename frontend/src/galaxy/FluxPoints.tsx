@@ -24,6 +24,7 @@ import {
   ZeroFactor,
 } from "three";
 
+import { useContextGeneration } from "./contextLoss";
 import { DUST_SEGMENT_STEPS } from "./flux";
 import { WING_BLOCK, WING_MAX_HALF, psfClamped } from "./hstPsf";
 import { DISC_LOOP_HALF, PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF } from "./plummer";
@@ -479,6 +480,11 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     },
     [points],
   );
+  // Whether the wings' target can be a blended float32 target: EXT_float_blend, which the viewer enables itself and so must
+  // enable again after a lost context is restored (T13, S83) - three re-enables only the extensions it asks for. The
+  // target itself is made again by three when next bound, and drawn every frame the wings are on.
+  const generation = useContextGeneration(gl.domElement);
+  const floatBlend = useMemo(() => gl.extensions.has("EXT_float_blend"), [gl, generation]); // eslint-disable-line react-hooks/exhaustive-deps -- asked again per context
   // The wings' pass (S82, #178): the same points and shader, the uniforms shared but wingPass, drawn into a coarse target
   // of WING_BLOCK-pixel blocks before the frame, and the composite that adds the target to the frame.
   const wings = useMemo(() => {
@@ -497,7 +503,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     object.matrixAutoUpdate = false;
     const scene = new Scene();
     scene.add(object);
-    const type = gl.extensions.has("EXT_float_blend") ? FloatType : HalfFloatType;
+    const type = floatBlend ? FloatType : HalfFloatType;
     const target = new WebGLRenderTarget(1, 1, { type, depthBuffer: false, minFilter: NearestFilter, magFilter: NearestFilter });
     const composite = new Mesh(
       new PlaneGeometry(2, 2),
@@ -519,7 +525,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     composite.frustumCulled = false;
     composite.visible = false;
     return { material, object, scene, target, composite };
-  }, [points, gl]);
+  }, [points, floatBlend]);
   useEffect(
     () => () => {
       wings.material.dispose();

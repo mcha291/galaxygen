@@ -58,6 +58,7 @@ import { type MeshArrival, listenMesh, meshWorkerAvailable, startMesh } from "./
 import { type MeshRequest, meshRequest, meshTexels } from "./meshTexelsJob";
 import type { Axis } from "../preview/axes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
+import { useContextGeneration } from "./contextLoss";
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { gpuTimer } from "./gpuTimer";
@@ -1258,9 +1259,18 @@ export function FieldVolume({
   useEffect(() => {
     void precompileMarch(gl);
   }, [gl]);
+  // A lost and restored context (T13, S83; contextLoss.ts): three uploads the mesh's seven textures, the raster's two, the
+  // share's and the placeholders again from the arrays they keep, and makes the march's target again when it is next
+  // bound; what three does not know is that the target's pixels are gone - so a restore re-marches (below) - and that the
+  // timer's queries and its extension were the old context's - so the timer is made again.
+  const generation = useContextGeneration(gl.domElement);
+  const generationNow = useRef(generation);
+  generationNow.current = generation;
   // The GPU's time for the march (S67, D227 R6; gpuTimer.ts): a timer query round its render call, read back frames later.
-  const timer = useMemo(() => gpuTimer(gl.getContext() as WebGL2RenderingContext), [gl]);
-  useEffect(() => () => timer.dispose(), [timer]);
+  const timed = useMemo(() => ({ timer: gpuTimer(gl.getContext() as WebGL2RenderingContext), generation }), [gl, generation]);
+  const timer = timed.timer;
+  // The queries of a context since lost are not this context's to delete: only a timer of the live context disposes them.
+  useEffect(() => () => (timed.generation === generationNow.current ? timed.timer.dispose() : undefined), [timed]);
 
   // The box lives in a scene of its own, marched into a lower-resolution float target.
   const offscreen = useMemo(() => {
@@ -1284,7 +1294,7 @@ export function FieldVolume({
     );
     quad.frustumCulled = false;
     quad.renderOrder = -1;
-    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0, region: "", settings: "" } };
+    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0, region: "", settings: "", generation: -1 } };
   }, [mesh]);
 
   useEffect(
@@ -1421,9 +1431,11 @@ export function FieldVolume({
     const spursDrawn = Boolean(tables.spurs && tables.spurs.count > 0 && tables.unspurred && spursInMarch);
     const layerOn = [tables.gas && gasInMarch ? 1 : 0, spursDrawn ? 1 : 0, clumped ? 1 : 0];
     const settings = `${steps},${sub},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
+    // A restored context (T13) holds none of the target's pixels: the march is drawn again, the camera still or not.
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
-      last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
+      last.width !== width || last.height !== height || last.region !== region || last.settings !== settings ||
+      last.generation !== generationNow.current;
     // React may build the memo above twice (StrictMode), and adding the mesh to the second scene
     // takes it out of the first; whichever scene is kept, the mesh goes back into it here.
     const reattached = mesh.parent !== offscreen.scene;
@@ -1491,6 +1503,7 @@ export function FieldVolume({
     last.height = height;
     last.region = region;
     last.settings = settings;
+    last.generation = generationNow.current;
     if (stats) {
       stats.width = width;
       stats.height = height;
