@@ -14,7 +14,15 @@ import { layerQuery } from "./layer";
 import { type ComparePicture, PictureFrame } from "./PictureBeside";
 import { extent, toScene } from "./positions";
 import { useDebounced } from "./TuningPanel";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
 import styles from "./ComparePane.module.css";
+
+/** A picture's scale: per pixel, as an angle (read at a distance) or as a length. */
+const SCALE_UNITS = [
+  { value: "arcsec", label: "″ / px" },
+  { value: "kpc", label: "kpc / px" },
+];
 
 // The comparison view's right pane (T16, S83): a second galaxy beside the galaxy shown - another template, the draft,
 // the galaxy shown through another filter set - or a picture file, chosen from a small bar above it. The galaxy is a
@@ -211,24 +219,48 @@ export function ComparePane(props: Props) {
             <button type="button" title="Choose a PNG or JPEG from this computer. It stays in the browser." onClick={() => file.current?.click()}>
               {picture ? "another file" : "choose file"}
             </button>
-            <label className={styles.field} title="The band the picture was taken in, as you state it: shown on the caption, read by nothing">
-              band
-              <input type="text" value={band} size={9} placeholder="e.g. F814W" onChange={(e) => setBand(e.target.value)} />
-            </label>
-            <label className={styles.field} title="The picture's pixel scale">
-              scale
-              <input type="number" min={0} step="any" value={perPixel} size={6} onChange={(e) => setPerPixel(e.target.value)} />
-            </label>
-            <select aria-label="The scale's unit" value={unit} onChange={(e) => setUnit(e.target.value as "arcsec" | "kpc")}>
-              <option value="arcsec">″ / px</option>
-              <option value="kpc">kpc / px</option>
-            </select>
+            {/* The picture's band, scale and distance: the design system's Input and Select (T17, S84), each named by its word. */}
+            <Input
+              size="sm"
+              mono
+              className={styles.band}
+              prefix="band"
+              aria-label="band"
+              title="The band the picture was taken in, as you state it: shown on the caption, read by nothing"
+              type="text"
+              value={band}
+              placeholder="e.g. F814W"
+              onChange={(e) => setBand(e.target.value)}
+            />
+            <Input
+              size="sm"
+              mono
+              className={styles.scale}
+              prefix="scale"
+              aria-label="scale"
+              title="The picture's pixel scale"
+              type="number"
+              min={0}
+              step="any"
+              value={perPixel}
+              onChange={(e) => setPerPixel(e.target.value)}
+            />
+            <Select size="sm" mono aria-label="The scale's unit" options={SCALE_UNITS} value={unit} onChange={(e) => setUnit(e.target.value as "arcsec" | "kpc")} />
             {unit === "arcsec" && (
-              <label className={styles.field} title="The distance the angular scale is read at, Mpc">
-                at
-                <input type="number" min={0} step="any" value={distance} size={5} onChange={(e) => setDistance(e.target.value)} />
-                Mpc
-              </label>
+              <Input
+                size="sm"
+                mono
+                className={styles.distance}
+                prefix="at"
+                suffix="Mpc"
+                aria-label="distance"
+                title="The distance the angular scale is read at, Mpc"
+                type="number"
+                min={0}
+                step="any"
+                value={distance}
+                onChange={(e) => setDistance(e.target.value)}
+              />
             )}
             {unit === "arcsec" &&
               distances.map((t) => (
