@@ -1,8 +1,9 @@
 # BUILD_V — the fifth build: everything that remains, batched so the work runs ahead of the suites
 
-**Status: DRAFT 2026-11-02, written at S81's open on the owner's word ("redesign the plan for the remaining work to try
-to get as much done as possible"; "there's ample usage remaining for the next two days").** For the owner's adoption;
-recorded as a decision when adopted. S81 (the viewer batch of D246) is this plan's first row and is already running.
+**Status: ADOPTED 2026-11-02 at S82 (D248; the owner's word "adopt the plan"), as drafted at S81's open on the owner's
+word ("redesign the plan for the remaining work to try to get as much done as possible"; "there's ample usage remaining
+for the next two days").** Its §6 ruling 1 is taken by the adoption; rulings 2–6 stand as recommendations until the
+owner takes them (S84 needs ruling 2, S86 ruling 4). S81 (the viewer batch of D246) was its first row, closed on D247.
 Everything here is `[inferred]` design unless tagged; the register's items are named by their numbers in
 `GALAXY_INPUTS.md`, the viewer tasks by `VIEWER_TASKS.md`'s rows.
 

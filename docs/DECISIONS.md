@@ -15832,3 +15832,25 @@ is asked beside the sample.
 phases, the tests gating a batch and not an item; its rulings in its §6, for adoption. Board rows at adoption.
 
 **The register.** #208 discharged: 134 open = 11 permanent + 123 carried, 58 discharged. No number moved.
+
+
+### D248. BUILD_V adopted — everything that remains, batched so the work runs ahead of the suites (the owner's word of 2026-11-02, at S82)
+
+**The owner, in chat, on 2026-11-02**, during S82: "adopt the plan". The plan is `docs/BUILD_V.md` as drafted at S81's
+open (8818717, D247) on the owner's earlier word ("redesign the plan for the remaining work to try to get as much done
+as possible"; "there's ample usage remaining for the next two days"): thirteen sessions in five phases — V-1 to V-4 the
+viewer's rows 81–84 (S81 done, S82 running), R the register pass at row 85, M1–M3 the model's three batches at rows
+86–92 with the pin lifted once per batch and the local full suite asked of the owner once per batch (D246), A Audit VI
+at row 93, and the deploy (T19, then the deployed probe) the owner's whenever the subscription's cost suits. Its three
+rules of order (§1), its gates (§5: every session on the fast gates, the suites gating a batch and not an item) and
+its definition of done (§7) stand as written.
+
+**Its §6, the six rulings.** Ruling 1 (adopt the plan and its order) is taken by this word. Rulings 2–6 — T17's
+structure (keep the tabs, port the mockup's components), #189 (retire the reference client's generate to a route
+demonstration), the pin lifted per batch, Audit VI at the end, the deploy whenever — stand as recommendations until
+the owner takes them, and no row that needs one is started before: S84 (T17) needs ruling 2, S86 (M1) needs ruling 4.
+
+**The board.** `GALAXY_PLAN.md` gains §5h, the fifth build, as §5g recorded the fourth: the plan's rows live in
+`BUILD_V.md` and no ☑ row is added for a session (the owner's ruling of 2026-11-02 at S81's open: no board rows for
+the debt sessions; the tag rows in `MANUAL_TODO.md` remain each session's record, rule C2e). `BUILD_V.md`'s status
+line reads adopted. This decision is the adoption's record; S82's own record is D249.
