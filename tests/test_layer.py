@@ -879,6 +879,10 @@ def test_i1_the_layer_off_run_is_reproducible_and_its_determinism_is_a_spec(prod
 # texture seed) and a non-default seed pair on the Milky Way, each layer on and off on the SMALL grid, and a
 # `texture_seed` reroll of the production run (two realisations, both layer on: BUILD_III 1c rule 1).
 OTHER_SEEDS = {"systems_seed": 3, "texture_seed": 777}
+# S86 (BUILD_V M1, debt #198): the saturated galaxy - pattern seed 28, the suite's most saturated barred galaxy
+# (tests/test_bar.py reads its cut: 84 of 400 rings at production, the smallest s 0.643) - so the walk passes through
+# the saturation cut acting: 10 of the SMALL grid's 48 rings, s down to 0.6436.
+SATURATED_SEEDS = {"pattern_seed": 28, "texture_seed": 0}
 REROLLED_TEXTURE = 987654321
 # The columns of a placed catalogue that name another row, not a property of the object: compared by what they name.
 # `cloud_cluster_index` is its cluster's index among its *cell's* clusters (clouds.cluster_indices), -1 for none - a
@@ -898,6 +902,7 @@ def variants(prod, runs):
     return {
         "ngc_4414 SMALL": (run(m, ngc, SMALL, layer=True), run(m, ngc, SMALL, layer=False)),
         "milky_way SMALL seeds 3/777": (run(m, OTHER_SEEDS, SMALL, layer=True), run(m, OTHER_SEEDS, SMALL, layer=False)),
+        "milky_way SMALL saturated": (run(m, SATURATED_SEEDS, SMALL, layer=True), run(m, SATURATED_SEEDS, SMALL, layer=False)),
         "milky_way texture reroll": (runs[DEFAULT_MODEL, True], run(m, {"texture_seed": REROLLED_TEXTURE}, layer=True)),
     }
 
@@ -1052,14 +1057,21 @@ def test_i1_every_placed_object_keeps_its_columns_at_another_template_seed_and_t
     hold_objects(*variants[case], prod[0].get(DEFAULT_MODEL))
 
 
-@pytest.mark.parametrize("case", ["ngc_4414 SMALL", "milky_way SMALL seeds 3/777"])
+@pytest.mark.parametrize("case", ["ngc_4414 SMALL", "milky_way SMALL seeds 3/777", "milky_way SMALL saturated"])
 def test_i1_the_walk_holds_at_another_template_and_seed(variants, case):
     """S70 (D234, Audit V F-3-2): I1's walk over every declared field at the second template and a second seed pair
     (it ran at the Milky Way's default seeds alone until S70). The bar's lanes are neutral in a galaxy with no bar,
     and the pieces' cut may or may not fire. The saturation cut (``arm_saturation``) fires on 0 of 48 rings at both
     SMALL runs and nowhere at production, so the walk does not exercise it (measured by the independent reviewer at
-    S70; the lead records it as a debt)."""
+    S70; the lead records it as a debt). **S86 (BUILD_V M1, #198 discharged): a third case, pattern seed 28, where
+    the cut acts on 10 of the 48 rings** (s down to 0.6436, the same in both runs: the law is the layer's neither way),
+    so the walk now passes through the cut acting; ``tests/test_bar.py`` reads the cut's effect on that galaxy at
+    production (the amplitudes and the body's depth summing to 1 on every one of its 84 saturated rings)."""
     on, off = variants[case]
+    if case == "milky_way SMALL saturated":
+        s_on, s_off = (np.asarray(r.fields["arm_saturation"], dtype=float) for r in (on, off))
+        assert int((s_on < 1.0).sum()) == 10 and float(s_on.min()) == pytest.approx(0.6436, abs=2e-4)
+        assert np.array_equal(s_on, s_off)
     unbarred = not np.isfinite(float(on.fields["bar_half_length"]))
     neutral = {"arm_piece_saturation"} | ({"star_formation_gas_contrast"} if unbarred else set())
     # The flocculent galaxy lays no gas spur at SMALL (its chains are short: measured 0 rows, layer on).
@@ -1068,7 +1080,7 @@ def test_i1_the_walk_holds_at_another_template_and_seed(variants, case):
     assert moved == set() and rounded <= set(RING_FIRST_STATISTICS)
 
 
-@pytest.mark.parametrize("case", ["ngc_4414 SMALL", "milky_way SMALL seeds 3/777"])
+@pytest.mark.parametrize("case", ["ngc_4414 SMALL", "milky_way SMALL seeds 3/777", "milky_way SMALL saturated"])  # S86 (#198): the saturated case
 def test_i4_a_composing_stage_s_other_outputs_are_the_same_on_and_off(variants, prod, case):
     """S70 (D234, Audit V F-3-6): publishing one composed field lends a stage the right to read the layer for all it
     requires, so its non-composed outputs - `gas_pattern`'s scalars and radial fields, the composing stages' laws - could

@@ -711,11 +711,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
-| **discharged** at S86 | **139, 142** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip) | 2 |
+| **discharged** at S86 | **139, 142, 198** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip; the saturation cut reached by an admissible galaxy, pattern seed 28: its effect read in tests/test_bar.py since S58, I1's walk and I4 through it since S86) | 3 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 141, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 90 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 141, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 209, 210, 211 | 89 |
 
-So the board's **123 open** is 33 permanent and 90 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **122 open** is 33 permanent and 89 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4841,12 +4841,22 @@ never been judged in twenty-three sessions.
    inversion on the ring's own interval for both draws, in a session of its own — it moves the whole catalogue, every
    frame and the catalogue's pins across the suite (D60's per-region determinism re-pinned with the reason).
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
-198. **The arm saturation cut is never exercised** (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
+198. ~~**The arm saturation cut is never exercised**~~ (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
    on 0 of 48 rings at both SMALL runs and on no ring at the production grid for either template, so the layer-off walk
    and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes
    it: a test that drives one ring past saturation on a synthetic pattern and reads the cut's effect, or — if no
    admissible input reaches it — the cut retired as dead (S41's rule) with the reason.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the saturation cut is the arm pattern's: a test that drives one ring past it, or the cut retired as dead, in the batch.
+   **DISCHARGED at S86 (M1, D254):** an admissible input reaches the cut, so it is not dead, and the walk now passes
+   through it acting. The Milky Way's inputs at pattern seed 28 — the suite's most saturated barred galaxy, a drawn arm
+   amplitude of 0.786 — saturate 84 of the production grid's 400 rings (s down to 0.6433 at 7.91 kpc) and 10 of the
+   SMALL grid's 48 (0.6436). Its effect was read since S58 on that galaxy (`tests/test_bar.py::
+   test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy`: on every saturated ring the published
+   amplitudes and the body's depth sum to 1 to 1e-15, on every other ring to less, and the composed field is
+   non-negative with nothing floored) — an admissible galaxy in place of the closer's synthetic pattern; what the
+   reviewer found unexercised was the walk. S86 adds that galaxy as a third case of I1's walk and of I4
+   (`tests/test_layer.py`, `SATURATED_SEEDS`; the case asserts the 10 rings and that s is the same bits layer on and
+   off): every declared field held on and off with the cut acting, green.
 199. ~~**A windowed render carries the whole galaxy's layer tables in its header**~~ (S72, D235; the bundle probe).
    **DISCHARGED at S73 (D236).** The three tables are published once per galaxy by `/api/layer` (model, template,
    layer; the same v7 functions, the 18 entries byte-identical to what the render's header carried, the 21 render
