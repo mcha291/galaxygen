@@ -114,11 +114,12 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
   const place = { ...window, level };
   const key = JSON.stringify([place, query]);
   // Keyed on the window the view looks at, mounted as a zoom crosses into the regime: the first key settles too (S78,
-  // useLoad's firstAtOnce).
-  const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal), SETTLE_MS, undefined, false).value ?? null;
-  const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal), SETTLE_MS, undefined, false).value ?? null;
+  // useLoad's firstAtOnce). The camera's loads: moved during a swap, they hold none (S82, #187; useLoad's `view`).
+  const held = { view: JSON.stringify(place) };
+  const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal), SETTLE_MS, undefined, false, held).value ?? null;
+  const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal), SETTLE_MS, undefined, false, held).value ?? null;
   const renderKey = JSON.stringify([filterSet, whiteKelvin, place, query]);
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, { ...query, ...place }, signal), SETTLE_MS, undefined, false).value ?? null;
+  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, { ...query, ...place }, signal), SETTLE_MS, undefined, false, held).value ?? null;
 
   const built = useMemo(() => {
     if (!clouds || !clusters || !remnants || !rendered) return null;

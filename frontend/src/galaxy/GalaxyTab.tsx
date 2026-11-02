@@ -320,13 +320,16 @@ export function GalaxyTab({
   }, [sample, area?.r_min, area?.r_max, area?.phi_min, area?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
   const regionStars = area ? regionSampleSize(STAR_SAMPLE, inWindow, REGION_TARGET_STARS, REGION_MAX_STARS) : 0;
   const regionKey = area ? JSON.stringify([area, regionStars, query]) : null;
-  // Keyed on the view (a zoom mounts it mid-drag): its first key settles too (S78, useLoad's firstAtOnce).
-  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal), SETTLE_MS, undefined, false);
+  // Keyed on the view (a zoom mounts it mid-drag): its first key settles too (S78, useLoad's firstAtOnce). The camera's
+  // load: moved during a swap, it holds none (S82, #187; useLoad's `view`).
+  const areaView = area ? JSON.stringify(area) : null;
+  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal), SETTLE_MS, undefined, false, { view: areaView });
   const detail = region.value && regionKey ? region.value : null;
   // The region's clusters (V3's volume, V4's points, S41): loaded once at the level the view asks for.
   const level = area && view ? levelFor(view.across) : 0;
   const clustersKey = area ? JSON.stringify([area, level, query]) : null;
-  const regionClusters = useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false).value ?? null;
+  const regionClusters =
+    useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
   const shownClusters = area && regionClusters ? regionClusters : null;
   const clusterPositions = useMemo(() => {
     if (!shownClusters) return null;
@@ -357,8 +360,15 @@ export function GalaxyTab({
   const seen = mode === "stars" && view ? footprint(view.camera.viewProjection, rMax) : null;
   const pointsOn = mode === "stars" && tuning.compPoints;
   const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
-  const brightTable = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal)).value ?? null;
+  // S82 (#187): the counts, the tiles and the field's remainder follow the table's answer. Inside a swap they read it as
+  // soon as it is held (`next`), and wait on the swap while it has not come (`settling`, their `after`), so the swap
+  // publishes once with them in. The table itself is never drawn; outside a swap `next` is its value.
+  const tableLoad = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal));
+  const brightTable = tableLoad.next ?? null;
   const tileLevel = mode === "stars" && view ? levelFor(view.across) : 0;
+  // Where the camera's footprint stands, as the star-first loads read it: what moves them as the user moves (#187's
+  // `view` - the camera's loads hold no swap once it has moved).
+  const seenView = seen ? JSON.stringify([tileLevel, seen.r_min, seen.r_max, seen.phi_min, seen.phi_max]) : null;
   const tilesSeen = useMemo(
     () => (seen && brightTable ? cellsIn(seen, brightTable.layout, tileLevel) : null),
     [brightTable, tileLevel, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
@@ -388,10 +398,11 @@ export function GalaxyTab({
     BRIGHT_SETTLE_MS,
     countsInput,
     false, // the cells in view: the camera may be moving as the mode opens (S78)
+    { view: seenView, after: tileLevel > 0 && tableLoad.settling }, // below 4 kpc the cells follow the table's layout (#187)
   );
   // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
-  // in view has its row (B9: no pick over a cell not held).
-  const levelHeld = tileLevel > 0 && levelLoad.value ? countRows.at(countsGalaxy, tileLevel) : null;
+  // in view has its row (B9: no pick over a cell not held). Read as soon as a swap holds them (#187).
+  const levelHeld = tileLevel > 0 && levelLoad.next ? countRows.at(countsGalaxy, tileLevel) : null;
   const tileCounts: BrightTable | CellCounts | null =
     tileLevel === 0 ? brightTable : levelHeld && tilesSeen && covers(levelHeld, tilesSeen) ? levelHeld : null;
   // The budget below the stars handover (S65, the lead's ruling on the zoomed footprint): each level-k cell's count
@@ -449,8 +460,15 @@ export function GalaxyTab({
     BRIGHT_SETTLE_MS,
     tilesInput,
     false, // the tiles in view, likewise (S78)
+    // the threshold follows the table, and below 4 kpc the counts (#187); the view projection moves the pick there
+    { view: seenView === null ? null : JSON.stringify([seenView, viewProjection ?? null]), after: tableLoad.settling || levelLoad.settling },
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
+  // The threshold the field's remainder is asked at (#187): the tiles' newest answer, held by a swap or published, and
+  // whether the tiles still hold the swap - the march's render follows them. Outside a swap the drawn tiles' own.
+  const brightAsked = pointsOn && brightLoad.next ? brightLoad.next : null;
+  const lMinAsked = brightAsked ? brightAsked.header.threshold.l_min : null;
+  const lMinAfter = pointsOn && brightLoad.settling;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster
   // of the disc with its own light through the set, loaded once per set and query (about 13 000).
   // S64 (V6, R5): the same request serves the field mode's knots (each cluster's line_response beside its response).
@@ -689,7 +707,8 @@ export function GalaxyTab({
             stats={marchStats}
             layers={marchLayers}
             onDepth={setDustPaint}
-            lMin={lMin}
+            lMin={lMinAsked}
+            lMinAfter={lMinAfter}
             onDust={setFieldDust}
             onStarsLayer={setStarsLayer}
             onRingEdges={onRingEdges}
