@@ -74,18 +74,19 @@ PSF = {
     # the galaxy; HST's central obscuration and the four spikes its secondary's supports make are not drawn." - a
     # template with this instrument and a distance draws the physical PSF since (frontend/src/galaxy/hstPsf.ts). The
     # JSON's copy was set to this string by hand, without a fetch; the next run of this tool writes the same. The fix
-    # pass (F4) added the zoom's clamp to it, the JSON's copy again by hand (hstPsf.ts psfHalf states the numbers).
+    # pass (F4) added the zoom's clamp to it, the JSON's copy again by hand (hstPsf.ts psfHalf states the numbers);
+    # S82 (#178) the wings' pass in place of the clamp's returned light, both copies by hand again.
     "about": ("The diffraction pattern of a circular aperture, (2 J1(v)/v)^2: the shape of an unresolved point through a "
               "telescope, drawn per channel at a radius proportional to the channel's pivot wavelength (lambda/D). Where "
               "a template carries this instrument with a distance (NGC 4414: WFC3/UVIS at 17.7 Mpc), a point is drawn at "
               "its physical size instead: HST's obscured Airy pattern (2.4 m, linear obscuration 0.33) at each channel's "
               "pivot, its angle turned into pc by the distance and convolved with the 0.04 arcsec pixel as a box, each "
               "screen pixel taking its share of the point's light; a switch draws the full pupil's image instead, its four "
-              "spikes and the mirror's pads, the same light. Close in, the box is clamped: at 0.488 pc a screen pixel "
-              "(NGC 4414's zoom stand) the table's half-width is 314 px and the box 60, the light outside it returned "
-              "inside by the box's share (0.958 of the red Airy, 0.940 of the red spikes), so the core is drawn 4.4 to "
-              "6.4 % brighter in red and the spikes end at the box's square edge. Without a distance its scale on "
-              "screen is a display choice [inferred] (S67, D227)."),
+              "spikes and the mirror's pads, the same light. Close in, the box is clamped and the light past it drawn "
+              "by a second, coarser pass: at 0.488 pc a screen pixel (NGC 4414's zoom stand) the table's half-width is "
+              "314 px and the box 60; the light past the box (0.042 of the red Airy, 0.060 of the red spikes) is drawn "
+              "where it falls in blocks of 8 pixels, each block's light spread evenly over it, so none is returned to "
+              "the box (S82). Without a distance its scale on screen is a display choice [inferred] (S67, D227)."),
 }
 
 

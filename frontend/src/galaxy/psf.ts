@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { CanvasTexture, DataTexture, FloatType, LinearFilter, NearestFilter, RGBAFormat, SRGBColorSpace, type Texture } from "three";
 
 import type { FilterSet } from "./filters";
-import { type Optics, imageDensity, psfTable, pupilImage } from "./hstPsf";
+import type { Optics, PsfTable } from "./hstPsf";
+import { askPsfTable } from "./psfTableClient";
+import type { PsfRequest } from "./psfTableJob";
 import { psfProfile } from "./sprite";
 
 // The default sprite's profile and its mean live in sprite.ts (no three.js there); re-exported here for their callers.
@@ -156,38 +159,72 @@ export interface PhysicalPsf {
   cellPc: number;
 }
 
-const physicalCache = new Map<string, PhysicalPsf>();
-const imageCache = new Map<string, Float64Array>();
+/** A table kept: the texture and the optics it was built for (the key's middle part). */
+interface Kept {
+  psf: PhysicalPsf;
+  optics: string;
+}
 
-/**
- * The table for a set's pivots under a template's optics, the obscured Airy (spikes off) or the pupil's transform with
- * its vanes and pads (on): built once per set, optics and switch, at load (the transform about 1 s, a table about
- * 0.6 s, on the main thread). Null where the optics are not all read (R2: the display sprite instead).
- */
-export function physicalPsf(set: FilterSet, optics: Optics | null, spikes: boolean): PhysicalPsf | null {
+const physicalCache = new Map<string, Kept>();
+
+/** What a set, the optics and the switch ask for: the table's key, its optics' key and the job, or null (R2: no optics). */
+export function physicalAsk(set: FilterSet, optics: Optics | null, spikes: boolean): { key: string; optics: string; request: PsfRequest } | null {
   if (!optics || !set.sources?.length) return null;
   const pivots = set.sources.map((s) => s.pivot);
   const opticsKey = JSON.stringify(optics);
-  const key = `${pivots.join(",")}|${opticsKey}|${spikes}`;
-  let psf = physicalCache.get(key);
-  if (!psf) {
-    let density;
-    if (spikes) {
-      let image = imageCache.get(opticsKey);
-      if (!image) {
-        image = pupilImage(optics);
-        imageCache.set(opticsKey, image);
-      }
-      density = imageDensity(image);
-    }
-    const table = psfTable(optics, { pivots, density });
-    const nodes = table.cells + 1;
-    const texture = new DataTexture(table.corners, nodes, nodes, RGBAFormat, FloatType);
-    texture.minFilter = NearestFilter;
-    texture.magFilter = NearestFilter;
-    texture.needsUpdate = true;
-    psf = { texture, cells: table.cells, cellPc: table.cellPc };
-    physicalCache.set(key, psf);
+  return { key: `${pivots.join(",")}|${opticsKey}|${spikes}`, optics: opticsKey, request: { optics, pivots, spikes } };
+}
+
+/**
+ * Keeps an arrived table as its texture (S82, #178 (ii)), and disposes every kept texture of other optics: the optics
+ * changed, and their tables are not drawn again unless asked again.
+ */
+export function adoptPhysical(ask: { key: string; optics: string }, table: PsfTable): PhysicalPsf {
+  const kept = physicalCache.get(ask.key);
+  if (kept) return kept.psf;
+  for (const [key, other] of physicalCache) {
+    if (other.optics === ask.optics) continue;
+    other.psf.texture.dispose();
+    physicalCache.delete(key);
   }
+  const nodes = table.cells + 1;
+  const texture = new DataTexture(table.corners, nodes, nodes, RGBAFormat, FloatType);
+  texture.minFilter = NearestFilter;
+  texture.magFilter = NearestFilter;
+  texture.needsUpdate = true;
+  const psf = { texture, cells: table.cells, cellPc: table.cellPc };
+  physicalCache.set(ask.key, { psf, optics: ask.optics });
   return psf;
+}
+
+/** The kept table under a key, if it has arrived. */
+export function keptPhysical(key: string): PhysicalPsf | null {
+  return physicalCache.get(key)?.psf ?? null;
+}
+
+/**
+ * The table for a set's pivots under a template's optics, the obscured Airy (spikes off) or the pupil's transform with
+ * its vanes and pads (on), as a hook (S82, #178 (ii)): built once per set, optics and switch in the PSF table worker
+ * (psfTableClient.ts; the transform about 1 s and a table about 0.6 s, off the main thread since S82), its pupil image
+ * dropped once the table is made. Until a new table arrives the last one drawn stays drawn (S81's mesh rule), none before
+ * the first. Null where the optics are not all read (R2: the display sprite instead).
+ */
+export function usePhysicalPsf(set: FilterSet, optics: Optics | null, spikes: boolean): PhysicalPsf | null {
+  const ask = physicalAsk(set, optics, spikes);
+  const key = ask?.key ?? null;
+  const [arrived, setArrived] = useState<PhysicalPsf | null>(null);
+  useEffect(() => {
+    if (!ask || physicalCache.has(ask.key)) return;
+    let live = true;
+    void askPsfTable(ask.key, ask.request).then((a) => {
+      const psf = adoptPhysical(ask, a.table);
+      if (live) setArrived(psf);
+    });
+    return () => {
+      live = false;
+    };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- the key names everything the ask holds
+  if (!key) return null;
+  // The last drawn, while it is still kept (a table of other optics is disposed when the new optics' arrives).
+  return keptPhysical(key) ?? ([...physicalCache.values()].some((k) => k.psf === arrived) ? arrived : null);
 }

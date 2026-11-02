@@ -19,6 +19,8 @@
 // form) - so a rectangle's light is four corners, and bilinear interpolation of C between nodes is exact for the
 // table's cell-constant density.
 
+import { PROFILE_MAX_HALF } from "./plummer";
+
 /** Radians per arcsecond. */
 export const ARCSEC = Math.PI / (180 * 3600);
 /** pc per Mpc. */
@@ -439,12 +441,12 @@ export function psfRect(t: Pick<PsfTable, "cells" | "corners">, lo: [number, num
 
 /**
  * The box's half-side, screen pixels, at `sidePc` pc a pixel: the table's half-width, at most PROFILE_MAX_HALF (plummer.ts
- * profileBox clamps). The clamp, disclosed (the fix pass, F4; not changed): at NGC 4414's zoom stand, 0.488 pc a pixel,
- * the table's half-width is 314 px (768 cells of 0.399 pc), drawn in a box of 60 px each side; psfWeights divides by the
- * box's share, so the light outside it (the box holds 0.958 of the red Airy, 0.940 of the red spikes) is returned inside
- * it - the core drawn 4.4 % (Airy) to 6.4 % (spikes) brighter in red, less in the bluer channels (0.971 / 0.976 of the
- * Airy, 0.952 / 0.958 of the spikes) - and the spikes end at the box's square edge. The point's light is kept; its shape
- * past 60 px is not drawn. At the template's camera (29.3 pc a pixel) the half-width is 6 px and nothing is clamped.
+ * profileBox clamps). At NGC 4414's zoom stand, 0.488 pc a pixel, the table's half-width is 314 px (768 cells of 0.399
+ * pc), drawn in a box of 60 px each side; the box holds 0.958 of the red Airy, 0.940 of the red spikes (0.971 / 0.976 of
+ * the Airy, 0.952 / 0.958 of the spikes in the bluer channels). Until S82 psfWeights divided by that share, returning the
+ * light outside the box inside it (the core 4.4 to 6.4 % bright in red, the spikes ending at the box's square edge; #178).
+ * Since S82 a clamped point's light past the box is drawn by the wings' pass where it falls (psfWingWeights), nothing
+ * returned. At the template's camera (29.3 pc a pixel) the half-width is 6 px and nothing is clamped.
  */
 export function psfHalf(t: Pick<PsfTable, "cells" | "cellPc">, sidePc: number): number {
   return (0.5 * t.cells * t.cellPc) / sidePc;
@@ -474,4 +476,73 @@ export function psfWeights(
     }
   }
   return { weights, norm: [1 / share[0], 1 / share[1], 1 / share[2]], share };
+}
+
+/**
+ * The wings' block, screen pixels a side (S82, #178): the grain of the second, coarser pass that draws the light past the
+ * box where the box is clamped. A sampling bound, fixed, not a display choice: at NGC 4414's zoom stand (0.488 pc a
+ * pixel) a block is 3.9 pc, 0.66 lambda/D in F814W and 1.2 in F438W, so past 5 lambda/D the rings are averaged within a
+ * block and a spike's light is spread across a block's width - placed where it falls to a block, not returned.
+ */
+export const WING_BLOCK = 8;
+/** The wings' box's largest half-side, blocks: the coarse sprite's bound, as PROFILE_MAX_HALF is the box's (480 px). */
+export const WING_MAX_HALF = PROFILE_MAX_HALF;
+
+/** Whether the box is clamped at `sidePc` pc a pixel, so the wings' pass draws the light past it (FluxPoints mode 4). */
+export function psfClamped(t: Pick<PsfTable, "cells" | "cellPc">, sidePc: number): boolean {
+  return Math.ceil(psfHalf(t, sidePc)) > PROFILE_MAX_HALF;
+}
+
+/**
+ * The wings' box round a point at (cx, cy) screen pixels, in blocks of `block` pixels aligned to the frame (block q covers
+ * pixels [q block, (q + 1) block)): the table's half-width in blocks and one more, so it covers the whole table wherever
+ * the point sits in its block, at most WING_MAX_HALF. FluxPoints' wingBox, line for line.
+ */
+export function wingBox(t: Pick<PsfTable, "cells" | "cellPc">, cx: number, cy: number, sidePc: number, block = WING_BLOCK): { x0: number; y0: number; side: number; block: number } {
+  const half = Math.max(1, Math.min(WING_MAX_HALF, Math.ceil(psfHalf(t, sidePc) / block) + 1));
+  return { x0: Math.floor(cx / block) - half, y0: Math.floor(cy / block) - half, side: 2 * half + 1, block };
+}
+
+/**
+ * A clamped point's light in two passes (S82, #178; FluxPoints modes 3 and 4): the box's pixels as psfWeights draws them
+ * and each block of the wings' box its light past the box, the block's light less its part inside the box (spread
+ * evenly over its pixels by the composite), every share divided by the wings' box's light - one wherever that box covers
+ * the table (to its float32 corners' rounding), so nothing is returned: the light past the box is drawn where it falls.
+ * Past WING_MAX_HALF blocks (closer than about 0.33 pc a pixel) the light past the wings' box is returned by the same
+ * division, `share` saying how much. `box` is plummer.ts profileBox(cx, cy, psfHalf(t, sidePc)), `wing` wingBox's.
+ */
+export function psfWingWeights(
+  t: Pick<PsfTable, "cells" | "corners" | "cellPc">,
+  cx: number,
+  cy: number,
+  sidePc: number,
+  box: { x0: number; y0: number; side: number },
+  wing: { x0: number; y0: number; side: number; block: number },
+): { weights: Float64Array[]; wings: Float64Array[]; share: [number, number, number] } {
+  const scale = sidePc / t.cellPc; // cells per screen pixel
+  const b = wing.block;
+  const rect = (x0: number, y0: number, x1: number, y1: number) => psfRect(t, [(x0 - cx) * scale, (y0 - cy) * scale], [(x1 - cx) * scale, (y1 - cy) * scale]);
+  const share = rect(wing.x0 * b, wing.y0 * b, (wing.x0 + wing.side) * b, (wing.y0 + wing.side) * b);
+  const weights = [0, 1, 2].map(() => new Float64Array(box.side * box.side));
+  for (let j = 0; j < box.side; j += 1) {
+    for (let i = 0; i < box.side; i += 1) {
+      const x = box.x0 + i;
+      const y = box.y0 + j;
+      const w = rect(x, y, x + 1, y + 1);
+      for (let k = 0; k < 3; k += 1) weights[k][j * box.side + i] = w[k] / share[k];
+    }
+  }
+  const wings = [0, 1, 2].map(() => new Float64Array(wing.side * wing.side));
+  for (let j = 0; j < wing.side; j += 1) {
+    for (let i = 0; i < wing.side; i += 1) {
+      const lo = [(wing.x0 + i) * b, (wing.y0 + j) * b];
+      const hi = [lo[0] + b, lo[1] + b];
+      const a = [Math.max(lo[0], box.x0), Math.max(lo[1], box.y0)];
+      const c = [Math.min(hi[0], box.x0 + box.side), Math.min(hi[1], box.y0 + box.side)];
+      const inner = a[0] < c[0] && a[1] < c[1] ? rect(a[0], a[1], c[0], c[1]) : [0, 0, 0];
+      const whole = rect(lo[0], lo[1], hi[0], hi[1]);
+      for (let k = 0; k < 3; k += 1) wings[k][j * wing.side + i] = (whole[k] - inner[k]) / share[k];
+    }
+  }
+  return { weights, wings, share };
 }

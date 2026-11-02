@@ -1,8 +1,31 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
-import { AdditiveBlending, BufferAttribute, BufferGeometry, type PerspectiveCamera, Points, ShaderMaterial, type Texture, Vector2, Vector3 } from "three";
+import {
+  AddEquation,
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
+  type Camera,
+  CustomBlending,
+  FloatType,
+  HalfFloatType,
+  Mesh,
+  NearestFilter,
+  OneFactor,
+  type PerspectiveCamera,
+  PlaneGeometry,
+  Points,
+  Scene,
+  ShaderMaterial,
+  type Texture,
+  Vector2,
+  Vector3,
+  WebGLRenderTarget,
+  ZeroFactor,
+} from "three";
 
 import { DUST_SEGMENT_STEPS } from "./flux";
+import { WING_BLOCK, WING_MAX_HALF, psfClamped } from "./hstPsf";
 import { DISC_LOOP_HALF, PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF } from "./plummer";
 import { type PhysicalPsf, type SpritePsf, psfMean, psfTexture } from "./psf";
 import { RING_ROWS } from "./regimes";
@@ -107,6 +130,26 @@ const VERTEX = /* glsl */ `
   uniform float psfCellPc;
   varying vec3 vNorm3;
   ${PSF_GLSL}
+  // The wings past a clamped box (S82, #178; hstPsf.ts psfWingWeights): wingsOn while any point may be clamped, the wings'
+  // pass drawing (wingPass) into the coarse target of wingPx blocks of wingBlock pixels; vWing the wings' box in blocks.
+  uniform float wingsOn;
+  uniform float wingPass;
+  uniform float wingBlock;
+  uniform vec2 wingPx;
+  varying vec4 vWing;
+  // hstPsf.ts wingBox, line for line: the table's half-width in blocks and one more, at most WING_MAX_HALF.
+  vec4 wingBox(vec2 c, float side) {
+    float hw = clamp(ceil(0.5 * psfCells * psfCellPc / side / wingBlock) + 1.0, 1.0, ${WING_MAX_HALF.toFixed(1)});
+    return vec4(floor(c / wingBlock) - hw, 2.0 * hw + 1.0, wingBlock);
+  }
+  // The wings' pass draws only a point the instrument's image draws whose box is clamped (hstPsf.ts psfClamped).
+  bool wingDrawn() {
+    float depth = -(modelViewMatrix * vec4(position, 1.0)).z;
+    if (depth <= 0.0 || physOn < 0.5) return false;
+    float side = 1000.0 * depth / pxPerUnit;
+    if (profile > 0.5 && extent > 0.0 && 2.0 * extent >= side) return false;
+    return ceil(0.5 * psfCells * psfCellPc / side) > ${PROFILE_MAX_HALF.toFixed(1)};
+  }
   // plummer.ts discNorm: the disc's coverage summed over its box, or its area past the loop's bound.
   float discNorm(vec2 c, vec2 k0, float n, float r) {
     if (n > ${2 * DISC_LOOP_HALF + 1}.0) return 3.14159265 * r * r;
@@ -185,6 +228,11 @@ const VERTEX = /* glsl */ `
   }
 
   void main() {
+    if (wingPass > 0.5 && !wingDrawn()) {
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+      gl_PointSize = 1.0;
+      return;
+    }
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     float depth = -mv.z;
     float dist = length(mv.xyz);
@@ -226,6 +274,17 @@ const VERTEX = /* glsl */ `
       vCentre = c;
       vNorm3 = 1.0 / psfRect((k0 - c) * scale, (k0 + n - c) * scale);
       gl_PointSize = n + 4.0;
+      // Clamped (S82, #178): the light past the box is the wings' to draw, so each channel is over the wings' box's light
+      // (one where it covers the table), not the box's; in the wings' pass the point is that box in the coarse target.
+      if (wingsOn > 0.5 && ceil(0.5 * psfCells * psfCellPc / side) > ${PROFILE_MAX_HALF.toFixed(1)}) {
+        vWing = wingBox(c, side);
+        vNorm3 = 1.0 / psfRect((vWing.xy * vWing.w - c) * scale, ((vWing.xy + vWing.z) * vWing.w - c) * scale);
+        if (wingPass > 0.5) {
+          vMode = 4.0;
+          gl_Position = vec4((vWing.xy + 0.5 * vWing.z) / wingPx * 2.0 - 1.0, 0.0, 1.0);
+          gl_PointSize = vWing.z + 2.0;
+        }
+      }
     } else if (mode > 0.5) {
       // The box of whole pixels round the point (plummer.ts profileBox), the profile's scale in pixels, and the light
       // over the box, by which each pixel's share is divided (plummer.ts profileWeights).
@@ -250,9 +309,23 @@ const FRAGMENT = /* glsl */ `
   varying vec2 vCentre;
   varying float vNorm;
   varying vec3 vNorm3;
+  varying vec4 vWing;
   ${PROFILE_GLSL}
   ${PSF_GLSL}
   void main() {
+    if (vMode > 3.5) {
+      // The wings (S82, #178; hstPsf.ts psfWingWeights): this block's light less its part inside the box, over the wings'
+      // box's light; the composite spreads it over the block's pixels.
+      vec2 q = floor(gl_FragCoord.xy);
+      if (q.x < vWing.x || q.y < vWing.y || q.x >= vWing.x + vWing.z || q.y >= vWing.y + vWing.z) discard;
+      vec2 lo = q * vWing.w;
+      vec2 hi = lo + vWing.w;
+      vec2 a = max(lo, vBox.xy);
+      vec2 b = min(hi, vBox.xy + vBox.z);
+      vec3 inner = a.x < b.x && a.y < b.y ? psfRect((a - vCentre) * vBox.w, (b - vCentre) * vBox.w) : vec3(0.0);
+      gl_FragColor = vec4(vLight * (psfRect((lo - vCentre) * vBox.w, (hi - vCentre) * vBox.w) - inner) * vNorm3, 1.0);
+      return;
+    }
     if (vMode < 0.5) {
       // The instrument's pattern per channel: the sprite's colour times its alpha (psf.ts), unit sum over the sprite.
       vec4 t = texture2D(sprite, gl_PointCoord);
@@ -276,6 +349,46 @@ const FRAGMENT = /* glsl */ `
 
 /** The points' two shader texts, as the material is built with them: exported for the pin (fluxPoints.test.ts). */
 export const FLUX_POINTS_SHADER = { vertex: VERTEX, fragment: FRAGMENT } as const;
+
+// The wings' composite (S82, #178): a quad over the frame, each pixel its block's light in the coarse target over the
+// block's pixels, added to the frame's light (its alpha left as it is) - each block's light spread evenly over it.
+const COMPOSITE_VERTEX = /* glsl */ `
+  void main() {
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`;
+const COMPOSITE_FRAGMENT = /* glsl */ `
+  uniform sampler2D wingTex;
+  uniform float wingBlock;
+  void main() {
+    ivec2 q = ivec2(floor(gl_FragCoord.xy / wingBlock));
+    gl_FragColor = vec4(texelFetch(wingTex, q, 0).rgb / (wingBlock * wingBlock), 0.0);
+  }
+`;
+
+/** The wings' composite's two shader texts: exported for the pin (fluxPoints.test.ts). */
+export const WING_COMPOSITE_SHADER = { vertex: COMPOSITE_VERTEX, fragment: COMPOSITE_FRAGMENT } as const;
+
+const SPHERE_CENTRE = new Vector3();
+const EYE = new Vector3();
+const FORWARD = new Vector3();
+
+/**
+ * Whether any point may be drawn clamped (S82, #178): the nearest the points' bounding sphere comes along the view, at
+ * that depth's pixel side (flux.ts pixelArea's), the table's box clamped (hstPsf.ts psfClamped) - a bound, so a frame
+ * whose points are all far (every capture but the zoom stands) draws no wings and adds nothing.
+ */
+export function mayClamp(points: Points, camera: Camera, pxPerUnit: number, physical: Pick<PhysicalPsf, "cells" | "cellPc">): boolean {
+  const sphere = points.geometry.boundingSphere;
+  if (!sphere || !Number.isFinite(sphere.radius)) return true;
+  const centre = SPHERE_CENTRE.copy(sphere.center).applyMatrix4(points.matrixWorld);
+  const radius = sphere.radius * points.matrixWorld.getMaxScaleOnAxis();
+  camera.getWorldPosition(EYE);
+  camera.getWorldDirection(FORWARD);
+  const nearest = FORWARD.dot(centre.sub(EYE)) - radius;
+  if (!(nearest > 0)) return true;
+  return psfClamped(physical, (1000 * nearest) / pxPerUnit);
+}
 
 interface Props {
   /** Scene positions, three per point (positions.ts toScene). */
@@ -341,6 +454,11 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         psfTable: { value: sprite },
         psfCells: { value: 1 },
         psfCellPc: { value: 1 },
+        // The wings (S82, #178): off until a frame may clamp a point.
+        wingsOn: { value: 0 },
+        wingPass: { value: 0 },
+        wingBlock: { value: WING_BLOCK },
+        wingPx: { value: new Vector2(1, 1) },
       },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
@@ -351,6 +469,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     });
     const object = new Points(geometry, material);
     object.frustumCulled = false;
+    geometry.computeBoundingSphere();
     return object;
   }, [positions, flux, extent]);
   useEffect(
@@ -359,6 +478,56 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
       (points.material as ShaderMaterial).dispose();
     },
     [points],
+  );
+  // The wings' pass (S82, #178): the same points and shader, the uniforms shared but wingPass, drawn into a coarse target
+  // of WING_BLOCK-pixel blocks before the frame, and the composite that adds the target to the frame.
+  const wings = useMemo(() => {
+    const main = points.material as ShaderMaterial;
+    const material = new ShaderMaterial({
+      uniforms: { ...main.uniforms, wingPass: { value: 1 } },
+      vertexShader: VERTEX,
+      fragmentShader: FRAGMENT,
+      transparent: true,
+      blending: AdditiveBlending,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const object = new Points(points.geometry, material);
+    object.frustumCulled = false;
+    object.matrixAutoUpdate = false;
+    const scene = new Scene();
+    scene.add(object);
+    const type = gl.extensions.has("EXT_float_blend") ? FloatType : HalfFloatType;
+    const target = new WebGLRenderTarget(1, 1, { type, depthBuffer: false, minFilter: NearestFilter, magFilter: NearestFilter });
+    const composite = new Mesh(
+      new PlaneGeometry(2, 2),
+      new ShaderMaterial({
+        uniforms: { wingTex: { value: target.texture }, wingBlock: { value: WING_BLOCK } },
+        vertexShader: COMPOSITE_VERTEX,
+        fragmentShader: COMPOSITE_FRAGMENT,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: CustomBlending,
+        blendEquation: AddEquation,
+        blendSrc: OneFactor,
+        blendDst: OneFactor,
+        blendSrcAlpha: ZeroFactor,
+        blendDstAlpha: OneFactor,
+      }),
+    );
+    composite.frustumCulled = false;
+    composite.visible = false;
+    return { material, object, scene, target, composite };
+  }, [points, gl]);
+  useEffect(
+    () => () => {
+      wings.material.dispose();
+      wings.target.dispose();
+      wings.composite.geometry.dispose();
+      (wings.composite.material as ShaderMaterial).dispose();
+    },
+    [wings],
   );
   useFrame(({ camera }) => {
     const uniforms = (points.material as ShaderMaterial).uniforms;
@@ -396,8 +565,30 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
       uniforms.cloudSlab.value = slab;
       (uniforms.cloudExt.value as Vector3).set(...(dust!.cloudExt ?? [0, 0, 0]));
     }
+    // The wings (S82, #178): only while a point may be clamped; else the frame is drawn as before, nothing added.
+    const drawWings = physical !== null && mayClamp(points, camera, uniforms.pxPerUnit.value as number, physical);
+    uniforms.wingsOn.value = drawWings ? 1 : 0;
+    wings.composite.visible = drawWings;
+    if (drawWings) {
+      const w = Math.ceil(buffer.x / WING_BLOCK);
+      const h = Math.ceil(buffer.y / WING_BLOCK);
+      if (wings.target.width !== w || wings.target.height !== h) wings.target.setSize(w, h);
+      (uniforms.wingPx.value as Vector2).set(w, h);
+      wings.object.matrix.copy(points.matrixWorld);
+      wings.object.matrixWorldNeedsUpdate = true;
+      const before = gl.getRenderTarget();
+      gl.setRenderTarget(wings.target);
+      gl.clear(true, false, false);
+      gl.render(wings.scene, camera);
+      gl.setRenderTarget(before);
+    }
   });
-  return <primitive object={points} />;
+  return (
+    <>
+      <primitive object={points} />
+      <primitive object={wings.composite} />
+    </>
+  );
 }
 
 const DEFAULT_MEAN: [number, number, number] = (() => {

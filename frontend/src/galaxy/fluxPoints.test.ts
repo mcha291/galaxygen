@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "./FieldVolume";
-import { FLUX_POINTS_SHADER } from "./FluxPoints";
+import { FLUX_POINTS_SHADER, WING_COMPOSITE_SHADER } from "./FluxPoints";
 import { SLAB_PIECES } from "./regimes";
 import regimesSource from "./regimes.ts?raw";
 
@@ -20,22 +20,55 @@ import regimesSource from "./regimes.ts?raw";
 // point multiplied by it; with those two taken back the vertex is S67's first text (8207, ca2da355...), as below.
 const S67_VERTEX_LENGTH = 8207;
 const S67_VERTEX_SHA256 = "ca2da355803635aa0cd5ff548b49a56afea4f61cfcf6a38ee6cd1fcf168f5864";
-const VERTEX_LENGTH = 8256;
-const VERTEX_SHA256 = "2ce20fe75c5fb22978aefef37b15d1fab62da8e3d063a53a82649f37e51710e6";
-const FRAGMENT_LENGTH = 2410;
-const FRAGMENT_SHA256 = "e8f58add7f895054ffb63159f5754d6d6f4ea6fdac6071e1d868ba5174cbd3da";
+// S82's change (#178): the wings past a clamped box - their uniforms, wingBox and wingDrawn, the wings' pass's early
+// way out, the clamped point's normaliser over the wings' box, and the fragment's mode 4. With those taken back the
+// texts are S67's second (8256, 2ce20fe7...; 2410, e8f58add...), as below.
+const S67_SECOND_VERTEX_LENGTH = 8256;
+const S67_SECOND_VERTEX_SHA256 = "2ce20fe75c5fb22978aefef37b15d1fab62da8e3d063a53a82649f37e51710e6";
+const S67_FRAGMENT_LENGTH = 2410;
+const S67_FRAGMENT_SHA256 = "e8f58add7f895054ffb63159f5754d6d6f4ea6fdac6071e1d868ba5174cbd3da";
+const VERTEX_LENGTH = 10172;
+const VERTEX_SHA256 = "0a58dd4c3d2d1938690df0ed9ad0befcaa735815997eeb9cb4d04498c5fa0f1d";
+const FRAGMENT_LENGTH = 3182;
+const FRAGMENT_SHA256 = "969f1611336ad9398acab1c7b1eac1bba1deb0ab1dbca78a4c72b10eeedf7cdf";
+// The wings' composite (S82): its own two texts.
+const COMPOSITE_VERTEX_SHA256 = "bac5b818df7ed479728d052e501a5fc324b83cae4cc6c2528517dcf4ac334193";
+const COMPOSITE_FRAGMENT_SHA256 = "a095aed65800cf7aee7b6e056c554dcbdf49f02376765af6f692b002ac1c6c3f";
+
+/** The texts with S82's additions taken back (#178): what S67 left. */
+const withoutWings = (vertex: string, fragment: string) => ({
+  vertex: vertex
+    .replace(/\r\n/g, "\n")
+    .replace(/ {2}\/\/ The wings past a clamped box \(S82[\s\S]*?(?= {2}\/\/ plummer\.ts discNorm)/, "")
+    .replace("    if (wingPass > 0.5 && !wingDrawn()) {\n      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);\n      gl_PointSize = 1.0;\n      return;\n    }\n", "")
+    .replace(/ {6}\/\/ Clamped \(S82[\s\S]*?(?= {4}\} else if \(mode > 0\.5\))/, ""),
+  fragment: fragment
+    .replace(/\r\n/g, "\n")
+    .replace("  varying vec4 vWing;\n", "")
+    .replace(/ {4}if \(vMode > 3\.5\) \{[\s\S]*?(?= {4}if \(vMode < 0\.5\))/, ""),
+});
 
 const sha256 = (text: string) => createHash("sha256").update(text.replace(/\r\n/g, "\n"), "utf-8").digest("hex");
 
 describe("the points' shader (FluxPoints, S64)", () => {
-  it("is the text S67 left, byte for byte", () => {
+  it("is the text S82 left, byte for byte, and S67's with the wings taken back", () => {
     expect(FLUX_POINTS_SHADER.vertex.length).toBe(VERTEX_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.vertex)).toBe(VERTEX_SHA256);
-    const before = FLUX_POINTS_SHADER.vertex.replace(/\r\n/g, "\n").replace("  uniform float dustDepthScale;\n", "").replace("return tau * dustDepthScale;", "return tau;");
-    expect(before.length).toBe(S67_VERTEX_LENGTH);
-    expect(sha256(before)).toBe(S67_VERTEX_SHA256);
     expect(FLUX_POINTS_SHADER.fragment.length).toBe(FRAGMENT_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.fragment)).toBe(FRAGMENT_SHA256);
+    const s67 = withoutWings(FLUX_POINTS_SHADER.vertex, FLUX_POINTS_SHADER.fragment);
+    expect(s67.vertex.length).toBe(S67_SECOND_VERTEX_LENGTH);
+    expect(sha256(s67.vertex)).toBe(S67_SECOND_VERTEX_SHA256);
+    expect(s67.fragment.length).toBe(S67_FRAGMENT_LENGTH);
+    expect(sha256(s67.fragment)).toBe(S67_FRAGMENT_SHA256);
+    const before = s67.vertex.replace("  uniform float dustDepthScale;\n", "").replace("return tau * dustDepthScale;", "return tau;");
+    expect(before.length).toBe(S67_VERTEX_LENGTH);
+    expect(sha256(before)).toBe(S67_VERTEX_SHA256);
+    expect(sha256(WING_COMPOSITE_SHADER.vertex)).toBe(COMPOSITE_VERTEX_SHA256);
+    expect(sha256(WING_COMPOSITE_SHADER.fragment)).toBe(COMPOSITE_FRAGMENT_SHA256);
+    // S82: the wings' box is hstPsf.ts wingBox's, and the clamp's test psfClamped's
+    expect(FLUX_POINTS_SHADER.vertex).toContain("vec4 wingBox(vec2 c, float side) {");
+    expect(FLUX_POINTS_SHADER.vertex).toContain("return ceil(0.5 * psfCells * psfCellPc / side) > 60.0;");
     // what the pin covers, named: the dust to each point, the slab's column in it, the two profiles
     expect(FLUX_POINTS_SHADER.vertex).toContain("vec3 dustTo(vec3 p) {");
     expect(FLUX_POINTS_SHADER.vertex).toContain("float slabColumn(float y0, float y1, float lo, float hi, float ds) {");

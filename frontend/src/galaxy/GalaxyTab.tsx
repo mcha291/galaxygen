@@ -38,7 +38,7 @@ import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { opticsOf } from "./hstPsf";
-import { instrumentOfSet, instrumentPsf, physicalPsf } from "./psf";
+import { instrumentOfSet, instrumentPsf, usePhysicalPsf } from "./psf";
 import { footprint } from "./frustum";
 import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
@@ -325,7 +325,9 @@ export function GalaxyTab({
     const own = ownSet ? instrumentOfSet(FILTER_SETS[ownSet]) : null;
     return own && own === instrumentOfSet(FILTER_SETS[filterSet]) ? opticsOf(template?.instrument) : null;
   }, [template, filterSet]);
-  const physical = useMemo(() => physicalPsf(FILTER_SETS[filterSet], optics, look.spikes), [optics, filterSet, look.spikes]);
+  // Built in the PSF table worker since S82 (#178 ii): the last table drawn until the new one arrives. The switch is the
+  // drawn template's during a landing's hold (`look`, #188's follow-up).
+  const physical = usePhysicalPsf(FILTER_SETS[filterSet], optics, look.spikes);
   const [brightestSlider, setBrightestSlider] = useState(500);
   const brightestN = brightestOf(brightestSlider);
   // A column some models lack ([α/Fe] is the advanced chemistry's) offers no chip where the
