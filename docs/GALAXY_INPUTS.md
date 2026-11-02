@@ -2995,6 +2995,33 @@ never been judged in twenty-three sessions.
    move) and pin the Milky Way template's measured bar, 5.0 kpc (BHG16), as A5 allows a template's measurement to
    replace the law — which makes the template no longer the bare defaults (A5's first sentence) and row 15 a
    restatement of the pin. Not built at S86; asked at S87's open. Still carried.
+   *S87 (M1):* **remedy (ii) built on the owner's ruling of 2026-11-03 (D255).** `BAR_LENGTH_RATIO` is retired; the
+   bar stage's half-length is Erwin 2019's law, log₁₀ a = `BAR_LENGTH_LOG_NORM` + `BAR_LENGTH_SLOPE` log₁₀ h = 0.04 +
+   0.76 log₁₀ h `[verified: Erwin 2019, MNRAS 489, 3553, Table 3; READING_BAR.md A1.2]`, h the λ_d scale length — **2.2698
+   kpc** on the default disc (h = 2.605). The Milky Way template pins its measured **5.0 kpc** (`bar_half_length`, a
+   numeric pin of 0.1–30 kpc read by the bar stage, `[verified: Wegg, Gerhard & Portail 2015, abstract;
+   READING_BAR.md A2]` and BHG16 through row 15), the device of `bar_present` and `pitch_angle`; an unbarred galaxy
+   has no length, pinned or not. **What moved** (layer off): on the default inputs the bar's corotation 5.48 → 2.39
+   kpc and pattern speed 45.5 → 88.0 km/s/kpc (one seed), the body's share of the checkpoint-1 disc 0.1015 → 0.0305,
+   and with the half-length everything that reads it (the footprint and its lanes, the gas inside the reach, the
+   pieces born at the bar's ends, the star-formation table there, the bar's angle and so the Sun's azimuth); on the
+   Milky Way template the bar shortens 5.2097 → 5.0 (corotation 5.26, pattern speed 47.25, share 0.0966) and the
+   Sun's azimuth moves 1.0954 → 0.9248 rad (the bar's angle is a closed form of its length). The radial history does not
+   read the bar (sfr, v_tan, h_z the same to the digit; no other row's verdict moves). **The acceptance table** is judged on the default inputs (`spec.run`),
+   which carry no pin, so it reads the law: **row 15 2.270 against 5.0 ± 0.2, out by 2.73**, and rows 16 and 17 follow
+   it out — the pattern speed's median 82.0 km/s/kpc (95 %: 69–102) against 34–52 and corotation's 2.65 kpc (1.90–3.34)
+   against 4.5–7.0 — three recorded misses under this number (`spec._MISSES`, since S87; 10 pass / 22 fail / 5 n-y-c,
+   was 12 / 20); on the template, 5.0 / 47.25 / 5.26, all three inside — row 15 a restatement of its pin, as S86 said.
+   *That row 15 passes on the pin holds only if the table judges the Milky Way template*: judging it on
+   `templates.resolve(MILKY_WAY)` instead of the bare defaults would be a change to `spec.run` and to rule A5's
+   "the template is the defaults", **put to the gate**, not made. Nothing is tuned back (B5, B10); the law has no
+   second parameter, and the Milky Way sits off it by a factor 2.2. **The template is no longer the bare defaults**
+   (A5's first sentence): every field downstream of the bar's length differs, layer off too, and
+   `tests/test_templates.py`'s gate now holds the template against the bare run with the same length pinned. **Still
+   carried**: the closer asked for the relation "read at the source's own definition", and the model's h is λ_d's,
+   not the source's 3.6 µm disc scale length (the S22 lesson on `disc_spin`); the referent is the one A1 allows at
+   checkpoint 1, and the row's misses stay this number's until a relation with the bar's own second dependence (disc
+   dominance, mass above Erwin 2018's 10^10.2 break) or the table's ruling moves them.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The

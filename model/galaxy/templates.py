@@ -570,15 +570,19 @@ MILKY_WAY = Template(
     about=(
         "The default galaxy: the registry's defaults, every one a measured value of the Milky Way or derived "
         "from one (rule A5). The template overrides no control, no seed and no event list, so it is the defaults "
-        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins three "
+        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins four "
         "measured facts of its structure: the Milky Way is barred, which the model derives too at these inputs, "
-        "so that pin changes no number; its bar stands 30 degrees from the line from the Sun to the centre, "
+        "so that pin changes no number; its bar's half-length is 5.0 kpc where the model's law of the disc's scale "
+        "length gives 2.27 - the Milky Way's bar is long for its disc - so since S87 (the owner's ruling of "
+        "2026-11-03, D255) every number downstream of the bar's length differs from the bare defaults', the "
+        "layer off too; its bar stands 30 degrees from the line from the Sun to the centre, "
         "the near end ahead of the Sun in the direction the disc turns, which places the Sun's azimuth and moves "
         "nothing else of the galaxy; and its mapped arms - the four major arms and the Local arm, as fitted to "
         "the masers' parallaxes over the third of the disc on the Sun's side - lie where they were measured, "
         "each continued past its measured range by drawn pieces, with the randomness layer's own arm pieces "
-        "filling the radii no measured arm crosses. With the layer off no arm is placed and the galaxy is the "
-        "bare default one, number for number. Seen face-on."
+        "filling the radii no measured arm crosses. With the layer off no arm is placed, and the galaxy is the "
+        "bare default one but for its bar's measured length and what reads it (until S87, number for number). "
+        "Seen face-on."
     ),
     model="azimuthal",
     camera=Camera(inclination_deg=0.0, azimuth_deg=270.0, radius_kpc=20.0, fov_deg=45.0),
@@ -638,6 +642,20 @@ MILKY_WAY = Template(
                 "[verified: docs/READING_ARM_SEGMENTS.md A4 items 5-6]. The Norma and Outer rows are one arm "
                 "in the source, fitted in two stretches with nothing measured between them: entered as two "
                 "chains [inferred]."
+            ),
+        ),
+        # S87 (#80; the owner's ruling of 2026-11-03, D255): the bar's measured half-length, in place of Erwin
+        # 2019's law, which gives 2.27 kpc on this disc - the Milky Way's bar is long for its disc. With it the
+        # template is no longer the bare defaults: every field downstream of the bar's length differs, layer off too.
+        Pin(
+            name="bar_half_length",
+            value=5.0,
+            source=(
+                "[verified: Wegg, Gerhard & Portail 2015, MNRAS 450, 4050 = arXiv:1504.01401, abstract, "
+                "https://arxiv.org/abs/1504.01401: the long bar's half-length 5.0 +/- 0.2 kpc] (docs/READING_BAR.md "
+                "A2, We15) [verified: GALAXY_INPUTS.md section 7 row 15, Bland-Hawthorn & Gerhard 2016 (BHG16): "
+                "5.0 +/- 0.2 kpc, acceptance row 15's target]; pinned on the owner's ruling of "
+                "2026-11-03 (D255) on debt #80 - Erwin 2019's law for the model, the Milky Way's measured length pinned"
             ),
         ),
     ),

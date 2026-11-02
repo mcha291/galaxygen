@@ -689,23 +689,55 @@ _MISSES: tuple[Miss, ...] = (
     Miss(
         row=15,
         debt=80,
-        since="S25",
+        since="S87",
         reason=(
-            "5.210 kpc against 5.0 +/- 0.2, out by 0.010 (4.883 and inside until S25). BUILD_II "
-            "Phase 1 moved the pattern ahead of star formation so that the arms can shape where "
-            "stars form (D174), and the bar stage then reads the one scale length that exists at "
-            "checkpoint 1 - the lambda_d one, 2.605 kpc - where it read the thin disc's fitted "
-            "stellar one before (2.441 kpc, a star-formation result 6% shorter). BAR_LENGTH_RATIO "
-            "= 2.0 is a recalled '1.5-2.5 R_d' that names no R_d, so it has no claim on either "
-            "number and is not retuned (rule B5, debt #80). The plan named disc_dominance as this "
-            "row's risk; it does not enter the length at all."
+            "2.270 kpc against 5.0 +/- 0.2, out by 2.73 from the target (2.53 from the window's floor). Since S87 "
+            "(the owner's ruling of 2026-11-03, D255, on debt #80) the half-length is Erwin 2019's law, log10 a = "
+            "0.04 + 0.76 log10 h, on the disc's lambda_d scale length (2.605 kpc, the only one checkpoint 1 holds): "
+            "the Milky Way's bar is long for its disc, as S26 read (Erwin 2005: 0.6-1.4 h by type). The table is "
+            "judged on the default inputs, which carry no pin; the Milky Way template pins the measured 5.0 kpc "
+            "(Wegg, Gerhard & Portail 2015) and reads 5.0 there, a restatement of its pin. Nothing is tuned back "
+            "(B5, B10). From S25 to S87: 5.210, out by 0.010, on BAR_LENGTH_RATIO = 2.0, a recalled '1.5-2.5 R_d' "
+            "fitted to this galaxy (4.883 and inside until S25, on the thin disc's fitted scale length)."
         ),
         prediction=(
-            "A sourced bar-length ratio quoted against a stated scale length, read at the source's "
-            "own definition (debt #80), either lands the row or moves the question to its target; "
-            "the constant is not moved to land it. What kills the debt's reading: a source giving "
-            "a_bar/R_d for the whole disc that puts the row outside 4.8-5.2 by more than the 0.01 "
-            "it misses now, in which case the miss is the ratio's and not the referent's."
+            "The law has no second parameter, and the Milky Way sits off it by a factor 2.2: a law with the "
+            "bar's own dependence (disc dominance, the galaxy's stellar mass above Erwin 2018's 10^10.2 break, "
+            "or the bulge) read from a source would move the row; the law's constants are not moved to land it. "
+            "What kills this reading: a bar-length relation for barred Sbc discs that puts a = 5 kpc at h = 2.6 "
+            "kpc inside its scatter, in which case the miss is the referent's (lambda_d against 3.6 um h), not "
+            "the law's."
+        ),
+    ),
+    Miss(
+        row=16,
+        debt=80,
+        since="S87",
+        reason=(
+            "median 82.0 km/s/kpc over the 41 seeds against 43 +/- 9 (34-52), the central 95 % 69-102: the bar's "
+            "pattern speed is the circular speed at corotation over the corotation radius, corotation drawn at "
+            "FAST_BAR_RATIO times the half-length, so a bar of Erwin 2019's 2.27 kpc turns about twice as fast as "
+            "one of 5.0 (the Milky Way template, pinned, reads 47.3). The row passed until S87 on the 5.2 kpc of "
+            "BAR_LENGTH_RATIO; it follows row 15 (debt #80, the owner's ruling of 2026-11-03, D255)."
+        ),
+        prediction=(
+            "It moves with row 15's half-length and with nothing else of #80: read on the template's pinned bar "
+            "it is inside. What kills this reading: the row staying out with a half-length inside 4.8-5.2."
+        ),
+    ),
+    Miss(
+        row=17,
+        debt=80,
+        since="S87",
+        reason=(
+            "median 2.65 kpc over the 41 seeds against 4.5-7.0, the central 95 % 1.90-3.34: corotation is drawn "
+            "at FAST_BAR_RATIO times the half-length, which is Erwin 2019's 2.27 kpc on the default inputs since "
+            "S87 (the Milky Way template, pinned at 5.0, reads 5.26). It passed until S87 on BAR_LENGTH_RATIO's "
+            "5.2 kpc; it follows row 15 (debt #80, the owner's ruling of 2026-11-03, D255)."
+        ),
+        prediction=(
+            "It moves with row 15's half-length: inside on the template's pinned bar. What kills this reading: "
+            "the row staying out with a half-length inside 4.8-5.2."
         ),
     ),
     Miss(

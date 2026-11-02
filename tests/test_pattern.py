@@ -31,9 +31,11 @@ def test_the_bar_scales_with_the_disc(model):
     o = out(model)
     # The lambda_d scale length since S25, when the pattern moved ahead of star formation (D174);
     # the thin disc's fitted stellar one, a star-formation result, until then.
-    assert o.fields["bar_half_length"] == pytest.approx(2.0 * o.fields["disc_scale_length_spin"])
-    # Row 15: 5.2097 since S25, out by 0.01 and a recorded miss (debt #80); 4.8828 and inside before.
-    assert o.fields["bar_half_length"] == pytest.approx(5.2097, abs=2e-3)
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was 2.0 times the scale length - Erwin 2019's law of it since S87, 10^0.04 h^0.76.
+    assert o.fields["bar_half_length"] == pytest.approx(10.0 ** 0.04 * o.fields["disc_scale_length_spin"] ** 0.76)
+    # Row 15: 2.2698 since S87, out by 2.73 and a recorded miss (debt #80; the template pins 5.0); 5.2097 from S25 to
+    # S87, out by 0.01; 4.8828 and inside before.
+    assert o.fields["bar_half_length"] == pytest.approx(2.2698, abs=2e-3)  # S87 (#80): was 5.2097 - the law
 
 
 def test_the_bar_length_is_reproducible_not_drawn(model):

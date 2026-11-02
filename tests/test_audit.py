@@ -349,15 +349,19 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
 
 def test_row_15_is_the_bar_constant_times_the_scale_length(model):
     f = run(model, only=("bar_half_length",)).fields
-    ratio = model.constants["BAR_LENGTH_RATIO"].value
-    # Since S25 the bar reads the lambda_d scale length (checkpoint 1), not the thin disc's fitted
-    # one (a star-formation result): 2.605 against 2.441, and the row reads 5.210 against 4.8-5.2,
-    # a recorded miss under debt #80 (D174). The check below is what took it out.
-    assert f["bar_half_length"] == pytest.approx(ratio * f["disc_scale_length_spin"], rel=1e-12)
-    assert ratio == 2.0 and not inside(15, f["bar_half_length"])
-    assert f["bar_half_length"] == pytest.approx(5.2097, abs=2e-3)
-    # A scale length outside 2.4-2.6 kpc takes row 15 out of its window: a check on R_d, not on the bar.
-    assert Q[15].lo / ratio == pytest.approx(2.4) and Q[15].hi / ratio == pytest.approx(2.6)
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `BAR_LENGTH_RATIO * disc_scale_length_spin` (2.0 x 2.605 = 5.210, out by 0.010 since S25). Erwin
+    # 2019's law of the scale length: log10 a = 0.04 + 0.76 log10 h, h the lambda_d one (checkpoint 1) - 2.270 kpc,
+    # row 15 out by 2.73 from its 5.0, recorded under #80; the Milky Way template pins the measured 5.0. The name
+    # keeps the record of the constant this test held from S22 to S87.
+    norm, slope = model.constants["BAR_LENGTH_LOG_NORM"].value, model.constants["BAR_LENGTH_SLOPE"].value
+    assert (norm, slope) == (0.04, 0.76) and "BAR_LENGTH_RATIO" not in model.constants
+    assert f["bar_half_length"] == pytest.approx(10.0 ** (norm + slope * math.log10(f["disc_scale_length_spin"])), rel=1e-12)
+    assert f["bar_half_length"] == pytest.approx(2.2698, abs=1e-4) and not inside(15, f["bar_half_length"])
+    # Until S87 (the ratio 2.0, 5.2097 out by 0.01) a scale length outside 2.4-2.6 kpc took row 15 out of its window -
+    # a check on R_d, not on the bar. On the law the window needs h of 7.0-7.8 kpc: the Milky Way's 5.0 is 1.92 of its
+    # discs' 2.6, which no h of a disc like it reaches (S87, #80) - a check on the law, not on R_d.
+    h_lo, h_hi = (10.0 ** ((math.log10(edge) - norm) / slope) for edge in (Q[15].lo, Q[15].hi))
+    assert (h_lo, h_hi) == pytest.approx((6.978, 7.753), abs=5e-3)
 
 
 # --- the register moved with the findings ----------------------------------------

@@ -64,10 +64,10 @@ REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 # Keyed "basic" deliberately (S46, D197): the tables are basic's and the azimuthal model aliases them below.
 VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS, spec.ROW_IONIZING_RATE, spec.ROW_HII_LF_SLOPE, spec.ROW_NII_HALPHA_GRADIENT}}  # S44: row 37  # S35: rows 34 and 35 (36 n-y-c)  # S34: rows 32 and 33  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 12, "fail": 20, "not-yet-computable": 5},  # S87 (#148): unchanged as a count - the clock moved row 2 out (1.8599, by 0.020, as S86 predicted) and row 6 in (345.09 pc, unpredicted)  # S44: row 37 fails, recorded (#117)  # S42: row 34 passes on the blind window the owner adopted (11/20 until S42)  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 10, "fail": 22, "not-yet-computable": 5},  # S87 (#80, the owner's ruling of 2026-11-03, D255): was 12 / 20 - Erwin 2019's law takes rows 16 and 17 out with row 15's half-length  # S87 (#148): unchanged as a count - the clock moved row 2 out (1.8599, by 0.020, as S86 predicted) and row 6 in (345.09 pc, unpredicted)  # S44: row 37 fails, recorded (#117)  # S42: row 34 passes on the blind window the owner adopted (11/20 until S42)  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "basic": {2, 3, 5, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33, 37},  # S87 (#148, the clock): 2 left its window, 6 entered it (355.7 -> 345.1 pc, on sigma_z)  # 37 since S44 (#117); 34 from S35 to S42; 32, 33 since S34
+    "basic": {2, 3, 5, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 32, 33, 37},  # S87 (#80, the owner's ruling of 2026-11-03, D255): 16 and 17 follow row 15's law  # S87 (#148, the clock): 2 left its window, 6 entered it (355.7 -> 345.1 pc, on sigma_z)  # 37 since S44 (#117); 34 from S35 to S42; 32, 33 since S34
 }
 # S25: row 15 is #80's (the bar reads the lambda_d scale length now that the pattern precedes
 # star formation). S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's
@@ -423,9 +423,10 @@ def test_rows_1_to_24_are_where_s27_left_them(judged):
     """The gate: S28 added light and moved nothing it did not publish (D176's numbers)."""
     for results in judged.values():
         v = {r.n: r.value for r in results}
-        assert v[15] == pytest.approx(5.20971, abs=5e-6)
-        assert v[16] == pytest.approx(41.1036, abs=5e-5)
-        assert v[17] == pytest.approx(6.08381, abs=5e-6)
+        # S87 (#80, the owner's ruling of 2026-11-03, D255): were 5.20971, 41.1036 and 6.08381 - the bar's length is Erwin 2019's law on the default inputs.
+        assert v[15] == pytest.approx(2.26984, abs=5e-6)
+        assert v[16] == pytest.approx(81.9702, abs=5e-5)
+        assert v[17] == pytest.approx(2.65068, abs=5e-6)
         assert v[3] == pytest.approx(251.0217, abs=5e-4)  # S87 (#148): was 251.026 - the clock
         assert v[21] == pytest.approx(0.2033, abs=5e-5)  # S87 (#148): was 0.2001 - the clock
 

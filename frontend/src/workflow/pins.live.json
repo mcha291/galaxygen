@@ -109,6 +109,13 @@
           ]
         },
         "source": "[verified: Reid et al. 2019, ApJ 885, 131 = arXiv:1910.03357, Table 2 and note, https://arxiv.org/pdf/1910.03357: the fitted arms' beta ranges, kinks and pitches, R0 = 8.15 kpc; all seven rows, two reads of the PDF text agree digit for digit] (docs/READING_ARM_SEGMENTS.md A1.3 and 'Milky Way pins') [verified: DECISIONS.md D219 item 8: the four major arms and the Local arm as chains of their fitted pieces over their measured beta ranges, the 3 kpc arm out, no chain tied to the bar, equal weights]. The source's uncertainties are not entered. Disputed, and recorded here beside the pin: four arms (this source) against two inner arms that bifurcate at 5.0-6.5 kpc plus outer segments (Xu et al. 2023), Scutum a separate arm (here) or part of Norma (Xu et al. 2023); the Sagittarius arm's pitch 1.0/17.1 deg about a kink (here), 6.9 deg (Reid et al. 2014) or 1.3 deg with Carina a separate arm of 21.4 deg (Xu et al. 2023); Perseus at beta = 40 deg at 8.87 kpc (here) against 9.08-9.29 kpc (the 2026 re-fit the reading calls Hy26); the Outer arm's pitch 3.0/9.4 deg (here), 13.8 (Reid et al. 2014) or 3.6 (Xu et al. 2023); the Sun's distance 8.15 kpc here against 7.92-8.34 elsewhere [verified: docs/READING_ARM_SEGMENTS.md A4 items 5-6]. The Norma and Outer rows are one arm in the source, fitted in two stretches with nothing measured between them: entered as two chains [inferred]."
+      },
+      {
+        "name": "bar_half_length",
+        "label": "Bar half-length (a template's pin)",
+        "unit": "kpc",
+        "value": 5.0,
+        "source": "[verified: Wegg, Gerhard & Portail 2015, MNRAS 450, 4050 = arXiv:1504.01401, abstract, https://arxiv.org/abs/1504.01401: the long bar's half-length 5.0 +/- 0.2 kpc] (docs/READING_BAR.md A2, We15) [verified: GALAXY_INPUTS.md section 7 row 15, Bland-Hawthorn & Gerhard 2016 (BHG16): 5.0 +/- 0.2 kpc, acceptance row 15's target]; pinned on the owner's ruling of 2026-11-03 (D255) on debt #80 - Erwin 2019's law for the model, the Milky Way's measured length pinned"
       }
     ],
     "ngc_4414": [

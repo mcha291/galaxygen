@@ -584,9 +584,11 @@ def _scalar(name, label, unit, about, provenance="derived"):
 BAR_HALF_LENGTH = _scalar(
     "bar_half_length", "Bar half-length", "kpc",
     "Acceptance row 15, and pointwise rather than statistical — which is why it lives in the "
-    "derived stage. Scaled from the disc's λ_d scale length (checkpoint 1) since S25, so that the "
-    "pattern can precede star formation; until then from the thin disc's fitted stellar scale "
-    "length, a star-formation result 6% shorter (D174, debt #80). The disc-dominance link "
+    "derived stage. Since S87 (the owner's ruling of 2026-11-03, D255, debt #80) Erwin 2019's law of the "
+    "disc's scale length, log10 a = 0.04 + 0.76 log10 h, h the λ_d scale length (checkpoint 1): 2.27 kpc "
+    "on the Milky Way's disc; a template's measured length, where one is pinned (the Milky Way's 5.0 kpc), "
+    "replaces it. From S25 to S87 2.0 times the λ_d scale length, and until S25 2.0 times the thin disc's "
+    "fitted stellar one, a star-formation result 6% shorter (D174, debt #80). The disc-dominance link "
     "GALAXY_INPUTS.md §4b describes is published beside it but not modelled (debt #21). "
     "Not a number for a galaxy with no bar: an unbarred disc has no bar length, and the bar's shape, "
     "amplitude, corotation radius and pattern speed are not numbers either.",
@@ -785,10 +787,16 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
     # the observed class where a template states it (the one way to a flocculent disc).
     pinned_class = ctx.inputs.get("arm_class")
     arm_class = ARM_CLASSES[0 if present else 1] if pinned_class is None else str(pinned_class)
+    # S87 (#80; the owner's ruling of 2026-11-03, D255): the half-length is Erwin 2019's law of the disc's scale
+    # length, or a template's measured length where one is pinned (the Milky Way's 5.0 kpc). An unbarred galaxy has
+    # none, pinned or not. Until S87: BAR_LENGTH_RATIO (2.0) times the scale length.
+    pinned_length = ctx.inputs.get("bar_half_length")
+    law_length = 10.0 ** (float(c["BAR_LENGTH_LOG_NORM"]) + float(c["BAR_LENGTH_SLOPE"]) * math.log10(R_d))
+    half_length = (law_length if pinned_length is None else float(pinned_length)) if present else nan
     return {
         "bar_formation_time": formation,
         "bar_present": BAR_PRESENT[int(present)],
-        "bar_half_length": float(c["BAR_LENGTH_RATIO"]) * R_d if present else nan,
+        "bar_half_length": half_length,
         "arm_class": arm_class,
         # S60 (D219 item 1): an arm piece's width across itself, at every radius - published so that every reader
         # of the arms builds the same pieces from published numbers (rule A9).
@@ -832,9 +840,10 @@ BAR = IMPLEMENTATIONS.register(
         # S58 (D217 items 1-2): the assembly redshift, for the disc's age, and the pin - an input that is not a
         # control and not a seed, given by a template or not at all (read with .get: absent, the stage derives).
         # ... and since S60 (D219 item 3) the arm class's pin, read the same way.
-        reads_inputs=("halo_assembly_z", "bar_present", "arm_class"),
+        # ... and since S87 (#80, D255) the bar's measured half-length, read the same way.
+        reads_inputs=("halo_assembly_z", "bar_present", "arm_class", "bar_half_length"),
         reads_constants=(
-            "BAR_LENGTH_RATIO", "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
+            "BAR_LENGTH_LOG_NORM", "BAR_LENGTH_SLOPE", "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
             "ARM_INTERARM_GRAND_DESIGN", "ARM_INTERARM_FLOCCULENT",
             "GAS_ARM_CONTRAST_GRAND_DESIGN", "GAS_ARM_CONTRAST_OTHER",
             "BAR_FORMATION_TIME_SCALE", "BAR_FORMATION_EXPONENT", "H0", "OMEGA_M",

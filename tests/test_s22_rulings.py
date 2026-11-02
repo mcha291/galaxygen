@@ -67,7 +67,9 @@ def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagona
     verdicts = {row: {s: Q[row].lo <= med[s][f] <= Q[row].hi for s in med} for row, f in SEEDED_ROWS.items()}
     for row, by_start in verdicts.items():
         assert len(set(by_start.values())) == 1, (row, by_start, med)
-    assert verdicts[16][0] is verdicts[17][0] is True and verdicts[18][0] is False
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `verdicts[16][0] is verdicts[17][0] is True` - on Erwin
+    # 2019's law the default disc's bar is 2.27 kpc, and rows 16 and 17 fail on all three diagonals alike.
+    assert verdicts[16][0] is verdicts[17][0] is False and verdicts[18][0] is False
 
     # The margin each verdict holds, against the spread the three samples show. Rows 16 and
     # 17 cleared their nearest edge by four to five times the spread at S22; since S25 the bar
@@ -244,7 +246,9 @@ def test_no_green_row_is_unconditioned(judged):
     # the table's own verdict ("chosen; a 2% fall in R_d fails it") named the lever.
     # Row 2: 1.7552 -> 1.8599 at S87 when the grid's clock became the model's own cosmology (debt #148, 13.467 Gyr
     # for a recalled 13.8) -- out by 0.020, predicted at S86 and written into the row before the build.
-    left_since = {15, 2}  # S87 (#148): was {15} - the clock took row 2 out
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): rows 16 and 17, the bar's pattern speed and corotation, left with row 15's half-length on Erwin
+    # 2019's law (82.0 km/s/kpc and 2.65 kpc at the medians; inside on the Milky Way template's pinned 5.0 kpc).
+    left_since = {15, 2, 16, 17}  # S87 (#80): was {15, 2} - the law; S87 (#148): was {15} - the clock took row 2 out
     # Rows added after the sealed list was written, green with their conditioning stated in the
     # decision that added them rather than in AUDIT_II_A.md: row 29 (S28, D177), the Tully-Fisher
     # slope, green on the slope alone -- its zero point is unjudged because dust moves it and the

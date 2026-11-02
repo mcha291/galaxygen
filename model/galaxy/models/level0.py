@@ -266,15 +266,27 @@ LEVEL0: dict[str, Constant] = {
         "direction. What S22 changed is that row 7's green says here, and in spec.py, what it stands "
         "on (AUDIT_II_A.md A-14, debt #42).",
     ),
-    "BAR_LENGTH_RATIO": Constant(
-        2.0,
+    "BAR_LENGTH_LOG_NORM": Constant(
+        0.04,
         "dimensionless",
-        "Bar half-length in units of the disc scale length. Bars in barred spirals run about "
-        "1.5-2.5 R_d [recall]. GALAXY_INPUTS.md 4b describes the chain as disc dominance -> bar "
-        "length -> pattern speed; only the second and third links are modelled here, because no "
-        "relation between disc dominance and bar length is quoted anywhere in the project and "
-        "inventing one would be rule A4's failure a level up. disc_dominance is published so the "
-        "missing link can be checked rather than forgotten (debt #21).",
+        "The bar's half-length law, log10(a / kpc) = BAR_LENGTH_LOG_NORM + BAR_LENGTH_SLOPE log10(h / kpc): its "
+        "zero point, 0.04 +- 0.02, a the deprojected visual bar length and h the disc's 3.6 um scale length, both "
+        "kpc, fitted over 367 S4G barred spirals (Spearman 0.61) [verified: Erwin 2019, MNRAS 489, 3553, "
+        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2 and A2 (E19)]. Adopted on the owner's ruling of "
+        "2026-11-03 (D255) on debt #80, replacing BAR_LENGTH_RATIO = 2.0 (bars 'about 1.5-2.5 R_d [recall]', a fit "
+        "to the one galaxy row 15 reads). The model's h is the lambda_d scale length (disc_scale_length_spin), the "
+        "only scale length checkpoint 1 holds (A1) - not the source's 3.6 um fit, a referent recorded under #80. "
+        "At the Milky Way's 2.605 kpc the law gives 2.27 kpc against the Milky Way's measured 5.0 +- 0.2: the "
+        "Milky Way's bar is long for its disc, so its template pins the measured length (bar_half_length) and the "
+        "law's own miss is row 15's, recorded (B5), nothing tuned back (B10). GALAXY_INPUTS.md 4b's chain disc "
+        "dominance -> bar length is still not modelled (debt #21).",
+    ),
+    "BAR_LENGTH_SLOPE": Constant(
+        0.76,
+        "dimensionless",
+        "The bar's half-length law's slope in log10 h, 0.76 +- 0.06 [verified: Erwin 2019, MNRAS 489, 3553, "
+        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2]: see BAR_LENGTH_LOG_NORM. The owner's ruling of "
+        "2026-11-03 (D255).",
     ),
     # --- the bar's presence, body and lanes (S58, BUILD_III Phase P3; DECISIONS.md D217) ----------------------
     "BAR_FORMATION_TIME_SCALE": Constant(
