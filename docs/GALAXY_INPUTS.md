@@ -4089,6 +4089,16 @@ never been judged in twenty-three sessions.
    the gas ridge of a co-rotating arm used as a check with its own row. What kills the reading: a co-rotating
    arm's gas ridge measured as wide as the stellar arm.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the second suspect is out, and this one is the miss that is left.** #142's thickness factor has been
+   in the forcing since S60 (D219 item 5; #142 discharged at S86), and #129's check reads on today's response (layer
+   on, 6–10 kpc, `tests/test_gas_pattern.py`'s pinned readings): the width by the strongest forcing **0.3675 at the
+   median, 0.074–0.530, on the Milky Way template (0.44–3.12 times the measured 0.17; S57: 0.466, 2.5–2.8 times)** and
+   **0.390, 0.270–0.752, on `ngc_4414` (1.59–4.42 times; S57: 0.512)** — narrower by a fifth, still wider than M51's
+   inner arms at the median on both. No source read gives a corotating arm's gas width (`READING_GAS_SHOCK.md` Part
+   C: no steady corotating profile, the simulations' dynamic arms print no ridge width), and the time-dependent
+   compression is #141's level B, out of every batch. Still carried: its first closer is #141's (proposed permanent
+   at S86), its second a reading — the dynamic-arm simulations' gas ridge widths over the arm spacing, if any prints
+   one — on S87's list.
 145. **The bar's presence is a criterion that bars nearly everything, and is wrong for the one unbarred galaxy the
    build holds** (S58, D217 items 1–2). Barred where Fujii et al. 2018's formation time, 0.146 exp(1.38/f_d) Gyr
    with f_d the disc's share of V² at 2.2 scale lengths, is under the disc's age `[verified: Fujii et al. 2018,
