@@ -17,7 +17,6 @@ import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { StatusDot } from "./ui/StatusDot";
-import { Switch } from "./ui/Switch";
 import { type TabItem, Tabs } from "./ui/Tabs";
 import { pendingLoads, settleSwap, useLoad, useSwap } from "./useLoad";
 import { runHash } from "./workflow/logic";
@@ -471,8 +470,12 @@ export function App() {
       <footer className={styles.footer}>
         <span className={styles.footLeft} />
         <span className={styles.footRight}>
-          {/* A live overlay of the Science scene: the design system's Switch (T17, S84). */}
-          <Switch label="Preview charts" checked={charts} onChange={setCharts} />
+          {/* Not the design system's Switch (T17, S84): the bars' heights are in every capture's viewport (the picture
+              spec sizes the window so the canvas is 1024 px square), and the Switch's 16.8 px line in place of this
+              18.5 px button moved the canvas's aspect by a fraction of a pixel and every frame's points with it. */}
+          <button type="button" className={styles.footToggle} aria-pressed={charts} onClick={() => setCharts((c) => !c)}>
+            preview charts {charts ? "on" : "off"}
+          </button>
         </span>
       </footer>
     </div>
