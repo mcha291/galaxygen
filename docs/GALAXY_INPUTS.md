@@ -3889,6 +3889,15 @@ never been judged in twenty-three sessions.
    The ring-to-ring spread is now the model's own. Still carried: the target is a class mean whose spread is over
    segments.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the gas contrast's scatter is the response's residual, drawn on `pattern_seed` with the arms'.
+   *S86 (M1):* **the contrast is the response's, and its spread across galaxies is the stars' and the disc's.** Since
+   S57 nothing draws a gas contrast: the ratio of means is the response to the stellar arms (the drawn arm amplitude,
+   the drawn pitch, the disc), so it already varies from galaxy to galaxy through those draws, and a residual drawn
+   on top would be a second draw of one quantity. Today's check, layer on, 6–10 kpc medians: **the Milky Way template
+   1.431 (1.34–1.95), 46 of 53 rings inside 1.37–5.79; `ngc_4414` 1.252 (1.02–1.75), a miss on the median**
+   (`tests/test_gas_pattern.py`, as S60 re-pinned) — the S57 numbers above are history. The question the entry
+   leaves is not a residual but whether the response's spread over seeds matches the per-galaxy means behind the
+   source's table: unread (the paper's per-galaxy figure or data), on S87's reading list beside #129's, where the
+   suite's 240 galaxies' medians are the model's side of the comparison. Still carried.
 
 132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
    amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
