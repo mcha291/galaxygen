@@ -33,6 +33,7 @@ import { type SpritePsf, psfTexture } from "./psf";
 import { galaxyRenderer } from "./renderer";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
+import { StatusDot } from "../ui/StatusDot";
 import styles from "./GalaxyView.module.css";
 
 export type Preset = "face-on" | "edge-on" | "oblique";
@@ -160,6 +161,7 @@ export function GalaxyView({
       </Canvas>
       {(context.lost || context.redrawing) && (
         <p role="status" style={LOST_LINE}>
+          <StatusDot tone="caution" style={{ marginRight: "var(--space-3)" }} />
           {CONTEXT_LOST_WORDS}
         </p>
       )}

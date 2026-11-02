@@ -197,33 +197,11 @@
   color: var(--text-muted);
 }
 
+/* One published value (the design system's Readout, T17 S84) on a hairline that fades in from the view. */
 .stat {
   padding: var(--space-3) 0;
-  background: linear-gradient(to right, transparent, color-mix(in oklab, var(--ink-3) 28%, transparent)) top right / 100% 1px no-repeat;
-}
-
-.statKey {
   overflow-wrap: anywhere;
-  font: var(--weight-regular) var(--size-2xs) / 1.35 var(--font-mono);
-  letter-spacing: 0.02em;
-  color: var(--text-muted);
-}
-
-.statValue {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
-  font: var(--weight-light) 18px / 1.2 var(--font-mono);
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-}
-
-.statUnit {
-  font: var(--weight-regular) var(--size-2xs) / 1 var(--font-ui);
-  color: var(--text-muted);
+  background: linear-gradient(to right, transparent, color-mix(in oklab, var(--ink-3) 28%, transparent)) top right / 100% 1px no-repeat;
 }
 
 .caption {
