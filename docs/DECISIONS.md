@@ -16007,3 +16007,136 @@ capture moved at S82 — none of the five items draws at a captured stand in a c
 
 **The register.** #172, #178, #187, #188, #190 discharged; #210 opened: **130 open = 11 permanent + 119 carried, 63
 discharged**. No number of the model's moved.
+
+
+### D250. S83, BUILD_V row 83: robustness and comparison — the renderer survives a lost WebGL context (T13), the comparison view (T16), "as JWST" built and held (T11, #211 opened)
+
+**The commission.** BUILD_V row 83 (D248): T13 the renderer survives a lost WebGL context, T16 a comparison view, T11
+"as JWST". A Fable lead on `session-83` (cut from `main` at 0416fca, S82's close), two Opus builders in worktrees on
+disjoint files — A the renderer and the instruments (`s83-robust`: 1dc8446 cherry-picked as 328c67d; aa0eec6 held), B the
+comparison view (`s83-compare`: 325ac19 cherry-picked as 064889b) — and the lead's review of each diff; nothing under
+`model/galaxy` (the hash f1fbbb17… stands), the march's shader snapshot untouched, no `fetch(` added.
+
+**Builder A, T13 — the renderer survives a lost WebGL context (1dc8446 on `s83-robust`, cherry-picked as 328c67d).**
+`contextLoss.ts contextWatch(canvas)`: one watch per canvas (lost, `generation` — restores so far — and losses), its
+listeners added after three's own, no react-three-fiber import so the e2e spec can read its words; hooks
+`useContextState` / `useContextGeneration`. `GalaxyView.tsx`'s `ContextGuard`: the Canvas takes `frameloop="never"` while
+the context is lost, a status line "Context lost · the graphics context was lost; drawing again" until the first frame after
+the restore (inline styles on `.stale`'s tokens — the stylesheet was the comparison view's this session), the instrument
+`window.__galaxygenContext()`. What three.js already does and the builder did not duplicate (a vitest case pins it in
+r186's source): `preventDefault` on the loss from a listener added before the context exists, and on restore its
+`initGLContext` re-uploads every texture from the arrays it keeps — the mesh's seven and the layer tables, the raster's
+A_V and slab, the knots' share, the PSF tables' `DataTexture`s from `table.corners`, the Airy and canvas sprites — every
+points geometry, every program lazily (the march compiles on the first frame after a restore; the precompile stand-in is
+not re-run) and every render target's framebuffer when next bound. What the viewer rebuilds on `generation`: the march's
+and the region's target pixels (`FieldVolume` re-marches — `last.generation` — its GPU timer remade per generation and the
+old context's queries not deleted on the new one; `RegionVolume`'s `last` rebuilt so all three targets re-march),
+`EXT_float_blend` asked again per context (`FluxPoints`, the wings' float32 target), and the paused frame loop; the
+Workers hold only CPU data, the mesh job is not re-asked (the Canvas is not remounted), the bloom pass and the wings are
+drawn every frame. **The test** `frontend/e2e/context.spec.ts` (beside the picture spec, in `npm run picture`'s run: 16
+passed): at milky_way-field's stand the frame before the loss is the committed capture's sha256; `loseContext()` — the
+default prevented, the status line visible, no frame while lost (a 250 ms grace for the one frame r3f may already have
+asked for); `restoreContext()` — generation 1, the status hidden, the frame sum equal to the sum before the loss
+(31 919.9486 / 27 789.7888 / 25 475.0772, the same bytes) and again in the star-first mode (48 779.0424 / 45 355.1939 /
+46 428.2155). **Without the re-march the sum after the restore is 497 / 290 / 206 — the black field: the likely cause of
+the owner's black picture.**
+
+**Builder A, T11 — "as JWST" (aa0eec6 on `s83-robust`; built, reviewed, NOT cherry-picked — held, see the rulings).**
+`tools/fetch_filters.py --raw` fetched JWST/NIRCam F444W, F200W, F090W from SVO (pivots 44 043.15 / 19 886.48 / 9 021.53 Å,
+resample errors 0.005 / 0.003 / 0.005; WFC3's six fetched again and byte-identical), writing the set `jwst_nircam`
+("NIRCam", red / green / blue in that order, `wavelengths: "vacuum"` marked [inferred]) with its about, `psf` and
+`optics` by the tool. The optics, read or derived in the tool: 18 flat-topped segments of 1.32 m with 7 mm gaps (Feinberg
+et al. 2023, arXiv:2301.01779, read from the paper — **the brief's "6.5 m flat to flat" corrected:** 6.628 m across the
+flats, 6.6717 m circumscribed; the paper states 6.575 / 6.64 m), the 0.74 m secondary inside the missing centre
+(obscuration 0.1109), three struts at 90 / 240 / 300° (the angles inferred from the eight spikes in JWST's images), the
+strut width 0.039 pupil radii (13 cm, derived from JDox's 25.4 of 26.3 m² unobscured), pixels 0.063″ (F444W) and 0.031″
+(F200W, F090W) per channel. `hstPsf.ts Optics` gains `aperture`, `segment`, `gap`, `vaneAngles`, `channelPixelArcsec`;
+`SetOptics`, `SEGMENT_CENTRES`, `onSegment`, `SEGMENT_SUBSAMPLES` 16; `pupilOpen` the hexagonal-18 aperture; `psfTable`
+boxes each channel with its own pixel; `opticsOf(instrument, set)` the template's fields winning; `psfTableJob.ts`
+images a segmented pupil in both switch states (off the segments alone, on with the struts; the obscured Airy stays the
+circular case, the FFT unchanged); `psf.ts viewOptics` draws a set with its own optics physically at any template with a
+distance; `filters.ts` gains the name and `FilterSet.optics`; nine `jwstPsf.test.ts` cases and `filters.test.ts`. *The
+spikes, measured (a ±2° wedge at 8–40 λ/D, 1e-4 of the total), segments only → with struts:* the horizontal pair 2.9 → 22.1,
+the four diagonals 11.3 → 26.5, the vertical pair 12.0 → 10.8 — the segments alone make the six spikes, the struts add the
+horizontal pair; with the derived width the horizontal pair is brighter than the vertical where JWST's images show it
+fainter: disclosed in the tool's text, not tuned. *Measured:* the table in the Worker 2.56–2.62 s with the struts, 1.97 s
+without (WFC3's 1.97 / 1.01 in the same run); at NGC 4414's zoom stand the box (clamped, the table's half-width 235 px)
+holds 0.913 / 0.959 / 0.980 of the segments-only image and 0.906 / 0.940 / 0.966 with the struts, the rest the wings'
+pass's, box plus wings 1 within 1e-14; the table captures 0.971 / 0.988 / 0.997 and 0.952 / 0.982 / 0.996; the switch moves
+the zoom frame's sum by −2.2e-6; no spike visible at this display. The frames byte for byte on the branch (no template
+selects the set). **What the set found in the model:** `tests/test_render.py` reads the viewer's sets and holds the model's
+response tables to each — for `jwst_nircam` the trapezoid bound between the slope rows fails and the end-row reading of
+the 87 hottest isochrone points misses by 0.009 mag in F444W against the 0.002 bound (the response grid's tails "beyond
+K" at 4.4 µm), and `AGE_FACTORS` has no entry for the set (the `full` fixture, not run). Opened as #211. The tool's
+`tuning.ts` spikes text still describes HST only (not in the builder's files).
+
+**Builder B, T16 — the comparison view (325ac19 on `s83-compare`, cherry-picked as 064889b).** *(i) Two galaxies under one
+camera.* `cameraLink.ts` (pure, out of React: `CameraLink` holds one pose — position and target — and `joinLink(link,
+view, leads)` joins a pane to it; the left pane leads and publishes its pose as it joins, so a landing, a preset or the
+comparison switched on starts both panes from the left's stand; the right pane follows, takes the link's pose first and
+publishes its own moves only after, so its canvas's first stand never moves the left; a pose written by the link is not
+published back), `CameraLinkProbe.tsx` (a child in each canvas joining its camera and orbit controls, writing through
+`controls.update()` so each pane's zoom bridge reports the view as a drag would), `ComparePane.tsx` (the right pane: a bar
+choosing "this galaxy" through another filter set, any other template, the draft, or a picture; a second row with the
+pane's own set, or the picture's file, band, scale, unit and distance; the pane's galaxy a second `GalaxyTab` with
+`pane="right"`, keyed on the galaxy it was loaded for — D1 per pane: the last galaxy whole until the next one's sample and
+fields are in), `workflow/comparison.ts` (pure: a template's query exactly a landing's, so the bundles answer it; the bar's
+choices and the default, NGC 4414 beside the Milky Way; the galaxy shown before the last Generate; which galaxy the pane
+draws, its set and its exposure), `GalaxyTab.tsx`'s new optional props (`pane`, `compare`, `link`, `mode` / `onMode`,
+`frame`, `onViewState`, `label`; the JSX and layout only, no loader key changed; `.renderRight` / `.overRight` equal
+widths; the right pane without panel or regime caption, each pane its caption and scale bar; `__galaxygenPointsShown` the
+left pane's, `window.__galaxygenMarches[pane]` each view's march stats) and `App.tsx` (the "compare" switch session
+state, off by default, never saved; a fresh link per camera — landing, preset, template; `leftMode` / `leftView`). Shared:
+one live camera (orbit, pan, wheel, the zoom slider and the regime buttons in either pane move both), the preset, the
+template's stand and lens, the landing count (the right pane never enters a hold of its own), the framing radius, the
+mode, the field painting, the physics-only switch, one exposure slider. Own per pane: the query, the filter set, the star
+sample, every load through the same loaders, and the pane's own template's display tuning, instrument and optics. The
+draft is drawn once still for 600 ms; **a Generate trades the panes** — the draft goes left and the right takes the galaxy
+it replaced, "before the last Generate"; a landing forgets it (verified live: "Render: draft of Milky Way", then "Milky
+Way · edited" left and "before the last Generate" right). *The head start:* the second pane is **not** asked ahead —
+`api.ts` keeps one galaxy's head start and asking another query aborts the last one's untaken answers, so asking the right
+pane ahead during a landing or a Generate would cancel the shown galaxy's and turn it into repeated requests; with the
+comparison off the request set is unchanged. *(ii) A picture beside the frame.* `PictureBeside.tsx`'s `PictureFrame`
+replaces S54's `ComparePicker` / `ComparePane`: the file the user picks (none bundled, PNG / JPEG, an object URL that
+never leaves the browser), its band free text, its scale in kpc or arcsec per pixel with a distance (the shown template's
+offered), drawn centred at the width `compare.ts pictureWidthPx` computes from the left pane's kpc across
+(`kpcOfArcsec`, `kpcPerPicturePixel`), the same `zoom.ts scaleBar`, the band and scale as its caption; with no scale
+stated it is fitted to the pane and says so. *Measured (the builder's servers 8060 / 8061 on the s78 bundles,
+`galaxygen-s83\b\compare\`):* a Milky Way landing with the comparison off — 11 requests on 11 keys on both the base and
+the build, the sets identical; on, NGC 4414 beside — the second pane's seven (`/api/region`, `/api/blackbody`,
+`/api/clusters`, `/api/clouds`, `/api/arrays`, `/api/render`, `/api/layer`); "this galaxy" through the next set — five
+(the sample reused; the arrays and the clouds census asked again under the same key: no client cache, not the builder's
+loaders to change); the frame at the Milky Way's field stand orbiting at 1600 × 900 — off 16.70 ms median / 17.50 p90
+(one march 1600 × 816, 21.8 GPU ms), on 16.70 / 18.00 (two marches 650 × 816, left 9.3 + right 4.6 GPU ms), both held at
+the display's 60 Hz, builder A possibly on the GPU at the same time; the 256 px `ngc_4414.png` at 0.05 kpc/px drawn 261.27
+CSS px wide against 261.64 expected from the rounded on-screen width (0.14 %, display rounding), no request; the shared
+camera live — a drag in the right pane, the wheel in the left, the edge-on preset, both captions reading the same kpc/px and
+inclination each time. Three test files: `cameraLink.test.ts` (one state for two views; the follower never moves the
+leader; a fresh link per camera), `comparison.test.ts` (the landing query, the bar, the trade at a Generate, the sets, the
+exposure), `compare.test.ts` (the picture's width at the render's kpc across; no scale from a statement that is not one).
+*Limits, disclosed:* the right pane reads its template's tuning at mount, so the left's tuning changes for "this galaxy"
+reach it only when the pane is remade; the right pane's point budget is the default (10^3.5), not the left's slider; with
+the comparison on `GalaxyView`'s probes (`__galaxygenCapture` and the rest) belong to whichever pane mounted last
+(`GalaxyView.tsx` was builder A's file); the open edit drawer covers the top of the right pane's bar; a draft drawn costs a
+full model run (~25 s cold for a texture_seed reroll). *The builder's display choices, for the owner's switches:* the
+right pane's exposure one slider; its point budget fixed at the default; the default beside-galaxy the first other
+template and, for "this galaxy", the next filter set; the draft's 600 ms settle and the trade at Generate; the picture
+centred on the pane (not following a pan), arcsec per pixel the default unit, the distance prefilled from the shown
+template; no regime caption on the right pane.
+
+**The gates on `session-83`.** *The builders':* A vitest 552 passed / 1 skipped, the typechecks EXIT=0, the picture test 14 passed on the T13 tip and the final tip with the nine verdicts (eight byte for byte, `ngc_4414-zoom` #210's, its sum 215 279.529… from the direct run of 16); B vitest 548, the typechecks EXIT=0, the picture test 14 passed with the same verdicts, run after checking port 8019 free. *The lead's on `session-83` after the two cherry-picks (064889b T16, 328c67d T13; no conflict):* vitest 552 passed / 1 skipped, `typecheck` and `typecheck:e2e` EXIT=0, the picture test 14 passed through `pytest -s` with the verdict lines read — eight captures the committed picture byte for byte, `ngc_4414-zoom` not the committed picture's bytes (1 503 153 B, as at S82: #210) — and the tree clean; the docs and register tests after the close's edits (`gate83*.log` in the session's scratchpad). No `fetch(` added, nothing under `model/galaxy`, `fieldFragment.s78.glsl` untouched; the held T11 commit's own gates were green on its branch.
+
+**The lead's rulings.** (1) **T11 held, not merged.** The set is viewer data, but `tests/test_render.py` holds the model's
+response tables to every set it reads, and the set fails two of those tests and needs a measured pin in a third; merging
+it would turn the nightly suite red, and a pin is the owner's under D246. The commit stays on `s83-robust` in its worktree
+(aa0eec6), reviewed; #211 names the three ways it merges; T11's row says so. (2) T13's division of labour stands as the
+builder read it from three.js's source and pinned in a test: the viewer rebuilds only what three cannot know. (3) T16's
+head start is right not to ask the second pane ahead: one galaxy's head start at a time is `api.ts`'s rule, and the
+comparison is off in every capture and every landing the probe measures. (4) The builder's display choices in T16 (the
+right pane's exposure and budget, the default beside-galaxy, the draft's settle and the trade at a Generate, the picture
+centred, no regime caption on the right) are the owner's to tune and are listed for them; none is a switch yet. (5) The
+comparison view's four limits (the right pane's tuning read at mount, its budget the default, `GalaxyView`'s probes the
+last pane's, the drawer over the right pane's bar) go to S84's lead with T17's panels, where the port touches the same
+chrome, or stay as lines. (6) The brief's 6.5 m corrected by the builder from the paper: the decision carries 6.628 m.
+
+**The register.** #211 opened: **131 open = 11 permanent + 120 carried, 63 discharged**. No number of the model's moved.

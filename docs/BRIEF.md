@@ -1,47 +1,41 @@
-# BRIEF — after S82: S68's viewer debts and the zoom's seams in, BUILD_V adopted; next is S83, BUILD_V row 83 (robustness and comparison)
+# BRIEF — after S83: robustness and comparison in; next is S84, BUILD_V row 84 (T17, the design system) on ruling 2
 
-**The state (2026-11-02).** BUILD_V is adopted (D248; `docs/BUILD_V.md`, the board's §5h): rulings 2–6 of its §6 stand
-as recommendations until the owner takes them (S84 needs ruling 2 on T17's structure, S86 ruling 4 on the pin per
-batch). S82 (D249) built #187 (`useLoad`'s `role`: the swap's dependent loaders ask inside the swap, the camera's never
-hold), #188 (a landing holds the old picture under its own line until the new template's answers are in, drawn with
-its own display tuning — `drawnTuning` / `LOAD_TUNING_KEYS`), #190 (the caption left of the open drawer), #178 (the
-light past the instrument's clamped box drawn where it falls by a coarse second pass, nothing returned; the PSF table
-in a Worker, the pupil image freed) and #172 on the owner's ruling (A: the field mode's region regime draws the
-catalogue's light-scaled tiles, the sampled reading kept behind the per-template switch 'region stars' (catalogue / sampled) for comparison).
-The captures unmoved (the zoom captures are the star-first mode's). #186 moved out of the viewer rows (an API change under the model's hash: the first model batch). **The model's
-hash is f1fbbb17eff3c1dc003abcd38117cb1f** (since S77). Register **130 open = 11 + 119, 63 discharged**; next number **#211**, decisions from
-**D250**. #210 opened: `ngc_4414-zoom` has not been the committed bytes since some session after S70 — read the picture
-test's verdict lines at every close (S82's lesson), never `git status` alone.
+**The state (2026-11-02).** S83 (D250) built T16 (the comparison view: two galaxies side by side under one camera —
+`cameraLink.ts`, `ComparePane.tsx`, `workflow/comparison.ts`; a picture file beside the frame at a stated band and scale
+— `PictureBeside.tsx PictureFrame`; a session switch, off in every capture), T13 (the renderer survives a lost WebGL context: `contextLoss.ts`, the frame loop paused and a status line while lost, the march's and the region's targets re-marched on the restore's generation, the rest three.js's own re-upload; `e2e/context.spec.ts` proves the frame after equals the frame before — the black field without the re-march was the owner's black stars regime), and T11 built on `s83-robust` (aa0eec6) and **held, not merged**: the `jwst_nircam` set (NIRCam F444W / F200W / F090W fetched by the tool, the 18-segment primary as a pupil) fails two of `tests/test_render.py`'s model-table tests and needs a pin in a third — #211, the owner's word under D246. The frames: every capture as before, eight byte for byte and the zoom capture #210's. **The
+model's hash is f1fbbb17eff3c1dc003abcd38117cb1f** (since S77). Register **131 open = 11 + 120, 63 discharged**; next number **#212**, decisions
+from **D251**. BUILD_V (D248): rulings 2–6 of its §6 stand as recommendations until the owner takes them; **S84 needs
+ruling 2** (T17's structure) and S86 ruling 4 (the pin per batch). #210 (the zoom capture's bytes): the picture gate reads
+the verdict lines at every close (`pytest -s`, the `picture:` lines).
 
-## S83 — BUILD_V row 83: robustness and comparison (a Fable lead, two Opus builders)
-- **T13, the renderer survives a lost WebGL context** (`VIEWER_TASKS.md` row T13; the owner saw five losses and a
-  black stars regime in the app's pane): the context-lost / restored events handled in `GalaxyView` and the field
-  volumes (the march's targets, the raster and PSF Workers' textures, the mesh's textures rebuilt), a forced loss
-  (`WEBGL_lose_context`) then a drawn frame as the test; the picture test byte for byte.
-- **T16, a comparison view**: (i) two seeds / sets side by side (the same camera, the existing tabs' state, no second
-  model call where a bundle answers); (ii) a picture file the user picks drawn beside the frame at a stated band and
-  scale (the scale bar, the band's name; none bundled). Display choices as sliders where they are choices.
-- **T11, "as JWST"**: NIRCam's curves (the download accepted by the owner 2026-11-02: `tools/fetch_filters.py` as
-  WFC3's, SVO) and a hexagonal pupil for the PSF (`hstPsf.ts pupilImage` takes the optics: add the segmented aperture,
-  the table built by the same job in the Worker). A new filter set, no template carries it by default: the frames stay
-  byte for byte; the set's about text and the instrument's in `instruments.json` by the tool, not by hand.
-- Read: T13 / T16 / T11 in `VIEWER_TASKS.md`; D227 (R1–R3, the PSF), D249 (the wings' pass, `psfTableJob.ts`), D232
-  (the tabs since V9); `GalaxyView.tsx`, `FieldVolume.tsx`, `rasterClient.ts`, `meshTexelsClient.ts`, `psfTableClient.ts`.
+## S84 — BUILD_V row 84: T17, the design system as designed (an Opus lead, Fable at the close)
+- **Waits on ruling 2.** The recommendation: keep the tabs as they stand since V9 (Science / Galaxy with the edit panel)
+  and port the mockup's components to them. If the owner takes it, S84 is: the 20 unported components (of 21) ported
+  onto the existing tabs — read `VIEWER_TASKS.md` row T17 and the mockup it names first, then the panels' tests; the
+  picture test's captures CHANGE knowingly where a panel's chrome is in the frame (they are canvas reads: check which,
+  if any, before promising), re-captured with the reason and the before / after sums; every other capture byte for byte.
+  If the owner rules the mockup's tabs instead (Workflow / Galaxy / System / Science), the session starts with the
+  tabs' restructure and the port follows; write the plan before the first edit and show it to the owner.
+- **The comparison view's limits from S83, as the owner may want them:** the right pane's tuning read at mount; its point
+  budget the default; `GalaxyView`'s probes the last pane's; the drawer over the right pane's bar — each a small item
+  for S84's lead to take with T17's panels where the port touches the same chrome, or to leave with a line.
+- Read: T17; D250; D232 (V9, the tabs since); `App.tsx`, `GalaxyTab.tsx` (the panel, the drawer), `ComparePane.tsx`.
 
 ## What waits on the owner
 - **BUILD_V §6 rulings 2–6** (T17's structure; #189 retire the reference client; the pin per batch; Audit VI at the end;
   the deploy whenever). **Confirm** S80's (a) and S81's Worker. **#210**: name the session by re-taking the capture on
-  each tag, or rule that a within-tolerance byte change needs no name.
+  each tag, or rule that a within-tolerance byte change needs no name. **#211 / T11**: say whether to pin the JWST set's numbers in `tests/test_render.py` (the `full` fixture run once, on your word), to move the red band inside the grid (F356W), or to leave the set for the M3 model batch that extends the response grid's tails; the commit waits on `s83-robust` in `galaxygen-s83-a`.
 - **The subscription and the deploy** (D239 (i)–(ii)), then the deployed probe. Housekeeping deferred: delete nothing.
 
-## Traps (S72–S82's stand)
+## Traps (S72–S83's stand)
 - Never run the full suite, `verify_clone` or the pins unprompted (D246): ask the owner where the model, a fixture or a
   pin changed. The fast gates: `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`, then
   `GALAXYGEN_PICTURE=1 GALAXY_BUNDLES=C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s78\bundles uv run pytest -s
-  tests/test_picture.py` (14 passed; grep the log for "byte for byte" / "not the committed": every capture named),
-  then `tools/progress.py` and the docs tests. A fresh worktree needs `npm ci --prefix frontend` first.
+  tests/test_picture.py` (14 passed; the nine `picture:` verdict lines, every capture named), then `tools/progress.py`
+  and the docs tests. A fresh worktree needs `npm ci --prefix frontend` first.
 - The picture test's port 8019 is one builder's at a time (`reuseExistingServer` takes a sibling's server): say who runs
-  when. Two builders sharing a file's line conflict at the cherry-pick: resolve by hand before the gates (S82).
+  when. Two builders sharing a file's line conflict at the cherry-pick: resolve by hand before the gates. A builder's
+  frame-time measurement while the other builder is on the GPU is a bound, not a number (S83).
 - The shader snapshot `fieldFragment.s78.glsl`: a change to the march is a change to that file, made knowingly. Rule D2
   refuses a second `fetch(`. The register's count pin in `tests/test_audit.py` and its pinned items move with every
   entry. Every byte under `model/galaxy` is in the hash: a change there is a model session, a new image and pin.
