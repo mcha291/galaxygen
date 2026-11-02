@@ -16,6 +16,9 @@ import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
+import { StatusDot } from "./ui/StatusDot";
+import { Switch } from "./ui/Switch";
+import { type TabItem, Tabs } from "./ui/Tabs";
 import { pendingLoads, settleSwap, useLoad, useSwap } from "./useLoad";
 import { runHash } from "./workflow/logic";
 import { pinWords, templateLabel } from "./workflow/templates";
@@ -210,9 +213,10 @@ export function App() {
   // makes, edited or not, so an edited galaxy's name says they still hold.
   const pinned = wf.template?.pins.map((p) => pinWords(p, meta?.fields)).join("; ") ?? "";
   // Two tabs, both open at any time (V9): the galaxy, and every group's previews of it.
-  const tabs: { key: Tab; label: string; title?: string }[] = [
-    { key: "science", label: "Science", title: "Every group's published fields, previewed for the galaxy on screen" },
-    { key: "galaxy", label: "Galaxy" },
+  // The design system's Tabs (T17, S84): the underline bar, the arrow keys moving between the two.
+  const tabs: TabItem<Tab>[] = [
+    { value: "science", label: "Science", title: "Every group's published fields, previewed for the galaxy on screen" },
+    { value: "galaxy", label: "Galaxy" },
   ];
   // The edit panel as the Science tab's rail: its groups choose the previews.
   const rail = (
@@ -227,6 +231,7 @@ export function App() {
   );
   const staleMark = marked && (
     <p className={styles.stale} role="status" data-failed={failure !== null || undefined}>
+      <StatusDot tone={failure !== null && !stale && !landing ? "fault" : "caution"} className={styles.lineDot} />
       {stale
         ? "Stale · the previous galaxy, until the generated one arrives"
         : landing
@@ -237,14 +242,22 @@ export function App() {
 
   const status = (
     <>
-      {!sample && !galaxy.error && !(wf.error && !wf.state) && <p className={styles.status}>Generating galaxy.</p>}
+      {/* Each status line leads with the design system's StatusDot (T17, S84): live, a fault - never colour alone. */}
+      {!sample && !galaxy.error && !(wf.error && !wf.state) && (
+        <p className={styles.status}>
+          <StatusDot tone="nominal" pulse className={styles.lineDot} />
+          Generating galaxy.
+        </p>
+      )}
       {wf.error && !wf.state && (
         <p className={styles.status}>
+          <StatusDot tone="fault" className={styles.lineDot} />
           Loading the model failed: {wf.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
         </p>
       )}
       {galaxy.error && !layerFault && (
         <p className={styles.status}>
+          <StatusDot tone="fault" className={styles.lineDot} />
           Generation failed: {galaxy.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
         </p>
       )}
@@ -252,6 +265,7 @@ export function App() {
           the switch is gone too, so the way back is here. */}
       {layerFault && (
         <p className={styles.status} role="alert">
+          <StatusDot tone="fault" className={styles.lineDot} />
           {layerFault}.{" "}
           {physicsOnly && (
             <button type="button" className={styles.footToggle} onClick={() => setPhysicsOnly(false)}>
@@ -298,20 +312,7 @@ export function App() {
             ))}
           </div>
         )}
-        <div className={styles.segmented} role="tablist" aria-label="View">
-          {tabs.map((t) => (
-            <button
-              key={t.key}
-              role="tab"
-              aria-pressed={tab === t.key}
-              aria-selected={tab === t.key}
-              title={t.title}
-              onClick={() => setTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <Tabs<Tab> items={tabs} value={tab} onChange={setTab} aria-label="View" className={styles.viewTabs} />
       </header>
 
       <main className={styles.main}>
@@ -377,7 +378,10 @@ export function App() {
                 {current && panels && query && meta ? (
                   <ScienceView checkpoint={current} panels={panels} query={query} cmaps={meta.cmaps} />
                 ) : (
-                  <p className={styles.status}>Loading field declarations.</p>
+                  <p className={styles.status}>
+                    <StatusDot tone="nominal" pulse className={styles.lineDot} />
+                    Loading field declarations.
+                  </p>
                 )}
               </div>
               {staleMark}
@@ -467,9 +471,8 @@ export function App() {
       <footer className={styles.footer}>
         <span className={styles.footLeft} />
         <span className={styles.footRight}>
-          <button type="button" className={styles.footToggle} aria-pressed={charts} onClick={() => setCharts((c) => !c)}>
-            preview charts {charts ? "on" : "off"}
-          </button>
+          {/* A live overlay of the Science scene: the design system's Switch (T17, S84). */}
+          <Switch label="Preview charts" checked={charts} onChange={setCharts} />
         </span>
       </footer>
     </div>

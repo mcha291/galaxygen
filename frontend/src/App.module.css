@@ -44,6 +44,18 @@
   white-space: nowrap;
 }
 
+/* The view switch (T17, S84): the design system's underline Tabs, standing on the top bar's own hairline. */
+.viewTabs {
+  align-self: stretch;
+  align-items: flex-end;
+  border-bottom: 0;
+}
+
+/* A status line's StatusDot, before its words. */
+.lineDot {
+  margin-right: var(--space-3);
+}
+
 .main {
   position: relative;
   min-height: 0;
@@ -372,6 +384,13 @@
   color: var(--status-caution);
   font: var(--text-data);
   pointer-events: none;
+}
+
+/* A failed Generate: the fault's colours, not the caution's. */
+.stale[data-failed] {
+  border-color: var(--status-fault);
+  background: var(--status-fault-bg);
+  color: var(--status-fault);
 }
 
 /* --- phones -------------------------------------------------------------------- */
