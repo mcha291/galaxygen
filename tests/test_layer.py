@@ -1844,7 +1844,7 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
                 assert f["stage"] == "arm_pieces" and f["kind"] == "table_column" and f["of"] == "arm_piece", f["name"]
                 assert f["domain"] == "table" and f["ramp"] is None and "not shown by the viewer" in f["about"], f["name"]
                 assert "No row with the randomness layer off" in f["about"], f["name"]
-                assert "38 printed rows" in f["statistic"] and "while the pitch it makes is not positive" in f["statistic"] and "[verified:" in f["statistic"], f["name"]
+                assert "38 printed rows" in f["statistic"] and "while the pitch it makes is under 1 degree" in f["statistic"] and "[verified:" in f["statistic"], f["name"]
                 assert "measured nowhere" in f["statistic"] and "not drawn" in f["statistic"], f["name"]
                 assert "self-gravitating disc" in f["stands_in_for"] and "Every ring's mean density and every law" in f["conserves"], f["name"]
                 assert not re.search(r"none read", f["statistic"], re.IGNORECASE), f["name"]
@@ -2381,7 +2381,7 @@ def test_texture_seed_is_the_fifth_seed_and_the_arm_pieces_read_it(prod):
     assert impls_.get("arm_pieces").reads_inputs == ("arm_pieces",)
     assert impls_.get("arm_pieces").reads_constants == (
         "ARM_SEGMENT_EXTENT_MEDIAN", "ARM_SEGMENT_EXTENT_LOG_SCATTER", "ARM_SEGMENT_EXTENT_MIN", "ARM_SEGMENT_EXTENT_MAX",
-        "ARM_SEGMENT_PITCH_RELATIVE_SCATTER",
+        "ARM_SEGMENT_PITCH_RELATIVE_SCATTER", "ARM_SEGMENT_PITCH_FLOOR",  # S87 (#209): the owner's floor, the thirteenth
         "ARM_CHAIN_LENGTH_GRAND_DESIGN", "ARM_CHAIN_LENGTH_GRAND_DESIGN_SCATTER",
         "ARM_CHAIN_LENGTH_MULTI_ARMED", "ARM_CHAIN_LENGTH_MULTI_ARMED_SCATTER", "ARM_CHAIN_LENGTH_MIN",
         "ARM_PIECE_FLOCCULENT_EXTENT_MIN", "ARM_PIECE_FLOCCULENT_EXTENT_MAX",

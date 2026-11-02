@@ -346,16 +346,23 @@ def test_arm_piece_pitch_scatter_and_the_flocculent_extents(audit):
 
     Fails if: the pooled deviation's mean or spread is more than 3 SE from the truncated law's, a drawn pitch is not
     positive, or a flocculent piece is outside its range or the flocculent mean off by 3 SE."""
-    dev = []
+    # S87 (#209): the normal is drawn again while the pitch is under the owner's floor, 1 degree (D255), so each
+    # galaxy's deviation is truncated at a = (1/p - 1)/0.56 for its own disc pitch p, and the pool is the mixture of
+    # those truncated laws, weighted by each galaxy's drawn pieces. Was one truncation, a = -1/0.56 (not positive).
+    dev, moments = [], []
     for tpl, seed in LAYER_ON:
         on = audit[tpl, seed, True]
         _, pitch, _, _ = drawn_pieces(on)
-        assert np.all(pitch > 0.0)
-        dev.append(pitch / float(on.fields["pitch_angle"]) - 1.0)
+        assert np.all(pitch >= 1.0)  # S87 (#209): was pitch > 0 - the owner's floor
+        p = float(on.fields["pitch_angle"])
+        dev.append(pitch / p - 1.0)
+        a = (1.0 / p - 1.0) / 0.56
+        lam = math.exp(-0.5 * a * a) / math.sqrt(TWO_PI) / (1.0 - float(_phi(a)))
+        moments.append((pitch.size, 0.56 * lam, 0.56**2 * (1.0 + a * lam - lam * lam)))
     dev = np.concatenate(dev)
-    a = -1.0 / 0.56
-    lam = math.exp(-0.5 * a * a) / math.sqrt(TWO_PI) / (1.0 - float(_phi(a)))
-    mean, sd = 0.56 * lam, 0.56 * math.sqrt(1.0 + a * lam - lam * lam)
+    n_all = sum(n for n, _, _ in moments)
+    mean = sum(n * m for n, m, _ in moments) / n_all
+    sd = math.sqrt(sum(n * (v + m * m) for n, m, v in moments) / n_all - mean * mean)
     assert abs(dev.mean() - mean) <= 3.0 * sd / math.sqrt(dev.size)
     assert abs(dev.std(ddof=1) - sd) <= 3.0 * sd / math.sqrt(2.0 * (dev.size - 1))
     floc = audit["ngc_4414", 4242, True]

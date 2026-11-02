@@ -137,7 +137,7 @@ def test_the_constants_are_the_ruling_s_and_the_stages_are_declared_as_ruled(pro
     assert (c["ARM_CHAIN_LENGTH_MULTI_ARMED"], c["ARM_CHAIN_LENGTH_MULTI_ARMED_SCATTER"], c["ARM_CHAIN_LENGTH_MIN"]) == (244.0, 131.0, 90.0)
     assert (c["ARM_PIECE_FLOCCULENT_EXTENT_MIN"], c["ARM_PIECE_FLOCCULENT_EXTENT_MAX"], c["ARM_LAYER_FLATTENING"]) == (37.0, 105.0, 7.3)
     assert (c["ARM_SEGMENT_EXTENT_MEDIAN"], c["ARM_SEGMENT_EXTENT_LOG_SCATTER"], c["ARM_SEGMENT_EXTENT_MIN"], c["ARM_SEGMENT_EXTENT_MAX"],
-            c["ARM_SEGMENT_PITCH_RELATIVE_SCATTER"]) == (60.0, 0.35, 20.0, 180.0, 0.56)
+            c["ARM_SEGMENT_PITCH_RELATIVE_SCATTER"], c["ARM_SEGMENT_PITCH_FLOOR"]) == (60.0, 0.35, 20.0, 180.0, 0.56, 1.0)  # S87 (#209): the floor added
     g = graph.analyse(model, prod[1], prod[2])
     assert g.ok, g.problems
     order = [s.id for s in g.order]
@@ -542,7 +542,7 @@ def hand_chain(seed: int, chain: int, x: float, azimuth: float, pitch: float, me
     while left > 0.0 and x <= x_edge:
         g = stream("out", k)
         z = float(g.normal())
-        while not pitch * (1.0 + 0.56 * z) > 0.0:  # the sixth follow-up, item 1: a drawn pitch never reverses
+        while not pitch * (1.0 + 0.56 * z) >= 1.0:  # S87 (#209): was > 0.0 (the sixth follow-up: never reverses) - the owner's floor, 1 degree
             z = float(g.normal())
         extent = 60.0 * math.exp(0.35 * float(g.normal()))
         while not 20.0 <= extent <= 180.0:

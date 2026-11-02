@@ -1139,6 +1139,21 @@ LEVEL0: dict[str, Constant] = {
         "azimuth ranges): a drawn extent over it is drawn again, not clipped [verified: "
         "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2].",
     ),
+    "ARM_SEGMENT_PITCH_FLOOR": Constant(
+        1.0,
+        "deg",
+        "The least pitch a drawn arm piece may have: its normal deviate is drawn again while the pitch it makes, "
+        "the disc's times one plus ARM_SEGMENT_PITCH_RELATIVE_SCATTER times the deviate, is under this. The owner's "
+        "ruling of 2026-11-03 (D255) on debt #209, as S86 proposed it: until then the deviate was drawn again only "
+        "while the pitch was not positive, and a piece could come out at 0.0086 deg (1/sin p = 6 700), an arc "
+        "that climbs a few parsecs in a full chain's worth of azimuth. The number is the smallest non-reversed "
+        "segment pitch the repository's readers hold: Reid et al. 2019 Table 2, the Sagittarius-Carina arm's "
+        "outer segment 1.0 +- 2.1 deg over 73 deg of azimuth, and Honig & Reid 2015, M51 arm B +1.2 deg over 50 "
+        "deg [verified: docs/READING_ARM_SEGMENTS.md A1.3 and HR15 Tables 2-5] - the disc draw's own 1 deg "
+        "clip (pattern.compute_pattern). **A resolution floor, not a physical one**: both pitches are consistent "
+        "with zero at their +-2 deg errors, so it bounds what a measured stretch of arm has been resolved as, "
+        "1/sin p at 57 instead of thousands, and says nothing of a real arc of no pitch.",
+    ),
     "ARM_SEGMENT_PITCH_RELATIVE_SCATTER": Constant(
         0.56,
         "dimensionless",
