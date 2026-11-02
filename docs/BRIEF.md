@@ -10,9 +10,9 @@ render, the layer's tables, the clouds' census) asked beside the star sample as 
 calls → 0 / 0). The request set and the frames are unchanged. Beside the suite the warm landing did not move (the
 answers are not localhost's critical path; the compile and the mesh are) and the cold first paints ~0.6 s (quiet;
 0.14–0.29 s beside the suite); (e) closed by measurement (the walk's 303 requests are the landing's own, pressed inside a settle); (b) the mesh and (d)
-the switch's context carried. D245 (the owner's ruling): the close's gate is the change's. **The model's hash is f1fbbb17eff3c1dc003abcd38117cb1f** (since S77): the next deploy
+the switch's context carried. D245 / D246 (the owner's rulings): the close's gate is the change's; the six of 2026-11-02 accepted. **The model's hash is f1fbbb17eff3c1dc003abcd38117cb1f** (since S77): the next deploy
 builds a new model image and pins the gateway to it. Register **135 open = 11 + 124, 57 discharged**; next number
-**#210**, decisions from **D246**, board row 79 (none planned: the owner's choice).
+**#210**, decisions from **D247**, board row 79 (none planned: the owner's choice).
 
 ## What waits on the owner
 - **The subscription and the deploy** (D239 (i)–(ii)): re-enable it in the portal, then from a checkout of `main` whose
@@ -55,6 +55,6 @@ builds a new model image and pins the gateway to it. Register **135 open = 11 + 
   fresh branch BEFORE main is merged in (S79: a `^208\. ` anchor misses the quoted test items). The owner's servers run
   in their Terminal panel on 8017 / 8018 / 5173; agents use 8050+ (the probe 8050 / 8060, the picture test 8019).
   The full suite (~3–5 h, `tools/bootstrap.py` first; the pricing test flakes under load, green alone; pytest's exit
-  code to a file) only where `model/galaxy` changed — a viewer-only session closes on the fast gates and reads CI's run
-  on `main` at the next open (D245; S80's: the `ci` run on the merge). Bash under 8 KB; the register's count pin in `tests/test_audit.py` and its pinned carried row move with every
+  code to a file) only on the owner's word, asked where the model, a fixture or a pin changed; every session closes on
+  the fast gates; CI's full suite nightly and on dispatch, every push the fast job (D245, D246). Bash under 8 KB; the register's count pin in `tests/test_audit.py` and its pinned carried row move with every
   entry. 74 `galaxygen-verify-*` folders (3.9 GB) and 59 agent worktrees under `.claude/worktrees` are the owner's to clear.

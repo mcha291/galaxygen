@@ -4712,10 +4712,10 @@ never been judged in twenty-three sessions.
    Quiet, the warm landing did not move (localhost's path is the compile and the mesh) and the cold first paints
    gained ~0.6 s (2.13 → 1.56, 2.54 → 1.93); the deployed probe (#204) is where (a) is to pay most. The walk's 303 requests are the default
    landing's own loads, pressed by the specs inside the settle R3 removed — no deferral short of a settle removes them,
-   so (e) is no side effect to remedy. **Carried.** What closes it: (b) the mesh's build and (d) the Canvas kept across
-   a switch (a display ruling: the camera is fresh by design), each measured with the probe before and after, the frames
-   byte for byte; or the deployed run (#204) reading the same steps on the wire and the owner's word that nothing more
-   is owed.
+   so (e) is no side effect to remedy. **(d) closed by ruling (D246): the remount kept, the fresh camera D213 ruling 5's, the switch inside its bound.**
+   **Carried.** What closes it: (b) the mesh's build off the main thread, measured with the probe before and after, the
+   frames byte for byte; or the deployed run (#204) reading the same steps on the wire and the owner's word that nothing
+   more is owed.
 209. **The per-piece pitch draw has no floor: a piece of nearly no pitch moves a ring's count at an unbounded rate in
    radius** (S79, D243). A drawn piece's pitch is p(1 + 0.56 z), z drawn again while the pitch it makes is not positive
    (D219, the gate's sixth follow-up), so it can land arbitrarily near zero: on the Milky Way template at `texture_seed`

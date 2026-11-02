@@ -362,7 +362,7 @@ and every session pays it — eleven times over. `[inferred]`
 | **`BRIEF.md` replaces reading this plan.** Written by the previous session, ~40 lines | The plan is read once, at S0 |
 | **Lessons are tagged by stage type**; a session reads only its tags | 27 untagged lessons is a per-session tax on all of them |
 | **The acceptance table lives in `spec.py`, never in prose read at runtime** | A session runs the spec and reads pass/fail, not 24 rows |
-| **Tests run quiet; only failures print.** Affected subset mid-session, full suite once at close where a byte under `model/galaxy` changed; a viewer-only session closes on its fast gates and CI's run on `main` (D245) | A suite printing 339 passing test names is pure waste |
+| **Tests run quiet; only failures print.** Affected subset mid-session; at close the fast gates, the local full suite on the owner's word where the model, a fixture or a pin changed, CI's full suite nightly (D245, D246) | A suite printing 339 passing test names is pure waste |
 | **Never read a file you are about to overwrite** | Common and invisible |
 | **Bundle verification is a fixed script, not an exploration** | It is the same six commands every time |
 

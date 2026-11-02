@@ -15714,3 +15714,36 @@ scratchpad); the smoothness probe ran on the idle machine for D244's table of re
 
 **What this is not.** No test moved, marked or widened; the suite's content and CI's schedule (D241) unchanged; the
 machine pins still run here at every model session's close.
+
+
+### D246. The owner's rulings of 2026-11-02 at S81's open: the suites — GitHub's nightly, this machine's on the owner's word; the six recommendations accepted (S80's (a) kept, the deploy when the cost suits, S81 the viewer batch, the pieces test to the nightly run, the Canvas remount kept, #209 left for an arms batch); rule C7 re-amended
+
+**The suites.** The owner, after D245 and the review of what remains: "for the CI tests and suites, the ones running on
+github can run nightly, the ones running on this local machine, prompt me to run them when you think they're
+necessary." Entered as: (1) `ci.yml`'s full suite and specs run on the nightly schedule and on dispatch only; every push,
+`main` included, and every pull request runs the fast job — so a merge no longer starts a four-hour run, and the
+nightly run is the suite of record for the day's merges, read at the next open. (2) On this machine no session runs
+the full suite, `verify_clone` or the machine pins on its own: where a session's change makes one necessary — a byte
+under `model/galaxy`, a test fixture, a pin, `tests/conftest.py` — the lead says so and asks the owner to run it (or to
+say "run it"), and the merge waits on its EXIT line; the fast gates (vitest, the typechecks, the picture test, the docs
+and register tests) close every session. Rule C7 re-amended, RESUMING's close order, GALAXY_PLAN §5's row and BRIEF
+with it. D241's "CI's full suite off every branch push" is answered by (1); its per-platform pins: the 21 machine pins
+stay skipped under CI, no Linux tables (the lead's recommendation, accepted).
+
+**The six, "accept your recommendations for all 6".** (1) S80's (a), the field's loads asked beside the sample, kept;
+the deployed probe is its judge. (2) The subscription re-enabled when its cost suits the owner (both apps at zero
+replicas); until then #204 and #205 carried as unmeasured, nothing else blocked. (3) S81 = the viewer batch: #208 (b)
+the mesh's build off the main thread, the blackbody table as a fifth head-start load, T14's cost cut while the camera
+moves. (4) The 88-minute pieces gate test runs in the nightly suite — which (1) makes the whole suite's place — and is
+not marked out of the local run; a local run on the owner's word runs it. (5) #208 (d), the Canvas kept across a
+template switch: ruled display, the remount kept — the fresh camera is D213 ruling 5's, the switch inside its bound at
+0.84 s; (d) closes by ruling, #208 is (b) alone. (6) #209 with #142: left; the finite-thickness reduction of the forcing
+is the remedy for both, in the first arms batch after the register pass, when the pin is lifted for it.
+
+**Standing after this.** Open for the owner (each with the lead's recommendation, none blocking S81): F5 (ruling 15 (a)
+stands until the deployed probe); T20 after the deploy; #197 and #202 into the first model batch; the register pass
+before any model batch; the pin lifted per batch, arms first; no board row for a debt session; T17's structure; the
+downloads for T11 and T10; the housekeeping (74 verify folders, 59 agent worktrees).
+
+**The register.** #208's (d) closed by ruling, (b) carried; no number moved: 135 open = 11 permanent + 124 carried, 57
+discharged.
