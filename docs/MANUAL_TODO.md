@@ -140,7 +140,7 @@ the row is written with its SHA at once.
 | 78 | `s78` | `2b08853726e2` | **applied** 2026-11-01 at S78's own close (C2e; D242); the SHA written on `main` in the commit after the merge |
 | 79 | `s79` | `06eb29a1bc4c` | **applied** 2026-11-02 at the lead's merge of the #207 side session (C2e; D243); the SHA written on `main` in the commit after the merge |
 | 80 | `s80` | `38e06dde3f33` | **applied** 2026-11-02 at S80's own close (C2e; D244, D245 — closed on the fast gates); the SHA written on `main` in the commit after the merge |
-| 81 | `s81` | TBD | **applied** 2026-11-02 at S81's own close (C2e; D246, D247 — the fast gates, D245 / D246); the SHA written on `main` in the commit after the merge |
+| 81 | `s81` | `6716ce94d5c6` | **applied** 2026-11-02 at S81's own close (C2e; D246, D247 — the fast gates, D245 / D246); the SHA written on `main` in the commit after the merge |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
