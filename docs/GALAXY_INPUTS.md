@@ -711,11 +711,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
-| **discharged** at S86 | **139** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap) | 1 |
+| **discharged** at S86 | **139, 142** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 91 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 141, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 90 |
 
-So the board's **124 open** is 33 permanent and 91 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **123 open** is 33 permanent and 90 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4034,7 +4034,7 @@ never been judged in twenty-three sessions.
    is a state the arm does not live to see. The first closer is out of every batch (S85) and the second has nothing
    to read; **proposed to the gate: permanent** — level A is steady by design (D216: the corotating frame is ruled,
    and a time-stepped flow is BUILD_III's out-of-scope level B), the size of what it gives up written here.
-142. **The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound** (S57, D216 gate G2
+142. ~~**The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound**~~ (S57, D216 gate G2
    item 5, gate G3 item 2). f_m = m A_m/(X sin p) uses the WKB potential of a disc with no thickness; no source read
    gives the finite-thickness reduction, and checkpoint 3 has no scale height. Three findings sit under it: the
    gas between the arms is nearly emptied where Σf > 1 (troughs of 0.007–0.02 of the ring's mean over 6–8 kpc at
@@ -4056,6 +4056,24 @@ never been judged in twenty-three sessions.
    numbers on every ring (× 0.512), and a numeric pitch pin is held to the draw's own 1°–60°. The drawn pitch
    still has no sourced floor: the owner's, with a read source.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88, with #209's floor.
+   **DISCHARGED at S86 (M1, D254):** the reduction was built at S60 and the entry was not struck; measured at S86.
+   *The closer, met at S60* (D219 item 5): each harmonic of a piece's excess is multiplied by m/(X(|sin p_j| + m h/R))
+   (`pieces.forcing_factor`), the razor-thin m/(X sin p) times T = 1/(1 + k h), exact for the midplane force of an
+   exponential stellar layer on thin gas `[verified: Kim & Ostriker 2007, eqs. 4 and 8; docs/READING_ARM_PIECES.md
+   Part B §1, §1.8]`, with h the checkpoint-1 scale length over h_R/h_z = 7.3 `[verified: Kregel et al. 2002;
+   READING_ARM_PIECES.md Part B §2]` — a read source for the factor and a height the pattern's checkpoint may use
+   (A1), both of what the entry asked; the sech² layer's fit, up to 13.7 % higher, is the named alternative in the
+   constant. *The kill condition, read on today's model (layer on, production grid):* the gas's smallest s on any ring
+   **0.3465** on the Milky Way template (its median trough over 6–8 kpc 0.525; S57: 0.007–0.02) and **0.1244** on
+   `ngc_4414` (its innermost rings; 0.398 over 6–8 kpc; S58: under 10⁻⁹ from 0.26 to 3 kpc) — not under a tenth.
+   *The tightly wound draws:* over pattern seeds 0–299 of each template's inputs (`ngc_4414`'s pitch pin off), 17 and
+   18 draws fall under 2.7° and 7 each on the draw's 1° clip; at the clip the summed forcing amplitudes reach 6.9–8.6
+   (S57: Σf 60–79) and s runs 0.21–2.17 (S57: 10⁻⁷⁹ to 15), the forcing bounded by R/(X h) at any pitch as D219 item 5
+   derived. *#129's width*, this entry's second finding, narrowed by a fifth (0.466 → 0.3675; 0.512 → 0.390) and is
+   #144's now. *What leaves with it to other entries:* the swing window's own razor-thin X — the "many-armed" of the
+   arm-number law — is #138's; the floor on the drawn pitch, which this entry held for the owner since S57, is #209's
+   (no longer needed to keep the gas regular: "#142's floor question retires as physics", D219 item 5; a question of
+   the arms' geometry, the owner's word with a read source).
 143. **The stellar mode's fractional amplitude is applied to the whole disc's surface density** (S57, D216 gate G2
    item 5). The potential that forces the gas is that of Σ₁ = A_m Σ with Σ checkpoint 1's total disc — stars and gas
    together, the Σ of the arm-number law's X — because checkpoint 3 has no stellar/gas split (star formation
