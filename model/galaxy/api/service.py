@@ -60,6 +60,7 @@ from galaxy.core.cmaps import COLORMAPS
 from galaxy.core.fielddoc import SCALES, SYNTHETIC_DECLARATIONS, FieldDecl, Palette, Ramp
 from galaxy.core.grids import DEFAULT, Grid, GridSpec
 from galaxy.core.registry import (
+    EVENT_FIELDS,
     INPUT_CEILING,
     Input,
     MergerEvent,
@@ -761,7 +762,12 @@ def input_json(inp: Input) -> dict[str, Any]:
     elif inp.kind == "seed":
         payload |= {"default": int(inp.default)}  # type: ignore[arg-type]
     elif inp.kind == "events":
-        payload |= {"default": [_event_json(e) for e in inp.default]}  # type: ignore[union-attr]
+        # S86 (#186): each event number's range beside the default, as a control's lo/hi travels - the ranges
+        # MergerEvent holds an event to (registry.EVENT_FIELDS, the one statement of them); metadata, rule D4.
+        payload |= {
+            "default": [_event_json(e) for e in inp.default],  # type: ignore[union-attr]
+            "fields": [{"name": f.name, "unit": f.unit, "lo": f.lo, "hi": f.hi, "lo_open": f.lo_open} for f in EVENT_FIELDS],
+        }
     else:  # a pin (S58, D217): no default - not given, the model derives. /api/inputs does not list it.
         payload |= {"default": None}
     return payload
