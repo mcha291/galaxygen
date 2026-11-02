@@ -740,3 +740,38 @@ NOT established by what was read
   shock [Wada+ 2011; Dobbs & Baba 2014; Baba+ 2015]; no contrast law or number found.
 - Vandervoort 1970, Shu 1968, Binney & Tremaine 2008, Bertin & Lin 1996, Romeo 1994: not read; the first two are
   reported second-hand only.
+
+---
+
+## Part C — S87 (BUILD_V M1): where an arm starts, and a bar-driven amplitude against radius (debt #149), re-read here
+
+**The lead's note (2026-11-03).** No web access this session. Debt #149 asked for Chugunov et al. 2024's fitted arms'
+inner ends (a sourced inner taper for an unbarred disc's arms) and for a driven A2(r/a) from Salo et al. 2010. This is
+a re-reading of Part A above and of READING_BAR.md; nothing was fetched, the arithmetic is the lead's `[inferred]`.
+
+- **What Part A holds about an arm's inner end.** The arms' share of the azimuthally averaged light "peaks at a
+  distance of 1-2 disc radial scale lengths" and "goes to zero at the centre" (Chugunov 2024, Sect. 6.5, Fig. 17, 20,
+  conclusions (vii)); along an arm the radial brightness is "far from exponential in many cases", and **ends that are
+  sharp (no growth or cutoff zone) raise chi2 by more than 10 %, while Gaussian and cubic tapers fit equally (0.5 %
+  apart)** (Chugunov 2025, Sect. 3.2, 4.1); arms are traced "from the inner galaxy region (the ends of a bar or where
+  spirals begin to be visible beyond the main body of a bulge)" (Savchenko 2020, Sect. 6) — a method statement; the
+  innermost HII-traced segments lie at 1.09-2.63 kpc in four galaxies (Honig & Reid 2015, Tables 2-5); the inner
+  two-armed part ends at twice the bar radius in barred galaxies (Elmegreen & Elmegreen 1995, a search summary of
+  the abstract only). The arms' radial scale over the disc's, <h_s>/h, runs 0.09-7.58 per galaxy (Chugunov 2024,
+  Table 4).
+- **What it gives a model.** An inner end is a *growth zone* — measured to exist (a sharp start fits worse by over
+  10 %), its shape free between a Gaussian and a cubic — and the arms' share peaks at 1-2 h and is zero at the
+  centre. **No reader prints the growth zone's length or the start radius per galaxy** (in h or in r25), so a taper
+  would carry an unsourced length — the rule A4 / B9 case the entry already named. Today's model (S86's line in
+  GALAXY_INPUTS.md #149): the default galaxy pinned unbarred carries its largest rms contrast, 0.507, at 0.11 kpc,
+  and `ngc_4414` 0.086 there against its peak 0.40 at 2.03 scale lengths — the second is inside "1-2 h" and near
+  zero at the centre; the first is not.
+- **A driven A2 against r/a.** READING_BAR.md holds the bar's own A2 maximum, 0.23-0.41 at 0.76-0.94 r_bar (DG16b's
+  stacks; "No A2 values at 1.5 or 2 r_bar are tabulated", B2), Salo et al. 2010's correlation of the local bar
+  forcing with the local A2 out to ~1.4-1.6 R_bar with "No amplitude-against-radius table is printed" (B2), Buta et
+  al. 2009's spiral A2s 0.063-1.220 at maximum, and the spiral maximum at about 2 bar radii (Bu09). **No driven
+  amplitude as a function of r/a is in the repository.**
+- **The owner's reading.** Chugunov et al. 2024's per-galaxy arm parameters beyond Table 4's scale ratio — the fitted
+  start radius and growth-zone width of each arm (their decomposition's own parameters), which would source a taper's
+  length in h; and Salo et al. 2010's Figure of A2(r) beside Q_T(r) (or DG16b's stacked A2 profiles past r_bar) for a
+  driven amplitude against r/a.

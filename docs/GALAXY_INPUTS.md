@@ -4370,6 +4370,15 @@ never been judged in twenty-three sessions.
    al. 2024) fail. A shape with its peak's place is read (Chugunov's 1–2 h); an inner cut-off's form is not. Still
    carried — S87's reading list: Chugunov et al. 2024's arm profiles (§6–7, the fitted arms' inner ends) for a sourced
    inner taper, and a driven A₂(r/a) (Salo et al. 2010's figures, Bu09).
+   *S87 (M1):* **read: an inner growth zone is measured to exist, its length is not in the repository; no driven
+   A₂(r/a) either.** `READING_ARM_PIECES.md` Part C (a re-reading; no web access). Chugunov et al. 2024: the arms'
+   share is zero at the centre and peaks at 1–2 h; Chugunov et al. 2025: sharp ends raise χ² by over 10 %, Gaussian
+   and cubic tapers fit equally — so an inner taper is sourced in kind, not in length (no start radius or
+   growth-zone width per galaxy is printed; <h_s>/h runs 0.09–7.58). READING_BAR.md holds the bar's own A₂ maximum
+   (DG16b, 0.23–0.41 at 0.76–0.94 r_bar, nothing at 1.5 or 2 r_bar) and Salo et al. 2010's correlation to ~1.5
+   R_bar with "no amplitude-against-radius table". A taper with an unsourced length is the A4 / B9 case; nothing
+   built. Still carried; the owner's reading Chugunov et al. 2024's per-arm start and growth-zone parameters, and
+   Salo et al. 2010's A₂(r) figure (or DG16b's stacked profiles past r_bar).
 150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
    S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
