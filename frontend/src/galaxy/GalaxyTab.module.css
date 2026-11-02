@@ -119,25 +119,12 @@
   color: var(--text-muted);
 }
 
+/* A palette's categories, each the design system's Tag with its colour as the key (T17, S84). */
 .categories {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  margin-top: var(--space-3);
-  font: var(--weight-regular) var(--size-xs) / 1 var(--font-mono);
-  color: var(--text-body);
-}
-
-.categories span {
-  display: inline-flex;
-  align-items: center;
   gap: var(--space-2);
-}
-
-.categories i {
-  width: 10px;
-  height: 10px;
-  border-radius: 1px;
+  margin-top: var(--space-3);
 }
 
 .note {

@@ -7,9 +7,15 @@
   color: var(--text-muted);
 }
 
-.exposure input {
+/* The slider's place in the row: the Tooltip's anchor (T17, S84), as wide as the row leaves. */
+.slot {
   flex: 1;
   min-width: 80px;
+}
+
+.slot input {
+  width: 100%;
+  min-width: 0;
   accent-color: var(--magenta-3);
 }
 
@@ -22,7 +28,7 @@
 
 /* Phones: the row has to fit the preview's right column, 56% of the screen. */
 @media (max-width: 640px) {
-  .exposure input {
+  .slot {
     min-width: 48px;
   }
 

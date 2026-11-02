@@ -12,13 +12,15 @@ interface Props {
   align?: "center" | "start" | "end";
   /** The control it explains; it is described by the line (aria-describedby). */
   children: ReactElement<{ "aria-describedby"?: string }>;
+  /** A class for the anchor that holds the control and the line (to size it in its row). */
+  className?: string;
 }
 
 /**
  * The design system's Tooltip: a one-line explanation shown while its control is hovered or focused, gone on
  * Escape. The control is described by it, so the line is read without the pointer.
  */
-export function Tooltip({ content, placement = "top", align = "center", children }: Props) {
+export function Tooltip({ content, placement = "top", align = "center", children, className }: Props) {
   const id = useId();
   const [dismissed, setDismissed] = useState(false);
   const described = isValidElement(children)
@@ -26,7 +28,7 @@ export function Tooltip({ content, placement = "top", align = "center", children
     : children;
   return (
     <span
-      className={styles.anchor}
+      className={cx(styles.anchor, className)}
       data-dismissed={dismissed || undefined}
       onKeyDown={(e) => {
         if (e.key === "Escape") setDismissed(true);
