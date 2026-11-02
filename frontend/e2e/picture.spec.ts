@@ -970,6 +970,10 @@ test("physics only on the wire: every request for model data carries layer=off, 
   await press(page, MODE_BUTTON.field, MODE_BUTTON.stars);
   await press(page, "stars");
   await quiet(page, net);
+  // Since S82 (#172) the region regime draws the catalogue's points by default; V3's sample, kept behind the switch,
+  // asks the region's own stars: both readings walked.
+  await press(page, "sampled stars");
+  await quiet(page, net);
 
   const asked = forModelData(net.asked.slice(before));
   expect(asked.filter((a) => a.layer !== "off"), "requests made under physics only without layer=off").toEqual([]);

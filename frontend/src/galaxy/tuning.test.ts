@@ -97,6 +97,7 @@ describe("tuning defaults (D199)", () => {
       // S64 (V6): the HII regions as knots and the clusters with their radius, both on.
       knots: true,
       clusterRadius: true,
+      regionStars: "catalogue", // S82 (#172, the owner's ruling): the region regime draws the catalogue's points
       // S66 (V7, D226 R3-R5): the randomness layer in the march, each on (drawn only with the layer on).
       gasInMarch: true,
       spursInMarch: true,
@@ -346,7 +347,7 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
-    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "clusterRadius", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading", "knots"]);
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "clusterRadius", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading", "knots", "regionStars"]);
     // ...and, since S67 (D228, the owner's ruling), the extinction strength: linear from 0 to 2, at 1 the model's.
     for (const c of group.filter((c) => !c.switch && c.key !== "extinctionStrength")) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
     const strength = group.find((c) => c.key === "extinctionStrength")!;
@@ -444,7 +445,7 @@ describe("the tuning a landing's hold draws with (S82, #188)", () => {
 
   it("names as load keys exactly the values a request's key or a loader's mounting reads", () => {
     expect([...LOAD_TUNING_KEYS].sort()).toEqual(
-      ["cloudsExtinction", "compClouds", "compDust", "compGas", "compPoints", "compStars", "fieldFloor", "knots", "whiteKelvin"],
+      ["cloudsExtinction", "compClouds", "compDust", "compGas", "compPoints", "compStars", "fieldFloor", "knots", "regionStars", "whiteKelvin"],
     );
     for (const k of LOAD_TUNING_KEYS) expect(k in TUNING_DEFAULTS).toBe(true);
   });

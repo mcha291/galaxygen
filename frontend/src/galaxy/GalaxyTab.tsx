@@ -44,10 +44,11 @@ import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFram
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { type Tuning, defaultsFor, drawnTuning, heldTemplate, loadTuning, saveTuning } from "./tuning";
+import { TUNING_CONTROLS, type Tuning, defaultsFor, drawnTuning, heldTemplate, loadTuning, saveTuning } from "./tuning";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
 import { regimePlace } from "./drawerLayout";
+import { starLoads } from "./regionStars";
 import styles from "./GalaxyTab.module.css";
 
 // The regime caption's class by where it stands: left of the edit drawer while that is open (S82, #190).
@@ -138,6 +139,9 @@ const REGIMES = [
   { key: "sampled", label: "sampled", name: "Sampled points", what: "The whole-galaxy star sample over the field." },
   { key: "stars", label: "stars", name: "Stars", what: "This region's own stars, materialised at a sample size scaled to the view." },
 ] as const;
+// The stars regime at "region stars: catalogue" (S82, #172): the region's volumes with the star-first mode's points.
+const REGION_CATALOGUE_WHAT = "This region's clouds, HII regions and shells, with the bright catalogue's stars at their own light.";
+const REGION_STARS_WHAT = TUNING_CONTROLS.find((c) => c.key === "regionStars")?.about ?? "";
 
 /** The view width, kpc, each regime button takes the camera to. */
 const REGIME_VIEW_KPC = { field: 45, sampled: 12, stars: 2.5 } as const;
@@ -341,13 +345,18 @@ export function GalaxyTab({
 
   // The stars regime: the window around where the view looks, at a sample size scaled to it.
   const area = mode === "field" && view && weights.stars > 0 ? regionAround(view.target[0], view.target[2], view.across * 0.75) : null;
+  // Which star layers are asked and drawn (S82, #172; regionStars.ts): in the region regime the star-first mode's points
+  // at "catalogue" (the default), V3's sample and its display-colour clusters at "sampled"; the region's volumes at both.
+  const loads = starLoads(mode, tuning.regionStars, tuning.compPoints, area !== null);
+  // The field mode's region regime drawing the star-first points: its footprint, tiles and threshold are read as there.
+  const zoomPoints = mode === "field" && loads.points;
   const inWindow = useMemo(() => {
     if (!area) return 0;
     const c = sample.columns as Record<string, ArrayLike<number>>;
     return starsInWindow(c.star_radius, c.star_azimuth, area);
   }, [sample, area?.r_min, area?.r_max, area?.phi_min, area?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
   const regionStars = area ? regionSampleSize(STAR_SAMPLE, inWindow, REGION_TARGET_STARS, REGION_MAX_STARS) : 0;
-  const regionKey = area ? JSON.stringify([area, regionStars, query]) : null;
+  const regionKey = area && loads.sampled ? JSON.stringify([area, regionStars, query]) : null;
   // Keyed on the view (a zoom mounts it mid-drag): its first key settles too (S78, useLoad's firstAtOnce). The camera's
   // load: moved during a swap, it holds none (S82, #187; useLoad's `view`).
   const areaView = area ? JSON.stringify(area) : null;
@@ -358,7 +367,8 @@ export function GalaxyTab({
   const clustersKey = area ? JSON.stringify([area, level, query]) : null;
   const regionClusters =
     useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
-  const shownClusters = area && regionClusters ? regionClusters : null;
+  // V3's display-colour cluster points (the sampled reading's); RegionVolume reads the census at both positions.
+  const shownClusters = area && loads.sampled && regionClusters ? regionClusters : null;
   const clusterPositions = useMemo(() => {
     if (!shownClusters) return null;
     const c = shownClusters.columns as Record<string, ArrayLike<number>>;
@@ -385,15 +395,15 @@ export function GalaxyTab({
   const R = meta.grid.axes.R;
   // The whole disc (fieldLoads.ts, S80: the window App asks the clouds' census ahead with is this one).
   const wholeDisc = wholeDiscOf(meta);
-  const seen = mode === "stars" && view ? footprint(view.camera.viewProjection, rMax) : null;
-  const pointsOn = mode === "stars" && tuning.compPoints;
+  const seen = (mode === "stars" || zoomPoints) && view ? footprint(view.camera.viewProjection, rMax) : null;
+  const pointsOn = loads.points;
   const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
   // S82 (#187): the counts, the tiles and the field's remainder follow the table's answer. Inside a swap they read it as
   // soon as it is held (`next`), and wait on the swap while it has not come (`settling`, their `after`), so the swap
   // publishes once with them in. The table itself is never drawn; outside a swap `next` is its value.
   const tableLoad = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal));
   const brightTable = tableLoad.next ?? null;
-  const tileLevel = mode === "stars" && view ? levelFor(view.across) : 0;
+  const tileLevel = (mode === "stars" || zoomPoints) && view ? levelFor(view.across) : 0;
   // Where the camera's footprint stands, as the star-first loads read it: what moves them as the user moves (#187's
   // `view` - the camera's loads hold no swap once it has moved).
   const seenView = seen ? JSON.stringify([tileLevel, seen.r_min, seen.r_max, seen.phi_min, seen.phi_max]) : null;
@@ -549,13 +559,16 @@ export function GalaxyTab({
   const knotsShown = knotsDrawn && knotPoints ? knotPoints : null;
   // One gain for the field and the points (D208): the field's per L☉/pc², its gain and the exposure's stops; the
   // point gain stays a display multiplier on the points (D199).
-  const pointsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * pointGain;
+  // In the field mode's region regime (S82, #172) the points fade in over the handover at the region's weight, as V3's
+  // sample did (1 below 2 kpc, so at the zoom stands the star-first mode's own gain).
+  const pointsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * pointGain * (zoomPoints ? weights.stars : 1);
   // The march's dust, handed up by the field volume for the segment to each point (T20): only as it acts.
   const [fieldDust, setFieldDust] = useState<PointDust | null>(null);
   // The extinction strength (S67, D228): the march's textures with every depth to a point at the slider; at 1 the same object.
   const strength = look.extinctionStrength;
   const scaledDust = useMemo(() => (fieldDust && strength !== 1 ? { ...fieldDust, depthScale: strength } : fieldDust), [fieldDust, strength]);
-  const pointDust = mode === "stars" && look.compDust && look.dustReading === "acts" ? scaledDust : null;
+  // In the field mode's region regime (S82, #172) the field's march's dust, as it acts there, as the knots read it.
+  const pointDust = mode === "stars" ? (look.compDust && look.dustReading === "acts" ? scaledDust : null) : zoomPoints ? scaledDust : null;
   // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
   const knotDust = mode === "field" ? scaledDust : null;
   const knotsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * weights.field;
@@ -715,6 +728,7 @@ export function GalaxyTab({
             cloudsOn={tuning.cloudsExtinction}
             hiiShare={knotsShown ? knotsShown.share : null}
             onDust={setFieldDust}
+            onStarsLayer={setStarsLayer}
             onRingEdges={onRingEdges}
           />
         )}
@@ -927,6 +941,20 @@ export function GalaxyTab({
           </div>
         </div>
 
+        {/* The field mode's stars below 4 kpc (S82, #172; the owner's ruling): the catalogue's points or V3's sample. */}
+        {mode === "field" && (
+          <div className={styles.section}>
+            <div className={styles.label}>Region stars</div>
+            <div className={styles.chips} role="group" aria-label="Region stars">
+              {(["catalogue", "sampled"] as const).map((value) => (
+                <button key={value} type="button" aria-pressed={tuning.regionStars === value} title={REGION_STARS_WHAT} onClick={() => setComponent({ regionStars: value })}>
+                  {value} stars
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {mode === "stars" && (
           <div className={styles.section}>
             <div className={styles.label}>Components</div>
@@ -1077,8 +1105,16 @@ export function GalaxyTab({
                         ? `; the cells expecting under one star in view are not asked: ${formatNumber(tileFetch.loss, 3)} expected stars of ${formatNumber(tileFetch.inView, 4)} in view`
                         : ""
                     }. The field under them is the light no point carries. Click a point for its numbers.`
-            : `${regime.what} ${
-                weights.active === "stars"
+            : `${weights.active === "stars" && !loads.sampled ? REGION_CATALOGUE_WHAT : regime.what} ${
+                weights.active === "stars" && zoomPoints
+                  ? !bright
+                    ? `Asking the cells in view at the threshold a budget of ${brightestN.toLocaleString("en")} allows.`
+                    : `${bright.header.count.returned.toLocaleString("en")} catalogue stars: every disc star in the ${bright.header.tiles.inView.toLocaleString("en")} cells in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
+                        clusterCensus ? `, and ${(clusterCensus.columns.cluster_radius?.length ?? 0).toLocaleString("en")} clusters` : ""
+                      }, each its own light (region stars: catalogue).`
+                  : weights.active === "stars" && !loads.sampled
+                  ? "The star points are switched off."
+                  : weights.active === "stars"
                   ? region.busy || !detail
                     ? "Loading this region's stars."
                     : `${detail.header.stars.materialised.toLocaleString("en")} stars here, of a ${regionStars.toLocaleString("en")}-star galaxy.`

@@ -10,6 +10,7 @@
 // 100 L☉ stay where they are and are tuned by a multiplier of 1.
 
 import { WHITE_KELVIN } from "./filters";
+import type { RegionStars } from "./regionStars";
 import { CLOUD_RASTER } from "./cloudOpacity";
 import { CLOSE_FIELD_FLOOR, SUB_SAMPLES_MAX } from "./regimes";
 
@@ -138,6 +139,8 @@ export interface Tuning {
   knots: boolean;
   /** A cluster drawn with its Plummer profile once its half-mass diameter fills a pixel. */
   clusterRadius: boolean;
+  /** The field mode's region regime's stars (S82, #172): the bright catalogue's points, or V3's sample (regionStars.ts). */
+  regionStars: RegionStars;
   // The randomness layer in the march (S66, BUILD_III V7; D226 R3-R5): each a function the model publishes, evaluated
   // once per ray as a thin screen at the ray's midplane crossing, the value multiplying each sub-step's placement; with
   // the layer off ("physics only") none is drawn whatever its switch.
@@ -188,6 +191,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   cloudElongation: 1,
   knots: true,
   clusterRadius: true,
+  regionStars: "catalogue",
   gasInMarch: true,
   spursInMarch: true,
   clumpsInMarch: true,
@@ -432,6 +436,16 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "about 1 kpc across. A display choice.",
   },
   {
+    key: "regionStars", label: "region stars", group: "Components", kind: "select", switch: true,
+    options: [{ value: "catalogue", label: "catalogue" }, { value: "sampled", label: "sampled" }],
+    about:
+      "The field mode's stars below 4 kpc across (S82, #172; the owner's ruling of 2026-11-02). catalogue: the " +
+      "star-first mode's points - every disc star in the level-k cells in view above the frame's threshold and every " +
+      "cluster, each its own light through the filter set on the field's scale (V6b), faded in over the handover with " +
+      "the region's weight. sampled: V3's reading, the region's star sample and its clusters as display-colour points, " +
+      "kept for comparison. The region's clouds, HII regions and shells are drawn at both. A display choice.",
+  },
+  {
     key: "cloudElongation", label: "cloud elongation", group: "March", kind: "range", min: 0, max: 2, step: 0.05, unit: "power",
     about: "Each cloud's face-on shape in the clouds' raster (S67, D230, the owner's choice: \"Stretch clouds along arms\"): an ellipse of the cloud's own area, its long axis along the gas fluctuation field's local shear (the gas_fluctuation strain per ring, D221), its axis ratio that shear's own, lambda+ = 1 + k^2/2 + |k| sqrt(1 + k^2/4) (5.8 inside 2 kpc, 2.7 at the Sun's radius on the Milky Way), raised to this power: 0 round, 1 the field's. Every cloud's A_V x area is conserved at any value; with the randomness layer off there is no field and the clouds are round. A display choice.",
   },
@@ -633,7 +647,8 @@ function safeStorage(): Storage | null {
  * The tuning values that enter a request's key or decide which loaders are mounted (S82, #188's follow-up): the white
  * point (the render's, the blackbody table's, the clusters' and the tiles' requests), the clouds as extinction and the
  * clouds' markers (whether the whole disc's census is asked), the star points (the bright table, the tiles, the
- * clusters), the knots (the clusters through the set in the field mode), the field's floor (which regime the zoom is
+ * clusters), the knots (the clusters through the set in the field mode), the region's stars (S82, #172: the star points
+ * or V3's sample below 4 kpc in the field mode), the field's floor (which regime the zoom is
  * in, so whether a region's stars and clusters are asked) and the star-first mode's three volume switches (whether its
  * march, and so its render, is mounted). Every other value only changes how what has arrived is drawn.
  */
@@ -643,6 +658,7 @@ export const LOAD_TUNING_KEYS = [
   "compClouds",
   "compPoints",
   "knots",
+  "regionStars",
   "fieldFloor",
   "compStars",
   "compGas",
