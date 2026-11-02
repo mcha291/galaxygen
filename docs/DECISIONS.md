@@ -15572,3 +15572,145 @@ test's: #209, for the owner (the remedy #142 already names).
 
 **The register.** −1, +1: **#207 discharged** (its "first assert" corrected to the midpoint's); **#209 opened** (the
 per-piece pitch draw has no floor) — 134 open = 11 permanent + 123 carried, 57 discharged.
+
+
+### D244. S80, debt #208: the field's loads asked beside the star sample and three's shader checks off in production (remedies a and c built, e closed by measurement; b and d carried)
+
+**The commission.** The owner's word of 2026-11-02 ("continue with the project") taken on `BRIEF.md`'s first agent item
+after S79: #208's remedies that are the viewer's alone — (a) the field's loads asked beside the sample, (c) three's
+`checkShaderErrors` off in production, (e) a first key deferred past the mount's tick, each measured, the frames byte
+for byte; (b) the mesh's build and (d) the Canvas kept across a switch (a display ruling, D213 ruling 5) out of scope.
+A Fable lead on `session-80` (cut from `main` at ca41ccd, S79's close), one Opus builder in a worktree on `s80-landing`,
+the lead cherry-picking; no board row (a debt session, as S79), nothing under `model/galaxy` (the hash f1fbbb17… stands),
+the shader snapshot untouched.
+
+**As built (two commits, 7446827 and 25d3c74 on `session-80`).** *(a)* `frontend/src/galaxy/fieldLoads.ts` names the
+field mode's loads once — the declared scalar arrays (`fieldArrayNames`), whether the light is declared (`fieldLit`),
+the whole disc's window (`wholeDiscOf`) — and `FieldVolume` and `GalaxyTab` now read their keys from it, so the head
+start and the loader cannot drift apart. While the Galaxy tab waits on the star sample (`App.tsx`: the shown query
+exists, the declarations are the shown model's, the landing's filter set has been taken — a new `viewOf` state set in
+the landing effect — and the tuning is the one the tab will read), one task after the sample's own request `askFieldAhead`
+asks the arrays, the whole render at the tuning's white point, the layer's tables and, where the template draws its
+clouds as extinction, the whole disc's census — each by the loader's own function with the loader's own arguments. The
+render and the layer go into `api.ts`'s held answers as before; the arrays and the census into a new `askAhead` /
+`aheadOf` map, one request per key, taken by the first loader that asks the same key and by no other (a later ask is a
+request of its own, as before); a taker's abort aborts the request; one galaxy's head start is kept, another query's
+drops the last, aborted; `forgetRenders` drops them (the tests). The swap (D232) is untouched: a head start is not a
+loader and holds nothing. Seven `fieldLoads.test.ts` cases: the keys the mount builds and the head start's are one set,
+asked once, the mount asking nothing again; no census where the clouds are not drawn as extinction, nothing for a model
+with no light; taken once; the taker's abort; one galaxy's head start; the render through a filter set the same request.
+*(c)* `frontend/src/galaxy/renderer.ts`: `SHADER_CHECKS = !import.meta.env.PROD`, and `galaxyRenderer(defaults)` builds
+the `WebGLRenderer` react-three-fiber (9.7) would have built from `gl={{ alpha, antialias }}` — its defaults with those
+two over them — with `debug.checkShaderErrors` set before anything compiles; `GalaxyView`'s Canvas takes `gl={galaxyRenderer}`.
+True in `vite build` (the picture test, the probe and the images), false under the dev server and vitest (a case asserts
+it). Counted on a landing with a scratch Playwright hook over the WebGL2 prototype: `getProgramInfoLog` 12 → 0 and
+`getShaderInfoLog` 24 → 0 in the production build, 12 / 24 still on a dev server of the same code. *(e) not built.* A
+variant (branch `s80-e-raf`, b2333d2, kept as evidence, not merged: a loader's first key at the next animation frame,
+`setTimeout(0)` without one) saved no request: the walk reads 303 requests and 55 distinct keys with it and without.
+The walk re-run with every first key settling (R3 undone) reproduces 264 — the 39 are the default landing's own loads
+(the Milky Way's arrays ×10, its clusters, clouds, render and layer ×5 each, NGC 4414's arrays ×3), sent because the
+walk's specs press another template 200–400 ms after the canvas appears, inside the settle R3 removed; they complete
+(0–1 aborted per walk) and no deferral short of a settle removes them, and that settle is the 0.35 s per loader R3 took
+off the landing. A frame-deferred first key would also hold a background-opened tab until it is shown. (e) closes by
+measurement: the 303 is the landing's, not a side effect to remedy.
+
+**The gates (the builder's, from files under `galaxygen-s80\gates\`, tree b9b597e = 25d3c74).** vitest 489 passed, 1
+skipped (43 files: 481 + 7 `fieldLoads` + 1 `renderer`), EXIT=0; `typecheck` and `typecheck:e2e` EXIT=0; the picture
+test with `GALAXY_BUNDLES` on 8019: 15 passed, EXIT=0, all 9 captures the committed picture byte for byte; the walk's
+request set 303 requests / 55 distinct keys before and after, the key sets identical (two view-keyed `/api/bright` tile
+POSTs at the zoom stands move by ±1 between runs either way); no `fetch(` added (D2). The lead's review: the whole-disc
+window `wholeDiscOf` is GalaxyTab's own (`R.hi ?? 30`), the head start fires only for the shown query at a swap, the
+`gl` function is 9.7's (it receives the defaults).
+
+**Measured beside S79's `verify_clone` suite (not the table of record; both runs under the same load, back to back,
+seconds, run 1 / median of runs 2–5; `galaxygen-s80\landing-before`, `landing-after-ac`).** Warm first paint 1.58 /
+0.79 (0.78–1.06) → 2.08 / 0.85 (0.79–0.89); switch 0.87 → 0.93 / 0.91; switch back 0.61 → 0.59; star-first 0.61 → 0.68;
+zoom 0.52 → 0.52; gateway-cold first paint 2.23 → 1.94; model-cold first paint 2.37 → 2.23; model-cold zoom (F5) 26.9 →
+24.9; every other cold step within 0.05 s. Attributed with a scratch timeline instrument (time to the field drawn,
+`galaxygen-s80\timeline\`): warm browser, runs 2+, medians 613 / 660 ms before (n = 5, 10) against 661 / 650 / 652 after
+— unchanged within 30 ms; fresh browser with the shader cache off, n = 10 each, 1 151 → 1 116 ms, the slow runs where the
+compile starts at ~770 ms 4 of 10 → 2 of 10 — so the probe's single run-1 readings (1.58 → 2.08) are noise. Why (a) gains
+nothing warm here: on localhost the answers are not the critical path — the last answer now lands at ~0.19 s (0.86 →
+0.25 s on the wire, run 1), but the field draws only after the Canvas mounts, the mesh is built and the compile ends (a
+long task at ~0.41 s); its one cost, answers arriving during the Canvas mount push the compile's start back ~40 ms
+(217–224 → 258–263 ms). Where answers take time it pays: gateway-cold −0.29 s, model-cold −0.14 s (runs 2–5) — the
+deployed wire (#204), unmeasured. (c)'s 15–27 ms is not separately visible inside the probe's 0.26 s bracket.
+
+**The lead's ruling on (a), to the owner's confirmation.** Kept: the request set and the frames unchanged, the warm
+landing unchanged within noise on this machine, every cold state better, and the mechanism's gain lies on the network
+the viewer is deployed to; the quiet table below and the deployed probe (#204) rule its stay. Not the lead's: the
+blackbody table GalaxyTab asks on mount for the stars' colours is not among D242's four loads and is not asked ahead
+(a fifth, if the owner wants it, measured the same way).
+
+**The table of record (quiet, after (a) and (c); the stand of D240 — the model with its bundles on :8050, the pinned
+gateway on :8060, the probe's own build; `galaxygen-s80\quiet`; seconds, run 1 a fresh browser, then the median of runs
+2–5 with their range; the bound ruling 10's).**
+
+| state | step | ready, run 1 | ready, runs 2–5 (range) | api wait | client (lower bound) | long tasks | longest `/api` | over the bound |
+|---|---|---|---|---|---|---|---|---|
+| model-cold | first paint | 1.52 | 1.56 (1.54–2.25) | 0.29 | 1.28 | 0.59 | templates 0.15 s, 10 KB, miss / bundle | 0 / 5 (5 s) |
+| model-cold | switch → NGC 4414 | 0.94 | 0.91 (0.84–0.95) | 0.14 | 0.74 | 0.17 | region 0.21 s, 1759 KB, miss / bundle | 0 / 5 (5 s) |
+| model-cold | switch back | 0.58 | 0.57 (0.56–0.58) | 0.06 | 0.51 | 0.19 | clusters 0.12 s, 3626 KB, hit / bundle | 0 / 5 (5 s) |
+| model-cold | star-first | 0.67 | 0.66 (0.66–0.67) | 0.16 | 0.51 | 0.06 | render 0.09 s, 12 KB, miss / bundle | 0 / 5 (5 s) |
+| model-cold | zoom | **23.45** | **23.18** (22.93–23.24) | 22.70 | 0.48 | 0.00 | bright 13.33 s, 218 KB, miss / model | 5 / 5 (5 s) |
+| gateway-cold | first paint | 1.82 | 1.93 (1.57–2.24) | 0.29 | 1.64 | 0.93 | templates 0.15 s, 10 KB, miss / bundle | 0 / 5 (5 s) |
+| gateway-cold | switch → NGC 4414 | 0.90 | 0.92 (0.87–0.94) | 0.11 | 0.81 | 0.13 | render 0.07 s, 2683 KB, miss / bundle | 0 / 5 (5 s) |
+| gateway-cold | switch back | 0.57 | 0.58 (0.55–0.60) | 0.07 | 0.51 | 0.21 | clusters 0.07 s, 3626 KB, hit / bundle | 0 / 5 (5 s) |
+| gateway-cold | star-first | 0.59 | 0.62 (0.58–0.66) | 0.07 | 0.54 | 0.06 | bright 0.08 s, 243 KB, miss / bundle | 0 / 5 (5 s) |
+| gateway-cold | zoom | 1.30 | 1.31 (1.31–1.32) | 0.77 | 0.55 | 0.00 | render 0.61 s, 12 KB, miss / model | 0 / 5 (5 s) |
+| warm | first paint | **2.08** | 0.81 (0.80–0.87) | 0.13 | 0.67 | 0.07 | render 0.09 s, 3003 KB, hit / bundle | 1 / 5 (1 s) |
+| warm | switch → NGC 4414 | 0.92 | 0.84 (0.83–0.94) | 0.14 | 0.69 | 0.16 | region 0.10 s, 1759 KB, hit / bundle | 0 / 5 (1 s) |
+| warm | switch back | 0.56 | 0.58 (0.56–0.59) | 0.06 | 0.52 | 0.20 | clusters 0.06 s, 3626 KB, hit / bundle | 0 / 5 (1 s) |
+| warm | star-first | 0.67 | 0.65 (0.58–0.66) | 0.03 | 0.63 | 0.06 | bright 0.03 s, 197 KB, miss / bundle | 0 / 5 (1 s) |
+| warm | zoom | 0.52 | 0.53 (0.51–0.53) | 0.05 | 0.48 | 0.00 | bright 0.03 s, 218 KB, hit / model | 0 / 5 (1 s) |
+
+The starts: model 1.06 s (median of 5), gateway 0.57 s (median of 10); the hash f1fbbb17…; the probe every 264 ms, its
+own cost 27 ms a call (median of 1 451, 90th percentile 39), a duty cycle of 10 % of the page's main thread. Against
+D242's table of record (the same stand, runs 2–5 medians): warm first paint 0.79 → 0.81, switch 0.85 → 0.84, switch
+back 0.59 → 0.58, star-first 0.63 → 0.65, zoom 0.52 → 0.53 — the warm steps unchanged within their ranges, as the
+timeline instrument said; **model-cold first paint 2.13 → 1.56 and gateway-cold first paint 2.54 → 1.93**, each ~0.6 s
+better where the answers were the critical path — the gain beside the suite (0.14–0.29 s) was the loaded machine's;
+model-cold switch 0.88 → 0.91; the model-cold zoom 24 → 23.2 (F5, the owner's, the one step over its bound). The warm
+run 1 (2.08) is the fresh browser's program build, as D242's 1.85 was — over the 1 s bound on run 1 alone, which the
+bound does not read (G7). Every step of runs 2–5 inside its bound but F5, as before.
+
+**S79's owed readings, taken at this close.** `verify_clone --ref main` at ca41ccd (S79's merge and its row 79): OK, EXIT=0, 1727 passed / 6 skipped / 1 xfailed in 5 h 32 (the pricing flake absent); `main`'s `ci` runs 41358163991 (06eb29a) and 41358192972 (ca41ccd) green, their `image` runs too. Nothing is owed from S79.
+
+**The close.** On the owner's ruling of this day (D245) the session's full suite was stopped at 76 % with no failure to
+that point and the close ran on the fast gates: vitest 489 passed / 1 skipped (43 files), `typecheck` and `typecheck:e2e` EXIT=0, the picture test 14 passed with the committed captures byte for byte (`GALAXYGEN_PICTURE=1`, the bundles), the docs and register tests after the close's edits (`gate_*.log` in the session's scratchpad). `main`'s `ci` run on the merge is the suite, read at the next
+open.
+
+**What this is not.** No change under `model/galaxy`, no change to the shader program or its snapshot, no change to any
+request's key or body, no change to what is drawn (the 15 captures byte for byte); no bound moved; (b) and (d) not
+built — (d) the owner's (keeping the Canvas keeps the camera: D213 ruling 5 says a landing's camera is fresh).
+
+**The register.** #208 stays open, its (a) and (c) built, its (e) closed by measurement, its (b) and (d) carried: 135
+open = 11 permanent + 124 carried, 57 discharged, no number moved.
+
+
+### D245. The close's gate scoped to the change: a session with nothing changed under `model/galaxy` closes on the fast gates and CI's full run on `main` (rule C7 amended; the owner's ruling of 2026-11-02)
+
+**The question.** The owner, with S80's suite at 58 %: "it seems like we're spending vastly more time waiting for CI to
+run than doing any implementation, is this really necessary?" The lead's reading: every close since S72 ran the full
+suite on the session branch (3–5.5 h) and then `verify_clone` of `main` after the merge (5.5–6 h), one after the other,
+while CI runs the same suite on `main` (~3 h, in parallel, free) less the 21 `machine_pinned` cases; S80 changed ~200
+lines of frontend TypeScript and no byte under `model/galaxy` (the hash f1fbbb17… stands since S77), which the model's
+1 700 tests cannot see, and the gates that can see it take ~15 min; and `main` has not moved between a session's suite
+and its merge at any close since S72, so `verify_clone` re-ran the tree the session's suite had just run.
+
+**The ruling.** The owner: "Yes, fast gates", on the lead's proposal. (1) A viewer-only session — no byte under
+`model/galaxy` changed, the hash the same before and after — closes on the fast gates: vitest, `typecheck`,
+`typecheck:e2e`, the picture test's captures byte for byte, the walk's request set where a request could change, and the
+docs and register tests (`test_docs`, `test_progress`, `test_audit`, `test_hook`, `test_graph`); its full suite is CI's run
+on `main` after the merge, read at the next open. No local full suite, no `verify_clone`. (2) A model session keeps the
+local full suite once at close (CI skips this machine's pins); `verify_clone` only where that suite did not run on the
+tree merged, or `main` moved between the suite and the merge. (3) The 88-minute pieces gate test may move to the nightly
+run — not done here; a model session's, on the owner's word. Rule C7 amended, RESUMING's close order and GALAXY_PLAN §5's
+row with it.
+
+**Applied at once.** S80's suite was stopped at 76 % with no failure to that point (`suite_s80.log` in the session's
+scratchpad); the smoothness probe ran on the idle machine for D244's table of record; S80 closed on the fast gates;
+`verify_clone` not run; `main`'s `ci` run on the merge is S80's suite, read at the next open.
+
+**What this is not.** No test moved, marked or widened; the suite's content and CI's schedule (D241) unchanged; the
+machine pins still run here at every model session's close.

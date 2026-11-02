@@ -142,6 +142,9 @@ export interface Frame {
  * the star catalogue.
  */
 export async function loadArrays(names: string[], query: Query = {}, signal?: AbortSignal, sampling?: Sampling): Promise<Frame> {
+  // S80 (#208 a): the field's arrays asked ahead of their loader are taken here, once (aheadOf, below).
+  const ahead = sampling ? null : aheadOf<Frame>(JSON.stringify(["arrays", names, query]), signal);
+  if (ahead) return ahead;
   const params = sampling ? { ...query, t_samples: sampling.tSamples, precision: sampling.precision } : query;
   const got = await arrays(names, params, { signal });
   return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"], ran: got.stages as string[] };
@@ -228,6 +231,9 @@ export type RegionWindowQuery = { r_min: number; r_max: number; phi_min: number;
  * for float32 (S64): the whole disc's census the clouds' opacity raster is built from, about 1.6 MB against 2.8.
  */
 export async function loadClouds(window: RegionWindowQuery, query: Query, signal?: AbortSignal, precision?: "f4" | "f8"): Promise<Census> {
+  // S80 (#208 a): the whole disc's census asked ahead of its loader is taken here, once (aheadOf, below).
+  const ahead = aheadOf<Census>(JSON.stringify(["clouds", window, query, precision ?? null]), signal);
+  if (ahead) return ahead;
   const got = await clouds(window, precision ? { ...query, precision } : query, { signal });
   return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
@@ -499,10 +505,77 @@ const REGION_PARAMS = ["r_min", "r_max", "phi_min", "phi_max", "level"];
 const WHOLE_RENDERS_HELD = 2;
 const wholeRenders = new Map<string, Promise<RenderFrame>>();
 
-/** Drop the held whole renders and layer answers (tests: each stands its own API up). */
+/** Drop the held whole renders and layer answers, and every answer asked ahead (tests: each stands its own API up). */
 export function forgetRenders(): void {
   wholeRenders.clear();
   layerAnswers.clear();
+  dropAhead();
+}
+
+// --- a head start (S80, #208 (a)) ------------------------------------------------------------------------------------
+//
+// The field's loads (the arrays, the whole render, the layer's tables, the whole disc's cloud census) were asked only
+// once the star sample had answered and the Galaxy tab had mounted the field (S78's profile: ~0.3 s of the landing's
+// chain). Asked ahead (galaxy/fieldLoads.ts askFieldAhead, from App beside the sample), each is the very request its
+// loader makes later, by the same function with the same arguments, so the request set is the same: the whole render
+// and the layer's tables through their held answers above, and the arrays and the census through `ahead` here - one
+// request per key, taken by the first loader that asks the same key and by no other (a later ask is a request of its
+// own, as before). A taker's abort aborts the request, as its own request's would have; only one galaxy's head start
+// is kept (a head start for another query drops the last, aborted).
+
+/** The answers asked ahead and not yet taken, by request key; and the query they were asked for. */
+const ahead = new Map<string, { answer: Promise<unknown>; abort: AbortController }>();
+let aheadFor: string | null = null;
+
+/** Abort and forget every answer asked ahead and not taken. */
+function dropAhead(): void {
+  ahead.forEach((a) => a.abort.abort());
+  ahead.clear();
+  aheadFor = null;
+}
+
+/** Ask `key` ahead of its loader: once, unless it is already asked; a head start for another galaxy drops the last's. */
+function askAhead(galaxy: string, key: string, ask: (signal: AbortSignal) => Promise<unknown>): void {
+  if (aheadFor !== galaxy) dropAhead();
+  aheadFor = galaxy;
+  if (ahead.has(key)) return;
+  const abort = new AbortController();
+  const answer = ask(abort.signal);
+  answer.catch(() => undefined); // a failure is its taker's to read; one never taken is nobody's
+  ahead.set(key, { answer, abort });
+}
+
+/** The answer asked ahead for `key`, taken (no one else gets it), or null: asked by its taker's signal from here on. */
+function aheadOf<T>(key: string, signal?: AbortSignal): Promise<T> | null {
+  const got = ahead.get(key);
+  if (!got) return null;
+  ahead.delete(key);
+  if (signal) {
+    if (signal.aborted) got.abort.abort();
+    else signal.addEventListener("abort", () => got.abort.abort(), { once: true });
+  }
+  return untilAborted(got.answer as Promise<T>, signal);
+}
+
+/** The arrays `loadArrays(names, query)` asks, asked now (galaxy/fieldLoads.ts). */
+export function askArraysAhead(names: string[], query: Query): void {
+  askAhead(JSON.stringify(query), JSON.stringify(["arrays", names, query]), (signal) => loadArrays(names, query, signal));
+}
+
+/** The census `loadClouds(window, query, _, precision)` asks, asked now (galaxy/fieldLoads.ts). */
+export function askCloudsAhead(window: RegionWindowQuery, query: Query, precision?: "f4" | "f8"): void {
+  askAhead(JSON.stringify(query), JSON.stringify(["clouds", window, query, precision ?? null]), (signal) => loadClouds(window, query, signal, precision));
+}
+
+/** The whole render `loadRender(curves, white, query)` asks, asked now: its held answer (wholeRender). */
+export function askRenderAhead(curves: Curve[], white: number, query: Query): void {
+  if (REGION_PARAMS.some((p) => p in query)) return; // a region's render is not held: never asked ahead
+  void wholeRender(curves, white, query).catch(() => undefined);
+}
+
+/** The layer's tables `loadLayer(query)` asks, asked now: its held answer. */
+export function askLayerAhead(query: Query): void {
+  void loadLayer(query).catch(() => undefined);
 }
 
 function untilAborted<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
