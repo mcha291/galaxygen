@@ -4479,6 +4479,12 @@ never been judged in twenty-three sessions.
    fits themselves are disputed since (Perseus 0.2–0.4 kpc further out; two bifurcating inner arms, Xu et al.
    2023, ApJ 947, 54). **Carried, with the owner** (with #138): a ridge per arm for a pinned template is a change of plan.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88, with the owner (a ridge per arm for a pinned template is a change of plan: the owner's word in the batch's first session).
+   *S87 (M1):* **the owner's ruling of 2026-11-03 (D255): no ridge per measured arm — the arm law is kept** (with
+   #138). The Milky Way template keeps its pinned chains on the measured loci and the arm-number law's chains
+   elsewhere, and this entry stays the disclosed check it has been since S59, with no verdict
+   (`tests/test_pieces.py`'s maser record, re-pinned at S87 where the clock, the floor and the bar's pinned length
+   moved it). Nothing to build. **Ruled permanent at S88's close** (Fable moves the rows then): the representation's
+   limit on the Milky Way's measured arms is the plan's, by the owner's word.
 153. **NGC 4414's measured pitch is 2.4σ from the pitch law's draw** (S59, D218 item 6). Five 3.6 µm segments
    average 28.9° ± 6.0° `[verified: Herrera-Endoqui et al. 2015, A&A 582, A86, Table 3; docs/READING_ARM_SEGMENTS.md]`;
    the law's mean from the shear plus its 6° draw gives 14.33° on the template's seed. The template pins `pitch_angle` = 28.9° (the law's
