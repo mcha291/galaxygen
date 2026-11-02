@@ -4443,6 +4443,32 @@ never been judged in twenty-three sessions.
    which across a nearly circular piece misplaces a ring gap's young light (16–91 % at S59): "a wound read in the
    render", the api's code under the model's hash, for S87 — and the azimuth drawn from 25 samples across a sector
    (1.5e-2 from the function's CDF at worst).
+   *S87 (M1):* **both halves measured on today's model; neither is built, and the render's is re-ruled a viewer
+   pass's.** *The render's read.* The render ships the 20–100 Myr part's weight as `sfr_modulation` over its ring mean
+   on the grid's rings (`stars_middle_placement`) and every other (R, φ) weight the same way; the viewer interpolates
+   each linearly in R at a fixed φ — the API computes no point between rings. Measured (layer on) at the middle of
+   every gap the table modulates (138 / 138 / 133 gaps, 2.1–12.3 kpc on the Milky Way inputs, holding 69 / 69 / 60 % of
+   today's star formation) against the young stars' own reader there (`Modulation.sector_means_at` at the mid-gap
+   radius), by S59's statistic (half the mean |difference| of two profiles each over its mean): **the default galaxy
+   worst 5.6 % at 2.10 kpc, 0.41 % weighted by star formation; the Milky Way template worst 26.0 % at 5.93 kpc, 1.31 %
+   weighted, three gaps over 10 % holding 3.1 % of its star formation; `ngc_4414` worst 7.1 % at 0.68 kpc, 0.69 %
+   weighted** (`tests/test_audit.py::test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_stars_reader_between_rings`
+   pins all three). S59's 16–91 % was the common winding's, gone since S60. **Why not built here:** the wound read S59
+   named (each ring's row at φ − (Φ(r) − Φ(R_ring))) has no single Φ since D219 — every chain of pieces winds on its
+   own and the bar's footprint does not wind — so it is not one offset per ring the API could ship; and the API-side
+   alternative, measured (the table on rings twice as fine), halves the weighted means at the quarter gap (0.29 →
+   0.10 %, 1.05 → 0.93 %, 0.58 → 0.27 %) but leaves the Milky Way's worst gap at 26 % (a piece's end between two
+   rings). What would mend it is the viewer reading the published point function where it draws (D5 allows a function
+   the model publishes with its vectors) — a viewer pass's design, with #186's viewer half, and the same question for
+   every (R, φ) weight, not this table's alone. *The azimuth.* Every reader draws a star's azimuth by inverting the
+   point function's 25 samples across its sector (`AZIMUTH_STEPS`, `pattern.invert_azimuths`); measured on the
+   level-0 sectors (1°) at every modulated ring and mid-gap radius against the function's own CDF (256 sub-sectors,
+   each by the reader's Gauss rule): **the Milky Way template worst 4.1e-2 at 2.96 kpc (inside the bar's footprint
+   edge), 99th percentile 7.7e-5, 0.54 % of sectors over 1e-3; `ngc_4414` worst 6.6e-4** — S60's 1.5e-2 understated
+   the worst; the sector's total is exact either way. A mend (the contrast's breaks as nodes of the inversion) moves
+   every placed star's azimuth in those sectors and is the layer's one sampling rule (`pattern.azimuths`,
+   `census_clustering`, the bright catalogue), not this table's: **proposed for the gate** as a layer item for the
+   censuses' batch (M2), with the numbers above. Still carried.
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N

@@ -537,6 +537,47 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
         assert means[0] == pytest.approx(cells, rel=0.05) and means[2] < 1e-3, (inputs, means)
 
 
+def test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_stars_reader_between_rings(default_model):
+    """Debt #154's render half, measured at S87 (BUILD_V M1) and re-ruled with its numbers. The render ships the 20-100
+    Myr part's weight as ``sfr_modulation`` over its ring mean on the grid's rings, and the viewer reads every (R, phi)
+    array linearly in R at a fixed phi. Here that read, at the middle of every gap the table modulates, against the
+    young stars' own reader there (``Modulation.sector_means_at``, the point function's cell means at the same radius):
+    the misplaced weight, half the mean |difference| of the two profiles each over its own mean (S59's statistic), worst
+    and weighted by the gap's share of today's star formation. S59 read 16-91 % across nearly circular segments on the
+    common winding; since S60 every chain winds on its own, so no single winding offset per ring makes the read wound,
+    and the worst Milky Way gap (a piece's end between two rings) is not mended by a table twice as fine either."""
+    from galaxy import templates
+    from galaxy.stages import systems
+
+    reads = ("sfr_modulation", "gas_surface_density", "sf_threshold_surface_density", "star_formation_gas_contrast",
+             "bar_half_length", "sfr_surface_density")
+    constants = {k: c.value for k, c in default_model.constants.items()}
+
+    def norm(a):
+        m = a.mean(axis=-1, keepdims=True)
+        return np.where(m > 0, a / np.where(m > 0, m, 1.0), 1.0)
+
+    for inputs, (worst, at, weighted) in (
+        (None, (0.0562, 2.100, 0.00405)),
+        (templates.overrides(templates.TEMPLATES["milky_way"]), (0.2600, 5.925, 0.01306)),
+        (templates.overrides(templates.TEMPLATES["ngc_4414"]), (0.0706, 0.675, 0.00693)),
+    ):
+        o = run(default_model, inputs, only=reads)
+        R, edges = o.grid.R, o.grid["phi"].edges
+        table = norm(np.asarray(o.fields["sfr_modulation"], dtype=float))
+        sfr = np.asarray(o.fields["sfr_surface_density"], dtype=float)
+        mid = 0.5 * (R[:-1] + R[1:])
+        truth = norm(systems.young_reader(o.fields, R, constants).sector_means_at(mid, edges))
+        apart = 0.5 * np.abs(0.5 * (table[:-1] + table[1:]) - truth).mean(axis=1)
+        spread = table.max(axis=1) - table.min(axis=1)
+        w = 0.5 * (sfr[:-1] + sfr[1:]) * mid
+        gaps = (w > 1e-6 * w.max()) & ((spread[:-1] > 1e-3) | (spread[1:] > 1e-3))
+        k = int(np.argmax(np.where(gaps, apart, -1.0)))
+        got = (float(apart[k]), float(mid[k]), float(np.sum(apart[gaps] * w[gaps]) / np.sum(w[gaps])))
+        assert got[0] == pytest.approx(worst, abs=5e-4) and got[1] == pytest.approx(at, abs=1e-9), (inputs is None, got)
+        assert got[2] == pytest.approx(weighted, abs=5e-5), (inputs is None, got)
+
+
 # --- gamma's probes (session-10-gamma, tests/test_calibration.py), ported at S11 -----
 
 
