@@ -15747,3 +15747,88 @@ downloads for T11 and T10; the housekeeping (74 verify folders, 59 agent worktre
 
 **The register.** #208's (d) closed by ruling, (b) carried; no number moved: 135 open = 11 permanent + 124 carried, 57
 discharged.
+
+
+### D247. S81, the viewer batch (BUILD_V row 81): the field mesh's texels built in a Worker (#208 (b)), the blackbody table a fifth head-start load, T14's sub-sample cut while the camera moves; #208 discharged; BUILD_V drafted
+
+**The commission.** The owner's rulings of 2026-11-02 (D246, item 3): S81 = the viewer batch — #208 (b) the mesh's build
+off the main thread, the blackbody table asked ahead with the sample, T14's cost cut while the camera moves. A Fable
+lead on `session-81` (cut from `main` at 9767fc8, S80's close; D246 and the BUILD_V draft its first two commits), one
+Opus builder in a worktree on `s81-batch` (three commits, cherry-picked: e50e712, 9cf6f69, f7cc7b3), the lead's review
+of the diff; nothing under `model/galaxy` (the hash f1fbbb17… stands), the shader snapshot untouched, no `fetch(` added.
+
+**The premise, measured first.** D242's 0.35 s for the mesh was a profiled, unminified build's. Timed with marks on the
+production build, warm, the whole mesh memo is ~60 ms — `planeTexture` 11–13 ms, the clustered fill (`clumpedLight` and
+four `starTexels`) 42–49 ms, the material under 1 ms — and it was the warm landing's only long task (65 ms at ~250–270
+ms). S78 had already removed the wasted `agedLight` / `starTexels` work (160–240 ms). The builder built the Worker
+because the brief ordered it, and said so; the lead's ruling on it is below.
+
+**As built.** *(b)* `frontend/src/galaxy/meshTexelsJob.ts` (`meshTexels`: `planeTexture` plus `agedLight` or the clustered
+fill — the same functions, imported, not copied; `meshRequest` copies only the arrays the job reads, each into its own
+buffer, transferred; `answerTransfer` sends the seven textures back), `meshTexels.worker.ts`, `meshTexelsClient.ts`
+(the raster client's pattern: one long-lived module Worker, at most one job running and one waiting, a newer mesh
+replaces the waiting one, a superseded answer is dropped, the main thread builds the job and every later one if the
+Worker fails; unlike the raster nothing is kept across remounts — the age switches refill the textures in place, so an
+answer goes to one field; an answer arriving before its field listens is held for the first listener), and
+`FieldVolume.tsx` split into `meshPlan` (keyed on its inputs by object identity through a WeakMap, the threshold's use,
+the age switches, the clustered flag) and the texels; **the last mesh stays drawn until the new texels arrive**, so a
+switch shows no blank frames (60–80 ms of them otherwise); `window.__galaxygenMeshTexels` for the probe. Fourteen
+`meshTexelsJob.test.ts` cases: the reference is the pre-S81 synchronous path line for line, the boundary a real
+structured clone with the buffers checked empty after transfer, all seven textures byte for byte for eight stellar
+sources (whole stars, `stars_unresolved`, `agedLight` at three switch sets, `clumpedLight` at the same three) on a fixture
+of float32 views into one shared buffer with NaNs in a placement, a line and a part; the no-Worker path; the request
+carrying only the arrays read; the queue against a stand-in Worker (replacement, a stale answer dropped, an early
+answer handed over once, failure's fallback). *The blackbody load:* `api.ts askBlackbodyAhead(curves, white, query)`
+through `askAhead` under the key `["blackbody", curves, white]`, kept and dropped with the galaxy's head start;
+`loadBlackbody` takes it through `aheadOf` once; `askFieldAhead` calls it with `curvesOf(filterSet)` and the tuning's
+white point — the same call as GalaxyTab's mount, since `useDebounced` starts at the tuning's value. One
+`fieldLoads.test.ts` case (per filter set and two white points, the head start asks exactly the mount's request, the
+loader takes it and asks nothing again, a later ask or another white point a request of its own); the existing fixtures
+gained the tab's blackbody load. *T14:* `tuning.ts marchSubSamples(subMax, subMoving, settleMs, sinceMoved)` — within
+the settle after a move the uniform is `min(full, subMoving)`, else the full cap computed exactly as before (rounded,
+clamped 1..8); the frame loop compares `camera.matrixWorld` and `projectionMatrix` with the previous frame's; the
+settings key carries the cap in use, so when the camera settles the still view is marched once more at the full count
+and **every frame at rest is unchanged**. Two Tuning sliders in the March group, saved per template as the others:
+`subMoving` (1–8, default 2) and `settleMs` (0–1000, default 200; 0 turns the cut off). The GLSL untouched (the
+existing `subMax` uniform). `window.__galaxygenMarchSub`. The march probe (`e2e/compile/march.probe.ts`) takes
+`GALAXYGEN_MARCH_TUNING` (panel values written into each template's storage before the page loads) and records the
+cap the march used; the probe nudges the camera every frame, so by default it measures the moving cap, `{"settleMs":0}`
+the full one. Any projection change counts as motion (a canvas resize marches at the moving cap for one settle).
+
+**Measured (the builder's, `galaxygen-s81\`).** *The mesh, warm probe, same day, runs 2–5 medians (range), before →
+after (b):* first paint 0.82 (0.78–0.86) → 0.80 (0.79–0.82), switch 0.93 → 0.90, switch back 0.57 → 0.56, star-first
+0.66 (0.57–0.69) → 0.58 (0.57–0.60), zoom 0.53 → 0.51; long tasks 0.06 / 0.16 / 0.18 / 0.06 → 0.00 / 0.10 / 0.00 /
+0.00 s; in the browser the Worker build 55–65 ms, 55–79 ms post to answer, warm landings with no long task, frame sums
+identical run to run. *The blackbody:* the request multiset identical over a landing, a switch and back, three runs
+each (21 requests, the table once), asked at ~108 ms after navigation in place of ~160. *T14, the march's GPU ms per
+re-march (RTX 4070, ANGLE D3D11, full canvas; 3 rounds × 9 captures × 200 frames, medians), full 8 → moving 2 (1 / 4):*
+milky_way-field 23.7 → 18.1 (10.0 / 23.6), milky_way-stars 19.9 → 15.2, milky_way-physics-only 19.0 → 14.4,
+ngc_4414-field 36.3 → 10.9 (7.5 / 19.2), ngc_4414-stars 29.5 → 8.5, milky_way-zoom 18.8 → 12.7 (9.7 / 16.2),
+ngc_4414-zoom 15.6 → 6.5 (4.8 / 9.9); the full column reproduces S78's figures; the probe's warm zoom step unchanged
+(0.53 / 0.51 / 0.52: the settle fits inside the probe's bracket). *The three-state table on the final tree (runs 2–5
+medians; D244's beside):* model-cold first paint 1.48 (1.56), switch 0.91 (0.91), switch back 0.56 (0.57), star-first
+0.59 (0.66), zoom 22.29 (23.18, F5); gateway-cold 1.72 (1.93), 0.88 (0.92), 0.56 (0.58), 0.59 (0.62), 1.30 (1.31); warm
+0.79 (0.81), 0.88 (0.84), 0.56 (0.58), 0.59 (0.65), 0.52 (0.53). Every step of runs 2–5 inside ruling 10's bound but F5;
+star-first ~0.06 s better than D244 in every state with no long task; D244 was another day — only the before / after
+(b) warm pair is a same-day comparison. The starts: model 1.07 s, gateway 0.57 s.
+
+**The gates.** The builder's on each item: vitest 503 → 504 → 507 passed / 1 skipped, `typecheck` and `typecheck:e2e`
+EXIT=0, the picture test 14 passed after each, `npm run picture` on the final tree 15 passed with all 9 captures the
+committed picture byte for byte, 0 `fetch(` added, 0 files under `model/galaxy`, the GLSL unchanged. The lead's on
+`session-81` after the cherry-picks: vitest 507 passed / 1 skipped, `typecheck` and `typecheck:e2e` EXIT=0, the picture test 14 passed with the tree clean after (the captures byte for byte), the docs and register tests after the close's edits (`gate81_*.log` in the session's scratchpad).
+
+**The lead's rulings.** (1) The Worker kept, to the owner's confirmation as S80's (a) was: 60 ms is what it is, but it
+is the warm landing's only long task, star-first drops by it in every state, a switch no longer shows blank frames, and
+the build is byte-identical under fourteen cases with a synchronous fallback; its 350 lines follow a pattern the viewer
+already carries. (2) **#208 discharged:** (a) and (c) built at S80, (e) closed by measurement at S80, (d) closed by
+ruling (D246), (b) built here — nothing of it remains; what the landing still costs is the compile and the Canvas mount,
+owned by the client's own work inside the bound (D242). (3) T14's cut done; its "render by window" clause is not built
+and no row asks it — struck with the cut's record in `VIEWER_TASKS.md`. (4) The moving cap's default 2 and the settle's
+200 ms are the builder's choice for the owner to tune (the viewer's direction: display choices as sliders). (5) The
+blackbody is the fifth load of the head start; the head start is complete: every request the Galaxy tab's mount makes
+is asked beside the sample.
+
+**BUILD_V.** Drafted at this session's open on the owner's word (`docs/BUILD_V.md`, 8818717): thirteen sessions in five
+phases, the tests gating a batch and not an item; its rulings in its §6, for adoption. Board rows at adoption.
+
+**The register.** #208 discharged: 134 open = 11 permanent + 123 carried, 58 discharged. No number moved.

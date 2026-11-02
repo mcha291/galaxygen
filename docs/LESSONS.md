@@ -1867,3 +1867,16 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   series, on a frontend change the model's 1 700 tests cannot reach, with CI running the same suite on `main` in
   parallel for nothing. The owner asked whether it was necessary; it was not, and the rule is now C7's (D245): the
   close's gate is the change's.
+
+## From S81 (the viewer batch; a Fable lead, one Opus builder in a worktree)
+
+- [viewer] Time the premise on the build the users get before building the remedy: D242's 0.35 s for the mesh was a
+  profiled, unminified build's, and the production build's memo is 60 ms. A brief that carries a number from an entry
+  should say which build measured it; the builder's marks on the production build are the first act, and a remedy
+  whose premise shrinks is reported as such, not built silently.
+- [viewer] An instrument measures what the viewer does, so a change the instrument is for may need the instrument
+  changed: the march probe nudges the camera every frame and so reads the moving cap by default once T14 is in;
+  `GALAXYGEN_MARCH_TUNING` makes the full cap and any panel value measurable from the probe. Record both caps in the
+  entry, with which one the probe read.
+- [close] Under D245 / D246 the viewer batch closed in minutes after the builder: cherry-pick, the four gates (~15
+  min), the docs tests, the merge. The suite's hours belong to the model's batches, where the owner starts them.
