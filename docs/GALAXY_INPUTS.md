@@ -711,10 +711,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
+| **discharged** at S86 | **139** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap) | 1 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 92 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 91 |
 
-So the board's **125 open** is 33 permanent and 92 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **124 open** is 33 permanent and 91 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3968,7 +3969,7 @@ never been judged in twenty-three sessions.
    (0.97); statement 6 is met inside the bar only. Nothing in the law moved at S86: it is the owner's kept law (D216),
    the conflict of sources is ruling 12's, and the alternatives are the owner's — S26's global window on every ring
    (D215) and #152's per-arm pin (put at S86's open). Still carried, with the owner.
-139. **The modes' phases are uniform and independent by assumption** (S56, D215). Each mode's phase is drawn
+139. ~~**The modes' phases are uniform and independent by assumption**~~ (S56, D215). Each mode's phase is drawn
    uniformly on [0, 2π) from `texture_seed`, independently of the others and of the bar `[inferred: a mode in a
    differentially rotating disc has no preferred phase]`; no source was read for it, and BUILD_III §9 asks a
    synthetic field to cite its statistic or carry a debt. What it gives up: until S55 the pattern's convention
@@ -3981,6 +3982,20 @@ never been judged in twenty-three sessions.
    — "a detection window, not a scatter: no draw"). m ≥ 3, and an unbarred galaxy's m = 2, stay uniform and
    independent `[inferred]`. Still carried for those.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   **DISCHARGED at S86 (M1, D254):** both of the entry's closers were met at S60 and the entry was not struck. The
+   modes' five drawn phases are retired with the `arm_phases` stage (D219 item 7): no field has a mode phase. What
+   places an arm since: (i) in a barred grand design two chains start at the bar's two ends, on its axis at its
+   half-length — D217 item 9's θ₂ tie as geometry, on the reading the entry asked for (arms begin within 20° of the
+   bar's axis in 10 of 12 galaxies `[verified: Block et al. 2004, AJ 128, 183, Table 3; docs/READING_BAR.md Part B]`);
+   (ii) a template whose arms are measured pins them — `milky_way`, Reid et al. 2019's four major arms and the Local
+   arm as five pinned chains (D219 item 8; `templates.py`, `REID_2019_TABLE2`): the entry's "P4's pins"; (iii) every
+   other chain is born **at the midpoint of the widest azimuthal gap** between the chains crossing its birth ring,
+   with no draw (D219, the gate's second follow-up, item 3: "the law's arm number m is m crests evenly spaced") — the
+   relation between arms that "independent" denied. The one uniform azimuth left is a chain born on a ring no chain
+   crosses (an unbarred disc's first, or a ring beyond every chain's reach; `layer/arm_pieces.py`, the births): in an
+   unbarred disc the disc's own symmetry — it defines no azimuth — and beyond a barred disc's chains a statement
+   that no source read ties an outer arm's start to the bar (Block et al. read arms at the bar's ends), declared in
+   the stage where it is drawn `[inferred]`. Nothing was built at S86; the register is put right.
 140. ~~**The gas ridge is placed by rank along each ring: a one-session instrument**~~ **DISCHARGED at S57** (S56, D215 rulings 7–10; retired D216). The
    exponential of a sum of modes made knots (a crest of 11 at R₀ where one mode's is 3.07), so on each ring the
    gas takes one mode's ridge values in the order of the stellar pattern. That keeps the sourced ratio of means
