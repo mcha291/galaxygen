@@ -4757,6 +4757,16 @@ never been judged in twenty-three sessions.
    one fails with the API's reason under the failed-Generate mark. **Carried.** What closes it: per-field `lo` / `hi`
    on the events declaration in `input_json`, read by `flow.setValue` as a control's range is (metadata, rule D4).
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — moved from the viewer rows at S82 (D249): an API change under the model's hash, the first model batch.
+   *S86 (M1):* **the wire's half built; the viewer's read is a viewer pass's.** The ranges now have one statement,
+   `registry.EVENT_FIELDS` — time in Gyr, ≥ 0, no upper end; mass_ratio in (0, 1]; gas_fraction in [0, 1] — which
+   `MergerEvent` checks against (its three messages unchanged) and `/api/inputs` publishes on the events declaration as
+   `fields: [{name, unit, lo, hi, lo_open}]` beside the default, metadata only (D4).
+   `tests/test_api.py::test_inputs_publishes_every_default_and_every_range` holds the published ranges to the API's own
+   refusal through the parser a Generate's events go through: at each published end taken (or refused where the end
+   is open), 1e-9 past it refused with a 400's reason. The closer's second half — `flow.setValue` and the event
+   editor (`frontend/src/workflow/Workflow.tsx`) reading `fields` as a control's range is read, refusing a bad event
+   before it is sent — is the viewer's code, not this batch's (nothing in the viewer moves in M1): for the viewer's
+   pass with #111, #170, #177, #183, #185. Still carried for that half.
 187. ~~**The whole swap holds only the loaders keyed on the query**~~ (S68, D232; the fix pass's note). In the star-first
    mode the tile loaders whose keys follow another loader's answer (`GalaxyTab`'s counts and bright tiles after
    `brightTable` / `tileK`) take their new keys only when the swap publishes, then load and publish on their own - a
