@@ -15854,3 +15854,156 @@ the owner takes them, and no row that needs one is started before: S84 (T17) nee
 `BUILD_V.md` and no ☑ row is added for a session (the owner's ruling of 2026-11-02 at S81's open: no board rows for
 the debt sessions; the tag rows in `MANUAL_TODO.md` remain each session's record, rule C2e). `BUILD_V.md`'s status
 line reads adopted. This decision is the adoption's record; S82's own record is D249.
+
+
+### D249. S82, BUILD_V row 82: S68's viewer debts and the zoom's seams — the swap's dependent loaders (#187), the landing's hold (#188), the caption left of the drawer (#190), the instrument's light past the clamped box and its table in a Worker (#178), the zoomed view one point layer on the owner's ruling (#172); #186 to the first model batch; #210 opened
+
+**The commission.** BUILD_V row 82 (adopted at this session, D248): S68's viewer debts #186–#190 and the zoom's seams
+#172 and #178, with #189 waiting on ruling 3. A Fable lead on `session-82` (cut from `main` at d8f0f7e, S81's close),
+two Opus builders in worktrees on disjoint files — A the swap and the loaders (`s82-swap`: d3336de, 2a011b0, 9e01f3b;
+cherry-picked e25ae66, 1325231, 2d8a139), B the view (`s82-view`: 2f1c951, e44f10b; cherry-picked 657f85f, 0595721;
+then `s82-zoom` 0cf427f, cherry-picked 0135004) — and the lead's review of each diff; nothing under `model/galaxy` (the
+hash f1fbbb17… stands), the march's shader snapshot untouched, no `fetch(` added. **#186 is not a viewer item:** the
+merger events' ranges go on the wire by `input_json`'s declaration in `model/galaxy`, under the hash — moved to the first
+model batch (M1, with the register pass naming it), its entry unchanged. **#189** waits on BUILD_V ruling 3.
+
+**Builder A, the swap (d3336de, 2a011b0 on `s82-swap`; `useLoad.ts` is the swap's store, so it is where the work is).**
+*#187.* `useLoad` takes a sixth argument `role: SwapRole = { view?, after? }` and returns, beside `value`, `next` (the newest
+answer for the current key, held or published), `answered` and `settling` (whether this loader is holding the swap).
+`after` — passed from a dependency's `settling` — registers the loader with the swap and asks nothing, even while its
+key is still null (below 4 kpc the tiles cannot be named until the counts answer); when the dependency's answer is
+held (`loads.answer`'s new `onHold`), the dependents read it through `next`, take their real key and ask inside the
+swap, so the swap publishes once with every dependent answer in. In `GalaxyTab` the bright table is read through
+`tableLoad.next`, the counts take `after` = level > 0 and the table settling, the tiles `after` = the table or the
+counts settling, and `FieldVolume` gets the tiles' `next` as `lMin` with a new `lMinAfter` — while it waits it asks the
+whole render ahead (`askRenderAhead`, the same request it would make anyway). `role.view` marks the view-keyed loaders
+(the region and its clusters by window; the counts and tiles by footprint cells and projection; `RegionVolume`'s three);
+a `ViewMark` records the view at each swap's first render (`swapGeneration()`), and a loader whose view has moved since
+is kept out of the hold by `loads.wait(token, { takeDown })` — its answer is published with the swap if it comes first,
+on its own after, and if the swap ends before it answers `takeDown` clears the old galaxy's value (D1: never one
+galaxy's stars under another's field). Outside a swap nothing changes: `next` is `value`, `settling` false; the hook's
+decision is the pure function `swapPart`. Seven cases in `useLoad.test.ts` (a dependent's answer part of the one
+publish, with the old behaviour as a counterfactual; `swapPart` with a null key; a view-keyed loader never holds and is
+taken down at the end; one answering inside the swap published with it; `ViewMark`). A scratch probe on the bundled
+servers, a halo-mass Generate in the star-first mode: before, the tiles and the remainder were asked at the old
+threshold and again after the mark came down (three frame changes after the swap); after, both inside the swap, 11 → 9
+requests, one publish, the same final frame sum 42 631.0775. *A limit, disclosed:* the tiles' frustum weights read the
+stars' layer height from the *published* render, so a Generate that changes that height can still move the threshold
+after the swap; gating on it would deadlock render → threshold → render.
+*#188.* `Swap` gains `landing`: `beginLanding(onScreen)` is called from `useWorkflow`'s `land()` in place of `endSwap()`
+(the app's first landing is no swap; a Generate pressed during a landing keeps the swap a landing's). The header keeps
+the previous name and hash with " · landing" and the status line reads "Landing · the previous galaxy, until <template>
+arrives"; a landing nothing waits on (the same template again) settles at once. `drawnCamera` (selection, preset,
+template) is frozen while the landing's swap is on and drives `GalaxyTab`'s `epoch`, `preset`, `stand`, `fov` and
+`cameraKey`, so the old canvas and its `FieldVolume` are not rebuilt until the swap publishes, while the loads go out
+from the old canvas with the new template's query, filter set and tuning. At the rebuild a loader unmounting with an
+answer the landing's swap published leaves it under its key (`handOver`), and the new canvas's loader of the same key
+starts from it (`handed`, `takeHanded`) and asks nothing — open for `HANDOVER_MS` 2000 after the publish, emptied by the
+next swap; a key moved by a landing is asked at once, as S78's first key was. Four more cases (the first landing no
+swap; a switch keeps the old field drawn until the new answers are in, publishes them together and hands the field over
+exactly once; the hand-over's window and the next swap; a Generate during a landing and a landing during a Generate).
+Live, warm, Milky Way → NGC 4414: before, bare stars (frame sum 603.85) for ~420 ms until the field came, the loads after
+their 350 ms settle; after, the Milky Way picture stays under the landing line until the swap (~270 ms), then the new
+canvas — the same six requests, all asked at once, the same final sum 15 094.8994. *Two limits, disclosed:* the remade
+canvas shows ~210 ms of blank frames on a warm switch while it compiles everything at once — the remount's own cost,
+#208 (d) as ruled (D246), for the owner's re-ruling if the blank is unwanted; and during the hold the old picture was
+drawn through the new template's display tuning (the tuning is per template and keys the loads) — closed by a third commit (9e01f3b): `tuning.ts LOAD_TUNING_KEYS` names the nine values that enter a request's key or decide which loaders are mounted (`whiteKelvin`, `cloudsExtinction`, `compClouds`, `compPoints`, `knots`, `fieldFloor`, `compStars`, `compGas`, `compDust`), `drawnTuning(live, held)` returns the held template's tuning for every other value and the live template's for those (the live object itself when nothing is held), and `heldTemplate` names the drawn camera's template while the hold keeps the previous landing's camera and the template is another. `GalaxyTab` draws with `look = drawnTuning(tuning, heldTuning)` — the march's resolution, budget, steps (the drawn template's at once, not debounced), sub-samples, settle, dither, filtering, field gain, the gas / spurs / clumps switches, the cloud raster and elongation; the bloom, tone mapping, sprite size, point gain, spikes; the extinction strength, cluster radius, cloud intensity, dust reading, cell outlines, the layer intensities and the age switches — while the loads, the panel and the switches read the live tuning, so the landing's requests are unchanged. Three `tuning.test.ts` cases through the real store (Milky Way on screen, NGC 4414 landed on, with differing display values and white points: during the hold every display value the Milky Way's and every load key NGC 4414's, white 7200 included; after the publish nothing held and the live object drawn; no hold outside a landing or for the same template). The optics (which instrument's PSF) follow the template and the filter set, not the tuning, and stay live.
+*The walk's request sets (S80's request-log hook, the bundles):* 302 requests / 56 keys before; 301 / 55 after #187 (one
+view-keyed level-2 `/api/bright` tile POST at the Milky Way's zoom, the ±1 S80 recorded as noise); 302 / 55 after both —
+the same tile 1 → 0 and NGC 4414's `/api/clusters` through RGB 0 → 1 at "the instrument's light on the GPU": the
+landing's own knots census through the template's own set, which the step used to cancel by pressing the WFC3 set as
+soon as the camera stood, and which now completes because the camera reaches the stand only after the landing has
+answered. **The lead's ruling:** accepted — the same key asked once, a load that was cancelled now completing; not a new
+request and not a repeat. Every other step's multiset identical, no key asked twice. The builder's gates: vitest 514
+then 518 passed / 1 skipped, the typechecks EXIT=0, the picture test 14 passed after each commit with the captures byte
+for byte.
+
+**Builder B, the view (2f1c951, e44f10b on `s82-view`, cherry-picked as 657f85f, 0595721).** *#190.* The caption moves
+left of the drawer while it is open: `drawerLayout.ts regimePlace(editing, pictureBeside)` → `home` / `besideDrawer`
+(`right: calc(320px + var(--space-4))`) / `besideDrawerHalf` (with a picture beside the render the shift is only the
+drawer's overlap with that half); on phones, where the drawer is a bottom sheet, both reset. Three cases hold the one
+320 px width against `App.module.css`'s `.editDrawer` and the two rules. Either option kept the captures (taken with the
+drawer closed); checked in the browser pane. *#178 (i).* A second, coarser pass, not a larger box (a full-table box at the
+zoom stand would be 629² fragments a point, 27× the 121² box): a clamped point is drawn as its box of whole pixels as
+before, plus `FluxPoints` mode 4 into a target of 8-px blocks (`WING_BLOCK`; Float where `EXT_float_blend` exists, else
+HalfFloat), each block taking the table's light over it less its part inside the box, a full-frame composite quad
+adding each block's light spread evenly over its 64 pixels (alpha unchanged, a custom blend); every share divided by the
+wings' box's light (83 blocks a side at the zoom stand, covering the whole table: 1 to float32 rounding), so **the share
+returned at the zoom stand is 0 within 1e-6** (was 4.18 % red Airy, 5.99 % red spikes); light is still returned only
+closer than ~0.33 pc a pixel, past `WING_MAX_HALF` = 60 blocks, by the same division, a test stating it. `hstPsf.ts
+psfClamped`, `wingBox`, `psfWingWeights` (the TS twin of the shader, line for line); `mayClamp` reads the points'
+bounding sphere's nearest depth, so a frame whose points are all far draws no wings and adds nothing — why every
+capture stays byte for byte. Light conserved: box plus wings 1 within 1e-6 for four centres × both tables, the wings
+exactly 1 − the old share, each box pixel the old weight × the old share within 1e-9, blocks inside the box exactly 0.
+Cost per clamped point: the box 125² = 15 625 fragments as before plus the wings 85² = 7 225 coarse fragments with two
+rectangles each, ~1.46×; one composite per frame only while a point may be clamped (the wings' GPU ms not measured: the
+march's timer covers the field). The about texts (`tuning.ts`, `instruments.json` both copies, `fetch_filters.py`'s
+string, by hand as before) say the wings' pass; the shader pin moves (vertex 10 172 chars, fragment 3 182, the composite
+pinned; with the S82 additions removed the texts are S67's to the byte). The wings' effect at the WFC3 zoom stand, spikes
+on, before → after: R 448 476 → 448 129 (0.99923), G 0.99958, B 0.99952 — the light the wings now carry past the frame's
+edge. The GPU light check there (33 964 boxes clamped): points-only over drawn light − 1 −4.05e-4 / −1.82e-4 / −1.14e-4
+(before −4.03e-4; tolerance 1e-3), spikes on over off − 1 7.3e-6 / 1.9e-6 / 2.4e-6; the disclosed centred-only figure
+1.2e-2 → 2.2e-2 in red, more light now coming from points centred off the frame. *#178 (ii).* `psfTableJob.ts` (`psfJob`:
+`hstPsf`'s own `psfTable` / `pupilImage` / `imageDensity`, imported), `psfTable.worker.ts`, `psfTableClient.ts` (one
+long-lived module Worker, each key asked once while it builds, the main thread where there is no Worker or it fails;
+`__galaxygenPsfPending` / `__galaxygenPsfBuilds`); `psf.ts physicalPsf` became the hook `usePhysicalPsf` — the last table
+drawn until the new one arrives (S81's rule), `physicalAsk` / `adoptPhysical` / `keptPhysical`, every other optics'
+texture disposed when a new optics' table arrives, the pupil image cache gone (it lives only inside the job: 33 554 432 B
+per optics no longer kept; a second WFC3 set's spikes table re-runs the FFT, ~1 s, in the Worker). Seven
+`psfTableJob.test.ts` cases: the table through a real structured clone equals the pre-S82 build byte for byte on a
+small fixture and both drawn tables at full size (the full-size case given 120 s under suite load), the client against a
+stand-in Worker with the failure fallback and the no-Worker path, textures disposed on an optics change. Measured: the
+Airy table ~600 ms, the spikes table ~1 330 ms on the main thread (Node, the pre-S82 path); in the browser the spikes
+table 1 450 ms in the Worker, 1 457 ms post to answer, the main thread unblocked. *A behaviour change, disclosed:* the
+spikes table now arrives ~1.4 s after the switch with the previous table drawn until then, and **on a first landing the
+display sprite shows until the table arrives** (before, the main thread froze for the build and the first frame had it).
+The picture spec's `settle` also waits until no table is building (`__galaxygenPsfPending`), and its `drawnLight` counts
+the wings. *No capture re-taken:* `ngc_4414-zoom` is taken in RGB (the owner's "Switch to RGB"), where the instrument's
+image is not drawn — its frame sum 215 279.529 / 165 012.581 / 117 074.415 before and after. *A finding, the lead's:* that capture reads "not the committed picture's bytes" on the base tree too — 1 503 153 B against the committed 1 503 149 (S70, 45e7f0e), the same frame sum to the digit, within the test's tolerance — and the other eight captures are the committed bytes. Some session since S70 moved NGC 4414's zoom frame by a few bytes while its close read "byte for byte" from a clean `git status`, which only says the frames were not rewritten; the spec's own verdict line is printed per capture and no close read it. Opened as #210; from this close the gate reads the verdict lines.
+
+**Builder B, the third item — #172 on the owner's ruling (0cf427f on `s82-zoom`, cut from the session's tip; cherry-picked
+as 0135004).** The owner, in chat, 2026-11-02, on the four choices put to them (A one point layer; B the region's volumes
+in both modes; C one mode at zoom; D carry): "accept A but keep the current modes around for now so i can compare and
+assess later". Built: `regionStars.ts starLoads(mode, regionStars, compPoints, inRegion)`, a pure function lifted out
+of `GalaxyTab` as `drawnTuning` was — the star-first mode its points when on, the field mode above 4 kpc neither, the
+field mode's region regime the points at `"catalogue"` (the default) or V3's sample at `"sampled"`; the switch
+`regionStars` in `tuning.ts` (a Components switch like `knots`, saved per template, in `LOAD_TUNING_KEYS`: a landing's
+hold takes it from the live template), shown in the field mode's panel as the chips "catalogue stars" / "sampled
+stars", its about text saying what each draws and that the sampled reading is V3's, kept for comparison. At
+`"catalogue"` the footprint, `tileLevel`, the counts and the tiles are read as the star-first mode reads them, the field
+volume hands up its stars' layer (`onStarsLayer`) so the tiles' budget is weighted as there, `loadRegion` and the
+display-colour cluster `StarLayer` are not run; `regionClusters` is still loaded at both positions because
+`RegionVolume` reads it; the knots stay `knotsWanted && !area`; `starClustersKey` is the same JSON, so with the knots on
+no request is added and with them off the clusters are asked below 4 kpc. The caption names what is drawn (the
+catalogue stars' count, cells, threshold, clusters). Two of the builder's own choices, **kept by the lead:** in the
+field mode the points take the march's dust as it acts (the knots' reading), and they fade in over the 4 → 2 kpc
+handover at the region's weight as V3's sample did (1 below 2 kpc, so at the zoom stands they are the star-first
+mode's own draw). The head start unchanged (nothing at galaxy scale moves; `fieldLoads.test.ts`). Three
+`regionStars.test.ts` cases (the positions decide the loaders; the galaxy-scale and star-first request sets the same at
+both; the switch a load key, per template, an unknown value refused); `tuning.test.ts`'s three lists gained it. The
+picture spec's physics-only wire walk presses "sampled stars" after the region, so `/api/region` stays in the walked
+set and both readings are checked under `layer=off`. *Measured, NGC 4414's zoom stand in the field mode (RGB, the
+browser pane at 1536 × 1028, the base 0595721 on port 8031 against the build on 8032):* before — clouds, clusters,
+region, remnants, render; frame sum 31 373.22 / 24 657.91 / 23 231.28; at `"catalogue"` — bright × 3 (the table, the
+level-2 counts, the tiles), clouds, clusters, remnants, render, no region request; 46 390.92 / 31 011.48 / 23 560.24
+(29 801 stars in 247 cells above 2 000 L☉ and 5 029 clusters, each at its own light — the sampled reading was never
+light-scaled, so the sums are not comparable as conservation); switched to `"sampled"` — one region request, the sum
+before to every printed digit. *No capture re-taken:* both zoom captures are the star-first mode's and the field
+captures stand above 4 kpc; every capture byte for byte with its sum unchanged (`ngc_4414-zoom` still the #210 note).
+
+**The walk's request sets and the gates on `session-82`.** *The walk (builder A, S80's request-log hook on the bundles):* 302 requests / 56 keys before; 301 / 55 after #187; 302 / 55 after #188 — the one key back is NGC 4414's `/api/clusters` through RGB at "the instrument's light on the GPU", the landing's own census through the template's set that the step used to cancel (ruling 1 below); every other step's multiset identical, no key asked twice; #172 adds nothing at galaxy scale or in the star-first mode, and at the field mode's zoom stand the region request gives way to the bright table, counts and tiles. *The builders' gates:* A vitest 514 → 518 → 521 passed / 1 skipped, B 532 → 538, the typechecks EXIT=0, the picture test 14 passed after every commit with no capture rewritten. *The lead's on `session-82` after the seven cherry-picks (the one conflict, `GalaxyTab.tsx`'s `physical` line, resolved as `usePhysicalPsf(…, look.spikes)`):* vitest 538 passed / 1 skipped (47 files), `typecheck` and `typecheck:e2e` EXIT=0, the picture test 14 passed through pytest and 15 through `npm run picture` with the tree clean, and — read for the first time at a close — **the verdict per capture: eight of nine the committed picture byte for byte, `ngc_4414-zoom` not the committed picture's bytes (1 503 153 B against S70's 1 503 149, the same frame sum), as on the base tree (#210)**; `tests/test_picture.py` now prints the verdicts under `-s` and asserts one per capture (run once more to prove it, `gate82d_picture.log`); the docs and register tests after the close's edits (`gate82*.log` in the session's scratchpad). No `fetch(` added, nothing under `model/galaxy`, `fieldFragment.s78.glsl` untouched.
+
+**The lead's rulings.** (1) #187's one added request on the walk (NGC 4414's `/api/clusters` through RGB at "the
+instrument's light on the GPU") is a cancelled load now completing, not a repeat: accepted. (2) #188's ~210 ms of blank
+frames on a warm switch are the remount's, #208 (d) as the owner ruled (D246); its hold now draws the old picture with
+its own display tuning (the follow-up), and the loads go out with the new template's. (3) The Worker for the PSF table
+is kept as S81's mesh Worker was: the build was the main thread's longest task (1.3–1.6 s) and the test proves the bytes;
+the first landing's display sprite until the table arrives (~1.4 s) is the price, disclosed, for the owner's eye. (4)
+The wings' pass is the remedy the entry named first (a larger box would cost 27×); its 8-px block is a sampling bound,
+not a display choice. (5) #172 built as the owner ruled, with the builder's two choices kept (the march's dust as it
+acts on the field mode's points, the fade over the handover). (6) #210 opened on the lead's own reading of the picture
+logs, and the close's gate reads the verdict lines from here on (the lesson). (7) The four captures' rule stands: no
+capture moved at S82 — none of the five items draws at a captured stand in a captured mode.
+
+**The register.** #172, #178, #187, #188, #190 discharged; #210 opened: **130 open = 11 permanent + 119 carried, 63
+discharged**. No number of the model's moved.

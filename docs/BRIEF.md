@@ -1,53 +1,54 @@
-# BRIEF — after S81: the landing's last tenths in and #208 discharged; next is S82, BUILD_V row 82 (S68's viewer debts and the zoom's seams)
+# BRIEF — after S82: S68's viewer debts and the zoom's seams in, BUILD_V adopted; next is S83, BUILD_V row 83 (robustness and comparison)
 
-**The state (2026-11-02).** S80 (D244) built #208's (a) and (c); S81 (D247) built (b) the field mesh's texels in a Web
-Worker (`meshTexelsJob.ts` / `meshTexels.worker.ts` / `meshTexelsClient.ts`, the raster client's pattern, byte-identical
-under 14 cases, a synchronous fallback, the last mesh drawn until the new one arrives), the blackbody table as the fifth
-head-start load (`api.ts askBlackbodyAhead`, taken by `loadBlackbody`), and T14's cut while the camera moves
-(`tuning.ts marchSubSamples`: `subMoving` 2 / `settleMs` 200 as Tuning sliders on the existing `subMax` uniform, the
-full count at rest — every still frame unchanged; NGC 4414's field 36 → 11 GPU ms per march moving). The mesh's premise
-shrank when timed on the production build (D242's 0.35 s was a profiled build's; 60 ms warm) and the Worker is kept on
-the lead's ruling, to the owner's confirmation. The frames byte for byte, the request multiset unchanged, every warm /
-cold step inside ruling 10's bound but F5. **#208 discharged.** D245 / D246: every session closes on the fast gates;
-the local full suite only on the owner's word; CI's full suite nightly. **The model's hash is
-f1fbbb17eff3c1dc003abcd38117cb1f** (since S77). Register **134 open = 11 + 123, 58 discharged**; next number **#210**,
-decisions from **D248**. `docs/BUILD_V.md` is drafted for adoption (its §6 rulings); its rows become board rows at adoption.
+**The state (2026-11-02).** BUILD_V is adopted (D248; `docs/BUILD_V.md`, the board's §5h): rulings 2–6 of its §6 stand
+as recommendations until the owner takes them (S84 needs ruling 2 on T17's structure, S86 ruling 4 on the pin per
+batch). S82 (D249) built #187 (`useLoad`'s `role`: the swap's dependent loaders ask inside the swap, the camera's never
+hold), #188 (a landing holds the old picture under its own line until the new template's answers are in, drawn with
+its own display tuning — `drawnTuning` / `LOAD_TUNING_KEYS`), #190 (the caption left of the open drawer), #178 (the
+light past the instrument's clamped box drawn where it falls by a coarse second pass, nothing returned; the PSF table
+in a Worker, the pupil image freed) and #172 on the owner's ruling (A: the field mode's region regime draws the
+catalogue's light-scaled tiles, the sampled reading kept behind the per-template switch 'region stars' (catalogue / sampled) for comparison).
+The captures unmoved (the zoom captures are the star-first mode's). #186 moved out of the viewer rows (an API change under the model's hash: the first model batch). **The model's
+hash is f1fbbb17eff3c1dc003abcd38117cb1f** (since S77). Register **130 open = 11 + 119, 63 discharged**; next number **#211**, decisions from
+**D250**. #210 opened: `ngc_4414-zoom` has not been the committed bytes since some session after S70 — read the picture
+test's verdict lines at every close (S82's lesson), never `git status` alone.
 
-## S82 — BUILD_V row 82: S68's viewer debts and the zoom's seams (a Fable lead, two Opus builders on disjoint files)
-- **The loaders** (`api.ts`, `App.tsx`, `GalaxyTab.tsx`): #186 the merger events' field ranges on the wire (`/api/inputs`
-  gives the events, not their ranges); #187 the whole swap holds only the loaders keyed on the query (the star-first
-  mode's dependent loaders); #188 a template landing drops the old field until the new one arrives (the swap's rule
-  applied to a landing). Gate: the walk's request set read before and after, the frames byte for byte.
-- **The view** (`GalaxyView.tsx`, `GalaxyTab.tsx`'s drawer, the zoom's layers): #190 the edit drawer covers the regime
-  caption; #172 the zoomed view is two pictures of one scene (below 4 kpc the point layer and the field are composed
-  as one picture: read D225's finding first); #178 the instrument's 121-pixel clamp at a close stand (the light outside
-  the box returned to the inside: a bound derived from the PSF's extent in place of the fixed box). These change
-  frames knowingly — regenerate with the reason, the goal pictures beside.
-- **#189, the reference client's generate**: BUILD_V ruling 3 — retire `interface/` to a route demonstration (BUILD_IV
-  ruling 2 (a)) if the owner adopts; else finish its generate. Ask at the open if the adoption has not come.
-- Read: #186–#190 (S68, D232), #172 (D225), #178 (D227); `fieldLoads.ts`'s header; D232's swap rule; `VIEWER_TASKS.md`.
+## S83 — BUILD_V row 83: robustness and comparison (a Fable lead, two Opus builders)
+- **T13, the renderer survives a lost WebGL context** (`VIEWER_TASKS.md` row T13; the owner saw five losses and a
+  black stars regime in the app's pane): the context-lost / restored events handled in `GalaxyView` and the field
+  volumes (the march's targets, the raster and PSF Workers' textures, the mesh's textures rebuilt), a forced loss
+  (`WEBGL_lose_context`) then a drawn frame as the test; the picture test byte for byte.
+- **T16, a comparison view**: (i) two seeds / sets side by side (the same camera, the existing tabs' state, no second
+  model call where a bundle answers); (ii) a picture file the user picks drawn beside the frame at a stated band and
+  scale (the scale bar, the band's name; none bundled). Display choices as sliders where they are choices.
+- **T11, "as JWST"**: NIRCam's curves (the download accepted by the owner 2026-11-02: `tools/fetch_filters.py` as
+  WFC3's, SVO) and a hexagonal pupil for the PSF (`hstPsf.ts pupilImage` takes the optics: add the segmented aperture,
+  the table built by the same job in the Worker). A new filter set, no template carries it by default: the frames stay
+  byte for byte; the set's about text and the instrument's in `instruments.json` by the tool, not by hand.
+- Read: T13 / T16 / T11 in `VIEWER_TASKS.md`; D227 (R1–R3, the PSF), D249 (the wings' pass, `psfTableJob.ts`), D232
+  (the tabs since V9); `GalaxyView.tsx`, `FieldVolume.tsx`, `rasterClient.ts`, `meshTexelsClient.ts`, `psfTableClient.ts`.
 
 ## What waits on the owner
-- **Adopt BUILD_V** (§6: the order; T17 keep the tabs and port the components; #189 retire; the pin per batch; Audit VI
-  at the end; the deploy whenever). **Confirm** S80's (a) and S81's Worker (both kept on the lead's ruling).
-- **The subscription and the deploy** (D239 (i)–(ii)), then the deployed probe (`tools/smoothness.py --url`), the table
-  appended to D244, #204 / #205 / F5 ruled on it. Housekeeping deferred (the owner, 2026-11-02): delete nothing.
+- **BUILD_V §6 rulings 2–6** (T17's structure; #189 retire the reference client; the pin per batch; Audit VI at the end;
+  the deploy whenever). **Confirm** S80's (a) and S81's Worker. **#210**: name the session by re-taking the capture on
+  each tag, or rule that a within-tolerance byte change needs no name.
+- **The subscription and the deploy** (D239 (i)–(ii)), then the deployed probe. Housekeeping deferred: delete nothing.
 
-## Traps (S72–S81's stand)
+## Traps (S72–S82's stand)
 - Never run the full suite, `verify_clone` or the pins unprompted (D246): ask the owner where the model, a fixture or a
   pin changed. The fast gates: `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`, then
-  `GALAXYGEN_PICTURE=1 GALAXY_BUNDLES=C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s78\bundles uv run pytest
-  tests/test_picture.py` (14; `git status` clean after = byte for byte), then the docs tests. A fresh worktree needs
-  `npm ci --prefix frontend` first (the probe's build fails without `tsc`).
-- The probe: runs 2–5 medians, never run 1; quiet, nothing else running; `--states` locally, `--state` with `--url`.
-  The march probe nudges the camera every frame — it reads the moving cap by default; `GALAXYGEN_MARCH_TUNING='{"settleMs":0}'`
-  for the full one (S81). Time a premise on the production build before building its remedy (S81's lesson).
+  `GALAXYGEN_PICTURE=1 GALAXY_BUNDLES=C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s78\bundles uv run pytest -s
+  tests/test_picture.py` (14 passed; grep the log for "byte for byte" / "not the committed": every capture named),
+  then `tools/progress.py` and the docs tests. A fresh worktree needs `npm ci --prefix frontend` first.
+- The picture test's port 8019 is one builder's at a time (`reuseExistingServer` takes a sibling's server): say who runs
+  when. Two builders sharing a file's line conflict at the cherry-pick: resolve by hand before the gates (S82).
 - The shader snapshot `fieldFragment.s78.glsl`: a change to the march is a change to that file, made knowingly. Rule D2
   refuses a second `fetch(`. The register's count pin in `tests/test_audit.py` and its pinned items move with every
   entry. Every byte under `model/galaxy` is in the hash: a change there is a model session, a new image and pin.
 - Builders: worktrees cut from the session's branch, one commit per item, no push, no DECISIONS; the lead cherry-picks
-  and runs the gates again on the session's tree. Two agents at once, one heavy. The owner's servers on 8017 / 8018 /
-  5173; agents 8050+ (the probe 8050 / 8060, the picture test 8019). No backtick in a shell string; messages via files.
-- A side session on the same day claims its numbers in the shared notes; renumber on a fresh branch before merging
-  `main` in (S79). `az account show` lies, `az rest` tells. CI: every push the fast job; the nightly run is the suite of
-  record, read at the open after a model merge; S80's per-push runs (41391451659 / 41391460380) were the last of their kind.
+  and runs the gates again on the session's tree; a builder's next item starts from a worktree reset onto the session
+  branch (`git checkout -B`). Two agents at once, one heavy. The owner's servers on 8017 / 8018 / 5173; agents 8050+
+  (the probe 8050 / 8060, the picture test 8019). No backtick in a shell string; messages and scripts via files (the
+  Bash heredoc rewrites a doubled backslash: the Write tool for scripts).
+- CI: every push the fast job; the nightly run is the suite of record, read at the open after a model merge. A side
+  session on the same day claims its numbers in the shared notes; renumber on a fresh branch before merging `main` in.

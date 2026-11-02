@@ -377,6 +377,14 @@ def test_the_viewer_draws_the_committed_frames():
     passed = re.search(r"(?m)^\s*(\d+) passed", proc.stdout)
     assert passed and int(passed.group(1)) >= len(taken()) + WIRE_TESTS, proc.stdout[-2000:]
     assert not re.search(r"(?m)^\s*\d+ (failed|flaky|skipped|did not run)", proc.stdout), proc.stdout[-2000:]
+    # Each capture's verdict, printed so a `-s` run shows it (S82, #210): the spec compares within a tolerance and
+    # rewrites nothing on a pass, so a clean tree after this test says only that no frame was rewritten - not that
+    # the frame is the committed bytes. The verdict is "the committed picture, byte for byte" or "not the committed
+    # picture's bytes" per capture; a close that claims byte for byte reads these lines.
+    verdicts = re.findall(r"(?m)^\s*([\w-]+: \d+ x \d+, [\d,]+ B \((?:the committed picture, byte for byte|not the committed picture's bytes)\))", proc.stdout)
+    assert len(verdicts) == len(taken()), (len(verdicts), proc.stdout[-2000:])
+    for line in verdicts:
+        print("picture:", line)
     if log is not None:
         assert log.is_file(), f"no source log at {log}: a server already on the port was reused, without the bundles"
         answers = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
