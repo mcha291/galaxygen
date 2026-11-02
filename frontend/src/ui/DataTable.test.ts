@@ -51,6 +51,10 @@ describe("DataTable (the design system's components/data/DataTable.jsx)", () => 
     expect(classes(renderToStaticMarkup(h(DataTable<Star>, { columns: COLUMNS, rows: ROWS, dense: true })))[0]).toBe("table dense");
     expect(classes(renderToStaticMarkup(h(DataTable<Star>, { columns: COLUMNS, rows: ROWS })))[0]).toBe("table");
     expect(cssRule(css, ".dense .cell")).toContain("padding: var(--space-1) var(--space-2);");
+    // A column of long names wraps where the others end in an ellipsis.
+    const wrapped = renderToStaticMarkup(h(DataTable<Star>, { columns: [{ key: "name", label: "Object", wrap: true }], rows: ROWS }));
+    expect(classes(wrapped).filter((c) => c.startsWith("cell"))).toEqual(["cell wrap head", "cell wrap", "cell wrap"]);
+    expect(cssRule(css, ".wrap")).toContain("white-space: normal;");
   });
 
   it("draws the selected row's rule and the header from the tokens, with no colour of its own", () => {

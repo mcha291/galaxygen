@@ -14,6 +14,8 @@ export interface Column<Row> {
   muted?: boolean;
   /** A CSS width for the column (the table's layout is fixed). */
   width?: string | number;
+  /** Words that wrap rather than end in an ellipsis (a long name in a narrow panel); numbers are never cut. */
+  wrap?: boolean;
   render?(row: Row): ReactNode;
   /** The header's accessible name where its label is not text (an icon, nothing). */
   ariaLabel?: string;
@@ -55,7 +57,7 @@ export function DataTable<Row extends object>({
 }: Props<Row>) {
   const [hover, setHover] = useState<unknown>(null);
   if (rows.length === 0) return <div className={cx(styles.empty, className)}>{empty}</div>;
-  const cell = (c: Column<Row>) => cx(styles.cell, c.mono && styles.mono, c.align && styles[c.align]);
+  const cell = (c: Column<Row>) => cx(styles.cell, c.mono && styles.mono, c.align && styles[c.align], c.wrap && styles.wrap);
   return (
     <table className={cx(styles.table, dense && styles.dense, className)} aria-label={label}>
       <thead>

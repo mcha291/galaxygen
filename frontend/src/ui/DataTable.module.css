@@ -28,6 +28,11 @@
   font-size: var(--size-2xs);
 }
 
+.wrap {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
