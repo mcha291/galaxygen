@@ -492,6 +492,9 @@ export interface BlackbodyTable {
 }
 
 export async function loadBlackbody(curves: Curve[], white: number, signal?: AbortSignal): Promise<BlackbodyTable> {
+  // S81: the table asked ahead of its loader (the Galaxy tab's, on its mount) is taken here, once (aheadOf, below).
+  const ahead = aheadOf<BlackbodyTable>(JSON.stringify(["blackbody", curves, white]), signal);
+  if (ahead) return ahead;
   return (await blackbody(curves, { white }, { signal })) as BlackbodyTable;
 }
 
@@ -565,6 +568,15 @@ export function askArraysAhead(names: string[], query: Query): void {
 /** The census `loadClouds(window, query, _, precision)` asks, asked now (galaxy/fieldLoads.ts). */
 export function askCloudsAhead(window: RegionWindowQuery, query: Query, precision?: "f4" | "f8"): void {
   askAhead(JSON.stringify(query), JSON.stringify(["clouds", window, query, precision ?? null]), (signal) => loadClouds(window, query, signal, precision));
+}
+
+/**
+ * The blackbody table `loadBlackbody(curves, white)` asks, asked now (galaxy/fieldLoads.ts; S81): the stars' and the
+ * clusters' colours through the filter set at the white point. Not a galaxy's - it is kept with the head start of the
+ * galaxy `query` names, and dropped with it.
+ */
+export function askBlackbodyAhead(curves: Curve[], white: number, query: Query): void {
+  askAhead(JSON.stringify(query), JSON.stringify(["blackbody", curves, white]), (signal) => loadBlackbody(curves, white, signal));
 }
 
 /** The whole render `loadRender(curves, white, query)` asks, asked now: its held answer (wholeRender). */
