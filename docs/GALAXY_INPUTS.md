@@ -4298,6 +4298,15 @@ never been judged in twenty-three sessions.
    What closes it: the pitch law (§5's shear form with its 6° draw) re-read against galaxies whose shear and
    pitch are both measured.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **measured against the law's mean, not its draw; the reading is S87's.** At the template's own shear
+   (Γ = 0.9976 at 2.2 R_d) the law's mean is 13.02°, so the measured 28.9° is **2.65 of the law's 6° scatter** from
+   it (2.43 from the draw on the template's seed, 14.33°, as written above); the Milky Way template's drawn 13.54°
+   sits 0.05 from its mean (Γ = 0.968). The law's intercept, 13.0° at Γ = 1, is `[recall]` ("the Milky Way's arms
+   are quoted near 12–13 degrees"), and the ruling that took it (`PITCH_YU`, §5) rests on Yu & Ho 2019 §4.3.5's
+   finding that the shear–pitch correlation is much weaker once a third of Seigar's pitches are corrected — no table
+   of galaxies with both measured has been read into the repository. Still carried; S87's reading list: Yu & Ho 2019's
+   sample (pitch with Γ, their §4.3), to re-read the intercept, the slope and the 6° scatter at their own
+   definitions and place NGC 4414's 28.9° in that distribution.
 154. **The grid's table of star formation is the law at a cell's mean contrast, and the viewer reads grid fields
    at a fixed azimuth between rings** (S59, D218's second and third follow-ups). The censuses now read the star
    formation law at a point (`systems.Modulation`: the law on each ring's own contrast as the point sees it, the
