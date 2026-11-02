@@ -4021,6 +4021,19 @@ never been judged in twenty-three sessions.
    response has relaxed after an arm's lifetime. What kills the reading: a measured gas contrast in co-rotating
    arms equal to the steady one's.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88 (level B or C is outside every batch: the batch reads the relaxation factor).
+   *S86 (M1):* **no relaxation factor exists to read, and the model's own clock says the steady state is not
+   reached.** `READING_GAS_SHOCK.md` holds no time to relax and no contrast for a corotating response (Part C:
+   "Not found anywhere: a steady corotating gas profile"); its arm lifetimes are 120 Myr (A1, one arm) and "the
+   short-lived spiral arms can recurrently develop" with no number (A3, as re-read at S70). Measured on today's
+   response instead `[inferred: the ridge's sound crossing, the response's own time scale]` — the ridge's full width
+   across the arm (the disclosed check's width × the period 2πR/m × sin p) over the gas's sound speed
+   (`GAS_DISPERSION`, 6 km/s), at 8 kpc with the 6–10 kpc band's medians of the width and of the strongest forcing's
+   m, layer on, each template at its seeds: the Milky Way template 0.3675 × (2π·8.12/3) × sin 13.54° = 1.46 kpc,
+   **238 Myr**; `ngc_4414` 0.390 × (2π·8.0/5) × sin 28.9° = 1.90 kpc, **309 Myr** — 2.0 and 2.6 times the one
+   printed arm lifetime, so the gas has crossed about half its ridge while an arm lives, and what the model publishes
+   is a state the arm does not live to see. The first closer is out of every batch (S85) and the second has nothing
+   to read; **proposed to the gate: permanent** — level A is steady by design (D216: the corotating frame is ruled,
+   and a time-stepped flow is BUILD_III's out-of-scope level B), the size of what it gives up written here.
 142. **The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound** (S57, D216 gate G2
    item 5, gate G3 item 2). f_m = m A_m/(X sin p) uses the WKB potential of a disc with no thickness; no source read
    gives the finite-thickness reduction, and checkpoint 3 has no scale height. Three findings sit under it: the
