@@ -1415,3 +1415,97 @@ def test_the_api_serves_an_unbarred_galaxy_with_nulls_for_the_bar_and_no_nan_any
             return {n for n, a in arrays.items() if a.dtype.kind == "f" and bool(np.isnan(a).any())}
 
         assert nan_arrays(body) <= nan_arrays(barred_body), (path, nan_arrays(body) - nan_arrays(barred_body))
+
+
+# --- debt #146: the body read at checkpoint 4 (S86, BUILD_V batch M1) ------------------------------------------------
+
+CHECKPOINT_4 = ("disc_surface_density", "stellar_surface_density", "bar_half_length", "bar_mass_share", "bulge_stellar_mass",
+                "bulge_scale_radius", "stellar_mass_total", "disc_surface_brightness", "disc_luminosity", "bulge_luminosity")
+
+
+def hand_hernquist_projected(R: np.ndarray, mass: float, a: float) -> np.ndarray:
+    """The projected surface density of a Hernquist sphere, M☉/pc², R and a in kpc: Σ(s) = M/(2π a² (1 − s²)²)
+    [(2 + s²) X(s) − 3], s = R/a, X = arcsech(s)/√(1 − s²) inside s = 1 and arcsec(s)/√(s² − 1) outside, 2M/(15π a²)
+    at s = 1 [recall: Hernquist 1990, ApJ 356, 359, eqs. 32-34 - the textbook form, checked here against its own
+    projection of the density by quadrature]. Written here; the model publishes the bulge's mass and scale and no
+    surface density of it."""
+    s = np.maximum(np.asarray(R, dtype=float) / a, 1e-9)
+    x = np.ones_like(s)
+    inner, outer = s < 1.0, s > 1.0
+    x[inner] = np.arccosh(1.0 / s[inner]) / np.sqrt(1.0 - s[inner] ** 2)
+    x[outer] = np.arccos(1.0 / s[outer]) / np.sqrt(s[outer] ** 2 - 1.0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sigma = mass / (2.0 * math.pi * a * a * (1.0 - s * s) ** 2) * ((2.0 + s * s) * x - 3.0)
+    sigma = np.where(inner | outer, sigma, 2.0 * mass / (15.0 * math.pi * a * a))
+    return sigma / 1e6
+
+
+def test_the_hand_hernquist_projection_is_the_density_s_line_of_sight_integral():
+    """The closed form above against the Hernquist density ρ = M a / (2π r (r + a)³) integrated along the line of sight
+    by quadrature, so the bulge's profile the #146 reading uses is not a recalled formula taken on trust."""
+    mass, a = 1.0e10, 0.36
+    for radius in (0.05, 0.36, 1.0, 3.0):
+        z = np.concatenate([[0.0], np.geomspace(1e-6, 400.0, 200001)])
+        r = np.sqrt(radius * radius + z * z)
+        rho = mass * a / (2.0 * math.pi * r * (r + a) ** 3)
+        column = 2.0 * float((0.5 * (rho[1:] + rho[:-1]) * np.diff(z)).sum()) / 1e6
+        assert float(hand_hernquist_projected(np.array([radius]), mass, a)[0]) == pytest.approx(column, rel=1e-4)
+
+
+def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
+    """Debt #146's first closer, "the share and the amplitude's profile read at checkpoint 4 against the same
+    sources" (S86, BUILD_V M1). The body is built at checkpoint 3 on checkpoint 1's disc; read here against what
+    checkpoint 4 holds - the disc's stars, their light and the bulge - with this file's arithmetic: the body's unit
+    profile on 1440 cells a ring (``hand_body``), its normalisation from the published ``bar_mass_share`` as the
+    module defines it (the share of checkpoint 1's disc on the grid, rings weighted R ΔR), each ring's share β of its
+    stars, and the bulge's projected Hernquist profile.
+
+    **As read on the Milky Way template** (the production grid):
+    - *the share in mass*: the body's stars (β of each ring's ``stellar_surface_density``) are **0.093 of the galaxy's
+      stellar mass**, the bulge in T (the bulge itself 0.162) - against "∼10 %" of all stellar mass in bars and a
+      Bar/T in mass whose peak sits above the light's (`READING_BAR.md` A1.1: W09 §5.2, G11 §3.1);
+    - *the share in light*: β of each ring's ``disc_surface_brightness`` over the disc's and the bulge's light,
+      bolometric, **0.047** - against Bar/T in light peaking at ≈ 0.10 (G11, SDSS i) and 0.14 for strong bars (K18):
+      **a miss, low by half**, recorded (B5);
+    - *the m = 2 profile*: the body's two-fold amplitude round each ring peaks at **0.41 a** on checkpoint 1's disc and
+      at **0.425 a** once the bulge dilutes it (A₂ × Σ⋆/(Σ⋆ + Σ_bulge)) - against the S⁴G stacks' 0.76-0.94 a
+      (DG16b). **The named suspect, the bulge's dilution, is killed**: it moves the peak by 0.015 a. The miss is the
+      body's own. Read beside it, the profile's exponent alone (the model's 2; S⁴G's flat bars about 0.3, K15): the
+      peak at 0.68 a for n = 0.3, 0.61 for 0.5, 0.51 for 1 - **no profile the decompositions print reaches the
+      stacks**: the body's shape (axis ratio 0.4, boxiness 3), not its profile, is the next suspect.
+
+    Pinned as read; nothing moved to meet a source."""
+    model = the_model(prod)
+    o = run(model, inputs_of("milky_way"), only=CHECKPOINT_4)
+    F, R = o.fields, o.grid.R
+    a = float(F["bar_half_length"])
+    disc1 = np.asarray(F["disc_surface_density"], dtype=float)
+    stars = np.asarray(F["stellar_surface_density"], dtype=float)
+    psi, unit = hand_body(R, a)
+    mean = unit.mean(axis=1)
+    weights = R * np.gradient(R)  # the module's ring weights: R ΔR
+    normalisation = float(F["bar_mass_share"]) * float((disc1 * weights).sum()) / float((mean * weights).sum())
+    beta = normalisation * mean / disc1
+    area = 2.0 * math.pi * R * np.gradient(R) * 1e6  # pc² a ring
+    mass_share = float((beta * stars * area).sum()) / float(F["stellar_mass_total"])
+    light_share = float((beta * np.asarray(F["disc_surface_brightness"], dtype=float) * area).sum()) / (
+        float(F["disc_luminosity"]) + float(F["bulge_luminosity"]))
+    bulge_share = float(F["bulge_stellar_mass"]) / float(F["stellar_mass_total"])
+    assert (mass_share, light_share, bulge_share) == pytest.approx((0.0926, 0.0468, 0.1623), rel=0.02)
+    assert light_share < 0.10 / 1.5  # the light: a miss, low by half against G11's peak at a tenth
+
+    inside = R < a
+    amplitude = normalisation * hand_fourier(unit, psi) / disc1  # the body's m = 2 amplitude of the contrast
+    bulge = hand_hernquist_projected(R, float(F["bulge_stellar_mass"]), float(F["bulge_scale_radius"]))
+    diluted = amplitude * stars / (stars + bulge)
+    peak, peak_diluted = (float(R[np.argmax(np.where(inside, v, -1.0))]) / a for v in (amplitude, diluted))
+    assert peak == pytest.approx(0.41, abs=0.01) and peak_diluted == pytest.approx(0.425, abs=0.01)
+    assert abs(peak_diluted - peak) < 0.03 and peak_diluted < 0.76  # the bulge is not the miss; the miss stands
+
+    def peak_at(n: float) -> float:
+        profile = np.where(unit > 0.0, unit ** (n / N_HAND), 0.0)  # (1 − m²)^n from the ruling's n = 2
+        return float(R[np.argmax(np.where(inside, hand_fourier(profile, psi) / disc1, -1.0))]) / a
+
+    flat, half, exponential = peak_at(0.3), peak_at(0.5), peak_at(1.0)
+    assert (flat, half, exponential) == pytest.approx((0.684, 0.612, 0.511), abs=0.015)
+    assert flat < 0.76  # no printed profile reaches the stacks' peak

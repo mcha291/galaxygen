@@ -4152,6 +4152,20 @@ never been judged in twenty-three sessions.
    bars are both observed, and the bar's torque parameter is not computed. **Carried.** What closes it: the share
    and the amplitude's profile read at checkpoint 4 against the same sources; a read distribution of b/a.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the first closer built — the body read at checkpoint 4 — and the named suspect killed.**
+   `tests/test_bar.py::test_debt_146_the_body_read_at_checkpoint_4_as_measured` reads the body against what checkpoint
+   4 holds, by the file's own arithmetic (the bulge's projected Hernquist profile held against its line-of-sight
+   quadrature beside it), on the Milky Way template: the body's stars are **0.093 of the stellar mass** (the bulge in
+   T, itself 0.162), against "∼10 %" of all stellar mass in bars (W09) — a hit in mass; its light, β of each ring's
+   bolometric surface brightness, **0.047 of the galaxy's**, against Bar/T ≈ 0.10 (G11, i) and 0.14 (K18, strong bars)
+   — **a miss, low by half**; its m = 2 amplitude peaks at **0.41 a on checkpoint 1's disc and 0.425 a with the
+   bulge's dilution** — the suspect moves it by 0.015 a, so the miss against the stacks' 0.76–0.94 a is the body's
+   own. The profile alone does not reach the stacks either: the peak at 0.68 / 0.61 / 0.51 a for exponents 0.3 / 0.5
+   / 1 (S⁴G's flat bars about 0.3, K15). Still carried, the next suspects and the second closer for S87: the body's
+   shape (b/a 0.4, boxiness 3 — the peak's place as a function of them, measured), the light share's half (the inner
+   disc's light per unit mass at checkpoint 4 against the body's mass taken from checkpoint 1's disc), and a read
+   distribution of b/a (K18's 0.31 ± 0.12 is strong bars only; MD07's ellipse-fit 0.48–0.54 ± 0.12–0.13 reads 20 %
+   low against a 2D fit, G11).
 147. **The bar's gas lanes are a template with one number that has no source** (S58, D217 items 6–8 and the
    follow-up). Two arcs on the leading side from the bar's end to a tenth of its length, curvature κ·a 1.15
    (the median of ten galaxies; the strength law is an envelope with a wide spread, so no draw), the ring's gas
