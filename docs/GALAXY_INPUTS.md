@@ -3850,6 +3850,13 @@ never been judged in twenty-three sessions.
    reads widths 0.365 / 0.370 / 0.380 on the Milky Way template (0.413 / 0.431 / 0.447 on `ngc_4414`), a probe of the
    law, not a change. The closer is unread: a sample-wide gas ridge width over the arm spacing with its spread (the
    PHANGS ridge masks against their galaxies' arm numbers) — S87's reading list.
+   *S87 (M1):* **read: no sample-wide width over the spacing is in the repository.** `READING_GAS_PATTERN.md`
+   Reading D (a re-reading; no web access): PHANGS's ridge masks are top-hat full widths of the CO ∪ Hα ridge,
+   "typical widths between 500 and 1000 pc", dilated by a 7.5″ kernel, with no per-galaxy list and no arm spacing
+   beside them (Querejeta et al. 2024, Appendix E); Reading B's ≳ 0.12 of the spacing is a bound from the broad
+   masks' area share. The check's target stays one galaxy's 0.17 (Egusa et al. 2017) and the model's 0.3675 /
+   0.390 (S86) stand. Still carried; the owner's reading the masks' widths per galaxy with their arm number and
+   pitch (L⊥ = 2πR sin p / m), or a PHANGS fit of the CO ridge's profile across the arm.
 130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
    contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
    and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
@@ -3917,6 +3924,13 @@ never been judged in twenty-three sessions.
    source's table: unread (the paper's per-galaxy figure or data), on S87's reading list beside #129's, where the
    suite's 240 galaxies' medians are the model's side of the comparison. Still carried.
 
+   *S87 (M1):* **read: the per-galaxy means are not in the repository.** `READING_GAS_PATTERN.md` Reading D: what
+   the readers hold is grouped over segments and radial bins (grand designs 2.73 against the rest 1.90; high M⋆
+   2.70 against low 1.80; narrow masks 2.53; 1.5 kpc 1.49). The one population relation with a spread, Meidt et
+   al. 2021's log C_CO = 1.41 log C_3.6 + 0.31 (~0.15 dex over 1527 radial bins of 67 galaxies), is a
+   percentile contrast per 150 pc annulus, not a ratio of masked means: comparing the response's spread with it
+   needs the model's 84th-percentile contrast per annulus, an instrument to build, not a reading — named here for
+   the batch's close. Still carried; the owner's reading Querejeta et al. 2024's per-galaxy figure or data.
 132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
    amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
    the lower bound of its range, 0.5: a disc this compact and massive (1.68 kpc, 3.9e10 M☉) makes a peak above
