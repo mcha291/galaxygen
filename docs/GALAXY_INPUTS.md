@@ -4182,6 +4182,13 @@ never been judged in twenty-three sessions.
    What closes it: a sub-kpc width statistic for bar dust lanes or molecular ridges; a read source on HII regions
    along bar lanes; a run of lane strength along the arc. The owner may prefer the width as a live slider.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **re-read against `READING_BAR.md` Part B; still no width.** B1.1's lanes are read for their place,
+   side and curvature (A92, K02, C09, SM15, KSK12) and its last row reads "Lane width: not printed in any source
+   read", as B5 does ("Not found in anything read: a lane width"); KSK12's one peak, Σ ~ 100 against 10 M☉/pc², is a
+   compression and not a width; the PHANGS ratio of 2.6 is over 1.5 kpc masks, wider than the lane. Nothing moved: the width stays the declared placeholder at
+   FWHM 0.10 a, with what it carries as S58 measured it. Carried, a reading for S87's list — a sub-kpc width of bar
+   dust lanes or molecular ridges (high-resolution CO of barred PHANGS galaxies, or the dust-lane widths of the
+   simulations KSK12 and S15 print) — and, the owner's alternative, the width as a live slider.
 148. **The model has two clocks** (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
    disc's age by the flat-ΛCDM closed form on the model's own H₀ and Ω_M, in which the universe is 13.47 Gyr old;
    the grid's time axis runs to 13.8 Gyr "from t = 0", and star formation starts at its zero whatever the
