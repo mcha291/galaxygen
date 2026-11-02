@@ -33,6 +33,14 @@ def test_37_quantities():  # test_36_quantities until S44, test_33_quantities un
     assert all(q.source and q.stated for q in spec.QUANTITIES)
 
 
+def test_row_2_carries_the_clocks_predicted_miss_written_before_the_build():
+    """S87 (debt #148): the grid's clock moves to the model's own cosmology, and S86 measured row 2 leaving its
+    window by 0.020 on it. The prediction goes into the row before the build (rule B4) and the window is not moved
+    to meet it (B5): the row keeps BHG16's 1.65 +/- 0.19."""
+    assert (Q[2].lo, Q[2].hi) == (1.46, 1.84)
+    assert "1.8599" in Q[2].note and "out by 0.020" in Q[2].note and "not tuned back" in Q[2].note
+
+
 def test_statistical_rows_are_debt_8():
     # S34: row 32, the globular cluster system, drawn on world_seed ({13, 14, 16, 17, 18} until S34).
     assert {q.n for q in spec.QUANTITIES if q.mode == "statistical"} == {13, 14, 16, 17, 18, 32}

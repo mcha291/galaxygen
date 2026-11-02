@@ -328,7 +328,7 @@ _HARRIS_READ = (
 
 QUANTITIES: tuple[Quantity, ...] = (
     Quantity(1, "Total stellar mass", "Msun", "stellar_mass_total", 4.0e10, 6.0e10, "pointwise", "5 ± 1 × 10¹⁰ M☉", _BHG16),
-    Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16),
+    Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16, note="S87 (debt #148), written before the build: with the grid's time axis on the model's own cosmology (t_max = the flat-ΛCDM age on H₀ = 70 km/s/Mpc and Ω_M = 0.3, 13.467 Gyr, in place of a recalled 13.8) this row is predicted to leave its window: S86 measured 1.8599 against 1.46–1.84, out by 0.020 (1.7552 on the 13.8 clock) - star formation's end 0.33 Gyr earlier on a history still falling. The miss is recorded, not tuned back (rules B5, B10: no constant was fitted on the 13.8); S88's suite judges it."),
     Quantity(3, "Solar tangential velocity", "km/s", "v_tangential_sun", 245.0, 251.0, "pointwise", "248 ± 3 km/s", _BHG16),
     Quantity(4, "Thin disc scale length", "kpc", "thin_disc_scale_length", 2.1, 3.1, "pointwise", "2.6 ± 0.5 kpc", _BHG16),
     Quantity(5, "Thick disc scale length", "kpc", "thick_disc_scale_length", 1.8, 2.2, "pointwise", "2.0 ± 0.2 kpc", _BHG16),

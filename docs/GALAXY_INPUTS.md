@@ -4266,6 +4266,11 @@ never been judged in twenty-three sessions.
    specs and the full suite are read — **for S87 to build and S88's suite to judge**. Its prediction (B4), read
    before it is built: **row 2, the SFR, leaves its window** — 1.8599 against 1.46–1.84 (BHG16's 1.65 ± 0.19), out
    by 0.020 — and nothing is to be tuned back into it (B5, B10: no constant was fitted on the 13.8). Still carried.
+   *S87 (M1):* **the prediction, written before the build (B4).** With `t_max` the model's own flat-ΛCDM age
+   (13.467 Gyr), acceptance row 2 is predicted to read **1.8599 M☉/yr against its window 1.46–1.84, a miss by
+   0.020** (1.7552 on the 13.8 clock); `stellar_mass_total` −0.19 %, the bar's threshold unmoved (0.3295). The
+   miss goes into the acceptance table's row 2 now (`specs/spec.py`, the row's note) and is not tuned back: no
+   constant was fitted on the 13.8 (B5, B10). S88's suite judges it.
 149. **No bar-driven two-armed arm is built, and an unbarred disc's arms run to its centre** (S58, D217 item 9 and
    the follow-up). Bar forcing correlates with the local m = 2 amplitude out to 1.4–1.6 bar radii (Salo et al.
    2010), but no source read prints the driven amplitude against radius, so none is invented: outside the bar the
