@@ -4064,6 +4064,20 @@ never been judged in twenty-three sessions.
    checkpoint-3 stage may read without a cycle. What kills the reading: the gas's own arm carrying the stars'
    fractional amplitude or more, which the response itself says it does.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **measured, and found to be two errors, not one.** Since S60 the forcing is the pieces' excess times
+   m/(X(|sin p| + m h/R)), X on checkpoint 1's Σ (D219 item 5), so its potential is that of A_s Σ₁. The potential of
+   today's disc is that of A_s Σ_s + A_g Σ_g, and the ratio of the two is [(Σ_s + Σ_g)/Σ₁] × [1 + f_g (A_g/A_s − 1)],
+   f_g = Σ_g/(Σ_s + Σ_g). Read on today's model, layer on, the 6–10 kpc rings' medians (A_g/A_s the published gas
+   field's Fourier amplitude over the stellar field's at the stars' strongest m on each ring): the Milky Way template
+   (Σ_s + Σ_g)/Σ₁ = 0.797, f_g = 0.219, A_g/A_s = 1.13 (0.78–1.41, 16th–84th) — **the kill condition met there: the
+   gas's own arm carries more than the stars' fractional amplitude**, the second factor 1.03 — so the forcing is
+   1/0.820 = **1.22 times** today's disc's; `ngc_4414` 0.780, f_g = 0.377, A_g/A_s = 0.66 (0.49–1.13), the second factor
+   0.87, the forcing **1.47 times**. The larger part is not the gas's share the entry named but checkpoint 1's disc
+   holding a quarter more than today's stars and gas at these radii (the mass the later stages take out of the disc
+   is in it); the gas share's part is +3 % (the Milky Way) to −13 % (`ngc_4414`). The closer stands as written and no
+   checkpoint-3 stage can read today's split (A1: star formation follows the pattern, D174); the sizes are written
+   here: Σ₁ is the only disc checkpoint 3 holds. **Proposed to the gate: permanent**, a property of the model's
+   order (A1), with its size measured.
 144. **The gas falling into a co-rotating arm shocks, and level A has no such shock** (S57, D216 gate G2 item 2). In
    the frame of a co-rotating arm no gas flows through, so there is no steady galactic shock; but the simulations
    show gas converging on the potential minimum from both sides at Mach ~2 and shocking as it arrives, a
