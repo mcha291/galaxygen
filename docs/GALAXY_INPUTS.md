@@ -3010,6 +3010,14 @@ never been judged in twenty-three sessions.
    docs/READING_GAS_SHOCK.md Part B, rows A1, A3 — simulations, not observations]`. Still carried for the second
    half: a sharp cut where a decay belongs, and a lifetime taken from two N-body papers.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the remaining half is the young-star cut against the arms' crossing time: the pattern's, with the arms' pieces.
+   *S86 (M1):* **the pieces give no crossing time either; the closer is a reading.** The arms are a census of pieces
+   since S60, each steady in the frame of its own ring (`arm_pattern_speed` = Ω(R), D216), so there is still no flow
+   through an arm and no crossing time to replace the cut with: the first half's ruling stands. What is left is the
+   second half — a sharp 0.1 Gyr cut where a decay belongs, its number two N-body lifetimes — and its closer is the
+   entry's own kill condition read from observation: the age at which a population's arm–interarm contrast decays to
+   the old disc's (age gradients across arms in resolved young clusters or populations). No reader in the repository
+   holds one. The cut's own fading is #162's (M2, the young stars' fading as a step). Still carried; on S87's reading
+   list.
 82. **Rows 25–28 cannot be judged: the source's magnitudes are not stated extinction-corrected and the
    model's light is intrinsic** (S28, BUILD_II Phase 3, D177). BHG16 Table 2 quotes M_B −20.70, M_V
    −21.37, B − V 0.73, Υ_V 1.70 for the Galaxy `[verified: arXiv:1602.07702 Table 2, read at S28]`,
