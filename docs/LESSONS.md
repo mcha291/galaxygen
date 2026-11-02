@@ -1850,3 +1850,20 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [audit] A failing assert names its constant: the runner's log said `< 1e-05`, the midpoint's bound, and the entry
   said "the first assert". Read the message's number before writing which claim failed; the two readings point at
   different mechanisms.
+
+## From S80 (#208's remedies a and c; a Fable lead, one Opus builder in a worktree)
+
+- [viewer] A head start pays where the answers take time, not where they are already in before the work that waits on
+  them: on localhost the field's loads asked 0.6 s earlier moved the warm landing by nothing (the compile and the mesh
+  are the path) and the cold first paints by ~0.6 s quiet (0.14–0.29 s beside the suite). Measure the mechanism on the wire it is for — the deployed probe,
+  #204 — and say in the entry which wire the estimate was made for (D242's "~0.3 s" was the chain's, not the landing's).
+- [viewer] A request count on a walk is the walk's: the 39 "extra" requests R3 seemed to add were the default landing's
+  own loads, sent because the specs press the next template inside the settle R3 removed. Read the keys (which loader,
+  which galaxy) before building a deferral for them; the number closed by measurement, not by code.
+- [close] A probe run beside the suite is attributed by its own instrument — n = 10 medians, the critical path's
+  timeline — never by run 1: the single fresh-browser readings went 1.58 → 2.08 s on a change the medians put within
+  30 ms.
+- [close] A gate costs what it costs only where it can see the change: two full-suite runs, nine to eleven hours in
+  series, on a frontend change the model's 1 700 tests cannot reach, with CI running the same suite on `main` in
+  parallel for nothing. The owner asked whether it was necessary; it was not, and the rule is now C7's (D245): the
+  close's gate is the change's.
