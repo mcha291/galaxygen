@@ -3953,6 +3953,21 @@ never been judged in twenty-three sessions.
    spur, each fitted on its own (Reid et al. 2019), where the template outside its bar is a sum of m = 3–6 with
    drawn phases (#152). Segments of the common winding change where the crests lie and no mode's power.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88 (with #152, the owner's).
+   *S86 (M1):* **re-read on the composed field, and the conflict carried with the owner.** Since S60 the field is a
+   census of arm pieces laid by this law (D219) and the S58 numbers above are the five modes'; read again on today's
+   model (layer on, the production grid, each template at its own seeds), the statements' own Fourier amplitudes of
+   `pattern_density_contrast` round each ring, m = 2…6 power weighted by Σ R ΔR: **the Milky Way template outside 1.5
+   bar half-lengths 0.086 / 0.441 / 0.276 / 0.052 / 0.144, A3/A2 2.26, m = 5–6 the largest of m = 2–6 on 6 of the 165
+   rings that carry a pattern, from 11.14 kpc** (S58: from 8.7 kpc outward); disc-wide, the bar in, 0.537 / 0.178 / 0.181 / 0.031 /
+   0.073, A3/A2 0.58; **`ngc_4414` 0.235 / 0.221 / 0.280 / 0.180 / 0.085, A3/A2 0.97, m = 5–6 the largest on 54 of
+   133 rings, from 2.51 kpc.** The law is what it was — its Σ A_m² over the 6–10 kpc rings 0.009 / 1.06 / 2.13 / 2.44
+   / 2.44 on the Milky Way template, where the realised pieces' `arm_mode_power_m` read 0.25 / 1.22 / 1.01 / 0.24 /
+   0.36: broad pieces at the law's count fill a ring and leave its low harmonics (D219's m-split check, as S60 read
+   it). So against `READING_ARM_MODES.md`: statement 8 is met on the Milky Way template inside 11 kpc and still fails
+   on `ngc_4414`; statement 1 fails outside the Milky Way's bar (A3/A2 2.26 against 0.33–0.58) and on `ngc_4414`
+   (0.97); statement 6 is met inside the bar only. Nothing in the law moved at S86: it is the owner's kept law (D216),
+   the conflict of sources is ruling 12's, and the alternatives are the owner's — S26's global window on every ring
+   (D215) and #152's per-arm pin (put at S86's open). Still carried, with the owner.
 139. **The modes' phases are uniform and independent by assumption** (S56, D215). Each mode's phase is drawn
    uniformly on [0, 2π) from `texture_seed`, independently of the others and of the bar `[inferred: a mode in a
    differentially rotating disc has no preferred phase]`; no source was read for it, and BUILD_III §9 asks a
