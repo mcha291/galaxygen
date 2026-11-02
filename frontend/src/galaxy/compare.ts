@@ -58,6 +58,49 @@ export function arcsecOf(kpc: number, distanceMpc: number): number {
   return (kpc / (distanceMpc * 1000)) * ARCSEC_PER_RADIAN;
 }
 
+/** An angle on the sky at a distance as a length across the line of sight, kpc (small angles): arcsecOf's inverse. */
+export function kpcOfArcsec(arcsec: number, distanceMpc: number): number {
+  return (arcsec / ARCSEC_PER_RADIAN) * distanceMpc * 1000;
+}
+
+/**
+ * A picture's pixel scale as the user states it (T16 ii, S83): kiloparsecs per pixel, or arcseconds per pixel with the
+ * distance that makes them a length.
+ */
+export type PictureScale = { unit: "kpc"; perPixel: number } | { unit: "arcsec"; perPixel: number; distanceMpc: number };
+
+/** Kiloparsecs one pixel of the picture covers, or null where the statement is not a scale (empty, zero, negative). */
+export function kpcPerPicturePixel(scale: PictureScale): number | null {
+  const ok = (v: number) => Number.isFinite(v) && v > 0;
+  if (!ok(scale.perPixel)) return null;
+  if (scale.unit === "kpc") return scale.perPixel;
+  return ok(scale.distanceMpc) ? kpcOfArcsec(scale.perPixel, scale.distanceMpc) : null;
+}
+
+/**
+ * The width a picture is drawn at beside the render, CSS pixels: its own width in kpc (pixels x kpc per pixel) at the
+ * render's pixels per kpc (ViewState.pxPerKpc, the scale bar's). The two panes are the same width, so the picture's
+ * pane is then the same kpc across as the render's - the left pane's across at its orbit target - and the scale bar
+ * reads the same on both. The browser resamples it; nothing here is physics (rule D5).
+ */
+export function pictureWidthPx(imagePx: number, kpcPerPx: number, pxPerKpc: number): number {
+  return imagePx * kpcPerPx * pxPerKpc;
+}
+
+/** The picture's caption: its file, the band the user states, and its scale - stated, and as drawn. */
+export function pictureCaption(name: string, band: string, scale: PictureScale, imagePx: number | null): string[] {
+  const kpc = kpcPerPicturePixel(scale);
+  const stated =
+    scale.unit === "kpc"
+      ? `${formatNumber(scale.perPixel, 3)} kpc per pixel`
+      : `${formatNumber(scale.perPixel, 3)}″ per pixel at ${formatNumber(scale.distanceMpc, 3)} Mpc`;
+  const across = kpc !== null && imagePx !== null ? ` · ${imagePx} px = ${formatNumber(imagePx * kpc, 3)} kpc across` : "";
+  return [
+    `Picture: ${name}${band.trim() ? `, in ${band.trim()}` : ", band not stated"}.`,
+    kpc === null ? "Scale not stated: drawn to fit the pane, not to the render's scale." : `${stated}${scale.unit === "arcsec" ? ` (${formatNumber(kpc, 3)} kpc)` : ""}${across}`,
+  ];
+}
+
 /**
  * What the render is, for a picture set beside it: the template (and whether it has been edited), the filter
  * set, the scale at the centre of the view and the inclination, each read from the view as it stands now - an

@@ -1907,3 +1907,26 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] **The Bash tool's heredoc rewrites a doubled backslash**: a Python patch script written through `cat <<'EOF'` with
   `"\\n"` in it reached the disk as `"\n"` and its anchor never matched. Scripts with backslashes go through the Write
   tool (galaxygen-machine-environment, again).
+
+## From S83 (BUILD_V row 83, robustness and comparison; a Fable lead, two Opus builders in worktrees)
+
+- [close] **A viewer item can reach the model's tests through data the tests read.** The JWST set is viewer data
+  (`instruments.json`), but `tests/test_render.py` holds the model's response tables to every set it finds there, so
+  the new set fails two of them and needs a pin in a third. Under D246 a pin is the owner's: the item is built and
+  held on its branch, not merged, and the register names what the owner decides (#211). Before briefing a new filter
+  set, grep the tests for the file they read.
+- [viewer] **Read what three.js already rebuilds before writing a rebuild.** On a context restore three re-uploads
+  every texture that keeps its pixels and remakes every framebuffer when bound; the viewer owes only what three cannot
+  know - its once-drawn targets, its raw GL queries, its own extensions. The builder pinned three's behaviour in a
+  vitest case against r186's source, so the division is a fact of the record, not an assumption.
+- [viewer] **The black picture had a cause the test found by removal.** Without the re-march the frame after a restore
+  sums to a few hundred - the march's target made again, empty - which is the owner's "black stars regime". A test that
+  fails when the remedy is taken out is the proof that the remedy is the cause's.
+- [infra] **A builder's frame-time measurement while the other builder is on the GPU is a bound, not a number.** Builder B
+  timed the two-pane view while builder A ran its PSF builds; the medians held at the display rate, which says enough
+  for a comparison switch that is off in every capture, and no more.
+- [close] **A brief's physical premise is the builder's to correct from the source, and the correction goes in the
+  record.** The brief said 6.5 m flat to flat; the builder read Feinberg et al. 2023 and derived 6.628 m from the
+  segments and gaps, stating the paper's own 6.575 / 6.64 m beside it. The decision carries the correction, not the brief.
+- [infra] **Two builders' picture gates share one port in turn.** Builder A owned 8019 for the session; builder B ran
+  its vitest and typechecks as it went and the picture gate last after checking the port was free. No collision this time.

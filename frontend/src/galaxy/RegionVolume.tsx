@@ -42,6 +42,7 @@ import {
   sortedFrom,
 } from "./region";
 import type { RegionWindow } from "./regimes";
+import { useContextGeneration } from "./contextLoss";
 
 /** The most pixels the region is marched at (as FieldVolume's budget): the loop over objects runs per pixel. */
 const PIXEL_BUDGET = 400_000;
@@ -249,7 +250,15 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     };
   }, [frame, passes]);
 
-  const last = useMemo(() => ({ view: new Matrix4(), projection: new Matrix4(), gain: -1, weight: -1, width: 0, height: 0, extinction: -1 }), [passes]);
+  // A lost and restored context (T13, S83): the three targets are made again by three when next bound, but hold none of
+  // the pixels marched into them - the transmission's two would read zero (WebGL clears a new target), the field under the
+  // multiply and the stars behind the clouds drawn black - so a restore starts a new record of the last march, and the
+  // next frame marches all three again.
+  const generation = useContextGeneration(gl.domElement);
+  const last = useMemo(
+    () => ({ view: new Matrix4(), projection: new Matrix4(), gain: -1, weight: -1, width: 0, height: 0, extinction: -1 }),
+    [passes, generation], // eslint-disable-line react-hooks/exhaustive-deps -- a restore is a new record, nothing read
+  );
   useFrame(({ camera }) => {
     if (!built || !passes) return;
     const gain = LIGHT_PER_LSUN_PC2 * 2 ** stops * weight;

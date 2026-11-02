@@ -710,9 +710,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S81 | **208** (the landing's last tenths: the head start and the shader checks at S80, the mesh's Worker at S81, (d) by ruling, (e) by measurement — D244, D246, D247) | 1 |
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 189, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 209, 210 | 119 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 189, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 120 |
 
-So the board's **130 open** is 11 permanent and 119 carried, and no item is unruled. (S22
+So the board's **131 open** is 11 permanent and 120 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4771,6 +4771,19 @@ never been judged in twenty-three sessions.
    closes it: the capture re-taken on each tag s71 … s81 (one capture, the bundles) to name the session, and its cause
    read; or the owner's word that a within-tolerance byte change needs no name, the capture re-taken at the next
    knowing change. From S82 the close's gate reads the verdict lines, not `git status` (LESSONS, S82).
+211. **The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the
+   end row 0.009 mag off** (S83, D250; builder A's run of the targeted tests on `s83-robust`). `tests/test_render.py`
+   reads the viewer's filter sets (`instruments.json`) and holds the model's response tables to each: for the new
+   `jwst_nircam` set (F444W, F200W, F090W, fetched from SVO by `tools/fetch_filters.py`) the linear read of ln G between
+   the slope rows exceeds the h²/32 bound, and the 87 hottest isochrone points read through the end row's tails "beyond
+   K" miss the exact path by 0.009 mag in F444W against the 0.002 bound measured at S48 for the optical sets; `AGE_FACTORS`
+   (the test's own pins per set, the `full` fixture) has no entry for the set and `GATE` lists only the old sets. The
+   response grid (`spectra.RESPONSE_SLOPES`, `RESPONSE_TEMPERATURES`) and its tails were built and bounded for U to K.
+   **Carried.** The set is built and held on `s83-robust` (aa0eec6), not merged: merging it would turn the nightly red.
+   What closes it: the owner's word (D246) to pin the set's own numbers in `tests/test_render.py` (a measured
+   `AGE_FACTORS` row, the end-row bound stated per set) with the `full` fixture run once; or a model batch that extends
+   the response grid's tails to 4.4 µm (M3, the populations), which moves the hash; or the set's red band moved inside
+   the grid (F356W or F277W) with the reason stated. What kills the reading: the bound met by a finer slope grid alone.
 
 ---
 

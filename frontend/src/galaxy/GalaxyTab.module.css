@@ -245,14 +245,17 @@
   gap: var(--space-3);
 }
 
-/* The render and the captions over it: the whole stage, or - while a picture is set beside it (T16 ii, S54) -
-   the left of two equal halves of what the control panel leaves free (300 px: its 268 and its margins), so the
-   render and the picture are the same size and neither is under the panel. PictureBeside.module.css holds the
-   right half. The view inside is absolute and fills whichever it is given. */
+/* The render and the captions over it: the whole stage, or - while the comparison is on (T16, S83) - one of two
+   equal panes of what the control panel leaves free (300 px: its 268 and its margins), so the two are the same
+   size, the same kpc across under one camera, and neither is under the panel: the left the galaxy shown, the right
+   the second galaxy (ComparePane.module.css holds the picture's pane at the right's place). The view inside is
+   absolute and fills whichever it is given. */
 .render,
 .renderHalf,
+.renderRight,
 .over,
-.overHalf {
+.overHalf,
+.overRight {
   position: absolute;
   inset: 0;
 }
@@ -263,6 +266,16 @@
   right: calc((100% - 300px) / 2);
 }
 
+.renderRight,
+.overRight {
+  left: calc(300px + (100% - 300px) / 2);
+}
+
+/* The line between the panes, drawn over the right pane's canvas so the two canvases are the same width. */
+.overRight {
+  box-shadow: inset var(--hair) 0 0 var(--border-hair);
+}
+
 @media (max-width: 640px) {
   /* The panel is a bottom sheet here: the two halves are the stage's own. */
   .renderHalf,
@@ -270,10 +283,16 @@
     left: 0;
     right: 50%;
   }
+
+  .renderRight,
+  .overRight {
+    left: 50%;
+  }
 }
 
 .over,
-.overHalf {
+.overHalf,
+.overRight {
   pointer-events: none;
 }
 
