@@ -1930,3 +1930,21 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   segments and gaps, stating the paper's own 6.575 / 6.64 m beside it. The decision carries the correction, not the brief.
 - [infra] **Two builders' picture gates share one port in turn.** Builder A owned 8019 for the session; builder B ran
   its vitest and typechecks as it went and the picture gate last after checking the port was free. No collision this time.
+
+## From S85 (BUILD_V row 85, the register pass; a Fable lead alone)
+
+- [close] **A register pass reads the code before it reads the entry.** Five entries said "carried; S70 enters it" and
+  S70 had entered them; Audit V's own pass struck #137 only. A grep per entry (the constant's about, the test's name)
+  costs a minute and turns a carried item into a discharged one with its evidence line. Do it for every entry that
+  names a session as its closer.
+- [close] **"Permanent" has two meanings and the entry must say which.** A property of the model's scope is permanent
+  as the model is; the frozen history's items are permanent while the owner's ruling 7 stands and re-open on their word.
+  The pass writes "the owner's word re-opens it" into each of the second kind, so a later reader does not take a
+  ruling for a law.
+- [close] **Extract before you rule.** A script that lists each carried item with its origin and its "what closes it"
+  (120 items in 64 KB) is what makes a one-session pass possible; the entries whose marker was missing were read in full
+  from the file. The dispositions went into one table first, the counts checked against the register's own row, and the
+  edits applied by one script - so the pins moved once, as BUILD_V's gate for the row says.
+- [close] **A plan's order bends for a ruling only where nothing depends on the bent step.** S84 waited on BUILD_V's
+  ruling 2; S85 depended on nothing S84 does, so it ran first and the decision says so. A step the next one builds on
+  would have waited.
