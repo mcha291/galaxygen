@@ -1,6 +1,6 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   ACESFilmicToneMapping,
   AdditiveBlending,
@@ -24,6 +24,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { type CaptureCamera, DEFAULT_FOV, type LensCamera, isLens, lensScale, orbitPosition, standOf } from "./capture";
+import { CONTEXT_LOST_WORDS, type ContextState, contextWatch, useContextState } from "./contextLoss";
 import { type NoiseProbeKind, type NoiseProbeRow, type NoiseProbeTables, runNoiseProbe } from "./noiseProbe";
 import { extent } from "./positions";
 import { screenRings } from "./ringProfile";
@@ -130,6 +131,9 @@ export function GalaxyView({
   const planes = clipPlanes(range);
   const position = placed ? orbitPosition(placed, fov) : cameraFor(preset ?? "oblique", reach, fov);
   const standKey = placed ? `${placed.inclination_deg},${placed.azimuth_deg},${placed.radius_kpc}` : preset;
+  // T13 (S83): the context lost, and since restored but not yet drawn again - the frame loop paused while lost, and the
+  // status line shown until the first frame after the restore (contextLoss.ts).
+  const [context, setContext] = useState<{ lost: boolean; redrawing: boolean }>(NOT_LOST);
 
   return (
     <div className={styles.view}>
@@ -138,7 +142,9 @@ export function GalaxyView({
         camera={{ position, fov, near: planes.near, far: planes.far }}
         dpr={[1, 2]}
         gl={galaxyRenderer} // alpha and antialias, three's shader checks off in a production build (renderer.ts, S80)
+        frameloop={context.lost ? "never" : "always"} // no frame while the context is lost (T13): nothing marched is recorded as drawn
       >
+        <ContextGuard onChange={setContext} />
         {children}
         {layers.map((layer, i) => (
           <Stars key={i} layer={layer} additive={additive} psf={psf} spriteSize={tuning.spriteSize} />
@@ -152,8 +158,79 @@ export function GalaxyView({
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
         <ZoomBridge reach={reach} standRadius={standRadius} zoom={zoom} onView={onView} />
       </Canvas>
+      {(context.lost || context.redrawing) && (
+        <p role="status" style={LOST_LINE}>
+          {CONTEXT_LOST_WORDS}
+        </p>
+      )}
     </div>
   );
+}
+
+const NOT_LOST = { lost: false, redrawing: false } as const;
+
+/**
+ * The context's status line (T13), drawn as the app's caution lines are (App.module.css `.stale`: the same tokens),
+ * inline because the view's stylesheet is the comparison view's to change this session; below the app's own status
+ * line, so the two never cover each other.
+ */
+const LOST_LINE: CSSProperties = {
+  position: "absolute",
+  top: "calc(var(--space-4) + var(--space-10))",
+  left: "50%",
+  zIndex: 1,
+  maxWidth: "min(320px, calc(100% - 2 * var(--space-4)))",
+  transform: "translateX(-50%)",
+  textAlign: "center",
+  margin: 0,
+  padding: "var(--space-2) var(--space-4)",
+  border: "var(--hair) solid var(--status-caution)",
+  borderRadius: "var(--radius-sm)",
+  background: "var(--status-caution-bg)",
+  color: "var(--status-caution)",
+  font: "var(--text-data)",
+  pointerEvents: "none",
+};
+
+/**
+ * The renderer's context watched (T13, S83; contextLoss.ts): tells the view when the context is lost - its frame loop
+ * paused and its status line shown - and when it is back and a frame has been drawn again. three.js prevents the loss's
+ * default itself, so the browser restores the context; what the viewer keeps on the GPU on its own terms is rebuilt by
+ * its owners on the restore's `generation` (FieldVolume, RegionVolume, FluxPoints). An instrument beside it (rule B1):
+ * `window.__galaxygenContext()`, the state of this canvas's context - lost, restores, losses.
+ */
+function ContextGuard({ onChange }: { onChange: (c: { lost: boolean; redrawing: boolean }) => void }) {
+  const gl = useThree((s) => s.gl);
+  const state: ContextState = useContextState(gl.domElement);
+  const tell = useRef(onChange);
+  tell.current = onChange;
+  // A restore's first frame not yet drawn: the status line stays until it is.
+  const redrawing = useRef(false);
+  useEffect(() => {
+    if (state.lost) {
+      redrawing.current = true;
+      tell.current({ lost: true, redrawing: true });
+    } else if (redrawing.current) {
+      tell.current({ lost: false, redrawing: true });
+    }
+  }, [state.lost, state.generation]);
+  // Priority 0: a positive one would take the render over from react-three-fiber where no composer draws (hdr off).
+  useFrame(() => {
+    if (!redrawing.current || state.lost) return;
+    redrawing.current = false;
+    tell.current(NOT_LOST);
+  });
+  useEffect(() => {
+    const holder = window as unknown as Record<string, unknown>;
+    const watch = contextWatch(gl.domElement);
+    const probe = () => ({ ...watch.state });
+    holder.__galaxygenContext = probe;
+    return () => {
+      if (holder.__galaxygenContext === probe) delete holder.__galaxygenContext;
+      tell.current(NOT_LOST); // a new canvas is a new context
+    };
+  }, [gl]);
+  return null;
 }
 
 /**
