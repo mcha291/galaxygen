@@ -3854,6 +3854,20 @@ never been judged in twenty-three sessions.
    re-read outside R₀. What kills the reading: a matched-resolution HI contrast equal to the molecular one, which would
    make this a resolution artefact and the one-contrast model right.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the HI's own contrast is the gas response's second contrast, placed with the ridge.
+   *S86 (M1):* **probed: the atomic gas's own response is the response at its own dispersion, and the gas the
+   model places is mostly atomic.** Since S57 no contrast is put in — the ridge is the gas's steady response at
+   `GAS_DISPERSION`, 6 km/s, the molecular gas's — so the HI's lower contrast has a mechanism: the same equation at
+   the atomic gas's warmer dispersion. Probed on today's model (the response solved again with the dispersion alone
+   changed; nothing published moved), 6–10 kpc, the ratio of means at 6 / 8 / 10 / 12 km/s: **the Milky Way template
+   1.431 / 1.396 / 1.362 / 1.330, `ngc_4414` 1.252 / 1.236 / 1.220 / 1.204** — at 10 km/s 4.8 % and 2.6 % under the
+   molecular response's, the sign and the size of "typically ∼10 % lower" (Querejeta et al. 2024). And the molecular
+   share of the gas there (`gas_molecular_surface_density` over `gas_surface_density`) is 0.21 (0.12–0.35) on the
+   Milky Way template and 0.06 (0.03–0.16) on `ngc_4414`: the gas the dust follows outside the molecular ring is
+   mostly atomic. The build this names, for S87: a second response at the atomic gas's dispersion, published beside
+   the molecular one at checkpoint 3 (no molecular fraction needed there), and the placement that reads both weighted
+   by the ism stage's molecular fraction where that stage runs (checkpoint 4 or later: no cycle) — once the atomic
+   dispersion is read from a source (it is `[recall]` here: HI dispersions about 10 km/s), the cost (a second solve,
+   about the first's) measured. Still carried.
 131. **The gas contrast's galaxy-to-galaxy scatter is unread, so the contrast has no residual** (S51, D210 as amended).
    `gas_arm_contrast` is its derived class mean — 1.90 for the non-grand-design spirals to 2.73 for the grand designs, by
    the two-fold pattern's amplification weight — with no draw. The spread the source gives, 1.37–5.79 for the grand
