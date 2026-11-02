@@ -4406,6 +4406,13 @@ never been judged in twenty-three sessions.
    of their images' separation (a short ramp), or the ended chain's sliver faded rather than compressed - either
    needs a length no source gives. A test records the largest phi-step per leg beside the fold count.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **no length to read, inside the carry's own declaration.** Nothing moved; the steps stand pinned in
+   `tests/test_pieces.py` (`EXPECTED_CARRIED_PHI_STEPS`, 0.089 at worst). Both named mends need a length — a ramp's
+   share of the images' separation, or a sliver's fade — that no reader (`READING_ARM_PIECES.md`, `READING_GAS_*`)
+   prints, and either chosen by hand would be a display constant (RESEARCH_AREAS §1, "never a display constant").
+   The step lives inside the carried map's declared approximation, whose misplaced weight is pinned up to 8 %;
+   the stellar field is untouched and the ring mean exact. **Proposed to the gate: permanent**, a property of the
+   carry (D219 item 6) with its size pinned; reopened if the owner's look at S88's frames finds the step.
 
 158. **An object's radius can spill inward past its ring's edge by up to one grid node** (S61, D220; found by the
    star sample's builder, measured on the default galaxy). The radial inverse CDF that places a cloud or a star in its
