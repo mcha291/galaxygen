@@ -1,0 +1,40 @@
+/* The design system's Card (components/core/Card.jsx): --surface-card, a 1 px hairline, 5 px radius and the inset
+   highlight; elevation from the hairline, never a drop shadow. */
+.card {
+  overflow: hidden;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-inset);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--hair) solid var(--border-hair);
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.label {
+  margin-bottom: var(--space-1);
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.title {
+  font: var(--text-h3);
+  letter-spacing: var(--track-heading);
+  color: var(--text-primary);
+}
+
+.body {
+  padding: var(--space-5);
+}

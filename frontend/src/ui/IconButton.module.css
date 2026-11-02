@@ -1,0 +1,65 @@
+/* The design system's IconButton (components/core/IconButton.jsx): square, transparent until hovered, magenta when
+   selected; the icon is the chrome's Lucide glyph in currentColor. */
+.button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: var(--hair) solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sm {
+  width: var(--control-sm);
+  height: var(--control-sm);
+}
+
+.md {
+  width: var(--control-md);
+  height: var(--control-md);
+}
+
+.lg {
+  width: var(--control-lg);
+  height: var(--control-lg);
+}
+
+.sm svg {
+  width: var(--size-sm);
+  height: var(--size-sm);
+}
+
+.md svg {
+  width: var(--size-md);
+  height: var(--size-md);
+}
+
+.lg svg {
+  width: var(--size-lg);
+  height: var(--size-lg);
+}
+
+.selected,
+.selected:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  background: var(--surface-selected);
+  color: var(--magenta-2);
+}
