@@ -4242,6 +4242,19 @@ never been judged in twenty-three sessions.
    profile (exponent 0.3) 0.50 / 0.60 / 0.68 / 0.76 a, and 0.80 a at b/a 0.5 and boxiness 4. Only a flat, round,
    boxy body reaches the stacks' range: the miss is the body's thinness and exponent together, a reading of what the
    stacks' bars are (DG16b's sample's b/a and profile) before any constant moves.
+   *S87 (M1):* **read: the stacks' bars are flat, and the profile is the miss's larger part; no b/a distribution
+   over all bars is in the repository.** `READING_BAR.md` Part C (a re-reading; no web access). DG16b's stacks: bars
+   in T < 5 flat, late types exponential, only M⋆ ≥ 10¹⁰ M☉ flat (K15 the same by bulge prominence) — the Milky Way
+   template (4.74 × 10¹⁰ M☉, B/T 0.16) is on the flat side, and the body is a Ferrers exponent 2 for every galaxy.
+   The stacks' maximum ellipticity ≈ 0.5 for spirals is b/a ≈ 0.5 by an ellipse fit, ≈ 0.4 as a 2D component
+   (G11's 20 %): the model's 0.4. With S86's probe the body's m = 2 peak goes 0.41 a → **0.68 a** with a flat
+   profile at b/a 0.4 and **0.76 a** (inside the stacks' 0.76–0.94) at the stacks' ellipse-fit b/a 0.5 — so the
+   exponent carries 0.27 a of the 0.35 a miss and the last 0.08 a is which axis ratio an image's A₂ is read
+   against, which no source read says. A distribution: K18's 0.31 ± 0.12 (strong bars, a component), MJ07's two
+   ellipse-fit bins (b/a 0.25–0.50 for 70–71 %, 0.60–0.75 for 7–10 %), MD07's projected means — no spread over
+   all bars, so b/a stays one number (§4b). No model change: the closer asked for a read distribution, not met;
+   the profile's exponent by mass or bulge (K15, DG16b) is a constant's form — **proposed for the gate** with its
+   size (0.41 → 0.68 a), not built. Still carried; the owner's reading G11's Fig. 1 or DG16's Table 3.
 147. **The bar's gas lanes are a template with one number that has no source** (S58, D217 items 6–8 and the
    follow-up). Two arcs on the leading side from the bar's end to a tenth of its length, curvature κ·a 1.15
    (the median of ten galaxies; the strength law is an envelope with a wide spread, so no draw), the ring's gas
@@ -4265,6 +4278,13 @@ never been judged in twenty-three sessions.
    FWHM 0.10 a, with what it carries as S58 measured it. Carried, a reading for S87's list — a sub-kpc width of bar
    dust lanes or molecular ridges (high-resolution CO of barred PHANGS galaxies, or the dust-lane widths of the
    simulations KSK12 and S15 print) — and, the owner's alternative, the width as a live slider.
+   *S87 (M1):* **read: still no width.** `READING_BAR.md` Part C: no reader prints a bar lane's or a bar's
+   molecular ridge's width (B1.1, B5 stand). The nearest number in the repository is not a bar's: S⁴G spiral dust
+   lanes ~150 pc at 10 Mpc, W/πR ≈ 1 % at 4 kpc, by eye near the resolution limit (Elmegreen et al. 2014,
+   `READING_GAS_PATTERN.md` Reading B). The placeholder's FWHM 0.10 a is 0.52 kpc on the Milky Way template, 3.5
+   times that spiral bound. Nothing moved. Still carried; the owner's reading a bar lane's width in
+   high-resolution CO (PHANGS's barred galaxies, the Milky Way's near and far lanes) or in KSK12's and S15's maps —
+   or the width as a live slider, the owner's alternative.
 148. ~~**The model has two clocks**~~ (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
    disc's age by the flat-ΛCDM closed form on the model's own H₀ and Ω_M, in which the universe is 13.47 Gyr old;
    the grid's time axis runs to 13.8 Gyr "from t = 0", and star formation starts at its zero whatever the
