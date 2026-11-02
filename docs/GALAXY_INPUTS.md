@@ -4271,6 +4271,19 @@ never been judged in twenty-three sessions.
    can build is the owner's — Erwin 2018's frequency in stellar mass as a draw (A1.3's fitted logistic, α −82.2, β₁
    17.1, β₂ −0.88; it needs a stellar mass at the checkpoint that draws it, checkpoint 4, or the pattern reading a
    later stage: an A1 question) — asked again at S87's open.
+   *S87 (M1):* **the owner's ruling of 2026-11-03 (D255): Erwin 2018's frequency is not a draw — the criterion keeps
+   its mechanism — and is built as a disclosed check** (`tests/test_bar.py::test_disclosed_check_the_presence_criterions_barred_fraction_against_erwin_2018_in_stellar_mass`,
+   a check and not a gate). Over 300 galaxies — the seven controls drawn on stream 145 over their declared ranges
+   (log-uniform across a decade or more), seeds and mergers at their defaults, the SMALL grid, layer off — the
+   criterion bars **0.74**; by stellar mass against Erwin's logistic at the bin's centre and its band at logit ± 0.5
+   (the printed coefficients' rounding, READING_BAR A2 (iii)): 10^8.5–9 **0.375** against 0.512 (0.389–0.634, under);
+   10^9–9.5 0.617 against 0.664, 10^9.5–10 0.714 against 0.705, 10^10–10.5 0.698 against 0.650 (all three inside);
+   **10^10.5–11 0.911 against 0.483, 10^11–11.5 0.867 against 0.231, 10^11.5–12 1.000 against 0.059** (over; the last
+   bin past S⁴G's range, Erwin's extrapolation). Checkpoint 1 is scale-free, but the controls that set f_d also set
+   the stellar mass, so over a population the criterion has a mass dependence — the wrong one above 10^10.5: it
+   bars nearly every massive disc where the measured frequency falls (the entry's own words, "a criterion that bars
+   nearly everything", measured). Still carried with the ruling written in: the closer — a source giving the barred
+   fraction against f_d or a second parameter with its scatter — is not met by the check.
 146. **The bar's body is normalised by its m = 2 maximum; its light share, its peak's place and its axis ratio are
    unchecked or missed** (S58, D217 item 4). The body is a Ferrers component on generalised ellipses (b/a 0.4,
    boxiness 3) whose strength is the drawn `bar_contrast`. The sourced light share, about a tenth of the whole

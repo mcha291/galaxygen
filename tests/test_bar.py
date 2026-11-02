@@ -1510,3 +1510,59 @@ def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
     flat, half, exponential = peak_at(0.3), peak_at(0.5), peak_at(1.0)
     assert (flat, half, exponential) == pytest.approx((0.684, 0.612, 0.511), abs=0.015)
     assert flat < 0.76  # no printed profile reaches the stacks' peak
+
+
+# --- #145: Erwin 2018's frequency as a disclosed check, not a draw (S87; the owner's ruling of 2026-11-03, D255) --------
+
+# Erwin 2018's fitted logistic of the barred fraction in stellar mass, x = log10(M*/Msun): f = 1/(1 + e^-(a + b1 x + b2 x^2))
+# [verified: Erwin 2018, MNRAS 474, 5372, arXiv:1711.04867, section 3 and its table; docs/READING_BAR.md A1.3]. The reader
+# warns that off the peak "b2 printed to two figures moves the logit by ~0.5" (A2's derivation iii): the band below.
+ERWIN_2018 = (-82.2, 17.1, -0.88)
+POPULATION_BINS = ((8.5, 9.0), (9.0, 9.5), (9.5, 10.0), (10.0, 10.5), (10.5, 11.0), (11.0, 11.5), (11.5, 12.0))
+
+
+def test_disclosed_check_the_presence_criterions_barred_fraction_against_erwin_2018_in_stellar_mass(prod):
+    """#145 (the owner's ruling of 2026-11-03, D255): the presence criterion keeps its mechanism - Fujii et al. 2018's
+    formation time against the disc's age, no draw - and Erwin 2018's measured frequency in stellar mass is this
+    disclosed check instead of a draw: a check, not a gate; it records what the criterion does over a population, and
+    no number is tuned to it. The population: 300 galaxies, each of the seven controls drawn on stream 145 uniformly
+    over its declared range (in log where the range spans a decade or more), every seed and the merger list at their
+    defaults, the SMALL grid, the layer off. Each bin's barred share against Erwin's logistic at the bin's centre and
+    its band at the logit +/- 0.5 (the printed coefficients' rounding, the reader's caution).
+
+    Measured at S87: 0.74 of the 300 barred; inside Erwin's band from 10^9 to 10^10.5 Msun (0.617, 0.714, 0.698 against
+    0.664, 0.705, 0.650), under it below 10^9 (0.375 against 0.512, the band 0.389-0.634), and **over it above 10^10.5:
+    0.911, 0.867 and 1.000 against 0.483, 0.231 and 0.059** - the criterion bars nearly every massive disc, where the
+    measured frequency falls (Erwin's fit is S4G's, 10^8.5-10^11, so the last bin is its extrapolation). The verdicts
+    by bin are pinned as read, and the counts with them."""
+    from galaxy.core.registry import INPUTS
+
+    model = the_model(prod)
+    small = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+    rng = np.random.default_rng(145)
+    controls = [i for i in INPUTS.values() if i.kind == "control"]
+    mass, barred = [], []
+    for _ in range(300):
+        inputs = {}
+        for i in controls:
+            lo, hi = float(i.lo), float(i.hi)
+            log = lo > 0.0 and hi / lo >= 10.0
+            inputs[i.name] = float(10.0 ** rng.uniform(math.log10(lo), math.log10(hi))) if log else float(rng.uniform(lo, hi))
+        f = run(model, inputs, small, only=("bar_present", "stellar_mass_total"), layer=False).fields
+        mass.append(math.log10(float(f["stellar_mass_total"])))
+        barred.append(f["bar_present"] == "yes")
+    x, b = np.array(mass), np.array(barred)
+    a, b1, b2 = ERWIN_2018
+    read = []
+    for lo, hi in POPULATION_BINS:
+        sel = (x >= lo) & (x < hi)
+        c = 0.5 * (lo + hi)
+        logit = a + b1 * c + b2 * c * c
+        band = (1.0 / (1.0 + math.exp(-(logit - 0.5))), 1.0 / (1.0 + math.exp(-(logit + 0.5))))
+        share = float(b[sel].mean())
+        verdict = "under" if share < band[0] else "over" if share > band[1] else "inside"
+        print(f"log M* [{lo}, {hi}): {int(sel.sum())} galaxies, barred {share:.3f}; Erwin 2018 {1.0 / (1.0 + math.exp(-logit)):.3f} ({band[0]:.3f}-{band[1]:.3f}): {verdict}")
+        read.append((int(sel.sum()), int(b[sel].sum()), verdict))
+    assert round(float(b.mean()), 3) == 0.74
+    assert read == [(16, 6, "under"), (47, 29, "inside"), (63, 45, "inside"), (63, 44, "inside"), (56, 51, "over"),
+                    (45, 39, "over"), (8, 8, "over")], read
