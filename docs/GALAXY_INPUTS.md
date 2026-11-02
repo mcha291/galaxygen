@@ -4387,6 +4387,12 @@ never been judged in twenty-three sessions.
    outer disc; the default's seed 4 steps by 0.0019 at 12.375 kpc that way (0.38 of the continuity bound at 8 192
    azimuths, a true step). The test's wedge geometry reads `law_width_at`.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the trigger is the owner's look, at S88.** Nothing moved; the steps are pinned where they were
+   (`tests/test_pieces.py`: Norma's 0.017, the seed-1 band's thirteen steps, the default's 0.0019). The entry's own
+   condition — "built if the owner's look at the frames finds the step" — waits on frames of the model as M1 leaves
+   it, which S88 regenerates (BUILD_V row 86–88: "the frames regenerated with the reason"); the continuous rule is
+   named and ready. #142's pitch floor, the other remedy for the drawn case, is #209's and the owner's (asked at
+   S86's open). Carried to S88's look.
 
 157. **The carried gas steps in azimuth where a clipped anchor meets a held one** (S60, D219, the gate's twelfth
    follow-up). Past a free end a chain's anchor is held between its neighbours' so the carried azimuth map is
