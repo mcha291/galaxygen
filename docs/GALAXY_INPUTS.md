@@ -712,10 +712,10 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
 | **discharged** at S86 | **139, 142, 198** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip; the saturation cut reached by an admissible galaxy, pattern seed 28: its effect read in tests/test_bar.py since S58, I1's walk and I4 through it since S86) | 3 |
-| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 141, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 209, 210, 211 | 89 |
+| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 155, 157, 195 | 37 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 148, 149, 152, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 209, 210, 211 | 85 |
 
-So the board's **122 open** is 33 permanent and 89 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **122 open** is 37 permanent and 85 carried, and no item is unruled (S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4085,7 +4085,7 @@ never been judged in twenty-three sessions.
    **238 Myr**; `ngc_4414` 0.390 × (2π·8.0/5) × sin 28.9° = 1.90 kpc, **309 Myr** — 2.0 and 2.6 times the one
    printed arm lifetime, so the gas has crossed about half its ridge while an arm lives, and what the model publishes
    is a state the arm does not live to see. The first closer is out of every batch (S85) and the second has nothing
-   to read; **proposed to the gate: permanent** — level A is steady by design (D216: the corotating frame is ruled,
+   to read; **PERMANENT (the gate, S86's close, D254)** — level A is steady by design (D216: the corotating frame is ruled,
    and a time-stepped flow is BUILD_III's out-of-scope level B), the size of what it gives up written here.
 142. ~~**The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound**~~ (S57, D216 gate G2
    item 5, gate G3 item 2). f_m = m A_m/(X sin p) uses the WKB potential of a disc with no thickness; no source read
@@ -4147,7 +4147,7 @@ never been judged in twenty-three sessions.
    holding a quarter more than today's stars and gas at these radii (the mass the later stages take out of the disc
    is in it); the gas share's part is +3 % (the Milky Way) to −13 % (`ngc_4414`). The closer stands as written and no
    checkpoint-3 stage can read today's split (A1: star formation follows the pattern, D174); the sizes are written
-   here: Σ₁ is the only disc checkpoint 3 holds. **Proposed to the gate: permanent**, a property of the model's
+   here: Σ₁ is the only disc checkpoint 3 holds. **PERMANENT (the gate, S86's close, D254)**, a property of the model's
    order (A1), with its size measured.
 144. **The gas falling into a co-rotating arm shocks, and level A has no such shock** (S57, D216 gate G2 item 2). In
    the frame of a co-rotating arm no gas flows through, so there is no steady galactic shock; but the simulations
@@ -4427,7 +4427,7 @@ never been judged in twenty-three sessions.
    galaxies carry a budget and no chain (inside the bar's reach, where no chain is born: D219's follow-up, item 2) and
    none of `ngc_4414`'s. No source can choose between the two closed forms — both are the census's own statistics,
    and neither reads a realised power — so the entry's remedy is a change of the budget's one formula by ruling.
-   **Proposed to the gate: permanent**, a declared design (D219 item 4: the independent form, "exact per ring is
+   **PERMANENT (the gate, S86's close, D254)**, a declared design (D219 item 4: the independent form, "exact per ring is
    refused"), the shortfall stated here and on `arm_power_budget`'s about line, the law honoured layer-off.
 156. **A chain's excess jumps at a kink within one LAW width of a free end** (S60, D219, the gate's fifth
    follow-up). The taper is read at the arc length to the point's foot; across the bisector of a kink sharp
@@ -4474,7 +4474,7 @@ never been judged in twenty-three sessions.
    share of the images' separation, or a sliver's fade — that no reader (`READING_ARM_PIECES.md`, `READING_GAS_*`)
    prints, and either chosen by hand would be a display constant (RESEARCH_AREAS §1, "never a display constant").
    The step lives inside the carried map's declared approximation, whose misplaced weight is pinned up to 8 %;
-   the stellar field is untouched and the ring mean exact. **Proposed to the gate: permanent**, a property of the
+   the stellar field is untouched and the ring mean exact. **PERMANENT (the gate, S86's close, D254)**, a property of the
    carry (D219 item 6) with its size pinned; reopened if the owner's look at S88's frames finds the step.
 
 158. **An object's radius can spill inward past its ring's edge by up to one grid node** (S61, D220; found by the

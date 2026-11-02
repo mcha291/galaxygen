@@ -1991,3 +1991,8 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **The stage subset is hours, not minutes.** `tests/test_pieces.py` holds the 88-minute gate test, and a
   `timeout 3000` around the whole subset killed it at 50 minutes with no verdict. Run the subset's files as parallel
   processes, each with its own log and EXIT line, and the targeted tests per commit.
+- [close] **The gate rules on the report's numbers, and moves the rows the same day.** Four of the lead's "proposed
+  permanent" entries carried a measurement each (a crossing time in arm lifetimes, a forcing ratio with its parts, a
+  realised power at three quantiles, a length no reader prints); ruling them at the close, with the summary rows and
+  their pins moved in one script, kept the register and DECISIONS saying the same thing - a proposal left standing in
+  the register is a ruling the next session has to find again.
