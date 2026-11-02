@@ -3421,6 +3421,7 @@ never been judged in twenty-three sessions.
    points carry the cluster's *stellar* light (`cluster_luminosity`), not its region's Hα, and the field's HII
    still fades by the regime's weight; the light past the 64th region is dropped as before. The remedy stands.
    *S85 register pass (D251):* **the viewer's** — the region volume's kept share handed to the field's HII fade is the viewer's composition (a viewer pass; S84 with T17's panels or the owner's viewer pass).
+   *S84 (D253):* T17's port did not reach it (chrome only; the HII fade is the march's composition) — the owner's viewer pass.
 112. ~~**The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
    them, a star in front included**~~ (S40, V3, D190). **Discharged at S67 (D228): the field's half mended.** The
    region march's third pass multiplies the field by each depth slab's own transmission: the field's light along a ray
@@ -4407,6 +4408,7 @@ never been judged in twenty-three sessions.
    display colours, not on the field's scale the knots use. **Carried.** The mend is one pass each: the knots in the
    star-first mode by their `line_response`, and the region regime's clusters on the field's scale.
    *S85 register pass (D251):* **the viewer's** — the knots in the star-first mode by their `line_response` is the viewer's; the second half (the region regime's clusters on the field's scale) was done at S82 (#172, the catalogue position).
+   *S84 (D253):* T17's port did not reach it (chrome only; the knots' line response is the render's) — the owner's viewer pass.
 171. **The star sample's luminosity function is not the catalogue's: its bright end is 0.14 of the table's at 10³ L☉**
    (S65, D225; the probe's measurement). `photometry.lookup` interpolates between isochrones at fixed initial mass and
    drops the short evolved phases, so the count of old sample stars above L, over the sampling fraction s times the
@@ -4488,6 +4490,7 @@ never been judged in twenty-three sessions.
    Held at 3e-2 and named in the test. **Carried.** What closes it: the bulge's light integrated over each pixel's
    footprint (its projected profile is closed-form) instead of point-sampled in the march.
    *S85 register pass (D251):* **the viewer's** — the bulge's light integrated over each pixel's footprint is the march's: a viewer pass.
+   *S84 (D253):* T17's port did not reach it (chrome only; the footprint is the march's) — the owner's viewer pass.
 178. ~~**At a close stand the instrument's image is clamped to a 121-pixel box, its outside light returned to the inside**~~
    (S67, D227 R1, R3; the review). At `ngc_4414`'s zoom stand (0.488 pc a pixel) the PSF table's half-width is 314 px
    and S64's box path clamps it at 60: the light outside, 4.2 % (red, Airy) to 6.0 % (red, with the spikes), is put
@@ -4574,6 +4577,7 @@ never been judged in twenty-three sessions.
    HII layers (D224's closure), consistent with D226's clustering map, an exact per-cell closure gate; about one
    builder pass and a review; it changes the Milky Way's young-light grain too.
    *S85 register pass (D251):* **the viewer's** — each knot's cluster drawn at the knot with its starlight through the set is the viewer's composition (a builder pass and a review; it changes the Milky Way's young-light grain).
+   *S84 (D253):* T17's port did not reach it (chrome only; a knot's starlight is the render's) — the owner's viewer pass.
 184. **One stellar layer height for every age: the young light is drawn in the old disc's thick layer** (S67, D230's
    measurement). `/api/render` publishes one `layers.stars` (356 pc on `milky_way`) for the young, middle and old
    parts alike, so the young light's clumps lie half in front of the clouds (now in their 34 pc layer, D229) and its
@@ -4589,6 +4593,7 @@ never been judged in twenty-three sessions.
    3/255 or more), but it grows where the sample's weight is high (views ~13-24 kpc across). **Carried.** What closes
    it: the sampled stars take the field's column to each point as FluxPoints does (`dustTo`, the march's textures).
    *S85 register pass (D251):* **the viewer's** — the sampled stars taking the field's column is `FluxPoints`' `dustTo`: a viewer pass (below 4 kpc the catalogue's points already take it since S82).
+   *S84 (D253):* T17's port did not reach it (chrome only; `dustTo` is the points' draw) — the owner's viewer pass.
 186. **The merger events' field ranges are not on the wire** (S68, D232; the review's F6). `/api/inputs` gives the
    `mergers` input only its default; the ranges (`mass_ratio must be in (0, 1]`, the time, the gas fraction) live in
    the API's own check in `service.py`, so the viewer cannot refuse a bad event before sending it, and a Generate with
