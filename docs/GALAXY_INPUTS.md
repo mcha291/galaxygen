@@ -708,10 +708,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S77 | **206** (the `ci` workflow green again: the machine pins marked `machine_pinned` and skipped under `CI`, `JSON_DEPTH_CAP` at every parse, the suite on `main` / nightly / dispatch, D241) | 1 |
 | **discharged** at S79 | **207** (the continuity test's hard ends by identity and its bound the taper's own rate, read on the runner's draw, D243) | 1 |
 | **discharged** at S81 | **208** (the landing's last tenths: the head start and the shader checks at S80, the mesh's Worker at S81, (d) by ruling, (e) by measurement — D244, D246, D247) | 1 |
+| **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 209 | 123 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 189, 191, 192, 193, 194, 195, 196, 197, 198, 202, 203, 204, 205, 209, 210 | 119 |
 
-So the board's **134 open** is 11 permanent and 123 carried, and no item is unruled. (S22
+So the board's **130 open** is 11 permanent and 119 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4328,11 +4329,15 @@ never been judged in twenty-three sessions.
    **Carried, closer re-named: a model pass of its own** — the EEP-style interpolation in `photometry.lookup`, with
    the star sample's pins re-read in the same commit — on the owner's word, since it moves published numbers.
    *(re-ruled at Audit V, S70, D234)*
-172. **The zoomed view is two pictures of one scene** (S65, D225; the probe's finding and the frames). Below 4 kpc the
+172. ~~**The zoomed view is two pictures of one scene**~~ (S65, D225; the probe's finding and the frames). Below 4 kpc the
    field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
    display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
-   field with no region march; the two zoom captures are the star-first mode's. **Carried.** One mode at zoom is a
-   display ruling, V8's or the owner's.
+   field with no region march; the two zoom captures are the star-first mode's. **DISCHARGED at S82 (D249), on the
+   owner's ruling** ("accept A but keep the current modes around for now so i can compare and assess later"): the
+   field mode's region regime draws the star-first mode's light-scaled points by default, its volumes kept
+   (`regionStars.ts starLoads`; the switch `regionStars` per template, "catalogue" / "sampled", the sampled reading
+   V3's exactly, kept for the owner's comparison); at NGC 4414's zoom stand in the field mode the region request
+   gives way to the bright table, counts and tiles. The captures unmoved (the zoom captures are the star-first mode's).
 173. **A once-seen failure of the migration test in a fresh clone** (S65, D225; S64's `verify_clone --ref main` at
    16ab0c3). A fresh clone's whole suite (6 h 08 min on a loaded machine) read 2 failed, 1 561 passed: the per-cell
    pricing timing test (the known load flake, S45 / S60 / S63 / S64) and
@@ -4385,14 +4390,22 @@ never been judged in twenty-three sessions.
    (a = 0.365 kpc) varies inside one pixel (39 pc) and one march step faster than the jittered sub-samples average.
    Held at 3e-2 and named in the test. **Carried.** What closes it: the bulge's light integrated over each pixel's
    footprint (its projected profile is closed-form) instead of point-sampled in the march.
-178. **At a close stand the instrument's image is clamped to a 121-pixel box, its outside light returned to the inside**
+178. ~~**At a close stand the instrument's image is clamped to a 121-pixel box, its outside light returned to the inside**~~
    (S67, D227 R1, R3; the review). At `ngc_4414`'s zoom stand (0.488 pc a pixel) the PSF table's half-width is 314 px
    and S64's box path clamps it at 60: the light outside, 4.2 % (red, Airy) to 6.0 % (red, with the spikes), is put
    back by 1/share, so the core and inner wings are 4.4-6.4 % bright and the spikes end at the box's square edge (about
    5 λ/D in F814W); the light is kept, the shape is not (disclosed in the PSF's about). The table and the spike FFT
    (2048², λ/D/16) are built on the main thread (about 1.6 s the first time the spikes are switched on), keep about
-   32 MB of pupil image per optics, and never free their textures. **Carried.** What closes it: a larger box at close
-   stands (the cost per point grows as its area) or the wings drawn as a second, coarser pass; the build in a worker.
+   32 MB of pupil image per optics, and never free their textures. **DISCHARGED at S82 (D249).** (i) The light past
+   the box is drawn where it falls by a second, coarser pass (`FluxPoints` mode 4 into a target of 8-px blocks, a
+   composite quad adding each block's light spread evenly over it; `hstPsf.ts psfWingWeights`, every share over the
+   wings' box's light): the share returned at the zoom stand 4.18 / 5.99 % → 0 within 1e-6, the light conserved within
+   1e-6, the cost per clamped point 1.46× the box's; light is still returned only closer than ~0.33 pc a pixel (past
+   `WING_MAX_HALF`), stated. (ii) The table and the FFT built in a Worker on S81's pattern (`psfTableJob.ts`,
+   `psfTable.worker.ts`, `psfTableClient.ts`; byte-identical under seven cases, a synchronous fallback, the last table
+   drawn until the new one arrives), the pupil image freed after the table (33.6 MB per optics), the textures disposed
+   when the optics change. No capture moved: the zoom captures are taken in RGB, where the instrument's image is not
+   drawn.
 179. **The instrument is WFC3/UVIS's by its filter set, not the goal camera's, and the pupil's vanes are inferred** (S67,
    D227; `docs/READING_HST_OPTICS.md`). `ngc_4414` draws WFC3/UVIS's 0.04″ pixel and TinyTim's `wfc3_uvis1.pup` pupil
    because its filter set is WFC3's (D213); the goal picture (STScI-PRC99-25) was taken with WFPC2's WF chips at
@@ -4476,23 +4489,34 @@ never been judged in twenty-three sessions.
    the API's own check in `service.py`, so the viewer cannot refuse a bad event before sending it, and a Generate with
    one fails with the API's reason under the failed-Generate mark. **Carried.** What closes it: per-field `lo` / `hi`
    on the events declaration in `input_json`, read by `flow.setValue` as a control's range is (metadata, rule D4).
-187. **The whole swap holds only the loaders keyed on the query** (S68, D232; the fix pass's note). In the star-first
+187. ~~**The whole swap holds only the loaders keyed on the query**~~ (S68, D232; the fix pass's note). In the star-first
    mode the tile loaders whose keys follow another loader's answer (`GalaxyTab`'s counts and bright tiles after
    `brightTable` / `tileK`) take their new keys only when the swap publishes, then load and publish on their own - a
    second, partial update after the swap; and a loader whose key keeps moving during a swap (the camera panning)
-   holds the swap until it is answered. **Carried.** What closes it: the dependent loaders registered with the swap
-   before their dependency resolves (the swap's generation in their key), and the camera's loads kept out of the hold.
-188. **A template landing drops the old field until the new one arrives** (S68, D232; the review and the walk).
+   holds the swap until it is answered. **DISCHARGED at S82 (D249).** Built as named: `useLoad`'s `role` (`after` registers a
+   dependent with the swap before its key exists and it asks inside the swap when the dependency's held answer comes
+   through `next`; `view` marks the camera's loaders, which never hold - `ViewMark`, `loads.wait(token, { takeDown })`),
+   the decision the pure `swapPart`; seven cases; a star-first Generate 11 -> 9 requests, one publish, the same final
+   frame sum. *Disclosed:* the tiles' frustum weights read the stars' layer height from the published render, so a
+   Generate that changes that height can still move the threshold after the swap (gating on it would deadlock).
+188. ~~**A template landing drops the old field until the new one arrives**~~ (S68, D232; the review and the walk).
    `FieldVolume` shows bare stars for about 15 s on a cold NGC 4414 landing; a landing takes no stale mark by design
-   (it is the template's galaxy). Predates V9. **Carried.** What closes it: a landing takes the whole-swap hold with
-   its own "landing" line.
+   (it is the template's galaxy). Predates V9. **DISCHARGED at S82 (D249).** Built as named: `beginLanding` takes the
+   whole-swap hold with its own "landing" line, `drawnCamera` frozen so the old canvas stays until the swap publishes,
+   the published answers handed to the new canvas's loaders (`handOver` / `handed`, 2 s), and the old picture drawn
+   with its own template's display tuning (`drawnTuning`, `LOAD_TUNING_KEYS`); seven cases; live, warm, Milky Way ->
+   NGC 4414: ~420 ms of bare stars -> the old picture under the landing line until the swap (~270 ms), the same six
+   requests. *Disclosed:* ~210 ms of blank frames while the remade canvas compiles (the remount, #208 (d) as ruled).
 189. **The reference client's generate is not whole** (S68, D232). `interface/app.js` shows "drawing…" instead of
    the previous picture when a Generate lands while a group's load is in flight, and its merger list is still not
    editable (as before V9). **Carried.** What closes it: the held answer its `shown` query already allows; an events
    editor in the reference client.
-190. **The edit drawer covers the Galaxy view's regime caption** (S68, D232). While the panel is open at the right
-   of the Galaxy view, the top-right caption (the regime and the window) sits under it. **Carried.** What closes it:
-   the caption moves left of the drawer while it is open, or the drawer leaves the caption's margin.
+190. ~~**The edit drawer covers the Galaxy view's regime caption**~~ (S68, D232). While the panel is open at the right
+   of the Galaxy view, the top-right caption (the regime and the window) sits under it. **DISCHARGED at S82 (D249).**
+   The caption moves left of the drawer while it is open (`drawerLayout.ts regimePlace`: `besideDrawer`, or
+   `besideDrawerHalf` with a picture beside the render, the one 320 px width held by a test against both stylesheets;
+   on phones the drawer is a bottom sheet and the caption stays home); the captures are taken with the drawer closed
+   and stayed byte for byte.
 191. **`BAR_GAS_RATIO` 2.6 is a ratio of medians used as a ratio of means** (S69, Audit V F-1A-1, D233). Querejeta
    2021 Table 3's medians give 11.51 / 4.492 = 2.56; its means 20.92 / 6.589 = 3.17; `gas_pattern.py` applies the
    constant to the lanes' contrast as a ratio of means. **Carried; ruled by the owner 2026-10-21 (D233): redefine the
@@ -4736,6 +4760,17 @@ never been judged in twenty-three sessions.
    "the owner's to order with a read source" — or a reading that a near-circular arc is what the sources' pitch scatter
    means; a `model/galaxy` change moves the hash and every layer-on field on those seeds. What kills the reading: a
    source giving the per-piece pitch a floor the 0.56 scatter already implies. Nothing drawn changed at S79.
+210. **NGC 4414's zoom capture is not the committed picture's bytes, and no close since S70 read the verdict** (S82,
+   D249; the lead's reading of builder B's picture logs). The picture test prints a verdict per capture ("the committed
+   picture, byte for byte" / "not the committed picture's bytes") and compares within a tolerance; `ngc_4414-zoom`
+   reads "not the committed picture's bytes" on S82's base tree (1 503 153 B against the committed 1 503 149, S70's
+   45e7f0e; the frame sum 215 279.529 / 165 012.581 / 117 074.415 to the digit) while the other eight captures are the
+   committed bytes. Some session between S71 and S81 moved that frame by a few bytes within the tolerance, and every
+   close read "byte for byte" from a clean `git status`, which only says the frames were not rewritten. Which session,
+   and whether the change is the viewer's or the GPU's (the frame sum did not move), is not known. **Carried.** What
+   closes it: the capture re-taken on each tag s71 … s81 (one capture, the bundles) to name the session, and its cause
+   read; or the owner's word that a within-tolerance byte change needs no name, the capture re-taken at the next
+   knowing change. From S82 the close's gate reads the verdict lines, not `git status` (LESSONS, S82).
 
 ---
 

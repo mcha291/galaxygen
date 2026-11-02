@@ -1880,3 +1880,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   entry, with which one the probe read.
 - [close] Under D245 / D246 the viewer batch closed in minutes after the builder: cherry-pick, the four gates (~15
   min), the docs tests, the merge. The suite's hours belong to the model's batches, where the owner starts them.
+
+## From S82 (BUILD_V row 82, S68's viewer debts and the zoom's seams; a Fable lead, two Opus builders in worktrees)
+
+- [close] **`git status` clean is not "byte for byte".** The picture test compares within a tolerance and rewrites nothing on a
+  pass, so a clean tree after it says only that no capture was rewritten. The spec prints a verdict per capture; the
+  lead's `-q` run swallowed it, and builder B's full log showed `ngc_4414-zoom` has not been the committed bytes since
+  some session after S70 (#210). From now the close's picture gate reads the verdict lines (run the spec's output into
+  the log, grep "byte for byte" and "not the committed") and the decision says which captures were which.
+- [close] **Read the brief's premise against the captures before promising a frame change.** The brief told builder B the zoom
+  frames would change under #178 (i); they are taken in RGB, where the instrument's image is not drawn, so none moved.
+  The builder checked and said so; the lead should have read `captures.json` first.
+- [viewer] **A follow-up to a builder goes to the same agent, with the files it may touch named again.** Builder A's tuning
+  split (#188's follow-up) and builder B's PSF hook both edit `GalaxyTab.tsx`'s `physical` line; the cherry-pick
+  conflicted once and was resolved by hand (`usePhysicalPsf(…, look.spikes)`). When two builders are told to stay out of
+  a file's logic, the lead still merges that file: expect one conflict per shared line and resolve it before the gates.
+- [close] **A builder's branch cut before a sibling's commits is reset onto the session branch for its next item**, not
+  rebased: its commits are already cherry-picked, so `git checkout -B <new> session-NN` in its worktree is the whole
+  move, and the brief says where it starts.
+- [infra] **The picture test's port is one builder's at a time.** Builder A's picture server held 8019 (`reuseExistingServer`)
+  when builder B first checked; B waited and checked the port before each run. Two builders with picture gates in the
+  same hour need the lead to say who runs when, or a second port in the spec.
+- [viewer] **A ruling that arrives mid-session goes to the builder with the files, as a third item on a new branch** (#172 to
+  builder B after its two), with the owner's words quoted in the brief — "keep the current modes around" became a
+  per-template switch with the ruled behaviour as its default, the viewer's direction (display choices as sliders).
+- [infra] **The Bash tool's heredoc rewrites a doubled backslash**: a Python patch script written through `cat <<'EOF'` with
+  `"\\n"` in it reached the disk as `"\n"` and its anchor never matched. Scripts with backslashes go through the Write
+  tool (galaxygen-machine-environment, again).

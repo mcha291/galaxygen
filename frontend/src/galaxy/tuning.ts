@@ -10,6 +10,7 @@
 // 100 L☉ stay where they are and are tuned by a multiplier of 1.
 
 import { WHITE_KELVIN } from "./filters";
+import type { RegionStars } from "./regionStars";
 import { CLOUD_RASTER } from "./cloudOpacity";
 import { CLOSE_FIELD_FLOOR, SUB_SAMPLES_MAX } from "./regimes";
 
@@ -138,6 +139,8 @@ export interface Tuning {
   knots: boolean;
   /** A cluster drawn with its Plummer profile once its half-mass diameter fills a pixel. */
   clusterRadius: boolean;
+  /** The field mode's region regime's stars (S82, #172): the bright catalogue's points, or V3's sample (regionStars.ts). */
+  regionStars: RegionStars;
   // The randomness layer in the march (S66, BUILD_III V7; D226 R3-R5): each a function the model publishes, evaluated
   // once per ray as a thin screen at the ray's midplane crossing, the value multiplying each sub-step's placement; with
   // the layer off ("physics only") none is drawn whatever its switch.
@@ -188,6 +191,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   cloudElongation: 1,
   knots: true,
   clusterRadius: true,
+  regionStars: "catalogue",
   gasInMarch: true,
   spursInMarch: true,
   clumpsInMarch: true,
@@ -338,10 +342,11 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "Where a template carries its instrument (NGC 4414 through WFC3: HST at 17.7 Mpc), each point is drawn as the " +
       "telescope's image of a point at its physical size. Off: the obscured Airy pattern (2.4 m, obscuration 0.33). On: the " +
       "full pupil's image - the obscuration, four vanes 0.022 pupil radii wide and the primary's three pads, by a 2-D FFT of " +
-      "the pupil at load - normalised to the same light, so the switch moves none. Close in the box is clamped: at 0.488 " +
-      "pc a screen pixel (NGC 4414's zoom stand) the table's half-width is 314 px and the box 60, the light outside it " +
-      "returned inside by the box's share (0.958 of the red Airy, 0.940 of the red spikes), so the core is drawn 4.4 to " +
-      "6.4 % brighter in red and the spikes end at the box's square edge. The vanes stand at 45 degrees to the " +
+      "the pupil at load - normalised to the same light, so the switch moves none. Close in the box is clamped and the " +
+      "light past it drawn by a second, coarser pass: at 0.488 pc a screen pixel (NGC 4414's zoom stand) the table's " +
+      "half-width is 314 px and the box 60; the light past the box (0.042 of the red Airy, 0.060 of the red spikes) is " +
+      "drawn where it falls in blocks of 8 pixels, each block's light spread evenly over it, so none is returned to the " +
+      "box (S82). The vanes stand at 45 degrees to the " +
       "picture's axes, a display choice: the detector's own angle was not read. No effect without an instrument (S67, D227 R3). A display choice.",
   },
   {
@@ -429,6 +434,16 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "A cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills a pixel, in place " +
       "of the point sprite, its light the same (S64, V6, T6). At galaxy scale no cluster is that large: it shows below " +
       "about 1 kpc across. A display choice.",
+  },
+  {
+    key: "regionStars", label: "region stars", group: "Components", kind: "select", switch: true,
+    options: [{ value: "catalogue", label: "catalogue" }, { value: "sampled", label: "sampled" }],
+    about:
+      "The field mode's stars below 4 kpc across (S82, #172; the owner's ruling of 2026-11-02). catalogue: the " +
+      "star-first mode's points - every disc star in the level-k cells in view above the frame's threshold and every " +
+      "cluster, each its own light through the filter set on the field's scale (V6b), faded in over the handover with " +
+      "the region's weight. sampled: V3's reading, the region's star sample and its clusters as display-colour points, " +
+      "kept for comparison. The region's clouds, HII regions and shells are drawn at both. A display choice.",
   },
   {
     key: "cloudElongation", label: "cloud elongation", group: "March", kind: "range", min: 0, max: 2, step: 0.05, unit: "power",
@@ -626,4 +641,48 @@ function safeStorage(): Storage | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The tuning values that enter a request's key or decide which loaders are mounted (S82, #188's follow-up): the white
+ * point (the render's, the blackbody table's, the clusters' and the tiles' requests), the clouds as extinction and the
+ * clouds' markers (whether the whole disc's census is asked), the star points (the bright table, the tiles, the
+ * clusters), the knots (the clusters through the set in the field mode), the region's stars (S82, #172: the star points
+ * or V3's sample below 4 kpc in the field mode), the field's floor (which regime the zoom is
+ * in, so whether a region's stars and clusters are asked) and the star-first mode's three volume switches (whether its
+ * march, and so its render, is mounted). Every other value only changes how what has arrived is drawn.
+ */
+export const LOAD_TUNING_KEYS = [
+  "whiteKelvin",
+  "cloudsExtinction",
+  "compClouds",
+  "compPoints",
+  "knots",
+  "regionStars",
+  "fieldFloor",
+  "compStars",
+  "compGas",
+  "compDust",
+] as const satisfies readonly (keyof Tuning)[];
+
+/**
+ * The tuning a picture is drawn with (S82, #188's follow-up). Outside a landing's hold (`held` null) the live tuning,
+ * the very object. During one, the template's whose picture is on screen (`held`, the drawn template's) for every
+ * value that only changes how it is drawn - so the previous picture keeps its own look - and the live template's for
+ * every value that keys a load (LOAD_TUNING_KEYS), so the landing's loads go out as they would without the hold.
+ */
+export function drawnTuning(live: Tuning, held: Tuning | null): Tuning {
+  if (held === null) return live;
+  const out: Tuning = { ...held };
+  for (const key of LOAD_TUNING_KEYS) (out as unknown as Record<string, unknown>)[key] = live[key];
+  return out;
+}
+
+/**
+ * Whose tuning the picture on screen keeps (S82, #188's follow-up): the drawn camera's template while a landing's hold
+ * keeps the previous landing's camera (App.tsx drawnCamera: its count differs from the live one) and that template is
+ * another; else null - nothing held, the live tuning drawn.
+ */
+export function heldTemplate(drawn: { selection: number; name: string | null }, live: { selection: number; name: string | null }): string | null {
+  return drawn.selection !== live.selection && drawn.name !== live.name ? drawn.name : null;
 }

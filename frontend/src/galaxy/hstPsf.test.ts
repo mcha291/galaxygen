@@ -12,12 +12,17 @@ import {
   obscuredAiryTotal,
   opticsOf,
   pixelPc,
+  WING_BLOCK,
+  WING_MAX_HALF,
+  psfClamped,
   psfHalf,
   psfRect,
   psfTable,
   psfWeights,
+  psfWingWeights,
   pupilImage,
   pupilOpen,
+  wingBox,
 } from "./hstPsf";
 import { PROFILE_MAX_HALF, profileBox } from "./plummer";
 import { airy, besselJ1 } from "./psf";
@@ -187,5 +192,96 @@ describe("the spikes' switch (S67, D227 R3)", () => {
     const ring = (t: typeof analytic, x: number, y: number) => psfRect(t, [x - 7.5, y - 7.5], [x + 7.5, y + 7.5])[0];
     // (within 7 %: the square pixel box and the square cells are not round)
     expect(Math.abs(ring(analytic, r / Math.SQRT2, r / Math.SQRT2) / ring(analytic, r, 0) - 1)).toBeLessThan(0.1);
+  });
+});
+
+// #178 (S82): the light past a clamped box drawn by a second, coarser pass where it falls, not returned inside the box.
+describe("the wings past a clamped box (S82, #178)", () => {
+  const centres: [number, number][] = [CENTRE, [100.0, 100.0], [7.93, 250.5], [517.02, 3.99]];
+
+  it("clamps only close in: the template's camera draws no wings, the zoom stand a box of 83 blocks round the table", () => {
+    expect(psfClamped(analytic, CAMERA_PC)).toBe(false);
+    expect(psfClamped(analytic, ZOOM_PC)).toBe(true);
+    expect(WING_BLOCK).toBe(8);
+    const wing = wingBox(analytic, ...CENTRE, ZOOM_PC);
+    // the table's half-width 314.3 px: 40 blocks, and one more for where the point sits in its block
+    expect(wing.side).toBe(83);
+    for (const [cx, cy] of centres) {
+      const w = wingBox(analytic, cx, cy, ZOOM_PC);
+      const half = psfHalf(analytic, ZOOM_PC);
+      expect(w.x0 * w.block).toBeLessThanOrEqual(cx - half);
+      expect(w.y0 * w.block).toBeLessThanOrEqual(cy - half);
+      expect((w.x0 + w.side) * w.block).toBeGreaterThanOrEqual(cx + half);
+      expect((w.y0 + w.side) * w.block).toBeGreaterThanOrEqual(cy + half);
+      // and it holds the box
+      const box = profileBox(cx, cy, half);
+      expect(w.x0 * w.block).toBeLessThanOrEqual(box.x0);
+      expect((w.x0 + w.side) * w.block).toBeGreaterThanOrEqual(box.x0 + box.side);
+    }
+  });
+
+  it("holds the light: the box's pixels and the wings' blocks sum to the point's light within 1e-6, nothing returned", () => {
+    for (const table of [analytic, spiked]) {
+      for (const [cx, cy] of centres) {
+        const box = profileBox(cx, cy, psfHalf(table, ZOOM_PC));
+        const wing = wingBox(table, cx, cy, ZOOM_PC);
+        const two = psfWingWeights(table, cx, cy, ZOOM_PC, box, wing);
+        const inBox = sums(two.weights);
+        const past = sums(two.wings);
+        for (let k = 0; k < 3; k += 1) {
+          expect(Math.abs(inBox[k] + past[k] - 1)).toBeLessThan(1e-6);
+          // the wings' box covers the table: its share is one to the corners' float32 rounding - none returned
+          expect(Math.abs(two.share[k] - 1)).toBeLessThan(1e-6);
+        }
+        // Before S82: the box alone, each pixel over the box's share (psfWeights), the light past it returned inside.
+        const before = psfWeights(table, cx, cy, ZOOM_PC, box);
+        for (let k = 0; k < 3; k += 1) {
+          expect(Math.abs(sums(before.weights)[k] - 1)).toBeLessThan(1e-6);
+          // the light the wings draw is what the box's share returned
+          expect(Math.abs(past[k] - (1 - before.share[k]))).toBeLessThan(1e-6);
+          // and each pixel of the box is drawn at its own light, the old weight times the old share
+          for (const p of [0, (box.side * box.side - 1) / 2, box.side * 7 + 60]) {
+            expect(Math.abs(two.weights[k][p] - before.weights[k][p] * before.share[k])).toBeLessThan(1e-9);
+          }
+        }
+      }
+    }
+  });
+
+  it("states what is no longer returned at the zoom stand: 4.2 % of the red Airy and 6.0 % of the red spikes", () => {
+    const box = boxOf(ZOOM_PC);
+    const wing = wingBox(analytic, ...CENTRE, ZOOM_PC);
+    const airyPast = sums(psfWingWeights(analytic, ...CENTRE, ZOOM_PC, box, wing).wings);
+    const spikesPast = sums(psfWingWeights(spiked, ...CENTRE, ZOOM_PC, box, wingBox(spiked, ...CENTRE, ZOOM_PC)).wings);
+    expect(airyPast[0]).toBeCloseTo(1 - 0.95824, 4);
+    expect(spikesPast[0]).toBeCloseTo(1 - 0.9401, 3);
+    // the blocks inside the box carry nothing (the block less its part inside it, the same rectangle: exactly zero)
+    const w = psfWingWeights(analytic, ...CENTRE, ZOOM_PC, box, wing);
+    const centreBlock = ((wing.side - 1) / 2) * wing.side + (wing.side - 1) / 2;
+    expect(w.wings[0][centreBlock]).toBe(0);
+    // the spikes reach past the box's square edge along the diagonals: a block at 200 px on the diagonal out-shines one
+    // on the axis at the same radius
+    const spikesW = psfWingWeights(spiked, ...CENTRE, ZOOM_PC, box, wingBox(spiked, ...CENTRE, ZOOM_PC));
+    const at = (dx: number, dy: number) => {
+      const i = Math.floor((CENTRE[0] + dx) / WING_BLOCK) - wing.x0;
+      const j = Math.floor((CENTRE[1] + dy) / WING_BLOCK) - wing.y0;
+      return spikesW.wings[0][j * wing.side + i];
+    };
+    const d = 200 / Math.SQRT2;
+    expect(at(d, d)).toBeGreaterThan(1.5 * at(200, 0)); // 1.75 measured
+  });
+
+  it("returns only past the wings' bound, closer than WING_MAX_HALF blocks cover", () => {
+    const close = 0.2; // pc a pixel: the table's half-width 766 px, past 480
+    const cx = 2000.4;
+    const cy = 1999.6;
+    const box = profileBox(cx, cy, psfHalf(analytic, close));
+    const wing = wingBox(analytic, cx, cy, close);
+    expect(wing.side).toBe(2 * WING_MAX_HALF + 1);
+    const two = psfWingWeights(analytic, cx, cy, close, box, wing);
+    for (let k = 0; k < 3; k += 1) {
+      expect(two.share[k]).toBeLessThan(1);
+      expect(Math.abs(sums(two.weights)[k] + sums(two.wings)[k] - 1)).toBeLessThan(1e-6);
+    }
   });
 });

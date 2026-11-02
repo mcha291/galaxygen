@@ -38,16 +38,25 @@ import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { opticsOf } from "./hstPsf";
-import { instrumentOfSet, instrumentPsf, physicalPsf } from "./psf";
+import { instrumentOfSet, instrumentPsf, usePhysicalPsf } from "./psf";
 import { footprint } from "./frustum";
 import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { type Tuning, defaultsFor, loadTuning, saveTuning } from "./tuning";
+import { TUNING_CONTROLS, type Tuning, defaultsFor, drawnTuning, heldTemplate, loadTuning, saveTuning } from "./tuning";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
+import { regimePlace } from "./drawerLayout";
+import { starLoads } from "./regionStars";
 import styles from "./GalaxyTab.module.css";
+
+// The regime caption's class by where it stands: left of the edit drawer while that is open (S82, #190).
+const regimeClass = {
+  home: styles.regime,
+  besideDrawer: `${styles.regime} ${styles.besideDrawer}`,
+  besideDrawerHalf: `${styles.regime} ${styles.besideDrawerHalf}`,
+};
 
 interface Props {
   meta: FieldsPayload;
@@ -77,6 +86,12 @@ interface Props {
   onTemplate(name: string): void;
   /** Counts the landings on a template: a new count is a fresh camera at the template's stand. */
   selection: number;
+  /**
+   * The camera drawn (S82, #188): while a landing's swap is under way, the previous landing's - its count, its preset and
+   * its template's stand and lens - so the previous picture stays on its canvas until the template's answers are in;
+   * then the landing's own. Absent, the live ones (`selection`, `preset`, `template`).
+   */
+  camera?: { selection: number; preset: Preset | null; template: Template | null };
   /** "Compare with a picture" (T16 ii): a picture chosen from disk, set beside the render; null without one. */
   picture: ComparePicture | null;
   onPicture(file: File | null): void;
@@ -124,6 +139,9 @@ const REGIMES = [
   { key: "sampled", label: "sampled", name: "Sampled points", what: "The whole-galaxy star sample over the field." },
   { key: "stars", label: "stars", name: "Stars", what: "This region's own stars, materialised at a sample size scaled to the view." },
 ] as const;
+// The stars regime at "region stars: catalogue" (S82, #172): the region's volumes with the star-first mode's points.
+const REGION_CATALOGUE_WHAT = "This region's clouds, HII regions and shells, with the bright catalogue's stars at their own light.";
+const REGION_STARS_WHAT = TUNING_CONTROLS.find((c) => c.key === "regionStars")?.about ?? "";
 
 /** The view width, kpc, each regime button takes the camera to. */
 const REGIME_VIEW_KPC = { field: 45, sampled: 12, stars: 2.5 } as const;
@@ -243,15 +261,18 @@ export function GalaxyTab({
   edited,
   onTemplate,
   selection,
+  camera,
   picture,
   onPicture,
   physicsOnly,
   onPhysicsOnly,
 }: Props) {
+  // The camera drawn (#188): the previous landing's while a landing's swap is under way, else the live one.
+  const drawn = camera ?? { selection, preset, template };
   // The zoom slider's ask belongs to the camera it was made of: a template chosen or a preset pressed is a fresh
   // camera at its own stand, and an ask made of the one before it must not move it (it did, for the presets,
   // until S54: the slider's last position outlived the camera).
-  const cameraKey = `${selection}:${preset}`;
+  const cameraKey = `${drawn.selection}:${drawn.preset}`;
   const [zoomAsk, setZoomAsk] = useState<{ of: string; zoom: number } | null>(null);
   const zoom = zoomAsk?.of === cameraKey ? zoomAsk.zoom : undefined;
   const setZoom = (value: number) => setZoomAsk({ of: cameraKey, zoom: value });
@@ -261,7 +282,7 @@ export function GalaxyTab({
   const [interiorNote, setInteriorNote] = useState<string | null>(null);
   // The template's camera and lens (D213 ruling 5): the view stands there while no preset is chosen, and keeps
   // the lens under a preset. Without templates (an API from before S54) the presets and the 45° lens, as before.
-  const fov = template?.camera.fov_deg ?? DEFAULT_FOV;
+  const fov = drawn.template?.camera.fov_deg ?? DEFAULT_FOV;
   const stands = switcherItems(templates, template?.name ?? null, edited, import.meta.env.BASE_URL);
   // The Tuning panel's display choices (D199): a UI preference kept in localStorage, today's values by default. Since
   // S67 (D227 R4) per template: each has its own defaults (tuning.ts defaultsFor) and its own stored choices, read
@@ -275,15 +296,24 @@ export function GalaxyTab({
     setTuningState({ of: templateName, t });
     saveTuning(t, undefined, templateName);
   };
+  // During a landing's hold (S82, #188's follow-up) the previous picture is drawn as it was: every value that only changes
+  // how it is drawn is the drawn template's tuning (as stored for it), every value that keys a load the live template's
+  // (tuning.ts drawnTuning, LOAD_TUNING_KEYS), so the landing's loads go out as they would without the hold. Outside a
+  // hold `look` is `tuning` itself. The panel and the switches edit the live template's, as before.
+  const held = heldTemplate({ selection: drawn.selection, name: drawn.template?.name ?? null }, { selection, name: templateName });
+  const heldTuning = useMemo(() => (held !== null ? loadTuning(undefined, held) : null), [held]);
+  const look = drawnTuning(tuning, heldTuning);
   // A new step count re-marches the view (two uniforms since S78, T29) and a new white point asks the model again: both wait for the slider to settle.
-  const steps = useDebounced(tuning.steps, 300);
+  // During a hold the drawn template's steps, at once: it is the step count the picture on screen was marched with.
+  const liveSteps = useDebounced(tuning.steps, 300);
+  const steps = heldTuning ? heldTuning.steps : liveSteps;
   const whiteKelvin = useDebounced(tuning.whiteKelvin, 400);
-  const fieldTuning = { ...tuning, steps, whiteKelvin };
+  const fieldTuning = { ...look, steps, whiteKelvin };
   const marchStats = useRef<MarchStats>({ width: 0, height: 0, ms: 0 }).current;
   // The field mode's starlight by age (S63, D223): the parts the render carries, told by the field volume, and
   // their switches. Null until a render carries them: the stellar layer is then `stars`, whole, and no switch shows.
   const [ageParts, setAgeParts] = useState<AgePart[] | null>(null);
-  const pointGain = tuning.pointGain;
+  const pointGain = look.pointGain;
   // The filter set's blackbody table (S42, P6): stars and clusters are drawn through the same curves as the field.
   const blackbodyKey = JSON.stringify([filterSet, whiteKelvin]);
   const blackbodyTable = useLoad<BlackbodyTable>(blackbodyKey, (signal) => loadBlackbody(curvesOf(filterSet), whiteKelvin, signal)).value ?? null;
@@ -299,7 +329,9 @@ export function GalaxyTab({
     const own = ownSet ? instrumentOfSet(FILTER_SETS[ownSet]) : null;
     return own && own === instrumentOfSet(FILTER_SETS[filterSet]) ? opticsOf(template?.instrument) : null;
   }, [template, filterSet]);
-  const physical = useMemo(() => physicalPsf(FILTER_SETS[filterSet], optics, tuning.spikes), [optics, filterSet, tuning.spikes]);
+  // Built in the PSF table worker since S82 (#178 ii): the last table drawn until the new one arrives. The switch is the
+  // drawn template's during a landing's hold (`look`, #188's follow-up).
+  const physical = usePhysicalPsf(FILTER_SETS[filterSet], optics, look.spikes);
   const [brightestSlider, setBrightestSlider] = useState(500);
   const brightestN = brightestOf(brightestSlider);
   // A column some models lack ([α/Fe] is the advanced chemistry's) offers no chip where the
@@ -313,21 +345,30 @@ export function GalaxyTab({
 
   // The stars regime: the window around where the view looks, at a sample size scaled to it.
   const area = mode === "field" && view && weights.stars > 0 ? regionAround(view.target[0], view.target[2], view.across * 0.75) : null;
+  // Which star layers are asked and drawn (S82, #172; regionStars.ts): in the region regime the star-first mode's points
+  // at "catalogue" (the default), V3's sample and its display-colour clusters at "sampled"; the region's volumes at both.
+  const loads = starLoads(mode, tuning.regionStars, tuning.compPoints, area !== null);
+  // The field mode's region regime drawing the star-first points: its footprint, tiles and threshold are read as there.
+  const zoomPoints = mode === "field" && loads.points;
   const inWindow = useMemo(() => {
     if (!area) return 0;
     const c = sample.columns as Record<string, ArrayLike<number>>;
     return starsInWindow(c.star_radius, c.star_azimuth, area);
   }, [sample, area?.r_min, area?.r_max, area?.phi_min, area?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
   const regionStars = area ? regionSampleSize(STAR_SAMPLE, inWindow, REGION_TARGET_STARS, REGION_MAX_STARS) : 0;
-  const regionKey = area ? JSON.stringify([area, regionStars, query]) : null;
-  // Keyed on the view (a zoom mounts it mid-drag): its first key settles too (S78, useLoad's firstAtOnce).
-  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal), SETTLE_MS, undefined, false);
+  const regionKey = area && loads.sampled ? JSON.stringify([area, regionStars, query]) : null;
+  // Keyed on the view (a zoom mounts it mid-drag): its first key settles too (S78, useLoad's firstAtOnce). The camera's
+  // load: moved during a swap, it holds none (S82, #187; useLoad's `view`).
+  const areaView = area ? JSON.stringify(area) : null;
+  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal), SETTLE_MS, undefined, false, { view: areaView });
   const detail = region.value && regionKey ? region.value : null;
   // The region's clusters (V3's volume, V4's points, S41): loaded once at the level the view asks for.
   const level = area && view ? levelFor(view.across) : 0;
   const clustersKey = area ? JSON.stringify([area, level, query]) : null;
-  const regionClusters = useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false).value ?? null;
-  const shownClusters = area && regionClusters ? regionClusters : null;
+  const regionClusters =
+    useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
+  // V3's display-colour cluster points (the sampled reading's); RegionVolume reads the census at both positions.
+  const shownClusters = area && loads.sampled && regionClusters ? regionClusters : null;
   const clusterPositions = useMemo(() => {
     if (!shownClusters) return null;
     const c = shownClusters.columns as Record<string, ArrayLike<number>>;
@@ -354,11 +395,18 @@ export function GalaxyTab({
   const R = meta.grid.axes.R;
   // The whole disc (fieldLoads.ts, S80: the window App asks the clouds' census ahead with is this one).
   const wholeDisc = wholeDiscOf(meta);
-  const seen = mode === "stars" && view ? footprint(view.camera.viewProjection, rMax) : null;
-  const pointsOn = mode === "stars" && tuning.compPoints;
+  const seen = (mode === "stars" || zoomPoints) && view ? footprint(view.camera.viewProjection, rMax) : null;
+  const pointsOn = loads.points;
   const brightTableKey = pointsOn ? JSON.stringify(["brightTable", query]) : null;
-  const brightTable = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal)).value ?? null;
-  const tileLevel = mode === "stars" && view ? levelFor(view.across) : 0;
+  // S82 (#187): the counts, the tiles and the field's remainder follow the table's answer. Inside a swap they read it as
+  // soon as it is held (`next`), and wait on the swap while it has not come (`settling`, their `after`), so the swap
+  // publishes once with them in. The table itself is never drawn; outside a swap `next` is its value.
+  const tableLoad = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal));
+  const brightTable = tableLoad.next ?? null;
+  const tileLevel = (mode === "stars" || zoomPoints) && view ? levelFor(view.across) : 0;
+  // Where the camera's footprint stands, as the star-first loads read it: what moves them as the user moves (#187's
+  // `view` - the camera's loads hold no swap once it has moved).
+  const seenView = seen ? JSON.stringify([tileLevel, seen.r_min, seen.r_max, seen.phi_min, seen.phi_max]) : null;
   const tilesSeen = useMemo(
     () => (seen && brightTable ? cellsIn(seen, brightTable.layout, tileLevel) : null),
     [brightTable, tileLevel, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max], // eslint-disable-line react-hooks/exhaustive-deps
@@ -388,10 +436,11 @@ export function GalaxyTab({
     BRIGHT_SETTLE_MS,
     countsInput,
     false, // the cells in view: the camera may be moving as the mode opens (S78)
+    { view: seenView, after: tileLevel > 0 && tableLoad.settling }, // below 4 kpc the cells follow the table's layout (#187)
   );
   // The counts the frame picks from: the whole table at level 0, the held rows at level k - and only once every cell
-  // in view has its row (B9: no pick over a cell not held).
-  const levelHeld = tileLevel > 0 && levelLoad.value ? countRows.at(countsGalaxy, tileLevel) : null;
+  // in view has its row (B9: no pick over a cell not held). Read as soon as a swap holds them (#187).
+  const levelHeld = tileLevel > 0 && levelLoad.next ? countRows.at(countsGalaxy, tileLevel) : null;
   const tileCounts: BrightTable | CellCounts | null =
     tileLevel === 0 ? brightTable : levelHeld && tilesSeen && covers(levelHeld, tilesSeen) ? levelHeld : null;
   // The budget below the stars handover (S65, the lead's ruling on the zoomed footprint): each level-k cell's count
@@ -449,8 +498,15 @@ export function GalaxyTab({
     BRIGHT_SETTLE_MS,
     tilesInput,
     false, // the tiles in view, likewise (S78)
+    // the threshold follows the table, and below 4 kpc the counts (#187); the view projection moves the pick there
+    { view: seenView === null ? null : JSON.stringify([seenView, viewProjection ?? null]), after: tableLoad.settling || levelLoad.settling },
   );
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
+  // The threshold the field's remainder is asked at (#187): the tiles' newest answer, held by a swap or published, and
+  // whether the tiles still hold the swap - the march's render follows them. Outside a swap the drawn tiles' own.
+  const brightAsked = pointsOn && brightLoad.next ? brightLoad.next : null;
+  const lMinAsked = brightAsked ? brightAsked.header.threshold.l_min : null;
+  const lMinAfter = pointsOn && brightLoad.settling;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster
   // of the disc with its own light through the set, loaded once per set and query (about 13 000).
   // S64 (V6, R5): the same request serves the field mode's knots (each cluster's line_response beside its response).
@@ -503,23 +559,26 @@ export function GalaxyTab({
   const knotsShown = knotsDrawn && knotPoints ? knotPoints : null;
   // One gain for the field and the points (D208): the field's per L☉/pc², its gain and the exposure's stops; the
   // point gain stays a display multiplier on the points (D199).
-  const pointsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * pointGain;
+  // In the field mode's region regime (S82, #172) the points fade in over the handover at the region's weight, as V3's
+  // sample did (1 below 2 kpc, so at the zoom stands the star-first mode's own gain).
+  const pointsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * pointGain * (zoomPoints ? weights.stars : 1);
   // The march's dust, handed up by the field volume for the segment to each point (T20): only as it acts.
   const [fieldDust, setFieldDust] = useState<PointDust | null>(null);
   // The extinction strength (S67, D228): the march's textures with every depth to a point at the slider; at 1 the same object.
-  const strength = tuning.extinctionStrength;
+  const strength = look.extinctionStrength;
   const scaledDust = useMemo(() => (fieldDust && strength !== 1 ? { ...fieldDust, depthScale: strength } : fieldDust), [fieldDust, strength]);
-  const pointDust = mode === "stars" && tuning.compDust && tuning.dustReading === "acts" ? scaledDust : null;
+  // In the field mode's region regime (S82, #172) the field's march's dust, as it acts there, as the knots read it.
+  const pointDust = mode === "stars" ? (look.compDust && look.dustReading === "acts" ? scaledDust : null) : zoomPoints ? scaledDust : null;
   // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
   const knotDust = mode === "field" ? scaledDust : null;
-  const knotsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * weights.field;
+  const knotsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * weights.field;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
   // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
   // the surface-brightness gate's per-ring reading of the points' draw. Since the fix pass (F3) also what FluxPoints
   // draws them with: their gain, the clusters' profile switch, and the instrument's table's grid where R1 applies - for
   // the GPU light check. It changes nothing drawn.
-  const clusterProfile = tuning.clusterRadius ? 1 : 0;
-  const starFieldGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure;
+  const clusterProfile = look.clusterRadius ? 1 : 0;
+  const starFieldGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure;
   useEffect(() => {
     const holder = window as unknown as Record<string, unknown>;
     const value = {
@@ -560,8 +619,8 @@ export function GalaxyTab({
   const marchOn = mode === "stars" && marchWanted(tuning);
   const ramp = useMemo(() => dustRamp(meta), [meta]);
   const [dustPaint, setDustPaint] = useState<DustPaintShown | null>(null);
-  const marchLayers = brightestLayers(tuning, ramp);
-  const diagnostic = mode === "stars" && diagnosticOn(tuning);
+  const marchLayers = brightestLayers(look, ramp);
+  const diagnostic = mode === "stars" && diagnosticOn(look);
   // The whole disc's cloud census, loaded once per query (about 17 000 clouds), float32 (S64): cut to the footprint
   // here for the markers, and rasterised by the field's march into the clouds' layer of opacity (V6, "clouds as
   // extinction"). One request serves both.
@@ -573,11 +632,11 @@ export function GalaxyTab({
   const cloudPaint = useMemo(() => {
     if (!cloudCensus || !CLOUD_COLUMNS.every((k) => k in cloudCensus.columns)) return null;
     try {
-      return cloudColors(meta, cloudCensus.columns, tuning.cloudIntensity);
+      return cloudColors(meta, cloudCensus.columns, look.cloudIntensity);
     } catch {
       return null; // a census from a just-switched model, before its declarations
     }
-  }, [meta, cloudCensus, tuning.cloudIntensity]);
+  }, [meta, cloudCensus, look.cloudIntensity]);
   const cloudLayer = useMemo(() => {
     if (!cloudCensus || !cloudPaint || !seen) return null;
     const c = cloudCensus.columns as Record<string, ArrayLike<number>>;
@@ -640,16 +699,16 @@ export function GalaxyTab({
         layers={layers}
         pickable={pickable}
         reach={reach}
-        preset={preset}
-        stand={template?.camera ?? null}
+        preset={drawn.preset}
+        stand={drawn.template?.camera ?? null}
         fov={fov}
-        epoch={selection}
+        epoch={drawn.selection}
         zoom={zoom}
         onView={setView}
         hdr
         additive={field === PHOTOMETRIC}
         psf={spritePsf}
-        tuning={tuning}
+        tuning={look}
       >
         {mode === "field" && (
           <FieldVolume
@@ -662,19 +721,20 @@ export function GalaxyTab({
             hiiFade={area ? weights.stars : 0}
             tuning={fieldTuning}
             stats={marchStats}
-            layers={fieldLayers(tuning)}
-            ages={agesOf(tuning)}
+            layers={fieldLayers(look)}
+            ages={agesOf(look)}
             onAges={setAgeParts}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
             hiiShare={knotsShown ? knotsShown.share : null}
             onDust={setFieldDust}
+            onStarsLayer={setStarsLayer}
             onRingEdges={onRingEdges}
           />
         )}
         {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
         {knotsShown && (
-          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} physical={physical} />
+          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} physical={physical} />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
             its starlight the remainder under the points' threshold (the whole of it while the points are off). */}
@@ -689,7 +749,8 @@ export function GalaxyTab({
             stats={marchStats}
             layers={marchLayers}
             onDepth={setDustPaint}
-            lMin={lMin}
+            lMin={lMinAsked}
+            lMinAfter={lMinAfter}
             onDust={setFieldDust}
             onStarsLayer={setStarsLayer}
             onRingEdges={onRingEdges}
@@ -704,23 +765,23 @@ export function GalaxyTab({
             flux={clusterPoints.flux}
             gain={pointsGain}
             psf={spritePsf}
-            spriteSize={tuning.spriteSize}
+            spriteSize={look.spriteSize}
             dust={pointDust}
             extent={clusterPoints.extent}
-            profile={tuning.clusterRadius ? 1 : 0}
+            profile={look.clusterRadius ? 1 : 0}
             physical={physical}
           />
         )}
         {brightPoints && (
-          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} physical={physical} />
+          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} />
         )}
-        {mode === "stars" && tuning.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
+        {mode === "stars" && look.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
         {mode === "stars" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
           <CloudMarkers positions={cloudLayer.positions} sizes={cloudLayer.sizes} colors={cloudLayer.colors} />
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={tuning.extinctionStrength} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={look.extinctionStrength} />
         )}
       </GalaxyView>
       </div>
@@ -880,6 +941,20 @@ export function GalaxyTab({
           </div>
         </div>
 
+        {/* The field mode's stars below 4 kpc (S82, #172; the owner's ruling): the catalogue's points or V3's sample. */}
+        {mode === "field" && (
+          <div className={styles.section}>
+            <div className={styles.label}>Region stars</div>
+            <div className={styles.chips} role="group" aria-label="Region stars">
+              {(["catalogue", "sampled"] as const).map((value) => (
+                <button key={value} type="button" aria-pressed={tuning.regionStars === value} title={REGION_STARS_WHAT} onClick={() => setComponent({ regionStars: value })}>
+                  {value} stars
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {mode === "stars" && (
           <div className={styles.section}>
             <div className={styles.label}>Components</div>
@@ -1009,7 +1084,7 @@ export function GalaxyTab({
 
       {/* The view's own captions sit over the render's half, wherever the stage is split. */}
       <div className={picture ? styles.overHalf : styles.over}>
-      <div className={styles.regime}>
+      <div className={regimeClass[regimePlace(editing, !!picture)]}>
         <div className={styles.regimeHead}>
           <span className={styles.muted}>{mode === "field" ? `regime ${REGIMES.indexOf(regime) + 1} of 3` : "mode 2 of 2"}</span>
           <span className={styles.regimeName}>{mode === "field" ? regime.name : "Star-first"}</span>
@@ -1030,8 +1105,16 @@ export function GalaxyTab({
                         ? `; the cells expecting under one star in view are not asked: ${formatNumber(tileFetch.loss, 3)} expected stars of ${formatNumber(tileFetch.inView, 4)} in view`
                         : ""
                     }. The field under them is the light no point carries. Click a point for its numbers.`
-            : `${regime.what} ${
-                weights.active === "stars"
+            : `${weights.active === "stars" && !loads.sampled ? REGION_CATALOGUE_WHAT : regime.what} ${
+                weights.active === "stars" && zoomPoints
+                  ? !bright
+                    ? `Asking the cells in view at the threshold a budget of ${brightestN.toLocaleString("en")} allows.`
+                    : `${bright.header.count.returned.toLocaleString("en")} catalogue stars: every disc star in the ${bright.header.tiles.inView.toLocaleString("en")} cells in view above ${formatNumber(bright.header.threshold.l_min, 3)} L☉${
+                        clusterCensus ? `, and ${(clusterCensus.columns.cluster_radius?.length ?? 0).toLocaleString("en")} clusters` : ""
+                      }, each its own light (region stars: catalogue).`
+                  : weights.active === "stars" && !loads.sampled
+                  ? "The star points are switched off."
+                  : weights.active === "stars"
                   ? region.busy || !detail
                     ? "Loading this region's stars."
                     : `${detail.header.stars.materialised.toLocaleString("en")} stars here, of a ${regionStars.toLocaleString("en")}-star galaxy.`
@@ -1045,7 +1128,7 @@ export function GalaxyTab({
         )}
         {mode === "field" && interiorNote && <p className={styles.muted}>{interiorNote}</p>}
         {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
-        {mode === "stars" && marchOn && tuning.compDust && tuning.dustReading === "where" && (
+        {mode === "stars" && marchOn && look.compDust && look.dustReading === "where" && (
           <p className={styles.muted}>
             {ramp
               ? `dust: ${ramp.field}'s declared ramp${ramp.coloured ? "" : " (grey)"}, ${ramp.scale}${

@@ -145,7 +145,10 @@ export function App() {
     setFailure(null);
   }, [wf.selection]); // eslint-disable-line react-hooks/exhaustive-deps -- a landing, not a Generate
   const stale = wf.generation !== settled;
-  const marked = stale || failure !== null;
+  // A landing over a galaxy on screen (S82, #188): a swap of its own, with its own line - the previous galaxy stays,
+  // its camera with it, until every loader has answered the template's query (useLoad.ts beginLanding).
+  const landing = swap.swapping && swap.landing;
+  const marked = stale || failure !== null || landing;
 
   // The star sample runs every stage, so it is only asked for where stars are drawn: the Galaxy
   // tab. The Science tab shows fields only, in every group including the last two.
@@ -169,6 +172,17 @@ export function App() {
     const timer = setTimeout(() => askFieldAhead(meta, galaxyQuery, filterSet, loadTuning(undefined, landed?.name ?? null)), 0);
     return () => clearTimeout(timer);
   }, [tabWaits, sampleKey]); // eslint-disable-line react-hooks/exhaustive-deps -- asked once per query the tab waits on
+  // A landing whose query no loader is asking with (the same template chosen again) has nothing to wait for (#188).
+  // After the loaders above, so this view's own have taken their keys.
+  useEffect(() => {
+    if (swap.swapping && swap.landing && pendingLoads() === 0) settleSwap();
+  }, [wf.selection, swap]);
+  // The camera drawn (#188): the landing's own once its swap is over; until then the previous one's, so the previous
+  // picture stays whole - its canvas, its field - while the template's loads are asked from it. A ref filled in
+  // render, as the label's below.
+  const liveCamera = { selection: wf.selection, preset, template: wf.template };
+  const drawnCamera = useRef(liveCamera);
+  if (!landing) drawnCamera.current = liveCamera;
 
   const seed = wf.shown?.state.values.world_seed;
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
@@ -187,7 +201,7 @@ export function App() {
   const label = useRef(live);
   if (!marked) label.current = live; // a ref filled in render, never in a memo (StrictMode builds a memo twice)
   const named = marked ? label.current : live;
-  const labelMark = stale ? " · generating" : failure !== null ? " · generation failed" : "";
+  const labelMark = stale ? " · generating" : landing ? " · landing" : failure !== null ? " · generation failed" : "";
   // The template's pins, in the field declarations' words (S58, D217): they ride with every request the galaxy
   // makes, edited or not, so an edited galaxy's name says they still hold.
   const pinned = wf.template?.pins.map((p) => pinWords(p, meta?.fields)).join("; ") ?? "";
@@ -211,7 +225,9 @@ export function App() {
     <p className={styles.stale} role="status" data-failed={failure !== null || undefined}>
       {stale
         ? "Stale · the previous galaxy, until the generated one arrives"
-        : `Generation failed: ${briefly(failure ?? "")}. What is drawn is not the inputs shown: change them and generate again, or reset.`}
+        : landing
+          ? `Landing · the previous galaxy, until ${wf.template?.label ?? "the template"} arrives`
+          : `Generation failed: ${briefly(failure ?? "")}. What is drawn is not the inputs shown: change them and generate again, or reset.`}
     </p>
   );
 
@@ -380,6 +396,7 @@ export function App() {
                   onPhysicsOnly={setPhysicsOnly}
                   preset={preset}
                   onPreset={setPreset}
+                  camera={drawnCamera.current}
                   editing={editing}
                   onEdit={() => setEditing((e) => !e)}
                   filterSet={filterSet}

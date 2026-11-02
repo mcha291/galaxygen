@@ -38,6 +38,7 @@ import {
   type LayerAnswer,
   type Query,
   type RenderFrame,
+  askRenderAhead,
   drawnPair,
   loadArrays,
   loadLayer,
@@ -659,6 +660,12 @@ interface Props {
    * `stars_unresolved` — the light no point above it carries, nor the clusters — and without one the whole.
    */
   lMin?: number | null;
+  /**
+   * The threshold `lMin` follows the tiles' answer, which has not come for the swap under way (S82, #187): the render
+   * waits on the swap and asks its remainder only at the threshold the swap's tiles name, so the swap publishes the
+   * field with the points, once. Its whole render - the same at any threshold - is asked meanwhile (api.ts askRenderAhead).
+   */
+  lMinAfter?: boolean;
   /** Handed the march's dust textures for the segment to each point (T20, D208); null when the volume goes. */
   onDust?: (dust: PointDust | null) => void;
   /**
@@ -825,6 +832,7 @@ export function FieldVolume({
   layers: shown = FIELD_LAYERS,
   onDepth,
   lMin = null,
+  lMinAfter = false,
   onDust,
   onStarsLayer,
   onRingEdges,
@@ -857,7 +865,13 @@ export function FieldVolume({
     (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null),
     undefined,
     lit ? JSON.stringify([filterSet, whiteKelvin, query]) : undefined,
+    true,
+    { after: lMinAfter }, // S82 (#187): the remainder at the swap's own threshold, published with the points
   );
+  // While the render waits on the tiles in a swap, its whole render is asked: the request it will make then, earlier.
+  useEffect(() => {
+    if (lit && lMinAfter) askRenderAhead(curvesOf(filterSet), whiteKelvin, query);
+  }, [lit, lMinAfter, filterSet, whiteKelvin, query]);
   const latest = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
   // The randomness layer's tables (S73, #199): /api/layer once per galaxy, keyed on the shown query as the render is
   // (so a Generate's swap holds it with the rest, D232), and drawn only beside a render of the same galaxy - the model,

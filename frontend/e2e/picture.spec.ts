@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
 
 import type { LensCamera } from "../src/galaxy/capture";
-import { type PsfTable, imageDensity, opticsOf, psfRect, psfTable, pupilImage } from "../src/galaxy/hstPsf";
+import { type PsfTable, imageDensity, opticsOf, psfRect, psfTable, pupilImage, wingBox } from "../src/galaxy/hstPsf";
 import { PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF, plummerRect } from "../src/galaxy/plummer";
 import { type RingCamera, spriteRings } from "../src/galaxy/ringProfile";
 import { psfMean, spriteTexels } from "../src/galaxy/sprite";
@@ -104,6 +104,8 @@ declare global {
       picture(): { png: string; width: number; height: number };
     };
     __galaxygenFrameSum?: () => { sum: number[]; width: number; height: number };
+    /** The PSF tables building now (S82, #178 ii; psfTableClient.ts): a still view is one with none building. */
+    __galaxygenPsfPending?: () => number;
     /** The march's GPU time (S67, D227 R6; FieldVolume's timer query). */
     __galaxygenMarchGpu?: { available: boolean; ms: number | null };
     /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
@@ -259,7 +261,10 @@ async function settle(page: Page, net: Net, mode: Capture["mode"]) {
   while (still < READY.stillProbes) {
     if (Date.now() > deadline) throw new Error(`the view was not ready in ${READY.timeoutMs} ms: ${net.inflight} requests in flight, frame sum ${last}`);
     await page.waitForTimeout(READY.probeMs);
-    const quiet = net.inflight === 0 && Date.now() - net.last >= READY.quietMs;
+    // Since S82 (#178 ii) the instrument's PSF table is built in a worker, asked by no request: the view is not still
+    // while one builds (the spikes' switch, a filter set's), the last table drawn until it arrives.
+    const building = await page.evaluate(() => window.__galaxygenPsfPending?.() ?? 0);
+    const quiet = net.inflight === 0 && Date.now() - net.last >= READY.quietMs && building === 0;
     const sum = await page.evaluate(() => window.__galaxygenFrameSum!().sum);
     const key = sum.join(",");
     still = quiet && sum.some((v) => v > 0) && key === last ? still + 1 : 0;
@@ -743,9 +748,12 @@ interface ShownPoints {
  * each point's flux times the gain over the sky's area one pixel covers at it, (1000 depth / f)^2 depth / dist; drawn as
  * a Plummer sphere where the clusters' profile is on and 2 r_h fills a pixel, else as the instrument's image; in the box
  * of whole pixels the shader draws (floor(c) - h, 2h + 1 a side, h clamped to PROFILE_MAX_HALF), each channel summing to
- * one over the box (the 1/share the clamp discloses, hstPsf.ts psfHalf) - so what lands on the frame is the light times
- * the share of the box inside it, by the profile's own rectangle integrals. `centred` counts only points whose centre
- * is in the frame; `all` every point in front of the camera (a GPU may draw a wide point whose centre is off screen).
+ * one over the box - so what lands on the frame is the light times the share of the box inside it, by the profile's own
+ * rectangle integrals. Since S82 (#178) a clamped instrument's box is not renormalised: its light past the box is the
+ * wings' pass's, in blocks of WING_BLOCK pixels each spread evenly over its pixels (hstPsf.ts psfWingWeights), every
+ * share over the wings' box's light - so the frame holds the box's part inside it and each block's light past the box
+ * times the block's pixels inside it. `centred` counts only points whose centre is in the frame; `all` every point in
+ * front of the camera (a GPU may draw a wide point whose centre is off screen).
  */
 function drawnLight(sets: { points: ShownPoints; cluster: boolean }[], cam: RingCamera, width: number, height: number, gain: number, clusterProfile: number, table: PsfTable) {
   const f = height / (2 * cam.tanHalfY);
@@ -778,8 +786,36 @@ function drawnLight(sets: { points: ShownPoints; cluster: boolean }[], cam: Ring
       const [ax, bx, ay, by] = [Math.max(x0, 0), Math.min(x0 + n, width), Math.max(y0, 0), Math.min(y0 + n, height)];
       const rect = (lx: number, hx: number, ly: number, hy: number): number[] =>
         asPlummer ? [0, 1, 2].map(() => plummerRect(lx - cx, hx - cx, ly - cy, hy - cy, scale)) : psfRect(table, [(lx - cx) * scale, (ly - cy) * scale], [(hx - cx) * scale, (hy - cy) * scale]);
-      const box = rect(x0, x0 + n, y0, y0 + n);
+      let box = rect(x0, x0 + n, y0, y0 + n);
       const on = ax < bx && ay < by ? rect(ax, bx, ay, by) : [0, 0, 0];
+      if (!asPlummer && Math.ceil(want) > PROFILE_MAX_HALF) {
+        // The wings (S82, #178): the wings' box's light divides; each block's light past the box lands on its pixels in
+        // the frame. Whole blocks in the frame at once (their light less the box's part in them), the frame's partial
+        // blocks one by one.
+        const w = wingBox(table, cx, cy, side);
+        const b = w.block;
+        box = rect(w.x0 * b, (w.x0 + w.side) * b, w.y0 * b, (w.y0 + w.side) * b);
+        const clip = (lx: number, hx: number, ly: number, hy: number): number[] =>
+          lx < hx && ly < hy ? rect(lx, hx, ly, hy) : [0, 0, 0];
+        const past = (lx: number, hx: number, ly: number, hy: number): number[] => {
+          const all = clip(lx, hx, ly, hy);
+          const inner = clip(Math.max(lx, x0), Math.min(hx, x0 + n), Math.max(ly, y0), Math.min(hy, y0 + n));
+          return [0, 1, 2].map((k) => all[k] - inner[k]);
+        };
+        const [fx, fy] = [Math.floor(width / b) * b, Math.floor(height / b) * b];
+        const [wx0, wx1, wy0, wy1] = [w.x0 * b, (w.x0 + w.side) * b, w.y0 * b, (w.y0 + w.side) * b];
+        const whole = past(Math.max(wx0, 0), Math.min(wx1, fx), Math.max(wy0, 0), Math.min(wy1, fy));
+        for (let k = 0; k < 3; k += 1) on[k] += whole[k];
+        for (let qy = w.y0; qy < w.y0 + w.side; qy += 1) {
+          for (let qx = w.x0; qx < w.x0 + w.side; qx += 1) {
+            const [lx, ly] = [qx * b, qy * b];
+            if (lx < 0 || ly < 0 || lx >= width || ly >= height || (lx + b <= fx && ly + b <= fy)) continue;
+            const part = (Math.min(lx + b, width) - lx) * (Math.min(ly + b, height) - ly) / (b * b);
+            const light = past(lx, lx + b, ly, ly + b);
+            for (let k = 0; k < 3; k += 1) on[k] += light[k] * part;
+          }
+        }
+      }
       const inFrame = cx >= 0 && cx < width && cy >= 0 && cy < height;
       for (let k = 0; k < 3; k += 1) {
         const light = (points.flux[3 * p + k] * gain) / area;
@@ -933,6 +969,10 @@ test("physics only on the wire: every request for model data carries layer=off, 
   // Back in the field mode, down to a region: the zoom's own "stars" regime button.
   await press(page, MODE_BUTTON.field, MODE_BUTTON.stars);
   await press(page, "stars");
+  await quiet(page, net);
+  // Since S82 (#172) the region regime draws the catalogue's points by default; V3's sample, kept behind the switch,
+  // asks the region's own stars: both readings walked.
+  await press(page, "sampled stars");
   await quiet(page, net);
 
   const asked = forModelData(net.asked.slice(before));

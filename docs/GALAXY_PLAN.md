@@ -121,7 +121,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > and its listing was pasted under D161 (S42's close, D192). The board said so until then,
 > which is the whole purpose of the column.
 
-**Open debts:** 134 (`GALAXY_INPUTS.md` §11). **Discharged:** 58.
+**Open debts:** 130 (`GALAXY_INPUTS.md` §11). **Discharged:** 63.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
@@ -726,6 +726,17 @@ Azure (W4), and smoothness measured on the deployed site (W5). **The build chang
 nothing the viewer draws**: the viewer work the owner's direction also named — the generate-first edit panel and
 the zoomed-in point layer — is BUILD_III's, rows 68 and 65. W3 runs in parallel from adoption on its own branch;
 W2, W4 and W5 run after V7 (S66), since a bundle holds what the viewer draws.
+
+## 5h. The fifth build — S81 to S93 (written 2026-11-02 at S81's open, at the owner's request; adopted at S82, D248)
+
+**`BUILD_V.md`** is the plan, adopted by the owner on 2026-11-02 ("adopt the plan"): everything that remains, batched so
+the work runs ahead of the suites — the viewer's four rows (V-1 the landing's last tenths, V-2 S68's debts and the
+zoom's seams, V-3 robustness and comparison, V-4 T17), the register pass (R), the model's three batches with the pin
+lifted once per batch and the local full suite asked of the owner once per batch (M1 the arms and the bar, M2 the
+clouds, the dust and the gas, M3 the populations and the ionized gas), Audit VI (A), and the deploy whenever the owner
+takes it (D). Every session closes on the fast gates (rule C7 as re-amended, D245 / D246); CI's full suite runs nightly.
+The rows are the plan's own table; no ☑ row is kept here for these sessions (the owner's ruling of 2026-11-02): each
+session's record is its tag row in `MANUAL_TODO.md` (rule C2e) and its decision.
 
 ## 6. What the executable specs assert
 
