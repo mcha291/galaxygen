@@ -184,6 +184,20 @@
   color: var(--text-body);
 }
 
+/* A toggle's Switch and a choice's Select (the design system's, T17 S84) in a row of the section. */
+.tuningSwitch {
+  flex: 1;
+  min-width: 0;
+}
+
+.tuningSelect {
+  margin-top: var(--space-2);
+}
+
+.tuningActions {
+  margin-top: var(--space-3);
+}
+
 .tuningDefault {
   padding: 0 var(--space-1);
   border: var(--hair) solid var(--border-line);
