@@ -4130,6 +4130,17 @@ never been judged in twenty-three sessions.
    Erwin's measured frequency in stellar mass as a draw at a checkpoint that holds a stellar mass. What kills the
    reading: a volume-limited sample barred at nine in ten for f_d above 0.35.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **re-read against `READING_BAR.md` A1.3–A1.4; nothing there closes it, and the remedy is the
+   owner's.** Today: the Milky Way template f_d 0.600, t_b 1.46 Gyr against a disc age of 9.63 Gyr, barred (and
+   pinned so); `ngc_4414` f_d 0.756, t_b 0.91 Gyr, barred by the criterion and pinned unbarred, as recorded. What A1.4
+   holds is a second parameter without a scatter — Bland-Hawthorn et al. 2023's onset time against halo mass, the
+   dividing line at f_disk 0.250 / 0.310 / 0.328 for 5×10¹⁰ / 10¹¹ / 5×10¹¹ M☉ (no scatter printed; the model's line
+   0.3295 at the default assembly redshift sits on the last) — and classification rates without a fraction against
+   a value (ELN tested at 71–81 %; EAGLE's f_disc/f_dec pair finding 82 % of strong bars). Neither bars fewer discs at
+   f_d ≈ 0.6–0.76, where both templates are, so neither moves `ngc_4414`'s pin. Still carried; the closer the batch
+   can build is the owner's — Erwin 2018's frequency in stellar mass as a draw (A1.3's fitted logistic, α −82.2, β₁
+   17.1, β₂ −0.88; it needs a stellar mass at the checkpoint that draws it, checkpoint 4, or the pattern reading a
+   later stage: an A1 question) — asked again at S87's open.
 146. **The bar's body is normalised by its m = 2 maximum; its light share, its peak's place and its axis ratio are
    unchecked or missed** (S58, D217 item 4). The body is a Ferrers component on generalised ellipses (b/a 0.4,
    boxiness 3) whose strength is the drawn `bar_contrast`. The sourced light share, about a tenth of the whole
