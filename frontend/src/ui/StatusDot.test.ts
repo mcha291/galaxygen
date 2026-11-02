@@ -15,8 +15,9 @@ describe("StatusDot (the design system's components/data/StatusDot.jsx)", () => 
     expect(html).toContain("Nominal</span>");
   });
 
-  it("takes every status tone from the status tokens, and glows only when nominal and live", () => {
-    for (const tone of STATUS_TONES) expect(cssRule(css, `.${tone}`)).toMatch(/background: var\(--(status-|ink-4)/);
+  it("takes every status tone from the status tokens (the mockup's accent the selected magenta), and glows only when nominal and live", () => {
+    for (const tone of STATUS_TONES) expect(cssRule(css, `.${tone}`)).toMatch(/background: var\(--(status-|ink-4|magenta-3)/);
+    expect(cssRule(css, ".accent")).toContain("var(--magenta-3)");
     const live = renderToStaticMarkup(h(StatusDot, { tone: "nominal", pulse: true }));
     expect(classes(live)[1]).toMatch(/pulse/);
     const fault = renderToStaticMarkup(h(StatusDot, { tone: "fault", pulse: true }));

@@ -47,6 +47,12 @@ describe("DataTable (the design system's components/data/DataTable.jsx)", () => 
     expect(renderToStaticMarkup(h(DataTable<Star>, { columns: COLUMNS, rows: [], empty: "No mergers." }))).toContain("No mergers.");
   });
 
+  it("comes at the telemetry density on request, its cells on the 2 / 4 px steps", () => {
+    expect(classes(renderToStaticMarkup(h(DataTable<Star>, { columns: COLUMNS, rows: ROWS, dense: true })))[0]).toBe("table dense");
+    expect(classes(renderToStaticMarkup(h(DataTable<Star>, { columns: COLUMNS, rows: ROWS })))[0]).toBe("table");
+    expect(cssRule(css, ".dense .cell")).toContain("padding: var(--space-1) var(--space-2);");
+  });
+
   it("draws the selected row's rule and the header from the tokens, with no colour of its own", () => {
     expect(cssRule(css, ".selected")).toContain("box-shadow: inset 2px 0 0 var(--magenta-3);");
     expect(cssRule(css, ".head")).toContain("font: var(--text-label);");

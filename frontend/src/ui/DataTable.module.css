@@ -18,6 +18,16 @@
   white-space: nowrap;
 }
 
+/* The telemetry density: the 2 px step the spacing scale keeps for dense tables. */
+.dense .cell {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--size-xs);
+}
+
+.dense .head {
+  font-size: var(--size-2xs);
+}
+
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

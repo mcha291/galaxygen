@@ -33,6 +33,10 @@
   background: var(--ink-4);
 }
 
+.accent {
+  background: var(--magenta-3);
+}
+
 .pulse {
   box-shadow: var(--glow-nominal);
 }

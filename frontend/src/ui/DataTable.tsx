@@ -36,6 +36,8 @@ interface Props<Row> {
   empty?: ReactNode;
   /** The table's name. */
   "aria-label"?: string;
+  /** The telemetry density: cells on the 2 / 4 px steps (--space-1 exists for these tables alone), for a narrow panel. */
+  dense?: boolean;
   className?: string;
 }
 
@@ -48,13 +50,14 @@ export function DataTable<Row extends object>({
   rowKey = "id" as keyof Row & string,
   empty = "No rows in this window.",
   "aria-label": label,
+  dense = false,
   className,
 }: Props<Row>) {
   const [hover, setHover] = useState<unknown>(null);
   if (rows.length === 0) return <div className={cx(styles.empty, className)}>{empty}</div>;
   const cell = (c: Column<Row>) => cx(styles.cell, c.mono && styles.mono, c.align && styles[c.align]);
   return (
-    <table className={cx(styles.table, className)} aria-label={label}>
+    <table className={cx(styles.table, dense && styles.dense, className)} aria-label={label}>
       <thead>
         <tr>
           {columns.map((c) => (

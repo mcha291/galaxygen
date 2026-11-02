@@ -3,8 +3,12 @@ import type { HTMLAttributes, ReactNode } from "react";
 import { cx } from "./cx";
 import styles from "./StatusDot.module.css";
 
-export type StatusTone = "nominal" | "caution" | "fault" | "archive" | "idle";
-export const STATUS_TONES: readonly StatusTone[] = ["nominal", "caution", "fault", "archive", "idle"];
+/**
+ * The status tones, and "accent": the component's source has none, but the mockup (Galaxygen.dc.html) asks its
+ * StatusDot for "accent" on the zoom regime that is the view's own choice; it is the selected magenta.
+ */
+export type StatusTone = "nominal" | "caution" | "fault" | "archive" | "idle" | "accent";
+export const STATUS_TONES: readonly StatusTone[] = ["nominal", "caution", "fault", "archive", "idle", "accent"];
 
 interface Props extends HTMLAttributes<HTMLSpanElement> {
   tone?: StatusTone;
