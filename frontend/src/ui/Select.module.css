@@ -1,0 +1,90 @@
+/* The design system's Select (components/forms/Select.jsx): the native select on the inset with the line hairline
+   and a 3 px radius, room at the right for a faint chevron, the focus hairline and ring. */
+.block {
+  display: block;
+  min-width: 0;
+}
+
+.disabled {
+  opacity: 0.4;
+}
+
+.disabled * {
+  cursor: not-allowed;
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--space-3);
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.frame {
+  position: relative;
+}
+
+.select {
+  width: 100%;
+  padding: 0 var(--space-8) 0 var(--space-4);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-sm);
+  outline: none;
+  appearance: none;
+  background: var(--surface-inset);
+  color: var(--text-primary);
+  font: var(--weight-regular) var(--size-sm) / 1.2 var(--font-ui);
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.select:focus-visible {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.select option {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.sm {
+  height: var(--control-sm);
+  padding: 0 var(--space-7) 0 var(--space-3);
+  font-size: var(--size-xs);
+}
+
+.md {
+  height: var(--control-md);
+}
+
+.lg {
+  height: var(--control-lg);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  width: var(--size-sm);
+  height: var(--size-sm);
+  margin-top: calc(var(--size-sm) / -2);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.note {
+  margin-top: var(--space-2);
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}
