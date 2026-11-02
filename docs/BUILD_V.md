@@ -3,7 +3,7 @@
 **Status: ADOPTED 2026-11-02 at S82 (D248; the owner's word "adopt the plan"), as drafted at S81's open on the owner's
 word ("redesign the plan for the remaining work to try to get as much done as possible"; "there's ample usage remaining
 for the next two days").** Its §6 ruling 1 is taken by the adoption and **rulings 2–6 by the owner's word of 2026-11-02
-("Yes, all five", D252), each as recommended**; S84 runs on ruling 2, S86 on ruling 4. S81 (the viewer batch of D246) was its first row, closed on D247.
+("Yes, all five", D252), each as recommended**; S84 runs on ruling 2, S86 on ruling 4. S81 (the viewer batch of D246) was its first row, closed on D247. **S86 closed 2026-11-03 into `batch-m1` (D254: #139, #142, #198 struck, #154's table rebuilt, #186 on the wire, four permanent at the gate; the hash moves at S88).**
 Everything here is `[inferred]` design unless tagged; the register's items are named by their numbers in
 `GALAXY_INPUTS.md`, the viewer tasks by `VIEWER_TASKS.md`'s rows.
 

@@ -237,6 +237,32 @@ class Input:
 
 
 @dataclass(frozen=True, slots=True)
+class EventField:
+    """One number of a merger event and the range ``MergerEvent`` holds it to (S86, debt #186): published on the
+    wire beside the event list's default (``/api/inputs``), so a client can refuse a bad event before it sends one,
+    as it refuses a control outside its range. ``lo_open`` excludes ``lo`` itself; ``hi`` None is no upper end."""
+
+    name: str
+    unit: str
+    lo: float
+    hi: float | None
+    lo_open: bool = False
+
+    def admits(self, value: float) -> bool:
+        above = self.lo < value if self.lo_open else self.lo <= value
+        return bool(above and (self.hi is None or value <= self.hi))
+
+
+# The ranges a merger event's numbers are held to, in the event's order - the one statement of them: MergerEvent checks
+# against these and /api/inputs publishes them (S86, #186; until then the ranges lived in the checks' words alone).
+EVENT_FIELDS: tuple[EventField, ...] = (
+    EventField("time", "Gyr", 0.0, None),            # cosmic time, t = 0 at the Big Bang: not negative
+    EventField("mass_ratio", "dimensionless", 0.0, 1.0, lo_open=True),  # satellite : host, in (0, 1]
+    EventField("gas_fraction", "dimensionless", 0.0, 1.0),  # a share of the remaining baryon budget, in [0, 1]
+)
+
+
+@dataclass(frozen=True, slots=True)
 class MergerEvent:
     """One entry in the ``mergers`` event list (ruling 11).
 
@@ -252,11 +278,14 @@ class MergerEvent:
     about: str = ""
 
     def __post_init__(self) -> None:
-        if not 0.0 <= self.time:
+        # S86 (#186): the ranges are EVENT_FIELDS', the same the wire publishes; the words are the ones these checks
+        # have always raised.
+        time, ratio, gas = EVENT_FIELDS
+        if not time.admits(self.time):
             raise RegistryError(f"merger at t={self.time}: time is cosmic time and cannot be negative")
-        if not 0.0 < self.mass_ratio <= 1.0:
+        if not ratio.admits(self.mass_ratio):
             raise RegistryError(f"merger at t={self.time}: mass_ratio must be in (0, 1]")
-        if not 0.0 <= self.gas_fraction <= 1.0:
+        if not gas.admits(self.gas_fraction):
             raise RegistryError(f"merger at t={self.time}: gas_fraction must be in [0, 1]")
 
 

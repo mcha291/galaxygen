@@ -1967,3 +1967,32 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **Rulings first, as the first commit.** The owner's five rulings went onto `session-84` as D252 before any
   code, with the register's one discharge and its pins in the same commit, so the row's builder started from a tree
   whose records already said what was ruled; S44's pattern, kept.
+
+## From S86 (BUILD_V row 86, M1's first session: the arms and the bar; an Opus lead)
+
+- [advanced] **Read the decision that superseded an entry before building its closer.** Two of M1's entries had been
+  met at S60 and never struck: #139's mode phases were retired by D219 item 7 and #142's thickness factor was built by
+  D219 item 5; both read as open work until D219's text was set beside them. Several more carried S57-S58 numbers
+  the pieces had moved (#129's width, #138's spectrum). Measure today's model first; the register's numbers are a
+  history.
+- [advanced] **A table published beside a point function is the function's cell mean, or it is a second law.** The
+  star formation table was the law at a cell's mean contrast while the census read the law at a point (#154); building
+  it as the point reader's own sector means (renormalised round the ring) closed the gap from 0.6 to 3e-4 in a cell at
+  0.8 s. The statistic that compared the reader at a cell's *centre* with the table then measured the function's own
+  spread inside a cell - re-read what a test compares when the thing it compared changes.
+- [close] **Stage a hunk on HEAD's text, never with a zero-context patch.** `git apply --cached --unidiff-zero` placed a
+  register line by the new file's line number while an earlier hunk stayed unstaged, and it landed inside the next
+  entry (df8767a, moved by f53987b). Building the index blob from `git show HEAD:` plus the block, anchored on the two
+  lines before it, staged every later block where it belonged.
+- [close] **Read an Edit's result before the commit that depends on it.** A script had rewritten GALAXY_INPUTS.md, the
+  next Edit was refused ("modified since read"), and the commit went without the register line (7363de0, then
+  0dc50e6). A replace that drops the line it anchors on is the same trap: count a marker (the S85 lines) before and
+  after a batch of edits.
+- [close] **The stage subset is hours, not minutes.** `tests/test_pieces.py` holds the 88-minute gate test, and a
+  `timeout 3000` around the whole subset killed it at 50 minutes with no verdict. Run the subset's files as parallel
+  processes, each with its own log and EXIT line, and the targeted tests per commit.
+- [close] **The gate rules on the report's numbers, and moves the rows the same day.** Four of the lead's "proposed
+  permanent" entries carried a measurement each (a crossing time in arm lifetimes, a forcing ratio with its parts, a
+  realised power at three quantiles, a length no reader prints); ruling them at the close, with the summary rows and
+  their pins moved in one script, kept the register and DECISIONS saying the same thing - a proposal left standing in
+  the register is a ruling the next session has to find again.

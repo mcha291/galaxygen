@@ -1597,7 +1597,8 @@ def test_the_young_stars_reader_is_the_law_of_the_gas_s_point_function(prod):
     reader follows by construction (D219 item 7). Held here: at a grid radius the reader is that ring's law of
     the pattern's own contrast, the ratio constant round the ring; between two rings each ring's term averages
     to 1 round the ring (the normaliser's quadrature) and so does the reader; its sector means are the
-    function's integrals; and the published table, at every cell, is the same law at the cell's mean contrast."""
+    function's integrals; and the published table, at every cell, is the reader's mean over the cell, over its ring
+    mean (S86, #154; until S86 the same law at the cell's mean contrast)."""
     for template in ("milky_way", "ngc_4414"):
         o = template_run(prod, template)
         F, R = o.fields, o.grid.R
@@ -1626,12 +1627,15 @@ def test_the_young_stars_reader_is_the_law_of_the_gas_s_point_function(prod):
         radii = mids[::5]
         want = reader.at(radii, samples).reshape(radii.size, 64, 400).mean(axis=2)
         assert np.abs(reader.sector_means_at(radii, edges) - want).max() < READER_SECTOR_BOUND[template], template
-        # The published table is the law at the cell's mean contrast, over the ring's mean (D218's third follow-up).
-        table, cellwise = np.asarray(F["sfr_modulation"]), np.asarray(F["star_formation_gas_contrast"])
+        # The published table is the reader's own mean over each of the grid's cells, over its mean round the ring (S86,
+        # BUILD_V M1, debt #154: the remedy named at S59, "the cell mean of the law of the point function"); a row of
+        # the sector means is the same bits whichever radii are asked with it. Until S86 it was the law at the cell's
+        # mean contrast, over the ring's mean (D218's third follow-up): `reader._law(rings, star_formation_gas_contrast)`.
+        table = np.asarray(F["sfr_modulation"])
         rings = np.arange(5, R.size, 31)
-        law = reader._law(rings, cellwise[rings])
-        mean = law.mean(axis=1, keepdims=True)
-        assert np.array_equal(np.where(mean > 0.0, law / np.where(mean > 0.0, mean, 1.0), 1.0), table[rings]), template
+        cells = reader.sector_means_at(R[rings], o.grid["phi"].edges)
+        mean = cells.mean(axis=1, keepdims=True)
+        assert np.array_equal(np.where(mean > 0.0, cells / np.where(mean > 0.0, mean, 1.0), 1.0), table[rings]), template
 
 
 READER_SECTOR_BOUND = {"milky_way": 1e-3, "ngc_4414": 1e-3}
