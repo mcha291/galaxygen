@@ -4195,6 +4195,19 @@ never been judged in twenty-three sessions.
    assembly redshift. The presence's threshold moves from f_d 0.3295 to 0.3276 between them; no template or
    default changes. **Carried.** What closes it: one cosmology for the time axis and the redshifts.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88 (one cosmology for both clocks: the pattern's checkpoint reads the time axis).
+   *S86 (M1):* **measured, not built: one clock is a whole-model change.** The two ways to one clock are not alike.
+   (a) *The bar on the grid's clock* (the S85 note's "the pattern's checkpoint reads the time axis"): the disc's age
+   stretched by 13.8/13.467, the threshold 0.3295 → 0.3276, no template or default moves — but the grid's 13.8 is
+   `[recall: age of the universe]` (`core/grids.py`) and the model would still hold two cosmologies, one of them
+   recalled. (b) *The grid's clock from the model's cosmology*: `t_max` = the flat-ΛCDM age on H₀ = 70 km/s/Mpc and
+   Ω_M = 0.3, **13.467 Gyr** (`pattern.cosmic_time(0, …)`), the bar's threshold unmoved. Measured at S86 on the
+   default galaxy, layer off, the grid's `t_max` at 13.8 and at 13.467: `sfr` **1.7552 → 1.8599 M☉/yr (+6.0 %)**,
+   `stellar_mass_total` 4.7509e10 → 4.7417e10 (−0.19 %), `thin_disc_scale_length` 2.4414 → 2.4397 kpc,
+   `metallicity_gradient` −0.06985 → −0.06987, the bulge unmoved: star formation's end moves 0.33 Gyr earlier on a
+   history that is still falling. (b) is the closer; it moves every time-dependent field, so it belongs where the
+   specs and the full suite are read — **for S87 to build and S88's suite to judge**. Its prediction (B4), read
+   before it is built: **row 2, the SFR, leaves its window** — 1.8599 against 1.46–1.84 (BHG16's 1.65 ± 0.19), out
+   by 0.020 — and nothing is to be tuned back into it (B5, B10: no constant was fitted on the 13.8). Still carried.
 149. **No bar-driven two-armed arm is built, and an unbarred disc's arms run to its centre** (S58, D217 item 9 and
    the follow-up). Bar forcing correlates with the local m = 2 amplitude out to 1.4–1.6 bar radii (Salo et al.
    2010), but no source read prints the driven amplitude against radius, so none is invented: outside the bar the
