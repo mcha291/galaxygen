@@ -389,6 +389,12 @@
     flex-basis: 100%;
   }
 
+  /* The tabs' own row on a phone is the height the segmented switch's was (24 px and its two hairlines): the bars'
+     heights are in every capture's viewport, the thumbnails' 256 px among them (T17, S84). */
+  .viewTabs {
+    height: calc(var(--control-sm) + 2 * var(--hair));
+  }
+
   .floatingRail {
     top: auto;
     right: var(--space-4);
