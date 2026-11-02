@@ -678,11 +678,12 @@ def test_the_presence_rederived_by_hand_for_both_templates(prod):
         derived = run(model, inputs_of(template, pinned=False), only=("bar_present", "bar_formation_time"))
         assert derived.fields["bar_present"] == "yes" and derived.fields["bar_formation_time"] == o.fields["bar_formation_time"]
     assert hand_age(1e6) == pytest.approx(pt.cosmic_time(0.0, H0_HAND, OMEGA_M_HAND), rel=1e-6) == pytest.approx(13.467, abs=1e-3)
-    # **Two clocks, a declared debt** (``pattern.lookback_time``'s docstring): the universe is 13.467 Gyr old by this
-    # cosmology and the grid's time axis runs to 13.8 Gyr "from t = 0". What the choice moves: at the default
-    # assembly redshift a disc is barred above f_d = 0.3295 on this clock, and above 0.3276 with the same lookback
-    # stretched to the grid's.
-    assert DEFAULT.t_max == 13.8
+    # **One clock since S87 (#148)** (``pattern.lookback_time``'s docstring): the universe is 13.467 Gyr old by this
+    # cosmology and the grid's time axis runs to the same age, the hand's quadrature here. Until S87 it ran to a
+    # recalled 13.8 Gyr "from t = 0": at the default assembly redshift a disc is barred above f_d = 0.3295 on this
+    # clock, and was above 0.3276 with the same lookback stretched to the old grid's - the threshold is this one's.
+    assert DEFAULT.t_max == pytest.approx(hand_age(1e6), rel=1e-6)  # S87 (#148): was DEFAULT.t_max == 13.8 - the clock
+    assert DEFAULT.t_max == pt.cosmic_time(0.0, H0_HAND, OMEGA_M_HAND)  # one statement: the grid's axis is the closed form's
     default_age = hand_age(1.66)
     assert S_HAND / math.log(default_age / T0_HAND) == pytest.approx(0.3295, abs=5e-5)
     assert S_HAND / math.log(default_age * 13.8 / 13.467 / T0_HAND) == pytest.approx(0.3276, abs=5e-5)
@@ -1150,7 +1151,7 @@ def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     # alone, gentler than the modes' there.
     # S62 (D221 item 7 as amended): were [3.222, 2.974, 2.689] and 1.535 - the gas spurs: a ring's gas gives the spurs'
     # mean there in proportion, and a spur's foot stands on two of the three rings' crests.
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.222, 2.966, 2.684], abs=2e-3) and float(g[after].max()) == pytest.approx(1.664, abs=2e-3)
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.222, 2.966, 2.684], abs=2e-3) and float(g[after].max()) == pytest.approx(1.679, abs=2e-3)  # S87 (#148): was 1.664 - the clock
 
 
 def test_the_gas_the_star_formation_law_reads_by_hand(prod):

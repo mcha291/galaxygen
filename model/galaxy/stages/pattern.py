@@ -122,6 +122,7 @@ from typing import Any
 
 import numpy as np
 
+from galaxy.core import cosmology as _cosmology
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import ARM_CLASSES, IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
@@ -129,9 +130,10 @@ from galaxy.stages import gas_response as _cells  # the fixed fine cells round a
 
 SHEAR_RADIUS_IN_SCALE_LENGTHS = 2.2  # ruling 3: take the scaled form
 CELLS = _cells.CELLS  # the fixed cells round a ring the bar's body is laid on: the gas response's own (S58, D217)
-# One kpc/(km/s) in Gyr: the IAU kiloparsec (3.0856775814913673e16 km) over a Julian gigayear (3.15576e16 s). A
-# definition, which turns the Hubble constant's km/s/kpc into a time.
-GYR_PER_KPC_PER_KMS = 3.0856775814913673e16 / 3.15576e16
+# One kpc/(km/s) in Gyr, and the flat-LCDM closed form: the model's one cosmology, in ``core/cosmology.py`` since
+# S87 (debt #148) so that the grid's time axis reads the same statement (re-exported here under the names S58 gave).
+GYR_PER_KPC_PER_KMS = _cosmology.GYR_PER_KPC_PER_KMS
+cosmic_time = _cosmology.cosmic_time
 BAR_PRESENT: tuple[str, str] = ("no", "yes")  # the verdict's two labels, in this order (S58, D217)
 # The closed set of arm numbers since S26 (D175): two to ARM_MULTIPLICITY_MAX. From S26 to S55 one of them
 # was drawn; since S56 (D215) each is a mode with its own amplitude at every radius. m = 1 is excluded
@@ -320,32 +322,20 @@ def bar_terms(R: np.ndarray, pitch_deg: float, bar_length: float) -> tuple[np.nd
 # --- the bar's presence (S58, D217 items 1-3) ---------------------------------
 
 
-def cosmic_time(redshift: float, hubble: float, omega_m: float) -> float:
-    """The age of the universe at ``redshift``, in Gyr, for flat matter and a cosmological constant:
-    t(z) = (2 / (3 H₀ √Ω_Λ)) asinh(√(Ω_Λ/Ω_M) (1 + z)^{−3/2}), Ω_Λ = 1 − Ω_M - the closed form of the
-    Friedmann equation with no radiation and no curvature [inferred: the textbook integral; held against
-    its own quadrature in tests/test_bar.py]. ``hubble`` in km/s/kpc, as the model holds H₀.
-
-    Flat because the model's one other use of Ω_M, the virial overdensity the halo's concentration is
-    quoted at, is the flat-universe form (``halo.virial_overdensity``): one cosmology, not two.
-    """
-    omega_l = 1.0 - omega_m
-    scale = 2.0 / (3.0 * hubble * math.sqrt(omega_l)) * GYR_PER_KPC_PER_KMS
-    return scale * math.asinh(math.sqrt(omega_l / omega_m) * (1.0 + redshift) ** -1.5)
-
-
 def lookback_time(redshift: float, hubble: float, omega_m: float) -> float:
-    """How long ago ``redshift`` was, in Gyr: t(0) − t(z) of :func:`cosmic_time`. The disc's age since the
-    halo's assembly redshift is this (D217 item 1: "the disc's age since ``halo_assembly_z``"); the model
-    held no function from that redshift to a time until S58 - the halo reads it for its concentration only.
+    """How long ago ``redshift`` was, in Gyr: t(0) − t(z) of :func:`cosmic_time` (``core/cosmology.py``). The
+    disc's age since the halo's assembly redshift is this (D217 item 1: "the disc's age since
+    ``halo_assembly_z``"); the model held no function from that redshift to a time until S58 - the halo reads
+    it for its concentration only.
 
-    **Two clocks, a declared debt.** By this cosmology the universe is 13.467 Gyr old (H₀ = 70 km/s/Mpc,
-    Ω_M = 0.3, flat); the grid's time axis runs to ``t_max`` = 13.8 Gyr, "cosmic time from t = 0"
-    (``core/grids.py``). The model so holds two ages of the universe, 2.5 % apart, and the bar's presence is
-    judged on this one. What the choice moves: at the default assembly redshift (1.66, a lookback of
-    9.625 Gyr) a disc is barred above f_d = 0.3295; with the same lookback stretched to the grid's clock
-    (× 13.8/13.467: 9.863 Gyr) the threshold would be 0.3276. Neither clock is reconciled with the other
-    here.
+    **One clock since S87 (debt #148).** By this cosmology the universe is 13.467 Gyr old (H₀ = 70 km/s/Mpc,
+    Ω_M = 0.3, flat), and since S87 the grid's time axis runs to the same age (``core/grids.py``: ``t_max`` =
+    ``cosmology.AGE``), so "today" on the grid is the moment this lookback counts back from. At the default
+    assembly redshift (1.66, a lookback of 9.625 Gyr) a disc is barred above f_d = 0.3295, unmoved by the
+    change. **Until S87 the grid ran to a recalled 13.8 Gyr**, two ages of the universe 2.5 % apart: on that
+    clock the same lookback stretched (× 13.8/13.467: 9.863 Gyr) would have put the threshold at 0.3276, and
+    the grid's star formation ran 0.33 Gyr longer (S86 measured ``sfr`` 1.7552 there against 1.8599 on this
+    one, acceptance row 2's predicted miss).
     """
     return cosmic_time(0.0, hubble, omega_m) - cosmic_time(redshift, hubble, omega_m)
 

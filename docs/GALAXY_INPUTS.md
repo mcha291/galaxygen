@@ -712,10 +712,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
 | **discharged** at S86 | **139, 142, 198** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip; the saturation cut reached by an admissible galaxy, pattern seed 28: its effect read in tests/test_bar.py since S58, I1's walk and I4 through it since S86) | 3 |
+| **discharged** at S87 | **148** (one cosmology for the time axis and the redshifts: the grid's `t_max` the model's own flat-ΛCDM age, 13.467 Gyr, from `core/cosmology.py`; row 2 out by 0.020 as predicted and recorded, row 6 in on σ_z, unpredicted) | 1 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 155, 157, 195 | 37 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 148, 149, 152, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 209, 210, 211 | 85 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 152, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 209, 210, 211, 212 | 85 |
 
-So the board's **122 open** is 37 permanent and 85 carried, and no item is unruled (S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **122 open** is 37 permanent and 85 carried, and no item is unruled (S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -748,7 +749,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234; S72, the template bundles, opened #199–#201 — the windowed render's header carrying the galaxy's layer tables, the bundle plan's unverified entries, two request shapes that end in a 500, D235; S73, on the owner's word, discharged all three — `/api/layer`, the logged walk, the 400s at the parse, D236; S71's close, on the owner's word, fixed F-4-1's display half and opened #202, the diffuse share's per-ring step drawn as a circle, D237; S74, the gateway's review, opened #203, the share links and the queue the viewer never calls, D238; S75, the deployment, opened #204, the W4 gate's deployed half unmeasured under a disabled subscription, and #205, a cold gateway waking the model for the landing, D239; S79, the #207 side session, discharged #207 (the continuity test's hard ends by identity, its bound the taper's own rate) and opened #209 (the per-piece pitch draw has no floor), D243.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234; S72, the template bundles, opened #199–#201 — the windowed render's header carrying the galaxy's layer tables, the bundle plan's unverified entries, two request shapes that end in a 500, D235; S73, on the owner's word, discharged all three — `/api/layer`, the logged walk, the 400s at the parse, D236; S71's close, on the owner's word, fixed F-4-1's display half and opened #202, the diffuse share's per-ring step drawn as a circle, D237; S74, the gateway's review, opened #203, the share links and the queue the viewer never calls, D238; S75, the deployment, opened #204, the W4 gate's deployed half unmeasured under a disabled subscription, and #205, a cold gateway waking the model for the landing, D239; S79, the #207 side session, discharged #207 (the continuity test's hard ends by identity, its bound the taper's own rate) and opened #209 (the per-piece pitch draw has no floor), D243; S87, M1's second session, discharged #148 (one clock, the model's own cosmology) and opened #212 (MERGER_HEATING derived on the old clock).) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -2200,6 +2201,14 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    250.97 in, row 6 368 out). "Rows 6 and 7 judged together" is now row 6 alone. Still carried, parked while
    ruling 7 keeps `basic` frozen (`AUDIT_V.md` §5). *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **permanent** — the heating constants calibrate the frozen history's rows (ruling 7): the owner's word re-opens it.
+   *S87 (M1, #148):* **row 6 is inside again, on a clock and not on the physics — the entry's point a sixth time.**
+   With the grid's time axis on the model's own cosmology (#148 discharged: 13.467 Gyr for a recalled 13.8) the
+   thin disc's scale height at R₀ reads **345.09 pc** against 250–350 (355.70 on the old clock), inside by 4.9 pc.
+   It lands on σ_z, as this entry asks of any landing: the thin disc's dispersion 21.283 → 20.962 km/s (stars 0.33
+   Gyr younger carry less secular heating), while Σ★(R₀) 36.140 → 36.031 M☉/pc² alone would raise it. No heating
+   constant moved. Row 6's recorded miss is removed (a miss that passes is an error to leave, #29) with its reason
+   kept beside the table (`specs/spec.py`), and the tests that read it re-pinned with the reason. Still
+   **permanent**: inside by a clock's 3 %, never for a stable reason.
 
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
@@ -4247,7 +4256,7 @@ never been judged in twenty-three sessions.
    FWHM 0.10 a, with what it carries as S58 measured it. Carried, a reading for S87's list — a sub-kpc width of bar
    dust lanes or molecular ridges (high-resolution CO of barred PHANGS galaxies, or the dust-lane widths of the
    simulations KSK12 and S15 print) — and, the owner's alternative, the width as a live slider.
-148. **The model has two clocks** (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
+148. ~~**The model has two clocks**~~ (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
    disc's age by the flat-ΛCDM closed form on the model's own H₀ and Ω_M, in which the universe is 13.47 Gyr old;
    the grid's time axis runs to 13.8 Gyr "from t = 0", and star formation starts at its zero whatever the
    assembly redshift. The presence's threshold moves from f_d 0.3295 to 0.3276 between them; no template or
@@ -4271,6 +4280,30 @@ never been judged in twenty-three sessions.
    0.020** (1.7552 on the 13.8 clock); `stellar_mass_total` −0.19 %, the bar's threshold unmoved (0.3295). The
    miss goes into the acceptance table's row 2 now (`specs/spec.py`, the row's note) and is not tuned back: no
    constant was fitted on the 13.8 (B5, B10). S88's suite judges it.
+   **DISCHARGED at S87 (M1):** one cosmology for the time axis and the redshifts, built as (b). `core/cosmology.py`
+   states the model's two parameters once (h = 0.7, Ω_M = 0.3; Level 0's `H0` and `OMEGA_M` are declared from them,
+   since `core` imports no model) and the closed form (`cosmic_time`, moved from `pattern`, which re-exports it);
+   `GridSpec.t_max` is `cosmology.AGE` = **13.466984 Gyr**, the age the bar stage's `lookback_time` counts back from,
+   where it was a recalled 13.8. Merger events keep their times from t = 0 (Gaia-Enceladus at 3.8 Gyr is now 9.67 Gyr
+   ago, not 10.0). **The prediction held**: on the default galaxy, layer off, `sfr` 1.75515 → **1.85988** M☉/yr, row 2
+   **out by 0.0199**, a recorded miss under this number (`spec._MISSES`, since S87; its note written first, a2d68ae);
+   `stellar_mass_total` −0.192 %, the bar's threshold and verdicts unmoved. **What the prediction did not name: row 6
+   enters its window** — the thin disc's scale height at R₀ 355.70 → **345.09 pc** against 250–350, on σ_z (21.283 →
+   20.962 km/s, the secular heating of stars 0.33 Gyr younger) and not on Σ★(R₀) (36.140 → 36.031 M☉/pc², which
+   alone raises it), as #42 asks of any landing; its recorded miss (#42's since S13) is removed as a miss that passes
+   (#29's rule), its reason kept in a comment, and #42 stays open (S87 line there). The pass/fail count is unmoved
+   (12 / 20 / 5: row 2 out, row 6 in). The other rows that move, all on the same side of their windows: row 3
+   251.026 → 251.022, row 20 8.088e9 → 8.154e9, row 21 0.2001 → 0.2033, row 22 −0.06985 → −0.06987, row 23
+   −0.0223 → −0.0219, rows 30 / 31 +6.0 % / +4.6 % (inside), row 29's slope −7.892 → −7.910 (inside), row 34
+   +5.9 % (inside), row 37 −0.0983 → −0.0986. Every test that moved in the files run was re-pinned with the reason
+   ("S87 (#148): was X - the clock"), none loosened; the files not run (the layer's, the render's, the templates',
+   the API's, the frames) are S88's suite's to judge. **What S86's reading missed: B10 fires once** — "no constant
+   was fitted on the 13.8" holds for the rows, but `MERGER_HEATING` (88.8) was *derived* from the model's own
+   secular heating, which the clock moved: its derivation reads 90.62 at its fixed point on the model's own clock
+   (secular 27.06 → 26.68 km/s). Not moved here (a constant's value is the gate's to rule): opened as **#212**, with
+   what a re-derivation moves (row 6 345.09 → 345.92, row 3 251.022 → 251.017, row 2 not at all). The tests that read
+   the derivation, row 6's landing value (74 → about 99) and S21 (a)'s probes were re-measured and re-stated
+   (`test_audit.py`, `test_audit_ii_a.py`): the churn probe's row 3 now reads 245.012, inside by 0.012.
 149. **No bar-driven two-armed arm is built, and an unbarred disc's arms run to its centre** (S58, D217 item 9 and
    the follow-up). Bar forcing correlates with the local m = 2 amplitude out to 1.4–1.6 bar radii (Salo et al.
    2010), but no source read prints the driven amplitude against radius, so none is invented: outside the bar the
@@ -5190,6 +5223,23 @@ never been judged in twenty-three sessions.
    the response grid's tails to 4.4 µm (M3, the populations), which moves the hash; or the set's red band moved inside
    the grid (F356W or F277W) with the reason stated. What kills the reading: the bound met by a finer slope grid alone.
    *S85 register pass (D251):* **the owner's word** — the owner's word (D246): the set's pins in `tests/test_render.py`, or F356W, or M3's grid extension.
+212. **`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
+   constant is 88.8** (S87, M1; found by #148's build). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
+   over the pre-merger population at R₀ — σ_W = 35 km/s, the model's own secular heating then 27.06 km/s — and set it
+   at the derivation's fixed point, 88.815. The secular heating is a function of the stars' ages (`assembly`: age =
+   now − t), so when #148 put the grid's clock on the model's own cosmology (13.467 Gyr for a recalled 13.8) the same
+   derivation moved: **the secular term 27.06 → 26.68 km/s, the derivation 90.64 from 88.8's weights, its fixed point
+   90.618** (measured at S87, `tests/test_audit.py::test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating`
+   pins the gap). S86's "no constant was fitted on the 13.8" missed this one: it was not fitted to a row, it was
+   derived from the model's own heating, and rule B10 asks every constant calibrated on a mechanism that changed to
+   be re-examined. What it moves if re-derived (S87's probe, layer off): row 6 345.09 → 345.92 pc (inside), row 3
+   251.022 → 251.017 (out, by 0.017); no verdict changes. Row 6 stays inside up to MERGER_HEATING ≈ 99 and row 3
+   comes inside above ≈ 98 (95: 251.007, 100: 250.995), so the two meet only in a sliver near 98–99, and neither is a lever (B5). The citation
+   read of S21 (a) (Soubiran et al. 2003's 39 ± 4 km/s) gives 113.8 net of today's secular heating (112.3 on the old
+   clock). **Carried.** What closes it: the constant re-derived at its fixed point on the model's own clock (90.62),
+   with the frames and the specs at S88 — the gate's or the owner's ruling, since it is a constant's value; or the
+   ruling that 88.8 stays declared as the old clock's derivation with the gap written beside it. What kills the
+   reading: a derivation that does not read the model's own heating.
 
 ---
 

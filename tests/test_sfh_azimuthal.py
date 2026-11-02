@@ -456,7 +456,7 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     assert built.tobytes() == modulation_cells(F, R, edges, constants, F["gas_surface_density"], F["sf_threshold_surface_density"], index).tobytes()
     cell_law = sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], footprint_gas, index)
     a_ = float(F["bar_half_length"])
-    assert float(np.abs(built - cell_law)[R < a_].max()) == pytest.approx(0.6221, abs=2e-3)
+    assert float(np.abs(built - cell_law)[R < a_].max()) == pytest.approx(0.6082, abs=2e-3)  # S87 (#148): was 0.6221 - the clock
     assert float(np.abs(built - cell_law)[R >= a_].max()) == pytest.approx(0.00313, abs=2e-4)
     laned = sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], laned_gas, index)
     band = (R >= 2.0) & (R <= 3.3)
@@ -466,8 +466,8 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # S59 (D218): was (0.8812, 0.9567) and (17.619, 3.4875)
     # S59 (D218 follow-up): was (0.8835, 0.9583) and (17.530, 3.4875)
     # S60 fourth pass: was (0.8839, 0.9586) and (17.348, 3.2625)
-    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.8833, 0.9683), abs=2e-4)
-    assert (float(laned.max()), float(R[int(np.argmax(laned.max(axis=1)))])) == pytest.approx((18.586, 4.0125), abs=2e-3)
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.8822, 0.9664), abs=2e-4)  # S87 (#148): was 0.8833, 0.9683 - the clock
+    assert (float(laned.max()), float(R[int(np.argmax(laned.max(axis=1)))])) == pytest.approx((18.475, 3.7875), abs=2e-3)  # S87 (#148): was 4.0125, 18.586 - the clock
     # As built.
     # S58 (D217 follow-up): was 17.619 at 3.4875 kpc (the largest modulation), 0.8812-0.9567 (the top tenth, 2-3.3 kpc)
     top = _top_tenth(built)
@@ -476,13 +476,13 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # S60 fourth pass: was (0.1490, 0.3189), (0.1000, 0.5055), (7.8290, 4.6125), 0.4014 and 5.4401
     # S86 (#154): were (0.1000, 0.2448), (0.1000, 0.5215), (6.0626, 4.8375) and 3.1733 - the law at the cells' mean
     # contrast; the point reader's cell means read these (at R0 the top tenth the same to 1e-4).
-    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1000, 0.2439), abs=2e-4)
-    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5205), abs=2e-4)
-    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((6.0567, 4.8375), abs=2e-3)
-    assert float(top[here]) == pytest.approx(float(_top_tenth(laned)[here]), abs=1e-4) and float(top[here]) == pytest.approx(0.2778, abs=2e-4)
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1000, 0.2434), abs=2e-4)  # S87 (#148): was 0.2439 - the clock
+    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5118), abs=2e-4)  # S87 (#148): was 0.5205 - the clock
+    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((5.9409, 4.8375), abs=2e-3)  # S87 (#148): was 6.0567 - the clock
+    assert float(top[here]) == pytest.approx(float(_top_tenth(laned)[here]), abs=1e-4) and float(top[here]) == pytest.approx(0.2730, abs=2e-4)  # S87 (#148): was 0.2778 - the clock
     # S86 (#154): was `built[past].tobytes() == laned[past].tobytes()` - the two cell laws on one field past the
     # half-length; the cell-law alternative on the laned field is still that field's bits there (the next line).
-    assert cell_law[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(3.1731, abs=2e-4)
+    assert cell_law[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(3.1071, abs=2e-4)  # S87 (#148): was 3.1731 - the clock
     assert float(np.abs(built.mean(axis=1) - 1.0).max()) < 1e-12 and built.min() >= 0.0
     # An unbarred galaxy has no lanes and no footprint: one field, twice.
     n = run(azimuthal, templates.overrides(templates.TEMPLATES["ngc_4414"]), only=only)

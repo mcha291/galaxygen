@@ -328,7 +328,7 @@ _HARRIS_READ = (
 
 QUANTITIES: tuple[Quantity, ...] = (
     Quantity(1, "Total stellar mass", "Msun", "stellar_mass_total", 4.0e10, 6.0e10, "pointwise", "5 ± 1 × 10¹⁰ M☉", _BHG16),
-    Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16, note="S87 (debt #148), written before the build: with the grid's time axis on the model's own cosmology (t_max = the flat-ΛCDM age on H₀ = 70 km/s/Mpc and Ω_M = 0.3, 13.467 Gyr, in place of a recalled 13.8) this row is predicted to leave its window: S86 measured 1.8599 against 1.46–1.84, out by 0.020 (1.7552 on the 13.8 clock) - star formation's end 0.33 Gyr earlier on a history still falling. The miss is recorded, not tuned back (rules B5, B10: no constant was fitted on the 13.8); S88's suite judges it."),
+    Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16, note="S87 (debt #148), written before the build: with the grid's time axis on the model's own cosmology (t_max = the flat-ΛCDM age on H₀ = 70 km/s/Mpc and Ω_M = 0.3, 13.467 Gyr, in place of a recalled 13.8) this row is predicted to leave its window: S86 measured 1.8599 against 1.46–1.84, out by 0.020 (1.7552 on the 13.8 clock) - star formation's end 0.33 Gyr earlier on a history still falling. The miss is recorded, not tuned back (rules B5, B10: no constant was fitted on the 13.8); S88's suite judges it. Built at S87: the row reads 1.8599, as predicted, a recorded miss (debt #148)."),
     Quantity(3, "Solar tangential velocity", "km/s", "v_tangential_sun", 245.0, 251.0, "pointwise", "248 ± 3 km/s", _BHG16),
     Quantity(4, "Thin disc scale length", "kpc", "thin_disc_scale_length", 2.1, 3.1, "pointwise", "2.6 ± 0.5 kpc", _BHG16),
     Quantity(5, "Thick disc scale length", "kpc", "thick_disc_scale_length", 1.8, 2.2, "pointwise", "2.0 ± 0.2 kpc", _BHG16),
@@ -510,6 +510,8 @@ class Miss:
 
 # Row 2's miss (debt #47, S16) was removed at S17 when the spheroid took 13% of the budget out of
 # what the disc accretes (D121); it reads 1.755 since S18 built the derived threshold, still inside.
+# S87 put the grid's clock on the model's own cosmology (debt #148, 13.467 Gyr for 13.8) and it left again,
+# as S86 predicted: 1.8599, its entry below.
 # Row 7's miss (debt #42, since S16) was removed at S20: it reads 962 pc, inside 720-1080, because
 # MERGER_HEATING was re-derived (120 -> 88.8, D128). The constant had been 'scaled so the merger
 # leaves the pre-existing disc at about 30 km/s' as if the kick were the thick disc's whole
@@ -662,6 +664,29 @@ _MISSES: tuple[Miss, ...] = (
         ),
     ),
     Miss(
+        row=2,
+        debt=148,
+        since="S87",
+        reason=(
+            "1.8599 Msun/yr against 1.65 +/- 0.19, out by 0.020 (1.7552 and inside until S87). S87 put the "
+            "grid's time axis on the model's own cosmology (debt #148): t_max is the flat-LCDM age on Level "
+            "0's H0 = 70 km/s/Mpc and Omega_M = 0.3, 13.467 Gyr (core/cosmology.py), where it was a recalled "
+            "13.8 - two ages of the universe 2.5% apart, the bar stage's lookback counted on the one and star "
+            "formation run to the other. Today on the grid comes 0.33 Gyr earlier on a history still falling, "
+            "so the rate is read higher (+6.0%) and the stellar mass 0.19% lower. Predicted at S86 and written "
+            "into this row's note before the build (rule B4); no constant was fitted to a row on the 13.8, so none is "
+            "moved to land it (B5). One was derived on it - MERGER_HEATING, from the model's own secular heating "
+            "(debt #212, 90.62 on this clock against 88.8) - and it does not reach this row: 1.85988 at either."
+        ),
+        prediction=(
+            "Nothing tuned can land it: KS_NORM is Kennicutt 1998's, deliberately not fitted (its 3.2e-4 "
+            "reads 1.847 on the old clock). What would move the row is the history's shape near today - an "
+            "infall or a threshold a source re-reads - or the target's own clock: BHG16's rate is today's, and "
+            "the model's 'today' is now its own cosmology's. What kills this reading: the row moving back "
+            "inside on a change to neither, in which case the clock was not the cause."
+        ),
+    ),
+    Miss(
         row=15,
         debt=80,
         since="S25",
@@ -742,35 +767,15 @@ _MISSES: tuple[Miss, ...] = (
             "7.0 / 5.9e9 across mu = 1.06 / 1.15 / 1.25 / 1.4 and never the target's ~7.7e9 (A-13)."
         ),
     ),
-    Miss(
-        row=6,
-        model=None,
-        debt=42,
-        since="S13",
-        reason=(
-            "356 pc against 250-350 (373 at S18 on the 120 km/s kick; 439 until S18 derived the "
-            "threshold, which holds 10.8 Msun/pc2 of gas at R0 where the constant held 6.3, so Sigma "
-            "rose and h_z fell; 384 at S16, 358 at S13). The advanced thin disc is every star - the "
-            "chemical split finds no thick disc (debt #27) - so it keeps the merger-heated old "
-            "population, and once Sagittarius stopped delivering a tenth of the budget as young gas "
-            "(debt #29, S13) the mass-weighted dispersion at R0 rose from 326 pc to 358. S20 judged "
-            "rows 6 and 7 together and re-examined both heating constants (D128): MERGER_HEATING is "
-            "re-derived from the thick disc's observed dispersion net of the model's own secular "
-            "heating (120 -> 88.8), which lands the simple row 7 at 962 and moves this row 373 -> 356; "
-            "SECULAR_HEATING stays at 25, because 20 reads the simple row 6 at 228 and 30 at 451, both "
-            "out, and this row at 252 and 483. What is left, 6 pc over, is the heated old population "
-            "counted as thin (debt #27): 60 km/s reads it inside at 346 and the simple row 7 at 751."
-        ),
-        prediction=(
-            "When the valley opens (debt #27) the heated stars leave the thin disc and this row falls "
-            "toward the simple model's 328. If a valley ever opens and it stays above 350 with a thick "
-            "disc present, SECULAR_HEATING is wrong for both models and the age-velocity relation it "
-            "was read from is the place to look. Not a lever now: MERGER_HEATING, which is set by a "
-            "cited dispersion since S20 and would have to fall below 78 to land this row alone (S21 (a): "
-            "below 74 - 351.4 at 78, 350.3 at 75, 348.7 at 70; A-11). The one probe that opens a real "
-            "alpha-rich mode - a burst inside the alpha-fall, A-4 - reads this row at 353, inside."
-        ),
-    ),
+    # Row 6's miss (debt #42, since S13) was removed at S87: on the model's own clock (debt #148, t_max 13.467 Gyr
+    # for 13.8) the thin disc's scale height at R0 reads 345.09 pc, inside 250-350 (355.70 on the old clock). It
+    # lands on sigma_z, not on the surface density it divides by - the thin disc's dispersion 21.283 -> 20.962 km/s
+    # (the secular heating of stars 0.33 Gyr younger), Sigma*(R0) 36.140 -> 36.031 Msun/pc2, which alone would
+    # raise it - as debt #42 asks of any landing. Not predicted at S86 (only row 2 was). A miss that passes is an
+    # error to leave (debt #29). Its last reason, kept: 356 pc against 250-350 (S20, D128): the heated old
+    # population counted as thin (debt #27) - 6 pc over; MERGER_HEATING set by a cited dispersion, SECULAR_HEATING
+    # at 25 because 20 and 30 put both models out. #42 stays open (permanent): the row is inside by 4.9 pc on a
+    # clock change, never for a stable reason - the debt's own point, made a sixth time.
     Miss(
         row=ROW_GC_SYSTEM_MASS,
         debt=98,

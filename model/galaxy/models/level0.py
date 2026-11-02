@@ -17,6 +17,7 @@ that nothing has needed yet (Ω_M, Ω_Λ) are absent rather than declared dead.
 
 from __future__ import annotations
 
+from galaxy.core import cosmology
 from galaxy.core.registry import Constant
 
 LEVEL0: dict[str, Constant] = {
@@ -31,12 +32,14 @@ LEVEL0: dict[str, Constant] = {
         "nominal_solar_mass_parameter reproduces this arithmetic].",
     ),
     "H0": Constant(
-        0.07,
+        cosmology.HUBBLE,
         "km/s/kpc",
         "Hubble constant, 70 km/s/Mpc, i.e. h = 0.7 [verified: GALAXY_INPUTS.md §2, citing BHG16 "
         "§1]. Read to form ρ_crit = 3H₀²/8πG, which fixes R₂₀₀, and since S58 by the bar stage, "
         "which turns the halo's assembly redshift into the disc's age with it (a flat universe's "
-        "lookback time, with OMEGA_M). The local-distance-ladder and "
+        "lookback time, with OMEGA_M). Since S87 (debt #148) the grid's time axis runs to the age "
+        "of the universe it gives with OMEGA_M, 13.467 Gyr (core/cosmology.py, where the value is "
+        "stated once: core imports no model). The local-distance-ladder and "
         "CMB values differ by about 8%; that propagates to R₂₀₀ as 8% and to R_d through λ_d, and "
         "is not modelled.",
     ),
@@ -63,12 +66,14 @@ LEVEL0: dict[str, Constant] = {
         "the response, 15.5 after it, inside the span; at the old 2.5 the fit read 18.5, over.",
     ),
     "OMEGA_M": Constant(
-        0.3,
+        cosmology.OMEGA_M,
         "dimensionless",
         "Matter density parameter, the Ω_M = 0.3 Level 0 takes from BHG16 and F_BARYON already "
         "assumes [verified: GALAXY_INPUTS.md §2]. Read to form the virial overdensity "
         "Δ_vir = 18π² + 82x − 39x², x = Ω_M − 1 [recall: Bryan & Norman 1998] — about 101 ρ_crit — "
-        "at which the c_vir normalisation is quoted (debt #12, S13).",
+        "at which the c_vir normalisation is quoted (debt #12, S13), by the bar stage's lookback time "
+        "with H0 (S58), and since S87 (debt #148) by the grid's time axis, which runs to the flat "
+        "universe's age on the two (core/cosmology.py states the value once).",
     ),
     "CONTRACTION_A": Constant(
         0.85,

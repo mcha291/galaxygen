@@ -242,7 +242,9 @@ def test_no_green_row_is_unconditioned(judged):
     # "every green row was conditioned when it was green, and every row that left has a reason".
     # Row 15: 4.88 -> 5.21 at S25 when the bar read the lambda_d scale length (D174, debt #80) --
     # the table's own verdict ("chosen; a 2% fall in R_d fails it") named the lever.
-    left_since = {15}
+    # Row 2: 1.7552 -> 1.8599 at S87 when the grid's clock became the model's own cosmology (debt #148, 13.467 Gyr
+    # for a recalled 13.8) -- out by 0.020, predicted at S86 and written into the row before the build.
+    left_since = {15, 2}  # S87 (#148): was {15} - the clock took row 2 out
     # Rows added after the sealed list was written, green with their conditioning stated in the
     # decision that added them rather than in AUDIT_II_A.md: row 29 (S28, D177), the Tully-Fisher
     # slope, green on the slope alone -- its zero point is unjudged because dust moves it and the
@@ -263,7 +265,10 @@ def test_no_green_row_is_unconditioned(judged):
     # number), adopted by the owner on 2026-09-27 over Bennett et al. 1994's, which the model missed by 3%; the model's
     # ionizing photons per unit star formation are 0.71 of Starburst99's (debt #100 stays open), so green says the
     # disc's whole history lands inside a factor-of-three window, not that its young light is right.
-    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, 35, spec.ROW_IONIZING_RATE}
+    # S87 (#148): row 6, the thin disc's scale height, green at 345.09 pc in 250-350 with its conditioning stated here:
+    # it entered on the clock (355.70 on the 13.8 Gyr axis), on sigma_z - stars 0.33 Gyr younger carry less secular
+    # heating - and not on the heating constants, which did not move; inside by 4.9 pc, debt #42 (permanent) its record.
+    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, 35, spec.ROW_IONIZING_RATE, 6}  # S87 (#148): 6 joined - the clock
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
         assert not passing & left_since, (name, "a row recorded as gone is green again", sorted(passing & left_since))

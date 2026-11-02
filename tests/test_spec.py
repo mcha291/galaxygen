@@ -64,15 +64,16 @@ REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 # Keyed "basic" deliberately (S46, D197): the tables are basic's and the azimuthal model aliases them below.
 VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS, spec.ROW_IONIZING_RATE, spec.ROW_HII_LF_SLOPE, spec.ROW_NII_HALPHA_GRADIENT}}  # S44: row 37  # S35: rows 34 and 35 (36 n-y-c)  # S34: rows 32 and 33  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 12, "fail": 20, "not-yet-computable": 5},  # S44: row 37 fails, recorded (#117)  # S42: row 34 passes on the blind window the owner adopted (11/20 until S42)  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 12, "fail": 20, "not-yet-computable": 5},  # S87 (#148): unchanged as a count - the clock moved row 2 out (1.8599, by 0.020, as S86 predicted) and row 6 in (345.09 pc, unpredicted)  # S44: row 37 fails, recorded (#117)  # S42: row 34 passes on the blind window the owner adopted (11/20 until S42)  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33, 37},  # 37 since S44 (#117); 34 from S35 to S42; 32, 33 since S34
+    "basic": {2, 3, 5, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33, 37},  # S87 (#148, the clock): 2 left its window, 6 entered it (355.7 -> 345.1 pc, on sigma_z)  # 37 since S44 (#117); 34 from S35 to S42; 32, 33 since S34
 }
 # S25: row 15 is #80's (the bar reads the lambda_d scale length now that the pattern precedes
 # star formation). S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's
-# (at its zero-width target), row 22 is #47's.
-DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80, 98, 99, 117}}  # 117 since S44 (row 37); 100 from S35 to S42 (row 34; the debt stays open, its row passes); 98, 99 since S34 (rows 32, 33)
+# (at its zero-width target), row 22 is #47's. S87: row 2 is #148's (the clock); row 6 passes on the same
+# clock and its miss (#42's since S13) is gone - #42 stays open, permanent, its row inside by 4.9 pc.
+DEBTS = {"basic": {2, 11, 17, 27, 28, 47, 80, 98, 99, 117, 148}}  # S87 (#148): 148 in (row 2), 42 out (row 6 passes)  # 117 since S44 (row 37); 100 from S35 to S42 (row 34; the debt stays open, its row passes); 98, 99 since S34 (rows 32, 33)
 # S27 (BUILD_II Phase 2): the azimuthal model is basic with the sfh slot swapped for one that adds
 # an (R, phi) modulation and changes no radial field, and every row is radial or vertical, so its
 # tables are basic's -- by reference, so that they cannot drift apart. test_sfh_azimuthal asserts
@@ -156,7 +157,8 @@ def test_report_runs(prod, judged):
     assert "spec" in out and "5 not-yet-computable of 37" in out  # of 36 until S44, 4 of 33 until S35
     assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
     assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
-    assert "recorded miss, debt #42, since S13" in out   # row 6: the heated old population counted as thin
+    assert "recorded miss, debt #148, since S87" in out   # row 2: the clock (S87); until S87 "debt #42, since S13", row 6, which passes on the same clock
+    assert "debt #42" not in out
     assert "recorded miss, debt #17, since S16" in out   # row 20: at its zero-width target
     assert "recorded miss, debt #47, since S18" in out   # row 22
     assert "recorded miss, debt #27, since S9" in out
@@ -213,7 +215,7 @@ def test_the_report_names_the_table_defect(prod, judged):
     assert "table: rows 20, 21, 25, 26, 27, 28, 36 have zero-width targets" in out  # 36 since S35
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
-    assert re.search(r"8\.08\d*e\+09", out)  # row 20's hydrogen mass, printed (6.028e9 until S18; 6.243e9 until S17; 4.171e9 until S16)
+    assert re.search(r"8\.15\d*e\+09", out)  # row 20's hydrogen mass, printed (S87 (#148): 8.08e9 until the clock; 6.028e9 until S18; 6.243e9 until S17; 4.171e9 until S16)
 
 
 def test_statistical():
@@ -424,8 +426,8 @@ def test_rows_1_to_24_are_where_s27_left_them(judged):
         assert v[15] == pytest.approx(5.20971, abs=5e-6)
         assert v[16] == pytest.approx(41.1036, abs=5e-5)
         assert v[17] == pytest.approx(6.08381, abs=5e-6)
-        assert v[3] == pytest.approx(251.026, abs=5e-4)
-        assert v[21] == pytest.approx(0.2001, abs=5e-5)
+        assert v[3] == pytest.approx(251.0217, abs=5e-4)  # S87 (#148): was 251.026 - the clock
+        assert v[21] == pytest.approx(0.2033, abs=5e-5)  # S87 (#148): was 0.2001 - the clock
 
 
 def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
@@ -434,6 +436,6 @@ def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
     -18.99, the light integrated along the isochrone's points; still a pass."""
     for results in judged.values():
         r = next(r for r in results if r.n == 29)
-        assert r.status == "pass" and r.value == pytest.approx(-7.89193, abs=5e-5)  # S49 (D204, #126): the light integrated along the isochrone's points; was -7.91436
+        assert r.status == "pass" and r.value == pytest.approx(-7.90967, abs=5e-5)  # S87 (#148): was -7.89193 - the clock  # S49 (D204, #126): the light integrated along the isochrone's points; was -7.91436
         zero = float(re.search(r"zero point at log W = 2\.5 (-?[0-9.]+)", r.reason).group(1))
-        assert zero == pytest.approx(-18.99, abs=0.01)  # S49 (D204, #126): the light integrated along the isochrone's points; was -19.00
+        assert zero == pytest.approx(-19.03, abs=0.01)  # S87 (#148): was -18.99 - the clock  # S49 (D204, #126): the light integrated along the isochrone's points; was -19.00
