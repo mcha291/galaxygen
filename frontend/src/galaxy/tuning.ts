@@ -16,6 +16,27 @@ import { CLOSE_FIELD_FLOOR, SUB_SAMPLES_MAX } from "./regimes";
 /** Ray-march steps through the galaxy's bounding box. */
 export const STEPS = 96;
 /**
+ * T14 (S81): the sub-samples cap while the camera moves, and how long it must be still before the full cap returns, ms.
+ * Display choices for the owner to tune (the Tuning panel). Measured at S81 with the march probe (e2e/compile/march.probe.ts,
+ * the camera nudged every frame; RTX 4070, ANGLE D3D11, the full canvas): the GPU's ms per march at the full cap 8 against
+ * 2 - milky_way-field 23.7 -> 18.1, ngc_4414-field 36.3 -> 10.9, milky_way-zoom 18.8 -> 12.7, ngc_4414-zoom 15.6 -> 6.5 (at
+ * 1: 10.0, 7.5, 9.7, 4.8; at 4 the Milky Way's unchanged, NGC 4414's field 19.2).
+ */
+export const SUB_SAMPLES_MOVING = 2;
+export const MOVING_SETTLE_MS = 200;
+
+/**
+ * The sub-samples cap the march uses on a frame (T14, S81; FieldVolume's frame loop): the panel's cap `subMax` (made a
+ * whole number in 1..SUB_SAMPLES_MAX, as the uniform always was) once the camera has been still for `settleMs`, else the
+ * moving cap, never above the full one. `sinceMoved` is the time since the camera last moved, ms (Infinity if it never
+ * has). At rest the result is the full cap whatever the moving choices are: a still frame is the frame without the cut.
+ */
+export function marchSubSamples(subMax: number, subMoving: number, settleMs: number, sinceMoved: number): { sub: number; full: number; moving: boolean } {
+  const full = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
+  const moving = sinceMoved < settleMs;
+  return { sub: moving ? Math.min(full, Math.max(1, Math.round(subMoving))) : full, full, moving };
+}
+/**
  * The most pixels the field is marched at, whatever the screen: the image is stretched onto the
  * canvas, and the field is smooth, so this loses nothing to see. The work per frame has to be
  * bounded by a number, not by the display. Marching every pixel of a 4K screen the galaxy fills,
@@ -44,6 +65,14 @@ export interface Tuning {
   steps: number;
   /** The most sub-samples read along one step (a uniform, at most SUB_SAMPLES_MAX). */
   subMax: number;
+  /**
+   * The sub-samples cap while the camera moves (S81, T14): the march reads at most this many along a step on a frame
+   * whose camera moved within `settleMs`, never more than `subMax`; at rest the full cap, so every still frame is the
+   * same as without it.
+   */
+  subMoving: number;
+  /** How long the camera must be still before the march returns to the full cap, ms (S81, T14); 0 never cuts. */
+  settleMs: number;
   /** The per-pixel offset into each step; off reads each sub-step at its middle. */
   dither: boolean;
   /** The plane textures' sampling. */
@@ -125,6 +154,8 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   pixelBudget: PIXEL_BUDGET,
   steps: STEPS,
   subMax: SUB_SAMPLES_MAX,
+  subMoving: SUB_SAMPLES_MOVING,
+  settleMs: MOVING_SETTLE_MS,
   dither: true,
   filtering: "linear",
   fieldGain: 1,
@@ -210,6 +241,14 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "subMax", label: "sub-samples cap", group: "March", kind: "range", min: 1, max: SUB_SAMPLES_MAX, step: 1, unit: "", integer: true,
     about: "The most reads of the layers along one step (fewer shows grazing terraces). A display choice.",
+  },
+  {
+    key: "subMoving", label: "sub-samples while moving", group: "March", kind: "range", min: 1, max: SUB_SAMPLES_MAX, step: 1, unit: "", integer: true,
+    about: "The sub-samples cap while the camera moves (T14): a cheaper march during a drag or a zoom, the full cap once the camera has been still for the settle. Never above the cap; at rest nothing changes. A display choice.",
+  },
+  {
+    key: "settleMs", label: "settle after moving", group: "March", kind: "range", min: 0, max: 1000, step: 10, unit: "ms", integer: true,
+    about: "How long the camera must be still before the march returns to the full sub-samples cap (T14); 0 never lowers it. A display choice.",
   },
   {
     key: "dither", label: "dither", group: "March", kind: "toggle",

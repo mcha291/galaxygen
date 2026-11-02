@@ -8,9 +8,11 @@ import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SLAB_PIECES, SUB_SAMPLES_MAX,
 import {
   BLOOM,
   MAX_RESOLUTION,
+  MOVING_SETTLE_MS,
   PIXEL_BUDGET,
   STAR_SPRITE_PX,
   STEPS,
+  SUB_SAMPLES_MOVING,
   TUNING_CONTROLS,
   TUNING_DEFAULTS,
   TEMPLATE_EXPOSURE,
@@ -22,6 +24,7 @@ import {
   storageKeyFor,
   changed,
   loadTuning,
+  marchSubSamples,
   positionOf,
   sanitize,
   saveTuning,
@@ -52,6 +55,9 @@ describe("tuning defaults (D199)", () => {
       pixelBudget: PIXEL_BUDGET,
       steps: STEPS,
       subMax: SUB_SAMPLES_MAX,
+      // S81 (T14): the cut while the camera moves - at rest the full cap, so the defaults draw every still frame as before.
+      subMoving: SUB_SAMPLES_MOVING,
+      settleMs: MOVING_SETTLE_MS,
       dither: true,
       filtering: "linear",
       fieldGain: 1,
@@ -354,5 +360,41 @@ describe("log sliders", () => {
       expect(valueAt(c, 0)).toBe(c.min);
       expect(valueAt(c, 1000)).toBe(c.max);
     }
+  });
+});
+
+describe("the march's cut while the camera moves (S81, T14)", () => {
+  it("is the full cap at rest, whatever the moving choices: a still frame is the frame without the cut", () => {
+    for (const subMax of [1, 3, 8, 8.4, 0, 99]) {
+      const full = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax))); // the uniform as the frame loop set it before S81
+      for (const subMoving of [1, 2, 8]) {
+        for (const settleMs of [0, 200, 1000]) {
+          expect(marchSubSamples(subMax, subMoving, settleMs, settleMs)).toEqual({ sub: full, full, moving: false });
+          expect(marchSubSamples(subMax, subMoving, settleMs, Infinity)).toEqual({ sub: full, full, moving: false });
+        }
+      }
+    }
+  });
+
+  it("lowers the cap to the moving count within the settle, never above the full cap, and never with a settle of 0", () => {
+    expect(marchSubSamples(8, 2, 200, 0)).toEqual({ sub: 2, full: 8, moving: true });
+    expect(marchSubSamples(8, 2, 200, 199.9)).toEqual({ sub: 2, full: 8, moving: true });
+    expect(marchSubSamples(8, 2, 200, 200)).toEqual({ sub: 8, full: 8, moving: false });
+    expect(marchSubSamples(3, 6, 200, 10).sub).toBe(3);
+    expect(marchSubSamples(8, 0, 200, 10).sub).toBe(1);
+    expect(marchSubSamples(8, 2, 0, 0)).toEqual({ sub: 8, full: 8, moving: false });
+  });
+
+  it("is two panel controls in the March group, stored as the panel's other values are", () => {
+    const moving = TUNING_CONTROLS.find((c) => c.key === "subMoving") as RangeControl;
+    const settle = TUNING_CONTROLS.find((c) => c.key === "settleMs") as RangeControl;
+    expect([moving.group, moving.min, moving.max, moving.integer]).toEqual(["March", 1, SUB_SAMPLES_MAX, true]);
+    expect([settle.group, settle.min, settle.max, settle.unit]).toEqual(["March", 0, 1000, "ms"]);
+    expect(sanitize({ subMoving: 12, settleMs: -5 })).toMatchObject({ subMoving: SUB_SAMPLES_MAX, settleMs: 0 });
+    const kept = new Map<string, string>();
+    const storage = { getItem: (k: string) => kept.get(k) ?? null, setItem: (k: string, v: string) => void kept.set(k, v), removeItem: (k: string) => void kept.delete(k) };
+    saveTuning({ ...defaultsFor("milky_way"), subMoving: 4, settleMs: 350 }, storage, "milky_way");
+    expect(loadTuning(storage, "milky_way")).toMatchObject({ subMoving: 4, settleMs: 350 });
+    expect(JSON.parse(kept.get(storageKeyFor("milky_way"))!)).toEqual({ subMoving: 4, settleMs: 350 });
   });
 });

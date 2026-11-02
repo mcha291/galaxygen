@@ -61,7 +61,7 @@ import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
 import { gpuTimer } from "./gpuTimer";
 import { partRings, renderRings } from "./ringProfile";
-import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
+import { MOVING_SETTLE_MS, STEPS, SUB_SAMPLES_MOVING, type Tuning, TUNING_DEFAULTS, marchSubSamples } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import {
   type ClusteringTables,
@@ -644,7 +644,7 @@ interface Props {
    * white point. The defaults are the values the view drew with before the panel.
    */
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin"> &
-    Partial<Pick<Tuning, "cloudRaster" | "cloudElongation" | "gasInMarch" | "spursInMarch" | "clumpsInMarch">>;
+    Partial<Pick<Tuning, "cloudRaster" | "cloudElongation" | "gasInMarch" | "spursInMarch" | "clumpsInMarch" | "subMoving" | "settleMs">>;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
   /**
@@ -835,6 +835,9 @@ export function FieldVolume({
   hiiShare = null,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
+  // T14 (S81): the cut while the camera moves; a caller with no such choice gets the defaults.
+  const subMoving = tuning.subMoving ?? SUB_SAMPLES_MOVING;
+  const settleMs = tuning.settleMs ?? MOVING_SETTLE_MS;
   // The randomness layer's switches in the march (S66, V7): on unless the tuning says off.
   const gasInMarch = tuning.gasInMarch ?? true;
   const spursInMarch = tuning.spursInMarch ?? true;
@@ -1363,6 +1366,9 @@ export function FieldVolume({
     }
   }, [mesh, filtering]);
 
+  // The camera as the last frame saw it, and when it last moved (T14, S81; the frame loop below).
+  const cameraMotion = useRef({ view: new Matrix4(), projection: new Matrix4(), movedAt: -Infinity, seen: false });
+
   // Before the composer (priority 1) draws the frame: march again only if the camera, the
   // drawing size, the gain or a tuning choice changed. A still view costs nothing after its first frame.
   useFrame(({ camera }) => {
@@ -1373,6 +1379,20 @@ export function FieldVolume({
       stats.gpuAvailable = timer.available;
     }
     (window as unknown as Record<string, unknown>).__galaxygenMarchGpu = { available: timer.available, ms: gpuMs };
+    // T14 (S81): the camera's motion frame to frame, watched whether or not there is a mesh yet. A frame whose camera
+    // differs from the frame before's (its place or its lens) moves it; the march reads at most `subMoving` sub-samples
+    // until the camera has been still for `settleMs`, then the full cap again - a change of the settings key, so the
+    // still view is marched once more at the full count and every frame at rest is the one it was without the cut.
+    camera.updateMatrixWorld();
+    const now = performance.now();
+    const motion = cameraMotion.current;
+    if (motion.seen && (!motion.view.equals(camera.matrixWorld) || !motion.projection.equals(camera.projectionMatrix))) motion.movedAt = now;
+    motion.view.copy(camera.matrixWorld);
+    motion.projection.copy(camera.projectionMatrix);
+    motion.seen = true;
+    const cut = marchSubSamples(subMax, subMoving, settleMs, now - motion.movedAt);
+    const sub = cut.sub;
+    (window as unknown as Record<string, unknown>).__galaxygenMarchSub = cut;
     if (!mesh || !offscreen) return;
     const gain = LIGHT_PER_LSUN_PC2 * fieldGain * 2 ** stops * weight;
     const buffer = gl.getDrawingBufferSize(DRAWING);
@@ -1380,14 +1400,13 @@ export function FieldVolume({
     const width = Math.max(1, Math.round(buffer.x * scale));
     const height = Math.max(1, Math.round(buffer.y * scale));
     const last = offscreen.last;
-    camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
     // The randomness layer's switches (S66, V7): each 1 only where its tables are there (the layer on) and it is on.
     const tables = mesh.userData.tables as LayerTables;
     const spursDrawn = Boolean(tables.spurs && tables.spurs.count > 0 && tables.unspurred && spursInMarch);
     const layerOn = [tables.gas && gasInMarch ? 1 : 0, spursDrawn ? 1 : 0, clumped ? 1 : 0];
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
+    const settings = `${steps},${sub},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -1423,7 +1442,8 @@ export function FieldVolume({
     uniforms.gain.value = gain;
     (uniforms.regionWindow.value as Vector4).set(w?.r_min ?? 0, w?.r_max ?? 0, w?.phi_min ?? 0, w?.phi_max ?? 0);
     uniforms.hiiFade.value = region ? hiiFade : 0;
-    uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
+    // The panel's cap at rest, the moving cap while the camera moves (T14, above).
+    uniforms.subMax.value = sub;
     // A new step count is two uniforms (S78, T29), not a new shader: the count and its reciprocal, which three uploads
     // as a float - the float nearest 1 / steps, as the constant 1.0 / float(steps) was folded when it was compiled in.
     const marchSteps = Math.max(1, Math.round(steps));
