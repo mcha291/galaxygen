@@ -3832,6 +3832,15 @@ never been judged in twenty-three sessions.
    largest amplitude with the lower arm number on a tie, was the kindest, 0.311, and is replaced). Suspects, in
    order: #144, then #142. Still carried: one galaxy's number is now the check's.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the gas ridge's width is the arms' steady response (D216): its sample-wide reading is the arm batch's, with #142's forcing.
+   *S86 (M1):* **the check re-read since the pieces and the thickness factor (S60); the target is still one
+   galaxy's.** On today's model, layer on, 6–10 kpc, the width by the strongest forcing reads **0.3675 at the median
+   (0.074–0.530) on the Milky Way template — 0.44 to 3.12 times 0.17, no longer wider on every ring — and 0.390
+   (0.270–0.752) on `ngc_4414`, 1.59 to 4.42 times** (S57's 0.466 and 0.512 above were the modes' razor-thin
+   response); pinned in `tests/test_gas_pattern.py`. #142 is discharged (the second suspect gone, a fifth of the
+   width with it) and #144 is the miss that is left. A warmer gas narrows nothing: the response at 8 / 10 / 12 km/s
+   reads widths 0.365 / 0.370 / 0.380 on the Milky Way template (0.413 / 0.431 / 0.447 on `ngc_4414`), a probe of the
+   law, not a change. The closer is unread: a sample-wide gas ridge width over the arm spacing with its spread (the
+   PHANGS ridge masks against their galaxies' arm numbers) — S87's reading list.
 130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
    contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
    and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
