@@ -47,7 +47,15 @@ import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindo
 import { type Tuning, defaultsFor, drawnTuning, heldTemplate, loadTuning, saveTuning } from "./tuning";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
+import { regimePlace } from "./drawerLayout";
 import styles from "./GalaxyTab.module.css";
+
+// The regime caption's class by where it stands: left of the edit drawer while that is open (S82, #190).
+const regimeClass = {
+  home: styles.regime,
+  besideDrawer: `${styles.regime} ${styles.besideDrawer}`,
+  besideDrawerHalf: `${styles.regime} ${styles.besideDrawerHalf}`,
+};
 
 interface Props {
   meta: FieldsPayload;
@@ -1046,7 +1054,7 @@ export function GalaxyTab({
 
       {/* The view's own captions sit over the render's half, wherever the stage is split. */}
       <div className={picture ? styles.overHalf : styles.over}>
-      <div className={styles.regime}>
+      <div className={regimeClass[regimePlace(editing, !!picture)]}>
         <div className={styles.regimeHead}>
           <span className={styles.muted}>{mode === "field" ? `regime ${REGIMES.indexOf(regime) + 1} of 3` : "mode 2 of 2"}</span>
           <span className={styles.regimeName}>{mode === "field" ? regime.name : "Star-first"}</span>

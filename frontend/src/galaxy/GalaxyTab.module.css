@@ -223,6 +223,21 @@
   background: radial-gradient(150% 170% at 100% 0%, color-mix(in oklab, var(--void-0) 97%, transparent) 0%, color-mix(in oklab, var(--void-0) 94%, transparent) 46%, transparent 100%);
 }
 
+/* While the edit drawer is open (App.module.css .editDrawer: 320 px at the stage's top right, inset by
+   --space-4) the caption stands left of it (S82, #190; drawerLayout.ts). Over the whole stage the shift is the
+   drawer and its inset. Over the render's half (a picture beside it) the half's right edge stands as far from
+   the stage's as the half is wide (two equal halves of what the control panel leaves), so the shift is the
+   drawer's overlap with the half - the drawer and its inset less the half's own width, the 100% here - and
+   none where the drawer clears it. */
+.besideDrawer {
+  right: calc(320px + var(--space-4));
+  max-width: min(392px, calc(100% - 320px - var(--space-4)));
+}
+
+.besideDrawerHalf {
+  right: max(0px, calc(320px + var(--space-4) - 100%));
+}
+
 .regimeHead {
   display: flex;
   align-items: center;
@@ -359,6 +374,13 @@
   .regime {
     max-width: 100%;
     padding: var(--space-4) var(--space-4) var(--space-6) var(--space-6);
+  }
+
+  /* The edit drawer is a bottom sheet here (App.module.css): the caption stays where it stood. */
+  .besideDrawer,
+  .besideDrawerHalf {
+    right: 0;
+    max-width: 100%;
   }
 
   .scale {
