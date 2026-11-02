@@ -22,7 +22,9 @@ import { SETTLE_MS, useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { type Template, pinWords, switcherItems, templateLabel } from "../workflow/templates";
 import { DEFAULT_FOV } from "./capture";
-import { type ComparePicture, ComparePane, ComparePicker, RenderCaption } from "./PictureBeside";
+import type { CameraLink } from "./cameraLink";
+import { CameraLinkProbe } from "./CameraLinkProbe";
+import { RenderCaption } from "./PictureBeside";
 import { compareCaption } from "./compare";
 import { PHOTOMETRIC, lightColors, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
@@ -92,9 +94,26 @@ interface Props {
    * then the landing's own. Absent, the live ones (`selection`, `preset`, `template`).
    */
   camera?: { selection: number; preset: Preset | null; template: Template | null };
-  /** "Compare with a picture" (T16 ii): a picture chosen from disk, set beside the render; null without one. */
-  picture: ComparePicture | null;
-  onPicture(file: File | null): void;
+  /**
+   * The comparison view (T16, S83): which part of the stage this view takes - the whole (the default, and the only one
+   * with the comparison off), the left of the two panes (the galaxy shown, with the panel) or the right (a second
+   * galaxy: no panel, no regime caption; the bar above it is ComparePane's).
+   */
+  pane?: "whole" | "left" | "right";
+  /** The comparison's switch in the panel: whether it is on, and turning it. */
+  compare?: { on: boolean; onToggle(): void };
+  /** The two panes' one camera (cameraLink.ts): the left pane leads, the right follows. Absent with the comparison off. */
+  link?: CameraLink | null;
+  /** The rendering mode, where the comparison holds it (the right pane takes the left's); absent, the view's own. */
+  mode?: Mode;
+  /** Told of the view's mode as it changes (the comparison reads the left pane's). */
+  onMode?(mode: Mode): void;
+  /** The framing radius the camera's zoom range is made from, kpc: the left pane's, so the two ranges are one. */
+  frame?: number;
+  /** Told of where the view stands as it moves (the comparison's picture is drawn at the left pane's scale). */
+  onViewState?(view: ViewState | null): void;
+  /** What the caption calls the galaxy (the right pane's: a template, the draft); absent, the template's label. */
+  label?: string;
   /**
    * "Physics only" (S55, D214: invariant I5): the galaxy drawn from the physics model alone, the randomness layer
    * off. The app's, so it outlives this tab; `query` above already carries it (`layer=off`, added in one place,
@@ -155,7 +174,7 @@ const REGIME_VIEW_KPC = { field: 45, sampled: 12, stars: 2.5 } as const;
  * render's remainder under that threshold). It replaces the "brightest" mode, whose stars were the brightest
  * of a number-drawn sample.
  */
-type Mode = "field" | "stars";
+export type Mode = "field" | "stars";
 const MODES: { key: Mode; label: string; what: string }[] = [
   { key: "field", label: "field", what: "The field, the sample and a region's stars, handed over by zoom." },
   { key: "stars", label: "star-first", what: "Every disc star in the cells in view above one threshold a frame - the faintest the point budget allows - and every cluster, as points of their own light over the field no point carries." },
@@ -262,8 +281,14 @@ export function GalaxyTab({
   onTemplate,
   selection,
   camera,
-  picture,
-  onPicture,
+  pane = "whole",
+  compare,
+  link = null,
+  mode: heldMode,
+  onMode,
+  frame,
+  onViewState,
+  label,
   physicsOnly,
   onPhysicsOnly,
 }: Props) {
@@ -277,7 +302,13 @@ export function GalaxyTab({
   const zoom = zoomAsk?.of === cameraKey ? zoomAsk.zoom : undefined;
   const setZoom = (value: number) => setZoomAsk({ of: cameraKey, zoom: value });
   const [view, setView] = useState<ViewState | null>(null);
-  const [mode, setMode] = useState<Mode>("field");
+  const [ownMode, setMode] = useState<Mode>("field");
+  // The comparison's right pane draws in the left pane's mode (T16, S83); every other view in its own.
+  const mode = heldMode ?? ownMode;
+  useEffect(() => onMode?.(mode), [mode, onMode]);
+  useEffect(() => onViewState?.(view), [view, onViewState]);
+  // The comparison's panes (T16, S83): the panel and the regime caption are the left pane's (or the whole stage's).
+  const solo = pane !== "right";
   // Why the region's clouds are drawn smooth inside, where it is not the switch's doing (RegionVolume, S55).
   const [interiorNote, setInteriorNote] = useState<string | null>(null);
   // The template's camera and lens (D213 ruling 5): the view stands there while no preset is chosen, and keeps
@@ -580,6 +611,7 @@ export function GalaxyTab({
   const clusterProfile = look.clusterRadius ? 1 : 0;
   const starFieldGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure;
   useEffect(() => {
+    if (!solo) return; // the comparison's right pane: the probe reads the galaxy shown's points (T16, S83)
     const holder = window as unknown as Record<string, unknown>;
     const value = {
       bright: brightPoints,
@@ -597,7 +629,17 @@ export function GalaxyTab({
     return () => {
       if (holder.__galaxygenPointsShown === value) delete holder.__galaxygenPointsShown;
     };
-  }, [brightPoints, clusterPoints, lMin, tileLevel, tileFetch, tilesSeen, pointsGain, starFieldGain, clusterProfile, physical]);
+  }, [solo, brightPoints, clusterPoints, lMin, tileLevel, tileFetch, tilesSeen, pointsGain, starFieldGain, clusterProfile, physical]);
+  // Each view's last march (T16, S83; rule B1, read-only), by pane - the whole stage's, or each of the comparison's two:
+  // the frame-time measure's. It holds the object the Tuning panel reads; nothing is drawn or asked for it.
+  useEffect(() => {
+    const holder = window as unknown as Record<string, Record<string, MarchStats> | undefined>;
+    const panes = (holder.__galaxygenMarches ??= {});
+    panes[pane] = marchStats;
+    return () => {
+      if (panes[pane] === marchStats) delete panes[pane];
+    };
+  }, [pane, marchStats]);
   // What a click on a point opened (T23): the object's own published columns.
   const [picked, setPicked] = useState<{ title: string; rows: SummaryRow[] } | null>(null);
   const named = (columns: Record<string, ArrayLike<number | bigint>>, row: number, key: string) =>
@@ -656,8 +698,10 @@ export function GalaxyTab({
   const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable, pointGain), [meta, sample, field, exposure, blackbodyTable, pointGain]);
   const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
   const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure, blackbodyTable, pointGain) : null), [meta, detail, field, exposure, blackbodyTable, pointGain]);
-  // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each.
-  const reach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);
+  // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each. The
+  // comparison's right pane takes the left pane's (`frame`): one camera, one zoom range.
+  const ownReach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);
+  const reach = frame ?? ownReach;
 
 
   const layers: StarLayer[] = [];
@@ -682,19 +726,21 @@ export function GalaxyTab({
   const current = MODES.find((m) => m.key === mode)!;
   // How far the camera stands from what it looks at, kpc: what a long lens changes and the width of view does not.
   const eyeDistance = view ? Math.hypot(...view.camera.position.map((v, k) => v - view.target[k])) : null;
-  // What the render is, for a picture set beside it (T16 ii): read from the view as it stands now.
+  // What each pane is, while the comparison is on (T16): read from the view as it stands now.
   const caption =
-    picture && view
+    pane !== "whole" && view
       ? compareCaption(
           { pxPerKpc: view.pxPerKpc, fov: view.fov, position: view.camera.position, target: view.target },
-          { label: template ? templateLabel(template, edited) : null, filters: FILTER_SETS[filterSet].label, distanceMpc: template?.instrument.distance_mpc ?? null },
+          { label: label ?? (template ? templateLabel(template, edited) : null), filters: FILTER_SETS[filterSet].label, distanceMpc: template?.instrument.distance_mpc ?? null },
         )
       : null;
+  const paneClass = { whole: styles.render, left: styles.renderHalf, right: styles.renderRight }[pane];
+  const overClass = { whole: styles.over, left: styles.overHalf, right: styles.overRight }[pane];
 
   return (
     <>
-      {/* The render: the whole stage, or its left half while a picture is set beside it (same height). */}
-      <div className={picture ? styles.renderHalf : styles.render}>
+      {/* The render: the whole stage, or one of the comparison's two equal panes (same height). */}
+      <div className={paneClass}>
       <GalaxyView
         layers={layers}
         pickable={pickable}
@@ -710,6 +756,8 @@ export function GalaxyTab({
         psf={spritePsf}
         tuning={look}
       >
+        {/* The comparison's one camera (T16, S83): this pane's moves are the other's. */}
+        {link && <CameraLinkProbe link={link} leads={solo} />}
         {mode === "field" && (
           <FieldVolume
             meta={meta}
@@ -785,8 +833,8 @@ export function GalaxyTab({
         )}
       </GalaxyView>
       </div>
-      {picture && <ComparePane picture={picture} onDismiss={() => onPicture(null)} />}
 
+      {solo && (
       <div className={styles.panel}>
         <div className={styles.section}>
           {/* The switcher (S54, D213 ruling 7; rule D1): each template with its thumbnail, a capture of the picture
@@ -826,9 +874,19 @@ export function GalaxyTab({
               Edit galaxy
             </button>
           </div>
-          <div className={styles.pair}>
-            <ComparePicker picture={picture} onPick={onPicture} onDismiss={() => onPicture(null)} />
-          </div>
+          {/* The comparison (T16, S83): a session's choice, off by default and never saved. */}
+          {compare && (
+            <div className={styles.pair}>
+              <button
+                type="button"
+                aria-pressed={compare.on}
+                title="Split the stage in two: this galaxy on the left, and beside it another template, the draft, this galaxy through another filter set, or a picture file - under one camera"
+                onClick={compare.onToggle}
+              >
+                compare
+              </button>
+            </div>
+          )}
         </div>
         <div className={styles.section}>
           <div className={styles.label}>Rendering</div>
@@ -1081,10 +1139,12 @@ export function GalaxyTab({
 
         <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} template={template?.name ?? null} filterSet={filterSet} exposure={exposure} defaults={tuningDefaults} />
       </div>
+      )}
 
-      {/* The view's own captions sit over the render's half, wherever the stage is split. */}
-      <div className={picture ? styles.overHalf : styles.over}>
-      <div className={regimeClass[regimePlace(editing, !!picture)]}>
+      {/* The view's own captions sit over its render, wherever the stage is split. */}
+      <div className={overClass}>
+      {solo && (
+      <div className={regimeClass[regimePlace(editing, pane === "left")]}>
         <div className={styles.regimeHead}>
           <span className={styles.muted}>{mode === "field" ? `regime ${REGIMES.indexOf(regime) + 1} of 3` : "mode 2 of 2"}</span>
           <span className={styles.regimeName}>{mode === "field" ? regime.name : "Star-first"}</span>
@@ -1138,6 +1198,7 @@ export function GalaxyTab({
           </p>
         )}
       </div>
+      )}
 
       {bar && (
         <div className={styles.scale}>

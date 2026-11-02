@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { orbitPosition } from "./capture";
-import { arcsecOf, compareCaption, kpcPerPixel } from "./compare";
+import { arcsecOf, compareCaption, kpcPerPicturePixel, kpcPerPixel, pictureCaption, pictureWidthPx } from "./compare";
 
 // NGC 4414's stand (D213 ruling 5): 55° from face-on, 20 kpc framed through a 5° lens, on a canvas 1000 px high,
 // so 40 kpc over 1000 pixels at the centre: 25 px per kpc.
@@ -45,6 +45,37 @@ describe("compare with a picture: what the render's caption states (T16 ii)", ()
     expect(milkyWay.lines[1]).not.toMatch(/Mpc/);
     const none = compareCaption(view, { label: null, filters: "RGB", distanceMpc: null });
     expect(none.galaxy).toBe("the default galaxy");
+  });
+
+  it("a picture of known pixels at a stated scale is drawn at the render's kpc across (T16 ii, S83)", () => {
+    // An 800-pixel picture at 0.05 kpc per pixel is 40 kpc wide. The left pane is 600 CSS px across 45 kpc at its orbit
+    // target: 13.33 px per kpc, so the picture is drawn 533.33 px wide - 40 of the pane's 45 kpc.
+    const pxPerKpc = 600 / 45;
+    const kpc = kpcPerPicturePixel({ unit: "kpc", perPixel: 0.05 })!;
+    expect(pictureWidthPx(800, kpc, pxPerKpc)).toBeCloseTo(533.3333, 3);
+    expect(pictureWidthPx(800, kpc, pxPerKpc) / pxPerKpc).toBeCloseTo(40, 9);
+    // The same kind of picture stated in arcseconds at NGC 4414's distance: 0.5″ per pixel at 17.7 Mpc is 42.9 pc.
+    const arcsec = kpcPerPicturePixel({ unit: "arcsec", perPixel: 0.5, distanceMpc: 17.7 })!;
+    expect(arcsec).toBeCloseTo(0.042906, 5);
+    expect(arcsecOf(arcsec, 17.7)).toBeCloseTo(0.5, 12); // the inverse of the render's own caption
+    expect(pictureWidthPx(1000, arcsec, 25)).toBeCloseTo(1000 * arcsec * 25, 9);
+    // A zoom doubles the pixels per kpc: the picture doubles with the render.
+    expect(pictureWidthPx(800, kpc, 2 * pxPerKpc)).toBeCloseTo(2 * 533.3333, 3);
+  });
+
+  it("no scale is drawn from a statement that is not one, and the caption says so", () => {
+    expect(kpcPerPicturePixel({ unit: "kpc", perPixel: 0 })).toBeNull();
+    expect(kpcPerPicturePixel({ unit: "kpc", perPixel: Number.NaN })).toBeNull();
+    expect(kpcPerPicturePixel({ unit: "arcsec", perPixel: 0.5, distanceMpc: 0 })).toBeNull();
+    expect(pictureCaption("m100.png", "", { unit: "kpc", perPixel: 0 }, 800)).toEqual([
+      "Picture: m100.png, band not stated.",
+      "Scale not stated: drawn to fit the pane, not to the render's scale.",
+    ]);
+    expect(pictureCaption("m100.png", " HST F814W ", { unit: "kpc", perPixel: 0.05 }, 800)).toEqual([
+      "Picture: m100.png, in HST F814W.",
+      "0.05 kpc per pixel · 800 px = 40 kpc across",
+    ]);
+    expect(pictureCaption("n4414.jpg", "V", { unit: "arcsec", perPixel: 0.5, distanceMpc: 17.7 }, null)[1]).toBe("0.5″ per pixel at 17.7 Mpc (0.0429 kpc)");
   });
 
   it("measures the inclination about what the camera looks at, not about the centre", () => {

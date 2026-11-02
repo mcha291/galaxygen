@@ -3,13 +3,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { PHOTOMETRIC } from "./galaxy/colors";
 import { PHYSICS_ONLY, layerQuery, onLayerFault } from "./galaxy/layer";
-import type { ComparePicture } from "./galaxy/PictureBeside";
+import { CameraLink } from "./galaxy/cameraLink";
+import { ComparePane } from "./galaxy/ComparePane";
 import { Exposure } from "./galaxy/Exposure";
 import { askFieldAhead } from "./galaxy/fieldLoads";
 import type { FilterSetName } from "./galaxy/filters";
-import { GalaxyTab } from "./galaxy/GalaxyTab";
+import { GalaxyTab, type Mode } from "./galaxy/GalaxyTab";
 import { exposureFor, loadTuning } from "./galaxy/tuning";
-import { type Preset } from "./galaxy/GalaxyView";
+import { type Preset, type ViewState } from "./galaxy/GalaxyView";
 import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
@@ -55,15 +56,13 @@ export function App() {
   const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
   const [charts, setCharts] = useState(false);
   const [exposure, setExposure] = useState(0); // photometric exposure, in stops
-  // "Compare with a picture" (T16 ii): a file the user picked, shown through an object URL. It never leaves
-  // the browser, and its URL is released when it is replaced or dismissed.
-  const [picture, setPicture] = useState<ComparePicture | null>(null);
-  useEffect(
-    () => () => {
-      if (picture) URL.revokeObjectURL(picture.url);
-    },
-    [picture],
-  );
+  // The comparison view (T16, S83): two panes under one camera, the galaxy shown on the left and a second galaxy or a
+  // picture on the right (galaxy/ComparePane.tsx). A session's choice: off by default, never saved. With it off nothing
+  // below asks or draws anything it did not before.
+  const [comparing, setComparing] = useState(false);
+  // What the right pane shares of the left: its mode (told by the left pane) and, for a picture, where its view stands.
+  const [leftMode, setLeftMode] = useState<Mode>("field");
+  const [leftView, setLeftView] = useState<ViewState | null>(null);
 
   // A template landed on - the first load, or one chosen in the switcher - brings its camera and its filter
   // set (rule D1 as amended; D213 rulings 5 and 7). What the user changes after that is theirs until the next.
@@ -87,7 +86,6 @@ export function App() {
     setPreset(null);
     setFilterSet(chosen.filters);
   };
-  const pickPicture = (file: File | null) => setPicture(file ? { url: URL.createObjectURL(file), name: file.name } : null);
 
   // "Physics only" (S55, D214: invariant I5's viewer half): the Galaxy view asks the model with the randomness
   // layer off. Display state held here, not an input: it is no part of the workflow's query (so no template is
@@ -183,6 +181,12 @@ export function App() {
   const liveCamera = { selection: wf.selection, preset, template: wf.template };
   const drawnCamera = useRef(liveCamera);
   if (!landing) drawnCamera.current = liveCamera;
+  // The comparison's one camera (galaxy/cameraLink.ts): a fresh state for every fresh camera - a landing, a preset - at
+  // which both panes' canvases are made again at the same stand and the left pane leads from there.
+  const cameraKey = `${drawnCamera.current.selection}:${drawnCamera.current.preset}:${drawnCamera.current.template?.name ?? ""}`;
+  const link = useMemo(() => (comparing ? new CameraLink() : null), [comparing, cameraKey]); // eslint-disable-line react-hooks/exhaustive-deps -- a fresh state per camera
+  // A model's catalogue where the workflow holds one: a template's query for the right pane is laid on it.
+  const catalogueOf = (model: string) => (wf.shown?.model === model ? wf.shown.state.cat : wf.state?.cat.model === model ? wf.state.cat : null);
 
   const seed = wf.shown?.state.values.world_seed;
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
@@ -406,8 +410,41 @@ export function App() {
                   edited={wf.edited}
                   onTemplate={chooseTemplate}
                   selection={wf.selection}
-                  picture={picture}
-                  onPicture={pickPicture}
+                  pane={comparing ? "left" : "whole"}
+                  compare={{ on: comparing, onToggle: () => setComparing((c) => !c) }}
+                  link={link}
+                  onMode={comparing ? setLeftMode : undefined}
+                  onViewState={comparing ? setLeftView : undefined}
+                />
+              )}
+              {comparing && link && meta && sample && galaxyQuery && query && (
+                <ComparePane
+                  templates={wf.templates}
+                  shown={{ query, template: wf.template, edited: wf.edited }}
+                  draft={wf.dirty && !wf.loading ? wf.draftQuery : null}
+                  generation={wf.generation}
+                  selection={wf.selection}
+                  catalogueOf={catalogueOf}
+                  left={{
+                    key: sampleKey,
+                    sample,
+                    answered: galaxy.answered ? galaxy.next : null,
+                    meta,
+                    set: filterSet,
+                    exposure,
+                    template: wf.template,
+                    view: leftView,
+                  }}
+                  physicsOnly={physicsOnly}
+                  onPhysicsOnly={setPhysicsOnly}
+                  mode={leftMode}
+                  fields={PAINT_CHOICES}
+                  field={field}
+                  onField={setField}
+                  preset={preset}
+                  onPreset={setPreset}
+                  camera={drawnCamera.current}
+                  link={link}
                 />
               )}
               {editing && (
