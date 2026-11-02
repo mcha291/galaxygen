@@ -440,9 +440,9 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # miss 1 by 1.07e-6 now, as the Milky Way's did by its lanes. S60 fourth pass: were 1.222e-2, 5.023e-3,
     # 9.82e-6 and `< 5e-13`.
     # S62 (D221): were {"milky_way": 1.200e-2, ...} and {"milky_way": 9.774e-6, ...} - the law's, held above.
-    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.6167, "ngc_4414": 2.243e-3}[template], rel=0.02)
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.6558, "ngc_4414": 2.243e-3}[template], rel=0.02)  # S87 (#148): was 0.6167 - the clock
     sampled = float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max())
-    assert sampled == pytest.approx({"milky_way": 2.523e-3, "ngc_4414": 1.0655e-6}[template], rel=0.02)
+    assert sampled == pytest.approx({"milky_way": 2.394e-3, "ngc_4414": 1.0655e-6}[template], rel=0.02)  # S87 (#148): was 2.523e-3 - the clock
     # S58 (D217): the 36-cell centre samples read 1.257e-3 and 1.056e-3; with the lanes, and with `ngc_4414`'s
     # inner rings untapered, 2.53e-2 and 7.26e-3 - the cells' means are 1 to 5e-14 as before.
     # S59 (D218): were 2.529e-2 and 7.263e-3 - the centre samples of rings the segments have turned (the Milky
@@ -454,7 +454,7 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     centre = coarse_gp.contrast(coarse.grid.R, coarse.grid.phi)
     # S60 fourth pass: were 2.960e-2 and 4.913e-3.
     # S62 (D221): the Milky Way's was 2.791e-2, the law's still (held after this one).
-    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.534e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)
+    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.469e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)  # S87 (#148): was 2.534e-2 - the clock
     centre = unspurred(coarse_gp).contrast(coarse.grid.R, coarse.grid.phi)
     assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.791e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)
 
@@ -1180,7 +1180,7 @@ def test_the_law_s_three_rings_as_measured(prod):
     # S60 fourth pass: was (5.366, 0.4738) - the pieces' response meets the lane: (5.320, 0.6815).
     # S62 (D221): was (5.320, 0.6815) - a spur's foot on the ridge at 4 kpc lifts the crest; the law's own, without
     # the spurs, is the number it was.
-    assert float(published[i].max()) == pytest.approx(5.910, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6783, abs=1e-3)
+    assert float(published[i].max()) == pytest.approx(6.011, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6783, abs=1e-3)  # S87 (#148): was 5.910 - the clock
     law = unspurred(gp).cell_means(R[i : i + 1], o.grid["phi"].edges)[0]
     assert float(law.max()) == pytest.approx(5.320, abs=2e-3) and float(law.min()) == pytest.approx(0.6815, abs=1e-3)
 
@@ -1643,7 +1643,7 @@ def test_the_gate_s_predictions_as_measured(prod):
     )
     # S62 (D221): the published field's (crest, trough) with the spurs, where they move it (beyond 10 kpc no spur
     # reaches the ring: <S> under 2e-9).
-    SPURRED = {4.0125: (5.9102, 0.67833), 5.9625: (2.4148, 0.46399), 7.9875: (1.4516, 0.64389)}
+    SPURRED = {4.0125: (6.0110, 0.67833), 5.9625: (2.1218, 0.46399), 7.9875: (1.4516, 0.64389)}  # S87 (#148): the crests were 5.9102 and 2.4148 - the clock (the spurs read the gas column)
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
         assert float(R[i]) == pytest.approx(radius, abs=1e-9)
@@ -2005,7 +2005,7 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     # S59 (D218): was 1.198e-2 - on a ring the winding's segments have turned, inside the bar's reach (3.79 kpc).
     # S62 (D221): was 1.222e-2 - a spur, narrower than a cell, puts a cell's mean 0.665 from its centre; the law's own,
     # without the spurs, reads 1.198e-2, held to the old pin.
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.6651, rel=0.02)  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.5781, rel=0.02)  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
     law = unspurred(gp)
     assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.222e-2, rel=0.02)
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
@@ -2063,7 +2063,9 @@ def test_a_point_reads_its_two_rings_carried_to_its_radius_and_its_own_bar_term(
     # (S60: was `abs=1e-12` of the plain interpolant sampled at ten points a cell; the carried map has kinks at its
     # anchors, and a midpoint sum over them is the exact mean to a few 1e-9 - the exact mean itself is held to
     # 1e-12 by the sector means, `test_the_sector_means_are_the_exact_means_of_the_point_function`.)
-    dense = (np.arange(14400) + 0.5) * (2.0 * math.pi / 14400)
+    # S87 (#148): was 14400 points - the clock moved the spurs (they read the gas column) until at 6.511 kpc the 14400-point midpoint sum read
+    # 1 + 6.3e-8 (1 + 3.2e-10 at 144000, the sector means 1 to 2e-15): a finer instrument, the bound unmoved.
+    dense = (np.arange(144000) + 0.5) * (2.0 * math.pi / 144000)
     for radius in (2.03, 6.511, 8.3, 11.99, 99.0):
         ring = gp.contrast_at(np.full_like(dense, radius), dense)
         assert float(ring.mean()) == pytest.approx(1.0, abs=1e-8) and ring.min() > 0.0
@@ -2122,10 +2124,10 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # S60 fourth pass: was (2.73831, 0.024599).
     # S62 (D221): was (1.36161, 0.80241) - a spur's foot on the ridge at R0 lifts the crest (the ring's spurs' mean
     # <S> takes the trough down by its share).
-    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((1.87998, 0.80108), abs=2e-5)
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((1.76292, 0.80136), abs=2e-5)  # S87 (#148): was 0.80108, 1.87998 - the clock
     # S57 (D216): was 1.603 at R0 and 1.194 by gas mass. S57 (D216 G3): was 1.3443 and 1.1157 on the centre samples.
     # S60 fourth pass: was 1.34398.
-    assert float((g[i] ** 2).mean()) == pytest.approx(1.02810, abs=2e-5)  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
+    assert float((g[i] ** 2).mean()) == pytest.approx(1.02757, abs=2e-5)  # S87 (#148): was 1.02810 - the clock  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
     weight = np.asarray(F["gas_surface_density"]) * R
     # S58 (D217): was 1.11562. The lanes: inside the bar the gas is thinned to four tenths of the ring's mean off two
     # narrow lanes at seven times it, so a process quadratic in the gas gains there - 1.312 over the disc by gas mass.
@@ -2133,7 +2135,7 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # mean square of their sum moves with it: 1.31031.
     # S59 (D218 follow-up): was 1.31031.
     # S60 fourth pass: was 1.31098.
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.21081, abs=2e-5)  # S62 (D221): was 1.21063, the spurs
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.21204, abs=2e-5)  # S87 (#148): was 1.21081 - the clock  # S62 (D221): was 1.21063, the spurs
 
 
 # --- what the stage reads, where it sits ---------------------------------------------------------------------
