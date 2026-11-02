@@ -1,0 +1,71 @@
+/* The design system's Switch (components/forms/Switch.jsx): a 30 x 16 px track, round (with the status dot, the
+   system's only round element), magenta-4 with a magenta-1 knob at the right when on, the inset and an ink-4 knob
+   at the left when off. */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  cursor: pointer;
+}
+
+.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* The native box, kept for the keyboard and the reader: hidden, never removed. */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.track {
+  display: flex;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 30px;
+  height: 16px;
+  padding: 2px;
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-full);
+  background: var(--surface-inset);
+  transition: var(--transition-control);
+}
+
+.switch:hover .track {
+  border-color: var(--border-strong);
+}
+
+.on,
+.switch:hover .on {
+  justify-content: flex-end;
+  border-color: var(--magenta-3);
+  background: var(--magenta-4);
+}
+
+.input:focus-visible + .track {
+  box-shadow: var(--shadow-focus);
+}
+
+.knob {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--ink-4);
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.on .knob {
+  background: var(--magenta-1);
+}
+
+.label {
+  font-size: var(--size-sm);
+  color: var(--text-primary);
+}
