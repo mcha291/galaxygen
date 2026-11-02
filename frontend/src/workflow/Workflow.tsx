@@ -1,7 +1,11 @@
 import { ChevronDown, ChevronRight, Eye, Plus, RotateCcw, Shuffle, X } from "lucide-react";
 import { useId, useState } from "react";
 
+import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
+import { IconButton } from "../ui/IconButton";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
 import { MergerTimeline } from "./MergerTimeline";
 import { type InputDecl, type MergerEvent, SLIDER_STEPS, formatNumber, fromSlider, isLog, toSlider } from "./logic";
 import { pinWords } from "./templates";
@@ -69,9 +73,9 @@ export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = nu
       <div className={styles.heading}>
         <span>Edit galaxy · {state.cat.checkpoints.length} groups</span>
         {onClose && (
-          <button type="button" className={styles.close} aria-label="Close the edit panel" onClick={onClose}>
-            <X />
-          </button>
+          <IconButton label="Close the edit panel" size="sm" onClick={onClose}>
+            <X aria-hidden />
+          </IconButton>
         )}
       </div>
 
@@ -94,14 +98,7 @@ export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = nu
         {/* The model is an input of the draft (F8): chosen here, generated with the rest; the header names only the
             model of the galaxy on screen. */}
         {wf.models.length > 1 && (
-          <div className={styles.models} role="group" aria-label="Model">
-            <span className={styles.pinsHead}>Model</span>
-            {wf.models.map((m) => (
-              <button key={m} type="button" className={styles.look} aria-pressed={m === wf.model} onClick={() => wf.setModel(m)}>
-                {m}
-              </button>
-            ))}
-          </div>
+          <Select label="Model" size="sm" mono className={styles.models} options={wf.models} value={wf.model} onChange={(e) => wf.setModel(e.target.value)} />
         )}
         <p className={styles.state} data-dirty={wf.dirty || undefined} role="status">
           {wf.loading
@@ -139,13 +136,17 @@ export function WorkflowPanel({ wf, tMax = 13.8, className, fields, viewing = nu
         return (
           <section key={cp.n} className={styles.group} data-dirty={dirty || undefined} data-viewing={viewing === cp.n || undefined} aria-label={cp.name}>
             <div className={styles.head}>
-              <button type="button" className={styles.fold} aria-expanded={open} aria-label={`${open ? "Fold" : "Open"} ${cp.name}`} onClick={() => fold(cp.n)}>
-                {open ? <ChevronDown /> : <ChevronRight />}
-              </button>
+              <IconButton label={`${open ? "Fold" : "Open"} ${cp.name}`} size="sm" aria-expanded={open} onClick={() => fold(cp.n)}>
+                {open ? <ChevronDown aria-hidden /> : <ChevronRight aria-hidden />}
+              </IconButton>
               <div className={styles.title}>
                 <div className={styles.titleRow}>
                   <span className={styles.name}>{cp.name}</span>
-                  {dirty && <span className={styles.badge} data-tone="caution" title="An input here differs from the galaxy on screen">changed</span>}
+                  {dirty && (
+                    <Badge tone="caution" title="An input here differs from the galaxy on screen">
+                      changed
+                    </Badge>
+                  )}
                   {onView && (
                     <button
                       type="button"
@@ -292,13 +293,13 @@ function MergerList({ decl, events, wf, tMax }: { decl: InputDecl; events: Merge
         <tbody>
           {events.map((e, i) => (
             <tr key={i} title={e.about} aria-selected={i === selected} onFocus={() => setSelected(i)}>
-              <td><input type="number" min={0} step={0.1} value={e.time} aria-label={`Event ${i + 1} time`} onChange={(x) => update(i, "time", x.target.value)} /></td>
-              <td><input type="number" min={0.001} max={1} step={0.01} value={e.mass_ratio} aria-label={`Event ${i + 1} mass ratio`} onChange={(x) => update(i, "mass_ratio", x.target.value)} /></td>
-              <td><input type="number" min={0} max={1} step={0.01} value={e.gas_fraction} aria-label={`Event ${i + 1} gas fraction`} onChange={(x) => update(i, "gas_fraction", x.target.value)} /></td>
+              <td><Input size="sm" mono className={styles.eventField} type="number" min={0} step={0.1} value={e.time} aria-label={`Event ${i + 1} time`} onChange={(x) => update(i, "time", x.target.value)} /></td>
+              <td><Input size="sm" mono className={styles.eventField} type="number" min={0.001} max={1} step={0.01} value={e.mass_ratio} aria-label={`Event ${i + 1} mass ratio`} onChange={(x) => update(i, "mass_ratio", x.target.value)} /></td>
+              <td><Input size="sm" mono className={styles.eventField} type="number" min={0} max={1} step={0.01} value={e.gas_fraction} aria-label={`Event ${i + 1} gas fraction`} onChange={(x) => update(i, "gas_fraction", x.target.value)} /></td>
               <td>
-                <button type="button" className={styles.remove} aria-label={`Remove event ${i + 1}`} onClick={() => remove(i)}>
-                  <X />
-                </button>
+                <IconButton label={`Remove event ${i + 1}`} size="sm" onClick={() => remove(i)}>
+                  <X aria-hidden />
+                </IconButton>
               </td>
             </tr>
           ))}

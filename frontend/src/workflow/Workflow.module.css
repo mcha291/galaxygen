@@ -69,41 +69,6 @@
   text-wrap: pretty;
 }
 
-/* The design system's Badge: 18 px, mono label, hairline, tinted by tone. */
-.badge {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  height: 18px;
-  padding: 0 var(--space-3);
-  border: var(--hair) solid var(--border-hair);
-  border-radius: var(--radius-xs);
-  background: var(--surface-2);
-  font: var(--text-label);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--text-muted);
-}
-
-.badge[data-tone="nominal"] {
-  border-color: var(--aqua-5);
-  background: var(--status-nominal-bg);
-  color: var(--aqua-2);
-}
-
-.badge[data-tone="caution"] {
-  border-color: var(--amber-5);
-  background: var(--status-caution-bg);
-  color: var(--amber-2);
-}
-
-.badge[data-tone="accent"] {
-  border-color: var(--magenta-5);
-  background: var(--surface-selected);
-  color: var(--magenta-2);
-}
-
 .stages {
   margin-top: 3px;
   font: 400 10.5px / 1.5 var(--font-mono);
@@ -244,7 +209,8 @@
   padding: var(--space-1);
 }
 
-.events tr[aria-selected="true"] input {
+/* The event chosen on the timeline: its fields' frames (the design system's Input, T17) take the magenta hairline. */
+.events tr[aria-selected="true"] .eventField > div {
   border-color: var(--magenta-3);
 }
 
@@ -252,70 +218,12 @@
   width: calc(var(--control-sm) + var(--space-2));
 }
 
-.events input {
-  width: 100%;
-  min-width: 0;
-  height: var(--control-sm);
+/* The fields' own sm padding is a step narrower here: three numbers share the drawer's width. */
+.eventField > div {
   padding: 0 var(--space-2);
-  border: var(--hair) solid var(--border-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-inset);
-  color: var(--text-primary);
-  font: var(--text-data);
-}
-
-.remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--control-sm);
-  height: var(--control-sm);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.remove:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-.remove svg {
-  width: var(--size-sm);
-  height: var(--size-sm);
 }
 
 /* --- V9: the bar, the pins, the groups ------------------------------------------- */
-
-.close,
-.fold {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.close:hover,
-.fold:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-.close svg,
-.fold svg {
-  width: 13px;
-  height: 13px;
-}
 
 /* Generate and Reset, and what differs from the galaxy on screen: held at the top while the groups scroll. */
 .bar {
@@ -414,15 +322,8 @@
   font-size: 10.5px;
 }
 
-/* The draft's model, beside the line that says what differs from the galaxy on screen. */
+/* The draft's model (the design system's Select, T17), above the line that says what differs from the galaxy on
+   screen. */
 .models {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.models .pinsHead {
-  margin: 0 2px 0 0;
+  margin-top: var(--space-3);
 }
