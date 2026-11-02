@@ -4433,6 +4433,17 @@ never been judged in twenty-three sessions.
    of galaxies with both measured has been read into the repository. Still carried; S87's reading list: Yu & Ho 2019's
    sample (pitch with Γ, their §4.3), to re-read the intercept, the slope and the 6° scatter at their own
    definitions and place NGC 4414's 28.9° in that distribution.
+   *S87 (M1):* **read: YH19's pitch–shear table is not in the repository, but the samples' pitch is, and it moves
+   the question.** `READING_ARM_SEGMENTS.md` Part C (a re-reading; no web access). The law's intercept, 13.0° at
+   Γ = 1, is `[recall]` (the Milky Way's arms) and sits 5–7° under every sample's mean pitch the readers hold — H17's
+   6 222 galaxies 18.6–19.4° (16th / 84th percentiles 12.2 / 26.1°), DG19's 3.6 µm means 17.8–21.3° for T 2–10
+   (19.7 ± 0.4° at T 4–6) — while its 6° scatter matches the samples' (H17's half-width 6.95°, YH19's ~7° at fixed
+   type). NGC 4414 (Sc, t = 5.2) at 28.9° is above H17's 84th percentile, **1.4σ** from H17's mean and **1.3σ**
+   from DG19's T 4–6 mean at 7° — against **2.65σ** from the law's mean: most of the miss is the intercept, not
+   the galaxy. The shear term (the slope −8, no source tag) is not re-read: no reader prints pitch against Γ. No
+   model change (the closer needs galaxies with both measured); the intercept's `[recall]` against the samples'
+   means is **put to the gate** as a finding on the law (#138's, with the owner). Still carried; the owner's reading
+   YH19 §4.3.
 154. **The grid's table of star formation is the law at a cell's mean contrast, and the viewer reads grid fields
    at a fixed azimuth between rings** (S59, D218's second and third follow-ups). The censuses now read the star
    formation law at a point (`systems.Modulation`: the law on each ring's own contrast as the point sees it, the
