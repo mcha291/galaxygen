@@ -28,11 +28,17 @@ export interface PsfAnswer {
   ms: number;
 }
 
-/** Builds the table (hstPsf.ts psfTable, with the pupil's image as its density where the spikes are on). */
+/**
+ * Builds the table (hstPsf.ts psfTable, with the pupil's image as its density where the spikes are on). A segmented
+ * primary (S83, T11: JWST's hexagonal-18) has no closed form: its table is the pupil's image either way - the
+ * segments alone with the switch off (their own six spikes, as the annulus alone is the obscured Airy), the segments and
+ * the struts with it on - the same transform; a circular aperture with the switch off is the obscured Airy, as before.
+ */
 export function psfJob(request: PsfRequest): PsfTable {
   const { optics, pivots, spikes, cells, fft } = request;
+  const imaged = spikes || optics.aperture === "hexagonal-18";
   // The image is a local: once the table is built nothing holds it, and it is collected.
-  const density = spikes ? (fft ? imageDensity(pupilImage(optics, true, fft.n, fft.m), fft.n, fft.m) : imageDensity(pupilImage(optics))) : undefined;
+  const density = imaged ? (fft ? imageDensity(pupilImage(optics, spikes, fft.n, fft.m), fft.n, fft.m) : imageDensity(pupilImage(optics, spikes))) : undefined;
   return psfTable(optics, { pivots, density, cells });
 }
 

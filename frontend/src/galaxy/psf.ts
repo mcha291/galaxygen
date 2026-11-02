@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { CanvasTexture, DataTexture, FloatType, LinearFilter, NearestFilter, RGBAFormat, SRGBColorSpace, type Texture } from "three";
 
 import type { FilterSet } from "./filters";
-import type { Optics, PsfTable } from "./hstPsf";
+import { type InstrumentFields, type Optics, type PsfTable, opticsOf } from "./hstPsf";
 import { askPsfTable } from "./psfTableClient";
 import type { PsfRequest } from "./psfTableJob";
 import { psfProfile } from "./sprite";
@@ -147,6 +147,21 @@ export function instrumentPsf(set: FilterSet): SpritePsf | null {
 export function instrumentOfSet(set: FilterSet | null | undefined): string | null {
   const svo = set?.psf?.kind === "airy" ? set.sources?.[0]?.svo : undefined;
   return svo ? svo.slice(0, svo.lastIndexOf(".")) : null;
+}
+
+/**
+ * The optics a point is drawn with, for a template's instrument, the instrument's own set and the set in view (S67, D227
+ * R1; S83, T11), or null for the display sprite (R2). The view's set the instrument's own (the same SVO family): the
+ * template's numbers, any it does not read taken from the set's own optics where it carries them. Another set that
+ * carries its own optics (JWST's NIRCam, which no template names): the set's telescope and detector at the template's
+ * distance - the template's other numbers are another telescope's. Neither: null.
+ */
+export function viewOptics(instrument: InstrumentFields | null | undefined, ownSet: FilterSet | null | undefined, viewSet: FilterSet): Optics | null {
+  if (!instrument) return null;
+  const own = instrumentOfSet(ownSet);
+  if (own && own === instrumentOfSet(viewSet)) return opticsOf(instrument, viewSet.optics ?? null);
+  if (viewSet.optics) return opticsOf({ distance_mpc: instrument.distance_mpc, pixel_scale_arcsec: null }, viewSet.optics);
+  return null;
 }
 
 /**

@@ -5,6 +5,7 @@
 
 import data from "./filters.json" with { type: "json" };
 import instruments from "./instruments.json" with { type: "json" };
+import type { SetOptics } from "./hstPsf";
 
 /**
  * One filter's transmission, as the model's spectrum function takes it (stages/spectra.py). Å; air unless the
@@ -23,12 +24,19 @@ export interface FilterSet {
   curves: Curve[];
   /** A named instrument's point spread function (S42): the stars' sprite while its set is shown. */
   psf?: { kind: "airy"; about: string };
+  /**
+   * A set's own telescope and detector (S83, T11), where no template's instrument names them (JWST's): drawn as the
+   * physical PSF at any template with a distance (hstPsf.ts opticsOf, psf.ts viewOptics). Absent for HST's sets, whose
+   * optics are NGC 4414's template's.
+   */
+  optics?: SetOptics & { about: string };
   /** Where a named instrument's curves came from, per filter (instruments.json, tools/fetch_filters.py). */
   sources?: { filter: string; svo: string; pivot: number; fwhm: number; resample_error: number }[];
 }
 
-// The named instruments (S42) come after the stand-ins: measured curves from the SVO Filter Profile Service.
-export type FilterSetName = "rgb" | "sho" | "hoo" | "wfc3" | "wfc3n";
+// The named instruments (S42) come after the stand-ins: measured curves from the SVO Filter Profile Service. JWST's
+// NIRCam since S83 (T11).
+export type FilterSetName = "rgb" | "sho" | "hoo" | "wfc3" | "wfc3n" | "jwst_nircam";
 
 /** The sets the selector offers, in its order. */
 export const FILTER_SETS = { ...data.sets, ...instruments.sets } as Record<FilterSetName, FilterSet>;
