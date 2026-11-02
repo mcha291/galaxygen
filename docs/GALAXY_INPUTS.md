@@ -2973,6 +2973,19 @@ never been judged in twenty-three sessions.
    this entry made, that it does not enter the bar's length (`bar_half_length` = `BAR_LENGTH_RATIO` × R_d,
    `pattern.py:801`; #21). Still carried, with its closer as written. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — a sourced bar-length relation against a stated scale length is the bar's reading (`READING_BAR.md`), the batch's first constant.
+   *S86 (M1):* **the pre-committed reading fires, and the remedy is a ruling, put to the owner.** The relation the
+   closer asks for is read — log a = 0.04 (±0.02) + 0.76 (±0.06) log h, a the deprojected visual bar length and h the
+   3.6 µm disc scale length, both kpc, 367 S⁴G barred spirals `[verified: Erwin 2019, Table 3; READING_BAR.md A1.2]` —
+   and at the model's h = 2.605 kpc (λ_d's, the only length checkpoint 1 holds) it gives **a = 2.27 kpc**: row 15
+   (5.0 ± 0.2) out by **2.73**, not inside 4.8–5.2. By the entry's own words, "the miss is the ratio's and this debt
+   was the wrong reading": the Milky Way's bar is long for a disc of its scale length (E05's 0.6–1.4 h by type;
+   BHG16's 5.0 over 2.6 is 1.92), and `BAR_LENGTH_RATIO` 2.0 is a fit to the one galaxy the row reads, recalled. Two
+   remedies, each the owner's because each changes what row 15 tests: (i) keep 2.0 and declare it a Milky Way fit
+   (row 15 then checks R_d against BHG16's 2.6 — #21 — and nothing about bars); (ii) build Erwin's relation as the law
+   (2.27 kpc at the defaults, every barred galaxy's body, lanes, corotation and pattern speed with it — rows 16–17
+   move) and pin the Milky Way template's measured bar, 5.0 kpc (BHG16), as A5 allows a template's measurement to
+   replace the law — which makes the template no longer the bare defaults (A5's first sentence) and row 15 a
+   restatement of the pin. Not built at S86; asked at S87's open. Still carried.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
