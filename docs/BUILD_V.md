@@ -2,8 +2,8 @@
 
 **Status: ADOPTED 2026-11-02 at S82 (D248; the owner's word "adopt the plan"), as drafted at S81's open on the owner's
 word ("redesign the plan for the remaining work to try to get as much done as possible"; "there's ample usage remaining
-for the next two days").** Its §6 ruling 1 is taken by the adoption; rulings 2–6 stand as recommendations until the
-owner takes them (S84 needs ruling 2, S86 ruling 4). S81 (the viewer batch of D246) was its first row, closed on D247.
+for the next two days").** Its §6 ruling 1 is taken by the adoption and **rulings 2–6 by the owner's word of 2026-11-02
+("Yes, all five", D252), each as recommended**; S84 runs on ruling 2, S86 on ruling 4. S81 (the viewer batch of D246) was its first row, closed on D247.
 Everything here is `[inferred]` design unless tagged; the register's items are named by their numbers in
 `GALAXY_INPUTS.md`, the viewer tasks by `VIEWER_TASKS.md`'s rows.
 
@@ -35,7 +35,7 @@ the local full suite runs on the owner's word, asked once per model batch; CI's 
 | 81 | S81 | V-1 | **The landing's last tenths**: #208 (b) the mesh off the main thread; the blackbody table a fifth head-start load; T14's sub-sample cut while the camera moves, the counts as tuning sliders | Fable; one Opus builder | fast gates; the probe quiet; frames byte for byte |
 | 82 | S82 | V-2 | **S68's viewer debts and the zoom's seams**: #186 the merger ranges on the wire, #187 the swap's dependent loaders, #188 the landing keeps the old field, #190 the drawer and the caption, #172 the zoomed view as one picture, #178 the clamped instrument box; #189 the reference client's generate (or its retirement, ruling 2 of BUILD_IV) | Fable; two Opus builders on disjoint files (the loaders / the view) | fast gates; the walk's request set; frames byte for byte except where #172 and #178 change them knowingly, regenerated with the reason |
 | 83 | S83 | V-3 | **Robustness and comparison**: T13 the renderer survives a lost WebGL context; T16 (i) two seeds / sets side by side and (ii) a picture file beside the frame at a stated band and scale; T11 "as JWST" (NIRCam's curves, a hexagonal PSF; the download accepted 2026-11-02) | Fable; two Opus builders | fast gates; frames byte for byte |
-| 84 | S84 | V-4 | **T17, the design system as designed** — on the structure ruled in §6 | Opus lead, Fable at the close | fast gates; the picture test re-captured knowingly |
+| 84 | S84 | V-4 | **T17, the design system as designed** — the tabs kept as they stand since V9, the mockup's components ported onto them (ruling 2, D252) | Opus lead, Fable at the close | fast gates; the picture test re-captured knowingly |
 | 85 | S85 | R | **The register pass**: the 124 carried items each ruled permanent (with the reason written in, B5) or assigned to batch M1 / M2 / M3 below; the viewer's remaining items confirmed done or carried; `RESEARCH_AREAS.md` read beside the arms' items | Fable alone (judgement) | docs and register tests; the count pin moved once |
 | 86–88 | S86–S88 | M1 | **The arms and the bar** (the pin lifted for the batch): #142 the finite-thickness reduction of the forcing with #209's floor by it; #138–#139 the arm-number law and the phases; #141, #143, #144; the bar's #145–#149; the pieces' #152–#157; `READING_ARM_*.md` the readers | Opus lead per session, Fable at the gates; two Opus builders on disjoint stages | subset mid-session; **the full suite once at S88's close, the owner's run**; the frames regenerated with the reason; the goal pictures beside |
 | 89–90 | S89–S90 | M2 | **The clouds, the dust and the gas**: #128 the heating's placement applied; #167–#169, #180–#182 the clouds' law, layer and slab; #202 the diffuse share's step; #197 the stars' and remnants' ring draws; #158–#165 the censuses' and spurs' debts | Opus lead, Fable at the gates; two Opus builders | subset mid-session; **one full suite at S90's close**; frames regenerated |
@@ -50,10 +50,10 @@ pass's to settle (S85): a batch takes what S85 rules a defect, in the order abov
 
 Every carried item ruled, none unruled. **Permanent** (22 more, 33 in all): #3, #11, #19, #26, #27, #28, #33, #39, #42, #43, #47, #49, #52, #70, #87, #90, #93, #99, #132, #133, #134, #195 — the frozen
 history's (the owner's ruling 7), the fit the owner kept (D215), a row no ruling owes, an instrument no row reads, a scope.
-**Discharged on evidence** (5): #191, #192, #193, #194, #196 — entered at S70 and never struck. **M1, the arms and the bar** (25):
+**Discharged on evidence** (5): #191, #192, #193, #194, #196 — entered at S70 and never struck. **Discharged by ruling** (1): #189 — ruling 3 taken, D252. **M1, the arms and the bar** (25):
 #80, #81, #129, #130, #131, #138, #139, #141, #142, #143, #144, #145, #146, #147, #148, #149, #152, #153, #154, #155, #156, #157, #186, #198, #209. **M2, the clouds, the dust and the gas** (25): #82, #91, #92, #94, #95, #109, #110, #128, #136, #158, #159, #160, #161, #162, #163, #164, #165, #167, #168, #169, #180, #181, #182, #197, #202. **M3, the populations and the ionized gas**
 (29): #83, #84, #85, #86, #88, #89, #96, #97, #98, #100, #101, #102, #103, #113, #114, #115, #117, #118, #119, #124, #125, #127, #135, #166, #171, #174, #175, #176, #184. **The viewer's** (5, a viewer pass with S84 or on the owner's word): #111, #170, #177, #183, #185.
-**The owner's word** (8): #107, #179, #189, #203, #204, #205, #210, #211. **Audit VI** (1): #173.
+**The owner's word** (7): #107, #179, #203, #204, #205, #210, #211 (#189 was the eighth until ruling 3, D252). **Audit VI** (1): #173.
 
 ## 3. Parallelism and pacing
 
@@ -84,7 +84,7 @@ names, and — for a model row — the stage's tests. Nothing else by default (G
   once per batch — one model image and pin at the next deploy.
 - The register's count pin (`tests/test_audit.py`) and its carried-row literal move with every entry, as before.
 
-## 6. Rulings needed from the owner
+## 6. Rulings from the owner — all six taken (1 at the adoption, D248; 2–6 on 2026-11-02, D252, each as recommended)
 
 | # | Question | Recommendation |
 |---|---|---|

@@ -710,10 +710,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S81 | **208** (the landing's last tenths: the head start and the shader checks at S80, the mesh's Worker at S81, (d) by ruling, (e) by measurement — D244, D246, D247) | 1 |
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
+| **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 189, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 93 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 92 |
 
-So the board's **126 open** is 33 permanent and 93 carried, and no item is unruled (S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **125 open** is 33 permanent and 92 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -4612,11 +4613,14 @@ never been judged in twenty-three sessions.
    with its own template's display tuning (`drawnTuning`, `LOAD_TUNING_KEYS`); seven cases; live, warm, Milky Way ->
    NGC 4414: ~420 ms of bare stars -> the old picture under the landing line until the swap (~270 ms), the same six
    requests. *Disclosed:* ~210 ms of blank frames while the remade canvas compiles (the remount, #208 (d) as ruled).
-189. **The reference client's generate is not whole** (S68, D232). `interface/app.js` shows "drawing…" instead of
+189. ~~**The reference client's generate is not whole**~~ (S68, D232). `interface/app.js` shows "drawing…" instead of
    the previous picture when a Generate lands while a group's load is in flight, and its merger list is still not
    editable (as before V9). **Carried.** What closes it: the held answer its `shown` query already allows; an events
    editor in the reference client.
    *S85 register pass (D251):* **the owner's word** — BUILD_V ruling 3 (retire the reference client's generate to a route demonstration): the owner's word.
+   **DISCHARGED at S84 (D252), by ruling:** BUILD_V §6 ruling 3 taken as recommended on 2026-11-02 — the reference client
+   is retired to a plain demonstration of the routes (BUILD_IV §7 ruling 2 (a), RULES D1 as amended at D232); its held
+   picture and its merger editor are not to be finished, and `tests/test_viewer.py` pins what it is.
 190. ~~**The edit drawer covers the Galaxy view's regime caption**~~ (S68, D232). While the panel is open at the right
    of the Galaxy view, the top-right caption (the regime and the window) sits under it. **DISCHARGED at S82 (D249).**
    The caption moves left of the drawer while it is open (`drawerLayout.ts regimePlace`: `besideDrawer`, or

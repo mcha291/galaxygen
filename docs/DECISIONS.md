@@ -16191,3 +16191,32 @@ S84 waits on a ruling and the pass waits on nothing; BUILD_V's rule 2 is kept (n
 rows 86–92 keep their named membership and gain the pass's additions as §2a; a batch's lead reads §2a as the list.
 
 **The register.** 126 open = 33 permanent + 93 carried, 68 discharged. Next number #212.
+
+
+### D252. The owner's word of 2026-11-02 ("Yes, all five"): BUILD_V §6 rulings 2–6 taken as recommended — the tabs kept and the mockup's components ported (S84), the reference client retired (#189 discharged), the pin lifted per batch (S86–S88), Audit VI at the end, the deploy whenever
+
+**The word.** Asked at S85's close for BUILD_V's five open rulings (§6, rows 2–6, each with the lead's recommendation),
+the owner answered "Yes, all five" on 2026-11-02. Each recommendation is now the ruling, recorded here as S84's first
+commit on `session-84` (cut from `main` at 894e19b, S85's close; "rulings first, as the first commit", as S44 ran).
+
+**The rulings.** (2) **T17's structure: keep the tabs as they stand since V9** — Science / Galaxy with the edit panel
+as the Galaxy view's drawer and the Science tab's rail — **and port the mockup's components onto them**; the design's
+Workflow / Galaxy / System / Science structure is not built. S84 (BUILD_V row 84) builds it: the `_ds` design system's
+20 unported components (`docs/design/_ds/…/_ds_manifest.json`: Badge, Card, Dialog, IconButton, Tabs, Tag, Tooltip,
+DataTable, Meter, Readout, StarIcon and its tables, StatusDot, Checkbox, Input, Select, Switch — `Button` is ported
+since S46) where the built panels have the same thing by hand, the tokens unchanged (byte-identical since the design,
+RENDER_PLAN_II §1c). (3) **#189: the reference client's generate is retired, not finished.** `interface/` is a plain
+demonstration of the routes (BUILD_IV §7 ruling 2 (a), RULES D1 as amended at D232) and `tests/test_viewer.py` pins
+what it is; the "drawing…" placeholder while a group's load is in flight and the uneditable merger list are the
+retired client's and no row finishes them. **#189 is discharged by this ruling** (the register 125 open = 33 permanent
++ 92 carried, 69 discharged; the count pin and the carried row move with it, D1's sentence in `RULES.md` already reads
+so). (4) **The pin is lifted per batch, not per item**: in M1 (S86–S88), M2 (S89–S90) and M3 (S91–S92) every change
+under `model/galaxy` is allowed, the hash moves once at each batch's close (D3 as amended at D235), the affected subset
+runs mid-session, and the full suite runs once per batch on the owner's run before the merge (D246). (5) **Audit VI at
+the end** (row 93): one Fable session reads what the three batches did, blind against their sources and the register,
+as Audit V read BUILD_III. (6) **The deploy falls wherever the owner takes it** (T19, the subscription when its cost
+suits); nothing in rows 82–93 waits on it, and the deployed probe (#204, #205, F5, S80's (a)) follows it.
+
+**What it unblocks.** S84 now, on ruling 2; S86 on ruling 4 after S84. The rulings still open are the owner's and no
+session's: #211 / T11 (the JWST set's pins, held on `s83-robust`), #210 (the zoom capture's session), the confirmations
+of S80's (a) and S81's Worker, the subscription. No number moved; nothing under `model/galaxy`; no capture moved.
