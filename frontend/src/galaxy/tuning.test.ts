@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { fieldFragment } from "./FieldVolume";
 import { NOISE_GLSL } from "./noise.glsl";
 import pinned from "./fieldFragment.s78.glsl?raw";
+import { beginLanding, endSwap, loads, swapState } from "../useLoad";
 import { WHITE_KELVIN } from "./filters";
 import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SLAB_PIECES, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
@@ -18,6 +19,9 @@ import {
   TEMPLATE_EXPOSURE,
   TEMPLATE_TUNING,
   TUNING_STORAGE_KEY,
+  LOAD_TUNING_KEYS,
+  drawnTuning,
+  heldTemplate,
   type Tuning,
   defaultsFor,
   exposureFor,
@@ -396,5 +400,52 @@ describe("the march's cut while the camera moves (S81, T14)", () => {
     saveTuning({ ...defaultsFor("milky_way"), subMoving: 4, settleMs: 350 }, storage, "milky_way");
     expect(loadTuning(storage, "milky_way")).toMatchObject({ subMoving: 4, settleMs: 350 });
     expect(JSON.parse(kept.get(storageKeyFor("milky_way"))!)).toEqual({ subMoving: 4, settleMs: 350 });
+  });
+});
+
+// S82 (#188's follow-up): during a landing's hold the previous picture is drawn with its own template's display tuning,
+// while every value that keys a load is the new template's, so the landing's loads go out as without the hold; after the
+// swap's publish both are the new template's. Driven as GalaxyTab drives it: App's drawn camera stays the previous
+// landing's while the store's swap is a landing's (heldTemplate), and the picture is drawn with drawnTuning.
+describe("the tuning a landing's hold draws with (S82, #188)", () => {
+  // The Milky Way on screen, NGC 4414 landed on; each template's stored choices differ in a load key too.
+  const milkyWay = { ...defaultsFor("milky_way"), whiteKelvin: 5800, knots: false };
+  const ngc = { ...defaultsFor("ngc_4414"), whiteKelvin: 7200, knots: true };
+  const DISPLAY = Object.keys(TUNING_DEFAULTS).filter((k) => !(LOAD_TUNING_KEYS as readonly string[]).includes(k)) as (keyof Tuning)[];
+
+  it("keeps the drawn template's look and the new template's load keys until the swap publishes", () => {
+    // The two templates' display defaults differ where the owner set them (TEMPLATE_TUNING): the hold must show it.
+    for (const k of ["fieldGain", "bloomStrength", "steps", "spikes", "cloudRaster"] as const) expect(milkyWay[k]).not.toEqual(ngc[k]);
+    const stars = {};
+    beginLanding(true); // NGC 4414 chosen over the Milky Way on screen
+    loads.wait(stars);
+    expect(swapState().landing).toBe(true);
+    // App's drawn camera: the previous landing's (selection 1, the Milky Way) while the landing's swap is on.
+    const drawn = swapState().landing ? { selection: 1, name: "milky_way" } : { selection: 2, name: "ngc_4414" };
+    const held = heldTemplate(drawn, { selection: 2, name: "ngc_4414" });
+    expect(held).toBe("milky_way");
+    const look = drawnTuning(ngc, held === "milky_way" ? milkyWay : null);
+    for (const k of DISPLAY) expect(look[k], `${k}: the drawn template's`).toEqual(milkyWay[k]);
+    for (const k of LOAD_TUNING_KEYS) expect(look[k], `${k}: the new template's`).toEqual(ngc[k]);
+    expect(look.whiteKelvin).toBe(7200); // the render, the blackbody, the clusters and the tiles asked at NGC 4414's white
+    // The swap publishes: the camera is the landing's own, nothing is held, everything is the new template's.
+    loads.answer(stars, () => undefined);
+    expect(swapState().swapping).toBe(false);
+    const after = swapState().landing ? { selection: 1, name: "milky_way" } : { selection: 2, name: "ngc_4414" };
+    expect(heldTemplate(after, { selection: 2, name: "ngc_4414" })).toBeNull();
+    expect(drawnTuning(ngc, null)).toBe(ngc); // the live tuning itself
+    endSwap();
+  });
+
+  it("holds nothing outside a landing or for the same template chosen again", () => {
+    expect(heldTemplate({ selection: 3, name: "milky_way" }, { selection: 3, name: "milky_way" })).toBeNull();
+    expect(heldTemplate({ selection: 3, name: "milky_way" }, { selection: 4, name: "milky_way" })).toBeNull();
+  });
+
+  it("names as load keys exactly the values a request's key or a loader's mounting reads", () => {
+    expect([...LOAD_TUNING_KEYS].sort()).toEqual(
+      ["cloudsExtinction", "compClouds", "compDust", "compGas", "compPoints", "compStars", "fieldFloor", "knots", "whiteKelvin"],
+    );
+    for (const k of LOAD_TUNING_KEYS) expect(k in TUNING_DEFAULTS).toBe(true);
   });
 });

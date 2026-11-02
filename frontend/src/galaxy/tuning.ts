@@ -627,3 +627,45 @@ function safeStorage(): Storage | null {
     return null;
   }
 }
+
+/**
+ * The tuning values that enter a request's key or decide which loaders are mounted (S82, #188's follow-up): the white
+ * point (the render's, the blackbody table's, the clusters' and the tiles' requests), the clouds as extinction and the
+ * clouds' markers (whether the whole disc's census is asked), the star points (the bright table, the tiles, the
+ * clusters), the knots (the clusters through the set in the field mode), the field's floor (which regime the zoom is
+ * in, so whether a region's stars and clusters are asked) and the star-first mode's three volume switches (whether its
+ * march, and so its render, is mounted). Every other value only changes how what has arrived is drawn.
+ */
+export const LOAD_TUNING_KEYS = [
+  "whiteKelvin",
+  "cloudsExtinction",
+  "compClouds",
+  "compPoints",
+  "knots",
+  "fieldFloor",
+  "compStars",
+  "compGas",
+  "compDust",
+] as const satisfies readonly (keyof Tuning)[];
+
+/**
+ * The tuning a picture is drawn with (S82, #188's follow-up). Outside a landing's hold (`held` null) the live tuning,
+ * the very object. During one, the template's whose picture is on screen (`held`, the drawn template's) for every
+ * value that only changes how it is drawn - so the previous picture keeps its own look - and the live template's for
+ * every value that keys a load (LOAD_TUNING_KEYS), so the landing's loads go out as they would without the hold.
+ */
+export function drawnTuning(live: Tuning, held: Tuning | null): Tuning {
+  if (held === null) return live;
+  const out: Tuning = { ...held };
+  for (const key of LOAD_TUNING_KEYS) (out as unknown as Record<string, unknown>)[key] = live[key];
+  return out;
+}
+
+/**
+ * Whose tuning the picture on screen keeps (S82, #188's follow-up): the drawn camera's template while a landing's hold
+ * keeps the previous landing's camera (App.tsx drawnCamera: its count differs from the live one) and that template is
+ * another; else null - nothing held, the live tuning drawn.
+ */
+export function heldTemplate(drawn: { selection: number; name: string | null }, live: { selection: number; name: string | null }): string | null {
+  return drawn.selection !== live.selection && drawn.name !== live.name ? drawn.name : null;
+}

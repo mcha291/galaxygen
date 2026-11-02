@@ -44,7 +44,7 @@ import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFram
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { type Tuning, defaultsFor, loadTuning, saveTuning } from "./tuning";
+import { type Tuning, defaultsFor, drawnTuning, heldTemplate, loadTuning, saveTuning } from "./tuning";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
 import styles from "./GalaxyTab.module.css";
@@ -284,15 +284,24 @@ export function GalaxyTab({
     setTuningState({ of: templateName, t });
     saveTuning(t, undefined, templateName);
   };
+  // During a landing's hold (S82, #188's follow-up) the previous picture is drawn as it was: every value that only changes
+  // how it is drawn is the drawn template's tuning (as stored for it), every value that keys a load the live template's
+  // (tuning.ts drawnTuning, LOAD_TUNING_KEYS), so the landing's loads go out as they would without the hold. Outside a
+  // hold `look` is `tuning` itself. The panel and the switches edit the live template's, as before.
+  const held = heldTemplate({ selection: drawn.selection, name: drawn.template?.name ?? null }, { selection, name: templateName });
+  const heldTuning = useMemo(() => (held !== null ? loadTuning(undefined, held) : null), [held]);
+  const look = drawnTuning(tuning, heldTuning);
   // A new step count re-marches the view (two uniforms since S78, T29) and a new white point asks the model again: both wait for the slider to settle.
-  const steps = useDebounced(tuning.steps, 300);
+  // During a hold the drawn template's steps, at once: it is the step count the picture on screen was marched with.
+  const liveSteps = useDebounced(tuning.steps, 300);
+  const steps = heldTuning ? heldTuning.steps : liveSteps;
   const whiteKelvin = useDebounced(tuning.whiteKelvin, 400);
-  const fieldTuning = { ...tuning, steps, whiteKelvin };
+  const fieldTuning = { ...look, steps, whiteKelvin };
   const marchStats = useRef<MarchStats>({ width: 0, height: 0, ms: 0 }).current;
   // The field mode's starlight by age (S63, D223): the parts the render carries, told by the field volume, and
   // their switches. Null until a render carries them: the stellar layer is then `stars`, whole, and no switch shows.
   const [ageParts, setAgeParts] = useState<AgePart[] | null>(null);
-  const pointGain = tuning.pointGain;
+  const pointGain = look.pointGain;
   // The filter set's blackbody table (S42, P6): stars and clusters are drawn through the same curves as the field.
   const blackbodyKey = JSON.stringify([filterSet, whiteKelvin]);
   const blackbodyTable = useLoad<BlackbodyTable>(blackbodyKey, (signal) => loadBlackbody(curvesOf(filterSet), whiteKelvin, signal)).value ?? null;
@@ -308,7 +317,7 @@ export function GalaxyTab({
     const own = ownSet ? instrumentOfSet(FILTER_SETS[ownSet]) : null;
     return own && own === instrumentOfSet(FILTER_SETS[filterSet]) ? opticsOf(template?.instrument) : null;
   }, [template, filterSet]);
-  const physical = useMemo(() => physicalPsf(FILTER_SETS[filterSet], optics, tuning.spikes), [optics, filterSet, tuning.spikes]);
+  const physical = useMemo(() => physicalPsf(FILTER_SETS[filterSet], optics, look.spikes), [optics, filterSet, look.spikes]);
   const [brightestSlider, setBrightestSlider] = useState(500);
   const brightestN = brightestOf(brightestSlider);
   // A column some models lack ([α/Fe] is the advanced chemistry's) offers no chip where the
@@ -530,23 +539,23 @@ export function GalaxyTab({
   const knotsShown = knotsDrawn && knotPoints ? knotPoints : null;
   // One gain for the field and the points (D208): the field's per L☉/pc², its gain and the exposure's stops; the
   // point gain stays a display multiplier on the points (D199).
-  const pointsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * pointGain;
+  const pointsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * pointGain;
   // The march's dust, handed up by the field volume for the segment to each point (T20): only as it acts.
   const [fieldDust, setFieldDust] = useState<PointDust | null>(null);
   // The extinction strength (S67, D228): the march's textures with every depth to a point at the slider; at 1 the same object.
-  const strength = tuning.extinctionStrength;
+  const strength = look.extinctionStrength;
   const scaledDust = useMemo(() => (fieldDust && strength !== 1 ? { ...fieldDust, depthScale: strength } : fieldDust), [fieldDust, strength]);
-  const pointDust = mode === "stars" && tuning.compDust && tuning.dustReading === "acts" ? scaledDust : null;
+  const pointDust = mode === "stars" && look.compDust && look.dustReading === "acts" ? scaledDust : null;
   // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
   const knotDust = mode === "field" ? scaledDust : null;
-  const knotsGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure * weights.field;
+  const knotsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * weights.field;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
   // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
   // the surface-brightness gate's per-ring reading of the points' draw. Since the fix pass (F3) also what FluxPoints
   // draws them with: their gain, the clusters' profile switch, and the instrument's table's grid where R1 applies - for
   // the GPU light check. It changes nothing drawn.
-  const clusterProfile = tuning.clusterRadius ? 1 : 0;
-  const starFieldGain = LIGHT_PER_LSUN_PC2 * tuning.fieldGain * 2 ** exposure;
+  const clusterProfile = look.clusterRadius ? 1 : 0;
+  const starFieldGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure;
   useEffect(() => {
     const holder = window as unknown as Record<string, unknown>;
     const value = {
@@ -587,8 +596,8 @@ export function GalaxyTab({
   const marchOn = mode === "stars" && marchWanted(tuning);
   const ramp = useMemo(() => dustRamp(meta), [meta]);
   const [dustPaint, setDustPaint] = useState<DustPaintShown | null>(null);
-  const marchLayers = brightestLayers(tuning, ramp);
-  const diagnostic = mode === "stars" && diagnosticOn(tuning);
+  const marchLayers = brightestLayers(look, ramp);
+  const diagnostic = mode === "stars" && diagnosticOn(look);
   // The whole disc's cloud census, loaded once per query (about 17 000 clouds), float32 (S64): cut to the footprint
   // here for the markers, and rasterised by the field's march into the clouds' layer of opacity (V6, "clouds as
   // extinction"). One request serves both.
@@ -600,11 +609,11 @@ export function GalaxyTab({
   const cloudPaint = useMemo(() => {
     if (!cloudCensus || !CLOUD_COLUMNS.every((k) => k in cloudCensus.columns)) return null;
     try {
-      return cloudColors(meta, cloudCensus.columns, tuning.cloudIntensity);
+      return cloudColors(meta, cloudCensus.columns, look.cloudIntensity);
     } catch {
       return null; // a census from a just-switched model, before its declarations
     }
-  }, [meta, cloudCensus, tuning.cloudIntensity]);
+  }, [meta, cloudCensus, look.cloudIntensity]);
   const cloudLayer = useMemo(() => {
     if (!cloudCensus || !cloudPaint || !seen) return null;
     const c = cloudCensus.columns as Record<string, ArrayLike<number>>;
@@ -676,7 +685,7 @@ export function GalaxyTab({
         hdr
         additive={field === PHOTOMETRIC}
         psf={spritePsf}
-        tuning={tuning}
+        tuning={look}
       >
         {mode === "field" && (
           <FieldVolume
@@ -689,8 +698,8 @@ export function GalaxyTab({
             hiiFade={area ? weights.stars : 0}
             tuning={fieldTuning}
             stats={marchStats}
-            layers={fieldLayers(tuning)}
-            ages={agesOf(tuning)}
+            layers={fieldLayers(look)}
+            ages={agesOf(look)}
             onAges={setAgeParts}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
@@ -701,7 +710,7 @@ export function GalaxyTab({
         )}
         {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
         {knotsShown && (
-          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} physical={physical} />
+          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} physical={physical} />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
             its starlight the remainder under the points' threshold (the whole of it while the points are off). */}
@@ -732,23 +741,23 @@ export function GalaxyTab({
             flux={clusterPoints.flux}
             gain={pointsGain}
             psf={spritePsf}
-            spriteSize={tuning.spriteSize}
+            spriteSize={look.spriteSize}
             dust={pointDust}
             extent={clusterPoints.extent}
-            profile={tuning.clusterRadius ? 1 : 0}
+            profile={look.clusterRadius ? 1 : 0}
             physical={physical}
           />
         )}
         {brightPoints && (
-          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={tuning.spriteSize} dust={pointDust} physical={physical} />
+          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} />
         )}
-        {mode === "stars" && tuning.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
+        {mode === "stars" && look.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
         {mode === "stars" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
           <CloudMarkers positions={cloudLayer.positions} sizes={cloudLayer.sizes} colors={cloudLayer.colors} />
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={tuning.extinctionStrength} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={look.extinctionStrength} />
         )}
       </GalaxyView>
       </div>
@@ -1073,7 +1082,7 @@ export function GalaxyTab({
         )}
         {mode === "field" && interiorNote && <p className={styles.muted}>{interiorNote}</p>}
         {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
-        {mode === "stars" && marchOn && tuning.compDust && tuning.dustReading === "where" && (
+        {mode === "stars" && marchOn && look.compDust && look.dustReading === "where" && (
           <p className={styles.muted}>
             {ramp
               ? `dust: ${ramp.field}'s declared ramp${ramp.coloured ? "" : " (grey)"}, ${ramp.scale}${
