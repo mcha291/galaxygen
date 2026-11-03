@@ -3595,6 +3595,16 @@ never been judged in twenty-three sessions.
    at the cloud vector's σ_s, its committed vectors the test, and the viewer's own lattice constants retired. No
    phase of BUILD_III or BUILD_IV now names it; the owner schedules it. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the region regime's noise constants are the clouds' interior, read at the σ–ℓ source.
+   *S89 (M2): read; the closer's constant is held and gives today's gain; the rest is a viewer pass.* The σ-ℓ relation
+   the Mach number's width rests on is in the model: `clouds.velocity_dispersion`, Heyer et al. 2009 eq. 10, σ_v ∝ R^½
+   at fixed Σ `[verified: model/galaxy/stages/clouds.py]`. A size-linewidth exponent of ½ is a velocity power spectrum
+   E(k) ∝ k^-2 (β = 2), and the closer's own rule w_k ∝ 2^(-kβ/2) then gives w_k ∝ 2^-k - **the gain 0.5 the clouds'
+   header publishes now**, so the octave weights are derived, not stated (that the density field takes the velocity's
+   index is `[inferred]`, as the closer infers it). What S70 made the closer - the region regime's cloud interior drawn
+   from the layer's noise (`noise.glsl.ts`) at the cloud vector's σ_s, its committed vectors the test, the viewer's own
+   lattice constants retired - is a rewrite of `region.ts`, its GLSL twin and `RegionVolume.tsx` with the region frames
+   regenerated; not built at S89 (a model session's lead on a limited week; the frames are S90's). Carried: the
+   viewer's half and the pillar rule as a column condition.
 111. **The region volume's display budget drops light the field has already given up** (S40, V3, D190). One march
    loops over at most 256 objects per pixel — the 128 heaviest clouds, the 64 brightest HII regions, the 64
    brightest shells — while a level-1 window (a view 1–4 kpc across asks `regionAround` for ±4 kpc of radius) holds
