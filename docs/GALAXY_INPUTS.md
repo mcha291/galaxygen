@@ -5129,6 +5129,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the conflicting sources (a constant with its citation per regime), a mass dependence read from a cloud survey's
    heights, and a template's own layer where its edge-on CO is measured.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): read against the readers the repository holds; not built - each part of the closer needs a source or a
+   ruling.* (1) The radial law: `READING_CLOUD_LAYER.md` holds Nakanishi & Sofue 2006's Table 1 at four radii only (48 pc
+   at 0-1 kpc, 90 ± 30 at 7-8, 186 at 8-9, 160 at 10-11), not the table, and inside R₀ the readings conflict (Bronfman et
+   al. 1988 flat from 2 kpc to R₀, Marasco et al. 2017 falling, Malhotra 1994 and Nakanishi & Sofue rising): choosing
+   one there is a named ruleset (B12) and so a ruling, and the flare outside R₀ rests on two bins that fall again (186 →
+   160). (2) The mass dependence: Stark & Lee 2005 give ~35 pc below ~2 × 10⁵ M☉ and "thinner" above it - no number. (3)
+   NGC 4414's own layer: no edge-on CO for it; Yim et al. 2014's three spirals bracket the one value (disclosed). **What
+   would close it:** Nakanishi & Sofue's Table 1 whole and the owner's choice among the inside-R₀ readings; a cloud
+   survey's heights against mass; NGC 4414's own CO thickness (`READING_CLOUD_LAYER.md`, Part S89).
 181. **The HII regions are one cluster's Strömgren sphere each, never a complex: the knots are unresolved points made
    large on screen only by their brightness** (S67, D227; the owner's question of 2026-10-18, "the hii knots are
    very big, bigger than the stars, is this right?"). The census's 12 710 HII regions on `milky_way` have Strömgren
