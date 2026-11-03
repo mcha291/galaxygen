@@ -4658,6 +4658,16 @@ never been judged in twenty-three sessions.
    every placed star's azimuth in those sectors and is the layer's one sampling rule (`pattern.azimuths`,
    `census_clustering`, the bright catalogue), not this table's: **proposed for the gate** as a layer item for the
    censuses' batch (M2), with the numbers above. Still carried.
+   *S88 (M1's close): the table half's reproducibility mended.* `galaxy.specs.determinism`'s two identical runs
+   (SMALL, the layer on; `tests/test_layer.py`'s I1 determinism test, unrun since S86) read `sfr_modulation` 8.4e-13
+   apart (3.6e-15 at S86's f9d8502 itself; fa5b5ce's model reproduces): the table is a Gauss quadrature cut at
+   `GasPattern.star_formation_kinks`, which at a grid ring took the anchors of both bracketing rings of the store,
+   and the ring above a grid ring is the next grid ring or a mid-gap one depending on whether an earlier reader in
+   the process (the clouds, their texture, the clusters) had completed the content-keyed store. Measured: cold and
+   cold after `forget_solutions` equal, cold and warm 8.4e-13 apart, a run of the table alone reproducing. Mended in
+   `gas_pattern.py`: at a solved ring's radius the ring's own anchors alone (the point reads that ring and nothing
+   of its neighbour). Cold and warm now equal on SMALL and on both templates' production runs (every field); the cold
+   table moved by at most 2.7e-10 (the Milky Way, 1 805 of 144 000 cells) and 2.0e-9 (`ngc_4414`, 5 421 cells).
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
