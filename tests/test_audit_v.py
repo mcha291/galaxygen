@@ -937,21 +937,23 @@ F_2_4 = ("F-2-4: spurs.py:68 (WALK_READ_DIFFERENCE = 0.052) and spurs.py:188 (_C
 
 
 # S70 (D234): was xfail(strict, F_2_4) holding the ten-foot 0.052 - the bound is now measured over every foot.
-@pytest.mark.xfail(strict=True, reason="S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the walk's worst read on Audit V's mesh is 0.570 at seed 4242 (0.260 at "
-                   "777) against WALK_READ_DIFFERENCE_COARSE 0.49, a bound measured over two seeds' feet at S70 and read "
-                   "over since the clock (0.568 before the floor); held for the gate to rule, not loosened")
+# S87 (BUILD_V M1) held it under a strict xfail: 0.570 at seed 4242 against the coarse bound 0.49, read over since the
+# clock (#148). S88 (D255 ruling 4): the bound re-measured over the same feet on the final model and re-declared, 0.58
+# (spurs.py: the clock moved the worst foot 0.4804 -> 0.5680, the floor 0.5687, the pinned bar 0.5700); the production
+# grid's 0.27 checked beside it (0.2506 at seed 4242, tests/test_spurs.py).
 def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K):
-    """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S70 wrote them: "within 0.27 of the point
-    function's value there, relative - measured at S70 over every foot on the production grid ... 0.4804 on Audit V's
-    coarser mesh". Re-measured at every foot of both Milky Way seeds on this mesh: the published foot contrast over the
-    gas pattern's unspurred point function at the foot's own (R, phi) held at ``WALK_READ_DIFFERENCE_COARSE`` (0.49),
-    the declared bound on this coarser mesh (the production grid's 0.27 is held in tests/test_spurs.py over every
-    foot of the template's own seed); and the worst read here is the declared 0.4804 (to 1e-3).
+    """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S88 re-measured them: "within 0.27 of the point
+    function's value there, relative - measured at S88 over every foot on the production grid ... and within 0.58 on
+    Audit V's coarser mesh (0.5700 at seed 4242 ...)". Re-measured at every foot of both Milky Way seeds on this mesh:
+    the published foot contrast over the gas pattern's unspurred point function at the foot's own (R, phi) held at
+    ``WALK_READ_DIFFERENCE_COARSE`` (0.58; S70's 0.49), the declared bound on this coarser mesh (the production grid's
+    0.27 is held in tests/test_spurs.py over every foot of the template's own seed and of 4242); and the worst read
+    here is the declared 0.5700 (to 1e-3; S70's 0.4804).
 
-    (c) ``stands_in_for``: the spur's foot is "as dense as the gas is there"; a foot read 48 % off the ridge's own
+    (c) ``stands_in_for``: the spur's foot is "as dense as the gas is there"; a foot read 57 % off the ridge's own
     density sets a Jeans length and a spacing for gas that is not there - declared now, not hidden by a sample.
 
-    Fails if: any foot's read differs from the point function by more than 0.49 relative on this mesh."""
+    Fails if: any foot's read differs from the point function by more than 0.58 relative on this mesh."""
     worst = {}
     for seed in SEEDS:
         on = audit["milky_way", seed, True]
@@ -959,7 +961,8 @@ def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K)
         gas = compose.gas_pattern(on.fields, R_AUDIT, K)
         worst[seed] = float(np.max(np.abs(s["contrast"] / gas.unspurred_contrast_at(s["radius"], s["azimuth"]) - 1.0)))
     assert all(w <= sp.WALK_READ_DIFFERENCE_COARSE for w in worst.values()), worst
-    assert max(worst.values()) == pytest.approx(0.4804, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst
+    assert max(worst.values()) == pytest.approx(0.5700, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
+    assert sp.WALK_READ_DIFFERENCE_COARSE == 0.58  # S88 (D255 ruling 4): was 0.49
 
 
 F_2_5 = ("F-2-5: spurs.py:13-14 (module docstring, item 7) 'every chain of a non-flocculent disc carries them here'; "

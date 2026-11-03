@@ -3046,7 +3046,13 @@ never been judged in twenty-three sessions.
    as the eleventh follow-up designed, on a ring with no budget and no amplitude either side (nothing drawn moves).
    No chain crosses on either side, which the test's classifier read as a first crossing; it is now named "reach
    boundary" and recorded (`tests/test_pieces.py`, `EXPECTED_R_STEPS`), admitted only where it moves N alone. Every
-   other leg's outermost piece ends past the grid (20.1–76.2 kpc).
+   other leg's outermost piece ends past the grid (20.1–76.2 kpc). (4) The spurs' walk, re-measured over the same
+   feet on the final model: Audit V's mesh **0.5700** (seed 4242, 45 feet, at 5.95 kpc; 0.2596 over 47 at 777), so
+   `WALK_READ_DIFFERENCE_COARSE` **0.49 → 0.58**, re-declared with the cause; the production grid 0.2506 (seed 4242, 45
+   feet; 0.0573 over 53 at seed 0) under its 0.27, which stands and is now held at 4242 too (`tests/test_spurs.py`). The
+   cause, by M1's model states on the same seeds (S86's 10d3a32, then each S87 item): #148's clock moved the mesh's
+   worst foot 0.4804 → 0.5680 (the spacing reads the gas column the clock moved, so the feet stand elsewhere), #209's
+   floor → 0.5687, #80's pinned bar → 0.5700; the worst feet stand at 5.9–6.1 kpc, just past the bar's end.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
