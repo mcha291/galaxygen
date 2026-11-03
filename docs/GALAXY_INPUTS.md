@@ -3035,6 +3035,10 @@ never been judged in twenty-three sessions.
    reads 2 924–3 208 µs on an idle machine (4 865 once) where the #209 commit read 2 100–2 651 — the default census
    is 54 pieces on 13 chains with the law's 2.27 kpc bar (was 32 on 6): split into its own test and held as a
    non-strict expected failure, since it straddles the bound; the gate's to rule.
+   *S88 (M1's close), the gate's rulings applied (D255's six):* (1) the gas ring mean's tolerance is **2e-13 with the
+   measurement** (`tests/test_bar.py`, `RING_MEAN_TOLERANCE`; the strict xfail removed): on the final model, by exact
+   summation, the Milky Way's worst ring 1.0036e-13 (ring 105, 7.9125 kpc; nine rings over 5e-14) and NGC 4414's
+   9.35e-14 (ring 129) — the composition of order-1 cell means over 360 cells, D234's F-2-3 ruling.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The

@@ -474,22 +474,27 @@ def test_gate_a_ring_keeps_its_stars_and_its_gas_on_any_grid(prod, template, n_p
         assert math.isnan(float(F["bar_mass_share"]))
 
 
-RING_MEAN_OVER = ("S87 (#80, the owner's ruling of 2026-11-03, D255): with the Milky Way's bar its pinned 5.0 kpc, ring 105 "
-                  "(7.9125 kpc) of the published gas contrast reads a mean of 1 + 1.0036e-13 by exact summation (math.fsum), "
-                  "over the gate's 1e-13 by 0.4 %; eight more rings read 7.6e-14 to 8.8e-14. Not rounding of the sum - the "
-                  "cells are of order 1 - but the spurs' composition on the cell means. Not loosened: held here as an "
-                  "expected failure for the gate to rule (re-measure the bound, or mend the composition).")
+RING_MEAN_TOLERANCE = 2e-13
+# S88 (D255 ruling 1): the tolerance became 2e-13 with the measurement, the same ruling as D234's F-2-3 (the audit
+# mesh's 2e-13). S87 held the Milky Way here under a strict xfail (RING_MEAN_OVER): with its bar pinned at 5.0 kpc,
+# ring 105 (7.9125 kpc) reads a mean of 1 + 1.0036e-13 by exact summation, over the gate's 1e-13 by 0.4 %. Measured
+# at S88 on the final model (math.fsum over each ring's 360 cells, the production grid): the Milky Way's worst
+# 1.0036e-13 at ring 105, the next 8.77e-14 (9.7125 kpc), 8.39e-14 (9.9375), 7.66e-14 (9.0375), nine rings over 5e-14;
+# NGC 4414's worst 9.35e-14 (ring 129, 9.7125 kpc), six over 5e-14. Not rounding of the sum: the cells are of order 1
+# and each a composition of the response, the lanes and the pieces' cell means, each exact to its own rounding, so a
+# ring's mean carries the sum of 360 such roundings - which is what the composition's bound is (D234's F-2-3).
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=RING_MEAN_OVER)) if t == "milky_way" else t for t in TEMPLATES])
+@pytest.mark.parametrize("template", TEMPLATES)
 def test_gate_the_gas_ring_means_are_one_to_1e13(prod, template):
     """The ring-mean clause of the gate the test after this one holds ("gas ring means 1 to 1e-13 with the lanes"),
-    split from it at S87 so that the Milky Way's reading over the bound (RING_MEAN_OVER) stays visible without
-    hiding the clauses that hold. Read by exact summation of each ring's cells."""
+    split from it at S87 so that the Milky Way's reading over the bound stayed visible without hiding the clauses
+    that hold; since S88 (D255 ruling 1) to ``RING_MEAN_TOLERANCE``, 2e-13, with the measurement. Read by exact
+    summation of each ring's cells. (The name keeps the gate's own wording.)"""
     o = template_run(prod, template)
     g = np.asarray(o.fields["gas_density_contrast"])
     exact = np.array([math.fsum(row) for row in g]) / g.shape[1]
-    assert float(np.abs(exact - 1.0).max()) < 1e-13
+    assert float(np.abs(exact - 1.0).max()) < RING_MEAN_TOLERANCE  # S88: was < 1e-13; measured 1.0036e-13 / 9.35e-14
 
 
 @pytest.mark.parametrize("template", TEMPLATES)
