@@ -2240,7 +2240,7 @@ def test_the_cloud_interior_s_noise_is_three_constants_of_the_model(runs, prod):
     for query in (SECTOR, SECTOR + "&layer=off", "model=basic&" + SECTOR):
         header = svc.handle("/api/clouds", query).frame()[0]
         assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
-        assert set(header["scalars"]) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v"}
+        assert set(header["scalars"]) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime"}  # S89 (#167): cloud_extinction_v retired
         assert not re.search(r"CLOUD_INTERIOR", json.dumps(header))
     for path in INPUT_ROUTES:
         if path != "/api/clouds":

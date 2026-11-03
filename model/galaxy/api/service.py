@@ -1473,9 +1473,8 @@ class Service:
                 "cloud_forcing_parameter": float(constants["TURBULENCE_FORCING_B"]),
                 "cloud_lifetime": float(constants["GMC_PHASE_EMBEDDED"] + constants["GMC_PHASE_BLOWN_OPEN"]
                                         + constants["GMC_PHASE_DISPERSING"]),
-                # S40 (V3): the census's one central A_V; since S67 (D231) an uncapped cloud of the inner regime's
-                # surface density, the stage's own function (no drawing reads it since D228).
-                "cloud_extinction_v": _clouds.census_extinction_v(constants),
+                # S89 (#167): was "cloud_extinction_v", the census's one central A_V (S40), retired with the stage's
+                # scalar - each cloud's own column is the body's cloud_dust_extinction_v.
             },
             # S55 (D214 section 5, as ruled at gate G1, change 4): the shape of the noise a renderer synthesises a
             # cloud's interior from - its octave count, lacunarity and gain. **Three constants of the model, and

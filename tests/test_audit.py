@@ -1006,7 +1006,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     lost = [f["name"] for f in fields
             if f["domain"] == "galaxy" and f["stage"] in catalogue_stages]
     assert sorted(lost) == [
-        "bound_cluster_mass_total", "bright_star_count_1e3", "bright_star_limit", "catalogue_size", "cloud_count_total", "cloud_extinction_v", "cloud_forcing_parameter",
+        "bound_cluster_mass_total", "bright_star_count_1e3", "bright_star_limit", "catalogue_size", "cloud_count_total", "cloud_forcing_parameter",
         "cloud_lifetime", "cloud_mass_total", "cluster_formation_efficiency", "dig_halpha_fraction",
         "dig_scale_height", "giant_fraction_sample", "halpha_luminosity_nebular", "halpha_sfr_ratio",
         "hii_luminosity_function_slope", "mean_planets_per_star", "nii_halpha_gradient_hii", "planet_count_sample",
@@ -1026,7 +1026,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
         assert "rule D4" in by_name[name]["about"], name
     # Everything else does reach a surface, and every picture has its ramp (rule A9).
     reachable = [f for f in fields if f["name"] not in lost]
-    assert len(reachable) == len(fields) - len(lost) and len(lost) == 20  # 18 until S48's two bright-catalogue scalars (D200)  # 17 until S44's nii_halpha_gradient_hii (row 37)  # 16 until S40's cloud_extinction_v  # 4 until S32's cloud scalars (D181), 8 until S33's two, 10 until S35's five, 15 until S36's one
+    assert len(reachable) == len(fields) - len(lost) and len(lost) == 19  # 20 until S89 retired cloud_extinction_v (#167)  # 18 until S48's two bright-catalogue scalars (D200)  # 17 until S44's nii_halpha_gradient_hii (row 37)  # 16 until S40's cloud_extinction_v  # 4 until S32's cloud scalars (D181), 8 until S33's two, 10 until S35's five, 15 until S36's one
     assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
 
 

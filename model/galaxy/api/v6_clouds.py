@@ -9,8 +9,9 @@ Two answers, each a hook in its own route method of ``service.py`` (and since S7
   ``sqrt(M / (pi Sigma_GMC))`` at its regime's Sigma_GMC and capped, ``clouds.cloud_size_law``, S67 D231). Each
   ring term is read at the cloud's ``cloud_birth_radius`` - the radius its ring drew, which every per-cloud law and every binner reads (D220) -
   interpolated on the grid as the census reads its metallicity there. The ring's dust law applied to the cloud's
-  gas: the clouds stage's own ``cloud_extinction_v`` (S40, the interior's central A_V at solar dust per hydrogen and
-  one surface density) is on another law and the two disagree (debt #167).
+  gas, and the model's only per-cloud A_V since S89 (#167): the clouds stage's own ``cloud_extinction_v`` (S40, the
+  interior's central A_V at solar dust per hydrogen and one surface density, no metallicity) was on another law, read
+  by no drawing since D228, and is retired.
 - **The diffuse share** (``/api/render``'s ``dust_diffuse_share``, :func:`diffuse_share`): per level-0 cell ring,
   1 - (the ring's REALISED clouds' dust) / (the ring's published dust mass). The clouds' dust is summed off the
   ring-first draw's own streams (D220: each ring's count, and each cloud's ``mass`` and ``radius`` uniforms on the
@@ -56,10 +57,9 @@ COLUMN_ABOUT: dict[str, Any] = {
              "systems_seed, through each cloud's realised mass, size and birth radius; the same with the randomness "
              "layer on or off. The ring's dust law applied to the cloud's gas, so the clouds' dust and the "
              "diffuse dust /api/render's dust_diffuse_share leaves sum to the ring's published dust. 0 where the ring "
-             "holds no dust (no dust, no extinction; never a guess). The clouds stage's own cloud_extinction_v (the "
-             "header's scalars; S40) is the interior's central A_V on another law - solar dust per hydrogen at one "
-             "surface density, 5.80 mag at the inner regime's 82 Msun/pc2 since D231 (2.97 at one 42 before), no "
-             "metallicity - and the two disagree (at S64, on the 42: 6.3x this law's column at R = 2 kpc, 0.15x at R = 14 on the Milky Way; debt #167)",
+             "holds no dust (no dust, no extinction; never a guess). The model's only per-cloud A_V: the clouds "
+             "stage's one central A_V, cloud_extinction_v, on another law (solar dust per hydrogen at one surface density, no metallicity; "
+             "S40-S88, the header's scalars) was retired at S89 (debt #167)",
 }
 
 

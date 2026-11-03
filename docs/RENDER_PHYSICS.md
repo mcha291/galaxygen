@@ -123,7 +123,7 @@ HII region as a sphere of the published emissivity per volume, each bubble and
 remnant as a shell of the published thickness and emissivity (§4's limb
 brightening for free), the clouds' transmission at each cloud's own face-on mean
 A_V (`cloud_dust_extinction_v`, a uniform sphere of that mean column; until S67 the
-census's one central A_V, `cloud_extinction_v`, D228); the field's HII component fades inside the window as
+census's one central A_V, `cloud_extinction_v`, D228, retired at S89, #167); the field's HII component fades inside the window as
 the spheres fade in (§7: no double counting). The routes name every row by
 (cell, index) — §5a's seed, realised. §7's catalogue-against-field holds for the
 clusters' Hα (0.980 over the disc, 0.974 over a level-1 sector, sixty level-1
@@ -243,7 +243,7 @@ carries `cloud_dust_extinction_v`, each cloud's face-on mean A_V from its own du
 `cloud_mass` x `dust_to_gas_ratio` x (`dust_extinction_v` / `dust_surface_density`),
 the ring terms read at `cloud_birth_radius`, over pi `cloud_size`^2 (the radius) -
 derived in the API from published fields, no stage; the clouds stage's own
-`cloud_extinction_v` (S40, 2.97 mag for every cloud) is on another law (debt #167).
+`cloud_extinction_v` (S40, 2.97 mag for every cloud; 5.80 from S67) was on another law and was retired at S89 (debt #167).
 `/api/render` carries `dust_diffuse_share` per ring - 1 less the ring's realised
 clouds' dust over its published dust, summed off the ring-first draw's streams, no
 census materialised, the same layer on and off - and the header's `clouds` states the

@@ -274,9 +274,9 @@ def test_the_size_law_by_hand_either_side_of_the_molecular_ring_and_at_the_cap()
     assert cl.molecular_ring(c, ((0.43, 4.29),)) == (0.43, 4.29) and cl.molecular_ring(c) == (4.0, 7.0)
     # σ_v at the capped giant's own Σ: (pi G 141.47 / 5 x 150)^1/2 = (G M / 5 R)^1/2 = (4.3009e-3 x 1e7 / 750)^1/2 = 7.573.
     assert float(cl.velocity_dispersion(size[6:], sigma[6:])[0]) == pytest.approx(7.573, abs=1e-3)  # S70 (D234): was size[3:], the giant now last of seven
-    # The inner regime's central A_V is 82/42 of the 42's 2.9696: the column cancels to Σ alone.
-    # S70 (D234): the ring's 82 now (the inner regime's until then) - the number unmoved.
-    assert cl.census_extinction_v(c | {"HII_MASS_PER_HYDROGEN": float(LEVEL0["HII_MASS_PER_HYDROGEN"].value)}) == pytest.approx(5.7977, abs=1e-3)
+    # S89 (#167): was `cl.census_extinction_v(...) == 5.7977` - the census's one central A_V, 82/42 of the 42's 2.9696,
+    # retired with the stage's scalar (each cloud's own column is /api/clouds' cloud_dust_extinction_v).
+    assert not hasattr(cl, "census_extinction_v")
 
 
 def test_the_clouds_header_carries_the_stage_scalars(model):
@@ -291,13 +291,13 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
     assert r.status == 200
     header, _ = wire.decode(r.body)
     scalars = header["scalars"]
-    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v"}  # S40: A_V
+    # S89 (#167): was with "cloud_extinction_v" (S40, the census's one central A_V), retired with the stage's scalar.
+    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime"}
     # S55 (D214 section 5 as ruled at gate G1, change 4): the cloud-interior noise's octave count, lacunarity and
     # gain ride in the header under their own key, not among the scalars - they are constants of the model, not a
     # stage's fields - so a renderer reads them instead of holding them (rule D5 as amended).
     assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
-    # S67 (D231): was 2.9696 (42 Msun/pc2); the inner regime's 82 x 3/2 through Draine's V row, 82/42 of it.
-    assert scalars["cloud_extinction_v"] == pytest.approx(5.7977, abs=1e-3)  # 2.9696 x 82/42 = 5.7978
+    # S89 (#167): was `scalars["cloud_extinction_v"] == 5.7977` (S67; 2.9696 until D231) - retired.
     assert scalars["cloud_lifetime"] == pytest.approx(26.0)
     assert 0.0 < scalars["cloud_forcing_parameter"] < 1.0
     # The same numbers /api/arrays serves when the stage itself runs; the realised mass is that route's alone.

@@ -163,7 +163,7 @@ SEEDED_BASIC = {
     # S55 (D214): the source's offset and direction and the gradient's steepness and direction left this set -
     # they are the layer's, synthetic (SYNTHETIC above), drawn on the same streams by the cloud_texture stage.
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_metallicity", "cloud_alpha",
-    "cloud_extinction_v",  # S40 (V3): the cloud's central A_V from its mass, size and the grain table
+    # S89 (#167): "cloud_extinction_v" (S40, the census's one central A_V) retired.
     "cloud_count_total", "cloud_mass_total", "cloud_forcing_parameter", "cloud_lifetime",
     # S33: which cluster a cloud holds, and the cluster census (a stage that reads systems_seed).
     "cloud_cluster_index",

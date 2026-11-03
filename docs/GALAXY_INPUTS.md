@@ -4943,6 +4943,16 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    solar circle; outside it an uncapped cloud's would be 2.47 mag, a capped giant's more. **Carried.** The mend is one pass: the clouds stage reads
    `dust_to_gas_ratio` at the cloud's ring, which moves the region regime's interiors and their pins.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): built — the second law retired.* The closer's "moves the region regime's interiors" was done at S67
+   (D228): every drawing reads each cloud's own column, `/api/clouds`' `cloud_dust_extinction_v`, which is the ring's
+   dust-to-gas ratio applied to the cloud's gas at its birth radius (metallicity in, through `dust_to_gas_ratio`). What
+   was left was the census's one central A_V, `cloud_extinction_v` (a galaxy scalar of the clouds stage and the
+   `/api/clouds` header's `scalars`: solar dust per hydrogen at the ring's Σ 82, 5.7977 mag for every uncapped cloud),
+   read by no stage and no drawing — a duplicate on another law (A9). **Retired** (the declaration, `census_extinction_v`,
+   `central_extinction_v`, the grain constants it read and the stage's read of `HII_MASS_PER_HYDROGEN`); the header's
+   scalars are three; the API's column, unchanged, is the model's only per-cloud A_V. Nothing drawn moves (the viewer
+   never read it: the frontend's tests hold it as fixture data only); the S55 layer-off reference loses one entry
+   (`LAYER_OFF_EXCEPTIONS`'s `cloud_extinction_v`, its two tests strict-held under #214). Proposed **discharged**.
 168. **Half the disc's dust now sits in the clouds' layer, up to 3.8× / 5.6× the gas layer the heating and the
    scattering were computed in** (S64, D224 stop condition 2). The clouds hold 0.4899973 of the disc's dust on the
    Milky Way and 0.6327142 on `ngc_4414` (realised; the molecular fraction's expectation 0.548 / 0.590), and since
