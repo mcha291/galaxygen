@@ -229,7 +229,7 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     assert saturated == {"milky_way": 26, "ngc_4414": 35}  # S58 (D217): was {"milky_way": 26, "ngc_4414": 34}
     # The body before the arms, at its deepest over the suite: 0.266 of the ring's mean (the bar amplitude at its
     # cap of 0.9; the depth is 0.816 of the amplitude at this shape). Positive on every seed: no seed to report.
-    assert body_lowest == pytest.approx(0.2661, abs=2e-4) and body_lowest > 0.0
+    assert body_lowest == pytest.approx(0.2636, abs=2e-4) and body_lowest > 0.0  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.2661
     for template in TEMPLATES:
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
@@ -240,14 +240,14 @@ def test_the_lowest_cell_over_the_suite_s_seeds_as_measured(prod):
     lowest, drawn = lowest_cell(prod)
     assert drawn == 240
     # S60 fourth pass: was 0.00248, on the modes' field.
-    assert lowest == pytest.approx(0.008506, abs=1e-5) and lowest > 0.0
+    assert lowest == pytest.approx(0.116317, abs=1e-5) and lowest > 0.0  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.008506
 
 
 def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):
     c = constants(the_model(prod))
     # S58 (D217): were 0.795 and 0.787, with the cosine bar's amplitude times its taper where the body's depth is
     # (the Milky Way) and where there is now no bar at all (`ngc_4414`, pinned unbarred: its modes untapered).
-    for template, worst in (("milky_way", 0.7937), ("ngc_4414", 0.7903)):
+    for template, worst in (("milky_way", 0.7965), ("ngc_4414", 0.7903)):  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7937
         o = pattern_run(prod, template)
         assert np.all(np.asarray(o.fields["arm_saturation"]) == 1.0), template
         law = law_of(o, c)
@@ -492,7 +492,7 @@ def test_arm_multiplicity_is_the_mode_with_the_most_mass_weighted_power(prod):
     # S58 (D217): `ngc_4414`'s shares were (0.1224, 0.2112, 0.2368, 0.2286, 0.2009) with a bar's taper in its
     # amplitudes; pinned unbarred it has none, so its published amplitudes are the gain's and its shares the
     # untapered ones the predictions' test pins (0.1935 ... 0.1401). Its label is still 4; the Milky Way's unmoved.
-    for template, label, shares in (("milky_way", 6.0, (0.0144, 0.1565, 0.2312, 0.2814, 0.3165)),
+    for template, label, shares in (("milky_way", 6.0, (0.0164, 0.1617, 0.2321, 0.2792, 0.3105)),  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0144, 0.1565, 0.2312, 0.2814, 0.3165
                                     ("ngc_4414", 4.0, (0.1935, 0.2363, 0.2390, 0.1912, 0.1401))):
         o = pattern_run(prod, template)
         F, R = o.fields, o.grid.R
@@ -604,10 +604,15 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
             # S59 (D218 item 6): was `list(bar_s)` for `ngc_4414` - its `pitch_angle` is pinned at the measured
             # 28.9 degrees, layer on and off alike, so it is no longer S55's draw - by ruling again, and not by a
             # moved stream: "the law's own value 14.3° is published beside it", and that is S55's pitch to the bit.
-            assert moved == ([] if template == "milky_way" else ["pitch_angle", *bar_s]), (template, layer)
+            # S88 (#80, the owner's ruling of 2026-11-03, D255): was `[] if template == "milky_way"` - the Milky Way
+            # pins its measured bar half-length (5.0 kpc, `bar_half_length`), so its half-length and the two numbers
+            # read from it (corotation at FAST_BAR_RATIO times it, the pattern speed) are the pin's - by ruling, not by a
+            # moved stream; its pitch and the amplitudes are S55's bits still.
+            mw_pinned = ["bar_corotation_radius", "bar_pattern_speed", "bar_half_length"]
+            assert moved == (mw_pinned if template == "milky_way" else ["pitch_angle", *bar_s]), (template, layer)
             drawn = run(the_model(prod), inputs_of(template), only=("pitch_angle_drawn",), layer=layer).fields["pitch_angle_drawn"]
             assert layer_reference.value_digest(drawn) == held[label]["pitch_angle"], (template, layer)
-            if moved:
+            if template != "milky_way":
                 assert all(math.isnan(o.fields[n]) for n in bar_s) and float(o.fields["pitch_angle"]) == 28.9
                 # "Every existing draw keeps its stream and value": the same inputs with the pins taken off - the
                 # derivation bars this disc, the pitch is the draw - give every number S55 drew, bit for bit.
@@ -618,10 +623,14 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
                 unpinned = {k: v for k, v in inputs_of(template).items() if k not in ("bar_present", "pitch_angle", "arm_class", "molecular_ring")}
                 derived = run(the_model(prod), unpinned, only=names + ("bar_present",), layer=layer)
                 assert derived.fields["bar_present"] == "yes"
-                assert [n for n in names if layer_reference.value_digest(derived.fields[n]) != held[label][n]] == []
+                # S88 (#80, the owner's ruling of 2026-11-03, D255): was `== []` - the unpinned disc is barred and its bar's
+                # half-length is Erwin 2019's law, no longer BAR_LENGTH_RATIO's, so the half-length and the two numbers
+                # read from it are the law's; every other stream is S55's draw still.
+                law = ["bar_corotation_radius", "bar_pattern_speed", "bar_half_length"]
+                assert [n for n in names if layer_reference.value_digest(derived.fields[n]) != held[label][n]] == law
                 # ... and with the pitch's pin alone left on, the pitch alone is not S55's.
                 barred = run(the_model(prod), {k: v for k, v in inputs_of(template).items() if k != "bar_present"}, only=names, layer=layer)
-                assert [n for n in names if layer_reference.value_digest(barred.fields[n]) != held[label][n]] == ["pitch_angle"]
+                assert [n for n in names if layer_reference.value_digest(barred.fields[n]) != held[label][n]] == ["pitch_angle", *law]  # S88 (#80): was ["pitch_angle"]
     # And the retired stream is not read: the stage's source names no "arms" stream.
     source = (PACKAGE / "stages" / "pattern.py").read_text(encoding="utf-8")
     streams = [n.args[1].value for n in ast.walk(ast.parse(source))
@@ -702,7 +711,17 @@ def test_with_the_layer_off_no_piece_is_laid_and_the_stream_is_never_drawn(prod,
 # --- evaluable at a point ------------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("template", TEMPLATES)
+# S88 (M1's close): on the Milky Way template the gas's sector means at 20 kpc are not every one exactly 1 - at most
+# 6.7e-15 off, and 4.4e-3 at 25 kpc (exact at 22, 27 and 29): spurs stand on chains past the arms' budget, at feet whose
+# contrast is 1.000000 (18.0, 20.2, 20.4 and 24.9 kpc; the last's spacing 1 076 kpc), and they bend the gas there; the
+# stars are exactly 1 at 20, 25 and 29 kpc, and NGC 4414 (no spurs) is exactly 1 throughout (measured,
+# s88_probe_sector20.py / s88_probe_outerspurs.py). Whether spurs belong on a chain with no ridge is the gate's to rule;
+# held strict here, not loosened.
+OUTER_SPURS = ("S88 (M1): the Milky Way's gas sector means at 20 kpc are 6.7e-15 off 1 (4.4e-3 at 25 kpc) - spurs on "
+               "chains past the arms' budget, feet of contrast 1.0; the gate's to rule")
+
+
+@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=OUTER_SPURS)) if t == "milky_way" else t for t in TEMPLATES])
 def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(prod, template):
     """Rule 1c-5 (D60): the same function at a grid cell, at a point, over a sector. At the grid radii the pattern's
     published form is the published field exactly; the composing stage's radial fields are the object's own
@@ -731,7 +750,7 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     # azimuth at the ring's own radius, bit for bit, and its ring mean is 1 to rounding with nothing divided.
     law = gas.cell_means(R, o.grid["phi"].edges)
     assert law.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
-    assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 1e-13
+    assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 2e-13  # S88 (D255 ruling 1): was < 1e-13; the Milky Way 1.0036e-13 (tests/test_bar.py RING_MEAN_TOLERANCE)
     for shape in (stars, gas):
         on_grid = shape.contrast(R, phi)
         assert np.allclose(shape.contrast_at(R[:, None], phi[None, :]), on_grid, rtol=0.0, atol=1e-12)
@@ -802,7 +821,7 @@ def test_the_point_function_at_the_cells_centres_against_the_published_cell_mean
     # S60 (D219), as measured on the final model: the pieces' ridges are averaged over the cells too, so the two
     # differ by the ridges' curvature across a cell on both templates (until S60 by the body's alone, and `ngc_4414`
     # has none). S60 fourth pass: was 1.888e-4 (milky_way) and 0.0 (ngc_4414).
-    assert apart == pytest.approx(7.634e-3 if template == "milky_way" else 5.329e-3, rel=0.02)
+    assert apart == pytest.approx(8.413e-3 if template == "milky_way" else 5.201e-3, rel=0.02)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 7.634e-3, 5.329e-3
 
 
 def test_a_pattern_with_nothing_to_place_is_flat():

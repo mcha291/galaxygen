@@ -3082,6 +3082,18 @@ never been judged in twenty-three sessions.
    81.9702 km/s/kpc, corotation's median 2.65068 kpc (the table 10 / 22 / 5); on the Milky Way template with its
    5.0 kpc pin all three are inside (5.0 / 47.2542 / 5.263). `spec._MISSES` row 15 names the answer. Still carried:
    the referent (λ_d against the source's 3.6 µm h).
+   *S88, the joint re-pin on M1's final model (the batch's unrun files run):* every plain number the clock, the floor,
+   the bar's law and pin and #212's constant moved re-pinned with the reason (a measurement run that records every
+   failing assert and goes on, then the strict run). Held strict for the gate, each with its measurement in the mark:
+   (i) **the S55 layer-off reference** (`tests/test_layer.py`, `S55_REFERENCE_MOVED`): 1 038 entries off it - 250 of
+   393 fields per model on the Milky Way's inputs, 246 on NGC 4414's, 42 route bodies, 4 single-mode fields; the named
+   list cannot carry a whole-model change and the reference's rewrite is a decision; (ii) the L1 gate (#161's line);
+   (iii) the dust column on ring 2 (#176's); (iv) a star outside its child cell (#197's); (v) **spurs on chains past the
+   arms' budget** (`tests/test_modes.py`, `OUTER_SPURS`): the Milky Way's gas sector means at 20 kpc 6.7e-15 off 1 and
+   4.4e-3 at 25 kpc, from spurs whose feet read a contrast of 1.000000 (18.0-24.9 kpc, one with a 1 076 kpc spacing) on
+   chains that reach 30.9 kpc with no amplitude - whether a spur belongs where no ridge stands is the gate's. Restated
+   where a verdict changed (rows 16-17 on the second diagonal, the arm label at the defaults 5 on 49 seeds of 60, row 3's
+   converged miss 0.0039); the routes' stage lists lose `gas_pattern` (unrun since #154's table, D4).
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
@@ -4819,6 +4831,16 @@ never been judged in twenty-three sessions.
    unit, every layer-on pin moving with it), and no phase of BUILD_III or BUILD_IV names it now.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S88 (M1's close): the effect met twice on M1's final model, both held strict for the gate.* Audit V's pair slope on
+   the Milky Way (D255 ruling 3; `tests/test_audit_v.py` `MW_PAIR_SLOPES` -0.4846 / -0.4327) - the field read directly
+   holds its law (-0.656 / -0.624 over the disc), -0.584 / -0.573 on the clouds' footprint, and the placement takes
+   0.10-0.14 more; neither the bar's length, the spurs nor the gas pattern's reading inside a cell is the cause (#80's
+   line, bound 3). And **the L1 gate itself** (`tests/test_clustering_gate.py`, `L1_GATE_READ_OVER`,
+   `BRIGHT_GATE_READ_OVER`): the default galaxy's clouds -0.4796 and clusters -0.4899 against -0.64 +/- 0.15 (S86
+   -0.6396 / -0.6578, the clock -0.6360 / -0.6699: the step is #80's re-drawn census), the young bright stars' youngest
+   bin -0.4750 (S86 -0.5696) and the 40.71-100 Myr bin's finest 1 + omega 0.8457 against flat within 0.05 (out since
+   the clock: 1.1887 there; S86 1.0391). The spill's declared figures re-measured (`census_clustering.SPILL_*`: p99
+   0.119, max 1.261, 1 795 of 16 940 beyond 0.06 dex, [alpha/Fe] 0.222).
 162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
    part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
    than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
@@ -5002,6 +5024,10 @@ never been judged in twenty-three sessions.
    derived one-draw bound 3 √((e^v − 1) g² / N_r) over 16 lattice offsets (worst 2.93 s_r), and the mend for that
    part is a footprint average of the map over the pixel.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S88 (M1's close):* the Milky Way's dust column on ring 2 at offset (1/4, 1/4) reads **3.3666 one-draw scatters**
+   (dev -1.8802e-2, s_r 5.5849e-3) against the pinned 3 - 2.9287 at S86 (the docstring's 2.93), unmoved by the clock
+   and the floor, 3.3666 from #80's pinned 5.0 kpc bar (ring 2, 1.86-2.79 kpc, inside the bar); the whole frame
+   3.5e-4 against 3e-3; NGC 4414's worst 2.8243. Held strict for the gate (`tests/test_v7_layer.py`, `DUST_COLUMN_OVER`).
 177. **The march under-samples the bulge's cusp: the innermost kiloparsec reads 2.3 % low on screen** (S67, D227 R5;
    the picture spec's ring gates). On `milky_way`'s face-on frame, dust and gas off, the ring 0-1 kpc's on-screen
    light over the render's published light plus the bulge is 0.977-0.978 in every state (layer on or off, points on
@@ -5214,6 +5240,10 @@ never been judged in twenty-three sessions.
    inversion on the ring's own interval for both draws, in a session of its own — it moves the whole catalogue, every
    frame and the catalogue's pins across the suite (D60's per-region determinism re-pinned with the reason).
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S88 (M1's close): met by the default census.* One inherited star of cell 300 (12.36 Gyr, thin disc) stands at
+   R 8.44826 kpc, 5.65 pc inside its ring's inner edge (8.45391), so it lies outside its child's footprint at levels
+   1-3 (`tests/test_hierarchy.py`, `HIERARCHY_197`, held strict): passing on S86's model and through the clock and
+   the floor, failing from #80's re-drawn census. Still M2's.
 198. ~~**The arm saturation cut is never exercised**~~ (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
    on 0 of 48 rings at both SMALL runs and on no ring at the production grid for either template, so the layer-off walk
    and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes

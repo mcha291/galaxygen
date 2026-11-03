@@ -1056,5 +1056,5 @@ def test_s21b_s20s_numbers_reach_the_viewer(default_model):
     R = np.linspace(axis["lo"], axis["hi"], axis["n"])
     at_sun = spread[int(np.argmin(abs(R - R_SUN)))].max()
     at_two = spread[int(np.argmin(abs(R - 2.0)))].max()
-    assert at_sun == pytest.approx(1.09, abs=0.02)  # 1.47 until S20
+    assert at_sun == pytest.approx(1.11, abs=0.02)  # 1.47 until S20  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 1.09
     assert at_two == pytest.approx(0.22, abs=0.02)  # 0.30 until S20

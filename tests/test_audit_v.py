@@ -523,7 +523,7 @@ def test_census_clustering_places_each_cloud_within_the_declared_reach_of_its_dr
         report[tpl, seed] = (float(np.max(np.abs(placed - drawn))), int((ring_of(placed) != ring_of(drawn)).sum()), placed.size)
         total += placed.size
     assert all(far < width and far <= 0.927 + 1e-3 and moved == 0 for far, moved, _ in report.values()), report
-    assert total == 40163, report  # S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
+    assert total == 40147, report  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 40163 (16 767 on each Milky Way seed, 6 613 on ngc_4414). S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
     assert "A cloud's ring is the ring that drew it" in cc._CONSERVES and "0.932 kpc" in cc._CONSERVES
 
 

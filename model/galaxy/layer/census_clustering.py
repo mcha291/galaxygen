@@ -401,10 +401,13 @@ _STANDS_IN_FOR = (
 # ring's radius of the maximum (kpc); the clouds beyond 0.06 dex; and the [alpha/Fe] maximum, likewise.
 # S70 (D234): re-measured after the clouds' ring inversion on the ring's own interval (Audit V F-2-7: the birth radius
 # the spill is taken from) and the size law's three regimes (#192) - were p90 0.063, p99 0.123, 1863 beyond and 0.232.
-SPILL_FEH_DEX = {"median": 0.022, "p90": 0.062, "p99": 0.121, "max": 1.258}
+# S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; 16 940 clouds): re-measured -
+# were p99 0.121, max 1.258, 1807 of 16 577 beyond 0.06 dex and the [alpha/Fe] maximum 0.226; the median 0.0217, the
+# 90th percentile 0.0617 and the maximum's ring 23.622 kpc read the declared digits still.
+SPILL_FEH_DEX = {"median": 0.022, "p90": 0.062, "p99": 0.119, "max": 1.261}
 SPILL_FEH_MAX_AT_KPC = 23.6
-SPILL_FEH_BEYOND = (0.06, 1807, 16577)  # S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
-SPILL_ALPHA_MAX_DEX = 0.226  # S70 (D234): was 0.232 (F-2-7)
+SPILL_FEH_BEYOND = (0.06, 1795, 16940)  # S88: was 1807 of 16577. S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
+SPILL_ALPHA_MAX_DEX = 0.222  # S88: was 0.226. S70 (D234): was 0.232 (F-2-7)
 
 _CONSERVES = (
     "Every cell's expected count of every census it places and every ring's realised total: it places a cloud "
@@ -421,7 +424,8 @@ _CONSERVES = (
     "46 214 of them (both templates, texture seeds 0 / 4414 and 4242, the production grid): at most 0.932 kpc, "
     "the median 0.27 kpc; 0.927 kpc over Audit V's mesh's 39 264 (until S70: 'measured at S61 on the default "
     "galaxy, a median 275 pc and at most 976 pc', a bound the inversion's 71 pc broke: 0.988) - while the cloud's abundances and its "
-    "cluster's efficiency are read at the radius the ring drew. Measured at S61 (the default galaxy, layer on): "
+    "cluster's efficiency are read at the radius the ring drew. Measured at S61 (the default galaxy, layer on; the "
+    "figures from the spill's constants re-measured at S88 on M1's final model): "
     f"the gas's [Fe/H] at the placed radius differs from that at the ring's by a median {SPILL_FEH_DEX['median']} "
     f"dex, {SPILL_FEH_DEX['p90']} at the 90th percentile and {SPILL_FEH_DEX['p99']} at the 99th, at most "
     f"{SPILL_FEH_DEX['max']} dex - a cloud the ring drew at {SPILL_FEH_MAX_AT_KPC} kpc, where the gas's [Fe/H] falls "

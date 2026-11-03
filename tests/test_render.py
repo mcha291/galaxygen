@@ -63,7 +63,7 @@ SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 
 # The gate's tolerance, stated (module docstring), and what the second cut measured at S38.
 TOLERANCE = 1e-3
-MEASURED_B_V = 0.561777  # S87 (#148, #80): was 0.569495 - the clock (#148) and the default disc's bar from Erwin's law (#80). # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)
+MEASURED_B_V = 0.561772  # S87 (#148, #80): was 0.569495 - the clock (#148) and the default disc's bar from Erwin's law (#80). # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.561777
 MEASURED_M_V = -21.146766  # S87 (#148, #80): was -21.110365. # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
 # The first cut's record (S38): one blackbody at the colour temperature.
 FIRST_CUT_B_V = 0.583477  # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
@@ -73,8 +73,8 @@ FIRST_CUT_M_V = -21.888969  # S87 (#148, #80): was -21.844831. # S49 (D204, #126
 # S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
 # S70 (D234, #128(b)): were 0.572933 and -20.668268 - the face-on frame read through the mixed slab; since S70 through
 # the stars' and the dust's own layers (specs.templates.face_on), the geometry the dust stage has used since S52.
-FACE_ON_B_V = {"basic": 0.567280, "azimuthal": 0.567280}  # S87 (#148, #80): were 0.573877 - the clock (#148) and the default disc's bar from Erwin's law (#80). # +0.0044 on the gate's. # S52 (D211): was 0.574638 (+0.0051)
-FACE_ON_M_V = {"basic": -20.844070, "azimuthal": -20.844070}  # S87 (#148, #80): were -20.808910. # 0.302 mag fainter. # S52 (D211): was -20.685591 (0.425)
+FACE_ON_B_V = {"basic": 0.567272, "azimuthal": 0.567272}  # S87 (#148, #80): were 0.573877 - the clock (#148) and the default disc's bar from Erwin's law (#80). # +0.0044 on the gate's. # S52 (D211): was 0.574638 (+0.0051)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): were 0.567280
+FACE_ON_M_V = {"basic": -20.844103, "azimuthal": -20.844103}  # S87 (#148, #80): were -20.808910. # 0.302 mag fainter. # S52 (D211): was -20.685591 (0.425)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): were -20.844070
 
 
 def curves(name: str) -> str:
@@ -335,13 +335,13 @@ BALANCE_TOLERANCE = 1e-3
 # S52 (D211): the dust heated in the stars' and its own layers. The frame absorbs 0.766 of what it did, the inner
 # disc's warm dust the most, so the cold outer disc's emission past 1 mm is a larger share of the frame's Sigma_IR
 # (8.56e-4, emitted over absorbed 0.999144: inside the 1e-3 tolerance, by less than before).
-MEASURED_ABSORBED = {"basic": 1.000219, "azimuthal": 1.000219}  # S87 (#148, #80): were 1.000224. # the frame's absorbed power over dust_absorbed_luminosity. # S52 (D211): was 1.000293
-MEASURED_EMITTED = {"basic": 0.999398, "azimuthal": 0.999398}  # S87 (#148, #80): were 0.999368. # the frame's TIR over dust_infrared_luminosity. # S52 (D211): was 0.999588
+MEASURED_ABSORBED = {"basic": 1.000222, "azimuthal": 1.000222}  # S87 (#148, #80): were 1.000224. # the frame's absorbed power over dust_absorbed_luminosity. # S52 (D211): was 1.000293  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): were 1.000219
+MEASURED_EMITTED = {"basic": 0.999400, "azimuthal": 0.999400}  # S87 (#148, #80): were 0.999368. # the frame's TIR over dust_infrared_luminosity. # S52 (D211): was 0.999588  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): were 0.999398
 TIR_OUTSIDE = {"basic": 8.20885e-4, "azimuthal": 8.20885e-4}  # S87 (#148, #80): were 8.55564e-4. # the share of the frame's Sigma_IR outside 8-1000 um. # S52 (D211): was 7.04826e-4
-REMOVED_SHARE = {m: [0.275275, 0.281064, 0.282064, 0.281070] for m in ("basic", "azimuthal")}  # S87 (#148, #80): was [0.275304, 0.280707, 0.280905, 0.280709]. # R, V, B, V row. # S52 (D211): was [0.361787, 0.369547, 0.367945, 0.369544]
-CURVE_OVER_GREY = 0.784658  # S87 (#148, #80): was 0.784105. # S52 (D211): was 0.759075
-THIN_OVER_SLAB = 18.476128  # S87 (#148, #80): was 18.982366. # S52 (D211): was 12.521717
-PROFILE_WORST = {"basic": 7.847869e-4, "azimuthal": 7.847869e-4}  # S87 (#148, #80): were 1.1096689e-2 - the clock (#148) and the default disc's bar from Erwin's law (#80): the worst ring inside the disc no longer the one it was
+REMOVED_SHARE = {m: [0.275246, 0.281032, 0.282030, 0.281038] for m in ("basic", "azimuthal")}  # S87 (#148, #80): was [0.275304, 0.280707, 0.280905, 0.280709]. # R, V, B, V row. # S52 (D211): was [0.361787, 0.369547, 0.367945, 0.369544]  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.275275, 0.281064, 0.282064, 0.281070
+CURVE_OVER_GREY = 0.784677  # S87 (#148, #80): was 0.784105. # S52 (D211): was 0.759075  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.784658
+THIN_OVER_SLAB = 18.483512  # S87 (#148, #80): was 18.982366. # S52 (D211): was 12.521717  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 18.476128
+PROFILE_WORST = {"basic": 7.910487e-4, "azimuthal": 7.910487e-4}  # S87 (#148, #80): were 1.1096689e-2 - the clock (#148) and the default disc's bar from Erwin's law (#80): the worst ring inside the disc no longer the one it was  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): were 7.847869e-4
 
 
 def full_render(api: Service, model: str, curve_list: list) -> tuple[dict, dict]:
@@ -1175,7 +1175,7 @@ def test_today_s_painting_against_the_object_s_light(objects):
 # the field's renormalised one and the stars' own, debt #126), and the remainder.
 # S49 (D204, #126): the light integrated along the isochrone's points; was total 4.895767e10, young 1.202957e10,
 # bright 9.019945e9 (the field's renormalised budget; the stars' own was 8.632747e9, which it now is), unresolved 2.790815e10.
-SPLIT_1E3 = {"total": 4.775925e10, "young": 1.276454e10, "bright": 9.022708e9, "unresolved": 2.597201e10}  # S87 (#148, #80): was 4.589796e10 / 1.204866e10 / 8.632747e9 / 2.521655e10
+SPLIT_1E3 = {"total": 4.775919e10, "young": 1.276454e10, "bright": 9.022694e9, "unresolved": 2.597196e10}  # S87 (#148, #80): was 4.589796e10 / 1.204866e10 / 8.632747e9 / 2.521655e10  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 4.775925e10, 9.022708e9, 2.597201e10
 # The closure through rgb: the largest relative departure, over rings and filters, of the parts' responses summed
 # from the stars' (the SED join is not linear), at 10^2, 10^3 and 10^4 Lsun.
 CLOSURE_RGB = {100.0: 4.4805e-6, 1000.0: 4.9964e-6, 10000.0: 4.8066e-6}  # S87 (#148, #80): was 4.4855e-6 / 5.0232e-6 / 4.8005e-6. # S49 (D204, #126): the light integrated along the isochrone's points; was 4.9594e-6 / 5.7059e-6 / 5.6762e-6

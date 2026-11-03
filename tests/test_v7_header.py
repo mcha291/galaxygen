@@ -153,7 +153,7 @@ def test_the_unspurred_placement_composed_with_the_spurs_is_the_dust_s(api, temp
         assert rows["radius"].size == 0 and not any(sp["share"])
         assert np.array_equal(unspurred, placed)
     else:
-        assert rows["radius"].size == 48
+        assert rows["radius"].size == 53  # S88: was 48 (S66) - #148's clock moved the gas column the spacing reads (tests/test_spurs.py, S87)
         spurs = Spurs(rows["radius"], rows["azimuth"], rows["contrast"], rows["pitch"], rows["length"], rows["width"],
                       rows["fall"], turn=sp["turn"])
         assert np.array_equal(np.array(sp["share"]), spurs.ring_mean(R))
@@ -318,12 +318,18 @@ def test_the_route_runs_the_layer_s_stages_and_nothing_more_on_or_off():
 
 
 # The stages /api/layer runs on a fresh service (S73; the closure of v7_layer.reads), on and off alike.
-S73_LAYER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
+# S88: was with "gas_pattern" after "arm_pieces" - since S86 (#154's table, f9d8502) sfh_azimuthal reads the gas
+# pattern's own reads and builds the pattern itself (GAS_PATTERN_READS), so the route asks the gas_pattern stage for
+# no field and a fresh service does not run it (D4); measured on a fresh service at S88, layer on and off alike.
+S73_LAYER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces",
                     "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "vertical_alpha", "ism", "gas_fluctuation")
 # The stages a fresh service ran for /api/render at S65 (3794fc3), the same list on each of the six whole-render
 # requests below (the review's eight, recorded by its r8 run): the layer reference drops `stages` from its digest, so
 # this is where a change to the render's stage list is caught.
-S65_RENDER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
+# S88: was with "gas_pattern" after "arm_pieces" - since S86 (#154's table, f9d8502) sfh_azimuthal reads the gas
+# pattern's own reads and builds the pattern itself (GAS_PATTERN_READS), so the route asks the gas_pattern stage for
+# no field and a fresh service does not run it (D4); measured on a fresh service at S88, layer on and off alike.
+S65_RENDER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces",
                      "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs",
                      "vertical_alpha", "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular")
 EIGHT = {"default on": {}, "default off": {"layer": ["off"]},

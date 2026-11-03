@@ -241,16 +241,16 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # draw of the census: Q reads 0.9397 of the young light, -5.5 %; the realised cloud mass is 0.904 of the molecular
     # gas at the default seed (2.7 times its 3.5 % noise low; over 300 systems seeds 1.003 +- 0.034, as 1.002 +- 0.036 drawn cell by cell: no bias), and
     # the clusters' mass follows it. Q's own noise is 4.6 %, the tolerance 0.16.
-    assert ratio == pytest.approx(0.9405, abs=0.0005)  # S70 (D234): was 0.9397 - the clouds' ring inversion (F-2-7) and the size law (#192)
+    assert ratio == pytest.approx(0.9430, abs=0.0005)  # S70 (D234): was 0.9397 - the clouds' ring inversion (F-2-7) and the size law (#192)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9405
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))
     # S60 (D219): was 1.008. S59 (D218 follow-up): was 1.010; first pass 1.035. S57 (D216): was 1.007; S56 (D215): was 1.063; S51 (D210): was 1.029
     # S61 (D220): was 1.015 (the clouds drawn ring-first, a new draw: the cloud mass 0.904 of the molecular gas)
-    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(0.933, abs=0.001)
+    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(0.9274, abs=0.001)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.933
     # S60 (D219): was 1.001. S59 (D218 follow-up): was 1.000; first pass 1.023. S58 (D217): was 1.002; S57 (D216): was 0.999; S56 (D215): was 1.053; S51 (D210): was 1.022
     # S61 (D220): was 1.005 (the clouds drawn ring-first, a new draw)
-    assert expected / light_young == pytest.approx(0.946, abs=0.001)
+    assert expected / light_young == pytest.approx(0.937, abs=0.001)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.946
     # The efficiency the census used, against the sources it was chosen against (its about line).
-    assert F["cluster_formation_efficiency"] == pytest.approx(0.02058, abs=0.0001)
+    assert F["cluster_formation_efficiency"] == pytest.approx(0.02131, abs=0.0001)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.02058
     assert 0.005 < F["cluster_formation_efficiency"] < 0.08
     # The wind: positive, finite, the O and B stars' - a 1 Myr burst blows harder than a 19 Myr one.
     _, w = cu.per_mass(np.array([1.0, 19.0]), np.zeros(2))
@@ -266,7 +266,7 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # of the census again, +1.8 % on S58's close and -5.0 % on the first pass's; the wind's own noise is 6.9 %)
     # S60 (D219): was 5.341e6 (the arms a census of pieces: another draw of the census, -1.0 %; the wind's own noise
     # is 6.7 %)
-    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(4.813e6, rel=0.01)  # S61 (D220): was 5.286e6 (ring-first, a new draw; the wind's own noise 5.0 %)  # S58 (D217): was 5.132e6 (the clouds on the bar's lanes inside its reach, another draw of the census)
+    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.159e6, rel=0.01)  # S61 (D220): was 5.286e6 (ring-first, a new draw; the wind's own noise 5.0 %)  # S58 (D217): was 5.132e6 (the clouds on the bar's lanes inside its reach, another draw of the census)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 4.813e6
 
 
 def test_the_census_on_the_default_grid(default):
@@ -284,10 +284,11 @@ def test_the_census_on_the_default_grid(default):
     # S60 (D219): was 12840 (the arms a census of pieces: the gas's response is another pattern's, and the census
     # another draw)
     # S61 (D220): was 12916 (the clouds drawn ring-first: each ring's count one Poisson draw on the ring's stream)
-    assert mass.size == 12710 == int(_hosts(F).sum())
+    assert mass.size == 12989 == int(_hosts(F).sum())  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710
     # S61 (D220): were 9.289 and 2.652e5 (ring-first, a new draw)
     # S70 (D234): the minimum was 9.614 - the clouds' ring inversion (F-2-7) moves the birth radius a cluster's efficiency is read at.
-    assert mass.min() == pytest.approx(9.689, rel=1e-3) and mass.max() == pytest.approx(2.258e5, rel=1e-3)
+    # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the minimum was 9.689.
+    assert mass.min() == pytest.approx(10.003, rel=1e-3) and mass.max() == pytest.approx(2.334e5, rel=1e-3)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 2.258e5
     # S51 (D210): median was 763.06 (763.42 then, inside the rel 1e-3), sum was 3.613e7
     # S56 (D215): median was 763.06 (763.42), sum was 3.733e7
     # S57 (D216): median was 764.08, sum was 3.537e7
@@ -296,13 +297,13 @@ def test_the_census_on_the_default_grid(default):
     # S59 (D218 follow-up): median was 764.61, sum was 3.547e7; first pass 761.14 and 3.633e7
     # S60 (D219): median was 760.29 (760.25 now, inside the rel 1e-3), sum was 3.537e7 (the arms a census of pieces)
     # S61 (D220): median was 760.29, sum was 3.563e7 (ring-first, a new draw)
-    assert np.median(mass) == pytest.approx(739.33, rel=1e-3) and mass.sum() == pytest.approx(3.274e7, rel=1e-3)
+    assert np.median(mass) == pytest.approx(763.04, rel=1e-3) and mass.sum() == pytest.approx(3.450e7, rel=1e-3)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 739.33, 3.274e7
     bound = np.asarray(F["cluster_bound"])
     # S57 (D216): was [906, 5947, 5961]; S56 (D215): was [890, 5982, 6058]; S51 (D210): was [901, 5951, 6008]
     # S59 (D218 follow-up): was [891, 5960, 5975]; first pass [922, 5980, 5937]. S58 (D217): was [894, 5946, 5989]
     # S60 (D219): was [906, 5992, 5942] (the arms a census of pieces, another draw)
     # S61 (D220): was [944, 5970, 6002] (ring-first: "bound" an array on the cloud's ring stream, a new draw)
-    assert np.bincount(bound, minlength=3).tolist() == [846, 5951, 5913]
+    assert np.bincount(bound, minlength=3).tolist() == [852, 6088, 6049]  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was [846, 5951, 5913]
     # Portegies Zwart et al.'s Schechter mass for Milky Way-type spirals, 2e5: 4 clusters are above it,
     # holding 2.7% of the mass (S59, D218 follow-up: was 3 holding 2.0% at S58's close and 5 holding 3.3% on the
     # first pass's draw; S56, D215: was 5 holding 3.1%; S51, D210: was 4 holding 2.7%; S57, D216: 3 and 2.0%
@@ -310,7 +311,7 @@ def test_the_census_on_the_default_grid(default):
     # S61 (D220): was 4 (ring-first, a new draw: 2 above it, holding 1.3 % of the mass)
     assert int((mass > 2.0e5).sum()) == 2  # S59 (D218 follow-up): was 3; first pass 5. S56 (D215): was 5; S51 (D210): was 4
     # S61 (D220): was 0.450 (ring-first, a new draw: the median mass 739 where it was 760)
-    assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.445, abs=0.002)
+    assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.450, abs=0.002)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.445
 
 
 def test_the_phase_5_hook(default):
@@ -321,8 +322,8 @@ def test_the_phase_5_hook(default):
     F, R = o.fields, o.grid.R
     locked = float(np.trapezoid(np.asarray(F["stars_formed_history"]).sum(axis=1) * 1.0e6 * 2.0 * math.pi * R, R))
     assert F["bound_cluster_mass_total"] == pytest.approx(c["CLUSTER_BOUND_FRACTION"] * locked, rel=1e-12)
-    assert F["bound_cluster_mass_total"] == pytest.approx(2.786e9, rel=1e-3)
-    assert F["bound_cluster_mass_total"] / (3.5e-5 * F["halo_virial_mass"]) == pytest.approx(72.4, abs=0.1)
+    assert F["bound_cluster_mass_total"] == pytest.approx(2.779e9, rel=1e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.786e9
+    assert F["bound_cluster_mass_total"] / (3.5e-5 * F["halo_virial_mass"]) == pytest.approx(72.2, abs=0.1)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 72.4
 
 
 def test_the_clusters_route_is_the_stages_census_by_window_and_level():

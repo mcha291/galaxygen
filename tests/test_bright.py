@@ -233,8 +233,8 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # S61 (D220 items 1-4): the catalogue is drawn ring-first - each level-0 ring's count and every per-star draw on
     # the ring's stream, the star's cell allocated by its sector uniform - so every star is a new draw once, and the
     # 3162nd moves (-1.59 %); the same number with the layer on or off from now on (test_the_ring_first_draw_...).
-    assert F["bright_star_limit"] == pytest.approx(33875.549, rel=1e-6)  # S61 (D220): was 34423.216; S60 (D219): was 34580.531; S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
-    assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
+    assert F["bright_star_limit"] == pytest.approx(34863.403, rel=1e-6)  # S61 (D220): was 34423.216; S60 (D219): was 34580.531; S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 33875.549
+    assert F["bright_star_count_1e3"] == pytest.approx(3.473010e6, rel=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 3.348738e6
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
         assert np.all(np.isfinite(np.asarray(F[d.name], dtype=float))), d.name
@@ -533,7 +533,7 @@ def test_the_route_refuses_what_it_cannot_answer(api):
         assert r.status == 400, query
         assert says in r.json()["error"], (query, r.json())
     # the count a refused l_min would hold is said
-    assert "3348738" in api.handle("/api/bright", "l_min=1000").json()["error"]
+    assert "3473010" in api.handle("/api/bright", "l_min=1000").json()["error"]
 
 
 # --- S48's wiring (D200 (5), D201): each star's band light through the viewer's curves -----------------------------
@@ -682,7 +682,7 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # S59 (D218 follow-up): the segments re-laid with a pitch relative to the disc's, and the young stars' cells weighted
 # by the law at a point - another realisation, inside the same gate.
 # S61 (D220 items 1-4): the ring-first draw - every star a new draw once, another realisation inside the same gate.
-BRIGHT_RGB_OVER_OWN = (0.99996, 1.00104, 0.99994)  # S61 (D220): was (1.00069, 1.00322, 1.00670); S60 (D219): was (0.99832, 1.00222, 1.00792); S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+BRIGHT_RGB_OVER_OWN = (0.99901, 1.00279, 1.00647)  # S61 (D220): was (1.00069, 1.00322, 1.00670); S60 (D219): was (0.99832, 1.00222, 1.00792); S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.99996, 1.00104, 0.99994
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
@@ -786,8 +786,8 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # places them - a new draw of the census, the same on and off since: 5.6 % to 6.5 % under through rgb and 6.9 %
 # bolometric (the clusters' light moved -6.6 %), the default
 # seed's clouds holding 0.904 of the molecular gas (300 systems seeds: 1.003 +- 0.034, as 1.002 +- 0.036 drawn cell by cell: no bias).
-CLUSTERS_RGB_OVER_YOUNG = (0.94499, 0.94219, 0.93566)  # S70 (D234): was (0.94372, 0.94097, 0.93468) - the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius), another draw of the census. S61 (D220): was (0.97512, 0.97813, 0.98674). S60 (D219): was (0.97428, 0.97826, 0.98757); S59 (D218 follow-up): was (0.99372, 1.00109, 1.01543); S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
-CLUSTERS_LIGHT_OVER_YOUNG = 0.93208  # S70 (D234): was 0.93132 - the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius), another draw of the census. S61 (D220): was 0.99711. S60 (D219): was 1.00064; S59 (D218 follow-up): was 1.03547; S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
+CLUSTERS_RGB_OVER_YOUNG = (0.94023, 0.93824, 0.93287)  # S70 (D234): was (0.94372, 0.94097, 0.93468) - the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius), another draw of the census. S61 (D220): was (0.97512, 0.97813, 0.98674). S60 (D219): was (0.97428, 0.97826, 0.98757); S59 (D218 follow-up): was (0.99372, 1.00109, 1.01543); S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.94499, 0.94219, 0.93566
+CLUSTERS_LIGHT_OVER_YOUNG = 0.93183  # S70 (D234): was 0.93132 - the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius), another draw of the census. S61 (D220): was 0.99711. S60 (D219): was 1.00064; S59 (D218 follow-up): was 1.03547; S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.93208
 
 
 def test_the_cluster_census_carries_the_young_light(default, models, through_rgb):

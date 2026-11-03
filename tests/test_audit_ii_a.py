@@ -263,8 +263,12 @@ def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(default
         f = run(default_model, {s: d for s in SEEDS}, only=tuple(vals)).fields
         for k in vals:
             vals[k].append(float(f[k]))
-    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(39.48, abs=0.3) and inside(16, np.median(vals["bar_pattern_speed"]))
-    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(6.33, abs=0.05) and inside(17, np.median(vals["bar_corotation_radius"]))
+    # S88 (#80, the owner's ruling of 2026-11-03, D255; re-stated, not re-numbered - S87's lesson): was "both verdicts
+    # hold" at 39.48 / 6.33. On Erwin 2019's law the defaults' bar is 2.27 kpc and both rows are recorded misses under
+    # #80 on either sample: seeds 41-81 read 79.69 and 2.760 (0-40: 81.97 and 2.651) - the verdicts still agree
+    # between the samples, so the fixed sample still decides no verdict of these two.
+    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(79.69, abs=0.3) and not inside(16, np.median(vals["bar_pattern_speed"]))
+    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(2.760, abs=0.05) and not inside(17, np.median(vals["bar_corotation_radius"]))
 
 
 # --- row 7: the constant's citation, read (A-14) -----------------------------------------------------------

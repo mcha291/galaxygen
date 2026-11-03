@@ -69,7 +69,7 @@ def test_the_exact_identities_hold_at_the_audit_mesh(audit):
 # mean over K seeds, within 3 sigma / sqrt(K) of 1; each seed is held only to 4 sigma; the default seed's own ratio
 # is recorded as measured.
 ENSEMBLE_SEEDS = tuple(range(1, 25))  # K = 24 systems seeds beside the default's (0)
-DEFAULT_SEED_CLOUD_MASS_RATIO = 0.8972526124767065  # S61 (D220 part I, ruling 1): as measured at this mesh, -3.06 sigma
+DEFAULT_SEED_CLOUD_MASS_RATIO = 0.8903455486006404  # S61 (D220 part I, ruling 1): as measured at this mesh, -3.06 sigma  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8972526124767065
 ONE_SEED_BOUND_SIGMA = 4.0  # "no bound tighter than 4 sigma on any one seed"
 
 

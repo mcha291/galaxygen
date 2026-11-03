@@ -316,7 +316,7 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
 # distance of all 1 024 (the bar's other end), the highest-contrast ridge cell (contrast 6.7), and an outer cell,
 # where the mesh is exact (every cell from ring 14, 13.1 kpc, outward).
 # S62 (D221 item 7 as amended): (20, 5) was 0.0 - a gas spur reaches the outer cell, so the pattern is no longer flat there.
-MESH_TV = {(5, 18): 2.853e-3, (5, 2): 3.394e-3, (2, 0): 8.25e-4, (20, 5): 1.886e-6}
+MESH_TV = {(5, 18): 3.548e-4, (5, 2): 6.258e-4, (2, 0): 3.8086e-3, (20, 5): 2.048e-7}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.853e-3, 3.394e-3, 8.25e-4, 1.886e-6
 MESH_TV_BOUND = 5e-3
 
 

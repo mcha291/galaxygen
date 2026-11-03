@@ -156,7 +156,7 @@ def test_the_default_census_numbers(default, default_layer_off):
     # follow-up: the winding is another, and the census another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: another draw of the census)
     # S61 (D220): was 12916 - the clouds drawn ring-first, a new draw of the census (the same on and off since)
-    assert L.size == 12710  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    assert L.size == 12989  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S58 (D217): was 0.720 (0.7304 now, a hair past the tolerance: another draw of the census)
     # S61 (D220): was 0.730 (0.7157 on the ring-first census, a new draw)
     # S67 (D231): were 0.716 pc, 193.7 cm^-3 and -2.826 - the clouds' size law (Lada & Dame's 82 / 35 Msun/pc2 either
@@ -165,7 +165,7 @@ def test_the_default_census_numbers(default, default_layer_off):
     # the census, its masses and its streams unchanged.
     # S70 (D234): were 0.605 pc, 177.9 cm^-3 and -2.788 - the size law's three regimes (#192, the owner's ruling D233:
     # the clouds inside 4 kpc and in 7-8.2 kpc 1.53x larger, so less dense) and the clouds' ring inversion (F-2-7).
-    assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.759, abs=0.01)
+    assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.770, abs=0.01)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.759
     assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(153.7, rel=0.01)
     assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.835, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
@@ -173,10 +173,10 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
     # S60 (D219): was 7734 (another draw, 76 more regions)
     # S61 (D220): was 7799 (the ring-first census, a new draw: 206 fewer regions)
-    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7694
+    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7809  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 7694
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
-    assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0770e7, rel=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
+    assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.4382e7, rel=1e-3)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 6.0770e7  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
     # The check that replaced the calibration (D166 -> D184): the model's photons per unit star formation are
     # 0.71 of Kennicutt & Evans 2012's Kroupa/Starburst99 steady state - the same 0.71 that puts row 34 3%
     # under Bennett et al. 1994's window (debt #100). A consistency check, not a validation.
@@ -212,12 +212,12 @@ def test_the_default_census_numbers(default, default_layer_off):
     # slope reads -2.0338, the gradient -0.101488. Not judged; the judged, layer-off rows above did not move.
     # S61 (D220 item 4): were -2.0338 and -0.101488. The census is drawn ring-first: the same regions on and off, so
     # the layer-on readings are the layer-off ones, to rounding (the regions are summed in another order).
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.05571, abs=1e-5)  # S70 (D234): was -2.05555 - the clouds' ring inversion (F-2-7)
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.04474, abs=1e-5)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -2.05571  # S70 (D234): was -2.05555 - the clouds' ring inversion (F-2-7)
     # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities, so their [N II]/Halpha
     # (-0.097717 -> -0.097902, on and off alike); row 37 above a recorded miss still, 0.0002 further out.
     # S70 (D234): was -0.097902 - the clouds' ring inversion on its own interval (F-2-7) to -0.098171, then the three
     # Sigma regimes (#192, the owner's ruling D233) to -0.098309; row 37 a recorded miss still, 0.0004 further out.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098309, abs=1e-6)
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098650, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309
     for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
         assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
 
@@ -323,7 +323,7 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     log_u = np.asarray(F["hii_ionization_parameter"])
     # S44: was 0.2641 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93 (D195, #121)
     # S61 (D220): was 0.0302 (the ring-first census, a new draw: 3.30 %)
-    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.0330, abs=1e-3) and not (log_z < g["log_z"][0]).any()
+    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.0313, abs=1e-3) and not (log_z < g["log_z"][0]).any()  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0330
     assert (age < g["log_age_yr"][0]).mean() == pytest.approx(0.0257, abs=1e-3) and not (age > g["log_age_yr"][-1]).any()
     assert np.all((log_u >= g["log_u"][0]) & (log_u <= g["log_u"][-1]))
     w = np.asarray(F["hii_halpha_luminosity"])
@@ -346,7 +346,7 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # tolerance.
     # S70 (D234): [O III] 0.775 -> 0.772 and [N II] 0.078 -> 0.080 - the size law's three regimes (#192) and the clouds'
     # ring inversion (F-2-7) move each region's density and U; the [S II] pair inside the tolerance.
-    assert weighted == pytest.approx({"oiii_5007": 0.772, "nii_6583": 0.080, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
+    assert weighted == pytest.approx({"oiii_5007": 0.779, "nii_6583": 0.080, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.772
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])
