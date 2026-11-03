@@ -246,27 +246,29 @@ F_2_1 = ("F-2-1: arm_pieces.py:492 (_CONSERVES) says the budget 'is met on avera
 
 # S70 (D234): was xfail(strict, F_2_1) holding "met on average" within 0.2 of 1 - the declaration (#195) now says the
 # measured share and why; this test holds what it says.
-@pytest.mark.xfail(strict=True, reason="S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the Milky Way template at seed 777 carries 0.934 of its budget, over the "
-                   "declared 0.4-0.9 (4242: 0.558; ngc_4414 4242: 0.445) - a declared bound read over on today's model, "
-                   "held for the gate to rule (re-measure the declaration or find the cause), not loosened")
+# S87 (BUILD_V M1) held it under a strict xfail: the Milky Way at seed 777 carried 0.934 of its budget, over the
+# declared 0.4-0.9. S88 (D255 ruling 2): the cause named by one probe (the pin on and off on the same seeds, and M1's
+# model states) and the declaration re-measured over S70's seven runs on the final model, 0.445 to 0.934 - the
+# census's draw, not a law's (arm_pieces._CONSERVES); the bound re-declared at that spread, 0.05 either way.
 def test_arm_pieces_carry_the_declared_share_of_the_power_budget(audit):
-    """(b) ``conserves``' second sentence as S70 wrote it (#195): "the census carries less than the budget - ... 0.569 of
-    the budget on the Milky Way template ... 0.847 on NGC 4414's ... 0.498 at 4242; Audit V's mesh read 0.53, 0.64 and
-    0.45". Re-derived: the summed realised power (the composed field's own variance) over the summed budget, on the
-    rings outside the bar, per run; each between 0.4 and 0.9 - inside the declared spread over seven runs (0.45 to
-    0.85) by 0.05 either way, and under the budget, as declared; and the declaration names the share, its reason and
-    the debt.
+    """(b) ``conserves``' second sentence as S88 re-measured it (#195): "the census carries less than the budget - ...
+    0.589 of the budget on the Milky Way template ... 0.692 on NGC 4414's ... Audit V's mesh read 0.558 and 0.934 ...
+    and 0.445 ...: 0.445 to 0.934 over the seven runs S70 measured". Re-derived: the summed realised power (the
+    composed field's own variance) over the summed budget, on the rings outside the bar, per run; each between 0.39
+    and 0.98 - inside the declared spread over seven runs (0.445 to 0.934; S70's 0.45 to 0.85, held at 0.4-0.9) by
+    0.05 either way, and under the budget, as declared; and the declaration names the share, its reason and the debt.
 
     (c) ``stands_in_for``: the law's budget is the amplitude a swing-amplified disc carries; a realisation carrying
     about half of it is weaker arms, now declared rather than said to be met on average.
 
-    Fails if: on any run the share is outside 0.4-0.9, or the declaration stops saying it."""
+    Fails if: on any run the share is outside 0.39-0.98 or over 1, or the declaration stops saying it."""
     ratios = {}
     for tpl, seed in LAYER_ON:
         var, _, budget = ring_power(audit[tpl, seed, True])
         ratios[tpl, seed] = math.fsum(var) / math.fsum(budget)
-    assert all(0.4 <= r <= 0.9 for r in ratios.values()), ratios
-    assert "0.569 of the budget" in ap._CONSERVES and "#195" in ap._CONSERVES and "in expectation" in ap._CONSERVES
+    assert all(0.39 <= r <= 0.98 and r < 1.0 for r in ratios.values()), ratios  # S88: was 0.4-0.9; measured 0.558 / 0.934 / 0.445
+    assert "0.589 of the budget" in ap._CONSERVES and "#195" in ap._CONSERVES and "in expectation" in ap._CONSERVES  # S88: was "0.569 of the budget"
+    assert "0.445 to 0.934" in ap._CONSERVES and "the census's draw" in ap._CONSERVES
 
 
 def piece_table(out) -> dict[str, np.ndarray]:

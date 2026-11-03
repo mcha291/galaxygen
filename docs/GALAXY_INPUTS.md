@@ -3053,6 +3053,15 @@ never been judged in twenty-three sessions.
    cause, by M1's model states on the same seeds (S86's 10d3a32, then each S87 item): #148's clock moved the mesh's
    worst foot 0.4804 → 0.5680 (the spacing reads the gas column the clock moved, so the feet stand elsewhere), #209's
    floor → 0.5687, #80's pinned bar → 0.5700; the worst feet stand at 5.9–6.1 kpc, just past the bar's end.
+   (2) Audit V's power-budget share, **the cause named and the declaration re-measured** (#195's measured share,
+   `arm_pieces._CONSERVES`; the test's bound 0.4–0.9 → 0.39–0.98, the xfail removed). One probe, the Milky Way on
+   Audit V's mesh with its pin on and off on the same seeds and the same seeds at M1's model states: seed 777 reads
+   0.627 at S86 (bar 5.21 kpc, 11 chains / 41 pieces), unmoved by the clock and the floor, **0.934 with the pinned 5.0
+   kpc** (9 / 44) and 0.695 with the pin off (the law's 2.27 kpc, 11 / 62); seed 4242 0.530 → 0.558 (pin off 0.565).
+   The share is the census's draw, not a law's: a seed's chains and pieces move with the bar's length, and the mesh
+   and the grid draw different censuses at one seed (777 on the production grid 0.709). Over S70's seven runs on the
+   final model: production 0.589 (the Milky Way, seed 0; 98 rings) / 0.656 (4242) / 0.692 (NGC 4414, its seed) /
+   0.498 (4242), the mesh 0.558 / 0.934 / 0.445 — **0.445 to 0.934** (S70: 0.45 to 0.85), every run under the budget.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
