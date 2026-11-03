@@ -3930,6 +3930,28 @@ never been judged in twenty-three sessions.
    with the reason, #136 re-read with it); this entry names the check and does not change it. (a), (c) and (d)
    carried as written. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2), (a) measured on today's model and not applied — applying it is a rule's change, the owner's.* With
+   the light on the stellar contrast and the dust on the gas's (each clipped at zero, every cell of the 360), each
+   cell's absorbed share the layered one at its column and the ring's ratio of heights, against the stage's mean
+   column (the method of `tests/test_dust_layer.py`'s `test_the_heating_is_still_the_ring_s_mean_column_s`, run on each
+of the three by a probe; the default's numbers are that test's pins): **the default galaxy 1.0047 over the disc** (0.9906 at 2 kpc,
+   1.0028 at 4, 1.0292 at R₀, 1.0055 at 12; the rings 0.976–1.060), **the Milky Way template 0.9728** (0.9038 at 2
+   kpc inside its pinned 5.0 kpc bar's lanes, 0.9548 at 4, 1.0226 at R₀; 0.904–1.026), **`ngc_4414` 1.0008** (0.9981 at
+   2, 1.0053 at 4, 1.0240 at R₀; 0.979–1.038). Applied it would move L_IR 1.2499e10 → 1.2558e10 (default), 1.2499e10 →
+   1.2159e10 (Milky Way), 6.7976e9 → 6.8028e9 (`ngc_4414`) and T_d(R₀) by +0.07 to +0.10 K (18.667 → 18.763 K default).
+   **Why it is not built here.** Since S55 the stellar and gas contrasts are *composed* fields, 1 everywhere with the
+   randomness layer off (D214), and the arms a census of the layer's pieces (D219): a dust stage that reads them must
+   be a composing stage (invariant I4, `Stage.may_place`), and its published T_d, L_IR and infrared surface brightness
+   would then differ with the layer on and off — which rule A10 forbids ("the layer changes no ring total of any field")
+   and invariant I1 tests (`tests/test_layer.py`: every field not declared composed bit-identical on and off). The
+   absorbed power is non-linear in the column, so no placement of the dust conserves it: no composed form with a
+   neutral exists. D211's "seeded extension" was written at S52, before the layer; today it needs A10 amended, or the
+   placed heating published as a separate composed factor beside the physics' own (a field no stage reads). The
+   lead's recommendation to the owner: **permanent** — the heating is the physics' at the ring's mean column by A10,
+   the placement's effect the measurement above (under 3 % of the disc's absorbed power, a tenth at the Milky Way's
+   2 kpc ring), the render's frame drawing the placed dust as it does. (b) was done at S70 (`specs/templates.py`
+   `layered_face_on_transmission`); (c) the flare's pressure is the pressure prescription's named alternative, which
+   moves the molecular fraction (D211 ruling 6): a ruling, not a build; (d) stands as stated.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
