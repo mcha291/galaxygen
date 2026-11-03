@@ -8,7 +8,7 @@ the default inputs; **#145** Erwin 2018's frequency a disclosed check, not a dra
 the model's own flat-ΛCDM age 13.467 Gyr (`core/cosmology.py`); row 2 out by 0.020 as predicted and recorded, row 6 in
 (345.09 pc, on σ_z), **#212** opened (`MERGER_HEATING` derives 90.62 on this clock against 88.8). #154's render half
 re-ruled a viewer pass's; #130 not built (no source gives the atomic dispersion); seven readings each in its
-`READING_*.md`. **The hash pin moved at S88 (M1's final model): 4522ff0b17784e14edf852a8ebbac688** (f1fbbb17… pinned until S88; a6a389b9… in fact at S87's close).
+`READING_*.md`. **The hash pin moved at S88 (M1's final model): 244c8bda25160845d157f3405518394c** (f1fbbb17… pinned until S88; a6a389b9… in fact at S87's close).
 Register **121 open = 37 + 84, 74 discharged**; next number **#213**, decisions from **D256**. Branches: `batch-m1` holds
 S86 and S87 (tags s86, s87); S88 cuts `session-88` from it, merges back into it, then **merges `batch-m1` into `main`**.
 
@@ -30,7 +30,7 @@ S86 and S87 (tags s86, s87); S88 cuts `session-88` from it, merges back into it,
 - **#152 to the permanent row** (the register's summary rows, the count pin, RESUMING's line) — Fable moves it at the close.
 - **The owner's two answers** built as they come (a) `spec.run` unchanged or judging the template; (b) the constant
   re-derived with row 3's miss in `spec._MISSES`, or the gap declared beside 88.8.
-- **The hash moves once** (D3 as amended at D235; done at S88: 4522ff0b17784e14edf852a8ebbac688): the docs' pin f1fbbb17… → the final `content_hash(MODEL)` in BRIEF,
+- **The hash moves once** (D3 as amended at D235; done at S88: 244c8bda25160845d157f3405518394c): the docs' pin f1fbbb17… → the final `content_hash(MODEL)` in BRIEF,
   DECISIONS, GALAXY_INPUTS, GALAXY_PLAN, RESUMING; one re-export of the bundles (`tools/export_template.py`); the frames
   regenerated with the reason and **the goal pictures beside them — say how far they are**; the owner's look rules
   #156 (and #157's reopen condition). The acceptance rows the batch touched (2, 6, 15, 16, 17, 35, 37, the arms') re-read
