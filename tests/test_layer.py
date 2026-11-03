@@ -397,9 +397,13 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # inputs and 246 on ngc_4414's, 19 + 19 + 4 route bodies, 2 + 2 single-mode fields - where D215's named list holds a
 # handful. The named list cannot carry a whole-model change; rewriting the reference (`... layer_reference.py write`)
 # is a deliberate act a decision must record (the module's docstring) - held strict for the gate to rule, not rewritten
-# and not loosened.
+# and not loosened. The gate at the close (D256): the rewrite was tried (digest d9aec859..., 393 / 392 fields, 42
+# routes) and reverted - these two tests are a ledger of the named movements since S55 (the exceptions' S55 values,
+# S61's redrawn censuses asserted to differ, the fields added at S56-S62 as the exact set over S55's 332, the redrawn
+# routes' headers asserted unequal), and every asserted difference vanishes on a new anchor, so they failed on their
+# history. Register #214 (M2's): the ledger re-based at a batch's close by decision, or retired to the hash pin.
 S55_REFERENCE_MOVED = ("S88 (M1): the S55 layer-off reference moved by the clock (#148) and MERGER_HEATING (#212) with "
-                       "the bar (#80): 1 038 entries off it on the final model; its rewrite is the gate's decision")
+                       "the bar (#80): 1 038 entries off it on the final model; the ledger's re-anchoring is #214, M2's")
 
 
 @pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture

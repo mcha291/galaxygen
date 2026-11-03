@@ -2069,3 +2069,9 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   commit ran held half the re-pins and five readings over their bounds (the S55 reference, the L1 gate, the dust
   column, a star outside its cell, spurs past the arms' budget) besides a determinism defect: run every model file
   once on the final model before the bounds are ruled, not after.
+- [close] **A bit-for-bit reference is a ledger of what moved since its anchor, and a ledger cannot take a new
+  anchor by rewriting the file.** The S55 layer-off reference's two tests assert every named movement since S55
+  against it; M1 moved 1 038 entries by design, and rewriting the reference made every asserted difference vanish, so
+  the tests failed on their history. The lead's strict hold was right; the gate's rewrite was reverted and the
+  re-anchoring made a register item for the next batch (#214): a reference that must follow the model per batch needs
+  its ledger re-based with it, by decision, or retiring to the hash pin that already holds the model bit for bit.

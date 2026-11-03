@@ -716,9 +716,9 @@ def test_with_the_layer_off_no_piece_is_laid_and_the_stream_is_never_drawn(prod,
 # contrast is 1.000000 (18.0, 20.2, 20.4 and 24.9 kpc; the last's spacing 1 076 kpc), and they bend the gas there; the
 # stars are exactly 1 at 20, 25 and 29 kpc, and NGC 4414 (no spurs) is exactly 1 throughout (measured,
 # s88_probe_sector20.py / s88_probe_outerspurs.py). Whether spurs belong on a chain with no ridge is the gate's to rule;
-# held strict here, not loosened.
+# ruled at the close (D256): they do not - register #213, M2's; held strict here, not loosened.
 OUTER_SPURS = ("S88 (M1): the Milky Way's gas sector means at 20 kpc are 6.7e-15 off 1 (4.4e-3 at 25 kpc) - spurs on "
-               "chains past the arms' budget, feet of contrast 1.0; the gate's to rule")
+               "chains past the arms' budget, feet of contrast 1.0; register #213 (the gate, D256), M2's")
 
 
 @pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=OUTER_SPURS)) if t == "milky_way" else t for t in TEMPLATES])

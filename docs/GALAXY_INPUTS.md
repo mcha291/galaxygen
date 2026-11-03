@@ -713,8 +713,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
 | **discharged** at S86 | **139, 142, 198** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip; the saturation cut reached by an admissible galaxy, pattern seed 28: its effect read in tests/test_bar.py since S58, I1's walk and I4 through it since S86) | 3 |
 | **discharged** at S87 | **148, 209** (one cosmology for the time axis and the redshifts: the grid's `t_max` the model's own flat-ΛCDM age, 13.467 Gyr, from `core/cosmology.py`; row 2 out by 0.020 as predicted and recorded, row 6 in on σ_z, unpredicted; the owner's 1.0° floor on a drawn piece's pitch, D255) | 2 |
-| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 155, 157, 195 | 37 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 152, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 210, 211, 212 | 84 |
+| **discharged** at S88 | **212** (`MERGER_HEATING` re-derived at its fixed point on the model's own clock, 88.8 → 90.6, on the owner's word of 2026-11-03; row 3's miss 251.017 written in under #11, D256) | 1 |
+| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 152, 155, 157, 195 | 38 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 210, 211, 213, 214 | 84 |
 
 So the board's **121 open** is 37 permanent and 84 carried, and no item is unruled (S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
@@ -3087,11 +3088,11 @@ never been judged in twenty-three sessions.
    failing assert and goes on, then the strict run). Held strict for the gate, each with its measurement in the mark:
    (i) **the S55 layer-off reference** (`tests/test_layer.py`, `S55_REFERENCE_MOVED`): 1 038 entries off it - 250 of
    393 fields per model on the Milky Way's inputs, 246 on NGC 4414's, 42 route bodies, 4 single-mode fields; the named
-   list cannot carry a whole-model change and the reference's rewrite is a decision; (ii) the L1 gate (#161's line);
+   list cannot carry a whole-model change and the reference's rewrite is a decision — tried at the close (D256) and reverted: the two tests are S55's ledger and cannot take a new anchor, #214 opened; (ii) the L1 gate (#161's line);
    (iii) the dust column on ring 2 (#176's); (iv) a star outside its child cell (#197's); (v) **spurs on chains past the
    arms' budget** (`tests/test_modes.py`, `OUTER_SPURS`): the Milky Way's gas sector means at 20 kpc 6.7e-15 off 1 and
    4.4e-3 at 25 kpc, from spurs whose feet read a contrast of 1.000000 (18.0-24.9 kpc, one with a 1 076 kpc spacing) on
-   chains that reach 30.9 kpc with no amplitude - whether a spur belongs where no ridge stands is the gate's. Restated
+   chains that reach 30.9 kpc with no amplitude - whether a spur belongs where no ridge stands is the gate's — it does not: #213 opened at the close (D256), M2's. Restated
    where a verdict changed (rows 16-17 on the second diagonal, the arm label at the defaults 5 on 49 seeds of 60, row 3's
    converged miss 0.0039); the routes' stage lists lose `gas_pattern` (unrun since #154's table, D4).
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
@@ -4560,7 +4561,7 @@ never been judged in twenty-three sessions.
    #138). The Milky Way template keeps its pinned chains on the measured loci and the arm-number law's chains
    elsewhere, and this entry stays the disclosed check it has been since S59, with no verdict
    (`tests/test_pieces.py`'s maser record, re-pinned at S87 where the clock, the floor and the bar's pinned length
-   moved it). Nothing to build. **Ruled permanent at S88's close** (Fable moves the rows then): the representation's
+   moved it). Nothing to build. **PERMANENT (the gate, S88's close, D256; the owner's ruling of 2026-11-03)**: the representation's
    limit on the Milky Way's measured arms is the plan's, by the owner's word.
 153. **NGC 4414's measured pitch is 2.4σ from the pitch law's draw** (S59, D218 item 6). Five 3.6 µm segments
    average 28.9° ± 6.0° `[verified: Herrera-Endoqui et al. 2015, A&A 582, A86, Table 3; docs/READING_ARM_SEGMENTS.md]`;
@@ -4840,7 +4841,7 @@ never been judged in twenty-three sessions.
    -0.6396 / -0.6578, the clock -0.6360 / -0.6699: the step is #80's re-drawn census), the young bright stars' youngest
    bin -0.4750 (S86 -0.5696) and the 40.71-100 Myr bin's finest 1 + omega 0.8457 against flat within 0.05 (out since
    the clock: 1.1887 there; S86 1.0391). The spill's declared figures re-measured (`census_clustering.SPILL_*`: p99
-   0.119, max 1.261, 1 795 of 16 940 beyond 0.06 dex, [alpha/Fe] 0.222).
+   0.119, max 1.261, 1 795 of 16 940 beyond 0.06 dex, [alpha/Fe] 0.222). *The gate (S88's close, D256): both held with the cause, the law kept, not loosened — M2's with this entry; the per-cell conservation (D220 part II rule 2) is the mend.*
 162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
    part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
    than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
@@ -5027,7 +5028,7 @@ never been judged in twenty-three sessions.
    *S88 (M1's close):* the Milky Way's dust column on ring 2 at offset (1/4, 1/4) reads **3.3666 one-draw scatters**
    (dev -1.8802e-2, s_r 5.5849e-3) against the pinned 3 - 2.9287 at S86 (the docstring's 2.93), unmoved by the clock
    and the floor, 3.3666 from #80's pinned 5.0 kpc bar (ring 2, 1.86-2.79 kpc, inside the bar); the whole frame
-   3.5e-4 against 3e-3; NGC 4414's worst 2.8243. Held strict for the gate (`tests/test_v7_layer.py`, `DUST_COLUMN_OVER`).
+   3.5e-4 against 3e-3; NGC 4414's worst 2.8243. Held strict for the gate (`tests/test_v7_layer.py`, `DUST_COLUMN_OVER`). *The gate (D256): held with its cause — #80's pinned bar inside ring 2 — not loosened; M3's with this entry.*
 177. **The march under-samples the bulge's cusp: the innermost kiloparsec reads 2.3 % low on screen** (S67, D227 R5;
    the picture spec's ring gates). On `milky_way`'s face-on frame, dust and gas off, the ring 0-1 kpc's on-screen
    light over the render's published light plus the bulge is 0.977-0.978 in every state (layer on or off, points on
@@ -5243,7 +5244,7 @@ never been judged in twenty-three sessions.
    *S88 (M1's close): met by the default census.* One inherited star of cell 300 (12.36 Gyr, thin disc) stands at
    R 8.44826 kpc, 5.65 pc inside its ring's inner edge (8.45391), so it lies outside its child's footprint at levels
    1-3 (`tests/test_hierarchy.py`, `HIERARCHY_197`, held strict): passing on S86's model and through the clock and
-   the floor, failing from #80's re-drawn census. Still M2's.
+   the floor, failing from #80's re-drawn census. Still M2's; *the gate (D256): held under this entry, the owner's word standing.*
 198. ~~**The arm saturation cut is never exercised**~~ (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
    on 0 of 48 rings at both SMALL runs and on no ring at the production grid for either template, so the layer-off walk
    and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes
@@ -5510,8 +5511,8 @@ never been judged in twenty-three sessions.
    the response grid's tails to 4.4 µm (M3, the populations), which moves the hash; or the set's red band moved inside
    the grid (F356W or F277W) with the reason stated. What kills the reading: the bound met by a finer slope grid alone.
    *S85 register pass (D251):* **the owner's word** — the owner's word (D246): the set's pins in `tests/test_render.py`, or F356W, or M3's grid extension.
-212. **`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
-   constant is 88.8** (S87, M1; found by #148's build). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
+212. ~~**`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
+   constant is 88.8**~~ (S87, M1; found by #148's build; discharged at S88's close, D256). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
    over the pre-merger population at R₀ — σ_W = 35 km/s, the model's own secular heating then 27.06 km/s — and set it
    at the derivation's fixed point, 88.815. The secular heating is a function of the stars' ages (`assembly`: age =
    now − t), so when #148 put the grid's clock on the model's own cosmology (13.467 Gyr for a recalled 13.8) the same
@@ -5528,8 +5529,7 @@ never been judged in twenty-three sessions.
    ruling that 88.8 stays declared as the old clock's derivation with the gap written beside it. What kills the
    reading: a derivation that does not read the model's own heating.
    *S88 (M1's close): **re-derived on the owner's word of 2026-11-03 ("Yes, both": the gate's recommendation B10) -
-   to be discharged at the close** (the heading struck and the summary rows and count pin moved by the close, as
-   with #152).* The derivation iterated on the final model (every other S88 model change in: the bounds' declarations,
+   discharged at the close (D256; the heading struck, the summary rows and count pin moved)**.* The derivation iterated on the final model (every other S88 model change in: the bounds' declarations,
    #154's reproducibility mend): 88.8 → 90.6377 → 90.6178 → 90.6180, **the fixed point 90.618028** (secular term
    26.6791 km/s), so `MERGER_HEATING` = **90.6** at the declaration's precision (as 88.815 was 88.8); its about line
    names the clock (13.467 Gyr, `core/cosmology.py`) and 88.8 as the old clock's same derivation; the named
@@ -5540,6 +5540,38 @@ never been judged in twenty-three sessions.
    202 of the Milky Way template's 393 fields (everything downstream of the assembly stage; none of the pattern's,
    the pieces' or the gas pattern's). `tests/test_audit.py`'s derivation test states agreement again (90.6 within
    0.05 of its derivation, 90.618).
+213. **Spurs stand on chains past the arms' budget: a spur's height is the ridge's crest contrast at its foot, which
+   is 1 where no ridge stands, and the walk runs each chain to its end** (S88, M1's close; found by `tests/test_modes.py`'s
+   sector-means check, unrun since S86). On the Milky Way template the gas's sector means past the last ring with any arm
+   power are not every one exactly 1: at most 6.7e-15 off at 20 kpc and 4.4e-3 at 25 kpc (exact at 22, 27 and 29; the
+   stars exactly 1 at 20, 25 and 29; NGC 4414, which draws no spurs, exact throughout). Four spurs stand at 18.0, 20.2,
+   20.4 and 24.9 kpc on chains that reach 30.9 kpc with no amplitude, at feet whose contrast is 1.000000 (the last's
+   Jeans spacing 1 076 kpc), and they bend the gas there. The walk (`layer/spurs.py`) places a spur every Jeans spacing
+   along the chain's polyline to the chain's end, and a spur's height is the ridge's crest contrast at the foot
+   (`stages/spurs.py`: "the foot's peak equal to the ridge's crest contrast there"), so where the ridge has no amplitude
+   the feather is composed whole — g' = (1 − ⟨S⟩) g + S keeps the ring's mean and bends its sectors — where its cause
+   is absent: the spacing reads the ridge's gas column (Kim & Ostriker 2006), which is the interarm's there. **Ruled at
+   S88's close (D256): a spur does not belong where no ridge stands. Carried, M2's** (the gas; with #163 and #165, the
+   feet). Held strict in `tests/test_modes.py` (`OUTER_SPURS`), not loosened; not mended at the close because a model
+   byte moves the hash, which moves once per batch (BUILD_V ruling 4). What closes it: the walk ends at the chain's last
+   ring with amplitude (the arms' budget's edge), or a spur's height is the ridge's excess over 1 — measured on both
+   templates, the frames and the walk's bounds (#165's 0.27 and 0.58) re-read, the sector means exact past the budget.
+   What kills the reading: a published amplitude on those chains past the budget's edge.
+214. **The S55 layer-off reference and its two tests are a ledger of the named movements since S55, and a model batch
+   cannot pass through it** (S88, M1's close, D256). `tests/layer_reference_s55.json` holds S55's layer-off run (D215), and
+   `tests/test_layer.py`'s two reference tests hold every later run to it through a ledger: the named exceptions with
+   their S55 and present values, the censuses S61's ring-first draw redrew (17 + 38 + 17 + 19 + 9 + 14 columns and
+   statistics, asserted to differ), the fields added at S56–S62 (asserted as the exact set over S55's 332), the redrawn
+   routes' headers asserted unequal, the render's `lines_hii` alone. M1 moved 1 038 entries by design (#148's clock,
+   #80's bar, #209's floor, #212's constant: 250 of 393 fields per model), which no named list carries; the lead held
+   both tests strict. The rewrite was tried at the close (`layer_reference.py write`, digest d9aec859…) and reverted: on
+   the new anchor every historic difference the ledger asserts vanishes, so the tests fail on the ledger, not the
+   physics. **Carried, M2's** (the next batch that moves the model; held strict meanwhile, `S55_REFERENCE_MOVED`). What
+   closes it: the ledger re-anchored at each batch's close by decision — the reference the batch's final layer-off run,
+   the tests holding every later run to it with an empty named list until the next batch, the historic sets kept as
+   history — or the reference retired to the batch's hash pin, the bundles' byte check and the machine pins, which hold
+   the final model bit for bit already, the two tests struck with the reason. What kills the reading: a ledger that
+   passes on M1's final model unchanged.
 
 ---
 
