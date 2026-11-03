@@ -31,7 +31,7 @@ def test_the_baryons_are_conserved(model):
     f = o.fields
     accounted = f["stellar_mass_total"] + f["gas_mass_30kpc"]
     assert accounted <= f["baryon_mass_total"] * 1.0001
-    # The infall is exponential and 13.8 Gyr is many e-folding times at small R,
+    # The infall is exponential and 13.467 Gyr (13.8 until S87, #148) is many e-folding times at small R,
     # so almost all of it has arrived; what is left out is the outer disc's tail.
     assert accounted / f["baryon_mass_total"] > 0.95
 
@@ -43,8 +43,10 @@ def test_the_split_is_computed_not_assumed(model):
     # Row 2 is inside since S17 took the spheroid's 13% out of the budget the disc accretes:
     # 1.82, from 2.08 with S16's tail (debt #47), 1.89 at S13, 1.97 while Sagittarius delivered
     # a tenth of the budget (debt #29, until S13), 1.14 before the merger-delivered second infall.
-    assert 1.46 <= f["sfr"] <= 1.84
-    assert f["sfr"] == pytest.approx(1.755, abs=0.06)  # 1.82 until S18's derived threshold held more gas at R0
+    # S87 (#148): the grid's clock on the model's own cosmology (13.467 Gyr for 13.8) takes it out, by 0.020, a recorded
+    # miss (debt #148) predicted at S86 and written into the row before the build.
+    assert 1.84 < f["sfr"] < 1.84 + 0.03  # S87 (#148): was 1.46 <= sfr <= 1.84 - the clock
+    assert f["sfr"] == pytest.approx(1.860, abs=0.06)  # S87 (#148): was 1.755 - the clock  # 1.82 until S18's derived threshold held more gas at R0
     # Row 20 is at its zero-width target since S18 (1% over): 25% low at S17, 22% at S16, 48% with no extended component (debt #18, until S16).
     assert f["gas_mass_30kpc"] == pytest.approx(1.108e10, rel=0.05)  # 8.26e9 until S18; 8.55e9 until S17; 5.71e9 until S16
     assert f["hydrogen_mass_30kpc"] == pytest.approx(0.73 * f["gas_mass_30kpc"])
@@ -248,7 +250,7 @@ def test_the_tail_is_accreted_and_what_it_moved(model):
     assert f["hydrogen_mass_30kpc"] == pytest.approx(8.09e9, rel=0.01)  # 6.03e9 until S18; 6.24e9 until S17; 4.17e9 until S16
     assert f["v_tangential_sun"] == pytest.approx(250.96, abs=0.5)  # 251.3 until S18; 252.9 until S17; 260.1 until S16
     assert f["thin_disc_scale_length"] == pytest.approx(2.44, abs=0.02)  # 2.48 until S18, unmoved since S13
-    assert f["sfr"] == pytest.approx(1.755, abs=0.03)  # 1.82 until S18; 2.08 until S17; 1.89 until S16
+    assert f["sfr"] == pytest.approx(1.860, abs=0.03)  # S87 (#148): was 1.755 - the clock  # 1.82 until S18; 2.08 until S17; 1.89 until S16
     assert f["stellar_mass_total"] == pytest.approx(4.75e10, rel=0.01)  # 5.03e10 until S18; 5.00e10 until S17; 5.29e10 until S16
     assert float(np.interp(20.0, R, f["gas_surface_density"])) == pytest.approx(3.33, abs=0.2)  # 3.75 until S18 (the threshold there is 3.9, so a little now forms stars); 0.6 until S16
 
@@ -278,7 +280,7 @@ def test_the_threshold_is_kennicutts_off_the_epicyclic_frequency(model):
     assert np.all(gas[inside] < crit[inside]) and np.all(gas[inside] > 0.6 * crit[inside])  # regulated: held just under
     assert float(np.interp(R_SUN, R, gas)) == pytest.approx(10.8, abs=0.2)  # 6.3 until S18
     assert f["hydrogen_mass_30kpc"] == pytest.approx(8.09e9, rel=0.01)  # 6.03e9 until S18
-    assert f["sfr"] == pytest.approx(1.755, abs=0.02)  # 1.82 until S18: still inside 1.46-1.84
+    assert f["sfr"] == pytest.approx(1.860, abs=0.02)  # S87 (#148): was 1.755, inside 1.46-1.84 - the clock took it out by 0.020  # 1.82 until S18
     # what it holds inside: more gas than the Milky Way has there (the bar's job, debt #21), on the record
     assert float(np.interp(4.0, R, gas)) == pytest.approx(22.8, abs=0.5) and float(np.interp(2.0, R, gas)) == pytest.approx(33.0, abs=0.7)
 

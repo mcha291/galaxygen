@@ -135,11 +135,11 @@ def test_the_zone_as_the_criteria_read_it(model, coarse):
     read twice as -0.4; S37 re-read the LaTeX and settled it (D186, D187)."""
     out = coarse[model.name]
     f, R = out.fields, out.grid.R
-    assert float(f["habitable_zone_half_radius"]) == pytest.approx(6.4414, abs=1e-3)
+    assert float(f["habitable_zone_half_radius"]) == pytest.approx(6.5580, abs=1e-3)  # S87 (#148): was 6.4414 - the clock
     assert float(f["habitable_zone_peak_radius"]) == pytest.approx(6.625, abs=1e-9)
-    assert float(f["habitable_fraction"]) == pytest.approx(5.9613e-3, rel=1e-4)
+    assert float(f["habitable_fraction"]) == pytest.approx(5.4403e-3, rel=1e-4)  # S87 (#148): was 5.9613e-3 - the clock
     i = int(np.argmin(abs(R - 8.2)))
-    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(0.20278, abs=5e-5)
+    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(0.21898, abs=5e-5)  # S87 (#148): was 0.20278 - the clock
 
 
 def test_the_dropped_root_reading_of_eq_5_is_kept_visible(prod, monkeypatch):
@@ -150,9 +150,9 @@ def test_the_dropped_root_reading_of_eq_5_is_kept_visible(prod, monkeypatch):
     monkeypatch.setattr(hz, "sterilization_distance", lambda mag, base, m_std: base * 10.0 ** (-0.4 * (mag - m_std)))
     out = run(prod[0].get(DEFAULT_MODEL), grid=COARSE, only=ZONE)
     f, R = out.fields, out.grid.R
-    assert float(f["habitable_fraction"]) == pytest.approx(4.7514e-4, rel=1e-4)
+    assert float(f["habitable_fraction"]) == pytest.approx(4.1198e-4, rel=1e-4)  # S87 (#148): was 4.7514e-4 - the clock
     assert float(f["habitable_zone_peak_radius"]) == pytest.approx(10.875, abs=1e-9)
-    assert float(f["habitable_zone_half_radius"]) == pytest.approx(12.0517, abs=1e-3)
+    assert float(f["habitable_zone_half_radius"]) == pytest.approx(12.1025, abs=1e-3)  # S87 (#148): was 12.0517 - the clock
     assert int(np.argmax(np.asarray(f["habitability"]))) == R.size - 1  # the edge, not an interior maximum
     i = int(np.argmin(abs(R - 8.2)))
-    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(2.0834, abs=5e-4)
+    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(2.2446, abs=5e-4)  # S87 (#148): was 2.0834 - the clock

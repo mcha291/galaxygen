@@ -51,6 +51,8 @@ PLAN_INPUTS = {
     "arm_class", "arm_pieces",
     # S70 (D234; the owner's ruling D233 on #192): a sixth pin, a table of one row - a galaxy's molecular ring.
     "molecular_ring",
+    # S87 (#80; the owner's ruling of 2026-11-03, D255): a seventh pin, a measured number - a bar's half-length in kpc.
+    "bar_half_length",
 }
 
 
@@ -65,8 +67,10 @@ def test_input_vector_is_closed():
     # S59 (D218): was ["bar_present"] and 7 + 5 + 1 + 1 - two more pins, each a measured number with its unit.
     # S60 (D219 items 3 and 8): was three pins and 7 + 5 + 1 + 3 - a named class and a table join them.
     # S70 (D234): was five pins and 7 + 5 + 1 + 5 - the molecular ring joins them, a table of one row (#192).
-    assert [i.name for i in pins()] == ["bar_present", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
-    assert len(INPUTS) == 7 + 5 + 1 + 6
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was six pins and 7 + 5 + 1 + 6 - the bar's measured half-length joins them, a number in kpc.
+    assert [i.name for i in pins()] == ["bar_present", "bar_half_length", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
+    assert len(INPUTS) == 7 + 5 + 1 + 7
+    assert (INPUTS["bar_half_length"].shape, INPUTS["bar_half_length"].unit, INPUTS["bar_half_length"].lo, INPUTS["bar_half_length"].hi) == ("number", "kpc", 0.1, 30.0)
     # The four shapes a pin takes, told apart by the declaration: True or False, one of its named classes, a number
     # in its unit, or rows of its columns.
     assert [INPUTS[n].shape for n in ("bar_present", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces")] == ["class", "number", "number", "named", "table"]

@@ -1996,3 +1996,45 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   realised power at three quantiles, a length no reader prints); ruling them at the close, with the summary rows and
   their pins moved in one script, kept the register and DECISIONS saying the same thing - a proposal left standing in
   the register is a ruling the next session has to find again.
+
+## From S87 (BUILD_V row 87, M1's second session; an Opus lead)
+
+- [audit] **"No constant was fitted on it" is not "no constant was derived on it".** S86 cleared #148's clock of B10
+  by checking for constants fitted to rows; `MERGER_HEATING` was derived from the model's own secular heating (D128),
+  which is a function of the stars' ages, so the clock moved its derivation 88.8 -> 90.62 (#212). Before a whole-model
+  change, search for every constant whose derivation reads the model's output, not only those fitted to a row.
+- [all] **A prediction that names one row misses the others: read the whole table on both sides first.** S86
+  predicted row 2 leaving its window and it did, to the digit; row 6 entered its window (355.70 -> 345.09 pc) and a
+  recorded miss went stale, which only the spec run showed. A two-clock probe that prints every acceptance row and
+  flags each flip costs one minute and belongs before the prediction is written.
+- [infra] **Measure every moved pin in one run, then judge in another.** A pytest plugin that records each failing
+  `pytest.approx` (file:line, expected, obtained, tolerance) and lets the test go on lists every number a change
+  moved, where a strict run stops at the first assert in each test; a script then re-pins the plain numbers with the
+  reason. Never a verdict: the strict run after it is the gate, and plain asserts (verdicts, windows) still fail first.
+- [close] **A test that states a verdict is re-stated, not re-numbered.** "Row 6 lands at 74, not 78", "row 2 is
+  inside and the KS_NORM band straddles it", "the churn loses row 3", "the constant is its derivation": each became
+  false on the new clock, and each was rewritten to what is true now with the old statement kept in its comment —
+  the number-only re-pin cannot see them.
+- [advanced] **A reading without the web is still a reading.** Set what the repository's readers already hold beside
+  today's model before writing "the owner's reading": the pitch law's recalled 13 deg intercept sits 5-7 deg under
+  every sample mean the readers hold (NGC 4414's "2.65 sigma" is 1.3-1.4 sigma against the samples), and DG16b's own
+  flat profile moves the bar body's m = 2 peak 0.41 -> 0.68 a. Both are findings for the gate, not builds.
+- [close] **The scratchpad outlives the session: name a session's files with its own prefix.** S87 wrote its #154
+  commit message to `msg154.txt`, a name S86 had used in the same scratchpad; the Write was refused ("not read
+  yet") and the `git commit -F` beside it in the same turn took S86's message (amended at once, d27c810). A refused
+  Write is the sign of a stale file; `s87_`-prefixed names after that.
+- [infra] **A test's record that is a plain assert is measured by a probe, not by the test.** The soft plugin sees
+  only `pytest.approx`; the `EXPECTED_*` records of tests/test_pieces.py and the sweep's numbers in
+  tests/test_gas_pattern.py stop at their first changed value, and the sweep alone is 42 minutes a pass. A script
+  that imports the test module and calls its own helpers (`suite_gate`, `gate`, the disclosed check's lines) prints
+  every reading at once; the strict run after it confirms. Splitting a file's node ids over six processes cut the
+  pieces file from two hours to its longest test (83 min).
+- [close] **Three model items committed one by one leave the heavy files red between them.** #148, #209 and #80 each
+  moved test_gas_pattern, test_pieces and test_render; each item's commit re-pinned the files it ran and said which
+  it left for the joint re-pin on the final model. That is honest but the branch is red at two commits: name the
+  files left red in every such commit's message, and run the joint re-pin before anything is reported green.
+- [close] **A bound read over on a changed model is the gate's to rule, not the builder's to loosen and not the owner's
+  to be asked.** S87's lead held six as strict expected failures with the measurement in each mark; the close ruled
+  them in one list on those numbers (a tolerance re-measured, a bound re-declared with its cause, a mechanism mended or
+  held), as D234 did at S70, and kept for the owner only what moves a constant's value or a rule (rows 15-17's referent,
+  #212). The owner's questions are the ones whose answer no measurement gives.

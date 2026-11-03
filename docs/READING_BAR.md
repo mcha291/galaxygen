@@ -637,3 +637,58 @@ A₂s ~ 0.06–1.2 at maximum (Bu09). A measured A₂(r/R_bar) profile for barre
   on ar5iv instead. The failed PDF fetches left copies in the tool-results folder; they were not opened.
 - Not found in anything read: a lane width; a shock compression other than KSK12's one figure; a signed
   distribution of the arm-start angle; the driven m = 2 amplitude against r/R_bar; the bar-end share of gas.
+
+---
+
+## Part C — S87 (BUILD_V M1): the stacks' bars, an axis-ratio distribution and a lane width, re-read here
+
+**The lead's note (2026-11-03).** S87's lead had no web access. What follows is a re-reading of Parts A and B
+above for the questions debts #146 and #147 carry from S86, set beside the model's numbers; nothing below was
+fetched, every source tag is the one the readers above wrote, and the arithmetic is the lead's `[inferred]`. Where
+the question is not answered by what the readers fetched it says so: those are the owner's readings.
+
+### C1. #146 — what the stacks' bars are (DG16b), and what that does to the body's peak
+
+- **Profile.** DG16b's stacks: bars in T < 5 are flat, late types exponential, and "only M⋆ ≥ 10¹⁰ M☉ show flat
+  bars" `[verified: DG16b, text and Table 5 — Part A A2]`; K15 the same split by bulge prominence (n_bar ∼ 0.30
+  where B/T > 0.2, ∼0.85 with no bulge, the change near 10^10.2 M☉) `[verified: K15, results — A1.2]`. The Milky Way
+  template (M⋆ 4.74 × 10¹⁰ M☉, B/T 0.16) is on the flat side of both. The model's body is (1 − m²)ⁿ with n =
+  `BAR_PROFILE_INDEX` = 2 for every galaxy — S15's S⁴G fitting form (α = 2, β = 0), which A3 calls "a fitting
+  choice, not a measurement"; A3's adoption was a Sérsic run with n set by the bulge (D217 item 4 took one form,
+  chosen before a number was read).
+- **Axis ratio of the stacks.** DG16b's stacked bars: maximum ellipticity ε ≈ 0.5 for spirals and irregulars,
+  ≈ 0.35 for S0s `[verified: DG16b, text, ×1 — A1.2]`, i.e. b/a ≈ 0.5 / 0.65 at the isophote of maximum ellipticity
+  of a deprojected ellipse fit. A 2D decomposition's component reads more elongated: "ellipse fits … on average,
+  20% lower" in ε `[verified: G11, §3.1 — A1.2]`, so the stacks' spirals at ε ≈ 0.6 as a 2D component, b/a ≈ 0.4 —
+  the model's 0.4 (A's own derivation (i)).
+- **What it does to the body's m = 2 peak (S86's probe on the Milky Way template, GALAXY_INPUTS.md #146).** The peak
+  goes nearly as the axis ratio; at the model's exponent 2 it sits at 0.41 a (b/a 0.4) against the stacks'
+  0.76–0.94 a (DG16b Table 5, Fig. 18 — B1.4). With a flat profile (the probe's exponent n = 0.3 of the same
+  form, standing for K15's flat Sérsic n ≈ 0.3 — two different functions, flat in either sense) it reads **0.68 a at
+  the 2D-equivalent b/a 0.4** and **0.76 a at the stacks' ellipse-fit b/a 0.5** (0.80 a with boxiness 4). So the
+  reading names the miss's larger part: **the exponent**, which the sources set flat for a galaxy of the template's
+  mass and type (0.41 → 0.68 a), and leaves the last 0.08 a to which axis ratio the stacks' amplitude should be read
+  against — the stack's A₂ is measured on images (disc and bulge light inside it), which is an ellipse fit's
+  setting, while the model's body is a component. No source read says which.
+- **A b/a distribution.** What the readers hold: K18, "b/a = 0.31 ± 0.12" median and 1σ, range 0.1–0.6, strong
+  bars only (a Sérsic component) `[verified: K18, results — A1.2]`; MJ07, deprojected maximum ellipticity (ellipse
+  fits) 0.25–0.80 with 70 % (B) / 71 % (H) of bars in 0.50–0.75 (b/a 0.25–0.50) and 7 % / 10 % in 0.25–0.40 (b/a
+  0.60–0.75) `[verified: MJ07, results, ×1]`; MD07, projected 0.54 ± 0.13 (Sa–Sb) and 0.48 ± 0.12 (Sc–Sd);
+  G11's distribution "peaks at ≈0.6" with its median and σ in a figure "not readable" (A2). **No distribution
+  over all bars with its spread is in the repository**: K18's is the only printed σ and it is of strong bars, which
+  the readers call "biased thin"; MJ07's two bins hold 77–81 % and leave the rest unbinned. A residual on b/a needs a
+  measured spread over the population it is drawn for (GALAXY_INPUTS.md §4b), so **b/a stays one number**. The
+  owner's reading: G11's Fig. 1 medians and σ (2D components, face-on, M⋆ > 10¹⁰), or DG16's Table 3 (mean ε per
+  type, "not in the ar5iv page" — A5).
+
+### C2. #147 — a lane width
+
+Part B's B1.1 last row and B5 stand: **no source read prints the width of a bar's dust lane or its molecular
+ridge**. The nearest numbers in the repository are not bar lanes: S⁴G *spiral* dust lanes "~4 pixels … W ~ 150 pc
+at a distance of 10 Mpc", W/πR ≈ 1 % at R = 4 kpc, by eye near the resolution limit `[verified: Elmegreen et al.
+2014, §5.1 — READING_GAS_PATTERN.md Reading B]`; KSK12's one peak, Σ ~ 100 against 10 M☉ pc⁻², a compression and not
+a width (B1.1). The model's lane is a Gaussian of FWHM 0.10 a across the arc, 0.52 kpc at the Milky Way template's
+a = 5.21 kpc — 3.5 times the S⁴G spiral lanes' 150 pc, which are an upper bound on spiral lanes and say nothing of
+a bar's. The owner's reading: the width of a bar lane in high-resolution CO (PHANGS' barred galaxies at ~100 pc,
+or the Milky Way's near and far lanes in CO) or in the simulations' maps (KSK12, Sormani et al. 2015), whose text
+the readers fetched without a width.

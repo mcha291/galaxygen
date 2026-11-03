@@ -275,6 +275,8 @@ def test_production_graphs_hold(prod):
             "arm_class": 3, "arm_pieces": 3,
             # S70 (D234; #192): a sixth pin, the molecular ring, read by the clouds stage at its checkpoint.
             "molecular_ring": 5,
+            # S87 (#80; D255): a seventh, the bar's measured half-length, read by the bar stage at the pattern's checkpoint.
+            "bar_half_length": 3,
         }
         # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's - and (the gate's follow-up,
         # item 2) the spread of a segment's pitch relative to the disc's, a law's number the winding's readers take.
@@ -283,7 +285,7 @@ def test_production_graphs_hold(prod):
         for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "arm_class",
                      "arm_piece_width"):
             assert g.provenance[name] == "derived" and g.producer[name] == "bar", name
-        assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present", "arm_class") and g.stages["bar"].reads_seeds == ()
+        assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present", "arm_class", "bar_half_length") and g.stages["bar"].reads_seeds == ()  # S87 (#80, D255): and the bar's measured length
         # S60 (D219): was `g.stages["arm_phases"].requires == ("bar_present",)` - the layer's stage lays chains by the
         # law's arm number, from the bar's end, placed by the Sun where a template pins arms.
         assert g.stages["arm_pieces"].requires == ("pitch_angle", "arm_class", "bar_half_length", "arm_design_count", "sun_azimuth")

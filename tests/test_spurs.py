@@ -291,11 +291,11 @@ def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     point = gp.unspurred_contrast_at(f["gas_spur_radius"][sample], f["gas_spur_azimuth"][sample])
     rel = np.abs(f["gas_spur_contrast"][sample] - point) / point
     assert rel.max() <= ls.WALK_READ_DIFFERENCE
-    assert rel.max() == pytest.approx(0.0516, abs=5e-4)
+    assert rel.max() == pytest.approx(0.0103, abs=5e-4)  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar
     # S70 (D234; Audit V F-2-4): and over EVERY foot, not ten - the bound is the population's (0.27, measured at seed
     # 4242: 0.2698); at this template's own seed every foot's read is within 0.0516 too (48 feet).
     every = np.abs(f["gas_spur_contrast"] / gp.unspurred_contrast_at(f["gas_spur_radius"], f["gas_spur_azimuth"]) - 1.0)
-    assert every.size == 48 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.0516, abs=5e-4)
+    assert every.size == 53 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.0573, abs=5e-4)  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar  # S87 (#148, #80): was 48 feet - the clock and the template's pinned 5.0 kpc bar
 
 
 def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default_model):
@@ -305,7 +305,7 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     contrast is 1.1-1.6 times the ring's mean where M51's dust lanes stand 10-30 times above the Galaxy's column."""
     o = galaxy_run(default_model, "milky_way")
     f, gp = o.fields, gas_of(default_model, o)
-    assert f["gas_spur_radius"].size == 48 and np.unique(f["gas_spur_chain"]).size == 12
+    assert f["gas_spur_radius"].size == 53 and np.unique(f["gas_spur_chain"]).size == 13  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
     # At three radii: 10 λ_J,sp where each chain crosses, from the published fields and the walk's read.
     pieces = gp.stars.pieces
     table = {}
@@ -317,9 +317,12 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
         table[radius] = (sigma, [round(s, 2) for s in spacing])
     # As measured at S62, kpc, the chains crossing each radius in order of spacing (Σ_gas 22.84, 10.92 and 8.12 M☉/pc²;
     # c_s 6 km/s): the ridge's contrast g read as the walk reads it, 10 c_s² / (G Σ_gas g).
-    assert [round(table[r][0], 2) for r in (4.0, R_SUN, 10.0)] == [22.84, 10.92, 8.12]
-    assert table[4.0][1] == [1.54, 3.97] and table[R_SUN][1] == [5.27, 5.92, 6.25, 6.52, 6.78]
-    assert table[10.0][1] == [6.95, 7.07, 8.26, 8.76, 8.85, 10.27]
+    # S87 (#148, #80): was [22.84, 10.92, 8.12] - the clock and the template's pinned 5.0 kpc bar
+    assert [round(table[r][0], 2) for r in (4.0, R_SUN, 10.0)] == [23.15, 11.03, 8.19]
+    # S87 (#148, #80): was [1.54, 3.97], [5.27, 5.92, 6.25, 6.52, 6.78] and [6.95, 7.07, 8.26, 8.76, 8.85, 10.27] - the
+    # clock and the template's pinned 5.0 kpc bar; still kiloparsecs, outside M51's 0.2-1 kpc past 4 kpc
+    assert table[4.0][1] == [1.15, 3.72] and table[R_SUN][1] == [4.66, 5.89, 6.23, 6.86, 6.86]
+    assert table[10.0][1] == [6.88, 6.99, 8.16, 8.68, 8.77, 10.16]
     assert all(s > 1.0 for s in table[R_SUN][1])  # outside M51's 0.2-1 kpc: recorded, not judged
 
 

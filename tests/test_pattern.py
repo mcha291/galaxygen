@@ -31,9 +31,11 @@ def test_the_bar_scales_with_the_disc(model):
     o = out(model)
     # The lambda_d scale length since S25, when the pattern moved ahead of star formation (D174);
     # the thin disc's fitted stellar one, a star-formation result, until then.
-    assert o.fields["bar_half_length"] == pytest.approx(2.0 * o.fields["disc_scale_length_spin"])
-    # Row 15: 5.2097 since S25, out by 0.01 and a recorded miss (debt #80); 4.8828 and inside before.
-    assert o.fields["bar_half_length"] == pytest.approx(5.2097, abs=2e-3)
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was 2.0 times the scale length - Erwin 2019's law of it since S87, 10^0.04 h^0.76.
+    assert o.fields["bar_half_length"] == pytest.approx(10.0 ** 0.04 * o.fields["disc_scale_length_spin"] ** 0.76)
+    # Row 15: 2.2698 since S87, out by 2.73 and a recorded miss (debt #80; the template pins 5.0); 5.2097 from S25 to
+    # S87, out by 0.01; 4.8828 and inside before.
+    assert o.fields["bar_half_length"] == pytest.approx(2.2698, abs=2e-3)  # S87 (#80): was 5.2097 - the law
 
 
 def test_the_bar_length_is_reproducible_not_drawn(model):
@@ -106,7 +108,10 @@ def test_arm_multiplicity_is_a_label_from_the_closed_set_and_no_longer_a_draw(mo
     seeds reads 6 (D215 ruling 11, the window on X at m = 1; on the X / 2 window of S56's first two passes: 3)."""
     only = ("arm_multiplicity", *AMPLITUDE_FIELDS)
     seen = {run(model, {"pattern_seed": s}, grid=COARSE, only=only).fields["arm_multiplicity"] for s in range(30)}
-    assert seen == {6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `seen == {6.0}`. With the bar on Erwin 2019's law (2.27 kpc,
+    # was 5.21) its taper covers fewer rings, the saturation - the seed's one way in - weighs the rings differently on
+    # some seeds, and they read 5: the label is still the disc's at nearly every seed, no longer at all thirty.
+    assert seen == {5.0, 6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
     # The disc moves it: a disc-dominated disc's label is four arms where the default's and a halo-dominated one's
     # are six (the label weighs the published amplitudes, the bar's taper in them, so it leans to the outer disc's
     # arm numbers; on the X / 2 window these read 6 and 2 beside the default's 3).
@@ -169,7 +174,7 @@ def test_the_ensemble_is_an_ensemble_of_galaxies(model):
 def test_rows_16_and_17_are_judged_statistically(model, judged):
     results = {r.n: r for r in judged[model.name]}
     for n in (16, 17):
-        assert results[n].status == "pass"
+        assert results[n].status == "fail"  # S87 (#80, D255): was "pass" - judged statistically still; on the law's 2.27 kpc bar both are out, recorded misses
         assert "median" in results[n].reason and "central 95%" in results[n].reason and "n=41" in results[n].reason
 
 

@@ -11,8 +11,12 @@ Extents are provisional and flagged for the stage that first needs them:
 
 - ``R_max = 30`` kpc: the acceptance table quotes the gas mass inside 30 kpc
   ``[verified: GALAXY_INPUTS.md §7 row 20]``, so the grid must reach it.
-- ``t_max = 13.8`` Gyr: cosmic time from t = 0 ``[recall: age of the universe]``.
-  S2 confirms the time convention.
+- ``t_max`` = 13.467 Gyr: cosmic time from t = 0 to today, the age of the universe by the model's own
+  cosmology (``cosmology.AGE``: the flat-ΛCDM closed form on Level 0's H₀ = 70 km/s/Mpc and Ω_M = 0.3), the
+  clock the bar stage counts the halo's assembly redshift back on. **Until S87 it was 13.8**
+  ``[recall: age of the universe]``, a second clock 2.5 % longer (debt #148, S58): S86 measured the move -
+  ``sfr`` 1.7552 → 1.8599 M☉/yr, the stellar mass −0.19 %, acceptance row 2 out of its window by 0.020, a
+  prediction written into the row before the build and not tuned back (rules B4, B5, B10).
 - ``z_max = 5`` kpc, z ≥ 0 by plane symmetry: about 5.5 thick-disc scale
   heights ``[verified: GALAXY_INPUTS.md §7 row 7]``. S1 confirms.
 - ``n_phi = 360`` (1°): not in the plan; S4 (pattern) decides.
@@ -25,6 +29,7 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
+from .cosmology import AGE
 from .fielddoc import AXES
 
 
@@ -76,7 +81,7 @@ class GridSpec:
     **It is sized for the rendered fields.** The viewer draws arrays, not scalars: a
     surface-density profile plotted at 16 annuli is not a profile, and the (R, t)
     histories are drawn as images whose pixels are grid cells. n_R = 400 puts a sample
-    every 75 pc across a 30 kpc disc, n_t = 2000 every 6.9 Myr, and n_phi = 360 one per
+    every 75 pc across a 30 kpc disc, n_t = 2000 every 6.7 Myr (6.9 on the 13.8 Gyr clock until S87), and n_phi = 360 one per
     degree, which is what a screen-sized picture of each needs. n_z = 60 is the one axis
     with no consumer left - `halo_potential` is the only field on it and its only reader
     takes column 0 (debt #35) - and it is kept because dropping an axis is a `core/` edit
@@ -93,7 +98,7 @@ class GridSpec:
     n_z: int = 60
     n_phi: int = 360
     R_max: float = 30.0
-    t_max: float = 13.8
+    t_max: float = AGE  # S87 (#148): was 13.8 [recall] - the clock is the model's own cosmology's, 13.467 Gyr
     z_max: float = 5.0
 
     def build(self) -> Grid:

@@ -293,3 +293,39 @@ radii for M 51's two arms; no source read says kinks of different arms share a r
   Hart+ 2018: not opened. "Chen et al. 2021" on Galaxy Builder: not found; the paper is Lingard et al. 2021.
 - DG19's Table 2 by arm class row by row; the CDS ReadMe of its table a1; B15's own PDF row for NGC 4414.
 - Ringermacher & Mead's formula (garbled); S20's per-class mean pitch (reads disagree).
+
+---
+
+## Part C — S87 (BUILD_V M1): the pitch law against the samples, and NGC 4414's place in them (debt #153), re-read here
+
+**The lead's note (2026-11-03).** No web access this session. Debt #153 asked for Yu & Ho 2019's sample — pitch
+against shear (their section 4.3) — to re-read the law's intercept, slope and scatter at their own definitions and
+place NGC 4414's 28.9 deg in that distribution. **That table is not in the repository**: YH19 was read for two
+numbers only (A2: 79 galaxies; the pitch's scatter at fixed Hubble type "~7 deg"; the 2 deg method scatter), and the
+ruling that took the law (`PITCH_YU`, GALAXY_INPUTS.md section 5) cites YH19 section 4.3.5's "much weaker" without
+its numbers. What the readers above do hold is the pitch's distribution over galaxies, without shear, and it moves the
+question. Nothing below was fetched; the arithmetic is the lead's `[inferred]`.
+
+- **The law.** Mean pitch 13.0 + (-8.0)(Gamma - 1) deg, scatter 6.0 deg (`PITCH_SHEAR_INTERCEPT`, `PITCH_SHEAR_SLOPE`,
+  `PITCH_SCATTER`, `models/level0.py`). The intercept is `[recall]` ("the Milky Way's arms are quoted near 12-13
+  degrees"); the slope and the scatter carry no source tag. At NGC 4414's shear (Gamma = 0.9976 at 2.2 R_d) the
+  mean is 13.02 deg; the Milky Way template's 13.26 deg (Gamma = 0.968).
+- **The samples' pitch, as read (A1.2).** H17, 6 222 SDSS galaxies, length-weighted arcs: mean |phi| 18.6 +/- 0.2 deg
+  (m = 2) to 19.4 +/- 0.6 (5+), the **16th / 84th percentiles 12.2 / 26.1 deg**. DG19, 391 S4G galaxies at 3.6 um:
+  mean |phi| by Hubble type 15.9 (T 0-2), 17.8 (2-4), **19.7 +/- 0.4 (4-6)**, 21.2 (6-8), 21.3 (8-10); flocculent
+  18.7-20.8, grand design 13.6-19.7. YH19: the scatter at fixed type ~7 deg. The Milky Way's segment-length-weighted
+  mean is 10 deg for its four major arms (Reid 2019, READING_ARM_PIECES.md).
+- **Where the law's mean sits.** 13 deg at Gamma = 1 is about the Milky Way's own and sits **5-7 deg under every
+  sample's mean** (H17's 18.6-19.4, DG19's 17.8-21.3 for T 2-10) and near H17's 16th percentile; the law's 6 deg
+  scatter is about H17's half-width (26.1 - 12.2)/2 = 6.95 and YH19's ~7. A flat-rotation-curve galaxy (Gamma near 1,
+  most of them) is drawn about the Milky Way's pitch, not the population's.
+- **NGC 4414 (Sc, t = 5.2 +/- 0.6, HL in READING_NGC_4414.md) in that distribution.** 28.9 +/- 6.0 deg (five 3.6 um
+  segments, Herrera-Endoqui et al. 2015) is **above H17's 84th percentile (26.1)**, (28.9 - 19.0)/6.95 = **1.4
+  sigma** from H17's mean, and (28.9 - 19.7)/7 = **1.3 sigma** from DG19's T 4-6 mean at YH19's scatter — against
+  **2.65 sigma** from the law's 13.02 at its 6 deg (2.27 at 7 deg). Most of the "2.4 sigma" is the law's intercept,
+  not the galaxy.
+- **What that does not settle.** The shear term: no reader prints pitch against Gamma for a sample, so the slope (-8)
+  and whether the population's 19 deg belongs at Gamma = 1 are not re-read; H17 is optical arcs and DG19 3.6 um
+  segments, and their means differ from HR15's HII-region segments (15.0 deg pooled, four galaxies). The owner's
+  reading: YH19 section 4.3 (pitch with shear for their sample, the fit and its scatter) or Seigar et al. 2006's
+  shear column with YH19's corrected pitches, to set intercept, slope and scatter at one definition.

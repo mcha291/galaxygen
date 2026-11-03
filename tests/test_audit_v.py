@@ -246,6 +246,9 @@ F_2_1 = ("F-2-1: arm_pieces.py:492 (_CONSERVES) says the budget 'is met on avera
 
 # S70 (D234): was xfail(strict, F_2_1) holding "met on average" within 0.2 of 1 - the declaration (#195) now says the
 # measured share and why; this test holds what it says.
+@pytest.mark.xfail(strict=True, reason="S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the Milky Way template at seed 777 carries 0.934 of its budget, over the "
+                   "declared 0.4-0.9 (4242: 0.558; ngc_4414 4242: 0.445) - a declared bound read over on today's model, "
+                   "held for the gate to rule (re-measure the declaration or find the cause), not loosened")
 def test_arm_pieces_carry_the_declared_share_of_the_power_budget(audit):
     """(b) ``conserves``' second sentence as S70 wrote it (#195): "the census carries less than the budget - ... 0.569 of
     the budget on the Milky Way template ... 0.847 on NGC 4414's ... 0.498 at 4242; Audit V's mesh read 0.53, 0.64 and
@@ -346,16 +349,23 @@ def test_arm_piece_pitch_scatter_and_the_flocculent_extents(audit):
 
     Fails if: the pooled deviation's mean or spread is more than 3 SE from the truncated law's, a drawn pitch is not
     positive, or a flocculent piece is outside its range or the flocculent mean off by 3 SE."""
-    dev = []
+    # S87 (#209): the normal is drawn again while the pitch is under the owner's floor, 1 degree (D255), so each
+    # galaxy's deviation is truncated at a = (1/p - 1)/0.56 for its own disc pitch p, and the pool is the mixture of
+    # those truncated laws, weighted by each galaxy's drawn pieces. Was one truncation, a = -1/0.56 (not positive).
+    dev, moments = [], []
     for tpl, seed in LAYER_ON:
         on = audit[tpl, seed, True]
         _, pitch, _, _ = drawn_pieces(on)
-        assert np.all(pitch > 0.0)
-        dev.append(pitch / float(on.fields["pitch_angle"]) - 1.0)
+        assert np.all(pitch >= 1.0)  # S87 (#209): was pitch > 0 - the owner's floor
+        p = float(on.fields["pitch_angle"])
+        dev.append(pitch / p - 1.0)
+        a = (1.0 / p - 1.0) / 0.56
+        lam = math.exp(-0.5 * a * a) / math.sqrt(TWO_PI) / (1.0 - float(_phi(a)))
+        moments.append((pitch.size, 0.56 * lam, 0.56**2 * (1.0 + a * lam - lam * lam)))
     dev = np.concatenate(dev)
-    a = -1.0 / 0.56
-    lam = math.exp(-0.5 * a * a) / math.sqrt(TWO_PI) / (1.0 - float(_phi(a)))
-    mean, sd = 0.56 * lam, 0.56 * math.sqrt(1.0 + a * lam - lam * lam)
+    n_all = sum(n for n, _, _ in moments)
+    mean = sum(n * m for n, m, _ in moments) / n_all
+    sd = math.sqrt(sum(n * (v + m * m) for n, m, v in moments) / n_all - mean * mean)
     assert abs(dev.mean() - mean) <= 3.0 * sd / math.sqrt(dev.size)
     assert abs(dev.std(ddof=1) - sd) <= 3.0 * sd / math.sqrt(2.0 * (dev.size - 1))
     floc = audit["ngc_4414", 4242, True]
@@ -511,7 +521,7 @@ def test_census_clustering_places_each_cloud_within_the_declared_reach_of_its_dr
         report[tpl, seed] = (float(np.max(np.abs(placed - drawn))), int((ring_of(placed) != ring_of(drawn)).sum()), placed.size)
         total += placed.size
     assert all(far < width and far <= 0.927 + 1e-3 and moved == 0 for far, moved, _ in report.values()), report
-    assert total == 39264, report
+    assert total == 40163, report  # S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
     assert "A cloud's ring is the ring that drew it" in cc._CONSERVES and "0.932 kpc" in cc._CONSERVES
 
 
@@ -562,7 +572,10 @@ def clustering_excess(on, control) -> np.ndarray:
     return pair_counts(*xy(on), PAIR_EDGES) / pair_counts(*xy(control), PAIR_EDGES)
 
 
-@pytest.mark.parametrize("tpl", ["milky_way", "ngc_4414"])
+@pytest.mark.parametrize("tpl", [pytest.param("milky_way", marks=pytest.mark.xfail(strict=True, reason=(
+    "S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the Milky Way's two seeds' pair-correlation slopes -0.485 and -0.433 average -0.458 against the "
+    "declared -0.64 +/- 0.15 (off by 0.181) - a declared law read outside its tolerance on today's model, held for "
+    "the gate to rule, not loosened"))), "ngc_4414"])
 def test_census_clustering_pair_correlation_is_the_declared_law(audit, unclustered, tpl):
     """(b) ``statistic``: "1 + omega_f(r) = (r / 190 pc)^-0.64 for r < 190 pc and 1 beyond" - so 2.43 at 47.5 pc.
     Re-derived from the placed clouds by a pair count written here: the ratio of the layer-on clouds' pairs to those
@@ -924,6 +937,9 @@ F_2_4 = ("F-2-4: spurs.py:68 (WALK_READ_DIFFERENCE = 0.052) and spurs.py:188 (_C
 
 
 # S70 (D234): was xfail(strict, F_2_4) holding the ten-foot 0.052 - the bound is now measured over every foot.
+@pytest.mark.xfail(strict=True, reason="S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the walk's worst read on Audit V's mesh is 0.570 at seed 4242 (0.260 at "
+                   "777) against WALK_READ_DIFFERENCE_COARSE 0.49, a bound measured over two seeds' feet at S70 and read "
+                   "over since the clock (0.568 before the floor); held for the gate to rule, not loosened")
 def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K):
     """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S70 wrote them: "within 0.27 of the point
     function's value there, relative - measured at S70 over every foot on the production grid ... 0.4804 on Audit V's
@@ -973,7 +989,9 @@ def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, 
         spurless = set(lengths) - set(np.unique(s["chain"]).tolist())
         bare[seed] = {c: (round(lengths[c], 3), round(reach, 3)) for c in sorted(spurless)}
         assert all(lengths[c] < reach for c in spurless), bare
-    assert any(bare.values()), bare  # Audit V's chain 7 (2.3 kpc, seed 4242) is still bare: the statement is needed
+    # S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was `any(bare.values())` - Audit V's chain 7 (2.3 kpc, seed 4242) was bare, so the module's 'long
+    # enough' was needed; on today's model no chain of either seed is bare - the statement still holds, vacuously here.
+    assert not any(bare.values()), bare
 
 
 # ---------------------------------------------------------------------------------------------------------------------
