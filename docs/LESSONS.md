@@ -2038,3 +2038,34 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   them in one list on those numbers (a tolerance re-measured, a bound re-declared with its cause, a mechanism mended or
   held), as D234 did at S70, and kept for the owner only what moves a constant's value or a rule (rows 15-17's referent,
   #212). The owner's questions are the ones whose answer no measurement gives.
+
+## From S88 (BUILD_V row 88, M1's close; an Opus lead)
+
+- [infra] **pytest's `pythonpath` beats PYTHONPATH.** `pyproject.toml` sets `pythonpath = ["model"]`, which pytest puts
+  first on `sys.path`, so a bisection that points PYTHONPATH at an older model tree and runs pytest runs today's model
+  - two "pre-existing on main" verdicts were false until `-o pythonpath=<tree>` was passed too. A plain script honours
+  PYTHONPATH; print `galaxy.__file__` in any probe that compares model states.
+- [infra] **Measure every pin, plain asserts included, with a soft-assert plugin.** S87's softapprox sees only
+  `pytest.approx`; a test whose first changed number is an `int ==` stops there, and each strict run then shows one
+  more. Wrapping every rewritten `assert` in a try that records pytest's own explanation and goes on (its pyc cached
+  under its own tag, never mixed with a normal run's) listed every moved number in one run; the strict run judges.
+- [infra] **A re-pin by value must skip docstrings and the records it already applied.** A second pass that looked
+  for each old literal anywhere in the file found it again in a docstring after the first pass had re-pinned the
+  assert, and rewrote the prose. Tokenize and replace NUMBER tokens of code only, and skip every site the first pass
+  handled; a tuple holding one literal twice needs the records' order.
+- [advanced] **A content-keyed cache makes a quadrature's breaks history-dependent.** `sfr_modulation` read 8.4e-13
+  apart cold and warm: its Gauss pieces were cut at the anchors of both rings the store brackets a grid radius with,
+  and the ring above is a grid ring or a mid-gap one depending on whether an earlier reader had completed the store.
+  At a solved ring's radius read the ring's own anchors alone. `galaxy.specs.determinism`'s two-run check found it;
+  the bundles' reversed-order `--check` (202 of 202) confirms it end to end.
+- [audit] **Bisect a bound read over across the batch's commits before naming its cause.** Extracting each S87 item's
+  `model/` tree (`git archive`) and running the same probe on each named the step at once: the walk's 0.48 -> 0.57 at the
+  clock, the share's 0.63 -> 0.93 and the dust column's 2.93 -> 3.37 at the pinned bar, the L1 gate's slope at the
+  defaults' re-drawn census - where "the composition" alone would have been a guess.
+- [close] **Any byte under `model/galaxy` moves the hash, the misses' prose included.** The acceptance rows' text was
+  written after the pin's commit and the bundles' key moved with it: pin, export and picture test ran twice. Write
+  every `spec.py` note before the hash moves.
+- [close] **The batch's unrun files carry the batch's findings.** The layer, API and frames files and the files no S87
+  commit ran held half the re-pins and five readings over their bounds (the S55 reference, the L1 gate, the dust
+  column, a star outside its cell, spurs past the arms' budget) besides a determinism defect: run every model file
+  once on the final model before the bounds are ruled, not after.
