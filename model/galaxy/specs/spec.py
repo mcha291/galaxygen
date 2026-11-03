@@ -540,7 +540,11 @@ _MISSES: tuple[Miss, ...] = (
             "debt #42, D128), the radial spread at R0 falls 1.47 -> 1.09 kpc, fewer of the disc's "
             "stars are carried across R0, and the row rises by 0.07 - back outside by less than the "
             "solver's own correction (D124). Rows 3 and 12 still have one cause: the bar the model has "
-            "no dynamics for (D121)."
+            "no dynamics for (D121). **S88 (debt #212, the owner's word of 2026-11-03): 251.017, out by "
+            "0.017** - MERGER_HEATING re-derived at its fixed point on the model's own clock (13.467 Gyr, "
+            "#148), 88.8 -> 90.6 (the fixed point 90.618; 88.8 the same derivation on the old 13.8 Gyr "
+            "clock); at 88.8 on this clock the row read 251.022 (S87). The re-derivation moves it by "
+            "-0.005 and crosses no edge; the row's cause is still the bar's (#11)."
         ),
         prediction=(
             "The bar's: 7e9 of disc buckled into the spheroid reads this row at 249.4 (D121) and row "
@@ -676,7 +680,8 @@ _MISSES: tuple[Miss, ...] = (
             "so the rate is read higher (+6.0%) and the stellar mass 0.19% lower. Predicted at S86 and written "
             "into this row's note before the build (rule B4); no constant was fitted to a row on the 13.8, so none is "
             "moved to land it (B5). One was derived on it - MERGER_HEATING, from the model's own secular heating "
-            "(debt #212, 90.62 on this clock against 88.8) - and it does not reach this row: 1.85988 at either."
+            "(debt #212; re-derived at S88 on the owner's word, 88.8 -> 90.6, the fixed point 90.618 on this clock) - "
+            "and it does not reach this row: 1.85988 at either."
         ),
         prediction=(
             "Nothing tuned can land it: KS_NORM is Kennicutt 1998's, deliberately not fitted (its 3.2e-4 "
@@ -696,7 +701,9 @@ _MISSES: tuple[Miss, ...] = (
             "0.04 + 0.76 log10 h, on the disc's lambda_d scale length (2.605 kpc, the only one checkpoint 1 holds): "
             "the Milky Way's bar is long for its disc, as S26 read (Erwin 2005: 0.6-1.4 h by type). The table is "
             "judged on the default inputs, which carry no pin; the Milky Way template pins the measured 5.0 kpc "
-            "(Wegg, Gerhard & Portail 2015) and reads 5.0 there, a restatement of its pin. Nothing is tuned back "
+            "(Wegg, Gerhard & Portail 2015) and reads 5.0 there, a restatement of its pin (rows 16 and 17 "
+            "inside there too: 47.25 and 5.26). The referent is the owner's answer of 2026-11-03 (S88, D255's "
+            "question (a)): the table keeps judging the default inputs; spec.run and rule A5 unchanged. Nothing is tuned back "
             "(B5, B10). From S25 to S87: 5.210, out by 0.010, on BAR_LENGTH_RATIO = 2.0, a recalled '1.5-2.5 R_d' "
             "fitted to this galaxy (4.883 and inside until S25, on the thin disc's fitted scale length)."
         ),
@@ -808,6 +815,8 @@ _MISSES: tuple[Miss, ...] = (
     # population counted as thin (debt #27) - 6 pc over; MERGER_HEATING set by a cited dispersion, SECULAR_HEATING
     # at 25 because 20 and 30 put both models out. #42 stays open (permanent): the row is inside by 4.9 pc on a
     # clock change, never for a stable reason - the debt's own point, made a sixth time.
+    # S88 (#212, the owner's word of 2026-11-03): MERGER_HEATING re-derived on this clock, 88.8 -> 90.6; the row reads
+    # 345.90 pc (345.09 at 88.8), still inside.
     Miss(
         row=ROW_GC_SYSTEM_MASS,
         debt=98,

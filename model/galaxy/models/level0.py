@@ -239,16 +239,20 @@ LEVEL0: dict[str, Constant] = {
         "[recall]; 0.5 is the random-walk value and the upper end of the observed range.",
     ),
     "MERGER_HEATING": Constant(
-        88.8,
+        90.6,
         "km/s",
         "Velocity dispersion a merger of mass ratio 1 would add to the stars already present; an "
         "event contributes this times its mass ratio. Set so that the Milky Way's 1:4 merger leaves "
         "the pre-existing disc at the thick disc's observed vertical dispersion, sigma_W = 35 km/s "
         "[recall: Bensby, Feltzing & Lundstrom 2003, (67, 38, 35) for the thick disc], **net of the "
         "heating the model already gives those stars**: the assembly stage composes the kick in "
-        "quadrature with the secular heating and the birth dispersion, which together read 27.06 km/s "
-        "over the thick population at R_0, so the kick is sqrt(35^2 - 27.06^2) = 22.2 km/s and the "
-        "constant is 22.2/0.25 (S20, debt #42; a test reproduces the arithmetic). Until S20 it was "
+        "quadrature with the secular heating and the birth dispersion, which together read 26.68 km/s "
+        "over the thick population at R_0, so the kick is sqrt(35^2 - 26.68^2) = 22.65 km/s and the "
+        "constant is 22.65/0.25, the derivation's fixed point 90.618 on the model's own clock (S88, "
+        "debt #212, on the owner's word of 2026-11-03: the grid's t_max the model's flat-LCDM age, "
+        "13.467 Gyr, core/cosmology.py, since #148). **88.8 was the same derivation on the old clock** "
+        "(a recalled 13.8 Gyr: 27.06 km/s of secular heating, the fixed point 88.815; S20, debt #42, "
+        "D128); a test reproduces the arithmetic. Until S20 it was "
         "120 - 'scaled so the merger leaves the pre-existing disc at about 30 km/s' - which counted "
         "the kick as if it were the whole dispersion, so the thick disc read 40.4 and row 7 1279 pc; "
         "it reads 960 now. Since S18 the same impulse is applied radially too (isotropic; an "
@@ -259,7 +263,8 @@ LEVEL0: dict[str, Constant] = {
         "citation and the 35 is Bensby et al.'s Table 1 adopted characteristic value for a kinematic "
         "selection function, quoted without an uncertainty, while the measurement their Sect. 1 quotes "
         "for it is Soubiran, Bienayme & Siebert 2003's sigma_W = 39 +/- 4; net of the same 27.06 that "
-        "gives sqrt(39^2 - 27.06^2)/0.25 = 112.3, at which row 7 reads 1193 (out) and row 3 250.97 "
+        "gives sqrt(39^2 - 27.06^2)/0.25 = 112.3 on the old clock (113.8 net of this clock's 26.68, "
+        "S88, #212), at which row 7 read 1193 (out) and row 3 250.97 "
         "(in) - the two rows trade across the source's own error bar and the window's top edge is "
         "sigma_W = 37.1. S22 kept 88.8: the arithmetic is S20's derivation and choosing between the "
         "two values with both rows' answers already known is the move rule B5 forbids in either "

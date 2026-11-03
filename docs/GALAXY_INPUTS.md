@@ -3076,6 +3076,12 @@ never been judged in twenty-three sessions.
    measurement as a cost record, not a gate** (`tests/test_audit.py`, `PRICE_RECORD`, still non-strict): eight runs
    on an idle machine read 2 839–3 026 µs a cell, the default census **48 pieces on 13 chains** (the law's 2.27 kpc
    bar; D255's "54" was not this run's count); the bound 3 000 → 3 500 µs, no sourced value (#154).
+   *S88, the owner's answer to D255's question (a), 2026-11-03 ("Yes, both", as the gate recommended):* **the
+   acceptance table keeps judging the default inputs** (`spec.run` and rule A5 unchanged). Rows 15–17 stay recorded
+   misses under #80 on the default disc: `galaxy.specs` on the final model 2.26984 kpc, the pattern speed's median
+   81.9702 km/s/kpc, corotation's median 2.65068 kpc (the table 10 / 22 / 5); on the Milky Way template with its
+   5.0 kpc pin all three are inside (5.0 / 47.2542 / 5.263). `spec._MISSES` row 15 names the answer. Still carried:
+   the referent (λ_d against the source's 3.6 µm h).
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
@@ -5491,6 +5497,19 @@ never been judged in twenty-three sessions.
    with the frames and the specs at S88 — the gate's or the owner's ruling, since it is a constant's value; or the
    ruling that 88.8 stays declared as the old clock's derivation with the gap written beside it. What kills the
    reading: a derivation that does not read the model's own heating.
+   *S88 (M1's close): **re-derived on the owner's word of 2026-11-03 ("Yes, both": the gate's recommendation B10) -
+   to be discharged at the close** (the heading struck and the summary rows and count pin moved by the close, as
+   with #152).* The derivation iterated on the final model (every other S88 model change in: the bounds' declarations,
+   #154's reproducibility mend): 88.8 → 90.6377 → 90.6178 → 90.6180, **the fixed point 90.618028** (secular term
+   26.6791 km/s), so `MERGER_HEATING` = **90.6** at the declaration's precision (as 88.815 was 88.8); its about line
+   names the clock (13.467 Gyr, `core/cosmology.py`) and 88.8 as the old clock's same derivation; the named
+   alternative reads 113.8 net of this clock's heating (112.3 on the old). `galaxy.specs` on the final model: **row 3
+   251.017, out by 0.017** (251.022 at 88.8; written into its recorded miss in `spec._MISSES`, which stays under #11 -
+   a row holds one miss and the row's cause is still the bar; #212 named in its reason), row 6 345.899 (inside; 345.09
+   at 88.8), row 2 1.85988 (unmoved), the table 10 pass / 22 fail / 5 not yet checked as before. The constant moves
+   202 of the Milky Way template's 393 fields (everything downstream of the assembly stage; none of the pattern's,
+   the pieces' or the gas pattern's). `tests/test_audit.py`'s derivation test states agreement again (90.6 within
+   0.05 of its derivation, 90.618).
 
 ---
 

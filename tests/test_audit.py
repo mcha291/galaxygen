@@ -305,7 +305,7 @@ def test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_h
     kick_now = default_model.constants["MERGER_HEATING"].value * 0.25
     secular2 = o.fields["disc_heating"] ** 2 - np.where(thick, kick_now**2, 0.0)
     secular = math.sqrt(np.average(secular2, weights=weights))
-    assert secular == pytest.approx(26.67, abs=0.2)  # S87 (#148): was 27.06 - the clock (stars 0.33 Gyr younger)
+    assert secular == pytest.approx(26.68, abs=0.2)  # S87 (#148): was 27.06 - the clock (stars 0.33 Gyr younger); S88: 26.679 at 90.6
     derived = math.sqrt(THICK_SIGMA_W**2 - secular**2) / 0.25
     # 88.815: the fixed point on the 13.8 Gyr clock, because the thick population's weights at R0 move a little with
     # the kick (88.5 on the 120 km/s run's weights derives 88.82 on its own); the constant was set at that point.
@@ -314,8 +314,13 @@ def test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_h
     # constant stays 88.8 until the gate rules (re-derived, it moves row 6 345.09 -> 345.92 and row 3 251.022 ->
     # 251.017; neither crosses an edge). Pinned as the open gap, not as agreement: the claim this test made is false
     # on today's clock and says so.
-    assert default_model.constants["MERGER_HEATING"].value == 88.8
-    assert derived == pytest.approx(90.64, abs=0.1)  # S87 (#148): was the constant, 88.8 - the clock (#212)
+    # **S88 (#212 discharged, the owner's word of 2026-11-03): re-derived.** Iterated on the final model the fixed
+    # point is 90.618028 (secular 26.6791 km/s; 88.8 -> 90.6377 -> 90.6178 -> 90.6180), the constant 90.6 at the
+    # declaration's precision as 88.815 was 88.8; row 3 reads 251.017 (out by 0.017, recorded) and row 6 345.90.
+    # The test again states agreement: the constant is its derivation on the model's own clock.
+    assert default_model.constants["MERGER_HEATING"].value == 90.6  # S88: was 88.8 (the old clock's)
+    assert derived == pytest.approx(default_model.constants["MERGER_HEATING"].value, abs=0.05)  # S88: was approx(90.64) - the open gap
+    assert derived == pytest.approx(90.618, abs=0.005)
 
 
 # --- debt #45: the constant that does nothing carries row 22 --------------------
