@@ -146,7 +146,7 @@ the row is written with its SHA at once.
 | 84 | `s84` | `e47dc71b5059` | **applied** 2026-11-02 at S84's own close (C2e; D252 the rulings first, D253 — the fast gates, D245 / D246); the SHA written on `main` in the commit after the merge; run after S85 (D251 ruling 3) |
 | 85 | `s85` | `2dbcfaec67d1` | **applied** 2026-11-02 at S85's own close (C2e; D251 — a docs-only close, the docs tests); the SHA written on `main` in the commit after the merge; S84 waits on BUILD_V ruling 2 and takes its row when it runs |
 | 86 | `s86` | `5a1b69a11519` | **applied** 2026-11-03 at S86's own close (C2e; D254 — the subset and the fast gates, D245 / D246; M1's first session: merged into `batch-m1`, not `main` — the SHA is that merge's, written on `batch-m1` in the commit after it; `main` takes the batch at S88) |
-| 87 | `s87` | TBD | **applied** 2026-11-03 at S87's own close (C2e; D255 — the subset and the fast gates, D245 / D246; M1's second session: merged into `batch-m1`, not `main` — the SHA is that merge's, written on `batch-m1` in the commit after it; `main` takes the batch at S88) |
+| 87 | `s87` | `097a0b05272e` | **applied** 2026-11-03 at S87's own close (C2e; D255 — the subset and the fast gates, D245 / D246; M1's second session: merged into `batch-m1`, not `main` — the SHA is that merge's, written on `batch-m1` in the commit after it; `main` takes the batch at S88) |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
