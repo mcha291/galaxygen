@@ -822,7 +822,8 @@ _MISSES: tuple[Miss, ...] = (
         debt=98,
         since="S34",
         reason=(
-            "the ensemble's median is 7.13e7 Msun against 2.7-4.0e7 (the Harris catalogue's 1.716e7 Lsun at the blind "
+            "the ensemble's median is 7.57e7 Msun (S88, M1's final model; 7.13e7 until S87's clock, #148, at which the "
+            "figures after this sentence were read) against 2.7-4.0e7 (the Harris catalogue's 1.716e7 Lsun at the blind "
             "reading's M/L_V = 1.9, S42; 1.54-3.26e7 at BHG16's 1.4 until then), 0.25 dex above the window's top and 0.34 "
             "above its centre (0.47 dex above the old centre); the mean it estimates is 6.97e7 = "
             "the survival 0.0250 times S33's bound cluster mass 2.786e9. The mean is 0.34 dex above the "
@@ -880,7 +881,7 @@ _MISSES: tuple[Miss, ...] = (
         debt=117,
         since="S44",
         reason=(
-            "-0.0983 dex/kpc against [-0.045, -0.005], 6.0 sigma below the window's floor and in the direction the "
+            "-0.0986 dex/kpc against [-0.045, -0.005], 6.0 sigma below the window's floor and in the direction the "
             "blind reader named as the killing one ('a model whose [N II]/Halpha follows N/H (about -0.06 to -0.08 "
             "dex/kpc) fails'). The reading's history: as built on the 8.69 scale the model read -0.0815; on the "
             "grid's own scale (D195, #121) it steepened to -0.1035 - the offset moved it out, not in; -0.1055 from "
@@ -893,7 +894,9 @@ _MISSES: tuple[Miss, ...] = (
             "here it is the same number with the layer on or off, and does not move when a placement is redrawn; "
             "-0.0979 (-0.097902) from S67, the clouds' size law (D231); **-0.0983 (-0.098309) since S70 (D234): the "
             "clouds' ring inversion on the ring's own interval (Audit V F-2-7; -0.098171 alone) and the source's three "
-            "Sigma_GMC regimes (#192, the owner's ruling D233) - 0.0004 further out, the same on and off**. "
+            "Sigma_GMC regimes (#192, the owner's ruling D233) - 0.0004 further out, the same on and off**; "
+            "**-0.0986 (-0.098650) since S88: M1's final model (#148's clock, #209's floor, #80's bar, #212's "
+            "MERGER_HEATING 90.6) moves the census the row reads (16 940 clouds where 16 577) - 0.0003 further out**. "
             "The three readings since S44 differ by how the census was placed and drawn, not by any change to the "
             "nebular physics. **Diagnosed at S45 (D196, tests/test_s45_diagnosis.py, which reads the layer-off "
             "census since S55 and finds the same parts: the metallicity path's product -0.0957 layer-off, -0.0956 "
