@@ -574,10 +574,30 @@ def clustering_excess(on, control) -> np.ndarray:
     return pair_counts(*xy(on), PAIR_EDGES) / pair_counts(*xy(control), PAIR_EDGES)
 
 
-@pytest.mark.parametrize("tpl", [pytest.param("milky_way", marks=pytest.mark.xfail(strict=True, reason=(
-    "S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the Milky Way's two seeds' pair-correlation slopes -0.485 and -0.433 average -0.458 against the "
-    "declared -0.64 +/- 0.15 (off by 0.181) - a declared law read outside its tolerance on today's model, held for "
-    "the gate to rule, not loosened"))), "ngc_4414"])
+# S87 (BUILD_V M1) held the Milky Way here under a strict xfail: its two seeds' slopes -0.485 and -0.433 averaged
+# -0.458 against the declared -0.64 +/- 0.15. S88 (D255 ruling 3: the declared law stays; the cause found with the
+# pin's probe; a defect of the composition mended, else the Milky Way's reading held with the cause written in).
+# The probe, the Milky Way on this mesh at 4242 / 777 (the two seeds' mean slope by this test's estimator):
+#   with its pin (5.0 kpc) -0.485 / -0.433 (-0.459); the pin off (the law's 2.27 kpc) -0.526 / -0.448 (-0.487);
+#   S86's model (5.21 kpc) -0.581 / -0.495 (-0.538); after #148's clock -0.529, after #209's floor -0.529;
+#   the spurs off (SPUR_SPACING_JEANS 1e9) -0.469; the gas pattern taken out of the placement inside a cell
+#   (census_clustering.mesh_factor None) -0.477 (pin off -0.533);
+#   the field itself, <f(x) f(x + r)> / <f>^2 evaluated directly: over the disc to 15 kpc -0.656 / -0.624 (the law),
+#   over the clouds' own footprint -0.584 / -0.573 (pin off 4242 -0.615), its excess at 47.5 pc 2.70 / 2.82 where
+#   the placed clouds read 2.18 / 2.01.
+# So neither the bar's length, the spurs nor the gas pattern's reading inside a cell is the cause: the field reads its
+# law, its realisation on the clouds' footprint is 0.05-0.07 flatter at these seeds, and the placement takes 0.10-0.14
+# more - one realisation of a log-normal of width 1.75 normalised over each level-0 cell's lattice (930 pc by 1.6 kpc
+# at the Milky Way's median cloud radius), the census holding each cell's count (D220 part II, rule 2: the field
+# redistributes inside a cell only), which S61 measured as the placement's own effect (-0.41 in a 190 pc window,
+# -0.63 in the whole cell, the default galaxy). The pairs are weighted by a cell's count squared, so the reading moves
+# with where the census's chains crowd the clouds: S86's census read -0.538, the 5.0 kpc bar's re-drawn one -0.459.
+# Not a defect a mend reaches without the per-cell conservation: the Milky Way's reading held, its two clauses that
+# meet their bounds kept; NGC 4414 (no spurs, no bar) still meets the law.
+MW_PAIR_SLOPES = (-0.4846, -0.4327)  # S88: the Milky Way's held reading, seeds 4242 and 777
+
+
+@pytest.mark.parametrize("tpl", ["milky_way", "ngc_4414"])
 def test_census_clustering_pair_correlation_is_the_declared_law(audit, unclustered, tpl):
     """(b) ``statistic``: "1 + omega_f(r) = (r / 190 pc)^-0.64 for r < 190 pc and 1 beyond" - so 2.43 at 47.5 pc.
     Re-derived from the placed clouds by a pair count written here: the ratio of the layer-on clouds' pairs to those
@@ -592,7 +612,13 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     up to 40 Myr against uniform randoms; here the placed clouds stand in for them, against a control with their arms
     - the BUILD_III L1 gate's reading.
 
-    Fails if: the realised slope, the 47.5 pc excess or the large-scale ratio is outside those bounds."""
+    **S88 (D255 ruling 3): the Milky Way's slope is held at its reading with the cause** (the comment above): the
+    two seeds' slopes are pinned (``MW_PAIR_SLOPES``, to 1e-3) and the mean is outside the law's 0.15, which is
+    asserted too, so a change that brings it back is seen; its excess and its large-scale ratio still meet the law's
+    bounds. NGC 4414's slope meets the law.
+
+    Fails if: the realised slope (NGC 4414) or the held reading (the Milky Way), the 47.5 pc excess or the
+    large-scale ratio is outside those bounds."""
     seeds = CASES[tpl]
     ratios = [clustering_excess(audit[tpl, s, True], unclustered[tpl, s]) for s in seeds]
     inner = (PAIR_MID > 0.0475) & (PAIR_MID < 0.19)
@@ -601,7 +627,11 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     beyond = [float(q[(PAIR_MID > 0.38) & (PAIR_MID < 0.76)].mean()) for q in ratios]
     one = len(seeds) == 1
     report = {"slopes": slopes, "excess_47.5pc": at, "ratio_380_760pc": beyond}
-    assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
+    if tpl == "milky_way":
+        assert slopes == pytest.approx(list(MW_PAIR_SLOPES), abs=1e-3), report
+        assert abs(np.mean(slopes) + 0.64) > 0.15, report  # held outside the law: the reading, not the law, moved
+    else:
+        assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
     assert abs(np.mean(at) / 2.43 - 1.0) <= (0.29 if one else 0.21), report
     assert abs(np.mean(beyond) - 1.0) <= 0.05, report
 

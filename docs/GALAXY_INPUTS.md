@@ -3062,6 +3062,17 @@ never been judged in twenty-three sessions.
    and the grid draw different censuses at one seed (777 on the production grid 0.709). Over S70's seven runs on the
    final model: production 0.589 (the Milky Way, seed 0; 98 rings) / 0.656 (4242) / 0.692 (NGC 4414, its seed) /
    0.498 (4242), the mesh 0.558 / 0.934 / 0.445 — **0.445 to 0.934** (S70: 0.45 to 0.85), every run under the budget.
+   (3) Audit V's pair-correlation slope: **the declared law stays (−0.64 ± 0.15); the Milky Way's reading is held with
+   its cause, not mended** (`tests/test_audit_v.py`, `MW_PAIR_SLOPES` −0.4846 / −0.4327; the xfail removed; NGC 4414
+   meets the law). The same probe (the two seeds' mean slope): pin on −0.459, **pin off −0.487**, S86's 5.21 kpc bar
+   −0.538, the clock and the floor −0.529; the spurs off −0.469; the gas pattern taken out of the placement inside a
+   cell −0.477 — none of the composition's named suspects is the cause. The field itself, evaluated directly, reads
+   its law over the disc (−0.656 / −0.624), −0.584 / −0.573 on the clouds' own footprint, and the placed clouds 0.10–0.14
+   flatter again (the 47.5 pc excess 2.18 / 2.01 against the field's 2.70 / 2.82 there): one realisation of a σ = 1.75
+   log-normal normalised over each level-0 cell (930 pc by 1.6 kpc at the median cloud), the census holding each
+   cell's count (D220 part II rule 2), the effect S61 measured (−0.41 in a 190 pc window, −0.63 in the whole cell);
+   pairs weigh a cell's count squared, so the reading moves with where the chains crowd the clouds. Not a defect a
+   mend reaches without the per-cell conservation.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
