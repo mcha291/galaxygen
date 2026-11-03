@@ -3022,6 +3022,19 @@ never been judged in twenty-three sessions.
    not the source's 3.6 µm disc scale length (the S22 lesson on `disc_spin`); the referent is the one A1 allows at
    checkpoint 1, and the row's misses stay this number's until a relation with the bar's own second dependence (disc
    dominance, mass above Erwin 2018's 10^10.2 break) or the table's ruling moves them.
+   *S87 (M1), the joint re-pin on the final model:* **four declared bounds read over on today's model, held as strict
+   expected failures for the gate, not loosened.** The Milky Way template's published gas contrast reads a ring mean
+   of 1 + 1.0036e-13 at ring 105 (7.9125 kpc, exact summation) against the gate's 1e-13 (`tests/test_bar.py`,
+   `RING_MEAN_OVER`; with its bar pinned at 5.0 kpc); Audit V's power-budget share at seed 777 is 0.934 against the
+   declared 0.4–0.9, and its pair-correlation slope −0.458 against −0.64 ± 0.15 (both the Milky Way's, with the
+   pin); the spurs' walk reads 0.570 on Audit V's mesh against `WALK_READ_DIFFERENCE_COARSE` 0.49 — since the clock
+   (#148), 0.568 before the floor (`tests/test_audit_v.py`). Each is the gate's to rule: re-measure the bound or
+   mend the cause. The default galaxy's render statistic (#154) and NGC 4414's fit record (the clock moved its
+   targets' model values; the objective 0.2511 → 0.2534, the controls not re-searched) were re-read in the same pass.
+   And the layered catalogue's price per cell (`tests/test_audit.py`, a bound of 3 000 µs with no sourced value, #154)
+   reads 2 924–3 208 µs on an idle machine (4 865 once) where the #209 commit read 2 100–2 651 — the default census
+   is 54 pieces on 13 chains with the law's 2.27 kpc bar (was 32 on 6): split into its own test and held as a
+   non-strict expected failure, since it straddles the bound; the gate's to rule.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
@@ -4198,6 +4211,11 @@ never been judged in twenty-three sessions.
    *S87 (M1):* the floor is built — #209 discharged on the owner's ruling of 2026-11-03 (D255): a drawn piece's
    pitch is redrawn while under 1.0° (`ARM_SEGMENT_PITCH_FLOOR`), a resolution floor read from the smallest
    non-reversed segment pitches in the readers; the disc draw's own 1° clip is unchanged.
+   *S87, the joint re-pin:* one consequence found and **held for the gate** as a strict expected failure
+   (`tests/test_pieces.py`, `R_STEP_FIRST_CROSSING`): on the drawn `ngc_4414` leg at texture seed 1 the count N
+   steps by 1 at 29.42 kpc, a ring's first crossing — the class the gate's eleventh follow-up removed — with the
+   width and the summed ⟨E⟩ unmoved; the floor's redrawn pieces reach that ring. `ngc_4414`'s one join is gone
+   with the floor (no kink or join left to test there: recorded so).
 143. **The stellar mode's fractional amplitude is applied to the whole disc's surface density** (S57, D216 gate G2
    item 5). The potential that forces the gas is that of Σ₁ = A_m Σ with Σ checkpoint 1's total disc — stars and gas
    together, the Σ of the arm-number law's X — because checkpoint 3 has no stellar/gas split (star formation
@@ -4397,7 +4415,7 @@ never been judged in twenty-three sessions.
    251.026 → 251.022, row 20 8.088e9 → 8.154e9, row 21 0.2001 → 0.2033, row 22 −0.06985 → −0.06987, row 23
    −0.0223 → −0.0219, rows 30 / 31 +6.0 % / +4.6 % (inside), row 29's slope −7.892 → −7.910 (inside), row 34
    +5.9 % (inside), row 37 −0.0983 → −0.0986. Every test that moved in the files run was re-pinned with the reason
-   ("S87 (#148): was X - the clock"), none loosened; the files not run (the layer's, the render's, the templates',
+   ("S87 (#148): was X - the clock"), none loosened; the files not run (the layer's, the render's - run and re-pinned in S87's joint re-pin after #80 -, the templates' - likewise -,
    the API's, the frames) are S88's suite's to judge. **What S86's reading missed: B10 fires once** — "no constant
    was fitted on the 13.8" holds for the rows, but `MERGER_HEATING` (88.8) was *derived* from the model's own
    secular heating, which the clock moved: its derivation reads 90.62 at its fixed point on the model's own clock
@@ -4580,7 +4598,10 @@ never been judged in twenty-three sessions.
    worst 5.6 % at 2.10 kpc, 0.41 % weighted by star formation; the Milky Way template worst 26.0 % at 5.93 kpc, 1.31 %
    weighted, three gaps over 10 % holding 3.1 % of its star formation; `ngc_4414` worst 7.1 % at 0.68 kpc, 0.69 % (0.82 % once #209's floor redrew its pieces, S87)
    weighted** (`tests/test_audit.py::test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_stars_reader_between_rings`
-   pins all three). S59's 16–91 % was the common winding's, gone since S60. **Why not built here:** the wound read S59
+   pins all three). **Re-read after #80** (the default galaxy's bar from Erwin's law, 2.27 kpc; the Milky Way's pinned
+   at 5.0 kpc): the default galaxy worst 11.7 % at 11.18 kpc, 0.68 % weighted; the Milky Way worst 25.2 % at 5.93 kpc,
+   1.27 % weighted; `ngc_4414`, unbarred, as above — the test pins these; the azimuth's figures below are from before
+   #80 and were not re-read. S59's 16–91 % was the common winding's, gone since S60. **Why not built here:** the wound read S59
    named (each ring's row at φ − (Φ(r) − Φ(R_ring))) has no single Φ since D219 — every chain of pieces winds on its
    own and the bar's footprint does not wind — so it is not one offset per ring the API could ship; and the API-side
    alternative, measured (the table on rings twice as fine), halves the weighted means at the quarter gap (0.29 →

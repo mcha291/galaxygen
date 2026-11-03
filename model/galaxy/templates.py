@@ -827,8 +827,9 @@ NGC_4414 = Template(
                     "h_r = 19.22 arcsec at 3.6 micron, 1.649 kpc at 17.7 Mpc; Wat19's two inner segments span "
                     "the window with the distance bracket]"
                 ),
-                model=1.6760444551064766,
-                residual=0.1352222755323829,
+                # S87 (#148): were 1.6760444551064766 and 0.1352222755323829 - the clock; the controls unmoved.
+                model=1.6751536081130878,
+                residual=0.1307680405654388,
             ),
             Target(
                 name="stellar_mass",
@@ -842,8 +843,9 @@ NGC_4414 = Template(
                     f"[verified: {_READING}, row 8 and window W-E; z0MGS (Leroy et al. 2019, table 4): "
                     "log M* = 10.65 +/- 0.10 at 17.7 Mpc, WISE 3.4 micron, a Kroupa-type IMF]"
                 ),
-                model=39047506448.23065,
-                residual=-0.449668221349256,
+                # S87 (#148): were 39047506448.23065 and -0.449668221349256 - the clock; the controls unmoved.
+                model=38999203706.98158,
+                residual=-0.4535324406491815,
             ),
         ),
         free={
@@ -869,11 +871,11 @@ NGC_4414 = Template(
         objective=(
             "the sum over the three targets of ((model - value) / half-window)^2, plus 0.001 times the sum over "
             "the four free controls of ((fitted - default) / (hi - lo))^2: the last term breaks ties among the free "
-            "controls and does nothing else. Where the search stops it is 0.2511 - 0.2509 from the targets, 0.0002 "
-            "from the tie-break - on a plateau resolved to the model's own steps, about 0.01 half-windows in the "
+            "controls and does nothing else. Where the search stopped it is 0.2534 - 0.2532 from the targets, 0.0002 "
+            "from the tie-break (S87: 0.2511 on the grid's old 13.8 Gyr clock, debt #148; the controls not re-searched) - on a plateau resolved to the model's own steps, about 0.01 half-windows in the "
             "objective: not a minimum to the printed precision"
         ),
-        objective_value=0.2511141040064585,
+        objective_value=0.25341948606942694,  # S87 (#148): was 0.2511141040064585 - the clock
         tool="tools/fit_template.py ngc_4414",
         method=(
             "damped Gauss-Newton (Levenberg-Marquardt) with a coordinate search in every step, over the free controls "

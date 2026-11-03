@@ -2023,3 +2023,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   commit message to `msg154.txt`, a name S86 had used in the same scratchpad; the Write was refused ("not read
   yet") and the `git commit -F` beside it in the same turn took S86's message (amended at once, d27c810). A refused
   Write is the sign of a stale file; `s87_`-prefixed names after that.
+- [infra] **A test's record that is a plain assert is measured by a probe, not by the test.** The soft plugin sees
+  only `pytest.approx`; the `EXPECTED_*` records of tests/test_pieces.py and the sweep's numbers in
+  tests/test_gas_pattern.py stop at their first changed value, and the sweep alone is 42 minutes a pass. A script
+  that imports the test module and calls its own helpers (`suite_gate`, `gate`, the disclosed check's lines) prints
+  every reading at once; the strict run after it confirms. Splitting a file's node ids over six processes cut the
+  pieces file from two hours to its longest test (83 min).
+- [close] **Three model items committed one by one leave the heavy files red between them.** #148, #209 and #80 each
+  moved test_gas_pattern, test_pieces and test_render; each item's commit re-pinned the files it ran and said which
+  it left for the joint re-pin on the final model. That is honest but the branch is red at two commits: name the
+  files left red in every such commit's message, and run the joint re-pin before anything is reported green.

@@ -351,7 +351,11 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     assert g.tobytes() == gp.cell_means(R, edges).tobytes()
     for i in (3, 60, 106, 133, 160, 399):
         assert g[i].tobytes() == gp.sector_means(float(R[i]), edges).tobytes(), i
-    assert float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max()) < 1e-13
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
+    # over this bound - held as a strict expected failure in tests/test_bar.py (RING_MEAN_OVER) for the gate to
+    # rule; here the reading is pinned, not loosened.
+    off = float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max())
+    assert off < 1e-13 or (template == "milky_way" and off == pytest.approx(1.0036e-13, rel=1e-3))
     # S58 (D217 item 6): was `g >= taper (1 - B)`, the cosine bar's trough. The bound is w_bar min L - to the rounding
     # of a cell's mean where the lane field sits on its base across a whole cell - and 0 for `ngc_4414`.
     # S59 (D218): was `> -1e-14`, the Milky Way reading -2.1e-15. The lanes' own cell means sit up to 8.9e-14 under
@@ -423,8 +427,8 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # without the spurs, are the ones pinned before (S60 fourth pass), held below.
     law = unspurred(gp)
     law_point = law.contrast(R, phi)
-    assert float(np.abs(law.cell_means(R, edges) - law_point).max()) == pytest.approx({"milky_way": 1.200e-2, "ngc_4414": 2.243e-3}[template], rel=0.02)
-    assert float(np.abs(law_point.sum(axis=1) / law_point.shape[1] - 1.0).max()) == pytest.approx({"milky_way": 9.774e-6, "ngc_4414": 1.0655e-6}[template], rel=0.02)
+    assert float(np.abs(law.cell_means(R, edges) - law_point).max()) == pytest.approx({"milky_way": 2.971e-2, "ngc_4414": 1.931e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.243e-3, 1.200e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert float(np.abs(law_point.sum(axis=1) / law_point.shape[1] - 1.0).max()) == pytest.approx({"milky_way": 1.625e-4, "ngc_4414": 5.0916e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6, 9.774e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     # S58 (D217): were 1.718e-3 and 1.716e-3. The Milky Way's lanes are narrow - half a kiloparsec across, a few
     # cells of this grid inside 3 kpc - so a cell's mean and its centre differ by 1.2 % of the ring's mean there;
     # `ngc_4414`, unbarred, shows its innermost rings untapered, where the response swings hardest.
@@ -440,9 +444,9 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # miss 1 by 1.07e-6 now, as the Milky Way's did by its lanes. S60 fourth pass: were 1.222e-2, 5.023e-3,
     # 9.82e-6 and `< 5e-13`.
     # S62 (D221): were {"milky_way": 1.200e-2, ...} and {"milky_way": 9.774e-6, ...} - the law's, held above.
-    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.6558, "ngc_4414": 2.243e-3}[template], rel=0.02)  # S87 (#148): was 0.6167 - the clock
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.6863, "ngc_4414": 1.931e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.243e-3, 0.6558 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6167 - the clock
     sampled = float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max())
-    assert sampled == pytest.approx({"milky_way": 2.394e-3, "ngc_4414": 1.0655e-6}[template], rel=0.02)  # S87 (#148): was 2.523e-3 - the clock
+    assert sampled == pytest.approx({"milky_way": 2.394e-3, "ngc_4414": 5.0916e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.523e-3 - the clock
     # S58 (D217): the 36-cell centre samples read 1.257e-3 and 1.056e-3; with the lanes, and with `ngc_4414`'s
     # inner rings untapered, 2.53e-2 and 7.26e-3 - the cells' means are 1 to 5e-14 as before.
     # S59 (D218): were 2.529e-2 and 7.263e-3 - the centre samples of rings the segments have turned (the Milky
@@ -454,9 +458,9 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     centre = coarse_gp.contrast(coarse.grid.R, coarse.grid.phi)
     # S60 fourth pass: were 2.960e-2 and 4.913e-3.
     # S62 (D221): the Milky Way's was 2.791e-2, the law's still (held after this one).
-    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.469e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)  # S87 (#148): was 2.534e-2 - the clock
+    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 3.275e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.469e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.534e-2 - the clock
     centre = unspurred(coarse_gp).contrast(coarse.grid.R, coarse.grid.phi)
-    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.791e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)
+    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 1.746e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.791e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
 
 @pytest.mark.parametrize("template", TEMPLATES)
@@ -563,7 +567,8 @@ def test_the_cell_averaged_field_s_errors_as_measured(prod, template):
     # the worst ring of s is no longer deep inside the bar but in the arms' own disc, at 7.46 kpc (3.56 kpc), so the
     # three readings are nearly one (the Milky Way's weight there 0.985). The h² law reads 5.00 on both.
     # S60 fourth pass: were (1.1821e-3, 2.749e-4, 2.915e-4) and (6.595e-4, 6.595e-4, 2.728e-5).
-    want = {"milky_way": (9.460e-5, 9.319e-5, 9.460e-5), "ngc_4414": (2.030e-4, 2.030e-4, 1.918e-4)}[template]
+    # S87 (#148, #209, #80): were (9.460e-5, 9.319e-5, 9.460e-5) and (2.030e-4, 2.030e-4, 1.918e-4) - the clock, the floor and the Milky Way's pinned 5.0 kpc bar.
+    want = {"milky_way": (7.610e-5, 5.757e-5, 5.790e-5), "ngc_4414": (1.637e-4, 1.637e-4, 1.338e-4)}[template]
     assert got == pytest.approx(want, rel=0.01), got
     assert float(np.abs(h2["published"] - h2["exact"]).max()) == pytest.approx(want[1], rel=0.01)
 
@@ -594,7 +599,12 @@ def test_the_sector_means_are_the_exact_means_of_the_point_function(model):
     uneven = np.concatenate([[0.0], np.sort(np.random.default_rng(5).uniform(0.0, 2.0 * np.pi, 31)), [2.0 * np.pi]])
     means = gp.sector_means(8.0, uneven)
     assert float((means * np.diff(uneven)).sum() / (2.0 * np.pi)) == pytest.approx(1.0, abs=1e-12)
-    assert np.all(gp.sector_means(20.0, edges) == 1.0) and np.all(gp.cell_means(np.array([20.0, 25.0]), edges) == 1.0)
+    # S87 (#209, #80): was the spurred field at 20 and 25 kpc - the default galaxy's spurs now have feet out to 26.6 kpc
+    # (59 of them; one at 20.0), so the ring past the last mode and the bar is read on the law the spurs compose on,
+    # and the spurred field past every foot.
+    law = unspurred(gp)
+    assert np.all(law.sector_means(20.0, edges) == 1.0) and np.all(law.cell_means(np.array([20.0, 25.0]), edges) == 1.0)
+    assert np.all(gp.sector_means(29.0, edges) == 1.0) and np.all(gp.cell_means(np.array([29.0, 35.0]), edges) == 1.0)
 
 
 # --- the gate ----------------------------------------------------------------------------------------------------
@@ -662,7 +672,10 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # their base (no winding in them: unmoved), and a trough of the turned response now sits on such a cell
     # (the published field's test, above, and tests/test_bar.py). Held to the suite's bound, −2e-13.
     assert got["min_s"] > 0.0 and got["margin"] > -2e-13
-    assert got["ring_mean"] < 1e-13                                  # measured 7.1e-14 and 9.3e-14: the cell means
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
+    # over this bound - held as a strict expected failure in tests/test_bar.py (RING_MEAN_OVER) for the gate to
+    # rule; here the reading is pinned, not loosened.
+    assert got["ring_mean"] < 1e-13 or (template == "milky_way" and got["ring_mean"] == pytest.approx(1.0036e-13, rel=1e-3))  # measured 7.1e-14 and 9.3e-14: the cell means
     assert got["steps"] <= gr.MAX_NEWTON_STEPS == 120 and got["halvings"] <= gr.MAX_HALVINGS == 30
     # The bound of D216 item 12 as S58 leaves it, [w_bar min L, max(max s, max L)]. S58 (D217): was `0.0 < margin
     # < 3e-5 and max_g <= max_s` - the cosine bar never passed the response's crest; the lanes do (7.06 on the lane
@@ -706,8 +719,11 @@ def test_gate_s_numbers_on_both_templates_as_measured(prod, template):
         # S60 fourth pass: were rings=165, steps=8, halvings=1, min_s=6.157e-14, max_s=6.2295, min_g=0.018411,
         # max_g=6.761358, floor=1.279e-11 and rings=133, steps=8, halvings=0, min_s=1.556e-15, max_s=3.1580,
         # min_g=4.012e-16, max_g=3.157115, floor=5.069e-12.
-        "milky_way": dict(rings=162, steps=6, halvings=0, min_s=0.34650, max_s=2.4280, min_g=0.385431, max_g=6.656862, floor=2.4257e-13, margin=2.1058e-6),
-        "ngc_4414": dict(rings=133, steps=7, halvings=0, min_s=0.12436, max_s=3.5420, min_g=0.124458, max_g=3.540190, floor=1.2088e-13, margin=0.124458),
+        # S87 (#148, #209, #80): were max_s=2.4280, max_g=6.656862, margin=2.1058e-6 (the Milky Way) and steps=7, min_s=0.12436,
+        # max_s=3.5420, min_g=0.124458, max_g=3.540190, floor=1.2088e-13, margin=0.124458 (`ngc_4414`, whose pieces
+        # under 1 degree are redrawn since the floor: its response's lowest cell 0.39 and its crest 2.51).
+        "milky_way": dict(rings=162, steps=6, halvings=0, min_s=0.34650, max_s=2.3930, min_g=0.385431, max_g=6.694174, floor=2.4257e-13, margin=4.8621e-6),
+        "ngc_4414": dict(rings=133, steps=6, halvings=0, min_s=0.39336, max_s=2.5078, min_g=0.393569, max_g=2.506026, floor=7.6041e-14, margin=0.393569),
     }[template]
     assert int(gp.carries.sum()) == want["rings"]
     # The residual: at these pitches (13.5 and - pinned since S59 - 28.9 degrees) every ring's floor is far under
@@ -895,10 +911,12 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # of 7.0e-12 and 1.27e-11 under floors of 1.62e-11 and 3.20e-11, no ring on its floor. S60 fourth pass: were
     # floor 3.0673e-10 (both), residuals 1.3705e-10 and 1.2989e-10 (over 1e-10, 0.4-0.5 of their bound), 9 steps,
     # 45 and 42 rings on their floor.
-    for label, residual, floor in ((("ngc_4414", 33, 0), 6.9753e-12, 1.6200e-11), (("ngc_4414", 33, 1), 1.26891e-11, 3.2029e-11)):
+    # S87 (#148, #209, #80): were (6.9753e-12, 1.6200e-11) and (1.26891e-11, 3.2029e-11), 6 steps - the floor redraws their pieces
+    # under 1 degree (at 1.78 degrees most of them): 5 steps.
+    for label, residual, floor in ((("ngc_4414", 33, 0), 7.4043e-12, 1.7000e-11), (("ngc_4414", 33, 1), 6.8227e-12, 1.5028e-11)):
         got = drawn[label]
         assert got["floor"] == pytest.approx(floor, rel=0.01) and got["residual"] == pytest.approx(residual, rel=0.01), label
-        assert got["steps"] == 6 and got["residual"] < 1e-10 and got["over"] < 0.2, label
+        assert got["steps"] == 5 and got["residual"] < 1e-10 and got["over"] < 0.2, label  # S87 (#209): was 6
         assert drawn_at[label] == pytest.approx(1.780, abs=2e-3) and got["on_floor"] == 0, label
     # The one whose bits moved with the criterion at S57 (the docstring): `ngc_4414` at pattern seed 1, texture
     # seed 1. S58 (D217): was residual 1.186e-10 under a floor of 2.516e-10, 9 steps; unbarred it is another
@@ -906,7 +924,8 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # (``test_the_suite_galaxy_whose_bits_moved_with_the_criterion_moved_by_rounding``).
     moved = drawn[("ngc_4414", 1, 1)]
     # S60 fourth pass: was 9.673e-11 under 2.280e-10, 9 steps; on the pieces' response 6.19e-12 under 1.55e-11, 6.
-    assert moved["residual"] == pytest.approx(6.1927e-12, rel=0.01) and moved["floor"] == pytest.approx(1.5478e-11, rel=0.01) and moved["steps"] == 6
+    # S87 (#209): was 6.1927e-12 under 1.5478e-11, 6 steps - the floor.
+    assert moved["residual"] == pytest.approx(4.7484e-12, rel=0.01) and moved["floor"] == pytest.approx(1.1516e-11, rel=0.01) and moved["steps"] == 5
     assert drawn_at[("ngc_4414", 1, 1)] == pytest.approx(2.065, abs=2e-3)
     # The worst seen over the 240, recorded: Newton's counts (the maxima are 120 and 30); the largest floor and the
     # residual nearest its bound - under half of it everywhere, since the bound carries a factor 2 for the
@@ -924,11 +943,13 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # texture seed 1); 8 steps at most (seed 28), no halving; the largest floor 4.09e-11 (seed 33); s from 9.8e-7
     # (seed 28) to 3.807 (seed 36). S60 fourth pass: were steps (10, 2), floor 2.1650e-10, `0.45 < over < 0.5`,
     # residual 8.6558e-11, s from under 1e-34 to 15.88.
-    assert (worst["steps"], worst["halvings"]) == (8, 0)
-    assert worst["floor"] == pytest.approx(4.0924e-11, rel=0.01) and worst["over"] == pytest.approx(0.9357, abs=2e-3)
+    # S87 (#148, #209, #80): were 8 steps, the largest floor 4.0924e-11, s from 9.7617e-7 to 3.807, the margin 6.189e-7 and the
+    # field's largest 6.673 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar, read on suite_gate's own sweep; the residual nearest its bound unmoved (0.936 of it).
+    assert (worst["steps"], worst["halvings"]) == (7, 0)
+    assert worst["floor"] == pytest.approx(2.0326e-11, rel=0.01) and worst["over"] == pytest.approx(0.9357, abs=2e-3)
     assert worst["residual"] == pytest.approx(9.3572e-11, rel=0.01) and worst["relogged"] < 5e-10
     assert worst["mean"] < 2e-13 and worst["ring_mean"] < 2e-13 and worst["sum"] < 1e-13
-    assert worst["min_s"] == pytest.approx(9.7617e-7, rel=0.02) and worst["max_s"] == pytest.approx(3.807, abs=0.02)
+    assert worst["min_s"] == pytest.approx(2.9566e-3, rel=0.02) and worst["max_s"] == pytest.approx(3.7842, abs=0.02)
     # S57 (D216 G3, the reviewer's second pass): the second build had loosened these two to `> 1e-3` and `abs=0.03`;
     # re-read on the cell-averaged field: 0.0016862 (ngc_4414, pattern seed 55) and 6.77163 (Milky Way, seed 40).
     # S58 (D217): were 1.6862e-3 and 6.7716. **`ngc_4414`'s inputs, unbarred, publish their innermost rings as the
@@ -948,7 +969,7 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # seed 1) to 6.673 (the Milky Way's at seed 47), and its margin over w_bar min L 6.2e-7 at the least (the Milky
     # Way's at seed 28) - no cell sits on the lanes' floor to rounding now. S60 fourth pass: were `-2e-13 < margin
     # < 0`, min_g 2.624e-23, max_g 8.223.
-    assert worst["margin"] == pytest.approx(6.189e-7, rel=0.02) and worst["min_g"] == pytest.approx(0.064482, rel=0.02) and worst["max_g"] == pytest.approx(6.673, abs=2e-3)
+    assert worst["margin"] == pytest.approx(1.2221e-6, rel=0.02) and worst["min_g"] == pytest.approx(0.064482, rel=0.02) and worst["max_g"] == pytest.approx(6.6963, abs=2e-3)
     assert worst["min_g"] > 0.0
     # Which galaxies have a ring whose floor is the bound: seven, at the lowest drawn pitches.
     # S58 (D217): were seventeen under 7.7 degrees, at most 50 rings; `ngc_4414` at pattern seed 28 left the list
@@ -975,7 +996,8 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # field's about's "within about a degree ... over the mid disc" no longer read the model**, and the lead's fix pass
     # re-read it to these counts (test_the_stage_reads_no_gas_and_sits_at_checkpoint_three holds the phrases). S60
     # fourth pass: was [12218, 7510, 15270, 762] and 4. (20 cells is this count's own line for one arm's crest.)
-    assert sides.tolist() == [9485, 1740, 9197, 14552] and mid_most == 20
+    # S87 (#148, #209, #80): was [9485, 1740, 9197, 14552] - the clock, the floor and the Milky Way's pinned 5.0 kpc bar, read on suite_gate's own sweep.
+    assert sides.tolist() == [9967, 1408, 8648, 14951] and mid_most == 20
 
 
 def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod, monkeypatch):
@@ -1036,7 +1058,8 @@ def test_the_tightly_wound_galaxy_s_newton_count_and_floor_as_measured(prod, mon
     solved = compose.gas_pattern(o.fields, o.grid.R, constants(model))
     # S60 (D219), on the final model: 6 steps, and its largest floor 2.08e-11 - under the absolute tolerance now: the
     # pieces' gentler response keeps ln s small. S60 fourth pass: was `5 < steps <= 10 and floor > 1e-10`.
-    assert solved.diagnostics.worst_steps == 6 and float(solved.diagnostics.floor.max()) == pytest.approx(2.082e-11, rel=0.02)
+    # S87 (#209): was 6 steps and 2.082e-11 - the floor redraws the pieces under 1 degree.
+    assert solved.diagnostics.worst_steps == 5 and float(solved.diagnostics.floor.max()) == pytest.approx(1.503e-11, rel=0.02)
     # Refused its steps (four), it is still far from converged: the residual the error carries is over 1e-10.
     gm.forget_solutions()
     monkeypatch.setattr(gr, "solve", functools.partial(gr.solve, max_steps=4))
@@ -1046,7 +1069,8 @@ def test_the_tightly_wound_galaxy_s_newton_count_and_floor_as_measured(prod, mon
     gm.forget_solutions()
     # S60 (D219): still not converged in four, but the residual it carries is 1.20e-11, over the ring's own floor
     # (1.0e-11) and under 1e-10 - the pieces' response is gentle here. S60 fourth pass: was `> 1e-10`.
-    assert failure.value.residual == pytest.approx(1.1955e-11, rel=0.02)
+    # S87 (#209): was 1.1955e-11 - the floor; 1.64e-11 now, still over the ring's own floor (1.5e-11) and under 1e-10.
+    assert failure.value.residual == pytest.approx(1.6371e-11, rel=0.02)
 
 
 # --- the law, re-derived by hand ---------------------------------------------------------------------------------
@@ -1104,8 +1128,9 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
     h_z = float(F["disc_scale_length_spin"]) / float(c["ARM_LAYER_FLATTENING"])
     assert gp.layer_height == pytest.approx(h_z, rel=1e-15) and c["ARM_LAYER_FLATTENING"] == 7.3
     for radius, omega_want, kappa_want, x_want, eps_want, weight_want in (
-        (4.0125, 59.942, 91.930, 4.26101, 0.069486, 0.29664),
-        (7.9875, 30.895, 41.442, 7.92860, 0.077433, 0.99602),
+        # S87 (#80): the arms' weights were 0.29664 and 0.99602 - the bar's pinned 5.0 kpc (the docstring's table is S60's).
+        (4.0125, 59.942, 91.930, 4.26101, 0.069486, 0.33949),
+        (7.9875, 30.895, 41.442, 7.92860, 0.077433, 0.99852),
         (10.0125, 23.905, 30.879, 12.00573, 0.082903, 1.00000),
     ):
         i = int(np.argmin(np.abs(R - radius)))
@@ -1164,7 +1189,8 @@ def test_the_law_s_three_rings_as_measured(prod):
     # ramps and joins' caps hold harmonics up to the cells' Nyquist number - and is read against the finer solve
     # (test_the_cell_averaged_field_s_errors_as_measured: 1440 cells stand), not against its old value. S60 fourth
     # pass: were 6.83e-4, 9.1e-5 and 3.8e-5.
-    for radius, ode_want in ((4.0125, 2.922e-2), (7.9875, 2.100e-3), (10.0125, 2.408e-3)):  # S58 (D217): the first was 4.85e-4
+    # S87 (#148, #209, #80): the second and third were 2.100e-3 and 2.408e-3 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar.
+    for radius, ode_want in ((4.0125, 2.922e-2), (7.9875, 1.774e-3), (10.0125, 2.126e-3)):  # S58 (D217): the first was 4.85e-4
         i = row(o, radius)
         model_ring, eps = gp.profiles[i], float(gp.epsilon()[i])
         second = np.fft.irfft(-(k**2) * np.fft.rfft(np.log(model_ring)), n=n)
@@ -1180,9 +1206,9 @@ def test_the_law_s_three_rings_as_measured(prod):
     # S60 fourth pass: was (5.366, 0.4738) - the pieces' response meets the lane: (5.320, 0.6815).
     # S62 (D221): was (5.320, 0.6815) - a spur's foot on the ridge at 4 kpc lifts the crest; the law's own, without
     # the spurs, is the number it was.
-    assert float(published[i].max()) == pytest.approx(6.011, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6783, abs=1e-3)  # S87 (#148): was 5.910 - the clock
+    assert float(published[i].max()) == pytest.approx(4.972, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6904, abs=1e-3)  # S87 (#148, #209, #80): was 0.6783, 6.011 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 5.910 - the clock
     law = unspurred(gp).cell_means(R[i : i + 1], o.grid["phi"].edges)[0]
-    assert float(law.max()) == pytest.approx(5.320, abs=2e-3) and float(law.min()) == pytest.approx(0.6815, abs=1e-3)
+    assert float(law.max()) == pytest.approx(5.007, abs=2e-3) and float(law.min()) == pytest.approx(0.6953, abs=1e-3)  # S87 (#148, #209, #80): was 0.6815, 5.320 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
 
 def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(prod):
@@ -1293,9 +1319,9 @@ def test_the_most_saturated_seed_s_two_rings_as_measured(prod):
     # S60 (D219), the pieces' forcing on the two rings: Σf (m = 2…6) 0.4196 and 0.3989, s from 0.776 to 1.644 and
     # from 0.758 to 1.496 - ε and the saturation are the law's, unmoved. S60 fourth pass: were (1.6041, 0.03979,
     # 2.3649, 6.936e-2) and (1.2219, 0.04563, 2.1300, 0.16190).
-    assert read[most][2:6] == pytest.approx((0.41958, 0.03979, 1.6439, 0.77610), rel=2e-3)
+    assert read[most][2:6] == pytest.approx((0.39848, 0.03979, 1.6439, 0.78526), rel=2e-3)  # S87 (#148, #209, #80): was 0.41958, 0.77610 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     assert read[outside][:2] == pytest.approx((6.5625, 0.6132), abs=2e-4)
-    assert read[outside][2:6] == pytest.approx((0.39886, 0.04563, 1.4964, 0.75793), rel=2e-3)
+    assert read[outside][2:6] == pytest.approx((0.44108, 0.04563, 1.4685, 0.78172), rel=2e-3)  # S87 (#148, #209, #80): was 0.39886, 0.75793, 1.4964 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
 
 def test_a_weak_piece_is_the_linear_response_and_a_lone_piece_has_no_offset_at_its_middle():
@@ -1413,15 +1439,17 @@ def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, templat
         # within_one=103, most=(2, 3) (the Milky Way); band={-5: 2, -4: 6, -3: 3, -2: 13, -1: 2, 0: 17, 1: 10},
         # other_arm=5, within_one=29, most=(5, 10), disc={-10: 3, -9: 34, -8: 17, -7: 11, -6: 6, -5: 6, -4: 6, -3: 3,
         # -2: 13, -1: 2, 0: 17, 1: 10} (`ngc_4414`).
-        "milky_way": dict(band={-20: 1, -9: 1, -8: 1, -7: 1, -6: 1, -5: 2, -4: 6, -3: 10, -2: 8, -1: 4, 0: 8, 1: 3, 2: 1, 3: 1, 5: 1,
-                                6: 1, 9: 1, 12: 1, 472: 1},
-                          disc={-9: 2, -8: 3, -7: 2, -6: 3, -5: 8, -4: 10, -3: 14, -2: 12, -1: 7, 0: 11, 1: 8, 2: 6, 3: 4, 4: 4, 5: 6,
-                                6: 5, 7: 6, 8: 6, 9: 3, 10: 3}, other_arm=39, within_one=26, most=(472, 10)),
-        "ngc_4414": dict(band={-631: 1, -292: 1, -288: 1, -285: 1, -280: 1, -5: 2, -4: 1, -2: 3, -1: 4, 0: 3, 1: 2, 2: 1, 3: 2, 4: 1,
-                               5: 1, 7: 1, 9: 2, 235: 1, 292: 2, 294: 2, 295: 1, 296: 1, 297: 1, 298: 1, 299: 1, 301: 2, 302: 1,
-                               304: 2, 306: 2, 307: 2, 530: 1, 534: 1, 538: 1, 542: 1, 547: 1, 550: 1},
-                         disc={-9: 2, -8: 1, -7: 1, -6: 1, -5: 3, -4: 3, -3: 7, -2: 6, -1: 12, 0: 12, 1: 9, 2: 9, 3: 4, 4: 2, 5: 2,
-                               6: 1, 7: 1, 8: 1, 9: 5}, other_arm=51, within_one=33, most=(631, 9)),
+        # S87 (#148, #209, #80): were other_arm=39, within_one=26, most=(472, 10) and other_arm=51, within_one=33, most=(631, 9),
+        # the counts as in git's history - the clock, the floor and the Milky Way's pinned 5.0 kpc bar; recorded as read.
+        "milky_way": dict(band={-35: 1, -16: 1, -15: 2, -14: 2, -13: 3, -12: 1, -10: 1, -7: 1, -6: 2, -5: 2, -4: 5, -3: 6, -2: 4,
+                                -1: 8, 1: 1, 2: 1, 3: 2, 5: 2, 8: 1, 9: 1, 10: 1, 12: 1, 16: 1, 18: 1, 469: 1, 486: 1},
+                          disc={-10: 1, -8: 2, -7: 2, -6: 6, -5: 3, -4: 9, -3: 11, -2: 8, -1: 14, 0: 2, 1: 6, 2: 5, 3: 5, 4: 5, 5: 6,
+                                6: 5, 7: 6, 8: 6, 9: 4, 10: 3}, other_arm=53, within_one=22, most=(486, 10)),
+        "ngc_4414": dict(band={-2: 1, -1: 4, 0: 5, 1: 3, 2: 4, 3: 5, 4: 2, 5: 5, 218: 1, 220: 1, 222: 1, 225: 1, 227: 1, 230: 1,
+                               233: 1, 236: 1, 239: 1, 243: 1, 246: 1, 247: 1, 249: 1, 250: 1, 253: 2, 256: 1, 257: 1, 259: 1,
+                               260: 1, 262: 1, 263: 1, 264: 1, 525: 1},
+                         disc={-9: 1, -7: 1, -6: 1, -5: 1, -4: 10, -3: 6, -2: 6, -1: 7, 0: 9, 1: 8, 2: 9, 3: 8, 4: 4, 5: 5, 6: 1,
+                               9: 3}, other_arm=53, within_one=24, most=(525, 9)),
     }[template]
     print(f"{template}: signed separation in solver cells, 6-10 kpc {dict(sorted(band.items()))}; the disc {dict(sorted(same_arm.items()))}")
     assert dict(band) == want["band"] and sum(band.values()) == 53
@@ -1434,7 +1462,7 @@ def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, templat
     # crest is at the smaller χ on rings out to 12.19 kpc, and over 6-10 kpc as far as 20 cells. S60 fourth pass:
     # was `all(R[i] < 0.9 for i in carries if signed[i] < 0) and min(band) == 0` (held until S60).
     if template == "milky_way":
-        assert max(float(R[i]) for i in carries if signed[i] < 0) == pytest.approx(12.1875, abs=1e-9) and min(band) == -20  # S58 (D217): was `R[i] < 6.0 ... == -1`
+        assert max(float(R[i]) for i in carries if signed[i] < 0) == pytest.approx(12.1875, abs=1e-9) and min(band) == -35  # S87 (#80): was -20 - the bar pinned at 5.0 kpc. S58 (D217): was `R[i] < 6.0 ... == -1`
 
 
 # --- the interpolation of the point function, in χ and in R (D216 item 9; gate G3 item 5) -----------------------
@@ -1526,7 +1554,7 @@ def test_the_interpolation_errors_as_measured(prod, template):
     # cells stand on the measured error of the published cell means against the same forcing solved on 2880 and
     # 5760 cells (test_the_cell_averaged_field_s_errors_as_measured: 9.5e-5 and 2.0e-4 of the field, under 1e-3,
     # so 1440 stands), and this level is pinned as measured: 1.085e-7 at 4.01 kpc (4.140e-7 at 3.56 kpc).
-    assert float(spectrum[:, 480:].max()) == pytest.approx({"milky_way": 1.085e-7, "ngc_4414": 4.140e-7}[template], rel=0.02)
+    assert float(spectrum[:, 480:].max()) == pytest.approx({"milky_way": 1.063e-7, "ngc_4414": 2.170e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.085e-7, 4.140e-7 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     error = midpoint_error(s)
     worst = int(np.argmax(error))
     # S58 (D217): were (1.240e-3, 2.963e-4, 3.486e-4, 9.37e-6) and (1.210e-3, 2.886e-4, 9.232e-5, 1.45e-5). The
@@ -1539,13 +1567,16 @@ def test_the_interpolation_errors_as_measured(prod, template):
     # S60 (D219), on the final model: the worst ring of s is in the arms' own disc now, 7.46 kpc (3.49 kpc) - the
     # pieces' response is gentle inside the bar - so the weighted and unweighted readings nearly agree. S60 fourth
     # pass: were (1.5756e-3, 3.809e-4, 4.134e-4, 2.051e-5) and (8.903e-4, 8.903e-4, 4.359e-5, 8.903e-4).
-    want = {"milky_way": (2.8310e-4, 2.7889e-4, 2.8310e-4, 2.7889e-4), "ngc_4414": (5.2461e-4, 5.2461e-4, 4.4255e-4, 5.2461e-4)}[template]
+    # S87 (#148, #209, #80): were (2.8310e-4, 2.7889e-4, 2.8310e-4, 2.7889e-4) and (5.2461e-4, 5.2461e-4, 4.4255e-4, 5.2461e-4) - the clock, the floor and the Milky Way's pinned 5.0 kpc bar.
+    want = {"milky_way": (2.1650e-4, 1.8094e-4, 1.8199e-4, 1.0663e-4), "ngc_4414": (4.0816e-4, 4.0816e-4, 3.5419e-4, 4.0816e-4)}[template]
     got = (float(error.max()), float((error * (1.0 - taper)).max()), float(error[R > 6.0].max()), float(error[worst] * (1.0 - taper[worst])))
     assert got == pytest.approx(want, rel=0.01), got
     # the worst ring of s: deep inside the bar's reach, where there is a bar (S58: was `< 0.012` for both).
     # S60 fourth pass: was `R[worst] < 2.0 and (1 - taper < 0.014 if barred else taper == 0)` - no longer, as read.
-    assert float(R[worst]) == pytest.approx({"milky_way": 7.4625, "ngc_4414": 3.4875}[template], abs=1e-9)
-    assert (1.0 - taper[worst] > 0.98) if gp.barred else taper[worst] == 0.0
+    assert float(R[worst]) == pytest.approx({"milky_way": 4.5375, "ngc_4414": 3.4125}[template], abs=1e-9)  # S87 (#148, #209, #80): was 3.4875, 7.4625 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    # S87 (#80): was `1 - taper > 0.98` where barred - the worst ring was in the arms' own disc; with the Milky Way's
+    # bar its pinned 5.0 kpc the worst ring is at 4.54 kpc, inside the bar's reach, the arms' weight there 0.4925.
+    assert (1.0 - taper[worst] == pytest.approx(0.4925, abs=1e-3)) if gp.barred else taper[worst] == 0.0
     # In R.
     pairs = np.flatnonzero(carries[:-1] | carries[1:])
     mid = 0.5 * (R[pairs] + R[pairs + 1])
@@ -1564,7 +1595,9 @@ def test_the_interpolation_errors_as_measured(prod, template):
     # 7.43 kpc (0.208 at 3.3 kpc), the median 5.0e-3 (2.5e-2), as read (the misplaced weight, the gate's own
     # statistic, stays under 0.1 in the test before this one). S60 fourth pass: were (0.3238, 5.823e-4, 8.59e-5, 6.45) and (0.3254, 0.3254,
     # 1.031e-4, 0.075).
-    want = {"milky_way": (0.33905, 0.33358, 5.026e-3, 7.425), "ngc_4414": (0.20756, 0.20756, 2.5478e-2, 3.3)}[template]
+    # S87 (#209): `ngc_4414`'s were (0.20756, 0.20756, 2.5478e-2, 3.3) - the floor.
+    # S87 (#80): the Milky Way's largest gaps were 0.33905 and 0.33358 - its bar's pinned 5.0 kpc.
+    want = {"milky_way": (0.18580, 0.18462, 5.026e-3, 7.425), "ngc_4414": (0.19644, 0.19644, 2.9285e-2, 3.075)}[template]
     got = (float(apart.max()), float((apart * weight).max()), float(np.median(apart * weight)), float(mid[int(np.argmax(apart * weight))]))
     assert got == pytest.approx(want, rel=0.02), got
 
@@ -1634,16 +1667,22 @@ def test_the_gate_s_predictions_as_measured(prod):
         # 2.0375), (1.7648, 0.3845, 1.8857), (1.1984, 0.8114, 1.2812); g (5.3660, 0.4738), (3.0922, 0.1798),
         # (2.7874, 0.0211), (2.0891, 0.1822), (1.7641, 0.3847), (1.1983, 0.8115); held False, False, True, True,
         # True, True.
-        (4.0125, (1.91, 0.37, 1.57), (1.7789, 0.69978, 1.3043), (5.3197, 0.68148), False),
-        (5.9625, (3.02, 0.007, 2.69), (1.7535, 0.34908, 1.9408), (1.6175, 0.46644), False),
-        (7.9875, (2.79, 0.018, 2.56), (1.4548, 0.64268, 1.3939), (1.4523, 0.64420), False),
-        (10.0125, (2.09, 0.18, 2.04), (1.4853, 0.75396, 1.3612), (1.4851, 0.75403), False),
-        (10.9875, (1.77, 0.38, 1.89), (1.1903, 0.80057, 1.2185), (1.1902, 0.80059), False),
-        (12.0375, (1.20, 0.81, 1.28), (1.1030, 0.89953, 1.0883), (1.1030, 0.89954), False),
+        # S87 (#148, #209, #80): were built (1.7789, 1.3043), (1.7535, 1.9408), (1.4548, 1.3939), (1.4853, -), (1.1903, -), (1.1030,
+        # 1.0883) and composed (5.3197, 0.68148), (1.6175, 0.46644), (1.4523, 0.64420), (1.4851, 0.75403), (1.1902,
+        # 0.80059), (1.1030, 0.89954) - the clock, the floor and the Milky Way's pinned 5.0 kpc bar; the verdicts unmoved.
+        (4.0125, (1.91, 0.37, 1.57), (1.7755, 0.69978, 1.3073), (5.0072, 0.69528), False),
+        (5.9625, (3.02, 0.007, 2.69), (1.8495, 0.34908, 2.0734), (1.7363, 0.44036), False),
+        (7.9875, (2.79, 0.018, 2.56), (1.5502, 0.64268, 1.4059), (1.5486, 0.63472), False),
+        (10.0125, (2.09, 0.18, 2.04), (1.4897, 0.75396, 1.3612), (1.4893, 0.75703), False),
+        (10.9875, (1.77, 0.38, 1.89), (1.2042, 0.80057, 1.2185), (1.2039, 0.79657), False),
+        (12.0375, (1.20, 0.81, 1.28), (1.0934, 0.89953, 1.0944), (1.0933, 0.89820), False),
     )
     # S62 (D221): the published field's (crest, trough) with the spurs, where they move it (beyond 10 kpc no spur
-    # reaches the ring: <S> under 2e-9).
-    SPURRED = {4.0125: (6.0110, 0.67833), 5.9625: (2.1218, 0.46399), 7.9875: (1.4516, 0.64389)}  # S87 (#148): the crests were 5.9102 and 2.4148 - the clock (the spurs read the gas column)
+    # reaches the ring: <S> under 2e-9). S87 (#148, #209, #80): the spurs now reach the ring at 10.0 kpc too (its
+    # crest 1.5082 where the law's is 1.4893); at 11 and 12 kpc they move it under 2e-4.
+    # S87 (#148): the crests were 5.9102 and 2.4148 - the clock (the spurs read the gas column). S87 (#148, #209, #80):
+    # were (6.0110, 0.67833), (2.1218, 0.46399), (1.4516, 0.64389) - the clock, the floor and the Milky Way's pinned 5.0 kpc bar.
+    SPURRED = {4.0125: (4.9723, 0.69043), 5.9625: (2.3171, 0.43874), 7.9875: (1.5477, 0.63436), 10.0125: (1.5082, 0.75695)}
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
         assert float(R[i]) == pytest.approx(radius, abs=1e-9)
@@ -1661,13 +1700,13 @@ def test_the_gate_s_predictions_as_measured(prod):
     # The forcing's sum at the six rings: the untapered one (the probe's tapered sums were 1.08, 2.28, 1.97, 1.25, 0.88, 0.25).
     sums = [float(f_sum[row(o, radius)]) for radius, *_ in table]
     # S60 fourth pass: was [3.659, 2.781, 1.976, 1.249, 0.884, 0.247].
-    assert sums == pytest.approx([0.6176, 0.8850, 0.5781, 0.4899, 0.3431, 0.1676], abs=3e-3)
+    assert sums == pytest.approx([0.6176, 0.9631, 0.5892, 0.4939, 0.3431, 0.1635], abs=3e-3)  # S87 (#148, #209, #80): was 0.1676, 0.4899, 0.5781, 0.8850 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     # The gaps between the arms, 6 to 8 kpc: nearly emptied, on every ring - S60 (D219): **not held now**: the
     # forcing's sum there is 0.53 at the least (never over 1), and the troughs of s stand at 0.35 to 0.64. S60 fourth
     # pass: was `np.all(f_sum[band] > 1.0) and max trough < 0.02 and min == 4.24e-5` (held until S60), 8 steps.
     band = (R >= 6.0) & (R <= 8.0)
-    assert not np.any(f_sum[band] > 1.0) and float(f_sum[band].min()) == pytest.approx(0.5303, abs=2e-4)
-    assert float(s[band].min(axis=1).max()) == pytest.approx(0.6427, abs=2e-4) and float(s[band].min()) == pytest.approx(0.3465, rel=0.03)  # S58 (D217): was 2.93e-4
+    assert not np.any(f_sum[band] > 1.0) and float(f_sum[band].min()) == pytest.approx(0.5384, abs=2e-4)  # S87 (#148, #209, #80): was 0.5303 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert float(s[band].min(axis=1).max()) == pytest.approx(0.6341, abs=2e-4) and float(s[band].min()) == pytest.approx(0.3465, rel=0.03)  # S87 (#148, #209, #80): was 0.6427 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S58 (D217): was 2.93e-4
     assert gp.diagnostics.worst_steps == 6
     # S60 (D219): the whole record is of s on the modes' forcing - every number a layer-on one; the forcing's sum
     # above is over the harmonics m = 2…6 as `main` defined it (`forcing_amplitudes()[:, 1:6]`), where the pieces'
@@ -1791,14 +1830,19 @@ def test_disclosed_check_s_readings_as_measured(prod, template):
         # Re-read as the numbers say; nothing is tuned. S60 fourth pass: were ratio=(2.5705, 2.0523, 3.3459),
         # inside=53, width=(0.4660, 0.4282, 0.4807) (the Milky Way) and ratio=(1.4065, 1.0468, 1.6564), inside=32,
         # below from 8.4375, width=(0.5496, 0.4939, 0.6062) (`ngc_4414`); `lower`/`higher` are the S59 record.
-        "milky_way": dict(rings=53, ratio=(1.4310, 1.3415, 1.9499), inside=46, tied=52, below_from=6.1125, wider=False, times=(0.4356, 3.1184),
-                          width=(0.3675, 0.0741, 0.5301), lower=(0.3107, 0.2141, 0.4807), higher=(0.4660, 0.3568, 0.4807)),
+        # S87 (#148, #209, #80): the Milky Way's were ratio=(1.4310, 1.3415, 1.9499), inside=46, below_from=6.1125, times=(0.4356,
+        # 3.1184), width=(0.3675, 0.0741, 0.5301) - the clock, the floor and the Milky Way's pinned 5.0 kpc bar; its ten rings under the 16th percentile are 9.04-9.94 kpc.
+        "milky_way": dict(rings=53, ratio=(1.4311, 1.3399, 2.1051), inside=43, tied=52, below_from=9.0375, wider=False, times=(0.4690, 3.6379),
+                          width=(0.3561, 0.0797, 0.6184), lower=(0.3107, 0.2141, 0.4807), higher=(0.4660, 0.3568, 0.4807)),
         # S59 (D218 item 6): `ngc_4414`'s were ratio=(1.8814, 1.0762, 2.8299), inside=46, width=(0.5120, 0.4790,
         # 0.5260), lower=(0.4218, 0.2620, 0.5083), higher=(0.5061, 0.4366, 0.5253), below from 9.4875 kpc - read at the
         # drawn pitch of 14.33 degrees. At the pinned 28.9 (ε and f both × 0.5121) the gate predicted a median of
         # "about 1.4–1.5" with "most of its 53 rings" under 1.37: read 1.4065, with 21 of 53 under, from 8.4375 kpc.
-        "ngc_4414": dict(rings=53, ratio=(1.2517, 1.0245, 1.7486), inside=17, tied=32, below_from=7.3125, wider=True, times=(1.5900, 4.4250),
-                         width=(0.3896, 0.2703, 0.7522), lower=(0.4532, 0.2940, 0.5448), higher=(0.5428, 0.4900, 0.5822)),
+        # S87 (#209, the owner's ruling of 2026-11-03, D255): `ngc_4414`'s were ratio=(1.2517, 1.0245, 1.7486), inside=17,
+        # below_from=7.3125, times=(1.5900, 4.4250), width=(0.3896, 0.2703, 0.7522) - the floor redraws its pieces under
+        # 1 degree, and the median is inside PHANGS's percentiles again.
+        "ngc_4414": dict(rings=53, ratio=(1.4294, 1.0243, 1.6373), inside=29, tied=32, below_from=8.2125, wider=True, times=(1.1058, 7.7245),
+                         width=(0.4235, 0.1880, 1.3132), lower=(0.4532, 0.2940, 0.5448), higher=(0.5428, 0.4900, 0.5822)),
     }[template]
     assert int(band.sum()) == want["rings"]
     assert (float(np.median(ratio)), float(ratio.min()), float(ratio.max())) == pytest.approx(want["ratio"], abs=2e-3)
@@ -1812,7 +1856,8 @@ def test_disclosed_check_s_readings_as_measured(prod, template):
     # its 53 rings under the 16th percentile (they were 7), fewer than the "most" predicted. Nothing is tuned.
     # S60 fourth pass: was `RATIO_LOW <= median <= RATIO_HIGH` on both (a hit); S60 (D219): a hit on the Milky Way,
     # a miss on `ngc_4414` (1.252 < 1.37), as read.
-    assert (RATIO_LOW <= float(np.median(ratio)) <= RATIO_HIGH) == (template == "milky_way")
+    # S87 (#209, D255): was `== (template == "milky_way")` - `ngc_4414`'s median 1.429 is a hit again (1.252 a miss).
+    assert RATIO_LOW <= float(np.median(ratio)) <= RATIO_HIGH
     assert int(((ratio >= RATIO_LOW) & (ratio <= RATIO_HIGH)).sum()) == want["inside"] and np.all(ratio <= RATIO_HIGH)
     below = R[band][ratio < RATIO_LOW]
     # S59 (D218): was `below.min() == 9.4875` - the seven outer rings; at the pinned pitch the 21 outer ones.
@@ -1821,8 +1866,11 @@ def test_disclosed_check_s_readings_as_measured(prod, template):
         # S60 fourth pass: were `median - RATIO_LOW == 0.036 and 1.4 <= median <= 1.5` ("the predicted range, held")
         # and `below.size == 21 < 53 / 2` ("most": not held). On the final model the median is 0.118 under the 16th
         # percentile - out of the predicted range - and 36 of 53 rings are under it: "most", held now.
-        assert float(np.median(ratio)) - RATIO_LOW == pytest.approx(-0.118, abs=2e-3) and not 1.4 <= float(np.median(ratio)) <= 1.5
-        assert below.size == 36 and below.size > want["rings"] / 2 and np.all(np.diff(np.flatnonzero(ratio < RATIO_LOW)) == 1)
+        # S87 (#209, D255): were `median - RATIO_LOW == -0.118`, `not 1.4 <= median <= 1.5` and `below.size == 36 > 53 / 2`
+        # - with the floor the median is 0.059 over the 16th percentile and inside S59's predicted 1.4-1.5 again, and
+        # 24 of 53 rings are under it, from 8.21 kpc: "most" not held.
+        assert float(np.median(ratio)) - RATIO_LOW == pytest.approx(0.0594, abs=2e-3) and 1.4 <= float(np.median(ratio)) <= 1.5
+        assert below.size == 24 and below.size < want["rings"] / 2 and np.all(np.diff(np.flatnonzero(ratio < RATIO_LOW)) == 1)
     # ... and the width a miss on every ring, under every reading: wider than the measured arm - by 2.5 to 3.1 times
     # as the check reads it. S60 (D219): on `ngc_4414` still (1.59 to 4.42 times); on the Milky Way no longer - 0.44
     # to 3.12 times, some rings narrower than the measured arm. S60 fourth pass: was `np.all(values > WIDTH_TARGET)`
@@ -2005,9 +2053,9 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     # S59 (D218): was 1.198e-2 - on a ring the winding's segments have turned, inside the bar's reach (3.79 kpc).
     # S62 (D221): was 1.222e-2 - a spur, narrower than a cell, puts a cell's mean 0.665 from its centre; the law's own,
     # without the spurs, reads 1.198e-2, held to the old pin.
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.5781, rel=0.02)  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.7229, rel=0.02)  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
     law = unspurred(gp)
-    assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.222e-2, rel=0.02)
+    assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.252e-2, rel=0.02)  # S87 (#148, #209, #80): was 1.222e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
     assert np.array_equal(gp.contrast_at(R[idx[0]], phi[idx[1]]), on_mesh[idx])
     assert np.array_equal(gp.contrast_at(R[:, None], phi[None, :]), on_mesh)
@@ -2052,7 +2100,9 @@ def test_a_point_reads_its_two_rings_carried_to_its_radius_and_its_own_bar_term(
     assert np.allclose(gp.unspurred_contrast_at(np.full_like(phi, radius), phi), by_hand, rtol=1e-13, atol=0.0)
     assert np.allclose(gp.contrast_at(np.full_like(phi, radius), phi), gp.spurs.compose_at(np.full_like(phi, radius), phi, by_hand), rtol=1e-13, atol=0.0)
     # ... and deep inside the bar, where the lanes carry nearly all the weight: the same composition.
-    k_in, deep = 26, float(0.6 * R[26] + 0.4 * R[27])
+    # S87 (#80): was ring 26 (1.98 kpc), where the default galaxy's bar now carries 0.536 of the weight - its half-length
+    # is Erwin's law's 2.27 kpc; ring 11 (0.89 kpc) is as deep in it as ring 26 was (0.976).
+    k_in, deep = 11, float(0.6 * R[11] + 0.4 * R[12])
     t_in = pt.bar_terms(np.array([deep]), gp.pitch_deg, gp.bar_length)[0]
     inner = (1.0 - t_in[0]) * gp.response_at(deep, phi) + t_in[0] * (0.6 * gr.interpolate(gp.lanes[k_in], phi - bar_angle) + 0.4 * gr.interpolate(gp.lanes[k_in + 1], phi - bar_angle))
     assert np.allclose(gp.unspurred_contrast_at(np.full_like(phi, deep), phi), inner, rtol=1e-12, atol=0.0) and t_in[0] > 0.97  # S62 (D221): was gp.contrast_at
@@ -2095,7 +2145,7 @@ def test_the_ring_s_mean_square_at_8_kpc_as_measured(model):
     # response there is weak (1.021: the crest 1.20); read at 8 kpc instead, where the arms are whole.
     # S60 (D219): the pieces' response at 8 kpc is far gentler than the modes' (the crest 1.36, the trough 0.80).
     # S60 fourth pass: was 1.358.
-    assert mean_square == pytest.approx(1.0276, abs=0.005)
+    assert mean_square == pytest.approx(1.0630, abs=0.005)  # S87 (#148, #209, #80): was 1.0276 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
 
 def test_the_default_field_s_range_and_its_mean_square(model):
@@ -2115,7 +2165,7 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # and an arm's together at 2.81 kpc on the relative residual's winding.
     # S60 fourth pass: was (0.018411, 6.761358) - on the pieces' response the lowest cell is 0.385 (0.94 kpc) and the
     # highest a lane's and an arm's at 2.06 kpc.
-    assert (float(g.min()), float(g.max())) == pytest.approx((0.385431, 6.656862), abs=2e-5)
+    assert (float(g.min()), float(g.max())) == pytest.approx((0.385431, 6.510051), abs=2e-5)  # S87 (#148, #209, #80): was 6.656862 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     i = row(o, R_SUN)
     # S57 (D216): was crest 3.0592, trough 0.5340 at R0. S57 (D216 G3): was (2.7403, 0.02534) on the centre samples.
     # S58 (D217): was (2.73964, 0.025373) - the cosine bar's 0.33 % of weight at R0 put 0.0007 into the trough.
@@ -2124,10 +2174,10 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # S60 fourth pass: was (2.73831, 0.024599).
     # S62 (D221): was (1.36161, 0.80241) - a spur's foot on the ridge at R0 lifts the crest (the ring's spurs' mean
     # <S> takes the trough down by its share).
-    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((1.76292, 0.80136), abs=2e-5)  # S87 (#148): was 0.80108, 1.87998 - the clock
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.23429, 0.65155), abs=2e-5)  # S87 (#148, #209, #80): was 0.80136, 1.76292 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.80108, 1.87998 - the clock
     # S57 (D216): was 1.603 at R0 and 1.194 by gas mass. S57 (D216 G3): was 1.3443 and 1.1157 on the centre samples.
     # S60 fourth pass: was 1.34398.
-    assert float((g[i] ** 2).mean()) == pytest.approx(1.02757, abs=2e-5)  # S87 (#148): was 1.02810 - the clock  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
+    assert float((g[i] ** 2).mean()) == pytest.approx(1.06967, abs=2e-5)  # S87 (#148, #209, #80): was 1.02757 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 1.02810 - the clock  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
     weight = np.asarray(F["gas_surface_density"]) * R
     # S58 (D217): was 1.11562. The lanes: inside the bar the gas is thinned to four tenths of the ring's mean off two
     # narrow lanes at seven times it, so a process quadratic in the gas gains there - 1.312 over the disc by gas mass.
@@ -2135,7 +2185,7 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # mean square of their sum moves with it: 1.31031.
     # S59 (D218 follow-up): was 1.31031.
     # S60 fourth pass: was 1.31098.
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.21204, abs=2e-5)  # S87 (#148): was 1.21081 - the clock  # S62 (D221): was 1.21063, the spurs
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.07991, abs=2e-5)  # S87 (#148, #209, #80): was 1.21204 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 1.21081 - the clock  # S62 (D221): was 1.21063, the spurs
 
 
 # --- what the stage reads, where it sits ---------------------------------------------------------------------
@@ -2428,5 +2478,5 @@ def test_the_suite_galaxy_whose_bits_moved_with_the_criterion_as_measured(prod, 
     # S60 (D219): on the pieces' response the galaxy's worst residual is 6.19e-12 under a floor of 1.55e-11, no ring
     # has a floor over 1e-10, 6 Newton steps; the two rules give the same bytes still. S60 fourth pass: were
     # 9.673e-11, 2.280e-10, 19 rings and 9 steps.
-    assert residual == pytest.approx(6.1927e-12, rel=0.01) and floor == pytest.approx(1.5478e-11, rel=0.01)
-    assert on_floor == 0 and steps == 6
+    assert residual == pytest.approx(4.7484e-12, rel=0.01) and floor == pytest.approx(1.1516e-11, rel=0.01)  # S87 (#148, #209, #80): was 6.1927e-12, 1.5478e-11 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert on_floor == 0 and steps == 5  # S87 (#209): was 6 - the floor

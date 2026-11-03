@@ -63,18 +63,18 @@ SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 
 # The gate's tolerance, stated (module docstring), and what the second cut measured at S38.
 TOLERANCE = 1e-3
-MEASURED_B_V = 0.569495  # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)
-MEASURED_M_V = -21.110365  # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
+MEASURED_B_V = 0.561777  # S87 (#148, #80): was 0.569495 - the clock (#148) and the default disc's bar from Erwin's law (#80). # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)
+MEASURED_M_V = -21.146766  # S87 (#148, #80): was -21.110365. # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
 # The first cut's record (S38): one blackbody at the colour temperature.
-FIRST_CUT_B_V = 0.590914  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
-FIRST_CUT_M_V = -21.844831  # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
+FIRST_CUT_B_V = 0.583477  # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
+FIRST_CUT_M_V = -21.888969  # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
 # S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
 # S70 (D234, #128(b)): were 0.572933 and -20.668268 - the face-on frame read through the mixed slab; since S70 through
 # the stars' and the dust's own layers (specs.templates.face_on), the geometry the dust stage has used since S52.
-FACE_ON_B_V = {"basic": 0.573877, "azimuthal": 0.573877}  # +0.0044 on the gate's. # S52 (D211): was 0.574638 (+0.0051)
-FACE_ON_M_V = {"basic": -20.808910, "azimuthal": -20.808910}  # 0.302 mag fainter. # S52 (D211): was -20.685591 (0.425)
+FACE_ON_B_V = {"basic": 0.567280, "azimuthal": 0.567280}  # S87 (#148, #80): were 0.573877 - the clock (#148) and the default disc's bar from Erwin's law (#80). # +0.0044 on the gate's. # S52 (D211): was 0.574638 (+0.0051)
+FACE_ON_M_V = {"basic": -20.844070, "azimuthal": -20.844070}  # S87 (#148, #80): were -20.808910. # 0.302 mag fainter. # S52 (D211): was -20.685591 (0.425)
 
 
 def curves(name: str) -> str:
@@ -124,8 +124,8 @@ def test_the_frame_s_colour_and_magnitude_are_the_table_s(full, model):
     m_b, m_v = band_magnitude(total[0], "B"), band_magnitude(total[1], "V")
     table = scalars(full, model.name, "colour_b_v", "absolute_magnitude_v")
     print(model.name, m_b - m_v, m_v, table)
-    assert table["colour_b_v"] == pytest.approx(0.5694, abs=5e-5)  # the targets, as published. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.6306
-    assert table["absolute_magnitude_v"] == pytest.approx(-21.1102, abs=5e-5)  # S49 (D204, #126): the light integrated along the isochrone's points; was -21.2159
+    assert table["colour_b_v"] == pytest.approx(0.5617, abs=5e-5)  # S87 (#148, #80): was 0.5694 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # the targets, as published. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.6306
+    assert table["absolute_magnitude_v"] == pytest.approx(-21.1466, abs=5e-5)  # S87 (#148, #80): was -21.1102 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was -21.2159
     assert abs((m_b - m_v) - table["colour_b_v"]) < TOLERANCE
     assert abs(m_v - table["absolute_magnitude_v"]) < TOLERANCE
     # The measurement itself, pinned, so it cannot drift inside the tolerance unseen.
@@ -210,8 +210,8 @@ def test_the_first_cut_is_recorded(full):
     lit = (b > 0) & (v > 0) & (per_ring[:, 1] > 0)
     d = ((zp["B"] - 2.5 * np.log10(per_ring[lit, 0])) - (zp["V"] - 2.5 * np.log10(per_ring[lit, 1]))) - (-2.5 * np.log10(b[lit] / v[lit]))
     weight = (f["disc_surface_brightness"] * grid.R)[lit]
-    assert d.min() == pytest.approx(-0.0876, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was -0.0796
-    assert d.max() == pytest.approx(0.2417, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.2517
+    assert d.min() == pytest.approx(-0.0889, abs=1e-3)  # S87 (#148, #80): was -0.0876 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was -0.0796
+    assert d.max() == pytest.approx(0.2439, abs=1e-3)  # S87 (#148, #80): was 0.2417 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.2517
     assert np.average(d, weights=weight) == pytest.approx(0.0563, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
 
 
@@ -230,7 +230,7 @@ def test_the_joined_spectrum_carries_most_of_the_published_light(full):
     header, arrays = wire.decode(full.handle("/api/render", {"filters": [wide]}).body)
     frame = float((arrays["stars"][..., 0] * cell_areas(header)).sum())
     published = scalars(full, DEFAULT_MODEL, "disc_luminosity")["disc_luminosity"]
-    assert frame / published == pytest.approx(0.692, abs=2e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.708
+    assert frame / published == pytest.approx(0.687, abs=2e-3)  # S87 (#148, #80): was 0.692 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.708
 
 
 def test_the_line_is_the_nebular_field_in_two_layers(full, model):
@@ -335,13 +335,13 @@ BALANCE_TOLERANCE = 1e-3
 # S52 (D211): the dust heated in the stars' and its own layers. The frame absorbs 0.766 of what it did, the inner
 # disc's warm dust the most, so the cold outer disc's emission past 1 mm is a larger share of the frame's Sigma_IR
 # (8.56e-4, emitted over absorbed 0.999144: inside the 1e-3 tolerance, by less than before).
-MEASURED_ABSORBED = {"basic": 1.000224, "azimuthal": 1.000224}  # the frame's absorbed power over dust_absorbed_luminosity. # S52 (D211): was 1.000293
-MEASURED_EMITTED = {"basic": 0.999368, "azimuthal": 0.999368}  # the frame's TIR over dust_infrared_luminosity. # S52 (D211): was 0.999588
-TIR_OUTSIDE = {"basic": 8.55564e-4, "azimuthal": 8.55564e-4}  # the share of the frame's Sigma_IR outside 8-1000 um. # S52 (D211): was 7.04826e-4
-REMOVED_SHARE = {m: [0.275304, 0.280707, 0.280905, 0.280709] for m in ("basic", "azimuthal")}  # R, V, B, V row. # S52 (D211): was [0.361787, 0.369547, 0.367945, 0.369544]
-CURVE_OVER_GREY = 0.784105  # S52 (D211): was 0.759075
-THIN_OVER_SLAB = 18.982366  # S52 (D211): was 12.521717
-PROFILE_WORST = {"basic": 1.1096689e-2, "azimuthal": 1.1096689e-2}
+MEASURED_ABSORBED = {"basic": 1.000219, "azimuthal": 1.000219}  # S87 (#148, #80): were 1.000224. # the frame's absorbed power over dust_absorbed_luminosity. # S52 (D211): was 1.000293
+MEASURED_EMITTED = {"basic": 0.999398, "azimuthal": 0.999398}  # S87 (#148, #80): were 0.999368. # the frame's TIR over dust_infrared_luminosity. # S52 (D211): was 0.999588
+TIR_OUTSIDE = {"basic": 8.20885e-4, "azimuthal": 8.20885e-4}  # S87 (#148, #80): were 8.55564e-4. # the share of the frame's Sigma_IR outside 8-1000 um. # S52 (D211): was 7.04826e-4
+REMOVED_SHARE = {m: [0.275275, 0.281064, 0.282064, 0.281070] for m in ("basic", "azimuthal")}  # S87 (#148, #80): was [0.275304, 0.280707, 0.280905, 0.280709]. # R, V, B, V row. # S52 (D211): was [0.361787, 0.369547, 0.367945, 0.369544]
+CURVE_OVER_GREY = 0.784658  # S87 (#148, #80): was 0.784105. # S52 (D211): was 0.759075
+THIN_OVER_SLAB = 18.476128  # S87 (#148, #80): was 18.982366. # S52 (D211): was 12.521717
+PROFILE_WORST = {"basic": 7.847869e-4, "azimuthal": 7.847869e-4}  # S87 (#148, #80): were 1.1096689e-2 - the clock (#148) and the default disc's bar from Erwin's law (#80): the worst ring inside the disc no longer the one it was
 
 
 def full_render(api: Service, model: str, curve_list: list) -> tuple[dict, dict]:
@@ -1175,10 +1175,10 @@ def test_today_s_painting_against_the_object_s_light(objects):
 # the field's renormalised one and the stars' own, debt #126), and the remainder.
 # S49 (D204, #126): the light integrated along the isochrone's points; was total 4.895767e10, young 1.202957e10,
 # bright 9.019945e9 (the field's renormalised budget; the stars' own was 8.632747e9, which it now is), unresolved 2.790815e10.
-SPLIT_1E3 = {"total": 4.589796e10, "young": 1.204866e10, "bright": 8.632747e9, "unresolved": 2.521655e10}
+SPLIT_1E3 = {"total": 4.775925e10, "young": 1.276454e10, "bright": 9.022708e9, "unresolved": 2.597201e10}  # S87 (#148, #80): was 4.589796e10 / 1.204866e10 / 8.632747e9 / 2.521655e10
 # The closure through rgb: the largest relative departure, over rings and filters, of the parts' responses summed
 # from the stars' (the SED join is not linear), at 10^2, 10^3 and 10^4 Lsun.
-CLOSURE_RGB = {100.0: 4.4855e-6, 1000.0: 5.0232e-6, 10000.0: 4.8005e-6}  # S49 (D204, #126): the light integrated along the isochrone's points; was 4.9594e-6 / 5.7059e-6 / 5.6762e-6
+CLOSURE_RGB = {100.0: 4.4805e-6, 1000.0: 4.9964e-6, 10000.0: 4.8066e-6}  # S87 (#148, #80): was 4.4855e-6 / 5.0232e-6 / 4.8005e-6. # S49 (D204, #126): the light integrated along the isochrone's points; was 4.9594e-6 / 5.7059e-6 / 5.6762e-6
 
 
 def _unresolved_query(model: str, l_min: float | None, **extra) -> dict:
@@ -1283,25 +1283,32 @@ AGE_ARRAYS = {"young": "stars_young", "middle": "stars_middle", "old": "stars_ol
 # Each part is its own spectrum's response; the join is not linear (band_consistent's twelve passes), so the three
 # miss the stars' by these, and each is scaled by its ring's factor (D223's ruling). The same departure l_min='s
 # closure.response states (CLOSURE_RGB). The default galaxy and the Milky Way template give the same numbers.
+# S87 (#148, #80): were rgb [4.9015e-06, 2.9040e-06, 1.5652e-06], sho [9.5342e-04, 1.2172e-03, 2.4408e-03], hoo [1.2172e-03,
+# 2.4408e-03, 2.4408e-03], wfc3 [5.4691e-05, 2.0088e-03, 8.4443e-04], wfc3n [8.9339e-04, 1.2194e-03, 2.4162e-03] (the
+# default and the Milky Way) and rgb [3.9761e-06, -, 1.1309e-06], sho [9.0774e-04, 1.1695e-03, 2.2633e-03], hoo
+# [1.1695e-03, 2.2633e-03, 2.2633e-03], wfc3 [4.4760e-05, 1.7858e-03, 7.3626e-04], wfc3n [8.4821e-04, 1.1717e-03,
+# 2.2405e-03] (`ngc_4414`) - the clock; the default and the Milky Way still give the same numbers.
 AGE_FACTORS = {
     None: {
-        "rgb": [4.9015e-06, 2.9040e-06, 1.5652e-06], "sho": [9.5342e-04, 1.2172e-03, 2.4408e-03],
-        "hoo": [1.2172e-03, 2.4408e-03, 2.4408e-03], "wfc3": [5.4691e-05, 2.0088e-03, 8.4443e-04],
-        "wfc3n": [8.9339e-04, 1.2194e-03, 2.4162e-03],
+        "rgb": [4.8901e-06, 2.8865e-06, 1.5218e-06], "sho": [9.5634e-04, 1.2199e-03, 2.4530e-03],
+        "hoo": [1.2199e-03, 2.4530e-03, 2.4530e-03], "wfc3": [5.5423e-05, 2.0168e-03, 8.3577e-04],
+        "wfc3n": [8.9636e-04, 1.2221e-03, 2.4282e-03],
     },
     "ngc_4414": {
-        "rgb": [3.9761e-06, 2.2993e-06, 1.1309e-06], "sho": [9.0774e-04, 1.1695e-03, 2.2633e-03],
-        "hoo": [1.1695e-03, 2.2633e-03, 2.2633e-03], "wfc3": [4.4760e-05, 1.7858e-03, 7.3626e-04],
-        "wfc3n": [8.4821e-04, 1.1717e-03, 2.2405e-03],
+        "rgb": [3.9888e-06, 2.2993e-06, 1.1286e-06], "sho": [9.1120e-04, 1.1731e-03, 2.2775e-03],
+        "hoo": [1.1731e-03, 2.2775e-03, 2.2775e-03], "wfc3": [4.5263e-05, 1.7968e-03, 7.3741e-04],
+        "wfc3n": [8.5161e-04, 1.1753e-03, 2.2545e-03],
     },
 }
 AGE_FACTORS["milky_way"] = AGE_FACTORS[None]
 # Each part's share of the disc's stellar light per filter (the rings' values weighted by their radius: the disc's
 # area), measured at S63 on the default galaxy - rgb's R, G, B and the table's B and V. The bright catalogue's
 # "26.3 % young / 18.8 % bright / 54.9 % unresolved" at 10^3 Lsun is another cut (bolometric, by luminosity).
+# S87 (#148, #80): were young [0.066242, 0.085078, 0.133017], middle [0.050839, 0.063355, 0.095066], old [0.882919,
+# 0.851568, 0.771917] - the clock (#148) and the default disc's bar from Erwin's law (#80).
 AGE_SHARES = {
-    "rgb": {"young": [0.066242, 0.085078, 0.133017], "middle": [0.050839, 0.063355, 0.095066], "old": [0.882919, 0.851568, 0.771917]},
-    "BV": {"young": [0.133017, 0.085078], "middle": [0.095066, 0.063355], "old": [0.771917, 0.851568]},
+    "rgb": {"young": [0.067831, 0.086832, 0.134976], "middle": [0.052138, 0.064762, 0.096582], "old": [0.880031, 0.848406, 0.768442]},
+    "BV": {"young": [0.134976, 0.086832], "middle": [0.096582, 0.064762], "old": [0.768442, 0.848406]},
 }
 
 
