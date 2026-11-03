@@ -521,8 +521,13 @@ def tiling_error(inputs: dict) -> tuple[float, float]:
         model = api.models.get(DEFAULT_MODEL)
         constants = {k: c.value for k, c in model.constants.items()}
         accepted = set(model.input_names(api.table))
+        # S88: and the spurs' rows, which the census's pattern composes (compose.gas_pattern reads them when present) -
+        # the header's total is the full run's; without them this read the unspurred sector means, which agreed with
+        # the header to the bit until M1's final model and land one unit in the last place apart on it
+        # (16473.30405497519 against 16473.304054975186, the Milky Way template, SMALL; measured, s88_probe_named).
+        from galaxy.layer import spurs as layer_spurs
         o = run(model, {k: v for k, v in inputs.items() if k in accepted}, SMALL,
-                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS))
+                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS, *(d.name for d in layer_spurs.GAS_SPUR_COLUMNS)))
         R = o.grid.R
         rings, sectors = clouds.cell_edges(R)
         gp = compose.gas_pattern(o.fields, R, constants)

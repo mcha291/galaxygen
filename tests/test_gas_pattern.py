@@ -352,10 +352,11 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     for i in (3, 60, 106, 133, 160, 399):
         assert g[i].tobytes() == gp.sector_means(float(R[i]), edges).tobytes(), i
     # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
-    # over this bound - held as a strict expected failure in tests/test_bar.py (RING_MEAN_OVER) for the gate to
-    # rule; here the reading is pinned, not loosened.
+    # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
+    # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE: 1.0036e-13 the Milky Way's worst, 9.35e-14 NGC 4414's).
+    # Was `off < 1e-13 or (template == "milky_way" and off == pytest.approx(1.0036e-13, rel=1e-3))`.
     off = float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max())
-    assert off < 1e-13 or (template == "milky_way" and off == pytest.approx(1.0036e-13, rel=1e-3))
+    assert off < 2e-13
     # S58 (D217 item 6): was `g >= taper (1 - B)`, the cosine bar's trough. The bound is w_bar min L - to the rounding
     # of a cell's mean where the lane field sits on its base across a whole cell - and 0 for `ngc_4414`.
     # S59 (D218): was `> -1e-14`, the Milky Way reading -2.1e-15. The lanes' own cell means sit up to 8.9e-14 under
@@ -673,9 +674,9 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # (the published field's test, above, and tests/test_bar.py). Held to the suite's bound, −2e-13.
     assert got["min_s"] > 0.0 and got["margin"] > -2e-13
     # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
-    # over this bound - held as a strict expected failure in tests/test_bar.py (RING_MEAN_OVER) for the gate to
-    # rule; here the reading is pinned, not loosened.
-    assert got["ring_mean"] < 1e-13 or (template == "milky_way" and got["ring_mean"] == pytest.approx(1.0036e-13, rel=1e-3))  # measured 7.1e-14 and 9.3e-14: the cell means
+    # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
+    # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE). Was `< 1e-13 or (milky_way and == approx(1.0036e-13))`.
+    assert got["ring_mean"] < 2e-13  # measured 1.0036e-13 and 9.3e-14: the cell means
     assert got["steps"] <= gr.MAX_NEWTON_STEPS == 120 and got["halvings"] <= gr.MAX_HALVINGS == 30
     # The bound of D216 item 12 as S58 leaves it, [w_bar min L, max(max s, max L)]. S58 (D217): was `0.0 < margin
     # < 3e-5 and max_g <= max_s` - the cosine bar never passed the response's crest; the lanes do (7.06 on the lane

@@ -26,6 +26,13 @@ the derived dominant one).
 
 ``uv run python tests/layer_reference.py`` prints the digest's own sha256 and what differs from the reference, and
 writes nothing; ``... write`` rewrites the reference, which is a deliberate act a decision must record.
+
+**At S88, M1's close (DECISIONS.md D256), the rewrite was tried and reverted.** M1's final model (``content_hash``
+244c8bda...) moved 1 038 of the reference's entries by design - #148's clock, #80's bar law and pin, #209's floor,
+#212's ``MERGER_HEATING`` - which no named list carries; but ``tests/test_layer.py``'s two reference tests are a ledger
+of the named movements since S55, asserted against this file, and every asserted difference vanishes on a new anchor.
+The reference stays S55's; both tests are held strict; the ledger's re-anchoring per batch, or its retirement to the
+batch's hash pin, is register #214 (M2's).
 """
 
 from __future__ import annotations

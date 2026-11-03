@@ -427,8 +427,8 @@ def test_rows_1_to_24_are_where_s27_left_them(judged):
         assert v[15] == pytest.approx(2.26984, abs=5e-6)
         assert v[16] == pytest.approx(81.9702, abs=5e-5)
         assert v[17] == pytest.approx(2.65068, abs=5e-6)
-        assert v[3] == pytest.approx(251.0217, abs=5e-4)  # S87 (#148): was 251.026 - the clock
-        assert v[21] == pytest.approx(0.2033, abs=5e-5)  # S87 (#148): was 0.2001 - the clock
+        assert v[3] == pytest.approx(251.0175, abs=5e-4)  # S87 (#148): was 251.026 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 251.0217
+        assert v[21] == pytest.approx(0.2032, abs=5e-5)  # S87 (#148): was 0.2001 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.2033
 
 
 def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
@@ -437,6 +437,6 @@ def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
     -18.99, the light integrated along the isochrone's points; still a pass."""
     for results in judged.values():
         r = next(r for r in results if r.n == 29)
-        assert r.status == "pass" and r.value == pytest.approx(-7.90967, abs=5e-5)  # S87 (#148): was -7.89193 - the clock  # S49 (D204, #126): the light integrated along the isochrone's points; was -7.91436
+        assert r.status == "pass" and r.value == pytest.approx(-7.90886, abs=5e-5)  # S87 (#148): was -7.89193 - the clock  # S49 (D204, #126): the light integrated along the isochrone's points; was -7.91436  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was -7.90967
         zero = float(re.search(r"zero point at log W = 2\.5 (-?[0-9.]+)", r.reason).group(1))
         assert zero == pytest.approx(-19.03, abs=0.01)  # S87 (#148): was -18.99 - the clock  # S49 (D204, #126): the light integrated along the isochrone's points; was -19.00

@@ -103,11 +103,14 @@ def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(default_model):
     reads = {}
     for n in (400, 800, 1600, 3200):
         reads[n] = float(run(default_model, grid=DEFAULT.replace(n_R=n), only=("v_tangential_sun",)).fields["v_tangential_sun"])
-    assert reads[400] == pytest.approx(251.026, abs=0.005)
-    assert reads[3200] == pytest.approx(251.013, abs=0.005)
+    assert reads[400] == pytest.approx(251.017, abs=0.005)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 251.026
+    assert reads[3200] == pytest.approx(251.004, abs=0.005)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 251.013
     assert all(v > Q[3].hi for v in reads.values()), reads  # out at every mesh: the miss is real
     converged = reads[3200] - Q[3].hi
-    assert 0.005 < converged < 0.02, converged
+    # S88 (#212, MERGER_HEATING 88.8 -> 90.6 on the model's own clock; re-stated, not re-numbered): was
+    # `0.005 < converged < 0.02` - the converged miss read 0.013. It reads 0.0039 now: the row is still out at every
+    # mesh (above), by under a third of what the default mesh adds (0.013), so the mesh is now worth more than the miss.
+    assert converged == pytest.approx(0.0039, abs=0.001), converged
     assert reads[400] - reads[3200] > 0.5 * converged  # the mesh is worth as much as the miss
 
 

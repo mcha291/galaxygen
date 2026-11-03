@@ -220,10 +220,10 @@ def test_the_temperature_profile_and_the_infrared_share(model, coarse):
     T = np.asarray(f["dust_temperature"])
     # S49 (D204, #126): the light integrated along the isochrone's points; was 17.955, 20.414, 19.543, 16.621, 16.485
     # S52 (D211): was 18.268, 20.207, 18.829, 16.597, 16.458
-    for r, want in ((2.0, 16.956), (5.0, 19.510), (8.2, 18.524), (12.0, 16.577), (16.0, 16.487)):
+    for r, want in ((2.0, 17.126), (5.0, 19.701), (8.2, 18.671), (12.0, 16.694), (16.0, 16.410)):  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 16.956, 19.510, 18.524, 16.577, 16.487
         assert float(np.interp(r, R, T)) == pytest.approx(want, abs=2e-3)
     L = float(f["dust_infrared_luminosity"])
-    assert L == pytest.approx(1.1999e10, rel=2e-4)  # S52 (D211): was 1.5665e10
+    assert L == pytest.approx(1.2487e10, rel=2e-4)  # S52 (D211): was 1.5665e10  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.1999e10
     assert L / float(f["disc_luminosity"]) == pytest.approx(0.2615, abs=2e-4)  # S52 (D211): was 0.3414
 
 
@@ -252,7 +252,7 @@ def test_g0_is_the_star_formations_far_ultraviolet_at_the_midplane(model, coarse
     tau = (1.0 - _c(model, "DUST_ALBEDO_FUV")) * _c(model, "DUST_EXTINCTION_RATIO_FUV") * np.asarray(f["dust_extinction_v"]) / (
         2.5 * math.log10(math.e))
     assert np.allclose(g0, dust.slab_midplane_flux(fuv, tau) * dust.FLUX_PER_LSUN_PC2 / 1.6e-3, rtol=1e-14, atol=0.0)
-    assert float(np.interp(8.2, R, g0)) == pytest.approx(2.632, abs=2e-3)
+    assert float(np.interp(8.2, R, g0)) == pytest.approx(2.794, abs=2e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.632
     assert np.all(g0 >= 0.0) and np.all(np.isfinite(g0))
 
 
@@ -270,8 +270,8 @@ def test_the_pah_fraction_follows_the_gas_abundance_and_stops_at_the_fits_edge(m
     free = feh < math.log10(1.2)
     assert np.allclose(q[free], 0.0457 * 10.0 ** (-11.0 + 1.30 * (8.69 + feh[free])), rtol=1e-13, atol=0.0)
     assert np.all(q[~free] == cap)
-    assert float(np.interp(8.2, R, q)) == pytest.approx(0.0910, abs=2e-4)
-    assert float(np.interp(16.0, R, q)) == pytest.approx(0.01347, abs=5e-5)
+    assert float(np.interp(8.2, R, q)) == pytest.approx(0.0900, abs=2e-4)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0910
+    assert float(np.interp(16.0, R, q)) == pytest.approx(0.01311, abs=5e-5)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.01347
 
 
 def test_both_models_publish_the_same_dust(coarse):

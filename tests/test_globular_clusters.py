@@ -196,7 +196,7 @@ def test_the_stellar_halo_is_the_accreted_debris(default, coarse, constants):
     t = default.grid.t
     assert per_step[t < 3.8].sum() == pytest.approx(9.625e9, rel=1e-3)
     assert per_step[t < 8.8].sum() == pytest.approx(3.1277e10, rel=1e-3)  # S87 (#148): was 3.1086e10 - the clock
-    assert F["halo_stellar_mass"] == pytest.approx(3.03401e9, rel=1e-5)  # S87 (#148): was 3.02802e9 - the clock
+    assert F["halo_stellar_mass"] == pytest.approx(3.03397e9, rel=1e-5)  # S87 (#148): was 3.02802e9 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 3.03401e9
 
 
 def test_the_halo_profile_holds_the_halo_mass(default, constants):
@@ -238,7 +238,7 @@ def test_rows_32_and_33_are_recorded_misses(judged):
         by_n = {r.n: r for r in results}
         r32, r33 = by_n[spec.ROW_GC_SYSTEM_MASS], by_n[spec.ROW_STELLAR_HALO_MASS]
         assert r32.status == "fail" and r32.value == pytest.approx(7.57357e7, rel=1e-5)  # S87 (#148): was 7.13032e7 - the clock
-        assert r33.status == "fail" and r33.value == pytest.approx(3.03401e9, rel=1e-5)  # S87 (#148): was 3.02802e9 - the clock
+        assert r33.status == "fail" and r33.value == pytest.approx(3.03397e9, rel=1e-5)  # S87 (#148): was 3.02802e9 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 3.03401e9
     assert spec.MISSES[spec.ROW_GC_SYSTEM_MASS].debt == 98 and spec.MISSES[spec.ROW_GC_SYSTEM_MASS].since == "S34"
     assert spec.MISSES[spec.ROW_STELLAR_HALO_MASS].debt == 99 and spec.MISSES[spec.ROW_STELLAR_HALO_MASS].since == "S34"
     q33 = {x.n: x for x in spec.QUANTITIES}[spec.ROW_STELLAR_HALO_MASS]

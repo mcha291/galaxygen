@@ -98,7 +98,7 @@ def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_
     # S61 (D220): was 0.2531 - the clouds drawn ring-first, another draw of the coarse grid's census (-7.5 %, 1.7 of the
     # clusters' light's 4.4 % seed-to-seed spread: this seed's clouds hold less of the molecular gas, 0.904 at the
     # default grid). disc_luminosity has not moved.
-    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2340, rel=2e-2)
+    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2389, rel=2e-2)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.2340
     dissolved = state == 2
     assert dissolved.mean() == pytest.approx(0.470, abs=0.02) and L[dissolved].sum() / L.sum() == pytest.approx(0.165, abs=0.02)
 

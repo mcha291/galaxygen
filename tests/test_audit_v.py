@@ -246,27 +246,29 @@ F_2_1 = ("F-2-1: arm_pieces.py:492 (_CONSERVES) says the budget 'is met on avera
 
 # S70 (D234): was xfail(strict, F_2_1) holding "met on average" within 0.2 of 1 - the declaration (#195) now says the
 # measured share and why; this test holds what it says.
-@pytest.mark.xfail(strict=True, reason="S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the Milky Way template at seed 777 carries 0.934 of its budget, over the "
-                   "declared 0.4-0.9 (4242: 0.558; ngc_4414 4242: 0.445) - a declared bound read over on today's model, "
-                   "held for the gate to rule (re-measure the declaration or find the cause), not loosened")
+# S87 (BUILD_V M1) held it under a strict xfail: the Milky Way at seed 777 carried 0.934 of its budget, over the
+# declared 0.4-0.9. S88 (D255 ruling 2): the cause named by one probe (the pin on and off on the same seeds, and M1's
+# model states) and the declaration re-measured over S70's seven runs on the final model, 0.445 to 0.934 - the
+# census's draw, not a law's (arm_pieces._CONSERVES); the bound re-declared at that spread, 0.05 either way.
 def test_arm_pieces_carry_the_declared_share_of_the_power_budget(audit):
-    """(b) ``conserves``' second sentence as S70 wrote it (#195): "the census carries less than the budget - ... 0.569 of
-    the budget on the Milky Way template ... 0.847 on NGC 4414's ... 0.498 at 4242; Audit V's mesh read 0.53, 0.64 and
-    0.45". Re-derived: the summed realised power (the composed field's own variance) over the summed budget, on the
-    rings outside the bar, per run; each between 0.4 and 0.9 - inside the declared spread over seven runs (0.45 to
-    0.85) by 0.05 either way, and under the budget, as declared; and the declaration names the share, its reason and
-    the debt.
+    """(b) ``conserves``' second sentence as S88 re-measured it (#195): "the census carries less than the budget - ...
+    0.589 of the budget on the Milky Way template ... 0.692 on NGC 4414's ... Audit V's mesh read 0.558 and 0.934 ...
+    and 0.445 ...: 0.445 to 0.934 over the seven runs S70 measured". Re-derived: the summed realised power (the
+    composed field's own variance) over the summed budget, on the rings outside the bar, per run; each between 0.39
+    and 0.98 - inside the declared spread over seven runs (0.445 to 0.934; S70's 0.45 to 0.85, held at 0.4-0.9) by
+    0.05 either way, and under the budget, as declared; and the declaration names the share, its reason and the debt.
 
     (c) ``stands_in_for``: the law's budget is the amplitude a swing-amplified disc carries; a realisation carrying
     about half of it is weaker arms, now declared rather than said to be met on average.
 
-    Fails if: on any run the share is outside 0.4-0.9, or the declaration stops saying it."""
+    Fails if: on any run the share is outside 0.39-0.98 or over 1, or the declaration stops saying it."""
     ratios = {}
     for tpl, seed in LAYER_ON:
         var, _, budget = ring_power(audit[tpl, seed, True])
         ratios[tpl, seed] = math.fsum(var) / math.fsum(budget)
-    assert all(0.4 <= r <= 0.9 for r in ratios.values()), ratios
-    assert "0.569 of the budget" in ap._CONSERVES and "#195" in ap._CONSERVES and "in expectation" in ap._CONSERVES
+    assert all(0.39 <= r <= 0.98 and r < 1.0 for r in ratios.values()), ratios  # S88: was 0.4-0.9; measured 0.558 / 0.934 / 0.445
+    assert "0.589 of the budget" in ap._CONSERVES and "#195" in ap._CONSERVES and "in expectation" in ap._CONSERVES  # S88: was "0.569 of the budget"
+    assert "0.445 to 0.934" in ap._CONSERVES and "the census's draw" in ap._CONSERVES
 
 
 def piece_table(out) -> dict[str, np.ndarray]:
@@ -521,7 +523,7 @@ def test_census_clustering_places_each_cloud_within_the_declared_reach_of_its_dr
         report[tpl, seed] = (float(np.max(np.abs(placed - drawn))), int((ring_of(placed) != ring_of(drawn)).sum()), placed.size)
         total += placed.size
     assert all(far < width and far <= 0.927 + 1e-3 and moved == 0 for far, moved, _ in report.values()), report
-    assert total == 40163, report  # S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
+    assert total == 40147, report  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 40163 (16 767 on each Milky Way seed, 6 613 on ngc_4414). S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
     assert "A cloud's ring is the ring that drew it" in cc._CONSERVES and "0.932 kpc" in cc._CONSERVES
 
 
@@ -572,10 +574,30 @@ def clustering_excess(on, control) -> np.ndarray:
     return pair_counts(*xy(on), PAIR_EDGES) / pair_counts(*xy(control), PAIR_EDGES)
 
 
-@pytest.mark.parametrize("tpl", [pytest.param("milky_way", marks=pytest.mark.xfail(strict=True, reason=(
-    "S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the Milky Way's two seeds' pair-correlation slopes -0.485 and -0.433 average -0.458 against the "
-    "declared -0.64 +/- 0.15 (off by 0.181) - a declared law read outside its tolerance on today's model, held for "
-    "the gate to rule, not loosened"))), "ngc_4414"])
+# S87 (BUILD_V M1) held the Milky Way here under a strict xfail: its two seeds' slopes -0.485 and -0.433 averaged
+# -0.458 against the declared -0.64 +/- 0.15. S88 (D255 ruling 3: the declared law stays; the cause found with the
+# pin's probe; a defect of the composition mended, else the Milky Way's reading held with the cause written in).
+# The probe, the Milky Way on this mesh at 4242 / 777 (the two seeds' mean slope by this test's estimator):
+#   with its pin (5.0 kpc) -0.485 / -0.433 (-0.459); the pin off (the law's 2.27 kpc) -0.526 / -0.448 (-0.487);
+#   S86's model (5.21 kpc) -0.581 / -0.495 (-0.538); after #148's clock -0.529, after #209's floor -0.529;
+#   the spurs off (SPUR_SPACING_JEANS 1e9) -0.469; the gas pattern taken out of the placement inside a cell
+#   (census_clustering.mesh_factor None) -0.477 (pin off -0.533);
+#   the field itself, <f(x) f(x + r)> / <f>^2 evaluated directly: over the disc to 15 kpc -0.656 / -0.624 (the law),
+#   over the clouds' own footprint -0.584 / -0.573 (pin off 4242 -0.615), its excess at 47.5 pc 2.70 / 2.82 where
+#   the placed clouds read 2.18 / 2.01.
+# So neither the bar's length, the spurs nor the gas pattern's reading inside a cell is the cause: the field reads its
+# law, its realisation on the clouds' footprint is 0.05-0.07 flatter at these seeds, and the placement takes 0.10-0.14
+# more - one realisation of a log-normal of width 1.75 normalised over each level-0 cell's lattice (930 pc by 1.6 kpc
+# at the Milky Way's median cloud radius), the census holding each cell's count (D220 part II, rule 2: the field
+# redistributes inside a cell only), which S61 measured as the placement's own effect (-0.41 in a 190 pc window,
+# -0.63 in the whole cell, the default galaxy). The pairs are weighted by a cell's count squared, so the reading moves
+# with where the census's chains crowd the clouds: S86's census read -0.538, the 5.0 kpc bar's re-drawn one -0.459.
+# Not a defect a mend reaches without the per-cell conservation: the Milky Way's reading held, its two clauses that
+# meet their bounds kept; NGC 4414 (no spurs, no bar) still meets the law.
+MW_PAIR_SLOPES = (-0.4846, -0.4327)  # S88: the Milky Way's held reading, seeds 4242 and 777
+
+
+@pytest.mark.parametrize("tpl", ["milky_way", "ngc_4414"])
 def test_census_clustering_pair_correlation_is_the_declared_law(audit, unclustered, tpl):
     """(b) ``statistic``: "1 + omega_f(r) = (r / 190 pc)^-0.64 for r < 190 pc and 1 beyond" - so 2.43 at 47.5 pc.
     Re-derived from the placed clouds by a pair count written here: the ratio of the layer-on clouds' pairs to those
@@ -590,7 +612,13 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     up to 40 Myr against uniform randoms; here the placed clouds stand in for them, against a control with their arms
     - the BUILD_III L1 gate's reading.
 
-    Fails if: the realised slope, the 47.5 pc excess or the large-scale ratio is outside those bounds."""
+    **S88 (D255 ruling 3): the Milky Way's slope is held at its reading with the cause** (the comment above): the
+    two seeds' slopes are pinned (``MW_PAIR_SLOPES``, to 1e-3) and the mean is outside the law's 0.15, which is
+    asserted too, so a change that brings it back is seen; its excess and its large-scale ratio still meet the law's
+    bounds. NGC 4414's slope meets the law.
+
+    Fails if: the realised slope (NGC 4414) or the held reading (the Milky Way), the 47.5 pc excess or the
+    large-scale ratio is outside those bounds."""
     seeds = CASES[tpl]
     ratios = [clustering_excess(audit[tpl, s, True], unclustered[tpl, s]) for s in seeds]
     inner = (PAIR_MID > 0.0475) & (PAIR_MID < 0.19)
@@ -599,7 +627,11 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     beyond = [float(q[(PAIR_MID > 0.38) & (PAIR_MID < 0.76)].mean()) for q in ratios]
     one = len(seeds) == 1
     report = {"slopes": slopes, "excess_47.5pc": at, "ratio_380_760pc": beyond}
-    assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
+    if tpl == "milky_way":
+        assert slopes == pytest.approx(list(MW_PAIR_SLOPES), abs=1e-3), report
+        assert abs(np.mean(slopes) + 0.64) > 0.15, report  # held outside the law: the reading, not the law, moved
+    else:
+        assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
     assert abs(np.mean(at) / 2.43 - 1.0) <= (0.29 if one else 0.21), report
     assert abs(np.mean(beyond) - 1.0) <= 0.05, report
 
@@ -937,21 +969,23 @@ F_2_4 = ("F-2-4: spurs.py:68 (WALK_READ_DIFFERENCE = 0.052) and spurs.py:188 (_C
 
 
 # S70 (D234): was xfail(strict, F_2_4) holding the ten-foot 0.052 - the bound is now measured over every foot.
-@pytest.mark.xfail(strict=True, reason="S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): the walk's worst read on Audit V's mesh is 0.570 at seed 4242 (0.260 at "
-                   "777) against WALK_READ_DIFFERENCE_COARSE 0.49, a bound measured over two seeds' feet at S70 and read "
-                   "over since the clock (0.568 before the floor); held for the gate to rule, not loosened")
+# S87 (BUILD_V M1) held it under a strict xfail: 0.570 at seed 4242 against the coarse bound 0.49, read over since the
+# clock (#148). S88 (D255 ruling 4): the bound re-measured over the same feet on the final model and re-declared, 0.58
+# (spurs.py: the clock moved the worst foot 0.4804 -> 0.5680, the floor 0.5687, the pinned bar 0.5700); the production
+# grid's 0.27 checked beside it (0.2506 at seed 4242, tests/test_spurs.py).
 def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K):
-    """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S70 wrote them: "within 0.27 of the point
-    function's value there, relative - measured at S70 over every foot on the production grid ... 0.4804 on Audit V's
-    coarser mesh". Re-measured at every foot of both Milky Way seeds on this mesh: the published foot contrast over the
-    gas pattern's unspurred point function at the foot's own (R, phi) held at ``WALK_READ_DIFFERENCE_COARSE`` (0.49),
-    the declared bound on this coarser mesh (the production grid's 0.27 is held in tests/test_spurs.py over every
-    foot of the template's own seed); and the worst read here is the declared 0.4804 (to 1e-3).
+    """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S88 re-measured them: "within 0.27 of the point
+    function's value there, relative - measured at S88 over every foot on the production grid ... and within 0.58 on
+    Audit V's coarser mesh (0.5700 at seed 4242 ...)". Re-measured at every foot of both Milky Way seeds on this mesh:
+    the published foot contrast over the gas pattern's unspurred point function at the foot's own (R, phi) held at
+    ``WALK_READ_DIFFERENCE_COARSE`` (0.58; S70's 0.49), the declared bound on this coarser mesh (the production grid's
+    0.27 is held in tests/test_spurs.py over every foot of the template's own seed and of 4242); and the worst read
+    here is the declared 0.5700 (to 1e-3; S70's 0.4804).
 
-    (c) ``stands_in_for``: the spur's foot is "as dense as the gas is there"; a foot read 48 % off the ridge's own
+    (c) ``stands_in_for``: the spur's foot is "as dense as the gas is there"; a foot read 57 % off the ridge's own
     density sets a Jeans length and a spacing for gas that is not there - declared now, not hidden by a sample.
 
-    Fails if: any foot's read differs from the point function by more than 0.49 relative on this mesh."""
+    Fails if: any foot's read differs from the point function by more than 0.58 relative on this mesh."""
     worst = {}
     for seed in SEEDS:
         on = audit["milky_way", seed, True]
@@ -959,7 +993,8 @@ def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K)
         gas = compose.gas_pattern(on.fields, R_AUDIT, K)
         worst[seed] = float(np.max(np.abs(s["contrast"] / gas.unspurred_contrast_at(s["radius"], s["azimuth"]) - 1.0)))
     assert all(w <= sp.WALK_READ_DIFFERENCE_COARSE for w in worst.values()), worst
-    assert max(worst.values()) == pytest.approx(0.4804, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst
+    assert max(worst.values()) == pytest.approx(0.5700, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
+    assert sp.WALK_READ_DIFFERENCE_COARSE == 0.58  # S88 (D255 ruling 4): was 0.49
 
 
 F_2_5 = ("F-2-5: spurs.py:13-14 (module docstring, item 7) 'every chain of a non-flocculent disc carries them here'; "
