@@ -1967,3 +1967,111 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **Rulings first, as the first commit.** The owner's five rulings went onto `session-84` as D252 before any
   code, with the register's one discharge and its pins in the same commit, so the row's builder started from a tree
   whose records already said what was ruled; S44's pattern, kept.
+
+## From S86 (BUILD_V row 86, M1's first session: the arms and the bar; an Opus lead)
+
+- [advanced] **Read the decision that superseded an entry before building its closer.** Two of M1's entries had been
+  met at S60 and never struck: #139's mode phases were retired by D219 item 7 and #142's thickness factor was built by
+  D219 item 5; both read as open work until D219's text was set beside them. Several more carried S57-S58 numbers
+  the pieces had moved (#129's width, #138's spectrum). Measure today's model first; the register's numbers are a
+  history.
+- [advanced] **A table published beside a point function is the function's cell mean, or it is a second law.** The
+  star formation table was the law at a cell's mean contrast while the census read the law at a point (#154); building
+  it as the point reader's own sector means (renormalised round the ring) closed the gap from 0.6 to 3e-4 in a cell at
+  0.8 s. The statistic that compared the reader at a cell's *centre* with the table then measured the function's own
+  spread inside a cell - re-read what a test compares when the thing it compared changes.
+- [close] **Stage a hunk on HEAD's text, never with a zero-context patch.** `git apply --cached --unidiff-zero` placed a
+  register line by the new file's line number while an earlier hunk stayed unstaged, and it landed inside the next
+  entry (df8767a, moved by f53987b). Building the index blob from `git show HEAD:` plus the block, anchored on the two
+  lines before it, staged every later block where it belonged.
+- [close] **Read an Edit's result before the commit that depends on it.** A script had rewritten GALAXY_INPUTS.md, the
+  next Edit was refused ("modified since read"), and the commit went without the register line (7363de0, then
+  0dc50e6). A replace that drops the line it anchors on is the same trap: count a marker (the S85 lines) before and
+  after a batch of edits.
+- [close] **The stage subset is hours, not minutes.** `tests/test_pieces.py` holds the 88-minute gate test, and a
+  `timeout 3000` around the whole subset killed it at 50 minutes with no verdict. Run the subset's files as parallel
+  processes, each with its own log and EXIT line, and the targeted tests per commit.
+- [close] **The gate rules on the report's numbers, and moves the rows the same day.** Four of the lead's "proposed
+  permanent" entries carried a measurement each (a crossing time in arm lifetimes, a forcing ratio with its parts, a
+  realised power at three quantiles, a length no reader prints); ruling them at the close, with the summary rows and
+  their pins moved in one script, kept the register and DECISIONS saying the same thing - a proposal left standing in
+  the register is a ruling the next session has to find again.
+
+## From S87 (BUILD_V row 87, M1's second session; an Opus lead)
+
+- [audit] **"No constant was fitted on it" is not "no constant was derived on it".** S86 cleared #148's clock of B10
+  by checking for constants fitted to rows; `MERGER_HEATING` was derived from the model's own secular heating (D128),
+  which is a function of the stars' ages, so the clock moved its derivation 88.8 -> 90.62 (#212). Before a whole-model
+  change, search for every constant whose derivation reads the model's output, not only those fitted to a row.
+- [all] **A prediction that names one row misses the others: read the whole table on both sides first.** S86
+  predicted row 2 leaving its window and it did, to the digit; row 6 entered its window (355.70 -> 345.09 pc) and a
+  recorded miss went stale, which only the spec run showed. A two-clock probe that prints every acceptance row and
+  flags each flip costs one minute and belongs before the prediction is written.
+- [infra] **Measure every moved pin in one run, then judge in another.** A pytest plugin that records each failing
+  `pytest.approx` (file:line, expected, obtained, tolerance) and lets the test go on lists every number a change
+  moved, where a strict run stops at the first assert in each test; a script then re-pins the plain numbers with the
+  reason. Never a verdict: the strict run after it is the gate, and plain asserts (verdicts, windows) still fail first.
+- [close] **A test that states a verdict is re-stated, not re-numbered.** "Row 6 lands at 74, not 78", "row 2 is
+  inside and the KS_NORM band straddles it", "the churn loses row 3", "the constant is its derivation": each became
+  false on the new clock, and each was rewritten to what is true now with the old statement kept in its comment —
+  the number-only re-pin cannot see them.
+- [advanced] **A reading without the web is still a reading.** Set what the repository's readers already hold beside
+  today's model before writing "the owner's reading": the pitch law's recalled 13 deg intercept sits 5-7 deg under
+  every sample mean the readers hold (NGC 4414's "2.65 sigma" is 1.3-1.4 sigma against the samples), and DG16b's own
+  flat profile moves the bar body's m = 2 peak 0.41 -> 0.68 a. Both are findings for the gate, not builds.
+- [close] **The scratchpad outlives the session: name a session's files with its own prefix.** S87 wrote its #154
+  commit message to `msg154.txt`, a name S86 had used in the same scratchpad; the Write was refused ("not read
+  yet") and the `git commit -F` beside it in the same turn took S86's message (amended at once, d27c810). A refused
+  Write is the sign of a stale file; `s87_`-prefixed names after that.
+- [infra] **A test's record that is a plain assert is measured by a probe, not by the test.** The soft plugin sees
+  only `pytest.approx`; the `EXPECTED_*` records of tests/test_pieces.py and the sweep's numbers in
+  tests/test_gas_pattern.py stop at their first changed value, and the sweep alone is 42 minutes a pass. A script
+  that imports the test module and calls its own helpers (`suite_gate`, `gate`, the disclosed check's lines) prints
+  every reading at once; the strict run after it confirms. Splitting a file's node ids over six processes cut the
+  pieces file from two hours to its longest test (83 min).
+- [close] **Three model items committed one by one leave the heavy files red between them.** #148, #209 and #80 each
+  moved test_gas_pattern, test_pieces and test_render; each item's commit re-pinned the files it ran and said which
+  it left for the joint re-pin on the final model. That is honest but the branch is red at two commits: name the
+  files left red in every such commit's message, and run the joint re-pin before anything is reported green.
+- [close] **A bound read over on a changed model is the gate's to rule, not the builder's to loosen and not the owner's
+  to be asked.** S87's lead held six as strict expected failures with the measurement in each mark; the close ruled
+  them in one list on those numbers (a tolerance re-measured, a bound re-declared with its cause, a mechanism mended or
+  held), as D234 did at S70, and kept for the owner only what moves a constant's value or a rule (rows 15-17's referent,
+  #212). The owner's questions are the ones whose answer no measurement gives.
+
+## From S88 (BUILD_V row 88, M1's close; an Opus lead)
+
+- [infra] **pytest's `pythonpath` beats PYTHONPATH.** `pyproject.toml` sets `pythonpath = ["model"]`, which pytest puts
+  first on `sys.path`, so a bisection that points PYTHONPATH at an older model tree and runs pytest runs today's model
+  - two "pre-existing on main" verdicts were false until `-o pythonpath=<tree>` was passed too. A plain script honours
+  PYTHONPATH; print `galaxy.__file__` in any probe that compares model states.
+- [infra] **Measure every pin, plain asserts included, with a soft-assert plugin.** S87's softapprox sees only
+  `pytest.approx`; a test whose first changed number is an `int ==` stops there, and each strict run then shows one
+  more. Wrapping every rewritten `assert` in a try that records pytest's own explanation and goes on (its pyc cached
+  under its own tag, never mixed with a normal run's) listed every moved number in one run; the strict run judges.
+- [infra] **A re-pin by value must skip docstrings and the records it already applied.** A second pass that looked
+  for each old literal anywhere in the file found it again in a docstring after the first pass had re-pinned the
+  assert, and rewrote the prose. Tokenize and replace NUMBER tokens of code only, and skip every site the first pass
+  handled; a tuple holding one literal twice needs the records' order.
+- [advanced] **A content-keyed cache makes a quadrature's breaks history-dependent.** `sfr_modulation` read 8.4e-13
+  apart cold and warm: its Gauss pieces were cut at the anchors of both rings the store brackets a grid radius with,
+  and the ring above is a grid ring or a mid-gap one depending on whether an earlier reader had completed the store.
+  At a solved ring's radius read the ring's own anchors alone. `galaxy.specs.determinism`'s two-run check found it;
+  the bundles' reversed-order `--check` (202 of 202) confirms it end to end.
+- [audit] **Bisect a bound read over across the batch's commits before naming its cause.** Extracting each S87 item's
+  `model/` tree (`git archive`) and running the same probe on each named the step at once: the walk's 0.48 -> 0.57 at the
+  clock, the share's 0.63 -> 0.93 and the dust column's 2.93 -> 3.37 at the pinned bar, the L1 gate's slope at the
+  defaults' re-drawn census - where "the composition" alone would have been a guess.
+- [close] **Any byte under `model/galaxy` moves the hash, the misses' prose included.** The acceptance rows' text was
+  written after the pin's commit and the bundles' key moved with it: pin, export and picture test ran twice. Write
+  every `spec.py` note before the hash moves.
+- [close] **The batch's unrun files carry the batch's findings.** The layer, API and frames files and the files no S87
+  commit ran held half the re-pins and five readings over their bounds (the S55 reference, the L1 gate, the dust
+  column, a star outside its cell, spurs past the arms' budget) besides a determinism defect: run every model file
+  once on the final model before the bounds are ruled, not after.
+- [close] **A bit-for-bit reference is a ledger of what moved since its anchor, and a ledger cannot take a new
+  anchor by rewriting the file.** The S55 layer-off reference's two tests assert every named movement since S55
+  against it; M1 moved 1 038 entries by design, and rewriting the reference made every asserted difference vanish, so
+  the tests failed on their history. The lead's strict hold was right; the gate's rewrite was reverted and the
+  re-anchoring made a register item for the next batch (#214): a reference that must follow the model per batch needs
+  its ledger re-based with it, by decision, or retiring to the hash pin that already holds the model bit for bit.

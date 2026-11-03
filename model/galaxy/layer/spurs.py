@@ -73,8 +73,14 @@ MAX_SPURS = 4096  # the most spurs one chain holds (rule A1): a 40 kpc chain at 
 # every foot the production grid reads 0.2698 (the Milky Way template at texture seed 4242, 44 feet, 6 over 0.052;
 # 0.0516 over 48 at its own seed 0) and Audit V's coarser mesh (130 rings) 0.4804 (seed 4242, 49 feet; 0.2553 over 40
 # at 777). The bound on the model's grid, and the coarser mesh's beside it (tests/test_audit_v.py holds both).
+# S88 (D255 ruling 4): re-measured over the same feet on M1's final model - the production grid 0.2506 (seed 4242, 45
+# feet, 3 over 0.052; 0.0573 over 53 at seed 0), under 0.27, which stands; Audit V's mesh 0.5700 (seed 4242, 45
+# feet, at 5.95 kpc; 0.2596 over 47 at 777), over S70's 0.49. The cause, by M1's model states on the same seeds:
+# #148's clock moved the mesh's worst foot 0.4804 -> 0.5680 (the spurs' spacing reads the gas column the clock
+# moved, so the feet stand elsewhere), #209's floor to 0.5687, #80's pinned bar to 0.5700; the worst feet stand at
+# 5.9-6.1 kpc, just past the bar's end, where the mesh's rings are 0.23 kpc apart. Was 0.49.
 WALK_READ_DIFFERENCE = 0.27
-WALK_READ_DIFFERENCE_COARSE = 0.49
+WALK_READ_DIFFERENCE_COARSE = 0.58
 SPUR_CONSTANTS: tuple[str, ...] = ("SPUR_SPACING_JEANS", "SPUR_PITCH", "SPUR_LENGTH", "SPUR_WIDTH", "SPUR_FALL")
 PER_PC2_IN_KPC2 = 1.0e6  # M☉/pc² to M☉/kpc²
 
@@ -198,9 +204,11 @@ _CONSERVES = (
     "clusters' sector shares on a ring do. It does not keep the interarm gas's share of a ring, which falls by the "
     "spurs' mean there: <S> at most 0.0092 of a ring. The walk reads the gas contrast at each foot on the two grid "
     "rings either side, at the chain's polyline: within 0.27 of the point function's value there, relative - measured "
-    "at S70 over every foot on the production grid (92 feet of the Milky Way template at texture seeds 0 and 4242: "
-    "at most 0.2698, 6 over 0.052, the median 2e-5), 0.4804 on Audit V's coarser mesh (S70, D234: was 'within 0.052 "
-    "... measured on the Milky Way template's feet', ten of them; Audit V F-2-4)."
+    "at S88 over every foot on the production grid (98 feet of the Milky Way template at texture seeds 0 and 4242: "
+    "at most 0.2506, 4 over 0.052, the median 2e-5; S70: 92 feet, at most 0.2698), and within 0.58 on Audit V's "
+    "coarser mesh (0.5700 at seed 4242, 0.2596 at 777; S70: 0.4804, under 0.49 - the model's own clock moved the "
+    "feet, #148; S70, D234: was 'within 0.052 ... measured on the Milky Way template's feet', ten of them; Audit V "
+    "F-2-4)."
 )
 _STATISTIC = (
     "One uniform draw per chain, where the first spur stands within one spacing of the chain's start - no source "

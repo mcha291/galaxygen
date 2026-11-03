@@ -130,7 +130,7 @@ def test_the_ia_history_counts_the_events_the_iron_implies(model, coarse):
     elapsed = (np.clip(T - t, t_min, T) ** p - t_min**p) / (T**p - t_min**p)
     formed = (np.asarray(f["sfr_surface_density_history"]) * area[:, None]).sum(axis=0) * dt * sn.YR_PER_GYR
     expected = float(f["type_ia_per_mass_formed"]) * float((formed * elapsed).sum())
-    assert events / expected - 1.0 == pytest.approx(-6.20e-5, abs=5e-7)
+    assert events / expected - 1.0 == pytest.approx(6.72e-5, abs=5e-7)  # S87 (#148): was -6.20e-5 - the clock
     assert abs(events / expected - 1.0) < 1e-4
 
 
@@ -155,8 +155,8 @@ def test_both_rates_pass_and_read_the_same_in_both_models(judged):
     for results in judged.values():
         r = {x.n: x for x in results}
         cc, ia = r[spec.ROW_CORE_COLLAPSE_RATE], r[spec.ROW_TYPE_IA_RATE]
-        assert cc.status == "pass" and cc.value == pytest.approx(0.0176069237, rel=1e-8)
-        assert ia.status == "pass" and ia.value == pytest.approx(0.0065332015, rel=1e-8)
+        assert cc.status == "pass" and cc.value == pytest.approx(0.0186575065, rel=1e-8)  # S87 (#148): was 0.0176069237 - the clock
+        assert ia.status == "pass" and ia.value == pytest.approx(0.00683629538, rel=1e-8)  # S87 (#148): was 0.0065332015 - the clock
     # Every row equal across the two models is test_sfh_azimuthal's; these two, bit for bit.
     for n in (spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE):
         # Both models by name, deliberately (S46, D197): the test compares them.

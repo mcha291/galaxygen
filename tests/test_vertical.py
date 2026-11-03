@@ -43,7 +43,7 @@ def test_the_thick_disc_carries_the_mergers_radial_kick(model):
     o = out(model)
     R = o.grid.R
     spread = o.fields["disc_radial_spread"]
-    assert float(np.interp(R_SUN, R, spread[:, 0])) == pytest.approx(1.09, abs=0.02)  # 1.47 until S20
+    assert float(np.interp(R_SUN, R, spread[:, 0])) == pytest.approx(1.11, abs=0.02)  # 1.47 until S20  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.09
     assert float(np.interp(2.0, R, spread[:, 0])) == pytest.approx(0.22, abs=0.02)  # 0.30 until S20
     born_after = o.grid.t > o.fields["last_major_merger_time"]
     assert np.all(spread[:, born_after] == 0.0)

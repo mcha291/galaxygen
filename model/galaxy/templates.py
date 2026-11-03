@@ -570,15 +570,19 @@ MILKY_WAY = Template(
     about=(
         "The default galaxy: the registry's defaults, every one a measured value of the Milky Way or derived "
         "from one (rule A5). The template overrides no control, no seed and no event list, so it is the defaults "
-        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins three "
+        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins four "
         "measured facts of its structure: the Milky Way is barred, which the model derives too at these inputs, "
-        "so that pin changes no number; its bar stands 30 degrees from the line from the Sun to the centre, "
+        "so that pin changes no number; its bar's half-length is 5.0 kpc where the model's law of the disc's scale "
+        "length gives 2.27 - the Milky Way's bar is long for its disc - so since S87 (the owner's ruling of "
+        "2026-11-03, D255) every number downstream of the bar's length differs from the bare defaults', the "
+        "layer off too; its bar stands 30 degrees from the line from the Sun to the centre, "
         "the near end ahead of the Sun in the direction the disc turns, which places the Sun's azimuth and moves "
         "nothing else of the galaxy; and its mapped arms - the four major arms and the Local arm, as fitted to "
         "the masers' parallaxes over the third of the disc on the Sun's side - lie where they were measured, "
         "each continued past its measured range by drawn pieces, with the randomness layer's own arm pieces "
-        "filling the radii no measured arm crosses. With the layer off no arm is placed and the galaxy is the "
-        "bare default one, number for number. Seen face-on."
+        "filling the radii no measured arm crosses. With the layer off no arm is placed, and the galaxy is the "
+        "bare default one but for its bar's measured length and what reads it (until S87, number for number). "
+        "Seen face-on."
     ),
     model="azimuthal",
     camera=Camera(inclination_deg=0.0, azimuth_deg=270.0, radius_kpc=20.0, fov_deg=45.0),
@@ -638,6 +642,20 @@ MILKY_WAY = Template(
                 "[verified: docs/READING_ARM_SEGMENTS.md A4 items 5-6]. The Norma and Outer rows are one arm "
                 "in the source, fitted in two stretches with nothing measured between them: entered as two "
                 "chains [inferred]."
+            ),
+        ),
+        # S87 (#80; the owner's ruling of 2026-11-03, D255): the bar's measured half-length, in place of Erwin
+        # 2019's law, which gives 2.27 kpc on this disc - the Milky Way's bar is long for its disc. With it the
+        # template is no longer the bare defaults: every field downstream of the bar's length differs, layer off too.
+        Pin(
+            name="bar_half_length",
+            value=5.0,
+            source=(
+                "[verified: Wegg, Gerhard & Portail 2015, MNRAS 450, 4050 = arXiv:1504.01401, abstract, "
+                "https://arxiv.org/abs/1504.01401: the long bar's half-length 5.0 +/- 0.2 kpc] (docs/READING_BAR.md "
+                "A2, We15) [verified: GALAXY_INPUTS.md section 7 row 15, Bland-Hawthorn & Gerhard 2016 (BHG16): "
+                "5.0 +/- 0.2 kpc, acceptance row 15's target]; pinned on the owner's ruling of "
+                "2026-11-03 (D255) on debt #80 - Erwin 2019's law for the model, the Milky Way's measured length pinned"
             ),
         ),
     ),
@@ -809,8 +827,9 @@ NGC_4414 = Template(
                     "h_r = 19.22 arcsec at 3.6 micron, 1.649 kpc at 17.7 Mpc; Wat19's two inner segments span "
                     "the window with the distance bracket]"
                 ),
-                model=1.6760444551064766,
-                residual=0.1352222755323829,
+                # S87 (#148): were 1.6760444551064766 and 0.1352222755323829 - the clock; the controls unmoved.
+                model=1.6751536081130878,
+                residual=0.1307680405654388,
             ),
             Target(
                 name="stellar_mass",
@@ -824,8 +843,9 @@ NGC_4414 = Template(
                     f"[verified: {_READING}, row 8 and window W-E; z0MGS (Leroy et al. 2019, table 4): "
                     "log M* = 10.65 +/- 0.10 at 17.7 Mpc, WISE 3.4 micron, a Kroupa-type IMF]"
                 ),
-                model=39047506448.23065,
-                residual=-0.449668221349256,
+                # S87 (#148): were 39047506448.23065 and -0.449668221349256 - the clock; the controls unmoved.
+                model=38999203706.98158,
+                residual=-0.4535324406491815,
             ),
         ),
         free={
@@ -851,11 +871,11 @@ NGC_4414 = Template(
         objective=(
             "the sum over the three targets of ((model - value) / half-window)^2, plus 0.001 times the sum over "
             "the four free controls of ((fitted - default) / (hi - lo))^2: the last term breaks ties among the free "
-            "controls and does nothing else. Where the search stops it is 0.2511 - 0.2509 from the targets, 0.0002 "
-            "from the tie-break - on a plateau resolved to the model's own steps, about 0.01 half-windows in the "
+            "controls and does nothing else. Where the search stopped it is 0.2534 - 0.2532 from the targets, 0.0002 "
+            "from the tie-break (S87: 0.2511 on the grid's old 13.8 Gyr clock, debt #148; the controls not re-searched) - on a plateau resolved to the model's own steps, about 0.01 half-windows in the "
             "objective: not a minimum to the printed precision"
         ),
-        objective_value=0.2511141040064585,
+        objective_value=0.25341948606942694,  # S87 (#148): was 0.2511141040064585 - the clock
         tool="tools/fit_template.py ngc_4414",
         method=(
             "damped Gauss-Newton (Levenberg-Marquardt) with a coordinate search in every step, over the free controls "

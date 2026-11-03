@@ -133,7 +133,7 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     # another and the census another draw again - 12 840 clusters, 2556 this young expected, 45 the spread)
     # S60 (D219): was 2643 (the arms a census of pieces: another draw of the census - 12 916 clusters)
     # S61 (D220): was 2614 (the clouds drawn ring-first, a new draw of the census)
-    assert young.sum() == 2572  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
+    assert young.sum() == 2633  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 2572. S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
     assert power[young] == pytest.approx(wind[young], rel=1e-9)
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
@@ -174,7 +174,7 @@ def test_the_default_numbers(default):
     # S59 (D218 follow-up): was 12826; first pass 12839 (a segment's pitch relative to the disc's: another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: another draw of the census)
     # S61 (D220): was 12916 (the clouds drawn ring-first, a new draw of the census)
-    assert radius.size == 12710  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    assert radius.size == 12989  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S59 (D218 follow-up): was 8.963 (S36's pin, which every draw since had read inside its 1 %: 8.912 at S57); this
     # draw's median bubble reads 8.863 pc, 1.1 % under it - re-read, the tolerance kept.
     # S61 (D220): was 8.863 (the ring-first census, a new draw: 8.766 pc, 1.1 % under)
@@ -183,14 +183,14 @@ def test_the_default_numbers(default):
     # and streams unchanged.
     # S70 (D234): was 8.349 - the size law's three regimes (#192: the clouds inside 4 kpc and in 7-8.2 kpc less dense, so
     # the regions' pressure lower) and the clouds' ring inversion (F-2-7).
-    assert float(np.median(radius)) == pytest.approx(9.444, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
+    assert float(np.median(radius)) == pytest.approx(9.616, rel=0.01)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 9.444  # S57 (D216): reads 8.912, inside the tolerance
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
     # S57 (D216): was 12477 (another draw of the census); S56 (D215): was 12582 (another draw of the census)
     # S59 (D218 follow-up): was 12499; first pass 12496 (another draw of the census). S58 (D217): was 12503 (another draw of the census)
     # S60 (D219): was 12502 (another draw of the census, 76 more clusters)
     # S61 (D220): was 12575 (the ring-first census, a new draw: 206 fewer clusters)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12391  # S70 (D234): was 12445 (#192, F-2-7). S67 (D231): was 12373, the clouds' size law
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12649  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12391  # S70 (D234): was 12445 (#192, F-2-7). S67 (D231): was 12373, the clouds' size law
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -199,12 +199,12 @@ def test_the_default_numbers(default):
     assert float(np.median(ratio)) == pytest.approx(1.0, abs=0.25)
     hosts = np.flatnonzero(np.asarray(F["cloud_cluster_index"]) >= 0)
     # S67 (D231): was 0.205 - the inner clouds 0.72x smaller under the size law, so more bubbles outgrow theirs.
-    assert float(np.mean(radius > np.asarray(F["cloud_size"])[hosts])) == pytest.approx(0.230, abs=0.01)
+    assert float(np.mean(radius > np.asarray(F["cloud_size"])[hosts])) == pytest.approx(0.242, abs=0.01)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.230
     assert float(np.mean(radius > np.asarray(F["hii_stromgren_radius"]))) > 0.99
-    assert np.asarray(F["remnant_size"]).size == 1464
-    assert float(F["remnant_count_total"]) == pytest.approx(1448.41, rel=1e-4)
+    assert np.asarray(F["remnant_size"]).size == 1549  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1464
+    assert float(F["remnant_count_total"]) == pytest.approx(1529.63, rel=1e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1448.41
     kind = np.asarray(F["remnant_kind"])
-    assert (int((kind == 0).sum()), int((kind == 1).sum())) == (1071, 393)
+    assert (int((kind == 0).sum()), int((kind == 1).sum())) == (1140, 409)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was (1071, 393)
     R = default.grid.R
     i = int(np.argmin(abs(R - 8.2)))
     # S51 (D210): was 0.0334 - one cell ring's bubbles, an r^3-weighted sum, are another draw when the clouds sit on the
@@ -228,7 +228,7 @@ def test_the_default_numbers(default):
     # birth radii: 0.0136, inside the sixteen seeds' spread (0.022 +/- 0.008, S51); one ring's draw, not judged.
     assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0136, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
-    assert n_mid == pytest.approx(0.688, abs=0.002)
+    assert n_mid == pytest.approx(0.703, abs=0.002)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.688
 
 
 def test_the_midplane_density_is_the_pressure_over_the_dispersion_squared(default, constants):
@@ -346,7 +346,7 @@ def test_the_routes():
     h0, a0 = wire.decode(r0.body)
     assert not set(h0["stages"]) & {"systems", "clouds", "clusters", "nebular", "bubbles"}
     assert h0["remnants"]["materialised"] == a0["remnant_size"].size > 0
-    assert h0["scalars"]["remnant_count_total"] == pytest.approx(1448.41, rel=1e-4)
+    assert h0["scalars"]["remnant_count_total"] == pytest.approx(1529.63, rel=1e-4)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1448.41
     for name in (*bb.REMNANT_COLUMNS, "remnant_phase", "remnant_kind"):
         assert name in h0["columns"], name
     whole, arrays = wire.decode(svc.handle("/api/arrays", "fields=remnant_radius,remnant_azimuth,remnant_size").body)

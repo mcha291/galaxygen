@@ -104,7 +104,9 @@ def test_debt_50s_prediction_ran_the_churn_applied_to_the_mass_loses_rows_3_and_
     monkeypatch.setattr(sfh, "radial_transport", kick_then_churn(1.0, eff))
     f = run(default_model, only=("thin_disc_scale_length", "v_tangential_sun")).fields
     assert f["thin_disc_scale_length"] == pytest.approx(3.49, abs=0.1) and not inside(4, f["thin_disc_scale_length"])
-    assert f["v_tangential_sun"] == pytest.approx(244.9, abs=0.5) and not inside(3, f["v_tangential_sun"])
+    # S87 (#148): row 3 under the churn reads 245.012 on the model's own clock, inside the window's floor (245.0) by
+    # 0.012 - the prediction's row 3 half no longer holds by a hair; its row 4 half (3.49 kpc, out) stands.
+    assert f["v_tangential_sun"] == pytest.approx(245.01, abs=0.5) and inside(3, f["v_tangential_sun"])  # S87 (#148): was 244.9 and not inside - the clock
 
 
 # --- D121: the bar's prediction, run for the first time -------------------------------------------------
@@ -197,7 +199,7 @@ def test_row_22_does_not_see_the_inner_reservoir(default_model, monkeypatch):
     monkeypatch.setattr(sfh, "toomre_threshold", capped(lambda c: np.minimum(c, crit_sun)))
     assert run(default_model, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0794, abs=0.001)
     monkeypatch.setattr(sfh, "toomre_threshold", capped(lambda c: np.full_like(c, 5.0)))
-    assert run(default_model, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0633, abs=0.001)
+    assert run(default_model, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0623, abs=0.001)  # S87 (#148): was -0.0633 - the clock
 
 
 # --- debt #46: the pre-committed two-parameter sweep --------------------------------------------------------
@@ -221,7 +223,7 @@ def test_the_distributions_mu_lands_rows_3_and_12_and_loses_rows_2_and_14(defaul
     lo = run(with_constant(default_model, "ANGULAR_MOMENTUM_MU", 1.06), only=("bulge_stellar_mass", "v_tangential_sun", "sfr", "bulge_velocity_dispersion", "hydrogen_mass_30kpc")).fields
     assert lo["bulge_stellar_mass"] == pytest.approx(1.46e10, rel=0.02) and inside(12, lo["bulge_stellar_mass"])
     assert lo["v_tangential_sun"] == pytest.approx(249.4, abs=0.3) and inside(3, lo["v_tangential_sun"])
-    assert lo["sfr"] == pytest.approx(1.14, abs=0.03) and lo["bulge_velocity_dispersion"] == pytest.approx(145.6, abs=1.5)
+    assert lo["sfr"] == pytest.approx(1.22, abs=0.03) and lo["bulge_velocity_dispersion"] == pytest.approx(145.6, abs=1.5)  # S87 (#148): was 1.14 - the clock
     assert lo["hydrogen_mass_30kpc"] == pytest.approx(7.53e9, rel=0.02)
     hi = run(with_constant(default_model, "ANGULAR_MOMENTUM_MU", 1.4), only=("bulge_stellar_mass",)).fields
     assert hi["bulge_stellar_mass"] == pytest.approx(5.6e9, rel=0.03)
@@ -241,10 +243,14 @@ def test_debt_28_the_narrower_kernel_lands_row_23_with_the_ratio_on_the_wrong_si
 
 def test_debt_42_row_6_lands_at_74_not_78(default_model):
     """The row 6 miss said MERGER_HEATING would have to fall below 78 to land it alone: 78 reads 351.4 and
-    75 reads 350.3, both out; 70 reads 348.7. The number is 74, and the direction held."""
-    for k, h in ((78.0, 351.4), (75.0, 350.3), (70.0, 348.7)):
+    75 reads 350.3, both out; 70 reads 348.7. The number is 74, and the direction held.
+
+    **S87 (#148): the number is about 99 on the model's own clock**, and the direction holds: the thin disc's
+    dispersion at R0 is lower for stars 0.33 Gyr younger, so every kick reads about 11 pc lower and the default 88.8
+    lands it (345.09); 95 reads 348.0 (in), 100 reads 350.5 (out). The name keeps S21's number as its record."""
+    for k, h in ((78.0, 340.7), (75.0, 339.6), (70.0, 337.9), (95.0, 348.0), (100.0, 350.5)):  # S87 (#148): was (78, 351.4), (75, 350.3), (70, 348.7) - the clock
         v = run(with_constant(default_model, "MERGER_HEATING", k), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"]
-        assert v == pytest.approx(h, abs=0.5) and inside(6, v) == (k < 74.0)
+        assert v == pytest.approx(h, abs=0.5) and inside(6, v) == (k < 99.0)  # S87 (#148): was (k < 74.0) - the clock
 
 
 def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(default_model):
@@ -257,8 +263,12 @@ def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(default
         f = run(default_model, {s: d for s in SEEDS}, only=tuple(vals)).fields
         for k in vals:
             vals[k].append(float(f[k]))
-    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(39.48, abs=0.3) and inside(16, np.median(vals["bar_pattern_speed"]))
-    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(6.33, abs=0.05) and inside(17, np.median(vals["bar_corotation_radius"]))
+    # S88 (#80, the owner's ruling of 2026-11-03, D255; re-stated, not re-numbered - S87's lesson): was "both verdicts
+    # hold" at 39.48 / 6.33. On Erwin 2019's law the defaults' bar is 2.27 kpc and both rows are recorded misses under
+    # #80 on either sample: seeds 41-81 read 79.69 and 2.760 (0-40: 81.97 and 2.651) - the verdicts still agree
+    # between the samples, so the fixed sample still decides no verdict of these two.
+    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(79.69, abs=0.3) and not inside(16, np.median(vals["bar_pattern_speed"]))
+    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(2.760, abs=0.05) and not inside(17, np.median(vals["bar_corotation_radius"]))
 
 
 # --- row 7: the constant's citation, read (A-14) -----------------------------------------------------------
@@ -268,10 +278,14 @@ def test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6(defaul
     S21 (a), that 35 is their Table 1's adopted 'characteristic' value for a selection function, with no
     uncertainty; the measurement the same paper quotes is Soubiran et al. 2003's 39 +/- 4. Net of the model's
     27.06 km/s that is a constant of 112.3, which reads row 3 at 250.97 (in) and row 6 at 368 (out). (It read
-    the simple model's row 7 at 1193, out, before D170; that thick disc went with the model.)"""
+    the simple model's row 7 at 1193, out, before D170; that thick disc went with the model.)
+
+    S87 (#148 -> #212): on the model's own clock the secular heating reads 26.68 km/s, so the same arithmetic gives
+    113.8 (39 km/s) and 103.1 (37.1); the arithmetic below keeps S21's 27.06 as the record of that reading, and at
+    112.3 row 6 reads 357.6, still out, row 3 250.967, still in."""
     for sigma_w, k, row3 in ((39.0, 112.3, 250.97), (37.1, 101.5, 251.00)):
         assert math.sqrt(sigma_w**2 - 27.06**2) / 0.25 == pytest.approx(k, abs=0.1)
         f = run(with_constant(default_model, "MERGER_HEATING", k), only=("v_tangential_sun",)).fields
         assert f["v_tangential_sun"] == pytest.approx(row3, abs=0.05)
     assert inside(3, 250.97)
-    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"] == pytest.approx(368.0, abs=1.0)
+    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"] == pytest.approx(357.6, abs=1.0)  # S87 (#148): was 368.0 - the clock

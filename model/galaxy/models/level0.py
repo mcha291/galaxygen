@@ -17,6 +17,7 @@ that nothing has needed yet (Ω_M, Ω_Λ) are absent rather than declared dead.
 
 from __future__ import annotations
 
+from galaxy.core import cosmology
 from galaxy.core.registry import Constant
 
 LEVEL0: dict[str, Constant] = {
@@ -31,12 +32,14 @@ LEVEL0: dict[str, Constant] = {
         "nominal_solar_mass_parameter reproduces this arithmetic].",
     ),
     "H0": Constant(
-        0.07,
+        cosmology.HUBBLE,
         "km/s/kpc",
         "Hubble constant, 70 km/s/Mpc, i.e. h = 0.7 [verified: GALAXY_INPUTS.md §2, citing BHG16 "
         "§1]. Read to form ρ_crit = 3H₀²/8πG, which fixes R₂₀₀, and since S58 by the bar stage, "
         "which turns the halo's assembly redshift into the disc's age with it (a flat universe's "
-        "lookback time, with OMEGA_M). The local-distance-ladder and "
+        "lookback time, with OMEGA_M). Since S87 (debt #148) the grid's time axis runs to the age "
+        "of the universe it gives with OMEGA_M, 13.467 Gyr (core/cosmology.py, where the value is "
+        "stated once: core imports no model). The local-distance-ladder and "
         "CMB values differ by about 8%; that propagates to R₂₀₀ as 8% and to R_d through λ_d, and "
         "is not modelled.",
     ),
@@ -63,12 +66,14 @@ LEVEL0: dict[str, Constant] = {
         "the response, 15.5 after it, inside the span; at the old 2.5 the fit read 18.5, over.",
     ),
     "OMEGA_M": Constant(
-        0.3,
+        cosmology.OMEGA_M,
         "dimensionless",
         "Matter density parameter, the Ω_M = 0.3 Level 0 takes from BHG16 and F_BARYON already "
         "assumes [verified: GALAXY_INPUTS.md §2]. Read to form the virial overdensity "
         "Δ_vir = 18π² + 82x − 39x², x = Ω_M − 1 [recall: Bryan & Norman 1998] — about 101 ρ_crit — "
-        "at which the c_vir normalisation is quoted (debt #12, S13).",
+        "at which the c_vir normalisation is quoted (debt #12, S13), by the bar stage's lookback time "
+        "with H0 (S58), and since S87 (debt #148) by the grid's time axis, which runs to the flat "
+        "universe's age on the two (core/cosmology.py states the value once).",
     ),
     "CONTRACTION_A": Constant(
         0.85,
@@ -234,16 +239,20 @@ LEVEL0: dict[str, Constant] = {
         "[recall]; 0.5 is the random-walk value and the upper end of the observed range.",
     ),
     "MERGER_HEATING": Constant(
-        88.8,
+        90.6,
         "km/s",
         "Velocity dispersion a merger of mass ratio 1 would add to the stars already present; an "
         "event contributes this times its mass ratio. Set so that the Milky Way's 1:4 merger leaves "
         "the pre-existing disc at the thick disc's observed vertical dispersion, sigma_W = 35 km/s "
         "[recall: Bensby, Feltzing & Lundstrom 2003, (67, 38, 35) for the thick disc], **net of the "
         "heating the model already gives those stars**: the assembly stage composes the kick in "
-        "quadrature with the secular heating and the birth dispersion, which together read 27.06 km/s "
-        "over the thick population at R_0, so the kick is sqrt(35^2 - 27.06^2) = 22.2 km/s and the "
-        "constant is 22.2/0.25 (S20, debt #42; a test reproduces the arithmetic). Until S20 it was "
+        "quadrature with the secular heating and the birth dispersion, which together read 26.68 km/s "
+        "over the thick population at R_0, so the kick is sqrt(35^2 - 26.68^2) = 22.65 km/s and the "
+        "constant is 22.65/0.25, the derivation's fixed point 90.618 on the model's own clock (S88, "
+        "debt #212, on the owner's word of 2026-11-03: the grid's t_max the model's flat-LCDM age, "
+        "13.467 Gyr, core/cosmology.py, since #148). **88.8 was the same derivation on the old clock** "
+        "(a recalled 13.8 Gyr: 27.06 km/s of secular heating, the fixed point 88.815; S20, debt #42, "
+        "D128); a test reproduces the arithmetic. Until S20 it was "
         "120 - 'scaled so the merger leaves the pre-existing disc at about 30 km/s' - which counted "
         "the kick as if it were the whole dispersion, so the thick disc read 40.4 and row 7 1279 pc; "
         "it reads 960 now. Since S18 the same impulse is applied radially too (isotropic; an "
@@ -254,22 +263,35 @@ LEVEL0: dict[str, Constant] = {
         "citation and the 35 is Bensby et al.'s Table 1 adopted characteristic value for a kinematic "
         "selection function, quoted without an uncertainty, while the measurement their Sect. 1 quotes "
         "for it is Soubiran, Bienayme & Siebert 2003's sigma_W = 39 +/- 4; net of the same 27.06 that "
-        "gives sqrt(39^2 - 27.06^2)/0.25 = 112.3, at which row 7 reads 1193 (out) and row 3 250.97 "
+        "gives sqrt(39^2 - 27.06^2)/0.25 = 112.3 on the old clock (113.8 net of this clock's 26.68, "
+        "S88, #212), at which row 7 read 1193 (out) and row 3 250.97 "
         "(in) - the two rows trade across the source's own error bar and the window's top edge is "
         "sigma_W = 37.1. S22 kept 88.8: the arithmetic is S20's derivation and choosing between the "
         "two values with both rows' answers already known is the move rule B5 forbids in either "
         "direction. What S22 changed is that row 7's green says here, and in spec.py, what it stands "
         "on (AUDIT_II_A.md A-14, debt #42).",
     ),
-    "BAR_LENGTH_RATIO": Constant(
-        2.0,
+    "BAR_LENGTH_LOG_NORM": Constant(
+        0.04,
         "dimensionless",
-        "Bar half-length in units of the disc scale length. Bars in barred spirals run about "
-        "1.5-2.5 R_d [recall]. GALAXY_INPUTS.md 4b describes the chain as disc dominance -> bar "
-        "length -> pattern speed; only the second and third links are modelled here, because no "
-        "relation between disc dominance and bar length is quoted anywhere in the project and "
-        "inventing one would be rule A4's failure a level up. disc_dominance is published so the "
-        "missing link can be checked rather than forgotten (debt #21).",
+        "The bar's half-length law, log10(a / kpc) = BAR_LENGTH_LOG_NORM + BAR_LENGTH_SLOPE log10(h / kpc): its "
+        "zero point, 0.04 +- 0.02, a the deprojected visual bar length and h the disc's 3.6 um scale length, both "
+        "kpc, fitted over 367 S4G barred spirals (Spearman 0.61) [verified: Erwin 2019, MNRAS 489, 3553, "
+        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2 and A2 (E19)]. Adopted on the owner's ruling of "
+        "2026-11-03 (D255) on debt #80, replacing BAR_LENGTH_RATIO = 2.0 (bars 'about 1.5-2.5 R_d [recall]', a fit "
+        "to the one galaxy row 15 reads). The model's h is the lambda_d scale length (disc_scale_length_spin), the "
+        "only scale length checkpoint 1 holds (A1) - not the source's 3.6 um fit, a referent recorded under #80. "
+        "At the Milky Way's 2.605 kpc the law gives 2.27 kpc against the Milky Way's measured 5.0 +- 0.2: the "
+        "Milky Way's bar is long for its disc, so its template pins the measured length (bar_half_length) and the "
+        "law's own miss is row 15's, recorded (B5), nothing tuned back (B10). GALAXY_INPUTS.md 4b's chain disc "
+        "dominance -> bar length is still not modelled (debt #21).",
+    ),
+    "BAR_LENGTH_SLOPE": Constant(
+        0.76,
+        "dimensionless",
+        "The bar's half-length law's slope in log10 h, 0.76 +- 0.06 [verified: Erwin 2019, MNRAS 489, 3553, "
+        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2]: see BAR_LENGTH_LOG_NORM. The owner's ruling of "
+        "2026-11-03 (D255).",
     ),
     # --- the bar's presence, body and lanes (S58, BUILD_III Phase P3; DECISIONS.md D217) ----------------------
     "BAR_FORMATION_TIME_SCALE": Constant(
@@ -1133,6 +1155,21 @@ LEVEL0: dict[str, Constant] = {
         "The longest segment among Honig & Reid 2015's 38 printed rows (the reader's arithmetic on the printed "
         "azimuth ranges): a drawn extent over it is drawn again, not clipped [verified: "
         "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2].",
+    ),
+    "ARM_SEGMENT_PITCH_FLOOR": Constant(
+        1.0,
+        "deg",
+        "The least pitch a drawn arm piece may have: its normal deviate is drawn again while the pitch it makes, "
+        "the disc's times one plus ARM_SEGMENT_PITCH_RELATIVE_SCATTER times the deviate, is under this. The owner's "
+        "ruling of 2026-11-03 (D255) on debt #209, as S86 proposed it: until then the deviate was drawn again only "
+        "while the pitch was not positive, and a piece could come out at 0.0086 deg (1/sin p = 6 700), an arc "
+        "that climbs a few parsecs in a full chain's worth of azimuth. The number is the smallest non-reversed "
+        "segment pitch the repository's readers hold: Reid et al. 2019 Table 2, the Sagittarius-Carina arm's "
+        "outer segment 1.0 +- 2.1 deg over 73 deg of azimuth, and Honig & Reid 2015, M51 arm B +1.2 deg over 50 "
+        "deg [verified: docs/READING_ARM_SEGMENTS.md A1.3 and HR15 Tables 2-5] - the disc draw's own 1 deg "
+        "clip (pattern.compute_pattern). **A resolution floor, not a physical one**: both pitches are consistent "
+        "with zero at their +-2 deg errors, so it bounds what a measured stretch of arm has been resolved as, "
+        "1/sin p at 57 instead of thousands, and says nothing of a real arc of no pitch.",
     ),
     "ARM_SEGMENT_PITCH_RELATIVE_SCATTER": Constant(
         0.56,

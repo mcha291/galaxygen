@@ -711,10 +711,13 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S82 | **172, 178, 187, 188, 190** (BUILD_V row 82: the swap's dependent loaders and the landing's hold with its own display tuning; the caption left of the drawer; the instrument's light past the clamped box drawn where it falls and its table built in a Worker; the zoomed view one point layer on the owner's ruling, the sampled reading kept behind a switch — D249) | 5 |
 | **discharged** at S85 | **191, 192, 193, 194, 196** (entered at S70 and never struck — the register pass read the code and the tests, D251) | 5 |
 | **discharged** at S84 | **189** (by the owner's ruling — BUILD_V §6 ruling 3, the reference client retired to a route demonstration, D252) | 1 |
-| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 195 | 33 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 198, 202, 203, 204, 205, 209, 210, 211 | 92 |
+| **discharged** at S86 | **139, 142, 198** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip; the saturation cut reached by an admissible galaxy, pattern seed 28: its effect read in tests/test_bar.py since S58, I1's walk and I4 through it since S86) | 3 |
+| **discharged** at S87 | **148, 209** (one cosmology for the time axis and the redshifts: the grid's `t_max` the model's own flat-ΛCDM age, 13.467 Gyr, from `core/cosmology.py`; row 2 out by 0.020 as predicted and recorded, row 6 in on σ_z, unpredicted; the owner's 1.0° floor on a drawn piece's pitch, D255) | 2 |
+| **discharged** at S88 | **212** (`MERGER_HEATING` re-derived at its fixed point on the model's own clock, 88.8 → 90.6, on the owner's word of 2026-11-03; row 3's miss 251.017 written in under #11, D256) | 1 |
+| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 152, 155, 157, 195 | 38 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 210, 211, 213, 214 | 84 |
 
-So the board's **125 open** is 33 permanent and 92 carried, and no item is unruled (D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **121 open** is 37 permanent and 84 carried, and no item is unruled (S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -747,7 +750,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
 #138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220; S62, the gas fluctuation field, opened #163–#165 — the field's normaliser table's cost, the spur's foot on top of the ridge, the walk at the stellar chain, D221; S63, light by age, opened #166 — the render's age split on requests that discard it, D223; S64, the censuses at whole-galaxy scale, opened #167–#170 — the clouds' extinction law, the dust in the clouds' geometry, the one-slab texel, the knots outside the field mode — and discharged #116, the cluster's undrawn extent, with #112's star half (its field half carried), D224; S65, the zoomed-in point layer, opened #171–#173 — the sample's luminosity function, the two modes at zoom, a once-seen failure of the migration test in a fresh clone — and re-ruled #113, D225; S66, the layer in the viewer, opened #174–#176 — the points' dust, the remainder's middle part, the on-screen sampling of the unit mean — D226; S67, the region's clouds, discharged #112 with its field half and
-did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234; S72, the template bundles, opened #199–#201 — the windowed render's header carrying the galaxy's layer tables, the bundle plan's unverified entries, two request shapes that end in a 500, D235; S73, on the owner's word, discharged all three — `/api/layer`, the logged walk, the 400s at the parse, D236; S71's close, on the owner's word, fixed F-4-1's display half and opened #202, the diffuse share's per-ring step drawn as a circle, D237; S74, the gateway's review, opened #203, the share links and the queue the viewer never calls, D238; S75, the deployment, opened #204, the W4 gate's deployed half unmeasured under a disabled subscription, and #205, a cold gateway waking the model for the landing, D239; S79, the #207 side session, discharged #207 (the continuity test's hard ends by identity, its bound the taper's own rate) and opened #209 (the per-piece pitch draw has no floor), D243.) The eleven
+did #167's region half, D228; S67, the clouds' size law, opened #182, two regimes and a cap, D231; S68, the generate-first edit panel, opened #186–#190 — the events' ranges off the wire, the swap's dependent loaders, the landing's dropped field, the reference client's generate and the drawer over the caption, D232; S69, Audit V, opened #191–#196 — the bar's gas ratio of medians, the clouds' Σ regimes, the clustering width's branch point, the placed catalogues' columns uncompared on and off, the pieces' power budget met at half, three declared bounds that were samples, D233; its register pass (AUDIT_V.md §5) found #137 discharged in fact and fifteen entries stale, left for S70 to strike and correct under B3; S70, Audit V's fixes, struck #137 (discharged in fact since S61's ring-first draw, its expected totals' ulp residue noted under #196), re-wrote #39 as live, narrowed #114 and #115, re-ruled #15 for `basic`, widened #128(b), corrected #21, #33, #43, #80, #87 and #93, replaced the deleted test citations of #11, #19, #26, #39, #42, #47 and #154, re-pointed the closers of #110, #159–#162 and #166 and re-named #171's and #173's, D234; at its close S70 opened #197, the stars' and remnants' ring draws inverting below the inner edge (the clouds' fixed), and #198, the saturation cut never exercised, D234; S72, the template bundles, opened #199–#201 — the windowed render's header carrying the galaxy's layer tables, the bundle plan's unverified entries, two request shapes that end in a 500, D235; S73, on the owner's word, discharged all three — `/api/layer`, the logged walk, the 400s at the parse, D236; S71's close, on the owner's word, fixed F-4-1's display half and opened #202, the diffuse share's per-ring step drawn as a circle, D237; S74, the gateway's review, opened #203, the share links and the queue the viewer never calls, D238; S75, the deployment, opened #204, the W4 gate's deployed half unmeasured under a disabled subscription, and #205, a cold gateway waking the model for the landing, D239; S79, the #207 side session, discharged #207 (the continuity test's hard ends by identity, its bound the taper's own rate) and opened #209 (the per-piece pitch draw has no floor), D243; S87, M1's second session, discharged #148 (one clock, the model's own cosmology) and opened #212 (MERGER_HEATING derived on the old clock), and on the owner's ruling (D255) discharged #209 (the 1.0° floor).) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -2199,6 +2202,14 @@ and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
    250.97 in, row 6 368 out). "Rows 6 and 7 judged together" is now row 6 alone. Still carried, parked while
    ruling 7 keeps `basic` frozen (`AUDIT_V.md` §5). *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **permanent** — the heating constants calibrate the frozen history's rows (ruling 7): the owner's word re-opens it.
+   *S87 (M1, #148):* **row 6 is inside again, on a clock and not on the physics — the entry's point a sixth time.**
+   With the grid's time axis on the model's own cosmology (#148 discharged: 13.467 Gyr for a recalled 13.8) the
+   thin disc's scale height at R₀ reads **345.09 pc** against 250–350 (355.70 on the old clock), inside by 4.9 pc.
+   It lands on σ_z, as this entry asks of any landing: the thin disc's dispersion 21.283 → 20.962 km/s (stars 0.33
+   Gyr younger carry less secular heating), while Σ★(R₀) 36.140 → 36.031 M☉/pc² alone would raise it. No heating
+   constant moved. Row 6's recorded miss is removed (a miss that passes is an error to leave, #29) with its reason
+   kept beside the table (`specs/spec.py`), and the tests that read it re-pinned with the reason. Still
+   **permanent**: inside by a clock's 3 %, never for a stable reason.
 
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
@@ -2972,6 +2983,118 @@ never been judged in twenty-three sessions.
    this entry made, that it does not enter the bar's length (`bar_half_length` = `BAR_LENGTH_RATIO` × R_d,
    `pattern.py:801`; #21). Still carried, with its closer as written. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — a sourced bar-length relation against a stated scale length is the bar's reading (`READING_BAR.md`), the batch's first constant.
+   *S86 (M1):* **the pre-committed reading fires, and the remedy is a ruling, put to the owner.** The relation the
+   closer asks for is read — log a = 0.04 (±0.02) + 0.76 (±0.06) log h, a the deprojected visual bar length and h the
+   3.6 µm disc scale length, both kpc, 367 S⁴G barred spirals `[verified: Erwin 2019, Table 3; READING_BAR.md A1.2]` —
+   and at the model's h = 2.605 kpc (λ_d's, the only length checkpoint 1 holds) it gives **a = 2.27 kpc**: row 15
+   (5.0 ± 0.2) out by **2.73**, not inside 4.8–5.2. By the entry's own words, "the miss is the ratio's and this debt
+   was the wrong reading": the Milky Way's bar is long for a disc of its scale length (E05's 0.6–1.4 h by type;
+   BHG16's 5.0 over 2.6 is 1.92), and `BAR_LENGTH_RATIO` 2.0 is a fit to the one galaxy the row reads, recalled. Two
+   remedies, each the owner's because each changes what row 15 tests: (i) keep 2.0 and declare it a Milky Way fit
+   (row 15 then checks R_d against BHG16's 2.6 — #21 — and nothing about bars); (ii) build Erwin's relation as the law
+   (2.27 kpc at the defaults, every barred galaxy's body, lanes, corotation and pattern speed with it — rows 16–17
+   move) and pin the Milky Way template's measured bar, 5.0 kpc (BHG16), as A5 allows a template's measurement to
+   replace the law — which makes the template no longer the bare defaults (A5's first sentence) and row 15 a
+   restatement of the pin. Not built at S86; asked at S87's open. Still carried.
+   *S87 (M1):* **remedy (ii) built on the owner's ruling of 2026-11-03 (D255).** `BAR_LENGTH_RATIO` is retired; the
+   bar stage's half-length is Erwin 2019's law, log₁₀ a = `BAR_LENGTH_LOG_NORM` + `BAR_LENGTH_SLOPE` log₁₀ h = 0.04 +
+   0.76 log₁₀ h `[verified: Erwin 2019, MNRAS 489, 3553, Table 3; READING_BAR.md A1.2]`, h the λ_d scale length — **2.2698
+   kpc** on the default disc (h = 2.605). The Milky Way template pins its measured **5.0 kpc** (`bar_half_length`, a
+   numeric pin of 0.1–30 kpc read by the bar stage, `[verified: Wegg, Gerhard & Portail 2015, abstract;
+   READING_BAR.md A2]` and BHG16 through row 15), the device of `bar_present` and `pitch_angle`; an unbarred galaxy
+   has no length, pinned or not. **What moved** (layer off): on the default inputs the bar's corotation 5.48 → 2.39
+   kpc and pattern speed 45.5 → 88.0 km/s/kpc (one seed), the body's share of the checkpoint-1 disc 0.1015 → 0.0305,
+   and with the half-length everything that reads it (the footprint and its lanes, the gas inside the reach, the
+   pieces born at the bar's ends, the star-formation table there, the bar's angle and so the Sun's azimuth); on the
+   Milky Way template the bar shortens 5.2097 → 5.0 (corotation 5.26, pattern speed 47.25, share 0.0966) and the
+   Sun's azimuth moves 1.0954 → 0.9248 rad (the bar's angle is a closed form of its length). The radial history does not
+   read the bar (sfr, v_tan, h_z the same to the digit; no other row's verdict moves). **The acceptance table** is judged on the default inputs (`spec.run`),
+   which carry no pin, so it reads the law: **row 15 2.270 against 5.0 ± 0.2, out by 2.73**, and rows 16 and 17 follow
+   it out — the pattern speed's median 82.0 km/s/kpc (95 %: 69–102) against 34–52 and corotation's 2.65 kpc (1.90–3.34)
+   against 4.5–7.0 — three recorded misses under this number (`spec._MISSES`, since S87; 10 pass / 22 fail / 5 n-y-c,
+   was 12 / 20); on the template, 5.0 / 47.25 / 5.26, all three inside — row 15 a restatement of its pin, as S86 said.
+   *That row 15 passes on the pin holds only if the table judges the Milky Way template*: judging it on
+   `templates.resolve(MILKY_WAY)` instead of the bare defaults would be a change to `spec.run` and to rule A5's
+   "the template is the defaults", **put to the gate**, not made. Nothing is tuned back (B5, B10); the law has no
+   second parameter, and the Milky Way sits off it by a factor 2.2. **The template is no longer the bare defaults**
+   (A5's first sentence): every field downstream of the bar's length differs, layer off too, and
+   `tests/test_templates.py`'s gate now holds the template against the bare run with the same length pinned. **Still
+   carried**: the closer asked for the relation "read at the source's own definition", and the model's h is λ_d's,
+   not the source's 3.6 µm disc scale length (the S22 lesson on `disc_spin`); the referent is the one A1 allows at
+   checkpoint 1, and the row's misses stay this number's until a relation with the bar's own second dependence (disc
+   dominance, mass above Erwin 2018's 10^10.2 break) or the table's ruling moves them.
+   *S87 (M1), the joint re-pin on the final model:* **four declared bounds read over on today's model, held as strict
+   expected failures for the gate, not loosened.** The Milky Way template's published gas contrast reads a ring mean
+   of 1 + 1.0036e-13 at ring 105 (7.9125 kpc, exact summation) against the gate's 1e-13 (`tests/test_bar.py`,
+   `RING_MEAN_OVER`; with its bar pinned at 5.0 kpc); Audit V's power-budget share at seed 777 is 0.934 against the
+   declared 0.4–0.9, and its pair-correlation slope −0.458 against −0.64 ± 0.15 (both the Milky Way's, with the
+   pin); the spurs' walk reads 0.570 on Audit V's mesh against `WALK_READ_DIFFERENCE_COARSE` 0.49 — since the clock
+   (#148), 0.568 before the floor (`tests/test_audit_v.py`). Each is the gate's to rule: re-measure the bound or
+   mend the cause. The default galaxy's render statistic (#154) and NGC 4414's fit record (the clock moved its
+   targets' model values; the objective 0.2511 → 0.2534, the controls not re-searched) were re-read in the same pass.
+   And the layered catalogue's price per cell (`tests/test_audit.py`, a bound of 3 000 µs with no sourced value, #154)
+   reads 2 924–3 208 µs on an idle machine (4 865 once) where the #209 commit read 2 100–2 651 — the default census
+   is 54 pieces on 13 chains with the law's 2.27 kpc bar (was 32 on 6): split into its own test and held as a
+   non-strict expected failure, since it straddles the bound; the gate's to rule.
+   *S88 (M1's close), the gate's rulings applied (D255's six):* (1) the gas ring mean's tolerance is **2e-13 with the
+   measurement** (`tests/test_bar.py`, `RING_MEAN_TOLERANCE`; the strict xfail removed): on the final model, by exact
+   summation, the Milky Way's worst ring 1.0036e-13 (ring 105, 7.9125 kpc; nine rings over 5e-14) and NGC 4414's
+   9.35e-14 (ring 129) — the composition of order-1 cell means over 360 cells, D234's F-2-3 ruling. (5) The drawn
+   `ngc_4414` leg's count step at 29.4215 kpc (texture seed 1) is **held with its cause, not mended — not a defect of
+   the count's floor**: under #209's floor that draw's outermost piece ends at 13.5956 kpc (chain 51, 17.40°), the law's
+   width there is 5.94 kpc and REACH = 9 of its dispersions 0.77198 in ln R, so the last ring any chain reaches,
+   13.5956 e^0.77198 = 29.4215 kpc, lies inside the grid's last ring (29.9625); N switches from its floor of 1 to 0 there
+   as the eleventh follow-up designed, on a ring with no budget and no amplitude either side (nothing drawn moves).
+   No chain crosses on either side, which the test's classifier read as a first crossing; it is now named "reach
+   boundary" and recorded (`tests/test_pieces.py`, `EXPECTED_R_STEPS`), admitted only where it moves N alone. Every
+   other leg's outermost piece ends past the grid (20.1–76.2 kpc). (4) The spurs' walk, re-measured over the same
+   feet on the final model: Audit V's mesh **0.5700** (seed 4242, 45 feet, at 5.95 kpc; 0.2596 over 47 at 777), so
+   `WALK_READ_DIFFERENCE_COARSE` **0.49 → 0.58**, re-declared with the cause; the production grid 0.2506 (seed 4242, 45
+   feet; 0.0573 over 53 at seed 0) under its 0.27, which stands and is now held at 4242 too (`tests/test_spurs.py`). The
+   cause, by M1's model states on the same seeds (S86's 10d3a32, then each S87 item): #148's clock moved the mesh's
+   worst foot 0.4804 → 0.5680 (the spacing reads the gas column the clock moved, so the feet stand elsewhere), #209's
+   floor → 0.5687, #80's pinned bar → 0.5700; the worst feet stand at 5.9–6.1 kpc, just past the bar's end.
+   (2) Audit V's power-budget share, **the cause named and the declaration re-measured** (#195's measured share,
+   `arm_pieces._CONSERVES`; the test's bound 0.4–0.9 → 0.39–0.98, the xfail removed). One probe, the Milky Way on
+   Audit V's mesh with its pin on and off on the same seeds and the same seeds at M1's model states: seed 777 reads
+   0.627 at S86 (bar 5.21 kpc, 11 chains / 41 pieces), unmoved by the clock and the floor, **0.934 with the pinned 5.0
+   kpc** (9 / 44) and 0.695 with the pin off (the law's 2.27 kpc, 11 / 62); seed 4242 0.530 → 0.558 (pin off 0.565).
+   The share is the census's draw, not a law's: a seed's chains and pieces move with the bar's length, and the mesh
+   and the grid draw different censuses at one seed (777 on the production grid 0.709). Over S70's seven runs on the
+   final model: production 0.589 (the Milky Way, seed 0; 98 rings) / 0.656 (4242) / 0.692 (NGC 4414, its seed) /
+   0.498 (4242), the mesh 0.558 / 0.934 / 0.445 — **0.445 to 0.934** (S70: 0.45 to 0.85), every run under the budget.
+   (3) Audit V's pair-correlation slope: **the declared law stays (−0.64 ± 0.15); the Milky Way's reading is held with
+   its cause, not mended** (`tests/test_audit_v.py`, `MW_PAIR_SLOPES` −0.4846 / −0.4327; the xfail removed; NGC 4414
+   meets the law). The same probe (the two seeds' mean slope): pin on −0.459, **pin off −0.487**, S86's 5.21 kpc bar
+   −0.538, the clock and the floor −0.529; the spurs off −0.469; the gas pattern taken out of the placement inside a
+   cell −0.477 — none of the composition's named suspects is the cause. The field itself, evaluated directly, reads
+   its law over the disc (−0.656 / −0.624), −0.584 / −0.573 on the clouds' own footprint, and the placed clouds 0.10–0.14
+   flatter again (the 47.5 pc excess 2.18 / 2.01 against the field's 2.70 / 2.82 there): one realisation of a σ = 1.75
+   log-normal normalised over each level-0 cell (930 pc by 1.6 kpc at the median cloud), the census holding each
+   cell's count (D220 part II rule 2), the effect S61 measured (−0.41 in a 190 pc window, −0.63 in the whole cell);
+   pairs weigh a cell's count squared, so the reading moves with where the chains crowd the clouds. Not a defect a
+   mend reaches without the per-cell conservation. (6) The layered catalogue's price per cell, **re-declared at the
+   measurement as a cost record, not a gate** (`tests/test_audit.py`, `PRICE_RECORD`, still non-strict): eight runs
+   on an idle machine read 2 839–3 026 µs a cell, the default census **48 pieces on 13 chains** (the law's 2.27 kpc
+   bar; D255's "54" was not this run's count); the bound 3 000 → 3 500 µs, no sourced value (#154).
+   *S88, the owner's answer to D255's question (a), 2026-11-03 ("Yes, both", as the gate recommended):* **the
+   acceptance table keeps judging the default inputs** (`spec.run` and rule A5 unchanged). Rows 15–17 stay recorded
+   misses under #80 on the default disc: `galaxy.specs` on the final model 2.26984 kpc, the pattern speed's median
+   81.9702 km/s/kpc, corotation's median 2.65068 kpc (the table 10 / 22 / 5); on the Milky Way template with its
+   5.0 kpc pin all three are inside (5.0 / 47.2542 / 5.263). `spec._MISSES` row 15 names the answer. Still carried:
+   the referent (λ_d against the source's 3.6 µm h).
+   *S88, the joint re-pin on M1's final model (the batch's unrun files run):* every plain number the clock, the floor,
+   the bar's law and pin and #212's constant moved re-pinned with the reason (a measurement run that records every
+   failing assert and goes on, then the strict run). Held strict for the gate, each with its measurement in the mark:
+   (i) **the S55 layer-off reference** (`tests/test_layer.py`, `S55_REFERENCE_MOVED`): 1 038 entries off it - 250 of
+   393 fields per model on the Milky Way's inputs, 246 on NGC 4414's, 42 route bodies, 4 single-mode fields; the named
+   list cannot carry a whole-model change and the reference's rewrite is a decision — tried at the close (D256) and reverted: the two tests are S55's ledger and cannot take a new anchor, #214 opened; (ii) the L1 gate (#161's line);
+   (iii) the dust column on ring 2 (#176's); (iv) a star outside its child cell (#197's); (v) **spurs on chains past the
+   arms' budget** (`tests/test_modes.py`, `OUTER_SPURS`): the Milky Way's gas sector means at 20 kpc 6.7e-15 off 1 and
+   4.4e-3 at 25 kpc, from spurs whose feet read a contrast of 1.000000 (18.0-24.9 kpc, one with a 1 076 kpc spacing) on
+   chains that reach 30.9 kpc with no amplitude - whether a spur belongs where no ridge stands is the gate's — it does not: #213 opened at the close (D256), M2's. Restated
+   where a verdict changed (rows 16-17 on the second diagonal, the arm label at the defaults 5 on 49 seeds of 60, row 3's
+   converged miss 0.0039); the routes' stage lists lose `gas_pattern` (unrun since #154's table, D4).
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
@@ -2996,6 +3119,23 @@ never been judged in twenty-three sessions.
    docs/READING_GAS_SHOCK.md Part B, rows A1, A3 — simulations, not observations]`. Still carried for the second
    half: a sharp cut where a decay belongs, and a lifetime taken from two N-body papers.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the remaining half is the young-star cut against the arms' crossing time: the pattern's, with the arms' pieces.
+   *S86 (M1):* **the pieces give no crossing time either; the closer is a reading.** The arms are a census of pieces
+   since S60, each steady in the frame of its own ring (`arm_pattern_speed` = Ω(R), D216), so there is still no flow
+   through an arm and no crossing time to replace the cut with: the first half's ruling stands. What is left is the
+   second half — a sharp 0.1 Gyr cut where a decay belongs, its number two N-body lifetimes — and its closer is the
+   entry's own kill condition read from observation: the age at which a population's arm–interarm contrast decays to
+   the old disc's (age gradients across arms in resolved young clusters or populations). No reader in the repository
+   holds one. The cut's own fading is #162's (M2, the young stars' fading as a step). Still carried; on S87's reading
+   list.
+   *S87 (M1):* **read: no reader prints the age at which a population's arm contrast decays.**
+   `READING_GAS_SHOCK.md` Part D (D1; a re-reading, no web access). Closest: clusters under ~30 Myr sit on a live
+   disc's arms (Wada et al. 2011, a simulation) and an arm lives ~120 Myr (Grand et al. 2012) — the cut's present
+   source; observed ages across arms are places, not contrasts (Shabani et al. 2018's <10 / 10–50 / 50–200 Myr bins:
+   a gradient in NGC 1566, none in M51a or NGC 628; Martínez-García et al. 2009's colour gradients in 10 of 13); the
+   nearest observed fade is the young clusters' clustering, homogeneous after ~40–60 Myr (Grasha et al. 2017a) and
+   random after ~100 Myr in M51 (Grasha et al. 2019) — a hierarchy's fade, #162's, which brackets the 0.1 Gyr and
+   is not its statistic. Nothing moved. Still carried; the owner's reading an arm–interarm contrast per age bin of
+   resolved young populations (LEGUS / PHANGS-HST catalogues against an arm mask).
 82. **Rows 25–28 cannot be judged: the source's magnitudes are not stated extinction-corrected and the
    model's light is intrinsic** (S28, BUILD_II Phase 3, D177). BHG16 Table 2 quotes M_B −20.70, M_V
    −21.37, B − V 0.73, Υ_V 1.70 for the Galaxy `[verified: arXiv:1602.07702 Table 2, read at S28]`,
@@ -3810,6 +3950,22 @@ never been judged in twenty-three sessions.
    largest amplitude with the lower arm number on a tie, was the kindest, 0.311, and is replaced). Suspects, in
    order: #144, then #142. Still carried: one galaxy's number is now the check's.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the gas ridge's width is the arms' steady response (D216): its sample-wide reading is the arm batch's, with #142's forcing.
+   *S86 (M1):* **the check re-read since the pieces and the thickness factor (S60); the target is still one
+   galaxy's.** On today's model, layer on, 6–10 kpc, the width by the strongest forcing reads **0.3675 at the median
+   (0.074–0.530) on the Milky Way template — 0.44 to 3.12 times 0.17, no longer wider on every ring — and 0.390
+   (0.270–0.752) on `ngc_4414`, 1.59 to 4.42 times** (S57's 0.466 and 0.512 above were the modes' razor-thin
+   response); pinned in `tests/test_gas_pattern.py`. #142 is discharged (the second suspect gone, a fifth of the
+   width with it) and #144 is the miss that is left. A warmer gas narrows nothing: the response at 8 / 10 / 12 km/s
+   reads widths 0.365 / 0.370 / 0.380 on the Milky Way template (0.413 / 0.431 / 0.447 on `ngc_4414`), a probe of the
+   law, not a change. The closer is unread: a sample-wide gas ridge width over the arm spacing with its spread (the
+   PHANGS ridge masks against their galaxies' arm numbers) — S87's reading list.
+   *S87 (M1):* **read: no sample-wide width over the spacing is in the repository.** `READING_GAS_PATTERN.md`
+   Reading D (a re-reading; no web access): PHANGS's ridge masks are top-hat full widths of the CO ∪ Hα ridge,
+   "typical widths between 500 and 1000 pc", dilated by a 7.5″ kernel, with no per-galaxy list and no arm spacing
+   beside them (Querejeta et al. 2024, Appendix E); Reading B's ≳ 0.12 of the spacing is a bound from the broad
+   masks' area share. The check's target stays one galaxy's 0.17 (Egusa et al. 2017) and the model's 0.3675 /
+   0.390 (S86) stand. Still carried; the owner's reading the masks' widths per galaxy with their arm number and
+   pitch (L⊥ = 2πR sin p / m), or a PHANGS fit of the CO ridge's profile across the arm.
 130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
    contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
    and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
@@ -3823,6 +3979,29 @@ never been judged in twenty-three sessions.
    re-read outside R₀. What kills the reading: a matched-resolution HI contrast equal to the molecular one, which would
    make this a resolution artefact and the one-contrast model right.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the HI's own contrast is the gas response's second contrast, placed with the ridge.
+   *S86 (M1):* **probed: the atomic gas's own response is the response at its own dispersion, and the gas the
+   model places is mostly atomic.** Since S57 no contrast is put in — the ridge is the gas's steady response at
+   `GAS_DISPERSION`, 6 km/s, the molecular gas's — so the HI's lower contrast has a mechanism: the same equation at
+   the atomic gas's warmer dispersion. Probed on today's model (the response solved again with the dispersion alone
+   changed; nothing published moved), 6–10 kpc, the ratio of means at 6 / 8 / 10 / 12 km/s: **the Milky Way template
+   1.431 / 1.396 / 1.362 / 1.330, `ngc_4414` 1.252 / 1.236 / 1.220 / 1.204** — at 10 km/s 4.8 % and 2.6 % under the
+   molecular response's, the sign and the size of "typically ∼10 % lower" (Querejeta et al. 2024). And the molecular
+   share of the gas there (`gas_molecular_surface_density` over `gas_surface_density`) is 0.21 (0.12–0.35) on the
+   Milky Way template and 0.06 (0.03–0.16) on `ngc_4414`: the gas the dust follows outside the molecular ring is
+   mostly atomic. The build this names, for S87: a second response at the atomic gas's dispersion, published beside
+   the molecular one at checkpoint 3 (no molecular fraction needed there), and the placement that reads both weighted
+   by the ism stage's molecular fraction where that stage runs (checkpoint 4 or later: no cycle) — once the atomic
+   dispersion is read from a source (it is `[recall]` here: HI dispersions about 10 km/s), the cost (a second solve,
+   about the first's) measured. Still carried.
+   *S87 (M1):* **read first, as the S86 design requires: no source in the repository gives the atomic gas's
+   velocity dispersion, so the second response is not built.** `READING_GAS_PATTERN.md` Reading D (D3): Corbelli
+   et al. 2018 say M33's "HI dispersion stays flat" with no number in the text read; `GAS_DISPERSION`'s own about
+   line carries "the Milky Way's HI reads 7-10 at R_0" as `[recall]`; every other 10 km/s in the readers is a
+   simulation's sound speed or a drift velocity. A `[recall]` dispersion would make the second response a
+   recalled number's (A3, B9), which the design ruled out. Nothing moved; the probe's numbers (S86: the ratio of
+   means 1.362 at 10 km/s on the Milky Way template, 4.8 % under the molecular response's) stand as the size of
+   what a build would do. Still carried; the owner's reading a measured HI dispersion with its radial behaviour
+   (the THINGS / HERACLES dispersion maps, named in Reading D as `[recall — NOT READ]`).
 131. **The gas contrast's galaxy-to-galaxy scatter is unread, so the contrast has no residual** (S51, D210 as amended).
    `gas_arm_contrast` is its derived class mean — 1.90 for the non-grand-design spirals to 2.73 for the grand designs, by
    the two-fold pattern's amplification weight — with no draw. The spread the source gives, 1.37–5.79 for the grand
@@ -3844,7 +4023,23 @@ never been judged in twenty-three sessions.
    The ring-to-ring spread is now the model's own. Still carried: the target is a class mean whose spread is over
    segments.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the gas contrast's scatter is the response's residual, drawn on `pattern_seed` with the arms'.
+   *S86 (M1):* **the contrast is the response's, and its spread across galaxies is the stars' and the disc's.** Since
+   S57 nothing draws a gas contrast: the ratio of means is the response to the stellar arms (the drawn arm amplitude,
+   the drawn pitch, the disc), so it already varies from galaxy to galaxy through those draws, and a residual drawn
+   on top would be a second draw of one quantity. Today's check, layer on, 6–10 kpc medians: **the Milky Way template
+   1.431 (1.34–1.95), 46 of 53 rings inside 1.37–5.79; `ngc_4414` 1.252 (1.02–1.75), a miss on the median**
+   (`tests/test_gas_pattern.py`, as S60 re-pinned) — the S57 numbers above are history. The question the entry
+   leaves is not a residual but whether the response's spread over seeds matches the per-galaxy means behind the
+   source's table: unread (the paper's per-galaxy figure or data), on S87's reading list beside #129's, where the
+   suite's 240 galaxies' medians are the model's side of the comparison. Still carried.
 
+   *S87 (M1):* **read: the per-galaxy means are not in the repository.** `READING_GAS_PATTERN.md` Reading D: what
+   the readers hold is grouped over segments and radial bins (grand designs 2.73 against the rest 1.90; high M⋆
+   2.70 against low 1.80; narrow masks 2.53; 1.5 kpc 1.49). The one population relation with a spread, Meidt et
+   al. 2021's log C_CO = 1.41 log C_3.6 + 0.31 (~0.15 dex over 1527 radial bins of 67 galaxies), is a
+   percentile contrast per 150 pc annulus, not a ratio of masked means: comparing the response's spread with it
+   needs the model's 84th-percentile contrast per annulus, an instrument to build, not a reading — named here for
+   the batch's close. Still carried; the owner's reading Querejeta et al. 2024's per-galaxy figure or data.
 132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
    amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
    the lower bound of its range, 0.5: a disc this compact and massive (1.68 kpc, 3.9e10 M☉) makes a peak above
@@ -3953,7 +4148,22 @@ never been judged in twenty-three sessions.
    spur, each fitted on its own (Reid et al. 2019), where the template outside its bar is a sum of m = 3–6 with
    drawn phases (#152). Segments of the common winding change where the crests lie and no mode's power.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88 (with #152, the owner's).
-139. **The modes' phases are uniform and independent by assumption** (S56, D215). Each mode's phase is drawn
+   *S86 (M1):* **re-read on the composed field, and the conflict carried with the owner.** Since S60 the field is a
+   census of arm pieces laid by this law (D219) and the S58 numbers above are the five modes'; read again on today's
+   model (layer on, the production grid, each template at its own seeds), the statements' own Fourier amplitudes of
+   `pattern_density_contrast` round each ring, m = 2…6 power weighted by Σ R ΔR: **the Milky Way template outside 1.5
+   bar half-lengths 0.086 / 0.441 / 0.276 / 0.052 / 0.144, A3/A2 2.26, m = 5–6 the largest of m = 2–6 on 6 of the 165
+   rings that carry a pattern, from 11.14 kpc** (S58: from 8.7 kpc outward); disc-wide, the bar in, 0.537 / 0.178 / 0.181 / 0.031 /
+   0.073, A3/A2 0.58; **`ngc_4414` 0.235 / 0.221 / 0.280 / 0.180 / 0.085, A3/A2 0.97, m = 5–6 the largest on 54 of
+   133 rings, from 2.51 kpc.** The law is what it was — its Σ A_m² over the 6–10 kpc rings 0.009 / 1.06 / 2.13 / 2.44
+   / 2.44 on the Milky Way template, where the realised pieces' `arm_mode_power_m` read 0.25 / 1.22 / 1.01 / 0.24 /
+   0.36: broad pieces at the law's count fill a ring and leave its low harmonics (D219's m-split check, as S60 read
+   it). So against `READING_ARM_MODES.md`: statement 8 is met on the Milky Way template inside 11 kpc and still fails
+   on `ngc_4414`; statement 1 fails outside the Milky Way's bar (A3/A2 2.26 against 0.33–0.58) and on `ngc_4414`
+   (0.97); statement 6 is met inside the bar only. Nothing in the law moved at S86: it is the owner's kept law (D216),
+   the conflict of sources is ruling 12's, and the alternatives are the owner's — S26's global window on every ring
+   (D215) and #152's per-arm pin (put at S86's open). Still carried, with the owner.
+139. ~~**The modes' phases are uniform and independent by assumption**~~ (S56, D215). Each mode's phase is drawn
    uniformly on [0, 2π) from `texture_seed`, independently of the others and of the bar `[inferred: a mode in a
    differentially rotating disc has no preferred phase]`; no source was read for it, and BUILD_III §9 asks a
    synthetic field to cite its statistic or carry a debt. What it gives up: until S55 the pattern's convention
@@ -3966,6 +4176,20 @@ never been judged in twenty-three sessions.
    — "a detection window, not a scatter: no draw"). m ≥ 3, and an unbarred galaxy's m = 2, stay uniform and
    independent `[inferred]`. Still carried for those.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   **DISCHARGED at S86 (M1, D254):** both of the entry's closers were met at S60 and the entry was not struck. The
+   modes' five drawn phases are retired with the `arm_phases` stage (D219 item 7): no field has a mode phase. What
+   places an arm since: (i) in a barred grand design two chains start at the bar's two ends, on its axis at its
+   half-length — D217 item 9's θ₂ tie as geometry, on the reading the entry asked for (arms begin within 20° of the
+   bar's axis in 10 of 12 galaxies `[verified: Block et al. 2004, AJ 128, 183, Table 3; docs/READING_BAR.md Part B]`);
+   (ii) a template whose arms are measured pins them — `milky_way`, Reid et al. 2019's four major arms and the Local
+   arm as five pinned chains (D219 item 8; `templates.py`, `REID_2019_TABLE2`): the entry's "P4's pins"; (iii) every
+   other chain is born **at the midpoint of the widest azimuthal gap** between the chains crossing its birth ring,
+   with no draw (D219, the gate's second follow-up, item 3: "the law's arm number m is m crests evenly spaced") — the
+   relation between arms that "independent" denied. The one uniform azimuth left is a chain born on a ring no chain
+   crosses (an unbarred disc's first, or a ring beyond every chain's reach; `layer/arm_pieces.py`, the births): in an
+   unbarred disc the disc's own symmetry — it defines no azimuth — and beyond a barred disc's chains a statement
+   that no source read ties an outer arm's start to the bar (Block et al. read arms at the bar's ends), declared in
+   the stage where it is drawn `[inferred]`. Nothing was built at S86; the register is put right.
 140. ~~**The gas ridge is placed by rank along each ring: a one-session instrument**~~ **DISCHARGED at S57** (S56, D215 rulings 7–10; retired D216). The
    exponential of a sum of modes made knots (a crest of 11 at R₀ where one mode's is 3.07), so on each ring the
    gas takes one mode's ridge values in the order of the stellar pattern. That keeps the sourced ratio of means
@@ -3991,7 +4215,20 @@ never been judged in twenty-three sessions.
    response has relaxed after an arm's lifetime. What kills the reading: a measured gas contrast in co-rotating
    arms equal to the steady one's.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88 (level B or C is outside every batch: the batch reads the relaxation factor).
-142. **The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound** (S57, D216 gate G2
+   *S86 (M1):* **no relaxation factor exists to read, and the model's own clock says the steady state is not
+   reached.** `READING_GAS_SHOCK.md` holds no time to relax and no contrast for a corotating response (Part C:
+   "Not found anywhere: a steady corotating gas profile"); its arm lifetimes are 120 Myr (A1, one arm) and "the
+   short-lived spiral arms can recurrently develop" with no number (A3, as re-read at S70). Measured on today's
+   response instead `[inferred: the ridge's sound crossing, the response's own time scale]` — the ridge's full width
+   across the arm (the disclosed check's width × the period 2πR/m × sin p) over the gas's sound speed
+   (`GAS_DISPERSION`, 6 km/s), at 8 kpc with the 6–10 kpc band's medians of the width and of the strongest forcing's
+   m, layer on, each template at its seeds: the Milky Way template 0.3675 × (2π·8.12/3) × sin 13.54° = 1.46 kpc,
+   **238 Myr**; `ngc_4414` 0.390 × (2π·8.0/5) × sin 28.9° = 1.90 kpc, **309 Myr** — 2.0 and 2.6 times the one
+   printed arm lifetime, so the gas has crossed about half its ridge while an arm lives, and what the model publishes
+   is a state the arm does not live to see. The first closer is out of every batch (S85) and the second has nothing
+   to read; **PERMANENT (the gate, S86's close, D254)** — level A is steady by design (D216: the corotating frame is ruled,
+   and a time-stepped flow is BUILD_III's out-of-scope level B), the size of what it gives up written here.
+142. ~~**The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound**~~ (S57, D216 gate G2
    item 5, gate G3 item 2). f_m = m A_m/(X sin p) uses the WKB potential of a disc with no thickness; no source read
    gives the finite-thickness reduction, and checkpoint 3 has no scale height. Three findings sit under it: the
    gas between the arms is nearly emptied where Σf > 1 (troughs of 0.007–0.02 of the ring's mean over 6–8 kpc at
@@ -4013,6 +4250,32 @@ never been judged in twenty-three sessions.
    numbers on every ring (× 0.512), and a numeric pitch pin is held to the draw's own 1°–60°. The drawn pitch
    still has no sourced floor: the owner's, with a read source.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88, with #209's floor.
+   **DISCHARGED at S86 (M1, D254):** the reduction was built at S60 and the entry was not struck; measured at S86.
+   *The closer, met at S60* (D219 item 5): each harmonic of a piece's excess is multiplied by m/(X(|sin p_j| + m h/R))
+   (`pieces.forcing_factor`), the razor-thin m/(X sin p) times T = 1/(1 + k h), exact for the midplane force of an
+   exponential stellar layer on thin gas `[verified: Kim & Ostriker 2007, eqs. 4 and 8; docs/READING_ARM_PIECES.md
+   Part B §1, §1.8]`, with h the checkpoint-1 scale length over h_R/h_z = 7.3 `[verified: Kregel et al. 2002;
+   READING_ARM_PIECES.md Part B §2]` — a read source for the factor and a height the pattern's checkpoint may use
+   (A1), both of what the entry asked; the sech² layer's fit, up to 13.7 % higher, is the named alternative in the
+   constant. *The kill condition, read on today's model (layer on, production grid):* the gas's smallest s on any ring
+   **0.3465** on the Milky Way template (its median trough over 6–8 kpc 0.525; S57: 0.007–0.02) and **0.1244** on
+   `ngc_4414` (its innermost rings; 0.398 over 6–8 kpc; S58: under 10⁻⁹ from 0.26 to 3 kpc) — not under a tenth.
+   *The tightly wound draws:* over pattern seeds 0–299 of each template's inputs (`ngc_4414`'s pitch pin off), 17 and
+   18 draws fall under 2.7° and 7 each on the draw's 1° clip; at the clip the summed forcing amplitudes reach 6.9–8.6
+   (S57: Σf 60–79) and s runs 0.21–2.17 (S57: 10⁻⁷⁹ to 15), the forcing bounded by R/(X h) at any pitch as D219 item 5
+   derived. *#129's width*, this entry's second finding, narrowed by a fifth (0.466 → 0.3675; 0.512 → 0.390) and is
+   #144's now. *What leaves with it to other entries:* the swing window's own razor-thin X — the "many-armed" of the
+   arm-number law — is #138's; the floor on the drawn pitch, which this entry held for the owner since S57, is #209's
+   (no longer needed to keep the gas regular: "#142's floor question retires as physics", D219 item 5; a question of
+   the arms' geometry, the owner's word with a read source).
+   *S87 (M1):* the floor is built — #209 discharged on the owner's ruling of 2026-11-03 (D255): a drawn piece's
+   pitch is redrawn while under 1.0° (`ARM_SEGMENT_PITCH_FLOOR`), a resolution floor read from the smallest
+   non-reversed segment pitches in the readers; the disc draw's own 1° clip is unchanged.
+   *S87, the joint re-pin:* one consequence found and **held for the gate** as a strict expected failure
+   (`tests/test_pieces.py`, `R_STEP_FIRST_CROSSING`): on the drawn `ngc_4414` leg at texture seed 1 the count N
+   steps by 1 at 29.42 kpc, a ring's first crossing — the class the gate's eleventh follow-up removed — with the
+   width and the summed ⟨E⟩ unmoved; the floor's redrawn pieces reach that ring. `ngc_4414`'s one join is gone
+   with the floor (no kink or join left to test there: recorded so).
 143. **The stellar mode's fractional amplitude is applied to the whole disc's surface density** (S57, D216 gate G2
    item 5). The potential that forces the gas is that of Σ₁ = A_m Σ with Σ checkpoint 1's total disc — stars and gas
    together, the Σ of the arm-number law's X — because checkpoint 3 has no stellar/gas split (star formation
@@ -4021,6 +4284,20 @@ never been judged in twenty-three sessions.
    checkpoint-3 stage may read without a cycle. What kills the reading: the gas's own arm carrying the stars'
    fractional amplitude or more, which the response itself says it does.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **measured, and found to be two errors, not one.** Since S60 the forcing is the pieces' excess times
+   m/(X(|sin p| + m h/R)), X on checkpoint 1's Σ (D219 item 5), so its potential is that of A_s Σ₁. The potential of
+   today's disc is that of A_s Σ_s + A_g Σ_g, and the ratio of the two is [(Σ_s + Σ_g)/Σ₁] × [1 + f_g (A_g/A_s − 1)],
+   f_g = Σ_g/(Σ_s + Σ_g). Read on today's model, layer on, the 6–10 kpc rings' medians (A_g/A_s the published gas
+   field's Fourier amplitude over the stellar field's at the stars' strongest m on each ring): the Milky Way template
+   (Σ_s + Σ_g)/Σ₁ = 0.797, f_g = 0.219, A_g/A_s = 1.13 (0.78–1.41, 16th–84th) — **the kill condition met there: the
+   gas's own arm carries more than the stars' fractional amplitude**, the second factor 1.03 — so the forcing is
+   1/0.820 = **1.22 times** today's disc's; `ngc_4414` 0.780, f_g = 0.377, A_g/A_s = 0.66 (0.49–1.13), the second factor
+   0.87, the forcing **1.47 times**. The larger part is not the gas's share the entry named but checkpoint 1's disc
+   holding a quarter more than today's stars and gas at these radii (the mass the later stages take out of the disc
+   is in it); the gas share's part is +3 % (the Milky Way) to −13 % (`ngc_4414`). The closer stands as written and no
+   checkpoint-3 stage can read today's split (A1: star formation follows the pattern, D174); the sizes are written
+   here: Σ₁ is the only disc checkpoint 3 holds. **PERMANENT (the gate, S86's close, D254)**, a property of the model's
+   order (A1), with its size measured.
 144. **The gas falling into a co-rotating arm shocks, and level A has no such shock** (S57, D216 gate G2 item 2). In
    the frame of a co-rotating arm no gas flows through, so there is no steady galactic shock; but the simulations
    show gas converging on the potential minimum from both sides at Mach ~2 and shocking as it arrives, a
@@ -4032,6 +4309,22 @@ never been judged in twenty-three sessions.
    the gas ridge of a co-rotating arm used as a check with its own row. What kills the reading: a co-rotating
    arm's gas ridge measured as wide as the stellar arm.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the second suspect is out, and this one is the miss that is left.** #142's thickness factor has been
+   in the forcing since S60 (D219 item 5; #142 discharged at S86), and #129's check reads on today's response (layer
+   on, 6–10 kpc, `tests/test_gas_pattern.py`'s pinned readings): the width by the strongest forcing **0.3675 at the
+   median, 0.074–0.530, on the Milky Way template (0.44–3.12 times the measured 0.17; S57: 0.466, 2.5–2.8 times)** and
+   **0.390, 0.270–0.752, on `ngc_4414` (1.59–4.42 times; S57: 0.512)** — narrower by a fifth, still wider than M51's
+   inner arms at the median on both. No source read gives a corotating arm's gas width (`READING_GAS_SHOCK.md` Part
+   C: no steady corotating profile, the simulations' dynamic arms print no ridge width), and the time-dependent
+   compression is #141's level B, out of every batch. Still carried: its first closer is #141's (proposed permanent
+   at S86), its second a reading — the dynamic-arm simulations' gas ridge widths over the arm spacing, if any prints
+   one — on S87's list.
+   *S87 (M1):* **read: no co-rotating arm's gas width in the repository.** `READING_GAS_SHOCK.md` Part D (D2): the
+   live-disc simulations print infall from both sides at Mach ~2 and density changes over ~100 Myr, no width; the
+   widths the readers hold are a steady shock's (Kim & Ostriker 2002, Kim, Kim & Ostriker 2010), one galaxy's
+   measured gas arm (Egusa et al. 2017), maser arms (Reid et al. 2019) and PHANGS's ridge masks. The second closer
+   is not met; the first is #141's (permanent, S86). Still carried; the owner's reading a live-disc simulation's
+   gas profile across an arm (Baba et al. 2015's dynamic models, Wada et al. 2011) as FWHM over the spacing.
 145. **The bar's presence is a criterion that bars nearly everything, and is wrong for the one unbarred galaxy the
    build holds** (S58, D217 items 1–2). Barred where Fujii et al. 2018's formation time, 0.146 exp(1.38/f_d) Gyr
    with f_d the disc's share of V² at 2.2 scale lengths, is under the disc's age `[verified: Fujii et al. 2018,
@@ -4045,6 +4338,30 @@ never been judged in twenty-three sessions.
    Erwin's measured frequency in stellar mass as a draw at a checkpoint that holds a stellar mass. What kills the
    reading: a volume-limited sample barred at nine in ten for f_d above 0.35.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **re-read against `READING_BAR.md` A1.3–A1.4; nothing there closes it, and the remedy is the
+   owner's.** Today: the Milky Way template f_d 0.600, t_b 1.46 Gyr against a disc age of 9.63 Gyr, barred (and
+   pinned so); `ngc_4414` f_d 0.756, t_b 0.91 Gyr, barred by the criterion and pinned unbarred, as recorded. What A1.4
+   holds is a second parameter without a scatter — Bland-Hawthorn et al. 2023's onset time against halo mass, the
+   dividing line at f_disk 0.250 / 0.310 / 0.328 for 5×10¹⁰ / 10¹¹ / 5×10¹¹ M☉ (no scatter printed; the model's line
+   0.3295 at the default assembly redshift sits on the last) — and classification rates without a fraction against
+   a value (ELN tested at 71–81 %; EAGLE's f_disc/f_dec pair finding 82 % of strong bars). Neither bars fewer discs at
+   f_d ≈ 0.6–0.76, where both templates are, so neither moves `ngc_4414`'s pin. Still carried; the closer the batch
+   can build is the owner's — Erwin 2018's frequency in stellar mass as a draw (A1.3's fitted logistic, α −82.2, β₁
+   17.1, β₂ −0.88; it needs a stellar mass at the checkpoint that draws it, checkpoint 4, or the pattern reading a
+   later stage: an A1 question) — asked again at S87's open.
+   *S87 (M1):* **the owner's ruling of 2026-11-03 (D255): Erwin 2018's frequency is not a draw — the criterion keeps
+   its mechanism — and is built as a disclosed check** (`tests/test_bar.py::test_disclosed_check_the_presence_criterions_barred_fraction_against_erwin_2018_in_stellar_mass`,
+   a check and not a gate). Over 300 galaxies — the seven controls drawn on stream 145 over their declared ranges
+   (log-uniform across a decade or more), seeds and mergers at their defaults, the SMALL grid, layer off — the
+   criterion bars **0.74**; by stellar mass against Erwin's logistic at the bin's centre and its band at logit ± 0.5
+   (the printed coefficients' rounding, READING_BAR A2 (iii)): 10^8.5–9 **0.375** against 0.512 (0.389–0.634, under);
+   10^9–9.5 0.617 against 0.664, 10^9.5–10 0.714 against 0.705, 10^10–10.5 0.698 against 0.650 (all three inside);
+   **10^10.5–11 0.911 against 0.483, 10^11–11.5 0.867 against 0.231, 10^11.5–12 1.000 against 0.059** (over; the last
+   bin past S⁴G's range, Erwin's extrapolation). Checkpoint 1 is scale-free, but the controls that set f_d also set
+   the stellar mass, so over a population the criterion has a mass dependence — the wrong one above 10^10.5: it
+   bars nearly every massive disc where the measured frequency falls (the entry's own words, "a criterion that bars
+   nearly everything", measured). Still carried with the ruling written in: the closer — a source giving the barred
+   fraction against f_d or a second parameter with its scatter — is not met by the check.
 146. **The bar's body is normalised by its m = 2 maximum; its light share, its peak's place and its axis ratio are
    unchecked or missed** (S58, D217 item 4). The body is a Ferrers component on generalised ellipses (b/a 0.4,
    boxiness 3) whose strength is the drawn `bar_contrast`. The sourced light share, about a tenth of the whole
@@ -4056,6 +4373,38 @@ never been judged in twenty-three sessions.
    bars are both observed, and the bar's torque parameter is not computed. **Carried.** What closes it: the share
    and the amplitude's profile read at checkpoint 4 against the same sources; a read distribution of b/a.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the first closer built — the body read at checkpoint 4 — and the named suspect killed.**
+   `tests/test_bar.py::test_debt_146_the_body_read_at_checkpoint_4_as_measured` reads the body against what checkpoint
+   4 holds, by the file's own arithmetic (the bulge's projected Hernquist profile held against its line-of-sight
+   quadrature beside it), on the Milky Way template: the body's stars are **0.093 of the stellar mass** (the bulge in
+   T, itself 0.162), against "∼10 %" of all stellar mass in bars (W09) — a hit in mass; its light, β of each ring's
+   bolometric surface brightness, **0.047 of the galaxy's**, against Bar/T ≈ 0.10 (G11, i) and 0.14 (K18, strong bars)
+   — **a miss, low by half**; its m = 2 amplitude peaks at **0.41 a on checkpoint 1's disc and 0.425 a with the
+   bulge's dilution** — the suspect moves it by 0.015 a, so the miss against the stacks' 0.76–0.94 a is the body's
+   own. The profile alone does not reach the stacks either: the peak at 0.68 / 0.61 / 0.51 a for exponents 0.3 / 0.5
+   / 1 (S⁴G's flat bars about 0.3, K15). Still carried, the next suspects and the second closer for S87: the body's
+   shape (b/a 0.4, boxiness 3 — the peak's place as a function of them, measured), the light share's half (the inner
+   disc's light per unit mass at checkpoint 4 against the body's mass taken from checkpoint 1's disc), and a read
+   distribution of b/a (K18's 0.31 ± 0.12 is strong bars only; MD07's ellipse-fit 0.48–0.54 ± 0.12–0.13 reads 20 %
+   low against a 2D fit, G11). *The shape probed at S86* (the body's own m = 2 profile on the Milky Way template's
+   disc, nothing published moved): the peak's place goes nearly as the axis ratio — at the model's exponent 2,
+   0.27 / 0.34 / 0.41 / 0.50 a for b/a 0.25 / 0.31 / 0.4 / 0.5 (boxiness 3), boxiness adding 0.01–0.03 a; with a flat
+   profile (exponent 0.3) 0.50 / 0.60 / 0.68 / 0.76 a, and 0.80 a at b/a 0.5 and boxiness 4. Only a flat, round,
+   boxy body reaches the stacks' range: the miss is the body's thinness and exponent together, a reading of what the
+   stacks' bars are (DG16b's sample's b/a and profile) before any constant moves.
+   *S87 (M1):* **read: the stacks' bars are flat, and the profile is the miss's larger part; no b/a distribution
+   over all bars is in the repository.** `READING_BAR.md` Part C (a re-reading; no web access). DG16b's stacks: bars
+   in T < 5 flat, late types exponential, only M⋆ ≥ 10¹⁰ M☉ flat (K15 the same by bulge prominence) — the Milky Way
+   template (4.74 × 10¹⁰ M☉, B/T 0.16) is on the flat side, and the body is a Ferrers exponent 2 for every galaxy.
+   The stacks' maximum ellipticity ≈ 0.5 for spirals is b/a ≈ 0.5 by an ellipse fit, ≈ 0.4 as a 2D component
+   (G11's 20 %): the model's 0.4. With S86's probe the body's m = 2 peak goes 0.41 a → **0.68 a** with a flat
+   profile at b/a 0.4 and **0.76 a** (inside the stacks' 0.76–0.94) at the stacks' ellipse-fit b/a 0.5 — so the
+   exponent carries 0.27 a of the 0.35 a miss and the last 0.08 a is which axis ratio an image's A₂ is read
+   against, which no source read says. A distribution: K18's 0.31 ± 0.12 (strong bars, a component), MJ07's two
+   ellipse-fit bins (b/a 0.25–0.50 for 70–71 %, 0.60–0.75 for 7–10 %), MD07's projected means — no spread over
+   all bars, so b/a stays one number (§4b). No model change: the closer asked for a read distribution, not met;
+   the profile's exponent by mass or bulge (K15, DG16b) is a constant's form — **proposed for the gate** with its
+   size (0.41 → 0.68 a), not built. Still carried; the owner's reading G11's Fig. 1 or DG16's Table 3.
 147. **The bar's gas lanes are a template with one number that has no source** (S58, D217 items 6–8 and the
    follow-up). Two arcs on the leading side from the bar's end to a tenth of its length, curvature κ·a 1.15
    (the median of ten galaxies; the strength law is an envelope with a wide spread, so no draw), the ring's gas
@@ -4072,12 +4421,68 @@ never been judged in twenty-three sessions.
    What closes it: a sub-kpc width statistic for bar dust lanes or molecular ridges; a read source on HII regions
    along bar lanes; a run of lane strength along the arc. The owner may prefer the width as a live slider.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
-148. **The model has two clocks** (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
+   *S86 (M1):* **re-read against `READING_BAR.md` Part B; still no width.** B1.1's lanes are read for their place,
+   side and curvature (A92, K02, C09, SM15, KSK12) and its last row reads "Lane width: not printed in any source
+   read", as B5 does ("Not found in anything read: a lane width"); KSK12's one peak, Σ ~ 100 against 10 M☉/pc², is a
+   compression and not a width; the PHANGS ratio of 2.6 is over 1.5 kpc masks, wider than the lane. Nothing moved: the width stays the declared placeholder at
+   FWHM 0.10 a, with what it carries as S58 measured it. Carried, a reading for S87's list — a sub-kpc width of bar
+   dust lanes or molecular ridges (high-resolution CO of barred PHANGS galaxies, or the dust-lane widths of the
+   simulations KSK12 and S15 print) — and, the owner's alternative, the width as a live slider.
+   *S87 (M1):* **read: still no width.** `READING_BAR.md` Part C: no reader prints a bar lane's or a bar's
+   molecular ridge's width (B1.1, B5 stand). The nearest number in the repository is not a bar's: S⁴G spiral dust
+   lanes ~150 pc at 10 Mpc, W/πR ≈ 1 % at 4 kpc, by eye near the resolution limit (Elmegreen et al. 2014,
+   `READING_GAS_PATTERN.md` Reading B). The placeholder's FWHM 0.10 a is 0.52 kpc on the Milky Way template, 3.5
+   times that spiral bound. Nothing moved. Still carried; the owner's reading a bar lane's width in
+   high-resolution CO (PHANGS's barred galaxies, the Milky Way's near and far lanes) or in KSK12's and S15's maps —
+   or the width as a live slider, the owner's alternative.
+148. ~~**The model has two clocks**~~ (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
    disc's age by the flat-ΛCDM closed form on the model's own H₀ and Ω_M, in which the universe is 13.47 Gyr old;
    the grid's time axis runs to 13.8 Gyr "from t = 0", and star formation starts at its zero whatever the
    assembly redshift. The presence's threshold moves from f_d 0.3295 to 0.3276 between them; no template or
    default changes. **Carried.** What closes it: one cosmology for the time axis and the redshifts.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88 (one cosmology for both clocks: the pattern's checkpoint reads the time axis).
+   *S86 (M1):* **measured, not built: one clock is a whole-model change.** The two ways to one clock are not alike.
+   (a) *The bar on the grid's clock* (the S85 note's "the pattern's checkpoint reads the time axis"): the disc's age
+   stretched by 13.8/13.467, the threshold 0.3295 → 0.3276, no template or default moves — but the grid's 13.8 is
+   `[recall: age of the universe]` (`core/grids.py`) and the model would still hold two cosmologies, one of them
+   recalled. (b) *The grid's clock from the model's cosmology*: `t_max` = the flat-ΛCDM age on H₀ = 70 km/s/Mpc and
+   Ω_M = 0.3, **13.467 Gyr** (`pattern.cosmic_time(0, …)`), the bar's threshold unmoved. Measured at S86 on the
+   default galaxy, layer off, the grid's `t_max` at 13.8 and at 13.467: `sfr` **1.7552 → 1.8599 M☉/yr (+6.0 %)**,
+   `stellar_mass_total` 4.7509e10 → 4.7417e10 (−0.19 %), `thin_disc_scale_length` 2.4414 → 2.4397 kpc,
+   `metallicity_gradient` −0.06985 → −0.06987, the bulge unmoved: star formation's end moves 0.33 Gyr earlier on a
+   history that is still falling. (b) is the closer; it moves every time-dependent field, so it belongs where the
+   specs and the full suite are read — **for S87 to build and S88's suite to judge**. Its prediction (B4), read
+   before it is built: **row 2, the SFR, leaves its window** — 1.8599 against 1.46–1.84 (BHG16's 1.65 ± 0.19), out
+   by 0.020 — and nothing is to be tuned back into it (B5, B10: no constant was fitted on the 13.8). Still carried.
+   *S87 (M1):* **the prediction, written before the build (B4).** With `t_max` the model's own flat-ΛCDM age
+   (13.467 Gyr), acceptance row 2 is predicted to read **1.8599 M☉/yr against its window 1.46–1.84, a miss by
+   0.020** (1.7552 on the 13.8 clock); `stellar_mass_total` −0.19 %, the bar's threshold unmoved (0.3295). The
+   miss goes into the acceptance table's row 2 now (`specs/spec.py`, the row's note) and is not tuned back: no
+   constant was fitted on the 13.8 (B5, B10). S88's suite judges it.
+   **DISCHARGED at S87 (M1):** one cosmology for the time axis and the redshifts, built as (b). `core/cosmology.py`
+   states the model's two parameters once (h = 0.7, Ω_M = 0.3; Level 0's `H0` and `OMEGA_M` are declared from them,
+   since `core` imports no model) and the closed form (`cosmic_time`, moved from `pattern`, which re-exports it);
+   `GridSpec.t_max` is `cosmology.AGE` = **13.466984 Gyr**, the age the bar stage's `lookback_time` counts back from,
+   where it was a recalled 13.8. Merger events keep their times from t = 0 (Gaia-Enceladus at 3.8 Gyr is now 9.67 Gyr
+   ago, not 10.0). **The prediction held**: on the default galaxy, layer off, `sfr` 1.75515 → **1.85988** M☉/yr, row 2
+   **out by 0.0199**, a recorded miss under this number (`spec._MISSES`, since S87; its note written first, a2d68ae);
+   `stellar_mass_total` −0.192 %, the bar's threshold and verdicts unmoved. **What the prediction did not name: row 6
+   enters its window** — the thin disc's scale height at R₀ 355.70 → **345.09 pc** against 250–350, on σ_z (21.283 →
+   20.962 km/s, the secular heating of stars 0.33 Gyr younger) and not on Σ★(R₀) (36.140 → 36.031 M☉/pc², which
+   alone raises it), as #42 asks of any landing; its recorded miss (#42's since S13) is removed as a miss that passes
+   (#29's rule), its reason kept in a comment, and #42 stays open (S87 line there). The pass/fail count is unmoved
+   (12 / 20 / 5: row 2 out, row 6 in). The other rows that move, all on the same side of their windows: row 3
+   251.026 → 251.022, row 20 8.088e9 → 8.154e9, row 21 0.2001 → 0.2033, row 22 −0.06985 → −0.06987, row 23
+   −0.0223 → −0.0219, rows 30 / 31 +6.0 % / +4.6 % (inside), row 29's slope −7.892 → −7.910 (inside), row 34
+   +5.9 % (inside), row 37 −0.0983 → −0.0986. Every test that moved in the files run was re-pinned with the reason
+   ("S87 (#148): was X - the clock"), none loosened; the files not run (the layer's, the render's - run and re-pinned in S87's joint re-pin after #80 -, the templates' - likewise -,
+   the API's, the frames) are S88's suite's to judge. **What S86's reading missed: B10 fires once** — "no constant
+   was fitted on the 13.8" holds for the rows, but `MERGER_HEATING` (88.8) was *derived* from the model's own
+   secular heating, which the clock moved: its derivation reads 90.62 at its fixed point on the model's own clock
+   (secular 27.06 → 26.68 km/s). Not moved here (a constant's value is the gate's to rule): opened as **#212**, with
+   what a re-derivation moves (row 6 345.09 → 345.92, row 3 251.022 → 251.017, row 2 not at all). The tests that read
+   the derivation, row 6's landing value (74 → about 99) and S21 (a)'s probes were re-measured and re-stated
+   (`test_audit.py`, `test_audit_ii_a.py`): the churn probe's row 3 now reads 245.012, inside by 0.012.
 149. **No bar-driven two-armed arm is built, and an unbarred disc's arms run to its centre** (S58, D217 item 9 and
    the follow-up). Bar forcing correlates with the local m = 2 amplitude out to 1.4–1.6 bar radii (Salo et al.
    2010), but no source read prints the driven amplitude against radius, so none is invented: outside the bar the
@@ -4087,6 +4492,29 @@ never been judged in twenty-three sessions.
    **Carried.** What closes it: a measured A₂ against radius in bar lengths for barred two-armed spirals; a
    sourced inner cut-off for arm modes in unbarred discs.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **re-read on the pieces; one finding gone, both closers unread.** *The bar-driven arm* is built as
+   geometry since S60 — a barred grand design's two chains start at the bar's ends (D219 item 3: "#149's bar-driven
+   arms as geometry") — at the ring's budget like every chain; no driven amplitude against r/a is read (`READING_BAR.md`
+   B5: "Not found in anything read: … the driven m = 2 amplitude against r/R_bar"). *The unbarred centre*, measured on
+   today's model, layer on: the six-armed mode's 10–70 pc wavelength is gone with the modes — a piece is 0.27 kpc wide
+   (FWHM) at the centre of `ngc_4414` and 0.40 kpc on the default galaxy, wider than the 75 pc ring step. The arms
+   still run to the centre: the law's budget is flat inward (0.063 on `ngc_4414` and 0.081 on the default galaxy
+   pinned unbarred, from the innermost ring), three and four chains cross 0.1 kpc, and the contrast's rms there is
+   0.086 on `ngc_4414` (its peak 0.40 at 3.56 kpc, 2.03 scale lengths) and **0.507 on the default galaxy pinned
+   unbarred — that disc's largest, at 0.11 kpc**, where `READING_ARM_MODES.md`'s statements 10 and 14 (amplitude
+   rising outward; the arms' contribution peaking at 1–2 scale lengths and "falling to zero at centre", Chugunov et
+   al. 2024) fail. A shape with its peak's place is read (Chugunov's 1–2 h); an inner cut-off's form is not. Still
+   carried — S87's reading list: Chugunov et al. 2024's arm profiles (§6–7, the fitted arms' inner ends) for a sourced
+   inner taper, and a driven A₂(r/a) (Salo et al. 2010's figures, Bu09).
+   *S87 (M1):* **read: an inner growth zone is measured to exist, its length is not in the repository; no driven
+   A₂(r/a) either.** `READING_ARM_PIECES.md` Part C (a re-reading; no web access). Chugunov et al. 2024: the arms'
+   share is zero at the centre and peaks at 1–2 h; Chugunov et al. 2025: sharp ends raise χ² by over 10 %, Gaussian
+   and cubic tapers fit equally — so an inner taper is sourced in kind, not in length (no start radius or
+   growth-zone width per galaxy is printed; <h_s>/h runs 0.09–7.58). READING_BAR.md holds the bar's own A₂ maximum
+   (DG16b, 0.23–0.41 at 0.76–0.94 r_bar, nothing at 1.5 or 2 r_bar) and Salo et al. 2010's correlation to ~1.5
+   R_bar with "no amplitude-against-radius table". A taper with an unsourced length is the A4 / B9 case; nothing
+   built. Still carried; the owner's reading Chugunov et al. 2024's per-arm start and growth-zone parameters, and
+   Salo et al. 2010's A₂(r) figure (or DG16b's stacked profiles past r_bar).
 150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
    S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
@@ -4129,6 +4557,12 @@ never been judged in twenty-three sessions.
    fits themselves are disputed since (Perseus 0.2–0.4 kpc further out; two bifurcating inner arms, Xu et al.
    2023, ApJ 947, 54). **Carried, with the owner** (with #138): a ridge per arm for a pinned template is a change of plan.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88, with the owner (a ridge per arm for a pinned template is a change of plan: the owner's word in the batch's first session).
+   *S87 (M1):* **the owner's ruling of 2026-11-03 (D255): no ridge per measured arm — the arm law is kept** (with
+   #138). The Milky Way template keeps its pinned chains on the measured loci and the arm-number law's chains
+   elsewhere, and this entry stays the disclosed check it has been since S59, with no verdict
+   (`tests/test_pieces.py`'s maser record, re-pinned at S87 where the clock, the floor and the bar's pinned length
+   moved it). Nothing to build. **PERMANENT (the gate, S88's close, D256; the owner's ruling of 2026-11-03)**: the representation's
+   limit on the Milky Way's measured arms is the plan's, by the owner's word.
 153. **NGC 4414's measured pitch is 2.4σ from the pitch law's draw** (S59, D218 item 6). Five 3.6 µm segments
    average 28.9° ± 6.0° `[verified: Herrera-Endoqui et al. 2015, A&A 582, A86, Table 3; docs/READING_ARM_SEGMENTS.md]`;
    the law's mean from the shear plus its 6° draw gives 14.33° on the template's seed. The template pins `pitch_angle` = 28.9° (the law's
@@ -4141,6 +4575,26 @@ never been judged in twenty-three sessions.
    What closes it: the pitch law (§5's shear form with its 6° draw) re-read against galaxies whose shear and
    pitch are both measured.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **measured against the law's mean, not its draw; the reading is S87's.** At the template's own shear
+   (Γ = 0.9976 at 2.2 R_d) the law's mean is 13.02°, so the measured 28.9° is **2.65 of the law's 6° scatter** from
+   it (2.43 from the draw on the template's seed, 14.33°, as written above); the Milky Way template's drawn 13.54°
+   sits 0.05 from its mean (Γ = 0.968). The law's intercept, 13.0° at Γ = 1, is `[recall]` ("the Milky Way's arms
+   are quoted near 12–13 degrees"), and the ruling that took it (`PITCH_YU`, §5) rests on Yu & Ho 2019 §4.3.5's
+   finding that the shear–pitch correlation is much weaker once a third of Seigar's pitches are corrected — no table
+   of galaxies with both measured has been read into the repository. Still carried; S87's reading list: Yu & Ho 2019's
+   sample (pitch with Γ, their §4.3), to re-read the intercept, the slope and the 6° scatter at their own
+   definitions and place NGC 4414's 28.9° in that distribution.
+   *S87 (M1):* **read: YH19's pitch–shear table is not in the repository, but the samples' pitch is, and it moves
+   the question.** `READING_ARM_SEGMENTS.md` Part C (a re-reading; no web access). The law's intercept, 13.0° at
+   Γ = 1, is `[recall]` (the Milky Way's arms) and sits 5–7° under every sample's mean pitch the readers hold — H17's
+   6 222 galaxies 18.6–19.4° (16th / 84th percentiles 12.2 / 26.1°), DG19's 3.6 µm means 17.8–21.3° for T 2–10
+   (19.7 ± 0.4° at T 4–6) — while its 6° scatter matches the samples' (H17's half-width 6.95°, YH19's ~7° at fixed
+   type). NGC 4414 (Sc, t = 5.2) at 28.9° is above H17's 84th percentile, **1.4σ** from H17's mean and **1.3σ**
+   from DG19's T 4–6 mean at 7° — against **2.65σ** from the law's mean: most of the miss is the intercept, not
+   the galaxy. The shear term (the slope −8, no source tag) is not re-read: no reader prints pitch against Γ. No
+   model change (the closer needs galaxies with both measured); the intercept's `[recall]` against the samples'
+   means is **put to the gate** as a finding on the law (#138's, with the owner). Still carried; the owner's reading
+   YH19 §4.3.
 154. **The grid's table of star formation is the law at a cell's mean contrast, and the viewer reads grid fields
    at a fixed azimuth between rings** (S59, D218's second and third follow-ups). The censuses now read the star
    formation law at a point (`systems.Modulation`: the law on each ring's own contrast as the point sees it, the
@@ -4176,6 +4630,63 @@ never been judged in twenty-three sessions.
    3 — within a few tenths of S59's 1.20 at 2.51 kpc, 0.59 % and 1.08 % on another seed, the worst cell and ring one
    ring inside the bar's reach. Still carried, with its remedy as named. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the table's half built as named; the render's wound read carried.** `sfr_modulation` is now the
+   young stars' own reader's mean over each grid cell (`sfh_azimuthal.modulation_cells`: `systems.Modulation`'s
+   `sector_means_at` on the grid's φ edges, the point function integrated piecewise between its breaks by a Gauss
+   rule), divided by its mean round the ring — the plain ring mean the field was always divided by, here taking out
+   the reader's quadrature normaliser's 1.5e-4 — so the ring means are 1 to 3e-16 and the rate still integrates back.
+   The stage reads the gas pattern's own reads and constants in place of `star_formation_gas_contrast`. Measured on
+   the production grid: the table against the reader's cell means **2.7e-4 in a cell, 0.0074 % of the worst ring's
+   young weight** on the Milky Way template (the old table 0.622 and 0.438 %), 9.4e-5 and 0.0004 % on `ngc_4414`
+   (0.0196, 0.040 %); at the defaults 2.6e-4 (S70's statistic of the table against the reader at the cells' centres
+   now reads the point function's own spread inside a cell, 0.923 and 0.51 %, which no grid holds;
+   `tests/test_audit.py`'s #154 test holds both). The cost, measured: the stage's table 0.80 s on the Milky Way
+   template and 0.36 s on `ngc_4414` (the law at a cell's mean was a few milliseconds). What moves with it: the
+   viewer's young light and every reader of the table (the bright catalogue's middle part), another realisation of
+   the same budget; tests re-pinned with the reason (`test_sfh_azimuthal.py`, `test_pieces.py`, `test_audit.py`).
+   **Still carried: the render's half** — the render interpolates every (R, φ) field between rings at a fixed φ,
+   which across a nearly circular piece misplaces a ring gap's young light (16–91 % at S59): "a wound read in the
+   render", the api's code under the model's hash, for S87 — and the azimuth drawn from 25 samples across a sector
+   (1.5e-2 from the function's CDF at worst).
+   *S87 (M1):* **both halves measured on today's model; neither is built, and the render's is re-ruled a viewer
+   pass's.** *The render's read.* The render ships the 20–100 Myr part's weight as `sfr_modulation` over its ring mean
+   on the grid's rings (`stars_middle_placement`) and every other (R, φ) weight the same way; the viewer interpolates
+   each linearly in R at a fixed φ — the API computes no point between rings. Measured (layer on) at the middle of
+   every gap the table modulates (138 / 138 / 133 gaps, 2.1–12.3 kpc on the Milky Way inputs, holding 69 / 69 / 60 % of
+   today's star formation) against the young stars' own reader there (`Modulation.sector_means_at` at the mid-gap
+   radius), by S59's statistic (half the mean |difference| of two profiles each over its mean): **the default galaxy
+   worst 5.6 % at 2.10 kpc, 0.41 % weighted by star formation; the Milky Way template worst 26.0 % at 5.93 kpc, 1.31 %
+   weighted, three gaps over 10 % holding 3.1 % of its star formation; `ngc_4414` worst 7.1 % at 0.68 kpc, 0.69 % (0.82 % once #209's floor redrew its pieces, S87)
+   weighted** (`tests/test_audit.py::test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_stars_reader_between_rings`
+   pins all three). **Re-read after #80** (the default galaxy's bar from Erwin's law, 2.27 kpc; the Milky Way's pinned
+   at 5.0 kpc): the default galaxy worst 11.7 % at 11.18 kpc, 0.68 % weighted; the Milky Way worst 25.2 % at 5.93 kpc,
+   1.27 % weighted; `ngc_4414`, unbarred, as above — the test pins these; the azimuth's figures below are from before
+   #80 and were not re-read. S59's 16–91 % was the common winding's, gone since S60. **Why not built here:** the wound read S59
+   named (each ring's row at φ − (Φ(r) − Φ(R_ring))) has no single Φ since D219 — every chain of pieces winds on its
+   own and the bar's footprint does not wind — so it is not one offset per ring the API could ship; and the API-side
+   alternative, measured (the table on rings twice as fine), halves the weighted means at the quarter gap (0.29 →
+   0.10 %, 1.05 → 0.93 %, 0.58 → 0.27 %) but leaves the Milky Way's worst gap at 26 % (a piece's end between two
+   rings). What would mend it is the viewer reading the published point function where it draws (D5 allows a function
+   the model publishes with its vectors) — a viewer pass's design, with #186's viewer half, and the same question for
+   every (R, φ) weight, not this table's alone. *The azimuth.* Every reader draws a star's azimuth by inverting the
+   point function's 25 samples across its sector (`AZIMUTH_STEPS`, `pattern.invert_azimuths`); measured on the
+   level-0 sectors (1°) at every modulated ring and mid-gap radius against the function's own CDF (256 sub-sectors,
+   each by the reader's Gauss rule): **the Milky Way template worst 4.1e-2 at 2.96 kpc (inside the bar's footprint
+   edge), 99th percentile 7.7e-5, 0.54 % of sectors over 1e-3; `ngc_4414` worst 6.6e-4** — S60's 1.5e-2 understated
+   the worst; the sector's total is exact either way. A mend (the contrast's breaks as nodes of the inversion) moves
+   every placed star's azimuth in those sectors and is the layer's one sampling rule (`pattern.azimuths`,
+   `census_clustering`, the bright catalogue), not this table's: **proposed for the gate** as a layer item for the
+   censuses' batch (M2), with the numbers above. Still carried.
+   *S88 (M1's close): the table half's reproducibility mended.* `galaxy.specs.determinism`'s two identical runs
+   (SMALL, the layer on; `tests/test_layer.py`'s I1 determinism test, unrun since S86) read `sfr_modulation` 8.4e-13
+   apart (3.6e-15 at S86's f9d8502 itself; fa5b5ce's model reproduces): the table is a Gauss quadrature cut at
+   `GasPattern.star_formation_kinks`, which at a grid ring took the anchors of both bracketing rings of the store,
+   and the ring above a grid ring is the next grid ring or a mid-gap one depending on whether an earlier reader in
+   the process (the clouds, their texture, the clusters) had completed the content-keyed store. Measured: cold and
+   cold after `forget_solutions` equal, cold and warm 8.4e-13 apart, a run of the table alone reproducing. Mended in
+   `gas_pattern.py`: at a solved ring's radius the ring's own anchors alone (the point reads that ring and nothing
+   of its neighbour). Cold and warm now equal on SMALL and on both templates' production runs (every field); the cold
+   table moved by at most 2.7e-10 (the Milky Way, 1 805 of 144 000 cells) and 2.0e-9 (`ngc_4414`, 5 421 cells).
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
@@ -4191,6 +4702,15 @@ never been judged in twenty-three sessions.
    For the owner: with the layer on the arms carry about 45-80 % of the arm-number law's power on the median
    ring; the law is honoured layer-off, where the acceptance rows are judged.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **re-measured on today's census; the choice is a ruling, not a reading.** Realised ring power
+   (`arm_ring_power`) over the budget, 16th / 50th / 84th percentiles over the rings that carry a budget and a chain
+   outside the bar's half-length: **the Milky Way template 0.37 / 0.57 / 0.73** (96 rings), **the default galaxy
+   0.39 / 0.42 / 0.62** (96), **`ngc_4414` 0.45 / 0.78 / 1.11** (133); besides, 48 and 69 rings of the two barred
+   galaxies carry a budget and no chain (inside the bar's reach, where no chain is born: D219's follow-up, item 2) and
+   none of `ngc_4414`'s. No source can choose between the two closed forms — both are the census's own statistics,
+   and neither reads a realised power — so the entry's remedy is a change of the budget's one formula by ruling.
+   **PERMANENT (the gate, S86's close, D254)**, a declared design (D219 item 4: the independent form, "exact per ring is
+   refused"), the shortfall stated here and on `arm_power_budget`'s about line, the law honoured layer-off.
 156. **A chain's excess jumps at a kink within one LAW width of a free end** (S60, D219, the gate's fifth
    follow-up). The taper is read at the arc length to the point's foot; across the bisector of a kink sharp
    enough that the two feet lie far from the vertex the arc length jumps and the taper with it: Norma's kink at
@@ -4212,6 +4732,12 @@ never been judged in twenty-three sessions.
    outer disc; the default's seed 4 steps by 0.0019 at 12.375 kpc that way (0.38 of the continuity bound at 8 192
    azimuths, a true step). The test's wedge geometry reads `law_width_at`.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **the trigger is the owner's look, at S88.** Nothing moved; the steps are pinned where they were
+   (`tests/test_pieces.py`: Norma's 0.017, the seed-1 band's thirteen steps, the default's 0.0019). The entry's own
+   condition — "built if the owner's look at the frames finds the step" — waits on frames of the model as M1 leaves
+   it, which S88 regenerates (BUILD_V row 86–88: "the frames regenerated with the reason"); the continuous rule is
+   named and ready. #142's pitch floor, the other remedy for the drawn case, is #209's and the owner's (asked at
+   S86's open). Carried to S88's look.
 
 157. **The carried gas steps in azimuth where a clipped anchor meets a held one** (S60, D219, the gate's twelfth
    follow-up). Past a free end a chain's anchor is held between its neighbours' so the carried azimuth map is
@@ -4225,6 +4751,13 @@ never been judged in twenty-three sessions.
    of their images' separation (a short ramp), or the ended chain's sliver faded rather than compressed - either
    needs a length no source gives. A test records the largest phi-step per leg beside the fold count.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88.
+   *S86 (M1):* **no length to read, inside the carry's own declaration.** Nothing moved; the steps stand pinned in
+   `tests/test_pieces.py` (`EXPECTED_CARRIED_PHI_STEPS`, 0.089 at worst). Both named mends need a length — a ramp's
+   share of the images' separation, or a sliver's fade — that no reader (`READING_ARM_PIECES.md`, `READING_GAS_*`)
+   prints, and either chosen by hand would be a display constant (RESEARCH_AREAS §1, "never a display constant").
+   The step lives inside the carried map's declared approximation, whose misplaced weight is pinned up to 8 %;
+   the stellar field is untouched and the ring mean exact. **PERMANENT (the gate, S86's close, D254)**, a property of the
+   carry (D219 item 6) with its size pinned; reopened if the owner's look at S88's frames finds the step.
 
 158. **An object's radius can spill inward past its ring's edge by up to one grid node** (S61, D220; found by the
    star sample's builder, measured on the default galaxy). The radial inverse CDF that places a cloud or a star in its
@@ -4299,6 +4832,16 @@ never been judged in twenty-three sessions.
    unit, every layer-on pin moving with it), and no phase of BUILD_III or BUILD_IV names it now.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S88 (M1's close): the effect met twice on M1's final model, both held strict for the gate.* Audit V's pair slope on
+   the Milky Way (D255 ruling 3; `tests/test_audit_v.py` `MW_PAIR_SLOPES` -0.4846 / -0.4327) - the field read directly
+   holds its law (-0.656 / -0.624 over the disc), -0.584 / -0.573 on the clouds' footprint, and the placement takes
+   0.10-0.14 more; neither the bar's length, the spurs nor the gas pattern's reading inside a cell is the cause (#80's
+   line, bound 3). And **the L1 gate itself** (`tests/test_clustering_gate.py`, `L1_GATE_READ_OVER`,
+   `BRIGHT_GATE_READ_OVER`): the default galaxy's clouds -0.4796 and clusters -0.4899 against -0.64 +/- 0.15 (S86
+   -0.6396 / -0.6578, the clock -0.6360 / -0.6699: the step is #80's re-drawn census), the young bright stars' youngest
+   bin -0.4750 (S86 -0.5696) and the 40.71-100 Myr bin's finest 1 + omega 0.8457 against flat within 0.05 (out since
+   the clock: 1.1887 there; S86 1.0391). The spill's declared figures re-measured (`census_clustering.SPILL_*`: p99
+   0.119, max 1.261, 1 795 of 16 940 beyond 0.06 dex, [alpha/Fe] 0.222). *The gate (S88's close, D256): both held with the cause, the law kept, not loosened — M2's with this entry; the per-cell conservation (D220 part II rule 2) is the mend.*
 162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
    part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
    than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
@@ -4482,6 +5025,10 @@ never been judged in twenty-three sessions.
    derived one-draw bound 3 √((e^v − 1) g² / N_r) over 16 lattice offsets (worst 2.93 s_r), and the mend for that
    part is a footprint average of the map over the pixel.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S88 (M1's close):* the Milky Way's dust column on ring 2 at offset (1/4, 1/4) reads **3.3666 one-draw scatters**
+   (dev -1.8802e-2, s_r 5.5849e-3) against the pinned 3 - 2.9287 at S86 (the docstring's 2.93), unmoved by the clock
+   and the floor, 3.3666 from #80's pinned 5.0 kpc bar (ring 2, 1.86-2.79 kpc, inside the bar); the whole frame
+   3.5e-4 against 3e-3; NGC 4414's worst 2.8243. Held strict for the gate (`tests/test_v7_layer.py`, `DUST_COLUMN_OVER`). *The gate (D256): held with its cause — #80's pinned bar inside ring 2 — not loosened; M3's with this entry.*
 177. **The march under-samples the bulge's cusp: the innermost kiloparsec reads 2.3 % low on screen** (S67, D227 R5;
    the picture spec's ring gates). On `milky_way`'s face-on frame, dust and gas off, the ring 0-1 kpc's on-screen
    light over the render's published light plus the bulge is 0.977-0.978 in every state (layer on or off, points on
@@ -4600,6 +5147,16 @@ never been judged in twenty-three sessions.
    one fails with the API's reason under the failed-Generate mark. **Carried.** What closes it: per-field `lo` / `hi`
    on the events declaration in `input_json`, read by `flow.setValue` as a control's range is (metadata, rule D4).
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — moved from the viewer rows at S82 (D249): an API change under the model's hash, the first model batch.
+   *S86 (M1):* **the wire's half built; the viewer's read is a viewer pass's.** The ranges now have one statement,
+   `registry.EVENT_FIELDS` — time in Gyr, ≥ 0, no upper end; mass_ratio in (0, 1]; gas_fraction in [0, 1] — which
+   `MergerEvent` checks against (its three messages unchanged) and `/api/inputs` publishes on the events declaration as
+   `fields: [{name, unit, lo, hi, lo_open}]` beside the default, metadata only (D4).
+   `tests/test_api.py::test_inputs_publishes_every_default_and_every_range` holds the published ranges to the API's own
+   refusal through the parser a Generate's events go through: at each published end taken (or refused where the end
+   is open), 1e-9 past it refused with a 400's reason. The closer's second half — `flow.setValue` and the event
+   editor (`frontend/src/workflow/Workflow.tsx`) reading `fields` as a control's range is read, refusing a bad event
+   before it is sent — is the viewer's code, not this batch's (nothing in the viewer moves in M1): for the viewer's
+   pass with #111, #170, #177, #183, #185. Still carried for that half.
 187. ~~**The whole swap holds only the loaders keyed on the query**~~ (S68, D232; the fix pass's note). In the star-first
    mode the tile loaders whose keys follow another loader's answer (`GalaxyTab`'s counts and bright tiles after
    `brightTable` / `tileK`) take their new keys only when the swap publishes, then load and publish on their own - a
@@ -4684,12 +5241,26 @@ never been judged in twenty-three sessions.
    inversion on the ring's own interval for both draws, in a session of its own — it moves the whole catalogue, every
    frame and the catalogue's pins across the suite (D60's per-region determinism re-pinned with the reason).
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
-198. **The arm saturation cut is never exercised** (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
+   *S88 (M1's close): met by the default census.* One inherited star of cell 300 (12.36 Gyr, thin disc) stands at
+   R 8.44826 kpc, 5.65 pc inside its ring's inner edge (8.45391), so it lies outside its child's footprint at levels
+   1-3 (`tests/test_hierarchy.py`, `HIERARCHY_197`, held strict): passing on S86's model and through the clock and
+   the floor, failing from #80's re-drawn census. Still M2's; *the gate (D256): held under this entry, the owner's word standing.*
+198. ~~**The arm saturation cut is never exercised**~~ (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
    on 0 of 48 rings at both SMALL runs and on no ring at the production grid for either template, so the layer-off walk
    and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes
    it: a test that drives one ring past saturation on a synthetic pattern and reads the cut's effect, or — if no
    admissible input reaches it — the cut retired as dead (S41's rule) with the reason.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — the saturation cut is the arm pattern's: a test that drives one ring past it, or the cut retired as dead, in the batch.
+   **DISCHARGED at S86 (M1, D254):** an admissible input reaches the cut, so it is not dead, and the walk now passes
+   through it acting. The Milky Way's inputs at pattern seed 28 — the suite's most saturated barred galaxy, a drawn arm
+   amplitude of 0.786 — saturate 84 of the production grid's 400 rings (s down to 0.6433 at 7.91 kpc) and 10 of the
+   SMALL grid's 48 (0.6436). Its effect was read since S58 on that galaxy (`tests/test_bar.py::
+   test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy`: on every saturated ring the published
+   amplitudes and the body's depth sum to 1 to 1e-15, on every other ring to less, and the composed field is
+   non-negative with nothing floored) — an admissible galaxy in place of the closer's synthetic pattern; what the
+   reviewer found unexercised was the walk. S86 adds that galaxy as a third case of I1's walk and of I4
+   (`tests/test_layer.py`, `SATURATED_SEEDS`; the case asserts the 10 rings and that s is the same bits layer on and
+   off): every declared field held on and off with the cut acting, green.
 199. ~~**A windowed render carries the whole galaxy's layer tables in its header**~~ (S72, D235; the bundle probe).
    **DISCHARGED at S73 (D236).** The three tables are published once per galaxy by `/api/layer` (model, template,
    layer; the same v7 functions, the 18 entries byte-identical to what the render's header carried, the 21 render
@@ -4788,7 +5359,7 @@ never been judged in twenty-three sessions.
    19 cases collected under the mark — the 18 bit-exact pins and #207's case — skipped when GitHub's `CI` is set by
    `tests/conftest.py`'s hook, run here, no tolerance widened), `JSON_DEPTH_CAP` 64 read before every parse of a
    request's JSON so both platforms answer "the JSON is nested too deeply" (a `model/galaxy/api` change: the hash
-   4f0c8401… → f1fbbb17…), `.python-version` 3.14.4, the suite on pushes to `main`, on dispatch and nightly with the
+   4f0c8401… → f1fbbb17…; M1's batch → 244c8bda… at S88), `.python-version` 3.14.4, the suite on pushes to `main`, on dispatch and nightly with the
    fast subset elsewhere. Two of this entry's readings corrected by S77: its "eighteen" summed to seventeen in its own
    list — the eighteenth is `test_gas_fluctuation`'s, which it counted apart; and that case does not move "past the
    float32 bound": the float32 read's libm rounding differs per machine, and the runner's number is the nearer to the
@@ -4872,8 +5443,8 @@ never been judged in twenty-three sessions.
    star-first 0.66 → 0.58, every long task 0, the rest within range. Every remedy resolved — (a), (c) built at S80,
    (e) closed by measurement at S80, (d) by ruling (D246), (b) here — and the landing's rest is the compile and the
    Canvas mount, the client's own work inside the bound (D242).
-209. **The per-piece pitch draw has no floor: a piece of nearly no pitch moves a ring's count at an unbounded rate in
-   radius** (S79, D243). A drawn piece's pitch is p(1 + 0.56 z), z drawn again while the pitch it makes is not positive
+209. ~~**The per-piece pitch draw has no floor: a piece of nearly no pitch moves a ring's count at an unbounded rate in
+   radius**~~ (S79, D243). A drawn piece's pitch is p(1 + 0.56 z), z drawn again while the pitch it makes is not positive
    (D219, the gate's sixth follow-up), so it can land arbitrarily near zero: on the Milky Way template at `texture_seed`
    49, chain 11's first piece has a pitch of 0.0103° (1/sin p = 5 600), an arc of 47° (0.82 rad) that climbs 1.5e-4 in
    ln R — 1.7 pc at 11.66 kpc, where the grid's rings are 150 pc apart. The count's taper runs along the chain over one
@@ -4888,6 +5459,32 @@ never been judged in twenty-three sessions.
    means; a `model/galaxy` change moves the hash and every layer-on field on those seeds. What kills the reading: a
    source giving the per-piece pitch a floor the 0.56 scatter already implies. Nothing drawn changed at S79.
    *S85 register pass (D251):* **batch M1 (the arms and the bar)** — named in BUILD_V row 86–88, with #142.
+   **DISCHARGED at S87 (M1), on the owner's ruling of 2026-11-03 (D255): "Take the 1.0° floor".** Built as S86
+   proposed it (D254, the owner's questions (b)): a drawn piece's normal deviate is drawn again while the pitch it
+   makes, p(1 + 0.56 z), is under **1.0°** (`ARM_SEGMENT_PITCH_FLOOR`, `models/level0.py`; `layer/arm_pieces.draw_piece`;
+   until S87 while it was not positive, which the floor keeps). The source: the smallest non-reversed segment pitches
+   the repository's readers hold — Reid et al. 2019 Table 2, the Sagittarius–Carina arm's outer segment 1.0 ± 2.1° over
+   73°, and Honig & Reid 2015, M51 arm B +1.2° over 50° (`READING_ARM_SEGMENTS.md`) — and the disc draw's own 1° clip.
+   **A measurement-resolution floor, not a physical one**: both pitches are consistent with zero at their ±2° errors,
+   so the floor bounds what a measured stretch has been resolved as (1/sin p at 57 instead of thousands) and says
+   nothing of a true arc of no pitch. The deviate's draws are counted to 64 (`MAX_PITCH_DRAWS`; 16 would raise once in
+   65 536 pieces at a disc pitch on the 1° clip, where the floor takes half the draws), which moves no bit of a draw
+   that met the floor within 16. **Measured on today's model** (texture seeds 0–299 of the Milky Way template, 0–49 of
+   the default galaxy, of `ngc_4414` and of `ngc_4414` with its pitch pin off): before, **100 / 10 / 10 / 26 seeds held
+   a drawn piece under 1°** (the least 0.0086° on the Milky Way template, 0.0089° on the third leg); after, none —
+   the least drawn pitch 1.0018° / 1.055° / 1.117° / 1.055°. **The default seeds:** the Milky Way template's (its least
+   drawn piece 2.45°) and the default galaxy's (8.27°) are **unmoved to the bit**; `ngc_4414`'s default seeds held a
+   piece at 0.793° (pinned pitch 28.9°) and 0.393° (pin off), so **its layer-on fields move**: the stellar contrast's
+   rms change 0.139 (the field's own rms 0.130) and the gas's 0.215 (0.216), the third leg's 0.143 / 0.182 — a
+   different realisation of the pieces, as on every moved seed (the Milky Way template's seeds 3, 4, 5: 0.011–0.032
+   stellar, 0.004–0.048 gas; `ngc_4414`'s seeds 0, 4, 5: 0.04–0.16 / 0.06–0.23). Layer-off fields do not move. The
+   tests that moved were re-pinned with "S87 (#209): was X - the owner's floor", none loosened (the commit lists
+   them); the ones that state the draw's rule (`tests/test_pieces.py`'s hand chain, `tests/test_audit_v.py`'s
+   truncated law — now truncated per galaxy at a = (1/p − 1)/0.56 — and `tests/test_layer.py`'s statistic and
+   constant list) were restated. `ngc_4414`'s frames move with it: S88's regeneration. Its disclosed gas checks move
+   with its pieces (6–10 kpc): the ratio of means' median 1.252 → **1.429**, inside PHANGS's 1.37–5.79 now — S86's "a miss
+   on the median" (#131) becomes a hit — and the ridge width's median 0.390 → 0.424 (#129). The stage subset's other
+   numbers that move with the floor are re-pinned once on the final model, after #80 (S87's re-pin commit).
 210. **NGC 4414's zoom capture is not the committed picture's bytes, and no close since S70 read the verdict** (S82,
    D249; the lead's reading of builder B's picture logs). The picture test prints a verdict per capture ("the committed
    picture, byte for byte" / "not the committed picture's bytes") and compares within a tolerance; `ngc_4414-zoom`
@@ -4914,6 +5511,67 @@ never been judged in twenty-three sessions.
    the response grid's tails to 4.4 µm (M3, the populations), which moves the hash; or the set's red band moved inside
    the grid (F356W or F277W) with the reason stated. What kills the reading: the bound met by a finer slope grid alone.
    *S85 register pass (D251):* **the owner's word** — the owner's word (D246): the set's pins in `tests/test_render.py`, or F356W, or M3's grid extension.
+212. ~~**`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
+   constant is 88.8**~~ (S87, M1; found by #148's build; discharged at S88's close, D256). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
+   over the pre-merger population at R₀ — σ_W = 35 km/s, the model's own secular heating then 27.06 km/s — and set it
+   at the derivation's fixed point, 88.815. The secular heating is a function of the stars' ages (`assembly`: age =
+   now − t), so when #148 put the grid's clock on the model's own cosmology (13.467 Gyr for a recalled 13.8) the same
+   derivation moved: **the secular term 27.06 → 26.68 km/s, the derivation 90.64 from 88.8's weights, its fixed point
+   90.618** (measured at S87, `tests/test_audit.py::test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating`
+   pins the gap). S86's "no constant was fitted on the 13.8" missed this one: it was not fitted to a row, it was
+   derived from the model's own heating, and rule B10 asks every constant calibrated on a mechanism that changed to
+   be re-examined. What it moves if re-derived (S87's probe, layer off): row 6 345.09 → 345.92 pc (inside), row 3
+   251.022 → 251.017 (out, by 0.017); no verdict changes. Row 6 stays inside up to MERGER_HEATING ≈ 99 and row 3
+   comes inside above ≈ 98 (95: 251.007, 100: 250.995), so the two meet only in a sliver near 98–99, and neither is a lever (B5). The citation
+   read of S21 (a) (Soubiran et al. 2003's 39 ± 4 km/s) gives 113.8 net of today's secular heating (112.3 on the old
+   clock). **Carried.** What closes it: the constant re-derived at its fixed point on the model's own clock (90.62),
+   with the frames and the specs at S88 — the gate's or the owner's ruling, since it is a constant's value; or the
+   ruling that 88.8 stays declared as the old clock's derivation with the gap written beside it. What kills the
+   reading: a derivation that does not read the model's own heating.
+   *S88 (M1's close): **re-derived on the owner's word of 2026-11-03 ("Yes, both": the gate's recommendation B10) -
+   discharged at the close (D256; the heading struck, the summary rows and count pin moved)**.* The derivation iterated on the final model (every other S88 model change in: the bounds' declarations,
+   #154's reproducibility mend): 88.8 → 90.6377 → 90.6178 → 90.6180, **the fixed point 90.618028** (secular term
+   26.6791 km/s), so `MERGER_HEATING` = **90.6** at the declaration's precision (as 88.815 was 88.8); its about line
+   names the clock (13.467 Gyr, `core/cosmology.py`) and 88.8 as the old clock's same derivation; the named
+   alternative reads 113.8 net of this clock's heating (112.3 on the old). `galaxy.specs` on the final model: **row 3
+   251.017, out by 0.017** (251.022 at 88.8; written into its recorded miss in `spec._MISSES`, which stays under #11 -
+   a row holds one miss and the row's cause is still the bar; #212 named in its reason), row 6 345.899 (inside; 345.09
+   at 88.8), row 2 1.85988 (unmoved), the table 10 pass / 22 fail / 5 not yet checked as before. The constant moves
+   202 of the Milky Way template's 393 fields (everything downstream of the assembly stage; none of the pattern's,
+   the pieces' or the gas pattern's). `tests/test_audit.py`'s derivation test states agreement again (90.6 within
+   0.05 of its derivation, 90.618).
+213. **Spurs stand on chains past the arms' budget: a spur's height is the ridge's crest contrast at its foot, which
+   is 1 where no ridge stands, and the walk runs each chain to its end** (S88, M1's close; found by `tests/test_modes.py`'s
+   sector-means check, unrun since S86). On the Milky Way template the gas's sector means past the last ring with any arm
+   power are not every one exactly 1: at most 6.7e-15 off at 20 kpc and 4.4e-3 at 25 kpc (exact at 22, 27 and 29; the
+   stars exactly 1 at 20, 25 and 29; NGC 4414, which draws no spurs, exact throughout). Four spurs stand at 18.0, 20.2,
+   20.4 and 24.9 kpc on chains that reach 30.9 kpc with no amplitude, at feet whose contrast is 1.000000 (the last's
+   Jeans spacing 1 076 kpc), and they bend the gas there. The walk (`layer/spurs.py`) places a spur every Jeans spacing
+   along the chain's polyline to the chain's end, and a spur's height is the ridge's crest contrast at the foot
+   (`stages/spurs.py`: "the foot's peak equal to the ridge's crest contrast there"), so where the ridge has no amplitude
+   the feather is composed whole — g' = (1 − ⟨S⟩) g + S keeps the ring's mean and bends its sectors — where its cause
+   is absent: the spacing reads the ridge's gas column (Kim & Ostriker 2006), which is the interarm's there. **Ruled at
+   S88's close (D256): a spur does not belong where no ridge stands. Carried, M2's** (the gas; with #163 and #165, the
+   feet). Held strict in `tests/test_modes.py` (`OUTER_SPURS`), not loosened; not mended at the close because a model
+   byte moves the hash, which moves once per batch (BUILD_V ruling 4). What closes it: the walk ends at the chain's last
+   ring with amplitude (the arms' budget's edge), or a spur's height is the ridge's excess over 1 — measured on both
+   templates, the frames and the walk's bounds (#165's 0.27 and 0.58) re-read, the sector means exact past the budget.
+   What kills the reading: a published amplitude on those chains past the budget's edge.
+214. **The S55 layer-off reference and its two tests are a ledger of the named movements since S55, and a model batch
+   cannot pass through it** (S88, M1's close, D256). `tests/layer_reference_s55.json` holds S55's layer-off run (D215), and
+   `tests/test_layer.py`'s two reference tests hold every later run to it through a ledger: the named exceptions with
+   their S55 and present values, the censuses S61's ring-first draw redrew (17 + 38 + 17 + 19 + 9 + 14 columns and
+   statistics, asserted to differ), the fields added at S56–S62 (asserted as the exact set over S55's 332), the redrawn
+   routes' headers asserted unequal, the render's `lines_hii` alone. M1 moved 1 038 entries by design (#148's clock,
+   #80's bar, #209's floor, #212's constant: 250 of 393 fields per model), which no named list carries; the lead held
+   both tests strict. The rewrite was tried at the close (`layer_reference.py write`, digest d9aec859…) and reverted: on
+   the new anchor every historic difference the ledger asserts vanishes, so the tests fail on the ledger, not the
+   physics. **Carried, M2's** (the next batch that moves the model; held strict meanwhile, `S55_REFERENCE_MOVED`). What
+   closes it: the ledger re-anchored at each batch's close by decision — the reference the batch's final layer-off run,
+   the tests holding every later run to it with an empty named list until the next batch, the historic sets kept as
+   history — or the reference retired to the batch's hash pin, the bundles' byte check and the machine pins, which hold
+   the final model bit for bit already, the two tests struck with the reason. What kills the reading: a ledger that
+   passes on M1's final model unchanged.
 
 ---
 

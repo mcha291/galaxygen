@@ -172,7 +172,7 @@ def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
     _, _, default = _power(basic, {})
     _, _, halo = _power(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
     _, _, disc = _power(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
-    assert default.tolist() == pytest.approx([0.014, 0.157, 0.231, 0.281, 0.316], abs=5e-3)
+    assert default.tolist() == pytest.approx([0.052, 0.202, 0.237, 0.260, 0.250], abs=5e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.014, 0.157, 0.231, 0.281, 0.316
     # S58 (D217 items 1-3): were 0.980 in five and six arms and under 1e-3 in two and three. **This disc is unbarred
     # by the criterion itself** - it holds 0.30 of its rotation, a bar would take 15 Gyr to form and the disc is 9.6
     # Gyr old - so its published amplitudes carry no bar's taper and its inner rings, where the low arm numbers
@@ -181,8 +181,8 @@ def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
     assert run(basic, {"disc_spin": 0.03, "baryon_retention": 0.15}, grid=COARSE, only=("bar_present",)).fields["bar_present"] == "no"
     assert halo[3:].sum() == pytest.approx(0.819, abs=5e-3), "a halo-dominated disc is multi-armed"
     assert halo[0] == 0.0 and halo[:2].sum() == pytest.approx(0.017, abs=2e-3), "two arms cannot be amplified where the disc holds so little of the rotation, and three barely"
-    assert disc.tolist() == pytest.approx([0.130, 0.213, 0.237, 0.225, 0.195], abs=5e-3)
-    assert halo[:2].sum() < default[:2].sum() < disc[:2].sum() == pytest.approx(0.343, abs=5e-3), "disc dominance moves the arm number"
+    assert disc.tolist() == pytest.approx([0.176, 0.228, 0.237, 0.201, 0.155], abs=5e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.130, 0.213, 0.225, 0.195
+    assert halo[:2].sum() < default[:2].sum() < disc[:2].sum() == pytest.approx(0.403, abs=5e-3), "disc dominance moves the arm number"  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.343
     # The label follows: 6 at the defaults on every seed, 6 for the halo-dominated disc (not a number on the two
     # seeds of sixty that draw no arm amplitude at all), 4 for the disc-dominated one - on 58 seeds of sixty, and 5 on
     # two: the label weighs the published amplitudes, the saturation is in them and is the one seeded thing in the
@@ -191,7 +191,10 @@ def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
     label, _, _ = _odds(basic, {})
     label_halo, arms_halo, _ = _odds(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
     label_disc, arms_disc, _ = _odds(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
-    assert set(label) == {6.0}
+    # S88 (#80, the owner's ruling of 2026-11-03, D255; measured on M1's final model): was `set(label) == {6.0}` - the
+    # defaults' bar is Erwin's 2.27 kpc, not 5.21, so the inner rings' arms are no longer under its taper and the
+    # whole disc's shares move to 0.052 / 0.202 / 0.237 / 0.260 / 0.250: the label is 5 on 49 seeds of sixty, 6 on 11.
+    assert sorted(label.tolist()).count(5.0) == 49 and sorted(label.tolist()).count(6.0) == 11
     # S58 (D217 item 5): was 58 fours and 2 fives - the saturation reads the bar's body's depth where it read the
     # cosine bar's amplitude times its taper, and on those two seeds the saturated rings weigh the other way: 4 on
     # every one of the sixty.
@@ -226,6 +229,6 @@ def test_rows_15_to_17_did_not_move(judged):
     """Phase 1b's gate: the amplitudes do not enter the bar's length, corotation or pattern speed."""
     # basic's verdicts by name, deliberately (S46, D197): the gate was set on basic; the rows are radial.
     results = {r.n: r for r in judged["basic"]}
-    assert results[15].value == pytest.approx(5.20971, abs=1e-4) and results[15].status == "fail"  # the recorded miss, #80
-    assert results[16].value == pytest.approx(41.1036, abs=1e-3) and results[16].status == "pass"
-    assert results[17].value == pytest.approx(6.08381, abs=1e-4) and results[17].status == "pass"
+    assert results[15].value == pytest.approx(2.26984, abs=1e-4) and results[15].status == "fail"  # the recorded miss, #80  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 5.20971
+    assert results[16].value == pytest.approx(81.9702, abs=1e-3) and results[16].status == "fail"  # S88: status was "pass" (#80); S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 41.1036
+    assert results[17].value == pytest.approx(2.65068, abs=1e-4) and results[17].status == "fail"  # S88 (#80, D255): was 6.08381, "pass" - the defaults' bar on Erwin's law; rows 16 and 17 recorded misses under #80

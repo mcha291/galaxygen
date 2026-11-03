@@ -171,6 +171,8 @@ describe("a template's pins (S58, D217 item 2)", () => {
       "Barred: yes (as observed)",
       "Angle of the bar to the Sun-centre line (a template's pin): 30° (as observed)",
       "Measured arm pieces (a template's pin): 6 rows by arm: Norma, Sct-Cen, Sgr-Car, Local, Perseus, Outer (as observed)",
+      // S87 (#80; the owner's ruling of 2026-11-03, D255): the Milky Way's measured bar half-length, in place of the law.
+      "Bar half-length (a template's pin): 5 kpc (as observed)",
     ]);
     expect(ngc.pins.map((p) => pinWords(p, FIELDS))).toEqual([
       "Barred: no (as observed)",

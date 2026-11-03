@@ -21,7 +21,8 @@ item 1, below).
 
 **A chain** (item 2) is pieces joined end to start, laid outward from its start: each piece's Δβ log-normal
 (median 60°, log-width 0.35, drawn again outside 20°-180°) and its pitch p(1 + 0.56 z), z a unit normal drawn
-again while the pitch is not positive (the gate's sixth follow-up, item 1: an arm's winding sense never reverses)
+again while the pitch is under 1° (the owner's ruling of 2026-11-03, D255, debt #209: a resolution floor; until
+S87 while it was not positive - the gate's sixth follow-up, item 1: an arm's winding sense never reverses)
 - S59's draws, now per arm as the sources measure them - and the chain's total length a normal, 273° ± 143° in a grand
 design and 244° ± 131° in a multi-armed disc, drawn again under 90° (the sources' definition of an arm), the last
 piece cut to it. A chain that has left the grid is not continued (no ring would cross the rest).
@@ -84,6 +85,10 @@ from galaxy.layer import compose as _compose
 from galaxy.stages.pattern import PIECE_FIELDS, PIECE_JOINS, bar_terms, rotation_sense
 
 MAX_DRAWS = 16  # how often an extent or a chain's length is drawn again before the stage raises (rule A1)
+# How often a piece's pitch deviate is drawn again before the stage raises (rule A1). S87 (#209): the floor takes
+# half the draws at a disc pitch on the 1 degree clip (z >= 0), so 16 would raise once in 65 536 pieces there; 64
+# leaves 2^-64. Every draw that met the floor at 16 meets it at the same deviate: the count changes no bits.
+MAX_PITCH_DRAWS = 64
 MAX_CHAIN_PIECES = 64  # the most pieces one laying holds: a length of 1280 degrees at the shortest extent
 GRAND_DESIGN, MULTI_ARMED, FLOCCULENT = ARM_CLASSES
 JOIN_NONE, JOIN_INNER, JOIN_OUTER = PIECE_JOINS
@@ -98,7 +103,7 @@ ADJACENT = 1e-9
 # and a flocculent piece's range.
 PIECE_CONSTANTS: tuple[str, ...] = (
     "ARM_SEGMENT_EXTENT_MEDIAN", "ARM_SEGMENT_EXTENT_LOG_SCATTER", "ARM_SEGMENT_EXTENT_MIN", "ARM_SEGMENT_EXTENT_MAX",
-    "ARM_SEGMENT_PITCH_RELATIVE_SCATTER",
+    "ARM_SEGMENT_PITCH_RELATIVE_SCATTER", "ARM_SEGMENT_PITCH_FLOOR",
     "ARM_CHAIN_LENGTH_GRAND_DESIGN", "ARM_CHAIN_LENGTH_GRAND_DESIGN_SCATTER",
     "ARM_CHAIN_LENGTH_MULTI_ARMED", "ARM_CHAIN_LENGTH_MULTI_ARMED_SCATTER", "ARM_CHAIN_LENGTH_MIN",
     "ARM_PIECE_FLOCCULENT_EXTENT_MIN", "ARM_PIECE_FLOCCULENT_EXTENT_MAX",
@@ -112,6 +117,7 @@ class Law:
 
     pitch_deg: float
     scatter: float            # the standard deviation of a piece's pitch over the disc's
+    floor: float              # the least drawn pitch, degrees (S87, #209: the owner's ruling, D255)
     extent_median: float
     extent_log_scatter: float
     extent_min: float
@@ -132,7 +138,7 @@ class Law:
         mean = c["ARM_CHAIN_LENGTH_GRAND_DESIGN"] if grand else c["ARM_CHAIN_LENGTH_MULTI_ARMED"]
         scatter = c["ARM_CHAIN_LENGTH_GRAND_DESIGN_SCATTER"] if grand else c["ARM_CHAIN_LENGTH_MULTI_ARMED_SCATTER"]
         return cls(
-            float(pitch_deg), c["ARM_SEGMENT_PITCH_RELATIVE_SCATTER"],
+            float(pitch_deg), c["ARM_SEGMENT_PITCH_RELATIVE_SCATTER"], c["ARM_SEGMENT_PITCH_FLOOR"],
             c["ARM_SEGMENT_EXTENT_MEDIAN"], c["ARM_SEGMENT_EXTENT_LOG_SCATTER"], c["ARM_SEGMENT_EXTENT_MIN"], c["ARM_SEGMENT_EXTENT_MAX"],
             float("nan") if flocculent else mean, float("nan") if flocculent else scatter, c["ARM_CHAIN_LENGTH_MIN"],
             c["ARM_PIECE_FLOCCULENT_EXTENT_MIN"], c["ARM_PIECE_FLOCCULENT_EXTENT_MAX"], flocculent,
@@ -266,17 +272,19 @@ def draw_piece(generator: Any, law: Law) -> tuple[float, float]:
     then the extent - log-normal about the median, drawn again while outside the sample's range, never clipped
     (S59's draw, D218 item 2); a flocculent disc's is uniform on its measured range instead.
 
-    **The deviate is drawn again while the pitch it makes, p(1 + 0.56 z), is not positive** (D219, the gate's
-    sixth follow-up, item 1: "an arm's winding sense never reverses - the sources measure the pitch's variation
-    along an arm, not a reversal of its sense, and a trailing arm stays trailing"), as the extent is drawn again
-    outside its range: the deviate's draws come first on the stream, then the extent's. A pinned piece keeps its
-    measured pitch and sign; it is not drawn here."""
-    for _ in range(MAX_DRAWS):
+    **The deviate is drawn again while the pitch it makes, p(1 + 0.56 z), is under the floor, 1°** (the owner's
+    ruling of 2026-11-03, D255, debt #209: the smallest non-reversed segment pitches the readers hold, a resolution
+    floor - ``ARM_SEGMENT_PITCH_FLOOR``). Until S87 it was drawn again while the pitch was not positive (D219, the
+    gate's sixth follow-up, item 1: "an arm's winding sense never reverses - the sources measure the pitch's
+    variation along an arm, not a reversal of its sense, and a trailing arm stays trailing"), which the floor
+    keeps. As the extent is drawn again outside its range: the deviate's draws come first on the stream, then the
+    extent's. A pinned piece keeps its measured pitch and sign; it is not drawn here."""
+    for _ in range(MAX_PITCH_DRAWS):
         deviate = float(generator.normal())
-        if law.pitch_deg * (1.0 + law.scatter * deviate) > 0.0:
+        if law.pitch_deg * (1.0 + law.scatter * deviate) >= law.floor:
             break
     else:
-        raise ArithmeticError(f"a piece's pitch {law.pitch_deg:g} * (1 + {law.scatter:g} z) fell at or under zero {MAX_DRAWS} times running")
+        raise ArithmeticError(f"a piece's pitch {law.pitch_deg:g} * (1 + {law.scatter:g} z) fell under {law.floor:g} degrees {MAX_PITCH_DRAWS} times running")
     if law.flocculent:
         return math.radians(law.flocculent_min + (law.flocculent_max - law.flocculent_min) * float(generator.random())), deviate
     for _ in range(MAX_DRAWS):
@@ -490,11 +498,16 @@ _CONSERVES = (
     "that ring, so the composed density contrast averages to 1 on every ring exactly, and no radial field, no "
     "scalar, no budget of arm power and no expected count of any census moves. It does not keep a ring's "
     "realised arm power at the budget: one galaxy's rings differ from it by what the composed stage publishes "
-    "beside it, ring by ring, and the census carries less than the budget - measured at S70 on the production "
-    "grid, the layer on, over the rings outside the bar with a budget (the realised variance summed over the "
-    "budget summed), 0.569 of the budget on the Milky Way template (96 rings, its texture seed 0; 0.677 at seed "
-    "4242) and 0.847 on NGC 4414's (133 rings, its seed 4414; 0.498 at 4242); Audit V's mesh read 0.53, 0.64 and "
-    "0.45 at other seeds (F-2-1, #195). Why: the budget is met in expectation by designed pieces alone - the law's "
+    "beside it, ring by ring, and the census carries less than the budget - measured at S88 on M1's final model "
+    "on the production grid, the layer on, over the rings outside the bar with a budget (the realised variance "
+    "summed over the budget summed), 0.589 of the budget on the Milky Way template (98 rings, its texture seed 0; "
+    "0.656 at seed 4242, 0.709 at 777) and 0.692 on NGC 4414's (133 rings, its own seed; 0.498 at 4242); Audit V's "
+    "mesh read 0.558 and 0.934 (the Milky Way at 4242 and 777) and 0.445 (NGC 4414 at 4242): 0.445 to 0.934 over "
+    "the seven runs S70 measured (S70: 0.45 to 0.85, the Milky Way 0.569 at seed 0; F-2-1, #195). The spread is the "
+    "census's draw, not a law's: one seed's chains and pieces move with the bar's length - the Milky Way at 777 on "
+    "Audit V's mesh carries 0.934 with its pinned 5.0 kpc bar (9 chains, 44 pieces), 0.695 with the law's 2.27 "
+    "kpc (11, 62) and 0.627 with the 5.21 kpc before #80 (11, 41) - and the mesh and the production grid draw "
+    "different censuses at one seed (0.709 at 777 on the grid). Why: the budget is met in expectation by designed pieces alone - the law's "
     "count of full-height ridges at the disc's own pitch at independent azimuths (stages/pieces.py, 'The budget, "
     "in expectation'); the census's pieces fade over their ends, are narrowed where chains crowd a ring, are cut "
     "by the saturation and lie off the disc's pitch, and each lowers a ring's variance (their shares not "
@@ -510,9 +523,10 @@ _STATISTIC = (
     "degrees - the reader's arithmetic on the 38 printed rows of one survey of four galaxies [verified: Honig & "
     "Reid 2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5; docs/READING_ARM_SEGMENTS.md A1.1]; its pitch the "
     "disc's times one plus 0.56 times a unit normal, independent from piece to piece, the normal drawn again "
-    "while the pitch it makes is not positive (an arm's winding sense never reverses: the sources measure how "
-    "the pitch varies along an arm, not a reversal of its sense; DECISIONS.md D219, the gate's sixth "
-    "follow-up) - the measured variation of the pitch along an arm, 0.56 +- 0.25 over Savchenko 2020's 67 stage-2 "
+    "while the pitch it makes is under 1 degree - the smallest non-reversed segment pitches the readers hold "
+    "(Reid et al. 2019 Table 2, Honig & Reid 2015), a resolution floor, the owner's ruling of 2026-11-03 "
+    "(DECISIONS.md D255, debt #209; until S87 while it was not positive, DECISIONS.md D219, the gate's sixth "
+    "follow-up: an arm's winding sense never reverses) - the measured variation of the pitch along an arm, 0.56 +- 0.25 over Savchenko 2020's 67 stage-2 "
     "galaxies (sections 3.3 and 4.2; was '155 galaxies', the whole sample - corrected at Audit V, S70) [verified: Savchenko, Marchuk, "
     "Mosenkov & Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; docs/READING_ARM_SEGMENTS.md A1.1]. A chain's "
     "whole length normal, 273 +- 143 degrees in a grand design and 244 +- 131 in a multi-armed disc, drawn again "
@@ -574,9 +588,9 @@ ARM_PIECE_START_AZIMUTH = _column(
 ARM_PIECE_PITCH = _column(
     "arm_piece_pitch", "Pitch of an arm piece", "deg",
     "The piece's own pitch angle: the disc's pitch times one plus the measured relative spread times a unit "
-    "normal draw, drawn again while the pitch it makes is not positive - an arm's winding sense never "
-    "reverses, so a drawn piece is always trailing, and a few come out nearly circular, as measured arms' "
-    "stretches do. A template's measured piece holds its fitted pitch, of either sign. The pitch sets how wide the piece lies on a ring and how hard it pulls the gas.",
+    "normal draw, drawn again while the pitch it makes is under 1 degree - an arm's winding sense never "
+    "reverses, so a drawn piece is always trailing, and none is flatter than the flattest measured stretch "
+    "(the owner's floor, S87). A template's measured piece holds its fitted pitch, of either sign. The pitch sets how wide the piece lies on a ring and how hard it pulls the gas.",
 )
 ARM_PIECE_EXTENT = _column(
     "arm_piece_extent", "Azimuthal extent of an arm piece", "rad",

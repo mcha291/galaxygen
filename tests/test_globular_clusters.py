@@ -124,17 +124,17 @@ def test_the_halo_relation_is_the_check_and_the_survival_misses_it_on_the_measur
     The physics behind the miss is #97's: the survivors are young open clusters, not globulars."""
     o, c = default, constants
     F = o.fields
-    assert F["gc_survival_fraction"] == pytest.approx(0.0250196, rel=1e-5)
-    assert F["bound_cluster_mass_total"] == pytest.approx(2.78579e9, rel=1e-5)  # S33's, unmoved (D182)
+    assert F["gc_survival_fraction"] == pytest.approx(0.0266360, rel=1e-5)  # S87 (#148): was 0.0250196 - the clock
+    assert F["bound_cluster_mass_total"] == pytest.approx(2.77940e9, rel=1e-5)  # S87 (#148): was 2.78579e9 - the clock  # S33's, unmoved (D182)
     mean = _mean(o, c)
-    assert mean == pytest.approx(6.96994e7, rel=1e-5)
+    assert mean == pytest.approx(7.40321e7, rel=1e-5)  # S87 (#148): was 6.96994e7 - the clock
     eta_m = c["GC_HALO_MASS_RATIO"] * F["halo_virial_mass"]
     assert eta_m == pytest.approx(3.19e7)  # 3.85e7 until S38
     dex = math.log10(mean / eta_m)
-    assert dex == pytest.approx(0.3394, abs=5e-4)  # 0.2578 until S38
+    assert dex == pytest.approx(0.3656, abs=5e-4)  # S87 (#148): was 0.3394 - the clock  # 0.2578 until S38
     assert dex > c["GC_SYSTEM_SCATTER"]  # outside the relation's own scatter on the measured eta (#105)
     # Before survival the bound mass was 72.4 x the adopted eta M_halo (D182), 87.3 x the measured one.
-    assert F["bound_cluster_mass_total"] / eta_m == pytest.approx(87.33, abs=0.01)
+    assert F["bound_cluster_mass_total"] / eta_m == pytest.approx(87.13, abs=0.01)  # S87 (#148): was 87.33 - the clock
 
 
 def test_the_survivors_are_mostly_young(default, constants):
@@ -149,14 +149,14 @@ def test_the_survivors_are_mostly_young(default, constants):
         return gc.survival_fraction(w, age, cc, 0.7) * w.sum() / per_step.sum()
 
     assert older_than(1.0) / total == pytest.approx(0.531, abs=1e-3)
-    assert older_than(10.0) / total == pytest.approx(0.0074, abs=5e-4)
+    assert older_than(10.0) / total == pytest.approx(0.0065, abs=5e-4)  # S87 (#148): was 0.0074 - the clock
     bound = o.fields["bound_cluster_mass_total"]
     eta_m = c["GC_HALO_MASS_RATIO"] * o.fields["halo_virial_mass"]
-    assert math.log10(older_than(10.0) * bound / eta_m) == pytest.approx(-1.790, abs=2e-3)  # -1.872 until S38 (eta 3.5e-5)
+    assert math.log10(older_than(10.0) * bound / eta_m) == pytest.approx(-1.822, abs=2e-3)  # S87 (#148): was -1.790 - the clock  # -1.872 until S38 (eta 3.5e-5)
     # The N-body tidal-field time-scale (Lamers et al.: 'a factor 5 shorter than derived from N-body'):
     slow = dict(c, CLUSTER_DISRUPTION_T0=5.0 * c["CLUSTER_DISRUPTION_T0"])
-    assert math.log10(older_than(10.0, slow) * bound / eta_m) == pytest.approx(0.167, abs=2e-3)  # 0.085 until S38 (eta 3.5e-5)
-    assert gc.survival_fraction(per_step, age, slow, 0.7) / total == pytest.approx(6.14, abs=0.01)
+    assert math.log10(older_than(10.0, slow) * bound / eta_m) == pytest.approx(0.123, abs=2e-3)  # S87 (#148): was 0.167 - the clock  # 0.085 until S38 (eta 3.5e-5)
+    assert gc.survival_fraction(per_step, age, slow, 0.7) / total == pytest.approx(5.976, abs=0.01)  # S87 (#148): was 6.14 - the clock
 
 
 def test_the_residual_is_a_seeded_lognormal_on_world_seed(models, constants):
@@ -195,8 +195,8 @@ def test_the_stellar_halo_is_the_accreted_debris(default, coarse, constants):
     per_step = sh.formed_per_step(F["stars_formed_history"], default.grid.R)
     t = default.grid.t
     assert per_step[t < 3.8].sum() == pytest.approx(9.625e9, rel=1e-3)
-    assert per_step[t < 8.8].sum() == pytest.approx(3.1086e10, rel=1e-3)
-    assert F["halo_stellar_mass"] == pytest.approx(3.02802e9, rel=1e-5)
+    assert per_step[t < 8.8].sum() == pytest.approx(3.1277e10, rel=1e-3)  # S87 (#148): was 3.1086e10 - the clock
+    assert F["halo_stellar_mass"] == pytest.approx(3.03397e9, rel=1e-5)  # S87 (#148): was 3.02802e9 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 3.03401e9
 
 
 def test_the_halo_profile_holds_the_halo_mass(default, constants):
@@ -215,7 +215,7 @@ def test_the_halo_profile_holds_the_halo_mass(default, constants):
     inside = (R > 1.0) & (R < 20.0)
     slope = np.diff(np.log(d[inside])) / np.diff(np.log(R[inside]))
     assert np.allclose(slope, inner)
-    assert float(np.interp(8.2, R, d)) == pytest.approx(1.444e-4, rel=1e-3)  # Msun/pc^3 in the plane at R0
+    assert float(np.interp(8.2, R, d)) == pytest.approx(1.447e-4, rel=1e-3)  # S87 (#148): was 1.444e-4 - the clock  # Msun/pc^3 in the plane at R0
     with pytest.raises(ValueError):
         sh.broken_power_law_norm(1.0, -3.5, -4.5, 25.0, 0.65)
 
@@ -237,8 +237,8 @@ def test_rows_32_and_33_are_recorded_misses(judged):
     for name, results in judged.items():
         by_n = {r.n: r for r in results}
         r32, r33 = by_n[spec.ROW_GC_SYSTEM_MASS], by_n[spec.ROW_STELLAR_HALO_MASS]
-        assert r32.status == "fail" and r32.value == pytest.approx(7.13032e7, rel=1e-5)
-        assert r33.status == "fail" and r33.value == pytest.approx(3.02802e9, rel=1e-5)
+        assert r32.status == "fail" and r32.value == pytest.approx(7.57357e7, rel=1e-5)  # S87 (#148): was 7.13032e7 - the clock
+        assert r33.status == "fail" and r33.value == pytest.approx(3.03397e9, rel=1e-5)  # S87 (#148): was 3.02802e9 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 3.03401e9
     assert spec.MISSES[spec.ROW_GC_SYSTEM_MASS].debt == 98 and spec.MISSES[spec.ROW_GC_SYSTEM_MASS].since == "S34"
     assert spec.MISSES[spec.ROW_STELLAR_HALO_MASS].debt == 99 and spec.MISSES[spec.ROW_STELLAR_HALO_MASS].since == "S34"
     q33 = {x.n: x for x in spec.QUANTITIES}[spec.ROW_STELLAR_HALO_MASS]

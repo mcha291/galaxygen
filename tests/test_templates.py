@@ -65,7 +65,8 @@ B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} f
 # Reid et al. 2019's Table 2 the template pins, the four major arms (Norma and the Outer arm as two chains) and the
 # Local arm - and NGC 4414's its observed arm class, a name.
 MW_ARMS = tuple(row for row in templates.REID_2019_TABLE2 if row[0] in templates.MILKY_WAY_PINNED_ARMS)
-MW_PINS = {"bar_present": True, "sun_bar_angle": 30.0, "arm_pieces": MW_ARMS}
+# S87 (#80, the owner's ruling of 2026-11-03, D255): and the Milky Way's measured bar half-length, 5.0 kpc, in place of Erwin 2019's law (2.27 on its disc).
+MW_PINS = {"bar_present": True, "bar_half_length": 5.0, "sun_bar_angle": 30.0, "arm_pieces": MW_ARMS}
 # S70 (D234; the owner's ruling D233 on #192): was without "molecular_ring" - NGC 4414 pins its own molecular ring.
 NGC_PINS = {"bar_present": False, "pitch_angle": 28.9, "arm_class": "flocculent", "molecular_ring": ((0.43, 4.29),)}
 assert len(MW_ARMS) == 6 and [row[0] for row in MW_ARMS] == ["Norma", "Sct-Cen", "Sgr-Car", "Local", "Perseus", "Outer"]
@@ -105,7 +106,8 @@ def test_two_templates_are_registered_and_the_default_leads():
         # observed arm class (a name).
         assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == (
             # S70 (D234): NGC 4414 was without "molecular_ring" (its own ring, #192).
-            ["bar_present", "sun_bar_angle", "arm_pieces"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class", "molecular_ring"]
+            # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way was without "bar_half_length", its measured bar, pinned last.
+            ["bar_present", "sun_bar_angle", "arm_pieces", "bar_half_length"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class", "molecular_ring"]
         )
     # S67 (D227 T1): was ("rgb", "wfc3") - the owner's "Switch to RGB": NGC 4414 opens on RGB, and its instrument
     # names its own set, WFC3, where the PSF and the spikes draw.
@@ -216,7 +218,13 @@ def test_a_pin_is_a_measured_fact_with_its_source_and_replaces_nothing_but_the_v
 def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     """The gate (BUILD_III Phase T): every published field of the whole pipeline on the production grid."""
     model = prod[0].get(MILKY_WAY.model)
-    bare = run(model)
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `bare = run(model)`. The template pins its bar's measured half-length, 5.0 kpc, where the model's
+    # law of the disc's scale length gives 2.27: the template is no longer the bare defaults, the layer off too -
+    # every field downstream of the bar's length differs. What this gate still says is that the template is the
+    # bare defaults **and its measured bar**: run with the same length pinned, the bare run below is its twin.
+    law = run(model, layer=False, only=("bar_half_length",))
+    assert float(law.fields["bar_half_length"]) == pytest.approx(2.2698, abs=1e-4)
+    bare = run(model, {"bar_half_length": 5.0})
     named = run(model, templates.resolve(MILKY_WAY))
     # S58 (D217 item 2): was `named.inputs == bare.inputs`. The template pins the Milky Way barred; the bare run
     # pins nothing and derives - barred, at the defaults - so the two differ by the pin among their inputs and
@@ -232,7 +240,10 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # the layer off the two are still bit-identical but for the Sun's azimuth, and that is the run the acceptance
     # table is judged on (below).
     assert named.inputs == {**bare.inputs, **MW_PINS} and "bar_present" not in bare.inputs and named.order == bare.order
-    assert math.isnan(float(bare.fields["sun_azimuth"])) and float(named.fields["sun_azimuth"]) == pytest.approx(1.09539, abs=2e-5)
+    assert bare.inputs["bar_half_length"] == named.inputs["bar_half_length"] == 5.0  # S87 (#80): the twin's one pin
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was 1.09539 - the bar's angle is a closed form of its half-length and the pitch (pattern.bar_terms), and
+    # the half-length is the pinned 5.0 where it was 5.2097: the Sun stands 30 degrees from a bar that turned.
+    assert math.isnan(float(bare.fields["sun_azimuth"])) and float(named.fields["sun_azimuth"]) == pytest.approx(0.92475, abs=2e-5)
     assert bare.fields["bar_present"] == named.fields["bar_present"] == "yes"
     assert set(named.fields) == set(bare.fields) and len(bare.fields) > 300
     differ = {name for name, value in bare.fields.items() if not same(value, named.fields[name])}
@@ -306,8 +317,9 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
         assert abs(a - b) <= 4.0 * float(np.spacing(max(abs(a), abs(b)))), (name, a, b)
     arrays = sum(isinstance(v, np.ndarray) for v in bare.fields.values())
     assert arrays > 150  # the comparison is on arrays, not on a handful of scalars
-    # ... and with the layer off, the run the acceptance table is judged on: bit-identical but for the Sun.
-    off, named_off = run(model, layer=False), run(model, templates.resolve(MILKY_WAY), layer=False)
+    # ... and with the layer off, the run the acceptance table is judged on: bit-identical but for the Sun. S87 (#80, D255):
+    # was `run(model, layer=False)` - the twin with the same bar length pinned; the bare defaults read the law (2.27 kpc).
+    off, named_off = run(model, {"bar_half_length": 5.0}, layer=False), run(model, templates.resolve(MILKY_WAY), layer=False)
     for name, value in off.fields.items():
         assert name == "sun_azimuth" or same(value, named_off.fields[name]), f"{name} differs between the template and the bare run, layer off"
     assert float(named_off.fields["sun_azimuth"]) == float(named.fields["sun_azimuth"])  # a law's number: the layer does not move it
@@ -345,7 +357,8 @@ def test_ngc_4414_states_the_controls_its_targets_measure_and_invents_nothing():
     assert dict(NGC_4414.seeds) == {s.name: 4414 for s in seeds()}  # a new seed in the registry fails here
     assert NGC_4414.mergers == ()
     # S59 (D218): the Sun is the Milky Way's. S60 (D219 item 8): and so are the measured arms.
-    assert set(resolved) == set(INPUTS) - {"sun_bar_angle", "arm_pieces"} and resolved["mergers"] == ()
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): and so is the measured bar length - NGC 4414 has no bar.
+    assert set(resolved) == set(INPUTS) - {"sun_bar_angle", "arm_pieces", "bar_half_length"} and resolved["mergers"] == ()
     # S58 (D217 item 2): the pin joins what the template states - a measured class, not a control.
     # S59 (D218 item 6): and the measured mean pitch. S60 (D219 item 3): and the observed arm class.
     assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers", *NGC_PINS} and {n: given[n] for n in NGC_PINS} == NGC_PINS
@@ -508,8 +521,13 @@ def tiling_error(inputs: dict) -> tuple[float, float]:
         model = api.models.get(DEFAULT_MODEL)
         constants = {k: c.value for k, c in model.constants.items()}
         accepted = set(model.input_names(api.table))
+        # S88: and the spurs' rows, which the census's pattern composes (compose.gas_pattern reads them when present) -
+        # the header's total is the full run's; without them this read the unspurred sector means, which agreed with
+        # the header to the bit until M1's final model and land one unit in the last place apart on it
+        # (16473.30405497519 against 16473.304054975186, the Milky Way template, SMALL; measured, s88_probe_named).
+        from galaxy.layer import spurs as layer_spurs
         o = run(model, {k: v for k, v in inputs.items() if k in accepted}, SMALL,
-                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS))
+                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS, *(d.name for d in layer_spurs.GAS_SPUR_COLUMNS)))
         R = o.grid.R
         rings, sectors = clouds.cell_edges(R)
         gp = compose.gas_pattern(o.fields, R, constants)
@@ -621,7 +639,9 @@ def test_a_pin_is_given_by_a_template_and_by_no_query_parameter():
     bare, mw, ngc = (api.handle("/api/arrays", wanted + extra).frame()[0] for extra in ("", "&template=milky_way", "&template=ngc_4414"))
     assert (bare["scalars"]["bar_present"], mw["scalars"]["bar_present"], ngc["scalars"]["bar_present"]) == ("yes", "yes", "no")
     assert "bar_present" not in bare["inputs"] and mw["inputs"]["bar_present"] is True and ngc["inputs"]["bar_present"] is False
-    assert bare["scalars"]["bar_half_length"] == mw["scalars"]["bar_half_length"] and ngc["scalars"]["bar_half_length"] is None
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `bare == mw` - the Milky Way pins its measured 5.0 kpc; the bare disc reads Erwin 2019's law.
+    assert bare["scalars"]["bar_half_length"] == pytest.approx(2.2698, abs=1e-4) and mw["scalars"]["bar_half_length"] == 5.0
+    assert ngc["scalars"]["bar_half_length"] is None and "bar_half_length" not in bare["inputs"] and mw["inputs"]["bar_half_length"] == 5.0
     assert ngc["scalars"]["bar_formation_time"] == pytest.approx(0.905, abs=0.01)  # published beside the pin
     # "Edit galaxy" from a template keeps its pin: the query moves a control, the template still says the class.
     edited = api.handle("/api/arrays", wanted + "&template=ngc_4414&halo_mass=2e12").frame()[0]

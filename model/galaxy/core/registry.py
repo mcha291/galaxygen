@@ -237,6 +237,32 @@ class Input:
 
 
 @dataclass(frozen=True, slots=True)
+class EventField:
+    """One number of a merger event and the range ``MergerEvent`` holds it to (S86, debt #186): published on the
+    wire beside the event list's default (``/api/inputs``), so a client can refuse a bad event before it sends one,
+    as it refuses a control outside its range. ``lo_open`` excludes ``lo`` itself; ``hi`` None is no upper end."""
+
+    name: str
+    unit: str
+    lo: float
+    hi: float | None
+    lo_open: bool = False
+
+    def admits(self, value: float) -> bool:
+        above = self.lo < value if self.lo_open else self.lo <= value
+        return bool(above and (self.hi is None or value <= self.hi))
+
+
+# The ranges a merger event's numbers are held to, in the event's order - the one statement of them: MergerEvent checks
+# against these and /api/inputs publishes them (S86, #186; until then the ranges lived in the checks' words alone).
+EVENT_FIELDS: tuple[EventField, ...] = (
+    EventField("time", "Gyr", 0.0, None),            # cosmic time, t = 0 at the Big Bang: not negative
+    EventField("mass_ratio", "dimensionless", 0.0, 1.0, lo_open=True),  # satellite : host, in (0, 1]
+    EventField("gas_fraction", "dimensionless", 0.0, 1.0),  # a share of the remaining baryon budget, in [0, 1]
+)
+
+
+@dataclass(frozen=True, slots=True)
 class MergerEvent:
     """One entry in the ``mergers`` event list (ruling 11).
 
@@ -252,11 +278,14 @@ class MergerEvent:
     about: str = ""
 
     def __post_init__(self) -> None:
-        if not 0.0 <= self.time:
+        # S86 (#186): the ranges are EVENT_FIELDS', the same the wire publishes; the words are the ones these checks
+        # have always raised.
+        time, ratio, gas = EVENT_FIELDS
+        if not time.admits(self.time):
             raise RegistryError(f"merger at t={self.time}: time is cosmic time and cannot be negative")
-        if not 0.0 < self.mass_ratio <= 1.0:
+        if not ratio.admits(self.mass_ratio):
             raise RegistryError(f"merger at t={self.time}: mass_ratio must be in (0, 1]")
-        if not 0.0 <= self.gas_fraction <= 1.0:
+        if not gas.admits(self.gas_fraction):
             raise RegistryError(f"merger at t={self.time}: gas_fraction must be in [0, 1]")
 
 
@@ -663,6 +692,25 @@ _INPUTS: tuple[Input, ...] = (
         "request offers it: the API takes it from template=<name> alone, it has no range and no default, and "
         "it does not count against the ceiling. An input that is not given is not among a run's inputs.",
         default=None,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "bar_half_length",
+        "Bar half-length (a template's pin)",
+        "pin",
+        "A pin, not a control (S87, the owner's ruling of 2026-11-03, D255, on debt #80): the measured half-length "
+        "of one named galaxy's bar, in kpc, with its source, stated by a template in place of the length the model "
+        "derives from the disc's scale length (Erwin 2019's law). It replaces the derived value in the published "
+        "bar_half_length - the bar's body, its lanes, its footprint, its corotation and pattern speed, and the arms "
+        "born at its ends all read it - and is not used where the galaxy has no bar. A measured length entering as "
+        "template structure, as the bar's presence does: nothing is fitted. Given by no template, nothing is "
+        "pinned and the law stands. It is held to 0.1 to 30 kpc - from a bar under a grid ring's width to the "
+        "grid's edge - and refused outside it, by a template and by a run. No request offers it: the API takes it "
+        "from template=<name> alone, it has no default, and it does not count against the ceiling.",
+        unit="kpc",
+        default=None,
+        lo=0.1,
+        hi=30.0,
         checkpoint_hypothesis=3,
     ),
     Input(

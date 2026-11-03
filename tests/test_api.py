@@ -526,6 +526,29 @@ def test_inputs_publishes_every_default_and_every_range(api, model):
     events = payload["events"][0]
     assert events["name"] == "mergers" and len(events["default"]) == 2
     assert {"time", "mass_ratio", "gas_fraction", "about"} == set(events["default"][0])
+    # S86 (debt #186): each event number's range travels beside the default, as a control's does - and it is the range
+    # the API refuses by: at each published end the event is taken (or, where the end is open, refused) and just past
+    # it refused with a 400's reason, through the parser a Generate's events go through.
+    from galaxy.api import service as service_mod
+
+    fields = {f["name"]: f for f in events["fields"]}
+    assert list(fields) == ["time", "mass_ratio", "gas_fraction"] and all(set(f) == {"name", "unit", "lo", "hi", "lo_open"} for f in fields.values())
+    assert [(f["unit"], f["lo"], f["hi"], f["lo_open"]) for f in fields.values()] == [
+        ("Gyr", 0.0, None, False), ("dimensionless", 0.0, 1.0, True), ("dimensionless", 0.0, 1.0, False)]
+    good = {"time": 5.0, "mass_ratio": 0.5, "gas_fraction": 0.5}
+
+    def taken(**one) -> bool:
+        try:
+            service_mod._events("mergers", json.dumps([{**good, **one}]))
+        except service_mod.BadRequest:
+            return False
+        return True
+
+    for name, f in fields.items():
+        assert taken(**{name: f["lo"]}) is not f["lo_open"] and not taken(**{name: f["lo"] - 1e-9}), name
+        if f["hi"] is not None:
+            assert taken(**{name: f["hi"]}) and not taken(**{name: f["hi"] + 1e-9}), name
+    assert all(taken(**{n: v}) for n, v in good.items())
 
 
 def test_the_api_publishes_no_model_internals(api):

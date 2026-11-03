@@ -1338,12 +1338,21 @@ class GasPattern:
         the pieces' differing turns from where this method puts them - so a piece between two breaks holds at
         most a kink or two of a profile that bends little there: what that leaves is measured in the tests.
         One turn's worth each, not wrapped into any range. ``bar`` is the caller's to drop where no ring it
-        reads holds a footprint that is not uniform; an unbarred pattern has none."""
+        reads holds a footprint that is not uniform; an unbarred pattern has none.
+
+        **At a solved ring's radius the ring's own anchors alone** (S88): the point reads that ring and nothing of
+        its neighbour (the share is 0 or 1), so the neighbour's anchors are not breaks of what is read. Until S88
+        both bracketing rings' anchors were taken there, and the neighbour above a grid ring is the next grid ring
+        or a mid-gap one depending on whether the store's mid-gap rings had been looked for yet - by an earlier
+        reader in the process, through the content-keyed store - so a quadrature on a grid ring (the published
+        ``sfr_modulation``, S86's cell means) was cut at different breaks in a cold and a warm process: the same
+        inputs gave bits 8.4e-13 apart (``galaxy.specs.determinism``'s two identical runs, found at S88)."""
         R = np.asarray(R, dtype=float)
         centres = _response.cell_centres(CELLS)
         parts = [np.broadcast_to(centres[None, :], (R.size, CELLS))]
         if self.stars is not None and self.stars.pieces.most:
-            lower, upper, _ = self._between(R)
+            lower, upper, share = self._between(R)
+            lower, upper = np.where(share >= 1.0, upper, lower), np.where(share <= 0.0, lower, upper)
             for ring in (lower, upper):
                 anchors, _, first, _, _ = self._anchors(ring, R)
                 parts.append(np.where(np.isfinite(anchors), anchors, first[:, None])[:, :-1])

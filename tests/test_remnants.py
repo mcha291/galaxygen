@@ -234,10 +234,10 @@ def test_the_locked_mass_is_what_the_model_counts_and_what_it_is_made_of(runs):
         assert b.locked == pytest.approx(float(o.fields["stellar_mass_total"]), rel=1e-12)
         assert float(o.fields["remnant_mass_fraction"]) == b.remnant_fraction
         assert ratio == pytest.approx(RECONCILED, abs=2e-4)
-        assert 1.0 - (b.living + b.remnant) / b.formed == pytest.approx(0.4147, abs=2e-4)
+        assert 1.0 - (b.living + b.remnant) / b.formed == pytest.approx(0.4137, abs=2e-4)  # S87 (#148): was 0.4147 - the clock
 
 
-RECONCILED = 0.83615  # S29, coarse grid: (living + remnant) / stellar_mass_total
+RECONCILED = 0.83760  # S87 (#148): was 0.83615 - the clock  # S29, coarse grid: (living + remnant) / stellar_mass_total
 
 
 def test_the_published_scalars(runs):
@@ -247,8 +247,8 @@ def test_the_published_scalars(runs):
     for name, o in runs.items():
         fraction, pne = float(o.fields["remnant_mass_fraction"]), float(o.fields["planetary_nebula_count"])
         print(f"{name}: remnant_mass_fraction {fraction:.6f}, planetary_nebula_count {pne:.1f}")
-        assert fraction == pytest.approx(0.21460, abs=5e-5)
-        assert pne == pytest.approx(14731.4, abs=5.0)
+        assert fraction == pytest.approx(0.21257, abs=5e-5)  # S87 (#148): was 0.21460 - the clock
+        assert pne == pytest.approx(15369.7, abs=5.0)  # S87 (#148): was 14731.4 - the clock
 
 
 def test_the_sample_agrees_with_the_integral(runs):
@@ -293,10 +293,10 @@ def test_the_solar_neighbourhood_for_audit_iii(runs):
     white = local[k["white_dwarf"]]
     total = local[k["living"]] + local[[k["white_dwarf"], k["neutron_star"], k["black_hole"]]].sum()
     print(f"R = {R[at]:.2f} kpc: Sigma_WD {white:.3f} Msun/pc2 of {total:.3f}, share {white / total:.4f}")
-    assert white == pytest.approx(4.757, abs=5e-3)
+    assert white == pytest.approx(4.677, abs=5e-3)  # S87 (#148): was 4.757 - the clock
     assert white / total == pytest.approx(LOCAL_WD_SHARE, abs=5e-4)
 
 
 # S29, coarse grid, R = 8.12 kpc: Σ_WD 4.757 M☉/pc² of 32.068 in stars and remnants. Seen after the ruling
 # that no row is added here, and so left to Audit III rather than made a row by this session (D113).
-LOCAL_WD_SHARE = 0.1483
+LOCAL_WD_SHARE = 0.1459  # S87 (#148): was 0.1483 - the clock (S29: 0.1483)

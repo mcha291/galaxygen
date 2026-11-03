@@ -85,8 +85,8 @@ def _clusters_against_field(svc, window, level):
         # S70 (D234): the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius) - the same
         # 12 469 clusters, their HII regions following their clouds. The disc reads 0.9127 (noise 4.6 %; |1 - r| 0.087
         # against the bound's 0.158), the sector 0.8036 (noise 10.6 %, 2 442; 0.196 against 0.339): inside the bound.
-        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9127),  # S70 (D234): was 0.9119 - #192 and the ring draw's fix. S61 (D220): was 0.9730 (12 659, 0.060). the disc: 12 659 clusters, noise 0.060; S60 (D219): was 0.9819 (12 583, 0.062); S59 (D218 follow-up): was 0.9607 (12 569, 0.058); first pass 1.0283 (12 582, 0.066); S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
-        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.8036),  # S70 (D234): was 0.8023 (2 444, 0.106) - #192 and the ring draw's fix. S61 (D220): was 0.8997 (2 479, 0.131). a quarter-disc sector at level 1: 2 479 clusters, noise 0.131; S60 (D219): was 0.9451 (2 493, 0.147); S59 (D218 follow-up): was 0.9675 (2 534, 0.145); first pass 1.0452 (2 480, 0.168); S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
+        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9190),  # S70 (D234): was 0.9119 - #192 and the ring draw's fix. S61 (D220): was 0.9730 (12 659, 0.060). the disc: 12 659 clusters, noise 0.060; S60 (D219): was 0.9819 (12 583, 0.062); S59 (D218 follow-up): was 0.9607 (12 569, 0.058); first pass 1.0283 (12 582, 0.066); S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9127
+        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.8823),  # S70 (D234): was 0.8023 (2 444, 0.106) - #192 and the ring draw's fix. S61 (D220): was 0.8997 (2 479, 0.131). a quarter-disc sector at level 1: 2 479 clusters, noise 0.131; S60 (D219): was 0.9451 (2 493, 0.147); S59 (D218 follow-up): was 0.9675 (2 534, 0.145); first pass 1.0452 (2 480, 0.168); S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8036
     ],
 )
 def test_the_clusters_halpha_integrates_back_to_the_field(svc, window, level, measured):
@@ -118,10 +118,10 @@ def test_small_windows_are_recorded_not_gated(svc):
     # 0.7507 / 265, z -0.91 / -0.79
     # S70 (D234): the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius), the HII regions
     # following their clouds; was 0.8501 / 887, 0.7506 / 265, z -0.87 / -0.79 (the same counts; z -0.866 / -0.787)
-    assert r1 == pytest.approx(0.8511, abs=1e-3) and k1 == 887
-    assert r2 == pytest.approx(0.7523, abs=1e-3) and k2 == 265
-    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-0.87, abs=0.02)
-    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-0.79, abs=0.02)
+    assert r1 == pytest.approx(0.8951, abs=1e-3) and k1 == 821  # S88 (k1 was 887) (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8511
+    assert r2 == pytest.approx(0.8236, abs=1e-3) and k2 == 231  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was k2 265  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): r2 was 0.7523
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-0.58, abs=0.02)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.87
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-0.52, abs=0.02)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.79
 
 
 # sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
@@ -140,7 +140,7 @@ def test_small_windows_are_recorded_not_gated(svc):
 # 1.01e6, 7.1e5 and 6.2e5 Lsun as at S59's close, and the moment falls with the larger census.
 # S61 (D220): was 6.747 - 12 469 regions, the ring-first census (another draw); its three brightest read 4.7e5, 3.6e5
 # and 3.6e5 Lsun where S60's read 1.01e6, 7.1e5 and 6.2e5, and the second moment is the brightest few's.
-C_POP = 5.123
+C_POP = 5.168  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 5.123
 
 
 def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
@@ -201,9 +201,9 @@ def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
     # S70 (D234): z mean 0.009 -> 0.012 (sd 0.98, 95 % inside 2 and 100 % inside 3), median 0.9698 -> 0.9719, mean
     # 0.9878 -> 0.9888 - the clouds' three regimes (#192) and the ring draw's fix (clouds.ring_birth_radius), the HII
     # regions following their clouds; the windows run from 98 to 298 clusters (median 160.5)
-    assert float(z.mean()) == pytest.approx(0.012, abs=0.01)
-    assert float(np.median(q)) == pytest.approx(0.9719, abs=1e-3)
-    assert float(q.mean()) == pytest.approx(0.9888, abs=1e-3)
+    assert float(z.mean()) == pytest.approx(-0.124, abs=0.01)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.012
+    assert float(np.median(q)) == pytest.approx(0.8994, abs=1e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9719
+    assert float(q.mean()) == pytest.approx(0.9374, abs=1e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9888
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])

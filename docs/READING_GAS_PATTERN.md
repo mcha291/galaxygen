@@ -552,3 +552,51 @@ Method: every arXiv source below was fetched as the full PDF from `https://arxiv
 - For gas vs potential, the Egusa 2017 scaling of Baba 2015 applies: offset(gas−star) ≈ −(90/0.8)·(r/R_CR − 0.5) degrees, for 0.1–0.9 R_CR. The shock is on the inner (concave) edge inside corotation (Roberts 1969 via Gittins & Clarke 2004).
 - Measured t_SF: 1–4 Myr (HI→24 µm, Tamburro); about 5–30 Myr (CO→Hα, Egusa 2009); 2–12 Myr (CO→Hα, Querejeta 2025).
 - The law needs Ω_p. The model publishes Ω_p only for the bar, and Querejeta 2025 (NGC 4303) found the spiral corotation (5.9 kpc) well outside the bar's (3.4 ± 0.2 kpc). So this law cannot be borrowed from the bar. It should stay a recorded, unadopted alternative.
+
+---
+
+# Reading D — S87 (BUILD_V M1): the ridge's width over the spacing, the per-galaxy contrasts, the atomic gas's dispersion — re-read here
+
+**The lead's note (2026-11-03).** No web access this session. This is a re-reading of Readings A–C above, and of the
+other readers, for the questions debts #129, #130 and #131 carry from S86; nothing below was fetched, each tag is the
+one the readers wrote, and the arithmetic is the lead's `[inferred]`. What is not in the repository is said so: the
+owner's readings.
+
+**D1. #129 — a sample-wide gas ridge width over the arm spacing, with its spread.** What the readers hold:
+- PHANGS's ridge ("narrow") masks: "typical widths between 500 and 1000 pc, so about half the width of the original
+  masks" — top-hat full widths of the union of CO and Hα ridges, dilated by a 7.5″ Gaussian that sets a floor; no
+  radial trend, no per-galaxy list, no arm spacing beside them `[verified: Querejeta et al. 2024, Appendix E —
+  Reading B §2]`. Reading B's own bracket from them, ≳ 0.12 of the spacing, rests on the broad masks' area share
+  (≥ 0.24) and is a bound, not a distribution (Reading B, recommendation 1).
+- Theory and single galaxies: Egusa et al. 2017's M51 inner arms, gas FWHM ≈ 30° of 180° = 0.17 (the check's target);
+  Kim, Kim & Ostriker 2010's 3D arm 10 % of the arm-to-arm distance; Kim & Ostriker 2002's W/L_x 0.05–0.16 (Reading B).
+- The model's side (S86, `tests/test_gas_pattern.py`): the width by the strongest forcing 0.3675 at the median on the
+  Milky Way template (0.074–0.530) and 0.390 on `ngc_4414` (0.270–0.752), FWHM over the mode's period.
+
+**No sample-wide distribution of ridge width over spacing is in the repository** — the PHANGS masks are not fitted
+profiles and no reader printed them per galaxy against an arm number or a pitch. The closer stays unread. The owner's
+reading: Querejeta et al. 2024's Appendix E per galaxy, with Stuber et al. 2023's arm classes or the S⁴G pitches
+(Herrera-Endoqui et al. 2015) to turn a width into a fraction of L⊥ = 2πR sin p / m; or a PHANGS paper that fits the
+CO ridge's profile across the arm.
+
+**D2. #131 — the per-galaxy contrasts behind Querejeta et al. 2024's table.** What the readers hold is grouped, never
+per galaxy: grand designs 2.73 (1.37–5.79) against the rest 1.90 (1.12–2.94), high stellar mass 2.70 against low 1.80,
+the narrow masks 2.53, 1.5 kpc resolution 1.49 — each a median and 16th–84th percentiles **over segments and radial
+bins** (Reading A, Table 1). The one population relation with a spread is Meidt et al. 2021's, log C_CO = 1.41 log
+C_3.6 + 0.31 with ~0.15 dex scatter, over 1527 radial bins of 67 galaxies, and its contrast is percentile-based (the
+84th percentile over the mean below it), not a ratio of masked means (Reading A §3). It is the nearest thing to the
+question S86 left — whether the response's spread at a given stellar contrast matches what galaxies show — but it is
+not the same statistic, and a comparison would need the model's 84th-percentile contrast per 150 pc annulus: an
+instrument to build, not a reading. **The per-galaxy means are not in the repository**: the owner's reading
+(Querejeta et al. 2024's per-galaxy figure or its data).
+
+**D3. #130 — the atomic gas's velocity dispersion, from a source.** The second response the entry designs needs the
+atomic gas's dispersion with a tag. What the repository holds: no reader prints one. Corbelli et al. 2018 (M33) say
+"the HI dispersion stays flat" with outward radius, with no number in the text read `[verified: READING_GAS_SPECTRA.md]`;
+the model's own `GAS_DISPERSION` (6 km/s, the cold gas Kennicutt 1989 fitted the threshold at) carries "The Milky Way's
+HI reads 7-10 at R_0 and rises inward" as `[recall]` in its about line (`models/level0.py`); every 10 km/s elsewhere
+in the readers is a simulation's sound speed (KSK12, Kim & Kim 2014, KO02) or a drift velocity, not a measured HI
+dispersion. **So the dispersion is not read, and the second response is not built** (the entry's own condition, S86).
+The owner's reading: a measured HI velocity dispersion with its radial behaviour, from the THINGS / HERACLES
+dispersion maps and stacks `[recall — NOT READ: Tamburro et al. 2009; Ianjamasimanana et al. 2012; Mogotsi et al.
+2016 — names only, none in any reader]`.

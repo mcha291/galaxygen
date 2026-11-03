@@ -32,7 +32,10 @@ CASES = [(t, layer) for t in ("milky_way", "ngc_4414") for layer in ("on", "off"
 # The render's stages at 01c4d4e, before the share (tools/timings.py "render: whole, rgb", a fresh process): the
 # clouds stage is among them because the nebular line is redistributed from the census (checkpoint 5) - the share
 # adds none.
-RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
+# S88: was with "gas_pattern" after "arm_pieces" - since S86 (#154's table, f9d8502) sfh_azimuthal reads the gas
+# pattern's own reads and builds the pattern itself (GAS_PATTERN_READS), so the route asks the gas_pattern stage for
+# no field and a fresh service does not run it (D4); measured on a fresh service at S88, layer on and off alike.
+RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces",
                  "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs", "vertical_alpha",
                  "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular"]
 # S66 (D226 R6; the review's M1): the render ran gas_fluctuation on every request - its header carried the field's
@@ -41,8 +44,8 @@ RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "patter
 # recorded in D224, not targets: the realised share is the census's draw, the expected the ring's molecular fraction).
 # S70 (D234): was {"milky_way": 0.4899973, "ngc_4414": 0.6327142} - the clouds' ring inversion on the ring's own interval
 # (Audit V F-2-7) moves the birth radius each cloud's dust-to-gas ratio is read at; the masses and #192's sizes do not enter.
-CLOUDS_SHARE_DISC = {"milky_way": 0.4922158, "ngc_4414": 0.6379672}
-EXPECTED_FIRST_THREE = {"milky_way": (0.8264951, 0.7385616, 0.6628994), "ngc_4414": (0.7907958, 0.6709560, 0.5524492)}
+CLOUDS_SHARE_DISC = {"milky_way": 0.4945250, "ngc_4414": 0.6392899}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.4922158, 0.6379672
+EXPECTED_FIRST_THREE = {"milky_way": (0.8296523, 0.7433026, 0.6686863), "ngc_4414": (0.7940028, 0.6756346, 0.5582309)}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8264951, 0.7385616, 0.6628994, 0.7907958, 0.6709560, 0.5524492
 
 
 @pytest.fixture(scope="module")

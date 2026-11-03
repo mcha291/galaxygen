@@ -250,40 +250,41 @@ def test_the_gate_s_predictions_as_measured(prod):
     o = template_run(prod, "milky_way")
     F, R, phi, edges = o.fields, o.grid.R, o.grid.phi, o.grid["phi"].edges
     a, B = float(F["bar_half_length"]), float(F["bar_contrast"])
-    assert (a, B) == pytest.approx((5.2097, 0.28926), abs=5e-5)
+    assert (a, B) == pytest.approx((5.0000, 0.28926), abs=5e-5)  # S87 (#80, #209): was 5.2097 - the bar's law and pinned length, the pitch floor
     stars = compose.stellar_pattern(F, R)
     # "the body's share of the cp1 disc 0.110": FAILED - 0.1015.
-    assert float(F["bar_mass_share"]) == pytest.approx(0.10146, abs=2e-5)
+    assert float(F["bar_mass_share"]) == pytest.approx(0.09658, abs=2e-5)  # S87 (#80, #209): was 0.10146 - the bar's law and pinned length, the pitch floor
     assert abs(float(F["bar_mass_share"]) - 0.110) > 0.008
     # "β_max ≈ 0.39": held.
     beta = stars.ring_share
-    assert float(beta.max()) == pytest.approx(0.3903, abs=2e-4) and float(R[int(np.argmax(beta))]) == pytest.approx(0.7125, abs=1e-6)
+    assert float(beta.max()) == pytest.approx(0.3988, abs=2e-4) and float(R[int(np.argmax(beta))]) == pytest.approx(0.7125, abs=1e-6)  # S87 (#80, #209): was 0.3903 - the bar's law and pinned length, the pitch floor
     # "A₂^max = 0.289 at ≈ 0.42 a = 2.2 kpc": held (0.4103 a = 2.1375 kpc, the grid ring).
     # S60 (D219): the bar part is the field less the pieces' cell means (was `hand_arms`, the modes' cosines).
     part = np.asarray(F["pattern_density_contrast"]) - 1.0 - arms_of(F, R, edges)
     a2 = hand_fourier(part, phi)
     inside = R < a
     peak = int(np.argmax(np.where(inside, a2, -1.0)))
-    assert float(a2[peak]) == pytest.approx(B, abs=1e-12) and (float(R[peak]), float(R[peak]) / a) == pytest.approx((2.1375, 0.4103), abs=1e-4)
+    assert float(a2[peak]) == pytest.approx(B, abs=1e-12) and (float(R[peak]), float(R[peak]) / a) == pytest.approx((2.0625, 0.4125), abs=1e-4)  # S87 (#80, #209): was 0.4103, 2.1375 - the bar's law and pinned length, the pitch floor
     assert not 0.76 <= float(R[peak]) / a <= 0.94  # the recorded miss: the stacks' maximum sits at 0.76-0.94 a
     # "A₂(0.85 a) ≈ 0.046": 0.0444, read at 0.85 a between the two grid rings (0.0408 on the nearer one).
-    assert float(np.interp(0.85 * a, R, a2)) == pytest.approx(0.04444, abs=2e-5)
-    assert float(a2[int(np.argmin(np.abs(R - 0.85 * a)))]) == pytest.approx(0.04081, abs=2e-5)
+    assert float(np.interp(0.85 * a, R, a2)) == pytest.approx(0.04287, abs=2e-5)  # S87 (#80, #209): was 0.04444 - the bar's law and pinned length, the pitch floor
+    assert float(a2[int(np.argmin(np.abs(R - 0.85 * a)))]) == pytest.approx(0.04418, abs=2e-5)  # S87 (#80, #209): was 0.04081 - the bar's law and pinned length, the pitch floor
     # "the minimum stellar contrast before the arms ≈ 0.77": 0.7641, at 1.91 kpc.
     low = 1.0 - stars.depth
-    assert float(low.min()) == pytest.approx(0.7641, abs=1e-4) and float(R[int(np.argmin(low))]) == pytest.approx(1.9125, abs=1e-6)
+    assert float(low.min()) == pytest.approx(0.7633, abs=1e-4) and float(R[int(np.argmin(low))]) == pytest.approx(1.8375, abs=1e-6)  # S87 (#80, #209): was 0.7641, 1.9125 - the bar's law and pinned length, the pitch floor
     # "lanes from (5.21 kpc, φ_bar) to 0.52 kpc with radius of curvature 4.5 kpc"; "the base ... (R < 2.1 kpc) 0.385".
     gas = compose.gas_pattern(F, R, constants(the_model(prod)))
-    assert (a, gas.ring_ratio * a, a / gas.lane_curvature, gas.axis_ratio * a) == pytest.approx((5.2097, 0.52097, 4.5302, 2.0839), abs=5e-5)
+    assert (a, gas.ring_ratio * a, a / gas.lane_curvature, gas.axis_ratio * a) == pytest.approx((5.0000, 0.50000, 4.34783, 2.0000), abs=5e-5)  # S87 (#80, #209): was 0.52097, 2.0839, 4.5302, 5.2097 - the bar's law and pinned length, the pitch floor
     filled = R < gas.axis_ratio * a
     base = 1.0 / RATIO_HAND
-    assert int(filled.sum()) == 28 and base == pytest.approx(0.38462, abs=1e-5)
+    assert int(filled.sum()) == 27 and base == pytest.approx(0.38462, abs=1e-5)  # S87 (#80): was 28 - the template's pinned 5.0 kpc bar (was 5.21)
     assert float(gas.lanes[filled].min()) == pytest.approx(base, abs=1e-12)  # the Gaussians' tails reach 0 between the lanes
-    # "rows 15-17 unchanged": the half-length is S57's bit for bit (the reference, tests/test_layer.py); the two
-    # statistical rows' ensemble medians are the regression numbers RESUMING.md carries, 41.10 and 6.08.
-    assert float(F["bar_half_length"]) == pytest.approx(5.20971, abs=5e-6)
+    # "rows 15-17 unchanged": the half-length was S57's bit for bit until S87 (5.20971, the ratio's); since S87 (#80, the
+    # owner's ruling of 2026-11-03, D255) the template's is its pinned 5.0 kpc and the default disc's Erwin 2019's law, on
+    # which the two statistical rows' ensemble medians read 81.97 and 2.65 (41.10 and 6.08 until S87).
+    assert float(F["bar_half_length"]) == pytest.approx(5.0, abs=5e-6)
     ensemble = spec.ensemble(the_model(prod), ("bar_pattern_speed", "bar_corotation_radius"))
-    assert (float(np.median(ensemble["bar_pattern_speed"])), float(np.median(ensemble["bar_corotation_radius"]))) == pytest.approx((41.10, 6.08), abs=0.01)
+    assert (float(np.median(ensemble["bar_pattern_speed"])), float(np.median(ensemble["bar_corotation_radius"]))) == pytest.approx((81.97, 2.65), abs=0.01)
     # ngc_4414: "unbarred, the bar's fields NaN, arms to the centre; ... t_b 0.91 Gyr published beside the pin".
     n = template_run(prod, "ngc_4414")
     assert n.fields["bar_present"] == "no" and all(math.isnan(float(n.fields[k])) for k in BAR_NUMBERS)
@@ -292,12 +293,12 @@ def test_the_gate_s_predictions_as_measured(prod):
     assert inner > 0.3 and sum(float(np.asarray(F[k])[0]) for k in pt.AMPLITUDE_FIELDS) < 1e-6  # no taper against a whole one
     # "Both A₂ peak radii miss 0.76-0.94 a": the same disc with the pin taken off - the criterion bars it - peaks at 0.42 a.
     u = template_run(prod, "ngc_4414", pinned=False)
-    assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.11256, abs=2e-5)
+    assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.03963, abs=2e-5)  # S87 (#80): was 0.11256 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     ua = float(u.fields["bar_half_length"])
     upart = np.asarray(u.fields["pattern_density_contrast"]) - 1.0 - arms_of(u.fields, R, edges)
     ua2 = hand_fourier(upart, phi)
     upeak = int(np.argmax(np.where(R < ua, ua2, -1.0)))
-    assert float(ua2[upeak]) == pytest.approx(float(u.fields["bar_contrast"]), abs=1e-12) and float(R[upeak]) / ua == pytest.approx(0.4167, abs=1e-4)
+    assert float(ua2[upeak]) == pytest.approx(float(u.fields["bar_contrast"]), abs=1e-12) and float(R[upeak]) / ua == pytest.approx(0.3792, abs=1e-4)  # S87 (#80): was 0.4167 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
 
 
 # --- the gate -----------------------------------------------------------------------------------------------------
@@ -348,8 +349,10 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     # and is pinned apart in the test after this one, awaiting the re-pin; the bound (> 0 on every cell) is held
     # in the sweep itself. The body's own lowest contrast is the number it was.
     assert sweep["lowest"] > 0.0
-    assert sweep["lowest_body"] == pytest.approx(0.2658, abs=2e-4) and sweep["lowest_body"] > 0.0
-    for template, want in (("milky_way", (0.4103, 0.1536, 0.3508)), ("ngc_4414", (0.4167, 0.1538, 0.3506))):
+    assert sweep["lowest_body"] == pytest.approx(0.2433, abs=2e-4) and sweep["lowest_body"] > 0.0  # S87 (#80, #209): was 0.2658 - the bar's law and pinned length, the pitch floor
+    # S87 (#80, #209): were (0.4103, 0.1536, 0.3508) and (0.4167, 0.1538, 0.3506) - the Milky Way's bar is its pinned 5.0 kpc
+    # (was the ratio's 5.21) and the barred NGC 4414 disc's is the law's, shorter against its disc than the ratio's 2.0.
+    for template, want in (("milky_way", (0.4125, 0.1482, 0.3339)), ("ngc_4414", (0.3792, 0.0989, 0.1234))):
         got = np.array(read[template])
         assert got.min(axis=0).tolist() == pytest.approx(want, abs=1e-4) and got.max(axis=0).tolist() == pytest.approx(want, abs=1e-4), template
         assert not np.any((got[:, 0] >= 0.76) & (got[:, 0] <= 0.94))  # the recorded miss, on every barred seed
@@ -431,7 +434,7 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # S59 (D218 follow-up): was 0.0025575 - the same galaxy again, its rings turned by segments of relative pitch.
     # S60 (D219), on the pieces' field: another galaxy's lowest cell. S60 fourth pass: was 0.0024782 at
     # ("milky_way", True, 28, 1).
-    assert sweep["lowest"] == pytest.approx(0.0085059, abs=1e-7) and sweep["where"] == ("milky_way", True, 33, 0)
+    assert sweep["lowest"] == pytest.approx(0.1163172, abs=1e-7) and sweep["where"] == ("milky_way", True, 3, 1)  # S87 (#80, #209): was 0.0085059 at ("milky_way", True, 33, 0) - the bar's law and pinned length, the pitch floor
     # The whole field's A₂ maximum inside a, less B: a consequence of the two-armed mode on the bar's axis, as read.
     # S59 (D218): were (-0.005854, 0.008093), (0.3959, 0.4391) and (-0.008212, 0.010120), (0.3953, 0.9936).
     # S59 (D218 follow-up): were (-0.005748, 0.007290), (0.3959, 0.4679) and (-0.004974, 0.008373), (0.4167, 0.4594) -
@@ -439,8 +442,9 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # S60 (D219), as read on the pieces' field: A₂ inside a less B is under 1e-9 on `ngc_4414`'s galaxies and
     # reaches 0.142 on the Milky Way's. S60 fourth pass: were (-0.007445, 0.006281),
     # (0.3959, 0.4535) and (-0.011014, 0.008358), (0.3953, 0.4594).
-    for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.141850), (0.4103, 0.9861)),
-                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.4167, 0.4167))):
+    # S87 (#80): were (-3.2153e-10, 0.141850), (0.4103, 0.9861) and (0.4167, 0.4167) - the bar's law and the pinned 5.0 kpc.
+    for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.188020), (0.4125, 0.9975)),
+                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.3792, 0.3792))):
         got = np.array(sweep["whole"][template])
         assert (float(got[:, 0].min()), float(got[:, 0].max())) == pytest.approx((low, high), abs=2e-6), template
         assert (float(got[:, 1].min()), float(got[:, 1].max())) == pytest.approx((near, far), abs=1e-4), template
@@ -465,9 +469,32 @@ def test_gate_a_ring_keeps_its_stars_and_its_gas_on_any_grid(prod, template, n_p
         assert float(a2[R < a].max()) == pytest.approx(B, abs=1e-12)
         # A coarse R grid has no ring at the continuous maximum, so the same amplitude takes another share: the
         # share is the published field's on its own grid (0.1015 on the production grid).
-        assert float(F["bar_mass_share"]) == pytest.approx(0.1033, abs=2e-3)
+        assert float(F["bar_mass_share"]) == pytest.approx(0.0983, abs=2e-3)  # S87 (#80): was 0.1033 - the pinned 5.0 kpc bar (0.0966 on the production grid; 0.0981-0.0986 over these grids)
     else:
         assert math.isnan(float(F["bar_mass_share"]))
+
+
+RING_MEAN_TOLERANCE = 2e-13
+# S88 (D255 ruling 1): the tolerance became 2e-13 with the measurement, the same ruling as D234's F-2-3 (the audit
+# mesh's 2e-13). S87 held the Milky Way here under a strict xfail (RING_MEAN_OVER): with its bar pinned at 5.0 kpc,
+# ring 105 (7.9125 kpc) reads a mean of 1 + 1.0036e-13 by exact summation, over the gate's 1e-13 by 0.4 %. Measured
+# at S88 on the final model (math.fsum over each ring's 360 cells, the production grid): the Milky Way's worst
+# 1.0036e-13 at ring 105, the next 8.77e-14 (9.7125 kpc), 8.39e-14 (9.9375), 7.66e-14 (9.0375), nine rings over 5e-14;
+# NGC 4414's worst 9.35e-14 (ring 129, 9.7125 kpc), six over 5e-14. Not rounding of the sum: the cells are of order 1
+# and each a composition of the response, the lanes and the pieces' cell means, each exact to its own rounding, so a
+# ring's mean carries the sum of 360 such roundings - which is what the composition's bound is (D234's F-2-3).
+
+
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_gate_the_gas_ring_means_are_one_to_1e13(prod, template):
+    """The ring-mean clause of the gate the test after this one holds ("gas ring means 1 to 1e-13 with the lanes"),
+    split from it at S87 so that the Milky Way's reading over the bound stayed visible without hiding the clauses
+    that hold; since S88 (D255 ruling 1) to ``RING_MEAN_TOLERANCE``, 2e-13, with the measurement. Read by exact
+    summation of each ring's cells. (The name keeps the gate's own wording.)"""
+    o = template_run(prod, template)
+    g = np.asarray(o.fields["gas_density_contrast"])
+    exact = np.array([math.fsum(row) for row in g]) / g.shape[1]
+    assert float(np.abs(exact - 1.0).max()) < RING_MEAN_TOLERANCE  # S88: was < 1e-13; measured 1.0036e-13 / 9.35e-14
 
 
 @pytest.mark.parametrize("template", TEMPLATES)
@@ -483,7 +510,8 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     gas = compose.gas_pattern(F, R, constants(the_model(prod)))
     g = np.asarray(F["gas_density_contrast"])
     assert g.tobytes() == gas.cell_means(R, edges).tobytes()
-    assert float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max()) < 1e-13 and np.all(np.isfinite(g)) and g.min() > 0.0
+    # S87 (#80): the ring-mean clause moved to the test after this one, where the Milky Way's reads over its bound.
+    assert np.all(np.isfinite(g)) and g.min() > 0.0
     taper = pt.bar_terms(R, gas.pitch_deg, gas.bar_length)[0]
     if template == "ngc_4414":
         assert not gas.barred and not taper.any() and math.isnan(gas.bar_length)
@@ -526,7 +554,7 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     # the taper and the cell's mean in it). One simulation's Σ_peak ~ 10 x its initial 10 M☉/pc² (Kim, Seo & Kim
     # 2012) is the check: the same order, under it. Nothing is tuned to it - the width is a declared placeholder.
     peak = L.max(axis=1)
-    assert (float(peak.max()), float(R[int(np.argmax(peak))])) == pytest.approx((7.058, 3.3375), abs=2e-3)
+    assert (float(peak.max()), float(R[int(np.argmax(peak))])) == pytest.approx((7.056, 3.1875), abs=2e-3)  # S87 (#80): was (7.058, 3.3375) - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     assert 5.0 < float(peak.max()) < 10.0
     # S60 (D219): the published gas's largest cell inside the bar - a lane's crest and an arm's response together -
     # is a layer-on number, pinned apart in the test after this one.
@@ -544,7 +572,7 @@ def test_the_published_gas_s_largest_cell_inside_the_bar_as_measured(prod):
     # S59 (D218 follow-up): was (6.679, 2.0625) - on the relative residual's winding the largest cell is a lane's
     # and an arm's together on another ring, 6.761 at 2.81 kpc (wound at one pitch: 6.664 at 2.06 kpc still).
     # S60 fourth pass: was (6.761, 2.8125); on the pieces' response 6.657 at 2.06 kpc, S59's ring again.
-    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.657, 2.0625), abs=2e-3)
+    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.694, 1.9875), abs=2e-3)  # S87 (#80, #209): was 2.0625, 6.657 - the bar's law and pinned length, the pitch floor
 
 
 def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
@@ -632,16 +660,16 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     # 53 cells exactly 0 on 8 rings, 0.71-1.24 kpc ([2, 7, 8, 9, 8, 8, 7, 4] a ring), and 239 solver cells exactly 0
     # and 343 subnormal.
     assert int((g == 0.0).sum()) == 0 and int((g < tiny).sum()) == 0
-    assert float(g.min()) == pytest.approx(8.564e-65, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)
+    assert float(g.min()) == pytest.approx(5.1621415e-6, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
     s = compose.gas_pattern(F, R, constants(the_model(prod))).profiles
     assert (int((s == 0.0).sum()), int(((s > 0.0) & (s < tiny)).sum())) == (0, 0)
-    assert float(s.min()) == pytest.approx(3.3725e-64, rel=2e-3)
+    assert float(s.min()) == pytest.approx(5.3832547e-6, rel=2e-3)  # S87 (#80, #209): was 3.3725e-64 - the bar's law and pinned length, the pitch floor
     low = np.asarray(barred.fields["gas_density_contrast"])
     # S59 (D218): was 4.768e-11 - the lowest cell of the barred disc, where the lanes' base under the taper meets
     # a trough of the response the segments have turned.
     # S59 (D218 follow-up): was 4.806e-11 - turned otherwise by segments of relative pitch.
     # S60 fourth pass: was 4.829e-11; the barred disc's lowest cell is 0.3854 on the pieces' response.
-    assert float(low.min()) == pytest.approx(0.3854, rel=2e-3)
+    assert float(low.min()) == pytest.approx(0.1969, rel=2e-3)  # S87 (#80, #209): was 0.3854 - the bar's law and pinned length, the pitch floor
 
 
 # --- by hand -------------------------------------------------------------------------------------------------------
@@ -678,11 +706,12 @@ def test_the_presence_rederived_by_hand_for_both_templates(prod):
         derived = run(model, inputs_of(template, pinned=False), only=("bar_present", "bar_formation_time"))
         assert derived.fields["bar_present"] == "yes" and derived.fields["bar_formation_time"] == o.fields["bar_formation_time"]
     assert hand_age(1e6) == pytest.approx(pt.cosmic_time(0.0, H0_HAND, OMEGA_M_HAND), rel=1e-6) == pytest.approx(13.467, abs=1e-3)
-    # **Two clocks, a declared debt** (``pattern.lookback_time``'s docstring): the universe is 13.467 Gyr old by this
-    # cosmology and the grid's time axis runs to 13.8 Gyr "from t = 0". What the choice moves: at the default
-    # assembly redshift a disc is barred above f_d = 0.3295 on this clock, and above 0.3276 with the same lookback
-    # stretched to the grid's.
-    assert DEFAULT.t_max == 13.8
+    # **One clock since S87 (#148)** (``pattern.lookback_time``'s docstring): the universe is 13.467 Gyr old by this
+    # cosmology and the grid's time axis runs to the same age, the hand's quadrature here. Until S87 it ran to a
+    # recalled 13.8 Gyr "from t = 0": at the default assembly redshift a disc is barred above f_d = 0.3295 on this
+    # clock, and was above 0.3276 with the same lookback stretched to the old grid's - the threshold is this one's.
+    assert DEFAULT.t_max == pytest.approx(hand_age(1e6), rel=1e-6)  # S87 (#148): was DEFAULT.t_max == 13.8 - the clock
+    assert DEFAULT.t_max == pt.cosmic_time(0.0, H0_HAND, OMEGA_M_HAND)  # one statement: the grid's axis is the closed form's
     default_age = hand_age(1.66)
     assert S_HAND / math.log(default_age / T0_HAND) == pytest.approx(0.3295, abs=5e-5)
     assert S_HAND / math.log(default_age * 13.8 / 13.467 / T0_HAND) == pytest.approx(0.3276, abs=5e-5)
@@ -741,16 +770,18 @@ def test_the_body_rederived_by_hand_on_the_milky_way_template(prod):
     P = p.mean(axis=1)
     areas = R * (R[1] - R[0])  # R ΔR on the grid's equal rings
     normalisation = share * float((sigma * areas).sum()) / float((P * areas).sum())  # M☉/pc²
-    assert normalisation == pytest.approx(464.8, abs=0.1)
+    assert normalisation == pytest.approx(480.36, abs=0.1)  # S87 (#80, #209): was 464.8 - the bar's law and pinned length, the pitch floor
     beta = normalisation * P / sigma
     depth = normalisation * (P - p.min(axis=1)) / sigma
     field = np.asarray(F["pattern_density_contrast"])
     part = field - 1.0 - arms_of(F, R, edges)  # S60 (D219): was `hand_arms(F, R, phi)`, the modes' cosines
     a2 = hand_fourier(part, phi)
     worst = 0.0
+    # S87 (#80): were (0.3903, 0.0436, 0.0422), (0.2200, 0.2200, 0.2893), (0.0511, 0.0511, 0.0945), (0.0008, 0.0008, 0.0015)
+    # for beta, depth and A2 - the template's bar is its pinned 5.0 kpc (was 5.21), so 5.06 kpc is now past its end.
     for radius, sigma_want, beta_want, depth_want, a2_want in (
-        (0.7125, 1045.37, 0.3903, 0.0436, 0.0422), (2.1375, 604.91, 0.2200, 0.2200, 0.2893),
-        (4.0125, 294.50, 0.0511, 0.0511, 0.0945), (5.0625, 196.80, 0.0008, 0.0008, 0.0015),
+        (0.7125, 1045.37, 0.3988, 0.0485, 0.0470), (2.1375, 604.91, 0.2091, 0.2091, 0.2883),
+        (4.0125, 294.50, 0.0378, 0.0378, 0.0707), (5.0625, 196.80, 0.0, 0.0, 0.0),
     ):
         i = int(np.argmin(np.abs(R - radius)))
         assert float(R[i]) == pytest.approx(radius, abs=1e-9)
@@ -772,10 +803,12 @@ def test_the_body_rederived_by_hand_on_the_milky_way_template(prod):
     assert reach / a == pytest.approx(1.00068, abs=1e-5)
     outside, sliver = R >= reach, (R >= a) & (R < reach)
     assert not p[outside].any() and float(np.abs(part[outside]).max()) < 1e-15
-    assert int(sliver.sum()) == 1 and float(R[sliver][0]) == pytest.approx(5.2125, abs=1e-9)
-    assert float(p[sliver].max()) == pytest.approx(8.52e-8, rel=0.01) and 1e-8 < float(np.abs(part[sliver]).max()) < 3e-7
-    assert np.array_equal(compose.stellar_pattern(F, R).body.holds, p.any(axis=1)) and int(p.any(axis=1).sum()) == 70
-    assert (float(beta.max()), float((1.0 - depth).min())) == pytest.approx((0.3903, 0.7641), abs=1e-4)
+    # S87 (#80): the template's bar is its pinned 5.0 kpc, whose reach (5.0034 kpc) holds no grid ring, so no ring
+    # carries a sliver; at the ratio's 5.2097 one ring did (5.2125 kpc: 8.52e-8 of the central density, 1e-8 to 3e-7 of
+    # the ring's mean in the field) - the case the first build missed, kept by the arithmetic above for any length.
+    assert int(sliver.sum()) == 0
+    assert np.array_equal(compose.stellar_pattern(F, R).body.holds, p.any(axis=1)) and int(p.any(axis=1).sum()) == 67  # S87 (#80): was 70 - the pinned 5.0 kpc bar
+    assert (float(beta.max()), float((1.0 - depth).min())) == pytest.approx((0.3988, 0.7633), abs=1e-4)  # S87 (#80): was (0.3903, 0.7641) - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     # The model's own body is the hand's: β and b on every ring.
     stars = compose.stellar_pattern(F, R)
     assert np.allclose(stars.ring_share, beta, rtol=1e-12, atol=1e-15) and np.allclose(stars.depth, depth, rtol=1e-12, atol=1e-15)
@@ -786,16 +819,18 @@ def test_the_body_rederived_by_hand_on_the_milky_way_template(prod):
     unit = np.array([hand_fourier(hand_cell_means(p[i] / sigma[i], edges[:-1] - angle, edges[1:] - angle)[None, :], phi)[0]
                      for i in np.flatnonzero(inside)])
     by_amplitude = (B / float(unit.max())) * float((P * areas).sum()) / float((sigma * areas).sum())
-    assert by_amplitude == pytest.approx(share, rel=1e-12) == pytest.approx(0.10146, abs=2e-5)
+    assert by_amplitude == pytest.approx(share, rel=1e-12) == pytest.approx(0.09658, abs=2e-5)  # S87 (#80): was 0.10146 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     # The amplitude is linear in the normalisation ("so A₂^max fixes the share and the share fixes A₂^max, one number").
     assert np.allclose(a2[inside], normalisation * unit, rtol=0.0, atol=1e-13)
     # The saturation reads this depth: the published amplitudes sum to at most 1 − b on every ring.
     total = np.sum([np.asarray(F[k], dtype=float) for k in pt.AMPLITUDE_FIELDS], axis=0)
-    assert float((total + depth).max()) == pytest.approx(0.7937, abs=1e-3) and np.all(np.asarray(F["arm_saturation"]) == 1.0)
+    assert float((total + depth).max()) == pytest.approx(0.7965, abs=1e-3) and np.all(np.asarray(F["arm_saturation"]) == 1.0)  # S87 (#80): was 0.7937 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     # And the body's mass in closed form: N a² q K_c / 3, K_c = 4 Γ(1 + 1/c)² / Γ(1 + 2/c), against the disc's 2π Σ₀ R_d²
     # - the grid's rings give the same share to 2e-4 of it (the body is resolved; the disc runs to the grid's edge).
     k_c = 4.0 * math.gamma(1.0 + 1.0 / C_HAND) ** 2 / math.gamma(1.0 + 2.0 / C_HAND)
-    closed = normalisation * a * a * Q_HAND * k_c / 3.0 / (2.0 * math.pi * float(F["disc_central_surface_density"]) * (a / 2.0) ** 2)
+    # S87 (#80): was `(a / 2.0) ** 2` for R_d^2 - true while the bar was BAR_LENGTH_RATIO = 2 times the scale length; the
+    # Milky Way's bar is its pinned 5.0 kpc now, so the disc's own scale length enters.
+    closed = normalisation * a * a * Q_HAND * k_c / 3.0 / (2.0 * math.pi * float(F["disc_central_surface_density"]) * float(F["disc_scale_length_spin"]) ** 2)
     assert closed == pytest.approx(share, rel=5e-4)
 
 
@@ -813,7 +848,7 @@ def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod
     o = run(model, inputs_of("milky_way", pattern_seed=28, texture_seed=0), only=STELLAR)
     F, R = o.fields, o.grid.R
     a, B, share = float(F["bar_half_length"]), float(F["bar_contrast"]), float(F["bar_mass_share"])
-    assert (B, float(F["arm_contrast"]), share) == pytest.approx((0.41008, 0.78587, 0.14384), abs=2e-5)
+    assert (B, float(F["arm_contrast"]), share) == pytest.approx((0.41008, 0.78587, 0.13693), abs=2e-5)  # S87 (#80, #209): was 0.14384 - the bar's law and pinned length, the pitch floor
     sigma = np.asarray(F["disc_surface_density"], dtype=float)
     _, p = hand_body(R, a)
     P = p.mean(axis=1)
@@ -823,12 +858,12 @@ def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod
     saturation = np.asarray(F["arm_saturation"], dtype=float)
     total = np.sum([np.asarray(F[k], dtype=float) for k in pt.AMPLITUDE_FIELDS], axis=0)
     saturated = saturation < 1.0
-    assert int(saturated.sum()) == 84 and (float(R[saturated].min()), float(R[saturated].max())) == pytest.approx((5.0625, 11.2875), abs=1e-6)
-    assert (float(saturation.min()), float(R[int(np.argmin(saturation))])) == pytest.approx((0.6433, 7.9125), abs=2e-4)
+    assert int(saturated.sum()) == 87 and (float(R[saturated].min()), float(R[saturated].max())) == pytest.approx((4.8375, 11.2875), abs=1e-6)  # S87 (#80): was 84 rings from 5.0625 - the template's pinned 5.0 kpc bar (was 5.21)
+    assert (float(saturation.min()), float(R[int(np.argmin(saturation))])) == pytest.approx((0.6410, 7.7625), abs=2e-4)  # S87 (#80): was (0.6433, 7.9125) - the template's pinned 5.0 kpc bar (was 5.21)
     assert float(np.abs(total[saturated] + depth[saturated] - 1.0).max()) < 1e-15
     assert np.all(total[~saturated] + depth[~saturated] < 1.0) and np.all(saturation[~saturated] == 1.0)
     with_body = saturated & (depth > 0.0)
-    assert int(with_body.sum()) == 3 and float(depth[with_body].max()) == pytest.approx(1.070e-3, rel=0.02)
+    assert int(with_body.sum()) == 3 and float(depth[with_body].max()) == pytest.approx(1.3765e-3, rel=0.02)  # S87 (#80): was 1.070e-3 - the template's pinned 5.0 kpc bar (was 5.21)
     assert np.all(total[with_body] < 1.0) and np.allclose(total[with_body], 1.0 - depth[with_body], rtol=0.0, atol=1e-15)
     field = np.asarray(F["pattern_density_contrast"])
     # S60 (D219): the field's lowest cell is a layer-on number, pinned apart in the test after this one; the bound
@@ -846,7 +881,7 @@ def test_the_most_saturated_barred_galaxy_s_lowest_cell_as_measured(prod):
     # saturation's, and no amplitude moved: every number above is the one it was.
     # S59 (D218 follow-up): was 0.03205 - on the relative residual's winding 0.031237, at 11.29 kpc again.
     # S60 fourth pass: was 0.03124, on the modes' field.
-    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.05950, abs=2e-5)
+    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.39263, abs=2e-5)  # S87 (#80, #209): was 0.05950 - the bar's law and pinned length, the pitch floor
 
 
 def test_the_saturation_ends_with_the_body_so_a_saturated_galaxy_s_arms_are_stronger_at_the_bar_s_end(prod):
@@ -881,10 +916,12 @@ def test_the_saturation_ends_with_the_body_so_a_saturated_galaxy_s_arms_are_stro
         end = int(np.argmax(R >= a))  # the first ring past the bar's end
         read.append((seed, int(differs.sum()), float(cosine[end]), float(s[end]), float((s / cosine).max()), float(R[int(np.argmax(s / cosine))]), B, float(F["arm_contrast"])))
     moved = [row for row in read if row[1] > 0]
-    assert [row[0] for row in moved] == [3, 4, 5, 6, 7, 12, 13, 16, 18, 20, 21, 28, 29, 33, 34, 36, 38, 40, 41, 44, 48, 51, 52, 55, 58, 59]
-    assert (min(row[1] for row in moved), max(row[1] for row in moved)) == (12, 98) and read[0][1] == 0
+    # S87 (#80): were the same seeds without 1, (12, 98), and (34, 98) with (0.6872, 1.0, 1.4552, 5.2125, ...) - the
+    # template's pinned 5.0 kpc bar (was 5.21): seed 1 now saturates too, and the worst ring is the bar's last one.
+    assert [row[0] for row in moved] == [1, 3, 4, 5, 6, 7, 12, 13, 16, 18, 20, 21, 28, 29, 33, 34, 36, 38, 40, 41, 44, 48, 51, 52, 55, 58, 59]
+    assert (min(row[1] for row in moved), max(row[1] for row in moved)) == (6, 100) and read[0][1] == 0
     worst = max(read, key=lambda row: row[4])
-    assert worst[:2] == (34, 98) and worst[2:] == pytest.approx((0.6872, 1.0, 1.4552, 5.2125, 0.87526, 0.71585), abs=2e-4)
+    assert worst[:2] == (34, 100) and worst[2:] == pytest.approx((0.6823, 0.9831, 1.4580, 4.9875, 0.87526, 0.71585), abs=2e-4)
 
 
 def test_a_point_reads_the_body_between_its_two_rings_in_the_bar_s_frame(prod):
@@ -911,7 +948,7 @@ def test_a_point_reads_the_body_between_its_two_rings_in_the_bar_s_frame(prod):
     assert np.all(stars.body_at(np.full_like(phi, 1.2 * a), phi) == 0.0)
     # On the bar's axis the body stands over the ring's mean, across it under: at 2.14 kpc, +0.31 and −0.22.
     on_axis, across = stars.body_at(np.array([R[28]]), np.array([angle])), stars.body_at(np.array([R[28]]), np.array([angle + 0.5 * math.pi]))
-    assert (float(on_axis[0]), float(across[0])) == pytest.approx((0.3115, -0.2200), abs=2e-4)
+    assert (float(on_axis[0]), float(across[0])) == pytest.approx((0.3213, -0.2091), abs=2e-4)  # S87 (#80, #209): was -0.2200, 0.3115 - the bar's law and pinned length, the pitch floor
     edges = np.linspace(0.0, 2.0 * math.pi, 13)
     for r in (0.5, 2.0, radius, 4.9, 5.3, 8.0):
         means = stars.sector_means(r, edges)
@@ -1001,9 +1038,9 @@ def test_the_lanes_geometry_by_hand_and_the_leading_side_from_the_trailing_arms(
     radius = a / KAPPA_A_HAND
     height = math.sqrt(radius**2 - 0.25 * chord**2)
     centre = (0.5 * a - height * RING_HAND * a / chord, -0.5 * RING_HAND * a + height * a / chord)
-    assert centre == pytest.approx((2.2370, 3.4184), abs=1e-4) and radius == pytest.approx(4.5302, abs=1e-4)
+    assert centre == pytest.approx((2.1469, 3.2808), abs=1e-4) and radius == pytest.approx(4.34783, abs=1e-4)  # S87 (#80, #209): was 2.2370, 3.4184, 4.5302 - the bar's law and pinned length, the pitch floor
     middle_y = centre[1] - math.sqrt(radius**2 - (0.5 * a - centre[0]) ** 2)
-    assert middle_y == pytest.approx(-1.0968, abs=1e-4) and middle_y < -0.5 * RING_HAND * a
+    assert middle_y == pytest.approx(-1.0527, abs=1e-4) and middle_y < -0.5 * RING_HAND * a  # S87 (#80, #209): was -1.0968 - the bar's law and pinned length, the pitch floor
     assert float(gm.lane_distance(np.array([0.5 * a]), np.array([middle_y]), a, KAPPA_A_HAND, RING_HAND, -1.0)[0]) < 1e-12
     # The other lane is this one's point reflection, and the other side's lane its mirror image.
     assert np.allclose(gm.lane_distance(x, y, a, KAPPA_A_HAND, RING_HAND, 1.0), gm.lane_distance(x, -y, a, KAPPA_A_HAND, RING_HAND, -1.0), rtol=0.0, atol=1e-12)
@@ -1014,7 +1051,8 @@ def test_the_lanes_geometry_by_hand_and_the_leading_side_from_the_trailing_arms(
     # own skew against the footprint's edge), at negative ψ for the end at ψ = 0, and its twin half a turn away.
     L = gas.lanes
     psi = gr.cell_centres()
-    for radius_kpc, want_deg in ((1.0125, -53.1), (2.0625, -31.9), (3.0375, -20.6), (4.0125, -11.1), (4.9875, -2.1)):
+    # S87 (#80): were -53.1, -31.9, -20.6, -11.1, -2.1 - the template's bar is its pinned 5.0 kpc (was 5.21).
+    for radius_kpc, want_deg in ((1.0125, -51.6), (2.0625, -30.6), (3.0375, -19.4), (4.0125, -9.6), (4.9875, -0.1)):
         i = int(np.argmin(np.abs(R - radius_kpc)))
         half = L[i][(psi > -0.5 * math.pi) & (psi < 0.5 * math.pi)]
         crest = float(psi[(psi > -0.5 * math.pi) & (psi < 0.5 * math.pi)][int(np.argmax(half))])
@@ -1052,8 +1090,10 @@ def test_the_lanes_gas_by_hand_on_four_rings(prod):
     n = 1440
     psi = -math.pi + (np.arange(n) + 0.5) * (2.0 * math.pi / n)
     sigma = WIDTH_HAND * a / (2.0 * math.sqrt(2.0 * math.log(2.0)))
-    for radius, f_want, base_want, top_want in ((1.0125, 1.0, 0.38462, 3.162), (3.0375, 0.4639, 0.57398, 7.010),
-                                               (4.0125, 0.3028, 0.67365, 6.867), (4.9875, 0.1583, 0.79786, 5.226)):
+    # S87 (#80): were (1.0, 0.38462, 3.162), (0.4639, 0.57398, 7.010), (0.3028, 0.67365, 6.867), (0.1583, 0.79786, 5.226) - the
+    # template's bar is its pinned 5.0 kpc (was 5.21): the footprint covers less of the outer rings.
+    for radius, f_want, base_want, top_want in ((1.0125, 1.0, 0.38462, 3.3343), (3.0375, 0.4389, 0.58747, 7.0489),
+                                               (4.0125, 0.2778, 0.69231, 6.7099), (4.9875, 0.0806, 0.88583, 3.7686)):
         i = int(np.argmin(np.abs(R - radius)))
         x, y = R[i] * np.cos(psi), R[i] * np.sin(psi)
         inside = ((np.abs(x) / a) ** C_HAND + (np.abs(y) / (Q_HAND * a)) ** C_HAND) ** (1.0 / C_HAND) <= 1.0
@@ -1078,7 +1118,7 @@ def test_the_lanes_gas_by_hand_on_four_rings(prod):
     base_all = 1.0 / (1.0 + (RATIO_HAND - 1.0) * share)
     assert np.all(share[inside_a] > 0.0) and np.all(L.min(axis=1)[inside_a] >= base_all[inside_a])  # never under its base
     open_rings = inside_a & (share < 1.0)  # where the ring leaves the footprint the minimum is the base itself
-    assert np.array_equal(L.min(axis=1)[open_rings], base_all[open_rings]) and int(open_rings.sum()) == 41
+    assert np.array_equal(L.min(axis=1)[open_rings], base_all[open_rings]) and int(open_rings.sum()) == 40  # S87 (#80): was 41 - the template's pinned 5.0 kpc bar (was 5.21)
     for i in np.flatnonzero(inside_a & (share > 0.0) & (share < 1.0)):
         assert float(L[i][footprint[i]].mean() / L[i][~footprint[i]].mean()) == pytest.approx(RATIO_HAND, rel=1e-11), float(R[i])
     # Deterministic given the bar: nothing is drawn, and another texture seed gives the same lanes.
@@ -1114,22 +1154,22 @@ def test_the_lanes_end_in_a_cliff_and_build_no_nuclear_ring(prod):
     a, L, g = gas.bar_length, gas.lanes, np.asarray(F["gas_density_contrast"])
     last = np.flatnonzero(R < a)[-3:]
     after = int(last[-1]) + 1
-    assert R[last].tolist() == pytest.approx([4.9875, 5.0625, 5.1375], abs=1e-9) and float(R[after]) == pytest.approx(5.2125, abs=1e-9)
-    assert L[last].max(axis=1).tolist() == pytest.approx([5.226, 4.886, 4.448], abs=2e-3)
+    assert R[last].tolist() == pytest.approx([4.8375, 4.9125, 4.9875], abs=1e-9) and float(R[after]) == pytest.approx(5.0625, abs=1e-9)  # S87 (#80, #209): was 4.9875, 5.0625, 5.1375, 5.2125 - the bar's law and pinned length, the pitch floor
+    assert L[last].max(axis=1).tolist() == pytest.approx([4.980, 4.605, 3.769], abs=2e-3)  # S87 (#80, #209): was 4.448, 4.886, 5.226 - the bar's law and pinned length, the pitch floor
     assert np.all(L[after:] == 1.0)  # the cliff: nothing of the lanes on the first ring past the half-length
     # S60 (D219): what the published gas shows of the cliff - the three rings' crests and the next's - is a
     # layer-on number, pinned apart in the test after this one; the taper there is the law's.
-    assert float(pt.bar_terms(R, gas.pitch_deg, a)[0][after]) == pytest.approx(0.367, abs=2e-3)
+    assert float(pt.bar_terms(R, gas.pitch_deg, a)[0][after]) == pytest.approx(0.350, abs=2e-3)  # S87 (#80, #209): was 0.367 - the bar's law and pinned length, the pitch floor
     # No nuclear ring: every ring's mean is 1; inside r_ring the field is the base and the two lanes' tails.
     ring = gas.ring_ratio * a
     inner = np.flatnonzero(R < ring)
-    assert ring == pytest.approx(0.52097, abs=1e-5) and inner.size == 7
+    assert ring == pytest.approx(0.50000, abs=1e-5) and inner.size == 7  # S87 (#80, #209): was 0.52097 - the bar's law and pinned length, the pitch floor
     assert float(np.abs(L.sum(axis=1) / L.shape[1] - 1.0).max()) < 1e-13
-    assert (float(L[inner[0]].min()), float(L[inner[0]].max())) == pytest.approx((0.9762, 1.0240), abs=2e-4)
-    assert (float(L[inner[-1]].min()), float(L[inner[-1]].max())) == pytest.approx((0.4047, 1.9336), abs=2e-4)
+    assert (float(L[inner[0]].min()), float(L[inner[0]].max())) == pytest.approx((0.9742, 1.0260), abs=2e-4)  # S87 (#80, #209): was 0.9762, 1.0240 - the bar's law and pinned length, the pitch floor
+    assert (float(L[inner[-1]].min()), float(L[inner[-1]].max())) == pytest.approx((0.4013, 1.9322), abs=2e-4)  # S87 (#80, #209): was 0.4047, 1.9336 - the bar's law and pinned length, the pitch floor
     peaks = L[R < a].max(axis=1)
     assert np.all(np.diff(peaks[: inner.size]) > 0.0)  # the peak rises outwards through r_ring: nothing marks the ring
-    assert (float(peaks.max()), float(R[int(np.argmax(peaks))])) == pytest.approx((7.058, 3.3375), abs=2e-3)
+    assert (float(peaks.max()), float(R[int(np.argmax(peaks))])) == pytest.approx((7.056, 3.1875), abs=2e-3)  # S87 (#80, #209): was 3.3375, 7.058 - the bar's law and pinned length, the pitch floor
 
 
 def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
@@ -1150,7 +1190,7 @@ def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     # alone, gentler than the modes' there.
     # S62 (D221 item 7 as amended): were [3.222, 2.974, 2.689] and 1.535 - the gas spurs: a ring's gas gives the spurs'
     # mean there in proportion, and a spur's foot stands on two of the three rings' crests.
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.222, 2.966, 2.684], abs=2e-3) and float(g[after].max()) == pytest.approx(1.664, abs=2e-3)
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.212, 2.919, 2.488], abs=2e-3) and float(g[after].max()) == pytest.approx(2.126, abs=2e-3)  # S87 (#80, #209): was 1.679, 2.684, 2.966, 3.222 - the bar's law and pinned length, the pitch floor  # S87 (#148): was 1.664 - the clock
 
 
 def test_the_gas_the_star_formation_law_reads_by_hand(prod):
@@ -1178,8 +1218,10 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
     U = gas.footprint
     n = 1440
     psi = -math.pi + (np.arange(n) + 0.5) * (2.0 * math.pi / n)
-    for radius, f_want, base_want, top_want in ((1.0125, 1.0, 0.38462, 1.0), (3.0375, 0.4639, 0.57398, 1.49234),
-                                               (4.0125, 0.3028, 0.67365, 1.75149), (4.9875, 0.1583, 0.79786, 2.07447)):
+    # S87 (#80): were (0.4639, 0.57398, 1.49234), (0.3028, 0.67365, 1.75149), (0.1583, 0.79786, 2.07447) on the three outer
+    # rings - the template's bar is its pinned 5.0 kpc (was 5.21).
+    for radius, f_want, base_want, top_want in ((1.0125, 1.0, 0.38462, 1.0), (3.0375, 0.4389, 0.58747, 1.52742),
+                                               (4.0125, 0.2778, 0.69231, 1.8), (4.9875, 0.0806, 0.88583, 2.30315)):
         i = int(np.argmin(np.abs(R - radius)))
         x, y = R[i] * np.cos(psi), R[i] * np.sin(psi)
         inside = ((np.abs(x) / a) ** C_HAND + (np.abs(y) / (Q_HAND * a)) ** C_HAND) ** (1.0 / C_HAND) <= 1.0
@@ -1194,7 +1236,7 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
             assert float(U[i].min()) == float(gas.lanes[i].min())  # the lanes' own base outside the footprint
     assert U.shape == (R.size, gr.CELLS) and float(np.abs(U.sum(axis=1) / gr.CELLS - 1.0).max()) < 1e-13
     assert np.all(U[R >= a] == 1.0) and np.all(U[R < gas.axis_ratio * a] == 1.0) and U.min() > 0.0
-    assert float(U.max()) == pytest.approx(2.2, abs=0.01) and float(U.max()) < RATIO_HAND < float(gas.lanes.max())
+    assert float(U.max()) == pytest.approx(2.303, abs=0.01) and float(U.max()) < RATIO_HAND < float(gas.lanes.max())  # S87 (#80, #209): was 2.2 - the bar's law and pinned length, the pitch floor
     # The published field is the blend's exact cell means, by hand, and the model's own to the bit.
     published = np.asarray(F["star_formation_gas_contrast"])
     assert published.tobytes() == gas.star_formation_cell_means(R, edges).tobytes()
@@ -1229,7 +1271,7 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
             assert gas.spurs.compose_cells(np.array([r]), sectors, means[None, :])[0].tobytes() == gas.sector_means(r, sectors).tobytes(), r
     past = R >= a
     # S62: was `published[past] == gas_density_contrast[past]` - the same, with the spurs composed on.
-    assert gas.spurs.compose_cells(R[past], edges, published[past]).tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 331
+    assert gas.spurs.compose_cells(R[past], edges, published[past]).tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 333  # S87 (#80): was 331 - the template's pinned 5.0 kpc bar (was 5.21)
     # An unbarred pattern has no footprint to ask for; its star-formation readings are its own.
     n4414 = template_run(prod, "ngc_4414")
     bare = compose.gas_pattern(n4414.fields, R, constants(the_model(prod)))
@@ -1415,3 +1457,153 @@ def test_the_api_serves_an_unbarred_galaxy_with_nulls_for_the_bar_and_no_nan_any
             return {n for n, a in arrays.items() if a.dtype.kind == "f" and bool(np.isnan(a).any())}
 
         assert nan_arrays(body) <= nan_arrays(barred_body), (path, nan_arrays(body) - nan_arrays(barred_body))
+
+
+# --- debt #146: the body read at checkpoint 4 (S86, BUILD_V batch M1) ------------------------------------------------
+
+CHECKPOINT_4 = ("disc_surface_density", "stellar_surface_density", "bar_half_length", "bar_mass_share", "bulge_stellar_mass",
+                "bulge_scale_radius", "stellar_mass_total", "disc_surface_brightness", "disc_luminosity", "bulge_luminosity")
+
+
+def hand_hernquist_projected(R: np.ndarray, mass: float, a: float) -> np.ndarray:
+    """The projected surface density of a Hernquist sphere, M☉/pc², R and a in kpc: Σ(s) = M/(2π a² (1 − s²)²)
+    [(2 + s²) X(s) − 3], s = R/a, X = arcsech(s)/√(1 − s²) inside s = 1 and arcsec(s)/√(s² − 1) outside, 2M/(15π a²)
+    at s = 1 [recall: Hernquist 1990, ApJ 356, 359, eqs. 32-34 - the textbook form, checked here against its own
+    projection of the density by quadrature]. Written here; the model publishes the bulge's mass and scale and no
+    surface density of it."""
+    s = np.maximum(np.asarray(R, dtype=float) / a, 1e-9)
+    x = np.ones_like(s)
+    inner, outer = s < 1.0, s > 1.0
+    x[inner] = np.arccosh(1.0 / s[inner]) / np.sqrt(1.0 - s[inner] ** 2)
+    x[outer] = np.arccos(1.0 / s[outer]) / np.sqrt(s[outer] ** 2 - 1.0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sigma = mass / (2.0 * math.pi * a * a * (1.0 - s * s) ** 2) * ((2.0 + s * s) * x - 3.0)
+    sigma = np.where(inner | outer, sigma, 2.0 * mass / (15.0 * math.pi * a * a))
+    return sigma / 1e6
+
+
+def test_the_hand_hernquist_projection_is_the_density_s_line_of_sight_integral():
+    """The closed form above against the Hernquist density ρ = M a / (2π r (r + a)³) integrated along the line of sight
+    by quadrature, so the bulge's profile the #146 reading uses is not a recalled formula taken on trust."""
+    mass, a = 1.0e10, 0.36
+    for radius in (0.05, 0.36, 1.0, 3.0):
+        z = np.concatenate([[0.0], np.geomspace(1e-6, 400.0, 200001)])
+        r = np.sqrt(radius * radius + z * z)
+        rho = mass * a / (2.0 * math.pi * r * (r + a) ** 3)
+        column = 2.0 * float((0.5 * (rho[1:] + rho[:-1]) * np.diff(z)).sum()) / 1e6
+        assert float(hand_hernquist_projected(np.array([radius]), mass, a)[0]) == pytest.approx(column, rel=1e-4)
+
+
+def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
+    """Debt #146's first closer, "the share and the amplitude's profile read at checkpoint 4 against the same
+    sources" (S86, BUILD_V M1). The body is built at checkpoint 3 on checkpoint 1's disc; read here against what
+    checkpoint 4 holds - the disc's stars, their light and the bulge - with this file's arithmetic: the body's unit
+    profile on 1440 cells a ring (``hand_body``), its normalisation from the published ``bar_mass_share`` as the
+    module defines it (the share of checkpoint 1's disc on the grid, rings weighted R ΔR), each ring's share β of its
+    stars, and the bulge's projected Hernquist profile.
+
+    **As read on the Milky Way template** (the production grid):
+    - *the share in mass*: the body's stars (β of each ring's ``stellar_surface_density``) are **0.093 of the galaxy's
+      stellar mass**, the bulge in T (the bulge itself 0.162) - against "∼10 %" of all stellar mass in bars and a
+      Bar/T in mass whose peak sits above the light's (`READING_BAR.md` A1.1: W09 §5.2, G11 §3.1);
+    - *the share in light*: β of each ring's ``disc_surface_brightness`` over the disc's and the bulge's light,
+      bolometric, **0.047** - against Bar/T in light peaking at ≈ 0.10 (G11, SDSS i) and 0.14 for strong bars (K18):
+      **a miss, low by half**, recorded (B5);
+    - *the m = 2 profile*: the body's two-fold amplitude round each ring peaks at **0.41 a** on checkpoint 1's disc and
+      at **0.425 a** once the bulge dilutes it (A₂ × Σ⋆/(Σ⋆ + Σ_bulge)) - against the S⁴G stacks' 0.76-0.94 a
+      (DG16b). **The named suspect, the bulge's dilution, is killed**: it moves the peak by 0.015 a. The miss is the
+      body's own. Read beside it, the profile's exponent alone (the model's 2; S⁴G's flat bars about 0.3, K15): the
+      peak at 0.68 a for n = 0.3, 0.61 for 0.5, 0.51 for 1 - **no profile the decompositions print reaches the
+      stacks**: the body's shape (axis ratio 0.4, boxiness 3), not its profile, is the next suspect.
+
+    Pinned as read; nothing moved to meet a source."""
+    model = the_model(prod)
+    o = run(model, inputs_of("milky_way"), only=CHECKPOINT_4)
+    F, R = o.fields, o.grid.R
+    a = float(F["bar_half_length"])
+    disc1 = np.asarray(F["disc_surface_density"], dtype=float)
+    stars = np.asarray(F["stellar_surface_density"], dtype=float)
+    psi, unit = hand_body(R, a)
+    mean = unit.mean(axis=1)
+    weights = R * np.gradient(R)  # the module's ring weights: R ΔR
+    normalisation = float(F["bar_mass_share"]) * float((disc1 * weights).sum()) / float((mean * weights).sum())
+    beta = normalisation * mean / disc1
+    area = 2.0 * math.pi * R * np.gradient(R) * 1e6  # pc² a ring
+    mass_share = float((beta * stars * area).sum()) / float(F["stellar_mass_total"])
+    light_share = float((beta * np.asarray(F["disc_surface_brightness"], dtype=float) * area).sum()) / (
+        float(F["disc_luminosity"]) + float(F["bulge_luminosity"]))
+    bulge_share = float(F["bulge_stellar_mass"]) / float(F["stellar_mass_total"])
+    assert (mass_share, light_share, bulge_share) == pytest.approx((0.0883, 0.0437, 0.1623), rel=0.02)  # S87 (#80, #209): was 0.0468, 0.0926 - the bar's law and pinned length, the pitch floor
+    assert light_share < 0.10 / 1.5  # the light: a miss, low by half against G11's peak at a tenth
+
+    inside = R < a
+    amplitude = normalisation * hand_fourier(unit, psi) / disc1  # the body's m = 2 amplitude of the contrast
+    bulge = hand_hernquist_projected(R, float(F["bulge_stellar_mass"]), float(F["bulge_scale_radius"]))
+    diluted = amplitude * stars / (stars + bulge)
+    peak, peak_diluted = (float(R[np.argmax(np.where(inside, v, -1.0))]) / a for v in (amplitude, diluted))
+    assert peak == pytest.approx(0.41, abs=0.01) and peak_diluted == pytest.approx(0.425, abs=0.01)
+    assert abs(peak_diluted - peak) < 0.03 and peak_diluted < 0.76  # the bulge is not the miss; the miss stands
+
+    def peak_at(n: float) -> float:
+        profile = np.where(unit > 0.0, unit ** (n / N_HAND), 0.0)  # (1 − m²)^n from the ruling's n = 2
+        return float(R[np.argmax(np.where(inside, hand_fourier(profile, psi) / disc1, -1.0))]) / a
+
+    flat, half, exponential = peak_at(0.3), peak_at(0.5), peak_at(1.0)
+    assert (flat, half, exponential) == pytest.approx((0.667, 0.612, 0.511), abs=0.015)  # S87 (#80, #209): was 0.684 - the bar's law and pinned length, the pitch floor
+    assert flat < 0.76  # no printed profile reaches the stacks' peak
+
+
+# --- #145: Erwin 2018's frequency as a disclosed check, not a draw (S87; the owner's ruling of 2026-11-03, D255) --------
+
+# Erwin 2018's fitted logistic of the barred fraction in stellar mass, x = log10(M*/Msun): f = 1/(1 + e^-(a + b1 x + b2 x^2))
+# [verified: Erwin 2018, MNRAS 474, 5372, arXiv:1711.04867, section 3 and its table; docs/READING_BAR.md A1.3]. The reader
+# warns that off the peak "b2 printed to two figures moves the logit by ~0.5" (A2's derivation iii): the band below.
+ERWIN_2018 = (-82.2, 17.1, -0.88)
+POPULATION_BINS = ((8.5, 9.0), (9.0, 9.5), (9.5, 10.0), (10.0, 10.5), (10.5, 11.0), (11.0, 11.5), (11.5, 12.0))
+
+
+def test_disclosed_check_the_presence_criterions_barred_fraction_against_erwin_2018_in_stellar_mass(prod):
+    """#145 (the owner's ruling of 2026-11-03, D255): the presence criterion keeps its mechanism - Fujii et al. 2018's
+    formation time against the disc's age, no draw - and Erwin 2018's measured frequency in stellar mass is this
+    disclosed check instead of a draw: a check, not a gate; it records what the criterion does over a population, and
+    no number is tuned to it. The population: 300 galaxies, each of the seven controls drawn on stream 145 uniformly
+    over its declared range (in log where the range spans a decade or more), every seed and the merger list at their
+    defaults, the SMALL grid, the layer off. Each bin's barred share against Erwin's logistic at the bin's centre and
+    its band at the logit +/- 0.5 (the printed coefficients' rounding, the reader's caution).
+
+    Measured at S87: 0.74 of the 300 barred; inside Erwin's band from 10^9 to 10^10.5 Msun (0.617, 0.714, 0.698 against
+    0.664, 0.705, 0.650), under it below 10^9 (0.375 against 0.512, the band 0.389-0.634), and **over it above 10^10.5:
+    0.911, 0.867 and 1.000 against 0.483, 0.231 and 0.059** - the criterion bars nearly every massive disc, where the
+    measured frequency falls (Erwin's fit is S4G's, 10^8.5-10^11, so the last bin is its extrapolation). The verdicts
+    by bin are pinned as read, and the counts with them."""
+    from galaxy.core.registry import INPUTS
+
+    model = the_model(prod)
+    small = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+    rng = np.random.default_rng(145)
+    controls = [i for i in INPUTS.values() if i.kind == "control"]
+    mass, barred = [], []
+    for _ in range(300):
+        inputs = {}
+        for i in controls:
+            lo, hi = float(i.lo), float(i.hi)
+            log = lo > 0.0 and hi / lo >= 10.0
+            inputs[i.name] = float(10.0 ** rng.uniform(math.log10(lo), math.log10(hi))) if log else float(rng.uniform(lo, hi))
+        f = run(model, inputs, small, only=("bar_present", "stellar_mass_total"), layer=False).fields
+        mass.append(math.log10(float(f["stellar_mass_total"])))
+        barred.append(f["bar_present"] == "yes")
+    x, b = np.array(mass), np.array(barred)
+    a, b1, b2 = ERWIN_2018
+    read = []
+    for lo, hi in POPULATION_BINS:
+        sel = (x >= lo) & (x < hi)
+        c = 0.5 * (lo + hi)
+        logit = a + b1 * c + b2 * c * c
+        band = (1.0 / (1.0 + math.exp(-(logit - 0.5))), 1.0 / (1.0 + math.exp(-(logit + 0.5))))
+        share = float(b[sel].mean())
+        verdict = "under" if share < band[0] else "over" if share > band[1] else "inside"
+        print(f"log M* [{lo}, {hi}): {int(sel.sum())} galaxies, barred {share:.3f}; Erwin 2018 {1.0 / (1.0 + math.exp(-logit)):.3f} ({band[0]:.3f}-{band[1]:.3f}): {verdict}")
+        read.append((int(sel.sum()), int(b[sel].sum()), verdict))
+    assert round(float(b.mean()), 3) == 0.74
+    assert read == [(16, 6, "under"), (47, 29, "inside"), (63, 45, "inside"), (63, 44, "inside"), (56, 51, "over"),
+                    (45, 39, "over"), (8, 8, "over")], read

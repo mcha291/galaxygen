@@ -14,108 +14,108 @@
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 1815671,
-      "sha256": "6429afa5d9d77eb3638980225cfc83cb42d3a538dbd61bc13f38b09e4387077e",
+      "bytes": 1829081,
+      "sha256": "57ccaabb7044b63a86e5c0ecdd7d92df86ae161512b0625b5847d54dce62420d",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 26.6,
-      "gpu_ms": 107.55
+      "ready_s": 3,
+      "gpu_ms": 24.33
     },
     "milky_way-stars": {
       "file": "e2e/frames/milky_way-stars.png",
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 1773865,
-      "sha256": "4314285965d411db61f1ca7b2ade48d8acb2eb628b025c960f7147345e773563",
+      "bytes": 1767585,
+      "sha256": "a5ee3f9b9e70ec6d5aaa1a2e30aad38f35a8b54ddd2f105793b8432222a361ac",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 14.6,
-      "gpu_ms": 25.74
+      "ready_s": 3.5,
+      "gpu_ms": 20.21
     },
     "milky_way-physics-only": {
       "file": "e2e/frames/milky_way-physics-only.png",
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 710891,
-      "sha256": "4df366f3aa44707e7b15a6e0b6bebf3c8d78b533094762b7ba9b2de20b823c69",
+      "bytes": 721823,
+      "sha256": "4143b702868825079f7d8dbf0d64d7e95da08c977dcc082153a225ea6999e6ec",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 9.2,
-      "gpu_ms": 24.27
+      "ready_s": 4.9,
+      "gpu_ms": 22.03
     },
     "milky_way-thumbnail": {
       "file": "public/templates/milky_way.png",
       "template": "milky_way",
       "width": 256,
       "height": 256,
-      "bytes": 130703,
-      "sha256": "996424df9fb384365cd471f475df8358da5abf2808c2853e84edca15779054c6",
+      "bytes": 131472,
+      "sha256": "2fae37969463879a114b5b5dd46e7810090176a2b7ece01a1c215b6a0fa74157",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 5.5,
-      "gpu_ms": 16.48
+      "ready_s": 2.8,
+      "gpu_ms": 4.67
     },
     "ngc_4414-field": {
       "file": "e2e/frames/ngc_4414-field.png",
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 1287080,
-      "sha256": "82b97ecc211c6127dcef74ad985b6f3dd75595688730c2d87b6ca594a254388d",
+      "bytes": 1297877,
+      "sha256": "bb113174fdf707f96d4acf29fe79338377c2004ee9e037dd229cdf203333c104",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 21.1,
-      "gpu_ms": 148.41
+      "ready_s": 3,
+      "gpu_ms": 35.13
     },
     "ngc_4414-stars": {
       "file": "e2e/frames/ngc_4414-stars.png",
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 1371511,
-      "sha256": "9a98437219f0a9c2b90718bf2481903a3722b05f9866d9ed326c432ccb2f8cc4",
+      "bytes": 1378293,
+      "sha256": "7a5dbebfcc48ec0570caac66429db968d1fd7b934e7a6c80cb6f95896b54fce7",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 9.5,
-      "gpu_ms": 37.73
+      "ready_s": 3.6,
+      "gpu_ms": 29.6
     },
     "ngc_4414-thumbnail": {
       "file": "public/templates/ngc_4414.png",
       "template": "ngc_4414",
       "width": 256,
       "height": 256,
-      "bytes": 96664,
-      "sha256": "93ab92286776ee73efbe9928499410ab2b82a72dd5effe31797a86e233af4a89",
+      "bytes": 97269,
+      "sha256": "69bd70279130ab0e4b839d9eaf165c97fd15b8682eded37f9850f24816d5fbd0",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 4.2,
-      "gpu_ms": 12.02
+      "ready_s": 2.9,
+      "gpu_ms": 4.87
     },
     "milky_way-zoom": {
       "file": "e2e/frames/milky_way-zoom.png",
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 1144537,
-      "sha256": "bb9cb645f22f6578164eccce4fd1617623e18d92b380ea0493f9479653d7aa3d",
+      "bytes": 1263450,
+      "sha256": "f594d93c7b8f0b5d811c3bef274bea01a5a14f8daba564e7a29cfa3e360870d3",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 20,
-      "gpu_ms": 46.66
+      "ready_s": 34.6,
+      "gpu_ms": 19.34
     },
     "ngc_4414-zoom": {
       "file": "e2e/frames/ngc_4414-zoom.png",
       "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 1503149,
-      "sha256": "3c58075050814cd846914ed178c72b22252fd97641aa665dee521bae275de8c6",
+      "bytes": 1478513,
+      "sha256": "4c4e0d8dae28a20798795100a7a9e11d022badf5a4e046f85f8a4013c654caa8",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34",
-      "ready_s": 13.1,
-      "gpu_ms": 42.78
+      "ready_s": 22.5,
+      "gpu_ms": 16.13
     }
   }
 }

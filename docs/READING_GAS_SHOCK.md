@@ -645,3 +645,41 @@ harmonics over the period of the lowest common pattern; otherwise the response i
 - Not found anywhere: a steady corotating gas profile; F in terms of a stellar surface-density contrast; a
   threshold formula in (nu, x, f); pre- and post-shock densities printed for an isothermal, unmagnetised solution
   (C1.3's are derived from mu).
+
+---
+
+## Part D — S87 (BUILD_V M1): how fast a young population's arm contrast fades (debt #81), and a dynamic arm's gas width (debt #144), re-read here
+
+**The lead's note (2026-11-03).** No web access this session. Debts #81 and #144 each named a reading for S87; this
+is a re-reading of Parts A-C above and of READING_CLUSTERING.md and READING_GAS_PATTERN.md. Nothing was fetched; the
+arithmetic is the lead's `[inferred]`.
+
+**D1. #81 — the age at which a population's arm-interarm contrast has decayed to the old disc's.** The entry's kill
+condition, read from observation. What the readers hold, closest first:
+- *Simulations, the young stars on the arm:* clusters younger than ~30 Myr sit on the stellar arms "without a clear
+  spatial offset" in a live disc (B22, Wada, Baba & Saitoh 2011); the arm's density changes on ~100 Myr (A4) and an
+  arm lives ~120 Myr (A1, Grand, Kawata & Cropper 2012) — the 0.1 Gyr the cut is sourced to since S57 (#81's re-ruling).
+- *Observations, ages across arms:* cluster age bins <10, 10-50 and 50-200 Myr against the arm in three LEGUS
+  galaxies — an age gradient in NGC 1566, none in M51a or NGC 628 (B11, Shabani et al. 2018); colour (age) gradients
+  across arms in 10 of 13 galaxies (B10, Martinez-Garcia et al. 2009); no propagation across the arm in M81's 20
+  regions (B13). Each is a *place* by age (an offset or a gradient), not an arm-interarm *contrast* by age.
+- *The nearest measured fading:* the young clusters' **clustering** decays with age — "more homogeneously distributed
+  after ~40-60 Myr" (six LEGUS galaxies), a "randomization timescale" of 50-100 Myr and "consistent with a randomized
+  distribution after 100 Myr" in M51 (Grasha et al. 2017, 2019; READING_CLUSTERING.md section 2). That is the fade
+  of a hierarchy of clumps the model draws on its own (`census_clustering`, #162's), not of the arm's contrast.
+- **No reader prints the age at which a population's arm-interarm contrast has decayed to the old disc's**, so the
+  0.1 Gyr cut stays a cut with two simulations' arm lifetime behind it; the observed fades the readers do hold
+  (clustering at 40-100 Myr) bracket it and are not its statistic. The owner's reading: an arm-interarm contrast (or
+  an azimuthal Fourier amplitude) per age bin of resolved young populations — LEGUS or PHANGS-HST cluster catalogues
+  binned by age against an arm mask, the form Shabani et al. 2018's bins come closest to.
+
+**D2. #144 — a dynamic (co-rotating) arm's gas ridge width over the arm spacing.** C1.4 above stands: the simulations
+of co-rotating arms (S7 Dobbs & Baba 2014 section 3.7; S8 Wada et al. 2011; S10; S11) print that gas falls into the
+minimum from both sides, at Mach ~2, and that the arm density changes over ~100 Myr — **no ridge width**. The widths
+the readers hold are a steady shock's (Kim & Ostriker 2002 W/L_x 0.05-0.16; Kim, Kim & Ostriker 2010's 3D arm at 10 %
+of the arm-to-arm distance, both rigid patterns), one galaxy's measured gas arm (Egusa et al. 2017, M51 inner 0.17),
+a maser arm's 1 sigma (Reid et al. 2019) and PHANGS's ridge masks (Querejeta et al. 2024, 500-1000 pc top-hat; Reading
+D of READING_GAS_PATTERN.md). None is a co-rotating arm's gas width, so #144's second closer is not met by anything in
+the repository and its first is #141's (permanent at S86). The owner's reading: the gas surface-density profile
+across an arm in a live-disc simulation with gas (Baba et al. 2015's dynamic models, Wada et al. 2011's Fig. 4 or 9),
+as FWHM over the arm spacing.
