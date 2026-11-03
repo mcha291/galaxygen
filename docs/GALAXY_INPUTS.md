@@ -3151,6 +3151,16 @@ never been judged in twenty-three sessions.
    corrected light the model is short of light, if it is observed light an attenuation of ~0.3 mag would
    land M_V and the colour would move the wrong way — the two readings separate on the colour.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the closer the batch can give is the dust stage's attenuated magnitude from the layered geometry (#128's closure); the source's errors stay [recall].
+   *S89 (M2): measured; not published - a published attenuated magnitude would be a field no row reads.* All directions
+   together, in the dust stage's convention, each band's disc light through its own absorbing depth in the two-layer
+   geometry (#168), the bulge undimmed: the default galaxy's **M_V −21.147 intrinsic → −20.816 attenuated (A_V 0.330),
+   B − V 0.562 → 0.570**; NGC 4414 −20.601 → −20.275, 0.661 → 0.651 (bluer: its dust takes the red inner light first).
+   Against BHG16's −21.37 and 0.73: corrected light, 0.22 mag short and 0.17 bluer; observed light, 0.55 short and 0.16
+   bluer. **The entry's prediction (B4) fails: the two readings do not separate on the colour** — attenuation reddens the
+   galaxy by 0.009 only, so the colour gap is the stars' under either reading. The rows still have no window (`lo ==
+   hi`, D100): **what would close them** is a source with errors (Licquia, Newman & Brinchmann 2015 `[recall — NEEDS
+   SOURCING]`) that states what its magnitudes measure; then the attenuated magnitude is published with the row that
+   reads it (`READING_DUST.md`).
 83. **The stellar wind's escape velocity is Newtonian: Γ_e is missing** (S28, D177). `star_wind_luminosity`
    is ½ Ṁ v_∞² with Vink, de Koter & Lamers 2001's mass-loss recipe and v_∞/v_esc = 2.6 (1.3 below the
    bistability jump) `[verified: A&A 369, 574, eqs. 15, 23, 24, 25, read at S28]`, but v_esc is computed
@@ -3258,6 +3268,18 @@ never been judged in twenty-three sessions.
    band — the same table, eight rows instead of one — which is one afternoon of arithmetic with a
    prediction: L_IR rises by ~10% and T_d(R₀) by ~0.5 K; the CMB floor is one constant (2.725 K).
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the dust's eight-band absorbed power is the dust stage's arithmetic, with #128's geometry.
+   *S89 (M2): read and measured; not built - the closer as written would absorb the light the bands do not hold at
+   the wrong depth.* The eight-band continuum (`spectra.sed_density` through the `disc_sed_*` samples and their blackbody
+   tails) carries **0.687 of `disc_luminosity`** (`tests/test_render.py`; 0.708 at S38) — the young stars' ultraviolet
+   shortward of U is not in it — and through that continuum the grain curve removes **0.7847 of what grey absorption at V
+   removes** (`CURVE_OVER_GREY`). "Eight rows instead of one" applied to the bolometric light would cut the absorbed power
+   by about a fifth on the continuum and absorb the other 31 %, the ultraviolet the curve absorbs most, at the
+   continuum's fraction: the prediction's sign (L_IR up ~10 %) rests on that 31 %, whose spectrum no stage computes (S31's
+   one measured side: the Habing band at the far-ultraviolet depth, +10.8 %). **What would close it:** the light's
+   spectrum shortward of U — the isochrone points as blackbodies at their own T_eff (the PARSEC table holds `log_teff`
+   and `log_l` for every point) or ultraviolet bands — a light-stage change, proposed for M3 beside T2 / #114
+   (`READING_DUST.md`). The CMB floor's source is not read; since S52 no unheated grain is drawn, so it moves no
+   published temperature.
 92. **The PAH fraction is a cross-galaxy fit applied per radius, and the Milky Way sits 0.30 dex above its
    own value** (S31, D180). Rémy-Ruyer et al. 2015's eq. 5 relates f_PAH to 12 + log O/H across 109
    galaxies `[verified: read at S31]`; applied to the gas's abundance at each radius it reads 9.1% at R₀
@@ -3267,6 +3289,11 @@ never been judged in twenty-three sessions.
    or by a per-radius calibration from resolved galaxies (KINGFISH), either a sourced relation replacing
    this one; what kills the reading: a Phase 9 PAH-band emission that lands at R₀ with 9.1%.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the PAH fraction's sSFR form is the dust stage's, read with #91.
+   *S89 (M2): read; not buildable from the repository.* Rémy-Ruyer et al. 2015's sSFR form was not read: `AUDIT_III.md`
+   records only the paper's concluding remark that f_PAH is "primarily driven by the sSFR, with a second order effect
+   from metallicity", and the metallicity relation (eq. 5) is the one read. **What would close it:** the sSFR relation
+   read from the same paper (its coefficients and scatter), or a per-radius calibration from resolved galaxies; the
+   stage would read the published `sfr_surface_density` over the stellar surface density per ring.
 93. **No acceptance row reads the dust temperature or the infrared luminosity** (S31, D180; headed "Row 32 is
    owed and was not entered" until S70 — row 32 has been the globular-cluster system mass since S34, `spec.py:239`).
    Planck 2013 XI's whole-sky ⟨T_obs⟩ = 19.7 ± 1.4 K `[verified: Table 3, read at S31]` was read while
@@ -3528,6 +3555,13 @@ never been judged in twenty-three sessions.
    the infrared channel's white point and the scattering phase in an inclined disc; what the closure itself left
    open is #128.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — what remains is the scattering geometry's source (a thin-slab guess) — the dust's, with #128 and #168; the infrared channel's white point is a display ruling the viewer takes with it.
+   *S89 (M2): read; not buildable from the repository; the white point is a display ruling.* No source for the
+   scattered light's phase in an inclined disc is held (the phase table's in-plane average is `[inferred]`), and the
+   region-scale alternative needs V3's resolved scattering, not built. The infrared channel's white point is a display
+   choice the owner rules with the viewer (BUILD_V §2a puts it with the viewer). Since S89 the scattering's *geometry*
+   takes the clouds' share of the dust in the clouds' layer (#168). **What would close it:** a radiative-transfer
+   source's scattered-light phase for an inclined exponential disc (or the region-scale scattering), and the owner's
+   white point.
 110. **The region regime's noise, pillar rule and tilt are stated shapes the cloud vector does not constrain**
    (S40, V3, D190). The cloud vector fixes the one-point PDF (σ_s), the mean column, the gradient and the source
    offset; the *spatial* structure needs a power spectrum it does not carry. So `region.ts` realises the log-normal
@@ -4127,6 +4161,16 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    says whether the dust reddens too little or the stars are too blue. What kills the dust reading: a frame still
    under 0.72 with the catalogues' face-on reddening applied by hand.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the frame's three dust terms read against a sourced face-on attenuation are the dust's.
+   *S89 (M2): the frame's three dust terms read separately; the comparison the closer names is not held.* The check's own
+   computation taken apart on the judged frame (the two-layer face-on transmission since #168): **NGC 4414 — stars alone
+   0.6607, through the extinction 0.6453, plus the scattered light 0.6458, plus the thermal 0.6458** (the check; 0.645984
+   after M1); the Milky Way template 0.5618 → 0.5651 → 0.5663 → 0.5663. The extinction makes NGC 4414's frame **bluer**
+   (−0.0155: its dust lies in the inner disc, where the light is reddest), the scattered light adds 0.0005, the thermal
+   nothing; so the stars alone are 0.059 under the window's floor and the dust as built reddens nothing that could close
+   the gap — "the stars are too blue" leads, not ruled. **What would close it:** a sourced face-on attenuation for an Sc
+   disc (the catalogues' own A_B − A_V; RC3 and HyperLeda correct to face-on, not to dust-free, `READING_NGC_4414.md`
+   W-K); the dust reading dies if the frame stays under 0.72 with it applied — at 0.6458 a face-on E(B − V) above 0.074 is
+   needed. The check's reason in `specs/templates.py` carries the split (`READING_DUST.md`).
 137. ~~**The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first**~~
    **DISCHARGED at S70** (Audit V, F-5-1, D234; discharged in fact at S61). Its own closer — "L1's ring-first draw
    … after which the list is empty and the realised ring totals are identical with the layer on or off" — was met

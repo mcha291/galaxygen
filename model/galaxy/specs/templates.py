@@ -255,11 +255,14 @@ CHECK_MISSES: Mapping[str, Mapping[str, CheckMiss]] = {
             debt=136,
             since="S54",
             reason=(
-                "0.652 against [0.72, 0.82]: the face-on frame through the dust is bluer than the catalogues' "
+                "0.646 against [0.72, 0.82]: the face-on frame through the dust is bluer than the catalogues' "
                 "face-on colour, as the default galaxy's is (0.57). S70 (D234, #128(b)): was 0.636 - the frame read "
                 "through the mixed slab the dust stage left at S52; through the stars' and the dust's own layers it "
                 "is 0.016 redder and 0.21 mag brighter in V (measured, the mechanism not separated), still bluer "
-                "than the window."
+                "than the window. 0.652 at S70, 0.6460 after M1 (S88), 0.6458 since S89 (#168: the clouds' share of "
+                "the dust in the clouds' layer). S89 took the three dust terms apart: the stars alone 0.6607, through "
+                "the extinction 0.6453 - bluer, the dust lying in the inner disc where the light is reddest - the "
+                "scattered light +0.0005, the thermal nothing (docs/READING_DUST.md)."
             ),
             prediction=(
                 "The window is corrected to face-on by a formula in the axis ratio and still holds the face-on "
