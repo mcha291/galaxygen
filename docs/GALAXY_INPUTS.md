@@ -4968,6 +4968,24 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    pass: #95's closure with D211's geometry re-done — the heating and the scattering computed with the clouds' dust at
    the clouds' heights.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): built — the heating and the scattering take the clouds' dust in the clouds' layer.* The ring's molecular
+   share of its dust (`gas_molecular_fraction_profile`: every gram of the molecular gas is in the census, #94's
+   construction) absorbs in the molecular layer's sech² (h = `MOLECULAR_LAYER_FWHM` / 3.5255 = 34.04 pc, the census's
+   own), the rest in the gas's (`dust.absorbed_fraction`, `two_layer_absorbed_fraction`: the stars' layer through two
+   dust layers, a fixed 256-node Gauss–Legendre in ln u, within 5e-11 of the one-layer quadrature when a layer is empty
+   and within 1e-12 of a midpoint sum on two layers, `tests/test_dust_layer.py`). The render's scattered share is taken
+   in the same geometry, and its header names it (`layers.dust_clouds` = {height, share}, the per-ring array
+   `dust_cloud_share`); the face-on template check (`specs/templates.py` `face_on_clouds`) and Audit IV's balance read it.
+   **Before → after** (the heating's disc total; the Milky Way template the default's — no field it reads is the bar's
+   or a pin's): L_IR **1.249895e10 → 1.247074e10 L☉** (×0.99774; the infrared share 0.26171 → 0.26112), T_d(R₀) 18.6669
+   → 18.6404 K; `ngc_4414` **6.797638e9 → 6.760673e9** (×0.99456; 0.26774 → 0.26628), T_d(R₀) 16.3259 → 16.3208 K. Ring by
+   ring (default) 1.0071 at 2 kpc (the clouds' layer thicker than the gas's there), 0.9901 at 4, 0.9921 at R₀, 0.9979 at
+   12. The scattered light moves with it (smaller where the clouds' layer is the thinner). **Stated, not computed:** the
+   census's *expectation* is used (this checkpoint precedes the census; the realised share is `/api/render`'s
+   `dust_diffuse_share`), and the clouds' dust is a smooth layer — the clumping that lets more light past a cloud than a
+   smooth layer of its mass is not computed (a clumpy medium's escape needs the clouds' covering factor, no source read).
+   G₀ keeps the mixed slab (D211 ruling 4). Proposed **discharged** for its stated closure, the clumping named under
+   #91's grey slab if the gate wants it carried.
 169. **A texel holding clouds far apart in height is drawn as one slab: thin vertical streaks inside ~3 kpc of the
    inclined view** (S64, D224; the clouds builder's first `ngc_4414` frame and the lead's ruling on it). The viewer's
    cloud raster holds per texel the A_V-weighted mean height and a half-thickness (the rms of the heights about it, in

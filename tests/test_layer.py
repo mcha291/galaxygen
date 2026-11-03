@@ -1772,7 +1772,8 @@ RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "d
 # the ring-first draw's streams, so the same bits on and off (the same clouds either way).
 # S66 (D226 R5b): and the middle part's three kept-octave windows - the history's and the constants', the same bits.
 RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old", "dust_diffuse_share",
-                   "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1")  # (R, ...)
+                   "stars_middle_kept3", "stars_middle_kept2", "stars_middle_kept1",
+                   "dust_cloud_share")  # (R, ...); S89 (#168): the clouds' share of the dust, a law, the same on and off
 # S61 (D220 items 4 and 6): was ("lines_hii",) - the regions' ring ratios are the ring-first census's, binned by the
 # clouds' radii, so the HII line light keeps its ring on and off to 1e-12 (RENDER_RING_FIRST). None is left here.
 RENDER_CENSUS_STATISTICS: tuple[str, ...] = ()
@@ -1951,7 +1952,8 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S61 (D220 part II): was 369 - the cloud's ring-drawn radius and the clustering field's seed and cell means.
     # S62 (D221 item 7 as amended): was 372 - the gas spurs' twelve columns. S62 (D221): was 384 - the gas fluctuation
     # field's eight.
-    assert len(columns) > 100 and len(b.fields) == 392
+    # S89 (#167): was 392 - the clouds stage's scalar cloud_extinction_v retired.
+    assert len(columns) > 100 and len(b.fields) == 391
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -2028,7 +2030,8 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # (measured).
     same_sample = ["star_bubble_radius", "star_population", "star_wind_luminosity", "star_wolf_rayet"]
     # S61 (D220 II.5): was 269 - bright_star_radius leaves what is held (above).
-    assert len(held) == 268 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
+    # S89 (#167): was 268 - cloud_extinction_v, a galaxy scalar held on and off, retired.
+    assert len(held) == 267 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
     assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
@@ -2795,4 +2798,4 @@ def test_the_template_checks_layer_off_are_the_numbers_d213_recorded():
     assert results["hydrogen_mass"].value == 4838898115.005813  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 4803633219.748805
     assert results["absolute_magnitude_k"].value == -23.289649026321634  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -23.270507283088264
     # S70 (D234, #128(b)): was 0.6355279197563419 - the frame through the mixed slab, abandoned by the dust stage at S52.
-    assert results["colour_b_v_face_on"].value == pytest.approx(0.645984252811246, abs=1e-11)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.6517106309907312
+    assert results["colour_b_v_face_on"].value == pytest.approx(0.6457810235493007, abs=1e-11)  # S89 (#168: the clouds' share of the dust in the clouds' layer, the face-on transmission with it): was 0.645984252811246  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.6517106309907312

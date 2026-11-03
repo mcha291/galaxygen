@@ -97,25 +97,32 @@ def mixed_face_on_transmission(tau: np.ndarray) -> np.ndarray:
     return np.where(tau > 1e-12, -np.expm1(-tau) / np.where(tau > 1e-12, tau, 1.0), 1.0)
 
 
-def layered_face_on_transmission(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+def layered_face_on_transmission(tau: np.ndarray, ratio: np.ndarray, cloud_share: Any = None, cloud_ratio: float | None = None) -> np.ndarray:
     """The share of a column's starlight a face-on line of sight keeps when the stars and the dust are two sech²
     layers, the dust's scale height ``ratio`` times the stars' (S70, D234, #128(b)): the geometry the dust stage
     heats in and the render names since S52 (D211). A star at u = z / 2h★ (its share ½ sech² u du) sees the dust
     above it, A(u) = ½[1 − tanh(u / ratio)] of the column, so the frame keeps ∫ ½ sech²(u) exp(−τ A(u)) du
     ``[inferred: derived here, as dust.layered_absorbed_fraction's A(s)]``. At ratio 1 it is the mixed slab's
     (1 − e^−τ)/τ; a thin dust sheet (ratio → 0) keeps ½(1 + e^−τ); a thin star sheet (ratio → ∞) e^(−τ/2).
-    ``tau`` (R, F) and ``ratio`` (R, 1) broadcast; a NaN ratio (no dust layer) keeps the mixed slab's."""
+    ``tau`` (R, F) and ``ratio`` (R, 1) broadcast; a NaN ratio (no dust layer) keeps the mixed slab's. Since S89 (#168)
+    the clouds' share of the dust (``cloud_share``, (R, 1)) lies in the clouds' own layer, ``cloud_ratio`` times the
+    stars' height: the dust above a star is (1 − f) A(u) + f A_c(u), as the dust stage heats it."""
     tau = np.asarray(tau, dtype=float)
     ratio = np.broadcast_to(np.asarray(ratio, dtype=float), tau.shape)
     out = mixed_face_on_transmission(tau)
     ok = (tau > 1e-12) & np.isfinite(ratio) & (ratio > 0.0)
     if not ok.any():
         return out
-    step = min(FACE_ON_STEP, float(ratio[ok].min()) / 40.0)
+    clouds = cloud_share is not None and cloud_ratio is not None and np.isfinite(cloud_ratio) and cloud_ratio > 0.0
+    least = float(ratio[ok].min()) if not clouds else min(float(ratio[ok].min()), float(cloud_ratio))
+    step = min(FACE_ON_STEP, least / 40.0)
     u = np.linspace(-FACE_ON_SPAN, FACE_ON_SPAN, int(math.ceil(2.0 * FACE_ON_SPAN / step)) + 1)
     stars = 0.5 / np.cosh(u) ** 2
     t, r = tau[ok][:, None], ratio[ok][:, None]
     above = 0.5 * (1.0 - np.tanh(u[None, :] / r))
+    if clouds:
+        f = np.broadcast_to(np.clip(np.nan_to_num(np.asarray(cloud_share, dtype=float), nan=0.0), 0.0, 1.0), tau.shape)[ok][:, None]
+        above = (1.0 - f) * above + f * 0.5 * (1.0 - np.tanh(u[None, :] / float(cloud_ratio)))
     out[ok] = np.trapezoid(stars[None, :] * np.exp(-t * above), u, axis=-1)
     return out
 
@@ -131,6 +138,17 @@ def face_on_ratio(header: Mapping[str, Any], arrays: Mapping[str, Any]) -> np.nd
         return np.asarray(arrays[dust], dtype=float) / float(stars)
 
 
+def face_on_clouds(header: Mapping[str, Any], arrays: Mapping[str, Any]) -> tuple[np.ndarray | None, float | None]:
+    """(R,) the clouds' share of each ring's dust and the clouds' layer's height over the stars', from the header's
+    ``layers.dust_clouds`` (S89, #168), or (None, None) where it names none (every grain in the dust's layer)."""
+    layers = header.get("layers") or {}
+    clouds, stars = layers.get("dust_clouds"), layers.get("stars")
+    if not isinstance(clouds, Mapping) or not isinstance(stars, (int, float)) or clouds.get("share") not in arrays:
+        return None, None
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.asarray(arrays[clouds["share"]], dtype=float), float(clouds["height"]) / float(stars)
+
+
 def face_on(header: Mapping[str, Any], arrays: Mapping[str, Any], layered: bool = True) -> dict[str, Any]:
     """The frame's stars with the dust composed face-on (S39): each column's light keeps the share a face-on line of
     sight lets through its dust, τ = −ln T the column's depth in each filter - since S70 (D234, #128(b)) with the
@@ -140,7 +158,9 @@ def face_on(header: Mapping[str, Any], arrays: Mapping[str, Any], layered: bool 
     undimmed (optically thin)."""
     tau = -np.log(arrays["dust_extinction"])
     ratio = face_on_ratio(header, arrays) if layered else None
-    own = (mixed_face_on_transmission(tau) if ratio is None else layered_face_on_transmission(tau, ratio[:, None]))[:, None, :]
+    share, cloud_ratio = face_on_clouds(header, arrays) if ratio is not None else (None, None)
+    own = (mixed_face_on_transmission(tau) if ratio is None
+           else layered_face_on_transmission(tau, ratio[:, None], None if share is None else share[:, None], cloud_ratio))[:, None, :]
     phase = header["components"]["dust_scattered"]["phase"]["factor"][-1]
     lit = (arrays["stars"] + phase * arrays["dust_scattered"]) * own + arrays["dust_thermal"][:, None, :]
     return {**arrays, "stars": lit}

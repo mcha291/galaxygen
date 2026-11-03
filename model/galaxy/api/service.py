@@ -116,9 +116,14 @@ RENDER_OPTIONAL = (
     "dust_temperature", "dust_infrared_surface_brightness",
     # The dust's own layer (S50, D206): the gas's scale height per ring.
     "gas_scale_height",
+    # S89 (#168): the clouds' share of each ring's dust, which lies in the clouds' own layer.
+    "gas_molecular_fraction_profile",
 )
 # The render's per-ring array of the dust layer's heights, kpc (D206): what `layers.dust` names.
 RENDER_DUST_HEIGHT = "dust_height"
+# S89 (#168): the render's per-ring array of the clouds' share of the dust, the part in the clouds' layer, which
+# `layers.dust_clouds` names with that layer's height.
+RENDER_DUST_CLOUD_SHARE = "dust_cloud_share"
 # The render's (R, phi) array of the dust's column around each ring over the ring's mean (D207; the gas's
 # own contrast since S51, D210): what `placement.dust` names.
 RENDER_DUST_PLACEMENT = "dust_placement"
@@ -1877,6 +1882,21 @@ class Service:
                          "taken to share it (one dust-to-gas ratio through the layer). NaN where the model holds "
                          "no height - past the stellar disc's edge, where there is no dust to place",
             }}
+        # S89 (#168): the clouds' dust in the clouds' own layer - the ring's molecular share of its dust (every gram of
+        # the molecular gas is in the census), at the molecular layer's scale height - as the dust stage heats it.
+        cloud_share, h_clouds = None, None
+        if dust_height is not None and "gas_molecular_fraction_profile" in f and "MOLECULAR_LAYER_FWHM" in model.constants:
+            cloud_share = np.clip(np.nan_to_num(np.asarray(f["gas_molecular_fraction_profile"], dtype=float), nan=0.0), 0.0, 1.0)
+            h_clouds = _clouds.cloud_layer_height({k: c.value for k, c in model.constants.items()})
+            layers["dust_clouds"] = {"height": h_clouds, "share": RENDER_DUST_CLOUD_SHARE}
+            layers["arrays"][RENDER_DUST_CLOUD_SHARE] = {
+                "unit": "dimensionless", "fields": ["gas_molecular_fraction_profile"],
+                "about": "the share of each ring's dust that lies in the clouds' own layer (dust_clouds.height, kpc, the "
+                         "molecular layer's scale height), the rest in the dust's layer (dust): the ring's molecular share "
+                         "of its gas, every gram of the molecular gas being in clouds. The geometry the dust stage heats "
+                         "in and the scattered light is taken in since S89 (#168): the dust's expectation, a smooth layer, "
+                         "not the realised clouds the viewer draws",
+            }
         components: list[tuple[str, np.ndarray]] = [("stars", stars)]
         about: dict[str, Any] = {
             "stars": {
@@ -2023,19 +2043,27 @@ class Service:
             layered = dust_height is not None and h_thin is not None
             with np.errstate(divide="ignore"):  # a stellar layer of no height: a sheet of stars, the ratio infinite
                 ratio = dust_height / h_thin if layered else np.ones(R_axis.n)
-            share = _spectra.scattered_share(tau_ext, tau_sca, ratio[:, None])  # (R, filter)
+            # S89 (#168): the clouds' share of the dust in the clouds' layer, as the dust stage heats it.
+            if cloud_share is not None and h_thin is not None:
+                with np.errstate(divide="ignore"):
+                    cloud_ratio = np.float64(h_clouds) / np.float64(h_thin)
+                share = _spectra.scattered_share(tau_ext, tau_sca, ratio[:, None], cloud_share[:, None], cloud_ratio)
+            else:
+                share = _spectra.scattered_share(tau_ext, tau_sca, ratio[:, None])  # (R, filter)
             components.append(("dust_scattered", share[:, None, :] * stars))
             about["dust_scattered"] = {
                 "unit": "Lsun/pc2", "fields": ["dust_scattering_optical_depth", "dust_extinction_v", "dust_scattering_asymmetry",
                                                *RENDER_STARS, *contrast_fields,
-                                               *(["gas_scale_height", "thin_disc_scale_height"] if layered else [])],
+                                               *(["gas_scale_height", "thin_disc_scale_height"] if layered else []),
+                                               *(["gas_molecular_fraction_profile"] if cloud_share is not None else [])],
                 "layer": "dust", "phase": _spectra.phase_table(g),
                 "about": "starlight the dust scatters, all directions together: the published V-band scattering depth, "
                          "moved to each filter by the grain model's scattering cross-section, and the share of the "
                          "stellar component the dust of that depth scatters as the dust stage counts it (what the "
                          "extinction removes less what the absorption keeps), "
                          + ("with the stars and the dust in their own layers, the two the header names, at each "
-                            "ring's ratio of their heights; none where the dust has no layer. "
+                            "ring's ratio of their heights, the clouds' share of the dust in the clouds' own layer "
+                            "(layers.dust_clouds); none where the dust has no layer. "
                             if layered else "the stars and the dust mixed in one layer. ")
                          + "The phase table's factor, a "
                          "Henyey-Greenstein phase function at the published g averaged over light arriving in the "
@@ -2082,6 +2110,8 @@ class Service:
                 arrays.append((name, value[rows] if name in per_ring_names else value[rows][:, cols]))
             if dust_height is not None:
                 arrays.append((RENDER_DUST_HEIGHT, dust_height[rows]))
+            if cloud_share is not None:
+                arrays.append((RENDER_DUST_CLOUD_SHARE, cloud_share[rows]))
             if placement is not None:
                 arrays.append((RENDER_DUST_PLACEMENT, placed_gas[rows][:, cols]))
             if unspurred is not None:
@@ -2096,6 +2126,8 @@ class Service:
             axes = {name: ["R", "filter"] if name in per_ring_names else ["R", "phi", "filter"] for name, _ in components}
             if dust_height is not None:
                 axes[RENDER_DUST_HEIGHT] = ["R"]
+            if cloud_share is not None:
+                axes[RENDER_DUST_CLOUD_SHARE] = ["R"]
             if placement is not None:
                 axes[RENDER_DUST_PLACEMENT] = ["R", "phi"]
             if unspurred is not None:
@@ -2127,6 +2159,10 @@ class Service:
                 # A cell's area-weighted mean height: the layer a cell's own dust is spread through.
                 arrays.append((RENDER_DUST_HEIGHT, _cell_means(dust_height, bounds, R_axis, phi_axis, per_ring=True)))
                 axes[RENDER_DUST_HEIGHT] = ["cell"]
+            if cloud_share is not None:
+                # A cell's area-weighted mean share, as its height.
+                arrays.append((RENDER_DUST_CLOUD_SHARE, _cell_means(cloud_share, bounds, R_axis, phi_axis, per_ring=True)))
+                axes[RENDER_DUST_CLOUD_SHARE] = ["cell"]
             if placement is not None:
                 # A cell's area-weighted mean of the factor: the share of its ring's dust the cell holds, over its
                 # share of the ring's area.

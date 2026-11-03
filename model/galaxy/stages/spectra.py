@@ -708,7 +708,8 @@ def extinction_depth(a_v: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
     return _dust.optical_depth(np.nan_to_num(np.asarray(a_v, dtype=float), nan=0.0)[..., None] * ratio)
 
 
-def scattered_share(tau_ext: np.ndarray, tau_sca: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+def scattered_share(tau_ext: np.ndarray, tau_sca: np.ndarray, ratio: np.ndarray, cloud_share: Any = 0.0,
+                    cloud_ratio: Any = np.nan) -> np.ndarray:
     """The share of a ring's starlight its dust scatters, all directions together, with the stars and the dust in
     their own layers (S52, D211): what the dust's extinction removes from the stars' light, 1 − P_esc(τ_ext), less
     what its absorption keeps, 1 − P_esc(τ_ext − τ_sca), both in the layered geometry at the ring's ``ratio`` of
@@ -719,10 +720,13 @@ def scattered_share(tau_ext: np.ndarray, tau_sca: np.ndarray, ratio: np.ndarray)
     mixed slab this was until S52; a ratio that is NaN (no dust layer) scatters nothing. Replaces, at S39,
     the ruling's optically thin τ_sca × the stars, which the frame measured at 12 times the mixed slab's share over
     the whole galaxy: the disc's centre has τ_sca near 30, and a thin scatterer there scatters thirty times the
-    light it holds (tests/test_render.py keeps it as the record)."""
+    light it holds (tests/test_render.py keeps it as the record). Since S89 (#168) the clouds' share of the dust
+    (``cloud_share``, broadcast as ``ratio``) lies in the clouds' own layer (``cloud_ratio`` times the stars' height),
+    as the dust stage heats it (``dust.absorbed_fraction``); with no share it is every grain in the gas's layer."""
     tau_ext = np.asarray(tau_ext, dtype=float)
     tau_abs = np.maximum(tau_ext - np.asarray(tau_sca, dtype=float), 0.0)
-    return _dust.layered_absorbed_fraction(tau_ext, ratio) - _dust.layered_absorbed_fraction(tau_abs, ratio)
+    return (_dust.absorbed_fraction(tau_ext, ratio, cloud_share, cloud_ratio)
+            - _dust.absorbed_fraction(tau_abs, ratio, cloud_share, cloud_ratio))
 
 
 # The scattering phase function [verified: Bosschaart & Olofsson 2026, arXiv:2604.08379 (HTML), eq. 3,
