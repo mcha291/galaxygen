@@ -5367,6 +5367,19 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    viewer, as a function the model publishes — D5 as amended) so the dust's depth is continuous in R; the closure
    per ring kept to 1e-12 either way; the frames regenerated with the circle measured gone.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): built — the share continuous in R, the closure kept; the frames are S90's.* `/api/render`'s
+   `dust_diffuse_share` is now a function of R (`v6_clouds.continuous_share`, `bounded_share`): linear between the 32
+   level-0 rings' centres, flat outside the first and last, its nodes solved so that each ring's dust-weighted integral
+   of it (the ring's own quadrature, `ring_dust_mass`'s) is the ring's realised diffuse dust — a 32-row system, each
+   ring's own node weighing about three quarters of it, diagonally dominant; held to [0, 1] (B9) and, in a ring where
+   the hold took something (the outer rings, where the share is 1 and the dust falls steeply: Milky Way rings 26–31,
+   NGC 4414 20–31), that ring's own grid values moved towards 1 by the room each has, so the ring keeps its share
+   exactly. The header carries the function (`clouds.rings.nodes`: radius, share, held_rings). **Before → after**
+   (the largest change of the share between neighbouring grid rings): **Milky Way 0.2196 (a step) → 0.0259; NGC 4414
+   0.3046 → 0.0334**; the hold's own steps at its rings' edges 2.1e-3 / 1.5e-3; the closure per level-0 ring 3.5e-16 /
+   3.9e-16 of the ring's dust, layer on and off alike (`tests/test_v6_clouds.py` gate (i) re-stated). The closer's last
+   clause — the frames regenerated with the circle measured gone (the physics-only frame's luminance across
+   4.60–4.84 kpc, 15.8 % at S71) — is S90's, with the bundles. Proposed **discharged at S90** on that measurement.
 203. **No viewer page opens a share link, and the viewer never asks the gateway's queue** (S74, D238; the review of
    W3). BUILD_IV §7 ruling 4 (a short id over a stored record, the result cached beside it, a stateless link as the
    copy-the-inputs fallback) and §2c's queue are built on the gateway's side — `POST /share`, `GET /share/{id}`, the
