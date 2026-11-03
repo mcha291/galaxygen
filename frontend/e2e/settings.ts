@@ -112,7 +112,12 @@ export const TRANSFER_SLACK = 1e-3;
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
  */
-export const DUSTY_LAYER_RATIO = [0.96641, 0.97054, 0.97765] as const;
+export const DUSTY_LAYER_RATIO = [0.96768, 0.97196, 0.97881] as const;
+// S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
+// (#148), the floor (#209), the Milky Way's pinned 5.0 kpc bar (#80) and MERGER_HEATING 90.6 (#212) move the dust, the
+// clouds (16 940 where 16 577) and the young light; measured with the new bundles on the RTX 4070 (physics only over
+// layered; the physics-only frame taken twice the same to 0): 0.96768, 0.97196, 0.97881 - moved by +0.00127, +0.00142,
+// +0.00116, past the 1e-3 pin in every channel. The layered frame is still the brighter (principle (ii) holds).
 // S71 (F-4-1, the owner's word of 2026-10-27): was [0.96427, 0.96617, 0.97222] - the Milky Way's display default draws
 // its clouds as extinction (tuning.ts TEMPLATE_TUNING.milky_way cloudsExtinction false -> true), so both frames now carry
 // the clouds' own column (0.492 of the disc's dust, undrawn before) beside the diffuse share. Measured (physics only over
