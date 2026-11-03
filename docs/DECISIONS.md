@@ -16404,3 +16404,121 @@ table beside a point function is its cell mean; a hunk staged on HEAD's text; an
 the subset as parallel processes). **Next: S87**, M1's second session — #148's build, #154's render half, #130's second
 response once the atomic dispersion is read, the reading list (#146, #129, #131, #153, #149, #81, #147, #144), the owner's
 four answers taken as they come; S88 closes the batch.
+
+
+### D255. S87, BUILD_V row 87 (M1's second session): the owner's four rulings of 2026-11-03 taken — the 1.0° pitch floor, Erwin 2019's bar-length law with the Milky Way's measured bar pinned, the bar frequency a check and not a draw, the arm law kept; one clock for the model (#148 built, row 2's predicted miss, row 6 in, #212 opened); #130 not built for want of a source; seven readings; six declared bounds read over on today's model, held strict and ruled at the gate; two questions to the owner for S88
+
+**The commission.** BUILD_V row 87 (D248), the second of M1's three sessions on ruling 4 (D252). An Opus lead on
+`session-87`, cut from `batch-m1` at 10d3a32 (S86's row commit), a Fable close; 16 commits, nothing pushed by the lead,
+DECISIONS untouched. The brief (S86's close) gave it #148's build with row 2's miss written in first, #154's render half,
+#130's second response once the atomic dispersion was read, seven readings, and the owner's answers to S86's four
+questions as they arrived — which they did the same day, all four as recommended.
+
+**The owner's rulings of 2026-11-03, taken here.**
+1. **#209 — "Take the 1.0° floor."** A drawn piece's pitch deviate is drawn again while p(1 + 0.56 z) < 1.0°
+   (`ARM_SEGMENT_PITCH_FLOOR`, `layer/arm_pieces.py`; 64 draws before the stage raises, since the floor takes half of
+   them at a disc on the 1° clip). The number is the smallest non-reversed segment pitch the readers hold — Reid et al.
+   2019 Table 2's Sagittarius–Carina outer segment 1.0 ± 2.1°, Honig & Reid 2015's M51 arm B +1.2° — and the disc draw's
+   own 1° clip; **a resolution floor, not a physical one** (both pitches are consistent with zero at their errors), so
+   it bounds 1/sin p at 57 where a piece could reach 6 700, and says nothing of a real arc of no pitch. The Milky Way and
+   default seeds do not move; `ngc_4414` does (its gas check's median ratio 1.252 → 1.429, a hit again; its one join
+   gone). **#209 discharged** (2c8fd8f).
+2. **#80 — Erwin 2019's law, the Milky Way's 5.0 kpc pinned.** `BAR_LENGTH_RATIO` (2.0, a recalled "1.5–2.5 R_d" fitted
+   to the one galaxy row 15 reads) is retired; the half-length is log₁₀ a = 0.04 + 0.76 log₁₀ h (`BAR_LENGTH_LOG_NORM`,
+   `BAR_LENGTH_SLOPE`; Erwin 2019 Table 3, 367 S⁴G bars), h the λ_d scale length, the only one checkpoint 1 holds: **2.27
+   kpc on the default disc**. The Milky Way template pins its measured **5.0 kpc** (`bar_half_length`, a numeric pin of
+   0.1–30 kpc read by the bar stage like `bar_present` and `pitch_angle`; Wegg, Gerhard & Portail 2015 through BHG16),
+   so the template is no longer the bare defaults (rule A5's first sentence amended in its about line: every field
+   downstream of the bar's length differs, layer off too; `tests/test_templates.py` holds the template against the
+   bare run with the same length pinned). **The acceptance table judges the default inputs** (`spec.run`), which carry
+   no pin, so it reads the law: **row 15 2.270 against 5.0 ± 0.2, out by 2.73, and rows 16 and 17 follow it out** (the
+   pattern speed's median 82.0 km/s/kpc against 34–52, corotation 2.65 kpc against 4.5–7.0) — three recorded misses
+   under #80 (`spec._MISSES`), nothing tuned back (B5, B10); on the template 5.0 / 47.25 / 5.26, all inside, row 15 a
+   restatement of its pin. The table now reads 10 pass / 22 fail / 5 not yet checked (was 12 / 20). **#80 carried**:
+   the model's h is λ_d's, not the source's 3.6 µm scale length (57649ff).
+3. **#145 — not a draw.** The presence criterion keeps its mechanism; Erwin 2018's frequency is a **disclosed check**
+   (`tests/test_bar.py`, 300 galaxies, the seven controls drawn over their ranges): the criterion bars 0.74; by stellar
+   mass it is inside Erwin's band from 10^9 to 10^10.5 and **over it above — 0.911 / 0.867 / 1.000 against 0.483 /
+   0.231 / 0.059**: it bars nearly every massive disc where the measured frequency falls. Carried with the ruling and
+   the measurement written in (7005cd6).
+4. **#152 — no ridge per measured arm; the arm law kept.** Written in; ruled permanent at S88's close, when Fable moves
+   the rows (0baa7a4).
+
+**One clock (#148 built, discharged; 5c0e9e2, 487f62a, 987814c).** The grid's `t_max` is the model's own flat-ΛCDM age
+on H₀ = 70 km/s/Mpc and Ω_M = 0.3, **13.467 Gyr** (`core/cosmology.py`, which holds the two parameters once; `level0.py`
+declares them from it, the bar stage's `cosmic_time` is re-exported from it), where it was a recalled 13.8. **Row 2
+left its window as S86 predicted and as written into the row before the build: 1.8599 against 1.46–1.84, out by
+0.0199** (a recorded miss, #148's). **Row 6 came back inside, unpredicted: 345.09 pc against 250–350** (355.70 before) —
+on σ_z (21.283 → 20.962 km/s, stars 0.33 Gyr younger), not on Σ★, as #42 asks of any landing; its recorded miss removed
+with the reason kept, #42 still permanent (inside by a clock's 3 %, never for a stable reason). **#212 opened:**
+`MERGER_HEATING` was derived (D128) from the model's own secular heating, which the clock moved 27.06 → 26.68 km/s, so
+its derivation now reads **90.62 at its fixed point against the constant's 88.8** — S86's "no constant was fitted on
+the 13.8" missed a derived one (rule B10). Re-derived it would move row 6 to 345.92 (inside) and **row 3 to 251.017,
+out by 0.017**. NGC 4414's fit record moved with the clock (objective 0.2511 → 0.2534; the controls not re-searched).
+
+**#154's render half** (d27c810): both halves measured, neither built; the render half re-ruled a viewer pass's — after
+#80 the default galaxy's worst cell 11.7 % at 11.18 kpc (0.68 % weighted), the Milky Way's 25.2 % (1.27 %); an azimuth
+mend proposed for M2. **#130** (ebfe2f9): read first as the S86 design requires — no source in the repository gives the
+atomic gas's dispersion (the 7–10 km/s is `[recall]`), so the second response is not built; the probe's numbers stand.
+**Readings** (7896935, 8bbf9b6, f8b4a7a, 194401c, 9d4f39e), each to its `READING_*.md` with the entry's line: #146 the
+stacks' bars are flat and the profile is the larger part of the m = 2 peak's miss (0.41 → 0.68 a with a flat profile);
+#129 / #131 PHANGS's ridge widths and per-galaxy contrasts are not in the repository; #153 the pitch law's intercept
+sits 5–7° under every sample mean the readers hold (NGC 4414 is 1.3–1.4 σ against the samples, not 2.65); #149 the
+growth zone exists in Chugunov et al. 2024 but its length and a driven A2(r/a) are not; #81 no reader prints the age at
+which a population's arm contrast decays; #147 no lane width; #144 no co-rotating arm's gas width. Each still carried
+with the owner's reading named.
+
+**Six declared bounds read over on today's model** — held by the lead as expected failures, none loosened, and **ruled
+here at the gate on the lead's measurements, as D234 ruled Audit V's at S70; S88 applies them with the strict run:**
+1. The Milky Way's published gas contrast, ring 105 (7.9125 kpc): a ring mean of 1 + 1.0036e-13 by exact summation
+   against the gate's 1e-13 (`tests/test_bar.py`, `RING_MEAN_OVER`). **Ruled: the tolerance becomes 2e-13 with the
+   measurement** — the composition of order-1 cells over a ring, the same ruling as D234's F-2-3 (the mesh's 2e-13).
+2. Audit V's power-budget share, the Milky Way at seed 777: 0.934 against the declared 0.4–0.9 (`tests/test_audit_v.py`).
+   **Ruled: S88 names the cause with one probe (the pin on and off on the same seeds) and re-declares the measured
+   spread with it** — the declaration is the model's own measured share (#195, permanent), not a source's; filling
+   the budget would be the owner's, re-stating what is measured is not.
+3. Audit V's pair-correlation slope, the Milky Way's two seeds: −0.458 against the declared law's −0.64 ± 0.15. **Ruled:
+   the declared law stays; S88 finds the cause with the same probe** (the field alone meets −0.646 ± 0.010, so the
+   composition — the longer bar's footprint, the spurs — flattens it): a defect of the composition is mended, else the
+   Milky Way's reading is held with the cause written in, as D234's F-2-n were.
+4. The spurs' walk on Audit V's mesh: 0.570 at seed 4242 against `WALK_READ_DIFFERENCE_COARSE` 0.49, since the clock
+   (0.568 before the floor). **Ruled: a bound measured at S70 over two seeds' feet, re-measured at S88 over the same
+   feet on the final model and re-declared with the reason**, the production-grid bound (0.27) checked beside it.
+5. The drawn `ngc_4414` leg at texture seed 1: the count steps by 1 at 29.42 kpc, a ring's first crossing, the class
+   the gate's eleventh follow-up removed (`tests/test_pieces.py`, `R_STEP_FIRST_CROSSING`). **Ruled: a mechanism — S88
+   mends the count's floor there if the first-crossing rule does not reach a redrawn piece at the grid's edge; if it
+   is not a defect of that rule, the step is held with its cause.**
+6. The layered catalogue's price per cell: 2 924–3 208 µs against a 3 000 µs bound with no sourced value (#154), the
+   default census 54 pieces on 13 chains with the law's 2.27 kpc bar (was 32 on 6). **Ruled: re-declared at the
+   measurement on an idle machine with the census's size written in** — a cost record, not a gate (its test stays
+   non-strict).
+
+**Two questions to the owner, for S88** (the gate recommends; nothing built on either until the word):
+- **(a) Rows 15–17: does the acceptance table judge the default inputs (as it does, `spec.run`) or the Milky Way
+  template with its pin?** The gate recommends the defaults: a table that judged the template would pass row 15 on a
+  number the template states, a restatement of the pin, and the law's miss is the honest record of what the model
+  derives. The three rows stay recorded misses under #80 (carried).
+- **(b) #212: re-derive `MERGER_HEATING` at its fixed point on the model's own clock (88.8 → 90.62) at S88, with row 3's
+  miss (251.017, out by 0.017) written in — or keep 88.8 declared as the old clock's derivation with the gap beside
+  it?** The gate recommends the re-derivation: a derived constant left at its old derivation is an adopted one wearing
+  a derived name (A9, B10), and the row's miss is the clock's to record, not the constant's to hide.
+
+**The register.** 122 open / 72 discharged → **121 open — 37 permanent, 84 carried — and 74 discharged**; #148 and #209
+discharged, #212 opened; next number **#213**. The count pin and the row literals in `tests/test_audit.py` moved with
+each (the lead's). **The hash** moved again with templates.py's fit record: `content_hash` prints
+a6a389b9af0e4e90731b6d3a14ee425d in fact; the docs' pin stays f1fbbb17… until S88 re-exports the bundles and regenerates
+the frames (D254).
+
+**The gates.** The lead's stage subset on the final model, each file its own process with its EXIT read from the
+process's own line (test_pieces and test_gas_pattern split six ways; the pieces' gate test 1 h 29): test_gas_pattern
+68, test_pieces 48 + 1 xfailed, test_bar 41 + 1 xfailed, test_render 93, test_templates 58 + 1 skipped, test_audit_v 35 +
+1 skipped + 3 xfailed, test_audit 30 + 1 xfailed, test_pattern 27, test_spec 32, test_s22_rulings 6, test_sfh_azimuthal 16,
+test_spurs 26, the docs tests 44 — all EXIT=0; test_gas_response 39 in the measurement run only (no strict run). The
+close's fast gates re-run by Fable in the worktree: vitest, the typechecks, `tools/progress.py` and the docs tests, each
+from its own EXIT line (the log). **Not run**: the full suite, `verify_clone`, the machine pins (D246); the layer, API
+and frames test files, left to S88's suite — the owner's run before the merge of `batch-m1` into `main`.
+
+**Lessons** (`LESSONS.md`, "From S87": eight of the lead's, one of the close's). **Next: S88** — the batch's close
+(`BRIEF.md`): the two answers taken, the six bounds applied, #152 to the permanent row, the pin moved, the bundles
+re-exported, the frames regenerated beside the goal pictures, the acceptance rows re-read, the owner's full suite, the
+merge into `main`, tag s88.

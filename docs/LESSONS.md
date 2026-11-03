@@ -2033,3 +2033,8 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   moved test_gas_pattern, test_pieces and test_render; each item's commit re-pinned the files it ran and said which
   it left for the joint re-pin on the final model. That is honest but the branch is red at two commits: name the
   files left red in every such commit's message, and run the joint re-pin before anything is reported green.
+- [close] **A bound read over on a changed model is the gate's to rule, not the builder's to loosen and not the owner's
+  to be asked.** S87's lead held six as strict expected failures with the measurement in each mark; the close ruled
+  them in one list on those numbers (a tolerance re-measured, a bound re-declared with its cause, a mechanism mended or
+  held), as D234 did at S70, and kept for the owner only what moves a constant's value or a rule (rows 15-17's referent,
+  #212). The owner's questions are the ones whose answer no measurement gives.
