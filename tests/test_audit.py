@@ -904,18 +904,22 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here; S59, layer off: 370-410
 
 
-PRICE_OVER = (
-    "S87 (#80, the owner's ruling of 2026-11-03, D255): with the default disc's bar from Erwin's law (2.27 kpc) its census "
-    "is 54 pieces on 13 chains (was 32 on 6), and the layer-on catalogue - the point function's cost by the star - reads "
-    "2924-3208 us a cell on an idle machine (4865 once), where the #209 commit read 2100-2651: the 3000 bound sits inside "
-    "the spread. Not loosened, and not strict (it would flip on noise): held for the gate to rule - re-measure the "
-    "bound (it has no sourced value, #154) or price the reader.")
+# S87 held this test as a non-strict xfail (PRICE_OVER): 2924-3208 us a cell on an idle machine (4865 once) against a
+# bound of 3000 with no sourced value (#154), the default census grown with Erwin's law's 2.27 kpc bar (was 32 pieces on
+# 6 chains). S88 (D255 ruling 6): re-declared at the measurement on an idle machine with the census's size - a cost
+# record, not a gate. Measured eight times on M1's final model (galaxy.specs.performance.catalogue_cost, this call):
+# 2839-3026 us a cell (3026, 2956, 3019, 3014, 2839, 2843, 2912, 2925), the default census 48 pieces on 13 chains
+# (bar 2.2698 kpc). The bound 3500 us: the measured spread and S87's 3208 under it, a stall's 4865 over it.
+PRICE_RECORD = (
+    "S88 (D255 ruling 6): a cost record, not a gate - the layered catalogue's price per cell re-declared at its "
+    "measurement on an idle machine, 2839-3026 us over eight runs, the default census 48 pieces on 13 chains (the law's "
+    "2.27 kpc bar); bound 3500 us, no sourced value (#154). Non-strict: a loaded machine's stall reads over it.")
 
 
-@pytest.mark.xfail(strict=False, reason=PRICE_OVER)
+@pytest.mark.xfail(strict=False, reason=PRICE_RECORD)
 def test_s21b_the_layered_catalogue_s_price_per_cell(default_model):
-    """The layer-on half of the test before this one, split from it at S87 (PRICE_OVER): the marginal cost per star
-    recorded, and the bound on the price of a cell."""
+    """The layer-on half of the test before this one, split from it at S87: the marginal cost per star recorded, and
+    the bound on the price of a cell - a cost record, re-declared at S88 at the measurement (PRICE_RECORD)."""
     from galaxy.specs import performance
 
     on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), repeats=3)
@@ -926,7 +930,7 @@ def test_s21b_the_layered_catalogue_s_price_per_cell(default_model):
     # ratio first/last read 1.7-2.7 against S59's 5.5-8.0). Recorded, the ordering not asserted layer on - as #154
     # and D218 did for the two per-cell timing statements; the layer-off part below keeps its assertion.
     print("layer on, marginal cost per star (s):", on_marginal)  # a record: no ordering asserted
-    assert 150.0 < on["per_cell_us"] < 3000.0, on["per_cell_us"]  # 800-1230 us here
+    assert 150.0 < on["per_cell_us"] < 3500.0, on["per_cell_us"]  # S88: was < 3000 (800-1230 us at S59); 2839-3026 us on M1's final model, 48 pieces on 13 chains
 
 
 def test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share():

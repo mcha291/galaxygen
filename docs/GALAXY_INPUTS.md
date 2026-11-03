@@ -3072,7 +3072,10 @@ never been judged in twenty-three sessions.
    log-normal normalised over each level-0 cell (930 pc by 1.6 kpc at the median cloud), the census holding each
    cell's count (D220 part II rule 2), the effect S61 measured (−0.41 in a 190 pc window, −0.63 in the whole cell);
    pairs weigh a cell's count squared, so the reading moves with where the chains crowd the clouds. Not a defect a
-   mend reaches without the per-cell conservation.
+   mend reaches without the per-cell conservation. (6) The layered catalogue's price per cell, **re-declared at the
+   measurement as a cost record, not a gate** (`tests/test_audit.py`, `PRICE_RECORD`, still non-strict): eight runs
+   on an idle machine read 2 839–3 026 µs a cell, the default census **48 pieces on 13 chains** (the law's 2.27 kpc
+   bar; D255's "54" was not this run's count); the bound 3 000 → 3 500 µs, no sourced value (#154).
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
