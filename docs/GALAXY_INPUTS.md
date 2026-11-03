@@ -3298,6 +3298,12 @@ never been judged in twenty-three sessions.
    citation; Phase 9's Hα and the cloud emissivities will read the count. What kills the reading: a
    sourced diffuse molecular fraction above ~30%, which would make the census hold too much.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the molecular completeness limit or diffuse fraction is the clouds' constant with a citation.
+   *S89 (M2): read; not buildable from the repository.* No sourced completeness limit and no sourced diffuse molecular
+   fraction is held: Rice et al. 2016's 25 (+10.7, −5.8) % is a catalogue's completeness-limited share (above); Roman-Duval
+   et al. 2016 (`READING_CLOUD_LAYER.md`) give the diffuse molecular gas a thicker layer, 130-200 pc, not a fraction.
+   **What would close it:** a diffuse (non-cloud) share of the Milky Way's CO or H₂ with its error (Roman-Duval et al.
+   2016's own diffuse fraction is the nearest candidate `[recall — NEEDS SOURCING]`), entered as a constant with its
+   citation; the census would then hold (1 − f) of the molecular gas, and #168's clouds' share of the dust with it.
 95. **The cloud vector's unsourced draws and its missing state** (S32, D181). The embedded source's offset
    from the cloud's centre (uniform over the volume), the density gradient's direction and steepness
    (uniform), the cloud's height (a sech² layer at half the thin disc's scale height) are seeded draws whose
@@ -3326,6 +3332,12 @@ never been judged in twenty-three sessions.
    the massive clouds' thinner layer, one layer for every template - is **#180**. The debt stays **carried** for its
    other parts: the source's offset and the density gradient (synthetic, none read) and the remnant state.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the cloud vector's four draws are the clouds' sources.
+   *S89 (M2): read; not buildable from the repository.* None of the remaining three has a source in the repository:
+   the embedded source's offset from its cloud's centre (Kruijssen et al. 2019's 100-150 pc is a decorrelation length,
+   not an offset distribution), the density gradient's steepness and direction, and a remnant shell's visibility time
+   (no duration read; Phase 10's bubbles carry their own ages). **What would close each:** a measured HII-region-to-cloud
+   offset distribution (e.g. a PHANGS cloud-HII-region cross-match `[recall]`), a measured cloud density gradient, a
+   shell's visible lifetime - each a constant with its citation in place of the stated draw.
 
 96. **The cluster census inherits the clouds' mass function, not the review's** (S33, BUILD_II Phase 11,
    D182). One cluster per cloud past its embedded phase at an efficiency derived from the local depletion
@@ -5152,6 +5164,14 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    giant HII regions' size-luminosity relation), and the census's regions in one clustering cell merged into one
    region of the summed ionising photons in the cell's gas (a Strömgren volume of the sum), drawn at its own radius.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): read; not built.* No source in the repository gives HII regions' sizes or a size-luminosity relation in
+   nearby discs (the one number above, NGC 604's ~400 pc, is `[recall]`). The merge the closer names - a clustering
+   cell's regions into one region of the summed ionising photons in the cell's gas, at the Strömgren radius of the sum -
+   is arithmetic on published fields, but *which* cell is a complex (a level-0 cell is 0.94 kpc by 11.25°, a level-3
+   cell about an eighth of that a side) is what the size-luminosity reading fixes: merged at a chosen level, the
+   complexes would be drawn at a chosen size, a guess the closer does not allow. **What would close it:** a giant HII
+   regions' size-luminosity relation and luminosity function read (`READING_CLOUD_SIZES.md`, Part S89, names what to
+   read), then the merge at the level whose summed regions match it.
 182. **The clouds' surface density is two regimes and a cap, not a law of radius or of mass** (S67, D231;
    `docs/READING_CLOUD_SIZES.md`; the owner's choice "Smaller giant clouds (model)"). A cloud's radius is √(M/πΣ) at
    Lada & Dame 2020's X_CO-corrected Σ_GMC — since S70 (#192, D234) `GMC_SURFACE_DENSITY_RING` 82 M☉ pc⁻² inside the
@@ -5169,6 +5189,16 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    What closes it: a radial Σ profile read across the ring's edge, a mass-radius relation for the catalogue's giants in
    place of the cap, and a template's own cloud census where one is measured.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): read; not built - the closer's main part is the owner's.* The readers hold two catalogue mass-radius
+   relations - Miville-Deschênes et al. 2017's M = 36.7 R^2.2 and Lada & Dame 2020's M = 78.6 R^1.98 (on Rice et al.
+   2016's catalogue) - and either in place of the cap makes the giants *larger*, the reverse of the owner's choice at S67
+   ("Smaller giant clouds (model)", D231): at 10⁷ M☉ they give R = 296 and 378 pc against the cap's 150 pc, and at 10⁶
+   M☉ 104 and 118 pc against the regimes' 62 pc (Σ 82) and 95 pc (Σ 35) - the catalogues' Σ is low (30, 23 M☉ pc⁻² at
+   10⁶) and their R is the equal-area radius of a 12CO/13CO footprint, not the model's √(M/πΣ_GMC). So a relation in
+   place of the cap is a ruling (the owner's), not a build. A Σ(R) across the molecular ring's edge: none read (Lada &
+   Dame's regimes are joined by no measured profile; their eq. 1 is uncorrected). NGC 4414's census: none. **What would
+   close it:** the owner's word between the cap and a catalogue relation; a resolved Σ_GMC profile across the ring's
+   edge; a template's own cloud census (`READING_CLOUD_SIZES.md`, Part S89).
 183. **In the field mode a knot carries its region's gas and not its cluster's starlight, so an HII region draws as
    pure line colour** (S67, D227; the owner's questions of 2026-10-19, "why is the hii regions all green on 4414?").
    The knots (S64, D224) hold each region's line light; the cluster's own starlight is spread through the field's
