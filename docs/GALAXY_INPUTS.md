@@ -3038,7 +3038,15 @@ never been judged in twenty-three sessions.
    *S88 (M1's close), the gate's rulings applied (D255's six):* (1) the gas ring mean's tolerance is **2e-13 with the
    measurement** (`tests/test_bar.py`, `RING_MEAN_TOLERANCE`; the strict xfail removed): on the final model, by exact
    summation, the Milky Way's worst ring 1.0036e-13 (ring 105, 7.9125 kpc; nine rings over 5e-14) and NGC 4414's
-   9.35e-14 (ring 129) — the composition of order-1 cell means over 360 cells, D234's F-2-3 ruling.
+   9.35e-14 (ring 129) — the composition of order-1 cell means over 360 cells, D234's F-2-3 ruling. (5) The drawn
+   `ngc_4414` leg's count step at 29.4215 kpc (texture seed 1) is **held with its cause, not mended — not a defect of
+   the count's floor**: under #209's floor that draw's outermost piece ends at 13.5956 kpc (chain 51, 17.40°), the law's
+   width there is 5.94 kpc and REACH = 9 of its dispersions 0.77198 in ln R, so the last ring any chain reaches,
+   13.5956 e^0.77198 = 29.4215 kpc, lies inside the grid's last ring (29.9625); N switches from its floor of 1 to 0 there
+   as the eleventh follow-up designed, on a ring with no budget and no amplitude either side (nothing drawn moves).
+   No chain crosses on either side, which the test's classifier read as a first crossing; it is now named "reach
+   boundary" and recorded (`tests/test_pieces.py`, `EXPECTED_R_STEPS`), admitted only where it moves N alone. Every
+   other leg's outermost piece ends past the grid (20.1–76.2 kpc).
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The

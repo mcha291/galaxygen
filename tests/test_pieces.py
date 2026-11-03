@@ -2239,13 +2239,20 @@ def step_class(sp, lo: float, hi: float) -> str:
     Σ min(w, s_c) = π R sin p has no solution on one side, or the weights sum under 1); else the kind of end each
     chain that starts or stops crossing has there - "turn-back" (a measured arm's two stretches both ending
     there), "join", "free end", "birth" (a chain's first piece's free start), or "kink" (a kink of a chain that
-    runs on outward: it does not stop crossing, so this is not expected)."""
+    runs on outward: it does not stop crossing, so this is not expected).
+
+    S88 (D255 ruling 5): **"reach boundary"** where no chain crosses the ring on either side - the count's switch
+    between its floor of 1 and 0 at the outermost (or innermost) ring any chain reaches, :data:`pieces.REACH`
+    dispersions at the law's width past the nearest piece's end (the eleventh follow-up's item 1: "the switch is at
+    the reach boundary, where a ridge is under e^(-81/2)"). Until S88 it was named "first crossing" with the rest."""
     p = sp.pieces
 
     def chains(r: float) -> set:
         return {int(p.chain_of[s]) for s in p.slots(np.array([r]))[0] if s < p.count}
 
     below, above = chains(lo), chains(hi)
+    if not below and not above:
+        return "reach boundary"
     if not below or not above:
         return "first crossing"
     if below == above:
@@ -2266,14 +2273,20 @@ def step_class(sp, lo: float, hi: float) -> str:
     return "+".join(sorted(kinds)) or "unexplained"
 
 
-R_STEP_FIRST_CROSSING = (
-    "S87 (#209, the owner's ruling of 2026-11-03, D255): on the drawn ngc_4414 leg at texture seed 1 the count N steps by "
-    "1 at 29.4215 kpc - a ring's first crossing, the class the gate's eleventh follow-up removed - with the width and "
-    "the summed <E> unmoved (sizes [1.0, 0.0, 0.0]); the floor's redrawn pieces reach that ring. Not loosened: held as "
-    "an expected failure for the gate to rule (mend the count's floor there, or rule the step harmless).")
+# S87 (#209, D255) held the drawn ngc_4414 leg here under a strict xfail (R_STEP_FIRST_CROSSING): at texture seed 1
+# the count N steps by 1 at 29.4215 kpc, classed "first crossing", the width and the summed <E> unmoved (sizes
+# [1.0, 0.0, 0.0]). S88 (D255 ruling 5: mend the count's floor if the first-crossing rule misses a redrawn piece at
+# the grid's edge, else hold the step with its cause) measured it: **not a defect of the floor**. Under the floor the
+# draw's outermost piece ends at 13.5956 kpc (chain 51, pitch 17.40 deg, 7.99-13.60 kpc); the law's width there is
+# 5.94 kpc, REACH = 9 dispersions of it 0.77198 in ln R, so the last ring any chain reaches is 13.5956 e^0.77198 =
+# 29.4215 kpc - inside the grid's last ring (29.9625), where the floor of 1 switches to 0 as the eleventh follow-up
+# designed it. The ring's budget is 0 there and the amplitude 0 on both sides: nothing drawn moves. No chain crosses
+# the ring on either side, which the step's classifier read as a first crossing; it is the reach boundary
+# (``step_class``), held below with its cause, and admitted only where the width and the summed <E> do not move. The
+# other legs' outermost pieces end past the grid's edge (20.1-76.2 kpc), so their reach covers the grid.
 
 
-@pytest.mark.parametrize("leg", [pytest.param(leg, marks=pytest.mark.xfail(strict=True, reason=R_STEP_FIRST_CROSSING)) if leg == "ngc_4414 drawn" else leg for leg in (*LEGS, "default")])
+@pytest.mark.parametrize("leg", (*LEGS, "default"))
 def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
     """The gate's ninth follow-up: "the count's weight at a JOINED end falls to zero over one width before the
     join, as a free end's does ... N, the bounded width, B and the means are then continuous in R everywhere a
@@ -2292,6 +2305,8 @@ def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
     **No step at a join** (before the ruling, 30 and more on these runs: N by 1, the width by 0.07-0.68 kpc, a Σ
     <E> by up to 0.12), at a free end, at a birth, at a ring's first crossing, between two rings the same chains
     cross, or unexplained. **One class remains, recorded**: "turn-back" - the Milky Way's Norma (#156's class).
+    **And one switch, recorded since S88**: "reach boundary" - N between its floor of 1 and 0 where the last ring
+    any chain reaches lies inside the grid, admitted only where it moves N alone (D255 ruling 5).
     (The gate's eleventh follow-up removed two: "first crossing" - N went from 0 to max(1, Σ w) where a ring was
     first crossed, and B with it from 0, while the starting chains' flanks already reached the ring: the count's
     floor now stands on every ring a chain reaches; and "same chains" - the self-consistent width solve jumped
@@ -2323,7 +2338,9 @@ def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
             for i in np.flatnonzero(np.abs(q_hi - q_lo) > 1e-7):
                 at = (round(float(lo[i]), 4), step_class(sp, float(lo[i]), float(hi[i])))
                 steps.setdefault(at, [0.0, 0.0, 0.0])[k] = float(abs(q_hi[i] - q_lo[i]))
-        unexpected = [(seed, *at, size) for at, size in steps.items() if at[1] != "turn-back"]
+        # S88 (D255 ruling 5): the reach boundary admitted where it moves N alone - nothing drawn moves there.
+        unexpected = [(seed, *at, size) for at, size in steps.items()
+                      if at[1] != "turn-back" and not (at[1] == "reach boundary" and size[1] == 0.0 and size[2] == 0.0)]
         assert not unexpected, unexpected
         for (_, kind), size in steps.items():
             n, largest = record.get(kind, (0, 0.0))
@@ -2333,7 +2350,9 @@ def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
 
 
 # S87 (#148, #209, #80): EXPECTED_R_STEPS was {"milky_way": {"turn-back": (3, 0.04)}, "ngc_4414": {}, "ngc_4414 drawn": {}, "default": {}} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
-EXPECTED_R_STEPS: dict = {"milky_way": {"turn-back": (3, 0.052)}, "ngc_4414": {}, "ngc_4414 drawn": {}, "default": {}}
+# S88 (D255 ruling 5): "ngc_4414 drawn" was {} under S87's strict xfail - its seed 1's reach boundary at 29.4215 kpc,
+# held with its cause (the comment above the test).
+EXPECTED_R_STEPS: dict = {"milky_way": {"turn-back": (3, 0.052)}, "ngc_4414": {}, "ngc_4414 drawn": {"reach boundary": (1, 0.0)}, "default": {}}
 # Before the ninth follow-up (the count's weight 1 up to a joined end), the same runs held 30 and more steps at joins
 # besides these, on every leg: N by 1-1.2, the width by 0.07-0.68 kpc, a Σ <E> by up to 0.12.
 
