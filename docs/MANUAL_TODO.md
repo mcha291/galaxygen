@@ -148,6 +148,7 @@ the row is written with its SHA at once.
 | 86 | `s86` | `5a1b69a11519` | **applied** 2026-11-03 at S86's own close (C2e; D254 — the subset and the fast gates, D245 / D246; M1's first session: merged into `batch-m1`, not `main` — the SHA is that merge's, written on `batch-m1` in the commit after it; `main` takes the batch at S88) |
 | 87 | `s87` | `097a0b05272e` | **applied** 2026-11-03 at S87's own close (C2e; D255 — the subset and the fast gates, D245 / D246; M1's second session: merged into `batch-m1`, not `main` — the SHA is that merge's, written on `batch-m1` in the commit after it; `main` takes the batch at S88) |
 | 88 | `s88` | `7aed48b07c3a` | **applied** 2026-11-03 at S88's own close (C2e; D256 — the batch's unrun files, the two reference tests and the fast gates, D245 / D246; M1's close: merged into `batch-m1`, then `batch-m1` into `main` on the owner's full suite's EXIT=0 — the SHA is the merge into `main`'s, written after it; tag s88 on that merge) |
+| 89 | `s89` | TBD | **applied** 2026-11-04 at S89's own close (C2e; D257 — the subset and the fast gates, D245 / D246; M2's first session: merged into `batch-m2`, not `main` — the SHA is that merge's, written on `batch-m2` in the commit after it; `main` takes the batch at S90) |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and

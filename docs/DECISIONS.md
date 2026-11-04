@@ -16646,3 +16646,100 @@ flake alone reopens S88. (2) **The look at the frames** beside the goal pictures
 `tools/progress.py`, vitest and the typechecks, each from its own EXIT line.
 
 **The lesson** (`LESSONS.md`, "From S88": seven of the lead's, one of the close's).
+
+
+### D257. S89, BUILD_V row 89 (M2's first session, the clouds and the dust): #167 retired and #168 built — the clouds' dust heated and scattering in the clouds' own layer — #202 the diffuse share continuous in R, #128 measured and put to the owner as a rule's change, #169 measured, nine entries read with their sources named, #91 moved to M3; #167 and #168 discharged; the hash 85649e31… in fact, the pin 244c8bda… until S90
+
+**The commission.** BRIEF after S88: M2's first session takes the clouds and the dust (#128; #167–#169; #180–#182; #202;
+then #82, #91, #92, #94, #95, #109, #110, #136 as read), one commit per item, measured before and after on both
+templates and the default galaxy, the pin lifted for the batch (the hash moves in fact, the docs' pin until S90), no
+bundles, no frames, no full suite; S90 takes the gas, the censuses and the batch's close. An Opus lead on `session-89`
+(cut from `batch-m2` = `main` at 1c58051, M1's close), ten commits, no builder (the weekly limit at 87 %), Fable at the
+gate; merged into `batch-m2`, not `main`.
+
+**Built.** **#167, a retirement (60ff082).** Every drawing has read `/api/clouds`' per-cloud `cloud_dust_extinction_v`
+(the gas's column with its metallicity) since D228; the clouds stage's one central A_V `cloud_extinction_v` (5.7977 mag
+for every uncapped cloud; solar dust per hydrogen at one surface density, no metallicity) was read by nothing — a
+duplicate on another law (A9). Retired: the declaration, `census_extinction_v`, `central_extinction_v` with its grain
+constants, the stage's read of `HII_MASS_PER_HYDROGEN`, the header's fourth scalar (the catalogue's scalars 20 → 19).
+Nothing drawn moves. **Discharged.** **#168, the clouds' dust in the clouds' own layer (48502dd).** Every gram of the
+molecular gas is in the cloud census (#94's construction), so the clouds hold the ring's molecular share of its dust
+(`gas_molecular_fraction_profile`, the census's expectation, not its draw — the radial field, the same on and off,
+A10 kept), in the molecular layer (h = `MOLECULAR_LAYER_FWHM` / 3.5255 = 34.04 pc, D229); the rest stays in the gas's
+layer. `dust.two_layer_absorbed_fraction` (a fixed 256-node Gauss–Legendre in ln u; within 5e-11 of the one-layer
+quadrature with a layer empty, 3e-13 of a midpoint sum; `absorbed_fraction` chooses, bit for bit the one-layer share
+where the clouds hold none); the render's scattered share and the face-on check (`specs/templates.py`,
+`face_on_clouds`) read the same geometry; the header gains `layers.dust_clouds` {height, share} and a per-ring
+`dust_cloud_share` on the whole, window and cell paths. Measured: L_IR 1.249895e10 → 1.247074e10 (×0.99774) on the
+default and the Milky Way, 6.797638e9 → 6.760673e9 (×0.99456) on NGC 4414; T_d(R₀) 18.6669 → 18.6404 K and 16.3259 →
+16.3208 K; the infrared share 0.2615 → 0.2609; the face-on B−V 0.567272 → 0.566336, the removed share [0.275109,
+0.280560, 0.280924, 0.280562], the NGC 4414 colour check 0.645984 → 0.645781. Two approximations declared in the
+entry: the expectation not the draw, a smooth layer not clumps. Re-pinned with the reason in test_dust, test_render,
+test_layer (machine-pinned), test_dust_layer (S52's geometry test re-stated two-layer, four tests added), test_audit,
+test_graph, test_clouds. **Discharged.** **#202, the diffuse share continuous in R (8cbd365).** `dust_diffuse_share`
+is linear between the 32 level-0 ring centres, the nodal values solved so each ring's own dust-weighted quadrature
+keeps its realised share (a diagonally dominant system; `v6_clouds.continuous_share`), held to [0, 1] with the held
+rings (the Milky Way's 26–31, NGC 4414's 20–31) keeping their share exactly by their own grid values (a step of at
+most 2.1e-3 at those edges); the largest change between neighbouring grid rings 0.2196 → 0.0259 (the Milky Way) and
+0.3046 → 0.0334 (NGC 4414); closure per level-0 ring 3.5e-16 / 3.9e-16, on and off alike; the header carries the
+nodes. **Carried to S90's frames**: the circle at 4.72 kpc gone is seen there, then discharged.
+
+**Measured, not built.** **#128 (44b78af).** The heating with the light on the stellar contrast and the dust on the
+gas contrast, in the layered geometry against the mean column: over the disc 1.0047 (default), 0.9728 (the Milky Way;
+0.9038 at 2 kpc inside the pinned bar's lanes), 1.0008 (NGC 4414); at R₀ 1.0292 / 1.0226 / 1.0240; L_IR would move
+1.2499e10 → 1.2558e10 / 1.2159e10, 6.7976e9 → 6.8028e9; T_d(R₀) +0.07–0.10 K. **Why not**: both contrasts are composed
+fields since S55 (1 with the layer off); a dust stage reading them is a composing stage whose published T_d and L_IR
+differ on and off, which A10 and I1 forbid, and absorbed power is non-linear in the column, so no neutral composed
+form exists; D211's "seeded extension" predates the layer. **The owner's**: amend A10 to admit a non-linear consequence
+of placement, or rule #128 permanent (the lead and the gate recommend permanent: under 3 % of the absorbed power).
+**#169 (5177adb).** The cause shrank tenfold at S67 (D229, D230): the largest texel half-thickness 1.10 → 0.125 kpc
+(the Milky Way), 2.96 → 0.175 kpc (NGC 4414); 1.6 % / 1.7 % of occupied texels spread clouds beyond their own height.
+Discharged in substance **unless the owner's look at S90's frames still finds the streaks**; the mend's shape in the
+entry for a viewer pass. **Carried for that look.**
+
+**Read, not built** (each part's source or ruling named in the entry and a READING file). **#180** (a992cbb,
+`READING_CLOUD_LAYER.md` Part S89): Nakanishi & Sofue 2006's table at four radii, falling in its outer bins; the
+readings inside R₀ conflict (a ruleset); no number for the massive clouds; no measurement for NGC 4414. **#181, #182,
+#94, #95** (9ffa866, `READING_CLOUD_SIZES.md` Part S89): the readers' two mass–radius relations make the giants larger
+than the 150 pc cap (296 / 378 pc at 10⁷ M☉; 104 / 118 at 10⁶ against 62 / 95) — the reverse of the owner's S67
+choice, so a ruling; no size–luminosity relation for the regions, the complex's cell level what a reading would fix;
+no sourced diffuse molecular fraction, offset distribution or remnant visibility time. **#82, #91, #92, #109, #136**
+(bba887c, `READING_DUST.md`, new): the eight-band continuum carries 0.687 of the disc's light and through it the grain
+curve removes 0.7847 of what grey absorption at V removes, so eight rows would absorb the missing 31 % (the young
+stars' ultraviolet) at the wrong depth — the closure needs the spectrum shortward of U (the PARSEC table holds
+`log_teff`, `log_l`); the attenuated magnitudes measured (M_V −21.147 → −20.816, B−V 0.562 → 0.570 on the default;
+−20.601 → −20.275, 0.661 → 0.651 on NGC 4414) and **#82's B4 prediction fails** — attenuation reddens by 0.009, the two
+readings do not separate on the colour; rows 25–28 have no window, so no row reads it; **#136 taken apart**: the stars
+alone 0.6607, through the extinction 0.6453 (bluer: the dust sits in the red inner disc), scattered +0.0005, thermal
+nothing — "the stars are too blue" now leads, not ruled; the CheckMiss reason carries the split; Rémy-Ruyer 2015's sSFR
+form never read; no source for an inclined disc's scattering phase, the IR white point a display ruling. **#110**
+(25ac760): the model holds σ ∝ R^½ (Heyer 2009 eq. 10), so β = 2 and the closer's own rule gives the published gain
+0.5 exactly — the octave weights are derived, not stated; the interior's rewrite a viewer pass.
+
+**The gate's rulings.** (1) #167 and #168 discharged on the measurements above. (2) #202 carried to S90's close, where
+the frames show the circle gone. (3) #169 carried for the owner's look. (4) **#91 moved from M2 to M3** (BUILD_V §2a:
+M2 26, M3 30), beside T2 / #114 — the light's ultraviolet is M3's and the heating's closure needs it. (5) #110's first
+half closed in its text (the weights derived); the entry carried for the viewer half. (6) The rest carried with their
+sources named. **The owner's rulings, put at this close with the recommendations**: (a) #128 — amend A10 or permanent
+(permanent); (b) #182 — a catalogue mass–radius relation or the 150 pc cap (the cap, the owner's S67 choice); (c) #180
+— which reading inside R₀ (Bronfman's flat value, as entered, until the table is read whole); (d) #82 — rows 25–28 on
+attenuated light (no, until a source with errors is read); (e) #109 — the infrared white point (a display ruling);
+(f) #169 and #110's viewer half — a viewer pass, if the look wants it. None blocks S90.
+
+**The gates.** Each file its own process, EXIT from pytest's own status: on the final model test_layer whole, test_api,
+test_templates, test_audit_iv, test_v7_layer, test_v7_header, test_clusters, test_nebular, test_bubbles, test_v6_knots,
+test_v6_bright, test_v6b_points, test_bundle, test_region_synthesis, test_audit_v, test_picture (no browser),
+test_s22_rulings, test_s45_diagnosis; after #202 test_render, test_v6_clouds; on #168's code test_dust_layer, test_dust,
+test_audit_iii, test_spec, test_goal_metrics; after #167 test_clouds, test_graph, test_v4 — all EXIT=0. The fast
+gates: vitest 617 passed, 1 skipped; the typechecks; progress 79 / 79; the docs tests 74 passed, 1 xpassed (the price
+record); re-run by Fable after the close's edits. No new strict hold; the held bounds unchanged (ring 2's column
+3.3666; the S55 ledger under #214). `galaxy.specs` 10 / 22 / 5, every row its S88 value; no `spec._MISSES` note needed.
+The frontend unchanged. **The hash in fact 85649e31f6f6789d885efa40f0f5b8d9; the docs' pin 244c8bda… until S90**, with
+the bundles, the frames and the goal pictures (BUILD_V ruling 4; no bundle or frame regenerated at S89). CI's runs on
+`main` after s88 (41734006697 ci, 41734006604 image) read at S90's open.
+
+**The register.** #167, #168 discharged: **120 open — 38 permanent, 82 carried — and 77 discharged**; next number #215,
+decisions from D258. **S90** (BUILD_V row 90, the batch's close): #158–#165, #197 (the owner's word), #213, #214 (the
+ledger, the gate's at the close); the hash moved once, the bundles re-exported, the frames regenerated beside the goal
+pictures (the circle of #202, the streaks of #169 read there); the acceptance rows re-read; the full suite before
+`batch-m2` → `main`.

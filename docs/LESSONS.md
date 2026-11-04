@@ -2102,3 +2102,8 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **A model edit lands in the next item's commit unless its tests run whole.** #167's retired scalar moved two
   counts in `tests/test_layer.py` (the fields, the held set) that #167's targeted run did not reach; they were re-pinned
   in #168's commit with the reason. Run a heavy file whole once per item that removes or adds a field.
+- [close] **A closer written before the layer existed is re-read against A10 before it is built.** #128's "seeded
+  extension" (D211, S52) asked the heating to read the composed contrasts; since S55 those are 1 with the layer off,
+  and a stage that reads them publishes totals the layer changes, which A10 forbids. The lead measured the effect (under
+  3 % of the absorbed power) and put the rule to the owner instead of building a composing stage - the batch's rule:
+  a closer that needs a rule's change is a ruling, however old the closer. The gate reads every M-batch closer's date.
