@@ -35,7 +35,16 @@ more strongly than that and the old stars' red light less, so the absorbed power
 both directions by an amount this stage does not know; the report of S31 measures one side of it
 and the debt is recorded there. Scattering is taken to remove no energy and to lengthen no path.
 The dust's placement round each ring (the render's ``dust_placement``) is not applied to the
-heating: the stage absorbs at each ring's mean column (debt #128's second half, D211 ruling 5).
+heating: the stage absorbs at each ring's mean column (debt #128's second half, D211 ruling 5; at S89 a rule's
+change, A10, put to the owner).
+
+**The clouds' dust in its own layer** (S89, debt #168). Every gram of the molecular gas is in the cloud census
+(debt #94's construction), so the clouds hold the ring's molecular share of its dust, and the census draws each cloud's
+height from the molecular layer's sech² (``MOLECULAR_LAYER_FWHM``, h 34.04 pc; D229). The heating takes that share of
+the column in the clouds' layer and the rest in the gas's: the stars through two dust layers
+(:func:`two_layer_absorbed_fraction`; :func:`absorbed_fraction` chooses), at the census's expectation - the
+molecular fraction this checkpoint holds - not its realised draw, and as a smooth layer, not as clouds: the clumping
+of the clouds' dust, which lets more light past than a smooth layer of the same mass, is not computed.
 
 The dust then emits that power as a modified blackbody, κ_ν = κ₀ (ν/ν₀)^β, optically thin in
 the infrared. Its power per unit dust mass, 4π ∫ κ_ν B_ν(T) dν, is analytic,
@@ -185,6 +194,99 @@ def layered_absorbed_fraction(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
     return out
 
 
+# The clouds' dust in its own layer (S89, debt #168): a second quadrature, for the stars' layer through two dust
+# layers. Gauss–Legendre on a fixed number of nodes in ln u, u = z / 2h★ the stars' height, from u = 1e-7 / k to 20
+# (k the larger of 1 and h★ over the thinner dust layer's height): below its start the integrand is its value at the
+# midplane to O(u²k²), counted so; above 20 the stars hold e⁻⁴⁰ of themselves. Fixed in advance (rule A1); the error
+# it was measured to is in two_layer_absorbed_fraction's docstring.
+TWO_LAYER_NODES = 256
+TWO_LAYER_U_MAX = 20.0
+TWO_LAYER_U_FLOOR = 1e-7
+_TWO_X, _TWO_W = np.polynomial.legendre.leggauss(TWO_LAYER_NODES)
+
+
+def one_minus_e2(x: np.ndarray) -> np.ndarray:
+    """1 − E₂(x) without the cancellation at small x: E₂(x) = e⁻ˣ − x E₁(x), so 1 − E₂(x) = −expm1(−x) + x E₁(x).
+    The share of an isotropic emitter's light a screen of absorption depth x in front of it keeps, one side; 0 at x ≤ 0."""
+    x = np.asarray(x, dtype=float)
+    out = np.zeros(x.shape)
+    pos = x > 0.0
+    xp = x[pos]
+    out[pos] = -np.expm1(-xp) + xp * expn(1, xp)
+    return out
+
+
+def two_layer_absorbed_fraction(tau: np.ndarray, ratio: np.ndarray, tau_b: np.ndarray, ratio_b: np.ndarray) -> np.ndarray:
+    """The share of a ring's starlight its dust absorbs when the stars are one sech² layer and the dust two: a part of
+    absorption depth ``tau`` in a sech² layer ``ratio`` times the stars' scale height and a part of depth ``tau_b`` in
+    one ``ratio_b`` times it (S89, #168: the diffuse dust in the gas's layer, the clouds' dust in the molecular layer).
+    Vectorised: the four broadcast.
+
+    **The geometry** ``[inferred: derived here, as layered_absorbed_fraction's]``. A star at u = z / 2h★ (its share
+    ½ sech² u du) has above it A_x(u) = ½[1 − tanh(u h★ / h_x)] of each dust layer x and below it the rest, and its
+    light is lost through both columns in every direction: ½[(1 − E₂(τ_above)) + (1 − E₂(τ_below))], τ_above =
+    τ A(u) + τ_b A_b(u). Over the stars, by the symmetry about the midplane,
+
+        absorbed = ∫₀^∞ sech²(u) ½[(1 − E₂(τ_above)) + (1 − E₂(τ_below))] du,
+
+    integrated by Gauss–Legendre on ``TWO_LAYER_NODES`` = 256 fixed nodes in ln u over [1e-7 / k, 20], the piece below
+    the start taken at the midplane's value (1 − E₂((τ + τ_b) / 2)). With one layer empty it is
+    :func:`layered_absorbed_fraction`'s quantity on another path.
+
+    **The error, measured at S89** (``tests/test_dust_layer.py``): against :func:`layered_absorbed_fraction` with the
+    second layer empty, and with the dust split 0.3 / 0.7 between two layers of one height, **under 5e-11 of the
+    absorbed share** for ratio 0.01–10 and τ 1e-6–1000 (worst 4.9e-11 at ratio 0.03, τ 1000; 160 nodes read 2.1e-7
+    there, 400 read 2.3e-11); against a midpoint sum of 400 000 points in u, under 3e-13 on the two-layer cases the
+    model's rings span. Zero where both depths are 0 or either ratio is NaN. A ratio of infinity (a stellar layer of no
+    height) is a sheet of stars: A = ½ for every star, 1 − E₂((τ + τ_b) / 2)."""
+    tau, ratio, tau_b, ratio_b = np.broadcast_arrays(*(np.asarray(v, dtype=float) for v in (tau, ratio, tau_b, ratio_b)))
+    out = np.zeros(tau.shape)
+    ok = (tau + tau_b > 0.0) & ~np.isnan(ratio) & ~np.isnan(ratio_b)
+    if not ok.any():
+        return out
+    with np.errstate(divide="ignore"):
+        ka = np.where(np.isinf(ratio[ok]), 0.0, 1.0 / ratio[ok])[:, None]
+        kb = np.where(np.isinf(ratio_b[ok]), 0.0, 1.0 / ratio_b[ok])[:, None]
+    k = np.minimum(np.maximum(np.maximum(ka, kb), 1.0), 1e12)
+    lo, hi = np.log(TWO_LAYER_U_FLOOR / k), math.log(TWO_LAYER_U_MAX)
+    half = 0.5 * (hi - lo)
+    u = np.exp(0.5 * (hi + lo) + half * _TWO_X)
+    ta, tb = tau[ok][:, None], tau_b[ok][:, None]
+    above_a = 0.5 * (1.0 - np.tanh(u * ka))
+    above_b = 0.5 * (1.0 - np.tanh(u * kb))
+    lost = 0.5 * (one_minus_e2(ta * above_a + tb * above_b) + one_minus_e2(ta * (1.0 - above_a) + tb * (1.0 - above_b)))
+    body = (half * _TWO_W * u / np.cosh(u) ** 2 * lost).sum(axis=-1)
+    floor = (TWO_LAYER_U_FLOOR / k[:, 0]) * one_minus_e2(0.5 * (tau[ok] + tau_b[ok]))
+    out[ok] = floor + body
+    return out
+
+
+def absorbed_fraction(tau: np.ndarray, ratio: np.ndarray, cloud_share: Any = 0.0, cloud_ratio: Any = np.nan) -> np.ndarray:
+    """The share of a ring's starlight its dust absorbs, the dust's total absorption depth ``tau`` split between the
+    gas's layer (``ratio`` times the stars' height) and the clouds' (``cloud_ratio`` times it) by ``cloud_share``, the
+    clouds' share of the ring's dust (S89, #168). Where the clouds hold none, or have no layer, every grain is in the
+    gas's layer and it is :func:`layered_absorbed_fraction`, bit for bit; elsewhere :func:`two_layer_absorbed_fraction`.
+    Vectorised: the four broadcast."""
+    tau, ratio, share, cratio = np.broadcast_arrays(*(np.asarray(v, dtype=float) for v in (tau, ratio, cloud_share, cloud_ratio)))
+    share = np.clip(np.nan_to_num(share, nan=0.0), 0.0, 1.0)
+    out = layered_absorbed_fraction(tau, ratio)
+    two = (share > 0.0) & ~np.isnan(cratio) & (tau > 0.0) & ~np.isnan(ratio)
+    if two.any():
+        out[two] = two_layer_absorbed_fraction(tau[two] * (1.0 - share[two]), ratio[two], tau[two] * share[two], cratio[two])
+    return out
+
+
+def cloud_layer_ratio(constants: Mapping[str, Any], thin_disc_scale_height_pc: float) -> float:
+    """The clouds' layer's scale height over the stars' (S89, #168): the molecular layer's h, the sech² h whose FWHM is
+    ``MOLECULAR_LAYER_FWHM`` (the clouds stage's own, ``clouds.cloud_layer_height``), over the thin disc's. Infinite for
+    a stellar layer of no height, as the gas's ratio is."""
+    from galaxy.stages.clouds import cloud_layer_height  # at call time: the census imports the stages before it
+
+    h = cloud_layer_height(constants) * PC_PER_KPC
+    with np.errstate(divide="ignore"):
+        return float(np.float64(h) / np.float64(thin_disc_scale_height_pc))
+
+
 def slab_midplane_flux(emitted: np.ndarray, tau: np.ndarray) -> np.ndarray:
     """4πJ at the midplane of a uniform slab emitting ``emitted`` per unit area in total (both
     faces) with total vertical absorption depth τ: emitted × (1 − E₂(τ/2)) / τ.
@@ -310,7 +412,8 @@ ABSORBED = FieldDecl(
         "times the probability that light emitted isotropically by the stars in their own layer does not "
         "escape the dust in its layer, the gas's, thinner than the stars' where they are dense and thicker where "
         "the gas flares: each star's light lost through the dust above and below it, averaged over the stars' heights, "
-        "at the V-band absorption depth (1 − albedo) τ_V. A thin dust layer under a thick stellar disc "
+        "at the V-band absorption depth (1 − albedo) τ_V - the molecular share of the dust in the clouds' own thin layer, "
+        "the rest in the gas's. A thin dust layer under a thick stellar disc "
         "absorbs little more than the half of an opaque ring's light that sets out towards it. Zero where the "
         "gas has no layer (past the stellar disc's edge). Grey at V: the young stars' ultraviolet is absorbed "
         "more than that and the old stars' red light less, so this is not exact in either direction. Taken "
@@ -404,7 +507,12 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     # layer of no height (a grid too coarse in time to hold a thin disc) is a sheet of stars: the ratio is infinite.
     with np.errstate(divide="ignore"):
         ratio = np.asarray(ctx.fields["gas_scale_height"], dtype=float) / float(ctx.fields["thin_disc_scale_height"])
-    absorbed = sigma_light * layered_absorbed_fraction((1.0 - albedo_v) * tau_v, ratio)  # Lsun/pc²
+    # S89 (#168): the clouds' dust - the ring's molecular share of it, every gram of the molecular gas being in clouds
+    # (debt #94's construction), at the expectation this checkpoint holds - in the clouds' own layer, the rest in the
+    # gas's. Was every grain in the gas's layer (S52-S88).
+    cloud_share = np.asarray(ctx.fields["gas_molecular_fraction_profile"], dtype=float)
+    cloud_ratio = cloud_layer_ratio(c, float(ctx.fields["thin_disc_scale_height"]))
+    absorbed = sigma_light * absorbed_fraction((1.0 - albedo_v) * tau_v, ratio, cloud_share, cloud_ratio)  # Lsun/pc²
     heated = (sigma_dust > 0.0) & (absorbed > 0.0)
     per_mass = np.where(heated, absorbed / np.where(heated, sigma_dust, 1.0), 0.0) / LSUN_PER_MSUN_PER_CGS  # erg/s/g
     temperature = np.where(heated, dust_temperature(per_mass, kappa0, lam0, beta), np.nan)
@@ -452,10 +560,12 @@ DUST = IMPLEMENTATIONS.register(
             "DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "DUST_EMISSIVITY_INDEX",
             "FUV_LUMINOSITY_PER_SFR", "HABING_FLUX", "PAH_FRACTION_GALACTIC", "PAH_METALLICITY_INTERCEPT",
             "PAH_METALLICITY_SLOPE", "OXYGEN_ABUNDANCE_SOLAR", "PAH_METALLICITY_MAX",
+            "MOLECULAR_LAYER_FWHM",  # S89 (#168): the clouds' layer, where the clouds' dust absorbs
         ),
         requires=(
             "disc_surface_brightness", "dust_surface_density", "dust_extinction_v", "sfr_surface_density", "feh_gas",
             "gas_scale_height", "thin_disc_scale_height",
+            "gas_molecular_fraction_profile",  # S89 (#168): the clouds' share of the ring's dust
         ),
         publishes=(
             SCATTERING_DEPTH, COLOUR_EXCESS, SCATTERING_ASYMMETRY, ABSORBED, TEMPERATURE, INFRARED,

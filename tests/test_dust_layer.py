@@ -45,6 +45,7 @@ RGB = json.dumps(json.loads((ROOT / "frontend" / "src" / "galaxy" / "filters.jso
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 FIELDS = (
     "gas_surface_density", "gas_midplane_density", "gas_scale_height", "thin_disc_scale_height",
+    "gas_molecular_fraction_profile",  # S89 (#168): the clouds' share of the dust, heated in the clouds' layer
     "dust_surface_density", "dust_extinction_v", "disc_surface_brightness", "disc_luminosity",
     "dust_absorbed_luminosity",
 )
@@ -220,10 +221,17 @@ def test_the_layered_geometry_is_applied(galaxy, prod):
     slab = float(np.trapezoid(light * dust.slab_absorbed_fraction(tau) * area, R))
     escape = np.array([layered_escape(t, r) if t > 0.0 and np.isfinite(r) else 1.0 for t, r in zip(tau, ratio)])
     layered = float(np.trapezoid(light * (1.0 - escape) * area, R))
-    # Applied: the stage's own number is the independent quadrature's, to the reference's own error.
-    assert float(f["dust_absorbed_luminosity"]) == pytest.approx(layered, rel=1e-8)  # S52 (D211): was the slab's, 1.5675e10
+    # S89 (#168): was `dust_absorbed_luminosity == layered` to 1e-8 and the rings `light * (1 - escape)` to 2e-6 - the
+    # stage heats the clouds' share of the dust (the molecular fraction) in the clouds' own layer since, so its number is
+    # the two-layer midpoint sum's (another path); the one-layer `layered` stays S52's record of the gas's layer alone.
+    share = np.nan_to_num(np.asarray(f["gas_molecular_fraction_profile"], dtype=float))
+    h_c = dust.cloud_layer_ratio({k: c.value for k, c in model.constants.items()}, float(f["thin_disc_scale_height"]))
+    two = np.array([midpoint_two_layer(t * (1.0 - fc), r, t * fc, h_c, n=20_000) if t > 0.0 and np.isfinite(r) else 0.0
+                    for t, r, fc in zip(tau, ratio, share)])
     per_ring = np.asarray(f["dust_absorbed_surface_brightness"], dtype=float)
-    np.testing.assert_allclose(per_ring, light * (1.0 - escape), rtol=2e-6, atol=0.0)
+    np.testing.assert_allclose(per_ring, light * two, rtol=2e-6, atol=0.0)
+    assert float(f["dust_absorbed_luminosity"]) == pytest.approx(float(np.trapezoid(light * two * area, R)), rel=1e-7)
+    assert float(f["dust_absorbed_luminosity"]) / layered == pytest.approx(0.99774, abs=5e-5)  # S89 (#168): the clouds' layer
     assert np.array_equal(per_ring > 0.0, np.isfinite(ratio))  # no gas height, nothing absorbed (D211 ruling 2)
     assert slab == pytest.approx(1.6273e10, rel=1e-4) and layered == pytest.approx(1.2499e10, rel=1e-4)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.5675e10, 1.2006e10
     assert layered / slab == pytest.approx(0.7681, abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7659
@@ -675,3 +683,76 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     # on the relative residual's winding. (The other four layered and slab readings here still read inside the first
     # pass's pins: 0.9502 and 0.9654 over the disc, 0.8522 and 0.9065 at 2 kpc; R₀'s are the ring's as they were.)
     assert at(R, q, 4.0) == pytest.approx(1.0028, abs=0.002)  # S60 (D219): was 0.9346. S58 (D217): was 0.9950; S57 (D216): was 0.9980; S56 (D215): was 0.9974  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9483
+
+
+# --- the clouds' dust in its own layer (S89, debt #168) -------------------------------------------------------------
+
+
+def midpoint_two_layer(tau: float, ratio: float, tau_b: float, ratio_b: float, n: int = 400_000) -> float:
+    """A second path for the two-layer share: a midpoint sum of n points in u = z / 2h* over [0, 20], each star's
+    light lost through both columns in every direction, ½[(1 - E2(above)) + (1 - E2(below))], weighted by sech²(u)."""
+    u = (np.arange(n) + 0.5) / n * 20.0
+    a = 0.5 * (1.0 - np.tanh(u / ratio))
+    b = 0.5 * (1.0 - np.tanh(u / ratio_b))
+    above, below = tau * a + tau_b * b, tau * (1.0 - a) + tau_b * (1.0 - b)
+    lost = 0.5 * ((1.0 - expn(2, above)) + (1.0 - expn(2, below)))
+    return float((lost / np.cosh(u) ** 2).sum() * 20.0 / n)
+
+
+@pytest.mark.parametrize("ratio", [0.01, 0.03, 0.06, 0.1, 0.3, 1.0, 3.0, 10.0])
+def test_the_two_layer_fraction_is_the_one_layer_s_when_one_layer_is_empty(ratio):
+    """S89 (#168): the two-layer quadrature with the clouds' layer empty, and with the dust split 0.3 / 0.7 between two
+    layers of one height, is the one-layer share to its stated bound (5e-11; measured 4.9e-11 at ratio 0.03, tau 1000)."""
+    tau = np.array([1e-6, 1e-3, 0.05, 0.5, 2.0, 12.0, 50.0, 1000.0])
+    one = dust.layered_absorbed_fraction(tau, np.full_like(tau, ratio))
+    empty = dust.two_layer_absorbed_fraction(tau, ratio, 0.0, 1.0)
+    split = dust.two_layer_absorbed_fraction(0.3 * tau, ratio, 0.7 * tau, ratio)
+    np.testing.assert_allclose(empty, one, rtol=5e-11, atol=0.0)
+    np.testing.assert_allclose(split, one, rtol=5e-11, atol=0.0)
+
+
+@pytest.mark.parametrize("case", [(0.3, 0.1, 1.0, 0.5), (0.06, 0.1, 10.0, 8.0), (2.0, 0.1, 0.3, 0.2), (0.3, 0.1, 100.0, 30.0)])
+def test_the_two_layer_fraction_is_the_midpoint_sum_s(case):
+    """S89 (#168): against a midpoint sum in the stars' height (another path), on two layers of different heights at the
+    depths and ratios the model's rings span: under 1e-12 (measured 3e-13)."""
+    ratio, ratio_b, tau, tau_b = case
+    got = float(dust.two_layer_absorbed_fraction(tau, ratio, tau_b, ratio_b)[()])
+    assert got == pytest.approx(midpoint_two_layer(tau, ratio, tau_b, ratio_b), rel=1e-12)
+
+
+def test_the_absorbed_fraction_chooses_by_the_clouds_share():
+    """Where the clouds hold no dust, or have no layer, every grain is in the gas's layer, bit for bit; a sheet of stars
+    (an infinite ratio) through two layers is the screen's 1 - E2(tau / 2); no layer (NaN) absorbs nothing."""
+    tau = np.array([0.1, 1.0, 5.0, 2.0])
+    ratio = np.array([0.06, 0.3, 1.0, np.nan])
+    np.testing.assert_array_equal(dust.absorbed_fraction(tau, ratio, 0.0, 0.1), dust.layered_absorbed_fraction(tau, ratio))
+    np.testing.assert_array_equal(dust.absorbed_fraction(tau, ratio, 0.5, np.nan), dust.layered_absorbed_fraction(tau, ratio))
+    both = dust.absorbed_fraction(tau, ratio, 0.5, 0.1)
+    assert both[3] == 0.0 and np.all(both[:3] > 0.0)
+    sheet = dust.two_layer_absorbed_fraction(tau[:3], np.inf, tau[:3], np.inf)
+    np.testing.assert_allclose(sheet, 1.0 - expn(2, tau[:3]), rtol=1e-12)
+
+
+def test_the_clouds_dust_is_heated_in_the_clouds_layer(prod):
+    """S89 (#168): the ring's molecular share of its dust (every gram of the molecular gas in clouds) absorbs in the
+    clouds' own layer (h = MOLECULAR_LAYER_FWHM / 3.5255 = 34.04 pc), the rest in the gas's. Measured before it was
+    applied, on the default galaxy (the Milky Way template the same: no field it reads is the bar's or a pin's): the
+    disc's absorbed power 0.99774 of every grain in the gas's layer; 1.0071 at 2 kpc (the clouds' layer thicker than
+    the gas's 21-60 pc there), 0.9901 at 4 kpc, 0.9921 at R0, 0.9979 at 12 kpc (molecular shares 0.696, 0.528, 0.199,
+    0.054); NGC 4414 0.99456 (its stellar layer 926 pc)."""
+    model = prod[0].get(DEFAULT_MODEL)
+    out = run(model, only=FIELDS + ("dust_absorbed_surface_brightness",))
+    f, R = out.fields, np.asarray(out.grid.R)
+    tau = (1.0 - float(model.constants["DUST_ALBEDO_V"].value)) * dust.optical_depth(f["dust_extinction_v"])
+    hs = float(f["thin_disc_scale_height"])
+    ratio = np.asarray(f["gas_scale_height"], dtype=float) / hs
+    cratio = dust.cloud_layer_ratio({k: c.value for k, c in model.constants.items()}, hs)
+    assert cratio * hs == pytest.approx(34.0378, abs=1e-4)
+    share = np.asarray(f["gas_molecular_fraction_profile"], dtype=float)
+    light = np.asarray(f["disc_surface_brightness"], dtype=float) * 2.0 * math.pi * R * PC_PER_KPC**2
+    one = dust.layered_absorbed_fraction(tau, ratio)
+    two = dust.absorbed_fraction(tau, ratio, share, cratio)
+    np.testing.assert_allclose(np.asarray(f["dust_absorbed_surface_brightness"]), np.asarray(f["disc_surface_brightness"]) * two, rtol=1e-12, atol=0.0)
+    assert float(np.trapezoid(light * two, R) / np.trapezoid(light * one, R)) == pytest.approx(0.99774, abs=5e-5)
+    q = np.where(one > 0.0, two / np.where(one > 0.0, one, 1.0), np.nan)
+    assert [round(at(R, q, r), 4) for r in (2.0, 4.0, 8.2, 12.0)] == pytest.approx([1.0071, 0.9901, 0.9921, 0.9979], abs=2e-4)

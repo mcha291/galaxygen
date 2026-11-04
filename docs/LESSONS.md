@@ -2075,3 +2075,35 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the tests failed on their history. The lead's strict hold was right; the gate's rewrite was reverted and the
   re-anchoring made a register item for the next batch (#214): a reference that must follow the model per batch needs
   its ledger re-based with it, by decision, or retiring to the hash pin that already holds the model bit for bit.
+
+## From S89 (BUILD_V row 89, M2's first session: the clouds and the dust; an Opus lead)
+
+- [advanced] **A closer written before the separation may now need a rule's change: read A10 and I1/I4 before
+  building it.** #128(a)'s "a seeded extension of the dust stage" was written at S52; since S55 the contrasts it would
+  read are composed fields (1 with the layer off), so a heating that reads them is a composing stage whose radial
+  outputs differ on and off - A10 ("the layer changes no ring total of any field") and I1 forbid it, and a non-linear
+  quantity has no neutral. The graph's `may_place` and the I1 test say so in one read; the measurement went in and the
+  rule went to the owner.
+- [advanced] **A second law nobody reads is retired, not mended.** #167's closer asked the clouds stage to read the
+  dust-to-gas ratio; the drawings had read the API's own per-cloud column since S67, so the census's scalar was a
+  duplicate on another law (A9). Removing it closed the debt with no drawn change; find what still reads a field before
+  writing its fix.
+- [field] **A share published on one grid and drawn on another needs a conservative reconstruction, not a lookup.**
+  #202's step was a per-ring number read at every grid ring; linear between the rings' centres with the nodes solved
+  so each ring's own quadrature keeps its share (a diagonally dominant system) removed the step and kept the closure to
+  1e-16 - and overshot 1 by a thousandth where the share is 1 and the dust falls, which a per-ring correction inside
+  the ring's own grid values takes back. Check the bounds a test already holds before choosing a reconstruction.
+- [advanced] **A probe that takes a check apart can kill the reading the check was carried on.** #136's "the dust
+  reddens too little" assumed the dust reddens: the three terms read separately show NGC 4414's extinction making its
+  frame *bluer* (the dust in the red inner disc), so the stars' colour carries the miss. #82's B4 prediction (the two
+  readings separate on the colour) failed the same way - attenuation reddens the galaxy by 0.009.
+- [infra] **A field's name inside a function's name breaks a substring guard.** A script asserted `'share' not in sig`
+  on `layered_removed_share(...)` and refused; guard on the token you add (`'share:'`), not on a word the name holds.
+- [close] **A model edit lands in the next item's commit unless its tests run whole.** #167's retired scalar moved two
+  counts in `tests/test_layer.py` (the fields, the held set) that #167's targeted run did not reach; they were re-pinned
+  in #168's commit with the reason. Run a heavy file whole once per item that removes or adds a field.
+- [close] **A closer written before the layer existed is re-read against A10 before it is built.** #128's "seeded
+  extension" (D211, S52) asked the heating to read the composed contrasts; since S55 those are 1 with the layer off,
+  and a stage that reads them publishes totals the layer changes, which A10 forbids. The lead measured the effect (under
+  3 % of the absorbed power) and put the rule to the owner instead of building a composing stage - the batch's rule:
+  a closer that needs a rule's change is a ruling, however old the closer. The gate reads every M-batch closer's date.

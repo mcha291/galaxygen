@@ -9,8 +9,9 @@ Two answers, each a hook in its own route method of ``service.py`` (and since S7
   ``sqrt(M / (pi Sigma_GMC))`` at its regime's Sigma_GMC and capped, ``clouds.cloud_size_law``, S67 D231). Each
   ring term is read at the cloud's ``cloud_birth_radius`` - the radius its ring drew, which every per-cloud law and every binner reads (D220) -
   interpolated on the grid as the census reads its metallicity there. The ring's dust law applied to the cloud's
-  gas: the clouds stage's own ``cloud_extinction_v`` (S40, the interior's central A_V at solar dust per hydrogen and
-  one surface density) is on another law and the two disagree (debt #167).
+  gas, and the model's only per-cloud A_V since S89 (#167): the clouds stage's own ``cloud_extinction_v`` (S40, the
+  interior's central A_V at solar dust per hydrogen and one surface density, no metallicity) was on another law, read
+  by no drawing since D228, and is retired.
 - **The diffuse share** (``/api/render``'s ``dust_diffuse_share``, :func:`diffuse_share`): per level-0 cell ring,
   1 - (the ring's REALISED clouds' dust) / (the ring's published dust mass). The clouds' dust is summed off the
   ring-first draw's own streams (D220: each ring's count, and each cloud's ``mass`` and ``radius`` uniforms on the
@@ -56,10 +57,9 @@ COLUMN_ABOUT: dict[str, Any] = {
              "systems_seed, through each cloud's realised mass, size and birth radius; the same with the randomness "
              "layer on or off. The ring's dust law applied to the cloud's gas, so the clouds' dust and the "
              "diffuse dust /api/render's dust_diffuse_share leaves sum to the ring's published dust. 0 where the ring "
-             "holds no dust (no dust, no extinction; never a guess). The clouds stage's own cloud_extinction_v (the "
-             "header's scalars; S40) is the interior's central A_V on another law - solar dust per hydrogen at one "
-             "surface density, 5.80 mag at the inner regime's 82 Msun/pc2 since D231 (2.97 at one 42 before), no "
-             "metallicity - and the two disagree (at S64, on the 42: 6.3x this law's column at R = 2 kpc, 0.15x at R = 14 on the Milky Way; debt #167)",
+             "holds no dust (no dust, no extinction; never a guess). The model's only per-cloud A_V: the clouds "
+             "stage's one central A_V, cloud_extinction_v, on another law (solar dust per hydrogen at one surface density, no metallicity; "
+             "S40-S88, the header's scalars) was retired at S89 (debt #167)",
 }
 
 
@@ -210,12 +210,75 @@ def ring_of(R: np.ndarray, at: np.ndarray | None = None) -> np.ndarray:
     return np.clip(np.searchsorted(edges, where, side="right") - 1, 0, CELL_RINGS - 1)
 
 
+def ring_centres(R: np.ndarray) -> np.ndarray:
+    """The level-0 cell rings' mid-radii, kpc: where :func:`continuous_share`'s nodes stand."""
+    edges, _ = cell_edges(R)
+    return 0.5 * (edges[:-1] + edges[1:])
+
+
+def continuous_share(share: np.ndarray, fields: Mapping[str, Any], R: np.ndarray) -> np.ndarray:
+    """The nodal values, one per level-0 cell ring at its mid-radius, of the share as a function of R (S89, debt #202):
+    linear between the rings' centres and held flat outside the first and last (``np.interp``), each node chosen so
+    that the ring's dust-weighted integral of the function - ``dust_surface_density`` times it over the ring's annulus,
+    the quadrature :func:`ring_dust_mass` integrates the ring's dust by - is the ring's share of its dust mass. A
+    linear system of one row per ring, each ring's own node weighing about three quarters of it and its two neighbours
+    an eighth each (diagonally dominant); a ring holding no dust keeps its node at its share, 1. So the share has no
+    step at a ring's edge (D237's circle at 4.725 kpc) and every level-0 ring's diffuse dust plus its clouds' dust is
+    its published dust, to rounding: the closure per ring is the step's, kept. ``[inferred: the interpolation the
+    register's closer names - between the level-0 rings' centres - made conservative so the closure holds]``."""
+    sigma = np.asarray(fields["dust_surface_density"], dtype=float)
+    centres = ring_centres(R)
+    n = centres.size
+    ring_dust = ring_dust_mass(fields, R)
+    system = np.zeros((n, n))
+    for j in range(n):
+        system[:, j] = _clouds.ring_molecular_mass(np.interp(R, centres, np.eye(n)[j]) * sigma, R)
+    target = np.asarray(share, dtype=float) * ring_dust
+    empty = ~(ring_dust > 0.0)
+    system[empty, :] = 0.0
+    system[empty, empty] = 1.0
+    target[empty] = np.asarray(share, dtype=float)[empty]
+    return np.linalg.solve(system, target)
+
+
+def bounded_share(nodes: np.ndarray, share: np.ndarray, fields: Mapping[str, Any], R: np.ndarray) -> tuple[np.ndarray, list[int]]:
+    """(the share on the grid's rings, the rings corrected): :func:`continuous_share`'s function at the grid's radii,
+    held to [0, 1] - a share is no more than the ring's dust and no less than none (rule B9) - and, in a ring where the
+    hold took something, the ring's grid values moved towards 1 (or 0) in proportion to the room each has, so that the
+    ring keeps its share of its dust exactly. Each grid radius lies in one ring (no grid radius is an interior edge), so
+    a ring's correction moves no other ring's integral. Where it acts the function steps at the ring's edges by what the
+    hold took (a thousandth at most at S89: the outer rings, where the share is 1 and the dust falls steeply)."""
+    sigma = np.asarray(fields["dust_surface_density"], dtype=float)
+    centres = ring_centres(R)
+    edges, _ = cell_edges(R)
+    raw = np.interp(R, centres, nodes)
+    out = np.clip(raw, 0.0, 1.0)
+    ring_dust = ring_dust_mass(fields, R)
+    corrected = []
+    for k in np.flatnonzero((ring_dust > 0.0) & np.any((raw != out)[None, :] & ((R >= edges[:-1, None]) & (R <= edges[1:, None])), axis=1)):
+        inside = (R >= edges[k]) & (R <= edges[k + 1])
+        want = float(share[k]) * float(ring_dust[k])
+        have = float(_clouds.ring_molecular_mass(out * sigma, R)[k])
+        room = np.where(inside, (1.0 - out) if want > have else out, 0.0)
+        per = float(_clouds.ring_molecular_mass(room * sigma, R)[k])
+        if per > 0.0:
+            out = out + (want - have) / per * room  # towards 1 where it lacks, towards 0 where it has too much
+        corrected.append(int(k))
+    # The correction lands a ring needing all its room exactly on 1, to the last bit or one past: held there.
+    return np.clip(out, 0.0, 1.0), corrected
+
+
 def diffuse_share(fields: Mapping[str, Any], R: np.ndarray, seed: int, constants: Mapping[str, float]) -> tuple[np.ndarray, dict[str, Any]]:
-    """(the share on the grid's rings, (R,); the per-cell-ring numbers behind it for the header): each grid ring
-    takes the share of the level-0 cell ring that holds it (:func:`ring_of`)."""
+    """(the share on the grid's rings, (R,); the per-cell-ring numbers behind it for the header). Since S89 (debt
+    #202) the share as a continuous function of R - linear between the level-0 cell rings' centres, the nodes keeping
+    each ring's share of its dust (:func:`continuous_share`) - evaluated at each grid ring; until S89 each grid ring
+    took the share of the level-0 cell ring that held it (:func:`ring_of`), a step at every ring's edge."""
     ring_dust = ring_dust_mass(fields, R)
     cloud_dust = ring_cloud_dust(fields, R, seed, constants)
     share = ring_share(ring_dust, cloud_dust)
+    nodes = continuous_share(share, fields, R)
+    centres = ring_centres(R)
+    grid, held = bounded_share(nodes, share, fields, R)
     expected = _clouds.ring_molecular_mass(
         np.asarray(fields["gas_molecular_surface_density"], dtype=float) * np.asarray(fields["dust_to_gas_ratio"], dtype=float), R
     )
@@ -231,8 +294,10 @@ def diffuse_share(fields: Mapping[str, Any], R: np.ndarray, seed: int, constants
         "expected_clouds_share": expected_share.tolist(),
         "expected_clouds_share_disc": float(expected.sum() / total) if total > 0.0 else 0.0,
         "floored": floored(ring_dust, cloud_dust),
+        # S89 (#202): the function the grid's share is: its nodes, at the rings' centres.
+        "nodes": {"radius": centres.tolist(), "share": nodes.tolist(), "held_rings": held},
     }
-    return share[ring_of(R)], rings
+    return grid, rings
 
 
 def render_header(rings: Mapping[str, Any], clouds_layer: float | None, placement: str | None, even: str) -> dict[str, Any]:
@@ -249,8 +314,10 @@ def render_header(rings: Mapping[str, Any], clouds_layer: float | None, placemen
             "clouds": "halpha_hii",
             "about": "the diffuse dust stays in the dust layer (the gas's published scale height, dust_height); the "
                      "clouds sit in their own layer, cloud_layer_height (the molecular layer's measured FWHM, S67 D229) - the halpha_hii layer, the clouds' layer the "
-                     "HII regions are drawn in - each cloud at its published cloud_height. The dust stage's heating "
-                     "and the scattered light were computed with all the dust in the gas layer (debt #168)",
+                     "HII regions are drawn in - each cloud at its published cloud_height. Since S89 (debt #168) the "
+                     "dust stage's heating and the scattered light take the clouds' share of the dust in the clouds' "
+                     "layer too, at its expectation (the molecular fraction; the render's dust_cloud_share), not this "
+                     "realised share",
             "clouds_scale_height": clouds_layer,
         },
         "about": "the share of each ring's dust that is diffuse once the ring's realised clouds hold theirs: 1 - (the "
@@ -261,11 +328,15 @@ def render_header(rings: Mapping[str, Any], clouds_layer: float | None, placemen
                  "(rule A10): the realised census's, a function of the inputs and the clouds stage's seed, systems_seed "
                  "(the 'cloud seed' of fields), not of the inputs alone (its expectation, 1 - rings.expected_clouds_share, "
                  "is a recorded check, not used). Each grid "
-                 "ring takes the share of the level-0 cell ring that holds it; at level=k a cell's mean, as the other "
+                 "ring takes the share as a continuous function of radius (S89, #202; until then the share of the "
+                 "level-0 cell ring that held it, a step at every ring's edge): linear between the level-0 cell rings' "
+                 "centres, flat beyond the first and last, its nodes (rings.nodes) chosen so that each level-0 ring's "
+                 "dust-weighted integral of it is that ring's share of its dust; at level=k a cell's mean, as the other "
                  "arrays. 1 where a ring holds no dust. The dust_extinction component is unchanged: the viewer "
                  "multiplies the diffuse depth by this array and draws the clouds' own column (/api/clouds' "
                  f"{COLUMN}) in the clouds' layer" + even,
-        "closure": "per level-0 cell ring: dust_diffuse_share * the ring's dust mass + the ring's clouds' dust (the "
+        "closure": "per level-0 cell ring: the ring's dust-weighted integral of dust_diffuse_share (dust_surface_density "
+                   "times it over the ring's annulus, the ring's dust mass's own quadrature) + the ring's clouds' dust (the "
                    "census's rows of that ring, cloud_mass * dust_to_gas_ratio at cloud_birth_radius) = the ring's "
                    "published dust mass, to 1e-12 (tests/test_v6_clouds.py, both templates, layer on and off)",
         "rings": {
@@ -274,7 +345,10 @@ def render_header(rings: Mapping[str, Any], clouds_layer: float | None, placemen
                      "floored lists each ring where the floor acted - its realised clouds holding more dust than the "
                      "ring publishes - with the excess dust mass, Msun, by which the closure misses there), the "
                      "ring's dust mass (Msun), the realised clouds' "
-                     "dust (Msun) and their share, and the disc's. expected_clouds_share is the ring's molecular "
+                     "dust (Msun) and their share, and the disc's; nodes (S89, #202), the continuous share's values at "
+                     "the rings' centres (radius, kpc), which the grid's array interpolates linearly, held to [0, 1] with "
+                     "each ring's share kept exactly in the rings listed (held_rings). expected_clouds_share "
+                     "is the ring's molecular "
                      "dust over its dust - the clouds' share in expectation, the ring's molecular fraction: a "
                      "recorded check on the realised share, which departs from it by the census's Poisson noise and "
                      "heavy mass function; not used",

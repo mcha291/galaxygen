@@ -714,8 +714,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S86 | **139, 142, 198** (the modes' phases retired at S60 (D219 item 7): two chains at the bar's ends, Reid's arms pinned, births in the widest gap; the forcing's thickness factor built at S60 (D219 item 5, Kim & Ostriker 2007, Kregel et al. 2002), the troughs measured at S86 above a tenth on both templates and at the 1 degree clip; the saturation cut reached by an admissible galaxy, pattern seed 28: its effect read in tests/test_bar.py since S58, I1's walk and I4 through it since S86) | 3 |
 | **discharged** at S87 | **148, 209** (one cosmology for the time axis and the redshifts: the grid's `t_max` the model's own flat-ΛCDM age, 13.467 Gyr, from `core/cosmology.py`; row 2 out by 0.020 as predicted and recorded, row 6 in on σ_z, unpredicted; the owner's 1.0° floor on a drawn piece's pitch, D255) | 2 |
 | **discharged** at S88 | **212** (`MERGER_HEATING` re-derived at its fixed point on the model's own clock, 88.8 → 90.6, on the owner's word of 2026-11-03; row 3's miss 251.017 written in under #11, D256) | 1 |
+| **discharged** at S89 | **167, 168** (the clouds' duplicate central A_V retired, read by no drawing since D228; the clouds' dust heated and scattering in the clouds' own layer at the census's expectation, L_IR ×0.9977 / ×0.9946, D257) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 152, 155, 157, 195 | 38 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 210, 211, 213, 214 | 84 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 197, 202, 203, 204, 205, 210, 211, 213, 214 | 82 |
 
 So the board's **121 open** is 37 permanent and 84 carried, and no item is unruled (S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
@@ -3151,6 +3152,16 @@ never been judged in twenty-three sessions.
    corrected light the model is short of light, if it is observed light an attenuation of ~0.3 mag would
    land M_V and the colour would move the wrong way — the two readings separate on the colour.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the closer the batch can give is the dust stage's attenuated magnitude from the layered geometry (#128's closure); the source's errors stay [recall].
+   *S89 (M2): measured; not published - a published attenuated magnitude would be a field no row reads.* All directions
+   together, in the dust stage's convention, each band's disc light through its own absorbing depth in the two-layer
+   geometry (#168), the bulge undimmed: the default galaxy's **M_V −21.147 intrinsic → −20.816 attenuated (A_V 0.330),
+   B − V 0.562 → 0.570**; NGC 4414 −20.601 → −20.275, 0.661 → 0.651 (bluer: its dust takes the red inner light first).
+   Against BHG16's −21.37 and 0.73: corrected light, 0.22 mag short and 0.17 bluer; observed light, 0.55 short and 0.16
+   bluer. **The entry's prediction (B4) fails: the two readings do not separate on the colour** — attenuation reddens the
+   galaxy by 0.009 only, so the colour gap is the stars' under either reading. The rows still have no window (`lo ==
+   hi`, D100): **what would close them** is a source with errors (Licquia, Newman & Brinchmann 2015 `[recall — NEEDS
+   SOURCING]`) that states what its magnitudes measure; then the attenuated magnitude is published with the row that
+   reads it (`READING_DUST.md`).
 83. **The stellar wind's escape velocity is Newtonian: Γ_e is missing** (S28, D177). `star_wind_luminosity`
    is ½ Ṁ v_∞² with Vink, de Koter & Lamers 2001's mass-loss recipe and v_∞/v_esc = 2.6 (1.3 below the
    bistability jump) `[verified: A&A 369, 574, eqs. 15, 23, 24, 25, read at S28]`, but v_esc is computed
@@ -3258,6 +3269,18 @@ never been judged in twenty-three sessions.
    band — the same table, eight rows instead of one — which is one afternoon of arithmetic with a
    prediction: L_IR rises by ~10% and T_d(R₀) by ~0.5 K; the CMB floor is one constant (2.725 K).
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the dust's eight-band absorbed power is the dust stage's arithmetic, with #128's geometry.
+   *S89 (M2): read and measured; not built - the closer as written would absorb the light the bands do not hold at
+   the wrong depth.* The eight-band continuum (`spectra.sed_density` through the `disc_sed_*` samples and their blackbody
+   tails) carries **0.687 of `disc_luminosity`** (`tests/test_render.py`; 0.708 at S38) — the young stars' ultraviolet
+   shortward of U is not in it — and through that continuum the grain curve removes **0.7847 of what grey absorption at V
+   removes** (`CURVE_OVER_GREY`). "Eight rows instead of one" applied to the bolometric light would cut the absorbed power
+   by about a fifth on the continuum and absorb the other 31 %, the ultraviolet the curve absorbs most, at the
+   continuum's fraction: the prediction's sign (L_IR up ~10 %) rests on that 31 %, whose spectrum no stage computes (S31's
+   one measured side: the Habing band at the far-ultraviolet depth, +10.8 %). **What would close it:** the light's
+   spectrum shortward of U — the isochrone points as blackbodies at their own T_eff (the PARSEC table holds `log_teff`
+   and `log_l` for every point) or ultraviolet bands — a light-stage change, proposed for M3 beside T2 / #114
+   (`READING_DUST.md`). The CMB floor's source is not read; since S52 no unheated grain is drawn, so it moves no
+   published temperature.
 92. **The PAH fraction is a cross-galaxy fit applied per radius, and the Milky Way sits 0.30 dex above its
    own value** (S31, D180). Rémy-Ruyer et al. 2015's eq. 5 relates f_PAH to 12 + log O/H across 109
    galaxies `[verified: read at S31]`; applied to the gas's abundance at each radius it reads 9.1% at R₀
@@ -3267,6 +3290,11 @@ never been judged in twenty-three sessions.
    or by a per-radius calibration from resolved galaxies (KINGFISH), either a sourced relation replacing
    this one; what kills the reading: a Phase 9 PAH-band emission that lands at R₀ with 9.1%.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the PAH fraction's sSFR form is the dust stage's, read with #91.
+   *S89 (M2): read; not buildable from the repository.* Rémy-Ruyer et al. 2015's sSFR form was not read: `AUDIT_III.md`
+   records only the paper's concluding remark that f_PAH is "primarily driven by the sSFR, with a second order effect
+   from metallicity", and the metallicity relation (eq. 5) is the one read. **What would close it:** the sSFR relation
+   read from the same paper (its coefficients and scatter), or a per-radius calibration from resolved galaxies; the
+   stage would read the published `sfr_surface_density` over the stellar surface density per ring.
 93. **No acceptance row reads the dust temperature or the infrared luminosity** (S31, D180; headed "Row 32 is
    owed and was not entered" until S70 — row 32 has been the globular-cluster system mass since S34, `spec.py:239`).
    Planck 2013 XI's whole-sky ⟨T_obs⟩ = 19.7 ± 1.4 K `[verified: Table 3, read at S31]` was read while
@@ -3298,6 +3326,12 @@ never been judged in twenty-three sessions.
    citation; Phase 9's Hα and the cloud emissivities will read the count. What kills the reading: a
    sourced diffuse molecular fraction above ~30%, which would make the census hold too much.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the molecular completeness limit or diffuse fraction is the clouds' constant with a citation.
+   *S89 (M2): read; not buildable from the repository.* No sourced completeness limit and no sourced diffuse molecular
+   fraction is held: Rice et al. 2016's 25 (+10.7, −5.8) % is a catalogue's completeness-limited share (above); Roman-Duval
+   et al. 2016 (`READING_CLOUD_LAYER.md`) give the diffuse molecular gas a thicker layer, 130-200 pc, not a fraction.
+   **What would close it:** a diffuse (non-cloud) share of the Milky Way's CO or H₂ with its error (Roman-Duval et al.
+   2016's own diffuse fraction is the nearest candidate `[recall — NEEDS SOURCING]`), entered as a constant with its
+   citation; the census would then hold (1 − f) of the molecular gas, and #168's clouds' share of the dust with it.
 95. **The cloud vector's unsourced draws and its missing state** (S32, D181). The embedded source's offset
    from the cloud's centre (uniform over the volume), the density gradient's direction and steepness
    (uniform), the cloud's height (a sech² layer at half the thin disc's scale height) are seeded draws whose
@@ -3326,6 +3360,12 @@ never been judged in twenty-three sessions.
    the massive clouds' thinner layer, one layer for every template - is **#180**. The debt stays **carried** for its
    other parts: the source's offset and the density gradient (synthetic, none read) and the remnant state.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the cloud vector's four draws are the clouds' sources.
+   *S89 (M2): read; not buildable from the repository.* None of the remaining three has a source in the repository:
+   the embedded source's offset from its cloud's centre (Kruijssen et al. 2019's 100-150 pc is a decorrelation length,
+   not an offset distribution), the density gradient's steepness and direction, and a remnant shell's visibility time
+   (no duration read; Phase 10's bubbles carry their own ages). **What would close each:** a measured HII-region-to-cloud
+   offset distribution (e.g. a PHANGS cloud-HII-region cross-match `[recall]`), a measured cloud density gradient, a
+   shell's visible lifetime - each a constant with its citation in place of the stated draw.
 
 96. **The cluster census inherits the clouds' mass function, not the review's** (S33, BUILD_II Phase 11,
    D182). One cluster per cloud past its embedded phase at an efficiency derived from the local depletion
@@ -3516,6 +3556,13 @@ never been judged in twenty-three sessions.
    the infrared channel's white point and the scattering phase in an inclined disc; what the closure itself left
    open is #128.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — what remains is the scattering geometry's source (a thin-slab guess) — the dust's, with #128 and #168; the infrared channel's white point is a display ruling the viewer takes with it.
+   *S89 (M2): read; not buildable from the repository; the white point is a display ruling.* No source for the
+   scattered light's phase in an inclined disc is held (the phase table's in-plane average is `[inferred]`), and the
+   region-scale alternative needs V3's resolved scattering, not built. The infrared channel's white point is a display
+   choice the owner rules with the viewer (BUILD_V §2a puts it with the viewer). Since S89 the scattering's *geometry*
+   takes the clouds' share of the dust in the clouds' layer (#168). **What would close it:** a radiative-transfer
+   source's scattered-light phase for an inclined exponential disc (or the region-scale scattering), and the owner's
+   white point.
 110. **The region regime's noise, pillar rule and tilt are stated shapes the cloud vector does not constrain**
    (S40, V3, D190). The cloud vector fixes the one-point PDF (σ_s), the mean column, the gradient and the source
    offset; the *spatial* structure needs a power spectrum it does not carry. So `region.ts` realises the log-normal
@@ -3549,6 +3596,16 @@ never been judged in twenty-three sessions.
    at the cloud vector's σ_s, its committed vectors the test, and the viewer's own lattice constants retired. No
    phase of BUILD_III or BUILD_IV now names it; the owner schedules it. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the region regime's noise constants are the clouds' interior, read at the σ–ℓ source.
+   *S89 (M2): read; the closer's constant is held and gives today's gain; the rest is a viewer pass.* The σ-ℓ relation
+   the Mach number's width rests on is in the model: `clouds.velocity_dispersion`, Heyer et al. 2009 eq. 10, σ_v ∝ R^½
+   at fixed Σ `[verified: model/galaxy/stages/clouds.py]`. A size-linewidth exponent of ½ is a velocity power spectrum
+   E(k) ∝ k^-2 (β = 2), and the closer's own rule w_k ∝ 2^(-kβ/2) then gives w_k ∝ 2^-k - **the gain 0.5 the clouds'
+   header publishes now**, so the octave weights are derived, not stated (that the density field takes the velocity's
+   index is `[inferred]`, as the closer infers it). What S70 made the closer - the region regime's cloud interior drawn
+   from the layer's noise (`noise.glsl.ts`) at the cloud vector's σ_s, its committed vectors the test, the viewer's own
+   lattice constants retired - is a rewrite of `region.ts`, its GLSL twin and `RegionVolume.tsx` with the region frames
+   regenerated; not built at S89 (a model session's lead on a limited week; the frames are S90's). Carried: the
+   viewer's half and the pillar rule as a column condition.
 111. **The region volume's display budget drops light the field has already given up** (S40, V3, D190). One march
    loops over at most 256 objects per pixel — the 128 heaviest clouds, the 64 brightest HII regions, the 64
    brightest shells — while a level-1 window (a view 1–4 kpc across asks `regionAround` for ±4 kpc of radius) holds
@@ -3930,6 +3987,28 @@ never been judged in twenty-three sessions.
    with the reason, #136 re-read with it); this entry names the check and does not change it. (a), (c) and (d)
    carried as written. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2), (a) measured on today's model and not applied — applying it is a rule's change, the owner's.* With
+   the light on the stellar contrast and the dust on the gas's (each clipped at zero, every cell of the 360), each
+   cell's absorbed share the layered one at its column and the ring's ratio of heights, against the stage's mean
+   column (the method of `tests/test_dust_layer.py`'s `test_the_heating_is_still_the_ring_s_mean_column_s`, run on each
+of the three by a probe; the default's numbers are that test's pins): **the default galaxy 1.0047 over the disc** (0.9906 at 2 kpc,
+   1.0028 at 4, 1.0292 at R₀, 1.0055 at 12; the rings 0.976–1.060), **the Milky Way template 0.9728** (0.9038 at 2
+   kpc inside its pinned 5.0 kpc bar's lanes, 0.9548 at 4, 1.0226 at R₀; 0.904–1.026), **`ngc_4414` 1.0008** (0.9981 at
+   2, 1.0053 at 4, 1.0240 at R₀; 0.979–1.038). Applied it would move L_IR 1.2499e10 → 1.2558e10 (default), 1.2499e10 →
+   1.2159e10 (Milky Way), 6.7976e9 → 6.8028e9 (`ngc_4414`) and T_d(R₀) by +0.07 to +0.10 K (18.667 → 18.763 K default).
+   **Why it is not built here.** Since S55 the stellar and gas contrasts are *composed* fields, 1 everywhere with the
+   randomness layer off (D214), and the arms a census of the layer's pieces (D219): a dust stage that reads them must
+   be a composing stage (invariant I4, `Stage.may_place`), and its published T_d, L_IR and infrared surface brightness
+   would then differ with the layer on and off — which rule A10 forbids ("the layer changes no ring total of any field")
+   and invariant I1 tests (`tests/test_layer.py`: every field not declared composed bit-identical on and off). The
+   absorbed power is non-linear in the column, so no placement of the dust conserves it: no composed form with a
+   neutral exists. D211's "seeded extension" was written at S52, before the layer; today it needs A10 amended, or the
+   placed heating published as a separate composed factor beside the physics' own (a field no stage reads). The
+   lead's recommendation to the owner: **permanent** — the heating is the physics' at the ring's mean column by A10,
+   the placement's effect the measurement above (under 3 % of the disc's absorbed power, a tenth at the Milky Way's
+   2 kpc ring), the render's frame drawing the placed dust as it does. (b) was done at S70 (`specs/templates.py`
+   `layered_face_on_transmission`); (c) the flare's pressure is the pressure prescription's named alternative, which
+   moves the molecular fraction (D211 ruling 6): a ruling, not a build; (d) stands as stated.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
@@ -4093,6 +4172,16 @@ never been judged in twenty-three sessions.
    says whether the dust reddens too little or the stars are too blue. What kills the dust reading: a frame still
    under 0.72 with the catalogues' face-on reddening applied by hand.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — the frame's three dust terms read against a sourced face-on attenuation are the dust's.
+   *S89 (M2): the frame's three dust terms read separately; the comparison the closer names is not held.* The check's own
+   computation taken apart on the judged frame (the two-layer face-on transmission since #168): **NGC 4414 — stars alone
+   0.6607, through the extinction 0.6453, plus the scattered light 0.6458, plus the thermal 0.6458** (the check; 0.645984
+   after M1); the Milky Way template 0.5618 → 0.5651 → 0.5663 → 0.5663. The extinction makes NGC 4414's frame **bluer**
+   (−0.0155: its dust lies in the inner disc, where the light is reddest), the scattered light adds 0.0005, the thermal
+   nothing; so the stars alone are 0.059 under the window's floor and the dust as built reddens nothing that could close
+   the gap — "the stars are too blue" leads, not ruled. **What would close it:** a sourced face-on attenuation for an Sc
+   disc (the catalogues' own A_B − A_V; RC3 and HyperLeda correct to face-on, not to dust-free, `READING_NGC_4414.md`
+   W-K); the dust reading dies if the frame stays under 0.72 with it applied — at 0.6458 a face-on E(B − V) above 0.074 is
+   needed. The check's reason in `specs/templates.py` carries the split (`READING_DUST.md`).
 137. ~~**The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first**~~
    **DISCHARGED at S70** (Audit V, F-5-1, D234; discharged in fact at S61). Its own closer — "L1's ring-first draw
    … after which the list is empty and the realised ring totals are identical with the layer on or off" — was met
@@ -4906,8 +4995,8 @@ never been judged in twenty-three sessions.
    V7 was the layer in the viewer and V8 the display defaults (D226, D227–D231); BUILD_IV's smoothness phase (W5,
    D222) is where a render's cost is next read, and the owner schedules it. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the starlight by age is the populations' render cost: the two mends in one pass with #184.
-167. **The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud** (S64, D224 stop
-   condition 1; the probe's measurement). The census's `central_extinction_v` is solar dust per hydrogen at one surface
+167. ~~**The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud**~~ (S64, D224 stop
+   condition 1; the probe's measurement; discharged at S89, D257 — retired, a duplicate on another law read by no drawing). The census's `central_extinction_v` is solar dust per hydrogen at one surface
    density (Σ_GMC 42 M☉/pc²; since S67, D231, the inner regime's 82, 5.7977 mag), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
    dust-to-gas ratio times the grain cross-section, 6.3× the cloud law at R = 2 kpc and 0.15× at R = 14 (Milky Way). A
    cloud drawn at its published A_V would not carry the extinction it takes from the ring. The API's derived column
@@ -4921,8 +5010,18 @@ never been judged in twenty-three sessions.
    solar circle; outside it an uncapped cloud's would be 2.47 mag, a capped giant's more. **Carried.** The mend is one pass: the clouds stage reads
    `dust_to_gas_ratio` at the cloud's ring, which moves the region regime's interiors and their pins.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
-168. **Half the disc's dust now sits in the clouds' layer, up to 3.8× / 5.6× the gas layer the heating and the
-   scattering were computed in** (S64, D224 stop condition 2). The clouds hold 0.4899973 of the disc's dust on the
+   *S89 (M2): built — the second law retired.* The closer's "moves the region regime's interiors" was done at S67
+   (D228): every drawing reads each cloud's own column, `/api/clouds`' `cloud_dust_extinction_v`, which is the ring's
+   dust-to-gas ratio applied to the cloud's gas at its birth radius (metallicity in, through `dust_to_gas_ratio`). What
+   was left was the census's one central A_V, `cloud_extinction_v` (a galaxy scalar of the clouds stage and the
+   `/api/clouds` header's `scalars`: solar dust per hydrogen at the ring's Σ 82, 5.7977 mag for every uncapped cloud),
+   read by no stage and no drawing — a duplicate on another law (A9). **Retired** (the declaration, `census_extinction_v`,
+   `central_extinction_v`, the grain constants it read and the stage's read of `HII_MASS_PER_HYDROGEN`); the header's
+   scalars are three; the API's column, unchanged, is the model's only per-cloud A_V. Nothing drawn moves (the viewer
+   never read it: the frontend's tests hold it as fixture data only); the S55 layer-off reference loses one entry
+   (`LAYER_OFF_EXCEPTIONS`'s `cloud_extinction_v`, its two tests strict-held under #214). Proposed **discharged**.
+168. ~~**Half the disc's dust now sits in the clouds' layer, up to 3.8× / 5.6× the gas layer the heating and the
+   scattering were computed in**~~ (S64, D224 stop condition 2; discharged at S89, D257 — the clouds' dust heated and scattering in the clouds' own layer at the census's expectation). The clouds hold 0.4899973 of the disc's dust on the
    Milky Way and 0.6327142 on `ngc_4414` (realised; the molecular fraction's expectation 0.548 / 0.590), and since
    S64 each cloud sits at its own published `cloud_height` — `cloud_layer_height` 178 pc (Milky Way) and 477 pc
    (`ngc_4414`), half the thin disc, a guess (#95; **since S67, D229, 34.04 pc on both**, the molecular layer's
@@ -4936,6 +5035,24 @@ never been judged in twenty-three sessions.
    pass: #95's closure with D211's geometry re-done — the heating and the scattering computed with the clouds' dust at
    the clouds' heights.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): built — the heating and the scattering take the clouds' dust in the clouds' layer.* The ring's molecular
+   share of its dust (`gas_molecular_fraction_profile`: every gram of the molecular gas is in the census, #94's
+   construction) absorbs in the molecular layer's sech² (h = `MOLECULAR_LAYER_FWHM` / 3.5255 = 34.04 pc, the census's
+   own), the rest in the gas's (`dust.absorbed_fraction`, `two_layer_absorbed_fraction`: the stars' layer through two
+   dust layers, a fixed 256-node Gauss–Legendre in ln u, within 5e-11 of the one-layer quadrature when a layer is empty
+   and within 1e-12 of a midpoint sum on two layers, `tests/test_dust_layer.py`). The render's scattered share is taken
+   in the same geometry, and its header names it (`layers.dust_clouds` = {height, share}, the per-ring array
+   `dust_cloud_share`); the face-on template check (`specs/templates.py` `face_on_clouds`) and Audit IV's balance read it.
+   **Before → after** (the heating's disc total; the Milky Way template the default's — no field it reads is the bar's
+   or a pin's): L_IR **1.249895e10 → 1.247074e10 L☉** (×0.99774; the infrared share 0.26171 → 0.26112), T_d(R₀) 18.6669
+   → 18.6404 K; `ngc_4414` **6.797638e9 → 6.760673e9** (×0.99456; 0.26774 → 0.26628), T_d(R₀) 16.3259 → 16.3208 K. Ring by
+   ring (default) 1.0071 at 2 kpc (the clouds' layer thicker than the gas's there), 0.9901 at 4, 0.9921 at R₀, 0.9979 at
+   12. The scattered light moves with it (smaller where the clouds' layer is the thinner). **Stated, not computed:** the
+   census's *expectation* is used (this checkpoint precedes the census; the realised share is `/api/render`'s
+   `dust_diffuse_share`), and the clouds' dust is a smooth layer — the clumping that lets more light past a cloud than a
+   smooth layer of its mass is not computed (a clumpy medium's escape needs the clouds' covering factor, no source read).
+   G₀ keeps the mixed slab (D211 ruling 4). Proposed **discharged** for its stated closure, the clumping named under
+   #91's grey slab if the gate wants it carried.
 169. **A texel holding clouds far apart in height is drawn as one slab: thin vertical streaks inside ~3 kpc of the
    inclined view** (S64, D224; the clouds builder's first `ngc_4414` frame and the lead's ruling on it). The viewer's
    cloud raster holds per texel the A_V-weighted mean height and a half-thickness (the rms of the heights about it, in
@@ -4945,6 +5062,18 @@ never been judged in twenty-three sessions.
    `ngc_4414` — the stated approximation, which still draws thin vertical streaks inside ~3 kpc of the inclined view
    (round `ngc_4414`'s bulge). **Carried.** The mend is one pass: a second slab per texel.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): measured on today's census — the mend's cause shrank tenfold at S67; not built, the owner's look rules.*
+   The tall slabs were S64's layer (h 178 / 477 pc). Since D229 the clouds' heights are drawn from the molecular layer
+   (h 34.04 pc) and since D230 each cloud's vertical extent is capped at the layer's half-maximum (60 pc). The raster's
+   rule applied to `/api/clouds`' whole census (each cloud in its centre texel; the viewer's default 5 / 3 texels a
+   render cell): **the largest texel half-thickness 1.10 → 0.125 kpc on the Milky Way and 2.96 → 0.175 kpc on
+   NGC 4414**, the 99th percentile 60 pc (the cap) on both; 515 of 16 365 occupied texels hold more than one cloud on the
+   Milky Way (211 of 6 427 on NGC 4414), and in 265 (112) of them - 1.6 % (1.7 %) - the clouds' spread in height exceeds
+   their own extent, 49 (66) inside 3 kpc. A second slab per texel would change those texels alone, each by at most a
+   175 pc span against the stars' 346 / 926 pc layer. **Proposed:** discharged as met in substance by D229 and D230,
+   unless the owner's look at S90's regenerated frames still finds the streaks round NGC 4414's bulge — then the mend
+   (a second slab, split at the midplane: a third raster channel, the march's piece loop cut at both slabs' parts,
+   `regimes.ts composeStep` and the pinned march re-pinned) is a viewer pass.
 170. **The knots are not drawn in the star-first mode, and the region regime's clusters keep a display-colour sprite**
    (S64, D224 R5–R7). The HII regions are drawn as knots in the field mode at galaxy scale only: the star-first mode's
    clusters carry their stellar light alone, so its screen has no knot. The region regime's clusters are a sprite in
@@ -5079,6 +5208,15 @@ never been judged in twenty-three sessions.
    the conflicting sources (a constant with its citation per regime), a mass dependence read from a cloud survey's
    heights, and a template's own layer where its edge-on CO is measured.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): read against the readers the repository holds; not built - each part of the closer needs a source or a
+   ruling.* (1) The radial law: `READING_CLOUD_LAYER.md` holds Nakanishi & Sofue 2006's Table 1 at four radii only (48 pc
+   at 0-1 kpc, 90 ± 30 at 7-8, 186 at 8-9, 160 at 10-11), not the table, and inside R₀ the readings conflict (Bronfman et
+   al. 1988 flat from 2 kpc to R₀, Marasco et al. 2017 falling, Malhotra 1994 and Nakanishi & Sofue rising): choosing
+   one there is a named ruleset (B12) and so a ruling, and the flare outside R₀ rests on two bins that fall again (186 →
+   160). (2) The mass dependence: Stark & Lee 2005 give ~35 pc below ~2 × 10⁵ M☉ and "thinner" above it - no number. (3)
+   NGC 4414's own layer: no edge-on CO for it; Yim et al. 2014's three spirals bracket the one value (disclosed). **What
+   would close it:** Nakanishi & Sofue's Table 1 whole and the owner's choice among the inside-R₀ readings; a cloud
+   survey's heights against mass; NGC 4414's own CO thickness (`READING_CLOUD_LAYER.md`, Part S89).
 181. **The HII regions are one cluster's Strömgren sphere each, never a complex: the knots are unresolved points made
    large on screen only by their brightness** (S67, D227; the owner's question of 2026-10-18, "the hii knots are
    very big, bigger than the stars, is this right?"). The census's 12 710 HII regions on `milky_way` have Strömgren
@@ -5093,6 +5231,14 @@ never been judged in twenty-three sessions.
    giant HII regions' size-luminosity relation), and the census's regions in one clustering cell merged into one
    region of the summed ionising photons in the cell's gas (a Strömgren volume of the sum), drawn at its own radius.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): read; not built.* No source in the repository gives HII regions' sizes or a size-luminosity relation in
+   nearby discs (the one number above, NGC 604's ~400 pc, is `[recall]`). The merge the closer names - a clustering
+   cell's regions into one region of the summed ionising photons in the cell's gas, at the Strömgren radius of the sum -
+   is arithmetic on published fields, but *which* cell is a complex (a level-0 cell is 0.94 kpc by 11.25°, a level-3
+   cell about an eighth of that a side) is what the size-luminosity reading fixes: merged at a chosen level, the
+   complexes would be drawn at a chosen size, a guess the closer does not allow. **What would close it:** a giant HII
+   regions' size-luminosity relation and luminosity function read (`READING_CLOUD_SIZES.md`, Part S89, names what to
+   read), then the merge at the level whose summed regions match it.
 182. **The clouds' surface density is two regimes and a cap, not a law of radius or of mass** (S67, D231;
    `docs/READING_CLOUD_SIZES.md`; the owner's choice "Smaller giant clouds (model)"). A cloud's radius is √(M/πΣ) at
    Lada & Dame 2020's X_CO-corrected Σ_GMC — since S70 (#192, D234) `GMC_SURFACE_DENSITY_RING` 82 M☉ pc⁻² inside the
@@ -5110,6 +5256,16 @@ never been judged in twenty-three sessions.
    What closes it: a radial Σ profile read across the ring's edge, a mass-radius relation for the catalogue's giants in
    place of the cap, and a template's own cloud census where one is measured.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): read; not built - the closer's main part is the owner's.* The readers hold two catalogue mass-radius
+   relations - Miville-Deschênes et al. 2017's M = 36.7 R^2.2 and Lada & Dame 2020's M = 78.6 R^1.98 (on Rice et al.
+   2016's catalogue) - and either in place of the cap makes the giants *larger*, the reverse of the owner's choice at S67
+   ("Smaller giant clouds (model)", D231): at 10⁷ M☉ they give R = 296 and 378 pc against the cap's 150 pc, and at 10⁶
+   M☉ 104 and 118 pc against the regimes' 62 pc (Σ 82) and 95 pc (Σ 35) - the catalogues' Σ is low (30, 23 M☉ pc⁻² at
+   10⁶) and their R is the equal-area radius of a 12CO/13CO footprint, not the model's √(M/πΣ_GMC). So a relation in
+   place of the cap is a ruling (the owner's), not a build. A Σ(R) across the molecular ring's edge: none read (Lada &
+   Dame's regimes are joined by no measured profile; their eq. 1 is uncorrected). NGC 4414's census: none. **What would
+   close it:** the owner's word between the cap and a catalogue relation; a resolved Σ_GMC profile across the ring's
+   edge; a template's own cloud census (`READING_CLOUD_SIZES.md`, Part S89).
 183. **In the field mode a knot carries its region's gas and not its cluster's starlight, so an HII region draws as
    pure line colour** (S67, D227; the owner's questions of 2026-10-19, "why is the hii regions all green on 4414?").
    The knots (S64, D224) hold each region's line light; the cluster's own starlight is spread through the field's
@@ -5317,6 +5473,19 @@ never been judged in twenty-three sessions.
    viewer, as a function the model publishes — D5 as amended) so the dust's depth is continuous in R; the closure
    per ring kept to 1e-12 either way; the frames regenerated with the circle measured gone.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): built — the share continuous in R, the closure kept; the frames are S90's.* `/api/render`'s
+   `dust_diffuse_share` is now a function of R (`v6_clouds.continuous_share`, `bounded_share`): linear between the 32
+   level-0 rings' centres, flat outside the first and last, its nodes solved so that each ring's dust-weighted integral
+   of it (the ring's own quadrature, `ring_dust_mass`'s) is the ring's realised diffuse dust — a 32-row system, each
+   ring's own node weighing about three quarters of it, diagonally dominant; held to [0, 1] (B9) and, in a ring where
+   the hold took something (the outer rings, where the share is 1 and the dust falls steeply: Milky Way rings 26–31,
+   NGC 4414 20–31), that ring's own grid values moved towards 1 by the room each has, so the ring keeps its share
+   exactly. The header carries the function (`clouds.rings.nodes`: radius, share, held_rings). **Before → after**
+   (the largest change of the share between neighbouring grid rings): **Milky Way 0.2196 (a step) → 0.0259; NGC 4414
+   0.3046 → 0.0334**; the hold's own steps at its rings' edges 2.1e-3 / 1.5e-3; the closure per level-0 ring 3.5e-16 /
+   3.9e-16 of the ring's dust, layer on and off alike (`tests/test_v6_clouds.py` gate (i) re-stated). The closer's last
+   clause — the frames regenerated with the circle measured gone (the physics-only frame's luminance across
+   4.60–4.84 kpc, 15.8 % at S71) — is S90's, with the bundles. Proposed **discharged at S90** on that measurement.
 203. **No viewer page opens a share link, and the viewer never asks the gateway's queue** (S74, D238; the review of
    W3). BUILD_IV §7 ruling 4 (a short id over a stored record, the result cached beside it, a stateless link as the
    copy-the-inputs fallback) and §2c's queue are built on the gateway's side — `POST /share`, `GET /share/{id}`, the
