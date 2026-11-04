@@ -5061,6 +5061,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    `ngc_4414` — the stated approximation, which still draws thin vertical streaks inside ~3 kpc of the inclined view
    (round `ngc_4414`'s bulge). **Carried.** The mend is one pass: a second slab per texel.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S89 (M2): measured on today's census — the mend's cause shrank tenfold at S67; not built, the owner's look rules.*
+   The tall slabs were S64's layer (h 178 / 477 pc). Since D229 the clouds' heights are drawn from the molecular layer
+   (h 34.04 pc) and since D230 each cloud's vertical extent is capped at the layer's half-maximum (60 pc). The raster's
+   rule applied to `/api/clouds`' whole census (each cloud in its centre texel; the viewer's default 5 / 3 texels a
+   render cell): **the largest texel half-thickness 1.10 → 0.125 kpc on the Milky Way and 2.96 → 0.175 kpc on
+   NGC 4414**, the 99th percentile 60 pc (the cap) on both; 515 of 16 365 occupied texels hold more than one cloud on the
+   Milky Way (211 of 6 427 on NGC 4414), and in 265 (112) of them - 1.6 % (1.7 %) - the clouds' spread in height exceeds
+   their own extent, 49 (66) inside 3 kpc. A second slab per texel would change those texels alone, each by at most a
+   175 pc span against the stars' 346 / 926 pc layer. **Proposed:** discharged as met in substance by D229 and D230,
+   unless the owner's look at S90's regenerated frames still finds the streaks round NGC 4414's bulge — then the mend
+   (a second slab, split at the midplane: a third raster channel, the march's piece loop cut at both slabs' parts,
+   `regimes.ts composeStep` and the pinned march re-pinned) is a viewer pass.
 170. **The knots are not drawn in the star-first mode, and the region regime's clusters keep a display-colour sprite**
    (S64, D224 R5–R7). The HII regions are drawn as knots in the field mode at galaxy scale only: the star-first mode's
    clusters carry their stellar light alone, so its screen has no knot. The region regime's clusters are a sprite in
