@@ -2107,3 +2107,29 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   and a stage that reads them publishes totals the layer changes, which A10 forbids. The lead measured the effect (under
   3 % of the absorbed power) and put the rule to the owner instead of building a composing stage - the batch's rule:
   a closer that needs a rule's change is a ruling, however old the closer. The gate reads every M-batch closer's date.
+
+## From S90 (BUILD_V row 90, M2's close: the gas, the censuses and the batch's close; an Opus lead)
+
+- [infra] **An empty argument file runs the whole suite.** The close runner split test_pieces and test_gas_pattern by
+  node id into `@file` arguments; the collection was read with `-q` on top of `addopts = "-q"`, which prints counts
+  per file, not node ids, so every part file was empty and each of nine processes ran every test. Collect without
+  `-q`, refuse a part with no node ids, and look at the first lines of a part's log before leaving it to run.
+- [infra] **Kill a run by its own process tree, never by name.** A blanket kill of every pytest process is refused
+  (other workloads share the machine); the runner's own PID with `taskkill /T` stopped exactly its children.
+- [close] **A re-base can be tried without writing the reference.** #214's prepared tests were run against the final
+  model's digest dumped to the scratchpad, through a one-line pytest plugin that points `layer_reference.REFERENCE`
+  at it - and that run found three faults in the rewrite that reading had not (the Milky Way template is not the
+  default galaxy since #80's pin, the template pins the Sun's azimuth, a header carries the molecular ring's pin).
+- [close] **A wall-clock bound fails under a ten-process close and passes alone - read it alone before calling it.**
+  Four timing tests (the bright whole disc, 1e5 objects, the fresh-interpreter row, a million stars) read 1.4-2.3x
+  over under load and green alone; only #67's pricing flake stayed red, beside one other process.
+- [field] **When a mend changes what a test conserves, the test is re-stated, not re-pinned.** #161 made the ring the
+  unit of the clouds' conservation; Audit V's "keeps every cell's clouds" then failed by design, and its builder's
+  file list had missed it. The test now holds the ring's count and mass against the field-off control and asserts the
+  cells move - the conserves text and the test read the same rule.
+- [field] **Choose between closers by what each moves inside the region that was right.** #213's two closers both
+  made the sector means past the budget exact (every foot there read 1.0); ending the walk kept the 40 spurs inside
+  the budget bit for bit, the excess over 1 would have changed every one of them and needed a rule for feet below 1.
+- [advanced] **A closer that names a width the model never declared is a ruling.** #164/#165's "downstream
+  half-width" has four readings in the repository's own rules and each breaks on many feet; the builder stopped,
+  measured all four and handed back options instead of picking a threshold.

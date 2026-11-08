@@ -7,7 +7,7 @@ ring 4e-16; discharged at S90 when the frames show the circle gone), measured **
 applying it is a rule's change, A10 — the owner's) and **#169** (the cause tenfold smaller since S67; the owner's look at
 S90's frames rules it), read nine entries with their sources named (`READING_DUST.md` new, `READING_CLOUD_LAYER.md` and
 `READING_CLOUD_SIZES.md` Part S89), moved **#91** to M3. **The hash prints 85649e31f6f6789d885efa40f0f5b8d9 in fact; the
-docs' pin stays 244c8bda… until S90's close.** Register **120 open = 38 + 82, 77 discharged**; next number **#215**,
+docs' pin stays 244c8bda… until S90's close.** *S90's close: the hash moved once, 244c8bda… → 5a2c097ec5116dce6a2d7bff87d6559f (M2's final model; the pin in BRIEF, GALAXY_INPUTS, GALAXY_PLAN and RESUMING - DECISIONS is the gate's).* Register **120 open = 38 + 82, 77 discharged**; next number **#215**,
 decisions from **D258**. Branches: `batch-m2` holds S89 (tag s89); S90 cuts `session-90` from it, merges back, then
 **merges `batch-m2` into `main`** on the full suite (D246).
 

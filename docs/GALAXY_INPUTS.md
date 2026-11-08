@@ -5635,7 +5635,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    19 cases collected under the mark — the 18 bit-exact pins and #207's case — skipped when GitHub's `CI` is set by
    `tests/conftest.py`'s hook, run here, no tolerance widened), `JSON_DEPTH_CAP` 64 read before every parse of a
    request's JSON so both platforms answer "the JSON is nested too deeply" (a `model/galaxy/api` change: the hash
-   4f0c8401… → f1fbbb17…; M1's batch → 244c8bda… at S88), `.python-version` 3.14.4, the suite on pushes to `main`, on dispatch and nightly with the
+   4f0c8401… → f1fbbb17…; M1's batch → 244c8bda… at S88; M2's batch → 5a2c097e… at S90), `.python-version` 3.14.4, the suite on pushes to `main`, on dispatch and nightly with the
    fast subset elsewhere. Two of this entry's readings corrected by S77: its "eighteen" summed to seventeen in its own
    list — the eighteenth is `test_gas_fluctuation`'s, which it counted apart; and that case does not move "past the
    float32 bound": the float32 read's libm rounding differs per machine, and the runner's number is the nearer to the
