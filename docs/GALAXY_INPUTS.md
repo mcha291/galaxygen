@@ -4931,6 +4931,28 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    bin -0.4750 (S86 -0.5696) and the 40.71-100 Myr bin's finest 1 + omega 0.8457 against flat within 0.05 (out since
    the clock: 1.1887 there; S86 1.0391). The spill's declared figures re-measured (`census_clustering.SPILL_*`: p99
    0.119, max 1.261, 1 795 of 16 940 beyond 0.06 dex, [alpha/Fe] 0.222). *The gate (S88's close, D256): both held with the cause, the law kept, not loosened — M2's with this entry; the per-cell conservation (D220 part II rule 2) is the mend.*
+   *S90 (M2's close; an Opus builder on branch s90-161): the mend built as the closer wrote it - rule 2's unit is the
+   ring.* `clouds.sector_placement` multiplies the gas pattern's sector means by the clustering field's mean over each
+   level-0 cell (`ClusteringField.sector_factors`: the published `census_clustering_cell_mean`, the same bits through
+   `kept_cell_means`' cache) and divides each ring's weights by their mean round the ring (`census_clustering.ring_unit`),
+   so every ring's expected total is kept (the cells' sum 1 unit in the last place from the ring's, 22 before) and,
+   drawn ring-first, every realised ring total (counts the same bits; masses the same multisets, summed in another
+   order); inside the cell the field places as before, and with the layer off nothing changes. No constant, no rule
+   changed: the cell table was already published, and `clusters` and `cloud_texture` declare the seed and the
+   constants they now read. Measured on the default galaxy by the gate's own construction (before 352bdec / after):
+   the finished clouds' 1 + omega in the bins holding 47.5 / 95 / 158 pc 2.084 / 1.248 / 1.016 -> 2.403 / 1.381 /
+   1.106 (the field's own 2.43 at 47.5 pc: D220 II.4's amplitude now met), crossing 1 near 174 pc -> near 430 pc,
+   1.03-1.05 over 200-270 pc and 0.97-1.01 beyond 340 pc; the clusters 2.129 / 1.295 / 1.041 -> 2.291 / 1.417 / 1.119.
+   The gate's fitted slope over 47.5-190 pc barely moves - clouds -0.4796 -> -0.4843 (still over the 0.15 by 0.006,
+   held strict), clusters -0.4882 -> -0.4991 (inside: that case lifted); worst beyond 380 pc 0.0205 / 0.0301. The
+   amplitude rose at every scale below 190 pc together, so the shape #80's re-drawn census flattened stays. The Milky
+   Way's pair slope (`tests/test_audit_v.py`) -0.4846 / -0.4327 -> -0.5561 / -0.4497, mean -0.5029, inside the law:
+   S88's hold lifted, its excess at 47.5 pc 2.64 / 2.26, its 380-760 pc ratio 0.951 (inside 0.05 by 0.001). The young
+   bright stars read the same to the digit (their sector weights are the young reader's, not the clouds'; a field
+   factor there would need the middle part split by the octaves' ages before the sector is drawn - not built), so
+   `BRIGHT_GATE_READ_OVER` stands as S88 wrote it. The spill: 1 785 of 16 940 beyond 0.06 dex (was 1 795), the other
+   figures unmoved. *The clouds' L1 slope is the gate's to rule (0.156 from -0.64 against 0.15); the excess this entry
+   names is mended.*
 162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
    part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
    than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
