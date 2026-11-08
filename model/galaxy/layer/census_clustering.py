@@ -28,17 +28,24 @@ the census read a slope of -0.18 (clouds, default galaxy) against the field's ow
 normalised alone and a radius through a clump gains no clouds; joint placement in a window of 190 pc about that
 radius read -0.41, in the whole cell -0.63. **The radius the ring drew is kept** (``cloud_birth_radius``): every
 per-cloud law reads it (the abundances, the clusters' efficiency) and every stage that bins clouds or clusters by
-radius bins by it, so no per-ring or per-radius total moves with the placement. The ring's count, the sector
-allocation and every other draw are part I's and untouched: **every cell's expected count and every ring's
-realised total is what it was** - the field redistributes inside a cell only (rule 2). The clusters inherit it: one
-per cloud, at its cloud's place plus the offset. With the layer off a cloud stands at the radius its ring drew,
-uniform in its sector: the arithmetic before S61, bit for bit.
+radius bins by it, so no per-ring or per-radius total moves with the placement. **The ring is the unit** (S90,
+register #161; D220 part II, rule 2, which admits a ring or a cell): the field's mean over each level-0 cell
+(:meth:`ClusteringField.sector_factors`, the published cell table's numbers) multiplies the cell's sector weight
+beside the gas pattern's sector mean, and each ring's weights are divided by their mean round the ring
+(:func:`ring_unit`), so a cell's expected count carries the hierarchy's coarse end and **every ring's expected and
+realised total is what it was** - the field redistributes inside a ring. From S61 to S89 the unit was the cell: the
+field placed inside the cell the pattern alone had allocated, every cell's expected count was the pattern's, and the
+finished clouds' excess was cut near the cell's short side (1.97 at 47.5 pc against the field's 2.43, 1 crossed near
+120 pc; #161). The ring's count and every other draw are part I's and untouched. The clusters inherit it: one per
+cloud, at its cloud's place plus the offset. With the layer off a cloud stands at the radius its ring drew, uniform
+in its sector: the arithmetic before S61, bit for bit.
 
 **What is published** (rule 5: evaluable at a point; no stored grid is the field). Two synthetic fields, each with
 its three declarations: the field's 32-bit seed, the one number beside the model's constants that makes f
 evaluable anywhere (``noise.fold_seed``: the fold is the model's, done once); and each level-0 cell's mean of the
 map over the cell's quadrature lattice (``noise.cell_quadrature``, R dR dphi), the number a renderer divides f by
-to give the cell unit mean, carried by ``/api/clouds``' header for the viewer (rule D5 as amended). With the layer
+to give the cell unit mean and, since S90 (#161), the factor the cloud census's sector weights take from the field,
+carried by ``/api/clouds``' header for the viewer (rule D5 as amended). With the layer
 off both are NaN - an unrealised number is NaN (D164; D215's ruling 5 for a synthetic scalar), and the cell table
 keeps its rows, which are the cells and are not drawn.
 
@@ -267,6 +274,18 @@ class ClusteringField:
                 out[r * CELL_SECTORS + s] = float(np.sum(q[:, 0] * e) / np.sum(q[:, 0]))
         return out
 
+    def sector_factors(self, R: np.ndarray, points: int) -> np.ndarray:
+        """``(rings, sectors)``: each level-0 cell's mean of :meth:`map` - :meth:`cell_means` at ``points``, the
+        published table's density, through the cache :func:`kept_cell_means` keeps - the factor a census's sector
+        weights take from the field (S90, #161; D220 part II, rule 2 with **the ring as the unit**): a cell's
+        expectation carries the field's coarse end, and the census divides each ring's weights by their mean round
+        the ring (:func:`ring_unit`), so every ring keeps its total (A10). Read-only; cached by the field, the grid
+        and ``points``."""
+        from galaxy.stages.systems import CELL_RINGS, CELL_SECTORS
+
+        means = kept_cell_means(self, tuple(float(r) for r in np.asarray(R, dtype=float)), (self.octaves,), int(points))
+        return means[self.octaves].reshape(CELL_RINGS, CELL_SECTORS)
+
     def kept_cell_means(self, R: np.ndarray, kept: tuple[int, ...], points: int | None = None) -> dict[int, np.ndarray]:
         """:meth:`cell_means` of each truncated map of :meth:`maps` - the ``n`` coarsest octaves, for each ``n`` of
         ``kept`` - on the same lattice, R-weighted, by the same arithmetic (S66, D226 R5c: the viewer divides a
@@ -294,6 +313,15 @@ def kept_cell_means(field: ClusteringField, R: tuple[float, ...], kept: tuple[in
     for m in out.values():
         m.setflags(write=False)
     return out
+
+
+def ring_unit(weights: np.ndarray) -> np.ndarray:
+    """``weights`` ``(rings, sectors)`` divided by each ring's mean round the ring, so every ring's weights average to
+    1 and a ring's expected total - its expectation over the sectors times their mean weight - is the ring's own
+    (S90, #161: the ring the unit of D220 part II's rule 2). A ring whose weights are all zero is left as it is."""
+    w = np.asarray(weights, dtype=float)
+    mean = w.mean(axis=1, keepdims=True)
+    return np.where(mean > 0.0, w / np.where(mean > 0.0, mean, 1.0), w)
 
 
 def mesh_factor(law: Any, cell: tuple[float, float, float, float], r_mid: np.ndarray, phi_mid: np.ndarray) -> np.ndarray | None:
@@ -410,9 +438,14 @@ SPILL_FEH_BEYOND = (0.06, 1795, 16940)  # S88: was 1807 of 16577. S70 (D234): wa
 SPILL_ALPHA_MAX_DEX = 0.222  # S88: was 0.226. S70 (D234): was 0.232 (F-2-7)
 
 _CONSERVES = (
-    "Every cell's expected count of every census it places and every ring's realised total: it places a cloud "
-    "inside the cloud's own cell after the ring's count, the sector allocation and every other draw are made, so "
-    "no count, mass or light moves between cells or rings; every per-cloud law and every binner reads the radius "
+    "Every ring's expected and realised total of every census it places - the ring is the unit (S90, register "
+    "#161; D220 part II, rule 2, which admits a ring or a cell): the field's mean over each level-0 cell multiplies "
+    "the cell's sector weight and each ring's weights are divided by their mean round the ring, so a ring's expected "
+    "count is the same number with the layer on or off (to rounding, invariant I2), its count is drawn before the "
+    "layer allocates or places a cloud, and no count, mass or light moves between rings. It does not keep a cell's "
+    "expected count: that carries the field's coarse end, the cell's mean of the map over the ring's (until S90 it "
+    "did, the field placing a cloud inside the cell the gas pattern alone allocated it to, and the finished clouds' "
+    "excess was cut near a cell's short side). Every per-cloud law and every binner reads the radius "
     "the ring drew (`cloud_birth_radius`, `cluster_birth_radius`), so nothing published per ring or per radius "
     "moves either. **A cloud's ring is the ring that drew it**, wherever a per-ring total or a per-radius law is "
     "read: its index in the ring-first draw, the ring of the cell it is placed in and the ring its birth radius "
@@ -434,7 +467,8 @@ _CONSERVES = (
     f"{SPILL_FEH_BEYOND[0]} dex apart; [alpha/Fe] at most {SPILL_ALPHA_MAX_DEX} apart. And its "
     "placed azimuth lies anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
     "of the map runs from 0.264 to 2.402 over all 1 024 cells (measured at S61 on the default galaxy; the review's "
-    "finding 6 - 0.44-1.93 was a 40-cell sample) - the published cell mean is what divides it out, taken on the "
+    "finding 6 - 0.44-1.93 was a 40-cell sample) - the published cell mean is what divides it out of a drawn map "
+    "and, since S90, what the clouds' sector weights carry, taken on the "
     "table's 2-point lattice: on the 4-point placement lattice the map divided by it has a mean off from 1 by 5.70e-3 rms "
     "and 3.43e-2 at worst."
 )
@@ -467,7 +501,8 @@ CENSUS_CLUSTERING_SEED = _decl(
     "the model's five numbers for the field it makes the field evaluable at any point, by the model or a "
     "shader, as the lattice noise's committed vectors define it. The cloud census reads it to place each "
     "cloud jointly in radius and azimuth on its level-0 cell's lattice by the field (D220 part II item 4 as "
-    "amended; the radius the ring drew is kept as `cloud_birth_radius`), and the bright catalogue its stars of 20 to 40.7 Myr, with the octaves "
+    "amended; the radius the ring drew is kept as `cloud_birth_radius`) and, since S90 (#161), to weigh each cell's "
+    "share of its ring by the field's mean over the cell; and the bright catalogue its stars of 20 to 40.7 Myr, with the octaves "
     "finer than a star's age allows dropped (D220 part II item 5). **Not shown by the viewer** (rule D4): a galaxy scalar of "
     "a layer stage, a key and no quantity; `/api/clouds`' header carries it with the field's numbers.",
 )
@@ -476,7 +511,9 @@ CENSUS_CLUSTERING_CELL_MEAN = _decl(
     "Each level-0 cell's mean of the clustering field's log-normal map over the cell's quadrature lattice, area "
     "weighted, one row a cell in the cells' order (ring by ring, sector by sector): what a renderer divides "
     "the field by to give the cell unit mean, so that the map it draws redistributes the cell's clouds and "
-    "weighs nothing. Not near 1 - a cell spans a few dozen of the field's coarsest lattice cells. `/api/clouds`' "
+    "weighs nothing; and, since S90 (#161, the ring the unit of D220 part II's rule 2), the factor each cell's "
+    "sector weight in the cloud census carries, the ring's weights then divided by their mean round the ring so "
+    "the ring keeps its total. Not near 1 - a cell spans a few dozen of the field's coarsest lattice cells. `/api/clouds`' "
     "header carries the window's cells' values for the viewer. It is not shown by the viewer, which will divide "
     "its own evaluation of the same noise by it when V7 draws the field (S61, D220).",
     of="cell",
@@ -509,7 +546,10 @@ def compute_census_clustering(ctx: Context) -> Mapping[str, Any]:
 
     def draw() -> dict[str, Any]:
         field = ClusteringField.of(field_seed(int(ctx.seeds["texture_seed"])), c)
-        return {"census_clustering_seed": float(field.seed), "census_clustering_cell_mean": field.cell_means(ctx.grid.R, int(c[TABLE_POINTS]))}
+        # S90 (#161): was field.cell_means(R, points) - the same bits (measured on the default galaxy, all 1 024 cells),
+        # now through the cache the clouds' sector weights read (ClusteringField.sector_factors), so it is computed once.
+        means = field.sector_factors(ctx.grid.R, int(c[TABLE_POINTS])).ravel().copy()
+        return {"census_clustering_seed": float(field.seed), "census_clustering_cell_mean": means}
 
     def neutral() -> dict[str, Any]:
         from galaxy.stages.systems import CELL_COUNT
@@ -530,8 +570,9 @@ CENSUS_CLUSTERING = IMPLEMENTATIONS.register(
             "clouds, and the clusters in them, gather into complexes below a cell's scale as the sources measure; and by which the bright "
             "catalogue's young stars stand near where they formed, losing its finer octaves as they age. "
             "Synthetic: it stands in "
-            "for the gas's fragmentation, moves no cloud between sectors or rings and no total, and with the "
-            "layer off realises nothing."
+            "for the gas's fragmentation; its mean over each level-0 cell weighs the cell's share of its ring's "
+            "clouds (S90, #161), so it moves clouds between the sectors of a ring but none between rings and no "
+            "ring total, and with the layer off realises nothing."
         ),
         compute=compute_census_clustering,
         layer_stage=True,
