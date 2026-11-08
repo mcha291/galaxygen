@@ -444,12 +444,15 @@ def test_arm_chain_lengths_are_the_declared_normal(audit, K):
 # ---------------------------------------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("tpl,seed", LAYER_ON)
-def test_census_clustering_keeps_every_cell_s_clouds(audit, unclustered, K, tpl, seed):
-    """(a) ``conserves``: "Every cell's expected count of every census it places and every ring's realised total: it
-    places a cloud inside the cloud's own cell after the ring's count, the sector allocation and every other draw are
-    made, so no count, mass or light moves between cells or rings". Measured: the clouds counted per level-0 cell by
-    their placed (radius, azimuth) against the field-off control (the same layer, the field's width 0; ``unclustered``)
-    - equal cell by cell, and the cloud mass per cell to 1e-12 relative; per ring, by the radius the ring drew,
+def test_census_clustering_keeps_every_ring_s_clouds(audit, unclustered, K, tpl, seed):
+    """(a) ``conserves`` since S90 (#161, the ring as the unit): "Every ring's expected and realised total of every
+    census it places ... no count, mass or light moves between rings. It does not keep a cell's expected count".
+    S90 (#161): was ``test_census_clustering_keeps_every_cell_s_clouds``, the cell as the unit (S61-S89), which asserted
+    the per-cell counts equal on and off the field - the mend moves them by design (the field's cell means enter the
+    sector weights). Measured: the clouds counted per level-0 ring by their placed (radius, azimuth) against the
+    field-off control (the same layer, the field's width 0; ``unclustered``) - equal ring by ring, the cloud mass per
+    ring to 1e-12 relative, and the cells' counts NOT all equal (the field's coarse end moves clouds between a ring's
+    cells); per ring, by the radius the ring drew,
     against the layer-off run, likewise (the placed radius against the drawn one is the next test's). (Against
     the layer-off run the cells' counts differ, as they should: the sector allocation follows the composed gas
     pattern, which the layer turns on; the field is not what moves them.) The published cell mean is the field's mean over
@@ -460,8 +463,8 @@ def test_census_clustering_keeps_every_cell_s_clouds(audit, unclustered, K, tpl,
     (c) ``stands_in_for``: "hierarchical fragmentation of the gas below a cell's scale" - fragmentation moves gas
     within a complex, not between kiloparsec cells; the field is held to that by construction, which is measured.
 
-    Fails if: a cell's count or mass differs with the field and without it, a ring's differs on and off, or the cell
-    mean is not the lattice's."""
+    Fails if: a ring's count or mass differs with the field and without it, or on and off, the field moves no cell's
+    count, or the cell mean is not the lattice's."""
     on, ctl, off = audit[tpl, seed, True], unclustered[tpl, seed], audit[tpl, None, False]
 
     def per_cell(out):
@@ -471,7 +474,12 @@ def test_census_clustering_keeps_every_cell_s_clouds(audit, unclustered, K, tpl,
         return np.bincount(cells, minlength=CELL_RINGS * CELL_SECTORS), np.array([math.fsum(v) for v in split])
 
     (n_on, m_on), (n_ctl, m_ctl) = per_cell(on), per_cell(ctl)
-    assert np.array_equal(n_on, n_ctl) and rel(m_on, m_ctl) <= 1e-12
+    # S90 (#161): was `np.array_equal(n_on, n_ctl) and rel(m_on, m_ctl) <= 1e-12` cell by cell - the ring is the unit now
+    rings_on, rings_ctl = n_on.reshape(CELL_RINGS, CELL_SECTORS), n_ctl.reshape(CELL_RINGS, CELL_SECTORS)
+    assert np.array_equal(rings_on.sum(axis=1), rings_ctl.sum(axis=1)) and not np.array_equal(n_on, n_ctl)
+    mass_on = np.array([math.fsum(r) for r in m_on.reshape(CELL_RINGS, CELL_SECTORS)])
+    mass_ctl = np.array([math.fsum(r) for r in m_ctl.reshape(CELL_RINGS, CELL_SECTORS)])
+    assert rel(mass_on, mass_ctl) <= 1e-12
     ron, roff = ring_of(arr(on, "cloud_birth_radius")), ring_of(arr(off, "cloud_birth_radius"))
     assert np.array_equal(np.bincount(ron, minlength=CELL_RINGS), np.bincount(roff, minlength=CELL_RINGS))
     assert rel(ring_sums(arr(on, "cloud_mass"), ron), ring_sums(arr(off, "cloud_mass"), roff)) <= 1e-12

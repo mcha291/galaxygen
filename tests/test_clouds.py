@@ -316,7 +316,7 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
 # distance of all 1 024 (the bar's other end), the highest-contrast ridge cell (contrast 6.7), and an outer cell,
 # where the mesh is exact (every cell from ring 14, 13.1 kpc, outward).
 # S62 (D221 item 7 as amended): (20, 5) was 0.0 - a gas spur reaches the outer cell, so the pattern is no longer flat there.
-MESH_TV = {(5, 18): 3.548e-4, (5, 2): 6.258e-4, (2, 0): 3.8086e-3, (20, 5): 2.048e-7}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.853e-3, 3.394e-3, 8.25e-4, 1.886e-6
+MESH_TV = {(5, 18): 3.548e-4, (5, 2): 6.258e-4, (2, 0): 3.8086e-3, (20, 5): 0.0}  # S90 (#213): (20, 5) was 2.048e-7 - the spur past the arms' budget whose flank it was is gone  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.853e-3, 3.394e-3, 8.25e-4, 1.886e-6
 MESH_TV_BOUND = 5e-3
 
 
@@ -325,7 +325,7 @@ def test_the_pattern_mesh_misplaces_little_of_a_cell_s_weight(default):
     bilinear between (``census_clustering.mesh_factor``); against the point function at every lattice point of all
     1 024 cells (measured at S61) the worst point is 32 % off - ring 5, sector 18, the bar's end - but what a draw sees,
     the total-variation distance of the cell's normalised weights, is at most 3.4e-3. Held here on four cells: each
-    below 5e-3, as measured to 1e-6, the outer one a spur's flank since S62 (it was exact). 0.07 s beyond the module's run (measured under the suite's
+    below 5e-3, as measured to 1e-6, the outer one a spur's flank from S62 to S89 and exact before and since (S90, #213). 0.07 s beyond the module's run (measured under the suite's
     load)."""
     from galaxy.layer import compose
     from galaxy.layer import census_clustering as CC
@@ -347,4 +347,4 @@ def test_the_pattern_mesh_misplaces_little_of_a_cell_s_weight(default):
         got[(ring, sector)] = 0.5 * float(np.sum(np.abs(mesh / mesh.sum() - point / point.sum())))
     assert all(tv < MESH_TV_BOUND for tv in got.values()), got
     assert got == pytest.approx(MESH_TV, abs=1e-6), got
-    assert 0.0 < got[(20, 5)] < 1e-5, got  # S62: was `== 0.0` - a spur's flank in the outer cell
+    assert got[(20, 5)] == 0.0, got  # S90 (#213): was `0.0 < ... < 1e-5` (S62: a spur's flank in the outer cell) - no spur stands past the arms' budget's edge, so the outer cell is exact again, as before S62
