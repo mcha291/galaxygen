@@ -5860,6 +5860,23 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    history — or the reference retired to the batch's hash pin, the bundles' byte check and the machine pins, which hold
    the final model bit for bit already, the two tests struck with the reason. What kills the reading: a ledger that
    passes on M1's final model unchanged.
+   *S90 (M2's close; PREPARED for the gate, one commit - the gate re-bases, retires, or drops it):* `tests/test_layer.py`'s
+   two reference tests rewritten to hold every later layer-off run to the reference with an **empty named list**
+   (`NAMED_SINCE_REBASE`, `NAMED_ROUTES_SINCE_REBASE`), the S55 ledger kept as history in a comment and in the constants
+   above them, not asserted; the pins' isolation on `ngc_4414` (runs against runs) kept. `tests/layer_reference_s55.json`
+   untouched and `write` not run. **What `write` would change** (`s90_digest214.py`, the final model's digest dumped to
+   the scratchpad, digest sha256 58e22e04...): 1 038 entries off the S55 reference - 250 / 250 / 246 / 246 fields of
+   azimuthal / basic / azimuthal@ngc_4414 / basic@ngc_4414, all 42 routes, all 4 single-mode digests; 392 / 391 fields
+   per label against S55's 332 / 331 (61 added each); the same 1 038 as S88's tried rewrite, S89-S90's changes landing
+   on entries already off. Run against that scratch digest through a one-line plugin (`s90_refplugin.py`), the
+   rewritten tests pass 5 of 5 after three faults the run found were mended: the Milky Way label is the template's
+   inputs, not the defaults (#80's pinned bar makes them differ), the template's Sun has an azimuth, and a header
+   carries the molecular ring's pin. **Beyond the two tests**, a re-base moves what `tests/test_modes.py` reads of the
+   same file: `test_regression_the_published_s55_fields_are_the_m_4_oracle` pins S55's single-mode digests by value
+   and would fail on a re-based json (all 4 single-mode digests move), and `test_the_streams_that_stay_are_the_numbers_s55_drew`
+   reads S55's digests of eleven scalars, which a re-base moves for any of them among the 1 038 (not checked) - S55's
+   oracle would be kept elsewhere before the json is rewritten. Retirement instead: strike the two tests and keep the
+   json for test_modes alone.
 
 ---
 

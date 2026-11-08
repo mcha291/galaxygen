@@ -390,192 +390,92 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 
 
 
-# S88 (M1's close): the S55 layer-off reference is moved by M1's whole-model changes, not by the layer - #148's clock
-# (every history on the grid's time axis) and #212's MERGER_HEATING 90.6 (everything from the assembly stage on), with
-# #80's bar (the Milky Way's pinned 5.0 kpc, the defaults' 2.27) and #209's floor: `uv run python tests/layer_reference.py`
-# on the final model reports 1 038 entries off the reference - 250 of the 393 fields of each model on the Milky Way's
-# inputs and 246 on ngc_4414's, 19 + 19 + 4 route bodies, 2 + 2 single-mode fields - where D215's named list holds a
-# handful. The named list cannot carry a whole-model change; rewriting the reference (`... layer_reference.py write`)
-# is a deliberate act a decision must record (the module's docstring) - held strict for the gate to rule, not rewritten
-# and not loosened. The gate at the close (D256): the rewrite was tried (digest d9aec859..., 393 / 392 fields, 42
-# routes) and reverted - these two tests are a ledger of the named movements since S55 (the exceptions' S55 values,
-# S61's redrawn censuses asserted to differ, the fields added at S56-S62 as the exact set over S55's 332, the redrawn
-# routes' headers asserted unequal), and every asserted difference vanishes on a new anchor, so they failed on their
-# history. Register #214 (M2's): the ledger re-based at a batch's close by decision, or retired to the hash pin.
-S55_REFERENCE_MOVED = ("S88 (M1): the S55 layer-off reference moved by the clock (#148) and MERGER_HEATING (#212) with "
-                       "the bar (#80): 1 038 entries off it on the final model; the ledger's re-anchoring is #214, M2's")
+# S88 (M1's close): the S55 layer-off reference is moved by M1's whole-model changes, not by the layer - #148's clock,
+# #212's MERGER_HEATING 90.6, #80's bar and #209's floor: 1 038 entries off it on M1's final model. The gate at the
+# close (D256) tried the rewrite and reverted it: the two tests were a ledger of the named movements since S55, and
+# every asserted difference vanishes on a new anchor. Register #214 (M2's).
+#
+# S90 (#214, PREPARED FOR THE GATE - the commit that carries this text is the gate's to keep or drop): the two tests
+# hold every later layer-off run to the reference **with an empty named list**. The reference is meant to be the
+# batch's final layer-off run, re-based by decision (`uv run python tests/layer_reference.py write`, which this commit
+# does NOT run; tests/layer_reference_s55.json is untouched) - on the S55 file as it stands both tests fail by design
+# until the gate re-bases it, or strikes them with the reference retired to the hash pin and the bundles' byte check.
+#
+# The S55 ledger, kept as history and no longer asserted against the reference: the named exceptions
+# (`LAYER_OFF_EXCEPTIONS`, with their S55 and S89 values; `CLOUD_SIZE_LAW_BY_RULING`, `UNBARRED_BY_RULING`,
+# `PITCH_PINNED_BY_RULING`), S61's ring-first redraw (`REDRAWN_OBJECTS_AT_S61`, `redrawn_at_s61`: 17 + 38 + 17 + 19 +
+# 9 + 14 columns and statistics, asserted to differ from S55's; `dig_halpha_fraction` landing on S55's bits on
+# `ngc_4414` since S70), the fields added at S56-S62 (`ADDED_AT_S56` ... `ADDED_AT_S62`, the exact set over S55's 332 /
+# 331), the redrawn routes (18 cloud / cluster / bright routes and 11 star-sample routes, their headers unequal to
+# S55's), the render's `lines_hii` the one array of its body off S55's, and the pins a template's header carries
+# beside it. A field or route that moves after the re-base joins `NAMED_SINCE_REBASE` by a decision, with the reason,
+# or the batch re-bases again at its close (#214's closer).
+NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route labels) named off the reference since its re-base
+NAMED_ROUTES_SINCE_REBASE: set[str] = set()
 
 
 @pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
-@pytest.mark.xfail(strict=True, reason=S55_REFERENCE_MOVED)
 @pytest.mark.parametrize("template", layer_reference.TEMPLATES)
 @pytest.mark.parametrize("name", MODELS)
-def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_list(runs, reference, prod, name, template):
-    """D215: "every field that exists in both is bit-identical layer-off, except a closed, named list". The reference
-    is sha256 of every field's bytes of S55's layer-off run, captured before P1's model code moved; nothing is
-    re-pinned here - a field that moves joins the named list by a decision, or the phase stops (BUILD_III 3d)."""
-    out = runs[name, False] if template == "milky_way" else run(prod[0].get(name), layer_reference.template_inputs(template), layer=False)
-    held = reference["fields"][layer_reference.label(name, template)]
+def test_layer_off_every_field_is_the_reference_bit_for_bit(reference, prod, name, template):
+    """D215 as re-based (#214): every field of the layer-off run is the reference's, bit for bit, with no named
+    exception - the reference the batch's final layer-off run. The pins' isolation on `ngc_4414` is the model's own
+    statement (runs against runs, not against the reference) and is kept."""
+    # The template's own inputs on both templates (the reference's): since #80's pinned 5.0 kpc bar (S87) the Milky Way
+    # template is not the default galaxy - the old test's `runs[name, False]` (the defaults) differs from the reference's
+    # Milky Way label in the bar's and the arm modes' fields (measured at S90 on the scratch re-base).
+    out = run(prod[0].get(name), layer_reference.template_inputs(template), layer=False)
+    lab = layer_reference.label(name, template)
+    held = reference["fields"][lab]
     now = {n: layer_reference.value_digest(v) for n, v in out.fields.items()}
-    assert not set(held) - set(now), sorted(set(held) - set(now))  # no field was lost
+    assert set(now) == set(held), (sorted(set(held) - set(now)), sorted(set(now) - set(held)))  # none lost, none added
     moved = {n for n in held if now[n] != held[n]}
-    # The fields of the named list whose value on this template is not S55's (the label can land on S55's number).
-    named = {n for n, by_template in LAYER_OFF_EXCEPTIONS.items() if not same_number(*by_template[template])}
-    # S61 (D220 item 10): was `moved == named` - the ring-first redraw moves the cloud and cluster censuses and their
-    # nine statistics, every one of them (measured: 17 cloud columns, 38 cluster columns, 9 statistics), and nothing else.
-    redrawn = redrawn_at_s61(out, held)
-    # S61 (D220): 17 + 38 + 9 at the clouds' build; the bright catalogue's 17 columns and its limit join; and the star
-    # sample's build: the star's 19 columns (the catalogue's 18 and the planets stage's star_planet_count), the
-    # planet's 9 and the four statistics.
-    assert len(redrawn) == 17 + 38 + 17 + 19 + 9 + 14 and not redrawn & named
-    if template == "ngc_4414":
-        # S70 (D234): `dig_halpha_fraction`, a ratio of two sums that is three tenths in any census to rounding, lands on
-        # S55's bits again on this template's census (0.30000000000000016) after the clouds' ring inversion (F-2-7) and
-        # the size law's three regimes (#192) - still a census statistic, still listed in RING_FIRST_STATISTICS.
-        redrawn = redrawn - {"dig_halpha_fraction"}
-    assert moved == named | redrawn, sorted(moved ^ (named | redrawn))
-    moved -= redrawn
-    # S58 (D217): was `else set()` - `ngc_4414`'s four bar scalars are NaN by ruling (unbarred, as observed).
-    # S59 (D218 item 6): was `else UNBARRED_BY_RULING` - and its pitch is the measured one by ruling. Nothing else of
-    # either template's layer-off run moved at S59: "a galaxy without pins: layer off bit for bit" (item 7), and the
-    # Milky Way's pin places the Sun and "moves nothing else".
-    # S67 (D231): and the clouds' one central A_V on both, the size law's inner surface density.
-    assert moved == ({"arm_multiplicity"} if template == "milky_way" else UNBARRED_BY_RULING | PITCH_PINNED_BY_RULING) | CLOUD_SIZE_LAW_BY_RULING
-    for n, by_template in LAYER_OFF_EXCEPTIONS.items():
-        was, is_now = by_template[template]
-        assert held[n] == layer_reference.value_digest(was) and same_number(float(out.fields[n]), is_now), (n, template)
-    # S57 (D216): was `== ADDED_AT_S56` - the layer-off run gained one field, `arm_pattern_speed`, and lost or moved none.
-    # S58 (D217): was `== ADDED_AT_S56 | ADDED_AT_S57` - six more, and none lost; a seventh at the gate's follow-up.
-    # S59 (D218): was `== ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58` - five more, and none lost (six since the
-    # gate's follow-up: ADDED_AT_S59, above).
-    # S60 (D219): was `... | ADDED_AT_S59` with the phases, the anchor, the segment columns and the spread among the
-    # earlier sets - 21 more and seven retired; the reference's count is S55's and does not move.
-    # S61 (D220 item 6): was `... | ADDED_AT_S60` - and the binners' radius, `cluster_birth_radius`.
-    # S62 (D221 item 7 as amended): was `... | ADDED_AT_S61` - and the gas spurs' twelve columns, empty with the layer off.
-    # S62 (D221): and the gas fluctuation field's eight.
-    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 | ADDED_AT_S59 | ADDED_AT_S60 | ADDED_AT_S61 | ADDED_AT_S62_SPURS | ADDED_AT_S62 and len(held) == (332 if name == "azimuthal" else 331)
+    assert moved == NAMED_SINCE_REBASE.get(lab, set()), sorted(moved)
     assert out.fields["bar_present"] == ("yes" if template == "milky_way" else "no")
-    # S59 (D218): what the five are with the layer off. The anchor is the bar's half-length, or where the bar would
-    # be; the drawn pitch is S55's `pitch_angle`, to the bit, on both templates; no segment is laid; and the Sun's
-    # azimuth is not a number - the default galaxy has no pin (the Milky Way *template*'s is read in
-    # tests/test_segments.py), and `ngc_4414` has neither the pin nor a bar.
-    # S60 (D219 item 7): the anchor and the spread are gone with the winding; no piece is laid with the layer off
-    # (every column of the table has no row); the Milky Way template's pinned arms are read in tests/test_pieces.py.
-    assert layer_reference.value_digest(out.fields["pitch_angle_drawn"]) == held["pitch_angle"]
-    assert all(np.asarray(out.fields[n]).shape == (0,) for n in pt.PIECE_FIELDS) and np.isnan(out.fields["sun_azimuth"])
-    # S60 (D219 items 1 and 3): the P5 laws with the layer off - the class the bar decides (a barred disc a grand
-    # design, an unbarred one multi-armed, flocculent by pin alone), the width of a piece a law of the scale length.
+    # no piece laid with the layer off; the Sun's azimuth a number on the Milky Way template (its pin places the Sun:
+    # 0.9247536441994608 rad at S90) and not a number on ngc_4414 (the old test read the defaults, which pin nothing)
+    assert all(np.asarray(out.fields[n]).shape == (0,) for n in pt.PIECE_FIELDS)
+    assert np.isfinite(out.fields["sun_azimuth"]) if template == "milky_way" else np.isnan(out.fields["sun_azimuth"])
     assert out.fields["arm_class"] == ("grand_design" if template == "milky_way" else "flocculent")
     assert np.all(np.asarray(out.fields["arm_piece_width"]) > 0.0) and np.all(np.isfinite(out.fields["arm_power_budget"]))
     if template == "ngc_4414":
-        # "Show nothing else under each digest changed": the same inputs with the pins taken off - the criterion bars
-        # this disc, the pitch is the draw - are S55's layer-off run on every field S55 published, the four bar
-        # scalars and the pitch with them; and the pinned run differs from that one in the verdict, the bar's eight
-        # numbers, the five arm amplitudes (no taper: the modes run to the centre) and the pitch - nothing else, on
-        # any of the model's fields.
-        # S59 (D218 item 6): was `if k != "bar_present"`, one pin; the template holds two, and each is shown alone.
-        # S60 (D219 item 3): three - the arm class is pinned flocculent, and with it move the class alone, and with
-        # the amplitudes the two radial laws made from them (the budget and the arm number the law counts).
+        # The template's pins, each alone, layer off (S58-S60, D217-D219; kept from the ledger: runs against runs).
         given = layer_reference.template_inputs(template)
         pins = {"bar_present", "pitch_angle", "arm_class"}
-        # S70 (D234; #192): was `== pins` - the template pins its own molecular ring too; it sets the clouds' sizes alone
-        # and is kept on the unpinned run below, which shows the other three pins one by one.
         assert set(templates.pinned(templates.TEMPLATES[template])) == pins | {"molecular_ring"}
         unpinned = run(prod[0].get(name), {k: v for k, v in given.items() if k not in pins}, layer=False)
         assert unpinned.fields["bar_present"] == "yes" and "bar_present" not in unpinned.inputs and out.inputs["bar_present"] is False
         assert "pitch_angle" not in unpinned.inputs and out.inputs["pitch_angle"] == 28.9
         assert "arm_class" not in unpinned.inputs and out.inputs["arm_class"] == "flocculent" and unpinned.fields["arm_class"] == "grand_design"
-        # S61 (D220 item 10): was `== set()` - the unpinned run's census is the ring-first redraw too.
-        # S67 (D231): and the clouds' one central A_V, the size law's inner surface density (pinned or not).
-        # S70 (D234): and `dig_halpha_fraction` lands on S55's bits on this census too (F-2-7, #192; see above).
-        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == (redrawn_at_s61(unpinned, held) - {"dig_halpha_fraction"}) | CLOUD_SIZE_LAW_BY_RULING
         differ = {n for n in out.fields if not same(out.fields[n], unpinned.fields[n])}
         assert differ == {"bar_present", *UNBARRED_BY_RULING, "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", *pt.AMPLITUDE_FIELDS,
                           *PITCH_PINNED_BY_RULING, "arm_class", "arm_design_count", "arm_power_budget"}
         assert np.all(np.asarray(out.fields["arm_saturation"]) == 1.0) and out.fields["bar_formation_time"] == unpinned.fields["bar_formation_time"]
-        # The pitch's pin alone, layer off: it moves `pitch_angle` and no other field of the model - the gas law's ε
-        # and f read it, and with the layer off no response is solved.
         drawn_pitch = run(prod[0].get(name), {k: v for k, v in given.items() if k != "pitch_angle"}, layer=False)
         assert {n for n in out.fields if not same(out.fields[n], drawn_pitch.fields[n])} == PITCH_PINNED_BY_RULING
-        assert float(drawn_pitch.fields["pitch_angle"]) == float(out.fields["pitch_angle_drawn"]) == LAYER_OFF_EXCEPTIONS["pitch_angle"][template][0]
-        # S60 (D219 item 3): the class's pin alone, layer off: it moves `arm_class` and nothing else - the class is
-        # read by the layer's census alone, and with the layer off no piece is laid. Unpinned, the model's rule
-        # makes this unbarred disc multi-armed.
+        assert float(drawn_pitch.fields["pitch_angle"]) == float(out.fields["pitch_angle_drawn"])
         derived_class = run(prod[0].get(name), {k: v for k, v in given.items() if k != "arm_class"}, layer=False)
         assert {n for n in out.fields if not same(out.fields[n], derived_class.fields[n])} == {"arm_class"}
         assert derived_class.fields["arm_class"] == "multi_armed"
-    assert now["arm_pattern_speed"] == layer_reference.value_digest(np.asarray(out.fields["circular_velocity"]) / out.grid.R)
-    if template == "ngc_4414":
         assert out.inputs["texture_seed"] == 4414
+    assert now["arm_pattern_speed"] == layer_reference.value_digest(np.asarray(out.fields["circular_velocity"]) / out.grid.R)
 
 
 @pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
-@pytest.mark.xfail(strict=True, reason=S55_REFERENCE_MOVED)
-def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(reference):
-    """Every input route asked with ``layer=off``, a window and the whole disc, both models and a template: each
-    array of the body is the reference's bytes in the reference's order, and the header is the reference's less
-    ``stages`` (what a request ran depends on what the service already held). A census placed by no pattern is the
-    census S55 placed by no pattern, object for object."""
+def test_layer_off_every_route_s_arrays_and_header_are_the_reference(reference):
+    """Every input route asked with ``layer=off``, a window and the whole disc, both models and a template: the
+    route's whole digest - status, every array in the body's order, the header less ``stages``, the arrays digested
+    apart since S63 (``added``) and a template's pins - is the reference's, with no named exception (#214's re-base).
+    A template's request carries its pins beside the header; a request that names none, none."""
     made = layer_reference.routes_digest()
     assert set(made) == set(reference["routes"]) and len(made) == 42
-    # S61 (D220 item 10): and the bright catalogue's two routes per model, its ring-first redraw (was 14).
-    redrawn_routes = {label for label in made if "/clouds/" in label or "/clusters/" in label or "/bright/" in label}
-    assert len(redrawn_routes) == 18
-    # S61 (D220 items 1-4 and 10): and the star sample's routes - each model's region window, whole disc, level-2
-    # window and brightest selection, its system, and the template's window: the ring-first sample, a new draw.
-    sample_routes = {label for label in made if "/region/" in label or label.endswith("/system")}
-    assert len(sample_routes) == 11
-    redrawn_routes |= sample_routes
+    off = sorted(label for label, got in made.items() if got != reference["routes"][label])
+    assert set(off) == NAMED_ROUTES_SINCE_REBASE, off
     for label, got in made.items():
-        held = reference["routes"][label]
-        assert got["status"] == held["status"] == 200, label
-        if label in redrawn_routes:
-            # S61 (D220 item 10): the cloud and cluster routes serve the ring-first census, a new draw - every array and
-            # the header's cells - in the columns they always sent, the clusters' with the binners' radius after their
-            # light temperature (ADDED_AT_S61). The star sample's routes likewise (its star, its planets, its cells).
-            names, was = [a[0] for a in got["arrays"]], [a[0] for a in held["arrays"]]
-            assert [n for n in names if n not in ADDED_AT_S61] == was, label
-            # S64 (V6): the clouds' own dust column is digested apart and reported added (layer_reference.ADDED_AT_S64).
-            # S64 (V6, R5): and the clusters' knots entry, with their line_response where filters= is asked
-            # (layer_reference.ADDED_KNOTS).
-            knots = (["line_response"] if label.endswith("/clusters/filters") else []) + ["knots"]
-            # S70 (D234): was ["cloud_dust_extinction_v"] - and the clouds' shape (Audit V F-4-3, ADDED_AT_S70).
-            assert got.get("added", []) == (list(v6c.DERIVED_COLUMNS) if "/clouds/" in label else knots if "/clusters/" in label else []), label
-            assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
-            assert got["header"] != held["header"], label
-            continue
-        # S63 (D223): the render adds the stars split by age and the weights that place them (the old part's, and the
-        # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
-        # S64 (V6): and the share of each ring's dust that is diffuse once its realised clouds hold theirs, with its
-        # header entry `clouds`, digested apart likewise (layer_reference.ADDED_AT_S64).
-        # S66 (V7, D226 R4-R6): and the render's four new arrays (the placement without the spurs - with the layer off
-        # the neutral placement itself - and the middle part's kept-octave windows, the same bits on and off) and its
-        # header's gas_fluctuation, census_clustering and spurs entries, their values null with the layer off -
-        # digested apart likewise (layer_reference.ADDED_ARRAYS_AT_S66, ADDED_AT_S66).
-        # S73 (#199): the three header entries moved to /api/layer; the render's header names it in layer_tables,
-        # digested apart likewise (layer_reference.ADDED_AT_S73).
-        s66 = [*layer_reference.ADDED_ARRAYS_AT_S66, *layer_reference.ADDED_AT_S73]
-        assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
-                                         + (["stars_middle_placement"] if not label.startswith("basic/") else [])
-                                         + ["dust_diffuse_share"] + s66)
-                                        if "/render/" in label else []), label
-        if "/render/" in label:
-            # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first
-            # census's, binned by the clouds' radii - and is a new draw; every other array and the header are S55's.
-            assert [a[0] for a, b in zip(got["arrays"], held["arrays"]) if a != b] == ["lines_hii"], label
-            assert [a[0] for a in got["arrays"]] == [b[0] for b in held["arrays"]], label
-            assert got["header"] == held["header"], label
-            continue
-        assert got["arrays"] == held["arrays"], (label, [a[0] for a, b in zip(got["arrays"], held["arrays"]) if a != b])
-        # S58 (D217 item 2): a request for a template carries the template's pin among its inputs, which S55's
-        # header did not hold. The header is digested with the pin taken out of its inputs and the pin read beside
-        # it (``layer_reference.route_digest``): every other word of the four `ngc_4414` headers is S55's, and the
-        # requests that name no template are pinned nothing.
-        assert got["header"] == held["header"], label
-        # S59 (D218 item 6): was `{"bar_present": False}` - the template holds a second pin, its measured pitch. With
-        # the layer off no array of any route reads it: every array above is still S55's, object for object.
-        # S60 (D219 item 3): and a third, its observed arm class - read by the layer's census alone.
-        assert got.get("pinned", {}) == ({"bar_present": False, "pitch_angle": 28.9, "arm_class": "flocculent"} if label.startswith("ngc_4414/") else {}), label
+        assert got["status"] == 200, label
+        # the pins a template's header carries beside it (S58-S60; and the molecular ring where a route reads it, S70):
+        # their values are the reference's with the rest of the digest, above
+        assert set(got.get("pinned", {})) <= ({"bar_present", "pitch_angle", "arm_class", "molecular_ring"} if label.startswith("ngc_4414/") else set()), label
 
 
 def test_the_cloud_route_sends_its_columns_in_the_order_it_always_did(prod):
