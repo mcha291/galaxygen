@@ -5423,6 +5423,17 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    R 8.44826 kpc, 5.65 pc inside its ring's inner edge (8.45391), so it lies outside its child's footprint at levels
    1-3 (`tests/test_hierarchy.py`, `HIERARCHY_197`, held strict): passing on S86's model and through the clock and
    the floor, failing from #80's re-drawn census. Still M2's; *the gate (D256): held under this entry, the owner's word standing.*
+   *S90 (M2's close; built, proposed discharged at the gate):* **the closer built as written** - the clouds' S70 inversion
+   on the ring's own interval, moved from `clouds.py` to `systems.ring_birth_radius` and shared by the star
+   catalogue's level-0 draw (`systems.materialise`) and the remnants' (`bubbles.materialise_remnants`); the clouds and
+   `api/v6_clouds.py` read the same function (the name kept in `clouds`). Measured on the production grid
+   (`s90_probe197.py`, layer off and on alike): before, 955 of the Milky Way template's 20 002 sample stars and 996 of
+   NGC 4414's 20 001 stood up to 70.01 / 70.29 pc below their ring, 70 of 1 549 and 28 of 623 remnants up to 61.35 /
+   71.0 pc; after, 0 of each. The held star of cell 300 (default galaxy, seed 0) moved 8.448259 -> the cell's lowest
+   at 8.462312 kpc, inside the edge 8.453906; `tests/test_hierarchy.py`'s `HIERARCHY_197` strict hold passed and is
+   lifted (the test's level-0 count re-pinned 9 -> 16, M1's re-drawn census masked since S88 by the hold:
+   15.92 -> 19.91 expected, s90_probe_cell300.py on 10d3a32 / a447981). Every catalogue pin across the suite moves
+   with it (D60's per-region determinism re-pinned with the reason in S90's close run).
 198. ~~**The arm saturation cut is never exercised**~~ (S70, D234; the reviewer of F-3-2's test). `arm_saturation` fires
    on 0 of 48 rings at both SMALL runs and on no ring at the production grid for either template, so the layer-off walk
    and every gate pass through code that never acts; a defect in the cut would be invisible. **Carried.** What closes

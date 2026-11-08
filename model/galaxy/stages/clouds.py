@@ -107,12 +107,13 @@ from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.spurs import SPUR_READS
-from galaxy.stages.systems import (
+from galaxy.stages.systems import (  # S90 (#197): ring_birth_radius moved to systems.py, shared
     CELL_COUNT,
     CELL_RINGS,
     CELL_SECTORS,
     Catalogue,
     cell_edges,
+    ring_birth_radius,
     sech2_height,
 )
 
@@ -222,24 +223,6 @@ def state_of(age_myr: np.ndarray, phases: Sequence[float]) -> np.ndarray:
 
 
 # --- the census ------------------------------------------------------------------------------------
-
-
-def ring_birth_radius(u: np.ndarray, R: np.ndarray, weight: np.ndarray, lo: float, hi: float) -> np.ndarray:
-    """The radii a level-0 ring [lo, hi) draws for uniforms ``u``, by inverting the CDF of ``weight`` (its density times
-    R on the grid radii, 0 outside the ring) on the ring's own interval (S70, D234; Audit V F-2-7): the table starts at
-    lo with nothing below it, so a grid point's weight fills the stretch from the last point before it, or from lo,
-    up to it. Until S70 the ring's draw was ``invert_cdf`` over the whole grid, whose first step inside the ring
-    interpolated from the grid point below lo: 712 of the Milky Way template's 16 577 clouds were born up to 71 pc
-    inside the ring's inner edge (one grid step, 75 pc), in the ring their binners then counted them in, not the
-    ring that drew them. A cloud's ring is the ring that drew it, everywhere a per-ring total or a per-radius law is
-    read, so every radius drawn here is asserted in [lo, hi) - a draw outside it is a defect, never clipped."""
-    keep = (R > lo) & (R <= hi)
-    x = np.concatenate(([float(lo)], R[keep]))
-    cdf = np.concatenate(([0.0], np.cumsum(np.asarray(weight, dtype=float)[keep])))
-    radius = np.interp(np.asarray(u, dtype=float), cdf / cdf[-1], x)
-    if not np.all((radius >= lo) & (radius < hi)):
-        raise ArithmeticError(f"a cloud of ring [{lo}, {hi}) was drawn at {radius[(radius < lo) | (radius >= hi)][:3]} kpc")
-    return radius
 
 
 def ring_molecular_mass(sigma_h2: np.ndarray, R: np.ndarray) -> np.ndarray:

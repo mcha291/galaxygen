@@ -97,7 +97,7 @@ from galaxy.stages.nebular import PROTON_MASS, alpha_b, case_b_halpha, halpha_pe
 from galaxy.stages.photometry import cumulative_over_age, isochrones, on_fine_ages, population_wind, steps_over
 from galaxy.stages.remnants import _heaviest_alive, death_age
 from galaxy.stages.supernovae import imf_stars_above
-from galaxy.stages.systems import CELL_COUNT, CELL_RINGS, CELL_SECTORS, Catalogue, cell_edges, invert_cdf, sech2_height
+from galaxy.stages.systems import CELL_COUNT, CELL_RINGS, CELL_SECTORS, Catalogue, cell_edges, ring_birth_radius, sech2_height
 
 BUBBLE_PHASES: tuple[str, ...] = ("wind", "supernova", "fading")
 BUBBLE_STATES: tuple[str, ...] = ("expanding", "stalled")
@@ -302,7 +302,8 @@ def materialise_remnants(
 
         lo, hi = rings[ring], rings[ring + 1]
         weight = np.where((R >= lo) & (R <= hi), amb.density * R, 0.0)
-        radius = invert_cdf(draw("radius"), R, weight) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
+        # S90 (#197): was invert_cdf(draw("radius"), R, weight) - inverted from the grid point below lo.
+        radius = ring_birth_radius(draw("radius"), R, weight, lo, hi) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
         n0 = amb.at("n0", radius)
         with np.errstate(divide="ignore", invalid="ignore"):
             scale = np.where(amb.at("rho", radius) > 0.0, amb.at("sigma", radius) / (4.0 * amb.at("rho", radius)), 0.0)  # pc
@@ -505,12 +506,11 @@ BUBBLE_STALLED = FieldDecl(
 
 REMNANT_RADIUS = _remnant("remnant_radius", "Galactocentric radius", "kpc",
                           "Drawn in its cell's ring by the supernova rate times the remnant lifetime at each radius, "
-                          "so the census traces where remnants are, not only where supernovae go off. **A carried "
-                          "defect** (S70, D234; Audit V F-2-7's sibling, debt #197): the ring's inversion runs over the "
-                          "whole grid, so its first step inside the ring starts at the grid point below it - measured "
-                          "at S70 on the production grid, layer off, 64 of the Milky Way template's 1 464 remnants "
-                          "(4.4 %) and 27 of NGC 4414's 594 (4.5 %) lie up to 61 and 71 pc inside their ring's inner "
-                          "edge; the clouds' draw was mended at S70 (clouds.ring_birth_radius), this one is not.",
+                          "so the census traces where remnants are, not only where supernovae go off. The draw inverts "
+                          "the ring's own interval (``systems.ring_birth_radius``, the clouds' since S70), so every "
+                          "remnant stands in the ring that drew it. Mended at S90 (debt #197): until then it inverted "
+                          "over the whole grid and 70 of the Milky Way template's 1 549 remnants (4.5 %) and 28 of "
+                          "NGC 4414's 623 stood up to 61 and 71 pc inside their ring's inner edge.",
                           ramp=Ramp("viridis"))
 REMNANT_AZIMUTH = _remnant("remnant_azimuth", "Azimuth", "rad",
                            "Uniform in its sector: the rates are axisymmetric, so the remnants of core collapses do "
