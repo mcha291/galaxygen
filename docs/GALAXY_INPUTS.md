@@ -4893,6 +4893,17 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (D219 (c), still theirs). V7 was the layer in the viewer (D226), not the census routes' placement; the costs above were not re-measured at S70. No phase of
    BUILD_III or BUILD_IV names it now. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; re-measured, not built):* `tools/timings.py` on 393b4c9 (s90_timings_393b4c9.txt; one process an
+   endpoint, the machine otherwise idle): `clouds: whole disc` 22.02 s cold / 0.114 warm (S61 9.6-10.3), `clusters:
+   whole disc` 17.62 / 0.019 (S61 11.9), `clouds: one sector` 12.65, `bright: table, level 2 cells` 20.40 (S64 ~13),
+   `region: whole disc` 10.37, `clouds: whole, layer off` 0.78. The cold costs grew with the batches' stages (the
+   gas fluctuation, the spurs, the layer tables), not only the lattice. #161's mend (S90) computes the clustering
+   field's cell-mean table once per run through its cache and reads it for the clouds' sector weights - a first step
+   of the closer's "one lattice shared" - but the placement's own 2.35 million-point field and the gas pattern's mesh
+   per cell are as they were. The closer (one per-cell lattice shared by the placement, the table and the shader, or
+   a coarser lattice with its error declared) is a cost pass with no ruling in it, but the bound on the whole-disc
+   calls is still the owner's (D219 (c)) and no bound is broken by a test; carried for the cost pass the owner
+   schedules (with #163 and #166).
 160. **The star sample and the bright catalogue place old stars by two rules that differ by 3.9e-3 per sector**
    (S61, D220; measured by the star sample's builder on ring 8, 7.52-8.45 kpc, young share 0.00367, no sector
    clipped). The sample allocates a young star by c-bar p and an old one by c-bar (1 - p) - the stellar contrast's
@@ -5008,6 +5019,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    costs 12.8 → 20.1 s cold (the stage, and the k-octave cell means cached with the run) and 0.80 → 1.63 s warm (the
    middle part's four windows through the curves, 0.7 s a request).
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; re-measured, not built):* on 393b4c9 (s90_timings_393b4c9.txt) `render: whole, rgb` costs 21.78 s
+   cold / 2.79 warm (S66 20.1 / 1.63), `render: ngc_4414` 16.02 / 3.19, `layer: tables` 12.86 / 0.034, `render: whole,
+   layer off` 4.75 / 1.58. The table's own share was not isolated in this pass. The closer (one lattice with #159, or
+   float32 with its error declared) needs no ruling; carried with #159 for the cost pass the owner schedules.
 164. **A spur's foot stands on top of the ridge, so the gas contrast doubles there** (S62, D221 item 7; the fix
    pass's finding). The ruling set the spur's peak at its foot equal to the ridge's crest contrast "so that it leaves
    the ridge continuously"; built as g′ = (1 − ⟨S⟩)·g + S with S_foot = the crest, the foot's total is about twice
