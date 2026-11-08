@@ -67,8 +67,8 @@ source in the about line; nothing here is recalled (rule B9).**
 ring's count is one Poisson draw on the ring's stream ``(systems_seed, "cloud", ring, "count")`` at the
 ring's expected total, its molecular mass over the law's mean cloud mass - a number the layer never
 touches, so the count is the same with the layer on or off (D220 item 1; the sum of the ring's cell
-expectations is that number to the bit with the layer off, and to 32 units in the last place with it on,
-measured at S61). Every per-object draw is an array of the ring's count on
+expectations is that number to the bit with the layer off, and to 1 unit in the last place with it on
+(measured at S90 on the default galaxy, the weights at mean 1 round each ring; 22 units before S90, 32 at S61)). Every per-object draw is an array of the ring's count on
 ``(systems_seed, "cloud", ring, name)``: a cloud's identity in the draw is ``(ring, i)``. The layer
 assigns the cell and the place in it and nothing else (D220 item 2): cloud i's sector is the inverse of the
 ring's cumulative sector weights at its own ``sector`` uniform - uniform with the layer off; the gas's
@@ -264,7 +264,7 @@ def ring_expected(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[s
     mean cloud mass at the ring's radius. No placement enters it, so it is the same number with the layer on or
     off - the ring's count is drawn at it (D220 item 1). It is the sum of the ring's cell expectations
     (:func:`expected_counts`) to the bit with the layer off; with the layer on that sum is the same number to
-    rounding (invariant I2: up to 32 units in the last place, 5.8e-15 of itself, on the inner rings, measured S61)."""
+    rounding (invariant I2: at most 1 unit in the last place, 2.2e-16 of itself, measured at S90 on the default galaxy with each ring's weights divided by their mean; 22 units on 352bdec before, 32 - 5.8e-15 of itself - at S61)."""
     rings, _ = cell_edges(R)
     ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
     mean = np.array([mass_function_mean(*law_for(0.5 * (rings[i] + rings[i + 1]), constants)) for i in range(CELL_RINGS)])

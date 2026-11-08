@@ -594,7 +594,13 @@ def clustering_excess(on, control) -> np.ndarray:
 # with where the census's chains crowd the clouds: S86's census read -0.538, the 5.0 kpc bar's re-drawn one -0.459.
 # Not a defect a mend reaches without the per-cell conservation: the Milky Way's reading held, its two clauses that
 # meet their bounds kept; NGC 4414 (no spurs, no bar) still meets the law.
-MW_PAIR_SLOPES = (-0.4846, -0.4327)  # S88: the Milky Way's held reading, seeds 4242 and 777
+# S90 (#161): the hold lifted. The mend named above - the per-cell conservation - is built: rule 2's unit is now the
+# ring (the field's cell means in the clouds' sector weights, each ring's weights at mean 1), and the Milky Way reads
+# -0.5561 / -0.4497 at 4242 / 777, mean -0.5029, inside the law's 0.15 (0.137); its excess at 47.5 pc 2.644 / 2.261
+# (was 2.18 / 2.01 at S88's probe), its 380-760 pc ratio 0.978 / 0.924 (mean 0.951, inside 0.05 by 0.001). So the
+# Milky Way is judged by the law as NGC 4414 is; its two slopes stay pinned as measured, so a change that moves them
+# is seen.
+MW_PAIR_SLOPES = (-0.5561, -0.4497)  # S90 (#161): was (-0.4846, -0.4327), S88's held reading outside the law
 
 
 @pytest.mark.parametrize("tpl", ["milky_way", "ngc_4414"])
@@ -612,10 +618,10 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     up to 40 Myr against uniform randoms; here the placed clouds stand in for them, against a control with their arms
     - the BUILD_III L1 gate's reading.
 
-    **S88 (D255 ruling 3): the Milky Way's slope is held at its reading with the cause** (the comment above): the
-    two seeds' slopes are pinned (``MW_PAIR_SLOPES``, to 1e-3) and the mean is outside the law's 0.15, which is
-    asserted too, so a change that brings it back is seen; its excess and its large-scale ratio still meet the law's
-    bounds. NGC 4414's slope meets the law.
+    **S88 (D255 ruling 3): the Milky Way's slope was held at its reading with the cause**, outside the law's 0.15;
+    **S90 (#161) lifted the hold**: with the ring as the unit of the per-cell conservation the Milky Way's mean
+    slope is inside the law and judged by it, its two seeds' slopes pinned as measured (``MW_PAIR_SLOPES``, to 1e-3).
+    NGC 4414's slope meets the law.
 
     Fails if: the realised slope (NGC 4414) or the held reading (the Milky Way), the 47.5 pc excess or the
     large-scale ratio is outside those bounds."""
@@ -629,9 +635,8 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     report = {"slopes": slopes, "excess_47.5pc": at, "ratio_380_760pc": beyond}
     if tpl == "milky_way":
         assert slopes == pytest.approx(list(MW_PAIR_SLOPES), abs=1e-3), report
-        assert abs(np.mean(slopes) + 0.64) > 0.15, report  # held outside the law: the reading, not the law, moved
-    else:
-        assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
+        # S90 (#161): was `abs(np.mean(slopes) + 0.64) > 0.15` - held outside the law; judged by it now (the comment above).
+    assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
     assert abs(np.mean(at) / 2.43 - 1.0) <= (0.29 if one else 0.21), report
     assert abs(np.mean(beyond) - 1.0) <= 0.05, report
 
