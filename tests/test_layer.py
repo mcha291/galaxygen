@@ -798,14 +798,19 @@ def test_the_clouds_expected_total_s_layer_on_bits_as_measured(runs, name):
     layer's rounding of the cells' exact means, and move with the pattern they are the means of."""
     on, off = runs[name, True], runs[name, False]
     # S60 fourth pass: was 16693.43298751 (two units above the layer-off value).
-    assert float(on.fields["cloud_count_total"]) == 17077.121100011533  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16693.432987509997; still one step above the layer-off 17077.12110001153
+    # S90 (#161): was 17077.121100011533, one step above the layer-off value - each ring's weights are now divided by
+    # their mean round the ring (census_clustering.ring_unit), so they tile the ring to the rounding of that division
+    # and the layer-on total lands on the layer-off bits.
+    assert float(on.fields["cloud_count_total"]) == 17077.12110001153  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16693.432987509997; still one step above the layer-off 17077.12110001153
     # S59 (D218 follow-up): was `== np.nextafter(off, inf)`, one step; two steps then.
     # S60 fourth pass: was two steps; one step now, as before S59's follow-up.
-    assert float(on.fields["cloud_count_total"]) == np.nextafter(float(off.fields["cloud_count_total"]), np.inf)
+    # S90 (#161): was `== np.nextafter(off, inf)`, one step; the same bits now.
+    assert float(on.fields["cloud_count_total"]) == float(off.fields["cloud_count_total"])
     for n in EXPECTED_TOTALS:
         apart = abs(float(on.fields[n]) - float(off.fields[n])) / float(np.spacing(max(abs(float(on.fields[n])), abs(float(off.fields[n])))))
         # S59 (D218 follow-up): the clouds' was 1.0. S60 fourth pass: was 2.0.
-        assert apart == {"cloud_count_total": 1.0, "bright_star_count_1e3": 0.0}[n] and apart <= EXPECTED_TOTAL_BOUND, (n, apart)
+        # S90 (#161): the clouds' was 1.0.
+        assert apart == {"cloud_count_total": 0.0, "bright_star_count_1e3": 0.0}[n] and apart <= EXPECTED_TOTAL_BOUND, (n, apart)
     # S59 (D218, the gate): "every `arm_mode_amplitude_m` bit-identical layer on and off" - radial fields of the
     # pattern stage, held by the walk above with every other field; named here because the gate names them.
     # S60 fourth pass: was `n not in moved_statistics and ...` - a name of test_i1's walk, left behind when these
@@ -2185,12 +2190,14 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S62 (D221 item 7 as amended): was 1582 - the gas spurs move the clouds' sector shares, and one cluster's cloud with them.
     # S67 (D231): was 1581 and 0.1244 - the clouds' size law: the inner clouds smaller, the offsets inside them shorter.
     # S70 (D234): was 1376 and 0.1083 - #192's larger clouds inside 4 kpc and in 7-8.2 kpc (their offsets longer) and F-2-7.
-    assert int(moved.sum()) == 1651 and moved.mean() == pytest.approx(0.1271, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252
+    # S90 (#161): was 1651 and 0.1271 (352bdec read 1652 and 0.1272 by this construction, s90 offset.py) - the field's
+    # cell means move clouds between the sectors of a ring, so other clouds sit near a grid ring's edge.
+    assert int(moved.sum()) == 1694 and moved.mean() == pytest.approx(0.1304, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3680, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3593, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
     assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 137  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
