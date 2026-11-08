@@ -4863,6 +4863,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    standing inside it - the frustum cut applies to positions, so what is drawn is right, and a window by name is
    what the route serves. The same mend serves both: a window answered by the placed position.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; read - the radius half mended by #197, the window half a ruling):* the inward spill's mend is
+   built for every ring-first census that draws a radius in its ring: the clouds' at S70 (F-2-7), the star sample's and
+   the remnants' at S90 (`systems.ring_birth_radius`, #197: 955 / 996 stars and 70 / 28 remnants below their ring
+   before, 0 after, both templates, layer on and off). No code of the bright catalogue (`stages/bright.py`) calls
+   `invert_cdf` or the ring's inversion; whether its own radial placement can spill is not measured here. What remains is the entry's second half: a young bright
+   star placed by the clustering field anywhere in its level-0 cell is served by its cell's name, so a window of
+   finest cells can serve a star standing outside it. Answering a window by the placed position changes what a
+   region request returns (D60: a cell alone, in a window and in a sweep the same rows) - a rule of the API, the
+   owner's; the drawn picture is right either way (the frustum cuts on positions). Listed, not built.
 159. **The lattice placement's cost on the whole-disc census routes** (S61, D220 part II). Placing every cloud jointly
    in radius and azimuth on its cell's quadrature lattice - the field on 2.35 million lattice points (2.0 s) and
    the gas pattern's 16 x 24 mesh per cell (1.1 s) - takes `materialise_clouds` from 1.0-1.1 s to 3.8-4.5 s for every
@@ -4901,6 +4910,13 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    with the per-sector comparison in the star sample's tests — and no phase of BUILD_III or BUILD_IV names it
    now. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; read - a ruling):* the two rules stand as the entry says (`bright.part_weights` the old part by
+   c-bar alone; the star sample's `Placement` by c-bar (1 - p)), and no source in the repository decides between them:
+   the sample keeps each cell's total at the contrast's expectation (D220 item 2's invariant), the catalogue keeps
+   the old part's own contrast. Making them one is a choice of which statement the model keeps, so it is listed for
+   the owner with the lead's recommendation - the sample's rule for both (the cell's total is the invariant the
+   censuses are tested on; the old part's own contrast is no law's), a redraw of the bright catalogue, its tiles and
+   frames. Not built.
 161. **The per-cell conservation removes the hierarchy's power at scales near the cell's short side** (S61, D220
    part II; the reviewer's finding 2). The field's own two-point excess is its statistic to the digits - (r/190 pc)^-0.64,
    2.43 at 47.5 pc, 1 beyond 340 pc on 24 squares - but a cloud is placed by the field *within its cell* with the
@@ -4972,6 +4988,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    mend is unchanged: one sourced function of age for the width (Grasha et al. 2019's amplitude series) beside the
    octaves' dropping. No phase of BUILD_III or BUILD_IV names it now. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; read - not buildable from the repository):* the source of the mend is held -
+   `READING_CLUSTERING.md` carries Grasha et al. 2019 Table 2 (M 51's clusters: amplitude 23 / 13 / 2.7 / 2.1 and
+   slope -0.40 / -0.34 / -0.12 / -0.07 for <= 10, 10-50, 50-100, > 100 Myr) - but the width cannot be made from it:
+   the separation unit behind A is not stated in the table's caption (the reading says so), so A does not give
+   1 + omega at any scale, and a log-normal width is fixed by 1 + omega at the field's scale; the series is also
+   one galaxy's clusters, against the young stars' field, and the timescales of the decay conflict across the six
+   sources the reading compares (40, 50-100, ~100 Myr). What closes it needs the paper's separation unit (Grasha et
+   al. 2019, section 4.2 / Fig. 10) read into `READING_CLUSTERING.md`, then the width as one function of age through
+   the four bins. Carried; no ruling needed once the unit is read.
 163. **The gas fluctuation field's per-cell normaliser table costs about 5 s a run** (S62, D221; the field builder's
    measurement). The table that gives the field unit mean per level-0 cell is evaluated on L1's lattice - 2 points per
    47.5 pc, 5.26 million points, six octaves of value noise in float64 - at 4.6-5.1 s cold; a sparser lattice breaks the
@@ -4997,6 +5022,32 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    contrast, the sum at the foot about the crest); the dust layer, the clustering gate's disclosed square and the
    frames move with it.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; measured, not built - the closer needs two definitions the repository does not give; a
+   ruling):* an Opus builder read the closer against the code and measured on every foot of the Milky Way template
+   at seeds 0 and 4242 (after #213: 40 / 36 feet on 13 / 11 chains; ngc_4414 draws none; scripts s90_probe164.py,
+   s90_probe164b.py, s90_probe164c.py). Today: the composed over the unspurred contrast at the feet has median
+   1.9975 (1.9391-2.0372) at seed 0 and 1.9974 (1.7416-2.1174) at 4242; the point function's crest at R0 1.6292 ->
+   1.6291 (no spur near R0 at seed 0) and 1.5785 -> 2.7677 at 4242. "The ridge's downstream half-width" has no
+   definition in the model: the gas pattern declares no ridge width (its docstring: neither a contrast nor a width
+   is put in), and the one rule in the repository, `gas_pattern.crest_width` (D216 item 11 iv, a disclosed check),
+   is the FWHM of a ring's tallest crest with the half level midway between the ring's trough and that crest. Four
+   readings were measured and each breaks on many feet: (A) that rule at each crest - the descent downstream crosses
+   neighbouring ridges, half-widths to 25.4 kpc of arc (median 2.8 / 3.7); (B) a climb to the crest with the floor
+   at the first local minimum downstream - wiggles of 0.5 % prominence act as ridges (half-widths 9-83 pc) unless a
+   prominence threshold is set, which no source gives; (C) ridges as the stretches above the ring's half level - 11
+   of 40 and 9 of 36 feet stand outside every ridge; (D) the chain's stellar FWHM (`arm_piece_width`, median 1.15
+   kpc) - the stars' width, not the gas's, 25-37 kpc of arc on near-circular chains. The entry's prediction ("the sum
+   at the foot about the crest") holds only for a half level at half the crest itself, which most rings never fall
+   to (the interarm floor 0.45-1.0): with a half level midway to a floor the sum is about crest + floor, 2 x level /
+   crest a median 1.56-1.68 against 2.0 now. The downstream side was checked on every foot: the arms' local slope
+   d(turn phi)/d ln R >= 1.89 against cot 63 deg = 0.51, so a spur lies on the -turn side, the trailing arm's outer
+   side, as `stages/spurs.py` says. Options for the owner: (1) A capped at the first local minimum (needs B's
+   threshold); (2) B with a prominence threshold the ruling sets; (3) C with feet outside every ridge losing their
+   spur (D256's "no spur where no ridge stands") or moving to the nearest ridge; (4) the foot kept at the chain and
+   only the height mended - S the excess over a local floor - #165 left until the gas ridge's width is mended (the
+   model's ridge is 2.5-2.8 times the measured one). The lead's recommendation: (4), the smallest change that takes
+   the doubling away, with the floor defined as the ring's trough (`crest_width`'s, the repository's one rule).
+   Carried.
 165. **The spurs' walk reads the gas contrast at the stellar chain's polyline, not at the gas crest** (S62, D221
    item 7; the reviewer's finding 4). The gas ridge sits on the stellar crest only to the carry's accuracy, so a
    foot read at the chain can stand up to 500 pc from the ring's gas crest: of the 28 Milky Way feet with contrast
@@ -5006,6 +5057,14 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    width of the chain (the gas pattern's `contrast_at` maximised across the ridge at each foot) - one pass, with
    #164's.
    *S85 register pass (D251):* **batch M2 (the clouds, the dust and the gas)** — named in BUILD_V row 89–90.
+   *S90 (M2's close; measured with #164, not built - a ruling):* the foot over the local gas crest (its largest within
+   0.5 kpc of arc) on today's model: median 0.9898, min 0.552 at seed 0 (21 feet under 0.99), 0.9962 and 0.298 at
+   4242 (13 under 0.99); 6 and 3 feet read g < 1. The closer's "within the ridge's width of the chain" needs the
+   ridge's width #164 lacks (A's window of +-FWHM/2 leaves 10 of 40 crests on its edge; +-FWHM finds crests up to
+   14 kpc away, other ridges'; B's climb reaches crests up to 5.7 kpc of arc away). Any of #164's options 1-3 makes
+   the walk read the point function, removing the walk's approximation: `WALK_READ_DIFFERENCE` (0.27) and
+   `_COARSE` (0.58) would then measure rounding and be re-declared; the cost +1.94 s (seed 0) / +2.23 s (4242) on the
+   walk's 1.80 / 1.91 s (the first off-grid read solves the mid-gap rings). With option 4, carried as it stands.
 166. **The render computes the starlight by age on every request, including those that discard it** (S63, D223; the
    reviewer's finding 3). `_ages` runs on window and level requests (0.30 → 0.81 s and 0.30 → 0.75 s warm) and on the
    star-first mode's requests (`l_min`: 1.24 → 1.61 s), which ship about 1.17 MB the viewer nulls when it draws the
