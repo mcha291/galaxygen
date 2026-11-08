@@ -5726,6 +5726,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    ring with amplitude (the arms' budget's edge), or a spur's height is the ridge's excess over 1 — measured on both
    templates, the frames and the walk's bounds (#165's 0.27 and 0.58) re-read, the sector means exact past the budget.
    What kills the reading: a published amplitude on those chains past the budget's edge.
+   *S90 (M2's close; built, proposed discharged at the gate):* **the walk ends at the arms' budget's edge** - the last
+   grid ring with `arm_piece_amplitude` > 0 (12.3375 kpc on the Milky Way template, 9.9375 on `ngc_4414`;
+   `layer/spurs.py`). Both closers were measured (`s90_probe213.py`): on the Milky Way template 13 of 53 feet stood past
+   the edge (12.43-24.87 kpc), every one at a contrast of exactly 1.0, so either closer makes the gas's sector means
+   exactly 1 there (after: 0.0 off at 18, 20, 22, 25, 27 and 29 kpc on both templates; before 0.0172 at 18, 6.7e-15 at
+   20, 4.35e-3 at 25). The excess over 1 was not taken: it changes the height of all 40 spurs inside the budget
+   (D221 item 7's law), leaves zero-height rows, and needs a rule for the 6 feet that read below 1 (a negative
+   height); ending the walk keeps the 40 rows inside bit for bit. The walk's bounds re-read: the production grid's
+   worst foot 0.0573 at the template's seed (40 feet, was 53) and 0.2506 at 4242 (36 feet, was 45) under 0.27; Audit
+   V's mesh 0.5700 under 0.58 (the worst feet stand at 5.95 kpc, inside the budget) - unmoved. `tests/test_modes.py`'s
+   `OUTER_SPURS` strict hold passed and is lifted; Audit V's spacing and "long enough" checks now count a chain's
+   polyline to the edge (seed 777's chain 8 starts past it and carries none). The frames are S90's close.
 214. **The S55 layer-off reference and its two tests are a ledger of the named movements since S55, and a model batch
    cannot pass through it** (S88, M1's close, D256). `tests/layer_reference_s55.json` holds S55's layer-off run (D215), and
    `tests/test_layer.py`'s two reference tests hold every later run to it through a ledger: the named exceptions with

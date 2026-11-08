@@ -45,6 +45,16 @@ round the ring) has median 0.987 and minimum 0.323, the crest up to 500 pc from 
 column) and 3 below 1 - spurs 2, 12 and 44 (chains 1, 3 and 11 at R 4.20, 10.33 and 10.51 kpc) at 0.933, 0.799 and
 0.821: feet in a gas trough. (D221's "9 of them on chains past the arm power" counted the 11 and the 3 short.)
 
+**Where a chain's spurs end** (S90, #213; the gate's ruling at S88's close, D256: "a spur does not belong where no
+ridge stands"): at the arms' budget's edge, the last grid ring where the pieces carry any amplitude
+(``arm_piece_amplitude`` > 0; 12.34 kpc on the Milky Way template). Until S90 the walk ran each chain to its end, and
+13 of the Milky Way template's 53 feet stood past the edge (12.43-24.87 kpc) at a contrast of exactly 1: they bent
+the gas there (the sector means at 25 kpc 4.4e-3 off 1). The other choice the entry named - a spur's height the
+ridge's excess over 1 - was measured beside it and not taken: it meets the sector means too (every foot past the
+edge reads 1.0 exactly) but changes the height of all 40 spurs inside the budget, needs a rule for the 6 feet in a
+trough (g < 1, a negative height), keeps zero-height rows, and changes D221 item 7's law; ending the walk leaves the
+40 rows inside bit for bit (the composed gas moves within a spur's reach of the removed feet).
+
 **Every count is fixed in advance** (rule A1): a chain holds at most :data:`MAX_SPURS` spurs; past it the stage raises.
 
 **The layer off:** nothing is drawn and the table has no row: the gas carries no spur.
@@ -147,6 +157,15 @@ def lay(
         at = table[piece]
         return (1.0 - float(share[0])) * at[int(lower[0])] + float(share[0]) * at[int(upper[0])]
 
+    # S90 (#213; the gate's ruling at S88's close, D256: a spur does not belong where no ridge stands): the walk ends
+    # at the arms' budget's edge - the last grid ring where the pieces carry any amplitude. Past it the gas ridge is
+    # flat (the contrast exactly 1 at every foot S88 found there) and a chain runs on with no amplitude, so a spur
+    # there would be composed whole where its cause is absent.
+    carried = np.flatnonzero(gas.stars.amplitude_at(R) > 0.0)
+    if not carried.size:
+        return []
+    edge = float(R[carried[-1]])
+
     rows: list[tuple[float, ...]] = []
     for chain in np.unique(pieces.chain):
         members, arc = chain_geometry(pieces, float(chain))
@@ -174,7 +193,7 @@ def lay(
         made = 0
         while position < total:
             radius, phi, contrast, peak, spacing = foot(position)
-            if not math.isfinite(spacing):
+            if radius > edge or not math.isfinite(spacing):  # S90 (#213): past the budget's edge the chain carries none
                 break
             made += 1
             if made > MAX_SPURS:

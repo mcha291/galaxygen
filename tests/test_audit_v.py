@@ -923,6 +923,30 @@ def chain_arc_lengths(t, turn) -> dict[float, float]:
     return out
 
 
+def chain_arc_to_edge(t, turn, edge: float) -> dict[float, float]:
+    """S90 (#213): each chain's length along its polyline up to where it first passes ``edge`` kpc in radius (the
+    arms' budget's edge, where the spurs' walk ends) - the same 4 000 chords a piece as :func:`chain_arc_lengths`, the
+    crossing interpolated inside its chord; the whole length where the chain never passes it."""
+    out = {}
+    for c in np.unique(t["chain"]):
+        total = 0.0
+        members = np.flatnonzero(t["chain"] == c)
+        for i in members[np.argsort(t["order"][members], kind="stable")]:
+            beta = np.linspace(0.0, t["extent"][i], 4001)
+            R = t["start_radius"][i] * np.exp(beta * abs(math.tan(math.radians(t["pitch"][i]))))
+            phi = t["start_azimuth"][i] + turn * beta * (1.0 if t["pitch"][i] >= 0 else -1.0)
+            chords = np.hypot(np.diff(R * np.cos(phi)), np.diff(R * np.sin(phi)))
+            past = np.flatnonzero(R > edge)
+            if past.size:
+                j = int(past[0])
+                if j > 0:
+                    total += float(np.sum(chords[: j - 1])) + float(chords[j - 1]) * (edge - R[j - 1]) / (R[j] - R[j - 1])
+                break
+            total += float(np.sum(chords))
+        out[float(c)] = total
+    return out
+
+
 def spur_rows(out) -> dict[str, np.ndarray]:
     return {k: arr(out, f"gas_spur_{k}") for k in ("chain", "arc", "radius", "azimuth", "spacing", "jeans_length", "peak_surface_density", "contrast")}
 
@@ -950,7 +974,11 @@ def test_gas_spurs_stand_ten_jeans_lengths_apart_along_each_chain(audit, K, seed
     column = np.interp(s["radius"], R_AUDIT, arr(on, "gas_surface_density"))
     assert rel(s["peak_surface_density"], column * s["contrast"]) <= 1e-9
     assert set(np.unique(s["chain"])) <= set(np.unique(t["chain"]))
-    lengths = chain_arc_lengths(t, -rotation_sense(float(on.fields["pitch_angle"])))
+    # S90 (#213): the walk ends at the arms' budget's edge (the last ring with arm_piece_amplitude > 0), so a chain's
+    # walked length is its polyline up to that radius (was the whole polyline).
+    edge = float(R_AUDIT[np.flatnonzero(arr(on, "arm_piece_amplitude") > 0.0)[-1]])
+    lengths = chain_arc_to_edge(t, -rotation_sense(float(on.fields["pitch_angle"])), edge)
+    assert np.all(s["radius"] <= edge)
     for c, total in lengths.items():
         idx = np.flatnonzero(s["chain"] == c)
         idx = idx[np.argsort(s["arc"][idx])]
@@ -1019,14 +1047,19 @@ def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, 
     for seed in SEEDS:
         on = audit["milky_way", seed, True]
         s, t = spur_rows(on), piece_table(on)
-        lengths = chain_arc_lengths(t, -rotation_sense(float(on.fields["pitch_angle"])))
+        # S90 (#213): a chain's length up to the arms' budget's edge, where the walk ends (was the whole polyline).
+        edge = float(R_AUDIT[np.flatnonzero(arr(on, "arm_piece_amplitude") > 0.0)[-1]])
+        lengths = chain_arc_to_edge(t, -rotation_sense(float(on.fields["pitch_angle"])), edge)
         reach = float(np.max(s["spacing"]))
         spurless = set(lengths) - set(np.unique(s["chain"]).tolist())
         bare[seed] = {c: (round(lengths[c], 3), round(reach, 3)) for c in sorted(spurless)}
         assert all(lengths[c] < reach for c in spurless), bare
     # S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was `any(bare.values())` - Audit V's chain 7 (2.3 kpc, seed 4242) was bare, so the module's 'long
     # enough' was needed; on today's model no chain of either seed is bare - the statement still holds, vacuously here.
-    assert not any(bare.values()), bare
+    # S90 (#213): the walk ends at the arms' budget's edge, so a chain that starts past it carries none - seed 777's
+    # chain 8 (117.4 kpc of polyline, all of it past the edge on this mesh) is bare by that rule; was
+    # `not any(bare.values())`.
+    assert bare[4242] == {} and set(bare[777]) == {8.0} and bare[777][8.0][0] == 0.0, bare
 
 
 # ---------------------------------------------------------------------------------------------------------------------
