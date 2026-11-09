@@ -111,8 +111,13 @@ export const TRANSFER_SLACK = 1e-3;
  * through; with it off each stands uniform in its sector. The layered frame is brighter by a further 1.5 % in R (each
  * texel's clouds a slab at their own heights, the lead's ruling on R3; 0.96717, 0.97239, 0.98261 with the clouds
  * spread through their sech2 layer).
+ *
+ * S90 (M2's close; the hash 5a2c097e...): was [0.96768, 0.97196, 0.97881] (S88) - #213 ends the spurs at the arms'
+ * budget's edge, #161 lets the clustering field's cell means move clouds between a ring's cells, #197 redraws the
+ * stars inside their rings: measured 0.96827, 0.97247, 0.97922 on the regenerated frames (+5.9e-4, +5.1e-4, +4.1e-4,
+ * inside DUSTY_RATIO_PIN before the re-pin).
  */
-export const DUSTY_LAYER_RATIO = [0.96768, 0.97196, 0.97881] as const;
+export const DUSTY_LAYER_RATIO = [0.96827, 0.97247, 0.97922] as const;
 // S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
 // (#148), the floor (#209), the Milky Way's pinned 5.0 kpc bar (#80) and MERGER_HEATING 90.6 (#212) move the dust, the
 // clouds (16 940 where 16 577) and the young light; measured with the new bundles on the RTX 4070 (physics only over

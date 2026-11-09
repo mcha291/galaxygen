@@ -444,12 +444,15 @@ def test_arm_chain_lengths_are_the_declared_normal(audit, K):
 # ---------------------------------------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("tpl,seed", LAYER_ON)
-def test_census_clustering_keeps_every_cell_s_clouds(audit, unclustered, K, tpl, seed):
-    """(a) ``conserves``: "Every cell's expected count of every census it places and every ring's realised total: it
-    places a cloud inside the cloud's own cell after the ring's count, the sector allocation and every other draw are
-    made, so no count, mass or light moves between cells or rings". Measured: the clouds counted per level-0 cell by
-    their placed (radius, azimuth) against the field-off control (the same layer, the field's width 0; ``unclustered``)
-    - equal cell by cell, and the cloud mass per cell to 1e-12 relative; per ring, by the radius the ring drew,
+def test_census_clustering_keeps_every_ring_s_clouds(audit, unclustered, K, tpl, seed):
+    """(a) ``conserves`` since S90 (#161, the ring as the unit): "Every ring's expected and realised total of every
+    census it places ... no count, mass or light moves between rings. It does not keep a cell's expected count".
+    S90 (#161): was ``test_census_clustering_keeps_every_cell_s_clouds``, the cell as the unit (S61-S89), which asserted
+    the per-cell counts equal on and off the field - the mend moves them by design (the field's cell means enter the
+    sector weights). Measured: the clouds counted per level-0 ring by their placed (radius, azimuth) against the
+    field-off control (the same layer, the field's width 0; ``unclustered``) - equal ring by ring, the cloud mass per
+    ring to 1e-12 relative, and the cells' counts NOT all equal (the field's coarse end moves clouds between a ring's
+    cells); per ring, by the radius the ring drew,
     against the layer-off run, likewise (the placed radius against the drawn one is the next test's). (Against
     the layer-off run the cells' counts differ, as they should: the sector allocation follows the composed gas
     pattern, which the layer turns on; the field is not what moves them.) The published cell mean is the field's mean over
@@ -460,8 +463,8 @@ def test_census_clustering_keeps_every_cell_s_clouds(audit, unclustered, K, tpl,
     (c) ``stands_in_for``: "hierarchical fragmentation of the gas below a cell's scale" - fragmentation moves gas
     within a complex, not between kiloparsec cells; the field is held to that by construction, which is measured.
 
-    Fails if: a cell's count or mass differs with the field and without it, a ring's differs on and off, or the cell
-    mean is not the lattice's."""
+    Fails if: a ring's count or mass differs with the field and without it, or on and off, the field moves no cell's
+    count, or the cell mean is not the lattice's."""
     on, ctl, off = audit[tpl, seed, True], unclustered[tpl, seed], audit[tpl, None, False]
 
     def per_cell(out):
@@ -471,7 +474,12 @@ def test_census_clustering_keeps_every_cell_s_clouds(audit, unclustered, K, tpl,
         return np.bincount(cells, minlength=CELL_RINGS * CELL_SECTORS), np.array([math.fsum(v) for v in split])
 
     (n_on, m_on), (n_ctl, m_ctl) = per_cell(on), per_cell(ctl)
-    assert np.array_equal(n_on, n_ctl) and rel(m_on, m_ctl) <= 1e-12
+    # S90 (#161): was `np.array_equal(n_on, n_ctl) and rel(m_on, m_ctl) <= 1e-12` cell by cell - the ring is the unit now
+    rings_on, rings_ctl = n_on.reshape(CELL_RINGS, CELL_SECTORS), n_ctl.reshape(CELL_RINGS, CELL_SECTORS)
+    assert np.array_equal(rings_on.sum(axis=1), rings_ctl.sum(axis=1)) and not np.array_equal(n_on, n_ctl)
+    mass_on = np.array([math.fsum(r) for r in m_on.reshape(CELL_RINGS, CELL_SECTORS)])
+    mass_ctl = np.array([math.fsum(r) for r in m_ctl.reshape(CELL_RINGS, CELL_SECTORS)])
+    assert rel(mass_on, mass_ctl) <= 1e-12
     ron, roff = ring_of(arr(on, "cloud_birth_radius")), ring_of(arr(off, "cloud_birth_radius"))
     assert np.array_equal(np.bincount(ron, minlength=CELL_RINGS), np.bincount(roff, minlength=CELL_RINGS))
     assert rel(ring_sums(arr(on, "cloud_mass"), ron), ring_sums(arr(off, "cloud_mass"), roff)) <= 1e-12
@@ -594,7 +602,13 @@ def clustering_excess(on, control) -> np.ndarray:
 # with where the census's chains crowd the clouds: S86's census read -0.538, the 5.0 kpc bar's re-drawn one -0.459.
 # Not a defect a mend reaches without the per-cell conservation: the Milky Way's reading held, its two clauses that
 # meet their bounds kept; NGC 4414 (no spurs, no bar) still meets the law.
-MW_PAIR_SLOPES = (-0.4846, -0.4327)  # S88: the Milky Way's held reading, seeds 4242 and 777
+# S90 (#161): the hold lifted. The mend named above - the per-cell conservation - is built: rule 2's unit is now the
+# ring (the field's cell means in the clouds' sector weights, each ring's weights at mean 1), and the Milky Way reads
+# -0.5561 / -0.4497 at 4242 / 777, mean -0.5029, inside the law's 0.15 (0.137); its excess at 47.5 pc 2.644 / 2.261
+# (was 2.18 / 2.01 at S88's probe), its 380-760 pc ratio 0.978 / 0.924 (mean 0.951, inside 0.05 by 0.001). So the
+# Milky Way is judged by the law as NGC 4414 is; its two slopes stay pinned as measured, so a change that moves them
+# is seen.
+MW_PAIR_SLOPES = (-0.5561, -0.4497)  # S90 (#161): was (-0.4846, -0.4327), S88's held reading outside the law
 
 
 @pytest.mark.parametrize("tpl", ["milky_way", "ngc_4414"])
@@ -612,10 +626,10 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     up to 40 Myr against uniform randoms; here the placed clouds stand in for them, against a control with their arms
     - the BUILD_III L1 gate's reading.
 
-    **S88 (D255 ruling 3): the Milky Way's slope is held at its reading with the cause** (the comment above): the
-    two seeds' slopes are pinned (``MW_PAIR_SLOPES``, to 1e-3) and the mean is outside the law's 0.15, which is
-    asserted too, so a change that brings it back is seen; its excess and its large-scale ratio still meet the law's
-    bounds. NGC 4414's slope meets the law.
+    **S88 (D255 ruling 3): the Milky Way's slope was held at its reading with the cause**, outside the law's 0.15;
+    **S90 (#161) lifted the hold**: with the ring as the unit of the per-cell conservation the Milky Way's mean
+    slope is inside the law and judged by it, its two seeds' slopes pinned as measured (``MW_PAIR_SLOPES``, to 1e-3).
+    NGC 4414's slope meets the law.
 
     Fails if: the realised slope (NGC 4414) or the held reading (the Milky Way), the 47.5 pc excess or the
     large-scale ratio is outside those bounds."""
@@ -629,9 +643,8 @@ def test_census_clustering_pair_correlation_is_the_declared_law(audit, uncluster
     report = {"slopes": slopes, "excess_47.5pc": at, "ratio_380_760pc": beyond}
     if tpl == "milky_way":
         assert slopes == pytest.approx(list(MW_PAIR_SLOPES), abs=1e-3), report
-        assert abs(np.mean(slopes) + 0.64) > 0.15, report  # held outside the law: the reading, not the law, moved
-    else:
-        assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
+        # S90 (#161): was `abs(np.mean(slopes) + 0.64) > 0.15` - held outside the law; judged by it now (the comment above).
+    assert abs(np.mean(slopes) + 0.64) <= (0.21 if one else 0.15), report
     assert abs(np.mean(at) / 2.43 - 1.0) <= (0.29 if one else 0.21), report
     assert abs(np.mean(beyond) - 1.0) <= 0.05, report
 
@@ -923,6 +936,30 @@ def chain_arc_lengths(t, turn) -> dict[float, float]:
     return out
 
 
+def chain_arc_to_edge(t, turn, edge: float) -> dict[float, float]:
+    """S90 (#213): each chain's length along its polyline up to where it first passes ``edge`` kpc in radius (the
+    arms' budget's edge, where the spurs' walk ends) - the same 4 000 chords a piece as :func:`chain_arc_lengths`, the
+    crossing interpolated inside its chord; the whole length where the chain never passes it."""
+    out = {}
+    for c in np.unique(t["chain"]):
+        total = 0.0
+        members = np.flatnonzero(t["chain"] == c)
+        for i in members[np.argsort(t["order"][members], kind="stable")]:
+            beta = np.linspace(0.0, t["extent"][i], 4001)
+            R = t["start_radius"][i] * np.exp(beta * abs(math.tan(math.radians(t["pitch"][i]))))
+            phi = t["start_azimuth"][i] + turn * beta * (1.0 if t["pitch"][i] >= 0 else -1.0)
+            chords = np.hypot(np.diff(R * np.cos(phi)), np.diff(R * np.sin(phi)))
+            past = np.flatnonzero(R > edge)
+            if past.size:
+                j = int(past[0])
+                if j > 0:
+                    total += float(np.sum(chords[: j - 1])) + float(chords[j - 1]) * (edge - R[j - 1]) / (R[j] - R[j - 1])
+                break
+            total += float(np.sum(chords))
+        out[float(c)] = total
+    return out
+
+
 def spur_rows(out) -> dict[str, np.ndarray]:
     return {k: arr(out, f"gas_spur_{k}") for k in ("chain", "arc", "radius", "azimuth", "spacing", "jeans_length", "peak_surface_density", "contrast")}
 
@@ -950,7 +987,11 @@ def test_gas_spurs_stand_ten_jeans_lengths_apart_along_each_chain(audit, K, seed
     column = np.interp(s["radius"], R_AUDIT, arr(on, "gas_surface_density"))
     assert rel(s["peak_surface_density"], column * s["contrast"]) <= 1e-9
     assert set(np.unique(s["chain"])) <= set(np.unique(t["chain"]))
-    lengths = chain_arc_lengths(t, -rotation_sense(float(on.fields["pitch_angle"])))
+    # S90 (#213): the walk ends at the arms' budget's edge (the last ring with arm_piece_amplitude > 0), so a chain's
+    # walked length is its polyline up to that radius (was the whole polyline).
+    edge = float(R_AUDIT[np.flatnonzero(arr(on, "arm_piece_amplitude") > 0.0)[-1]])
+    lengths = chain_arc_to_edge(t, -rotation_sense(float(on.fields["pitch_angle"])), edge)
+    assert np.all(s["radius"] <= edge)
     for c, total in lengths.items():
         idx = np.flatnonzero(s["chain"] == c)
         idx = idx[np.argsort(s["arc"][idx])]
@@ -1019,14 +1060,19 @@ def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, 
     for seed in SEEDS:
         on = audit["milky_way", seed, True]
         s, t = spur_rows(on), piece_table(on)
-        lengths = chain_arc_lengths(t, -rotation_sense(float(on.fields["pitch_angle"])))
+        # S90 (#213): a chain's length up to the arms' budget's edge, where the walk ends (was the whole polyline).
+        edge = float(R_AUDIT[np.flatnonzero(arr(on, "arm_piece_amplitude") > 0.0)[-1]])
+        lengths = chain_arc_to_edge(t, -rotation_sense(float(on.fields["pitch_angle"])), edge)
         reach = float(np.max(s["spacing"]))
         spurless = set(lengths) - set(np.unique(s["chain"]).tolist())
         bare[seed] = {c: (round(lengths[c], 3), round(reach, 3)) for c in sorted(spurless)}
         assert all(lengths[c] < reach for c in spurless), bare
     # S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was `any(bare.values())` - Audit V's chain 7 (2.3 kpc, seed 4242) was bare, so the module's 'long
     # enough' was needed; on today's model no chain of either seed is bare - the statement still holds, vacuously here.
-    assert not any(bare.values()), bare
+    # S90 (#213): the walk ends at the arms' budget's edge, so a chain that starts past it carries none - seed 777's
+    # chain 8 (117.4 kpc of polyline, all of it past the edge on this mesh) is bare by that rule; was
+    # `not any(bare.values())`.
+    assert bare[4242] == {} and set(bare[777]) == {8.0} and bare[777][8.0][0] == 0.0, bare
 
 
 # ---------------------------------------------------------------------------------------------------------------------

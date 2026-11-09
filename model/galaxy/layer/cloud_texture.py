@@ -52,7 +52,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
-from galaxy.stages.clouds import TEXTURE_COLUMNS, RingLayout, cloud_layout, ring_draws
+from galaxy.stages.clouds import CLUSTERING_CONSTANTS, TEXTURE_COLUMNS, RingLayout, cloud_layout, ring_draws
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.spurs import SPUR_READS
 
@@ -223,6 +223,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
             # The census's layout: the mass function's mean and the gas pattern's two constants, as the census reads them.
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", *GAS_PATTERN_CONSTANTS,
+            *CLUSTERING_CONSTANTS,  # S90 (#161): the layout's sector weights carry the clustering field's cell means
             # The cloud-interior noise's parameters: constants this stage declares (gate G1, change 4).
             "CLOUD_INTERIOR_OCTAVES", "CLOUD_INTERIOR_LACUNARITY", "CLOUD_INTERIOR_GAIN",
         ),
@@ -230,6 +231,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
             "cloud_size", "gas_molecular_surface_density",
             *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
             *SPUR_READS,  # S62 (D221 item 7 as amended): the census's layout is the spurred gas pattern's
+            "census_clustering_seed",  # S90 (#161): the layout's sector weights read the clustering field's cell means
         ),
         publishes=(CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT, CLOUD_GRADIENT_ANGLE),
     )

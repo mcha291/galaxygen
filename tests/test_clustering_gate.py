@@ -58,11 +58,17 @@ WIDTH = "CENSUS_CLUSTERING_WIDTH"
 # S62 (D221): was clouds (-0.636, 1.977, 0.0216), clusters (-0.670, 2.097, 0.0210) - the gas spurs on the gas
 # contrast move the clouds' placement (and the clusters born in them) by a few thousandths; both well inside the
 # judged window (|slope + 0.64| < 0.15) and flat beyond 380 pc (< 0.05).
+# S90 (#161, the ring the unit of D220 part II's rule 2: the field's cell means in the clouds' sector weights): was
+# clouds (-0.6396, 1.9798, 0.0212), clusters (-0.6578, 2.0842, 0.0210) - S70's and S67's figures, not met since #80's
+# re-drawn census at S88 (clouds -0.4796 / 1.7815 / 0.0256, clusters -0.4882 / 1.8557 / 0.0266 on 352bdec, measured
+# by s90 probe161.py with this file's construction); the cells' expectations now carry the field's coarse end, the
+# amplitude rises (the bin holding 47.5 pc 2.08 -> 2.40, the field's own 2.43) and the clusters' slope comes inside
+# the window (0.141 from -0.64), the clouds' not (0.156).
 MEASURED = {
-    "clouds": (-0.6396, 1.9798, 0.0212),
+    "clouds": (-0.4843, 1.9452, 0.0205),
     # S70 (D234): was (-0.6908, 2.1129, 0.0221) - the clouds' ring inversion (F-2-7) and the size law's three regimes (#192:
     # the clouds inside 4 kpc and in 7-8.2 kpc larger, so a cluster's source offset reaches further); the window holds.
-    "clusters": (-0.6578, 2.0842, 0.0210),  # S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
+    "clusters": (-0.4991, 2.0255, 0.0301),  # S90 (#161): was (-0.6578, 2.0842, 0.0210), above. S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
     # bounded by its cloud's size, and the giants shrank (the radius cap 150 pc, Sigma 82 inside R_SUN); the judged window holds.
 }
 # The templates, measured by hand with this file's construction at S61 (each run about 30 s, its control 10-20 s):
@@ -82,7 +88,7 @@ SQUARE_BEFORE = {"clouds": (-0.096, 1.17, 1.18, 1.17), "clusters<=10Myr": (-0.10
 # S62 (D221): was {"clouds": (-0.163, 1.24, 2.01, 1.16), "clusters<=10Myr": (-0.141, 1.30, 1.60, 1.24)} - the gas
 # spurs place the clouds on the spurs' streaks too, and the young clusters with them.
 # S70 (D234): the young clusters' last figure was 1.131 - F-2-7 and #192 (their offsets in larger clouds).
-SQUARE_AFTER = {"clouds": (-0.125, 1.223, 2.068, 1.182), "clusters<=10Myr": (-0.179, 1.315, 2.275, 1.203)}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.170, 1.248, 2.088, 1.176, -0.154, 1.302, 1.838, 1.148
+SQUARE_AFTER = {"clouds": (-0.149, 1.292, 2.025, 1.324), "clusters<=10Myr": (-0.208, 1.404, 2.148, 1.262)}  # S90 (#161): was -0.125, 1.223, 2.068, 1.182, -0.179, 1.315, 2.275, 1.203 - the field's cell means in the clouds' sector weights add its coarse end at 300 pc. S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.170, 1.248, 2.088, 1.176, -0.154, 1.302, 1.838, 1.148
 # S67 (D231): the young clusters' square was (-0.121, 1.278, 1.800, 1.202) - their offsets from their clouds shrink with
 # the clouds (the size law); the clouds' own square did not move.
 # The default galaxy's field alone in a flat 6.08 kpc square (exact expectation; points through the instrument).
@@ -141,8 +147,15 @@ BRIGHT_GATE_READ_OVER = ("S88 (M1): the young bright stars' judged clauses read 
                          "out since #148's clock, 1.1887 there); the gate's to rule")
 
 
-@pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER)
-@pytest.mark.parametrize("name", ("clouds", "clusters"))
+# S90 (#161): the clusters' case lifted - with the field's cell means in the clouds' sector weights their slope reads
+# -0.4991, inside the window (0.141); the clouds' -0.4843 is still over (0.156) and held strict, the reason re-measured.
+# S90 close (the gate, D258): #161 discharged; the clouds' residual is register #215 (the amplitude rose together at every
+# scale below 190 pc, so the flatter shape #80's census left is unchanged) - held strict under #215, M3's.
+L1_GATE_READ_OVER_S90 = ("S90 (#215, after #161's ring-unit mend): the clouds' judged slope reads -0.4843 against -0.64 +/- 0.15 "
+                         "(S88 -0.4796; the clusters' -0.4991 now inside); register #215, M3's")
+
+
+@pytest.mark.parametrize("name", (pytest.param("clouds", marks=pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER_S90)), "clusters"))
 def test_the_census_against_its_own_law_returns_the_hierarchy_s_slope(census, name):
     corr = C.against_control(census["data"][name], census["control"][name], census["annulus"])
     slope, at_finest, worst = _judged(corr)

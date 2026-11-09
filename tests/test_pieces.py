@@ -1604,7 +1604,11 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
 # S87 (#148): was {'gas': (0.18, {'Norma-Outer': 0.18, 'Sct-Cen': 0.22, 'Sgr-Car': 0.04, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.49, (0.3, 0.82), 1, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.52, (0.23, 1.05), 2, 94)} - the clock: the gas's
 # spurs and the young stars' law read the gas column, so both records moved by a hundredth or two, no verdict.
 # S87 (#148, #209, #80): EXPECTED_MASERS was {'gas': (0.17, {'Norma-Outer': 0.17, 'Sct-Cen': 0.2, 'Sgr-Car': 0.04, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.51, (0.27, 0.8), 1, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.19, 'Sgr-Car': 0.05, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.52, (0.24, 1.05), 2, 94)} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
-EXPECTED_MASERS: dict = {'gas': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.46, (0.25, 0.88), 3, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.23, 0.96), 2, 97)}
+# S90 (#213): the gas's record was (0.19, {'Norma-Outer': 0.19, ...}, 0.13, 0.46, (0.25, 0.88), 3, 100) - the spurs past the arms'
+# budget are gone (the walk ends at 12.34 kpc), so the gas's outer contrast and its rotated null moved: the as-built 0.19 -> 0.20,
+# Norma-Outer 0.19 -> 0.22, the null's median 0.46 -> 0.50, the percentile 3 -> 2; the young stars' record is unmoved (the
+# star formation contrast keeps no spur). No verdict: a disclosed check.
+EXPECTED_MASERS: dict = {'gas': (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.23, 0.96), 2, 97)}
 # S60 fourth pass: was {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 # (the polyline alone, before A and B: gas 0.07 at the 0th percentile of a null of median 0.50, the young stars 0.10 / 0.44)
 

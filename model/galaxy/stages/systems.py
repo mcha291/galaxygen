@@ -208,6 +208,30 @@ def invert_cdf(u: np.ndarray, x: np.ndarray, weight: np.ndarray) -> np.ndarray:
     return np.interp(np.asarray(u, dtype=float), cdf / total, x)
 
 
+def ring_birth_radius(u: np.ndarray, R: np.ndarray, weight: np.ndarray, lo: float, hi: float) -> np.ndarray:
+    """The radii a level-0 ring [lo, hi) draws for uniforms ``u``, by inverting the CDF of ``weight`` (its density times
+    R on the grid radii, 0 outside the ring) on the ring's own interval (S70, D234; Audit V F-2-7): the table starts at
+    lo with nothing below it, so a grid point's weight fills the stretch from the last point before it, or from lo,
+    up to it. Until S70 the ring's draw was ``invert_cdf`` over the whole grid, whose first step inside the ring
+    interpolated from the grid point below lo: 712 of the Milky Way template's 16 577 clouds were born up to 71 pc
+    inside the ring's inner edge (one grid step, 75 pc), in the ring their binners then counted them in, not the
+    ring that drew them. A cloud's ring is the ring that drew it, everywhere a per-ring total or a per-radius law is
+    read, so every radius drawn here is asserted in [lo, hi) - a draw outside it is a defect, never clipped.
+
+    S90 (#197): moved here from ``clouds.py`` and shared - the star catalogue's level-0 draw (:func:`materialise`)
+    and the remnants' (``bubbles.materialise_remnants``) invert their ring the same way since S90; until then both
+    called :func:`invert_cdf` over the whole grid and 955 of the Milky Way template's 20 002 sample stars (4.8 %),
+    996 of NGC 4414's 20 001, and 70 of 1 549 / 28 of 623 remnants stood up to 70-71 pc below their ring (measured
+    at S90 before the mend, layer on and off alike; S70 read 955 / 995 / 64 / 27)."""
+    keep = (R > lo) & (R <= hi)
+    x = np.concatenate(([float(lo)], R[keep]))
+    cdf = np.concatenate(([0.0], np.cumsum(np.asarray(weight, dtype=float)[keep])))
+    radius = np.interp(np.asarray(u, dtype=float), cdf / cdf[-1], x)
+    if not np.all((radius >= lo) & (radius < hi)):
+        raise ArithmeticError(f"an object of ring [{lo}, {hi}) was drawn at {radius[(radius < lo) | (radius >= hi)][:3]} kpc")
+    return radius
+
+
 def invert_columns(u: np.ndarray, x: np.ndarray, cdf: np.ndarray, column: np.ndarray) -> np.ndarray:
     """:func:`invert_cdf` where each draw reads its own column of a shared table.
 
@@ -1080,7 +1104,8 @@ def materialise(
         if footprint is None:
             inside = (R >= lo) & (R <= hi)
             weight = np.where(inside, fields["stellar_surface_density"] * R, 0.0)
-            radius = invert_cdf(draw("radius"), R, weight)
+            # S90 (#197): was invert_cdf(draw("radius"), R, weight) - inverted from the grid point below lo.
+            radius = ring_birth_radius(draw("radius"), R, weight, lo, hi) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
             phi_lo, phi_hi = sector * width, (sector + 1) * width
         else:
             r_lo, r_hi = footprint["r_lo"], footprint["r_hi"]
@@ -1433,12 +1458,11 @@ def _column(name, label, unit, about, ramp=Ramp("viridis"), placement=False):
 
 STAR_RADIUS = _column("star_radius", "Galactocentric radius", "kpc",
                       "Drawn by inverting the radial mass distribution the model published, so the "
-                      "sample traces the disc exactly rather than approximately. **A carried defect** (S70, D234; "
-                      "Audit V F-2-7's sibling, debt #197): a level-0 star's ring draw inverts over the whole grid, "
-                      "so its first step inside the ring starts at the grid point below it - measured at S70 on the "
-                      "production grid, layer off, 955 of the Milky Way template's 20 003 sample stars (4.8 %) and 995 "
-                      "of NGC 4414's 20 004 (5.0 %) lie up to 70 pc inside their ring's inner edge, one grid step; "
-                      "the clouds' draw was mended at S70 (clouds.ring_birth_radius), this one is not.")
+                      "sample traces the disc exactly rather than approximately. A level-0 star's draw inverts its "
+                      "own ring's interval (``ring_birth_radius``, the clouds' since S70), so every star stands in "
+                      "the ring that drew it. Mended at S90 (debt #197): until then the draw inverted over the whole "
+                      "grid and 955 of the Milky Way template's 20 002 sample stars (4.8 %) and 996 of NGC 4414's "
+                      "20 001 stood up to 70 pc inside their ring's inner edge, one grid step.")
 STAR_AZIMUTH = _column("star_azimuth", "Azimuth", "rad",
                        "Drawn from the bar and arm density contrast at the star's radius, so stars "
                        "crowd into the arms and the bar. Where the model publishes where stars form "

@@ -72,7 +72,7 @@ from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
-from galaxy.stages.clouds import RingLayout, cloud_layout, layout_of, ring_draws, with_layout
+from galaxy.stages.clouds import CLUSTERING_CONSTANTS, RingLayout, cloud_layout, layout_of, ring_draws, with_layout
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.spurs import SPUR_READS
@@ -433,11 +433,13 @@ CLUSTERS = IMPLEMENTATIONS.register(
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING", "CLUSTER_BOUND_FRACTION", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_HALF_MASS_DENSITY",
             *GAS_PATTERN_CONSTANTS,  # S51 (D210): the cloud census's layout is the gas pattern's
+            *CLUSTERING_CONSTANTS,  # S90 (#161): and its sector weights carry the clustering field's cell means
         ),
         requires=(
             *CLOUD_READS, "gas_molecular_surface_density",
             *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
             *SPUR_READS,  # S62 (D221 item 7 as amended): the cloud census's layout is the spurred gas pattern's
+            "census_clustering_seed",  # S90 (#161): the layout's sector weights read the clustering field's cell means
             "stars_formed_history", "sfr_surface_density",
         ),
         publishes=(

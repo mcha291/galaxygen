@@ -445,7 +445,9 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # miss 1 by 1.07e-6 now, as the Milky Way's did by its lanes. S60 fourth pass: were 1.222e-2, 5.023e-3,
     # 9.82e-6 and `< 5e-13`.
     # S62 (D221): were {"milky_way": 1.200e-2, ...} and {"milky_way": 9.774e-6, ...} - the law's, held above.
-    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.6863, "ngc_4414": 1.931e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.243e-3, 0.6558 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6167 - the clock
+    # S90 (#213): the Milky Way's was 0.6863 - the worst cell stood at 24.86 kpc on a spur past the arms' budget (a447981; s90_probe_gp.py), gone with the walk's end at 12.34 kpc (0.50380 now, at 10.16 kpc; the
+    # centre samples' 2.396e-3 and the 36-cell grid's 3.275e-2 / 1.746e-2 unmoved within their 2 %)
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.5038, "ngc_4414": 1.931e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.243e-3, 0.6558 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6167 - the clock
     sampled = float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max())
     assert sampled == pytest.approx({"milky_way": 2.394e-3, "ngc_4414": 5.0916e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.523e-3 - the clock
     # S58 (D217): the 36-cell centre samples read 1.257e-3 and 1.056e-3; with the lanes, and with `ngc_4414`'s

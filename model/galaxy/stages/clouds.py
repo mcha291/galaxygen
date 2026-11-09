@@ -56,19 +56,23 @@ source in the about line; nothing here is recalled (rule B9).**
   weighted by the molecular law, that contrast and the randomness layer's clustering field
   (``layer/census_clustering.py``, read through ``compose``): the clouds gather into complexes below a cell's
   scale. The radius the ring drew is kept as ``cloud_birth_radius``: the cloud's abundances are read there
-  and its cluster is binned by it, so nothing per ring or per radius moves with the placement. The ring's
-  count, the sector and every other draw are untouched; with the layer off the cloud stands at the radius
-  its ring drew, uniform in its sector.
+  and its cluster is binned by it, so nothing per ring or per radius moves with the placement. **Since S90
+  (#161; D220 part II, rule 2 with the ring as the unit)** the same field's mean over each cell enters the
+  cell's sector weight beside the contrast, each ring's weights divided by their mean round the ring: a cell's
+  expected count carries the hierarchy's coarse end and the ring keeps its total (until S90 every cell kept its
+  own count, and the field's power near a cell's short side was cut). The ring's count and every other draw
+  are untouched; with the layer off the cloud stands at the radius its ring drew, uniform in its sector.
 
 **The ring-first draw (S61, D220 part I).** A ring's clouds are drawn before the layer places them. The
 ring's count is one Poisson draw on the ring's stream ``(systems_seed, "cloud", ring, "count")`` at the
 ring's expected total, its molecular mass over the law's mean cloud mass - a number the layer never
 touches, so the count is the same with the layer on or off (D220 item 1; the sum of the ring's cell
-expectations is that number to the bit with the layer off, and to 32 units in the last place with it on,
-measured at S61). Every per-object draw is an array of the ring's count on
+expectations is that number to the bit with the layer off, and to 1 unit in the last place with it on
+(measured at S90 on the default galaxy, the weights at mean 1 round each ring; 22 units before S90, 32 at S61)). Every per-object draw is an array of the ring's count on
 ``(systems_seed, "cloud", ring, name)``: a cloud's identity in the draw is ``(ring, i)``. The layer
 assigns the cell and the place in it and nothing else (D220 item 2): cloud i's sector is the inverse of the
-ring's cumulative sector weights at its own ``sector`` uniform - uniform with the layer off - and its place
+ring's cumulative sector weights at its own ``sector`` uniform - uniform with the layer off; the gas's
+contrast times the clustering field's cell means, at mean 1 round the ring, with it on (S90, #161) - and its place
 in the cell, with the layer on, is drawn jointly in radius and azimuth on the cell's lattice - the molecular
 law, the pattern's point function (read on the cell's 16 x 24 mesh) and the clustering field - at its own
 ``azimuth`` and ``position`` uniforms (D220 part II item 4 as amended), the radius the ring drew kept as
@@ -98,16 +102,18 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.layer import census_clustering as _clustering
 from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.spurs import SPUR_READS
-from galaxy.stages.systems import (
+from galaxy.stages.systems import (  # S90 (#197): ring_birth_radius moved to systems.py, shared
     CELL_COUNT,
     CELL_RINGS,
     CELL_SECTORS,
     Catalogue,
     cell_edges,
+    ring_birth_radius,
     sech2_height,
 )
 
@@ -128,8 +134,9 @@ G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) time
 # The FWHM of sech²(z/2h) in units of h: sech²(x) = 1/2 at x = artanh(1/√2), so the half maximum is at
 # z = ±2h·artanh(1/√2) and the full width 4·artanh(1/√2) h = 3.5255 h.
 SECH2_FWHM_PER_SCALE_HEIGHT = 4.0 * math.atanh(1.0 / math.sqrt(2.0))
-# The clustering field's constants, which the census reads to place a cloud in its cell (S61, D220 part II as amended).
-CLUSTERING_CONSTANTS: tuple[str, ...] = tuple(_CLUSTERING_CONSTANTS.values())
+# The clustering field's constants, which the census reads to place a cloud in its cell (S61, D220 part II as amended),
+# and the density of the lattice its cell means are taken on, which the census's sector weights read (S90, #161).
+CLUSTERING_CONSTANTS: tuple[str, ...] = (*_CLUSTERING_CONSTANTS.values(), _clustering.TABLE_POINTS)
 
 
 def cloud_layer_height(constants: Mapping[str, Any]) -> float:
@@ -218,24 +225,6 @@ def state_of(age_myr: np.ndarray, phases: Sequence[float]) -> np.ndarray:
 # --- the census ------------------------------------------------------------------------------------
 
 
-def ring_birth_radius(u: np.ndarray, R: np.ndarray, weight: np.ndarray, lo: float, hi: float) -> np.ndarray:
-    """The radii a level-0 ring [lo, hi) draws for uniforms ``u``, by inverting the CDF of ``weight`` (its density times
-    R on the grid radii, 0 outside the ring) on the ring's own interval (S70, D234; Audit V F-2-7): the table starts at
-    lo with nothing below it, so a grid point's weight fills the stretch from the last point before it, or from lo,
-    up to it. Until S70 the ring's draw was ``invert_cdf`` over the whole grid, whose first step inside the ring
-    interpolated from the grid point below lo: 712 of the Milky Way template's 16 577 clouds were born up to 71 pc
-    inside the ring's inner edge (one grid step, 75 pc), in the ring their binners then counted them in, not the
-    ring that drew them. A cloud's ring is the ring that drew it, everywhere a per-ring total or a per-radius law is
-    read, so every radius drawn here is asserted in [lo, hi) - a draw outside it is a defect, never clipped."""
-    keep = (R > lo) & (R <= hi)
-    x = np.concatenate(([float(lo)], R[keep]))
-    cdf = np.concatenate(([0.0], np.cumsum(np.asarray(weight, dtype=float)[keep])))
-    radius = np.interp(np.asarray(u, dtype=float), cdf / cdf[-1], x)
-    if not np.all((radius >= lo) & (radius < hi)):
-        raise ArithmeticError(f"a cloud of ring [{lo}, {hi}) was drawn at {radius[(radius < lo) | (radius >= hi)][:3]} kpc")
-    return radius
-
-
 def ring_molecular_mass(sigma_h2: np.ndarray, R: np.ndarray) -> np.ndarray:
     """Molecular mass per cell ring, M☉: Σ_H₂ (M☉ pc⁻²) integrated over each ring's annulus."""
     edges, _ = cell_edges(R)
@@ -258,7 +247,7 @@ def ring_expected(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[s
     mean cloud mass at the ring's radius. No placement enters it, so it is the same number with the layer on or
     off - the ring's count is drawn at it (D220 item 1). It is the sum of the ring's cell expectations
     (:func:`expected_counts`) to the bit with the layer off; with the layer on that sum is the same number to
-    rounding (invariant I2: up to 32 units in the last place, 5.8e-15 of itself, on the inner rings, measured S61)."""
+    rounding (invariant I2: at most 1 unit in the last place, 2.2e-16 of itself, measured at S90 on the default galaxy with each ring's weights divided by their mean; 22 units on 352bdec before, 32 - 5.8e-15 of itself - at S61)."""
     rings, _ = cell_edges(R)
     ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
     mean = np.array([mass_function_mean(*law_for(0.5 * (rings[i] + rings[i + 1]), constants)) for i in range(CELL_RINGS)])
@@ -267,16 +256,31 @@ def ring_expected(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[s
 
 def sector_placement(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> tuple[Any, np.ndarray | None]:
     """``(pattern, weights)``: the gas's pattern from compose (S55, D214) and its exact sector means per ring,
-    ``(rings, sectors)`` and clipped at 0 - or ``(pattern, None)`` where nothing places the clouds (the layer off,
-    or a flat pattern), and every sector of a ring then weighs the same. What a census's cells expect and where a
-    ring's clouds are allocated (D220 item 2), read once."""
+    ``(rings, sectors)`` and clipped at 0, times the clustering field's mean in each cell (S90, #161) and divided by
+    their mean round each ring - or ``(pattern, None)`` where nothing places the clouds (the layer off), and every
+    sector of a ring then weighs the same. What a census's cells expect and where a ring's clouds are allocated
+    (D220 item 2), read once.
+
+    **The ring is the unit** (S90, #161; D220 part II, rule 2, which admits a ring or a cell): from S61 to S89 the
+    weights were the pattern's alone and the field placed a cloud only inside the cell the pattern allocated it to,
+    so every cell kept its own count and the hierarchy's power at scales near a cell's short side was cut (the
+    finished clouds read 1 + omega 1.97 at 47.5 pc against the field's own 2.43, and crossed 1 near 120 pc, not
+    190). Now a cell's share of its ring carries the field's mean over the cell
+    (``census_clustering.ClusteringField.sector_factors``, the published ``census_clustering_cell_mean``'s numbers),
+    and ``census_clustering.ring_unit`` keeps each ring's weights at mean 1, so the ring's expected total - and,
+    drawn ring-first, its realised total - is what it was (A10; invariant I2). Inside the cell the field places as
+    before. With a flat pattern the weights are the field's alone."""
     pattern = _compose.gas_pattern(fields, R, constants)
-    if pattern is None or pattern.flat:
+    field = _compose.census_clustering(fields, constants)
+    if field is None and (pattern is None or pattern.flat):
         return pattern, None
     rings, sectors = cell_edges(R)
-    return pattern, np.maximum(
+    weights = np.ones((CELL_RINGS, CELL_SECTORS)) if pattern is None or pattern.flat else np.maximum(
         np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)]), 0.0
     )
+    if field is None:
+        return pattern, weights
+    return pattern, _clustering.ring_unit(weights * field.sector_factors(R, int(constants[_clustering.TABLE_POINTS])))
 
 
 def expected_counts(
@@ -284,7 +288,8 @@ def expected_counts(
 ) -> np.ndarray:
     """The expected number of clouds in every cell, (rings, sectors): the cell's molecular mass over
     the law's mean cloud mass at the ring's radius, shared among the ring's sectors by the gas's own
-    contrast averaged over each (S51, D210). A population integral, whatever a request asked for.
+    contrast averaged over each (S51, D210) and, with the layer on, the clustering field's mean over each (S90,
+    #161), the ring's weights at mean 1 (:func:`sector_placement`). A population integral, whatever a request asked for.
     Since S61 no draw is made at a cell's expectation: a ring's count is drawn at its ring's
     (:func:`ring_expected`) and its clouds allocated among the sectors in these proportions (D220 items 1-2)."""
     _, weights = sector_placement(fields, R, constants) if placement is None else placement
