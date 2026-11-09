@@ -15,9 +15,8 @@ power paths (**#217**); on `session-90a`. Register **119 open = 38 + 81, 81 disc
 ## The merge (D246, taken 2026-11-09)
 - **The full suite ran on the GitHub runner, not here, on the owner's word**: `batch-m2` at c00caf5 (run 42548438883)
   1714 passed / 13 failed, every failure one of S90a's fourteen pins; `session-90a` at 6e7b378 (run 42558372671) **1713
-  passed, 41 skipped, specs OK**. `batch-m2` (15a0612) merged into `main` as **66687e0**; the nightly and the `image` run
-  for it are read at S91's open. **Not run here**: the local suite, `verify_clone`, the 35 `machine_pinned` cases (the
-  runner skips them; they last ran per file at S90's close).
+  passed, 41 skipped, specs OK**. `batch-m2` (15a0612) merged into `main` as **66687e0**; its nightly and `image` runs are
+  read at S91's open. **Not run here**: the local suite, `verify_clone`, the 35 `machine_pinned` cases (the runner skips them).
 
 ## What the owner is asked (build nothing on any before it comes; none blocks S91)
 - Standing: **#128** amend A10 or permanent (permanent, recommended); **#182** the 150 pc cap (recommended); **#180**
