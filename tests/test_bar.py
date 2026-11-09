@@ -438,7 +438,8 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # S59 (D218 follow-up): was 0.0025575 - the same galaxy again, its rings turned by segments of relative pitch.
     # S60 (D219), on the pieces' field: another galaxy's lowest cell. S60 fourth pass: was 0.0024782 at
     # ("milky_way", True, 28, 1).
-    assert sweep["lowest"] == pytest.approx(0.1163172, abs=1e-7) and sweep["where"] == ("milky_way", True, 3, 1)  # S87 (#80, #209): was 0.0085059 at ("milky_way", True, 33, 0) - the bar's law and pinned length, the pitch floor
+    # S91 (#216): was 0.1163172 - the same galaxy, its census re-laid by the births made bit-independent.
+    assert sweep["lowest"] == pytest.approx(0.1208049, abs=1e-7) and sweep["where"] == ("milky_way", True, 3, 1)  # S87 (#80, #209): was 0.0085059 at ("milky_way", True, 33, 0) - the bar's law and pinned length, the pitch floor
     # The whole field's A₂ maximum inside a, less B: a consequence of the two-armed mode on the bar's axis, as read.
     # S59 (D218): were (-0.005854, 0.008093), (0.3959, 0.4391) and (-0.008212, 0.010120), (0.3953, 0.9936).
     # S59 (D218 follow-up): were (-0.005748, 0.007290), (0.3959, 0.4679) and (-0.004974, 0.008373), (0.4167, 0.4594) -
@@ -447,7 +448,8 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # reaches 0.142 on the Milky Way's. S60 fourth pass: were (-0.007445, 0.006281),
     # (0.3959, 0.4535) and (-0.011014, 0.008358), (0.3953, 0.4594).
     # S87 (#80): were (-3.2153e-10, 0.141850), (0.4103, 0.9861) and (0.4167, 0.4167) - the bar's law and the pinned 5.0 kpc.
-    for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.188020), (0.4125, 0.9975)),
+    # S91 (#216): the Milky Way's high was 0.188020 - the censuses re-laid by the births made bit-independent.
+    for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.107999), (0.4125, 0.9975)),
                                                 ("ngc_4414", (-4.4e-16, 5.99e-11), (0.3792, 0.3792))):
         got = np.array(sweep["whole"][template])
         assert (float(got[:, 0].min()), float(got[:, 0].max())) == pytest.approx((low, high), abs=2e-6), template

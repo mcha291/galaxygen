@@ -628,15 +628,20 @@ def births_off_the_widest_gap(table: np.ndarray, R: np.ndarray, first_free: int)
         own = table[table[:, 0] == chain]
         born = own[own[:, 1] == 0.0][0]
         x = math.log(float(born[2]))
-        at = sorted((y0 + (x - x0) / (x1 - x0) * (y1 - y0)) % (2.0 * math.pi)
-                    for c, parts in lines.items() if c < chain for x0, y0, x1, y1 in parts if x0 <= x < x1)
+        crossing = sorted(((y0 + (x - x0) / (x1 - x0) * (y1 - y0)) % (2.0 * math.pi), c)
+                          for c, parts in lines.items() if c < chain for x0, y0, x1, y1 in parts if x0 <= x < x1)
+        at = [a for a, _ in crossing]
         if not at:
             alone += 1
             continue
         gaps = [(at[k + 1] - a) if k + 1 < len(at) else (at[0] + 2.0 * math.pi - a) for k, a in enumerate(at)]
         # (Two gaps of one width - the two halves a second chain leaves, opposite the first - differ here and in the
-        #  model by rounding alone: a birth at the middle of either is at the widest gap's.)
-        widest = [k for k, gap in enumerate(gaps) if gap >= max(gaps) - 1e-9]
+        #  model by rounding alone.) S91 (#216): gaps within 1e-9 rad of the widest are one width and the tie is
+        #  taken by identity - the gap that starts at the lowest chain's crossing (``arm_pieces.GAP_TOLERANCE``);
+        #  until S91 a birth at the middle of any tied gap passed here.
+        widest = [k for k, gap in enumerate(gaps) if gap >= max(gaps) - ap.GAP_TOLERANCE]
+        first = min(crossing[k][1] for k in widest)
+        widest = [k for k in widest if crossing[k][1] == first]
         worst = max(worst, min(abs(math.remainder(float(born[3]) - (at[k] + 0.5 * gaps[k]), 2.0 * math.pi)) for k in widest))
         in_gap += 1
     return in_gap, alone, worst
@@ -686,7 +691,9 @@ def test_the_census_by_hand_a_barred_disc_s_chains(prod):
     count, design, budget = np.asarray(F["arm_chain_count"]), np.asarray(F["arm_design_count"]), np.asarray(F["arm_power_budget"])
     has = budget > 0.0
     past = has & (R >= a)  # the first follow-up, item 2: no chain is born inside the bar's half-length
-    assert np.all(count[past] >= design[past]) and np.all(design[has] >= 2.0) and np.all(design[~has] == 0.0)
+    # S91 (#216): the births read the law's count to its rounding (`ap.counted`: within 1e-9 of an integer, that integer).
+    births = np.array([ap.counted(float(d)) for d in design])
+    assert np.all(count[past] >= births[past]) and np.all(design[has] >= 2.0) and np.all(design[~has] == 0.0)
     firsts = rows[rows[:, 1] == 0.0]
     assert np.all(firsts[:, 2] >= a * (1.0 - 1e-12)) and np.all(count[R < a] == 0.0)
     assert np.array_equal(count, sp.pieces.chains_crossing(R)) and sp.pieces.joins == int((rows[:, 7] != 0.0).sum())
@@ -702,7 +709,7 @@ def test_the_census_by_hand_a_barred_disc_s_chains(prod):
         i = int(np.argmin(np.abs(R - r)))
         assert R[i] == pytest.approx(r, rel=1e-14)
         earlier = sum(1 for ch, (lo, hi) in spans.items() if ch < chain and lo <= R[i] < hi)
-        assert earlier < design[i], (chain, r)
+        assert earlier < births[i], (chain, r)
     # Every birth at the widest gap's midpoint; no two chains cross; a joined end is a chain's last.
     in_gap, alone, worst = births_off_the_widest_gap(rows, R, 2)
     assert in_gap == len(starts) - 2 and alone == 0 and worst < 1e-12
@@ -724,7 +731,9 @@ def test_the_census_by_hand_a_barred_disc_s_chains(prod):
 
 # S87 (#80, D255): was (32, 6, 1) - the default disc's bar is Erwin's law's 2.27 kpc now, and its census is laid
 # from that bar's ends (#209's floor redraws none of this galaxy's pieces).
-EXPECTED_DEFAULT_CENSUS: tuple = (54, 13, 6)
+# S91 (#216): was (54, 13, 6) - the births made bit-independent: chain 4's quarter-turn tie at 2.29 kpc taken by
+# identity (the gap at the earliest-laid piece), not by the last bit; a one-ulp probe no longer moves it.
+EXPECTED_DEFAULT_CENSUS: tuple = (53, 12, 5)
 
 
 def test_a_flocculent_disc_is_single_pieces_and_an_unbarred_one_has_no_chain_from_a_bar(prod):
@@ -746,7 +755,8 @@ def test_a_flocculent_disc_is_single_pieces_and_an_unbarred_one_has_no_chain_fro
     # (pieces, those ended at a join, the least and the greatest extent of the others in degrees)
     assert record == EXPECTED_FLOCCULENT, repr(record)
     has = np.asarray(floc.fields["arm_power_budget"]) > 0.0
-    assert np.all(np.asarray(floc.fields["arm_chain_count"])[has] >= np.asarray(floc.fields["arm_design_count"])[has])
+    births = np.array([ap.counted(float(d)) for d in np.asarray(floc.fields["arm_design_count"])])  # S91 (#216)
+    assert np.all(np.asarray(floc.fields["arm_chain_count"])[has] >= births[has])
     assert crossings(rows) == (0, 0) and births_off_the_widest_gap(rows, floc.grid.R, 0)[2] < 1e-12
     other = table_of(multi.fields)
     pieces_per_chain = np.bincount(other[:, 0].astype(int))
@@ -1562,7 +1572,8 @@ def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
 
 # S60 fourth pass (re-pinned on the final model): EXPECTED_CREST was {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.41), 'Sgr-Car': (0.01, 0.88), 'Local': (0.03, 1.0), 'Perseus': (0.03, 0.9), 'Outer': (0.05, 0.82)}
 # S87 (#148, #209, #80): EXPECTED_CREST was {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.38), 'Sgr-Car': (0.01, 0.88), 'Local': (0.04, 1.0), 'Perseus': (0.03, 0.82), 'Outer': (0.04, 0.88)} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
-EXPECTED_CREST: dict = {'Norma': (0.31, 0.2), 'Sct-Cen': (0.13, 0.37), 'Sgr-Car': (0.01, 0.8), 'Local': (0.04, 1.0), 'Perseus': (0.02, 0.83), 'Outer': (0.04, 0.93)}
+# S91 (#216): Perseus was (0.02, 0.83), Outer (0.04, 0.93) - the template's census (49, 13, 4) -> (46, 12, 3), chain 12's one-ulp birth gone.
+EXPECTED_CREST: dict = {'Norma': (0.31, 0.2), 'Sct-Cen': (0.13, 0.37), 'Sgr-Car': (0.01, 0.8), 'Local': (0.04, 1.0), 'Perseus': (0.02, 0.85), 'Outer': (0.04, 0.89)}
 # S60 fourth pass: was {'Norma': (0.26, 0.22), 'Sct-Cen': (0.16, 0.12), 'Sgr-Car': (0.01, 0.95), 'Local': (0.01, 1.0), 'Perseus': (0.01, 0.83), 'Outer': (0.05, 0.76)}
 
 
@@ -1619,7 +1630,7 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
 # budget are gone (the walk ends at 12.34 kpc), so the gas's outer contrast and its rotated null moved: the as-built 0.19 -> 0.20,
 # Norma-Outer 0.19 -> 0.22, the null's median 0.46 -> 0.50, the percentile 3 -> 2; the young stars' record is unmoved (the
 # star formation contrast keeps no spur). No verdict: a disclosed check.
-EXPECTED_MASERS: dict = {'gas': (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.23, 0.96), 2, 97)}
+EXPECTED_MASERS: dict = {'gas': (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.24, 0.96), 2, 97)}  # S91 (#216): the young stars' null band's low was 0.23 - the template's census re-laid
 # S60 fourth pass: was {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 # (the polyline alone, before A and B: gas 0.07 at the 0th percentile of a null of median 0.50, the young stars 0.10 / 0.44)
 
@@ -2230,7 +2241,8 @@ def test_no_step_round_any_whole_ring(prod, leg):
 
 EXPECTED_WHOLE_RINGS: dict = {
     # S87 (#148, #209, #80): were milky_way (73, 0.055, [...the same kinks...], 0.6, 1.64) and default (0, 0.0, [], 0.11, 0.38) - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
-    "milky_way": (67, 0.0609, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
+    # S91 (#216): the Milky Way was 67 exempted steps - its five seeds' censuses re-laid by the births made bit-independent.
+    "milky_way": (78, 0.0609, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
     "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.1, 0.46),
 }
 # (The twelfth follow-up, item 3: the wedges read the law's width and the largest step is recorded outside every

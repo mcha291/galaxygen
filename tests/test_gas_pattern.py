@@ -1453,7 +1453,9 @@ def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, templat
         # the counts as in git's history - the clock, the floor and the Milky Way's pinned 5.0 kpc bar; recorded as read.
         "milky_way": dict(band={-35: 1, -16: 1, -15: 2, -14: 2, -13: 3, -12: 1, -10: 1, -7: 1, -6: 2, -5: 2, -4: 5, -3: 6, -2: 4,
                                 -1: 8, 1: 1, 2: 1, 3: 2, 5: 2, 8: 1, 9: 1, 10: 1, 12: 1, 16: 1, 18: 1, 469: 1, 486: 1},
-                          disc={-10: 1, -8: 2, -7: 2, -6: 6, -5: 3, -4: 9, -3: 11, -2: 8, -1: 14, 0: 2, 1: 6, 2: 5, 3: 5, 4: 5, 5: 6,
+                          # S91 (#216): the disc's -5 / -4 were 3 / 9 - the template's census (49, 13, 4) -> (46, 12, 3)
+                          # by the births made bit-independent (chain 12's one-ulp birth at 11.96 kpc gone).
+                          disc={-10: 1, -8: 2, -7: 2, -6: 6, -5: 5, -4: 8, -3: 11, -2: 8, -1: 14, 0: 2, 1: 6, 2: 5, 3: 5, 4: 5, 5: 6,
                                 6: 5, 7: 6, 8: 6, 9: 4, 10: 3}, other_arm=53, within_one=22, most=(486, 10)),
         "ngc_4414": dict(band={-2: 1, -1: 4, 0: 5, 1: 3, 2: 4, 3: 5, 4: 2, 5: 5, 218: 1, 220: 1, 222: 1, 225: 1, 227: 1, 230: 1,
                                233: 1, 236: 1, 239: 1, 243: 1, 246: 1, 247: 1, 249: 1, 250: 1, 253: 2, 256: 1, 257: 1, 259: 1,
@@ -1687,8 +1689,11 @@ def test_the_gate_s_predictions_as_measured(prod):
         (5.9625, (3.02, 0.007, 2.69), (1.8495, 0.34908, 2.0734), (1.7363, 0.44036), False),
         (7.9875, (2.79, 0.018, 2.56), (1.5502, 0.64268, 1.4059), (1.5486, 0.63472), False),
         (10.0125, (2.09, 0.18, 2.04), (1.4897, 0.75396, 1.3612), (1.4893, 0.75703), False),
-        (10.9875, (1.77, 0.38, 1.89), (1.2042, 0.80057, 1.2185), (1.2039, 0.79657), False),
-        (12.0375, (1.20, 0.81, 1.28), (1.0934, 0.89953, 1.0944), (1.0933, 0.89820), False),
+        # S91 (#216): the outer two rows' built crest and composed (crest, trough) were 1.2042 / (1.2039, 0.79657) and
+        # 1.0934 / (1.0933, 0.89820) - the default galaxy's outer chains re-laid by the births made bit-independent
+        # (the census (48, 13, 4) -> (42, 11, 3)); the first four rings unmoved, the verdicts unmoved.
+        (10.9875, (1.77, 0.38, 1.89), (1.1867, 0.80057, 1.2185), (1.1866, 0.79716), False),
+        (12.0375, (1.20, 0.81, 1.28), (1.0964, 0.89953, 1.0944), (1.0964, 0.89920), False),
     )
     # S62 (D221): the published field's (crest, trough) with the spurs, where they move it (beyond 10 kpc no spur
     # reaches the ring: <S> under 2e-9). S87 (#148, #209, #80): the spurs now reach the ring at 10.0 kpc too (its
@@ -1713,7 +1718,8 @@ def test_the_gate_s_predictions_as_measured(prod):
     # The forcing's sum at the six rings: the untapered one (the probe's tapered sums were 1.08, 2.28, 1.97, 1.25, 0.88, 0.25).
     sums = [float(f_sum[row(o, radius)]) for radius, *_ in table]
     # S60 fourth pass: was [3.659, 2.781, 1.976, 1.249, 0.884, 0.247].
-    assert sums == pytest.approx([0.6176, 0.9631, 0.5892, 0.4939, 0.3431, 0.1635], abs=3e-3)  # S87 (#148, #209, #80): was 0.1676, 0.4899, 0.5781, 0.8850 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    # S91 (#216): the sixth was 0.1635 - the outer chains re-laid (the births bit-independent).
+    assert sums == pytest.approx([0.6176, 0.9631, 0.5892, 0.4939, 0.3431, 0.1665], abs=3e-3)  # S87 (#148, #209, #80): was 0.1676, 0.4899, 0.5781, 0.8850 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     # The gaps between the arms, 6 to 8 kpc: nearly emptied, on every ring - S60 (D219): **not held now**: the
     # forcing's sum there is 0.53 at the least (never over 1), and the troughs of s stand at 0.35 to 0.64. S60 fourth
     # pass: was `np.all(f_sum[band] > 1.0) and max trough < 0.02 and min == 4.24e-5` (held until S60), 8 steps.

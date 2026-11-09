@@ -241,7 +241,9 @@ def test_the_lowest_cell_over_the_suite_s_seeds_as_measured(prod):
     lowest, drawn = lowest_cell(prod)
     assert drawn == 240
     # S60 fourth pass: was 0.00248, on the modes' field.
-    assert lowest == pytest.approx(0.116317, abs=1e-5) and lowest > 0.0  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.008506
+    # S91 (#216): was 0.116317 - the same galaxy (milky_way, pattern seed 3, texture 1), its census re-laid by the
+    # births made bit-independent.
+    assert lowest == pytest.approx(0.120805, abs=1e-5) and lowest > 0.0  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.008506
 
 
 def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):
