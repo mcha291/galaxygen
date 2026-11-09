@@ -149,8 +149,10 @@ BRIGHT_GATE_READ_OVER = ("S88 (M1): the young bright stars' judged clauses read 
 
 # S90 (#161): the clusters' case lifted - with the field's cell means in the clouds' sector weights their slope reads
 # -0.4991, inside the window (0.141); the clouds' -0.4843 is still over (0.156) and held strict, the reason re-measured.
-L1_GATE_READ_OVER_S90 = ("S90 (#161, the ring the unit): the clouds' judged slope reads -0.4843 against -0.64 +/- 0.15 "
-                         "(S88 -0.4796; the clusters' -0.4991 now inside); the gate's to rule")
+# S90 close (the gate, D258): #161 discharged; the clouds' residual is register #215 (the amplitude rose together at every
+# scale below 190 pc, so the flatter shape #80's census left is unchanged) - held strict under #215, M3's.
+L1_GATE_READ_OVER_S90 = ("S90 (#215, after #161's ring-unit mend): the clouds' judged slope reads -0.4843 against -0.64 +/- 0.15 "
+                         "(S88 -0.4796; the clusters' -0.4991 now inside); register #215, M3's")
 
 
 @pytest.mark.parametrize("name", (pytest.param("clouds", marks=pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER_S90)), "clusters"))
