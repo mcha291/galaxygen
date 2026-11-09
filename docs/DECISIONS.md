@@ -16948,4 +16948,8 @@ since the runners disagree among themselves.
 **The register.** +2: **#216** (the arm census's births decided by rounding; the owner's — a model change that moves
 the hash and every census, or the owner's word that a seed names a galaxy on one machine) and **#217** (the tile's
 and the table's threshold two computations of one power; a batch's) — **119 open — 38 permanent, 81 carried — and 81
-discharged**; next number #218, decisions from D260. The gates here: below.
+discharged**; next number #218, decisions from D260. **The gates here**: the fourteen marked cases in one
+low-priority single-threaded process with `CI` unset, **14 passed in 25 min 07**; the same ids with `CI=true`, **14
+skipped in 1.4 s**; `tools/progress.py` and the light gates (`test_docs`, `test_progress`, `test_audit`, `test_hook`,
+`test_graph`) **74 passed, 1 xpassed** (#154's cost record, non-strict); `git diff --stat` empty under `model/galaxy`.
+The gate's dispatched `ci` run on `session-90a` reads the marks on the runner before the merge.
