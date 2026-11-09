@@ -1,4 +1,5 @@
-"""The reference the layer-off model is held to: S55 with the randomness layer off (S56, DECISIONS.md D215).
+"""The reference the layer-off model is held to: S55 with the randomness layer off (S56, DECISIONS.md D215) until
+S90; since S90 (D258, #214) the batch's final layer-off run, re-based at each batch's close.
 
 **What it replaced, and why.** Phase R (S55, D214) was behaviour-preserving, and this module's first reference was of
 S54 with the layer **on** (``tests/layer_reference_s54.json``): every field and every route's arrays, bit for bit.
@@ -6,7 +7,7 @@ That reference is retired at S56: from Phase P1 the layer-on galaxy changes by d
 their phases a new draw on ``texture_seed`` - so a layer-on digest stops being a statement about anything a phase
 must keep. What a phase must keep is the physics, and the physics alone is the layer-off run.
 
-**The reference is S55's layer-off run** (D215, the lead's reading 3), captured at S55's state (session-56 at
+**The reference was S55's layer-off run until S90** (D215, the lead's reading 3), captured at S55's state (session-56 at
 9b54398, before any of P1's model code moved) and committed as ``tests/layer_reference_s55.json``. On the
 production grid:
 
@@ -20,19 +21,25 @@ production grid:
   is held to these. They are made by ``tests/s55_patterns.py``, a frozen copy of S55's two classes that was the
   classes themselves bit for bit, and the published fields, at capture.
 
-``tests/test_layer.py`` holds every later layer-off run to it, field by field, **with a closed, named list of
-exceptions** (``LAYER_OFF_EXCEPTIONS``; at S56 one entry, ``arm_multiplicity``: it was the drawn arm number and is
-the derived dominant one).
+From S56 to S89 ``tests/test_layer.py`` held every later layer-off run to S55's file, field by field, with a named
+list of exceptions (``LAYER_OFF_EXCEPTIONS``; at S56 one entry, ``arm_multiplicity``) that grew into a ledger of the
+named movements since S55. That ledger is now history (below).
 
 ``uv run python tests/layer_reference.py`` prints the digest's own sha256 and what differs from the reference, and
 writes nothing; ``... write`` rewrites the reference, which is a deliberate act a decision must record.
 
 **At S88, M1's close (DECISIONS.md D256), the rewrite was tried and reverted.** M1's final model (``content_hash``
 244c8bda...) moved 1 038 of the reference's entries by design - #148's clock, #80's bar law and pin, #209's floor,
-#212's ``MERGER_HEATING`` - which no named list carries; but ``tests/test_layer.py``'s two reference tests are a ledger
-of the named movements since S55, asserted against this file, and every asserted difference vanishes on a new anchor.
-The reference stays S55's; both tests are held strict; the ledger's re-anchoring per batch, or its retirement to the
-batch's hash pin, is register #214 (M2's).
+#212's ``MERGER_HEATING`` - which no named list carries, and the tests' ledger was asserted against S55's file.
+
+**At S90, M2's close (the gate, D258; #214), the reference is re-based.** It is M2's final layer-off run
+(``content_hash`` 5a2c097e...), written by ``... write`` to a new file, ``tests/layer_reference_s90.json``
+(``REFERENCE``). The reference is re-anchored at each batch's close by decision - each batch that moves the model
+re-bases it at its close - and ``tests/test_layer.py``'s two reference tests hold every later run to it with an
+empty named list (a field or route that moves between re-bases is named by a decision, with the reason).
+``tests/layer_reference_s55.json`` (``REFERENCE_S55``, ``load_s55()``) is kept untouched: it is S55's history and
+the oracle ``tests/test_modes.py`` reads - S55's single-mode digests (the m = 4 fields S55 published) and the streams
+S55 drew.
 """
 
 from __future__ import annotations
@@ -46,7 +53,8 @@ from typing import Any
 
 import numpy as np
 
-REFERENCE = Path(__file__).resolve().parent / "layer_reference_s55.json"
+REFERENCE = Path(__file__).resolve().parent / "layer_reference_s90.json"  # S90 (#214, D258): was layer_reference_s55.json
+REFERENCE_S55 = Path(__file__).resolve().parent / "layer_reference_s55.json"  # S55's run, kept: test_modes' oracle
 
 MODELS = ("azimuthal", "basic")
 TEMPLATES = ("milky_way", "ngc_4414")
@@ -342,7 +350,13 @@ def digest() -> dict[str, Any]:
 
 
 def load() -> dict[str, Any]:
+    """The reference (since S90, M2's final layer-off run; re-based at each batch's close by decision)."""
     return json.loads(REFERENCE.read_text(encoding="utf-8"))
+
+
+def load_s55() -> dict[str, Any]:
+    """S55's layer-off run, kept as history and as ``tests/test_modes.py``'s oracle (#214, D258)."""
+    return json.loads(REFERENCE_S55.read_text(encoding="utf-8"))
 
 
 def differences(made: dict[str, Any], held: dict[str, Any]) -> list[str]:

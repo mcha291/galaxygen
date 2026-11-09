@@ -55,3 +55,28 @@ from Vallejo, Braine & Baudry 2002's obscured molecular ring (5″-50″ at 17.7
   interarm 75; barred centres ~20× the discs' sightline Σ (Sun et al. 2020); M51's centre 212, arms 185, interarm 143
   (Colombo et al. 2014).
 - Heyer & Dame 2015 was not read (403).
+
+---
+
+## Part S89 — what #181's, #182's, #94's and #95's closers need (2026-11-04, no web access)
+
+Read beside today's model at S89 (BUILD_V row 89). None of the four is built; each needs a source the repository does
+not hold, or a ruling.
+
+- **#182, the giants.** The two mass-radius relations above (Miville-Deschênes et al. 2017, M = 36.7 R^2.2; Lada & Dame
+  2020, M = 78.6 R^1.98) put a 10⁷ M☉ cloud at R = 296 and 378 pc and a 10⁶ M☉ cloud at 104 and 118 pc; the model's
+  regimes give 62 pc (Σ 82) and 95 pc (Σ 35) at 10⁶ and cap every cloud at 150 pc. A relation in place of the cap makes
+  the giants larger than the owner chose at S67 ("Smaller giant clouds (model)", D231), and the catalogues' R is an
+  equal-area radius of a CO footprint, not √(M/πΣ_GMC): a ruling, the owner's. A Σ_GMC profile across the molecular
+  ring's edge (Lada & Dame's regimes are joined by none) and NGC 4414's own cloud census are not held.
+- **#181, the HII complexes.** A size-luminosity relation for giant HII regions in nearby discs and their luminosity
+  function (candidates `[recall — NEEDS SOURCING]`: Kennicutt 1984's giant HII region sizes; the PHANGS-MUSE nebular
+  catalogue's HII region sizes and luminosities). With one read, the census's regions in one clustering cell can be
+  merged into one Strömgren volume of their summed photons at the cell level whose merged sizes match it; without it the
+  level is a guess.
+- **#94, the diffuse molecular gas.** A diffuse (non-cloud) share of the Milky Way's CO or H₂ with its error (Roman-Duval
+  et al. 2016's diffuse component is the nearest candidate `[recall — NEEDS SOURCING]`; the reader above gave only its
+  layer, 130-200 pc), or a sourced completeness limit for the mass function's lower end (10⁴ M☉ is `[inferred]`).
+- **#95, the cloud vector's draws.** An HII-region-to-cloud offset distribution (a PHANGS cloud-HII-region cross-match
+  `[recall]`), a measured density gradient across clouds, a remnant shell's visibility time: each a constant with its
+  citation in place of the stated draw.

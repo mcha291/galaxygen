@@ -91,6 +91,10 @@ def ring_integral(sigma, R):
     return out
 
 
+# S89 (#202): the largest change of the diffuse share between neighbouring grid rings, measured (layer on and off alike).
+LARGEST_STEP = {"milky_way": 0.0259, "ngc_4414": 0.0334}
+HELD_RINGS = {"milky_way": [26, 27, 28, 29, 30, 31], "ngc_4414": list(range(20, 32))}
+
 @pytest.mark.parametrize("template,layer", CASES)
 def test_gate_i_the_rings_dust_is_the_diffuse_share_plus_the_realised_clouds(service, template, layer):
     R = service.grid.R
@@ -103,17 +107,34 @@ def test_gate_i_the_rings_dust_is_the_diffuse_share_plus_the_realised_clouds(ser
     ring = np.asarray(c["cell"]) // SECTORS
     clouds_dust = np.bincount(ring, weights=c["cloud_mass"] * np.interp(c["cloud_birth_radius"], R, f["dust_to_gas_ratio"]), minlength=RINGS)
     e = ring_edges(R)
-    for i in range(RINGS):
-        # The grid rings the cell ring holds all carry its share (the last edge in the last ring).
-        here = (R >= e[i]) & ((R < e[i + 1]) | (i == RINGS - 1))
-        assert np.ptp(share[here]) == 0.0, i
-        s = float(share[here][0])
-        if dust[i] > 0.0:
-            assert abs(s * dust[i] + clouds_dust[i] - dust[i]) <= 1e-12 * dust[i], (i, s, dust[i], clouds_dust[i])
-        else:
-            assert s == 1.0 and clouds_dust[i] == 0.0
-    # The header's rings say the same, and the disc's realised clouds' share is the probe's.
     rings = h["clouds"]["rings"]
+    # S89 (#202): was "the grid rings the cell ring holds all carry its share" (np.ptp(share[here]) == 0 and
+    # share * dust + clouds = dust per ring) - a step at every level-0 ring's edge, D237's circle at 4.725 kpc. The
+    # share is a continuous function of R now: linear between the level-0 rings' centres (the header's rings.nodes),
+    # each ring's dust-weighted integral of it that ring's diffuse dust - the closure per ring, kept to 1e-12.
+    nodes = rings["nodes"]
+    assert np.allclose(nodes["radius"], 0.5 * (e[:-1] + e[1:]), rtol=0, atol=1e-12)
+    raw = np.interp(R, nodes["radius"], nodes["share"])
+    held = np.zeros(R.shape, dtype=bool)
+    for k in nodes["held_rings"]:
+        held |= (R >= e[k]) & (R <= e[k + 1])
+    np.testing.assert_array_equal(share[~held], raw[~held])
+    # Held to [0, 1] (B9), each held ring's share kept by moving its own grid values (a step of what the hold took).
+    assert np.all((share >= 0.0) & (share <= 1.0)) and float(np.max(np.abs(share - raw))) < 3e-3
+    assert nodes["held_rings"] == HELD_RINGS[template]
+    diffuse = ring_integral(share * np.asarray(f["dust_surface_density"]), R)
+    for i in range(RINGS):
+        if dust[i] > 0.0:
+            assert abs(diffuse[i] + clouds_dust[i] - dust[i]) <= 1e-12 * dust[i], (i, diffuse[i], dust[i], clouds_dust[i])
+        else:
+            assert clouds_dust[i] == 0.0 and nodes["share"][i] == 1.0
+    # No step: measured at S89, the largest change between neighbouring grid rings 0.0259 on the Milky Way (0.2196 as a
+    # step before) and 0.0334 on NGC 4414 (0.3046); the nodes 0.2228-1.0013 and 0.1437-1.0010 - the linear function
+    # overshoots 1 by a thousandth at the outer rings, where the share is 1 and the dust falls steeply, which the hold
+    # takes back inside each ring (2.1e-3 and 1.5e-3 at most).
+    assert float(np.max(np.abs(np.diff(share)))) == pytest.approx(LARGEST_STEP[template], abs=1e-4)
+    assert 0.0 <= min(nodes["share"]) and max(nodes["share"]) < 1.002
+    # The header's rings say the same, and the disc's realised clouds' share is the probe's.
     assert np.allclose(rings["dust_mass"], dust, rtol=1e-12, atol=0.0)
     assert np.allclose(rings["cloud_dust_mass"], clouds_dust, rtol=1e-12, atol=0.0)
     assert rings["clouds_share_disc"] == pytest.approx(clouds_dust.sum() / dust.sum(), rel=1e-12)

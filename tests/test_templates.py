@@ -44,7 +44,6 @@ from galaxy.api import wire
 from galaxy.api.service import RESERVED, Service, routes
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS, MergerEvent, controls, seeds
-from galaxy.layer import compose
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.models.level0 import LEVEL0
 from galaxy.run import run
@@ -527,11 +526,13 @@ def tiling_error(inputs: dict) -> tuple[float, float]:
         # (16473.30405497519 against 16473.304054975186, the Milky Way template, SMALL; measured, s88_probe_named).
         from galaxy.layer import spurs as layer_spurs
         o = run(model, {k: v for k, v in inputs.items() if k in accepted}, SMALL,
-                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS, *(d.name for d in layer_spurs.GAS_SPUR_COLUMNS)))
+                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS, *(d.name for d in layer_spurs.GAS_SPUR_COLUMNS),
+                      "census_clustering_seed"))  # S90 (#161): the clouds' sector weights carry the clustering field's cell means
         R = o.grid.R
-        rings, sectors = clouds.cell_edges(R)
-        gp = compose.gas_pattern(o.fields, R, constants)
-        w = np.array([gp.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(systems.CELL_RINGS)])
+        # S90 (#161): was the gas's sector means read here (compose.gas_pattern's sector_means per ring) - the weights
+        # expected_counts reads are now those times the clustering field's cell means, divided by their mean round each
+        # ring (clouds.sector_placement), so eps is measured on those.
+        _, w = clouds.sector_placement(o.fields, R, constants)
         _TILING[key] = (float(np.abs(w.mean(axis=1) - 1.0).max()), float(clouds.expected_counts(o.fields, R, constants).sum()))
     return _TILING[key]
 
@@ -602,8 +603,9 @@ def test_naming_the_default_template_is_naming_none(route, query, layer):
                 # its own deterministic residue (bare +1 ulp, named -5 against layer off). Now DERIVED:
                 # cloud_count_total = sum_r (C_r / S) sum_s w_rs (clouds.expected_counts), C_r the ring's expected
                 # count - the same for both requests, the layer moves no ring total - and w_rs the gas's sector
-                # means, which tile each ring to 1 within eps: |mean_s w_rs - 1| <= eps (``_carried_mean``'s
-                # rounding). So each total is sum_r C_r (1 + delta_r), |delta_r| <= eps, and the two differ by at
+                # means (since S90, #161, times the clustering field's cell means, divided by their ring's mean), which
+                # tile each ring to 1 within eps: |mean_s w_rs - 1| <= eps (the rounding of that division; until S90
+                # ``_carried_mean``'s). So each total is sum_r C_r (1 + delta_r), |delta_r| <= eps, and the two differ by at
                 # most (eps_bare + eps_named) * total from the tiling; plus each total's own rounding - three
                 # roundings a cell term and a sum of K = CELL_COUNT terms, under (K + 2) u * total a run (the
                 # recursive summation's bound, which numpy's pairwise sum never exceeds), u = 2^-53. eps is

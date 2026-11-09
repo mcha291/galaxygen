@@ -1,57 +1,59 @@
-# BRIEF — after S88: M1 closed into `batch-m1` (D256); the owner's full suite gates `batch-m1` → `main`; next is S89 (BUILD_V rows 89–90), M2's first session
+# BRIEF — after S90: M2 closed into `batch-m2` (D258); the owner's full suite gates `batch-m2` → `main`; next is S91 (BUILD_V rows 91–92), M3's first session
 
-**The state (2026-11-03).** S88 (D256) closed M1: D255's six bounds applied with their probes (the ring-mean tolerance
-2e-13; the power-budget share a census draw, 0.445–0.934; the pair slope held with its cause, the law kept; the walk's
-coarse bound 0.58 by the clock, the production 0.27 holding; the `ngc_4414` step a reach boundary; the price a cost
-record at 3 500 µs); the owner's two answers built ("Yes, both": **the table judges the default inputs**, rows 15–17
-misses under #80; **`MERGER_HEATING` 90.6** on the model's clock, row 3 251.017 out by 0.017 under #11); #154's table
-made reproducible (a cache-dependent quadrature); **the hash moved once to 244c8bda25160845d157f3405518394c**, the
-bundles re-exported (202 entries at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s88\bundles`), the nine frames
-regenerated — **no frame nearer the goal pictures** (the Milky Way still many faint arms, no long bar, flecks not lanes;
-NGC 4414 smooth, no lanes); the S55 layer-off reference's rewrite tried and reverted (its two tests are S55's ledger:
-#214); five readings held with their cause (#161, #176, #197, the new #213). Register **122 open = 38 permanent + 84
-carried, 75 discharged**; next number **#215**, decisions from **D257**. M1's 25 items: 5 discharged, 5 permanent, 15
-carried with what closes each; #212 opened and discharged inside the batch; #213 and #214 opened to M2.
+**The state (2026-11-09).** S90 (D258), M2's close, built and discharged **#213** (the spurs' walk ends at the arms'
+budget's edge; the walk's bounds 0.0573 / 0.2506 / 0.5700 under 0.27 / 0.58), **#161** (the ring the unit of the
+clouds' conservation, D220 part II rule 2) and **#197** (the stars' and remnants' ring draws on the ring's own
+interval); **#214** re-based by the gate (`tests/layer_reference_s90.json`, S55's file kept as `test_modes`' oracle);
+**#215** opened (the clouds' L1 slope -0.4843, M3's). #158, #160, #162, #164, #165 read and carried; #159 / #163
+re-timed. **The hash 5a2c097ec5116dce6a2d7bff87d6559f in fact and pinned**; the bundles at
+`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s90\bundles` (202 entries); the nine frames regenerated — none nearer
+the goal pictures; #202's circle inconclusive, #169's streaks visible. **S90a (D259), beside S90:** the nightly on
+`main`, red since M1's merge on fourteen CI-only failures, read and marked `machine_pinned` (35 cases, were 21) —
+thirteen records of this machine's census, whose births rounding decides (**#216**, the owner's), one identity of two
+power paths (**#217**); on `session-90a`. Register **119 open = 38 + 81, 81 discharged**; next **#218**, **D260**.
 
-## What gates the merge (D246) — nothing else runs before it
-- **The owner's full suite on `batch-m1`**: `uv run pytest` backgrounded with its EXIT line to a file, read from
-  pytest's own line (the pricing flake #67 red alone is green). On EXIT=0: `batch-m1` merges into `main` (`--no-ff`,
-  the message through a file), tag **s88** on that merge, pushed; MANUAL_TODO row 88 takes the merge's SHA; CI's full
-  run on `main` read at S89's open. A red that is not #67's reopens S88 on `session-88`.
-- **The owner's look at the frames** beside the goal pictures rules #156 and #157's reopen condition.
-- Still the owner's: #210 (the zoom capture), #211 / T11 (the JWST set on `s83-robust` aa0eec6), T19 the deploy.
+## What gates the merge (D246)
+- **The owner's full suite on `batch-m2`** (#67's pricing flake red alone is green alone; `test_bright`, `test_render`,
+  `test_scaling`, `test_systems`'s wall-clock bounds read over only under load, green alone); then `batch-m2` → `main`
+  `--no-ff`. The tag s90 is on S90's merge into `batch-m2` (its SHA in `MANUAL_TODO.md` row 90); CI on `main` read at S91's open.
 
-## S89 — M2's first session (BUILD_V rows 89–90: the clouds, the dust and the gas; an Opus lead, Fable at the gates)
-- **Branches**: `batch-m2` cut from `main` after s88; `session-89` from it; S89 and S90 merge into `batch-m2`; S90's
-  close merges `batch-m2` into `main` on the owner's full suite, the hash moving **once** at S90 (ruling 4).
-- **M2's 27 items** (D251 + #213, #214): #128 the heating's placement applied; #167–#169, #180–#182 the clouds' law, layer
-  and slab; #202 the diffuse share's per-ring step (the 4.72 kpc circle); #197 the stars' and remnants' ring draws
-  (the owner's word; S88's held star of cell 300 is its case); #158–#165 the censuses' and spurs' debts (#161 holds
-  the L1 gate's and Audit V's pair slopes; #163 / #165 the feet); **#213** spurs on chains past the arms' budget (the
-  walk ends at the last ring with amplitude, or a spur's height is the ridge's excess — measured, both templates);
-  **#214** the S55 layer-off reference's ledger re-based at the batch's close or retired to the hash pin; #82, #91, #92, #94, #95, #109, #110, #136. Read each entry's "what closes it" before building; a ruling that is the
-  owner's (a constant's value, a rule) is put to them first, as D255 did.
-- **Held readings M2 inherits**: `tests/test_clustering_gate.py` (L1 gate, #161), `tests/test_hierarchy.py` (#197),
-  `tests/test_modes.py` (#213), `tests/test_layer.py`'s two reference tests (#214) — strict xfails with the measurement; `tests/test_v7_layer.py`'s dust column is #176's
-  (M3). A mend that passes one removes its mark with the reason.
-- **Builders**: worktrees cut from `session-89`, one commit per item, no push, no DECISIONS; `machine_pinned` tests
-  re-pinned with the reason, never loosened; the subset's files as parallel processes with their own EXIT lines; the
-  joint re-pin on the final model before anything is reported green; every `spec.py` note before the hash moves.
+## What the owner is asked (build nothing on any before it comes; none blocks S91)
+- Standing: **#128** amend A10 or permanent (permanent, recommended); **#182** the 150 pc cap (recommended); **#180**
+  Bronfman's flat value (recommended); **#82** rows 25–28 on attenuated light (no); **#109** the IR white point; **#169**,
+  **#110**'s viewer half (a viewer pass if the look wants it); #210; #211 / T11; T19; **the look at the frames** — #202's
+  circle, #169's streaks, #156 / #157.
+- S90's: **#164 / #165** the spur's height as the excess over the ring's trough, `crest_width`'s floor (recommended;
+  #165 waits for the ridge's width); **#160** the star sample's c-bar (1 - p) rule for both catalogues (recommended —
+  it redraws the bright catalogue, its tiles and the frames);
+  **#158**'s window half: whether D60's per-region rule answers a window by placed position; **#159 / #163**: the
+  whole-disc bound (D219 (c)) and when the cost pass runs.
+
+## S91 — M3's first session (BUILD_V rows 91–92; an Opus lead, Fable at the gates)
+- **The populations and the ionized gas**: T2 / #114 points through the filter set, T3 / #115 the young population
+  once, #113, #171, #184, #174–#176; #100–#101, #117–#119 and T10's forbidden lines (the FSPS grid download accepted
+  2026-11-02); T15; T8. M3's list (31, BUILD_V §2a): #83, #84, #85, #86, #88, #89, #91, #96, #97, #98, #100, #101, #102,
+  #103, #113, #114, #115, #117, #118, #119, #124, #125, #127, #135, #166, #171, #174, #175, #176, #184, #215.
+- **Branches**: `batch-m3` cut from `main` after `batch-m2` lands; `session-91` from it. The pin is lifted for the
+  batch; the hash moves once, at S92's close; one full suite at S92's close, the owner's run.
+- **The reference** (#214's procedure, D258): re-based by decision at the batch's close (`write` to a new file).
 
 ## The gates and the close (each session)
 - `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`; the picture test where a frame is regenerated
-  knowingly (`GALAXYGEN_PICTURE=1`, `GALAXY_BUNDLES` at the batch's export); `tools/progress.py` and the docs tests
+  knowingly (`GALAXYGEN_PICTURE=1`, `GALAXY_BUNDLES` at the export); `tools/progress.py` and the docs tests
   (`test_docs`, `test_progress`, `test_audit`, `test_hook`, `test_graph`); the register's count pin and pinned rows with
-  every entry. D257… in `DECISIONS.md`; `LESSONS.md` tagged; `RESUMING.md` ≤ 120 lines; this file rewritten;
-  `MANUAL_TODO.md`'s row (the SHA of the merge into the batch branch, then `main`'s at the batch's close).
+  every entry. D260… in `DECISIONS.md`; `LESSONS.md` tagged; `RESUMING.md` ≤ 120 lines; this file rewritten;
+  `MANUAL_TODO.md`'s row (the SHA of the merge into `batch-m3`, then `main`'s). The full suite on `batch-m3` before the
+  merge into `main`: the owner's run, or here on their word; CI's full run on `main` read at the next open.
 
-## Traps (S72–S88's stand)
+## Traps (S72–S90's stand)
 - Never run the full suite, `verify_clone` or the pins unprompted (D246). A fresh worktree needs `npm ci --prefix
-  frontend`. The owner's servers on 8017 / 8018 / 5173; agents 8050+; the picture test's 8019 one builder's at a time.
-  No backtick in a shell string; commit messages through a file with `s89_`-prefixed names (a refused Write is a stale
-  name); scripts through the Write tool. Two agents at once, one heavy, none past 50 % of the 5-hour window. Read a
-  suite's exit from pytest's own line. Stage a hunk on HEAD's text, never `--unidiff-zero`.
-- Any byte under `model/galaxy` moves the hash, the misses' prose included: write every note before the pin. A
-  bisection over a batch's states needs `-o pythonpath=<tree>` beside PYTHONPATH (pytest's own `pythonpath` wins).
-  Run every model file once on the final model before the bounds are ruled: the unrun files carried half of M1's
-  findings. Before a whole-model change, list every constant whose derivation reads the model's own output (#212).
+  frontend` and `uv sync`. The owner's servers on 8017 / 8018 / 5173; agents 8050+; the picture test's 8019 one
+  builder's at a time. No backtick in a shell string; commit messages through a file with `s91_`-prefixed names (a
+  refused Write is a stale name); scripts through the Write tool. Two agents at once, one heavy, none past 50 % of the
+  5-hour window (check `get_usage` before every spawn). Read a suite's exit from pytest's own line.
+- Any byte under `model/galaxy` moves the hash, the misses' prose included: write every note before the pin. A closer
+  older than the layer is re-read against A10 before it is built (D257); a constant derived from the model's own output
+  is listed before a whole-model change (#212); a closer that names a width the model never declared is a ruling.
+- S90: **an empty argument file runs the whole suite** (collect node ids without `-q`, refuse an empty part, read a
+  part's first log lines); **kill a run by its own process tree** (`taskkill /T` on the runner's PID), never by name; **a
+  wall-clock bound under a ten-process close** reads over and passes alone — read it alone before calling it.

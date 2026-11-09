@@ -82,11 +82,11 @@ def test_ids_bounds_and_windows():
 # and #209's floor, failing from #80's bar (the defaults' census re-drawn). The class is register #197's - the stars'
 # ring draw inverting below the inner edge, the clouds' fixed at S70 (F-2-7), the stars' carried to M2 - now met by
 # this census. Held strict for the gate (a mend is M2's #197), not loosened.
-HIERARCHY_197 = ("S88 (M1): a level-0 star of cell 300 at R 8.44826 kpc, 5.65 pc inside its ring's inner edge - #197's "
-                 "inversion below the inner edge, met by the census #80 re-drew; held for the gate")
+# S90 (#197): mended - the stars' level-0 draw inverts its own ring's interval (systems.ring_birth_radius, the clouds'
+# since S70); the cell's lowest star now stands at 8.46231 kpc, inside the edge (s90_probe197.py), and the strict hold
+# (HIERARCHY_197) passed and is lifted.
 
 
-@pytest.mark.xfail(strict=True, reason=HIERARCHY_197)
 @pytest.mark.parametrize("level", [1, 2, 3])
 def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     F, R, t = fields
@@ -146,7 +146,10 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     # rounding on the ring's stream) are allocated among its sectors by the parts' weights, and 9 land here against
     # the same expectation of 15.92 (measured: every cell's expectation under the allocation is the contrast's to
     # 4e-16, and the counts of a 200 000-star sample scatter about it at chi2 0.93-1.02 a cell on three seeds).
-    assert "level" not in parent and parent.size == 9
+    # S90: was 9 - M1's model (S86 10d3a32: 9 against 15.92; s89 a447981: 16 against 19.91 - the census #80's bar
+    # re-drew, the line masked since S88 by the HIERARCHY_197 hold above it); unmoved by #197's mend (16 on a447981
+    # and on the mend, which moves where in its ring a star stands, not how many a cell holds). s90_probe_cell300.py.
+    assert "level" not in parent and parent.size == 16
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields, constants):

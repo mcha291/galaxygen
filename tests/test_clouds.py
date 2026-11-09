@@ -274,9 +274,9 @@ def test_the_size_law_by_hand_either_side_of_the_molecular_ring_and_at_the_cap()
     assert cl.molecular_ring(c, ((0.43, 4.29),)) == (0.43, 4.29) and cl.molecular_ring(c) == (4.0, 7.0)
     # σ_v at the capped giant's own Σ: (pi G 141.47 / 5 x 150)^1/2 = (G M / 5 R)^1/2 = (4.3009e-3 x 1e7 / 750)^1/2 = 7.573.
     assert float(cl.velocity_dispersion(size[6:], sigma[6:])[0]) == pytest.approx(7.573, abs=1e-3)  # S70 (D234): was size[3:], the giant now last of seven
-    # The inner regime's central A_V is 82/42 of the 42's 2.9696: the column cancels to Σ alone.
-    # S70 (D234): the ring's 82 now (the inner regime's until then) - the number unmoved.
-    assert cl.census_extinction_v(c | {"HII_MASS_PER_HYDROGEN": float(LEVEL0["HII_MASS_PER_HYDROGEN"].value)}) == pytest.approx(5.7977, abs=1e-3)
+    # S89 (#167): was `cl.census_extinction_v(...) == 5.7977` - the census's one central A_V, 82/42 of the 42's 2.9696,
+    # retired with the stage's scalar (each cloud's own column is /api/clouds' cloud_dust_extinction_v).
+    assert not hasattr(cl, "census_extinction_v")
 
 
 def test_the_clouds_header_carries_the_stage_scalars(model):
@@ -291,13 +291,13 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
     assert r.status == 200
     header, _ = wire.decode(r.body)
     scalars = header["scalars"]
-    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v"}  # S40: A_V
+    # S89 (#167): was with "cloud_extinction_v" (S40, the census's one central A_V), retired with the stage's scalar.
+    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime"}
     # S55 (D214 section 5 as ruled at gate G1, change 4): the cloud-interior noise's octave count, lacunarity and
     # gain ride in the header under their own key, not among the scalars - they are constants of the model, not a
     # stage's fields - so a renderer reads them instead of holding them (rule D5 as amended).
     assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
-    # S67 (D231): was 2.9696 (42 Msun/pc2); the inner regime's 82 x 3/2 through Draine's V row, 82/42 of it.
-    assert scalars["cloud_extinction_v"] == pytest.approx(5.7977, abs=1e-3)  # 2.9696 x 82/42 = 5.7978
+    # S89 (#167): was `scalars["cloud_extinction_v"] == 5.7977` (S67; 2.9696 until D231) - retired.
     assert scalars["cloud_lifetime"] == pytest.approx(26.0)
     assert 0.0 < scalars["cloud_forcing_parameter"] < 1.0
     # The same numbers /api/arrays serves when the stage itself runs; the realised mass is that route's alone.
@@ -316,7 +316,7 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
 # distance of all 1 024 (the bar's other end), the highest-contrast ridge cell (contrast 6.7), and an outer cell,
 # where the mesh is exact (every cell from ring 14, 13.1 kpc, outward).
 # S62 (D221 item 7 as amended): (20, 5) was 0.0 - a gas spur reaches the outer cell, so the pattern is no longer flat there.
-MESH_TV = {(5, 18): 3.548e-4, (5, 2): 6.258e-4, (2, 0): 3.8086e-3, (20, 5): 2.048e-7}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.853e-3, 3.394e-3, 8.25e-4, 1.886e-6
+MESH_TV = {(5, 18): 3.548e-4, (5, 2): 6.258e-4, (2, 0): 3.8086e-3, (20, 5): 0.0}  # S90 (#213): (20, 5) was 2.048e-7 - the spur past the arms' budget whose flank it was is gone  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 2.853e-3, 3.394e-3, 8.25e-4, 1.886e-6
 MESH_TV_BOUND = 5e-3
 
 
@@ -325,7 +325,7 @@ def test_the_pattern_mesh_misplaces_little_of_a_cell_s_weight(default):
     bilinear between (``census_clustering.mesh_factor``); against the point function at every lattice point of all
     1 024 cells (measured at S61) the worst point is 32 % off - ring 5, sector 18, the bar's end - but what a draw sees,
     the total-variation distance of the cell's normalised weights, is at most 3.4e-3. Held here on four cells: each
-    below 5e-3, as measured to 1e-6, the outer one a spur's flank since S62 (it was exact). 0.07 s beyond the module's run (measured under the suite's
+    below 5e-3, as measured to 1e-6, the outer one a spur's flank from S62 to S89 and exact before and since (S90, #213). 0.07 s beyond the module's run (measured under the suite's
     load)."""
     from galaxy.layer import compose
     from galaxy.layer import census_clustering as CC
@@ -347,4 +347,4 @@ def test_the_pattern_mesh_misplaces_little_of_a_cell_s_weight(default):
         got[(ring, sector)] = 0.5 * float(np.sum(np.abs(mesh / mesh.sum() - point / point.sum())))
     assert all(tv < MESH_TV_BOUND for tv in got.values()), got
     assert got == pytest.approx(MESH_TV, abs=1e-6), got
-    assert 0.0 < got[(20, 5)] < 1e-5, got  # S62: was `== 0.0` - a spur's flank in the outer cell
+    assert got[(20, 5)] == 0.0, got  # S90 (#213): was `0.0 < ... < 1e-5` (S62: a spur's flank in the outer cell) - no spur stands past the arms' budget's edge, so the outer cell is exact again, as before S62

@@ -108,20 +108,25 @@ def test_the_v1_gate_holds_at_the_audit_mesh(svc, model):
 
 # --- V2 (D189): the frame's dust removes what it emits; the light is conserved; the layers sum -----------------
 
-def _layered_removed_share(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+def _layered_removed_share(tau: np.ndarray, ratio: np.ndarray, share: np.ndarray | None = None, cloud_ratio: float | None = None) -> np.ndarray:
     """(R, filter): the share the dust takes out of each ring's starlight with the stars and the dust in their own sech²
     layers (S52, D211), ``ratio`` the dust's height over the stars' per ring: each star's light through the dust above and
     below it at every inclination, ½[E₂(τA) + E₂(τ(1 − A))], over the stars' height x = z / 2h★ by the trapezoid on a
-    step of min(0.25, ratio / 6) to x = 18; A = ½[1 − tanh(x / ratio)]. Zero where the dust has no layer (NaN)."""
+    step of min(0.25, ratio / 6) to x = 18; A = ½[1 − tanh(x / ratio)]. Zero where the dust has no layer (NaN).
+    S89 (#168): with ``share`` (R,) the clouds' share of the dust in a layer ``cloud_ratio`` times the stars' height,
+    A = (1 − f) ½[1 − tanh(x / ratio)] + f ½[1 − tanh(x / cloud_ratio)], the step min(0.25, ratio / 6, cloud_ratio / 6)."""
     tau = np.asarray(tau, dtype=float)
     out = np.zeros_like(tau)
     for i, r in enumerate(np.asarray(ratio, dtype=float)):
         if not np.isnan(r):
-            step = min(0.25, r / 6.0)
+            f = 0.0 if share is None else float(np.clip(np.nan_to_num(share[i]), 0.0, 1.0))
+            step = min(0.25, r / 6.0) if f == 0.0 else min(0.25, r / 6.0, cloud_ratio / 6.0)
             x = np.arange(0.0, 18.0, step)
             weight = np.full_like(x, step) * 0.5 / np.cosh(x) ** 2
             weight[0] *= 0.5
             above = 0.5 * (1.0 - np.tanh(x / r))
+            if f > 0.0:
+                above = (1.0 - f) * above + f * 0.5 * (1.0 - np.tanh(x / cloud_ratio))
             t = np.maximum(tau[i], 0.0)[:, None]
             out[i] = 1.0 - ((expn(2, t * above) + expn(2, t * (1.0 - above))) * weight).sum(axis=-1)
     return out
@@ -139,7 +144,9 @@ def test_the_v2_balance_holds_at_the_audit_mesh(svc, model):
     area = _cell_areas(header).sum(axis=1)
     albedo = np.asarray(header["components"]["dust_extinction"]["albedo"])
     ratio = np.asarray(arrays["dust_height"], dtype=float) / float(header["layers"]["stars"])
-    share = _layered_removed_share((1.0 - albedo) * -np.log(arrays["dust_extinction"]), ratio)
+    clouds = header["layers"]["dust_clouds"]  # S89 (#168): the clouds' share of the dust in the clouds' layer
+    cshare, cratio = np.asarray(arrays[clouds["share"]], dtype=float), float(clouds["height"]) / float(header["layers"]["stars"])
+    share = _layered_removed_share((1.0 - albedo) * -np.log(arrays["dust_extinction"]), ratio, cshare, cratio)
     absorbed = share[:, 3] * f["disc_surface_brightness"]
     lit = f["dust_absorbed_surface_brightness"] > 1e-9 * f["dust_absorbed_surface_brightness"].max()
     assert absorbed[lit] == pytest.approx(f["dust_absorbed_surface_brightness"][lit], rel=1e-8)
@@ -157,9 +164,9 @@ def test_the_v2_balance_holds_at_the_audit_mesh(svc, model):
     # The light's three fates add to the light, in every filter, at every ring (exact).
     light = arrays["stars"].mean(axis=1)
     tau = -np.log(arrays["dust_extinction"])
-    escaped = light * (1.0 - _layered_removed_share(tau, ratio))
+    escaped = light * (1.0 - _layered_removed_share(tau, ratio, cshare, cratio))
     scattered = arrays["dust_scattered"].mean(axis=1)
-    absorbed_f = light * _layered_removed_share((1.0 - albedo) * tau, ratio)
+    absorbed_f = light * _layered_removed_share((1.0 - albedo) * tau, ratio, cshare, cratio)
     assert escaped + scattered + absorbed_f == pytest.approx(light, rel=1e-9)
 
 

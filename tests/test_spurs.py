@@ -291,17 +291,18 @@ def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     point = gp.unspurred_contrast_at(f["gas_spur_radius"][sample], f["gas_spur_azimuth"][sample])
     rel = np.abs(f["gas_spur_contrast"][sample] - point) / point
     assert rel.max() <= ls.WALK_READ_DIFFERENCE
-    assert rel.max() == pytest.approx(0.0103, abs=5e-4)  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar
+    assert rel.max() == pytest.approx(0.0077, abs=5e-4)  # S90 (#213): was 0.0103 - the walk ends at the arms' budget's edge, 53 -> 40 feet, so the ten sampled feet are others  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar
     # S70 (D234; Audit V F-2-4): and over EVERY foot, not ten - the bound is the population's (0.27, measured at seed
     # 4242: 0.2698); at this template's own seed every foot's read is within 0.0516 too (48 feet).
     every = np.abs(f["gas_spur_contrast"] / gp.unspurred_contrast_at(f["gas_spur_radius"], f["gas_spur_azimuth"]) - 1.0)
-    assert every.size == 53 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.0573, abs=5e-4)  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar  # S87 (#148, #80): was 48 feet - the clock and the template's pinned 5.0 kpc bar
+    # S90 (#213): 53 -> 40 feet - the 13 past the arms' budget's edge (12.34 kpc) are gone; they read 1.0 exactly, so the worst is unmoved
+    assert every.size == 40 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.0573, abs=5e-4)  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar  # S87 (#148, #80): was 48 feet - the clock and the template's pinned 5.0 kpc bar
     # S88 (D255 ruling 4): the bound's own seed, 4242, held here beside it - every foot on the production grid, the
     # population S70 measured the 0.27 on (0.2698 then, 44 feet); on M1's final model 0.2506 over 45 feet, 3 over 0.052.
     o4242 = galaxy_run(default_model, "milky_way", texture_seed=4242)
     f4, gp4 = o4242.fields, gas_of(default_model, o4242)
     every = np.abs(f4["gas_spur_contrast"] / gp4.unspurred_contrast_at(f4["gas_spur_radius"], f4["gas_spur_azimuth"]) - 1.0)
-    assert every.size == 45 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.2506, abs=5e-4)
+    assert every.size == 36 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.2506, abs=5e-4)  # S90 (#213): was 45 feet - the walk ends at the arms' budget's edge
 
 
 def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default_model):
@@ -311,7 +312,7 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     contrast is 1.1-1.6 times the ring's mean where M51's dust lanes stand 10-30 times above the Galaxy's column."""
     o = galaxy_run(default_model, "milky_way")
     f, gp = o.fields, gas_of(default_model, o)
-    assert f["gas_spur_radius"].size == 53 and np.unique(f["gas_spur_chain"]).size == 13  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
+    assert f["gas_spur_radius"].size == 40 and np.unique(f["gas_spur_chain"]).size == 13  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
     # At three radii: 10 λ_J,sp where each chain crosses, from the published fields and the walk's read.
     pieces = gp.stars.pieces
     table = {}

@@ -46,3 +46,23 @@ Conversions: a Gaussian's σ = FWHM / 2.3548 = HWHM / 1.1774; a sech²(z/2h) lay
 - **Heyer & Dame 2015** (ARA&A) was not read: the fetch returned 403.
 
 Read 2026-10-18 by a blind reader (no repository access); quotations as the reader gave them.
+
+---
+
+## Part S89 — what #180's closer needs that the repository does not hold (2026-11-04, no web access)
+
+Read beside today's model at S89 (BUILD_V row 89). The layer is one constant, `MOLECULAR_LAYER_FWHM` 120 pc (h 34.04
+pc), drawn at every radius for every cloud and both templates; since S89 (#168) the dust stage heats the clouds' share
+of the dust in that layer too, so the layer now reaches the infrared numbers. What a radial or mass law would need:
+
+- **The flare outside R0.** Nakanishi & Sofue 2006's Table 1 whole, every radial bin with its error: the reader above
+  quoted four (48 pc at 0-1 kpc, 90 ± 30 at 7-8, 186 at 8-9, 160 at 10-11), and the two outer bins fall again, so no
+  flare law can be fitted to what is held.
+- **Inside R0, a ruling.** Bronfman et al. 1988 (flat, the value entered), Marasco et al. 2017 (falling from ~100 pc HWHM
+  at the centre to ~50 pc at R0) and Malhotra 1994 / Nakanishi & Sofue (rising) conflict: by B12 they are named
+  rulesets, and which one the model draws is the owner's choice, not a reader's.
+- **A mass dependence.** Stark & Lee 2005's table of cloud heights by mass (the reader gave ~35 pc below ~2 × 10⁵ M☉ and
+  "thinner" above, no number), or a catalogue's heights binned by mass (Miville-Deschênes et al. 2017's whole-Galaxy
+  catalogue holds each cloud's latitude and distance `[recall]`).
+- **NGC 4414's own layer.** An edge-on CO thickness for NGC 4414 is impossible (it is inclined ~55°); a template's own
+  layer would need a population law (Yim et al. 2014's σ = a + b R over three spirals is a bracket, not a law).

@@ -234,6 +234,7 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
 
+@pytest.mark.machine_pinned  # S90a (#216, D259): a record of this machine's 240 draws, whose births rounding decides (the runner: 0.026249); the bound stays in CI above
 def test_the_lowest_cell_over_the_suite_s_seeds_as_measured(prod):
     """The lowest cell of the stellar field over the 240 galaxies, as measured on the pieces' field (S60, D219; the
     gate's test above keeps the bound); a layer-on number, pinned here apart."""
@@ -573,7 +574,7 @@ def test_the_fence_nothing_composes_or_places_from_arm_multiplicity(prod):
 def test_regression_the_published_s55_fields_are_the_m_4_oracle(prod):
     """What ties the frozen copy to S55: for the drawn arm number its two fields are the ones S55 published - the
     digests ``tests/layer_reference_s54.json`` held for the layer-on run until S56, carried here."""
-    held = layer_reference.load()["single_mode"]
+    held = layer_reference.load_s55()["single_mode"]  # S90 (#214, D258): S55's file, kept as this oracle
     assert held["milky_way"]["m4"] == {
         "stars": "<f8[400, 360]:7c90330760ec53ab57e1c96203a236b2a79fa54c6994284574a8471cd514a226",
         "gas": "<f8[400, 360]:eb04c184a7de24db197344cdba06807694a32c54b41a05277166008e13b206d1",
@@ -590,7 +591,7 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
     """"The arm number's draw retires ... and no other stream's path changes": the pitch, the fast-bar ratio (through
     the corotation radius and the pattern speed) and the two amplitudes are S55's bits, on the default seed and on
     ``ngc_4414``'s - read against the reference captured before the law moved."""
-    held = layer_reference.load()["fields"]
+    held = layer_reference.load_s55()["fields"]  # S90 (#214, D258): S55's file, the streams S55 drew
     names = ("pitch_angle", "arm_contrast", "bar_contrast", "bar_corotation_radius", "bar_pattern_speed",
              "bar_half_length", "gas_arm_contrast", "swing_x", "swing_arm_min", "swing_arm_max", "arm_contrast_mean")
     bar_s = ("bar_contrast", "bar_corotation_radius", "bar_pattern_speed", "bar_half_length")
@@ -717,11 +718,12 @@ def test_with_the_layer_off_no_piece_is_laid_and_the_stream_is_never_drawn(prod,
 # stars are exactly 1 at 20, 25 and 29 kpc, and NGC 4414 (no spurs) is exactly 1 throughout (measured,
 # s88_probe_sector20.py / s88_probe_outerspurs.py). Whether spurs belong on a chain with no ridge is the gate's to rule;
 # ruled at the close (D256): they do not - register #213, M2's; held strict here, not loosened.
-OUTER_SPURS = ("S88 (M1): the Milky Way's gas sector means at 20 kpc are 6.7e-15 off 1 (4.4e-3 at 25 kpc) - spurs on "
-               "chains past the arms' budget, feet of contrast 1.0; register #213 (the gate, D256), M2's")
+# S90 (#213): mended - the spurs' walk ends at the arms' budget's edge (layer/spurs.py; 12.34 kpc on the Milky Way
+# template, 53 -> 40 feet, the 13 past it read 1.0 exactly), and the gas's sector means are exactly 1 at 18, 20, 22, 25,
+# 27 and 29 kpc on both templates (s90_probe213.py). The strict hold (OUTER_SPURS) passed and is lifted.
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=OUTER_SPURS)) if t == "milky_way" else t for t in TEMPLATES])
+@pytest.mark.parametrize("template", TEMPLATES)
 def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(prod, template):
     """Rule 1c-5 (D60): the same function at a grid cell, at a point, over a sector. At the grid radii the pattern's
     published form is the published field exactly; the composing stage's radial fields are the object's own

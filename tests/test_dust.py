@@ -178,12 +178,24 @@ def test_the_absorbed_light_is_the_layered_share_of_the_starlight(model, coarse)
     tau_abs = (1.0 - _c(model, "DUST_ALBEDO_V")) * np.asarray(f["dust_extinction_v"]) / (2.5 * math.log10(math.e))
     ratio = np.asarray(f["gas_scale_height"], dtype=float) / float(f["thin_disc_scale_height"])
     absorbed = np.asarray(f["dust_absorbed_surface_brightness"])
-    assert np.allclose(absorbed, light * dust.layered_absorbed_fraction(tau_abs, ratio), rtol=1e-12, atol=0.0)  # tau rounded differently
+    # S89 (#168): was `light * dust.layered_absorbed_fraction(tau_abs, ratio)` - the clouds' share of the dust (the
+    # molecular fraction) lies in the clouds' own layer since, the rest in the gas's.
+    share = np.asarray(f["gas_molecular_fraction_profile"], dtype=float)
+    cratio = dust.cloud_layer_ratio({k: c.value for k, c in model.constants.items()}, float(f["thin_disc_scale_height"]))
+    assert np.allclose(absorbed, light * dust.absorbed_fraction(tau_abs, ratio, share, cratio), rtol=1e-12, atol=0.0)  # tau rounded differently
     assert np.all(absorbed <= light)
-    # Thinner than the stars, the dust absorbs less than the mixed slab would; flared past them, more.
+    # Thinner than the stars, the dust absorbs less than the mixed slab would; flared past them, more - as the gas's
+    # one layer holds it (S52-S88's statement, on every grain in the gas's layer).
     slab = light * dust.slab_absorbed_fraction(tau_abs)
     held = np.isfinite(ratio)
-    assert np.all((absorbed < slab)[held & (ratio < 1.0)]) and np.all((absorbed > slab)[held & (ratio > 1.0)])
+    one = light * dust.layered_absorbed_fraction(tau_abs, ratio)
+    assert np.all((one < slab)[held & (ratio < 1.0)]) and np.all((one > slab)[held & (ratio > 1.0)])
+    # S89 (#168): was `absorbed` in place of `one` above - with the clouds' share in the clouds' own layer the first
+    # flared ring absorbs under the slab (its clouds' dust lies in a layer far thinner than the stars'). The clouds'
+    # layer moves the share the way its height lies from the gas's: less where the gas's layer is the thicker, more
+    # where the clouds' is (the inner disc, the gas 21-34 pc).
+    moved = held & (share > 0.0) & (absorbed > 0.0)
+    assert np.all((absorbed < one)[moved & (ratio > cratio)]) and np.all((absorbed > one)[moved & (ratio < cratio)])
 
 
 def test_the_dust_is_between_10_and_60_k_wherever_the_disc_has_dust(model, coarse):
@@ -220,11 +232,11 @@ def test_the_temperature_profile_and_the_infrared_share(model, coarse):
     T = np.asarray(f["dust_temperature"])
     # S49 (D204, #126): the light integrated along the isochrone's points; was 17.955, 20.414, 19.543, 16.621, 16.485
     # S52 (D211): was 18.268, 20.207, 18.829, 16.597, 16.458
-    for r, want in ((2.0, 17.126), (5.0, 19.701), (8.2, 18.671), (12.0, 16.694), (16.0, 16.410)):  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 16.956, 19.510, 18.524, 16.577, 16.487
+    for r, want in ((2.0, 17.147), (5.0, 19.661), (8.2, 18.644), (12.0, 16.687), (16.0, 16.407)):  # S89 (#168: the clouds' dust in the clouds' layer): was 17.126, 19.701, 18.671, 16.694, 16.410  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 16.956, 19.510, 18.524, 16.577, 16.487
         assert float(np.interp(r, R, T)) == pytest.approx(want, abs=2e-3)
     L = float(f["dust_infrared_luminosity"])
-    assert L == pytest.approx(1.2487e10, rel=2e-4)  # S52 (D211): was 1.5665e10  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.1999e10
-    assert L / float(f["disc_luminosity"]) == pytest.approx(0.2615, abs=2e-4)  # S52 (D211): was 0.3414
+    assert L == pytest.approx(1.2457e10, rel=2e-4)  # S89 (#168): was 1.2487e10  # S52 (D211): was 1.5665e10  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.1999e10
+    assert L / float(f["disc_luminosity"]) == pytest.approx(0.2609, abs=2e-4)  # S52 (D211): was 0.3414  # S89 (#168): was 0.2615
 
 
 # --- scattering, the field G0 and the PAHs -----------------------------------------------------

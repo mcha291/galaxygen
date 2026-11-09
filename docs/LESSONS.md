@@ -2075,3 +2075,82 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the tests failed on their history. The lead's strict hold was right; the gate's rewrite was reverted and the
   re-anchoring made a register item for the next batch (#214): a reference that must follow the model per batch needs
   its ledger re-based with it, by decision, or retiring to the hash pin that already holds the model bit for bit.
+
+## From S89 (BUILD_V row 89, M2's first session: the clouds and the dust; an Opus lead)
+
+- [advanced] **A closer written before the separation may now need a rule's change: read A10 and I1/I4 before
+  building it.** #128(a)'s "a seeded extension of the dust stage" was written at S52; since S55 the contrasts it would
+  read are composed fields (1 with the layer off), so a heating that reads them is a composing stage whose radial
+  outputs differ on and off - A10 ("the layer changes no ring total of any field") and I1 forbid it, and a non-linear
+  quantity has no neutral. The graph's `may_place` and the I1 test say so in one read; the measurement went in and the
+  rule went to the owner.
+- [advanced] **A second law nobody reads is retired, not mended.** #167's closer asked the clouds stage to read the
+  dust-to-gas ratio; the drawings had read the API's own per-cloud column since S67, so the census's scalar was a
+  duplicate on another law (A9). Removing it closed the debt with no drawn change; find what still reads a field before
+  writing its fix.
+- [field] **A share published on one grid and drawn on another needs a conservative reconstruction, not a lookup.**
+  #202's step was a per-ring number read at every grid ring; linear between the rings' centres with the nodes solved
+  so each ring's own quadrature keeps its share (a diagonally dominant system) removed the step and kept the closure to
+  1e-16 - and overshot 1 by a thousandth where the share is 1 and the dust falls, which a per-ring correction inside
+  the ring's own grid values takes back. Check the bounds a test already holds before choosing a reconstruction.
+- [advanced] **A probe that takes a check apart can kill the reading the check was carried on.** #136's "the dust
+  reddens too little" assumed the dust reddens: the three terms read separately show NGC 4414's extinction making its
+  frame *bluer* (the dust in the red inner disc), so the stars' colour carries the miss. #82's B4 prediction (the two
+  readings separate on the colour) failed the same way - attenuation reddens the galaxy by 0.009.
+- [infra] **A field's name inside a function's name breaks a substring guard.** A script asserted `'share' not in sig`
+  on `layered_removed_share(...)` and refused; guard on the token you add (`'share:'`), not on a word the name holds.
+- [close] **A model edit lands in the next item's commit unless its tests run whole.** #167's retired scalar moved two
+  counts in `tests/test_layer.py` (the fields, the held set) that #167's targeted run did not reach; they were re-pinned
+  in #168's commit with the reason. Run a heavy file whole once per item that removes or adds a field.
+- [close] **A closer written before the layer existed is re-read against A10 before it is built.** #128's "seeded
+  extension" (D211, S52) asked the heating to read the composed contrasts; since S55 those are 1 with the layer off,
+  and a stage that reads them publishes totals the layer changes, which A10 forbids. The lead measured the effect (under
+  3 % of the absorbed power) and put the rule to the owner instead of building a composing stage - the batch's rule:
+  a closer that needs a rule's change is a ruling, however old the closer. The gate reads every M-batch closer's date.
+
+## From S90 (BUILD_V row 90, M2's close: the gas, the censuses and the batch's close; an Opus lead)
+
+- [infra] **An empty argument file runs the whole suite.** The close runner split test_pieces and test_gas_pattern by
+  node id into `@file` arguments; the collection was read with `-q` on top of `addopts = "-q"`, which prints counts
+  per file, not node ids, so every part file was empty and each of nine processes ran every test. Collect without
+  `-q`, refuse a part with no node ids, and look at the first lines of a part's log before leaving it to run.
+- [infra] **Kill a run by its own process tree, never by name.** A blanket kill of every pytest process is refused
+  (other workloads share the machine); the runner's own PID with `taskkill /T` stopped exactly its children.
+- [close] **A re-base can be tried without writing the reference.** #214's prepared tests were run against the final
+  model's digest dumped to the scratchpad, through a one-line pytest plugin that points `layer_reference.REFERENCE`
+  at it - and that run found three faults in the rewrite that reading had not (the Milky Way template is not the
+  default galaxy since #80's pin, the template pins the Sun's azimuth, a header carries the molecular ring's pin).
+- [close] **A wall-clock bound fails under a ten-process close and passes alone - read it alone before calling it.**
+  Four timing tests (the bright whole disc, 1e5 objects, the fresh-interpreter row, a million stars) read 1.4-2.3x
+  over under load and green alone; only #67's pricing flake stayed red, beside one other process.
+- [field] **When a mend changes what a test conserves, the test is re-stated, not re-pinned.** #161 made the ring the
+  unit of the clouds' conservation; Audit V's "keeps every cell's clouds" then failed by design, and its builder's
+  file list had missed it. The test now holds the ring's count and mass against the field-off control and asserts the
+  cells move - the conserves text and the test read the same rule.
+- [field] **Choose between closers by what each moves inside the region that was right.** #213's two closers both
+  made the sector means past the budget exact (every foot there read 1.0); ending the walk kept the 40 spurs inside
+  the budget bit for bit, the excess over 1 would have changed every one of them and needed a rule for feet below 1.
+- [advanced] **A closer that names a width the model never declared is a ruling.** #164/#165's "downstream
+  half-width" has four readings in the repository's own rules and each breaks on many feet; the builder stopped,
+  measured all four and handed back options instead of picking a threshold.
+
+## From S90a (the nightly's fourteen CI-only failures read and marked; a side session beside S90, one Opus builder)
+
+- [infra] **A red nightly nobody records is a batch merged unchecked.** M1's re-pins were taken here and never run on
+  the runner (a branch push runs only the fast job), so `main` went red the first night after the merge and stayed red
+  five nights unwritten. A batch's close that moves pins wants a dispatched `ci` run on the batch branch before the
+  merge into `main`, read like the owner's suite.
+- [audit] **Emulate the other machine's last bits before calling a divergence.** A probe that moves a quarter of the
+  transcendental functions' results by one ulp (patched before the package is imported, so `from math import exp`
+  binds the patched one too) reproduced the runner's census of one galaxy and the lowest cell of another in seconds, and the first parting
+  row named the comparison - no Linux needed. Two runner nights disagreeing in the twelfth digit had already said
+  the cause was CPU-dispatched floating point, not a platform API.
+- [field] **A threshold that a law can sit on exactly is decided by rounding.** The arm census's design count sits on
+  its plateau of 6 and reads 6.000000000000001 on alternate rings; "crossing < wanted" then births a chain by one
+  ulp, and a second birth on a ring always meets the two exact halves of the gap the first split. Where a rule
+  compares a continuous quantity with an integer or picks the widest of symmetric gaps, state the tie or the
+  tolerance, or a seed names one galaxy per machine (#216).
+- [api] **Two paths to one published number must be one path.** The tile's `l_min_used` (a scalar power) and the
+  table's threshold (an array power) agree here to the bit and an ulp apart on one runner; numpy's array loops
+  dispatch by CPU, its scalar power does not. A contract that says "the value read back is the grid's" needs one
+  function that both answers call (#217).
