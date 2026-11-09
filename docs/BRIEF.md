@@ -1,4 +1,4 @@
-# BRIEF — after S90: M2 closed into `batch-m2` (D258); the owner's full suite gates `batch-m2` → `main`; next is S91 (BUILD_V rows 91–92), M3's first session
+# BRIEF — after S90 and S90a: M2 closed (D258, D259) and **merged into `main` 2026-11-09 (66687e05958625c3d2c143a6c8ccb7088420edfb) on the GitHub runner's full suite, the owner's word**; next is S91 (BUILD_V rows 91–92), M3's first session, on `batch-m3` cut from `main`
 
 **The state (2026-11-09).** S90 (D258), M2's close, built and discharged **#213** (the spurs' walk ends at the arms'
 budget's edge; the walk's bounds 0.0573 / 0.2506 / 0.5700 under 0.27 / 0.58), **#161** (the ring the unit of the
@@ -12,10 +12,12 @@ the goal pictures; #202's circle inconclusive, #169's streaks visible. **S90a (D
 thirteen records of this machine's census, whose births rounding decides (**#216**, the owner's), one identity of two
 power paths (**#217**); on `session-90a`. Register **119 open = 38 + 81, 81 discharged**; next **#218**, **D260**.
 
-## What gates the merge (D246)
-- **The owner's full suite on `batch-m2`** (#67's pricing flake red alone is green alone; `test_bright`, `test_render`,
-  `test_scaling`, `test_systems`'s wall-clock bounds read over only under load, green alone); then `batch-m2` → `main`
-  `--no-ff`. The tag s90 is on S90's merge into `batch-m2` (its SHA in `MANUAL_TODO.md` row 90); CI on `main` read at S91's open.
+## The merge (D246, taken 2026-11-09)
+- **The full suite ran on the GitHub runner, not here, on the owner's word**: `batch-m2` at c00caf5 (run 42548438883)
+  1714 passed / 13 failed, every failure one of S90a's fourteen pins; `session-90a` at 6e7b378 (run 42558372671) **1713
+  passed, 41 skipped, specs OK**. `batch-m2` (15a0612) merged into `main` as **66687e0**; the nightly and the `image` run
+  for it are read at S91's open. **Not run here**: the local suite, `verify_clone`, the 35 `machine_pinned` cases (the
+  runner skips them; they last ran per file at S90's close).
 
 ## What the owner is asked (build nothing on any before it comes; none blocks S91)
 - Standing: **#128** amend A10 or permanent (permanent, recommended); **#182** the 150 pc cap (recommended); **#180**
