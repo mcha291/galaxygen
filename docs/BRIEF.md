@@ -1,17 +1,16 @@
 # BRIEF — after S90: M2 closed into `batch-m2` (D258); the owner's full suite gates `batch-m2` → `main`; next is S91 (BUILD_V rows 91–92), M3's first session
 
 **The state (2026-11-09).** S90 (D258), M2's close, built and discharged **#213** (the spurs' walk ends at the arms'
-budget's edge; the sector means past it exactly 1; the walk's bounds 0.0573 / 0.2506 / 0.5700 under 0.27 / 0.58),
-**#161** (the ring the unit of the clouds' conservation, D220 part II rule 2; A10 measured on and off by the reviewer)
-and **#197** (the stars' and remnants' ring draws on the ring's own interval: 0 below their ring, were 955 / 996 and
-70 / 28); **#214** re-based by the gate — the layer-off reference is M2's final run in `tests/layer_reference_s90.json`,
-S55's file kept as `test_modes`' oracle; **#215** opened (the clouds' L1 slope -0.4843 against -0.64 after the mend,
-M3's). #158, #160, #162, #164, #165 read and carried (rulings below); #159 / #163 re-timed and carried for the cost
-pass. **The hash moved once: 5a2c097ec5116dce6a2d7bff87d6559f in fact and pinned** (BRIEF, GALAXY_INPUTS,
-GALAXY_PLAN, RESUMING). The bundles at `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s90\bundles` (202 entries,
-byte-identical on re-check); the nine frames regenerated — no frame nearer the goal pictures; #202's circle at 4.72 kpc
-inconclusive in the profile (-0.0515 against step rms 0.0173), #169's streaks still visible. Register **117 open =
-38 + 79, 81 discharged**; next number **#216**, decisions from **D259**.
+budget's edge; the walk's bounds 0.0573 / 0.2506 / 0.5700 under 0.27 / 0.58), **#161** (the ring the unit of the
+clouds' conservation, D220 part II rule 2) and **#197** (the stars' and remnants' ring draws on the ring's own
+interval); **#214** re-based by the gate (`tests/layer_reference_s90.json`, S55's file kept as `test_modes`' oracle);
+**#215** opened (the clouds' L1 slope -0.4843, M3's). #158, #160, #162, #164, #165 read and carried; #159 / #163
+re-timed. **The hash 5a2c097ec5116dce6a2d7bff87d6559f in fact and pinned**; the bundles at
+`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s90\bundles` (202 entries); the nine frames regenerated — none nearer
+the goal pictures; #202's circle inconclusive, #169's streaks visible. **S90a (D259), beside S90:** the nightly on
+`main`, red since M1's merge on fourteen CI-only failures, read and marked `machine_pinned` (35 cases, were 21) —
+thirteen records of this machine's census, whose births rounding decides (**#216**, the owner's), one identity of two
+power paths (**#217**); on `session-90a`. Register **119 open = 38 + 81, 81 discharged**; next **#218**, **D260**.
 
 ## What gates the merge (D246)
 - **The owner's full suite on `batch-m2`** (#67's pricing flake red alone is green alone; `test_bright`, `test_render`,
@@ -42,7 +41,7 @@ inconclusive in the profile (-0.0515 against step rms 0.0173), #169's streaks st
 - `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`; the picture test where a frame is regenerated
   knowingly (`GALAXYGEN_PICTURE=1`, `GALAXY_BUNDLES` at the export); `tools/progress.py` and the docs tests
   (`test_docs`, `test_progress`, `test_audit`, `test_hook`, `test_graph`); the register's count pin and pinned rows with
-  every entry. D259… in `DECISIONS.md`; `LESSONS.md` tagged; `RESUMING.md` ≤ 120 lines; this file rewritten;
+  every entry. D260… in `DECISIONS.md`; `LESSONS.md` tagged; `RESUMING.md` ≤ 120 lines; this file rewritten;
   `MANUAL_TODO.md`'s row (the SHA of the merge into `batch-m3`, then `main`'s). The full suite on `batch-m3` before the
   merge into `main`: the owner's run, or here on their word; CI's full run on `main` read at the next open.
 

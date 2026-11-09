@@ -16859,3 +16859,97 @@ window half, #159 / #163's bound, with the lead's recommendations in BRIEF; stan
 → `main` on the owner's full suite (D246)**; CI's full run on `main` read at S91's open. **S91** (BUILD_V rows 91–92,
 M3's first session): the populations and the ionized gas on `batch-m3`, the pin lifted for the batch, the hash moving
 once at S92.
+
+### D259. S90a, a side session beside S90: the nightly's ten (fourteen) CI-only failures read and marked — thirteen records of this machine's arm census, whose births rounding decides (#216), and one identity of two power paths (#217); `machine_pinned` 21 → 35 cases
+
+**The commission.** The gate found at S90's close that `ci`'s nightly full suite on `main` had been red every night
+since batch M1's merge (7aed48b, tag s88; first red 2026-11-04, green on 2026-11-02 and 11-03 at fa5b5ce), unrecorded:
+the pushes of the merge ran only the fast job, so M1's re-pins had never run on the runner. The owner's word of
+2026-11-09, "Yes, fix them". One Opus builder in a worktree on `session-90a` cut from `batch-m2` at c00caf5 (S90's
+close), as S79 ran beside S78 (D243); nothing under `model/galaxy` touched (the hash 5a2c097e… stays), D241's
+procedure: each failure read before it is marked, no tolerance widened, no pinned number moved, no test deleted.
+Numbered S90a so that it shares no name with S90 or S91; no board row, the tag the gate's.
+
+**The runs read.** Nights 2–5 (42121489795, 42299910782, 42411808413, 42522129002; ~3 h 28 each, `main` at 1c58051)
+fail the same ten tests with the same values to the last digit; night 1 (41923775720, 1 h 53, a faster runner) fails
+those ten and four more, and its values for the shared ten differ from the other nights' in the twelfth digit
+(`test_gas_pattern`'s cell mean 0.7140453369923492 against 0.7140453369947026) — so the runners disagree among
+themselves in the last bits, as CPU-dispatched float loops (numpy's SIMD paths, the C library's transcendental
+functions) do, and not as a platform API (an integer width, a sort, `hash()`) would: **no case of class (c) was found.**
+A scan of `model/galaxy` for the platform hazards the brief named found `kind="stable"` on every argsort but one
+(`chemistry_dtd.weighted_percentile`, whose ties do not change its interpolated value) and BLAKE2b, never `hash()`,
+for seeds.
+
+**The mechanism, measured here** (s90a_jitter.py in the session's scratchpad: `math`'s and numpy's transcendental
+functions patched before `galaxy` is imported, a quarter of their results moved one ulp up or down by a fixed RNG; one
+pattern-only run each, ~8 s, at low priority). (1) *The default galaxy, texture seed 7* (`test_the_census_by_hand…`):
+the census (pieces, chains, joins) (54, 13, 6) here; under the probe (53, 12, 5) five times, (49, 12, 4) once, (51, 13, 5)
+once — **the runner's value exactly** — and unmoved twice in eight. The first parting row is chain 4's birth on the ring
+at 2.2875 kpc: azimuth 4.2113 here, 5.7843 under the probe — a quarter-turn apart, one of the four quarter-turn gaps
+the bar's two chains and the two born between them leave, the case the `widest_gap` docstring in `layer/arm_pieces.py`
+names as "told apart by that rounding" (S60, D219); the 23 rows before agree to 1.4e-13. (2) *The Milky Way template, pattern seed 28* (`test_the_most_saturated…`): the
+lowest cell 0.392635 here; under the probe 0.148905 in four of six — **the runner's 0.1489046318891898 to the twelfth
+digit**. The parting is chain 8, the second birth on the ring at 5.0625 kpc: the two halves of the gap chain 7 split,
+equal but for rounding (0.3772 here, 2.4347 there). (3) *The Milky Way template at its own seeds*: the census
+(49, 13, 4) under every probe, but chain 12 born on another ring (11.9625 kpc here; 12.2625, 11.8125, 11.8875) — the
+ring's design count, the births' `wanted`, sits on its plateau: it reads 6.0 and 6.000000000000001 on alternate rings
+over 11.74–12.34 kpc, so `crossing < wanted` births a chain where it reads one ulp over 6. Every record test below that
+reads the Milky Way template's or the suite's draws stands downstream of one of these two comparisons.
+
+**The fourteen readings** (runner vs this machine's pin; the class; the action — each mark's comment names the
+mechanism and the register entry):
+
+| Test | Runner vs pinned | Mechanism | Class | Action |
+|---|---|---|---|---|
+| `test_bar` lowest cell and A₂ consequence | 0.026249 vs 0.1163172 at (milky_way, True, 3, 1) | the lowest cell over 240 draws; some galaxy's births split otherwise | (a) | marked; the bounds over every galaxy stay in the gate's test |
+| `test_bar` most saturated barred galaxy | 0.148905 vs 0.39263 | chain 8's tied halves (2), reproduced | (a) | marked |
+| `test_gas_pattern` cell mean vs centre [milky_way] | 0.7140 vs 0.6863 (M1's pin; 0.5038 since S90) | the worst cell a narrow feature of chains laid by rounding | (a) | the leg marked (R1b) |
+| `test_gas_pattern` crests cells apart [milky_way] | disc bins −8 / −2 / −1: 3 / 10 / 15 vs 2 / 8 / 14 | which crest is tallest per ring on the template's census | (a) | the leg marked |
+| `test_gas_pattern` the gate's predictions | s's crest at 10.99 kpc 1.2120 vs 1.2042 (the first four rings agree) | the template's outer chains (3) | (a) | marked; no verdict moves |
+| `test_modes` lowest cell over the seeds | 0.026249 vs 0.116317 | as `test_bar`'s, the stellar field alone | (a) | marked; the bound stays in the gate's test |
+| `test_pieces` census by hand | (51, 13, 5) vs (54, 13, 6) | chain 4's quarter-turn tie (1), reproduced | (a) | marked — skips the hand-laid chains, births and no-crossing asserts too, which held on the runner |
+| `test_pieces` composed crest vs the loci | Outer (0.04, 0.94) vs (0.04, 0.93) | a share rounded to the hundredth on the template's census | (a) | marked |
+| `test_pieces` masers' disclosed check | young stars 0.18 vs 0.19 (Norma-Outer likewise) | as above | (a) | marked |
+| `test_pieces` no step round any whole ring [milky_way] | 63 vs 67 exempted steps | a count over five seeds' censuses; the structural assert held | (a) | the leg marked (R1b) |
+| `test_audit_v` pair correlation [milky_way] (night 1) | slopes −0.4738 / −0.4252 vs −0.4846 / −0.4327 (S88's; S90's −0.5561 / −0.4497) | the two slopes pinned to 1e-3 on the census of seeds 4242 / 777 | (a) | the leg marked; NGC 4414 stays |
+| `test_audit_v` spurs' walk read (night 1) | 0.5106 vs 0.5700 (the bound 0.58 held) | the worst foot pinned to 1e-3 on the census | (a) | marked — skips the bound with it |
+| `test_audit_v` every long chain carries spurs (night 1) | chains 7 (3.3 kpc) and 9 bare vs none | which chains are bare is the census's; the statement held | (a) | marked — skips the statement with it |
+| `test_v6b_points` level k's threshold [3-milky_way] (night 1) | 125.89254117941663 vs …661 | the tile's `l_min_used` a scalar `10.0 ** LOG_L_GRID[k]` (`snap_up`), the table's threshold an array `10.0 ** grid`; an ulp apart where the array loop is dispatched otherwise | (b) | the case marked, **#217** |
+
+Thirteen are (a), records of this machine's draw: each pins what one census laid, and the census is laid by births
+that rounding decides. The cause is not the tests' but the model's — two comparisons that are exact only in exact
+arithmetic — so it is entered, **#216**, rather than left in thirteen comments; it is not class (c) (the runners differ
+from one another, not only from this machine, and the difference is in the last bits), but **it does make the runner
+draw other galaxies for the same seeds**, which the gate should weigh: the bundles are exported here, and a Linux
+service (the deployed model image) would lay another census for a seed whose births tie. One (b): "the frame's one
+threshold" is a structural claim that rests on two computations agreeing to the bit (the S79 lesson's pattern) —
+**#217**, a batch's (the fix is under `model/galaxy/api`, in the hash).
+
+**As built (`session-90a`).** `@pytest.mark.machine_pinned` with a comment naming the mechanism and the entry: in
+`test_bar.py` two tests, `test_modes.py` one, `test_gas_pattern.py` the gate's predictions and the Milky Way legs of
+two parametrized tests (`pytest.param(..., marks=...)`, the ids unchanged), `test_pieces.py` the census by hand, the
+crest, the masers and the whole-ring test's Milky Way leg, `test_audit_v.py` the pair correlation's Milky Way leg and
+the two spur tests, `test_v6b_points.py` the (3, milky_way) case (its two stacked parametrizations made one list, the
+ids `2-milky_way` … `3-ngc_4414` unchanged). The collection under the mark: **21 → 35 cases** (the 14 above added,
+none removed; every other node id the same, 253 in the six files). Under `CI` the runner skips **41** where it
+skipped 27 (the 35 and the usual 6), M1's tree; on `batch-m2` the gate's dispatched run is the first since M1 to
+run the two batches' re-pins on the runner, and its own failures, if any, are new readings. What the runner no longer
+checks, by mark: the records themselves; and with them the structural asserts that share a test with a record — the
+census by hand's hand-laid chains, births at the widest gap and no crossing; the whole-ring test's Milky Way leg's
+bound outside the kinks' wedges; the pair correlation's law on the Milky Way (its excess and large-scale ratio); the
+walk's coarse bound 0.58; the "every chain long enough carries spurs" statement; level 3's per-ring identity on the
+Milky Way. Each held on the runner every night it ran; here they all still run, every close.
+
+**What this is not.** No tolerance widened, no pinned number moved, no test deleted; nothing under `model/galaxy`.
+The marks say the nightly checks everything but this machine's census — the sentence D241 wrote, now also for the
+arms. #216 closed would let most of the thirteen come back to CI; D241's other remedy (pins per platform) would not,
+since the runners disagree among themselves.
+
+**The register.** +2: **#216** (the arm census's births decided by rounding; the owner's — a model change that moves
+the hash and every census, or the owner's word that a seed names a galaxy on one machine) and **#217** (the tile's
+and the table's threshold two computations of one power; a batch's) — **119 open — 38 permanent, 81 carried — and 81
+discharged**; next number #218, decisions from D260. **The gates here**: the fourteen marked cases in one
+low-priority single-threaded process with `CI` unset, **14 passed in 25 min 07**; the same ids with `CI=true`, **14
+skipped in 1.4 s**; `tools/progress.py` and the light gates (`test_docs`, `test_progress`, `test_audit`, `test_hook`,
+`test_graph`) **74 passed, 1 xpassed** (#154's cost record, non-strict); `git diff --stat` empty under `model/galaxy`.
+The gate's dispatched `ci` run on `session-90a` reads the marks on the runner before the merge.
