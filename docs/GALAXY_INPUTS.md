@@ -3163,6 +3163,12 @@ never been judged in twenty-three sessions.
    hi`, D100): **what would close them** is a source with errors (Licquia, Newman & Brinchmann 2015 `[recall — NEEDS
    SOURCING]`) that states what its magnitudes measure; then the attenuated magnitude is published with the row that
    reads it (`READING_DUST.md`).
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **permanent**.* Rows 25–28 stay
+   not-yet-computable; no row compares attenuated light against the model's intrinsic light. The reason, written in
+   (B5): BHG16's table says neither whether its magnitudes are corrected for internal extinction nor their errors,
+   and S89's measurement killed the entry's own prediction (the two readings do not separate on the colour), so no
+   comparison of attenuated against intrinsic light judges anything a source states; a source with errors that says
+   what its magnitudes measure would be a new entry.
 83. **The stellar wind's escape velocity is Newtonian: Γ_e is missing** (S28, D177). `star_wind_luminosity`
    is ½ Ṁ v_∞² with Vink, de Koter & Lamers 2001's mass-loss recipe and v_∞/v_esc = 2.6 (1.3 below the
    bistability jump) `[verified: A&A 369, 574, eqs. 15, 23, 24, 25, read at S28]`, but v_esc is computed
@@ -3564,6 +3570,10 @@ never been judged in twenty-three sessions.
    takes the clouds' share of the dust in the clouds' layer (#168). **What would close it:** a radiative-transfer
    source's scattered-light phase for an inclined exponential disc (or the region-scale scattering), and the owner's
    white point.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **carried, the viewer's**.* The infrared
+   white point is chosen by eye in a viewer pass with the sliders (the standing direction since 2026-10-01: display
+   choices go in as sliders the owner tunes live); the entry moves from M3's list to the viewer's in BUILD_V §2a. The
+   scattering phase in an inclined disc stays as S89 read it (no source held).
 110. **The region regime's noise, pillar rule and tilt are stated shapes the cloud vector does not constrain**
    (S40, V3, D190). The cloud vector fixes the one-point PDF (σ_s), the mean column, the gradient and the source
    offset; the *spatial* structure needs a power spectrum it does not carry. So `region.ts` realises the log-normal
@@ -4010,6 +4020,14 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    2 kpc ring), the render's frame drawing the placed dust as it does. (b) was done at S70 (`specs/templates.py`
    `layered_face_on_transmission`); (c) the flare's pressure is the pressure prescription's named alternative, which
    moves the molecular fraction (D211 ruling 6): a ruling, not a build; (d) stands as stated.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **permanent**; A10 not amended.* The
+   heating stays each ring's at its mean column, in the layered geometry S52 applied (0.766 of the mixed slab's
+   absorbed light: the slab had left L_IR about 30 % and T_d(R₀) about 1.4 K over the drawn geometry's — the entry's
+   first measurement, the reason the layered factor stands); the placement is not applied. The reason, written in
+   (B5): a dust stage that read the placed (composed) contrasts would publish T_d and L_IR that differ with the layer
+   on and off, which rule A10 and invariant I1 forbid, and absorbed power is non-linear in the column, so no neutral
+   composed form exists; the placement's own effect is measured at S89 (under 3 % of the disc's absorbed power).
+   Parts (b)–(d) stand as recorded above.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
@@ -4873,6 +4891,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    finest cells can serve a star standing outside it. Answering a window by the placed position changes what a
    region request returns (D60: a cell alone, in a window and in a sweep the same rows) - a rule of the API, the
    owner's; the drawn picture is right either way (the frustum cuts on positions). Listed, not built.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **permanent** — the window half.* D60's
+   rule is kept: a cell answers the same rows alone, in a window and in a sweep, so a window of finest cells may serve
+   a star its cell names that stands outside the window; the drawn picture is right either way (the frustum cuts on
+   positions). The radius half was mended by #197 (S90). The reason, written in: the API's statement of what a
+   region request returns is the owner's rule, and it is kept.
 159. **The lattice placement's cost on the whole-disc census routes** (S61, D220 part II). Placing every cloud jointly
    in radius and azimuth on its cell's quadrature lattice - the field on 2.35 million lattice points (2.0 s) and
    the gas pattern's 16 x 24 mesh per cell (1.1 s) - takes `materialise_clouds` from 1.0-1.1 s to 3.8-4.5 s for every
@@ -4905,6 +4928,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    a coarser lattice with its error declared) is a cost pass with no ruling in it, but the bound on the whole-disc
    calls is still the owner's (D219 (c)) and no bound is broken by a test; carried for the cost pass the owner
    schedules (with #163 and #166).
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **the whole-disc bound is 25 s cold**
+   for the viewer's whole-disc calls (D219 (c) answered); the cost pass runs after M3 — at S92's close or Audit VI.*
+   Carried with the bound written in: S90's 22.02 s (`clouds: whole disc`) and 17.62 s (`clusters: whole disc`) cold
+   are inside it today; what closes the entry is the cost pass's one shared lattice (or a coarser one with its error
+   declared) with every whole-disc call measured cold under 25 s.
 160. **The star sample and the bright catalogue place old stars by two rules that differ by 3.9e-3 per sector**
    (S61, D220; measured by the star sample's builder on ring 8, 7.52-8.45 kpc, young share 0.00367, no sector
    clipped). The sample allocates a young star by c-bar p and an old one by c-bar (1 - p) - the stellar contrast's
@@ -5031,6 +5059,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    cold / 2.79 warm (S66 20.1 / 1.63), `render: ngc_4414` 16.02 / 3.19, `layer: tables` 12.86 / 0.034, `render: whole,
    layer off` 4.75 / 1.58. The table's own share was not isolated in this pass. The closer (one lattice with #159, or
    float32 with its error declared) needs no ruling; carried with #159 for the cost pass the owner schedules.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"), with #159: **the whole-disc bound is
+   25 s cold** (D219 (c) answered) and the cost pass runs after M3 (S92's close or Audit VI).* Carried with the bound
+   written in; `render: whole, rgb` read 21.78 s cold at S90, inside it.
 164. **A spur's foot stands on top of the ridge, so the gas contrast doubles there** (S62, D221 item 7; the fix
    pass's finding). The ruling set the spur's peak at its foot equal to the ridge's crest contrast "so that it leaves
    the ridge continuously"; built as g′ = (1 − ⟨S⟩)·g + S with S_foot = the crest, the foot's total is about twice
@@ -5322,6 +5353,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    NGC 4414's own layer: no edge-on CO for it; Yim et al. 2014's three spirals bracket the one value (disclosed). **What
    would close it:** Nakanishi & Sofue's Table 1 whole and the owner's choice among the inside-R₀ readings; a cloud
    survey's heights against mass; NGC 4414's own CO thickness (`READING_CLOUD_LAYER.md`, Part S89).
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **permanent**.* Bronfman et al. 1988's
+   flat 120 pc FWHM is kept at every radius until a whole table is read. The reason, written in: inside R₀ the
+   readings the repository holds conflict (a named ruleset, B12), the flare outside R₀ rests on two bins that fall
+   again, and no source gives the mass dependence a number — choosing among them is not a build; a whole table read
+   would be a new entry.
 181. **The HII regions are one cluster's Strömgren sphere each, never a complex: the knots are unresolved points made
    large on screen only by their brightness** (S67, D227; the owner's question of 2026-10-18, "the hii knots are
    very big, bigger than the stars, is this right?"). The census's 12 710 HII regions on `milky_way` have Strömgren
@@ -5371,6 +5407,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    Dame's regimes are joined by no measured profile; their eq. 1 is uncorrected). NGC 4414's census: none. **What would
    close it:** the owner's word between the cap and a catalogue relation; a resolved Σ_GMC profile across the ring's
    edge; a template's own cloud census (`READING_CLOUD_SIZES.md`, Part S89).
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **permanent** — the 150 pc cap kept.*
+   The owner's "Smaller giant clouds (model)" of S67 (D231) stands; the reason, written in: both catalogue mass–radius
+   relations the readers hold would make the giants larger (296 / 378 pc at 10⁷ M☉ against the cap's 150), the reverse
+   of that choice, and no resolved Σ_GMC profile or template census is held.
 183. **In the field mode a knot carries its region's gas and not its cluster's starlight, so an HII region draws as
    pure line colour** (S67, D227; the owner's questions of 2026-10-19, "why is the hii regions all green on 4414?").
    The knots (S64, D224) hold each region's line light; the cluster's own starlight is spread through the field's
@@ -5788,6 +5828,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    read; or the owner's word that a within-tolerance byte change needs no name, the capture re-taken at the next
    knowing change. From S82 the close's gate reads the verdict lines, not `git status` (LESSONS, S82).
    *S85 register pass (D251):* **the owner's word** — the owner's word: name the session by re-taking the capture on each tag, or rule that a within-tolerance byte change needs no name.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **discharged by ruling**.* A
+   within-tolerance byte change in a capture needs no name; the capture is re-taken at the next knowing change, and
+   the picture test's verdict lines stay the close's gate (LESSONS, S82).
 211. **The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the
    end row 0.009 mag off** (S83, D250; builder A's run of the targeted tests on `s83-robust`). `tests/test_render.py`
    reads the viewer's filter sets (`instruments.json`) and holds the model's response tables to each: for the new
@@ -5802,6 +5845,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the response grid's tails to 4.4 µm (M3, the populations), which moves the hash; or the set's red band moved inside
    the grid (F356W or F277W) with the reason stated. What kills the reading: the bound met by a finer slope grid alone.
    *S85 register pass (D251):* **the owner's word** — the owner's word (D246): the set's pins in `tests/test_render.py`, or F356W, or M3's grid extension.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **M3's** — the response grid's tails
+   (`spectra.RESPONSE_SLOPES`, `RESPONSE_TEMPERATURES`) extended to 4.4 µm so the `jwst_nircam` set passes
+   `tests/test_render.py`'s bounds; then the set on `s83-robust` (aa0eec6) merges (S92), the owner's pin need gone.*
+   Carried, the batch's.
 212. ~~**`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
    constant is 88.8**~~ (S87, M1; found by #148's build; discharged at S88's close, D256). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
    over the pre-merger population at R₀ — σ_W = 35 km/s, the model's own secular heating then 27.06 km/s — and set it
