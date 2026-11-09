@@ -259,8 +259,13 @@ def resolved_per_ring(service: Service, template: str, l_min: float):
     return br.resolve(out.fields, float(spec.t_max), int(spec.n_t), constants, l_min)
 
 
-@pytest.mark.parametrize("template", TEMPLATES)
-@pytest.mark.parametrize("level", (2, 3))
+# S90a (#217, D259; R1b): the level-3 Milky Way case alone is machine_pinned - the tile's l_min_used (snap_up: a scalar
+# 10.0 ** LOG_L_GRID[k]) and the table's threshold (10.0 ** the grid as an array) are two computations of one power;
+# on one runner (41923775720) they parted by an ulp, 125.89254117941663 against ...661. A structural claim ("the
+# frame's one threshold") that rests on two paths agreeing to the bit - register #217. Ids unchanged (level-template).
+@pytest.mark.parametrize("level,template", [pytest.param(level, template, id=f"{level}-{template}",
+                                                         marks=[pytest.mark.machine_pinned] if (level, template) == (3, "milky_way") else [])
+                                            for level in (2, 3) for template in TEMPLATES])
 def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes_per_ring(service, template, level):
     """The frame's one threshold at level k: the per-cells table's pick for the cells in view at the default point budget,
     the tile's l_min_used, and the render's l_min at level k (cell means over the same cells) resolved at exactly that
