@@ -2133,3 +2133,24 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [advanced] **A closer that names a width the model never declared is a ruling.** #164/#165's "downstream
   half-width" has four readings in the repository's own rules and each breaks on many feet; the builder stopped,
   measured all four and handed back options instead of picking a threshold.
+
+## From S90a (the nightly's fourteen CI-only failures read and marked; a side session beside S90, one Opus builder)
+
+- [infra] **A red nightly nobody records is a batch merged unchecked.** M1's re-pins were taken here and never run on
+  the runner (a branch push runs only the fast job), so `main` went red the first night after the merge and stayed red
+  five nights unwritten. A batch's close that moves pins wants a dispatched `ci` run on the batch branch before the
+  merge into `main`, read like the owner's suite.
+- [audit] **Emulate the other machine's last bits before calling a divergence.** A probe that moves a quarter of the
+  transcendental functions' results by one ulp (patched before the package is imported, so `from math import exp`
+  binds the patched one too) reproduced the runner's census of one galaxy and the lowest cell of another in seconds, and the first parting
+  row named the comparison - no Linux needed. Two runner nights disagreeing in the twelfth digit had already said
+  the cause was CPU-dispatched floating point, not a platform API.
+- [field] **A threshold that a law can sit on exactly is decided by rounding.** The arm census's design count sits on
+  its plateau of 6 and reads 6.000000000000001 on alternate rings; "crossing < wanted" then births a chain by one
+  ulp, and a second birth on a ring always meets the two exact halves of the gap the first split. Where a rule
+  compares a continuous quantity with an integer or picks the widest of symmetric gaps, state the tie or the
+  tolerance, or a seed names one galaxy per machine (#216).
+- [api] **Two paths to one published number must be one path.** The tile's `l_min_used` (a scalar power) and the
+  table's threshold (an array power) agree here to the bit and an ulp apart on one runner; numpy's array loops
+  dispatch by CPU, its scalar power does not. A contract that says "the value read back is the grid's" needs one
+  function that both answers call (#217).

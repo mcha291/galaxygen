@@ -717,9 +717,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S89 | **167, 168** (the clouds' duplicate central A_V retired, read by no drawing since D228; the clouds' dust heated and scattering in the clouds' own layer at the census's expectation, L_IR ×0.9977 / ×0.9946, D257) | 2 |
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 152, 155, 157, 195 | 38 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 202, 203, 204, 205, 210, 211, 215 | 79 |
+| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 202, 203, 204, 205, 210, 211, 215, 216, 217 | 81 |
 
-So the board's **117 open** is 38 permanent and 79 carried, and no item is unruled (S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **119 open** is 38 permanent and 81 carried, and no item is unruled (S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -5913,6 +5913,37 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    it: a census whose pair-correlation shape steepens below 190 pc from a source (not a fit to the slope); or the
    gate's window re-derived from the field's own slope, with the reason. What kills the reading: the slope landing
    inside the window on a model change that did not aim at it.
+216. **The arm census's births are decided by rounding, so a seed's census is the machine's: the nightly has failed
+   since M1 on records of this machine's draw** (S90a, D259; the nightly runs 41923775720 … 42522129002 on `main` at
+   1c58051). Two comparisons in `layer/arm_pieces.py`'s birth sweep take a float that is exact only in exact
+   arithmetic: *crossing < wanted*, where a ring's design count sits on its plateau — the Milky Way template's reads
+   6.0 and 6.000000000000001 on alternate rings over 11.74-12.34 kpc, so chain 12 is born at 11.9625 kpc by one ulp —
+   and *the widest gap*, where two gaps tie but for rounding — a barred disc's four quarter-turns (the default galaxy,
+   texture seed 7: chain 4 at 2.29 kpc) and the two halves of a gap a first birth on the same ring split (the Milky
+   Way template, pattern seed 28: chain 8 at 5.06 kpc); `widest_gap`'s docstring names the second (S60, D219). A probe
+   that moves a quarter of the transcendental functions' results by one ulp (`math` and numpy's, as another libm or
+   SIMD path would; s90a_jitter.py) changes the default galaxy's census in 6 of 8 draws and reproduces the runner's
+   (51, 13, 5) exactly, and pattern seed 28's lowest cell in 4 of 6, reproducing the runner's 0.148905; the pieces
+   before the parting agree to 1e-12. Thirteen record tests carry `machine_pinned` naming this entry (D259). Not a
+   platform API: the runners themselves disagree in the last bits (one night's 0.7140453369923492 against the next
+   four's …947026), as CPU-dispatched float loops do. **Carried, the owner's** (a model change: it moves the hash and
+   every census). What closes it: the births made bit-independent — the design count compared with a tolerance
+   stated against its own rounding, and gaps equal within one stated tolerance taken by a rule of identity (the
+   lesser azimuth, or the chain order) — with the records re-pinned once, the marks lifted where the runner then
+   agrees; or the owner's word that a seed names a galaxy on one machine only (the bundles are exported here; a
+   Linux service would draw other galaxies for the same seeds). What kills the reading: a one-ulp probe that leaves
+   the census unmoved over the suite's seeds.
+217. **The tile's threshold and the table's are two computations of one power: "the frame's one threshold" holds only
+   where they agree to the bit** (S90a, D259; the nightly run 41923775720). `/api/bright`'s table publishes
+   `threshold` as `10.0 ** np.asarray(grid)` (an array power, a CPU-dispatched loop) and its header says "a threshold
+   read back is the grid's value"; the tile form snaps `l_min` to the grid and answers `l_min_used` as
+   `10.0 ** LOG_L_GRID[k]` (a scalar power, `api/v6_tiles.py` `snap_up`). On one runner the two parted by an ulp
+   (125.89254117941663 against 125.89254117941661, level 3, the Milky Way), so a viewer that reads the table and
+   compares the tile's `l_min_used` with it to the bit sees two thresholds. The snap's 1e-6 dex tolerance
+   (`SNAP_TOLERANCE_DEX`) keeps the tile at the right grid step; the identity is what fails. `test_v6b_points`' (3, milky_way) case carries `machine_pinned` naming
+   this entry. **Carried, a model batch's** (`model/galaxy/api` is inside the hash). What closes it: one function
+   computes a grid threshold and both answers use it (or the table's array is built from the scalar path), the mark
+   lifted and the case run on the runner. What kills the reading: the runner's case green with the two paths kept.
 
 ---
 
