@@ -16743,3 +16743,119 @@ decisions from D258. **S90** (BUILD_V row 90, the batch's close): #158–#165, #
 ledger, the gate's at the close); the hash moved once, the bundles re-exported, the frames regenerated beside the goal
 pictures (the circle of #202, the streaks of #169 read there); the acceptance rows re-read; the full suite before
 `batch-m2` → `main`.
+
+### D258. S90, BUILD_V row 90 (M2's close: the gas, the censuses and the batch's close): #213 the spurs' walk ends at the arms' budget's edge, #161 the ring as the unit, #197 the stars' and remnants' ring draws invert their own ring — built and discharged; #214 the layer-off reference re-based onto M2's final run (the gate's ruling); #158–#160, #162–#165 read and carried with the owner's rulings listed; #215 opened; the hash moved once, 244c8bda… → 5a2c097ec5116dce6a2d7bff87d6559f; the bundles re-exported and the frames regenerated — no frame nearer the goal pictures; merged into `batch-m2`, `main` on the owner's full suite
+
+**The commission.** BRIEF after S89: the gas and the censuses in order (#213; #158–#165 with #161's mend the per-cell
+conservation; #197 on the owner's word, measured first), #214 prepared as one commit the gate rules on, then the
+batch's close — the unrun files on the final model, every moved number re-pinned with the reason, the hash moving once
+with the bundles and the frames beside the goal pictures, the acceptance rows re-read, the fast gates. An Opus lead on
+`session-90` (cut from `batch-m2` at a447981, S89's close), one Opus builder for #161 and one for #164/#165 (no commit),
+eleven commits in 6 h 20; an independent Opus reviewer at the gate (read-only, every claim re-measured); a Fable
+coordinator at the gate; an Opus close builder on the gate's rulings. Merged into `batch-m2`, not `main`.
+
+**Built.** **#213 (352bdec).** The spurs' walk ends at the arms' budget's edge — the last grid ring with
+`arm_piece_amplitude` > 0 (12.3375 kpc on the Milky Way, 9.9375 on `ngc_4414`); `layer/spurs.py`. Both closers
+measured first: 13 of 53 Milky Way feet stood past the edge (12.43–24.87 kpc) and every one read exactly 1.0, so either
+closer makes the sector means exact; ending the walk keeps the 40 rows inside the budget bit for bit, where the
+excess-over-1 law would re-scale every spur's height (D221 item 7) and need a rule for the six feet below 1. Sector
+means now exactly 1 at 18–29 kpc on both templates (were 0.0172 at 18, 4.35e-3 at 25). The walk's bounds unmoved:
+production 0.0573 over 40 feet (53 before) and 0.2506 at seed 4242 over 36 (45), under 0.27; Audit V's mesh 0.5700
+under 0.58. `OUTER_SPURS` passed and is lifted; re-pins 53 → 40, 45 → 36, the ten-foot sample 0.0103 → 0.0077; Audit
+V's spacing and length checks count a chain to the edge (seed 777's chain 8 starts past it and carries no spur, by the
+rule). The reviewer's reading, recorded and not a defect: the edge is a grid ring, so it sits one step (75 pc) inside the
+last radius with amplitude and moves with the grid; no production foot falls in that gap. **#161 (7c286a8, 24af22f,
+cb45b72, da614c8; the Opus builder's diff reviewed by the lead and fast-forwarded).** The ring is the unit (D220 part II
+rule 2; A10 holds): the clustering field's cell means multiply the clouds' sector weights and each ring's weights are
+divided by their mean — `clouds.sector_placement`, `census_clustering.sector_factors` / `ring_unit`. Default galaxy
+before → after: the clouds' L1 slope −0.4796 → −0.4843, the clusters' −0.4882 → −0.4991; the clouds' 1+ω at 47.5 / 95 /
+158 pc 2.084 / 1.248 / 1.016 → 2.403 / 1.381 / 1.106 (the field's own 2.43 at 47.5 pc met); the crossing of 1 174 → 432
+pc; the Milky Way pair slopes −0.4846 / −0.4327 → −0.5561 / −0.4497 (mean −0.5029, inside the law). Lifted: the clusters'
+L1 case and the Milky Way's "held outside the law" hold. Still over, held strict: the clouds' L1 slope, 0.156 off −0.64
+against a 0.15 window (`L1_GATE_READ_OVER_S90`) — the amplitude rose together at every scale below 190 pc, the flatter
+shape #80's census left unchanged; the bright stars' gate unchanged (−0.4750; 0.8457), the young reader's sector weights
+not being the clouds'. A10 measured by the reviewer on all three galaxies: `cloud_count_total` 17 077.121 100 011 53
+layer on and off (6 664.826 755 093 110 5 on `ngc_4414`), `ring_expected` bit-identical, per-ring cell sums within
+2.2e-16 of it, the realised counts per ring identical (16 940 / 6 656 clouds), clusters 12 989 / 5 121 on and off, masses
+within 1e-15 — the order of summation. Recorded: a flat-pattern galaxy with the layer on now takes the field's factors
+where it took uniform sectors — a change beyond the closer's wording, its pins moved with the reason. Re-pins:
+`SPILL_FEH_BEYOND` 1 795 → 1 785; in `test_layer` `cloud_count_total` layer on now equals layer off; the clusters in
+another grid ring 1 651 / 0.1271 → 1 694 / 0.1304, their mass share 0.3680 → 0.3593. **#197 (393b4c9).** S70's clouds
+inversion (F-2-7) moved to `systems.ring_birth_radius` and shared by the star catalogue's level-0 draw and the remnants'
+draw. Measured layer on and off alike, before → 0: Milky Way stars 955 of 20 002 below their ring (to 70.01 pc),
+`ngc_4414` 996 of 20 001 (70.29 pc); remnants 70 of 1 549 (61.35 pc) and 28 of 623 (71.0 pc). Cell 300's lowest star
+8.462 312 kpc inside its edge 8.453 906; `HIERARCHY_197` passed and lifted. One re-pin with another cause: the test's
+level-0 count 9 → 16 is M1's re-drawn census, masked by the hold since S88 (10d3a32: 9 against 15.92 expected; a447981:
+16 against 19.91). The reviewer: the same seed gives a bit-identical catalogue twice, stars and remnants; the empty-ring
+fallback draws no uniform and shifts no later draw; an edge case (a ring whose only weight sits exactly on its lower
+edge) is unreached on the production grid.
+
+**Read, none built (574db1d, e82af61).** **#158**: the radius half is mended for every census that draws a radius in its
+ring (#197); the window half — answering a window by placed position — changes D60's rule, the owner's. **#160**: no
+source decides between the two old-star rules; the owner's (the lead recommends the star sample's c̄(1−p) rule for both
+catalogues; it redraws the bright catalogue, its tiles and the frames). **#162**: Grasha et al. 2019's Table 2 is in the
+repository but the separation unit behind its amplitude is not, so no width follows; the unit is read into
+`READING_CLUSTERING.md` first. **#164 / #165**: a second Opus builder made no commit — "the ridge's half-width" and
+"within the ridge's width" have no definition in the model; four readings tried (`crest_width`'s rule, a climb to a local
+floor, the stretches above the half level — 11 of 40 feet outside every ridge — the stellar FWHM), each breaks on many
+feet; measured: composed over unspurred contrast at the feet, median 1.9975 / 1.9974; foot over the local crest, median
+0.9898 / 0.9962, minimum 0.552 / 0.298. The owner's (the lead recommends the foot kept at the chain and the spur's height
+the excess over the ring's trough, `crest_width`'s floor being the repository's one rule; #165 waits for the ridge's
+width). **#159 / #163** re-timed on 393b4c9: the clouds' whole disc 22.02 s cold (S61: 9.6–10.3), the clusters' 17.62
+(11.9); the render's whole RGB 21.78 s cold / 2.79 warm (S66: 20.1 / 1.63), the layer's tables 12.86 s — carried for the
+cost pass; the whole-disc bound is the owner's (D219 (c)).
+
+**The batch's close (360cbb2, ceea83b).** 74 model test files run on 393b4c9's model, `test_pieces` and
+`test_gas_pattern` split six ways, every part its own process (a first attempt whose part files were empty ran every
+test nine times over and was killed by its own process tree — LESSONS). Re-pins, each cause found by running the file on
+the batch's earlier states: `test_audit_v` (#161; "keeps every cell's clouds" restated as the ring's count and mass
+kept, cells moving), `test_region_synthesis` (#161; 0.8823 → 0.8900, 0.8951/821 → 0.8910/832, 0.8236/231 → 0.8229/226,
+z1 −0.58 → −0.61, z mean −0.124 → −0.091, median 0.8994 → 0.9008, mean 0.9374 → 0.9476), `test_v6_knots` (#161; the
+empty-cell share layer on 0.013971 → 0.016055 Milky Way, 0.051035 → 0.056165 `ngc_4414`; K/F median 0.395 → 0.398, p90
+1.755 → 1.794), `test_gas_pattern` (#213; the Milky Way cell mean against centre 0.6863 → 0.5038 — on a447981 the worst
+cell stood at 24.86 kpc on a spur past the budget), `test_clouds` (#213; mesh cell (20, 5) back to exact 0 from
+2.048e-7), `test_v7_header` (#213; spur rows 53 → 40), `test_pieces` (#213 by reasoning, the only gas change in S89–S90,
+not bisected: the maser check's gas record 0.19 → 0.20, Norma–Outer 0.19 → 0.22, null median 0.46 → 0.50, percentile
+3 → 2). Over only under load, green alone: `test_bright`'s cold bound (140 s against 60; 30 s alone), `test_render` at
+1e5 objects (5.4 s against 3), `test_scaling` (84.7 s against 60), `test_systems`' million stars (14.9 s against 10;
+12.07 s alone at the review), `test_performance`'s pricing flake #67 (red beside the gate test, 6 passed alone). The
+pieces' gate test 9 passed in 4 h 06. Acceptance rows (`galaxy.specs`, EXIT=0): 10 pass / 22 fail / 5 not yet, every
+fail a recorded miss, no row moved (row 35 −2.04474, row 37 −0.0986497, rows 2 / 3 1.85988 / 251.017); no new miss.
+**The hash moved once**: 244c8bda… → **5a2c097ec5116dce6a2d7bff87d6559f**, pinned in BRIEF, GALAXY_INPUTS (#206's
+line), GALAXY_PLAN and RESUMING (and here); the bundles re-exported to `C:\Users\Semaphore\AppData\Local\Temp\
+galaxygen-s90\bundles` — 202 entries, 206 files, 298 705 925 bytes, 182.3 s, `--check` byte-identical on all 202, the
+s88 export untouched; the seven frames and both thumbnails regenerated for M2's model, `DUSTY_LAYER_RATIO` [0.96768,
+0.97196, 0.97881] → [0.96827, 0.97247, 0.97922], the picture test 14 of 14 byte for byte. **Beside the goal pictures**
+(D256's method; S88 → S90 → goal): Milky Way field A2 0.0534 → 0.0544 (0.194), arm/interarm 1.640 → 1.598 (1.83), dark
+fraction 0.0311 → 0.0317 (0.0066), slope −1.19 → −1.22 (−1.99), Δ(B−R) −0.341 → −0.335 (−0.354); Milky Way stars A2
+0.0930 → 0.0877, arm/interarm 1.963 → 1.980; NGC 4414 field A2 0.1838 → 0.1855 (0.068), arm/interarm 2.471 → 2.531
+(2.72), dark fraction 0.0340 → 0.0317 (0.157), slope −2.18 → −2.14 (−2.09), A1 0.1012 → 0.0953 (0.099); NGC 4414 stars
+A2 0.0937 → 0.0910, arm/interarm 1.967 → 2.009. **No frame came materially nearer the goals; the moves are
+thousandths.** #202's circle: an azimuthal-median profile finds no step at 4.72 kpc (≈ 292 px) that stands out from the
+frame's noise (−0.0515 at 297 px against a step rms 0.0173; before −0.0511 against 0.0186; larger steps elsewhere) — the
+frames neither show the circle nor prove it gone, the owner's look decides. #169's streaks: the elongated dark flecks
+remain all through the Milky Way field frame.
+
+**The gate.** The independent reviewer (read-only, five test files as their own processes: `test_spurs` 26 passed,
+`test_clustering_gate` 6 passed 2 xfailed, `test_hierarchy` 7, `test_clouds` 12, `test_systems` 34 passed 2 skipped
+and the two timing cases red under its own load, green alone) found nothing blocking; its four readings are recorded
+above. **#214 ruled re-based**, not retired: the reference is M2's final layer-off run, written to a new file
+`tests/layer_reference_s90.json`; `tests/layer_reference_s55.json` stays untouched as `test_modes`' oracle and as
+history (its m_4 oracle reads S55's drawn pitch, which a re-base onto `ngc_4414`'s pinned 28.9° would break — the lead's
+disclosure); `test_layer`'s two reference tests hold every later layer-off run to the new file with an empty named list
+(`NAMED_SINCE_REBASE`, `NAMED_ROUTES_SINCE_REBASE`), the S55 ledger kept as history in comments and constants, the
+`ngc_4414` pin-isolation checks intact (the reviewer: the empty lists do hold every field and every route's whole digest
+to the reference). The lead's dry run — the rewritten tests against the final model's digest through a one-line plugin —
+found three faults reading had not (the Milky Way label is the template's inputs since #80's pin, the template's Sun has
+an azimuth, a header carries the molecular ring's pin), all mended before the write. **The rule from here (BUILD_V §5)**:
+each batch that moves the model re-bases the layer-off reference at its close by decision; between batches the tests
+hold with the empty lists. **#215 opened**: the clouds' L1 slope's residual (−0.4843 against −0.64 after the mend; the
+shape #80's census left) is a different debt from #161's mechanism and carries the strict hold.
+
+**The register.** #213, #161, #197, #214 discharged, #215 opened: **117 open — 38 permanent, 79 carried — and 81
+discharged**; next number #216, decisions from D259. The owner is asked (none blocks S91): #164 / #165, #160, #158's
+window half, #159 / #163's bound, with the lead's recommendations in BRIEF; standing: #128, #182, #180, #82, #109,
+#169, #110, #210, #211 / T11, T19, and the look at the frames (#202's circle, #169's streaks, #156 / #157). **`batch-m2`
+→ `main` on the owner's full suite (D246)**; CI's full run on `main` read at S91's open. **S91** (BUILD_V rows 91–92,
+M3's first session): the populations and the ionized gas on `batch-m3`, the pin lifted for the batch, the hash moving
+once at S92.
