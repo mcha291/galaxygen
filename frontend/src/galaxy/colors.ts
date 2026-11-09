@@ -1,6 +1,7 @@
 import { paintOf } from "@interface/ramp.js";
 
 import type { BlackbodyTable, Columns, FieldsPayload } from "../api";
+import { fluxOf } from "./flux";
 
 /** One sRGB channel in 0..1 to linear light (IEC 61966-2-1). */
 export function srgbToLinear(c: number): number {
@@ -96,8 +97,8 @@ export function channelShare(table: BlackbodyTable): ((kelvin: number) => [numbe
 
 /**
  * photometricColors for any object that publishes a luminosity and a colour temperature with the blackbody
- * ramp: a star, or since S41 a cluster (`cluster_light_temperature`, `cluster_luminosity`) - the same mapping,
- * so a cluster is a point of the light its stars sum to, painted as a star of its temperature.
+ * ramp: a star - the same mapping. S41 to S90 painted the region regime's clusters this way too
+ * (`cluster_light_temperature`, `cluster_luminosity`); since S91 (T2 / #114) they are `responseColors`.
  */
 export function lightColors(
   meta: FieldsPayload,
@@ -138,6 +139,30 @@ export function lightColors(
     out[3 * i + 2] = srgbToLinear(b / 255) * L * gain;
   }
   return out;
+}
+
+/**
+ * A point's colour from its own band light through the filter set (S91, T2 / #114): each object's `response`
+ * (row-major, N × filters, /api/clusters' with `filters=`) over the white point's, per display channel - flux.ts
+ * fluxOf, the star-first mode's own reading - on the display scale `lightColors` draws the sampled stars beside it
+ * (REFERENCE_LUMINOSITY at zero stops, doubled per stop, times the point gain). In place of the blackbody share of
+ * the bolometric light, which paints an integrated population 1.89 / 2.12 / 2.43 times its R / G / B light
+ * (`tests/test_v4.py`): a channel here divided by the gain is the object's response over the white point's, exactly.
+ * Null without a response or a usable white point: nothing is drawn on a guess (rule B9).
+ */
+export function responseColors(
+  response: ArrayLike<number> | undefined,
+  white: readonly (number | null)[] | null | undefined,
+  count: number,
+  stops: number,
+  /** The Tuning panel's point gain (D199), as lightColors takes it. */
+  pointGain: number = 1,
+): Float32Array | null {
+  const flux = fluxOf(response, white, count);
+  if (!flux) return null;
+  const gain = 2 ** stops / (REFERENCE_LUMINOSITY / pointGain);
+  for (let i = 0; i < flux.length; i += 1) flux[i] *= gain;
+  return flux;
 }
 
 /**
