@@ -573,7 +573,7 @@ def test_the_fence_nothing_composes_or_places_from_arm_multiplicity(prod):
 def test_regression_the_published_s55_fields_are_the_m_4_oracle(prod):
     """What ties the frozen copy to S55: for the drawn arm number its two fields are the ones S55 published - the
     digests ``tests/layer_reference_s54.json`` held for the layer-on run until S56, carried here."""
-    held = layer_reference.load()["single_mode"]
+    held = layer_reference.load_s55()["single_mode"]  # S90 (#214, D258): S55's file, kept as this oracle
     assert held["milky_way"]["m4"] == {
         "stars": "<f8[400, 360]:7c90330760ec53ab57e1c96203a236b2a79fa54c6994284574a8471cd514a226",
         "gas": "<f8[400, 360]:eb04c184a7de24db197344cdba06807694a32c54b41a05277166008e13b206d1",
@@ -590,7 +590,7 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
     """"The arm number's draw retires ... and no other stream's path changes": the pitch, the fast-bar ratio (through
     the corotation radius and the pattern speed) and the two amplitudes are S55's bits, on the default seed and on
     ``ngc_4414``'s - read against the reference captured before the law moved."""
-    held = layer_reference.load()["fields"]
+    held = layer_reference.load_s55()["fields"]  # S90 (#214, D258): S55's file, the streams S55 drew
     names = ("pitch_angle", "arm_contrast", "bar_contrast", "bar_corotation_radius", "bar_pattern_speed",
              "bar_half_length", "gas_arm_contrast", "swing_x", "swing_arm_min", "swing_arm_max", "arm_contrast_mean")
     bar_s = ("bar_contrast", "bar_corotation_radius", "bar_pattern_speed", "bar_half_length")

@@ -3,9 +3,10 @@
 Phase R is a behaviour-preserving restructure. What this file holds, in the order BUILD_III section 1d states it:
 
 - **The reference.** With the layer off, every field of both models at both templates' inputs on the production
-  grid, and every array of every input route's body, is bit-identical to S55's layer-off run, captured before any of
-  Phase P1's model code moved (``tests/layer_reference.py``, ``tests/layer_reference_s55.json``) - but for a closed,
-  named list (``LAYER_OFF_EXCEPTIONS``). Until S56 the reference was S54's with the layer **on** (Phase R was
+  grid, and every array of every input route's body, is bit-identical to the reference with an empty named list -
+  since S90 (#214, D258) the batch's final layer-off run, re-based at each batch's close by decision
+  (``tests/layer_reference.py``, ``tests/layer_reference_s90.json``); from S56 to S89 S55's layer-off run
+  (``tests/layer_reference_s55.json``, kept as history) with a named list (``LAYER_OFF_EXCEPTIONS``). Until S56 the reference was S54's with the layer **on** (Phase R was
   behaviour-preserving); it is retired, because from P1 the layer-on galaxy changes by design (D215).
 - **I1.** With the layer off the model runs, and every field not declared composed - every scalar, every history,
   every radial field, a phi-axis field too - is bit-identical to the layer-on run, except the census statistics, a
@@ -395,11 +396,11 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # close (D256) tried the rewrite and reverted it: the two tests were a ledger of the named movements since S55, and
 # every asserted difference vanishes on a new anchor. Register #214 (M2's).
 #
-# S90 (#214, PREPARED FOR THE GATE - the commit that carries this text is the gate's to keep or drop): the two tests
-# hold every later layer-off run to the reference **with an empty named list**. The reference is meant to be the
-# batch's final layer-off run, re-based by decision (`uv run python tests/layer_reference.py write`, which this commit
-# does NOT run; tests/layer_reference_s55.json is untouched) - on the S55 file as it stands both tests fail by design
-# until the gate re-bases it, or strikes them with the reference retired to the hash pin and the bundles' byte check.
+# S90 (#214; the gate's ruling at M2's close, D258: re-based): the two tests hold every later layer-off run to the
+# reference **with an empty named list**. The reference is M2's final layer-off run, written by
+# `uv run python tests/layer_reference.py write` to tests/layer_reference_s90.json; tests/layer_reference_s55.json is
+# kept untouched as S55's history and tests/test_modes.py's oracle. Each batch that moves the model re-bases the
+# reference at its close by decision.
 #
 # The S55 ledger, kept as history and no longer asserted against the reference: the named exceptions
 # (`LAYER_OFF_EXCEPTIONS`, with their S55 and S89 values; `CLOUD_SIZE_LAW_BY_RULING`, `UNBARRED_BY_RULING`,

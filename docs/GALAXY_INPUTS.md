@@ -5845,8 +5845,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    V's mesh 0.5700 under 0.58 (the worst feet stand at 5.95 kpc, inside the budget) - unmoved. `tests/test_modes.py`'s
    `OUTER_SPURS` strict hold passed and is lifted; Audit V's spacing and "long enough" checks now count a chain's
    polyline to the edge (seed 777's chain 8 starts past it and carries none). The frames are S90's close.
-214. **The S55 layer-off reference and its two tests are a ledger of the named movements since S55, and a model batch
-   cannot pass through it** (S88, M1's close, D256). `tests/layer_reference_s55.json` holds S55's layer-off run (D215), and
+214. ~~**The S55 layer-off reference and its two tests are a ledger of the named movements since S55, and a model batch
+   cannot pass through it**~~ (S88, M1's close, D256). `tests/layer_reference_s55.json` holds S55's layer-off run (D215), and
    `tests/test_layer.py`'s two reference tests hold every later run to it through a ledger: the named exceptions with
    their S55 and present values, the censuses S61's ring-first draw redrew (17 + 38 + 17 + 19 + 9 + 14 columns and
    statistics, asserted to differ), the fields added at S56–S62 (asserted as the exact set over S55's 332), the redrawn
@@ -5877,6 +5877,14 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    reads S55's digests of eleven scalars, which a re-base moves for any of them among the 1 038 (not checked) - S55's
    oracle would be kept elsewhere before the json is rewritten. Retirement instead: strike the two tests and keep the
    json for test_modes alone.
+   *S90 close (the gate, D258): re-based.* The reference is M2's final layer-off run, written by
+   `uv run python tests/layer_reference.py write` to a new file, `tests/layer_reference_s90.json`
+   (`layer_reference.REFERENCE`); `tests/test_layer.py`'s two reference tests hold every later run to it with empty
+   named lists (`NAMED_SINCE_REBASE`, `NAMED_ROUTES_SINCE_REBASE`). `tests/layer_reference_s55.json` is kept untouched
+   as S55's history and as `tests/test_modes.py`'s oracle (`layer_reference.load_s55()`: S55's single-mode digests,
+   the m = 4 fields S55 published, and the streams S55 drew). The procedure from here: each batch that moves the model
+   re-bases the reference at its close by decision, a field or route moved between re-bases named by a decision with
+   the reason.
 
 ---
 
