@@ -65,7 +65,7 @@ WIDTH = "CENSUS_CLUSTERING_WIDTH"
 # amplitude rises (the bin holding 47.5 pc 2.08 -> 2.40, the field's own 2.43) and the clusters' slope comes inside
 # the window (0.141 from -0.64), the clouds' not (0.156).
 MEASURED = {
-    "clouds": (-0.4965, 1.9852, 0.0205),  # S91 (#216's re-laid census, still held under #215, D260): was (-0.4843, 1.9452, 0.0205)
+    "clouds": (-0.4965, 1.9852, 0.0205),  # S91 (#216's re-laid census, D260): was (-0.4843, 1.9452, 0.0205) - passes the window by 0.0065, not a mend (#219)
     # S70 (D234): was (-0.6908, 2.1129, 0.0221) - the clouds' ring inversion (F-2-7) and the size law's three regimes (#192:
     # the clouds inside 4 kpc and in 7-8.2 kpc larger, so a cluster's source offset reaches further); the window holds.
     "clusters": (-0.4791, 1.9997, 0.0287),  # S91 (#216's re-laid census, held under #219, D260): was (-0.4991, 2.0255, 0.0301). S90 (#161): was (-0.6578, 2.0842, 0.0210), above. S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
@@ -150,18 +150,20 @@ BRIGHT_GATE_READ_OVER = ("S88 (M1): the young bright stars' judged clauses read 
 # S90 (#161): the clusters' case lifted - with the field's cell means in the clouds' sector weights their slope reads
 # -0.4991, inside the window (0.141); the clouds' -0.4843 is still over (0.156) and held strict, the reason re-measured.
 # S90 close (the gate, D258): #161 discharged; the clouds' residual is register #215 (the amplitude rose together at every
-# scale below 190 pc, so the flatter shape #80's census left is unchanged) - held strict under #215, M3's.
-L1_GATE_READ_OVER_S90 = ("S90 (#215, after #161's ring-unit mend): the clouds' judged slope reads -0.4965 against -0.64 +/- 0.15 "
-                         "(S91, after #216's re-laid census; S90 -0.4843, S88 -0.4796); register #215, M3's")
-# S91 close (the gate, D260): #216's re-laid census (red at 3f16d0f, green on main at 4f06cc9) moves the clusters' judged
-# slope -0.4991 -> -0.4791, 0.161 from -0.64 against the window's 0.15 (one square's slope scatters 0.068 between
-# seeds); the window untouched, the number not re-pinned as a pass - held strict under register #219, M3's, read again
-# after S92's #164 / #165. (The clouds' reads -0.4965 at S91, still held under #215.)
+# scale below 190 pc, so the flatter shape #80's census left is unchanged) - held strict under #215, M3's, as
+# L1_GATE_READ_OVER_S90 ("the clouds' judged slope reads -0.4843 against -0.64 +/- 0.15 (S88 -0.4796; the clusters'
+# -0.4991 now inside); register #215, M3's").
+# S91 close (the gate, D260): #216's re-laid census (red at 3f16d0f, green on main at 4f06cc9) moved both judged slopes
+# and they exchanged sides of the window's edge at -0.49: the clouds' -0.4843 -> -0.4965, inside by 0.0065, so the
+# strict hold passed and is lifted (L1_GATE_READ_OVER_S90 removed) - not a mend: one square's slope scatters 0.068
+# between seeds, ten times the margin, and #215 is discharged on its own kill clause (the slope inside the window on a
+# change that did not aim at it); the clusters' -0.4991 -> -0.4791, 0.161 from -0.64 against 0.15, held strict under
+# register #219 - the gate's own debt, both populations at the edge since #80's census.
 L1_GATE_READ_OVER_S91 = ("S91 (#219, after #216's re-laid census): the clusters' judged slope reads -0.4791 against -0.64 +/- 0.15 "
-                         "(S90 -0.4991, inside); register #219, M3's")
+                         "(S90 -0.4991, inside; the clouds' -0.4965 now inside by 0.0065); register #219, M3's")
 
 
-@pytest.mark.parametrize("name", (pytest.param("clouds", marks=pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER_S90)),
+@pytest.mark.parametrize("name", ("clouds",
                                   pytest.param("clusters", marks=pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER_S91))))
 def test_the_census_against_its_own_law_returns_the_hierarchy_s_slope(census, name):
     corr = C.against_control(census["data"][name], census["control"][name], census["annulus"])
