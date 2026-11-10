@@ -27,8 +27,13 @@ const S67_SECOND_VERTEX_LENGTH = 8256;
 const S67_SECOND_VERTEX_SHA256 = "2ce20fe75c5fb22978aefef37b15d1fab62da8e3d063a53a82649f37e51710e6";
 const S67_FRAGMENT_LENGTH = 2410;
 const S67_FRAGMENT_SHA256 = "e8f58add7f895054ffb63159f5754d6d6f4ea6fdac6071e1d868ba5174cbd3da";
-const VERTEX_LENGTH = 10172;
-const VERTEX_SHA256 = "0a58dd4c3d2d1938690df0ed9ad0befcaa735815997eeb9cb4d04498c5fa0f1d";
+// S93's change (#174): the gas fluctuation map on the points' diffuse dust - the switch gasOn, the noise include and
+// its uniforms (noise.glsl.ts, pinned in noise.test.ts), the thin screen read once in dustTo and its factor on the
+// diffuse term. With those taken back the vertex is S82's (10172, 0a58dd4c...), as below.
+const S82_VERTEX_LENGTH = 10172;
+const S82_VERTEX_SHA256 = "0a58dd4c3d2d1938690df0ed9ad0befcaa735815997eeb9cb4d04498c5fa0f1d";
+const VERTEX_LENGTH = 20449;
+const VERTEX_SHA256 = "6c29b1e9cc86fe3fe3992c59f6f8c518d6c2221305bf66c9dc7cd4a0d32b4a56";
 const FRAGMENT_LENGTH = 3182;
 const FRAGMENT_SHA256 = "969f1611336ad9398acab1c7b1eac1bba1deb0ab1dbca78a4c72b10eeedf7cdf";
 // The wings' composite (S82): its own two texts.
@@ -48,6 +53,14 @@ const withoutWings = (vertex: string, fragment: string) => ({
     .replace(/ {4}if \(vMode > 3\.5\) \{[\s\S]*?(?= {4}if \(vMode < 0\.5\))/, ""),
 });
 
+/** The vertex with S93's additions taken back (#174): what S82 left. */
+const withoutGas = (vertex: string) =>
+  vertex
+    .replace(/\r\n/g, "\n")
+    .replace(/ {2}\/\/ The gas fluctuation map on the points' diffuse dust \(S93[\s\S]*?(?= {2}\/\/ The profile \(S64\))/, "")
+    .replace(/ {4}\/\/ The gas map as the march's thin screen \(S93[\s\S]*?(?= {4}float ds = sMax)/, "")
+    .replace("face * place * gasAt * share", "face * place * share");
+
 const sha256 = (text: string) => createHash("sha256").update(text.replace(/\r\n/g, "\n"), "utf-8").digest("hex");
 
 describe("the points' shader (FluxPoints, S64)", () => {
@@ -56,7 +69,10 @@ describe("the points' shader (FluxPoints, S64)", () => {
     expect(sha256(FLUX_POINTS_SHADER.vertex)).toBe(VERTEX_SHA256);
     expect(FLUX_POINTS_SHADER.fragment.length).toBe(FRAGMENT_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.fragment)).toBe(FRAGMENT_SHA256);
-    const s67 = withoutWings(FLUX_POINTS_SHADER.vertex, FLUX_POINTS_SHADER.fragment);
+    const s82 = withoutGas(FLUX_POINTS_SHADER.vertex);
+    expect(s82.length).toBe(S82_VERTEX_LENGTH);
+    expect(sha256(s82)).toBe(S82_VERTEX_SHA256);
+    const s67 = withoutWings(s82, FLUX_POINTS_SHADER.fragment);
     expect(s67.vertex.length).toBe(S67_SECOND_VERTEX_LENGTH);
     expect(sha256(s67.vertex)).toBe(S67_SECOND_VERTEX_SHA256);
     expect(s67.fragment.length).toBe(S67_FRAGMENT_LENGTH);
@@ -71,6 +87,9 @@ describe("the points' shader (FluxPoints, S64)", () => {
     expect(FLUX_POINTS_SHADER.vertex).toContain("return ceil(0.5 * psfCells * psfCellPc / side) > 60.0;");
     // what the pin covers, named: the dust to each point, the slab's column in it, the two profiles
     expect(FLUX_POINTS_SHADER.vertex).toContain("vec3 dustTo(vec3 p) {");
+    // S93 (#174): the march's gas map, read as its thin screen, on the diffuse term only
+    expect(FLUX_POINTS_SHADER.vertex).toContain("float layerGasMap(vec2 xy) {");
+    expect(FLUX_POINTS_SHADER.vertex).toContain("gasAt = layerGasMap(vec2(screen.x, -screen.z));");
     expect(FLUX_POINTS_SHADER.vertex).toContain("float slabColumn(float y0, float y1, float lo, float hi, float ds) {");
     expect(FLUX_POINTS_SHADER.vertex).toContain("plummerRect(");
     // S67: the PSF table's reader in both, and the physical mode's switch.

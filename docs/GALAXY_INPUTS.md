@@ -5344,6 +5344,17 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    in τ. Stated in the code and in `RENDER_PHYSICS.md` §0. **Carried.** The mend is one pass: the noise include
    (`noise.glsl.ts`) shared into FluxPoints' shader, its pin moved.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3, lane REST): built as the closer states.* `noise.glsl.ts`' include and its uniforms are shared into
+   FluxPoints' vertex shader; `FieldVolume` hands the points the march material's own uniforms (`PointDust.noise`), so
+   the points read the same gas tables under the march's own switch (`gasFluct`); `dustTo` multiplies the diffuse term
+   (not the clouds') by the map read once per point as the march's thin screen - where the segment to the camera crosses
+   the midplane inside its cut, else at the point's projection. The TS twin `flux.ts dustToPoint` takes the same map
+   (`gas`); `flux.test.ts` holds the one read, its place and the factor (1e-12), and the S64 depth bit for bit without a
+   map; the shader's pin moved (`fluxPoints.test.ts`: vertex 10172 / 0a58dd4c... -> 20449 / 6c29b1e9..., S82's text
+   recovered byte for byte with S93's lines taken back). With the layer off the map is never read and the points' frame
+   is unchanged (the factor 1.0 exact). The spurs stay their cell means in the points' dust (the entry asks the noise
+   only). Not measured on the GPU here (no browser run in the lane); the picture spec's star-first captures move with
+   the layer on.
 175. **The star-first mode's remainder keeps its middle part unmodulated by the clustering field** (S66, D226 R5e).
    The field mode splits the middle part (20–100 Myr) at the octave survival ages — `stars_middle_kept3/2/1`, the
    windows [20, 23.87), [23.87, 31.18), [31.18, 40.71) Myr, each multiplied by its k-octave map over its k-octave

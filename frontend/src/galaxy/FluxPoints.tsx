@@ -26,6 +26,7 @@ import {
 
 import { useContextGeneration } from "./contextLoss";
 import { DUST_SEGMENT_STEPS } from "./flux";
+import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import { WING_BLOCK, WING_MAX_HALF, psfClamped } from "./hstPsf";
 import { DISC_LOOP_HALF, PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF } from "./plummer";
 import { type PhysicalPsf, type SpritePsf, psfMean, psfTexture } from "./psf";
@@ -47,9 +48,9 @@ import { RING_ROWS } from "./regimes";
  * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. Since S64 (V6) the clouds'
  * raster (null: no clouds drawn) and its slab texture (each texel's clouds' mean height and half-thickness, kpc), and
  * each channel's depth per magnitude of A_V. Since S66 (V7, D226 R7) the march multiplies the diffuse dust's placement
- * per sub-step by the gas fluctuation map and draws the spurs from their table; the points do not: a point's dust is
- * the ring's placed column as the textures hold it (the cell means, spurs included), unmodulated below the cell - a
- * debt (the mend: the GLSL include shared into this shader, its pin moved). */
+ * per sub-step by the gas fluctuation map and draws the spurs from their table. Since S93 (#174) the points' diffuse
+ * dust takes the same gas map, the march's include and tables shared into this shader (`noise`), read as the march's
+ * thin screen; the spurs stay the ring's placed column as the textures hold them (their cell means). */
 export interface PointDust {
   rings: Texture;
   scatter: Texture;
@@ -61,7 +62,14 @@ export interface PointDust {
   cloudExt?: readonly [number, number, number];
   /** The extinction strength (S67, D228, the owner's ruling): every depth to a point multiplied by it; 1 when absent. */
   depthScale?: number;
+  /** The march material's uniforms (S93, #174): its gas fluctuation tables (GAS_TEXTURES, GAS_SCALARS) and its switch
+   * gasFluct, read each frame, so the points' diffuse dust takes the map the march multiplies its own by. */
+  noise?: Record<string, { value: unknown }> | null;
 }
+
+/** The gas fluctuation map's tables and scalars (noise.glsl.ts), as the march's material names them (S93, #174). */
+export const GAS_TEXTURES = ["uGasRing", "uGasWeights", "uGasCells"] as const;
+export const GAS_SCALARS = ["uGasSeed", "uGasInvScale", "uGasSense", "uGasEdge0"] as const;
 
 // plummer.ts plummerCorner and plummerRect, line for line: the Plummer's share of its light over a rectangle.
 const PROFILE_GLSL = /* glsl */ `
@@ -114,6 +122,12 @@ const VERTEX = /* glsl */ `
   uniform sampler2D cloudSlab;
   uniform vec3 cloudExt;
   uniform float cloudsOn;
+  // The gas fluctuation map on the points' diffuse dust (S93, #174): the march's noise include and its tables, shared
+  // from the march's material (PointDust.noise); gasOn is the march's own gasFluct, so the map is read exactly where the
+  // march reads it and is 1 (never read) with the layer off.
+  uniform float gasOn;
+  ${NOISE_UNIFORMS}
+  ${NOISE_GLSL}
   // The profile (S64): 0 none, 1 a Plummer sphere of half-mass radius extent, 2 a disc of radius extent (pc); the
   // drawing buffer's size, px.
   attribute float extent;
@@ -205,6 +219,14 @@ const VERTEX = /* glsl */ `
       sMax = disc > 0.0 ? min(sMax, max(0.0, (-b + sqrt(disc)) / a)) : 0.0;
     }
     if (sMax <= 0.0) return tau;
+    // The gas map as the march's thin screen (S93, #174; FieldVolume's screenGas): read once where the segment crosses
+    // the midplane (y = 0) inside [0, sMax], else at the point's own projection, and multiplying the diffuse dust only.
+    float gasAt = 1.0;
+    if (gasOn > 0.5) {
+      float tCross = abs(u.y) > 1e-6 ? -p.y / u.y : -1.0;
+      vec3 screen = (tCross >= 0.0 && tCross <= sMax) ? p + u * tCross : p;
+      gasAt = layerGasMap(vec2(screen.x, -screen.z));
+    }
     float ds = sMax / float(${DUST_SEGMENT_STEPS});
     for (int j = 0; j < ${DUST_SEGMENT_STEPS}; j++) {
       float s0 = float(j) * ds;
@@ -223,7 +245,7 @@ const VERTEX = /* glsl */ `
       vec2 slab = cloudsOn > 0.5 ? textureLod(cloudSlab, vec2(x, phi / 6.28318531), 0.0).rg : vec2(0.0);
       float cloudColumn = cloudsOn > 0.5 ? slabColumn(p.y + u.y * s0, p.y + u.y * s1, slab.x - slab.y, slab.x + slab.y, ds) : 0.0;
       vec3 clouds = cloudsOn > 0.5 ? textureLod(cloudTex, vec2(x, phi / 6.28318531), 0.0).r * cloudExt : vec3(0.0);
-      tau += face * place * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;
+      tau += face * place * gasAt * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;
     }
     return tau * dustDepthScale;
   }
@@ -448,6 +470,10 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         cloudSlab: { value: sprite },
         cloudExt: { value: new Vector3(0, 0, 0) },
         cloudsOn: { value: 0 },
+        // The gas map (S93, #174): bound to the sprite and 0 until the march's tables arrive; never read while gasOn is 0.
+        gasOn: { value: 0 },
+        ...Object.fromEntries(GAS_TEXTURES.map((name) => [name, { value: sprite }])),
+        ...Object.fromEntries(GAS_SCALARS.map((name) => [name, { value: 0 }])),
         profile: { value: 0 },
         bufferPx: { value: new Vector2(1, 1) },
         // Bound to the sprite until a table arrives: never read while physOn is 0.
@@ -566,6 +592,10 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     const clouds = dust?.clouds ?? null;
     const slab = dust?.slab ?? null;
     uniforms.cloudsOn.value = clouds && slab ? 1 : 0;
+    // The gas map (S93, #174): the march's own tables and switch, copied each frame from its material's uniforms.
+    const noise = dust?.noise ?? null;
+    uniforms.gasOn.value = noise ? Number(noise.gasFluct?.value ?? 0) : 0;
+    if (noise) for (const name of [...GAS_TEXTURES, ...GAS_SCALARS]) if (noise[name]) uniforms[name].value = noise[name].value;
     if (clouds && slab) {
       uniforms.cloudTex.value = clouds;
       uniforms.cloudSlab.value = slab;

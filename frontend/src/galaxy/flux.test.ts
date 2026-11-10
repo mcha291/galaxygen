@@ -118,6 +118,27 @@ describe("the dust in front of a point (T20, D208)", () => {
     expect(tau[1]).toBe(tau[0]);
   });
 
+  it("takes the gas map as the march's thin screen: once, where the segment crosses the midplane, else at the point (S93, #174)", () => {
+    const seen: Array<[number, number]> = [];
+    const gas = (x: number, y: number) => {
+      seen.push([x, y]);
+      return 1.75;
+    };
+    const plain = dustToPoint([5, -6, 0], [35, 54, 0], 8, 30, read);
+    const mapped = dustToPoint([5, -6, 0], [35, 54, 0], 8, 30, read, DUST_SEGMENT_STEPS, gas);
+    // One read per point, at the crossing y = 0 (a tenth of the way to the eye): x = 8, face-on y = -z = 0.
+    expect(seen.length).toBe(1);
+    expect(seen[0][0]).toBeCloseTo(8, 12);
+    expect(seen[0][1]).toBeCloseTo(0, 12);
+    for (let k = 0; k < 3; k += 1) expect(mapped[k]).toBeCloseTo(1.75 * plain[k], 12);
+    // A point on the camera's side of the midplane: the map at its own projection.
+    seen.length = 0;
+    dustToPoint([5, 0.5, -2], [5, 60, -2], 8, 30, read, DUST_SEGMENT_STEPS, gas);
+    expect(seen).toEqual([[5, 2]]);
+    // No map: the S64 depth, bit for bit.
+    expect(dustToPoint([5, -6, 0], [35, 54, 0], 8, 30, read, DUST_SEGMENT_STEPS, null)).toEqual(plain);
+  });
+
   it("follows the two layers' own integral along an inclined and a near edge-on segment", () => {
     for (const [point, eye, tolerance] of [
       [[5, 0, 0], [35, 30, 0], 0.01], // 45° to the plane

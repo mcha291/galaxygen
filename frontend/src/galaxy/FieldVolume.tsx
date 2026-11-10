@@ -1203,6 +1203,8 @@ export function FieldVolume({
       rLo: R.lo,
       rHi: R.hi,
       top: DUST_TOP_HEIGHTS * tallestLayer(typeof layers.dust === "string" ? a[layers.dust] : layers.dust),
+      // The march's own uniforms (S93, #174): the points' diffuse dust takes its gas fluctuation map under its switch.
+      noise: material.uniforms as Record<string, { value: unknown }>,
     };
     box.userData.pointDust = pointDust;
     box.userData.cloudExt = cloudDepthScale(extinctionRatio(light));
