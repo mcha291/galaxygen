@@ -716,10 +716,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S88 | **212** (`MERGER_HEATING` re-derived at its fixed point on the model's own clock, 88.8 → 90.6, on the owner's word of 2026-11-03; row 3's miss 251.017 written in under #11, D256) | 1 |
 | **discharged** at S89 | **167, 168** (the clouds' duplicate central A_V retired, read by no drawing since D228; the clouds' dust heated and scattering in the clouds' own layer at the census's expectation, L_IR ×0.9977 / ×0.9946, D257) | 2 |
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
-| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 87, 90, 93, 99, 132, 133, 134, 141, 143, 152, 155, 157, 195 | 38 |
-| **carried** | 80, 81, 82, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 128, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 158, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 202, 203, 204, 205, 210, 211, 215, 216, 217 | 81 |
+| **discharged** at S91 | **210** (by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 1 |
+| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 211, 215, 216, 217 | 75 |
 
-So the board's **119 open** is 38 permanent and 81 carried, and no item is unruled (S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **118 open** is 43 permanent and 75 carried, and no item is unruled (S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3169,6 +3170,7 @@ never been judged in twenty-three sessions.
    and S89's measurement killed the entry's own prediction (the two readings do not separate on the colour), so no
    comparison of attenuated against intrinsic light judges anything a source states; a source with errors that says
    what its magnitudes measure would be a new entry.
+   *S91 close (the gate, D260): permanent* on the owner's ruling above.
 83. **The stellar wind's escape velocity is Newtonian: Γ_e is missing** (S28, D177). `star_wind_luminosity`
    is ½ Ṁ v_∞² with Vink, de Koter & Lamers 2001's mass-loss recipe and v_∞/v_esc = 2.6 (1.3 below the
    bistability jump) `[verified: A&A 369, 574, eqs. 15, 23, 24, 25, read at S28]`, but v_esc is computed
@@ -4038,6 +4040,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    on and off, which rule A10 and invariant I1 forbid, and absorbed power is non-linear in the column, so no neutral
    composed form exists; the placement's own effect is measured at S89 (under 3 % of the disc's absorbed power).
    Parts (b)–(d) stand as recorded above.
+   *S91 close (the gate, D260): permanent* on the owner's ruling above.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
@@ -4906,6 +4909,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    a star its cell names that stands outside the window; the drawn picture is right either way (the frustum cuts on
    positions). The radius half was mended by #197 (S90). The reason, written in: the API's statement of what a
    region request returns is the owner's rule, and it is kept.
+   *S91 close (the gate, D260): permanent* on the owner's ruling above.
 159. **The lattice placement's cost on the whole-disc census routes** (S61, D220 part II). Placing every cloud jointly
    in radius and azimuth on its cell's quadrature lattice - the field on 2.35 million lattice points (2.0 s) and
    the gas pattern's 16 x 24 mesh per cell (1.1 s) - takes `materialise_clouds` from 1.0-1.1 s to 3.8-4.5 s for every
@@ -5395,6 +5399,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    readings the repository holds conflict (a named ruleset, B12), the flare outside R₀ rests on two bins that fall
    again, and no source gives the mass dependence a number — choosing among them is not a build; a whole table read
    would be a new entry.
+   *S91 close (the gate, D260): permanent* on the owner's ruling above.
 181. **The HII regions are one cluster's Strömgren sphere each, never a complex: the knots are unresolved points made
    large on screen only by their brightness** (S67, D227; the owner's question of 2026-10-18, "the hii knots are
    very big, bigger than the stars, is this right?"). The census's 12 710 HII regions on `milky_way` have Strömgren
@@ -5448,6 +5453,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    The owner's "Smaller giant clouds (model)" of S67 (D231) stands; the reason, written in: both catalogue mass–radius
    relations the readers hold would make the giants larger (296 / 378 pc at 10⁷ M☉ against the cap's 150), the reverse
    of that choice, and no resolved Σ_GMC profile or template census is held.
+   *S91 close (the gate, D260): permanent* on the owner's ruling above.
 183. **In the field mode a knot carries its region's gas and not its cluster's starlight, so an HII region draws as
    pure line colour** (S67, D227; the owner's questions of 2026-10-19, "why is the hii regions all green on 4414?").
    The knots (S64, D224) hold each region's line light; the cluster's own starlight is spread through the field's
@@ -5853,7 +5859,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    with its pieces (6–10 kpc): the ratio of means' median 1.252 → **1.429**, inside PHANGS's 1.37–5.79 now — S86's "a miss
    on the median" (#131) becomes a hit — and the ridge width's median 0.390 → 0.424 (#129). The stage subset's other
    numbers that move with the floor are re-pinned once on the final model, after #80 (S87's re-pin commit).
-210. **NGC 4414's zoom capture is not the committed picture's bytes, and no close since S70 read the verdict** (S82,
+210. ~~**NGC 4414's zoom capture is not the committed picture's bytes, and no close since S70 read the verdict**~~ (S82,
    D249; the lead's reading of builder B's picture logs). The picture test prints a verdict per capture ("the committed
    picture, byte for byte" / "not the committed picture's bytes") and compares within a tolerance; `ngc_4414-zoom`
    reads "not the committed picture's bytes" on S82's base tree (1 503 153 B against the committed 1 503 149, S70's
@@ -5868,6 +5874,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **discharged by ruling**.* A
    within-tolerance byte change in a capture needs no name; the capture is re-taken at the next knowing change, and
    the picture test's verdict lines stay the close's gate (LESSONS, S82).
+   *S91 close (the gate, D260): discharged* on the owner's ruling above.
 211. **The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the
    end row 0.009 mag off** (S83, D250; builder A's run of the targeted tests on `s83-robust`). `tests/test_render.py`
    reads the viewer's filter sets (`instruments.json`) and holds the model's response tables to each: for the new
