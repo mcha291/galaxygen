@@ -7,14 +7,16 @@ remainder ``stars_unresolved``) are expectations, exact per ring (``tests/test_v
 ``tests/test_v6b_points.py``), while the cluster census and the bright catalogue are realisations of them. Measured at
 S91 on the Milky Way through rgb at 6500 K (``scratch_s91_t2/measure_closure.py`` in the builder's worktree), at the
 grid threshold where the whole disc expects at most 3 x 10^4 bright stars (10^4.20 Lsun, 24 070 returned), with the
-census's 12 989 clusters:
+census's 12 989 clusters (re-read at S91's close on 557e725, after #216 and #160, from the test's own quantities:
+every number below the same to the fourth decimal but the bright catalogue's R 1.0028, was 1.0027, and the clusters'
+B through the set over bolometric 1.0009, was 1.0010):
 
 * clusters + bright + remainder over ``stars``: the disc 0.9959 / 0.9947 / 0.9910 (R / G / B); per ring (the 26 rings
   holding over 1 % of the brightest ring's light) 0.927-1.099; per level-0 cell p05-p95 0.77-1.26 (median 0.96-0.97),
   and over the 16 level-2 children of cell 261 (R 7.5-8.5 kpc) 0.88-1.01 per cell, 0.905 / 0.881 / 0.818 summed - that
   cell's ten clusters carry 0.18 of its expected young light. Not claimed per cell.
 * the clusters alone over the young part: the disc 0.9398 / 0.9380 / 0.9327, per ring 0.66-1.45; bolometrically the
-  census's light over the young part's 0.9318. Through the set over bolometric, 1.0086 / 1.0066 / 1.0010: the census's
+  census's light over the young part's 0.9318. Through the set over bolometric, 1.0086 / 1.0066 / 1.0009: the census's
   response is the young part's colour to 1 %, and its 6 % shortfall is the census's draw against its expectation (the
   clusters' light's seed-to-seed spread is 4.4 %, D210), not the filter path.
 * the drawn path (``frontend/src/galaxy/GalaxyTab.tsx``, the region regime's "sampled" cluster points): before S91,
@@ -105,13 +107,13 @@ def test_the_census_the_catalogue_and_the_remainder_close_on_the_render_s_stars_
     # the bright catalogue against its expected part, the render's stars less its young part and its remainder
     expected = parts["stars"] - parts["young"] - parts["remainder"]
     bright = parts["bright"].sum(axis=0) / expected.sum(axis=0)
-    assert np.all(np.abs(bright - 1.0) < 0.03), bright  # measured 1.0027 / 1.0091 / 1.0148 (24 070 stars)
+    assert np.all(np.abs(bright - 1.0) < 0.03), bright  # measured 1.0028 / 1.0091 / 1.0148 (24 070 stars; S91's close: was 1.0027)
 
 
 def test_the_clusters_summed_response_is_the_young_part_s_colour(parts):
     """The clusters alone against the render's young part (the census's ages): through the set the disc reads 0.9398 /
     0.9380 / 0.9327, bolometrically 0.9318 - so the response the region regime now draws is the young part's colour to
-    1 % (1.0086 / 1.0066 / 1.0010), and the shortfall is the census's draw against its expectation, the same in every
+    1 % (1.0086 / 1.0066 / 1.0009), and the shortfall is the census's draw against its expectation, the same in every
     channel and in the bolometric light (the clusters' light's seed-to-seed spread is 4.4 %, D210)."""
     through = parts["clusters"].sum(axis=0) / parts["young"].sum(axis=0)
     bolometric = float(np.sum(parts["census"]["cluster_luminosity"])) / parts["young_light"]

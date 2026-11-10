@@ -716,11 +716,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S88 | **212** (`MERGER_HEATING` re-derived at its fixed point on the model's own clock, 88.8 → 90.6, on the owner's word of 2026-11-03; row 3's miss 251.017 written in under #11, D256) | 1 |
 | **discharged** at S89 | **167, 168** (the clouds' duplicate central A_V retired, read by no drawing since D228; the clouds' dust heated and scattering in the clouds' own layer at the census's expectation, L_IR ×0.9977 / ×0.9946, D257) | 2 |
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
-| **discharged** at S91 | **210** (by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 1 |
+| **discharged** at S91 | **114, 210** (the region regime's cluster points drawn from their own response through the filter set, T2's closure test green; by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
-| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 114, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 211, 215, 216, 217 | 75 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 211, 215, 216, 217 | 74 |
 
-So the board's **118 open** is 43 permanent and 75 carried, and no item is unruled (S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **117 open** is 43 permanent and 74 carried, and no item is unruled (S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3671,8 +3671,8 @@ never been judged in twenty-three sessions.
    zoomed-in point layer is now the bright catalogue at level-k tiles in the star-first mode (D225 R1), its picker
    naming the level; the level-k sample stays V3's display points in the field mode's region regime.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
-114. **A point is painted by its bolometric light through a blackbody's share at its temperature, and that is
-   about twice its light through an optical filter** (S41, V4, D191). A star's point is `star_luminosity` in the
+114. ~~**A point is painted by its bolometric light through a blackbody's share at its temperature, and that is
+   about twice its light through an optical filter**~~ (S41, V4, D191). A star's point is `star_luminosity` in the
    declared blackbody ramp's hue at `star_temperature` (D5, A9), and P1 paints a cluster the same way from
    `cluster_luminosity` and `cluster_light_temperature`. Measured against the population's own eight-band SED
    through the viewer's rgb curves — V1's machinery (D188) at the object grain — the census summed reads 1.89 /
@@ -3714,6 +3714,11 @@ never been judged in twenty-three sessions.
    p05–p95 0.77–1.26, not claimed (the render's parts are expectations, the census and the catalogue draws); the
    clusters' summed response is the young part's colour to 1 % (1.0086 / 1.0066 / 1.0010 of the bolometric ratio),
    its 6 % shortfall the census's draw. **The closer is met** (the gate rules the verdict); the double count is #115's.
+   *S91 close (the gate, D260): discharged.* The closer as S70 narrowed it - the region regime's cluster points drawn
+   from the `response` through the filter set - is built, and T2's closure test (`tests/test_s91_t2_closure.py`, the
+   test VIEWER_TASKS row T2 names) ran green at 557e725: 3 passed in 39.04 s, the numbers above the same to the fourth
+   decimal after #216 and #160 (the bright catalogue's R 1.0028, the clusters' B 1.0009). The sampled stars'
+   blackbody colours in the field mode are outside this closer and ride with T3 / #115.
 115. **The young population is on the screen twice in principle and once in practice: the cluster points and the
    sampled stars have no accounting between them, and a dissolved cluster is a point** (S41, V4, D191). The
    clusters are the whole young population — ΣQ / the light stage's young Q = 1.0088 (D182) — and carry 0.249 of
