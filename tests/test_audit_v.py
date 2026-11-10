@@ -617,7 +617,8 @@ MW_PAIR_SLOPES = (-0.5624, -0.4486)  # S92 (#164 / #165): was (-0.5626, -0.4616)
 # S90a (#216, D259): the Milky Way leg alone is machine_pinned - its two slopes are pinned as measured to 1e-3 on this
 # machine's census, which the births lay by rounding; one runner (41923775720) read -0.4738 / -0.4252 against S88's
 # -0.4846 / -0.4327. NGC 4414 (flocculent) stays in CI. Ids unchanged.
-@pytest.mark.parametrize("tpl", [pytest.param(t, id=t, marks=[pytest.mark.machine_pinned] if t == "milky_way" else []) for t in ("milky_way", "ngc_4414")])
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
+@pytest.mark.parametrize("tpl", [pytest.param(t, id=t, marks=[]) for t in ("milky_way", "ngc_4414")])
 def test_census_clustering_pair_correlation_is_the_declared_law(audit, unclustered, tpl):
     """(b) ``statistic``: "1 + omega_f(r) = (r / 190 pc)^-0.64 for r < 190 pc and 1 beyond" - so 2.43 at 47.5 pc.
     Re-derived from the placed clouds by a pair count written here: the ratio of the layer-on clouds' pairs to those
@@ -1024,7 +1025,7 @@ F_2_4 = ("F-2-4: spurs.py:68 (WALK_READ_DIFFERENCE = 0.052) and spurs.py:188 (_C
 # grid's 0.27 checked beside it (0.2506 at seed 4242, tests/test_spurs.py).
 # S90a (#216, D259): the worst read is pinned to 1e-3 on this machine's census of seeds 4242 and 777, whose births
 # rounding decides; one runner (41923775720) read 0.5106, inside the bound 0.58, which the mark skips there with it.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K):
     """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S88 re-measured them: "within 0.27 of the point
     function's value there, relative - measured at S88 over every foot on the production grid ... and within 0.58 on
@@ -1083,7 +1084,7 @@ F_2_5 = ("F-2-5: spurs.py:13-14 (module docstring, item 7) 'every chain of a non
 # S90a (#216, D259): the last assert names which chains are bare on this machine's census of the two seeds (births laid
 # by rounding); one runner (41923775720) found other bare chains, each shorter than the reach - the statement held
 # there, and the mark skips it with the record.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, K):
     """(b) The module's statement of where spurs are (S70, D234, Audit V F-2-5): "every chain of a non-flocculent disc
     long enough for a first foot carries them here" - the first foot one uniform within one spacing of the chain's

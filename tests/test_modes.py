@@ -234,7 +234,8 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
 
-@pytest.mark.machine_pinned  # S90a (#216, D259): a record of this machine's 240 draws, whose births rounding decides (the runner: 0.026249); the bound stays in CI above
+# S90a (#216, D259): a record of this machine's 240 draws, whose births rounding decides (the runner: 0.026249); the bound stays in CI above
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_lowest_cell_over_the_suite_s_seeds_as_measured(prod):
     """The lowest cell of the stellar field over the 240 galaxies, as measured on the pieces' field (S60, D219; the
     gate's test above keeps the bound); a layer-on number, pinned here apart."""

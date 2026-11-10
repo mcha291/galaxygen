@@ -655,7 +655,7 @@ def table_of(F) -> np.ndarray:
 # in one of four quarter-turn gaps that tie but for rounding; the runner reads (51, 13, 5), which a one-ulp libm probe
 # reproduces (s90a_jitter.py). The mark skips the hand-laid chains, the births and the no-crossing asserts with it,
 # which held on the runner every night.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_census_by_hand_a_barred_disc_s_chains(prod):
     """D219 items 2-3 and the gate's second follow-up, items 2-3, on the bare default galaxy (barred, no pin: a
     grand design). Chains 0 and 1 start at the bar's two ends - R = a, φ_bar and φ_bar + π - and are this file's
@@ -1562,7 +1562,7 @@ EXPECTED_SPLIT: dict = {'milky_way': ([0.279, 1.242, 1.114, 0.296, 0.33], [0.01,
 
 # S90a (#216, D259): a record rounded to the hundredth on this machine's census (the template's drawn chains are laid by
 # births rounding decides); the runner reads the Outer arm's share 0.94 against 0.93. Recorded, not a verdict.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
     """D219 item 8: "the composed stellar crest lies within 0.1 width of each pinned locus over its β range — by
     construction, asserted, not a test of the model". **What holds by construction is asserted in the test of the
@@ -1603,7 +1603,7 @@ EXPECTED_CREST: dict = {'Norma': (0.31, 0.2), 'Sct-Cen': (0.13, 0.37), 'Sgr-Car'
 
 # S90a (#216, D259): a disclosed check's record rounded to the hundredth on this machine's census; the runner reads the
 # young stars' 0.18 against 0.19 (and Norma-Outer's likewise). No verdict: the check is disclosed, not a spec row.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_crests(prod):
     """D219 item 8: "the model is tested by the gas and young stars' crest against the maser loci within the masers'
     σ (0.34 kpc at R₀), a disclosed check with its null stated". **A disclosed check, not a spec row** (I3). The
@@ -2201,7 +2201,8 @@ WHOLE_RING_AZIMUTHS = 8192
 # S90a (#216, D259; R1b): the Milky Way leg alone is machine_pinned - its record (the exempted steps' count) is this
 # machine's census over five texture seeds, whose births rounding decides; the runner counts 63 against 67, its
 # structural assert (no step over the bound outside a kink's wedge) holding there. The other legs stay in CI. Ids unchanged.
-@pytest.mark.parametrize("leg", [pytest.param(leg, id=leg, marks=[pytest.mark.machine_pinned] if leg == "milky_way" else [])
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
+@pytest.mark.parametrize("leg", [pytest.param(leg, id=leg, marks=[])
                                  for leg in (*LEGS, "default")])
 def test_no_step_round_any_whole_ring(prod, leg):
     """The gate's sixth follow-up, item 1: "The continuity test is widened as the reviewer probed: whole rings
