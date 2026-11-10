@@ -2270,6 +2270,10 @@ def test_no_step_round_any_whole_ring(prod, leg):
 EXPECTED_WHOLE_RINGS: dict = {
     # S87 (#148, #209, #80): were milky_way (73, 0.055, [...the same kinks...], 0.6, 1.64) and default (0, 0.0, [], 0.11, 0.38) - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
     # S91 (#216): the Milky Way was 67 exempted steps - its five seeds' censuses re-laid by the births made bit-independent.
+    # (S92, the comment D260 owed: the 78 are the Milky Way template's five texture seeds - the template's own 12, seed 1's
+    #  24, seed 2's 10, seed 3's 19, seed 4's 13 - all at Norma's turn-back (rings 3.56-4.24 kpc, azimuth 0.62-0.65 rad,
+    #  each step at most 0.0201) and seed 1's also at its forward kink (rings to 5.1 kpc, azimuth to -1.53 rad), where the
+    #  largest, 0.0609, lies.)
     "milky_way": (78, 0.0609, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
     # S91 (#216): the default's was (0, 0.0, [], 0.1, 0.46) - its five seeds' censuses re-laid by the births made bit-independent.
     "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.12, 0.5),

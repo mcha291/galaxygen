@@ -449,6 +449,8 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # (0.3959, 0.4535) and (-0.011014, 0.008358), (0.3953, 0.4594).
     # S87 (#80): were (-3.2153e-10, 0.141850), (0.4103, 0.9861) and (0.4167, 0.4167) - the bar's law and the pinned 5.0 kpc.
     # S91 (#216): the Milky Way's high was 0.188020 - the censuses re-laid by the births made bit-independent.
+    # (S92, the comment D260 owed: the high 0.107999 is the Milky Way template's, pinned, at pattern_seed 41 and
+    #  texture_seed 1, on the ring at R = 4.6125 kpc - 0.9225 of a = 5.0 kpc; measured with s92_owed.py.)
     for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.107999), (0.4125, 0.9975)),
                                                 ("ngc_4414", (-4.4e-16, 5.99e-11), (0.3792, 0.3792))):
         got = np.array(sweep["whole"][template])
