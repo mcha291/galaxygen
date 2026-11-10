@@ -6013,6 +6013,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    it: a census whose pair-correlation shape steepens below 190 pc from a source (not a fit to the slope); or the
    gate's window re-derived from the field's own slope, with the reason. What kills the reading: the slope landing
    inside the window on a model change that did not aim at it.
+   *S91 close (the gate, D260):* after #216's re-laid census the clouds' slope reads -0.4965 (amplitude 1.9852), still
+   held strict; the recorded value in `tests/test_clustering_gate.py` (`MEASURED`, `L1_GATE_READ_OVER_S90`) moved with it.
 216. **The arm census's births are decided by rounding, so a seed's census is the machine's: the nightly has failed
    since M1 on records of this machine's draw** (S90a, D259; the nightly runs 41923775720 … 42522129002 on `main` at
    1c58051). Two comparisons in `layer/arm_pieces.py`'s birth sweep take a float that is exact only in exact
