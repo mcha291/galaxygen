@@ -37,11 +37,11 @@ Take in this order (the lead's recommendation at S91; Fable rules):
 - See D260 for the layer-off reference reading at S91 and the picture test's verdicts.
 
 ## The gate's notes for S92 (D260)
-- Before the hash pin: write into `arm_pieces.py`'s two tolerances the measured smallest step off a plateau and the
-  smallest real gap difference over the 300-galaxy sweep (the reviewer's note; a model byte, so S92's).
-- Two crossings coinciding to ulps on the birth ring still order by their last bit (not structural; noted).
+- Before the hash pin: the sweep's smallest plateau step and real gap difference into `arm_pieces.py`'s tolerances.
+- Two crossings coinciding to ulps on the birth ring still order by their last bit (not structural; noted). The 13
+  marks naming #216 wait on the runner (`s91-marks-lifted`). test_gas_pattern's tightly wound galaxy's refused-steps
+  residual moved 1.6371e-11 -> 6.2050e-10: a record, not a bound, but over 1e-10 again.
 - T2 changed the region regime's sampled cluster path only: the sampled stars keep the blackbody colours (T3's pass).
-- The 13 `machine_pinned` marks naming #216 wait on the runner (branch `s91-marks-lifted`, the gate's dispatched ci).
 
 ## The gates and the close (each session)
 - `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`; the picture test where a frame is regenerated
