@@ -375,14 +375,16 @@ def remainder(service: Service, q: Query) -> Response:
     own placing weights turn into ``stars_unresolved`` exactly:
 
         stars_unresolved(R, phi, f) = stars_unresolved_middle(R, f) * <middle's weight>(R, phi)
-                                      + stars_unresolved_old(R, f) * stars_placement(R, phi)
+                                      + stars_unresolved_old(R, f) * <old's weight>(R, phi)
 
-    the middle's weight being ``stars_middle_placement`` where the model publishes sfr_modulation and
-    ``stars_placement`` where it does not (bright.part_weights; the whole render's ``ages`` names both). Runs the
-    stellar part of an ``l_min=`` render and no more (rule D4): the stars' fields, the history, the contrast."""
+    the weights being ``stars_middle_placement`` and ``stars_old_placement`` where the model publishes sfr_modulation
+    and ``stars_placement`` both where it does not (bright.part_weights; the whole render's ``ages`` names them; the
+    old one by the star sample's rule since S91, #160). Runs the stellar part of an ``l_min=`` render and no more
+    (rule D4): the stars' fields, the history, the contrast, and where the model publishes sfr_modulation what the old
+    part's young share reads (``bright.OLD_SHARE_READS``)."""
     from galaxy.api.service import (
-        EVEN_ROUND_THE_RING, RENDER_MIDDLE_PLACEMENT, RENDER_STARS, RENDER_STARS_PLACEMENT, BadRequest, NotFound,
-        _inputs_json, _parse_filters, _white_point,
+        EVEN_ROUND_THE_RING, RENDER_MIDDLE_PLACEMENT, RENDER_OLD_PLACEMENT, RENDER_STARS, RENDER_STARS_PLACEMENT,
+        BadRequest, NotFound, _inputs_json, _parse_filters, _white_point, old_share,
     )
 
     if q.one("only") != "remainder":
@@ -406,6 +408,8 @@ def remainder(service: Service, q: Query) -> Response:
     if missing:
         raise NotFound(f"model {model.name!r} does not publish {missing}, which the remainder is decomposed from")
     wanted = [*RENDER_STARS, *(n for n in ("pattern_density_contrast", *_bright.RESOLVE_READS) if n in declared)]
+    if "sfr_modulation" in declared:  # S91 (#160): the old part's young share, as the whole render reads it
+        wanted += [n for n in _bright.OLD_SHARE_READS if n in declared and n not in wanted]
     inputs = service._overrides(model, q)
     out, ran = service.compute(model, inputs, wanted, service._layer(q))
     f = out.fields
@@ -416,9 +420,10 @@ def remainder(service: Service, q: Query) -> Response:
     # The full render's own entry and closure (the same method, so the same words and the same numbers), and its two
     # parts as it forms them: one decomposition, each part through the curves at the ring's colour temperature.
     parts: dict[str, np.ndarray] = {}
-    _, entry, resolved = service._unresolved(model, f, R, curves, per_ring, contrast, l_min, parts)
-    middle_by = RENDER_MIDDLE_PLACEMENT if _compose.published(f, "sfr_modulation") is not None else RENDER_STARS_PLACEMENT
-    weight = {"middle": middle_by, "old": RENDER_STARS_PLACEMENT}
+    _, entry, resolved = service._unresolved(model, f, R, curves, per_ring, contrast, l_min, parts, share=old_share(f, out))
+    published = _compose.published(f, "sfr_modulation") is not None
+    weight = {"middle": RENDER_MIDDLE_PLACEMENT if published else RENDER_STARS_PLACEMENT,
+              "old": RENDER_OLD_PLACEMENT if published else RENDER_STARS_PLACEMENT}
     R_axis = out.grid.axes["R"]
     header = {
         "model": model.name,

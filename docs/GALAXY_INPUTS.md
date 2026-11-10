@@ -4957,6 +4957,33 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the owner with the lead's recommendation - the sample's rule for both (the cell's total is the invariant the
    censuses are tested on; the old part's own contrast is no law's), a redraw of the bright catalogue, its tiles and
    frames. Not built.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("#160: one placement rule for both catalogues - the star sample's
+   c-bar (1 - p) for the old part, in `bright.part_weights` too; it redraws the bright catalogue, its tiles and the
+   frames"); built by an Opus builder on branch s91-160.* "Old" is one age split in both: older than YOUNG_STAR_AGE
+   (the sample's young steps of the ring's arrival law; the bright catalogue's `old` age part), so the ruling reads
+   one way. `bright.part_weights(contrast, modulation, share)` places the old part by c+ (1 - p), p = clip(y m-bar /
+   c-bar) - `systems.young_fraction`, the one function the sample's `YoungStars` and `sub_ring_weights` now call -
+   with y the young share of the row's level-0 ring (`systems.ring_young_share`: the churn's arrival law built
+   without its birth-radius tables, the sample's share to the bit, 11-12 ms), then scaled per ring to the ring sum
+   of c+, so the old part's ring total is the contrast's (A10: 2.2e-16 relative per finest sub-ring, both
+   templates); where the model publishes no modulation the old part is c+ as it was, and with the layer off it is 1
+   (the bright catalogue reads no modulation then; the render's share is 0, p = 0). The bright catalogue's old
+   weights are the sample's own level-3 weights (`Placement.sub_ring_weights`' old part) scaled to that sum, to
+   4.0e-14 / 1.9e-14 per finest sector (milky_way / ngc_4414; the sub-rings' middle radii cut by two arithmetics) -
+   `tests/test_bright.py` `test_the_two_catalogues_place_their_old_stars_by_one_rule`; until now they differed by up
+   to 1.37e-2 / 6.8e-3 per finest sector. `BrightGalaxy` takes `migration=` (the stage reads `migration_efficiency`
+   and `bright.OLD_SHARE_READS`, the stellar surface density and the SFR history). The render ships one more placing
+   weight where the model publishes sfr_modulation, `stars_old_placement` (the same function on the render's grid),
+   which places `stars_old` (ages) and the remainder's old part (`stars_unresolved`, `only=remainder`'s rule names
+   it); `stars_placement` (the stars component's) is unchanged. Measured before / after (default seeds): the bright
+   catalogue's expected count per level-0 sector at 10^3 Lsun moves at most 3.3e-3 (milky_way ring 8, 7.52-8.45 kpc),
+   1.7e-3 (ring 3, 2.84-3.78 kpc), 1.3e-3 / 2.0e-3 (ngc_4414), every ring's total the same number; the realised tiles
+   at 10^4 Lsun keep every ring's count (4973, 2878; 1627, 1373), the per-sector counts' |differences| summing to
+   18 / 4 / 2 / 4 (at most 3 in a sector); the
+   render's old weight per cell moves at most 1.44e-2 (milky_way) / 6.8e-3 (ngc_4414), `stars_unresolved` at l_min =
+   10^4 at most 7.5e-3 / 3.7e-3 per cell and filter, every ring's sum to 2e-14; the render's stages and its time
+   unchanged. With the layer off no array moves; the azimuthal model's four layer-off renders gain the new array (1)
+   and name it (`NAMED_ROUTES_SINCE_REBASE`). The frames are the lead's.
 161. ~~**The per-cell conservation removes the hierarchy's power at scales near the cell's short side**~~ (S61, D220
    part II; the reviewer's finding 2). The field's own two-point excess is its statistic to the digits - (r/190 pc)^-0.64,
    2.43 at 47.5 pc, 1 beyond 340 pc on 24 squares - but a cloud is placed by the field *within its cell* with the

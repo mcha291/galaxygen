@@ -137,6 +137,7 @@ RENDER_AGES = {"young": "stars_young", "middle": "stars_middle", "old": "stars_o
 RENDER_STARS_PLACEMENT = "stars_placement"
 RENDER_MIDDLE_PLACEMENT = "stars_middle_placement"
 RENDER_YOUNG_PLACEMENT = "stars_young_placement"
+RENDER_OLD_PLACEMENT = "stars_old_placement"  # S91 (#160): the old part by the star sample's rule
 # The dust stage's modified blackbody (S39): its shape is read with the stage's own constants, server-side.
 RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "DUST_EMISSIVITY_INDEX")
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
@@ -339,7 +340,8 @@ ROUTES: tuple[Route, ...] = (
         "the header's resolved stating the light split and the closure. The stars split by age (S63, D223): stars_young, "
         "stars_middle and stars_old per ring and filter, each its own spectrum's response scaled by the ring's closure "
         "factor so the three sum to the stars' ring value, with the (R, phi) weights that place them (stars_placement, "
-        "stars_middle_placement, or dust_placement for the young) - the header's ages names each part's weight. "
+        "stars_middle_placement and stars_old_placement where the model publishes sfr_modulation, or dust_placement "
+        "for the young) - the header's ages names each part's weight. "
         "The clouds as extinction (S64, V6): dust_diffuse_share per ring, the share of each ring's dust that is diffuse "
         "once its realised clouds (summed off the census's ring streams, no census materialised) hold theirs - the "
         "viewer multiplies the dust's depth by it and draws the clouds' own column, /api/clouds' "
@@ -352,7 +354,7 @@ ROUTES: tuple[Route, ...] = (
         "dust_placement_unspurred the dust's placement without "
         "the spurs, and stars_middle_kept3, _kept2 and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
         "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
-        "filter, which this render's own stars_middle_placement (or stars_placement) and stars_placement turn into "
+        "filter, which this render's own stars_middle_placement and stars_old_placement (or stars_placement) turn into "
         "stars_unresolved exactly; the header's remainder states the rule.",
         ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
         "render",
@@ -1654,7 +1656,8 @@ class Service:
             if found is None:
                 constants = {k: c.value for k, c in model.constants.items()}
                 spec = self.grid.spec
-                galaxy = _bright.BrightGalaxy(out.fields, self.grid.R, self.grid.t, float(spec.t_max), int(spec.n_t), constants)
+                galaxy = _bright.BrightGalaxy(out.fields, self.grid.R, self.grid.t, float(spec.t_max), int(spec.n_t), constants,
+                                              migration=float(out.inputs["migration_efficiency"]))
                 seed = int(out.inputs["systems_seed"])
                 cells = _bright.all_cells()
                 _, info = _bright.select_brightest(
@@ -1816,6 +1819,10 @@ class Service:
         # S63 (D223): the history the light by age is decomposed from, and where stars form today (the middle part's
         # weight) - the bright stage's own reads, where the model publishes them.
         wanted += [n for n in _bright.RESOLVE_READS if n in declared and n not in wanted]
+        # S91 (#160): where the model publishes sfr_modulation the old part is placed by the star sample's rule, whose
+        # young share is the churn's arrival law - the fields it reads.
+        if "sfr_modulation" in declared:
+            wanted += [n for n in _bright.OLD_SHARE_READS if n in declared and n not in wanted]
         # S64 (V6, R2): what the diffuse share reads - the ism stage's, which the dust component already runs.
         wanted += [n for n in _v6_clouds.SHARE_FIELDS if n in declared and n not in wanted]
         if l_min is not None:
@@ -1847,6 +1854,7 @@ class Service:
         # The stellar light follows the pattern's density contrast around each ring (a constant mass-to-light
         # ratio in azimuth), which averages to 1 around every ring, so each ring keeps its published light.
         placed = np.ones((R.size, phi_axis.n)) if contrast is None else np.maximum(np.asarray(contrast, dtype=float), 0.0)
+        old_rows = old_share(f, out)  # S91 (#160): the star sample's young share per R, for the old part's weight
         stars = per_ring[:, None, :] * placed[..., None]
         halpha_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["halpha"])
         contrast_fields = ["pattern_density_contrast"] if contrast is not None else []
@@ -1910,7 +1918,7 @@ class Service:
         }
         resolved = None
         if l_min is not None:
-            unresolved, about["stars_unresolved"], resolved = self._unresolved(model, f, R, curves, per_ring, contrast, l_min)
+            unresolved, about["stars_unresolved"], resolved = self._unresolved(model, f, R, curves, per_ring, contrast, l_min, share=old_rows)
             about["stars_unresolved"]["about"] += even
             components.append(("stars_unresolved", unresolved))
         line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
@@ -2087,7 +2095,7 @@ class Service:
         if all(n in f for n in _bright.RESOLVE_READS[:2]):
             ages, age_rings, age_weights = self._ages(
                 model, f, curves, per_ring, placed, contrast_fields, placed_gas, gas_fields,
-                RENDER_DUST_PLACEMENT if placement is not None else None, even, clustering_declared,
+                RENDER_DUST_PLACEMENT if placement is not None else None, even, clustering_declared, old_rows,
             )
         drawn = {"halpha"} if ("halpha_hii" in about or "halpha_dig" in about) else set()
         for name in ("lines_hii", "lines_dig"):
@@ -2258,7 +2266,7 @@ class Service:
     def _ages(
         self, model: Model, f: Mapping[str, Any], curves: Sequence[Any], per_ring: np.ndarray, placed: np.ndarray,
         contrast_fields: list[str], placed_gas: np.ndarray, gas_fields: list[str], dust_placement: str | None, even: str,
-        kept_declared: bool = False,
+        kept_declared: bool = False, share: np.ndarray | None = None,
     ) -> tuple[dict[str, Any], list[tuple[str, np.ndarray]], list[tuple[str, np.ndarray]]]:
         """The stars component's light split by the age of its stars (S63, D223; BUILD_III Phase V5): (the header's
         ``ages``, the three per-ring (R, filter) arrays, the (R, phi) weight arrays shipped for them).
@@ -2273,7 +2281,9 @@ class Service:
         stated per filter (D223's ruling: ``stars`` unchanged). Each part is placed round its ring by its own weight,
         the one the censuses give the same ages: the young by the gas's own contrast (the clusters sit in the
         clouds), the middle by sfr_modulation normalised per ring (``bright.part_weights``), the old by the stellar
-        pattern's contrast, as ``stars`` is."""
+        pattern's contrast, as ``stars`` is, where the model publishes no modulation, and where it does by the star
+        sample's rule ``c (1 - p)`` scaled to the contrast's ring mean (``bright.part_weights``, S91 #160: the census's
+        weight for the same ages; ``share`` is each row's young share, ``bright.row_young_share``)."""
         spec = self.grid.spec
         constants = {k: c.value for k, c in model.constants.items()}
         anchors = _bright.part_anchors(f, float(spec.t_max), int(spec.n_t), constants)  # (3, R, 8)
@@ -2286,7 +2296,7 @@ class Service:
         departure = [float(np.max(np.abs(factor[:, k] - 1.0), initial=0.0)) for k in range(factor.shape[1])]
 
         modulation = _compose.published(f, "sfr_modulation")
-        middle_weight = _bright.part_weights(placed, modulation)[0]
+        middle_weight, old_weight = _bright.part_weights(placed, modulation, share)
         stars_about = (
             "the stellar pattern's density contrast round each ring, floored at zero: what the stars component is "
             "placed by (pattern_density_contrast)" if contrast_fields else
@@ -2300,8 +2310,18 @@ class Service:
                 "zero (bright.part_weights: the bright catalogue's rule for its stars younger than YOUNG_STAR_AGE)",
             )
             middle_by = RENDER_MIDDLE_PLACEMENT
+            weights[RENDER_OLD_PLACEMENT] = (
+                old_weight, [*contrast_fields, "sfr_modulation", *_bright.OLD_SHARE_READS],
+                "the stars older than YOUNG_STAR_AGE round each ring by the star sample's rule: the stellar pattern's "
+                "contrast c floored at zero times (1 - p), p = clip(y m / c, 0, 1) the sample's young share of the cell "
+                "- m sfr_modulation over its ring mean, y the young share of the level-0 ring's arrival law (the churn: "
+                "the history, the stellar surface density and the migration_efficiency input) - scaled to the "
+                "contrast's ring mean (bright.part_weights: the star sample's and the bright catalogue's rule for "
+                "their stars older than YOUNG_STAR_AGE, S91 #160)",
+            )
+            old_by = RENDER_OLD_PLACEMENT
         else:
-            middle_by = RENDER_STARS_PLACEMENT
+            middle_by = old_by = RENDER_STARS_PLACEMENT
         if dust_placement is not None:
             young_by = dust_placement
         elif gas_fields == contrast_fields:
@@ -2311,19 +2331,23 @@ class Service:
                 placed_gas, list(gas_fields), "the gas's own density contrast round each ring, floored at zero")
             young_by = RENDER_YOUNG_PLACEMENT
         weight_fields = {RENDER_STARS_PLACEMENT: list(contrast_fields), RENDER_MIDDLE_PLACEMENT: ["sfr_modulation"],
+                         RENDER_OLD_PLACEMENT: [*contrast_fields, "sfr_modulation", *_bright.OLD_SHARE_READS],
                          RENDER_YOUNG_PLACEMENT: list(gas_fields), RENDER_DUST_PLACEMENT: list(gas_fields)}
-        grids = {RENDER_STARS_PLACEMENT: placed, RENDER_MIDDLE_PLACEMENT: middle_weight,
+        grids = {RENDER_STARS_PLACEMENT: placed, RENDER_MIDDLE_PLACEMENT: middle_weight, RENDER_OLD_PLACEMENT: old_weight,
                  RENDER_YOUNG_PLACEMENT: placed_gas, RENDER_DUST_PLACEMENT: placed_gas}
         cut = _bright.cluster_window(constants)
         bounds = {"young": [0.0, cut], "middle": [cut, _catalogue.YOUNG_STAR_AGE], "old": [_catalogue.YOUNG_STAR_AGE, None]}
-        placed_by = {"young": young_by, "middle": middle_by, "old": RENDER_STARS_PLACEMENT}
+        placed_by = {"young": young_by, "middle": middle_by, "old": old_by}
         says = {
             "young": "the stars younger than the cluster census's window - the cluster points' ages - placed by the "
                      "gas's own density contrast, as the clouds the clusters sit in are",
             "middle": "the stars from the cluster window to YOUNG_STAR_AGE, placed by where stars form today "
                       "(sfr_modulation normalised per ring), as the bright catalogue places its young stars",
             "old": "the stars older than YOUNG_STAR_AGE, placed by the stellar pattern's density contrast, as the stars "
-                   "component is",
+                   "component is" if old_by == RENDER_STARS_PLACEMENT else
+                   "the stars older than YOUNG_STAR_AGE, placed by the star sample's rule (stars_old_placement: the "
+                   "contrast times one less the sample's young share of the cell), as the star sample and the bright "
+                   "catalogue place their old stars (S91, #160)",
         }
         used = sorted(set(placed_by.values()))
         header = {
@@ -2368,7 +2392,7 @@ class Service:
 
     def _unresolved(
         self, model: Model, f: Mapping[str, Any], R: np.ndarray, curves: Sequence[Any], per_ring: np.ndarray,
-        contrast: Any, l_min: float, parts: dict[str, np.ndarray] | None = None,
+        contrast: Any, l_min: float, parts: dict[str, np.ndarray] | None = None, *, share: np.ndarray | None = None,
     ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
         """The field's remainder under ``l_min`` (S48's wiring, D200 (4)): (the component on the (R, phi) grid, its
         entry in ``components``, the header's ``resolved``).
@@ -2379,8 +2403,9 @@ class Service:
         function on the field's own quadrature (S49, D204), so unresolved + young + bright is the field's total per ring
         and band exactly. Each of the remainder's two age parts goes through the curves on its own and is placed
         around the ring by the weight the bright catalogue gives the same part (``bright.part_weights``: the
-        contrast for the old part, the normalised sfr_modulation for the 20-100 Myr part where the model publishes
-        it), so the points and the field agree around the arms. The SED join is not linear, so the parts' responses
+        normalised sfr_modulation for the 20-100 Myr part and the star sample's ``c (1 - p)`` for the old part where
+        the model publishes it - ``share`` each row's young share, ``bright.row_young_share``, S91 #160 - the contrast
+        for both where it does not), so the points and the field agree around the arms. The SED join is not linear, so the parts' responses
         do not sum to the total's exactly: the departure through this request's curves is measured here, per ring,
         and stated in the header. ``parts``, when given, receives the two parts' responses per ring and filter
         (``middle``, ``old``): what ``only=remainder`` sends (S64, V6, R8; ``api/v6_tiles.py``)."""
@@ -2395,7 +2420,11 @@ class Service:
             parts.update(middle=middle, old=old)
         modulation = _compose.published(f, "sfr_modulation")
         grid_contrast = np.ones((R.size, self.grid.axes["phi"].n)) if contrast is None else contrast
-        weights = _bright.part_weights(grid_contrast, modulation)  # (2, R, phi): middle, old
+        weights = _bright.part_weights(grid_contrast, modulation, share)  # (2, R, phi): middle, old
+        # S91 (#160): the old part's words where the model publishes sfr_modulation (a model without it reads as it did).
+        old_words = "" if modulation is None else (
+            " times one less the star sample's young share of the cell (stars_old_placement: the star sample's rule, "
+            "S91 #160)")
         component = middle[:, None, :] * weights[0][..., None] + old[:, None, :] * weights[1][..., None]
         # The closure through these curves: every part through the field's machinery at the ring's temperature.
         parts = middle + old + _spectra.stellar_response(a["young"], T, curves) + _spectra.stellar_response(
@@ -2413,7 +2442,7 @@ class Service:
                      "older than it (the bright catalogue's, /api/bright with the same l_min), from one decomposition "
                      "of the history onto the isochrones and the luminosity function, whose totals are the field's "
                      "tables (one quadrature along the isochrones' points); its 20-100 Myr part placed around each ring by where stars form today (sfr_modulation, "
-                     "where the model publishes it) and the older part by the pattern's contrast, as the bright "
+                     "where the model publishes it) and the older part by the pattern's contrast" + old_words + ", as the bright "
                      "catalogue places its stars; through each curve as the stars component is, at the ring's colour "
                      "temperature",
         }
@@ -2633,6 +2662,20 @@ def _brightest(catalogue: Any, n: int, view: np.ndarray | None) -> tuple[Any, di
     chosen["cell"] = cells[keep]
     chosen["index"] = indices[keep]
     return chosen, {"requested": n, "pool": int(catalogue.size), "in_view": in_view, "returned": int(keep.size)}
+
+
+def old_share(f: Mapping[str, Any], out: Outputs) -> np.ndarray | None:
+    """Each R row's young share by the star sample's rule (``bright.row_young_share``), what the render's old part is
+    placed with where the run publishes sfr_modulation (S91, #160); None where it publishes none. With the layer off
+    the share is 0 on every row: the star sample then places every star alike (``Placement`` reads no modulation), and
+    p = 0 leaves the neutral contrast's 1 exactly - the old part's weight is 1 bit for bit, as every placing weight is
+    with the layer off."""
+    if _compose.published(f, "sfr_modulation") is None:
+        return None
+    R = out.grid.R
+    if _compose.placement_weight(f, "sfr_modulation") is None:
+        return np.zeros(R.size)
+    return _bright.row_young_share(f, R, out.grid.t, R, migration=float(out.inputs["migration_efficiency"]))
 
 
 def _stage_for(model: Model, slot: str, impls: Any) -> Stage:

@@ -307,9 +307,10 @@ def bright(census):
     F, R, spec = out.fields, out.grid.R, out.grid.spec
     seed = int(out.inputs["systems_seed"])
     cells = BR.all_cells()
-    galaxy = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, c)
+    mig = float(out.inputs["migration_efficiency"])
+    galaxy = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, c, migration=mig)
     l_min = 10.0 ** galaxy.threshold(cells, BRIGHT_TARGET)
-    law = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, dict(c, **{WIDTH: 0.0}))
+    law = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, dict(c, **{WIDTH: 0.0}), migration=mig)
     return {"galaxy": galaxy, "data": BR.materialise_bright(galaxy, seed, cells, l_min),
             "control": [BR.materialise_bright(law, s, cells, l_min) for s in range(seed + 1, seed + 1 + CONTROL_SEEDS)]}
 
