@@ -2154,3 +2154,23 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   table's threshold (an array power) agree here to the bit and an ulp apart on one runner; numpy's array loops
   dispatch by CPU, its scalar power does not. A contract that says "the value read back is the grid's" needs one
   function that both answers call (#217).
+
+## From S91 (BUILD_V row 91, M3's first session: #216 first, T2, #160; an Opus lead, Opus builders)
+
+- [audit] **Run the one-ulp probe over the whole sweep, not only the named cases.** S90a's probe named two galaxies;
+  over test_bar's 300-galaxy sweep 289 censuses parted under one ulp before #216's mend, and 0 after - the plateau
+  of the design count and the symmetric gaps are everywhere, not two seeds' accident. A probe whose result is "it
+  moves nothing" must be run where the tests read, galaxy for galaxy.
+- [field] **A tie rule changes exact ties too.** Taking near-ties by identity (the earliest-laid piece) also re-chose
+  the gaps that were equal to the bit, which the old rule gave the lesser azimuth: the flocculent `ngc_4414`'s
+  census moved though no rounding ever decided it. Measure the exact ties' moves beside the rounding ones before
+  calling a mend "only the fragile cases".
+- [close] **A sample-size guard that fails after a redraw is a test's window, not a bound.** test_bright's "more
+  than 1 000 field stars" read 964 on #216's census (1 234 before); the window widened to 0-1.5 rad (2 184) keeps every
+  assert. Find what a failing count guards before re-pinning or loosening it.
+- [infra] **A lead's flag file outlives the run it guards unless the run removes it.** The T2 builder waited three
+  hours on a "pytest running" flag the lead had created by hand and never removed; create and remove the flag in the
+  same script that runs pytest.
+- [infra] **A builder killed by the network leaves its pytest alive.** The re-pin builder died on ENOTFOUND with a
+  90-minute pytest still running in its worktree; resuming the builder by message (its transcript intact) let it
+  finish rather than repeat the run - check the process tree before starting another.
