@@ -415,7 +415,7 @@ NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route la
 # S91 (#160, the owner's ruling of 2026-11-10: the old part by the star sample's rule): the azimuthal model's renders
 # send one more placing weight, stars_old_placement - exactly 1 with the layer off - and their headers name it (ages,
 # arrays, axes; with l_min= the remainder's about); no array they sent before moves (measured on this machine against
-# bb25415's own layer-off digests). Was set().
+# bb25415's own layer-off digests). Named by decision D260 (the gate, S91's close). Was set().
 NAMED_ROUTES_SINCE_REBASE: set[str] = {"azimuthal/render/disc", "azimuthal/render/level1", "azimuthal/render/unresolved",
                                        "ngc_4414/render/disc"}
 
