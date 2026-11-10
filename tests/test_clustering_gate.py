@@ -65,10 +65,10 @@ WIDTH = "CENSUS_CLUSTERING_WIDTH"
 # amplitude rises (the bin holding 47.5 pc 2.08 -> 2.40, the field's own 2.43) and the clusters' slope comes inside
 # the window (0.141 from -0.64), the clouds' not (0.156).
 MEASURED = {
-    "clouds": (-0.4843, 1.9452, 0.0205),
+    "clouds": (-0.4965, 1.9852, 0.0205),  # S91 (#216's re-laid census, D260): was (-0.4843, 1.9452, 0.0205) - passes the window by 0.0065, not a mend (#219)
     # S70 (D234): was (-0.6908, 2.1129, 0.0221) - the clouds' ring inversion (F-2-7) and the size law's three regimes (#192:
     # the clouds inside 4 kpc and in 7-8.2 kpc larger, so a cluster's source offset reaches further); the window holds.
-    "clusters": (-0.4991, 2.0255, 0.0301),  # S90 (#161): was (-0.6578, 2.0842, 0.0210), above. S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
+    "clusters": (-0.4791, 1.9997, 0.0287),  # S91 (#216's re-laid census, held under #219, D260): was (-0.4991, 2.0255, 0.0301). S90 (#161): was (-0.6578, 2.0842, 0.0210), above. S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
     # bounded by its cloud's size, and the giants shrank (the radius cap 150 pc, Sigma 82 inside R_SUN); the judged window holds.
 }
 # The templates, measured by hand with this file's construction at S61 (each run about 30 s, its control 10-20 s):
@@ -88,7 +88,7 @@ SQUARE_BEFORE = {"clouds": (-0.096, 1.17, 1.18, 1.17), "clusters<=10Myr": (-0.10
 # S62 (D221): was {"clouds": (-0.163, 1.24, 2.01, 1.16), "clusters<=10Myr": (-0.141, 1.30, 1.60, 1.24)} - the gas
 # spurs place the clouds on the spurs' streaks too, and the young clusters with them.
 # S70 (D234): the young clusters' last figure was 1.131 - F-2-7 and #192 (their offsets in larger clouds).
-SQUARE_AFTER = {"clouds": (-0.149, 1.292, 2.025, 1.324), "clusters<=10Myr": (-0.208, 1.404, 2.148, 1.262)}  # S90 (#161): was -0.125, 1.223, 2.068, 1.182, -0.179, 1.315, 2.275, 1.203 - the field's cell means in the clouds' sector weights add its coarse end at 300 pc. S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.170, 1.248, 2.088, 1.176, -0.154, 1.302, 1.838, 1.148
+SQUARE_AFTER = {"clouds": (-0.205, 1.335, 2.481, 1.336), "clusters<=10Myr": (-0.226, 1.476, 2.169, 1.551)}  # S91 (#216's re-laid census, red at 3f16d0f, green on main; disclosed, not judged - the gate's ruling, D260): was -0.149, 1.292, 2.025, 1.324, -0.208, 1.404, 2.148, 1.262. S90 (#161): was -0.125, 1.223, 2.068, 1.182, -0.179, 1.315, 2.275, 1.203 - the field's cell means in the clouds' sector weights add its coarse end at 300 pc. S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.170, 1.248, 2.088, 1.176, -0.154, 1.302, 1.838, 1.148
 # S67 (D231): the young clusters' square was (-0.121, 1.278, 1.800, 1.202) - their offsets from their clouds shrink with
 # the clouds (the size law); the clouds' own square did not move.
 # The default galaxy's field alone in a flat 6.08 kpc square (exact expectation; points through the instrument).
@@ -150,12 +150,21 @@ BRIGHT_GATE_READ_OVER = ("S88 (M1): the young bright stars' judged clauses read 
 # S90 (#161): the clusters' case lifted - with the field's cell means in the clouds' sector weights their slope reads
 # -0.4991, inside the window (0.141); the clouds' -0.4843 is still over (0.156) and held strict, the reason re-measured.
 # S90 close (the gate, D258): #161 discharged; the clouds' residual is register #215 (the amplitude rose together at every
-# scale below 190 pc, so the flatter shape #80's census left is unchanged) - held strict under #215, M3's.
-L1_GATE_READ_OVER_S90 = ("S90 (#215, after #161's ring-unit mend): the clouds' judged slope reads -0.4843 against -0.64 +/- 0.15 "
-                         "(S88 -0.4796; the clusters' -0.4991 now inside); register #215, M3's")
+# scale below 190 pc, so the flatter shape #80's census left is unchanged) - held strict under #215, M3's, as
+# L1_GATE_READ_OVER_S90 ("the clouds' judged slope reads -0.4843 against -0.64 +/- 0.15 (S88 -0.4796; the clusters'
+# -0.4991 now inside); register #215, M3's").
+# S91 close (the gate, D260): #216's re-laid census (red at 3f16d0f, green on main at 4f06cc9) moved both judged slopes
+# and they exchanged sides of the window's edge at -0.49: the clouds' -0.4843 -> -0.4965, inside by 0.0065, so the
+# strict hold passed and is lifted (L1_GATE_READ_OVER_S90 removed) - not a mend: one square's slope scatters 0.068
+# between seeds, ten times the margin, and #215 is discharged on its own kill clause (the slope inside the window on a
+# change that did not aim at it); the clusters' -0.4991 -> -0.4791, 0.161 from -0.64 against 0.15, held strict under
+# register #219 - the gate's own debt, both populations at the edge since #80's census.
+L1_GATE_READ_OVER_S91 = ("S91 (#219, after #216's re-laid census): the clusters' judged slope reads -0.4791 against -0.64 +/- 0.15 "
+                         "(S90 -0.4991, inside; the clouds' -0.4965 now inside by 0.0065); register #219, M3's")
 
 
-@pytest.mark.parametrize("name", (pytest.param("clouds", marks=pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER_S90)), "clusters"))
+@pytest.mark.parametrize("name", ("clouds",
+                                  pytest.param("clusters", marks=pytest.mark.xfail(strict=True, reason=L1_GATE_READ_OVER_S91))))
 def test_the_census_against_its_own_law_returns_the_hierarchy_s_slope(census, name):
     corr = C.against_control(census["data"][name], census["control"][name], census["annulus"])
     slope, at_finest, worst = _judged(corr)
@@ -298,7 +307,7 @@ BRIGHT_MEASURED = {
 # the S60 census in the probe -0.33 / 1.77 (20-40 Myr) and -0.36 / 2.02 (40-100 Myr); the branch before the field
 # (0969929) -0.285 / 1.74 / 1.90 / 1.88 and -0.441 / 2.20 / 3.42 / 1.93; after, below. milky_way after: -0.208 / 1.55 /
 # 2.14 / 1.42 and -0.111 / 1.61 / 1.28 / 1.42; ngc_4414 after: -0.359 / 1.86 / 2.88 / 1.80 and -0.065 / 1.45 / 2.23 / 2.31.
-BRIGHT_SQUARE_AFTER = {"20-40": (-0.286, 2.203, 3.75, 2.12), "40-100": (-0.289, 1.79, 1.604, 1.756)}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.302, 1.75, 2.39, 1.72, -0.415, 2.14, 3.31, 1.79
+BRIGHT_SQUARE_AFTER = {"20-40": (-0.122, 1.283, 2.267, 1.292), "40-100": (-0.080, 1.195, -1.688, 1.831)}  # S91 (#216's re-laid census - the 20-40 Myr bin read -0.1217 on bb25415 and the same four numbers at HEAD, so #160's placement did not move it; the gate's ruling, D260; S92's #164 / #165 will move it again): was -0.286, 2.203, 3.75, 2.12, -0.289, 1.79, 1.604, 1.756  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.302, 1.75, 2.39, 1.72, -0.415, 2.14, 3.31, 1.79
 
 
 @pytest.fixture(scope="module")
@@ -307,9 +316,10 @@ def bright(census):
     F, R, spec = out.fields, out.grid.R, out.grid.spec
     seed = int(out.inputs["systems_seed"])
     cells = BR.all_cells()
-    galaxy = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, c)
+    mig = float(out.inputs["migration_efficiency"])
+    galaxy = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, c, migration=mig)
     l_min = 10.0 ** galaxy.threshold(cells, BRIGHT_TARGET)
-    law = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, dict(c, **{WIDTH: 0.0}))
+    law = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, dict(c, **{WIDTH: 0.0}), migration=mig)
     return {"galaxy": galaxy, "data": BR.materialise_bright(galaxy, seed, cells, l_min),
             "control": [BR.materialise_bright(law, s, cells, l_min) for s in range(seed + 1, seed + 1 + CONTROL_SEEDS)]}
 

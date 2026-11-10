@@ -608,7 +608,10 @@ def clustering_excess(on, control) -> np.ndarray:
 # (was 2.18 / 2.01 at S88's probe), its 380-760 pc ratio 0.978 / 0.924 (mean 0.951, inside 0.05 by 0.001). So the
 # Milky Way is judged by the law as NGC 4414 is; its two slopes stay pinned as measured, so a change that moves them
 # is seen.
-MW_PAIR_SLOPES = (-0.5561, -0.4497)  # S90 (#161): was (-0.4846, -0.4327), S88's held reading outside the law
+# S91 (#216): the births bit-independent re-lay both seeds' censuses on this mesh (4242: 41 pieces on 9 chains -> 41 on
+# 10; 777: 44 on 9 -> 39 on 10); the slopes (-0.5626, -0.4616), mean -0.5121, still inside the law's 0.15 (0.128); the
+# 380-760 pc ratio 0.978 / 0.926 (mean 0.952).
+MW_PAIR_SLOPES = (-0.5626, -0.4616)  # S91 (#216): was (-0.5561, -0.4497); S90 (#161): was (-0.4846, -0.4327)
 
 
 # S90a (#216, D259): the Milky Way leg alone is machine_pinned - its two slopes are pinned as measured to 1e-3 on this
@@ -1040,7 +1043,9 @@ def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K)
         gas = compose.gas_pattern(on.fields, R_AUDIT, K)
         worst[seed] = float(np.max(np.abs(s["contrast"] / gas.unspurred_contrast_at(s["radius"], s["azimuth"]) - 1.0)))
     assert all(w <= sp.WALK_READ_DIFFERENCE_COARSE for w in worst.values()), worst
-    assert max(worst.values()) == pytest.approx(0.5700, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
+    # S91 (#216): was 0.5700 - the births bit-independent re-lay seed 4242's census on this mesh, so its feet stand
+    # elsewhere; 0.5106, the value one runner read on night 1 (D259), now this machine's too; the bound 0.58 kept.
+    assert max(worst.values()) == pytest.approx(0.5106, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
     assert sp.WALK_READ_DIFFERENCE_COARSE == 0.58  # S88 (D255 ruling 4): was 0.49
 
 
@@ -1082,7 +1087,11 @@ def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, 
     # S90 (#213): the walk ends at the arms' budget's edge, so a chain that starts past it carries none - seed 777's
     # chain 8 (117.4 kpc of polyline, all of it past the edge on this mesh) is bare by that rule; was
     # `not any(bare.values())`.
-    assert bare[4242] == {} and set(bare[777]) == {8.0} and bare[777][8.0][0] == 0.0, bare
+    # S91 (#216): was bare[4242] == {} and bare[777] == {8: 0.0} - the births bit-independent re-lay both censuses:
+    # seed 4242's chain 7 (3.329 kpc to the edge, under the reach 13.027) is bare, as the statement allows, and seed
+    # 777's bare chain is 9 (none of it inside the edge) - the chains one runner named on night 1 (D259).
+    assert set(bare[4242]) == {7.0} and bare[4242][7.0][0] == pytest.approx(3.329, abs=1e-3), bare
+    assert set(bare[777]) == {9.0} and bare[777][9.0][0] == 0.0, bare
 
 
 # ---------------------------------------------------------------------------------------------------------------------

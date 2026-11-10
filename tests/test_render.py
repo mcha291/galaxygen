@@ -586,8 +586,10 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     # And the dust's placement round each ring (D207): one factor per (R, phi) cell, no filter axis.
     assert arrays["dust_placement"].shape == (48, 36) and header["axes"]["dust_placement"] == ["R", "phi"]
     # And the stars split by age with the weights that place them (S63, D223): the middle part's own weight where the
-    # model publishes sfr_modulation.
-    by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement", *(["stars_middle_placement"] if model.name != "basic" else [])}
+    # model publishes sfr_modulation - and since S91 (#160) the old part's, by the star sample's rule (was the middle's
+    # alone).
+    by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement",
+              *(["stars_middle_placement", "stars_old_placement"] if model.name != "basic" else [])}
     # And the share of each ring's dust that is diffuse once its realised clouds hold theirs (S64, V6): one per ring.
     assert arrays["dust_diffuse_share"].shape == (48,) and header["axes"]["dust_diffuse_share"] == ["R"]
     # And V7's (S66, D226 R4-R5): the placement without the gas spurs, and the middle part split by kept octaves.
@@ -1208,6 +1210,18 @@ def _unresolved_query(model: str, l_min: float | None, **extra) -> dict:
     return query
 
 
+def _old_rows(api: Service, model) -> np.ndarray | None:
+    """S91 (#160): each R row's young share by the star sample's rule, as the render places its old part with it
+    (``service.old_share``: ``bright.row_young_share`` of the run); None where the model publishes no sfr_modulation."""
+    from galaxy.api.service import old_share
+    from galaxy.stages import bright as br
+
+    if "sfr_modulation" not in api._declared(model):
+        return None
+    out, _ = api.compute(model, {}, ["sfr_modulation", *br.OLD_SHARE_READS], True)
+    return old_share(out.fields, out)
+
+
 def test_without_l_min_the_render_is_the_one_it_was(full, model):
     """l_min= adds one component, its entry in components and axes, and the header's resolved; nothing else moves.
     Asserted byte for byte: the body without it is the body with it, the additions taken out (both warm, so both
@@ -1232,8 +1246,10 @@ def test_without_l_min_the_render_is_the_one_it_was(full, model):
 def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_them(full, model):
     """stars_unresolved is bright.resolve's two remainder parts through the curves at the ring's colour temperature,
     the 20-100 Myr part placed by sfr_modulation normalised around its ring where the model publishes it, the older
-    by the pattern's contrast (bright.part_weights, the catalogue's rule); in the basic model both by the contrast,
-    so it is a fixed share of the stars around each ring. The header states the split and the closure."""
+    by the pattern's contrast (bright.part_weights, the catalogue's rule) - since S91 (#160), where the model publishes
+    sfr_modulation, times one less the star sample's young share of the cell, the sample's rule; in the basic model
+    both by the contrast, so it is a fixed share of the stars around each ring. The header states the split and the
+    closure."""
     from galaxy.stages import bright as br
 
     header, arrays = render_q(full, _unresolved_query(model.name, 1000.0))
@@ -1247,7 +1263,7 @@ def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_th
     parsed = spectra.parse_curves(SETS["rgb"]["curves"])
     middle = spectra.stellar_response(res.anchors["unresolved_middle"], f["disc_light_temperature"], parsed)
     old = spectra.stellar_response(res.anchors["unresolved_old"], f["disc_light_temperature"], parsed)
-    w = br.part_weights(f["pattern_density_contrast"], f.get("sfr_modulation"))
+    w = br.part_weights(f["pattern_density_contrast"], f.get("sfr_modulation"), _old_rows(full, model))  # S91 (#160): the share
     want = middle[:, None, :] * w[0][..., None] + old[:, None, :] * w[1][..., None]
     assert np.allclose(rest, want, rtol=1e-12, atol=0.0)
     lit = stars > 0.0
@@ -1401,10 +1417,12 @@ def test_each_part_is_its_own_spectrum_scaled_by_the_ring_s_closure_factor(full,
 
 def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(full, model):
     """Rule D5 as amended: the viewer places a part by the array the header names and computes no physics. The old
-    part by the stellar contrast (stars_placement, what stars is placed by), the middle by sfr_modulation over its
-    ring mean (bright.part_weights; the contrast in a model that publishes none), the young by the gas's own contrast
-    (the dust's placement). Every weight's fields are the run's; each averages to 1 round every ring; the age
-    bounds are the bright catalogue's (bright.AGE_PARTS)."""
+    part by the stellar contrast (stars_placement, what stars is placed by) in a model that publishes no
+    sfr_modulation, and where it publishes one - since S91 (#160) - by the star sample's rule (stars_old_placement,
+    bright.part_weights' old part), the middle by sfr_modulation over its ring mean (bright.part_weights; the
+    contrast in a model that publishes none), the young by the gas's own contrast (the dust's placement). Every
+    weight's fields are the run's; each averages to 1 round every ring; the age bounds are the bright catalogue's
+    (bright.AGE_PARTS)."""
     from galaxy.stages import bright as br
 
     header, arrays = render_q(full, {"model": [model.name], "filters": [curves("rgb")]})
@@ -1413,11 +1431,16 @@ def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(fu
     assert ages["rule"] == "part(R, phi, filter) = part(R, filter) * weight(R, phi)"
     assert [ages["parts"][p]["ages_gyr"] for p in AGES] == [[0.0, 0.02], [0.02, 0.1], [0.1, None]]
     azimuthal = model.name != "basic"
-    want = {"young": "dust_placement", "middle": "stars_middle_placement" if azimuthal else "stars_placement", "old": "stars_placement"}
+    # S91 (#160): was "old": "stars_placement" in both models, and the weights stars_placement and
+    # stars_middle_placement - the old part was the contrast alone until the owner's ruling of 2026-11-10.
+    want = {"young": "dust_placement", "middle": "stars_middle_placement" if azimuthal else "stars_placement",
+            "old": "stars_old_placement" if azimuthal else "stars_placement"}
     assert {p: ages["parts"][p]["weight"] for p in AGES} == want
-    assert set(ages["weights"]) == {"stars_placement", *(["stars_middle_placement"] if azimuthal else [])}
-    published = {"stars_placement": ["pattern_density_contrast"], "stars_middle_placement": ["sfr_modulation"], "dust_placement": ["gas_density_contrast"]}
-    f = scalars(full, model.name, "pattern_density_contrast", "gas_density_contrast", *(["sfr_modulation"] if azimuthal else []))
+    assert set(ages["weights"]) == {"stars_placement", *(["stars_middle_placement", "stars_old_placement"] if azimuthal else [])}
+    published = {"stars_placement": ["pattern_density_contrast"], "stars_middle_placement": ["sfr_modulation"], "dust_placement": ["gas_density_contrast"],
+                 "stars_old_placement": ["pattern_density_contrast", "sfr_modulation", *br.OLD_SHARE_READS]}
+    f = scalars(full, model.name, "pattern_density_contrast", "gas_density_contrast",
+                *(["sfr_modulation", *br.OLD_SHARE_READS] if azimuthal else []))
     for p in AGES:
         entry = ages["parts"][p]
         assert entry["array"] == AGE_ARRAYS[p] and entry["weight"] in arrays and header["axes"][entry["weight"]] == ["R", "phi"]
@@ -1426,7 +1449,10 @@ def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(fu
     assert np.array_equal(arrays["stars_placement"], np.maximum(f["pattern_density_contrast"], 0.0))
     assert np.array_equal(arrays["dust_placement"], np.maximum(f["gas_density_contrast"], 0.0))
     if azimuthal:
-        assert np.array_equal(arrays["stars_middle_placement"], br.part_weights(arrays["stars_placement"], f["sfr_modulation"])[0])
+        w = br.part_weights(arrays["stars_placement"], f["sfr_modulation"], _old_rows(full, model))
+        assert np.array_equal(arrays["stars_middle_placement"], w[0]) and np.array_equal(arrays["stars_old_placement"], w[1])
+        moved = np.max(np.abs(arrays["stars_old_placement"] - arrays["stars_placement"]))
+        assert 1e-3 < moved < 0.05  # the sample's rule moves the old part off the contrast (measured 1.44e-2)
         spread = np.ptp(arrays["stars_middle_placement"] - arrays["stars_placement"], axis=1)
         assert np.max(spread) > 0.05  # the middle part does not follow the stars
     assert "the viewer multiplies the part's ring value by the weight at (R, phi)" in ages["about"]

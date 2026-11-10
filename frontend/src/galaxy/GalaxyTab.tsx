@@ -27,7 +27,7 @@ import type { CameraLink } from "./cameraLink";
 import { CameraLinkProbe } from "./CameraLinkProbe";
 import { RenderCaption } from "./PictureBeside";
 import { compareCaption } from "./compare";
-import { PHOTOMETRIC, lightColors, photometricColors, starColors } from "./colors";
+import { PHOTOMETRIC, photometricColors, responseColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
 import { wholeDiscOf } from "./fieldLoads";
@@ -408,9 +408,12 @@ export function GalaxyTab({
   const detail = region.value && regionKey ? region.value : null;
   // The region's clusters (V3's volume, V4's points, S41): loaded once at the level the view asks for.
   const level = area && view ? levelFor(view.across) : 0;
-  const clustersKey = area ? JSON.stringify([area, level, query]) : null;
+  // At "sampled" the census is asked through the shown filter set at the white point, as the star-first mode asks it
+  // (S91, T2 / #114): each cluster's `response` is what its point is drawn by. At "catalogue" only RegionVolume reads it.
+  const clustersLight = loads.sampled ? { curves: curvesOf(filterSet), white: whiteKelvin } : undefined;
+  const clustersKey = area ? JSON.stringify([area, level, query, loads.sampled ? [filterSet, whiteKelvin] : null]) : null;
   const regionClusters =
-    useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
+    useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal, clustersLight), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
   // V3's display-colour cluster points (the sampled reading's); RegionVolume reads the census at both positions.
   const shownClusters = area && loads.sampled && regionClusters ? regionClusters : null;
   const clusterPositions = useMemo(() => {
@@ -418,10 +421,15 @@ export function GalaxyTab({
     const c = shownClusters.columns as Record<string, ArrayLike<number>>;
     return c.cluster_radius ? toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height) : null;
   }, [shownClusters]);
+  // Each cluster's own band light through the set over the white point's (S91, T2 / #114: fluxOf, the star-first
+  // points' reading), on the sampled stars' display scale - not the blackbody share of its bolometric light, which
+  // painted the census 1.89 / 2.12 / 2.43 times its R / G / B light. No response or no white point draws none (B9).
   const clusterColors = useMemo(() => {
-    if (!shownClusters || !shownClusters.columns.cluster_luminosity) return null;
-    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable, pointGain);
-  }, [meta, shownClusters, exposure, blackbodyTable, pointGain]);
+    if (!shownClusters) return null;
+    const c = shownClusters.columns as Record<string, ArrayLike<number>>;
+    if (!c.cluster_radius) return null;
+    return responseColors(c.response, shownClusters.header.white?.response, c.cluster_radius.length, exposure, pointGain);
+  }, [shownClusters, exposure, pointGain]);
 
   // The star-first mode (D208): the frustum's footprint, and the disc stars in it by tiles (S64, V6, R8): the footprint
   // resolved to level-0 cells, ONE threshold per frame picked from the API's table of expected counts per tile - the

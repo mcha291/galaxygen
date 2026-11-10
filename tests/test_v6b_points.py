@@ -299,8 +299,11 @@ def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes_per_ri
     assert np.max(np.abs(anchored[on] / a["total"][on] - 1.0)) < 1e-12
     # and the render's whole-disc numbers are these rings' (the trapezoid in R the header states)
     assert rh["resolved"]["light"]["bright"] > 0
-    placed = (np.asarray(ra["stars_middle"]) * np.asarray(ra["stars_middle_placement"])[:, None]
-              + np.asarray(ra["stars_old"]) * np.asarray(ra["stars_placement"])[:, None])
+    # S91 (#160): was ra["stars_placement"] for the old part - since the owner's ruling of 2026-11-10 the old part is
+    # placed by the star sample's rule, stars_old_placement; each part's weight is the one the header's ages names.
+    by = {p: rh["ages"]["parts"][p]["weight"] for p in ("middle", "old")}
+    placed = (np.asarray(ra["stars_middle"]) * np.asarray(ra[by["middle"]])[:, None]
+              + np.asarray(ra["stars_old"]) * np.asarray(ra[by["old"]])[:, None])
     assert np.all(placed - np.asarray(ra["stars_unresolved"]) >= -1e-12 * placed)
 
 

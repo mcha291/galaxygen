@@ -412,7 +412,12 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # beside it. A field or route that moves after the re-base joins `NAMED_SINCE_REBASE` by a decision, with the reason,
 # or the batch re-bases again at its close (#214's closer).
 NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route labels) named off the reference since its re-base
-NAMED_ROUTES_SINCE_REBASE: set[str] = set()
+# S91 (#160, the owner's ruling of 2026-11-10: the old part by the star sample's rule): the azimuthal model's renders
+# send one more placing weight, stars_old_placement - exactly 1 with the layer off - and their headers name it (ages,
+# arrays, axes; with l_min= the remainder's about); no array they sent before moves (measured on this machine against
+# bb25415's own layer-off digests). Named by decision D260 (the gate, S91's close). Was set().
+NAMED_ROUTES_SINCE_REBASE: set[str] = {"azimuthal/render/disc", "azimuthal/render/level1", "azimuthal/render/unresolved",
+                                       "ngc_4414/render/disc"}
 
 
 @pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture
@@ -684,7 +689,8 @@ def test_i1_the_placement_weights_average_to_1_on_every_ring_to_1e_13(runs, vari
     F, R = out.fields, out.grid.R
     c = constants(prod[0].get(DEFAULT_MODEL))
     _, clouds = cl.sector_placement(F, R, c)
-    g = br.BrightGalaxy(F, R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), c)
+    g = br.BrightGalaxy(F, R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), c,
+                        migration=float(out.inputs["migration_efficiency"]))
     assert clouds.shape == (cl.CELL_RINGS, cl.CELL_SECTORS) and g.modulation is not None
     assert np.asarray(g.weights).shape == (2, g.area.size, g.sector_lo.size)
     for weights in (clouds, *np.asarray(g.weights)):
@@ -876,7 +882,8 @@ def bright_names(out, m) -> tuple[dict[str, np.ndarray], np.ndarray]:
     not the rows' identity, so the selection is made again here from the run's fields (the stage's own call) and held
     to be the published columns bit for bit; a star is then named by its level-0 ring and its place in the ring's
     ordered process - its Gamma, which is strictly increasing round the ring, so it names the place ``i`` exactly."""
-    galaxy = br.BrightGalaxy(out.fields, out.grid.R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), constants(m))
+    galaxy = br.BrightGalaxy(out.fields, out.grid.R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), constants(m),
+                             migration=float(out.inputs["migration_efficiency"]))
     chosen, _ = br.select_brightest(galaxy, int(out.inputs["systems_seed"]), br.all_cells(), br.DEFAULT_SELECTION)
     columns = {d.name: np.asarray(chosen[d.name]) for d in br.COLUMNS}
     for n, v in columns.items():
@@ -1049,7 +1056,8 @@ def ring_expectations(out, m) -> dict[str, np.ndarray]:
     # `sfr_modulation`. The stars' expectation is now the number the stage hands `ring_star_count` (systems._layout):
     # `ring_star_expected` of the stellar surface density, the same function the stage calls.
     stars = sy.ring_star_expected(F["stellar_surface_density"], R, sy.CATALOGUE_SAMPLE)
-    galaxy = br.BrightGalaxy(F, R, out.grid.t, float(spec_.t_max), int(spec_.n_t), c)
+    galaxy = br.BrightGalaxy(F, R, out.grid.t, float(spec_.t_max), int(spec_.n_t), c,
+                             migration=float(out.inputs["migration_efficiency"]))
     ring, _ = galaxy.locate(br.all_cells())
     rings = int(ring.max()) + 1
     return {
@@ -1671,8 +1679,11 @@ def test_i5_what_layer_off_serves():
 # too: up to a factor of six in a thinly populated ring on the production grid.
 # S63 (D223): the two placing weights the starlight by age ships beside dust_placement - sfr_modulation over its ring
 # mean and the stellar contrast floored at 0 - are (R, phi) arrays, exactly 1 with the layer off.
+# S91 (#160): and the old part's, by the star sample's rule - the contrast times one less the sample's young share,
+# scaled to the contrast's ring sum - exactly 1 with the layer off too.
 RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement",
-                 "dust_placement_unspurred")  # (R, phi, ...) - S66 (D226 R4): and the gas's placement without its spurs
+                 "dust_placement_unspurred",  # (R, phi, ...) - S66 (D226 R4): and the gas's placement without its spurs
+                 "stars_old_placement")
 # S63 (D223): and the three age parts of the starlight, per ring and filter, the same numbers on and off.
 # S64 (D224, R2): and the share of each ring's dust that is diffuse once its realised clouds hold theirs - (R,), read off
 # the ring-first draw's streams, so the same bits on and off (the same clouds either way).

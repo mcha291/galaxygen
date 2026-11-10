@@ -424,11 +424,14 @@ class Churn:
     kernel weighted by how much mass each ring had to send (rule B8, and see
     ``chemistry.transport``). Both are precomputed once per materialisation: one kernel per
     age bin, and one arrival law per cell ring, so the cost does not scale with the stars.
+    ``birth=False`` builds the arrival law alone (:func:`ring_young_share`, S91 #160): the
+    same loop and the same bits, without the birth-radius tables a star's draw reads.
     """
 
     __slots__ = ("R", "t", "arrive", "_born", "_cdf", "_bin", "_rings")
 
-    def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float):
+    def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float,
+                 *, birth: bool = True):
         """``rings`` are the grid indices of every cell ring — all of them, always: see the
         note at the call site for why this must not depend on which cells were asked for."""
         self.R, self.t = R, t
@@ -452,12 +455,14 @@ class Churn:
         # the whole bin — so the birth-radius distribution is read at that resolution too,
         # and the birth mass is summed over the bin to match it. Cumulative and normalised
         # here, once, so that drawing a star's birth radius is a search and not a sum.
-        self._cdf = np.zeros((R.size, widths.size, self._rings.size))
+        self._cdf = np.zeros((R.size, widths.size, self._rings.size)) if birth else None
         for b in range(widths.size):
             step = self._bin == b
             if not step.any():
                 continue
             self.arrive[step] = self._born[:, step].T @ kcol[b]
+            if not birth:
+                continue
             weight = self._born[:, step].sum(axis=1)[:, None] * kcol[b]
             cum = np.cumsum(weight, axis=0)
             total = cum[-1]
@@ -699,14 +704,12 @@ class YoungStars:
         sectors: np.ndarray,
     ) -> None:
         self.modulation = modulation
-        self.young_step = (t[-1] - t) < YOUNG_STAR_AGE
+        self.young_step = young_steps(t)
         first = int(np.argmax(self.young_step)) if self.young_step.any() else t.size
         # invert_cdf gives step k's weight to the interval ending at t[k], so a star born after
         # t[first - 1] was drawn from the young steps' weights, and it is young by that token.
         self.born_after = float(t[first - 1]) if first > 0 else -math.inf
-        total = arrive.sum(axis=0)
-        young = arrive[self.young_step].sum(axis=0)
-        self.share = np.where(total > 0.0, young / np.where(total > 0.0, total, 1.0), 0.0)
+        self.share = young_share(arrive, t)
         mids = 0.5 * (rings[:-1] + rings[1:])
         mod = modulation.sector_means_at(mids, sectors)
         ring_mean = mod.mean(axis=1, keepdims=True)
@@ -716,11 +719,62 @@ class YoungStars:
             if pattern is None or pattern.flat
             else np.array([pattern.sector_means(float(r), sectors) for r in mids])
         )
-        ratio = np.where(con > 0.0, mod / np.where(con > 0.0, con, 1.0), 1.0)
-        self.p = np.clip(self.share[:, None] * ratio, 0.0, 1.0)
+        self.p = young_fraction(self.share, mod, con)
 
     def is_young(self, born: np.ndarray) -> np.ndarray:
         return born > self.born_after
+
+
+def young_steps(t: np.ndarray) -> np.ndarray:
+    """The history's steps whose stars are younger than :data:`YOUNG_STAR_AGE` today, (n_t,) bool: the star sample's
+    split of a ring's arrival law into young and old (:class:`YoungStars`)."""
+    return (t[-1] - t) < YOUNG_STAR_AGE
+
+
+def young_share(arrive: np.ndarray, t: np.ndarray) -> np.ndarray:
+    """``y`` per cell ring, (rings,): the share of a ring's arrival law (:attr:`Churn.arrive`, (n_t, rings)) born in
+    the :func:`young_steps` - the young share the star sample's sectors are weighted by (:class:`YoungStars`); 0 where
+    the ring receives nothing."""
+    total = arrive.sum(axis=0)
+    young = arrive[young_steps(t)].sum(axis=0)
+    return np.where(total > 0.0, young / np.where(total > 0.0, total, 1.0), 0.0)
+
+
+def young_fraction(share: Any, mod: np.ndarray, con: np.ndarray) -> np.ndarray:
+    """``p = clip(y m̄ / c̄, 0, 1)``, the young share of each sector (:class:`YoungStars`, S27) - one function for the
+    star sample's level-0 rings and sub-rings and for the bright catalogue's and the render's old part (S91, #160):
+    ``share`` the ring's young share ``y``, a number or one per row of ``mod``; ``mod`` the modulation's sector means
+    over their ring mean (``m̄``); ``con`` the stellar pattern's sector means (``c̄``, unfloored), the ratio taken as
+    1 where ``c̄ <= 0``."""
+    ratio = np.where(con > 0.0, mod / np.where(con > 0.0, con, 1.0), 1.0)
+    y = np.asarray(share, dtype=float)
+    return np.clip((y[:, None] if y.ndim else y) * ratio, 0.0, 1.0)
+
+
+def ring_grid_index(sigma_star: np.ndarray, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
+    """The grid index that stands for each cell ring (``edges``, the :func:`cell_masses` rings): the grid point
+    nearest the ring's mean radius weighted by ``Σ★ R``. Computed from the density field rather than from the stars a
+    cell happens to realise: the realised mean would make a cell's ages depend on how many stars were asked for,
+    which silently broke the prefix property until a test caught it. The rings the arrival law is read at."""
+    weights = sigma_star * R
+    ring_radius = np.array([
+        float(np.average(R, weights=np.where((R >= edges[i]) & (R <= edges[i + 1]), weights, 0.0)))
+        if np.any((R >= edges[i]) & (R <= edges[i + 1]) & (weights > 0.0))
+        else 0.5 * (edges[i] + edges[i + 1])
+        for i in range(edges.size - 1)
+    ])
+    return np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
+
+
+def ring_young_share(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, *, migration: float) -> np.ndarray:
+    """(CELL_RINGS,): each level-0 ring's young share ``y``, the star sample's own (``Placement(...).young.share``,
+    to the bit): the churn's arrival law (:class:`Churn` with its birth-radius tables not built) at the rings'
+    :func:`ring_grid_index`, split by :func:`young_share`. What the bright catalogue and the render place their old
+    part with where the model publishes a modulation, ``c̄ (1 − p)`` (S91, #160: the owner's ruling)."""
+    _, edges = cell_masses(fields["stellar_surface_density"], R)
+    rings = ring_grid_index(fields["stellar_surface_density"], R, edges)
+    churn = Churn(R, t, fields["sfr_surface_density_history"], rings, migration, birth=False)
+    return young_share(churn.arrive, t)
 
 
 # --- the ring-first draw (S61, D220 part I) ----------------------------------
@@ -829,18 +883,8 @@ class Placement:
                  constants: Mapping[str, Any] | None) -> None:
         _, edges = cell_masses(fields["stellar_surface_density"], R)
         self.edges, self.t = edges, t
-        # The radius that stands for a ring, computed from the density field rather than
-        # from the stars a cell happens to realise. Using the realised mean would make a
-        # cell's ages depend on how many stars were asked for, which silently broke the
-        # prefix property until a test caught it.
-        weights = fields["stellar_surface_density"] * R
-        ring_radius = np.array([
-            float(np.average(R, weights=np.where((R >= edges[i]) & (R <= edges[i + 1]), weights, 0.0)))
-            if np.any((R >= edges[i]) & (R <= edges[i + 1]) & (weights > 0.0))
-            else 0.5 * (edges[i] + edges[i + 1])
-            for i in range(CELL_RINGS)
-        ])
-        self.ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
+        # The radius that stands for a ring, from the density field (ring_grid_index: why not the realised stars').
+        self.ring_index = ring_grid_index(fields["stellar_surface_density"], R, edges)
         # The pattern the catalogue places by, from compose (S55, D214): none with the layer off, and then every
         # sector of a ring is alike and a star's azimuth is uniform in its sector - the arithmetic of no pattern.
         self.pattern = _compose.stellar_pattern(fields, R)
@@ -914,8 +958,7 @@ class Placement:
         mean = float(mod.mean())
         mod = mod / mean if mean > 0.0 else np.ones_like(mod)
         c = np.ones_like(mod) if con is None else con
-        ratio = np.where(c > 0.0, mod / np.where(c > 0.0, c, 1.0), 1.0)
-        p = np.clip(float(self.young.share[r]) * ratio, 0.0, 1.0)
+        p = young_fraction(float(self.young.share[r]), mod, c)
         c = np.maximum(c, 0.0)
         return c * (1.0 - p), c * p
 

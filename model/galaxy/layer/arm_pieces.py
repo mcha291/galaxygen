@@ -37,7 +37,11 @@ draw - barred: a grand design; unbarred: multi-armed - or pinned by a template:
   between the chains crossing it** (the gate's second follow-up, item 3: "the law's arm number m is m crests
   evenly spaced - that is what an m-fold mode is - and births at uniform azimuths spend the law's m-power at
   m = 1-2 as shot noise"); at a uniform azimuth where no chain crosses the ring - the first chain of an
-  unbarred disc. No number enters the rule. (The law's number is not an integer: 4.8 gives five.) A ring with
+  unbarred disc. No number enters the rule. (The law's number is not an integer: 4.8 gives five.) **Both
+  comparisons are bit-independent since S91** (#216, the owner's ruling of 2026-11-10): the law's number within
+  :data:`BIRTH_COUNT_TOLERANCE` of an integer is that integer, and gaps within :data:`GAP_TOLERANCE` of the widest
+  are one width, the tie taken by the earliest-laid piece the gap starts at - so a seed lays one census on every
+  machine, where the last bit of a transcendental function had decided it (D259). A ring with
   no arm power starts none; **and none is born inside a bar's half-length** - the sweep starts at R = a in a
   barred disc (the gate's first follow-up, item 2);
 - *no crossing* (the second follow-up, item 2; the fourth, A): "a drawn piece that meets another chain ends there,
@@ -98,6 +102,27 @@ MEETING_FROM = 1e-12
 # Two ends closer than this in ln R and in azimuth (rad) are one point: the piece a new one is laid from stands at
 # its origin and is not among those it may meet (the same tolerance as ``pieces.JOINED``).
 ADJACENT = 1e-9
+# S91 (#216, the owner's ruling of 2026-11-10): the births are made bit-independent. The law's arm number on a ring
+# (``arm_design_count``, Σ m w_m / Σ w_m of powers and exponentials) sits exactly on an integer on its plateaus in
+# exact arithmetic and reads it to a few ulps (the Milky Way template: 6.0 and 6.000000000000001 on alternate rings
+# over 11.74-12.34 kpc), so "fewer chains cross than the law counts" was decided by the last bit. A count within
+# this distance of an integer is that integer: about 10^6 of its own ulps at 6 (8.9e-16 each), and far under the
+# steps the law's count takes between neighbouring rings off its plateaus.
+BIRTH_COUNT_TOLERANCE = 1e-9
+# Two azimuthal gaps between the chains crossing a birth ring within this many radians of each other are one width
+# (#216): the four quarter-turns a barred disc's two chains and the two born between them leave, or the two exact
+# halves of a gap a first birth on the same ring split, differ by the rounding of the azimuths they are computed
+# from (a few 1e-16 rad on sums of reaches and advances); of such a tie the gap is taken by identity, not by
+# rounding - the one that starts at the crossing of the earliest-laid piece (the lowest chain, then its order).
+# The same tolerance the gate's arithmetic reads a birth's widest gap with (``tests/test_pieces.py``).
+GAP_TOLERANCE = 1e-9
+
+
+def counted(design: float) -> float:
+    """The law's arm number on a ring as the births read it (#216): an integer where it lies within
+    :data:`BIRTH_COUNT_TOLERANCE` of one, else the law's value as published."""
+    nearest = round(design)
+    return float(nearest) if abs(design - nearest) <= BIRTH_COUNT_TOLERANCE else float(design)
 
 # What the draws read: a piece's extent (S59's four numbers), the spread of its pitch, a chain's length by class,
 # and a flocculent piece's range.
@@ -243,27 +268,34 @@ class Laying:
     def crossings(self, x: float) -> list[float]:
         """The azimuths, within one turn, at which the chains laid so far cross the ring at ln R = ``x``: where
         each piece whose locus crosses it stands on it."""
+        return [azimuth for azimuth, _ in self.identified_crossings(x)]
+
+    def identified_crossings(self, x: float) -> list[tuple[float, tuple[int, int]]]:
+        """:meth:`crossings` with each crossing's identity: (azimuth, (chain, the piece's place in the laying))."""
         out = []
-        for p in self.pieces:
+        for k, p in enumerate(self.pieces):
             reach = p.reach()
             if p.x <= x < p.x + reach:
-                out.append((p.azimuth + (x - p.x) / reach * p.advance(self.turn)) % (2.0 * math.pi))
+                out.append(((p.azimuth + (x - p.x) / reach * p.advance(self.turn)) % (2.0 * math.pi), (p.chain, k)))
         return out
 
     def widest_gap(self, x: float) -> float | None:
         """The midpoint of the widest azimuthal gap between the chains crossing the ring at ln R = ``x``, within
-        one turn; None where none crosses. Of two gaps of one width to the last bit, the one that starts at the
-        lesser azimuth - and two gaps that are equal but for rounding are told apart by that rounding (the four
-        quarter-turns a barred disc's fourth chain finds, for one).
+        one turn; None where none crosses. **Gaps within** :data:`GAP_TOLERANCE` **of the widest are one width,
+        and of those the gap is the one that starts at the crossing of the earliest-laid piece** - the lowest chain,
+        then the piece's place in the laying (#216, S91: a rule of identity, so that two gaps equal but for
+        rounding - the four quarter-turns a barred disc's fourth chain finds, the two halves of a gap a first birth
+        on the same ring split - are no longer told apart by that rounding, and a seed's census is the same on
+        every machine). Until S91 the first of the sorted gaps strictly wider than every earlier one, which the
+        last bit decided between ties.
         One chain crossing leaves one gap, the whole turn: the midpoint is opposite it."""
-        at = sorted(self.crossings(x))
+        at = sorted(self.identified_crossings(x))
         if not at:
             return None
-        best, start = -1.0, 0.0
-        for k, azimuth in enumerate(at):
-            gap = (at[k + 1] - azimuth) if k + 1 < len(at) else (at[0] + 2.0 * math.pi - azimuth)
-            if gap > best:
-                best, start = gap, azimuth
+        gaps = [((at[k + 1][0] - azimuth) if k + 1 < len(at) else (at[0][0] + 2.0 * math.pi - azimuth), azimuth, who)
+                for k, (azimuth, who) in enumerate(at)]
+        widest = max(gap for gap, _, _ in gaps)
+        best, start, _ = min((g for g in gaps if g[0] >= widest - GAP_TOLERANCE), key=lambda g: g[2])
         return (start + 0.5 * best) % (2.0 * math.pi)
 
 
@@ -445,7 +477,7 @@ def census(
     # a barred disc."
     x_first = math.log(bar_length) if math.isfinite(bar_length) else -math.inf
     for i in range(R.size):
-        wanted = float(design_count[i])
+        wanted = counted(float(design_count[i]))  # #216 (S91): an integer to its rounding is that integer
         x = float(x_ring[i])
         if not wanted > 0.0 or x < x_first:
             continue
