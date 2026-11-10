@@ -718,9 +718,9 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
 | **discharged** at S91 | **114, 210** (the region regime's cluster points drawn from their own response through the filter set, T2's closure test green; by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
-| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 211, 215, 216, 217 | 74 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 211, 215, 216, 217, 218, 219 | 76 |
 
-So the board's **117 open** is 43 permanent and 74 carried, and no item is unruled (S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **119 open** is 43 permanent and 76 carried, and no item is unruled (S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; #218 opened, the layer-off reference off on `main`, and #219, the clustering gate's clusters' slope after #216; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -6067,6 +6067,31 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    this entry. **Carried, a model batch's** (`model/galaxy/api` is inside the hash). What closes it: one function
    computes a grid threshold and both answers use it (or the table's array is built from the scalar path), the mark
    lifted and the case run on the runner. What kills the reading: the runner's case green with the two paths kept.
+218. **The layer-off reference is off on `main`: the star sample's columns no longer read
+   `tests/layer_reference_s90.json` at 4f06cc9** (S91's gate, D260; found by the close builder's run of the two
+   machine-pinned reference nodes, B2). At `main` (4f06cc9, the hash 5a2c097e…) `tests/test_layer.py`'s
+   `test_layer_off_every_field_is_the_reference_bit_for_bit` fails on all four cases - `star_age`,
+   `star_ionizing_photons`, `star_magnitude_v`, `star_temperature`, and `star_luminosity` on the Milky Way's - and
+   `test_layer_off_every_route_s_arrays_and_header_are_the_reference` on ten routes: `region/brightest`, `region/disc`,
+   `region/level2`, `region/window` and `render/unresolved`, each on `azimuthal` and `basic` (37.46 s, 5 failed). Not
+   S91's: session-91 reads the same fields off and the same ten routes plus the three of D260's four named routes not
+   already among them (`azimuthal/render/disc`, `azimuthal/render/level1`, `ngc_4414/render/disc`). The runner never
+   reads these nodes (`machine_pinned`: `tests/conftest.py` skips them under `CI`, #206), and M2 was merged on the runner's run, so
+   the reference has been off since a commit between its writing (S90's 4303e22) and `main` - or was written before
+   M2's final model. **Carried, M3's.** What closes it: S92's FIRST measurement - the two nodes bisected over S90's and
+   S90a's commits (#197, the stars' ring draws, the first suspect; or the reference written before the final model),
+   the cause named; then either the model's bits restored or the re-base at M3's close naming the cause by decision.
+   Nothing re-bases before the cause is known. What kills the reading: the two nodes green on `main` in a fresh clone
+   on this machine (a stale environment, not the model).
+219. **The clustering gate's judged clusters' slope reads -0.4791 after #216's re-laid census, 0.011 outside the
+   window** (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clusters' L1
+   slope over 47.5-190 pc against their own law moved -0.4991 → -0.4791 when #216 made the arm census's births
+   bit-independent and the default galaxy's census went (48, 13, 4) → (42, 11, 3): 0.161 from -0.64 against the
+   window's 0.15 (one square's slope scatters 0.068 between seeds). The window is not touched and the number is not
+   re-pinned as a pass: held `xfail(strict)` as `L1_GATE_READ_OVER_S91`, beside #215's clouds (-0.4965 at S91).
+   **Carried, M3's.** What closes it: the slope read again after S92's #164 / #165 (they move the dust layer and this
+   gate); if still out, the owner's ruling beside #215. What kills the reading: the slope back inside the window on a
+   change that did not aim at it.
 
 ---
 
