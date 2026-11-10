@@ -1035,7 +1035,7 @@ def test_the_tables_are_the_trapezoid_between_their_rows(name):
     parsed = [spectra.band_curve(b) for b in BANDS] if name == "bands" else spectra.parse_curves(SETS[name]["curves"])
     factors = spectra.response_factors(parsed)
     slopes = 0.5 * (spectra.RESPONSE_SLOPES[1:] + spectra.RESPONSE_SLOPES[:-1])
-    kelvin = np.sqrt(spectra.RESPONSE_TEMPERATURES[1:] * spectra.RESPONSE_TEMPERATURES[:-1])
+    kelvin = np.sqrt(spectra.TAIL_TEMPERATURES[1:] * spectra.TAIL_TEMPERATURES[:-1])  # S92 (#211): was RESPONSE_TEMPERATURES - the tails' own grid
     tables = {k: (table[..., 0], member) for k, table, member in factors.segments}
     log_x, ends = np.log(spectra.SED_WAVELENGTHS), spectra.SED_WAVELENGTHS
     for c, curve in enumerate(parsed):
@@ -1124,7 +1124,9 @@ GATE = {
     "rgb": (5.4e-8, 2.83e-6, 8.3e-8),
     "sho": (3.16e-6, 9.51e-6, 3.26e-6),
     "hoo": (3.16e-6, 9.51e-6, 3.26e-6),
-    "wfc3": (1.93e-6, 1.89e-5, 2.07e-6),
+    # S92 (#211): the median and the weighted were 1.93e-6 and 2.07e-6 - the tails tabulated on their own finer grid
+    # (TAIL_TEMPERATURES, 1/384 dex to 10^6 K) are read closer to the exact integral; the worst unmoved within 5 %.
+    "wfc3": (1.60e-6, 1.89e-5, 1.64e-6),
     "wfc3n": (3.16e-6, 9.50e-6, 3.27e-6),
 }
 
