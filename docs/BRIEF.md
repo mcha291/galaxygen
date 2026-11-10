@@ -36,6 +36,13 @@ Take in this order (the lead's recommendation at S91; Fable rules):
   pinned −0.286): fails identically on 3f16d0f — #216's re-laid default census, a disclosed check; re-pin or hold.
 - See D260 for the layer-off reference reading at S91 and the picture test's verdicts.
 
+## The gate's notes for S92 (D260)
+- Before the hash pin: write into `arm_pieces.py`'s two tolerances the measured smallest step off a plateau and the
+  smallest real gap difference over the 300-galaxy sweep (the reviewer's note; a model byte, so S92's).
+- Two crossings coinciding to ulps on the birth ring still order by their last bit (not structural; noted).
+- T2 changed the region regime's sampled cluster path only: the sampled stars keep the blackbody colours (T3's pass).
+- The 13 `machine_pinned` marks naming #216 wait on the runner (branch `s91-marks-lifted`, the gate's dispatched ci).
+
 ## The gates and the close (each session)
 - `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`; the picture test where a frame is regenerated
   knowingly (`GALAXYGEN_PICTURE=1`, `GALAXY_BUNDLES` at a fresh export); `tools/progress.py` and the docs tests
