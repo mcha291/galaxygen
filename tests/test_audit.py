@@ -457,7 +457,7 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S91 | **114, 210, 215**",  # S91 (M3, D260)
         "114. ~~**A point is painted by its bolometric light through a blackbody's share at its temperature, and that is",  # S91 (M3): discharged, T2 built and its closure test green (D260)
         # S83 (D250): #211 opened (the model's response tables at 4.4 um; the JWST set held on s83-robust).
-        "211. **The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the",
+        "211. ~~**The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the",  # S92 (M3): discharged, the tails on their own grid (D261)
         # S85 (D251): the register pass struck five S70 entries whose work S70 did.
         "| **discharged** at S85 | **191, 192, 193, 194, 196**",
         "191. ~~**`BAR_GAS_RATIO` 2.6 is a ratio of medians used as a ratio of means**~~",
@@ -479,7 +479,13 @@ def test_the_register_carries_the_s10_findings():
         "197. ~~**The star catalogue's and the remnants' ring draws invert",  # S90 (M2's close): discharged
         "215. ~~**The clouds' L1 slope reads -0.4843 against -0.64 after the ring-unit mend",  # S90 (M2's close): opened; S91 (D260): discharged on its own kill clause
         "218. **The layer-off reference is off on `main`",  # S91 (the gate, D260): opened
-        "219. **The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**",  # S91 (the gate, D260): opened, restated
+        "219. ~~**The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**~~",  # S91 (the gate, D260): opened, restated; S92 (D261): discharged by the gate's ruling
+        "| **discharged** at S92 | **164, 165, 211, 216, 219**",  # S92 (M3, D261)
+        "164. ~~**A spur's foot stands on top of the ridge, so the gas contrast doubles there**~~",  # S92 (M3): discharged, built as ruled
+        "165. ~~**The spurs' walk reads the gas contrast at the stellar chain's polyline, not at the gas crest**~~",  # S92 (M3): discharged, built as ruled
+        "216. ~~**The arm census's births are decided by rounding",  # S92 (M3): discharged, the runner's eleven read here alike
+        "220. **The spurs' walk reads the gas crest over its own bound at texture seed 4242",  # S92 (D261): opened
+        "221. **Inside the bar the spur's crest can be a lane's",  # S92 (D261): opened
         "| **discharged** at S89 | **167, 168**",  # S89 (M2)
         "167. ~~**The clouds stage's extinction law ignores the metallicity gradient",  # S89 (M2): discharged
         "168. ~~**Half the disc's dust now sits in the clouds' layer",  # S89 (M2): discharged
