@@ -4817,6 +4817,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    `gas_pattern.py`: at a solved ring's radius the ring's own anchors alone (the point reads that ring and nothing
    of its neighbour). Cold and warm now equal on SMALL and on both templates' production runs (every field); the cold
    table moved by at most 2.7e-10 (the Milky Way, 1 805 of 144 000 cells) and 2.0e-9 (`ngc_4414`, 5 421 cells).
+   *S91 close (the gate, D260):* #216's re-laid census moves the table half's records - at the cells' centres the
+   default (1.7956, 2.2125, 1.1720, 0.0335) → (1.9223, 2.2125, 1.1179, 0.0324), pattern seed 3 (1.5197, 1.9875, 0.6370,
+   0.0246) → (1.7078, 2.1375, 0.6526, 0.0262); the renormalisation's size 2.439e-3 → 2.914e-3 and 1.1286e-3 → 1.8137e-3;
+   the debt's bound (`means[2]`, 1.9e-14 / 1.8e-14 under 1e-3) holds - and the worst cell and the worst ring, one ring
+   since S59, are two since #216 (rings 29 / 24 and 28 / 26), both inside the bar's reach, which the test now asserts.
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N

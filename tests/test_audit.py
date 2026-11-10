@@ -528,7 +528,10 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
     worst ring; 0.998, 0.93 % at pattern seed 3), the footprint's edge and an arm's crest now, not two laws. The
     debt's own statistic is the table against the reader's **cell means**: **2.6e-4 in a cell at worst** (5.5e-5 at
     pattern seed 3) - the renormalisation's size, the reader's normaliser being a quadrature - and **under 1e-3 % of
-    any ring's young weight** (S70: 1.07 and 0.59 %)."""
+    any ring's young weight** (S70: 1.07 and 0.59 %).
+
+    S91 (D260): the worst cell and the worst ring, one ring since S59, are two rings since #216's re-laid census, both
+    inside the bar's reach - which is what is asserted now."""
     from galaxy.stages import systems
 
     reads = ("sfr_modulation", "gas_surface_density", "sf_threshold_surface_density", "star_formation_gas_contrast", "bar_half_length")
@@ -539,8 +542,8 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
         # S87 (#80): the default disc's bar is Erwin 2019's 2.27 kpc (was 5.21): the worst cell moves inward with the
         # footprint's edge, and the table against the reader's cell means reads 2.4e-3 (was 2.6e-4) - the reader's
         # quadrature normaliser on rings where a small footprint's edge crosses the pattern's cells.
-        (None, (1.7956, 2.2125, 1.1720, 0.0335), 2.439e-3),  # S87 (#80): was (0.9069, 4.3875, 0.5019, 0.0381), 2.63e-4 - the bar's law  # S87 (#148): was (0.9230, ..., 0.5104, ...) - the clock
-        ({"pattern_seed": 3}, (1.5197, 1.9875, 0.6370, 0.0246), 1.1286e-3),  # S87 (#80): was (0.9808, 4.1625, 0.9125, 0.0556), 5.17e-5 - the bar's law  # S87 (#148): was (0.9979, ..., 0.9263, ...), 5.5e-5 - the clock  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)
+        (None, (1.9223, 2.2125, 1.1179, 0.0324), 2.914e-3),  # S91 (#216's re-laid census, D260): was (1.7956, 2.2125, 1.1720, 0.0335), 2.439e-3  # S87 (#80): was (0.9069, 4.3875, 0.5019, 0.0381), 2.63e-4 - the bar's law  # S87 (#148): was (0.9230, ..., 0.5104, ...) - the clock
+        ({"pattern_seed": 3}, (1.7078, 2.1375, 0.6526, 0.0262), 1.8137e-3),  # S91 (#216's re-laid census, D260): was (1.5197, 1.9875, 0.6370, 0.0246), 1.1286e-3  # S87 (#80): was (0.9808, 4.1625, 0.9125, 0.0556), 5.17e-5 - the bar's law  # S87 (#148): was (0.9979, ..., 0.9263, ...), 5.5e-5 - the clock  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)
     ):
         o = run(default_model, inputs, only=reads)
         R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
@@ -556,8 +559,11 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
 
         got, weight, ring = statistic(reader.at(R, phi))
         assert got == pytest.approx(want, abs=2e-3), (inputs, got)
-        # The worst cell and the worst ring are one ring, inside the bar's reach, as at S59.
-        assert ring == int(np.argmax(weight)) and float(R[ring]) < float(o.fields["bar_half_length"]), (inputs, ring)
+        # The worst cell's ring and the worst ring both lie inside the bar's reach. S91 (#216's re-laid census, D260):
+        # they were one ring, as at S59, until S91; since #216 they read rings 29 / 24 by default and 28 / 26 at
+        # pattern seed 3.
+        worst_ring = int(np.argmax(weight))
+        assert float(R[ring]) < float(o.fields["bar_half_length"]) and float(R[worst_ring]) < float(o.fields["bar_half_length"]), (inputs, ring, worst_ring)
         # S86 (#154): the table against the reader's own cell means - the debt's statistic, closed.
         means, weight, _ = statistic(reader.sector_means_at(R, edges))
         assert means[0] == pytest.approx(cells, rel=0.05) and means[2] < 1e-3, (inputs, means)
