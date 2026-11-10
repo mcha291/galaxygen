@@ -611,7 +611,7 @@ def clustering_excess(on, control) -> np.ndarray:
 # S91 (#216): the births bit-independent re-lay both seeds' censuses on this mesh (4242: 41 pieces on 9 chains -> 41 on
 # 10; 777: 44 on 9 -> 39 on 10); the slopes (-0.5626, -0.4616), mean -0.5121, still inside the law's 0.15 (0.128); the
 # 380-760 pc ratio 0.978 / 0.926 (mean 0.952).
-MW_PAIR_SLOPES = (-0.5626, -0.4616)  # S91 (#216): was (-0.5561, -0.4497); S90 (#161): was (-0.4846, -0.4327)
+MW_PAIR_SLOPES = (-0.5624, -0.4486)  # S92 (#164 / #165): was (-0.5626, -0.4616) - the spurs' heights and spacing re-placed the clouds; S91 (#216): was (-0.5561, -0.4497); S90 (#161): was (-0.4846, -0.4327)
 
 
 # S90a (#216, D259): the Milky Way leg alone is machine_pinned - its two slopes are pinned as measured to 1e-3 on this
@@ -991,7 +991,9 @@ def test_gas_spurs_stand_ten_jeans_lengths_apart_along_each_chain(audit, K, seed
     assert rel(s["jeans_length"], jeans) <= 1e-9
     assert rel(s["spacing"], 10.0 * s["jeans_length"]) <= 1e-12 and float(K["SPUR_SPACING_JEANS"]) == 10.0
     column = np.interp(s["radius"], R_AUDIT, arr(on, "gas_surface_density"))
-    assert rel(s["peak_surface_density"], column * s["contrast"]) <= 1e-9
+    # S92 (#164 / #165): was rel(peak, column * contrast) <= 1e-9 - the peak is the column times the gas crest near the
+    # chain, the contrast the spur's height (the crest over the ring's trough), so the peak is at least column * height.
+    assert np.all(s["peak_surface_density"] >= column * s["contrast"] * (1.0 - 1e-12)) and np.all(s["contrast"] >= 0.0)
     assert set(np.unique(s["chain"])) <= set(np.unique(t["chain"]))
     # S90 (#213): the walk ends at the arms' budget's edge (the last ring with arm_piece_amplitude > 0), so a chain's
     # walked length is its polyline up to that radius (was the whole polyline).
@@ -1041,12 +1043,34 @@ def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K)
         on = audit["milky_way", seed, True]
         s = spur_rows(on)
         gas = compose.gas_pattern(on.fields, R_AUDIT, K)
-        worst[seed] = float(np.max(np.abs(s["contrast"] / gas.unspurred_contrast_at(s["radius"], s["azimuth"]) - 1.0)))
+        # S92 (#164 / #165): the walk reads the gas crest near the chain - the published crest (the peak over the
+        # column) against the point function's crest within half the foot's own ring's crest width of the foot (was
+        # the contrast at the chain against the point function there).
+        crest = s["peak_surface_density"] / np.interp(s["radius"], R_AUDIT, arr(on, "gas_surface_density"))
+        point = np.array([point_crest(gas, float(r), float(a)) for r, a in zip(s["radius"], s["azimuth"])])
+        worst[seed] = float(np.max(np.abs(crest / point - 1.0)))
     assert all(w <= sp.WALK_READ_DIFFERENCE_COARSE for w in worst.values()), worst
     # S91 (#216): was 0.5700 - the births bit-independent re-lay seed 4242's census on this mesh, so its feet stand
     # elsewhere; 0.5106, the value one runner read on night 1 (D259), now this machine's too; the bound 0.58 kept.
-    assert max(worst.values()) == pytest.approx(0.5106, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
+    # S92 (#164 / #165): was 0.5106 (the chain's read) - the walk's crest read against the point function's crest, 0.4413
+    # at seed 4242 and 0.2279 at 777 on this mesh, inside the coarse bound 0.58.
+    assert max(worst.values()) == pytest.approx(0.4413, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
     assert sp.WALK_READ_DIFFERENCE_COARSE == 0.58  # S88 (D255 ruling 4): was 0.49
+
+
+def point_crest(gas, R: float, phi: float) -> float:
+    """S92 (#164 / #165): the largest unspurred contrast on the ring at ``R`` within half its crest width of ``phi``
+    each side, on the solver's cell centres, the value at ``phi`` among them (``layer/spurs.py``'s reads, written here)."""
+    from galaxy.stages import gas_pattern as gm
+
+    centres = -math.pi + (np.arange(gm.CELLS) + 0.5) * (2.0 * math.pi / gm.CELLS)
+    prof = gas.unspurred_contrast_at(np.full(gm.CELLS, R), centres)
+    at = float(gas.unspurred_contrast_at(np.array([R]), np.array([phi]))[0])
+    w = gm.crest_width(prof)
+    if not math.isfinite(w):
+        return at
+    near = np.abs(np.mod(centres - phi + math.pi, 2.0 * math.pi) - math.pi) <= 0.5 * w
+    return max(at, float(prof[near].max(initial=-math.inf)))
 
 
 F_2_5 = ("F-2-5: spurs.py:13-14 (module docstring, item 7) 'every chain of a non-flocculent disc carries them here'; "
@@ -1090,7 +1114,8 @@ def test_gas_spurs_every_chain_long_enough_for_a_first_foot_carries_them(audit, 
     # S91 (#216): was bare[4242] == {} and bare[777] == {8: 0.0} - the births bit-independent re-lay both censuses:
     # seed 4242's chain 7 (3.329 kpc to the edge, under the reach 13.027) is bare, as the statement allows, and seed
     # 777's bare chain is 9 (none of it inside the edge) - the chains one runner named on night 1 (D259).
-    assert set(bare[4242]) == {7.0} and bare[4242][7.0][0] == pytest.approx(3.329, abs=1e-3), bare
+    # S92 (#165): seed 4242's chain 7 (3.329 kpc) carries a spur now - the spacing reads the ridge's crest, shorter.
+    assert bare[4242] == {}, bare
     assert set(bare[777]) == {9.0} and bare[777][9.0][0] == 0.0, bare
 
 

@@ -318,7 +318,7 @@ def walk_against_point(model, seed: int | None = None) -> np.ndarray:
 # Until S92 (the chain's read): ten sampled feet 0.0077, every foot 0.0573 (39 feet) at seed 0 and 0.2506 (35) at 4242.
 WALK_READ_OVER_S92 = ("S92 (#164 / #165): the walk's crest read reads over WALK_READ_DIFFERENCE (0.27) at texture seed "
                       "4242 - the crest window's width differs between the two grid rings and the crest it holds can be "
-                      "another ridge's (worst feet at 4.44 and 5.40 kpc); the bound is the gate's to re-declare, not moved here")
+                      "another ridge's (worst feet at 4.44 and 5.40 kpc); register #220, the bound not moved")
 
 
 def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
