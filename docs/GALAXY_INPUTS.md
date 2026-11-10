@@ -3811,6 +3811,20 @@ never been judged in twenty-three sessions.
    DIG [N II]/Hα and [S II]/Hα (a value with a width, or a relation with the layer's temperature) published as
    two scalars of the nebular stage and drawn beside the layer's Hβ.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), built — the closer met:* Haffner et al. 2009 re-read (ar5iv) gives the WIM's ratios as trends, no
+   single value ("a few tenths to unity or higher", §II.A); the relation with the layer's temperature is Madsen,
+   Reynolds & Haffner 2006's eqs. 2–3 (ApJ 652, 401, §II: [N II] 6583/Hα = 1.62 × 10⁵ T₄^0.4 e^(−2.18/T₄)(N⁺/N)(N/H),
+   [S II] 6716/[N II] = 4.62 e^(0.04/T₄)(S⁺/S)(S/H)/((N⁺/N)(N/H)), energy units, on their N/H 7.5 × 10⁻⁵, S/H 1.86 ×
+   10⁻⁵, N⁺/N 0.8) `[verified: arXiv:astro-ph/0609558 via ar5iv, read at S93]`, with S⁺/S the midpoint of Haffner's
+   0.3–0.7 `[inferred]` and the 6731 line by Sanders et al. 2016's low-density limit (eq. 6, R_max 1.4484
+   `[verified: arXiv:1509.03636 §III.1]`). The nebular stage publishes `dig_nii_6583_ratio` = 0.5827 and
+   `dig_sii_6716_ratio` = 0.4387 (6731: 0.3029) at the layer's 8000 K — Madsen's "typical value of [N II]/Hα is ≈0.5"
+   and the faint local WIM's [S II]/Hα ≳ 0.4 — and three fields `*_surface_brightness_dig`; the render route's
+   `lines_dig` sums Hβ, [N II] and the [S II] pair through each curve (`tests/test_nebular.py`,
+   `test_render.py`). The width is the layer's: 6000–10000 K gives [N II]/Hα 0.21–1.10. **Changes what is drawn**:
+   the diffuse glow in every set whose curves pass 6583–6731 Å (the Hubble palette's red, the broadband R).
+   Remains: the ratios are one number for the layer (Madsen's local abundances, not the model's per-ring gas);
+   their rise with height (Haffner §II.C) is not modelled.
 120. ~~**The named instrument's sprite is a display choice, and the curves' wavelength convention is unstated**~~
    **DISCHARGED at S67** (D227 R1, R3: where a template carries an instrument and a distance and the view uses that
    instrument's filters, a point is the instrument's image of a point at its physical size - the obscured Airy of a

@@ -273,7 +273,7 @@ def test_the_clusters_route_carries_the_regions_and_the_scalars_fall_under_rule_
     fields = svc.handle("/api/fields", f"model={DEFAULT_MODEL}").json()["fields"]
     by_name = {f["name"]: f for f in fields}
     for name in ("dig_scale_height", "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
-                 "nii_halpha_gradient_hii"):  # the sixth since S44 (row 37, D195)
+                 "nii_halpha_gradient_hii", "dig_nii_6583_ratio", "dig_sii_6716_ratio"):  # the sixth since S44 (row 37, D195); two more since S93 (#119)
         assert by_name[name]["domain"] == "galaxy" and "rule D4" in by_name[name]["about"], name
     for name in ("halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "halpha_surface_brightness_nebular"):
         assert by_name[name]["domain"] == "grid" and by_name[name]["unit"] == "Lsun/pc2"
@@ -368,3 +368,33 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     t_dig = float(models[DEFAULT_MODEL].constants["DIG_TEMPERATURE"].value)
     dec = float(nb.case_b_halpha(np.array([t_dig]))[0] / nb.case_b_hbeta(np.array([t_dig]))[0])
     assert np.allclose(np.asarray(F["hbeta_surface_brightness_dig"]) * dec, F["halpha_surface_brightness_dig"], rtol=1e-12)
+
+
+# --- S93 (T10 / #119): the diffuse gas's forbidden lines, Madsen et al. 2006's relation at the layer's temperature ----
+
+
+def test_the_diffuse_gas_carries_its_forbidden_lines_by_madsens_relation(models, coarse):
+    """#119's closer: the diffuse gas's [N II]/Halpha and [S II]/Halpha are two sourced scalars of the nebular stage,
+    drawn beside its Hbeta. Madsen, Reynolds & Haffner 2006 eqs. 2-3 written out by hand at the layer's 8000 K, on
+    their N/H 7.5e-5, S/H 1.86e-5, N+/N 0.8 and S+/S 0.5 (Haffner et al. 2009's 0.3-0.7, its midpoint); the 6731 line
+    by Sanders et al. 2016's low-density limit, R_max = 1.4484 at 1 cm^-3. Against the source's own readings: the WIM's
+    "typical value of [N II]/Halpha is ~0.5", its faint local gas [N II]/Halpha >~ 0.5 and [S II]/Halpha >~ 0.4,
+    the O-star HII regions' averages 0.27 and 0.11 (Madsen et al. 2006 sections IV and VI.2.1)."""
+    t4 = 0.8
+    nii = 1.62e5 * t4**0.4 * math.exp(-2.18 / t4) * 0.8 * 7.5e-5
+    sii = nii * 4.62 * math.exp(0.04 / t4) * 0.5 * 1.86e-5 / (0.8 * 7.5e-5)
+    assert float(models[DEFAULT_MODEL].constants["DIG_TEMPERATURE"].value) == 8000.0
+    got = nb.dig_line_ratios(8000.0)
+    assert got["nii_6583"] == pytest.approx(nii, rel=1e-12) and got["sii_6716"] == pytest.approx(sii, rel=1e-12)
+    assert got["sii_6716"] / got["sii_6731"] == pytest.approx(1.4484, abs=5e-4)  # 1.44818 on the printed coefficients
+    assert nb.sii_doublet_ratio(np.array([1.0, 1.0e5])) == pytest.approx([1.4484, 0.4375], abs=5e-4)  # Table 1's limits
+    # Measured at S93: 0.5827 and 0.4387 (0.3029 for 6731); above the regions' 0.27 and 0.11, as the WIM is.
+    assert got["nii_6583"] == pytest.approx(0.5827, abs=1e-4) and got["sii_6716"] == pytest.approx(0.4387, abs=1e-4)
+    assert got["nii_6583"] > 0.27 and got["sii_6716"] > 0.11
+    # The layer's range, 6000-10000 K, spans 0.21-1.10 in [N II]/Halpha (Madsen's "in some cases exceeds 1.0").
+    assert 0.20 < nb.dig_line_ratios(6000.0)["nii_6583"] < nii < nb.dig_line_ratios(10000.0)["nii_6583"] < 1.11
+    F = coarse.fields
+    dig = np.asarray(F["halpha_surface_brightness_dig"], dtype=float)
+    assert float(F["dig_nii_6583_ratio"]) == got["nii_6583"] and float(F["dig_sii_6716_ratio"]) == got["sii_6716"]
+    for n in nb.DIG_LINES:
+        assert np.array_equal(np.asarray(F[f"{n}_surface_brightness_dig"]), dig * got[n]), n

@@ -155,6 +155,9 @@ SEEDED_BASIC = {
     "nii_6583_surface_brightness_hii", "sii_6716_surface_brightness_hii", "sii_6731_surface_brightness_hii",
     # S44 (D195): the [N II]/Halpha gradient over 8.2-15.4 kpc, the statistic acceptance row 37 reads.
     "nii_halpha_gradient_hii",
+    # S93 (#119): the diffuse gas's [N II] and [S II] by Madsen et al. 2006's relation, two scalars and three fields.
+    "dig_nii_6583_ratio", "dig_sii_6716_ratio", "nii_6583_surface_brightness_dig", "sii_6716_surface_brightness_dig",
+    "sii_6731_surface_brightness_dig",
     # S34 (BUILD_II Phase 5): the globular cluster system, drawn on world_seed; the survival fraction and the
     # metal-poor share are a separate stage and stay derived (D55), as the stellar halo does.
     "gc_system_mass", "gc_count_estimate",

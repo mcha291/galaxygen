@@ -287,12 +287,20 @@ def test_the_other_lines_are_their_fields_through_each_curve_at_their_wavelength
     assert np.allclose(arrays["lines_hii"][..., 0], sii, rtol=1e-12, atol=0.0)
     assert not arrays["lines_hii"][..., 1].any()
     assert np.allclose(arrays["lines_hii"][..., 2], f["oiii_5007_surface_brightness_hii"][:, None] * placed, rtol=1e-12, atol=0.0)
-    assert not arrays["lines_dig"].any()  # Hbeta falls in none of the three boxes
+    # S93 (#119): was `assert not arrays["lines_dig"].any()` (Hbeta falls in none of the three boxes) - the diffuse gas
+    # carries its [N II] and [S II] since (Madsen et al. 2006's relation), and its [S II] pair lands in red.
+    g = scalars(full, model.name, "sii_6716_surface_brightness_dig", "sii_6731_surface_brightness_dig")
+    assert np.allclose(arrays["lines_dig"][:, 0], g["sii_6716_surface_brightness_dig"] + g["sii_6731_surface_brightness_dig"], rtol=1e-12, atol=0.0)
+    assert not arrays["lines_dig"][:, 1:].any()
     assert header["layers"]["lines_hii"] == header["layers"]["halpha_hii"] and header["layers"]["lines_dig"] == header["layers"]["halpha_dig"]
     # Through the broadband set Hbeta lands in B, in both layers.
     header, arrays = render(full, model.name, "rgb")
-    b = header["components"]["lines_dig"]["lines"]["hbeta"]["transmission"]
-    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], f["hbeta_surface_brightness_dig"][:, None] * np.array(b), rtol=1e-12, atol=0.0)
+    dig_lines = header["components"]["lines_dig"]["lines"]
+    b = dig_lines["hbeta"]["transmission"]
+    assert set(dig_lines) == {"hbeta", "nii_6583", "sii_6716", "sii_6731"}  # S93 (#119): was Hbeta alone
+    g = scalars(full, model.name, *(f"{n}_surface_brightness_dig" for n in dig_lines))
+    summed = sum(g[f"{n}_surface_brightness_dig"][:, None] * np.array(dig_lines[n]["transmission"]) for n in dig_lines)
+    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], summed, rtol=1e-12, atol=0.0)
     # Every HII line is its ring's Halpha times a ratio the census's regions set: finite and non-negative.
     for n in names:
         x = f[f"{n}_surface_brightness_hii"]
