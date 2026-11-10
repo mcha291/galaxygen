@@ -90,6 +90,14 @@ TILE_REFUSES = ("n", "view", "r_min", "r_max", "phi_min", "phi_max")
 REMAINDER_PARTS = {"middle": "stars_unresolved_middle", "old": "stars_unresolved_old"}
 
 
+def grid_threshold(log_l: Any) -> np.ndarray:
+    """10^``log_l`` (L☉), element by element, by the one scalar power (``math.pow``) - S92 (#217): the tile's
+    ``l_min_used`` and the tables' ``threshold`` column are both this function's, so a threshold read back from the
+    table is the tile's to the bit on any machine. Until S92 the tables took an array power (``10.0 ** array``, a
+    CPU-dispatched loop) and the tile a scalar one; on one runner they parted by an ulp (D259)."""
+    return np.array([math.pow(10.0, float(x)) for x in np.asarray(log_l, dtype=np.float64).reshape(-1)], dtype=np.float64)
+
+
 def snap_up(l_min: float) -> tuple[int, float]:
     """(k, L): the grid threshold ``LOG_L_GRID[k]`` a tile is asked at for ``l_min`` (L☉), and its luminosity - the
     smallest at or above ``l_min`` (below the grid's faint end, the faint end). Past the grid's last, a 400."""
@@ -102,7 +110,7 @@ def snap_up(l_min: float) -> tuple[int, float]:
             f"l_min={l_min:g} is above the luminosity function's last threshold, 10^{_bright.LOG_L_GRID[-1]:g} Lsun: "
             "no disc star is that bright"
         )
-    return k, float(10.0 ** _bright.LOG_L_GRID[k])
+    return k, float(grid_threshold(_bright.LOG_L_GRID[k:k + 1])[0])
 
 
 def tiles_of(raw: str, level: int = TILE_LEVEL) -> list[int]:
@@ -339,7 +347,7 @@ def _cells_table(service: Service, galaxy: Any, base: dict[str, Any], precision:
         },
         "cells": {**layout(service.grid.R), "children": CHILDREN},
     }
-    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", 10.0 ** np.asarray(grid, dtype=np.float64))]
+    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", grid_threshold(grid))]
     expected = cells_table_of(galaxy, cells, level)
     if precision == "f4":
         expected = expected.astype(np.float32)
@@ -362,7 +370,7 @@ def _table(service: Service, galaxy: Any, base: dict[str, Any], precision: str, 
         },
         "cells": layout(service.grid.R),
     }
-    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", 10.0 ** np.asarray(grid, dtype=np.float64))]
+    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", grid_threshold(grid))]
     expected = table_of(galaxy)
     if precision == "f4":
         expected = expected.astype(np.float32)
