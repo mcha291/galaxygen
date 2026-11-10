@@ -213,7 +213,7 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray) -> dic
                "width": "gas_spur_width", "fall": "gas_spur_fall"}
     entry["rows"] = {k: _floats(fields[n]) for k, n in columns.items()}
     entry["units"] = {"radius": "kpc", "azimuth": "rad", "pitch": "deg", "length": "kpc", "width": "kpc (FWHM)",
-                      "contrast": "dimensionless (A: the ridge's crest contrast at the foot)", "fall": "dimensionless"}
+                      "contrast": "dimensionless (A: the ridge's crest over the ring's trough at the foot)", "fall": "dimensionless"}
     entry["turn"] = -float(rotation_sense(float(fields["pitch_angle"])))  # GasPattern.from_fields' sense for psi
     spurs = shape.spurs
     entry["share"] = _floats(np.zeros(np.size(R)) if spurs is None else spurs.ring_mean(np.asarray(R, dtype=float)))
