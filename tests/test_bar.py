@@ -427,7 +427,7 @@ def suite_sweep(prod) -> dict:
 # S90a (#216, D259): a record of this machine's 240 draws - how each galaxy's census is laid is decided where a birth
 # is (a ring's design count one ulp over its plateau, two widest gaps equal but for rounding); the runner reads
 # 0.026249 every night since M1. The bounds over every galaxy stay in CI (the gate's test above).
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measured(prod):
     """The layer-on readings of the gate's sweep, as last pinned on the modes' field (S59, D218 follow-up): the
     lowest cell of the composed field over the 240 galaxies, and the whole field's A₂ maximum inside a less B -
@@ -880,7 +880,7 @@ def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod
 # S90a (#216, D259): this machine's draw - the galaxy's chain 8 is the second birth on the ring at 5.06 kpc, where the
 # two halves of the gap chain 7 split tie but for rounding; a one-ulp libm probe lays it in the other half and reads
 # the runner's 0.148905 (s90a_jitter.py).
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_most_saturated_barred_galaxy_s_lowest_cell_as_measured(prod):
     """The composed field's lowest cell on the suite's most saturated barred galaxy, as last pinned (S59, D218
     follow-up); the pieces' field moves it (S60, D219). The saturation's law stays in the test before this one."""

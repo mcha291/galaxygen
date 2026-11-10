@@ -416,7 +416,8 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
 # births lay by rounding (the template's chain 12 is born where the design count reads one ulp over 6; at M1 the worst
 # cell was a spur at 24.86 kpc), and the runner read 0.714 against M1's 0.6863. ngc_4414 (flocculent, no spurs) stays
 # in CI. Ids unchanged.
-@pytest.mark.parametrize("template", [pytest.param(t, id=t, marks=[pytest.mark.machine_pinned] if t == "milky_way" else []) for t in TEMPLATES])
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
+@pytest.mark.parametrize("template", [pytest.param(t, id=t, marks=[]) for t in TEMPLATES])
 def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     """How far a cell's mean is from the point function at its centre, and how far the centre samples' ring mean is
     from 1 on the default and the 36-cell grid, as last pinned (S59, D218 follow-up); the pieces' response moves
@@ -1404,7 +1405,8 @@ def crest_separation(gp: GasPattern) -> np.ndarray:
 # S90a (#216, D259): the Milky Way leg alone is machine_pinned - the ring-by-ring record of which crest is tallest is
 # this machine's census (its births laid by rounding); the runner's disc counts differ on three bins (-8, -2, -1).
 # ngc_4414 stays in CI. Ids unchanged.
-@pytest.mark.parametrize("template", [pytest.param(t, id=t, marks=[pytest.mark.machine_pinned] if t == "milky_way" else []) for t in TEMPLATES])
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
+@pytest.mark.parametrize("template", [pytest.param(t, id=t, marks=[]) for t in TEMPLATES])
 def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, template):
     """D216's prediction "offset 0 on every ring", as the record is worded since gate G3's follow-up: "zero for a
     lone mode, exactly; with several modes, within one solver cell (0.25 deg) on the Milky Way template and up to
@@ -1635,7 +1637,7 @@ def test_the_interpolation_errors_as_measured(prod, template):
 
 # S90a (#216, D259): the as-built s and g are read on the Milky Way template's census, which its births lay by rounding;
 # the runner's crest of s at 10.99 kpc reads 1.2120 against 1.2042 (the first four rings agree). No verdict moves.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_gate_s_predictions_as_measured(prod):
     """D216's predictions for the default galaxy, read on the built model before they were judged. The probe that
     made them forced with the *tapered* amplitudes; the ruling forces with the untapered ones and composes with the
