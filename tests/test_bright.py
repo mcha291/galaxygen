@@ -411,7 +411,10 @@ def test_a_lattice_s_two_step_inverse_is_the_row_major_inverse_of_the_product():
 def test_the_young_stars_the_field_places_stand_in_their_level_0_cell(galaxy, seed, default):
     """S61 (D220 part II item 5): a star of 20 to 40.71 Myr stands anywhere in its level-0 cell, placed there by the
     field; every other star inside its finest cell, as before - and the field moves the young ones out of it."""
-    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.0)
+    # S91 (#216): the window was 0-1.0 rad - the default galaxy's census re-laid by the births made bit-independent
+    # leaves it 964 field stars (1 234 on 4f06cc9) under the test's own 1 000; 0-1.5 rad holds 2 184 field stars of
+    # 4 452, the guard and every assert unchanged.
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.5)
     cat = br.materialise_bright(galaxy, seed, cells, 1.0e4)
     radius, azimuth = np.asarray(cat["bright_star_radius"]), np.asarray(cat["bright_star_azimuth"])
     field = np.asarray(cat["bright_star_age"]) * 1000.0 <= galaxy.octave_ages[0]
