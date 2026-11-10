@@ -3702,6 +3702,16 @@ never been judged in twenty-three sessions.
    closes it:** the region regime's clusters drawn from the same `response` the star-first mode reads.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S91 (M3; T2): built (bb25415) - the closer as S70 narrowed it.* The field mode's region regime (the "sampled"
+   reading) asks `/api/clusters` through the shown filter set at the white point and draws each cluster by its own
+   `response` over the white point's (`colors.ts responseColors`: `flux.ts fluxOf` times the sampled stars' display
+   gain); the ramp kept for the stars' fields. The drawn path's factor, the census summed: **1.8352 / 2.0703 / 2.4222
+   → 1.0000000** in R / G / B (two windows 2.02–2.37 → 1). T2's closure as the published answers support it
+   (`tests/test_s91_t2_closure.py`; the Milky Way through rgb at 6500 K, l_min 10^4.20): clusters + bright + remainder
+   over the render's `stars` 0.9959 / 0.9947 / 0.9910 over the disc, 0.927–1.099 per lit ring; per level-0 cell
+   p05–p95 0.77–1.26, not claimed (the render's parts are expectations, the census and the catalogue draws); the
+   clusters' summed response is the young part's colour to 1 % (1.0086 / 1.0066 / 1.0010 of the bolometric ratio),
+   its 6 % shortfall the census's draw. **The closer is met** (the gate rules the verdict); the double count is #115's.
 115. **The young population is on the screen twice in principle and once in practice: the cluster points and the
    sampled stars have no accounting between them, and a dissolved cluster is a point** (S41, V4, D191). The
    clusters are the whole young population — ΣQ / the light stage's young Q = 1.0088 (D182) — and carry 0.249 of
@@ -6007,6 +6017,29 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    agrees; or the owner's word that a seed names a galaxy on one machine only (the bundles are exported here; a
    Linux service would draw other galaxies for the same seeds). What kills the reading: a one-ulp probe that leaves
    the census unmoved over the suite's seeds.
+   *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations": build it in M3, first in the batch);
+   built (3f16d0f).* `layer/arm_pieces.py`: the law's arm number within `BIRTH_COUNT_TOLERANCE` (1e-9, about 10⁶ of
+   its own ulps at 6) of an integer is that integer (`counted`), and gaps within `GAP_TOLERANCE` (1e-9 rad) of the
+   widest are one width, the tie taken by identity - the gap that starts at the crossing of the earliest-laid piece
+   (the lowest chain, then its place in the laying), where the old rule took the lesser azimuth among exact ties and
+   rounding among near ones. **The probe, before → after** (s90a_jitter.py's method extended: s91_jitter.py and
+   s91_probe_compare.py in the session's scratchpad; a case "parts" where its census or any row moves past 1e-9):
+   ten named galaxies (the default; texture seed 7; the Milky Way template at its seeds, at pattern seed 28, at
+   texture 4242 and 777; `ngc_4414`; Audit V's mesh at Milky Way 4242 / 777 and `ngc_4414` 4242) under six jitter
+   seeds, 10 of 10 parting before, **0 of 10 after**; `tests/test_bar.py`'s 300-galaxy sweep under three, 289 of 300
+   before, **0 of 300 after** (rows within 8.6e-12); test_pieces' legs at texture seeds 1-4 (the Milky Way, the
+   default, `ngc_4414` and its drawn leg: 16 galaxies) under four, **0 of 16 after**. The censuses this machine now
+   lays: the default galaxy (48, 13, 4) → (42, 11, 3); texture 7 (54, 13, 6) → (53, 12, 5), the value five of eight
+   probes drew at S90a; the Milky Way template (49, 13, 4) → (46, 12, 3), chain 12's one-ulp birth gone; Audit V's
+   mesh 4242 (41, 9, 2) → (41, 10, 3), 777 (44, 9, 3) → (39, 10, 4) - the walk's worst foot there 0.5700 → 0.5106 and
+   the bare chains 7 and 9, the runner's night-1 values (D259), now this machine's too. Of the sweep's 300, 224 are
+   re-laid here (82 of the Milky Way's 120, 22 of `ngc_4414`'s 60 unpinned, and all 120 of its flocculent pinned ones,
+   whose exact ties the old rule gave the lesser azimuth and the new one gives the earliest-laid piece); pattern seed
+   28's census is unmoved. Every record on a census
+   re-pinned with the reason. **The thirteen `machine_pinned` marks naming #216 are left in place**: the probe says
+   the census under each record is now machine-independent (every galaxy they read is among the probed), so the gate
+   may lift them, a dispatched `ci` run on the batch branch reading them on the runner first. **Carried until the
+   gate rules on the marks and the runner agrees** (the hash moves at S92).
 217. **The tile's threshold and the table's are two computations of one power: "the frame's one threshold" holds only
    where they agree to the bit** (S90a, D259; the nightly run 41923775720). `/api/bright`'s table publishes
    `threshold` as `10.0 ** np.asarray(grid)` (an array power, a CPU-dispatched loop) and its header says "a threshold
