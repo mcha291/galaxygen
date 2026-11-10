@@ -6094,6 +6094,20 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the cause named; then either the model's bits restored or the re-base at M3's close naming the cause by decision.
    Nothing re-bases before the cause is known. What kills the reading: the two nodes green on `main` in a fresh clone
    on this machine (a stale environment, not the model).
+   *S92 (M3's close; the cause named by measurement, nothing re-based):* **no commit is bad: the model's star sample
+   depends on OpenBLAS's thread count.** No byte under `model/` moved between the reference's commit (4303e22, whose
+   model is 393b4c9's) and `main`. Read field by field (the scratchpad's s92_bisect.py, every label of both
+   templates): single-threaded (`OMP_NUM_THREADS` = `OPENBLAS_NUM_THREADS` = `MKL_NUM_THREADS` = 1, the environment
+   the gate's runner script sets) 393b4c9 and session-92's HEAD read the same five fields off on all four labels, and
+   24af22f (before #197) those and #197's remnant and radius columns, so #197 is in the reference; **with the threads
+   unrestricted (20 here) session-92's HEAD reads no field off and only D260's four named routes**, and
+   `OPENBLAS_NUM_THREADS=1` alone reproduces the red. The mechanism: `stages/systems.py` `Churn.__init__`'s arrival
+   law, `self._born[:, step].T @ kcol[b]`, a BLAS matrix product whose summation order follows the thread count; its
+   last bits move each star's drawn age (`invert_cdf`), and with it the age's columns. The reference was written
+   multi-threaded at S90; the nodes were read single-threaded at S91. Neither the model's bits nor the reference is
+   wrong: the bits are the machine's environment's, #206's family. **Carried, the gate's:** either the product made
+   thread-independent (a sum the model orders itself - a model change, its own bits moved once), or the reference and
+   its two nodes read in one stated thread setting; the re-base at M3's close follows that ruling.
 219. **The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**
    (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clouds' and the clusters'
    L1 slopes over 47.5-190 pc against their own law read -0.4965 and -0.4791 on #216's re-laid census, against the
