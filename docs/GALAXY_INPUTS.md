@@ -4034,13 +4034,17 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    moves the molecular fraction (D211 ruling 6): a ruling, not a build; (d) stands as stated.
    *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"): **permanent**; A10 not amended.* The
    heating stays each ring's at its mean column, in the layered geometry S52 applied (0.766 of the mixed slab's
-   absorbed light: the slab had left L_IR about 30 % and T_d(R₀) about 1.4 K over the drawn geometry's — the entry's
-   first measurement, the reason the layered factor stands); the placement is not applied. The reason, written in
+   absorbed light: the slab had left L_IR about 30 % and the inner disc's T_d about 1.4 K over the drawn geometry's,
+   T_d(R₀) 0.30 K (18.82 → 18.52 K) — the entry's first measurement, the reason the layered factor stands); the
+   placement is not applied. The reason, written in
    (B5): a dust stage that read the placed (composed) contrasts would publish T_d and L_IR that differ with the layer
    on and off, which rule A10 and invariant I1 forbid, and absorbed power is non-linear in the column, so no neutral
    composed form exists; the placement's own effect is measured at S89 (under 3 % of the disc's absorbed power).
    Parts (b)–(d) stand as recorded above.
-   *S91 close (the gate, D260): permanent* on the owner's ruling above.
+   *S91 close (the gate, D260): permanent* on the owner's ruling above. The ruling's words ("the mixed slab's heating
+   kept, with the layered factor 0.766") are corrected here to what this entry's history shows: 0.766 is S52's layered
+   geometry, applied since D211, and the 30 % / 1.4 K were the mixed slab's excess it removed (the 1.4 K the inner
+   disc's T_d, 0.30 K at R₀); the owner's ruling — permanent, A10 not amended — is unchanged by the correction.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
