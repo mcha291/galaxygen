@@ -1,60 +1,56 @@
-# BRIEF — after S91: M3's first session on `session-91` (from `batch-m3` = `main` 4f06cc9); the gate's D260 merges it into `batch-m3`; next is S92 (BUILD_V row 92), M3's close
+# BRIEF — after S92: M3 on `session-92` (from `batch-m3` bd0ed0c), closed PARTIAL; the gate's D261 merges it into `batch-m3`; next is S93 (BUILD_V row 92 continued), M3's close
 
-**The state (2026-11-10).** S91 took the owner's twelve rulings of 2026-11-10 ("accept all recommendations") into
-the register's entries (#82, #128, #158's window half, #180, #182 permanent; #210 discharged by ruling; #109 the
-viewer's; #159 / #163 the whole-disc bound 25 s cold, the cost pass after M3; #211, #160, #164 / #165, #216 M3's) and
-built, in the ruled order: **#216 first** — the arm census's births bit-independent (`arm_pieces.counted`, the
-widest gap's tie by identity); the one-ulp probe parts 0 of 300 swept censuses and 0 of 26 named galaxies (289 of 300
-before); every census record re-pinned with the reason; the thirteen `machine_pinned` marks naming #216 left in place
-for the gate. **T2 / #114** — the region regime's cluster points by their own `response` (1.84 / 2.07 / 2.42 → 1),
-T2's closure measured and tested per ring (`tests/test_s91_t2_closure.py`). **#160** — one old-star rule for both
-catalogues (`bright.part_weights` c̄(1 − p), the render's `stars_old_placement`). The hash in fact moved (not pinned:
-the pin moves once, at S92's close). The frames: see D260.
+**The state (2026-11-11).** S92 built, on the owner's ruling of 2026-11-10, **#164 / #165** in one pass (2940b36:
+the spur's height the gas crest over the ring's trough, the walk reading the crest within half the ring's crest
+width of the chain) and re-pinned every layer-on file it moves; **#217** (one `grid_threshold` for the tile's and the
+tables' threshold) and **#211** (the response tails on their own grid, `TAIL_TEMPERATURES` 1000 K–10^6 K at 1/384
+dex). **#218's cause named by measurement**: no bad commit — `systems.Churn`'s arrival law is a BLAS product whose
+bits follow OpenBLAS's thread count; the reference was written multi-threaded, read single-threaded. **#219** read on
+nine censuses (means -0.618 / -0.637; the default -0.5035 / -0.4970 both inside) and discharged by the gate's
+ruling; the runner's eleven failing nodes (ci 42796166390) read on this machine at bd0ed0c, every number the
+runner's: S91's unrun re-pins, so **#216** discharged and its thirteen marks lifted (3df553c). Two holds opened as
+entries: **#220** (the walk's crest read 0.4582 over 0.27 at seed 4242) and **#221** (inside the bar a spur's crest
+on a lane: 7.3027 over 7.0556). The hash in fact moved (not pinned; the batch's close pins it once).
 
-## S92 — M3's close (BUILD_V row 92; an Opus lead, Fable at the gate)
-Take in this order (the lead's recommendation at S91; Fable rules):
-1. **#164 / #165** as ruled: the spur's height the excess over the ring's trough, `gas_pattern.crest_width`'s floor
-   the width; the walk reads the gas crest within that width. It moves every layer-on gas pin, the dust layer, the
-   clustering gate's disclosed square and the frames — do it before any other re-pin.
-2. **#217** (one function for a grid threshold, the tile's and the table's; lifts one mark) and **#211** (the
-   response grid's tails to 4.4 µm; then `s83-robust` aa0eec6 merges, its diff read first).
-3. **T3 / #115** the young population drawn once in the sampled reading (a membership, the dissolved clusters'
-   light handed to the sample) with **#113 / #171** (the EEP-style interpolation in `photometry.lookup`, which
-   moves the star sample's light and every pin on it — one pass) and **#184** (a per-age layer height, a source).
+## S93 — M3 continued (BUILD_V row 92; an Opus lead, Fable at the gate)
+Take in this order (the gate's ruling at S92, D261):
+1. **#218 first: the arrival law's product made a sum the model orders itself** (`systems.Churn`,
+   `self._born[:, step].T @ kcol[b]`), so its bits no longer follow the BLAS thread count; then **a sweep of every
+   BLAS-backed product on a draw path under `model/galaxy`** (`@`, `dot`, `matmul`, `einsum`, `linalg`), each
+   measured threads-on (20) against threads-off (1), bit for bit. A model change: every census and star column
+   moves once; re-pin over EVERY layer-on file. The reference file and its two nodes untouched until the close.
+2. **The gate's dispatched `ci` run on `session-92`** (`gh workflow run ci.yml --ref session-92`; read it with `gh
+   run view`, never `gh run watch`): #217's mark lifted in its own commit — #217 closes when the runner reads it green.
+3. **T3 / #115** the young population drawn once in the sampled reading, with **#113 / #171** (the EEP-style
+   interpolation in `photometry.lookup`, one pass) and **#184** (a per-age layer height, a source).
 4. The ionized gas: **T10 / #119**, **#117**, **#118**, **#100**, **#101** (the FSPS grid download accepted
-   2026-11-02); then #174–#176 (the viewer's shader and tolerances), #166 (cost), T15, T8, and the rest of M3's
-   list read once: #83–#86, #88–#89, #91, #96–#98, #102–#103, #124–#125, #127, #135.
-5. **The batch's close**: every model test file once on the final model (S88's lesson; S91 ran the stage's files and
-   the gate found #216's moves in two more); the layer-off reference re-based by decision once #218's cause is named;
-   the hash moved once, the bundles re-exported, the frames regenerated beside the goal pictures; the owner's full
-   suite (or the runner's, on the owner's word) before `main`.
+   2026-11-02); then #174–#176, #166, T15, T8 and the rest of M3's list read once: #83–#86, #88–#89, #91, #96–#98,
+   #102–#103, #124–#125, #127, #135; #220 and #221 put to the gate with their measurements.
+5. **The batch's close**: every model test file once on the final model, each its own process; the layer-off
+   reference re-based once (#218's cause named, on a file of its own, the gate switches it); `s83-robust` merged
+   (one conflict, `GalaxyView.tsx`; a measured `jwst_nircam` row in test_render); the hash moved once, the bundles
+   re-exported, the frames regenerated beside the goal pictures; the runner's full suite on the owner's word.
 
-## S92 opens with (the gate, D260)
-- **#218** first: the two layer-off reference nodes bisected over S90 / S90a (`main` is off too; #197 first suspect).
-- The dispatched `ci` run on `s91-marks-lifted`: any #216 move it finds in a file nobody ran here is the first re-pin.
-- **#219** (the L1 gate's two slopes at the edge, -0.4965 / -0.4791; #215 killed, not mended) read over several seeds
-  after #164 / #165; if the mean sits at the edge, put the seed mean to the owner. Owed comments: test_bar's A2 high
-  0.107999 and test_pieces' WHOLE_RINGS 78 (galaxy, seed, ring). S91's close moved one model byte (SPILL_FEH_BEYOND).
+## The rules said again (S92's lessons)
+- **The two-thirds rule**: a lead past two-thirds of its context hands back with the disk state, never waits.
+- **Commit each item the moment it is green** (`git commit -F`, the message through a file): S92's lead died twice
+  on the network and once on its context with fifteen files uncommitted.
+- Queue a run, then do the work that does not wait on it (register text, docs, the decision's draft).
+- A census change is read over every layer-on file; each re-pin's reason separates the moves (old -> first -> now).
+- Node ids go to pytest through `@argsfile` (an `&` in an id splits `cmd //c`).
 
-## The gate's notes for S92 (D260)
-- Before the hash pin: the sweep's smallest plateau step and real gap difference into `arm_pieces.py`'s tolerances.
-- Two crossings coinciding to ulps on the birth ring still order by their last bit (not structural; noted). The 13
-  marks naming #216 wait on the runner (`s91-marks-lifted`). test_gas_pattern's tightly wound galaxy's refused-steps
-  residual moved 1.6371e-11 -> 6.2050e-10: a record, not a bound, but over 1e-10 again.
-- T2 changed the region regime's sampled cluster path only: the sampled stars keep the blackbody colours (T3's pass).
+## The gate's notes (D261)
+- Held strict, bounds unmoved: `WALK_READ_OVER_S92` (#220), `GAS_LANES_READ_OVER_S92` and `GATE_MAX_G_READ_OVER_S92`
+  (#221). The L1 judged clause stays on the default census (#219).
+- #211's merge needs `s83-robust`'s set; test_render's wfc3 gate re-pinned (1.93e-6 / 2.07e-6 -> 1.60e-6 / 1.64e-6).
 
 ## The gates and the close (each session)
 - `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`; the picture test where a frame is regenerated
-  knowingly (`GALAXYGEN_PICTURE=1`, `GALAXY_BUNDLES` at a fresh export); `tools/progress.py` and the docs tests
-  (`test_docs`, `test_progress`, `test_audit`, `test_hook`, `test_graph`); the register's count pin with every
-  entry. D261… in `DECISIONS.md`; `LESSONS.md` tagged; `RESUMING.md` ≤ 120 lines; this file rewritten.
+  knowingly; `tools/progress.py` and the docs tests (`test_docs`, `test_progress`, `test_audit`, `test_hook`,
+  `test_graph`); the register's count pin with every entry. D262… in `DECISIONS.md`; `LESSONS.md` tagged.
 
-## Traps (S72–S91's stand)
-- Never run the full suite, `verify_clone` or the pins unprompted (D246). One low-priority pytest process at a time;
-  a "pytest running" flag file is made and removed by the script that runs pytest. A fresh worktree needs `npm ci
-  --prefix frontend` and `uv sync`. The owner's servers on 8017 / 8018 / 5173; agents 8050+; the picture test's
-  8019 one at a time. No backtick in a shell string; commit messages through a file; scripts through the Write tool.
-- Any byte under `model/galaxy` moves the hash: write every note before the pin. A closer older than the layer is
-  re-read against A10 (D257); a constant derived from the model's own output is listed before a whole-model change.
-- An empty argument file runs the whole suite; kill a run by its own process tree; a wall-clock bound under load
-  reads over — read it alone. A builder killed by the network leaves its pytest alive: check the process tree.
+## Traps (S72–S92's stand)
+- Never the full suite, `verify_clone` or the pins unprompted (D246). One low-priority, single-threaded pytest at a
+  time through a script that makes and removes its flag; check `tasklist` first. No backtick in a shell string.
+- Any byte under `model/galaxy` moves the hash: write every note before the pin. An empty argument file runs the
+  whole suite; a builder killed by the network leaves its pytest alive: check the process tree.

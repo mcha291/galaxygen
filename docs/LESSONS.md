@@ -2185,3 +2185,28 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **A census change is read over EVERY file that draws layer-on, not the stage's own files.** #216 re-laid
   every arm census; S91 re-pinned the stage's files, and the clustering gate's squares and judged slope and
   `tests/test_audit.py`'s #154 records were found red only at the gate (green on `main`, red at 3f16d0f).
+
+## From S92 (BUILD_V row 92, M3: #164 / #165, #217, #211, #218's cause, #219 read; a partial session, S93 carries the row)
+
+- [infra] **`gh run watch` dies on a network blip; read a run with `gh run view`.** The lead's watch on run
+  42796166390 ended with the connection, not the run; `gh run view <id>` (and `--log-failed` into a file) reads the
+  state at any time and survives the drop.
+- [audit] **Read a reference in the environment it was written in, and write the environment down.** The layer-off
+  reference was written multi-threaded at S90; S91's gate read it with the runner script's single thread, and a BLAS
+  product's summation order (`systems.Churn`'s arrival law) moved the star sample's last bits: red on `main` with no
+  bad commit (#218). A reference names its thread settings, or the model's bits stop depending on them.
+- [infra] **Uncommitted work does not survive a kill: the next agent reads the disk, not the plan.** The S92 lead
+  died with fifteen files of re-pins, two placeholders (`PROBE_S92`) and three queued runs on disk; the close builder
+  rebuilt the state from `git diff`, the run logs and the notes. Commit each green item at once; a placeholder assert
+  is a run's question, written down in the notes with the log it waits on.
+- [close] **A census change is read over EVERY layer-on file - S91 left eleven nodes unrun.** #216's re-lay was
+  read on the stage's files; the runner (42796166390) then failed eleven nodes in five other files, every one a
+  census record, none a lifted mark. Before a census-moving commit closes, list the files that draw layer-on and run
+  each; a node unrun is a re-pin owed, and its reason must separate the two moves (old -> the first move -> now).
+- [infra] **A lead that queues runs and waits spends its context on the waiting.** The S92 lead queued three runs
+  one behind another and re-read their state until its context ran out. Queue, then do the work that does not
+  depend on the run (the register's text, the docs, the decision's draft), and read a run's summary only when its
+  number is needed.
+- [infra] **`cmd //c` parses a node id: an `&` in a parametrised id splits the command.** The bd0 queue ran none of
+  its eleven nodes (cmd: "not recognized as ... a command"; one id holds `r_min=4.0&r_max=...`); pass node ids
+  through pytest's `@argsfile`, which no shell parses.

@@ -717,10 +717,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S89 | **167, 168** (the clouds' duplicate central A_V retired, read by no drawing since D228; the clouds' dust heated and scattering in the clouds' own layer at the census's expectation, L_IR ×0.9977 / ×0.9946, D257) | 2 |
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
 | **discharged** at S91 | **114, 210, 215** (the region regime's cluster points drawn from their own response through the filter set, T2's closure test green; the clouds' L1 slope inside the window on #216's re-lay, killed by its own clause, not mended; by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 3 |
+| **discharged** at S92 | **164, 165, 211, 216, 219** (the spur's height the gas crest over the ring's trough and the walk at the gas crest, built as ruled; the response tails on their own grid to 10^6 K, the jwst_nircam set inside test_render's bounds; the arm census's births machine-independent - the runner's eleven failing nodes read on this machine at bd0ed0c, every number the runner's, the thirteen marks lifted; the L1 judged clause kept on the default census by the gate's ruling, both slopes inside - D261) | 5 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
-| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 164, 165, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 211, 216, 217, 218, 219 | 75 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 217, 218, 220, 221 | 72 |
 
-So the board's **118 open** is 43 permanent and 75 carried, and no item is unruled (S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; #215 discharged on its own kill clause; #218 opened, the layer-off reference off on `main`, and #219, the L1 gate's two slopes at the window's edge; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **115 open** is 43 permanent and 72 carried, and no item is unruled (S92 (M3), D261: #164, #165, #211, #216, #219 discharged - #164 / #165 built as ruled, #211 built, #216 read on the runner and here alike, #219 by the gate's ruling; #220 and #221 opened, the walk's crest read over its bound and a spur's crest on a bar lane; S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; #215 discharged on its own kill clause; #218 opened, the layer-off reference off on `main`, and #219, the L1 gate's two slopes at the window's edge; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -5117,7 +5118,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S91 (M3), the owner's ruling of 2026-11-10 ("accept all recommendations"), with #159: **the whole-disc bound is
    25 s cold** (D219 (c) answered) and the cost pass runs after M3 (S92's close or Audit VI).* Carried with the bound
    written in; `render: whole, rgb` read 21.78 s cold at S90, inside it.
-164. **A spur's foot stands on top of the ridge, so the gas contrast doubles there** (S62, D221 item 7; the fix
+164. ~~**A spur's foot stands on top of the ridge, so the gas contrast doubles there**~~ (S62, D221 item 7; the fix
    pass's finding). The ruling set the spur's peak at its foot equal to the ridge's crest contrast "so that it leaves
    the ridge continuously"; built as g′ = (1 − ⟨S⟩)·g + S with S_foot = the crest, the foot's total is about twice
    the crest - the default galaxy's crest at R₀ 1.36 → 1.88, a cell's mean against its centre value 0.012 → 0.62 at
@@ -5157,7 +5158,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    model's ridge is 2.5-2.8 times the measured one). The lead's recommendation: (4), the smallest change that takes
    the doubling away, with the floor defined as the ring's trough (`crest_width`'s, the repository's one rule).
    Carried.
-165. **The spurs' walk reads the gas contrast at the stellar chain's polyline, not at the gas crest** (S62, D221
+   *S92 (M3):* built as option 4 on the owner's ruling of 2026-11-10, in one pass with #165 (2940b36; the measurement
+   under #165). **Discharged at S92 (D261), with #165, on the gate's ruling.**
+165. ~~**The spurs' walk reads the gas contrast at the stellar chain's polyline, not at the gas crest**~~ (S62, D221
    item 7; the reviewer's finding 4). The gas ridge sits on the stellar crest only to the carry's accuracy, so a
    foot read at the chain can stand up to 500 pc from the ring's gas crest: of the 28 Milky Way feet with contrast
    above 1.05, the foot over the local crest (±0.5 kpc round the ring) has median 0.987 and minimum 0.323; 11 feet
@@ -5174,6 +5177,28 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the walk read the point function, removing the walk's approximation: `WALK_READ_DIFFERENCE` (0.27) and
    `_COARSE` (0.58) would then measure rounding and be re-declared; the cost +1.94 s (seed 0) / +2.23 s (4242) on the
    walk's 1.80 / 1.91 s (the first off-grid read solves the mid-gap rings). With option 4, carried as it stands.
+   *S92 (M3; #164 and #165 built in one pass, 2940b36, on the owner's ruling of 2026-11-10 - option 4 with the
+   ridge's width `crest_width`'s):* the foot stays on the chain. Each grid ring the pieces span is read whole once on
+   the solver's 1440 cell centres (`layer/spurs.ring_profiles`): its trough (the profile's least, `crest_width`'s
+   floor) and its tallest crest's FWHM. Where a chain crosses the ring the walk reads the **gas crest**, the largest g
+   within half that width of the chain each side, the chain's own read among them; both reads linear in R between the
+   two rings (no mid-gap ring solved, no cost added). **#164: the spur's height `gas_spur_contrast` = crest - trough**;
+   **#165: `gas_spur_peak_surface_density` = the column times the crest**, so the spacing reads the ridge. Measured on
+   the Milky Way template (s92_m164.py, seeds 0 / 4242, before = bd0ed0c): the composed over the unspurred contrast at
+   the feet, median 1.9975 / 1.9974 -> 1.5312 / 1.5175 (over the crest at most 1.7573 / 1.8251, was up to 1.9985);
+   feet 39 / 35 -> 45 / 43; the spurs' ring mean at most 0.0070 / 0.0073 -> 0.0139 / 0.0106; 7 / 6 crests on the
+   window's edge (S90's +-FWHM/2 at the chain: 10 of 40). **Held for the gate:** the walk's crest against the point
+   function's crest at the foot's own ring reads 0.2176 at seed 0 (45 feet, under `WALK_READ_DIFFERENCE` 0.27) and
+   **0.4582 at seed 4242** (43 feet) - over, `xfail(strict)` `WALK_READ_OVER_S92` in `tests/test_spurs.py`; the
+   window's width differs between two grid rings and the crest it holds can be another ridge's (worst feet at 4.44
+   and 5.40 kpc). Inside the bar the crest can be a lane's: the Milky Way's published gas inside the bar reads 7.3027
+   at 3.94 kpc over `test_bar`'s clause max(lane peak 7.0556, response 2.3930) - `xfail(strict)`
+   `GAS_LANES_READ_OVER_S92`. Both are the gate's: re-declare the walk's bound for the crest read (or read the crest by
+   the point function, +2 s), and rule whether a spur's crest may be a bar lane's. The re-pins are in the S92 commits
+   with their reasons (re-read over every layer-on file: S91's census move and this one, each node's three numbers).
+   **Discharged at S92 (D261), with #164, on the gate's ruling:** the ruled build stands; the two readings it left
+   are their own entries, #220 (the walk's read over its bound) and #221 (inside the bar the crest can be a lane's),
+   both holds kept strict.
 166. **The render computes the starlight by age on every request, including those that discard it** (S63, D223; the
    reviewer's finding 3). `_ages` runs on window and level requests (0.30 → 0.81 s and 0.30 → 0.75 s warm) and on the
    star-first mode's requests (`l_min`: 1.24 → 1.61 s), which ship about 1.17 MB the viewer nulls when it draws the
@@ -5889,8 +5914,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    within-tolerance byte change in a capture needs no name; the capture is re-taken at the next knowing change, and
    the picture test's verdict lines stay the close's gate (LESSONS, S82).
    *S91 close (the gate, D260): discharged* on the owner's ruling above.
-211. **The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the
-   end row 0.009 mag off** (S83, D250; builder A's run of the targeted tests on `s83-robust`). `tests/test_render.py`
+211. ~~**The model's response tables do not hold a 4.4 µm band: NIRCam's F444W fails the trapezoid bound and reads the
+   end row 0.009 mag off**~~ (S83, D250; builder A's run of the targeted tests on `s83-robust`). `tests/test_render.py`
    reads the viewer's filter sets (`instruments.json`) and holds the model's response tables to each: for the new
    `jwst_nircam` set (F444W, F200W, F090W, fetched from SVO by `tools/fetch_filters.py`) the linear read of ln G between
    the slope rows exceeds the h²/32 bound, and the 87 hottest isochrone points read through the end row's tails "beyond
@@ -5907,6 +5932,21 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (`spectra.RESPONSE_SLOPES`, `RESPONSE_TEMPERATURES`) extended to 4.4 µm so the `jwst_nircam` set passes
    `tests/test_render.py`'s bounds; then the set on `s83-robust` (aa0eec6) merges (S92), the owner's pin need gone.*
    Carried, the batch's.
+   *S92 (M3, built):* the tails' factors are tabulated on their own grid, `spectra.TAIL_TEMPERATURES` - 1000 K to
+   10^6 K at 1/384 dex (1153 rows) - where they were on `RESPONSE_TEMPERATURES` (1000-10^5 K, 1/96 dex), which
+   `/api/blackbody` and the white point's range keep reading unchanged. Why both ends: a tail's ln factor is nearly
+   linear in 1/T, so read linearly in ln T its midpoint error is about h^2/8 times hc/k (1/lambda_K - 1/lambda) / T -
+   2.4e-4 at 4.4 um and 1000 K on 1/96 dex, 1.5e-5 on 1/384; and the isochrones' 87 points hotter than 10^5 K (to
+   2.2e5 K) now read their own tails, not 10^5 K's. The `jwst_nircam` set (aa0eec6's `instruments.json`) against
+   test_render's two bounds (s92_p211.py, its own test functions): the trapezoid-between-rows test **passes** (it
+   failed on F444W's beyond-K tail); the end row's worst 0.009005 -> 1.6e-6 mag (F444W; rgb 6.5e-6 -> 4.5e-7).
+   `s83-robust` against session-92 (`git merge-tree`): **one conflict, `frontend/src/galaxy/GalaxyView.tsx`**; and
+   `test_render`'s closure test reads `AGE_FACTORS[template][name]` for every set, so the merge needs a measured
+   `jwst_nircam` row (the `full` fixture) - an as-measured pin, no longer a bound. The merge is the gate's.
+   Committed bb78ff1 with test_render's wfc3 gate re-pinned (the median and the weighted 1.93e-6 / 2.07e-6 -> 1.60e-6 /
+   1.64e-6: the finer tails read closer to the exact integral); test_render green (92 passed, then the five
+   object-response nodes). **Discharged at S92 (D261)**: the model's tables hold the 4.4 µm band; `s83-robust`'s merge
+   (its set, the conflict, the measured `jwst_nircam` row) is the batch's close, no longer this debt's.
 212. ~~**`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
    constant is 88.8**~~ (S87, M1; found by #148's build; discharged at S88's close, D256). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
    over the pre-merger population at R₀ — σ_W = 35 km/s, the model's own secular heating then 27.06 km/s — and set it
@@ -6024,8 +6064,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    seeds, ten times the margin. The strict hold passed and is lifted (`L1_GATE_READ_OVER_S90` removed, its words in the
    comment), `MEASURED`'s row the measured one. The flatter shape #80's census left is not mended: the gate's two
    slopes at the window's edge are #219's.
-216. **The arm census's births are decided by rounding, so a seed's census is the machine's: the nightly has failed
-   since M1 on records of this machine's draw** (S90a, D259; the nightly runs 41923775720 … 42522129002 on `main` at
+216. ~~**The arm census's births are decided by rounding, so a seed's census is the machine's: the nightly has failed
+   since M1 on records of this machine's draw**~~ (S90a, D259; the nightly runs 41923775720 … 42522129002 on `main` at
    1c58051). Two comparisons in `layer/arm_pieces.py`'s birth sweep take a float that is exact only in exact
    arithmetic: *crossing < wanted*, where a ring's design count sits on its plateau — the Milky Way template's reads
    6.0 and 6.000000000000001 on alternate rings over 11.74-12.34 kpc, so chain 12 is born at 11.9625 kpc by one ulp —
@@ -6067,6 +6107,14 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the census under each record is now machine-independent (every galaxy they read is among the probed), so the gate
    may lift them, a dispatched `ci` run on the batch branch reading them on the runner first. **Carried until the
    gate rules on the marks and the runner agrees** (the hash moves at S92).
+   *S92 (the runner read; D261):* the dispatched `ci` run 42796166390 on `s91-marks-lifted` (3df553c, the thirteen
+   marks lifted): **all thirteen lifted nodes passed**; 11 failed / 1719 passed, the eleven in five other files
+   (test_clouds 1, test_dust_layer 2, test_hierarchy 3, test_layer 1, test_region_synthesis 3, test_v7_header 1),
+   none a lifted mark. The same eleven nodes on this machine at bd0ed0c (s92c_bd0.log, 11 failed in 194.94 s) read
+   the runner's numbers - every count exactly (22, 1722, 39), every float to 1e-13 relative: S91's re-lay unrun at
+   S91, not a machine's draw; no census parts between the two machines (the scratchpad's s92c_eleven.md). The marks
+   lifted on `session-92` (the gate's ruling: 3df553c cherry-picked); the eleven re-pinned with their reasons (old ->
+   bd0ed0c -> now). **Discharged at S92 (D261).**
 217. **The tile's threshold and the table's are two computations of one power: "the frame's one threshold" holds only
    where they agree to the bit** (S90a, D259; the nightly run 41923775720). `/api/bright`'s table publishes
    `threshold` as `10.0 ** np.asarray(grid)` (an array power, a CPU-dispatched loop) and its header says "a threshold
@@ -6078,6 +6126,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    this entry. **Carried, a model batch's** (`model/galaxy/api` is inside the hash). What closes it: one function
    computes a grid threshold and both answers use it (or the table's array is built from the scalar path), the mark
    lifted and the case run on the runner. What kills the reading: the runner's case green with the two paths kept.
+   *S92 (M3, built):* `api/v6_tiles.grid_threshold` - 10^x by the one scalar power (`math.pow`), element by element -
+   is both answers': `snap_up`'s `l_min_used` and the two tables' `threshold` column. The mark on
+   `test_v6b_points`' (3, milky_way) case lifted on the gate's ruling in its own commit (2eb3c9f, revertible alone).
+   **Carried until the gate's dispatched run on `session-92` reads the case green on the runner.**
 218. **The layer-off reference is off on `main`: the star sample's columns no longer read
    `tests/layer_reference_s90.json` at 4f06cc9** (S91's gate, D260; found by the close builder's run of the two
    machine-pinned reference nodes, B2). At `main` (4f06cc9, the hash 5a2c097e…) `tests/test_layer.py`'s
@@ -6108,7 +6160,16 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    wrong: the bits are the machine's environment's, #206's family. **Carried, the gate's:** either the product made
    thread-independent (a sum the model orders itself - a model change, its own bits moved once), or the reference and
    its two nodes read in one stated thread setting; the re-base at M3's close follows that ruling.
-219. **The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**
+   *The gate's ruling (S92, D261):* the remedy is the product made thread-independent - the arrival law's
+   `self._born[:, step].T @ kcol[b]` (`systems.Churn`) made a sum the model orders itself, so its bits no longer follow
+   OpenBLAS's thread count (the owner's #216 ruling, a seed names one galaxy whatever the machine, carried to its second
+   cause). **Not built at S92: S93's first item**, with a sweep of every BLAS-backed product (`@`, `dot`, `matmul`,
+   `einsum` through BLAS, `linalg`) on a draw path under `model/galaxy`, each measured threads-on against threads-off.
+   The reference file and its two nodes are untouched until then. **Carried, M3's (S93).** What closes it: the ordered
+   sum built and the sweep's every draw-path product reading the same bits at 1 and 20 threads; then the reference
+   re-based once at M3's close, naming the cause. What kills the reading: the two nodes green at one thread and at
+   twenty on the unchanged model.
+219. ~~**The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**~~
    (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clouds' and the clusters'
    L1 slopes over 47.5-190 pc against their own law read -0.4965 and -0.4791 on #216's re-laid census, against the
    window's edge at -0.49 (S90 -0.4843 / -0.4991, S88 -0.4796 / -0.4899): about 0.15 flatter than -0.64 since #80's
@@ -6119,6 +6180,54 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    #165 over several seeds; if the mean still sits at the edge, the owner's ruling - whether the judged clause is read
    on a seed mean, or the flatter shape #80 left is mended (to put, recommended: the seed mean, the window unmoved).
    What kills the reading: both slopes inside by more than the scatter on one census.
+   *S92 (read after #164 / #165, 2940b36; the scratchpad's s92_p219.py, the file's own fixture and `_judged`):* nine
+   censuses of the default galaxy - the default inputs and `systems_seed` = `texture_seed` = 1-8 (the census, the
+   clustering field and the arm census each re-drawn; the control the census's own law under the next four systems
+   seeds, as the fixture builds it). **The clouds' slope: mean -0.6177, sd 0.1030 (sem 0.0343), -0.7641 to -0.5035,
+   9 of 9 inside the window; the clusters': mean -0.6367, sd 0.1064 (sem 0.0355), -0.7922 to -0.4970, 8 of 9
+   inside.** The default census reads -0.5035 / -0.4970 - both inside, by 0.0035 and 0.0030, far under one sd. The
+   seed mean sits 0.022 and 0.003 from -0.64, not at the edge: the closer's question to the owner does not arise; the
+   default census's place at the edge is its draw (the mean of nine within 0.7 sem of -0.64 for the clusters). The
+   window untouched. The nine censuses (slope, worst residual):
+
+   | census (`systems_seed` = `texture_seed`) | clouds | clusters |
+   |---|---|---|
+   | default (0) | -0.5035, 0.0199 | -0.4970, 0.0282 |
+   | 1 | -0.5477, 0.0346 | -0.5675, 0.0344 |
+   | 2 | -0.5426, 0.0100 | -0.5579, 0.0204 |
+   | 3 | -0.7306, 0.0457 | -0.7922, 0.0452 |
+   | 4 | -0.7641, 0.0251 | -0.7683, 0.0265 |
+   | 5 | -0.5800, 0.0267 | -0.5971, 0.0204 |
+   | 6 | -0.5103, 0.0140 | -0.5495, 0.0219 |
+   | 7 | -0.6478, 0.0345 | -0.6755, 0.0414 |
+   | 8 | -0.7327, 0.0415 | -0.7253, 0.0436 |
+
+   **The gate's ruling (S92, D261): the judged clause stays on the one default census** (both inside now); the
+   clusters' strict hold `L1_GATE_READ_OVER_S91` lifted (`tests/test_clustering_gate.py`, green), the string kept as
+   the record. **Discharged at S92 (D261).**
+220. **The spurs' walk reads the gas crest over its own bound at texture seed 4242: 0.4582 against
+   `WALK_READ_DIFFERENCE` 0.27** (S92, D261; found by #164 / #165's build, 2940b36). The walk now reads each foot's
+   gas crest within half the ring's crest width of the chain, linear in R between the two grid rings it lies
+   between; `tests/test_spurs.py` holds that read against the point function's crest at the foot's own ring. On the
+   Milky Way template it reads 0.2176 at seed 0 (45 feet, under the bound) and **0.4582 at seed 4242** (43 feet; the
+   worst feet at 4.44 and 5.40 kpc). The cause as far as measured: the window's width is each grid ring's own FWHM, so
+   it differs between the two rings, and the crest the window holds on one ring can be another ridge's (S90's
+   reading: a +-FWHM window finds crests up to 14 kpc away). Held `xfail(strict)` as `WALK_READ_OVER_S92`; the bound
+   is not moved. **Carried, M3's (the gate's to rule).** What closes it: the walk's bound re-declared for the crest
+   read with its measurement over the suite's seeds, or the crest read by the point function at the foot (S90
+   measured +1.94 s / +2.23 s on the walk's 1.80 / 1.91 s), the hold then lifted. What kills the reading: the
+   seed-4242 read under 0.27 with the window held to the foot's own ridge on the unchanged walk (a test artefact).
+221. **Inside the bar the spur's crest can be a lane's: the Milky Way's published gas reads 7.3027 at 3.94 kpc over
+   the bar's clause max(lane peak 7.0556, response 2.3930)** (S92, D261; found by #164 / #165's build). #164 sets a
+   spur's height to the ring's crest over its trough; inside the bar's reach the ring's tallest crest is a lane's,
+   so a spur whose foot stands on the lane adds its height above the lane's peak, and the published field passes
+   both `tests/test_bar.py`'s clause and `tests/test_gas_pattern.py`'s gate clause "max g <= max(max s, the lanes'
+   max)". Held `xfail(strict)` twice: `GAS_LANES_READ_OVER_S92` (test_bar) and `GATE_MAX_G_READ_OVER_S92`
+   (test_gas_pattern, the Milky Way's case); the clause is not moved. **Carried, M3's (the gate's or the owner's to
+   rule):** whether a spur may stand on a lane. What closes it: either the spur's crest read from the response alone
+   inside the bar (no spur on a lane's crest, the clause then holding as written), or the clause re-declared as the
+   lane or the response plus the spurs' own height, with its measurement; the two holds lifted. What kills the
+   reading: the field's maximum inside the bar under the clause on the unchanged model (another ring's read).
 
 ---
 
