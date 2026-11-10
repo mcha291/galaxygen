@@ -2182,3 +2182,6 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the test's own nodes (its environment, its digests) before reporting a drift.
 - [infra] **A network drop kills an agent mid-step: commit each whole item as it is done.** One commit per whole item
   means a resumed agent reads its state from the log and never guesses which half of an edit landed.
+- [close] **A census change is read over EVERY file that draws layer-on, not the stage's own files.** #216 re-laid
+  every arm census; S91 re-pinned the stage's files, and the clustering gate's squares and judged slope and
+  `tests/test_audit.py`'s #154 records were found red only at the gate (green on `main`, red at 3f16d0f).

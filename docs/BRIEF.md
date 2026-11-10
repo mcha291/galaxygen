@@ -24,17 +24,17 @@ Take in this order (the lead's recommendation at S91; Fable rules):
 4. The ionized gas: **T10 / #119**, **#117**, **#118**, **#100**, **#101** (the FSPS grid download accepted
    2026-11-02); then #174–#176 (the viewer's shader and tolerances), #166 (cost), T15, T8, and the rest of M3's
    list read once: #83–#86, #88–#89, #91, #96–#98, #102–#103, #124–#125, #127, #135, #215.
-5. **The batch's close**: every model test file once on the final model (S88's lesson — S91 ran only the stage's
-   files: test_pieces, test_spurs, test_bar, test_modes, test_gas_pattern, test_audit_v, test_bright, test_systems,
-   test_v6_bright, test_v6b_points, test_render and the T2 closure); the layer-off reference re-based by decision
-   (#160 named four routes in `NAMED_ROUTES_SINCE_REBASE`); the hash moved once, the bundles re-exported, the frames
-   regenerated beside the goal pictures; a dispatched `ci` run on `batch-m3` reads the #216 marks on the runner
-   before the gate lifts them; the owner's full suite (or the runner's, on the owner's word) before `main`.
+5. **The batch's close**: every model test file once on the final model (S88's lesson; S91 ran the stage's files and
+   the gate found #216's moves in two more); the layer-off reference re-based by decision once #218's cause is named;
+   the hash moved once, the bundles re-exported, the frames regenerated beside the goal pictures; the owner's full
+   suite (or the runner's, on the owner's word) before `main`.
 
-## Held at S91 with their cause (the gate rules)
-- `tests/test_clustering_gate.py`'s disclosed square of the young bright stars (20–40 Myr bin −0.1217 against the
-  pinned −0.286): fails identically on 3f16d0f — #216's re-laid default census, a disclosed check; re-pin or hold.
-- See D260 for the layer-off reference reading at S91 and the picture test's verdicts.
+## S92 opens with (the gate, D260)
+- **#218** first: the two layer-off reference nodes bisected over S90 / S90a (`main` is off too; #197 first suspect).
+- The dispatched `ci` run on `s91-marks-lifted`: any #216 move it finds in a file nobody ran here is the first re-pin.
+- **#219** read again after #164 / #165. Owed comments: test_bar's A2 high 0.107999 and test_pieces' WHOLE_RINGS 78
+  (galaxy, seed, ring). Left red at S91 for the gate: the spill count 1787 / 1785 (its pin is a model byte) and
+  #154's "one ring" statement in `tests/test_audit.py`.
 
 ## The gate's notes for S92 (D260)
 - Before the hash pin: the sweep's smallest plateau step and real gap difference into `arm_pieces.py`'s tolerances.
