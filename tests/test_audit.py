@@ -582,7 +582,7 @@ def test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_star
         return np.where(m > 0, a / np.where(m > 0, m, 1.0), 1.0)
 
     for inputs, (worst, at, weighted) in (
-        (None, (0.1167, 11.175, 0.00677)),  # S87 (#80): was (0.0562, 2.100, 0.00405) - the default disc's bar is the law's 2.27 kpc
+        (None, (0.1048, 2.25, 0.00542)),  # S91 (#216, D260): was (0.1167, 11.175, 0.00677) - the default galaxy's census re-laid by the births made bit-independent (red at 3f16d0f, green on main); the templates' rows read the same  # S87 (#80): was (0.0562, 2.100, 0.00405) - the default disc's bar is the law's 2.27 kpc
         (templates.overrides(templates.TEMPLATES["milky_way"]), (0.2516, 5.925, 0.01271)),  # S87 (#80): was (0.2600, 5.925, 0.01306) - its pinned 5.0 kpc bar
         (templates.overrides(templates.TEMPLATES["ngc_4414"]), (0.0706, 0.675, 0.00824)),  # S87 (#209): the weighted mean was 0.00693 - the owner's floor redrew its pieces
     ):
