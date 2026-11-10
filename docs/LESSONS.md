@@ -2174,3 +2174,11 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] **A builder killed by the network leaves its pytest alive.** The re-pin builder died on ENOTFOUND with a
   90-minute pytest still running in its worktree; resuming the builder by message (its transcript intact) let it
   finish rather than repeat the run - check the process tree before starting another.
+- [close] **A re-pinned test is run green to its end before it is committed.** A failing assert hides every later one
+  in its chain: after 3f16d0f the re-pin builder found test_gas_pattern's 12.0375 row still read the old number
+  (1.0944 -> 1.0884) behind the first assert it had re-pinned. Re-run the whole test after each re-pin, not the line.
+- [audit] **A plain script's reading of the reference is not the reference test.** The lead's script read bb25415 off
+  `tests/layer_reference_s90.json` on 10 routes where no S91 commit before 995a007 could move a layer-off output; run
+  the test's own nodes (its environment, its digests) before reporting a drift.
+- [infra] **A network drop kills an agent mid-step: commit each whole item as it is done.** One commit per whole item
+  means a resumed agent reads its state from the log and never guesses which half of an edit landed.
