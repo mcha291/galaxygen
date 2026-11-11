@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from galaxy.api import wire
+from galaxy.api import v6_tiles, wire
 from galaxy.api.service import MAX_BRIGHTEST, Service
 from galaxy.stages import bright as br
 from galaxy.stages import systems as sy
@@ -160,7 +160,15 @@ def test_the_refusals(service):
 def test_the_table_is_each_tile_s_expected_count_at_every_grid_threshold(service):
     h, t, r = ask(service, "/api/bright", template="milky_way", table=1)
     assert t["expected"].shape == (sy.CELL_COUNT, br.LOG_L_GRID.size) and t["expected"].dtype == np.float64
-    assert t["log_l"].tobytes() == br.LOG_L_GRID.tobytes() and np.array_equal(t["threshold"], 10.0 ** br.LOG_L_GRID)
+    # S92 at the gate (#217; the runner's run 42918523059 on 859de1d): the table's threshold is
+    # api/v6_tiles.grid_threshold (math.pow, element by element - the function the tile's l_min_used is too), so its
+    # bytes are that function's on any machine. Until then this line took 10.0 ** LOG_L_GRID (an array power, a
+    # CPU-dispatched loop) for the oracle and asked equality: it held on this machine and failed on the runner, whose
+    # array power parts from math.pow by an ulp (D259's two paths, now the test's own). The array power is kept as a
+    # closeness, within two ulps.
+    assert t["log_l"].tobytes() == br.LOG_L_GRID.tobytes()
+    assert t["threshold"].tobytes() == v6_tiles.grid_threshold(br.LOG_L_GRID).tobytes()
+    assert np.allclose(t["threshold"], 10.0 ** br.LOG_L_GRID, rtol=5e-16, atol=0.0)
     assert "smallest grid threshold" in h["table"]["rule"] and "point budget" in h["table"]["rule"]
     rings, sectors = sy.cell_edges(service.grid.R)
     assert h["cells"]["ring_edges"] == rings.tolist() and h["cells"]["sector_edges"] == sectors.tolist()
