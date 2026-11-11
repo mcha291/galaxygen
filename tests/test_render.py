@@ -1487,10 +1487,14 @@ def test_the_parts_shares_of_the_disc_s_light_are_pinned_as_measured(full):
         assert np.allclose(sum(np.array(got[p]) for p in AGES), 1.0, rtol=1e-12)
 
 
-def test_the_whole_render_s_age_parts_are_their_cached_bits_with_and_without_l_min(small, model):
+def test_the_whole_render_s_age_parts_are_their_cached_bits_with_and_without_l_min(small, model, monkeypatch):
     """S93 (#166): the render's parts read bright.part_anchors' arithmetic through the run's cache - the same bits as
     bright.part_anchors itself, the same bits on a second (warm) request, and the same bits under a whole-grid l_min=
-    (which adds stars_unresolved and keeps the parts, test_without_l_min_the_render_is_the_one_it_was)."""
+    (which adds stars_unresolved and keeps the parts, test_without_l_min_the_render_is_the_one_it_was).
+    S95 (Audit VI F-3B-6): bit equality alone stays green with the cache removed, so the end of this test counts the
+    calls: with the anchors' caches emptied, a first request computes the parts (``bright.window_anchors``, the
+    0.2-0.7 s the cache spares) and a second identical request reaches the cache (``v7_layer.window_anchors``) and
+    computes nothing."""
     q = {**_ages_query("rgb"), "model": [model.name]}
     header, whole = render_q(small, q)
     _, again = render_q(small, q)
@@ -1509,6 +1513,33 @@ def test_the_whole_render_s_age_parts_are_their_cached_bits_with_and_without_l_m
     cut, spec = br.cluster_window(c), small.grid.spec
     cached = v7_layer.window_anchors(f, spec.t_max, spec.n_t, c, [(0.0, cut), (cut, sy.YOUNG_STAR_AGE), (sy.YOUNG_STAR_AGE, math.inf)])
     assert np.array_equal(cached, br.part_anchors(f, spec.t_max, spec.n_t, c))
+    # S95 (F-3B-6): the cache is used, not only bit-equal. Fresh caches (this module's other tests warm them), a counting
+    # wrapper on the cached entry and on the computation it spares; the service reads both by attribute at call time.
+    from collections import OrderedDict
+
+    monkeypatch.setattr(v7_layer, "_ANCHORS", OrderedDict())
+    monkeypatch.setattr(v7_layer, "_ANCHORS_UNDER", OrderedDict())
+    calls = {"cached": 0, "computed": 0}
+    real_cached, real_computed = v7_layer.window_anchors, br.window_anchors
+
+    def counted_cached(*a, **k):
+        calls["cached"] += 1
+        return real_cached(*a, **k)
+
+    def counted_computed(*a, **k):
+        calls["computed"] += 1
+        return real_computed(*a, **k)
+
+    monkeypatch.setattr(v7_layer, "window_anchors", counted_cached)
+    monkeypatch.setattr(br, "window_anchors", counted_computed)
+    _, first = render_q(small, q)
+    after_first = dict(calls)
+    _, second = render_q(small, q)
+    assert after_first["cached"] >= 1 and after_first["computed"] >= 1, after_first  # the wrappers are on the path
+    assert calls["cached"] > after_first["cached"], (after_first, calls)  # the second request reached the cache ...
+    assert calls["computed"] == after_first["computed"], (after_first, calls)  # ... and computed nothing again
+    for p in AGES:
+        assert np.array_equal(second[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]) and np.array_equal(first[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]), p
 
 
 def test_the_parts_ride_on_windows_and_region_cells(small):
