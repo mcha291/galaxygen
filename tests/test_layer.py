@@ -5,7 +5,8 @@ Phase R is a behaviour-preserving restructure. What this file holds, in the orde
 - **The reference.** With the layer off, every field of both models at both templates' inputs on the production
   grid, and every array of every input route's body, is bit-identical to the reference with an empty named list -
   since S90 (#214, D258) the batch's final layer-off run, re-based at each batch's close by decision
-  (``tests/layer_reference.py``, ``tests/layer_reference_s90.json``); from S56 to S89 S55's layer-off run
+  (``tests/layer_reference.py``, ``tests/layer_reference_s93.json`` since S93's re-base, #218, D262; M2's
+  ``tests/layer_reference_s90.json`` kept as history); from S56 to S89 S55's layer-off run
   (``tests/layer_reference_s55.json``, kept as history) with a named list (``LAYER_OFF_EXCEPTIONS``). Until S56 the reference was S54's with the layer **on** (Phase R was
   behaviour-preserving); it is retired, because from P1 the layer-on galaxy changes by design (D215).
 - **I1.** With the layer off the model runs, and every field not declared composed - every scalar, every history,
@@ -411,13 +412,21 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # S55's), the render's `lines_hii` the one array of its body off S55's, and the pins a template's header carries
 # beside it. A field or route that moves after the re-base joins `NAMED_SINCE_REBASE` by a decision, with the reason,
 # or the batch re-bases again at its close (#214's closer).
+#
+# S93 (#218; M3's close, D262: re-based again, the two lists emptied). S92 measured the cause of the S90 file's red
+# (D261): its star columns followed OpenBLAS's thread count through the arrival law's BLAS product (`systems.Churn`,
+# `self._born[:, step].T @ kcol[b]`) - the file written multi-threaded at S90, the nodes read single-threaded at S91.
+# S93 ordered that product and five more on draw paths (`core/special.ordered_product`; lane 218's 3e36ae7, 052a464,
+# the gate's fb8871b, eca0ff2, cd12cdd, the review's mends merged at cfa1670, and c161965's `bright.window_anchors`),
+# so the model's bits moved once - with S91's and S92's own model moves (#160, #164 / #165, #216, #211, M3's lanes) -
+# and the reference is M3's final layer-off run, written single-threaded by `tests/layer_reference.py write` to
+# tests/layer_reference_s93.json and read green at one thread and unrestricted. tests/layer_reference_s90.json is
+# kept untouched as history; no test reads it.
 NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route labels) named off the reference since its re-base
-# S91 (#160, the owner's ruling of 2026-11-10: the old part by the star sample's rule): the azimuthal model's renders
-# send one more placing weight, stars_old_placement - exactly 1 with the layer off - and their headers name it (ages,
-# arrays, axes; with l_min= the remainder's about); no array they sent before moves (measured on this machine against
-# bb25415's own layer-off digests). Named by decision D260 (the gate, S91's close). Was set().
-NAMED_ROUTES_SINCE_REBASE: set[str] = {"azimuthal/render/disc", "azimuthal/render/level1", "azimuthal/render/unresolved",
-                                       "ngc_4414/render/disc"}
+# S91 (#160) named four render routes here off the S90 file (D260: the azimuthal renders' stars_old_placement); the
+# S93 re-base carries them, so the list is empty again. Was {"azimuthal/render/disc", "azimuthal/render/level1",
+# "azimuthal/render/unresolved", "ngc_4414/render/disc"}.
+NAMED_ROUTES_SINCE_REBASE: set[str] = set()
 
 
 @pytest.mark.machine_pinned  # S77 (#206): bit for bit against this machine's capture

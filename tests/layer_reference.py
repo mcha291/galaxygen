@@ -40,6 +40,15 @@ empty named list (a field or route that moves between re-bases is named by a dec
 ``tests/layer_reference_s55.json`` (``REFERENCE_S55``, ``load_s55()``) is kept untouched: it is S55's history and
 the oracle ``tests/test_modes.py`` reads - S55's single-mode digests (the m = 4 fields S55 published) and the streams
 S55 drew.
+
+**At S93, M3's close (D262; #218), the reference is re-based again**, onto M3's final layer-off run (``content_hash``
+f9b04ed2...), written single-threaded (``OMP_NUM_THREADS`` = ``OPENBLAS_NUM_THREADS`` = ``MKL_NUM_THREADS`` = 1) by
+``... write`` to a new file, ``tests/layer_reference_s93.json`` (``REFERENCE``). The cause (#218): S92 measured the
+S90 file's star columns following OpenBLAS's thread count through the arrival law's BLAS product (``systems.Churn``);
+S93 made that product and every other BLAS product on a draw path an ordered sum (``core/special.ordered_product``:
+lane 218's 3e36ae7, 052a464, the gate's fb8871b, eca0ff2, cd12cdd, the review's mends merged at cfa1670 and
+c161965's ``bright.window_anchors``), so the model's bits moved once and the run reads the same bits at 1 and 20
+threads. ``tests/layer_reference_s90.json`` (``REFERENCE_S90``) is kept untouched as history; no test reads it.
 """
 
 from __future__ import annotations
@@ -53,7 +62,8 @@ from typing import Any
 
 import numpy as np
 
-REFERENCE = Path(__file__).resolve().parent / "layer_reference_s90.json"  # S90 (#214, D258): was layer_reference_s55.json
+REFERENCE = Path(__file__).resolve().parent / "layer_reference_s93.json"  # S93 (#218, D262): was layer_reference_s90.json (S90, #214, D258: was layer_reference_s55.json)
+REFERENCE_S90 = Path(__file__).resolve().parent / "layer_reference_s90.json"  # M2's final run (S90), kept as history
 REFERENCE_S55 = Path(__file__).resolve().parent / "layer_reference_s55.json"  # S55's run, kept: test_modes' oracle
 
 MODELS = ("azimuthal", "basic")
