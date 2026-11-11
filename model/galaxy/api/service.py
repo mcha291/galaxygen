@@ -2091,14 +2091,9 @@ class Service:
                          "dust stage's modified blackbody at the published temperature and its emissivity index, "
                          "optically thin. Zero through an optical filter; a curve holding the far infrared gets it all",
             }
-        # The stars' light by age (S63, D223): three per-ring arrays and the (R, phi) arrays that place them. Not on a
-        # whole-grid l_min= request (S93, #166): the star-first mode's frame draws its remainder (stars_unresolved), never
-        # the age parts, so that request no longer computes the light it discarded. A window or a level with l_min=
-        # keeps them (the region cells' closures read the young part beside the remainder, test_s91_t2_closure).
-        whole_l_min = l_min is not None and level is None and not any(
-            q.one(n) is not None for n in ("r_min", "r_max", "phi_min", "phi_max"))
+        # The stars' light by age (S63, D223): three per-ring arrays and the (R, phi) arrays that place them.
         ages, age_rings, age_weights = None, [], []
-        if not whole_l_min and all(n in f for n in _bright.RESOLVE_READS[:2]):
+        if all(n in f for n in _bright.RESOLVE_READS[:2]):
             ages, age_rings, age_weights = self._ages(
                 model, f, curves, per_ring, placed, contrast_fields, placed_gas, gas_fields,
                 RENDER_DUST_PLACEMENT if placement is not None else None, even, clustering_declared, old_rows,
