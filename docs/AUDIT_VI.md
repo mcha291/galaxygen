@@ -88,3 +88,87 @@ does not re-fit a template or open `basic` (frozen, ruling 7); it does not re-ru
 and 2026-11-10, and it lists — without judging — the rulings taken on recommendation, which are the owner's to
 re-rule; it does not touch the deployment (row D). A reader that finds a source contradicting what a batch assumed
 writes it as a finding and continues.
+
+## 1. The citations since s85, re-read (strands 1A and 1B; two Opus readers; nothing from recall)
+
+Two read-only Opus readers on `git diff s85..main`, blind to DECISIONS, LESSONS, BRIEF, RESUMING, BUILD_V and
+GALAXY_INPUTS §11 (none opened): **1A** the arms and the bar (M1, 17 slice files), **1B** the clouds, the dust, the gas,
+the populations and the ionized gas (M2, M3). Every label rests on a page fetched in the session (WebFetch on arXiv
+abs, ar5iv and arxiv html, SVO, JDox, the CMD FAQ; arXiv PDFs read through `pdftotext`); 1A redid three derivations by
+hand, 1B its arithmetic in two scratch scripts; no pytest ran and nothing in the repository changed. **84 rows:** 1A 49
+(15 code, 34 reading) — MATCH 38, DIFFERS 3, ADOPTED-NOT-MEASURED 1, MISATTRIBUTED 0, UNREACHABLE 2, unread 4, n/a 1;
+1B 36 (35 labelled) — MATCH 31, DIFFERS 2, MISATTRIBUTED 2, ADOPTED-NOT-MEASURED 0, UNREACHABLE 0. **The answer, in
+the readers' terms: no wrong number reaching a computed field or a pin was found** — "every code constant and pin in
+the slice matched its page" (1A); "every number that reaches a field in my slice ... matched its page" (1B). The ten
+findings are wording, provenance and coverage.
+
+| source group (strand) | rows | MATCH | DIFFERS | ADOPTED | MISATTR. | UNREACH. | unread / n/a |
+|---|---|---|---|---|---|---|---|
+| `level0.py`, `core/cosmology.py`, `templates.py`'s bar pin (1A) | 13 | 12 | 0 | 0 | 0 | 1 | 0 |
+| `layer/arm_pieces.py` (1A) | 2 | 1 | 1 | 0 | 0 | 0 | 0 |
+| READING_ARM_PIECES, READING_BAR (1A; one row shared) | 19 | 15 | 2 | 0 | 0 | 0 | 2 |
+| READING_ARM_SEGMENTS (1A) | 7 | 4 | 0 | 1 | 0 | 1 | 1 n/a |
+| READING_GAS_PATTERN, READING_GAS_SHOCK (1A) | 8 | 6 | 0 | 0 | 0 | 0 | 2 |
+| `level0.py` DIG_*, `nebular.py`, `spec.py` row 2, `photometry.py` (1B) | 14 | 14 | 0 | 0 | 0 | 0 | 0 |
+| `tools/fetch_filters.py` / `instruments.json`, JWST (1B) | 9 | 6 | 1 | 0 | 1 | 0 | 1 unlabelled |
+| READING_CLOUD_SIZES, READING_CLOUD_LAYER, READING_DUST (1B) | 12 | 11 | 1 | 0 | 0 | 0 | 0 |
+| `stages/systems.py:819, 832` (1B) | 1 | 0 | 0 | 0 | 1 | 0 | 0 |
+
+Not a plain MATCH beyond the findings: Erwin 2019's MNRAS volume / page (only the DOI printed) and Herrera-Endoqui
+2015's NGC 4414 pitch 28.9 ± 6.0 (VizieR table3 "HTTP 404") UNREACHABLE; PITCH_SHEAR's intercept self-declared
+[recall] (n/a); MJ07's "0.25-0.80" where the page prints "0.35-0.80" (DIFFERS, low, not numbered). MATCHes with a
+note: Erwin's "367 ... (Spearman 0.61)" (Table 3 prints neither), Chugunov 2024's "Fig. 17" unconfirmed, DG16b's
+"a hint of" dropped, Chugunov 2025's zones azimuthal; LD20's 78.6 R^1.98 fitted to Rice et al. 2016's catalogue,
+Marasco 2017's R0 end fixed at 52 pc, V02's A_B - A_V derived, the CMD FAQ's "have not been carefully checked".
+
+- **F-1A-1** `layer/arm_pieces.py:25, 315, 566, 628`, `level0.py:1159` — DIFFERS (rule vs its own cited table);
+  wording / rule, not a number. "the sources measure the pitch's variation along an arm, not a reversal of its sense";
+  HR15 Table 5, M51 arm B: "-200->-250 | 7.11+-0.05 | -10.3+-1.4 | 0.43+-0.04". Settle: "Is a measured reversed
+  segment (HR15 Table 5, M51 arm B, -10.3 +- 1.4 deg at 7.1 kpc) outside what the model draws by ruling (M51
+  interacting), and does the about-line say so instead of 'the sources measure ... not a reversal'?"
+- **F-1A-2** `READING_BAR.md:666`, `READING_ARM_PIECES.md:769` — DIFFERS (a quoted range narrower than the table);
+  medium. "at 0.76-0.94 a (DG16b Table 5)"; the table also prints T 5-8 0.66, SB all T 0.68, SB T>=5 0.62. Settle:
+  "Which DG16b Table 5 row is the Milky Way template's comparator (SB, T<5: 0.78 +- 0.19; or the mass bin 10.5-11:
+  0.90 +- 0.20), and is #146's miss stated against that row's value and dispersion?"
+- **F-1A-3** `READING_ARM_SEGMENTS.md:323` — stale arithmetic referent; low. "(28.9 - 19.0)/6.95 = 1.4 sigma from H17's
+  mean"; H17 s3.1: "Our mean pitch angle is 18.0 deg"; on it 1.57 sigma; the conclusion is unchanged. Settle: "Use
+  H17's 18.0 (s3.1) beside its percentiles, or say the 19.0 is the arm-number means' midpoint."
+- **F-1A-4** `READING_ARM_SEGMENTS.md:330` — a directed reading the source cannot answer; low-medium. YH19 s IV.3.5
+  prints only rho = -0.49, "much weaker than previously claimed"; no slope, intercept or scatter for the law's -8 deg
+  and 6 deg. Settle: "Re-point #153's reading at a source that prints a pitch-shear fit (or at YH19's data to fit),
+  and record that YH19 prints rho = -0.49 only."
+- **F-1A-5** `READING_ARM_SEGMENTS.md:329` — ADOPTED-NOT-MEASURED (provenance); low. "15.0 deg pooled, four galaxies";
+  HR15 prints no pooled mean, "Most pitch angles ... between about 10 and 30 deg". Settle: "Mark 15.0 as [inferred:
+  pooled from HR15 Tables 2-5 by <reader>, weighting ...] or drop it."
+- **F-1A-6** `level0.py:274` BAR_LENGTH_LOG_NORM — coverage; low. Erwin 2019's Table 3 fit is to barred spirals of
+  log M* 9-11; the about-line names the h referent but not the mass range. Settle: "Add the fit's mass range (log M*
+  9-11) to the about-line, or record what the model does outside it."
+- **F-1B-1** `tools/fetch_filters.py:113`, so `instruments.json`'s jwst_nircam optics.about — MISATTRIBUTED (author),
+  provenance only. "Feinberg et al. 2023, arXiv:2301.01779": first author McElwain, Feinberg second; the numbers match.
+  Settle: "arXiv:2301.01779's first author is McElwain; the citation reads McElwain et al. 2023 (PASP 135, 058001)".
+- **F-1B-2** `tools/fetch_filters.py:116` — DIFFERS (a derived comparison's wording), small. "which the two numbers
+  here give to 0.5 %"; re-derived 6.628 m across the flats (+0.81 % over 6.575) and 6.6717 m circumscribed (+0.48 %
+  over 6.64). Settle: "the comment says 0.8 % (flat-to-flat) and 0.5 % (circumscribed)", or a reason the outer
+  segments' flats differ from 4p + f.
+- **F-1B-3** `READING_CLOUD_SIZES.md:69-70` — DIFFERS (a source's definition), prose feeding the owner's ruling #182.
+  "the catalogues' R is an equal-area radius" holds for LD20, not MD17 (inertia-matrix radius, eqs. 18, 22; on LD20's
+  radius MD17's clouds give 57.5 R^2.10); LD20's 78.6 R^1.98 is "for the clouds in the R+16 catalog".
+  Settle: the MD17 relation "restated on LD20's equal-area radius ... or labelled as MD17's inertia-matrix radius; and
+  78.6 R^1.98 is labelled Rice et al. 2016's clouds as fitted by LD20".
+- **F-1B-4** `stages/systems.py:819, 832` (S93 docstrings) — MISATTRIBUTED (a modelling choice attributed to a source),
+  wording. "bound is drawn independent of mass and age (Lada & Lada 2003)"; the page: "only the most massive clusters
+  in our catalog are candidates for long term survival". Settle: "the docstrings say the fraction is Lada & Lada's
+  and the independence of mass and age is the model's choice (their sec. 2.5 names a mass cut)".
+
+**Not read / not reached.** *1A:* not fetched Elmegreen & Elmegreen 1995, Salo 2015's fitting form, Egusa 2017,
+Wada, Baba & Saitoh 2011, Shabani 2018, Martinez-Garcia 2009, Grasha 2017 and 2019, Dobbs & Baba 2014 §3.7, Corbelli
+2018, Querejeta 2024's 7.5" dilation, Chugunov 2024's figure numbers; MERGER_HEATING's unchanged 35 km/s target and the
+model outputs (26.68 km/s, 0.507, 0.40, the spur bounds) not re-run. *1B:* not fetched Bronfman 1988, Malhotra 1994,
+Remy-Ruyer 2015 eq. 5, Licquia, Newman & Brinchmann 2015, JDox's NIRCam filters page; NS06's Table 1 read through
+`pdftotext` with its rows offset; [recall]-labelled sources and READING_DUST's model measurements are not rows; the
+changed lines of `stages/dust.py`, `clouds.py`, `clusters.py`, `bubbles.py`, `chemistry_dtd.py`, `bright.py`,
+`spectra.py`, two `layer/` and three `api/` modules carry no cited claim; #168's two-layer derivation not re-derived.
+
+## 2. What the batches built, re-measured (strand 2)
+
+*(assembled when the strand's note is in)*
