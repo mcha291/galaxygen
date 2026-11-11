@@ -414,6 +414,32 @@ def star_at(counts: Sequence[tuple[int, int]], row: int) -> tuple[int, int]:
     raise IndexError(f"row {row} is past the {seen} stars these cells realise")
 
 
+def _arrival(born: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    """``born.T @ kernel`` - (steps, cell rings): what each step's births send to each cell ring - as a sum in an
+    order the model fixes (S93, #218): birth ring by birth ring, from the centre out, each term one elementwise
+    product added to the running total. A BLAS product sums in an order that follows its thread count (OpenBLAS's
+    dgemm read the star sample's ages one bit apart at 1 and 20 threads), and a seed names one galaxy whatever
+    the machine (#216's ruling). ``born`` is (birth rings, steps), ``kernel`` (birth rings, cell rings)."""
+    out = np.zeros((born.shape[1], kernel.shape[1]))
+    for i in range(born.shape[0]):
+        out += born[i][:, None] * kernel[i][None, :]
+    return out
+
+
+def ordered_product(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """``a @ b`` with ``a``'s last axis summed against ``b``'s first - ``np.tensordot(a, b, axes=1)`` - as a sum in an
+    order the model fixes (S93, #218, as :func:`_arrival`): index by index along the summed axis, each term one
+    elementwise product added to the running total, so its bits follow neither BLAS's thread count nor its kernel.
+    ``a`` is (..., k), ``b`` (k, ...); the result (a's leading axes, b's trailing ones)."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    lead, tail = a.shape[:-1], b.shape[1:]
+    out = np.zeros(lead + tail)
+    for i in range(a.shape[-1]):
+        out += a[..., i].reshape(lead + (1,) * len(tail)) * b[i]
+    return out
+
+
 class Churn:
     """Where the stars now at each ring were born — the chemistry's migration kernel, backwards.
 
@@ -460,7 +486,7 @@ class Churn:
             step = self._bin == b
             if not step.any():
                 continue
-            self.arrive[step] = self._born[:, step].T @ kcol[b]
+            self.arrive[step] = _arrival(self._born[:, step], kcol[b])
             if not birth:
                 continue
             weight = self._born[:, step].sum(axis=1)[:, None] * kcol[b]
@@ -924,6 +950,8 @@ class Placement:
         # a region came back with a star one bit from the sweep's. Per-region determinism is
         # this stage's whole contract (D60), and arithmetic that depends on what was asked for
         # is the one thing it cannot have. Affordable because the kernel is read by column now.
+        # (Since S93, #218, the product is a sum the model orders itself, :func:`_arrival`, whose
+        # columns no longer depend on each other; the rings stay all of them.)
         self.churn = Churn(R, t, fields["sfr_surface_density_history"], self.ring_index, migration)
         # Where stars form today, when the model publishes it (the azimuthal model, S27): read
         # optionally, so the same stage draws both models' catalogues, and tabulated over every

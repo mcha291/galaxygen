@@ -6283,6 +6283,33 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    sum built and the sweep's every draw-path product reading the same bits at 1 and 20 threads; then the reference
    re-based once at M3's close, naming the cause. What kills the reading: the two nodes green at one thread and at
    twenty on the unchanged model.
+   *S93 (built, lane #218; 3e36ae7, 052a464):* **the arrival law is a sum the model orders itself**
+   (`systems._arrival`: birth ring by birth ring from the centre out, each term an elementwise product added to the
+   running total; no BLAS). Measured in separate processes at `OPENBLAS_NUM_THREADS` = 1 and unrestricted (20): on six
+   full runs (`basic`; the default inputs, the Milky Way's, NGC 4414's; layer on and off; 391 fields each) 28 field
+   digests differed before - `star_age`, `star_ionizing_photons`, `star_luminosity`, `star_magnitude_v`,
+   `star_temperature` - and none after. Cost: the churn 13 → 57 ms, its `birth=False` build 9 → 54 ms (two a run, about
+   +0.09 s on 45 s). The bits moved once at one thread: `star_age` on 8443 of 20002 stars, at most 2.1e-14 relative,
+   the four photometric columns on about 1900-2070 stars, at most 2.7e-13; no count, no discrete column. **The sweep**
+   (every `@`, `dot`, `matmul`, `tensordot`, `einsum`, `linalg`, `polyfit` under `model/galaxy`, each read on the fields
+   and the 42 reference routes at 1 and 20 threads) found one more: `/api/render`'s `stars_unresolved` followed the
+   thread count through `bright.above_at`'s and `bright.resolve`'s band products ((3, 400, 396) @ (396, 8)). Every BLAS
+   product in `stages/bright.py` is now `systems.ordered_product` (the same ordered sum, any shapes): the anchors,
+   `above_at`, `resolve`, the bright catalogue's count and light tables (its draw), `in_frustum`; cost `resolve`
+   129 → 152 ms, the bright galaxy's tables 167 → 265 ms (cached), the frustum on 10^6 points 54 → 87 ms; the bright
+   catalogue's `bright_star_radius` / `bright_star_azimuth` and the bright and render-unresolved routes moved once. After
+   both, every field of the six runs and all 42 routes with the four fields labels read the same bits at 1 and 20.
+   Left as measured equal: `sfh.py`'s spread (400 × 400 by up to 2000 steps), `bright.steps_over` (400 × 2000 by 36,
+   per metallicity), `chemistry_dtd`'s four transports and `chemistry.migrate` (400 × 400 by a vector), `spectra.py`'s
+   three, `v6_clouds`' 32 × 32 solve, the polyfits; the `einsum`s (numpy's own loops, not BLAS) and `np.outer`. **Not
+   closed by this alone:** the left products still sum in the order OpenBLAS's per-CPU kernel chooses (a seed's galaxy
+   on another CPU, #216's reach), the ones on a draw path being `sfh.py:295`, `bright.py:292` and `chemistry_dtd.py:431`
+   (ordered, about 0.2-0.4 s a call each); the gate's to rule. No thread setting is set anywhere in the repository: the
+   runner (`ci.yml`, `uv run pytest`) reads unrestricted, the lanes' local wrapper one thread. The two reference nodes
+   now fail alike at 1 and 20, assertion for assertion: the fields off `tests/layer_reference_s90.json` on all four
+   labels are the five star columns and `bright_star_radius` (this lane's), and 22 of the 42 routes (the bright,
+   region, render and clusters routes and both `system` headers - this lane's and S91's / S92's model moves alike).
+   The reference is not re-based here; the re-base at M3's close stands, now in either thread setting.
 219. ~~**The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**~~
    (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clouds' and the clusters'
    L1 slopes over 47.5-190 pc against their own law read -0.4965 and -0.4791 on #216's re-laid census, against the
