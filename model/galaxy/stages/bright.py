@@ -289,8 +289,10 @@ def mass_on_isochrones(
     out = np.zeros((formed.shape[0], w.shape[1], n_mh))
     # S93 (#218, the gate's ruling): summed in an order the model fixes, not by BLAS - step by step from the first,
     # each step's mass added to the row of the metallicity it formed at. Until S93 it was, per metallicity,
-    # ``np.where(mh == z, formed, 0.0) @ w``: the same terms, each other row's +0 skipped here (adding +0 to a sum of
-    # non-negative terms leaves it), and a step outside the age window, whose weights are all 0, is skipped too.
+    # ``np.where(mh == z, formed, 0.0) @ w``: the same terms, each other row's zero term skipped here, and a step
+    # outside the age window, whose weights are all 0, is skipped too. The terms are NOT all non-negative - ``w``
+    # holds tiny negative rounding weights (S93's review: 6151 of them, down to about -7e-14) - but skipping a zero
+    # term is still exact whatever the other terms' signs: adding ±0 to a running total leaves it, bar a zero's sign.
     rows = np.arange(formed.shape[0])
     for j in np.flatnonzero(np.any(w != 0.0, axis=1)):
         out[rows, :, mh[:, j]] += formed[:, j, None] * w[j][None, :]
