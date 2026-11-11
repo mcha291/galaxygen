@@ -725,9 +725,11 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S93 | **113, 119, 166, 171, 174, 175, 217, 218** (the star sample read along equivalent evolutionary points, its luminosity function and its light per mass on their closure tests; the diffuse gas's [N II] and [S II] by Madsen et al. 2006 at the layer's temperature, drawn beside its Hβ; the starlight by age cached per run, the skip found met where the viewer asks - by the gate's ruling; the points' dust through the march's gas map; the star-first remainder split by kept octaves with `kept=1`, its WFC3 size clause held on #222; one grid threshold read green on the runner; the layer-off reference re-based onto M3's final run in `tests/layer_reference_s93.json` once every draw-path BLAS product was an ordered sum, its two nodes green at one thread and unrestricted - D262) | 8 |
 | **discharged** at S95 | **160, 173** (one placement rule for both catalogues' old stars, built at S91 on the owner's ruling - 995a007, `tests/test_bright.py::test_the_two_catalogues_place_their_old_stars_by_one_rule` - and never struck; struck at Audit VI's register pass, F-5-1; the migration test's once-seen failure not reproducible on the model as it stands - five hash seeds bit-identical, the file and three shuffled orders green, by the gate's ruling in the owner's place, F-2-1 - D264) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 81, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 144, 145, 152, 155, 157, 158, 180, 182, 195 | 46 |
-| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 146, 147, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 220, 221, 222, 223, 224 | 62 |
+| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 146, 147, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 220, 221, 222, 223, 224, 225 | 63 |
 
-So the board's **108 open** is 46 permanent and 62 carried, and no item is unruled (S96 (the reading session), D265:
+So the board's **109 open** is 46 permanent and 63 carried, and no item is unruled (S96 (the reading session), D265:
+#225 opened - the bright catalogue's table does not see the churn's migration, the sample under it at every
+luminosity (Audit VI F-2-4, the audit's strand 2 completed: #160, #113 / #171 at migration 0, #161 hold);
 the eighteen entries that waited on a source re-ruled on two readers' readings - #81, #144, #145 permanent on their
 readings, each reason in its text; #130 a build with its source read (Mogotsi et al. 2016), #95 restated with a
 sourced median (F-96B-1), #136's and #181's closers rewritten (F-96B-2); five rulings for the owner, each two named
@@ -3827,6 +3829,9 @@ never been judged in twenty-three sessions.
    2.04 -> 1.03 (`ngc_4414`) at the test's 500 000 stars (`tests/test_s93_t3_membership.py`, #115). **Discharged at
    S93 (D262)** on the two closure tests. The realised per-patch closure (the sample's light over a patch is its few
    brightest giants' draw) is #115's, which carries it.
+   *S96 (D265; Audit VI strand 2 completed):* the closure re-measured by the audit's own estimator holds at
+   migration 0 (`tests/test_audit_vi.py::test_171_the_sample_s_luminosity_function_is_the_bright_table_s_at_its_shape`;
+   the numbers under #171); under the default migration the sample reads under the bright table - #225.
 114. ~~**A point is painted by its bolometric light through a blackbody's share at its temperature, and that is
    about twice its light through an optical filter**~~ (S41, V4, D191). A star's point is `star_luminosity` in the
    declared blackbody ramp's hue at `star_temperature` (D5, A9), and P1 paints a cluster the same way from
@@ -5423,6 +5428,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    merged into `main` with batch M3) and held since by `tests/test_bright.py::test_the_two_catalogues_place_their_old_stars_by_one_rule`
    - one placement rule for both catalogues' old stars, the closer met - but never struck: S91's close named it built
    and left the number open. Struck at S95's register pass; nothing in the model moves.
+   *S96 (D265; Audit VI strand 2 completed):* the audit's own estimator holds it
+   (`tests/test_audit_vi.py::test_160_the_two_catalogues_old_stars_share_one_azimuthal_placement_per_ring`; `ngc_4414`,
+   level-0 rings 7-8): the two catalogues' old stars by sector, two-sample Pearson chi-square on 31 dof, 36.1 (ring 7)
+   and 20.1 (ring 8) against the bound 62.5 (mean + 4 sd) - with the caveat the note states: with 1.5e4-9e4 old stars
+   per catalogue per ring it resolves a per-sector difference of a few percent, so it cannot by itself tell the S91
+   rule from the one it replaced (3.9e-3 of a sector); the build's weight test is what separates them.
 161. ~~**The per-cell conservation removes the hierarchy's power at scales near the cell's short side**~~ (S61, D220
    part II; the reviewer's finding 2). The field's own two-point excess is its statistic to the digits - (r/190 pc)^-0.64,
    2.43 at 47.5 pc, 1 beyond 340 pc on 24 squares - but a cloud is placed by the field *within its cell* with the
@@ -5482,6 +5493,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    layer on now takes the field's factors where it took uniform sectors before - a behaviour change beyond the
    closer's wording, its pins moved with the reason; (b) the clouds' L1 slope -0.4843 still reads 0.156 off -0.64 and
    is held strict as `L1_GATE_READ_OVER_S90` - that residual is a different debt, opened as #215.
+   *S96 (D265; Audit VI strand 2 completed):* the audit's own estimator holds it
+   (`tests/test_audit_vi.py::test_161_the_ring_keeps_its_clouds_count_and_mass_with_the_layer_on_and_off`): with the
+   layer on and off, per-ring cloud counts identical and per-ring masses within 1e-12 relative under all three ring
+   readings, on both templates (17 158 clouds on `milky_way`, 6670 on `ngc_4414`); per-cell counts differ, 669 and
+   487 cells.
 162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
    part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
    than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
@@ -5789,6 +5805,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (1 M☉ L, T, the Sun's V 4.7727 -> 4.7809; `SUN_V_OFFSET` unmoved). The star sample's other records (the layer-off reference, the layer-on files) are
    re-read by the batch's close with the reference's re-base. The residual 5-12 % and the 10⁴ L☉ bin stay as
    measured above; the realised whole-sample closure is #115's.
+   *S96 (D265; Audit VI strand 2 completed):* re-measured by the audit's own estimator
+   (`tests/test_audit_vi.py::test_171_the_sample_s_luminosity_function_is_the_bright_table_s_at_its_shape`;
+   `milky_way`, rings 7-8, 4 M stars): at migration 0 the sample over the table reads 1.024 / 1.021 / 1.024 / 1.027
+   at 0.1 / 1 / 10 / 100 L☉ (shape 0.997-1.003), 10³ L☉ 1.35 ± 0.28 on 17.8 expected, reported only - the closure
+   holds. Under the default migration the same window reads under the table at every luminosity: #225.
 172. ~~**The zoomed view is two pictures of one scene**~~ (S65, D225; the probe's finding and the frames). Below 4 kpc the
    field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
    display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
@@ -6983,6 +7004,30 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the owner's word on the next build decides which. What kills the reading: the 1679 / 2917 share read under 0.98 on
    the unchanged model (the hold XPASSes strict and the table's row is stale), or the 1.073 found to be the
    mesh's - the same pair under 1 on the production grid with the share computed as the test computes it.
+225. **The bright catalogue's table does not see the churn's migration: the sample reads under it at every luminosity**
+   (S96, D265; Audit VI F-2-4, found by the audit's strand 2 completed at S96). Measured on `milky_way` (texture seed
+   6060, systems seed 4242), level-0 rings 7-8 whole (R 6.65-8.51 kpc), the star sample by `/api/region` at 5 000 000
+   stars (the 4 M run materialised 441 278 in the window), rows older than the cluster window (0.02 Gyr) counted above
+   the table's thresholds against `/api/bright?table=1` summed over the window's 64 cells: under the default
+   `migration_efficiency` the sample over the table reads **0.968 ± 0.004 / 0.898 ± 0.007 / 0.883 ± 0.021 / 0.838 ±
+   0.059 / 0.764 ± 0.19** at 0.1 / 1 / 10 / 100 / 1000 L☉ - above 1 L☉ 10 % (14σ) under, falling with L; the 1000 L☉
+   point rests on about 18 expected stars. At migration 0 the two agree, 1.02-1.03 from 0.1 to 100 L☉. The table's
+   numbers are bit-identical at migration 0 and at the default: the bright catalogue's luminosity function per ring is
+   read from the ring's own formation history (`bright.part_masses`: `stars_formed_history`), while the sample's ages
+   follow the churn's arrival law (`Placement.born`), so per ring the two carry different age mixes (whole-disc sums
+   may largely cancel, which is where #113 / #171's build measured). #113 / #171's closure - the sample read along
+   equivalent evolutionary points - holds at migration 0 where the audit re-measured it; this is a different defect,
+   found only because the audit measured at both. What it touches: the star-first mode's tiles and remainder are drawn
+   from the table, the sampled reading from the sample, so the two readings of one galaxy differ by up to about a
+   quarter at the bright end under the default inputs `[inferred from the ratios]`. Held
+   `xfail(strict=True)` as
+   `tests/test_audit_vi.py::test_225_the_sample_s_luminosity_function_under_the_default_migration_against_the_bright_table`
+   (added on the measurement's branch; the lead merges it). **Carried.** What closes it: the table built on the migrated
+   history (a model batch), the hold then lifted; or the difference ruled a property of the two catalogues'
+   definitions (the bright catalogue migration-free by design) with the reason written in - the owner's word on the
+   next build decides which. What kills the reading: the same window under the default migration read inside 1 within
+   its errors at 1-100 L☉ on the unchanged model (the hold XPASSes strict), or the deficit found to be the window's - the
+   ratio at 1 L☉ back within 3σ of 1 over the whole disc's rings with the count computed as the test computes it.
 
 ---
 

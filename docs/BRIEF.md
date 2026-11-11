@@ -6,7 +6,7 @@ mended (a template switch's first star-first press asked at the old threshold; t
 rows read; 0.27 not relaxed (#220), #224 opened, 2e-13 kept as `SUM_TOLERANCE`; the three-legs read is D263's line.
 **S96, the reading session:** two Opus readers fetched the sources eighteen entries waited on. Three ruled permanent
 (#81, #144, #145); #130 / #95 / #136 / #181 with a sourced build or a rewritten closer; five rulings for the owner; the
-rest carried with what was read. **108 open = 46 + 62, 99 discharged**; next #225, D266. Still no byte under `model/`.
+rest carried with what was read; the audit's three unreached re-measurements done - #160, #113 / #171 at migration 0, #161 hold - and #225 found. **109 open = 46 + 63, 99 discharged**; next #226, D266. Still no byte under `model/`.
 
 ## The two headlines
 The pictures' diagnosis (S96, second part): `docs/READING_PICTURES.md` - display: NGC 4414's colour sign, more than half the Milky Way's bar, the dots (HII knots); metric: NGC 4414's A₂ (its inclination); model: no connected dust lanes, the bar 2.4 times under the goal in light. A live display pass by the owner is the cheapest first move.
