@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { Matrix4, PerspectiveCamera } from "three";
 
-import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, FRUSTUM_SAMPLES, cellCentre, cellsIn, cellsToFetch, covers, expectedIn, frustumWeights, levelCounts, pickThreshold, placeRemainder, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
+import { type BrightTable, type CellCounts, type CellLayout, type CountsAnswer, CountRows, type TileAnswer, TileCache, FRUSTUM_SAMPLES, cellCentre, cellsIn, cellsToFetch, covers, expectedIn, frustumWeights, levelCounts, ofGalaxy, pickThreshold, placeRemainder, shownTable, splitByTile, tileOf, tilesFrame, tilesIn, unionOf, verticalExtent, weighted } from "./brightTiles";
 import { layerShare } from "./regimes";
 import { levelFor } from "./region";
 
@@ -380,5 +380,44 @@ describe("cellsToFetch: a zoomed frame asks the cells expected to show at least 
     const r = cellsToFetch(w, [1, 2], 0);
     expect(r.fetch).toEqual([1]);
     expect([r.loss, r.inView].map((v) => Math.round(v * 1e12) / 1e12)).toEqual([0.3, 1.5]);
+  });
+});
+
+// S95 (Audit VI F-W-1, rule D1): after a template switch the table's loader holds the last galaxy's answer in `next`
+// until the shown galaxy's comes. The walk logged NGC 4414's tiles and remainder asked at the Milky Way's threshold.
+describe("the star-first pick reads the shown galaxy's table only", () => {
+  const milkyWay = handTable();
+  const ngc: BrightTable = { ...handTable(), thresholds: [700, 790, 890, 1000] };
+  const tiles = Array.from({ length: 1024 }, (_, c) => c);
+  // GalaxyTab's chain: the table shown, the pick over it, the tiles asked at the pick.
+  async function asked(load: { answered: boolean; next: BrightTable | null }, key: string | null, galaxy: string) {
+    const lMins: number[] = [];
+    const table = shownTable(load, key);
+    if (table) {
+      const k = pickThreshold(table, tiles, 50_000);
+      await tilesFrame(new TileCache(), galaxy, tiles, k, table, async (cells, lMin) => {
+        lMins.push(lMin);
+        return { columns: { x: new Float32Array(0) }, header: { tile: { cells, l_min_used: lMin }, cells: { count: 0 } }, bytes: 0 };
+      }, new Map());
+    }
+    return lMins;
+  }
+
+  it("asks nothing while the new galaxy's table is pending, though the loader still holds the old one", async () => {
+    // The switch: the key is NGC 4414's, nothing has answered it, `next` is the Milky Way's table (useLoad's fallback).
+    expect(await asked({ answered: false, next: milkyWay }, '["brightTable",{"template":"ngc_4414"}]', "ngc")).toEqual([]);
+    // The old reading (`tableLoad.next ?? null`) asked at the Milky Way's threshold for NGC 4414 - the defect:
+    expect(pickThreshold(milkyWay, tiles, 50_000)).toBe(1);
+    // NGC 4414's table answers: asked once, at its own threshold.
+    expect(await asked({ answered: true, next: ngc }, '["brightTable",{"template":"ngc_4414"}]', "ngc")).toEqual([790]);
+    // No key (the points off): nothing, whatever is held.
+    expect(await asked({ answered: true, next: milkyWay }, null, "ngc")).toEqual([]);
+  });
+
+  it("the remainder's threshold is the shown galaxy's tiles' alone", () => {
+    const frame = { galaxy: '{"template":"milky_way"}', header: { threshold: { l_min: 1122, index: 1 } } };
+    expect(ofGalaxy(frame, '{"template":"ngc_4414"}')).toBeNull();
+    expect(ofGalaxy(frame, '{"template":"milky_way"}')).toBe(frame);
+    expect(ofGalaxy(null, '{"template":"milky_way"}')).toBeNull();
   });
 });
