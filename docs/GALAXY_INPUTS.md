@@ -3833,6 +3833,18 @@ never been judged in twenty-three sessions.
    the gate dispatches it: Esteban & García-Rojas 2018 and Arellano-Córdova et al. 2020, the Galactic HII regions'
    direct-method 12 + log(O/H) gradient over R_G 8–15 kpc with its uncertainty, a window set before any model number
    is shown.
+   *S93, the blind window (the gate; an Opus reader given the question and the sources' names only, no repository
+   file and no model number):* −0.043 ± 0.008 dex kpc⁻¹, acceptance [−0.059, −0.027] at two sigma. Its sources:
+   Esteban & García-Rojas 2018 −0.041 ± 0.006 over 5.1–17.0 kpc (−0.051 ± 0.008 beyond 7 kpc); Arellano-Córdova et
+   al. 2020 −0.037 ± 0.009 (33 regions, 6.15–17 kpc; the reader's own unweighted refit of its 23 regions at 8–15 kpc
+   −0.041 ± 0.008 [inferred: the table's columns re-aligned from a garbled extraction, checked against the paper's
+   full-range slope]); Arellano-Córdova et al. 2021 −0.042 ± 0.009; Méndez-Delgado et al. 2022 −0.044 ± 0.009. The
+   samples share most of their spectra, so the error was not shrunk by combining them; the papers were read through
+   a summarising fetch of their arXiv versions, so the numbers are not checked against the journal's pages. The
+   window sits between the closer's −0.03 and −0.05: **both** — the Galaxy's HII gas is flatter than its Cepheids
+   (−0.064 ± 0.003) and the model's gas (−0.078, #124) is steeper than the window's steep edge by 0.019 dex kpc⁻¹,
+   0.035 from its centre. By the closer the question is now #124's ruling; the blind reading is done and #117 stays
+   **carried** on that ruling and on row 37's re-read after it.
 118. **3.0 % of the regions read the grid's metal-rich edge (a quarter until S44), and the grid's gas is not the
    region's** (S42, D192; re-stated at S44, D195). The grid spans log(Z/Z☉) −1.98 to +0.2; since S44 enters the
    axis on the grid's own oxygen (8.93, #121, D195) **3.0 % of the default regions** (the inner disc) are richer
@@ -4005,6 +4017,10 @@ never been judged in twenty-three sessions.
    gradient against a sourced gas measurement (the blind direct-method HII-region gradient #117 asks for serves
    both), with rows 22 and 23 re-read after any change (B10).
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the gas-phase gradient's ruling is read with #117's blind HII-region gradient, which serves both.
+   *S93 (the gate):* #117's blind window is set — the Galactic HII regions' direct-method O/H gradient over 8–15 kpc
+   −0.043 ± 0.008 dex kpc⁻¹, acceptance [−0.059, −0.027]; the model's −0.078 is outside it by 0.019. The ruling this
+   entry asks for now has its sourced gas measurement. It changes `chemistry_dtd` / `ism` and moves rows 22 and 23,
+   so it is a build item of its own and is not built in M3: **carried** past the batch.
 125. **The spectrum's band curves cannot hold a band below what their wings collect from a brighter neighbour** (S48,
    D201). `spectra.band_consistent` makes the joined spectrum's mean through each band's curve equal the band's
    own flux by twelve multiplicative passes, the curves Gaussians at the passbands' pivots and widths `[inferred]`
