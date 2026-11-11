@@ -507,6 +507,37 @@ def test_160_the_two_catalogues_old_stars_share_one_azimuthal_placement_per_ring
     assert all(r["chi2"] < bound for r in report.values()), report
 
 
+S96_LF_STARS = 4_000_000
+S96_LF_THRESHOLDS = (0.1, 1.0, 10.0, 100.0, 1000.0)
+
+
+def _sample_against_table(api, model, K, migration=None) -> dict:
+    """{L: (n, e)}: the star sample's rows older than the cluster window above each grid threshold L (Lsun) in level-0
+    rings S96_RINGS whole (the Milky Way, texture 6060, systems 4242, S96_LF_STARS), and the bright table's expected
+    count over the same 64 cells times the sampling fraction s = stars (1 - RETURN_FRACTION) <m> / (the 32 rings'
+    ``cell_masses``). ``migration`` None: the model's default migration_efficiency."""
+    from galaxy.stages.systems import cell_masses, cluster_window, imf_mean_mass
+
+    extra = {} if migration is None else {"migration_efficiency": float(migration)}
+    inputs = {**_inputs("milky_way", 6060), **extra}
+    sigma = run(model, inputs, grid=AUDIT_VI_GRID, only=("stellar_surface_density",)).fields["stellar_surface_density"]
+    mass, _ = cell_masses(np.asarray(sigma, dtype=float), api.grid.R)
+    s = S96_LF_STARS * (1.0 - float(K["RETURN_FRACTION"])) * imf_mean_mass() / float(mass.sum())
+    common = dict(template="milky_way", texture_seed=6060, systems_seed=4242, **extra)
+    _, sa = _answer(api, "/api/region", stars=S96_LF_STARS, **common, **_ring_window(api, S96_RINGS))
+    _, ta = _answer(api, "/api/bright", table=1, **common)
+    threshold = np.asarray(ta["threshold"], dtype=float)
+    table = np.asarray(ta["expected"], dtype=float).reshape(32, 32, -1)[S96_RINGS[0]:S96_RINGS[-1] + 1].sum(axis=(0, 1))
+    older = np.asarray(sa["star_age"], dtype=float) > cluster_window(K)
+    lum = np.asarray(sa["star_luminosity"], dtype=float)[older]
+    rows = {}
+    for L in S96_LF_THRESHOLDS:
+        k = int(np.argmin(np.abs(np.log10(threshold) - math.log10(L))))
+        assert abs(math.log10(threshold[k]) - math.log10(L)) < 1e-9, threshold[k]
+        rows[L] = (int(np.sum(lum > threshold[k])), s * float(table[k]))
+    return rows
+
+
 def test_171_the_sample_s_luminosity_function_is_the_bright_table_s_at_its_shape(audit_api, audit_model, K):
     """#171 / #113 (S65; built S93: ``photometry.lookup`` reads a star along equivalent evolutionary points; struck
     at S93, D262). Before the mend the sample's count above 10^3 Lsun was 0.14 of the bright table's (S65); the
@@ -527,25 +558,7 @@ def test_171_the_sample_s_luminosity_function_is_the_bright_table_s_at_its_shape
     30, which must reach 100 Lsun. 10^3 Lsun expects about 18 sample stars at this size, so it is reported, not held.
     Measured at S96 (5 x 10^6 stars, the same window): 1.029 +- 0.004 / 1.027 / 1.023 / 1.019 +- 0.065 / 1.26 +- 0.24
     at 0.1 / 1 / 10 / 100 / 1000 Lsun. Fails if the sample's bright end again falls short of the table's."""
-    from galaxy.stages.systems import cell_masses, cluster_window, imf_mean_mass
-
-    stars = 4_000_000
-    inputs = {**_inputs("milky_way", 6060), "migration_efficiency": 0.0}
-    sigma = run(audit_model, inputs, grid=AUDIT_VI_GRID, only=("stellar_surface_density",)).fields["stellar_surface_density"]
-    mass, _ = cell_masses(np.asarray(sigma, dtype=float), audit_api.grid.R)
-    s = stars * (1.0 - float(K["RETURN_FRACTION"])) * imf_mean_mass() / float(mass.sum())
-    common = dict(template="milky_way", texture_seed=6060, systems_seed=4242, migration_efficiency=0.0)
-    _, sa = _answer(audit_api, "/api/region", stars=stars, **common, **_ring_window(audit_api, S96_RINGS))
-    _, ta = _answer(audit_api, "/api/bright", table=1, **common)
-    threshold = np.asarray(ta["threshold"], dtype=float)
-    table = np.asarray(ta["expected"], dtype=float).reshape(32, 32, -1)[S96_RINGS[0]:S96_RINGS[-1] + 1].sum(axis=(0, 1))
-    older = np.asarray(sa["star_age"], dtype=float) > cluster_window(K)
-    lum = np.asarray(sa["star_luminosity"], dtype=float)[older]
-    rows = {}
-    for L in (0.1, 1.0, 10.0, 100.0, 1000.0):
-        k = int(np.argmin(np.abs(np.log10(threshold) - math.log10(L))))
-        assert abs(math.log10(threshold[k]) - math.log10(L)) < 1e-9, threshold[k]
-        rows[L] = (int(np.sum(lum > threshold[k])), s * float(table[k]))
+    rows = _sample_against_table(audit_api, audit_model, K, migration=0.0)
     n0, e0 = rows[0.1]
     report = {L: (n, round(e, 1), round(n / e, 4)) for L, (n, e) in rows.items()}
     assert abs(n0 / e0 - 1.0) < 0.05, report
@@ -558,6 +571,36 @@ def test_171_the_sample_s_luminosity_function_is_the_bright_table_s_at_its_shape
         held.append((L, round(shape, 4), round(sigma_shape, 4)))
         assert abs(shape - 1.0) <= 3.0 * sigma_shape, (L, shape, sigma_shape, report)
     assert max(L for L, *_ in held) >= 100.0, (held, report)
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
+    "#225 (Audit VI F-2-4, S96, D265): under the default migration the star sample reads 0.963 / 0.895 / 0.892 / 0.888 "
+    "of the bright table at 0.1 / 1 / 10 / 100 L_sun - the table is built on each ring's own formation history, the sample's ages "
+    "include the churn"))
+def test_225_the_sample_s_luminosity_function_under_the_default_migration_against_the_bright_table(
+        audit_api, audit_model, K):
+    """#225 (Audit VI F-2-4, S96; carried at the gate, D265): the bright catalogue's table does not see the churn's
+    migration. The #113 / #171 node's window, seeds and estimator (``_sample_against_table``: the Milky Way, texture
+    6060, systems 4242, level-0 rings 7-8 whole, 4 x 10^6 sample stars, s from the rings' stellar mass) with the
+    model's DEFAULT migration_efficiency: the sample's count above L over s times the table's expected count, its
+    Poisson error sqrt(n) / e, asserted within 3 sigma of 1 at every threshold from 0.1 to 100 Lsun (expected counts
+    195-47 000); 10^3 Lsun reported, not asserted. Measured by this node at S96 (4 x 10^6 stars): 0.963 +- 0.005 /
+    0.895 +- 0.008 / 0.892 +- 0.024 / 0.888 +- 0.068 / 0.90 +- 0.22 (16 of 17.8) at 0.1 / 1 / 10 / 100 / 1000 Lsun -
+    outside 3 sigma at 0.1, 1 and 10 (8, 13 and 4.5 sigma), 1.7 sigma at 100. The probe, 5 x 10^6 stars: 0.968 +- 0.004 / 0.898 +-
+    0.007 / 0.883 +- 0.021 / 0.838 +- 0.059 / 0.764 +- 0.19; at migration 0 the same window reads 1.02-1.03 flat (the
+    #171 node), and the table's column is the same number at either migration. Held strict: it XPASSes (and fails
+    the run) the day the table and the sample read one age law at ring scale."""
+    rows = _sample_against_table(audit_api, audit_model, K)
+    report = {L: (n, round(e, 1), round(n / e, 4), round(math.sqrt(max(n, 1)) / e, 4)) for L, (n, e) in rows.items()}
+    misses = []
+    for L, (n, e) in rows.items():
+        if L > 100.0:
+            continue
+        assert e >= 30.0, (L, e, report)
+        if abs(n / e - 1.0) > 3.0 * math.sqrt(max(n, 1)) / e:
+            misses.append(L)
+    text = "; ".join(f"L={L:g}: n={n} e={e} ratio={r} +- {sd}" for L, (n, e, r, sd) in report.items())
+    assert not misses, f"sample / table under the default migration: {text}; outside 3 sigma at L = {misses}"
 
 
 def test_161_the_ring_keeps_its_clouds_count_and_mass_with_the_layer_on_and_off(audit_api):
