@@ -434,7 +434,7 @@ _STANDS_IN_FOR = (
 # 90th percentile 0.0617 and the maximum's ring 23.622 kpc read the declared digits still.
 SPILL_FEH_DEX = {"median": 0.022, "p90": 0.062, "p99": 0.119, "max": 1.261}
 SPILL_FEH_MAX_AT_KPC = 23.6
-SPILL_FEH_BEYOND = (0.06, 1785, 16940)  # S90 (#161): was 1795 - the field's cell means move clouds between the sectors of a ring (the other spill figures read the declared digits still). S88: was 1807 of 16577. S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
+SPILL_FEH_BEYOND = (0.06, 1791, 16940)  # S92 (#164 / #165): was 1787 - the spurs re-laid move clouds between the sectors of a ring (10.57 %, the declaration's 11 % still true). S91 (#216, D260): was 1785 - the census re-laid by the births made bit-independent. S90 (#161): was 1795 - the field's cell means move clouds between the sectors of a ring (the other spill figures read the declared digits still). S88: was 1807 of 16577. S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
 SPILL_ALPHA_MAX_DEX = 0.222  # S88: was 0.226. S70 (D234): was 0.232 (F-2-7)
 
 _CONSERVES = (

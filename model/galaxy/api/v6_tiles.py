@@ -88,6 +88,17 @@ CHILDREN = (
 TILE_REFUSES = ("n", "view", "r_min", "r_max", "phi_min", "phi_max")
 # What the remainder's two per-ring arrays are called: the remainder's two age parts, as /api/render's l_min= splits it.
 REMAINDER_PARTS = {"middle": "stars_unresolved_middle", "old": "stars_unresolved_old"}
+# S93 (#175): the remainder's middle part split by the clustering octaves its stars keep, as the field mode's is
+# (``v7_layer.middle_kept`` under ``l_min``): per-ring arrays of their own names, beside the whole render's.
+REMAINDER_KEPT = {3: "stars_unresolved_middle_kept3", 2: "stars_unresolved_middle_kept2", 1: "stars_unresolved_middle_kept1"}
+
+
+def grid_threshold(log_l: Any) -> np.ndarray:
+    """10^``log_l`` (L☉), element by element, by the one scalar power (``math.pow``) - S92 (#217): the tile's
+    ``l_min_used`` and the tables' ``threshold`` column are both this function's, so a threshold read back from the
+    table is the tile's to the bit on any machine. Until S92 the tables took an array power (``10.0 ** array``, a
+    CPU-dispatched loop) and the tile a scalar one; on one runner they parted by an ulp (D259)."""
+    return np.array([math.pow(10.0, float(x)) for x in np.asarray(log_l, dtype=np.float64).reshape(-1)], dtype=np.float64)
 
 
 def snap_up(l_min: float) -> tuple[int, float]:
@@ -102,7 +113,7 @@ def snap_up(l_min: float) -> tuple[int, float]:
             f"l_min={l_min:g} is above the luminosity function's last threshold, 10^{_bright.LOG_L_GRID[-1]:g} Lsun: "
             "no disc star is that bright"
         )
-    return k, float(10.0 ** _bright.LOG_L_GRID[k])
+    return k, float(grid_threshold(_bright.LOG_L_GRID[k:k + 1])[0])
 
 
 def tiles_of(raw: str, level: int = TILE_LEVEL) -> list[int]:
@@ -339,7 +350,7 @@ def _cells_table(service: Service, galaxy: Any, base: dict[str, Any], precision:
         },
         "cells": {**layout(service.grid.R), "children": CHILDREN},
     }
-    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", 10.0 ** np.asarray(grid, dtype=np.float64))]
+    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", grid_threshold(grid))]
     expected = cells_table_of(galaxy, cells, level)
     if precision == "f4":
         expected = expected.astype(np.float32)
@@ -362,7 +373,7 @@ def _table(service: Service, galaxy: Any, base: dict[str, Any], precision: str, 
         },
         "cells": layout(service.grid.R),
     }
-    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", 10.0 ** np.asarray(grid, dtype=np.float64))]
+    arrays = [("log_l", np.asarray(grid, dtype=np.float64)), ("threshold", grid_threshold(grid))]
     expected = table_of(galaxy)
     if precision == "f4":
         expected = expected.astype(np.float32)
@@ -375,18 +386,30 @@ def remainder(service: Service, q: Query) -> Response:
     own placing weights turn into ``stars_unresolved`` exactly:
 
         stars_unresolved(R, phi, f) = stars_unresolved_middle(R, f) * <middle's weight>(R, phi)
-                                      + stars_unresolved_old(R, f) * stars_placement(R, phi)
+                                      + stars_unresolved_old(R, f) * <old's weight>(R, phi)
 
-    the middle's weight being ``stars_middle_placement`` where the model publishes sfr_modulation and
-    ``stars_placement`` where it does not (bright.part_weights; the whole render's ``ages`` names both). Runs the
-    stellar part of an ``l_min=`` render and no more (rule D4): the stars' fields, the history, the contrast."""
+    the weights being ``stars_middle_placement`` and ``stars_old_placement`` where the model publishes sfr_modulation
+    and ``stars_placement`` both where it does not (bright.part_weights; the whole render's ``ages`` names them; the
+    old one by the star sample's rule since S91, #160). Runs the stellar part of an ``l_min=`` render and no more
+    (rule D4): the stars' fields, the history, the contrast, and where the model publishes sfr_modulation what the old
+    part's young share reads (``bright.OLD_SHARE_READS``).
+
+    S93 (#175): with ``kept=1`` and where the model publishes the clustering field, the remainder's middle part is
+    split as the field mode's is (``v7_layer.middle_kept``), each age window's light under ``l_min``: the header's
+    ``remainder.middle_kept`` names three more per-ring arrays (``REMAINDER_KEPT``), which with the rest sum to
+    ``stars_unresolved_middle``, so the star-first march clusters the remainder's middle part as the field's. Asked,
+    not sent by default: without ``kept=`` the answer is S64's two arrays, its size gate unmoved."""
+    from galaxy.api import v7_layer as _v7
     from galaxy.api.service import (
-        EVEN_ROUND_THE_RING, RENDER_MIDDLE_PLACEMENT, RENDER_STARS, RENDER_STARS_PLACEMENT, BadRequest, NotFound,
-        _inputs_json, _parse_filters, _white_point,
+        EVEN_ROUND_THE_RING, RENDER_MIDDLE_PLACEMENT, RENDER_OLD_PLACEMENT, RENDER_STARS, RENDER_STARS_PLACEMENT,
+        BadRequest, NotFound, _inputs_json, _parse_filters, _white_point, old_share,
     )
 
     if q.one("only") != "remainder":
         raise BadRequest(f"only={q.one('only')!r}: the one part /api/render answers alone is only=remainder")
+    kept_asked = q.one("kept")
+    if kept_asked not in (None, "0", "1"):
+        raise BadRequest(f"kept={kept_asked!r} is not 0 or 1")
     for name in ("level", "r_min", "r_max", "phi_min", "phi_max"):
         if q.one(name) is not None:
             raise BadRequest(f"only=remainder takes no {name}=: its arrays are per ring over the whole grid")
@@ -406,6 +429,8 @@ def remainder(service: Service, q: Query) -> Response:
     if missing:
         raise NotFound(f"model {model.name!r} does not publish {missing}, which the remainder is decomposed from")
     wanted = [*RENDER_STARS, *(n for n in ("pattern_density_contrast", *_bright.RESOLVE_READS) if n in declared)]
+    if "sfr_modulation" in declared:  # S91 (#160): the old part's young share, as the whole render reads it
+        wanted += [n for n in _bright.OLD_SHARE_READS if n in declared and n not in wanted]
     inputs = service._overrides(model, q)
     out, ran = service.compute(model, inputs, wanted, service._layer(q))
     f = out.fields
@@ -416,9 +441,10 @@ def remainder(service: Service, q: Query) -> Response:
     # The full render's own entry and closure (the same method, so the same words and the same numbers), and its two
     # parts as it forms them: one decomposition, each part through the curves at the ring's colour temperature.
     parts: dict[str, np.ndarray] = {}
-    _, entry, resolved = service._unresolved(model, f, R, curves, per_ring, contrast, l_min, parts)
-    middle_by = RENDER_MIDDLE_PLACEMENT if _compose.published(f, "sfr_modulation") is not None else RENDER_STARS_PLACEMENT
-    weight = {"middle": middle_by, "old": RENDER_STARS_PLACEMENT}
+    _, entry, resolved = service._unresolved(model, f, R, curves, per_ring, contrast, l_min, parts, share=old_share(f, out))
+    published = _compose.published(f, "sfr_modulation") is not None
+    weight = {"middle": RENDER_MIDDLE_PLACEMENT if published else RENDER_STARS_PLACEMENT,
+              "old": RENDER_OLD_PLACEMENT if published else RENDER_STARS_PLACEMENT}
     R_axis = out.grid.axes["R"]
     header = {
         "model": model.name,
@@ -445,4 +471,25 @@ def remainder(service: Service, q: Query) -> Response:
         "stages": list(out.needs),
     }
     arrays = [(REMAINDER_PARTS[p], parts[p]) for p in REMAINDER_PARTS]
+    # S93 (#175): the middle part's kept shares, each window's light under l_min (the same arrays with the layer off) -
+    # computed only when kept=1 asks them (D262, the review's C5: the default answer runs no more than S64's, D4).
+    kept_entry, kept = None, []
+    if kept_asked == "1":
+        constants = {k: c.value for k, c in model.constants.items()}
+        spec = service.grid.spec
+        kept_entry, kept = _v7.middle_kept(
+            _v7.published_entries(declared)["census_clustering"], f, constants, float(spec.t_max), int(spec.n_t), curves,
+            parts["middle"], _bright.cluster_window(constants), _catalogue.YOUNG_STAR_AGE, weight["middle"],
+            l_min=l_min, names=REMAINDER_KEPT)
+    if kept_entry is not None:
+        # The words are the whole render's ages.middle_kept's, named and not repeated (the f4 answer's size gate, #222).
+        kept_entry["rest"] = f"{REMAINDER_PARTS['middle']} less the three kept arrays, modulated by nothing"
+        kept_entry["rule"] = "as the whole render's ages.middle_kept.rule, each kept part placed by this weight"
+        kept_entry["closure"]["about"] = "as the whole render's ages.middle_kept.closure, over the remainder's middle part"
+        kept_entry["about"] = ("the remainder's middle part split as the whole render's ages.middle_kept splits stars_middle "
+                               "(S66, D226 R5b), each age window's light under l_min (S93, #175)")
+        kept_entry["l_min"] = float(l_min)
+        header["remainder"]["middle_kept"] = kept_entry
+        header["axes"].update({name: ["R", "filter"] for name, _ in kept})
+        arrays += kept
     return _respond(header, arrays, precision, ran)

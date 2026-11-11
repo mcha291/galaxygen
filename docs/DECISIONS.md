@@ -16953,3 +16953,513 @@ low-priority single-threaded process with `CI` unset, **14 passed in 25 min 07**
 skipped in 1.4 s**; `tools/progress.py` and the light gates (`test_docs`, `test_progress`, `test_audit`, `test_hook`,
 `test_graph`) **74 passed, 1 xpassed** (#154's cost record, non-strict); `git diff --stat` empty under `model/galaxy`.
 The gate's dispatched `ci` run on `session-90a` reads the marks on the runner before the merge.
+
+### D260. S91, BUILD_V row 91 (M3's first session: the populations): the owner's twelve rulings of 2026-11-10 taken; #216 the arm census's births made bit-independent, T2 / #114 the region regime's cluster points through the filter set (discharged), #160 one placement rule for both catalogues' old stars; #82, #128, #158, #180, #182 permanent and #210 discharged by ruling; #218 found on `main` (not S91's) and #219 held; #215 discharged on its kill clause; the thirteen #216 marks left in place, `s91-marks-lifted` for the runner; the hash in fact fc2d72cb…, not pinned
+
+**The commission.** The owner's word of 2026-11-10, "accept all recommendations", on the twelve rulings S90's close
+and S90a put to them. An Opus lead on `session-91` cut from `batch-m3` = `main` at 4f06cc9, two Opus builders (T2;
+#216's remaining re-pins on `s91-rp`), an independent Opus reviewer, an Opus close builder, the Fable gate. The pin
+lifted for M3 as a batch (BUILD_V ruling 4): the hash moves once, at S92's close.
+
+**The rulings as taken** (each written into its entry as the owner's word, ad170fe). Permanent: **#82** (rows 25–28
+not yet computable; no comparison of attenuated against intrinsic light), **#128** (the heating at each ring's mean
+column in the layered geometry; A10 not amended), **#158**'s window half (D60's rule: a cell answers the same alone,
+in a window and in a sweep; the radius half mended by #197), **#180** (Bronfman's flat 120 pc FWHM until a whole
+table is read), **#182** (the 150 pc cap; the owner's "Smaller giant clouds" of S67 stands). Discharged by ruling:
+**#210** (a within-tolerance byte change in a capture needs no name; the capture re-taken at the next knowing change,
+the picture test's verdict lines the gate). Carried: **#109** the viewer's (the infrared white point by eye with the
+sliders, moved to the viewer's list); **#159 / #163** with the whole-disc bound **25 s cold** written in (D219 (c)
+answered; S90's 22.02 / 17.62 / 21.78 s inside it), the cost pass after M3; **#211** M3's (the response grid's tails
+to 4.4 µm, then `s83-robust` merges); **#216**, **#160**, **#164 / #165** built in M3. **#128's two figures corrected**:
+the ruling read "the mixed slab's heating kept, with the layered factor 0.766 (L_IR about 30 % high, T_d(R0) 1.4 K
+high)". The entry's history says otherwise: 0.766 is S52's *layered* geometry, applied since D211, and the 30 % and
+1.4 K were the mixed slab's excess that it removed. The 1.4 K is the inner disc's T_d; at R0 the slab's excess was
+0.30 K (18.82 → 18.52 K). The entry says so; the ruling (permanent, A10 not amended) is unchanged.
+
+**#216, built first (3f16d0f).** `layer/arm_pieces.py`: the law's arm number within `BIRTH_COUNT_TOLERANCE` (1e-9,
+about 10⁶ of its own ulps at 6) of an integer is that integer (`counted`), so the Milky Way template's 6.000000000000001
+plateau no longer births chain 12 by one ulp; gaps within `GAP_TOLERANCE` (1e-9 rad) of the widest are one width, the
+tie taken by identity — the gap that starts at the crossing of the earliest-laid piece (the lowest chain, then its
+place in the laying), where the old rule took the lesser azimuth among exact ties and rounding among near ones. **The
+one-ulp probe** (S90a's method extended; s91_jitter.py, s91_probe_compare.py): ten named galaxies under six jitter
+seeds, 10 of 10 parting before, **0 of 10 after**; test_bar's 300-galaxy sweep under three, 289 of 300 before, **0 of
+300 after** (rows within 8.6e-12); test_pieces' legs at texture seeds 1–4, 0 of 16 after. The censuses this machine
+now lays: the default galaxy (48, 13, 4) → (42, 11, 3); texture 7 (54, 13, 6) → (53, 12, 5); the Milky Way template
+(49, 13, 4) → (46, 12, 3); Audit V's mesh 4242 (41, 9, 2) → (41, 10, 3), 777 (44, 9, 3) → (39, 10, 4); 224 of the
+sweep's 300 re-laid (all 120 flocculent pinned ones: the exact ties now go to the earliest-laid piece). The reviewer's
+two notes, carried to S92 before the hash pin: the two tolerances to be written from the sweep's measured smallest
+step off a plateau and smallest real gap difference; two crossings coinciding to ulps on the birth ring still order
+by their last bit (not structural).
+
+**T2 / #114 (bb25415), discharged.** The field mode's region regime draws each cluster by its own `response` through
+the shown filter set over the white point's (`colors.ts responseColors`), no longer L_bol × the blackbody share: the
+census's painting 1.8352 / 2.0703 / 2.4222 → 1.0000000 in R / G / B. Its closure, `tests/test_s91_t2_closure.py` (the
+test VIEWER_TASKS row T2 names), run at 557e725 after #216 and #160: **3 passed in 39.04 s**. Clusters + bright +
+remainder over the render's `stars` 0.9959 / 0.9947 / 0.9910 over the disc, 0.927–1.099 over 26 lit rings; the
+bright catalogue against its expected part 1.0028 / 1.0091 / 1.0148 (was 1.0027 / …); the clusters through the set
+over bolometric 1.0086 / 1.0066 / 1.0009 (was … / 1.0010); 12 989 clusters. Discharged on its closer as S70 narrowed
+it (the region regime's cluster points drawn from the response); the sampled stars' blackbody colours ride with
+T3 / #115.
+
+**#160 (995a007).** `bright.part_weights` places the old part by the star sample's rule c̄(1 − p) (`systems.young_
+fraction`, shared with `YoungStars` and `sub_ring_weights`), scaled per ring to the ring sum (A10's residual 2.2e-16
+per finest sub-ring); the two catalogues' old weights agree to 4.0e-14 / 1.9e-14 (were up to 1.37e-2 / 6.8e-3 apart);
+the render ships `stars_old_placement`. With the layer off no array moves; the azimuthal model's four layer-off
+renders gain the new array (all ones) — `azimuthal/render/disc`, `azimuthal/render/level1`,
+`azimuthal/render/unresolved`, `ngc_4414/render/disc` — **named by this decision** in `NAMED_ROUTES_SINCE_REBASE`.
+0c39f4e widened test_bright's field-star window past its own sample-size guard (964 field stars after #216, 1 234
+before; 0–1.5 rad holds 2 184); 9cf1b89 regenerated the frames knowingly (eight captures moved, the physics-only one
+byte for byte; no frame materially nearer the goal pictures — the moves are thousandths).
+
+**Re-pinned, every number with its reason (#216 unless named):**
+- 3f16d0f: test_pieces 4 (EXPECTED_DEFAULT_CENSUS, _CREST, _MASERS, _WHOLE_RINGS 67 → 78); test_bar 2 (the lowest
+  cell 0.1163172 → 0.1208049, the Milky Way's A2 high 0.188020 → 0.107999); test_modes 1 (0.116317 → 0.120805);
+  test_gas_pattern the gate's outer rows, the sixth forcing sum 0.1635 → 0.1665 and the crest separations;
+  test_audit_v 3 (MW_PAIR_SLOPES, the walk's worst foot 0.5700 → 0.5106, the bare chains).
+- 88db8f6 → b436de0, the re-pin builder: test_spurs 3, test_gas_pattern 17 (among them the 12.0375 row's built ratio
+  1.0944 → 1.0884, hidden at 3f16d0f behind an earlier assert, and the tightly wound galaxy's refused-steps residual
+  1.6371e-11 → 6.2050e-10, a record, over 1e-10 again), test_pieces 13 records. Strict, CI unset: test_spurs 26 passed
+  in 15.93 s, test_gas_pattern 68 passed in 2195.25 s, test_pieces 49 passed in 7777.19 s.
+- The close (the gate's rulings): test_clustering_gate the young bright stars' disclosed square (20–40 Myr
+  (-0.286, 2.203, 3.75, 2.12) → (-0.122, 1.283, 2.267, 1.292); 40–100 (-0.289, 1.79, 1.604, 1.756) → (-0.080, 1.195,
+  -1.688, 1.831)) and the square at R_SUN (clouds (-0.149, 1.292, 2.025, 1.324) → (-0.205, 1.335, 2.481, 1.336), the
+  young clusters (-0.208, 1.404, 2.148, 1.262) → (-0.226, 1.476, 2.169, 1.551)), both disclosed; the judged slopes'
+  `MEASURED` rows (clouds (-0.4843, 1.9452, 0.0205) → (-0.4965, 1.9852, 0.0205), clusters (-0.4991, 2.0255, 0.0301) →
+  (-0.4791, 1.9997, 0.0287)); `SPILL_FEH_BEYOND` in `layer/census_clustering.py`, an as-measured record re-pinned at
+  S70, S88 and S90, 1785 → 1787 of 16 940 (the declaration's "11 %" still true, 10.55 %) — **the one model byte the
+  close moves**, permitted inside the lifted batch (88642ce); test_audit #154's render half (the default (0.1167,
+  11.175, 0.00677) → (0.1048, 2.25, 0.00542)) and its table half (36bb365): at the cells' centres the default
+  (1.7956, 2.2125, 1.1720, 0.0335) → (1.9223, 2.2125, 1.1179, 0.0324), pattern seed 3 (1.5197, 1.9875, 0.6370, 0.0246)
+  → (1.7078, 2.1375, 0.6526, 0.0262), and the renormalisation's size — the table against the reader's cell means, the
+  record re-pinned at S87 — 2.439e-3 → 2.914e-3 and 1.1286e-3 → 1.8137e-3; the debt's bound (`means[2]` < 1e-3, read
+  1.9e-14 / 1.8e-14) holds untouched. S59's statement "the worst cell and the worst ring are one ring" no longer holds
+  (rings 29 / 24 by default, 28 / 26 at pattern seed 3, since #216) and is replaced by what it contained that holds:
+  both lie inside the bar's reach (2.27 kpc). No tolerance widened, no bound moved.
+
+**Held, killed and found.** **#215 discharged on its own "what kills the reading" — killed, not mended**: on #216's
+re-lay, a change that aimed at nothing of the kind, the clouds' judged slope reads -0.4965, inside the window by
+0.0065, so its strict hold passed; the hold is lifted (`L1_GATE_READ_OVER_S90` removed, its words kept in the comment)
+and the comment says why it is not a mend (c3b9060, 15db9ba). **#219** (new, restated at the gate as its own debt):
+the L1 gate's two judged slopes sit at the window's edge at -0.49 — the clouds' -0.4965, the clusters' -0.4791 (S90
+-0.4843 / -0.4991, S88 -0.4796 / -0.4899), about 0.15 flatter than -0.64 since #80's census — and they exchanged sides
+on #216's re-lay; which reads over is the census's draw, one square's slope scattering 0.068 between seeds, six times
+either margin. The clusters' case is held `xfail(strict)` (`L1_GATE_READ_OVER_S91`); the window is not touched. Its
+closer: the slopes read over several seeds after S92's #164 / #165; if the mean still sits at the edge, the owner's
+ruling — the judged clause read on a seed mean (recommended, the window unmoved) or the flatter shape #80 left
+mended. **#218** (new, not S91's): the two machine-pinned layer-off reference nodes fail on `main` at 4f06cc9 —
+`star_age`, `star_ionizing_photons`, `star_magnitude_v`, `star_temperature` (and `star_luminosity` on the Milky
+Way's) over ten routes (`region/brightest`, `disc`, `level2`, `window`, `render/unresolved`, on `azimuthal` and
+`basic`); session-91 reads the same plus this decision's named routes. The runner skips these nodes; S92 bisects S90 /
+S90a first, and nothing re-bases before the cause is named.
+
+**The marks.** The thirteen `machine_pinned` marks naming #216 are left in place on `session-91`: the probe says the
+censuses under them are machine-independent, but the runner reads them first. `s91-marks-lifted` (session-91's final
+HEAD plus the lifting commit) carries them lifted, each comment extended; the gate dispatches `ci` on it after the
+merge, and any #216 move it finds in a file nobody ran here is S92's first re-pin.
+
+**Not built, S92's** (BRIEF): #218's bisection first; #164 / #165, then #219 over several seeds; #217, #211; T3 / #115
+with #113 / #171, #184; #174–#176, #166, #91; the ionized gas (T10 / #119, #117, #118, #100, #101); the two owed
+comments (test_bar's A2 0.107999 and WHOLE_RINGS 78: the galaxy, seed and ring); the batch's close.
+
+**The review.** An independent Opus reviewer read the session; three blockers, each closed at the gate: #216's
+remaining re-pins uncommitted on `s91-rp` (landed as b436de0); the layer-off reference's two nodes unrun (run: red on
+`main` too — #218); the clustering gate's disclosed square of the young bright stars red (re-pinned, 557e725). The gate
+then had the whole clustering-gate file and the docs gate read, and the judged slopes (#215, #219), the spill count
+and #154's table half came from that reading.
+
+**Not run** (D246): the local full suite, verify_clone, the machine-pin set. **The gates** (each its own low-priority
+process, CI unset): the stage's files as above; test_bright 30 passed in 443.62 s; tests/test_s91_t2_closure.py 3 passed
+in 39.04 s; tests/test_spec.py 32 passed in 43.82 s; test_clustering_gate 6 passed, 2 xfailed in 126.34 s (the clusters'
+slope, #219; the young bright stars, S88); the docs tests 1 failed, 73 passed, 1 xpassed in 129.01 s - the one failure
+#67's wall-clock pricing order under load, green alone (1 passed in 2.95 s); `tools/progress.py` 79/79, EXIT=0; vitest
+621 passed / 1 skipped, typecheck and typecheck:e2e EXIT=0, the picture test's check 16 passed with nine verdicts byte
+for byte (9cf1b89; no byte under `frontend/` since, and under `model/` only `SPILL_FEH_BEYOND`, which no frame draws).
+**The hash in fact at HEAD fc2d72cb6be8c7b9f9f8c45ef8d141fd** (`galaxy.api.version.content_hash`; f8102d73… before the
+spill count, `main` 5a2c097e…), not pinned; no test pins the model's hash — the pin is the docs' and the bundles', moved
+once at S92's close, as S89 held 85649e31… in fact. The nightly `ci` on `main` (42728608168, 4f06cc9) green, 1713
+passed; `image` 42586094988 green. session-91 at 15db9ba, `s91-marks-lifted` at 437182b. With this decision
+entered the five docs files read 74 passed, 1 xpassed in 113.72 s.
+
+**The register.** #82, #128, #158, #180, #182 permanent; #114, #210 and #215 discharged; #218 and #219 opened —
+**118 open — 43 permanent, 75 carried — and 84 discharged**; next number #220, decisions from D261. An Opus lead, two
+Opus builders, an Opus reviewer and close builder, the Fable gate.
+
+### D261. S92, BUILD_V row 92 (M3 continued; closed PARTIAL, S93 carries the row): #164 / #165 built as ruled and every layer-on file re-pinned; #217 one grid threshold; #211 the response tails on their own grid; #218's cause named (a BLAS product's bits follow the thread count) and its remedy ruled for S93; #219 read on nine censuses and discharged by ruling; the runner's eleven read here at bd0ed0c - #216 discharged, its thirteen marks and #217's lifted; #220, #221 opened; reviewed, one blocker (test_pieces never run to its end) mended; the gate's run on session-92 read, two failures mended; the three-legs gate unread; the hash in fact 52f03a19…, not pinned
+
+**The commission.** BUILD_V row 92 on `session-92`, cut from `batch-m3` at bd0ed0c. An Opus lead (killed twice by
+network failures, then out of context waiting on queued runs, its work half-committed), an Opus close builder that
+finished it from the disk, an independent Opus reviewer, an Opus fix builder for what the review found, the Fable gate.
+The pin stays lifted for M3 (BUILD_V ruling 4): the hash moves once, at the batch's close.
+
+**Built.**
+- 071202f: the two comments D260 owed - test_bar's Milky Way A2 high 0.107999 (the template pinned, pattern_seed 41,
+  texture_seed 1, the ring at 4.6125 kpc) and test_pieces' WHOLE_RINGS 78 (12 / 24 / 10 / 19 / 13 by texture seed).
+- 2940b36, **#164 / #165** on the owner's ruling of 2026-11-10 (S90's option 4): `layer/spurs.ring_profiles` reads each
+  grid ring the pieces span once on the solver's 1440 cell centres - its trough (`crest_width`'s floor) and its tallest
+  crest's FWHM; the walk reads the gas crest within half that width of the chain, both linear in R between rings; the
+  foot stays on the chain. `gas_spur_contrast` = crest - trough (#164); `gas_spur_peak_surface_density` = the column
+  times the crest (#165). Measured (s92_m164.py, the Milky Way template, seeds 0 / 4242, before = bd0ed0c): the
+  composed over the unspurred contrast at the feet, median 1.9975 / 1.9974 -> 1.5312 / 1.5175; feet 39 / 35 -> 45 / 43;
+  the spurs' ring mean at most 0.0070 / 0.0073 -> 0.0139 / 0.0106.
+- 096dfcb, **#218's cause** (below). ee04a5d, the gate's note (D260): arm_pieces' two tolerances written from the
+  sweep (s92_ptol.py: plateaus at most 8.9e-16 off an integer, off one at least 4.88e-4; ties at most 1.78e-15 rad,
+  the smallest real gap difference 7.69e-5 rad) - 1e-9 stands, comments only.
+- 9db2146, **#217**: `api/v6_tiles.grid_threshold` (`math.pow`, element by element) is `snap_up`'s `l_min_used` and both
+  tables' `threshold`. test_v6b_points 28 passed, test_v6_bright 17 passed.
+- bb78ff1, **#211**: `spectra.TAIL_TEMPERATURES`, 1000 K to 10^6 K at 1/384 dex (1153 rows), the tails' own grid;
+  `RESPONSE_TEMPERATURES` (what `/api/blackbody` and the white point read) unchanged. The jwst_nircam set (aa0eec6)
+  against test_render's bounds: the trapezoid test passes (it failed on F444W), the end row's worst 0.009005 -> 1.6e-6
+  mag. test_render: wfc3's D200 gate re-pinned, median / weighted 1.93e-6 / 2.07e-6 -> 1.60e-6 / 1.64e-6 (closer to the
+  exact integral; worst unmoved); 92 passed + the five object-response nodes.
+
+**Re-pinned, every number with its reason (0de00e4).** #164 / #165 over every layer-on file but one (test_pieces: the
+review's blocker, below): test_audit_v, test_bar, test_clouds, test_clustering_gate (the judged `MEASURED` rows clouds
+(-0.4965, 1.9852, 0.0205) -> (-0.5035, 1.9885, 0.0199), clusters (-0.4791, 1.9997, 0.0287) -> (-0.4970, 2.0176, 0.0282);
+the disclosed `SQUARE_AFTER`), test_dust_layer, test_gas_pattern (among them the cell-mean records 0.5038 -> 0.4928 and
+2.394e-3 -> 1.454e-3, the 36-cell grid 3.275e-2 -> 1.794e-2, the Milky Way gate's max_g 6.694174 -> 7.302670 and min_g
+0.385431 -> 0.385444, the law's ring at 4 kpc (4.972, 0.6904) -> (6.0961, 0.6907), SPURRED's four rings and a fifth,
+10.9875 kpc (1.18706, 0.79716), the default field at R0 (1.39816, 0.74294) -> (1.56734, 0.74235), its mean squares
+1.03968 -> 1.04031 and 1.07829 -> 1.07779, the published-on-mesh 0.7028 -> 0.4447), test_hierarchy, test_layer,
+test_region_synthesis, test_v6_knots, test_v7_header; `SPILL_FEH_BEYOND` 1787 -> 1791 of 16 940 (10.57 %; the
+declaration's 11 % true) - an as-measured record, the model byte this pass moves. **The runner's eleven separated from
+it**: the eleven nodes ci 42796166390 failed were run here at bd0ed0c (s92c_bd0.log) - every count (22, 1722, 39) and
+float (to 1e-13) the runner's: S91's #216 re-lay, never run at S91. Each reason reads old -> bd0ed0c -> now
+(s92c_eleven.md): test_hierarchy 16 -> 22 -> 22 and test_dust_layer's R0 ratio 1.032 -> 1.0194 -> 1.0194 are S91's
+alone; test_clouds' MESH_TV, the dust layer's read[4.0], test_layer's 1694 -> 1722 -> 1705, test_region_synthesis 0.8900
+-> 0.8921 -> 0.8955, r1 0.8910 -> 0.8253 -> 0.8265, z -0.091 -> 0.0142 -> 0.006, test_v7_header 40 -> 39 -> 45 moved
+twice. An assert after a node's first failure at bd0ed0c is marked "S91 and #164 / #165 together". No tolerance widened,
+no bound moved.
+
+**Held strict, no bound moved.** `WALK_READ_OVER_S92` (test_spurs): the walk's crest read against the point
+function's crest at the foot's ring reads 0.2176 at seed 0 (45 feet) and **0.4582 at seed 4242** (43 feet) against
+`WALK_READ_DIFFERENCE` 0.27 - the window's width differs between two grid rings, and its crest can be another ridge's
+(worst feet at 4.44 and 5.40 kpc): **#220**. `GAS_LANES_READ_OVER_S92` (test_bar) and `GATE_MAX_G_READ_OVER_S92`
+(test_gas_pattern, the Milky Way's gate): the published gas inside the bar reads 7.3027 at 3.94 kpc over max(lane
+peak 7.0556, response 2.3930) - a spur's height on a lane's crest: **#221**.
+
+**#218's cause, named by measurement (096dfcb).** No model byte moved between the reference's commit (4303e22) and
+`main`. Single-threaded (the runner script's OMP / OPENBLAS / MKL = 1) 393b4c9 and session-92 read star_age,
+star_ionizing_photons, star_magnitude_v, star_temperature (and star_luminosity on the Milky Way's) off on every label;
+with the threads unrestricted (20 here) session-92 reads no field off and only D260's four named routes;
+`OPENBLAS_NUM_THREADS=1` alone reproduces the red. The mechanism: `systems.Churn`'s arrival law,
+`self._born[:, step].T @ kcol[b]`, a BLAS product whose summation order follows the thread count; its last bits move
+each star's drawn age. The reference was written multi-threaded at S90 and read single-threaded at S91.
+
+**The gate's rulings (S92).** (1) The marks: 3df553c cherry-picked onto session-92 (4e0736f, no conflict); #217's
+mark lifted in its own commit (2eb3c9f, revertible alone); #217 stays open until the gate's next ci run reads it.
+(2) #219: the judged clause stays on the default census (-0.5035 / -0.4970, both inside); the clusters' strict hold
+lifted; nine censuses (the default and systems = texture seed 1-8): clouds mean -0.6177 (sd 0.1030), 9 of 9 inside,
+clusters -0.6367 (sd 0.1064), 8 of 9 - the table in the entry; **#219 discharged**. (3) #218: the remedy is the
+arrival law's product made a sum the model orders itself, so its bits no longer follow OpenBLAS's thread count (the
+owner's #216 ruling carried to its second cause); **not built: S93's first item**, with a sweep of every BLAS-backed
+product on a draw path under model/galaxy, each measured threads-on against threads-off; the reference and its two
+nodes untouched. (4) #164 / #165 discharged on the ruled build; #220 and #221 opened for its two readings.
+
+**The runner's read.** ci 42796166390 on `s91-marks-lifted` (3df553c): 11 failed / 1719 passed; all thirteen lifted
+#216 nodes passed; the eleven failures in five other files, none a lifted mark, each read here at bd0ed0c with the
+runner's numbers: no census parts between the machines - **#216 discharged**.
+
+**Found at the gate.** (a) *The gate's own wrong premise.* Resuming the lead after the network outage, the gate read the
+runner's eleven failures as lifted marks failing and ruled that the marks stay. The lead showed that none of the eleven
+is one of the thirteen lifted nodes (all thirteen passed on the runner); the gate re-ruled (ruling 1), and the eleven
+were then read here at bd0ed0c. A ruling taken on a count without the node ids - the S56 lesson, at the gate this time.
+(b) *#219's discharge rests on the gate's ruling, not on the entry's kill clause as written* ("both slopes inside by
+more than the scatter on one census"): the default census is inside by 0.0135 and 0.0070 against an sd of 0.10 between
+censuses, and one cluster census of nine is out (seed 3, on the steep side). What the nine censuses do show is the seed
+mean inside by 0.128 and 0.147, more than the scatter, so the closer's question to the owner did not arise. #218's
+remedy moves the star sample's bits: **S93 re-reads the two slopes on the default census after it**; a slope back over
+the edge re-opens the hold under a new entry, the window untouched. The close builder's margins (0.0035 / 0.0030) were
+an arithmetic slip, corrected in the entry and the test's comments (28929a9). (c) *#216's discharge stands at bd0ed0c*,
+where this machine and the runner agree on the eleven and on the thirteen. The thirteen nodes' records were re-pinned
+again after #164 / #165 (MW_PAIR_SLOPES, SPURRED, the cell-mean records, F-2-4 / F-2-5): those values are this machine's
+until the runner reads them - the gate's dispatched run on session-92 at 859de1d (ci 42918523059) read all thirteen
+green on the runner with the new records, so the census is one on both machines after #164 / #165 too.
+
+**The review** (an independent Opus reviewer on bd0ed0c..859de1d, read-only). Verified: no model byte unnamed by a
+commit; #164 `contrast = max(top - floor, 0)`, #165 `peak = sigma * top`, the walk's read within half `crest_width`'s
+width; A10 unmarked and green on both templates (test_bar, test_spurs); no tolerance widened, no judged bound moved, no
+test deleted or skipped, no node id changed, every xfail strict with a register entry; s92c_bd0.log against the runner's
+log node for node (counts exact, floats to 1e-14); exactly thirteen marks lifted in 4e0736f and one in 2eb3c9f; the
+register's arithmetic (118 - 5 + 2 = 115, 84 + 5 = 89) and test_audit's literals. **One blocker: tests/test_pieces.py
+had never run to its end after #164 / #165** (its run died with the lead: twelve bytes of log) **and was red at
+859de1d** - the masers' disclosed gas record, and `EXPECTED_LEAST`'s Milky Way largest gas 6.696 against 7.303, with the
+judged ring-mean clause (`worst["gas"] < 2e-13`, A10 over the sweep's galaxies) unread on the new spurs. The close
+builder's "every layer-on file" was false by one file (corrected above). An Opus fix builder mended it: 04f76b0 re-pins
+the masers' record - `EXPECTED_MASERS['gas']` (0.2, {Norma-Outer 0.22, Sct-Cen 0.21, Sgr-Car 0.04, Perseus 0.1, Local
+0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100) -> (0.17, {0.23, 0.24, 0.04, 0.1, 0.17}, 0.14, 0.42, (0.26, 0.7), 1, 100), the
+old value being bd0ed0c's, where the runner passed the file, so the move is #164 / #165's alone - and `EXPECTED_HELD`'s
+"the masers' check keeps its 1st-percentile power" False -> True (the gas percentile 2 -> 1). The whole-file run here
+was stopped after twelve nodes on the owner's word of 2026-11-11 (long tests are GitHub's); the runner then read the
+file at 859de1d and failed one node, the masers', with exactly the record 04f76b0 pins. **Unread anywhere:
+`test_gate_on_the_three_legs_of_the_suite_s_galaxies`** - machine_pinned since S77 (#206), so the runner skips it, and
+over ten minutes here. `EXPECTED_LEAST`'s Milky Way largest gas 6.696 (the template now reads 7.303) and the judged
+ring-mean clause over the sweep's galaxies are not read at S92: **S93's close reads the node by name on the batch's
+final model**, re-pins the as-measured record with its reason, and reports a breach of the judged clause as a model
+fault with the galaxy, the ring and the number. A10 on the two templates is green unmarked (test_bar, test_spurs). Three
+mends ruled by the gate on the review's concerns: C1 (65e36f1): the two #221 over-clauses split into tests of their own
+that carry the strict hold (test_bar `test_gate_the_gas_inside_the_bar_is_under_the_lanes_or_the_response`,
+test_gas_pattern `test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes`), so the two original gates
+run unmarked and assert every other clause, no node id renamed; C2 (50e95f5): layer/spurs.py's docstring says the
+measured walk error (0.2176 at 4.45 kpc on seed 0, 0.4582 at 4.44 kpc on seed 4242; 0.2105 was seed 0's second foot and
+0.4541 no run reads) - a docstring, which moves the hash in fact to 52f03a19…; C3 (aa5ac5f): `peak == column * (contrast
++ trough)` is exact again wherever contrast > 0 (test_spurs to rtol 1e-12, Audit V to rel 1e-9), the trough read
+test-side from `spurs.ring_profiles`, no new published field.
+
+**The runner on session-92** (ci 42918523059, the full suite dispatched on 859de1d on the owner's word of 2026-11-09; no
+local full suite, D246): **2 failed, 1728 passed, 27 skipped, 6 xfailed, 1 xpassed in 2:24:50** (the xpass is
+test_audit's non-strict cost record). (i) test_pieces' masers node: the record 04f76b0 already pins, made after the
+run's head. (ii) `test_v6_bright::test_the_table_is_each_tile_s_expected_count_at_every_grid_threshold`: the test took
+`10.0 ** LOG_L_GRID`, an array power, for the table's threshold and asked equality, while #217 made the table's
+threshold `grid_threshold`'s scalar powers; the two agree to the bit here and part by an ulp on the runner's libm -
+D259's two power paths, left in the test's own oracle. Mended at the gate (fcec70d): the test asks the bytes of
+`grid_threshold`, the function the tile's `l_min_used` is too, and keeps the array power as a closeness within two ulps
+(rtol 5e-16); no model byte, no bound moved; the node and the five docs files 75 passed, 1 xpassed. **#217's lifted node
+(test_v6b_points, 3-milky_way) passed on the runner**: its closer is met, 2eb3c9f stays. Every other file at 859de1d is
+green there, test_systems (which draws layer-on) among them. The commits after 859de1d - 04f76b0, 65e36f1, aa5ac5f,
+50e95f5, 28929a9, fcec70d: tests, comments and one docstring - are the runner's to read in S93's dispatched run.
+
+**Not built, S93's** (BRIEF): #218's ordered sum and the BLAS sweep first; the three-legs gate read by name on the final
+model; #217 moved in the register; T3 / #115 with #113 / #171, #184; the ionized gas (T10 / #119, #117, #118, #100,
+#101); #174-#176, #166, T15, T8 and the rest of M3's list; #220 and #221 to the gate; the batch's close (every model
+file on the final model, the reference re-based by decision, `s83-robust` merged, the hash pinned once, the bundles and
+frames).
+
+**Not run** (D246): the local full suite, verify_clone, the machine-pin set. **The gates** (each its own low-priority
+single-threaded process, CI unset): the files above, and after #211 (0de00e4 + bb78ff1) test_v6b_points 28 passed,
+test_region_synthesis 9, test_v6_knots 18, test_v7_header 18, test_v6_bright 17, test_bright 30 (s92c_verify); the docs
+tests (test_docs, test_progress, test_audit, test_hook, test_graph) 74 passed, 1 xfailed in 141.91 s on 859de1d (2
+failed on 46961c6: the register literals, mended in 859de1d, and #67's wall-clock pricing order under load, green
+alone); `tools/progress.py` 79/79, EXIT=0; vitest 621 passed / 1 skipped, EXIT=0; typecheck and typecheck:e2e EXIT=0;
+the picture test not run (no frame regenerated). **The hash in fact at the merged head
+52f03a1999b410de3940a151c6d20b49** (cf0255bb… at 859de1d, before C2's docstring - no computed byte between them;
+fc2d72cb… at S91's close), not pinned; no frame regenerated (the batch's close does both).
+
+**The register.** #164, #165, #211, #216, #219 discharged; #220, #221 opened - **115 open - 43 permanent, 72 carried -
+and 89 discharged**; next number #222, decisions from D262 (#217's closer is met on the runner, below; the register
+moves it in M3's one pass at the close, so the counts here are the close builder's). An Opus lead, an Opus close
+builder, an Opus reviewer, an Opus fix builder, the Fable gate.
+
+### D262. S93, BUILD_V row 92 continued (M3's close): five parallel lanes, each reviewed - #218's ordered sums on every draw path; T3 / #115 in part; #113 / #171 the EEP-style lookup; T10 / #119; #118 (b); #174, #175 (`kept=1`), #166 by the gate's ruling; `s83-robust` merged; #113, #119, #166, #171, #174, #175, #217, #218 discharged, #222 opened; the three-legs gate read; the layer-off reference re-based; the hash pinned once; 5a2c097e… → f9b04ed2…
+
+**The commission.** BUILD_V row 92, carried from S92 (D261), on `session-93`, cut from `session-92` at 28929a9 (S92's
+gate commits, the merge 5d83067 and row 92 brought in by e13cea8). Five parallel Opus lanes, each on its own branch
+and worktree cut from `session-92` (859de1d; `s93-s83` from `session-93` at b9534e5): **ION** (`s93-ion`: T10 / #119,
+#118, #117, #100, #101), **T3** (`s93-t3`: T3 / #115, #113 / #171, #184), **#218** (`s93-218`: the arrival law and the
+BLAS sweep), **REST** (`s93-rest`: #174-#176, #166, #91, T15, T8, M3's fifteen read once, #220 / #221), **s83**
+(`s93-s83`: the merge of `s83-robust`). An independent Opus reviewer per lane (read-only, given the code, not the
+builder's conclusions), Opus mend builders for what each review found, the Fable gate integrating on `session-93` and
+ruling. The owner's word of 2026-11-11 ("don't block on my rulings ... take your own recommendations") stands behind
+every ruling below marked as taken on recommendation; the owner may re-rule any of them. The pin stays lifted for M3
+(BUILD_V ruling 4): the hash moves once, at this close.
+
+**Built, by lane.**
+- **#218** (5 commits, merged d6ade35 and 50e3f76). 3e36ae7: `systems.Churn`'s arrival law,
+  `self._born[:, step].T @ kcol[b]`, a sum the model orders itself (`systems._arrival`, birth ring by birth ring,
+  elementwise, no BLAS, no FMA). Six full runs (basic; default, milky_way, ngc_4414; layer on and off), 391 fields
+  each, threads 1 against 20: 28 field digests differed before (star_age, star_ionizing_photons, star_luminosity,
+  star_magnitude_v, star_temperature), 0 of 2346 after. The bits moved at one thread by at most 2.1e-14 (star_age,
+  8443 of 20 002 stars) and 2.7e-13 (the photometry); no count, no discrete column; +0.09 s a run. 052a464: the sweep
+  found by measurement one more family - `bright.py`'s band products (`/api/render`'s `stars_unresolved`, the
+  bright catalogue's count tables) - made the same ordered sum (`ordered_product`); all 42 reference routes and the four
+  fields labels identical at 1 and 20 threads. The gate's ruling on the lane's recommendation (#216's ruling carried
+  to every BLAS product whose bits reach a draw): fb8871b `sfh.radial_transport` (16 -> 260 ms a call, once a run; the
+  history's arrays moved at most 2.8e-11 relative), eca0ff2 `bright.mass_on_isochrones` step by step (53 -> 48 ms),
+  cd12cdd `chemistry_dtd`'s four transports (the stage 260-296 -> 350 ms); `ordered_product` moved to `core/special`.
+  After all three: 2346 field digests and 42 routes identical at 1 and 20 threads; the bits moved once, at 1e-11
+  relative or less, no count or integer array. The two layer-off reference nodes fail alike at 1 and 20 threads (37 of
+  42 routes): they wait on this close's re-base. 17f1f0c and d788300: #218's entry.
+- **T3** (3 commits, merged 5dc5545 and 717b7d7). 8672ff9, **T3 / #115**: `systems.cluster_member` publishes
+  `star_cluster_member` on the sample - a star younger than the census's window (`systems.cluster_window`, 20 Myr, one
+  definition `bright` imports) in a cluster still a point, by the census's own rule on the star's own `member` uniform
+  (a seventh ring stream; no other draw moves); the "sampled" reading drops the members and the dissolved clusters'
+  points (`regionStars.ts dropRows`). The young part's closure in expectation (`tests/test_s93_t3_membership.py`, at
+  the 500 000 stars it runs; 10^6 in brackets): sample + every point over the render's young part 1.9196 (1.9319) ->
+  0.9405 (0.9343) on the Milky Way, 2.0381 (1.9813) -> 1.0316 (1.0241) on `ngc_4414` - the remaining 6 % the census's
+  own draw (T2's). Realised, the whole sample's light over s against the render's total 0.30 -> 0.44 (10^6, the Milky
+  Way): not met. fd57ebc, **#113 / #171**: `photometry.lookup` along equivalent evolutionary points (below the giant
+  branch by mass normalised to the first giant point; each giant phase by its path in (log L, log T_eff)); the dead /
+  alive edge exactly the old one; the light per mass formed through the lookup 0.43-0.98 -> 0.947-1.043 of the
+  population's at 21 ages between isochrones; the sample's luminosity function at 10^3 L☉ over its faint end 0.438 ->
+  0.948 (Milky Way), 0.275 -> 0.794 (`ngc_4414`); the old light over the render's 0.655 -> 0.927 / 0.599 -> 0.878.
+  test_photometry re-pinned (1 M☉ L, T; the Sun's V 4.7727 -> 4.7809, `SUN_V_OFFSET` unmoved). ca8997c, **#184**:
+  listed, not built - Robin et al. 2003's thin disc proposed (sech² 33-263 pc over seven age bins at 8.5 kpc).
+- **ION** (3 commits, merged 5cd9dd0 and 7467b3a). 2c797d6, **T10 / #119**: the diffuse gas's [N II] 6583 and [S II]
+  6716 by Madsen, Reynolds & Haffner 2006's eqs. 2-3 at the layer's 8000 K (`dig_nii_6583_ratio` 0.5827,
+  `dig_sii_6716_ratio` 0.4387; 6731 0.3029 by Sanders et al. 2016's low-density limit), three fields, `lines_dig`
+  summing Hβ, [N II] and the [S II] pair; nothing else moved. 0605c63, **#118**: (a) the +0.2 dex edge ruled the grid's
+  limit (3.13 % of the default regions); (b) the regions' [S II] pair split at their rms density by Sanders et al.
+  2016's eq. 6, the grid's sum kept - the Hα-weighted 6716/6731 1.2892 -> 1.2694; (c) the U convention measured (a
+  volume-mean match +0.67 to +1.5 dex) and not built. 7a7dc0b: **#100** (needs PARSEC isochrones under 4 Myr, a
+  download, and SHP03's gravities, which move the sample's Q), **#101** (Zurita et al. 2002 read whole; Haffner's 1/8
+  without a width), **#117** read; none built. The gate (b9534e5): #117's blind window set by an Opus reader given the
+  question and the sources' names only - the Galactic HII regions' direct-method O/H gradient over 8-15 kpc −0.043 ±
+  0.008 dex kpc⁻¹, acceptance [−0.059, −0.027]; the model's gas −0.078 outside it by 0.019 (#124).
+- **REST** (4 commits, merged 70426f7 and 1eb7f2d). 5e32ca4, **#174**: `noise.glsl.ts`' include and the march
+  material's gas tables shared into FluxPoints' vertex shader under the march's switch, the map read once per point
+  as the march's thin screen; the TS twin `dustToPoint` the same (`flux.test.ts`); the points' shader pin moved
+  (vertex 10172 / 0a58dd4c -> 20449 / 6c29b1e9, S82's text recovered); layer off unchanged. ee39315, **#175**:
+  `only=remainder` with `kept=1` splits the remainder's middle part at the octave survival ages under `l_min`, one
+  closure factor per ring and filter (departure at most 4.0e-5); the viewer asks it and draws the remainder clustered
+  with the clustering on; the default answer unchanged. 0bf3c69, **#166**: the anchors through the run's cache and a
+  whole-grid `l_min=` render without the age parts (the second half reverted, below). d173b2e: **#176** (neither mend
+  answers the hold's cause; the bound re-derived with the placement's weights recommended), **#91** (a light-stage
+  change, past M3), **#220** (measured: one window on both rings still reads 0.4547 at seed 4242 - the crest's
+  interpolation between grid rings, not the width; the crest by the point function at the foot recommended),
+  **#221** (the response's profile inside the bar recommended), and M3's fifteen read once (#83-#86, #88-#89,
+  #96-#98, #102-#103, #124-#125, #127, #135: none met, each needing a source, a mechanism or a light-table pass).
+  T15 and T8 read, not started.
+- **s83** (merged 505e135). 6a37b77: `s83-robust` merged at last - T11 "as JWST" (aa0eec6: NIRCam's curves fetched by
+  the tool, the segmented primary as a pupil); T13's commit (1dc8446) a no-op, its files byte-identical to 328c67d on
+  `main`; one conflict hunk, `GalaxyView.tsx`'s lost-context line, resolved keeping S84's StatusDot before T13's
+  words. 741f3b6: the `jwst_nircam` set's as-measured rows in test_render (GATE median 9.55e-7, max 6.27e-6, weighted
+  7.86e-7; the end row 1.57e-6 against 0.002; `AGE_FACTORS` per template), no old value moved; vitest 634 passed /
+  1 skipped, typecheck and typecheck:e2e EXIT 0. Nothing under `model/galaxy`; no template selects the set; not seen on
+  a GPU or in a browser.
+
+**The reviews, and what was mended.**
+- **ION** (rev93ion_review.md): no blocker; the sources re-read and every constant recomputed (Madsen's, Sanders'
+  Table 1). Mended: 83dd181 two sentences #119 made false (the render's absent-lines why; RENDER_PHYSICS's
+  ionized-gas note); 16bd6cf the diffuse gas's S⁺/S, N⁺/N, N/H, S/H as level-0 constants (values and outputs
+  unchanged), 0fe4bef Madsen §IX's wider S⁺/S (0.1-1) in #119; a683f46 #118's two limitations named (the rms density
+  where a clumpy doublet samples ⟨n²⟩/⟨n⟩; Sanders' atomic data in place of S35's PyNeb / NIST).
+- **T3** (rev93t3_review.md): no blocker. Mended: 1b5cd81 one rule for the census and the membership
+  (`systems.cluster_state`, the bits unchanged on both sides); cbc9f31 the membership test on both galaxies at the
+  size it runs, its records named as measured; eb195a7 #115 written as met in part (the realised 0.30 -> 0.44);
+  632f862 the table-age test over the whole track, the IMF-light margin named as-measured, the old lookup's values
+  labelled. Left to the close: #171's "the star sample's pins re-read in the same commit" completes only with the
+  layer-off reference and the layer-on files re-read here.
+- **#218** (rev93b_review.md): no blocker; `ordered_product` verified (no BLAS, no FMA, the order fixed by the code);
+  1173 field digests and five routes' bodies equal at 1 and 20 threads. Concerns: no guard test; the 32 x 32 solve
+  selects `held_rings`; the claim's scope (libm and the einsum loops are not shown machine-independent); a per-render
+  +45 ms. Mended on `s93-218` (merged cfa1670): 7055b69 `tests/test_ordered_products.py`, an `ast` scan of
+  `model/galaxy` against an allow-list of nineteen rows (file, function, kind, count) that fails on an unlisted
+  BLAS-backed product and on a row whose site is gone - the rows name what is left unordered and why (the 32 x 32 solve,
+  five einsums, `chemistry.migrate` with no caller, spectra's three, four stage polyfits, seven `specs/` sites); 8844d1b
+  the entry's text; a01038f a comment; e667611 `systems._arrival` calls `ordered_product` (0 of 1173 digests differ).
+  **The guard's first catch, at the merge (c161965, the gate):** REST's #175 had added `flat @ band_flux` in
+  `bright.window_anchors`' `l_min` branch - on a route (`only=remainder`, `kept=1`), seen from neither lane's branch;
+  ordered with `ordered_product`, the guard and the two window-closure tests 6 passed. The gate's rulings on
+  recommendation: the guard in place of a subprocess pair at two thread counts; the solve and the einsums left unordered
+  and named.
+- **REST** (rev93rest_review.md): **one blocker - #166's skip turned `test_layer`'s `test_i5` red in both parameters**
+  (a whole-grid `l_min=1000` render asks the age parts by name); no lane had run test_layer. Mended (by the gate's
+  rulings): e34f4d3 the skip reverted (no caller sends that request: `api.ts`, the bundle plan and `interface/` ask
+  the whole render and `only=remainder`, which returns before `_ages`), the cache kept, re-measured back to back
+  single-threaded (Milky Way whole cold 16.46 -> 14.15 s, warm 1.82 -> 1.39 s; `l_min` cold 10.33 -> 7.94 s, warm
+  2.38 -> 1.79 s, the same 11 606 128 bytes; every cold call under 25 s); c2ba0b3 the bundle plan asks `kept=1` as
+  `api.ts loadRemainder` does (C1: a bundle keys on the raw query), the S72/S73 fixture's twenty records respelled, a
+  test reading the loader's literal beside the plan; 5b3e169 the 32 000-byte gate read on the request the viewer sends
+  (C2): RGB 30 792 / 29 824 / 30 984 under it, WFC3 43 640 / 42 664 / 43 824 held `xfail(strict)` on #222; fcd2741
+  the closure factor's departure pinned as measured (2.2373e-5 / 1.9365e-5 / 4.0041e-5 Milky Way, rel 1e-3) in place
+  of `< 1e-2`, each kept array its raw window times the factor to 1e-12 (C3); 65561b9 the kept windows computed only
+  under `kept=1`, thresholded anchors cached apart (C5, C6; 24 bodies byte-identical before and after); 04b3c95 the
+  entries' texts (#166, #175, #174's "what holds it": a text hash, no TS-to-GLSL comparison, no GPU compile; #221's
+  prediction worded as one).
+- **s83**: the merge's one hunk and the measured rows read at the gate; no independent review (no model byte).
+
+**Held strict, no bound moved.** `test_v6_bright::test_the_remainder_the_viewer_asks_is_under_the_same_size_gate`
+through WFC3 (#222). `WALK_READ_OVER_S92` (#220), `GAS_LANES_READ_OVER_S92` and `GATE_MAX_G_READ_OVER_S92` (#221)
+unchanged.
+
+**Rulings taken on recommendation at S93's gate** (the owner's word of 2026-11-11; the owner may re-rule each):
+1. #218's second part: `sfh.radial_transport`, `bright.mass_on_isochrones` and `chemistry_dtd`'s transports ordered
+   (the lane's recommendation; #216's ruling carried to every BLAS product whose bits reach a draw).
+2. #166 discharged by the gate's ruling: the cache built; the first mend met where the viewer asks; the literal skip on
+   whole-grid `l_min=` requests reverted because `test_i5` names those parts.
+3. #175's `kept=1` opt-in (the builder's), with #222 opened for the WFC3 size clause held strict, the bound unmoved.
+4. #115: membership by class (the census's rule on the star's uniform), not a per-star `star_cluster_index` (the
+   builder's); carried, met in part.
+5. #118 (a): the +0.2 dex edge the grid's limit (the builder's); (b) met on Sanders et al. 2016's atomic data (the
+   gate's); open on (c) alone.
+6. #117 carried on #124's ruling; #124 carried past M3 as a build item of its own (it moves `chemistry_dtd` / `ism`
+   and rows 22-23).
+7. `s83-robust` merged (T11, T13), the conflict resolved keeping S84's status dot.
+8. #184 needs a source ruling (Robin et al. 2003 proposed, with how it scales and which height each render part takes).
+9. The request fixture's two Science-tab records respelled by hand, and the `jwst_nircam` set's 17 planned requests
+   held to `wfc3`'s with the curves swapped, in place of a walk of the built viewer (owed).
+10. The three-legs record re-pinned as read and not re-run (71 minutes; the record is the node's last assertion).
+11. The layer-off reference re-based on the final model by the gate's decision (#214's procedure) and #218 discharged
+   on its closer.
+
+**Not built, carried past M3** (readings and recommendations in the entries): #115's realised closure; #118 (c); #100
+with #84 (the download); #101; #117 / #124; #184; #176 (the bound with the placement's weights); #91; #220 (the crest
+by the point function at the foot); #221 (the response's profile inside the bar); #222; the fifteen read once; T15
+(a Model task) and T8 (a viewer pass); T11 unstruck (nothing seen on a GPU or in a browser); T3 in part.
+
+**The close.** **The three-legs gate read** (`test_pieces`' `test_gate_on_the_three_legs_of_the_suite_s_galaxies`,
+machine_pinned, skipped on the runner, unread since S92's review): 1:11:28 on e5bdf4a, 360 galaxies, single-threaded -
+every judged clause held (`worst`'s four: the stars' and the gas's ring means, the expected power, the forcing's bound),
+`EXPECTED_GATE` equal, and the last assertion, the as-measured `EXPECTED_LEAST`, read the Milky Way leg (0.1208, 0.1245,
+8.214) where S91 pinned (0.1208, 0.1252, 6.696) - S92's #164 / #165 (the spurs re-laid; the template alone read 7.303 at
+D261); both NGC 4414 legs unmoved. Re-pinned as read with the reason and the old value (518045f) and **not re-run** -
+the record is the node's last assertion, everything before it passed, and the model after e5bdf4a moved only
+`bright.window_anchors` and `systems._arrival`, off the pattern's path. `test_systems` on the merged head: 36 passed, 2
+skipped. **The layer-off reference re-based** (fa68351; #214's procedure, the gate's decision):
+`tests/layer_reference_s93.json` written single-threaded on the final model (sha256 d77cbbd1…, fields 398 / 397 / 398 /
+397, 42 routes) and the same digest written again with the threads unrestricted; against S90's file 117 fields moved on
+each Milky Way label and 14 on each NGC 4414 label (the star columns, `bright_star_radius`, the stars' feh and alpha,
+`giant_occurrence`, the HII [S II]), six added on every label (the diffuse gas's five line fields,
+`star_cluster_member`), none lost, 39 of 42 routes moved, no single-mode digest moved. `test_layer`'s two nodes read the
+new file with both named lists empty: **5 passed single-threaded and 5 passed at 20 threads** - #218's closer, so **#218
+is discharged** (707cbee). S90's file stays as history, read by no test; `test_modes` keeps S55's. **The re-pin pass**
+(the gate's, on the runner's six failures below; tests only, no judged bound or window moved, nothing under `model/`):
+(i) `test_bundle`'s plan node, two causes (424aa1b) - the request fixture's two Science-tab `/api/arrays` records named
+20 fields where the tab now sends 23 (the diffuse gas's three line maps), respelled **by hand, no walk run** (a fourth
+`walks` entry says so; a walk of the built viewer on S93's model is owed), and the reverse guard met T11's `jwst_nircam`
+set, shipped after the walks: its 17 planned requests are each a walked set's with the curves swapped (asserted against
+`wfc3`), set apart, and the four `/api/remnants` strings stay the only others unsent (planned 192, sent 171); (ii)
+`test_v6_bright`'s table node - mended at S92's gate (fcec70d), which reached `session-93` only through merge e13cea8,
+after the run's head; green here; (iii) `test_layer`'s oracle layer-off: `basic`'s fields 391 → 397 (the diffuse gas's
+three maps and two ratios, `star_cluster_member`); (iv) `test_layer`'s oracle against layer-on `basic`: held 267 → 272
+(the diffuse gas's five the same bits on and off; `star_cluster_member` a placed column, not held); (v) `test_render`'s
+first cut: `FIRST_CUT_B_V` 0.583477 → 0.583346 and `FIRST_CUT_M_V` −21.888969 → −21.886848 - the first cut is tied to
+the table's own Sun, which `photometry.lookup` reads along equivalent evolutionary points since #113 / #171 (fd57ebc) -
+and the ring-weighted mean difference 0.0563 → 0.0553 (it read 0.05535, at the edge of the old pin's 1e-3; the minimum
+and the maximum inside theirs, left); (vi) `test_sfh_azimuthal`'s shared fields: `star_cluster_member` joins the moved
+star columns for S61's reason (the ring-first sample's rows stand in other cells in `azimuthal`; 2 members of 20005 rows
+in both models). (iii)-(vi) in 32d97f1, the four nodes by name 4 passed. **The fast job** (`test_api` and `test_bundle`
+beside the docs files, on every push) **had been red on `session-93` since e13cea8** on cause (i), unseen at the gate,
+whose local fast gate ran the five docs files alone (LESSONS From S93's addition: read the push runs; run `test_api` and
+`test_bundle` with the docs files); green again at 518045f (push run 42948994340) and at 32d97f1 (push run 42951812249).
+**The hash** moved once, 5a2c097ec5116dce6a2d7bff87d6559f → **f9b04ed20a06c0a68420f1cc8e13714e** (`content_hash(MODEL)`,
+86 files, 5 650 219 bytes; 9842723, the last model-side act - c161965 is the last commit that touches `model/`); the
+bundles re-exported and the frames regenerated beside the two goal pictures: 222 bundle entries (226 files, 366 487 712
+bytes) exported to a new folder and `--check` 222 of 222 byte-identical; the seven captures and both thumbnails
+rewritten (787fa5a), the picture test's nine verdicts byte for byte on a second run, `DUSTY_LAYER_RATIO` [0.96827,
+0.97247, 0.97922] → [0.96835, 0.97233, 0.97909] as measured (inside its 1e-3 pin before). Beside the goal pictures, S90
+→ S93 (the goal's in brackets): the Milky Way field's A2 0.0544 → 0.0531 (0.194), arm / interarm 1.598 → 1.604 (1.83),
+dark fraction 0.0317 → 0.0315 (0.0066), slope −1.22 → −1.26 (−1.99), Δ(B−R) −0.335 → −0.322 (−0.354); NGC 4414's field
+A2 0.1855 → 0.1848 (0.068), arm / interarm 2.531 → 2.568 (2.72), dark fraction 0.0317 → 0.0309 (0.157), slope −2.14 →
+−2.12 (−2.09), A1 0.0953 → 0.0911 (0.099); the stars frames' A2 0.0877 → 0.0916 and 0.0910 → 0.0886. **In plain words:
+no frame came materially nearer either goal picture** - the moves are hundredths at most (M3 built the populations and
+the ionized gas behind the picture, not the picture). Slightly nearer: both arm / interarm ratios, both slopes; no
+nearer: the Milky Way's A2 a quarter of the goal's and its dark fraction five times over, NGC 4414's dark fraction a
+fifth of the goal's; worse: the Milky Way's colour step and NGC 4414's A1. As seen: the Milky Way field a smooth tan
+disc with a burnt-out core, broad faint tightly wound arms, combed texture and short dark flecks (#169's streaks), no
+bar, no blue knots, no pink HII regions; NGC 4414 an overexposed bulge glow over a faint swirled disc with a few dark
+blobs, neither the goal's flocculent fragments nor its lane network; the stars frame even blobs under the cell grid, no
+spiral. The owner's look is still owed. **The runner** (the full suite dispatched on `session-93` at 1eb7f2d - the five
+lanes merged, before lane 218's review mends, c161965 and the close - on the owner's word of 2026-11-09; no local full
+suite, D246): **6 failed, 1744 passed, 27 skipped, 9 xfailed, 1 xpassed in 1:45:30** (ci 42938224513; the xpass is
+`test_audit`'s non-strict cost record) - the six of the re-pin pass above, each an as-measured record or a test-side
+list that M3's own builds moved, none a judged clause; every other file green on the runner at 1eb7f2d, `test_systems`
+and `test_pieces`' unpinned nodes among them. The commits after 1eb7f2d - lane 218's review mends, c161965's ordered
+product, the reference re-based, the hash, the frames, the re-pins - are read by the push runs' fast job and the named
+nodes above only. A first dispatch, made before the last lane's mends had landed, was cancelled and dispatched again at
+1eb7f2d (LESSONS From S93); the final head's suite is the batch's, dispatched on `batch-m3` after the merge.
+
+**The gates** (each its own low-priority single-threaded process, CI unset): the close builder's on 707cbee - vitest 68
+files, 634 passed, 1 skipped; typecheck and typecheck:e2e EXIT 0 (the npm scripts live in `frontend/`); the picture test
+14 passed, nine verdicts byte for byte; `tools/progress.py` 79/79, EXIT 0; the five docs files 74 passed, 1 xpassed. The
+docs builder's: the docs tests (test_docs, test_progress, test_audit, test_hook, test_graph, one process) 74 passed, 1
+xpassed (test_audit's non-strict cost record) on 5059f7a, a3cd9ff and e5bdf4a; `tools/progress.py` 79/79, EXIT=0.
+
+**The register** (5059f7a; the docs a3cd9ff, e5bdf4a). Discharged: #113 and #171 on their closure tests (T3's pass, the
+sample read along equivalent evolutionary points), #119 (T10 built, the closer met), #166 (by the gate's ruling), #174
+(on its closer), #175 (on its build), #217 (its lifted node, `test_v6b_points`' 3-milky_way case, green on the runner,
+ci 42918523059 on `session-92` at 859de1d; `test_v6_bright`'s table oracle, the one test still comparing an array power,
+mended at S92's gate in fcec70d, D261). Opened: #222 (carried). Text only: #115, #118, #100, #101, #117, #124, #184,
+#176, #91, #220, #221 and the fifteen. **109 open - 43 permanent, 66 carried - and 96 discharged** before #218's move;
+next number #223, decisions from D263. After #218's discharge at this close: **108 open - 43 permanent, 65 carried - and
+97 discharged**. Five Opus lanes, four Opus reviewers (the s83 lane's merge read at the gate), Opus mend builders, an
+Opus docs builder, the Fable gate.

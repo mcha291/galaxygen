@@ -213,7 +213,7 @@ def spurs_entry(fields: Any, constants: Mapping[str, Any], R: np.ndarray) -> dic
                "width": "gas_spur_width", "fall": "gas_spur_fall"}
     entry["rows"] = {k: _floats(fields[n]) for k, n in columns.items()}
     entry["units"] = {"radius": "kpc", "azimuth": "rad", "pitch": "deg", "length": "kpc", "width": "kpc (FWHM)",
-                      "contrast": "dimensionless (A: the ridge's crest contrast at the foot)", "fall": "dimensionless"}
+                      "contrast": "dimensionless (A: the ridge's crest over the ring's trough at the foot)", "fall": "dimensionless"}
     entry["turn"] = -float(rotation_sense(float(fields["pitch_angle"])))  # GasPattern.from_fields' sense for psi
     spurs = shape.spurs
     entry["share"] = _floats(np.zeros(np.size(R)) if spurs is None else spurs.ring_mean(np.asarray(R, dtype=float)))
@@ -238,6 +238,10 @@ def unspurred_placement(fields: Any, constants: Mapping[str, Any], R: np.ndarray
 # are applied after - so it is cached as the k-octave means are (census_clustering.kept_cell_means): by what it reads.
 _ANCHORS: OrderedDict[tuple, np.ndarray] = OrderedDict()
 _ANCHORS_HELD = 8  # runs, as kept_cell_means' lru_cache holds
+# S93 (D262, the review's C6): the anchors under a threshold (only=remainder's kept=1, #175) are held apart, one entry
+# per run and threshold, so a threshold slider's walk never evicts the runs' own anchors; and the runs' own hold two
+# window sets per run since #166 (the three parts' and the kept windows), so twice the runs. Bits unchanged.
+_ANCHORS_UNDER: OrderedDict[tuple, np.ndarray] = OrderedDict()
 
 
 def _digest(value: Any) -> tuple:
@@ -246,28 +250,32 @@ def _digest(value: Any) -> tuple:
 
 
 def window_anchors(fields: Any, t_max: float, n_t: int, constants: Mapping[str, Any],
-                   windows: Sequence[tuple[float, float]]) -> np.ndarray:
+                   windows: Sequence[tuple[float, float]], l_min: float | None = None) -> np.ndarray:
     """``bright.window_anchors``, cached by everything it reads: the run's formed and metallicity histories (by their
-    bytes), the age grid, RETURN_FRACTION and the windows. A copy each call; the arithmetic is the stage's, bit for bit."""
+    bytes), the age grid, RETURN_FRACTION, the windows and the threshold (S93, #175; None: every living star). A copy
+    each call; the arithmetic is the stage's, bit for bit."""
     key = (_digest(fields["stars_formed_history"]), _digest(fields["feh_history"]), float(t_max), int(n_t),
-           float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows))
-    held = _ANCHORS.get(key)
+           float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows),
+           None if l_min is None else float(l_min))
+    cache, cap = (_ANCHORS, 2 * _ANCHORS_HELD) if l_min is None else (_ANCHORS_UNDER, _ANCHORS_HELD)
+    held = cache.get(key)
     if held is None:
-        held = np.array(_bright.window_anchors(fields, t_max, n_t, constants, windows))
+        held = np.array(_bright.window_anchors(fields, t_max, n_t, constants, windows, l_min))
         held.setflags(write=False)
-        _ANCHORS[key] = held
-        while len(_ANCHORS) > _ANCHORS_HELD:
-            _ANCHORS.popitem(last=False)
+        cache[key] = held
+        while len(cache) > cap:
+            cache.popitem(last=False)
     else:
-        _ANCHORS.move_to_end(key)
+        cache.move_to_end(key)
     return held.copy()
 
 
 _RESPONSES: OrderedDict[tuple, np.ndarray] = OrderedDict()
+_RESPONSES_UNDER: OrderedDict[tuple, np.ndarray] = OrderedDict()  # under a threshold, held apart (S93, as the anchors)
 
 
 def window_responses(fields: Any, t_max: float, n_t: int, constants: Mapping[str, Any],
-                     windows: Sequence[tuple[float, float]], curves: Sequence[Any]) -> np.ndarray:
+                     windows: Sequence[tuple[float, float]], curves: Sequence[Any], l_min: float | None = None) -> np.ndarray:
     """(len(windows), n_R, n_filters): the window anchors (:func:`window_anchors`) through ``curves`` at the ring's
     colour temperature (``spectra.stellar_response``), cached with the run and the request's filter set (the lead's
     ruling on review M1): keyed as the anchors are, plus disc_light_temperature by its bytes and the parsed curves by a
@@ -279,23 +287,26 @@ def window_responses(fields: Any, t_max: float, n_t: int, constants: Mapping[str
     T = fields["disc_light_temperature"]
     key = (_digest(fields["stars_formed_history"]), _digest(fields["feh_history"]), _digest(T), float(t_max), int(n_t),
            float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows),
-           hashlib.blake2b(repr(tuple(curves)).encode("utf-8"), digest_size=16).hexdigest())
-    held = _RESPONSES.get(key)
+           hashlib.blake2b(repr(tuple(curves)).encode("utf-8"), digest_size=16).hexdigest(),
+           None if l_min is None else float(l_min))
+    cache = _RESPONSES if l_min is None else _RESPONSES_UNDER
+    held = cache.get(key)
     if held is None:
-        anchors = window_anchors(fields, t_max, n_t, constants, windows)
+        anchors = window_anchors(fields, t_max, n_t, constants, windows, l_min)
         held = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])
         held.setflags(write=False)
-        _RESPONSES[key] = held
-        while len(_RESPONSES) > _ANCHORS_HELD:
-            _RESPONSES.popitem(last=False)
+        cache[key] = held
+        while len(cache) > _ANCHORS_HELD:
+            cache.popitem(last=False)
     else:
-        _RESPONSES.move_to_end(key)
+        cache.move_to_end(key)
     return held.copy()
 
 
 def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max: float, n_t: int, curves: Any,
                 middle: np.ndarray, cut: float, young_age: float,
-                weight: str) -> tuple[dict[str, Any] | None, list[tuple[str, np.ndarray]]]:
+                weight: str, *, l_min: float | None = None,
+                names: Mapping[int, str] = MIDDLE_KEPT) -> tuple[dict[str, Any] | None, list[tuple[str, np.ndarray]]]:
     """The ages' ``middle_kept`` entry and its three per-ring arrays (S66, D226 R5b): the middle part's light split by
     the clustering field's octaves its stars keep - ages [cut, t_3), [t_3, t_2), [t_2, t_1) keep 3, 2, 1 octaves
     (t_k the octave survival ages, :func:`octave_ages_myr`), the rest [t_1, young_age) none. Each window's anchors are
@@ -304,7 +315,9 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
     and the four are scaled per ring and filter by one closure factor ``middle / their sum``, as the three parts are
     scaled to the stars: so the three arrays and the rest (``middle`` less the three) sum to ``middle`` to rounding.
     The ages are the history's and the constants', not the layer's: the same arrays with the layer off, where the maps
-    are 1 (I5). None and no arrays where the model publishes no clustering field (``declared``)."""
+    are 1 (I5). None and no arrays where the model publishes no clustering field (``declared``). With ``l_min`` (S93,
+    #175: ``only=remainder``) each window's light under that threshold (:func:`window_anchors`), ``middle`` the
+    remainder's middle part, and the arrays called ``names``."""
     if not declared:
         return None, []
     ages = np.asarray(octave_ages_myr(constants)) / 1000.0  # Gyr, coarsest octave first
@@ -312,14 +325,14 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
         raise ValueError(f"the middle part splits by {len(KEPT)} octaves; the clustering field has {ages.size}")
     edges = np.clip(np.array([cut, ages[2], ages[1], ages[0], young_age]), cut, young_age)
     windows = [(float(edges[i]), float(edges[i + 1])) for i in range(4)]  # keep 3, 2, 1, 0 octaves
-    raw = window_responses(fields, t_max, n_t, constants, windows, curves)  # (4, R, filter), cached (review M1)
+    raw = window_responses(fields, t_max, n_t, constants, windows, curves, l_min)  # (4, R, filter), cached (review M1)
     total = raw.sum(axis=0)
     lit = (total > 0.0) & (middle > 0.0)
     factor = np.where(lit, middle / np.where(lit, total, 1.0), 1.0)
     parts = raw * factor[None]
     departure = [float(np.max(np.abs(factor[:, k] - 1.0), initial=0.0)) for k in range(factor.shape[1])]
     entry = {
-        "arrays": {str(k): MIDDLE_KEPT[k] for k in (3, 2, 1)},
+        "arrays": {str(k): names[k] for k in (3, 2, 1)},
         "ages_gyr": {"3": list(windows[0]), "2": list(windows[1]), "1": list(windows[2]), "rest": list(windows[3])},
         "octave_ages_myr": octave_ages_myr(constants),
         "weight": weight,
@@ -341,4 +354,4 @@ def middle_kept(declared: bool, fields: Any, constants: Mapping[str, Any], t_max
                  "the layer off, where every map is 1 (census_clustering's seed and cell means null): the parts are "
                  "then stars_middle split and placed as it is",
     }
-    return entry, [(MIDDLE_KEPT[k], parts[i]) for i, k in enumerate((3, 2, 1))]
+    return entry, [(names[k], parts[i]) for i, k in enumerate((3, 2, 1))]

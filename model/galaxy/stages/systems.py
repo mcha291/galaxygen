@@ -64,6 +64,7 @@ from galaxy.core import seeds as _seeds
 from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
+from galaxy.core.special import ordered_product  # S93 #218: _arrival sums with it; bright.py reads it from here
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
@@ -414,6 +415,18 @@ def star_at(counts: Sequence[tuple[int, int]], row: int) -> tuple[int, int]:
     raise IndexError(f"row {row} is past the {seen} stars these cells realise")
 
 
+def _arrival(born: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    """``born.T @ kernel`` - (steps, cell rings): what each step's births send to each cell ring - as a sum in an
+    order the model fixes (S93, #218): birth ring by birth ring, from the centre out, each term one elementwise
+    product added to the running total. A BLAS product sums in an order that follows its thread count (OpenBLAS's
+    dgemm read the star sample's ages one bit apart at 1 and 20 threads), and a seed names one galaxy whatever
+    the machine (#216's ruling). ``born`` is (birth rings, steps), ``kernel`` (birth rings, cell rings). Since the
+    review's mend (S93) it is :func:`core.special.ordered_product` itself - the same terms in the same order, every
+    bit unchanged (measured on the default galaxy layer on and off and the Milky Way's layer on)."""
+    return ordered_product(born.T, kernel)
+
+
+
 class Churn:
     """Where the stars now at each ring were born — the chemistry's migration kernel, backwards.
 
@@ -424,11 +437,14 @@ class Churn:
     kernel weighted by how much mass each ring had to send (rule B8, and see
     ``chemistry.transport``). Both are precomputed once per materialisation: one kernel per
     age bin, and one arrival law per cell ring, so the cost does not scale with the stars.
+    ``birth=False`` builds the arrival law alone (:func:`ring_young_share`, S91 #160): the
+    same loop and the same bits, without the birth-radius tables a star's draw reads.
     """
 
     __slots__ = ("R", "t", "arrive", "_born", "_cdf", "_bin", "_rings")
 
-    def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float):
+    def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float,
+                 *, birth: bool = True):
         """``rings`` are the grid indices of every cell ring — all of them, always: see the
         note at the call site for why this must not depend on which cells were asked for."""
         self.R, self.t = R, t
@@ -452,12 +468,14 @@ class Churn:
         # the whole bin — so the birth-radius distribution is read at that resolution too,
         # and the birth mass is summed over the bin to match it. Cumulative and normalised
         # here, once, so that drawing a star's birth radius is a search and not a sum.
-        self._cdf = np.zeros((R.size, widths.size, self._rings.size))
+        self._cdf = np.zeros((R.size, widths.size, self._rings.size)) if birth else None
         for b in range(widths.size):
             step = self._bin == b
             if not step.any():
                 continue
-            self.arrive[step] = self._born[:, step].T @ kcol[b]
+            self.arrive[step] = _arrival(self._born[:, step], kcol[b])
+            if not birth:
+                continue
             weight = self._born[:, step].sum(axis=1)[:, None] * kcol[b]
             cum = np.cumsum(weight, axis=0)
             total = cum[-1]
@@ -699,14 +717,12 @@ class YoungStars:
         sectors: np.ndarray,
     ) -> None:
         self.modulation = modulation
-        self.young_step = (t[-1] - t) < YOUNG_STAR_AGE
+        self.young_step = young_steps(t)
         first = int(np.argmax(self.young_step)) if self.young_step.any() else t.size
         # invert_cdf gives step k's weight to the interval ending at t[k], so a star born after
         # t[first - 1] was drawn from the young steps' weights, and it is young by that token.
         self.born_after = float(t[first - 1]) if first > 0 else -math.inf
-        total = arrive.sum(axis=0)
-        young = arrive[self.young_step].sum(axis=0)
-        self.share = np.where(total > 0.0, young / np.where(total > 0.0, total, 1.0), 0.0)
+        self.share = young_share(arrive, t)
         mids = 0.5 * (rings[:-1] + rings[1:])
         mod = modulation.sector_means_at(mids, sectors)
         ring_mean = mod.mean(axis=1, keepdims=True)
@@ -716,11 +732,62 @@ class YoungStars:
             if pattern is None or pattern.flat
             else np.array([pattern.sector_means(float(r), sectors) for r in mids])
         )
-        ratio = np.where(con > 0.0, mod / np.where(con > 0.0, con, 1.0), 1.0)
-        self.p = np.clip(self.share[:, None] * ratio, 0.0, 1.0)
+        self.p = young_fraction(self.share, mod, con)
 
     def is_young(self, born: np.ndarray) -> np.ndarray:
         return born > self.born_after
+
+
+def young_steps(t: np.ndarray) -> np.ndarray:
+    """The history's steps whose stars are younger than :data:`YOUNG_STAR_AGE` today, (n_t,) bool: the star sample's
+    split of a ring's arrival law into young and old (:class:`YoungStars`)."""
+    return (t[-1] - t) < YOUNG_STAR_AGE
+
+
+def young_share(arrive: np.ndarray, t: np.ndarray) -> np.ndarray:
+    """``y`` per cell ring, (rings,): the share of a ring's arrival law (:attr:`Churn.arrive`, (n_t, rings)) born in
+    the :func:`young_steps` - the young share the star sample's sectors are weighted by (:class:`YoungStars`); 0 where
+    the ring receives nothing."""
+    total = arrive.sum(axis=0)
+    young = arrive[young_steps(t)].sum(axis=0)
+    return np.where(total > 0.0, young / np.where(total > 0.0, total, 1.0), 0.0)
+
+
+def young_fraction(share: Any, mod: np.ndarray, con: np.ndarray) -> np.ndarray:
+    """``p = clip(y m̄ / c̄, 0, 1)``, the young share of each sector (:class:`YoungStars`, S27) - one function for the
+    star sample's level-0 rings and sub-rings and for the bright catalogue's and the render's old part (S91, #160):
+    ``share`` the ring's young share ``y``, a number or one per row of ``mod``; ``mod`` the modulation's sector means
+    over their ring mean (``m̄``); ``con`` the stellar pattern's sector means (``c̄``, unfloored), the ratio taken as
+    1 where ``c̄ <= 0``."""
+    ratio = np.where(con > 0.0, mod / np.where(con > 0.0, con, 1.0), 1.0)
+    y = np.asarray(share, dtype=float)
+    return np.clip((y[:, None] if y.ndim else y) * ratio, 0.0, 1.0)
+
+
+def ring_grid_index(sigma_star: np.ndarray, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
+    """The grid index that stands for each cell ring (``edges``, the :func:`cell_masses` rings): the grid point
+    nearest the ring's mean radius weighted by ``Σ★ R``. Computed from the density field rather than from the stars a
+    cell happens to realise: the realised mean would make a cell's ages depend on how many stars were asked for,
+    which silently broke the prefix property until a test caught it. The rings the arrival law is read at."""
+    weights = sigma_star * R
+    ring_radius = np.array([
+        float(np.average(R, weights=np.where((R >= edges[i]) & (R <= edges[i + 1]), weights, 0.0)))
+        if np.any((R >= edges[i]) & (R <= edges[i + 1]) & (weights > 0.0))
+        else 0.5 * (edges[i] + edges[i + 1])
+        for i in range(edges.size - 1)
+    ])
+    return np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
+
+
+def ring_young_share(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, *, migration: float) -> np.ndarray:
+    """(CELL_RINGS,): each level-0 ring's young share ``y``, the star sample's own (``Placement(...).young.share``,
+    to the bit): the churn's arrival law (:class:`Churn` with its birth-radius tables not built) at the rings'
+    :func:`ring_grid_index`, split by :func:`young_share`. What the bright catalogue and the render place their old
+    part with where the model publishes a modulation, ``c̄ (1 − p)`` (S91, #160: the owner's ruling)."""
+    _, edges = cell_masses(fields["stellar_surface_density"], R)
+    rings = ring_grid_index(fields["stellar_surface_density"], R, edges)
+    churn = Churn(R, t, fields["sfr_surface_density_history"], rings, migration, birth=False)
+    return young_share(churn.arrive, t)
 
 
 # --- the ring-first draw (S61, D220 part I) ----------------------------------
@@ -728,7 +795,45 @@ class YoungStars:
 # The per-star streams of a ring's draw, each an array of the ring's count (D220 item 1). The names are the ones the
 # cells' streams had until S61; ``sector`` (the allocation's uniform) and ``count`` (the ring's seeded rounding) are
 # the ring's own.
-STAR_STREAMS: tuple[str, ...] = ("radius", "age", "azimuth", "birth_radius", "height", "mass")
+STAR_STREAMS: tuple[str, ...] = ("radius", "age", "azimuth", "birth_radius", "height", "mass", "member")
+
+
+# --- the young population drawn once (S93, T3 / #115) ---------------------------------------------------------
+
+# What the membership reads: the cluster census's age window (its clouds' blown-open and dispersing phases) and the
+# rule by which a cluster in it is a point or dissolved (clusters.materialise_clusters: bound at the bound fraction,
+# independent of mass; an unbound one dissolved from the dissolution age).
+CLUSTER_MEMBER_CONSTANTS: tuple[str, ...] = (
+    "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_BOUND_FRACTION",
+)
+
+
+def cluster_window(constants: Mapping[str, Any]) -> float:
+    """Gyr: the ages the cluster census holds (its clouds' blown-open and dispersing phases), which the
+    bright catalogue leaves to it and the sample's membership reads, so that no star is counted twice."""
+    return (float(constants["GMC_PHASE_BLOWN_OPEN"]) + float(constants["GMC_PHASE_DISPERSING"])) / 1000.0
+
+
+def cluster_state(age: np.ndarray, u: np.ndarray, bound_fraction: float, dissolution: float) -> np.ndarray:
+    """The census's one rule (``clusters.CLUSTER_BOUND_STATES``): 0 bound - its uniform ``u`` below the bound fraction,
+    whatever its mass and age (Lada & Lada 2003) - else 1 unbound while younger than the dissolution age and 2
+    dissolved past it; ``age`` and ``dissolution`` in one unit. ``clusters.materialise_clusters`` states each cluster
+    by it and :func:`cluster_member` the sample's young stars (S93 review: one rule, not two copies, as S92's #217)."""
+    bound = np.asarray(u, dtype=float) < bound_fraction
+    return np.where(bound, 0, np.where(np.asarray(age, dtype=float) < dissolution, 1, 2)).astype(np.int64)
+
+
+def cluster_member(age_gyr: np.ndarray, u: np.ndarray, constants: Mapping[str, Any]) -> np.ndarray:
+    """1 where a sampled star is one the cluster points carry, else 0 (S93, T3 / #115): younger than the census's
+    window and in a cluster that is still a point - every cluster younger than the dissolution age (bound or
+    unbound), and past it a bound one, at the census's own bound fraction drawn on the star's ``member`` uniform.
+    The rest of the window is the dissolved clusters' stars, an association spread over its cell: the sample
+    keeps them and the dissolved clusters are not drawn as points. It is the census's partition by class, not by
+    object - bound is drawn independent of mass and age (Lada & Lada 2003), so the kept stars hold, over the
+    sampling fraction, the dissolved clusters' light in expectation at every age - and no star names its cluster."""
+    age = np.asarray(age_gyr, dtype=float)
+    state = cluster_state(age, u, float(constants["CLUSTER_BOUND_FRACTION"]), float(constants["CLUSTER_DISSOLUTION_AGE"]) / 1000.0)
+    return ((age < cluster_window(constants)) & (state != 2)).astype(np.int64)
 
 
 def star_stream(seed: int, ring: int, name: str, level: int = 0) -> np.random.Generator:
@@ -829,18 +934,8 @@ class Placement:
                  constants: Mapping[str, Any] | None) -> None:
         _, edges = cell_masses(fields["stellar_surface_density"], R)
         self.edges, self.t = edges, t
-        # The radius that stands for a ring, computed from the density field rather than
-        # from the stars a cell happens to realise. Using the realised mean would make a
-        # cell's ages depend on how many stars were asked for, which silently broke the
-        # prefix property until a test caught it.
-        weights = fields["stellar_surface_density"] * R
-        ring_radius = np.array([
-            float(np.average(R, weights=np.where((R >= edges[i]) & (R <= edges[i + 1]), weights, 0.0)))
-            if np.any((R >= edges[i]) & (R <= edges[i + 1]) & (weights > 0.0))
-            else 0.5 * (edges[i] + edges[i + 1])
-            for i in range(CELL_RINGS)
-        ])
-        self.ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
+        # The radius that stands for a ring, from the density field (ring_grid_index: why not the realised stars').
+        self.ring_index = ring_grid_index(fields["stellar_surface_density"], R, edges)
         # The pattern the catalogue places by, from compose (S55, D214): none with the layer off, and then every
         # sector of a ring is alike and a star's azimuth is uniform in its sector - the arithmetic of no pattern.
         self.pattern = _compose.stellar_pattern(fields, R)
@@ -850,6 +945,8 @@ class Placement:
         # a region came back with a star one bit from the sweep's. Per-region determinism is
         # this stage's whole contract (D60), and arithmetic that depends on what was asked for
         # is the one thing it cannot have. Affordable because the kernel is read by column now.
+        # (Since S93, #218, the product is a sum the model orders itself, :func:`_arrival`, whose
+        # columns no longer depend on each other; the rings stay all of them.)
         self.churn = Churn(R, t, fields["sfr_surface_density_history"], self.ring_index, migration)
         # Where stars form today, when the model publishes it (the azimuthal model, S27): read
         # optionally, so the same stage draws both models' catalogues, and tabulated over every
@@ -914,8 +1011,7 @@ class Placement:
         mean = float(mod.mean())
         mod = mod / mean if mean > 0.0 else np.ones_like(mod)
         c = np.ones_like(mod) if con is None else con
-        ratio = np.where(c > 0.0, mod / np.where(c > 0.0, c, 1.0), 1.0)
-        p = np.clip(float(self.young.share[r]) * ratio, 0.0, 1.0)
+        p = young_fraction(float(self.young.share[r]), mod, c)
         c = np.maximum(c, 0.0)
         return c * (1.0 - p), c * p
 
@@ -1091,6 +1187,9 @@ def materialise(
     # [α/Fe] at birth, read at the same place as [Fe/H].
     alpha = np.asarray(fields["alpha_fe_history"], dtype=float)
     width = 2.0 * math.pi / CELL_SECTORS
+    # S93 (T3 / #115): the membership is published where the census's constants are given (the stage and the routes
+    # give every model constant); a caller that gives none gets a catalogue without the column, never a guessed rule.
+    members = constants is not None and all(k in constants for k in CLUSTER_MEMBER_CONSTANTS)
 
     def rows_for(cell: int, count: int, draw: Callable[[str], np.ndarray], footprint: dict[str, float] | None) -> dict[str, np.ndarray]:
         """One cell's (or one child's extra) stars: every column but the looked-up ones.
@@ -1146,6 +1245,7 @@ def materialise(
         is_thick = thick_at_birth[rows, cols]
         metallicity = feh[rows, cols]
         height = sech2_height(draw("height"), np.where(is_thick, h_thick, h_thin))
+        own = {"star_cluster_member": cluster_member(t[-1] - born, draw("member"), constants)} if members else {}
         return {
             "star_radius": radius,
             "star_azimuth": azimuth,
@@ -1156,6 +1256,7 @@ def materialise(
             "star_alpha": alpha[rows, cols],
             "star_mass": imf_sample(draw("mass")),
             "star_population": is_thick.astype(np.int64),
+            **own,
         }, pending
 
     def place(made: Sequence[tuple[dict[str, np.ndarray], tuple | None]]) -> None:
@@ -1314,6 +1415,8 @@ def materialise(
                       "star_luminosity", "star_temperature", "star_magnitude_v", "star_ionizing_photons",
                       "star_wind_luminosity", "star_remnant_mass", "star_bubble_radius")
         } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}
+        if members:
+            blank["star_cluster_member"] = empty.astype(np.int64)
         if level:
             blank |= {n: empty.astype(np.int64) for n in ("level", "cell", "index")}
         return Catalogue.of(blank, out_counts, out_layout)
@@ -1550,6 +1653,19 @@ STAR_WOLF_RAYET = FieldDecl(
     ),
 )
 
+STAR_CLUSTER_MEMBER = FieldDecl(
+    name="star_cluster_member", label="Carried by a cluster point", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
+    of="star", categories=("field", "cluster"), ramp=Palette(("#5a5a5a", "#6fd3ff")), provenance="seeded",
+    about=(
+        "Whether the cluster census's points carry this star (S93, T3 / #115): a star younger than the census's "
+        "window (its clouds' blown-open and dispersing phases, 20 Myr) in a cluster that is still a point - "
+        "every one younger than the dissolution age, past it a bound one at the census's bound fraction, drawn "
+        "on the star's own uniform. A star the points carry is not drawn as a sampled star, and a dissolved "
+        "cluster is not drawn as a point: its stars are the sample's. The census's partition by class, not a "
+        "star's cluster by name: the light matches in expectation, not star by star."
+    ),
+)
+
 STAR_REMNANT = FieldDecl(
     name="star_remnant", label="Remnant", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=REMNANT_CATEGORIES,
@@ -1636,7 +1752,8 @@ SYSTEMS = IMPLEMENTATIONS.register(
         reads_inputs=("migration_efficiency",),
         # S59 (D218): what the young stars' reader applies the star formation law with - the gas pattern's
         # constants and the law's index. Read only where the model publishes a modulation and the layer is on.
-        reads_constants=YOUNG_CONSTANTS,
+        # S93 (T3 / #115): and the cluster census's window and rule, which the membership is read with.
+        reads_constants=(*YOUNG_CONSTANTS, *CLUSTER_MEMBER_CONSTANTS),
         requires=tuple(dict.fromkeys((
             "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
             "birth_population", "sfr_surface_density_history", "feh_history", "alpha_fe_history",
@@ -1653,7 +1770,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
             STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
             STAR_MAGNITUDE_V, STAR_IONIZING_PHOTONS, STAR_WIND_LUMINOSITY, STAR_WOLF_RAYET,
-            STAR_REMNANT, STAR_REMNANT_MASS, STAR_BUBBLE_RADIUS,
+            STAR_REMNANT, STAR_REMNANT_MASS, STAR_BUBBLE_RADIUS, STAR_CLUSTER_MEMBER,
         ),
     )
 )

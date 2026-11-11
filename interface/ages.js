@@ -164,6 +164,30 @@ export function keptParts(header, arrays) {
 }
 
 /**
+ * The star-first mode's remainder as parts (S93, #175): under a threshold the render's stars are `stars_unresolved`,
+ * whose rule the remainder's header states as two per-ring parts, each placed by a weight among the render's arrays
+ * (`remainder.parts`: middle and old; no young part - the clusters carry it), and whose middle part the route splits by
+ * the octaves its stars keep as the field mode's (`remainder.middle_kept`). Returns { parts, kept } in the shapes
+ * ageParts and keptParts return - the parts middle then old, `kept` keptParts' - or null unless every array is there.
+ * clumpedLight over them is stars_unresolved split for the clustered march; agedLight over them, stars_unresolved.
+ */
+export function remainderParts(header, arrays) {
+  const declared = header?.remainder?.parts;
+  if (!declared || !arrays) return null;
+  const parts = [];
+  for (const part of AGE_PARTS) {
+    if (part.key === "young") continue;
+    const entry = declared[part.key];
+    const name = entry?.array;
+    const weight = entry?.weight;
+    if (typeof name !== "string" || !(name in arrays) || typeof weight !== "string" || !(weight in arrays)) return null;
+    parts.push({ ...part, name, unit: header.components?.stars?.unit ?? null, placedBy: weight, weight, ages: null });
+  }
+  const kept = keptParts({ ages: { middle_kept: header.remainder.middle_kept } }, arrays);
+  return kept ? { parts, kept } : null;
+}
+
+/**
  * The stellar layer split for the clustered march: `rest` (the old part and the middle part's light that keeps no
  * octave) and `clumps` [k = 3, 2, 1] - the young part with the middle's 3-octave light (both are multiplied by the
  * 3-octave map), the middle's 2-octave and its 1-octave light - each row-major over (R, phi, filter) and placed as

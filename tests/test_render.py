@@ -66,8 +66,8 @@ TOLERANCE = 1e-3
 MEASURED_B_V = 0.561772  # S87 (#148, #80): was 0.569495 - the clock (#148) and the default disc's bar from Erwin's law (#80). # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.561777
 MEASURED_M_V = -21.146766  # S87 (#148, #80): was -21.110365. # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
 # The first cut's record (S38): one blackbody at the colour temperature.
-FIRST_CUT_B_V = 0.583477  # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
-FIRST_CUT_M_V = -21.888969  # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
+FIRST_CUT_B_V = 0.583346  # S93 (D262; #113 / #171, fd57ebc): the first cut is tied to the table's own Sun, and photometry.lookup reads it along equivalent evolutionary points now - both zero points moved; was 0.583477. # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
+FIRST_CUT_M_V = -21.886848  # S93 (D262; #113 / #171, fd57ebc): the Sun's lookup, as above; was -21.888969. # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
 # S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
@@ -212,7 +212,7 @@ def test_the_first_cut_is_recorded(full):
     weight = (f["disc_surface_brightness"] * grid.R)[lit]
     assert d.min() == pytest.approx(-0.0889, abs=1e-3)  # S87 (#148, #80): was -0.0876 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was -0.0796
     assert d.max() == pytest.approx(0.2439, abs=1e-3)  # S87 (#148, #80): was 0.2417 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.2517
-    assert np.average(d, weights=weight) == pytest.approx(0.0563, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
+    assert np.average(d, weights=weight) == pytest.approx(0.0553, abs=1e-3)  # S93 (D262; #113 / #171): the Sun's lookup moved the zero points - reads 0.05535, at the edge of the old pin's tolerance; was 0.0563 (the minimum -0.08901 and the maximum 0.24377 stay inside theirs)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
 
 
 def test_the_viewer_s_rgb_b_and_v_are_the_table_s_bands():
@@ -287,12 +287,20 @@ def test_the_other_lines_are_their_fields_through_each_curve_at_their_wavelength
     assert np.allclose(arrays["lines_hii"][..., 0], sii, rtol=1e-12, atol=0.0)
     assert not arrays["lines_hii"][..., 1].any()
     assert np.allclose(arrays["lines_hii"][..., 2], f["oiii_5007_surface_brightness_hii"][:, None] * placed, rtol=1e-12, atol=0.0)
-    assert not arrays["lines_dig"].any()  # Hbeta falls in none of the three boxes
+    # S93 (#119): was `assert not arrays["lines_dig"].any()` (Hbeta falls in none of the three boxes) - the diffuse gas
+    # carries its [N II] and [S II] since (Madsen et al. 2006's relation), and its [S II] pair lands in red.
+    g = scalars(full, model.name, "sii_6716_surface_brightness_dig", "sii_6731_surface_brightness_dig")
+    assert np.allclose(arrays["lines_dig"][:, 0], g["sii_6716_surface_brightness_dig"] + g["sii_6731_surface_brightness_dig"], rtol=1e-12, atol=0.0)
+    assert not arrays["lines_dig"][:, 1:].any()
     assert header["layers"]["lines_hii"] == header["layers"]["halpha_hii"] and header["layers"]["lines_dig"] == header["layers"]["halpha_dig"]
     # Through the broadband set Hbeta lands in B, in both layers.
     header, arrays = render(full, model.name, "rgb")
-    b = header["components"]["lines_dig"]["lines"]["hbeta"]["transmission"]
-    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], f["hbeta_surface_brightness_dig"][:, None] * np.array(b), rtol=1e-12, atol=0.0)
+    dig_lines = header["components"]["lines_dig"]["lines"]
+    b = dig_lines["hbeta"]["transmission"]
+    assert set(dig_lines) == {"hbeta", "nii_6583", "sii_6716", "sii_6731"}  # S93 (#119): was Hbeta alone
+    g = scalars(full, model.name, *(f"{n}_surface_brightness_dig" for n in dig_lines))
+    summed = sum(g[f"{n}_surface_brightness_dig"][:, None] * np.array(dig_lines[n]["transmission"]) for n in dig_lines)
+    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], summed, rtol=1e-12, atol=0.0)
     # Every HII line is its ring's Halpha times a ratio the census's regions set: finite and non-negative.
     for n in names:
         x = f[f"{n}_surface_brightness_hii"]
@@ -586,8 +594,10 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     # And the dust's placement round each ring (D207): one factor per (R, phi) cell, no filter axis.
     assert arrays["dust_placement"].shape == (48, 36) and header["axes"]["dust_placement"] == ["R", "phi"]
     # And the stars split by age with the weights that place them (S63, D223): the middle part's own weight where the
-    # model publishes sfr_modulation.
-    by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement", *(["stars_middle_placement"] if model.name != "basic" else [])}
+    # model publishes sfr_modulation - and since S91 (#160) the old part's, by the star sample's rule (was the middle's
+    # alone).
+    by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement",
+              *(["stars_middle_placement", "stars_old_placement"] if model.name != "basic" else [])}
     # And the share of each ring's dust that is diffuse once its realised clouds hold theirs (S64, V6): one per ring.
     assert arrays["dust_diffuse_share"].shape == (48,) and header["axes"]["dust_diffuse_share"] == ["R"]
     # And V7's (S66, D226 R4-R5): the placement without the gas spurs, and the middle part split by kept octaves.
@@ -1033,7 +1043,7 @@ def test_the_tables_are_the_trapezoid_between_their_rows(name):
     parsed = [spectra.band_curve(b) for b in BANDS] if name == "bands" else spectra.parse_curves(SETS[name]["curves"])
     factors = spectra.response_factors(parsed)
     slopes = 0.5 * (spectra.RESPONSE_SLOPES[1:] + spectra.RESPONSE_SLOPES[:-1])
-    kelvin = np.sqrt(spectra.RESPONSE_TEMPERATURES[1:] * spectra.RESPONSE_TEMPERATURES[:-1])
+    kelvin = np.sqrt(spectra.TAIL_TEMPERATURES[1:] * spectra.TAIL_TEMPERATURES[:-1])  # S92 (#211): was RESPONSE_TEMPERATURES - the tails' own grid
     tables = {k: (table[..., 0], member) for k, table, member in factors.segments}
     log_x, ends = np.log(spectra.SED_WAVELENGTHS), spectra.SED_WAVELENGTHS
     for c, curve in enumerate(parsed):
@@ -1122,8 +1132,13 @@ GATE = {
     "rgb": (5.4e-8, 2.83e-6, 8.3e-8),
     "sho": (3.16e-6, 9.51e-6, 3.26e-6),
     "hoo": (3.16e-6, 9.51e-6, 3.26e-6),
-    "wfc3": (1.93e-6, 1.89e-5, 2.07e-6),
+    # S92 (#211): the median and the weighted were 1.93e-6 and 2.07e-6 - the tails tabulated on their own finer grid
+    # (TAIL_TEMPERATURES, 1/384 dex to 10^6 K) are read closer to the exact integral; the worst unmoved within 5 %.
+    "wfc3": (1.60e-6, 1.89e-5, 1.64e-6),
     "wfc3n": (3.16e-6, 9.50e-6, 3.27e-6),
+    # S93 (T11 merged, #211): JWST NIRCam's F444W, F200W, F090W, measured at S93 on the tails' own grid (S92) - as
+    # measured, not a bound; D200's thresholds hold.
+    "jwst_nircam": (9.55e-7, 6.27e-6, 7.86e-7),
 }
 
 
@@ -1208,6 +1223,18 @@ def _unresolved_query(model: str, l_min: float | None, **extra) -> dict:
     return query
 
 
+def _old_rows(api: Service, model) -> np.ndarray | None:
+    """S91 (#160): each R row's young share by the star sample's rule, as the render places its old part with it
+    (``service.old_share``: ``bright.row_young_share`` of the run); None where the model publishes no sfr_modulation."""
+    from galaxy.api.service import old_share
+    from galaxy.stages import bright as br
+
+    if "sfr_modulation" not in api._declared(model):
+        return None
+    out, _ = api.compute(model, {}, ["sfr_modulation", *br.OLD_SHARE_READS], True)
+    return old_share(out.fields, out)
+
+
 def test_without_l_min_the_render_is_the_one_it_was(full, model):
     """l_min= adds one component, its entry in components and axes, and the header's resolved; nothing else moves.
     Asserted byte for byte: the body without it is the body with it, the additions taken out (both warm, so both
@@ -1232,8 +1259,10 @@ def test_without_l_min_the_render_is_the_one_it_was(full, model):
 def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_them(full, model):
     """stars_unresolved is bright.resolve's two remainder parts through the curves at the ring's colour temperature,
     the 20-100 Myr part placed by sfr_modulation normalised around its ring where the model publishes it, the older
-    by the pattern's contrast (bright.part_weights, the catalogue's rule); in the basic model both by the contrast,
-    so it is a fixed share of the stars around each ring. The header states the split and the closure."""
+    by the pattern's contrast (bright.part_weights, the catalogue's rule) - since S91 (#160), where the model publishes
+    sfr_modulation, times one less the star sample's young share of the cell, the sample's rule; in the basic model
+    both by the contrast, so it is a fixed share of the stars around each ring. The header states the split and the
+    closure."""
     from galaxy.stages import bright as br
 
     header, arrays = render_q(full, _unresolved_query(model.name, 1000.0))
@@ -1247,7 +1276,7 @@ def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_th
     parsed = spectra.parse_curves(SETS["rgb"]["curves"])
     middle = spectra.stellar_response(res.anchors["unresolved_middle"], f["disc_light_temperature"], parsed)
     old = spectra.stellar_response(res.anchors["unresolved_old"], f["disc_light_temperature"], parsed)
-    w = br.part_weights(f["pattern_density_contrast"], f.get("sfr_modulation"))
+    w = br.part_weights(f["pattern_density_contrast"], f.get("sfr_modulation"), _old_rows(full, model))  # S91 (#160): the share
     want = middle[:, None, :] * w[0][..., None] + old[:, None, :] * w[1][..., None]
     assert np.allclose(rest, want, rtol=1e-12, atol=0.0)
     lit = stars > 0.0
@@ -1313,11 +1342,13 @@ AGE_FACTORS = {
         "rgb": [4.8901e-06, 2.8865e-06, 1.5218e-06], "sho": [9.5634e-04, 1.2199e-03, 2.4530e-03],
         "hoo": [1.2199e-03, 2.4530e-03, 2.4530e-03], "wfc3": [5.5423e-05, 2.0168e-03, 8.3577e-04],
         "wfc3n": [8.9636e-04, 1.2221e-03, 2.4282e-03],
+        "jwst_nircam": [1.3170e-03, 1.5114e-03, 9.1216e-04],  # S93 (T11 merged, #211): measured at S93, the full grid
     },
     "ngc_4414": {
         "rgb": [3.9888e-06, 2.2993e-06, 1.1286e-06], "sho": [9.1120e-04, 1.1731e-03, 2.2775e-03],
         "hoo": [1.1731e-03, 2.2775e-03, 2.2775e-03], "wfc3": [4.5263e-05, 1.7968e-03, 7.3741e-04],
         "wfc3n": [8.5161e-04, 1.1753e-03, 2.2545e-03],
+        "jwst_nircam": [1.0329e-03, 1.1778e-03, 7.5136e-04],  # S93 (T11 merged, #211): measured at S93, the full grid
     },
 }
 AGE_FACTORS["milky_way"] = AGE_FACTORS[None]
@@ -1401,10 +1432,12 @@ def test_each_part_is_its_own_spectrum_scaled_by_the_ring_s_closure_factor(full,
 
 def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(full, model):
     """Rule D5 as amended: the viewer places a part by the array the header names and computes no physics. The old
-    part by the stellar contrast (stars_placement, what stars is placed by), the middle by sfr_modulation over its
-    ring mean (bright.part_weights; the contrast in a model that publishes none), the young by the gas's own contrast
-    (the dust's placement). Every weight's fields are the run's; each averages to 1 round every ring; the age
-    bounds are the bright catalogue's (bright.AGE_PARTS)."""
+    part by the stellar contrast (stars_placement, what stars is placed by) in a model that publishes no
+    sfr_modulation, and where it publishes one - since S91 (#160) - by the star sample's rule (stars_old_placement,
+    bright.part_weights' old part), the middle by sfr_modulation over its ring mean (bright.part_weights; the
+    contrast in a model that publishes none), the young by the gas's own contrast (the dust's placement). Every
+    weight's fields are the run's; each averages to 1 round every ring; the age bounds are the bright catalogue's
+    (bright.AGE_PARTS)."""
     from galaxy.stages import bright as br
 
     header, arrays = render_q(full, {"model": [model.name], "filters": [curves("rgb")]})
@@ -1413,11 +1446,16 @@ def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(fu
     assert ages["rule"] == "part(R, phi, filter) = part(R, filter) * weight(R, phi)"
     assert [ages["parts"][p]["ages_gyr"] for p in AGES] == [[0.0, 0.02], [0.02, 0.1], [0.1, None]]
     azimuthal = model.name != "basic"
-    want = {"young": "dust_placement", "middle": "stars_middle_placement" if azimuthal else "stars_placement", "old": "stars_placement"}
+    # S91 (#160): was "old": "stars_placement" in both models, and the weights stars_placement and
+    # stars_middle_placement - the old part was the contrast alone until the owner's ruling of 2026-11-10.
+    want = {"young": "dust_placement", "middle": "stars_middle_placement" if azimuthal else "stars_placement",
+            "old": "stars_old_placement" if azimuthal else "stars_placement"}
     assert {p: ages["parts"][p]["weight"] for p in AGES} == want
-    assert set(ages["weights"]) == {"stars_placement", *(["stars_middle_placement"] if azimuthal else [])}
-    published = {"stars_placement": ["pattern_density_contrast"], "stars_middle_placement": ["sfr_modulation"], "dust_placement": ["gas_density_contrast"]}
-    f = scalars(full, model.name, "pattern_density_contrast", "gas_density_contrast", *(["sfr_modulation"] if azimuthal else []))
+    assert set(ages["weights"]) == {"stars_placement", *(["stars_middle_placement", "stars_old_placement"] if azimuthal else [])}
+    published = {"stars_placement": ["pattern_density_contrast"], "stars_middle_placement": ["sfr_modulation"], "dust_placement": ["gas_density_contrast"],
+                 "stars_old_placement": ["pattern_density_contrast", "sfr_modulation", *br.OLD_SHARE_READS]}
+    f = scalars(full, model.name, "pattern_density_contrast", "gas_density_contrast",
+                *(["sfr_modulation", *br.OLD_SHARE_READS] if azimuthal else []))
     for p in AGES:
         entry = ages["parts"][p]
         assert entry["array"] == AGE_ARRAYS[p] and entry["weight"] in arrays and header["axes"][entry["weight"]] == ["R", "phi"]
@@ -1426,7 +1464,10 @@ def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(fu
     assert np.array_equal(arrays["stars_placement"], np.maximum(f["pattern_density_contrast"], 0.0))
     assert np.array_equal(arrays["dust_placement"], np.maximum(f["gas_density_contrast"], 0.0))
     if azimuthal:
-        assert np.array_equal(arrays["stars_middle_placement"], br.part_weights(arrays["stars_placement"], f["sfr_modulation"])[0])
+        w = br.part_weights(arrays["stars_placement"], f["sfr_modulation"], _old_rows(full, model))
+        assert np.array_equal(arrays["stars_middle_placement"], w[0]) and np.array_equal(arrays["stars_old_placement"], w[1])
+        moved = np.max(np.abs(arrays["stars_old_placement"] - arrays["stars_placement"]))
+        assert 1e-3 < moved < 0.05  # the sample's rule moves the old part off the contrast (measured 1.44e-2)
         spread = np.ptp(arrays["stars_middle_placement"] - arrays["stars_placement"], axis=1)
         assert np.max(spread) > 0.05  # the middle part does not follow the stars
     assert "the viewer multiplies the part's ring value by the weight at (R, phi)" in ages["about"]
@@ -1444,6 +1485,30 @@ def test_the_parts_shares_of_the_disc_s_light_are_pinned_as_measured(full):
         for p in AGES:
             assert got[p] == pytest.approx(pinned[p], abs=2e-6), (name, p)
         assert np.allclose(sum(np.array(got[p]) for p in AGES), 1.0, rtol=1e-12)
+
+
+def test_the_whole_render_s_age_parts_are_their_cached_bits_with_and_without_l_min(small, model):
+    """S93 (#166): the render's parts read bright.part_anchors' arithmetic through the run's cache - the same bits as
+    bright.part_anchors itself, the same bits on a second (warm) request, and the same bits under a whole-grid l_min=
+    (which adds stars_unresolved and keeps the parts, test_without_l_min_the_render_is_the_one_it_was)."""
+    q = {**_ages_query("rgb"), "model": [model.name]}
+    header, whole = render_q(small, q)
+    _, again = render_q(small, q)
+    lh, lit = render_q(small, {**q, "l_min": ["2251.0"]})
+    assert header["ages"] is not None and lh["ages"] == header["ages"]
+    assert np.array_equal(lit["stars"], whole["stars"]) and "stars_unresolved" in lit
+    for p in AGES:
+        assert np.array_equal(again[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]), p
+        assert np.array_equal(lit[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]), p
+    from galaxy.api import v7_layer
+    from galaxy.stages import bright as br
+    from galaxy.stages import systems as sy
+
+    f = scalars(small, model.name, "stars_formed_history", "feh_history")
+    c = {k: v.value for k, v in model.constants.items()}
+    cut, spec = br.cluster_window(c), small.grid.spec
+    cached = v7_layer.window_anchors(f, spec.t_max, spec.n_t, c, [(0.0, cut), (cut, sy.YOUNG_STAR_AGE), (sy.YOUNG_STAR_AGE, math.inf)])
+    assert np.array_equal(cached, br.part_anchors(f, spec.t_max, spec.n_t, c))
 
 
 def test_the_parts_ride_on_windows_and_region_cells(small):

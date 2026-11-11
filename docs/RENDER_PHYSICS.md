@@ -58,8 +58,8 @@ sections below as a description of an empty slate.
   (Byler et al. 2017 via FSPS, fetched on the owner's word of 2026-09-27, clamped at its
   edges): per region `hii_{oiii_5007,nii_6583,sii_6716,sii_6731}_ratio` over its own Hα,
   per ring `*_surface_brightness_hii`, and Hβ in both layers; `/api/render` carries them as
-  `lines_hii` / `lines_dig` and `absent.lines` is empty. The diffuse gas has no forbidden
-  line (the grid does not model its field; debt #119).
+  `lines_hii` / `lines_dig` and `absent.lines` is empty. The diffuse gas carries Hβ and,
+  since S93 (#119), [N II] 6583 and [S II] 6716 / 6731 by Madsen et al. 2006 at the layer's temperature.
 - **Since S36 (Phase 10)** the `bubbles` stage publishes the hollow: per cluster
   Weaver et al. 1977's bubble (radius, shell velocity, density, thickness, Hα per
   unit volume in the shell, interior pressure and temperature, phase, stalled),
@@ -328,8 +328,11 @@ sub-step); per level-0 ring on a
 capture's own pixel lattice, at 16 offsets, the dust's column and every clustered part,
 young and kept, within the derived one-draw bound 3 sqrt((e^v - 1) g^2 / N_r) of a log-normal map
 point-sampled on the ring's pixels (worst 2.93 of it; debt #176) `[verified: tests/test_v7_layer.py,
-frontend/e2e/picture.spec.ts]`. Not modulated: the star-first points' dust (the ring's placed
-column, R7) and the star-first remainder's middle part (R5e) - debts.
+frontend/e2e/picture.spec.ts]`. Since S93 (#174) the star-first points' diffuse dust takes the same gas map,
+read once per point as the same thin screen (where the segment to the camera crosses the midplane, else
+at the point's own projection; the spurs as their cell means, the clouds unmapped), and the star-first
+remainder's middle part is split by kept octaves as the field mode's (#175, `only=remainder`'s
+`remainder.middle_kept`) and clustered in the march with the young light clustered.
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,

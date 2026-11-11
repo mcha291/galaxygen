@@ -12,6 +12,18 @@
    "date": "2026-10-26",
    "by": "the S73 walker (#200)",
    "covered": "both templates, the built viewer on galaxy.api with no bundle mounted: the landing; the field mode under each shipped set (rgb, sho, hoo, wfc3, wfc3n); the star-first mode under each set; physics only (layer=off) in the star-first and the field mode under each set; the layer back on; the Science tab, scene and plots looks, every group's previews, every history each offers (the plots' picker and checkpoint 4's chips), the preview charts on and off on each scene. Then a second walk per template, layer on and off: the field mode's clouds-as-extinction switch flipped and back, the star-first mode's molecular-clouds component on and off (the Milky Way's whole-disc /api/clouds, which its default never asks). /api/layer as #199 asks it. 380 /api answers logged, none windowed (nothing below 4 kpc), 171 meanings, 136 new to this file."
+  },
+  {
+   "session": "S93",
+   "date": "2026-11-11",
+   "by": "the S93 REST mend (D262; by hand, no walk run)",
+   "covered": "no new walk: the twenty only=remainder records respelled with kept=1 before filters=, as api.ts loadRemainder sends since S93 (#175); tests/test_bundle.py reads that loader beside the plan so the two cannot part again."
+  },
+  {
+   "session": "S93",
+   "date": "2026-11-11",
+   "by": "the S93 gate (D262; by hand, no walk run)",
+   "covered": "no new walk: the Science tab's plots request at the ionized gas's checkpoint (two records, one per template, layer on) respelled with the three line fields the diffuse gas declares since S93 (#118: nii_6583, sii_6716 and sii_6731 _surface_brightness_dig), each in its unit's group where /api/fields declares it - Preview.tsx builds that list from /api/fields and is unchanged since the S73 walk, tools/export_template.py's science_arrays mirrors it; bytes are the S73 walk's. No walk ran under jwst_nircam either, the set shipped at S93 with T11 (as JWST): tests/test_bundle.py holds its seventeen planned entries to wfc3's with the curves swapped. A walk of the built viewer on S93's model, the new set under it, is owed to confirm both."
   }
  ],
  "prefixes": {
@@ -90,7 +102,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/on",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:rgb>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:rgb>",
    "bytes": 14680
   },
   {
@@ -132,7 +144,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/off",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:rgb>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:rgb>",
    "bytes": 14864
   },
   {
@@ -180,7 +192,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/on",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:rgb>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:rgb>",
    "bytes": 13728
   },
   {
@@ -222,7 +234,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/off",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:rgb>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:rgb>",
    "bytes": 13920
   },
   {
@@ -318,7 +330,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/on",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:sho>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:sho>",
    "bytes": 14816
   },
   {
@@ -330,7 +342,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/on",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:hoo>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:hoo>",
    "bytes": 14816
   },
   {
@@ -342,7 +354,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/on",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:wfc3>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:wfc3>",
    "bytes": 27656
   },
   {
@@ -354,7 +366,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/on",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:wfc3n>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:wfc3n>",
    "bytes": 27704
   },
   {
@@ -378,7 +390,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/off",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:sho>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:sho>",
    "bytes": 15000
   },
   {
@@ -402,7 +414,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/off",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:hoo>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:hoo>",
    "bytes": 15000
   },
   {
@@ -426,7 +438,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/off",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:wfc3>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:wfc3>",
    "bytes": 27848
   },
   {
@@ -450,7 +462,7 @@
   {
    "path": "/api/render",
    "galaxy": "milky_way/off",
-   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&filters=<set:wfc3n>",
+   "rest": "white=6500&precision=f4&l_min=35481.33892335753&only=remainder&kept=1&filters=<set:wfc3n>",
    "bytes": 27888
   },
   {
@@ -624,7 +636,7 @@
   {
    "path": "/api/arrays",
    "galaxy": "milky_way/on",
-   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
+   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_dig%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_dig%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_dig%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
    "bytes": 36440
   },
   {
@@ -708,7 +720,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/on",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:sho>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:sho>",
    "bytes": 13864
   },
   {
@@ -720,7 +732,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/on",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:hoo>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:hoo>",
    "bytes": 13864
   },
   {
@@ -732,7 +744,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/on",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:wfc3>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:wfc3>",
    "bytes": 26712
   },
   {
@@ -744,7 +756,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/on",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:wfc3n>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:wfc3n>",
    "bytes": 26752
   },
   {
@@ -768,7 +780,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/off",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:sho>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:sho>",
    "bytes": 14056
   },
   {
@@ -792,7 +804,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/off",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:hoo>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:hoo>",
    "bytes": 14056
   },
   {
@@ -816,7 +828,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/off",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:wfc3>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:wfc3>",
    "bytes": 26896
   },
   {
@@ -840,7 +852,7 @@
   {
    "path": "/api/render",
    "galaxy": "ngc_4414/off",
-   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&filters=<set:wfc3n>",
+   "rest": "white=6500&precision=f4&l_min=25118.86431509577&only=remainder&kept=1&filters=<set:wfc3n>",
    "bytes": 26944
   },
   {
@@ -1014,7 +1026,7 @@
   {
    "path": "/api/arrays",
    "galaxy": "ngc_4414/on",
-   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
+   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_dig%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_dig%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_dig%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
    "bytes": 35480
   },
   {

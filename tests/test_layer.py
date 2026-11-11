@@ -5,7 +5,8 @@ Phase R is a behaviour-preserving restructure. What this file holds, in the orde
 - **The reference.** With the layer off, every field of both models at both templates' inputs on the production
   grid, and every array of every input route's body, is bit-identical to the reference with an empty named list -
   since S90 (#214, D258) the batch's final layer-off run, re-based at each batch's close by decision
-  (``tests/layer_reference.py``, ``tests/layer_reference_s90.json``); from S56 to S89 S55's layer-off run
+  (``tests/layer_reference.py``, ``tests/layer_reference_s93.json`` since S93's re-base, #218, D262; M2's
+  ``tests/layer_reference_s90.json`` kept as history); from S56 to S89 S55's layer-off run
   (``tests/layer_reference_s55.json``, kept as history) with a named list (``LAYER_OFF_EXCEPTIONS``). Until S56 the reference was S54's with the layer **on** (Phase R was
   behaviour-preserving); it is retired, because from P1 the layer-on galaxy changes by design (D215).
 - **I1.** With the layer off the model runs, and every field not declared composed - every scalar, every history,
@@ -411,7 +412,20 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # S55's), the render's `lines_hii` the one array of its body off S55's, and the pins a template's header carries
 # beside it. A field or route that moves after the re-base joins `NAMED_SINCE_REBASE` by a decision, with the reason,
 # or the batch re-bases again at its close (#214's closer).
+#
+# S93 (#218; M3's close, D262: re-based again, the two lists emptied). S92 measured the cause of the S90 file's red
+# (D261): its star columns followed OpenBLAS's thread count through the arrival law's BLAS product (`systems.Churn`,
+# `self._born[:, step].T @ kcol[b]`) - the file written multi-threaded at S90, the nodes read single-threaded at S91.
+# S93 ordered that product and five more on draw paths (`core/special.ordered_product`; lane 218's 3e36ae7, 052a464,
+# the gate's fb8871b, eca0ff2, cd12cdd, the review's mends merged at cfa1670, and c161965's `bright.window_anchors`),
+# so the model's bits moved once - with S91's and S92's own model moves (#160, #164 / #165, #216, #211, M3's lanes) -
+# and the reference is M3's final layer-off run, written single-threaded by `tests/layer_reference.py write` to
+# tests/layer_reference_s93.json and read green at one thread and unrestricted. tests/layer_reference_s90.json is
+# kept untouched as history; no test reads it.
 NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route labels) named off the reference since its re-base
+# S91 (#160) named four render routes here off the S90 file (D260: the azimuthal renders' stars_old_placement); the
+# S93 re-base carries them, so the list is empty again. Was {"azimuthal/render/disc", "azimuthal/render/level1",
+# "azimuthal/render/unresolved", "ngc_4414/render/disc"}.
 NAMED_ROUTES_SINCE_REBASE: set[str] = set()
 
 
@@ -619,7 +633,9 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # the census moved by the clouds' ring inversion (F-2-7) and the size law's three regimes (#192).
     # S88 (M1's final model): two more differ in their last bits on and off - `cloud_mass_total` and
     # `dig_halpha_fraction`, sums over the same clouds and regions in another order (the census of 16 940 clouds).
-    assert rounded == {"hot_phase_porosity", "cloud_mass_total", "dig_halpha_fraction",
+    # S92 (#164 / #165): `dig_halpha_fraction` left the set - on the spurs' re-laid census its two sums round alike on
+    # and off again (the layer-on sum's last bit; the layer-off one unmoved).
+    assert rounded == {"hot_phase_porosity", "cloud_mass_total",
                        *(f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731"))}, sorted(rounded)
     # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
     # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.
@@ -627,7 +643,7 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # S61 (D220): was (0.29999999999999993, 0.29999999999999993) - the ring-first census, the same regions on and off
     # summed in another order: one rounding of three tenths each.
     # S70 (D234): was (0.29999999999999993, 0.30000000000000016) - F-2-7 and #192, another rounding of three tenths.
-    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000004, 0.30000000000000016)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the layer-off sum was 0.30000000000000004
+    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000016, 0.30000000000000016)  # S92 (#164 / #165): the layer-on sum was 0.30000000000000004  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the layer-off sum was 0.30000000000000004
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
@@ -684,7 +700,8 @@ def test_i1_the_placement_weights_average_to_1_on_every_ring_to_1e_13(runs, vari
     F, R = out.fields, out.grid.R
     c = constants(prod[0].get(DEFAULT_MODEL))
     _, clouds = cl.sector_placement(F, R, c)
-    g = br.BrightGalaxy(F, R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), c)
+    g = br.BrightGalaxy(F, R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), c,
+                        migration=float(out.inputs["migration_efficiency"]))
     assert clouds.shape == (cl.CELL_RINGS, cl.CELL_SECTORS) and g.modulation is not None
     assert np.asarray(g.weights).shape == (2, g.area.size, g.sector_lo.size)
     for weights in (clouds, *np.asarray(g.weights)):
@@ -876,7 +893,8 @@ def bright_names(out, m) -> tuple[dict[str, np.ndarray], np.ndarray]:
     not the rows' identity, so the selection is made again here from the run's fields (the stage's own call) and held
     to be the published columns bit for bit; a star is then named by its level-0 ring and its place in the ring's
     ordered process - its Gamma, which is strictly increasing round the ring, so it names the place ``i`` exactly."""
-    galaxy = br.BrightGalaxy(out.fields, out.grid.R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), constants(m))
+    galaxy = br.BrightGalaxy(out.fields, out.grid.R, out.grid.t, float(out.grid.spec.t_max), int(out.grid.spec.n_t), constants(m),
+                             migration=float(out.inputs["migration_efficiency"]))
     chosen, _ = br.select_brightest(galaxy, int(out.inputs["systems_seed"]), br.all_cells(), br.DEFAULT_SELECTION)
     columns = {d.name: np.asarray(chosen[d.name]) for d in br.COLUMNS}
     for n, v in columns.items():
@@ -1049,7 +1067,8 @@ def ring_expectations(out, m) -> dict[str, np.ndarray]:
     # `sfr_modulation`. The stars' expectation is now the number the stage hands `ring_star_count` (systems._layout):
     # `ring_star_expected` of the stellar surface density, the same function the stage calls.
     stars = sy.ring_star_expected(F["stellar_surface_density"], R, sy.CATALOGUE_SAMPLE)
-    galaxy = br.BrightGalaxy(F, R, out.grid.t, float(spec_.t_max), int(spec_.n_t), c)
+    galaxy = br.BrightGalaxy(F, R, out.grid.t, float(spec_.t_max), int(spec_.n_t), c,
+                             migration=float(out.inputs["migration_efficiency"]))
     ring, _ = galaxy.locate(br.all_cells())
     rings = int(ring.max()) + 1
     return {
@@ -1671,8 +1690,11 @@ def test_i5_what_layer_off_serves():
 # too: up to a factor of six in a thinly populated ring on the production grid.
 # S63 (D223): the two placing weights the starlight by age ships beside dust_placement - sfr_modulation over its ring
 # mean and the stellar contrast floored at 0 - are (R, phi) arrays, exactly 1 with the layer off.
+# S91 (#160): and the old part's, by the star sample's rule - the contrast times one less the sample's young share,
+# scaled to the contrast's ring sum - exactly 1 with the layer off too.
 RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement",
-                 "dust_placement_unspurred")  # (R, phi, ...) - S66 (D226 R4): and the gas's placement without its spurs
+                 "dust_placement_unspurred",  # (R, phi, ...) - S66 (D226 R4): and the gas's placement without its spurs
+                 "stars_old_placement")
 # S63 (D223): and the three age parts of the starlight, per ring and filter, the same numbers on and off.
 # S64 (D224, R2): and the share of each ring's dust that is diffuse once its realised clouds hold theirs - (R,), read off
 # the ring-first draw's streams, so the same bits on and off (the same clouds either way).
@@ -1859,7 +1881,9 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S62 (D221 item 7 as amended): was 372 - the gas spurs' twelve columns. S62 (D221): was 384 - the gas fluctuation
     # field's eight.
     # S89 (#167): was 392 - the clouds stage's scalar cloud_extinction_v retired.
-    assert len(columns) > 100 and len(b.fields) == 391
+    # S93 (D262): was 391 - six added: the diffuse gas's three line maps and its two line ratios (T10 / #119, 2c797d6)
+    # and the star sample's star_cluster_member (T3 / #115, 8672ff9).
+    assert len(columns) > 100 and len(b.fields) == 397
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1937,7 +1961,10 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     same_sample = ["star_bubble_radius", "star_population", "star_wind_luminosity", "star_wolf_rayet"]
     # S61 (D220 II.5): was 269 - bright_star_radius leaves what is held (above).
     # S89 (#167): was 268 - cloud_extinction_v, a galaxy scalar held on and off, retired.
-    assert len(held) == 267 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
+    # S93 (D262): was 267 - the diffuse gas's five (T10 / #119: its [N II] and [S II] maps and the two ratios, laws of
+    # the ring, the same bits on and off) join what is held; the sixth field M3 adds, star_cluster_member (T3 / #115),
+    # is a placed column of the sample whose rows stand in other cells, and is not held (nor in same_sample, below).
+    assert len(held) == 272 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
     assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
@@ -2093,15 +2120,20 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S70 (D234): was 1376 and 0.1083 - #192's larger clouds inside 4 kpc and in 7-8.2 kpc (their offsets longer) and F-2-7.
     # S90 (#161): was 1651 and 0.1271 (352bdec read 1652 and 0.1272 by this construction, s90 offset.py) - the field's
     # cell means move clouds between the sectors of a ring, so other clouds sit near a grid ring's edge.
-    assert int(moved.sum()) == 1694 and moved.mean() == pytest.approx(0.1304, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252
+    # S92: was 1694 and 0.1304; at bd0ed0c (S91's #216 re-lay, never run at S91) 1722, the runner's number too (its mean and
+    # the share below not read there - the count fails first); now (#164 / #165, the spurs re-laid move the clouds' sector
+    # shares and the clusters' offsets with them) 1705 and 0.1313.
+    assert int(moved.sum()) == 1705 and moved.mean() == pytest.approx(0.1313, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3593, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741
+    # S92: was 0.3593 (0.3541 now) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read there).
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3541, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 137  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
+    # S92: was 137 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the moved count fails first there).
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 125  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -2212,7 +2244,7 @@ def test_every_synthetic_declaration_says_what_it_does_not_keep_with_the_number(
     # S70 (D234, Builder C's population measurement): was "0.47 of the budget" - re-measured 0.569 (sum over sum, 96 rings).
     # S88 (D255 ruling 2): was "0.569 of the budget" - re-measured on M1's final model, 0.589 (98 rings).
     assert "0.589 of the budget" in synthetic["arm_piece_chain"].conserves and "#195" in synthetic["arm_piece_chain"].conserves
-    assert "at most 0.0092 of a ring" in synthetic["gas_spur_chain"].conserves
+    assert "at most 0.0139 of a ring" in synthetic["gas_spur_chain"].conserves  # S92 (#164 / #165): was 0.0092 - the spurs' heights and spacing re-laid
     for n in ("cloud_density_gradient", "cloud_gradient_angle"):
         assert "16 577 clouds" in synthetic[n].conserves and "at most 0.99998" in synthetic[n].conserves, n
 

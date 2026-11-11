@@ -28,7 +28,7 @@ import {
   type WebGLRenderer,
 } from "three";
 
-import { ALL_AGES, ageParts, agedLight, clumpedLight, keptParts } from "@interface/ages.js";
+import { ALL_AGES, ageParts, agedLight, clumpedLight, keptParts, remainderParts } from "@interface/ages.js";
 
 import {
   type Census,
@@ -141,6 +141,17 @@ interface AgedStars {
   kept: { arrays: Record<number, string> } | null;
   /** The switches the texture was last filled with, and whether it was filled split for the clustered march. */
   shown: string;
+  /**
+   * S93 (#175): the star-first mode's remainder (interface/ages.js remainderParts), its middle part clustered as the
+   * field mode's: drawn with every part on whatever the age switches say (the remainder never took them), and not
+   * offered to the age switches (onAges).
+   */
+  remainder?: boolean;
+}
+
+/** The switches a stellar layer is filled with: the remainder's always every part on (S93, #175), else the panel's. */
+function gainsFor(aged: AgedStars | null, gains: AgeGains): AgeGains {
+  return aged?.remainder ? ALL_AGES : gains;
 }
 
 /**
@@ -997,9 +1008,9 @@ export function FieldVolume({
     const a = light.arrays;
     // The starlight by age (S63, D223): where the render carries the three parts, the stellar layer is their sum at
     // the switches, each part placed round the ring by its own weight. Not under the star-first mode's threshold,
-    // whose remainder is its own component - and so not clustered in the march either (S66, D226 R5e): the remainder
-    // has no young part (the clusters carry it) and its middle part stays placed by sfr_modulation, unmodulated - a debt
-    // (the mend: only=remainder's per-part arrays split by kept octaves as the field's are).
+    // whose remainder is its own component. Since S93 (#175) the remainder's middle part is clustered in the march as
+    // the field's is (D226 R5e's debt): only=remainder splits it by kept octaves, its two parts placed by their weights
+    // (no young part: the clusters carry it); with the clustering off the march draws stars_unresolved as before.
     const parts = unresolved ? null : (ageParts(light.header, a) as AgePart[] | null);
     const n = { R: R.n, phi: phi.n, filter: white.length };
     // The randomness layer's tables (S66, V7; D226 R6): every number the model's, null with the layer off - since S73
@@ -1017,11 +1028,16 @@ export function FieldVolume({
     // The young light can be clustered where the render splits the middle part and the layer's cells are there (R5).
     const middle = parts?.find((p) => p.key === "middle");
     const kept = parts && middle?.weight && tables.clustering && tables.gas ? (keptParts(light.header, a) as AgedStars["kept"]) : null;
-    const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, kept, shown: "" } : null;
+    const rest = unresolved && a.stars_unresolved && tables.clustering && tables.gas ? (remainderParts(light.header, a) as { parts: AgePart[]; kept: AgedStars["kept"] } | null) : null;
+    const aged: AgedStars | null = parts
+      ? { parts, arrays: a, n, white, kept, shown: "" }
+      : rest
+        ? { parts: rest.parts, arrays: a, n, white, kept: rest.kept, shown: "", remainder: true }
+        : null;
     // Split for the clustered march (S66, R5): the job's clustered fill writes every texel of the stellar layer from the
     // split, so the parts' sum is not computed for it only to be overwritten (S78: 160-240 ms of the landing's main thread).
     const clumped = Boolean(aged?.kept) && clumpsNow.current;
-    const gains = agesNow.current;
+    const gains = gainsFor(aged, agesNow.current);
     const ask: Omit<MeshRequest, "arrays"> = {
       R,
       phi,
@@ -1030,7 +1046,7 @@ export function FieldVolume({
       // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
       // A frame that carries the age parts draws their sum at the switches; one from before them draws `stars`.
       stars:
-        unresolved && a.stars_unresolved
+        unresolved && a.stars_unresolved && !(aged?.remainder && clumped)
           ? { from: "array", name: "stars_unresolved" }
           : aged
             ? clumped
@@ -1203,6 +1219,8 @@ export function FieldVolume({
       rLo: R.lo,
       rHi: R.hi,
       top: DUST_TOP_HEIGHTS * tallestLayer(typeof layers.dust === "string" ? a[layers.dust] : layers.dust),
+      // The march's own uniforms (S93, #174): the points' diffuse dust takes its gas fluctuation map under its switch.
+      noise: material.uniforms as Record<string, { value: unknown }>,
     };
     box.userData.pointDust = pointDust;
     box.userData.cloudExt = cloudDepthScale(extinctionRatio(light));
@@ -1352,7 +1370,7 @@ export function FieldVolume({
   useEffect(() => {
     if (!mesh) return;
     const aged = mesh.userData.aged as AgedStars | null | undefined;
-    tellAges.current?.(aged ? aged.parts : null);
+    tellAges.current?.(aged && !aged.remainder ? aged.parts : null);
   }, [mesh]);
 
   // An age switch moved (S63, D223): the stellar layer's texture is refilled in place with the parts' sum at the
@@ -1361,12 +1379,12 @@ export function FieldVolume({
   // the parts' sum as before.
   const aged = mesh ? ((mesh.userData.aged as AgedStars | null | undefined) ?? null) : null;
   const clumped = Boolean(aged?.kept) && clumpsInMarch;
-  const shownAges = `${agesKey(ages)},${clumped}`;
+  const shownAges = `${agesKey(gainsFor(aged, ages))},${clumped}`;
   useEffect(() => {
     if (!mesh || !aged || aged.shown === shownAges) return;
     const uniforms = (mesh.material as ShaderMaterial).uniforms;
     const clumps = ["clump3", "clump2", "clump1"].map((k) => uniforms[k].value as DataTexture);
-    fillStars(aged, agesNow.current, clumped, uniforms.plane.value as DataTexture, clumps);
+    fillStars(aged, gainsFor(aged, agesNow.current), clumped, uniforms.plane.value as DataTexture, clumps);
     aged.shown = shownAges;
   }, [mesh, aged, clumped, shownAges]);
 

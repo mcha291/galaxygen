@@ -234,14 +234,17 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
 
-@pytest.mark.machine_pinned  # S90a (#216, D259): a record of this machine's 240 draws, whose births rounding decides (the runner: 0.026249); the bound stays in CI above
+# S90a (#216, D259): a record of this machine's 240 draws, whose births rounding decides (the runner: 0.026249); the bound stays in CI above
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_lowest_cell_over_the_suite_s_seeds_as_measured(prod):
     """The lowest cell of the stellar field over the 240 galaxies, as measured on the pieces' field (S60, D219; the
     gate's test above keeps the bound); a layer-on number, pinned here apart."""
     lowest, drawn = lowest_cell(prod)
     assert drawn == 240
     # S60 fourth pass: was 0.00248, on the modes' field.
-    assert lowest == pytest.approx(0.116317, abs=1e-5) and lowest > 0.0  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.008506
+    # S91 (#216): was 0.116317 - the same galaxy (milky_way, pattern seed 3, texture 1), its census re-laid by the
+    # births made bit-independent.
+    assert lowest == pytest.approx(0.120805, abs=1e-5) and lowest > 0.0  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.008506
 
 
 def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):

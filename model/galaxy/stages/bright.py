@@ -108,7 +108,11 @@ from galaxy.stages.systems import (
     Catalogue,
     cell_edges,
     children_per_cell,
+    cluster_window,  # S93 (T3 / #115): moved to systems, which the sample's membership reads it in; one definition
+    ring_young_share,
     sech2_height,
+    young_fraction,
+    ordered_product,
     young_reader,
 )
 from galaxy.stages.vertical import POPULATIONS
@@ -284,10 +288,15 @@ def mass_on_isochrones(
     mh = nearest_metallicity(feh_history)  # (n_R, n_t)
     n_mh = isochrones().mhs.size
     out = np.zeros((formed.shape[0], w.shape[1], n_mh))
-    for z in range(n_mh):
-        on = mh == z
-        if on.any():
-            out[:, :, z] = np.where(on, formed, 0.0) @ w
+    # S93 (#218, the gate's ruling): summed in an order the model fixes, not by BLAS - step by step from the first,
+    # each step's mass added to the row of the metallicity it formed at. Until S93 it was, per metallicity,
+    # ``np.where(mh == z, formed, 0.0) @ w``: the same terms, each other row's zero term skipped here, and a step
+    # outside the age window, whose weights are all 0, is skipped too. The terms are NOT all non-negative - ``w``
+    # holds tiny negative rounding weights (S93's review: 6151 of them, down to about -7e-14) - but skipping a zero
+    # term is still exact whatever the other terms' signs: adding ±0 to a running total leaves it, bar a zero's sign.
+    rows = np.arange(formed.shape[0])
+    for j in np.flatnonzero(np.any(w != 0.0, axis=1)):
+        out[rows, :, mh[:, j]] += formed[:, j, None] * w[j][None, :]
     return out
 
 
@@ -324,36 +333,72 @@ def part_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants: M
 def _anchors_of(masses: np.ndarray) -> np.ndarray:
     """(parts, n_R, 8): λL_λ at the eight bands of the mass on each isochrone, (parts, n_R, n_age, n_mh)."""
     flat = masses.reshape(*masses.shape[:2], -1)
-    bands = flat @ population_light().band_flux.reshape(-1, len(BANDS))  # (parts, n_R, 8)
+    bands = ordered_product(flat, population_light().band_flux.reshape(-1, len(BANDS)))  # (parts, n_R, 8); S93 #218
     return np.stack([band_nu_l_nu(bands[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
 
 
 def window_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any],
-                   windows: Sequence[tuple[float, float]]) -> np.ndarray:
+                   windows: Sequence[tuple[float, float]], l_min: float | None = None) -> np.ndarray:
     """(len(windows), n_R, 8): :func:`part_anchors`' arithmetic over any age windows ``(age_min, age_max)`` in Gyr - the
     same history, the same isochrone weights and the same clip of the fine-age reading's few 1e-16 negatives. S66
     (D226 R5b): the middle part split at the clustering field's octave survival ages, so that each age window's light
     is modulated by the octaves its stars keep; windows that partition the middle part sum to its anchors to
-    rounding."""
+    rounding. With ``l_min`` (S93, #175) each window's light under that threshold, as :func:`resolve` forms the
+    unresolved parts (every living star less :func:`above_at`'s, the same tables and threshold rule): windows that
+    partition the middle part then sum to ``resolve``'s ``unresolved_middle`` to rounding."""
     formed = np.asarray(fields["stars_formed_history"], dtype=float) / (1.0 - float(constants["RETURN_FRACTION"]))
     feh = fields["feh_history"]
     masses = [mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=float(a), age_max_gyr=float(b)) for a, b in windows]
-    return _anchors_of(np.maximum(np.stack(masses), 0.0))
+    stacked = np.maximum(np.stack(masses), 0.0)
+    if l_min is None:
+        return _anchors_of(stacked)
+    log_l = math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0]))
+    flat = stacked.reshape(*stacked.shape[:2], -1)
+    light = ordered_product(flat, population_light().band_flux.reshape(-1, len(BANDS)))  # S93 #218: not BLAS
+    bands = light - above_at(stacked, luminosity_function().band_above, log_l)
+    return np.stack([band_nu_l_nu(bands[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
 
 
-def part_weights(contrast: np.ndarray, modulation: np.ndarray | None) -> np.ndarray:
-    """(2, n_rings, n_sectors): the azimuthal weights of the ``middle`` and ``old`` parts around each ring. The old
-    part follows the pattern's density ``contrast``; the middle part follows ``modulation`` (where stars form today)
-    normalised to its ring mean, so each ring keeps its light, or the contrast where the model publishes none. Floored
-    at zero. One rule for the bright catalogue's finest cells and for the render's grid cells."""
+def part_weights(contrast: np.ndarray, modulation: np.ndarray | None, share: np.ndarray | None = None) -> np.ndarray:
+    """(2, n_rings, n_sectors): the azimuthal weights of the ``middle`` and ``old`` parts around each ring, floored at
+    zero. One rule for the bright catalogue's finest cells and for the render's grid cells.
+
+    The middle part (the cluster window to :data:`YOUNG_STAR_AGE`) follows ``modulation`` (where stars form today, m)
+    over its ring mean, so each ring keeps its light, or the ``contrast`` (c) where the model publishes none.
+
+    The old part (older than :data:`YOUNG_STAR_AGE`: the star sample's old stars, the same age split) is placed by the
+    star sample's rule (S91, #160: the owner's ruling of 2026-11-10, one placement rule for both catalogues):
+    ``c+ (1 - p)`` with ``p = clip(y m / c, 0, 1)`` (``systems.young_fraction``, the ratio 1 where ``c <= 0``), ``y``
+    the young share of the level-0 ring the row lies in (``share``, one per row: ``systems.ring_young_share``, the
+    sample's own) - then scaled per ring to the ring sum of ``c+``, so the old part's ring total is what the contrast
+    gave it (A10: the sample's allocation is that law normalised, a ring's count its own). Where the model publishes
+    no modulation (and with the layer off, where every sector is alike) the old part is ``c+`` as it was. Until S91
+    it was ``c+`` always, 3.9e-3 per sector from the sample's (S61's measure)."""
     contrast = np.asarray(contrast, dtype=float)
     if modulation is None:
-        young = contrast
-    else:
-        young = np.asarray(modulation, dtype=float)
-        mean = young.mean(axis=1, keepdims=True)
-        young = np.where(mean > 0.0, young / np.where(mean > 0.0, mean, 1.0), 1.0)
-    return np.maximum(np.stack([young, contrast]), 0.0)
+        return np.maximum(np.stack([contrast, contrast]), 0.0)
+    if share is None:
+        raise ValueError("the old part's weight reads each row's young share where the model publishes a modulation "
+                         "(systems.ring_young_share: the star sample's rule, #160)")
+    young = np.asarray(modulation, dtype=float)
+    mean = young.mean(axis=1, keepdims=True)
+    young = np.where(mean > 0.0, young / np.where(mean > 0.0, mean, 1.0), 1.0)
+    kept = np.maximum(contrast, 0.0)
+    old = kept * (1.0 - young_fraction(np.asarray(share, dtype=float), young, contrast))
+    total, left = kept.sum(axis=1, keepdims=True), old.sum(axis=1, keepdims=True)
+    old = np.where(left > 0.0, old * (total / np.where(left > 0.0, left, 1.0)), kept)
+    return np.maximum(np.stack([young, old]), 0.0)
+
+
+def row_young_share(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, radii: np.ndarray, *,
+                    migration: float) -> np.ndarray:
+    """(len(radii),): the star sample's young share ``y`` (``systems.ring_young_share``) of the level-0 ring each radius
+    lies in - a row of the bright catalogue's finest cells, or of the render's grid (a radius on a ring's inner edge
+    is the ring's; ``R[-1]`` the last ring's): what :func:`part_weights` places the old part with (#160)."""
+    y = ring_young_share(fields, R, t, migration=migration)
+    edges = cell_edges(R)[0]
+    ring = np.clip(np.searchsorted(edges, np.asarray(radii, dtype=float), side="right") - 1, 0, CELL_RINGS - 1)
+    return y[ring]
 
 
 def above_at(mass: np.ndarray, table: np.ndarray, log_l: float) -> np.ndarray:
@@ -367,12 +412,16 @@ def above_at(mass: np.ndarray, table: np.ndarray, log_l: float) -> np.ndarray:
     m = m.reshape(*m.shape[:-2], -1)
     t = np.asarray(table, dtype=float)
     t = t.reshape(-1, *t.shape[2:])
-    return _between(np.tensordot(m, t[:, k], axes=1), np.tensordot(m, t[:, k + 1], axes=1), float(frac))
+    return _between(ordered_product(m, t[:, k]), ordered_product(m, t[:, k + 1]), float(frac))  # S93 #218: not BLAS
 
 
 # What :func:`resolve` reads of the bright stage's inputs: the history it decomposes, and where stars form today
 # (optional) for the middle part's weight. /api/render reads these with l_min= (rule D4: no more of the stage).
 RESOLVE_READS: tuple[str, ...] = ("stars_formed_history", "feh_history", "sfr_modulation")
+# S91 (#160): what the old part's weight reads besides, where the model publishes sfr_modulation - the star sample's
+# young share of each level-0 ring (``systems.ring_young_share``: the churn's arrival law; and the
+# migration_efficiency input).
+OLD_SHARE_READS: tuple[str, ...] = ("stellar_surface_density", "sfr_surface_density_history")
 
 
 @dataclass(frozen=True)
@@ -398,8 +447,8 @@ def resolve(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mappin
     masses = part_masses(fields, t_max, n_t, constants)  # (3, n_R, n_age, n_mh)
     log_l = math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0]))
     flat = masses.reshape(*masses.shape[:2], -1)
-    bands = flat @ pop.band_flux.reshape(-1, len(BANDS))  # (3, n_R, 8): every living star of each part
-    light = flat @ pop.light_per_mass.ravel()  # (3, n_R)
+    bands = ordered_product(flat, pop.band_flux.reshape(-1, len(BANDS)))  # (3, n_R, 8): every living star of each part
+    light = ordered_product(flat, pop.light_per_mass.ravel())  # (3, n_R); S93 #218: sums ordered here, not by BLAS
     bright_bands = above_at(masses[1:], tables.band_above, log_l)  # (2, n_R, 8): what lies above l_min
     bright_light = above_at(masses[1:], tables.light_above, log_l)  # (2, n_R)
 
@@ -467,12 +516,6 @@ def octaves_kept(age_gyr: np.ndarray, survival_myr: np.ndarray) -> np.ndarray:
     return (t[:, None] <= np.asarray(survival_myr, dtype=float)[None, :]).sum(axis=1).astype(np.int64)
 
 
-def cluster_window(constants: Mapping[str, Any]) -> float:
-    """Gyr: the ages the cluster census holds (its clouds' blown-open and dispersing phases), which the
-    bright catalogue leaves to it so that no star is counted twice."""
-    return (float(constants["GMC_PHASE_BLOWN_OPEN"]) + float(constants["GMC_PHASE_DISPERSING"])) / 1000.0
-
-
 def _bracket(log_l: float | np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """(k, frac): the threshold interval [x_k, x_k+1] holding each log L and the way across it; below the
     grid the first point, above it the last interval's end."""
@@ -496,14 +539,17 @@ class BrightGalaxy:
     """Everything one galaxy's bright catalogue reads, tabulated once over every finest cell (D60: no table
     depends on which cells a request names).
 
-    Two age parts, each with its own azimuthal weight: ``0`` from the cluster window to
+    Two age parts, each with its own azimuthal weight (:func:`part_weights`): ``0`` from the cluster window to
     ``YOUNG_STAR_AGE`` (placed by the star formation law at a point where the model publishes
     ``sfr_modulation`` - the star sample's own reader, ``systems.Modulation`` - and by the contrast where it
-    does not) and ``1`` older (by the contrast). A finest cell is one of 256 rings by 256 sectors.
+    does not) and ``1`` older (by the contrast where there is no modulation; where there is, since S91 (#160) by the
+    star sample's rule ``c (1 - p)`` at the sample's level-3 sub-rings - ``systems.Placement.sub_ring_weights``' old
+    part, normalised to the ring's sum of the contrast - which reads the churn's arrival law, so ``migration``, the
+    ``migration_efficiency`` input, is required). A finest cell is one of 256 rings by 256 sectors.
     """
 
     def __init__(self, fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, t_max: float, n_t: int,
-                 constants: Mapping[str, Any]) -> None:
+                 constants: Mapping[str, Any], *, migration: float) -> None:
         tables = luminosity_function()
         self.R, self.t, self.t_max = np.asarray(R, dtype=float), np.asarray(t, dtype=float), float(t_max)
         n_iso = tables.count_above.shape[0] * tables.count_above.shape[1]
@@ -514,7 +560,7 @@ class BrightGalaxy:
         mass_R = part_masses(fields, t_max, n_t, constants)[1:].reshape(2, self.R.size, n_iso)  # M☉/pc² per isochrone
         self.windows = np.log10(np.array([[self.cut, YOUNG_STAR_AGE], [YOUNG_STAR_AGE, self.t_max]]) * 1e9)
         count = tables.count_above.reshape(n_iso, K)
-        self.count_R = mass_R @ count  # (2, n_R, K): stars per pc² above each threshold
+        self.count_R = ordered_product(mass_R, count)  # (2, n_R, K): stars per pc² above each threshold (S93 #218)
         # The finest cells: 2^MAX_LEVEL sub-rings and sub-sectors of every level-0 cell, cut as cell_bounds cuts.
         n = 1 << MAX_LEVEL
         rings32, sectors32 = cell_edges(self.R)
@@ -535,8 +581,8 @@ class BrightGalaxy:
         np.add.at(average, (rows, i0.ravel()), (weight * (1.0 - w1)).ravel())
         np.add.at(average, (rows, i0.ravel() + 1), (weight * w1).ravel())
         self.mass_cell = np.einsum("cr,prx->pcx", average, mass_R)  # (2, 256, n_iso) M☉/pc²
-        self.count_cell = self.mass_cell @ count  # (2, 256, K)
-        self.light_cell = self.mass_cell @ tables.light_above.reshape(n_iso, K)
+        self.count_cell = ordered_product(self.mass_cell, count)  # (2, 256, K)
+        self.light_cell = ordered_product(self.mass_cell, tables.light_above.reshape(n_iso, K))
         self.count_iso = count  # (n_iso, K)
         dphi = 2.0 * math.pi / (CELL_SECTORS * n)
         self.area = 0.5 * (self.ring_hi**2 - self.ring_lo**2) * dphi * PC_PER_KPC**2  # pc² per cell, by ring
@@ -553,7 +599,9 @@ class BrightGalaxy:
         # applied to the gas pattern's point function, ring by ring (``systems.Modulation``), not the grid table.
         self.modulation = young_reader(fields, self.R, constants)
         young = None if self.modulation is None else self.modulation.sector_means_at(middle, edges)
-        self.weights = part_weights(contrast, young)  # (2, 256, 256)
+        # S91 (#160): the old part by the star sample's rule, with the sample's young share of each sub-ring's ring.
+        share = None if young is None else row_young_share(fields, self.R, self.t, middle, migration=migration)
+        self.weights = part_weights(contrast, young, share)  # (2, 256, 256)
         # S61 (D220 items 1-2): the ring-first draw's tables. A level-0 ring's expected count above each threshold
         # is its eight sub-rings' areas times their stars per pc² above it times the finest sectors round a ring:
         # each part's weights sum to that sector count round a sub-ring to rounding (3e-16 of it at the default
@@ -1119,7 +1167,7 @@ def in_frustum(view: np.ndarray, radius: np.ndarray, azimuth: np.ndarray, height
     r = np.asarray(radius, dtype=float)
     phi = np.asarray(azimuth, dtype=float)
     p = np.stack([r * np.cos(phi), np.asarray(height, dtype=float), -r * np.sin(phi), np.ones_like(r)])
-    clip = view @ p
+    clip = ordered_product(view, p)  # S93 #218: summed in a fixed order, not by BLAS
     w = clip[3]
     return (w > 0) & (np.abs(clip[0]) <= w) & (np.abs(clip[1]) <= w) & (np.abs(clip[2]) <= w)
 
@@ -1294,6 +1342,7 @@ READS = tuple(dict.fromkeys((
     # S59 (D218): the young part's reader - the gas pattern's reads and the ring's gas column and threshold.
     *GAS_PATTERN_READS, *YOUNG_READS,
     "census_clustering_seed",  # S61 (D220 part II item 5): the field the young stars are placed by in their cell
+    *OLD_SHARE_READS,  # S91 (#160): the old part's young share is the star sample's (the churn's arrival law)
 )))
 
 
@@ -1304,7 +1353,8 @@ def all_cells() -> np.ndarray:
 
 def galaxy_of(ctx: Context) -> BrightGalaxy:
     spec = ctx.grid.spec
-    return BrightGalaxy(ctx.fields, ctx.grid.R, ctx.grid.t, float(spec.t_max), int(spec.n_t), ctx.constants)
+    return BrightGalaxy(ctx.fields, ctx.grid.R, ctx.grid.t, float(spec.t_max), int(spec.n_t), ctx.constants,
+                        migration=float(ctx.inputs["migration_efficiency"]))
 
 
 def scalars(galaxy: BrightGalaxy, limit: float) -> dict[str, float]:
@@ -1331,6 +1381,7 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
         compute=compute_bright,
         placement_reader=True,  # S55 (D214, I4): a census, placed by the stellar pattern and the modulation
         reads_seeds=("systems_seed",),
+        reads_inputs=("migration_efficiency",),  # S91 (#160): the old part's young share, the churn's arrival law
         # S59 (D218): and what the young part's reader applies the star formation law with.
         reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", *YOUNG_CONSTANTS,
                          *CLUSTERING_CONSTANTS),  # S61 (D220 part II item 5): the field's numbers and its survival

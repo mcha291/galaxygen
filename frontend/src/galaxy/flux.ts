@@ -71,7 +71,9 @@ export type DustRead = (
  * for line. The segment is cut where it leaves the slab |y| ≤ `top` or the disc's radius `rHi`, split into
  * `steps` equal steps, and each takes the dust layer's exact column over its own heights (regimes.ts
  * layerColumn) at the depth and height read at its middle. Scene coordinates: x = R cos φ, y = height,
- * z = −R sin φ, kpc.
+ * z = −R sin φ, kpc. With `gas` (S93, #174) the diffuse depth is multiplied by the gas fluctuation map (noise.ts
+ * gasMap) read once as the march's thin screen: where the segment crosses y = 0 inside the cut, else at the point's
+ * own projection, at the face-on position (x, −z); the clouds' depth is not.
  */
 export function dustToPoint(
   point: readonly [number, number, number],
@@ -80,6 +82,7 @@ export function dustToPoint(
   rHi: number,
   read: DustRead,
   steps: number = DUST_SEGMENT_STEPS,
+  gas: ((x: number, y: number) => number) | null = null,
 ): [number, number, number] {
   const d = [eye[0] - point[0], eye[1] - point[1], eye[2] - point[2]];
   const length = Math.hypot(d[0], d[1], d[2]);
@@ -98,6 +101,12 @@ export function dustToPoint(
     sMax = disc > 0 ? Math.min(sMax, Math.max(0, (-b + Math.sqrt(disc)) / a)) : 0;
   }
   if (!(sMax > 0)) return tau;
+  let gasAt = 1;
+  if (gas) {
+    const tCross = Math.abs(u[1]) > 1e-6 ? -point[1] / u[1] : -1;
+    const s = tCross >= 0 && tCross <= sMax ? tCross : 0;
+    gasAt = gas(point[0] + u[0] * s, -(point[2] + u[2] * s));
+  }
   const ds = sMax / steps;
   for (let j = 0; j < steps; j += 1) {
     const s0 = j * ds;
@@ -114,7 +123,7 @@ export function dustToPoint(
     // The clouds (S64): the slab's own column over the same step, at the clouds' depth read there.
     const slab = at.slab ?? [0, 0];
     const cloudColumn = at.clouds ? slabColumn(point[1] + u[1] * s0, point[1] + u[1] * s1, slab[0] - slab[1], slab[0] + slab[1], ds) : 0;
-    for (let k = 0; k < 3; k += 1) tau[k] += at.depth[k] * column + (at.clouds ? at.clouds[k] * cloudColumn : 0);
+    for (let k = 0; k < 3; k += 1) tau[k] += at.depth[k] * gasAt * column + (at.clouds ? at.clouds[k] * cloudColumn : 0);
   }
   return tau;
 }

@@ -177,7 +177,8 @@ def test_count_above_on_the_oldest_solar_isochrone_against_a_hand_count(tables):
 def galaxy(default, models):
     spec = default.grid.spec
     constants = {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()}
-    return br.BrightGalaxy(default.fields, default.grid.R, default.grid.t, spec.t_max, spec.n_t, constants)
+    return br.BrightGalaxy(default.fields, default.grid.R, default.grid.t, spec.t_max, spec.n_t, constants,
+                           migration=float(default.inputs["migration_efficiency"]))
 
 
 @pytest.fixture(scope="module")
@@ -410,7 +411,10 @@ def test_a_lattice_s_two_step_inverse_is_the_row_major_inverse_of_the_product():
 def test_the_young_stars_the_field_places_stand_in_their_level_0_cell(galaxy, seed, default):
     """S61 (D220 part II item 5): a star of 20 to 40.71 Myr stands anywhere in its level-0 cell, placed there by the
     field; every other star inside its finest cell, as before - and the field moves the young ones out of it."""
-    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.0)
+    # S91 (#216): the window was 0-1.0 rad - the default galaxy's census re-laid by the births made bit-independent
+    # leaves it 964 field stars (1 234 on 4f06cc9) under the test's own 1 000; 0-1.5 rad holds 2 184 field stars of
+    # 4 452, the guard and every assert unchanged.
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.5)
     cat = br.materialise_bright(galaxy, seed, cells, 1.0e4)
     radius, azimuth = np.asarray(cat["bright_star_radius"]), np.asarray(cat["bright_star_azimuth"])
     field = np.asarray(cat["bright_star_age"]) * 1000.0 <= galaxy.octave_ages[0]
@@ -435,7 +439,8 @@ def test_the_ring_first_draw_holds_every_ring_s_totals_with_the_layer_on_or_off(
     cells' expectations meets it to 1e-13 (measured 6.4e-15 / 6.8e-15 at 10^3 / 10^4.5 Lsun per finest ring)."""
     spec = default_off.grid.spec
     off = br.BrightGalaxy(default_off.fields, default_off.grid.R, default_off.grid.t, spec.t_max, spec.n_t,
-                          {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()})
+                          {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()},
+                          migration=float(default_off.inputs["migration_efficiency"]))
     assert galaxy.ring_curve.tobytes() == off.ring_curve.tobytes()
     assert not np.array_equal(galaxy.weights, off.weights)  # the layer does place this census
     cells = br.all_cells()
@@ -460,6 +465,35 @@ def test_the_ring_first_draw_holds_every_ring_s_totals_with_the_layer_on_or_off(
         a, b = (np.sort(np.asarray(c["bright_star_luminosity"])[ri == r]) for c, ri in zip(cats, rings))
         assert a.tobytes() == b.tobytes(), r
     assert default.fields["bright_star_limit"] == default_off.fields["bright_star_limit"]
+
+
+def test_the_two_catalogues_place_their_old_stars_by_one_rule(galaxy, default, models):
+    """S91 (#160; the owner's ruling of 2026-11-10: "one placement rule for both catalogues - the star sample's c-bar
+    (1 - p) for the old part, in bright.part_weights too"). Both catalogues call a star old past YOUNG_STAR_AGE (the
+    sample's young split of the arrival law, the bright catalogue's ``old`` age part). The young share ``y`` the
+    bright catalogue reads is the sample's to the bit (``systems.ring_young_share`` against ``Placement``'s), and on
+    every finest sub-ring the bright catalogue's old weights are the sample's own level-3 weights
+    (``Placement.sub_ring_weights``' old part, ``c (1 - p)``) scaled to the ring's sum of the contrast - to 1e-12
+    per sector (measured 4.0e-14: the sub-rings' middle radii are cut by two arithmetics) - so the two place an old
+    star by one law; and A10: each sub-ring's old weights sum to the contrast's, as before (measured 2.2e-16 relative).
+    Until S91 the bright catalogue's old part was ``c`` alone: 1.37e-2 per finest sector at most from the sample's
+    (S61 measured 3.9e-3 on ring 8's level-0 sectors)."""
+    from galaxy.stages.systems import CELL_RINGS, Placement, ring_young_share
+
+    F, R, t = default.fields, default.grid.R, default.grid.t
+    migration = float(default.inputs["migration_efficiency"])
+    place = Placement(F, R, t, migration=migration, constants={k: c.value for k, c in models[DEFAULT_MODEL].constants.items()})
+    assert ring_young_share(F, R, t, migration=migration).tobytes() == place.young.share.tobytes()
+    edges = np.concatenate([galaxy.sector_lo, galaxy.sector_hi[-1:]])
+    moved = 0.0
+    for sub in range(CELL_RINGS << MAX_LEVEL):
+        sample, _ = place.sub_ring_weights(MAX_LEVEL, sub)
+        mine = galaxy.weights[1, sub]
+        kept = np.maximum(galaxy.pattern.sector_means(0.5 * (galaxy.ring_lo[sub] + galaxy.ring_hi[sub]), edges), 0.0)
+        assert abs(mine.sum() - kept.sum()) <= 1e-13 * kept.sum(), sub
+        assert np.allclose(mine, sample * (kept.sum() / sample.sum()), rtol=0.0, atol=1e-12), sub
+        moved = max(moved, float(np.max(np.abs(mine - kept))))
+    assert moved > 1e-3  # the old part is no longer the contrast alone (measured 1.37e-2)
 
 
 def test_the_n_brightest_are_complete_above_the_header_s_threshold(api, default, models):

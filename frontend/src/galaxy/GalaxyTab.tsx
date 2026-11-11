@@ -27,7 +27,7 @@ import type { CameraLink } from "./cameraLink";
 import { CameraLinkProbe } from "./CameraLinkProbe";
 import { RenderCaption } from "./PictureBeside";
 import { compareCaption } from "./compare";
-import { PHOTOMETRIC, lightColors, photometricColors, starColors } from "./colors";
+import { PHOTOMETRIC, photometricColors, responseColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
 import { wholeDiscOf } from "./fieldLoads";
@@ -40,8 +40,7 @@ import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
-import { opticsOf } from "./hstPsf";
-import { instrumentOfSet, instrumentPsf, usePhysicalPsf } from "./psf";
+import { instrumentPsf, usePhysicalPsf, viewOptics } from "./psf";
 import { footprint } from "./frustum";
 import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
@@ -51,7 +50,7 @@ import { TUNING_CONTROLS, type Tuning, defaultsFor, drawnTuning, heldTemplate, l
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
 import { regimePlace } from "./drawerLayout";
-import { starLoads } from "./regionStars";
+import { dropRows, starLoads } from "./regionStars";
 import { type Column, DataTable } from "../ui/DataTable";
 import { IconButton } from "../ui/IconButton";
 import { StatusDot, type StatusTone } from "../ui/StatusDot";
@@ -367,11 +366,12 @@ export function GalaxyTab({
   // filter set is that instrument's own, a point is the telescope's image of a point at its physical size (the obscured
   // Airy, or with the spikes' switch the full pupil's), in place of the sprite. Elsewhere - the Milky Way, an artist's
   // impression with no instrument, or another filter set - the sprite stays the display choice it was (R2). The
-  // instrument's own set is the one it names (S67, D227 T1: NGC 4414 opens on RGB, its instrument still WFC3's).
+  // instrument's own set is the one it names (S67, D227 T1: NGC 4414 opens on RGB, its instrument still WFC3's). Since
+  // S83 (T11) a set carrying its own optics (JWST's NIRCam) is drawn physically at any template with a distance (psf.ts
+  // viewOptics).
   const optics = useMemo(() => {
     const ownSet = template ? (template.instrument.filters ?? template.filters) : null;
-    const own = ownSet ? instrumentOfSet(FILTER_SETS[ownSet]) : null;
-    return own && own === instrumentOfSet(FILTER_SETS[filterSet]) ? opticsOf(template?.instrument) : null;
+    return viewOptics(template?.instrument, ownSet ? FILTER_SETS[ownSet] : null, FILTER_SETS[filterSet]);
   }, [template, filterSet]);
   // Built in the PSF table worker since S82 (#178 ii): the last table drawn until the new one arrives. The switch is the
   // drawn template's during a landing's hold (`look`, #188's follow-up).
@@ -408,9 +408,12 @@ export function GalaxyTab({
   const detail = region.value && regionKey ? region.value : null;
   // The region's clusters (V3's volume, V4's points, S41): loaded once at the level the view asks for.
   const level = area && view ? levelFor(view.across) : 0;
-  const clustersKey = area ? JSON.stringify([area, level, query]) : null;
+  // At "sampled" the census is asked through the shown filter set at the white point, as the star-first mode asks it
+  // (S91, T2 / #114): each cluster's `response` is what its point is drawn by. At "catalogue" only RegionVolume reads it.
+  const clustersLight = loads.sampled ? { curves: curvesOf(filterSet), white: whiteKelvin } : undefined;
+  const clustersKey = area ? JSON.stringify([area, level, query, loads.sampled ? [filterSet, whiteKelvin] : null]) : null;
   const regionClusters =
-    useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
+    useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal, clustersLight), SETTLE_MS, undefined, false, { view: areaView }).value ?? null;
   // V3's display-colour cluster points (the sampled reading's); RegionVolume reads the census at both positions.
   const shownClusters = area && loads.sampled && regionClusters ? regionClusters : null;
   const clusterPositions = useMemo(() => {
@@ -418,10 +421,16 @@ export function GalaxyTab({
     const c = shownClusters.columns as Record<string, ArrayLike<number>>;
     return c.cluster_radius ? toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height) : null;
   }, [shownClusters]);
+  // Each cluster's own band light through the set over the white point's (S91, T2 / #114: fluxOf, the star-first
+  // points' reading), on the sampled stars' display scale - not the blackbody share of its bolometric light, which
+  // painted the census 1.89 / 2.12 / 2.43 times its R / G / B light. No response or no white point draws none (B9).
   const clusterColors = useMemo(() => {
-    if (!shownClusters || !shownClusters.columns.cluster_luminosity) return null;
-    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable, pointGain);
-  }, [meta, shownClusters, exposure, blackbodyTable, pointGain]);
+    if (!shownClusters) return null;
+    const c = shownClusters.columns as Record<string, ArrayLike<number>>;
+    if (!c.cluster_radius) return null;
+    // S93 (T3 / #115): a dissolved cluster is not a point - its stars are the sample's (dropRows).
+    return dropRows(responseColors(c.response, shownClusters.header.white?.response, c.cluster_radius.length, exposure, pointGain), c.cluster_bound, 2);
+  }, [shownClusters, exposure, pointGain]);
 
   // The star-first mode (D208): the frustum's footprint, and the disc stars in it by tiles (S64, V6, R8): the footprint
   // resolved to level-0 cells, ONE threshold per frame picked from the API's table of expected counts per tile - the
@@ -710,7 +719,16 @@ export function GalaxyTab({
   const samplePositions = useMemo(() => positionsOf(sample), [sample]);
   const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable, pointGain), [meta, sample, field, exposure, blackbodyTable, pointGain]);
   const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
-  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure, blackbodyTable, pointGain) : null), [meta, detail, field, exposure, blackbodyTable, pointGain]);
+  // S93 (T3 / #115): at "sampled" the region sample's stars the cluster points carry draw nothing (the model's membership).
+  const detailColors = useMemo(
+    () => {
+      if (!detail) return null;
+      const colors = colorsFor(meta, detail, field, exposure, blackbodyTable, pointGain);
+      // Only where the cluster points are drawn (the light, field === PHOTOMETRIC); a painted field shows every star.
+      return field === PHOTOMETRIC ? dropRows(colors, (detail.columns as Record<string, ArrayLike<number>>).star_cluster_member, 1) : colors;
+    },
+    [meta, detail, field, exposure, blackbodyTable, pointGain],
+  );
   // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each. The
   // comparison's right pane takes the left pane's (`frame`): one camera, one zoom range.
   const ownReach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);

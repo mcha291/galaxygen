@@ -261,10 +261,12 @@ def resolved_per_ring(service: Service, template: str, l_min: float):
 
 # S90a (#217, D259; R1b): the level-3 Milky Way case alone is machine_pinned - the tile's l_min_used (snap_up: a scalar
 # 10.0 ** LOG_L_GRID[k]) and the table's threshold (10.0 ** the grid as an array) are two computations of one power;
+# S92 (#217 built, 9db2146: api/v6_tiles.grid_threshold is both answers'): the mark lifted in its own commit, to be read
+# on the runner by the gate's dispatched run; revert this commit alone if the runner parts the two again.
 # on one runner (41923775720) they parted by an ulp, 125.89254117941663 against ...661. A structural claim ("the
 # frame's one threshold") that rests on two paths agreeing to the bit - register #217. Ids unchanged (level-template).
 @pytest.mark.parametrize("level,template", [pytest.param(level, template, id=f"{level}-{template}",
-                                                         marks=[pytest.mark.machine_pinned] if (level, template) == (3, "milky_way") else [])
+                                                         marks=[])
                                             for level in (2, 3) for template in TEMPLATES])
 def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes_per_ring(service, template, level):
     """The frame's one threshold at level k: the per-cells table's pick for the cells in view at the default point budget,
@@ -299,8 +301,11 @@ def test_the_render_at_level_k_resolves_at_the_tiles_threshold_and_closes_per_ri
     assert np.max(np.abs(anchored[on] / a["total"][on] - 1.0)) < 1e-12
     # and the render's whole-disc numbers are these rings' (the trapezoid in R the header states)
     assert rh["resolved"]["light"]["bright"] > 0
-    placed = (np.asarray(ra["stars_middle"]) * np.asarray(ra["stars_middle_placement"])[:, None]
-              + np.asarray(ra["stars_old"]) * np.asarray(ra["stars_placement"])[:, None])
+    # S91 (#160): was ra["stars_placement"] for the old part - since the owner's ruling of 2026-11-10 the old part is
+    # placed by the star sample's rule, stars_old_placement; each part's weight is the one the header's ages names.
+    by = {p: rh["ages"]["parts"][p]["weight"] for p in ("middle", "old")}
+    placed = (np.asarray(ra["stars_middle"]) * np.asarray(ra[by["middle"]])[:, None]
+              + np.asarray(ra["stars_old"]) * np.asarray(ra[by["old"]])[:, None])
     assert np.all(placed - np.asarray(ra["stars_unresolved"]) >= -1e-12 * placed)
 
 
