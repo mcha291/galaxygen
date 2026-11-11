@@ -212,11 +212,15 @@ def test_218_every_draw_reads_the_same_bits_at_one_thread_and_at_the_machine_s_c
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-def _rgb() -> str:
+def _curves(name: str) -> str:
     import json
 
     sets = json.loads((ROOT / "frontend/src/galaxy/filters.json").read_text(encoding="utf-8"))["sets"]
-    return json.dumps(sets["rgb"]["curves"])
+    return json.dumps(sets[name]["curves"])
+
+
+def _rgb() -> str:
+    return _curves("rgb")
 
 
 def test_175_the_remainder_s_kept_windows_split_the_middle_part_the_unsplit_answer_ships(audit_api):
@@ -249,6 +253,41 @@ def test_175_the_remainder_s_kept_windows_split_the_middle_part_the_unsplit_answ
     spans = sorted(ages)
     assert all(lo < hi for lo, hi in spans), ages
     assert all(abs(spans[i][1] - spans[i + 1][0]) <= 1e-12 for i in range(len(spans) - 1)), ages
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# 5. T2 / #114: the cluster points' light through a filter set closes on the render's young part
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+def test_114_the_clusters_summed_response_through_sho_is_the_young_part_s_colour(audit_api):
+    """T2 / #114 (S91, D260): ``/api/clusters`` with ``filters=`` gives each cluster's own band light through each
+    curve, and summed over the census it closes on the render's young part (``stars_young`` times its placing weight,
+    per cell, times the cell's area): the build read the RGB set at 6500 K on the default seed - 0.940 / 0.938 / 0.933
+    over the disc, the 6 % the census's draw against its expectation, the colour to 1 %. Re-measured on the Hubble
+    palette (``sho``, three narrow bands, not pinned by the build), the Milky Way at texture seed 5151, this file's
+    mesh, the cells' areas integrated here: the clusters over the young part per filter within 0.80-1.20 (the census's
+    light spreads 4.4 % seed to seed, D210: about four of it), and the three filters' ratios within 3 % of each other
+    (the colour). Fails if the filter path tints the census against the field's young part."""
+    from galaxy.stages import systems as sy
+
+    q = dict(template="milky_way", texture_seed=5151, filters=_curves("sho"), white=6500, r_min=0, r_max=1000,
+             phi_min=0, phi_max=2.0 * math.pi)
+    rh, ra = _answer(audit_api, "/api/render", level=0, **q)
+    R = audit_api.grid.R
+    edges, sectors = sy.cell_edges(R)
+    cell = np.asarray(ra["cell"], dtype=np.int64)
+    ring, sector = np.divmod(cell, sy.CELL_SECTORS)
+    area = 0.5 * (edges[ring + 1] ** 2 - edges[ring] ** 2) * (sectors[sector + 1] - sectors[sector]) * 1e6  # pc2
+    weight = rh["ages"]["parts"]["young"]["weight"]
+    young = (np.asarray(ra["stars_young"], dtype=float) * np.asarray(ra[weight], dtype=float)[:, None]
+             * area[:, None]).sum(axis=0)
+    _, ca = _answer(audit_api, "/api/clusters", **q)
+    clusters = np.asarray(ca["response"], dtype=float).sum(axis=0)
+    ratio = clusters / young
+    assert ratio.size == 3 and np.all(young > 0.0), (young, clusters)
+    assert np.all((ratio > 0.80) & (ratio < 1.20)), ratio
+    assert float(ratio.max() / ratio.min()) < 1.03, ratio
 
 
 # ---------------------------------------------------------------------------------------------------------------------

@@ -152,7 +152,8 @@ Marasco 2017's R0 end fixed at 52 pc, V02's A_B - A_V derived, the CMD FAQ's "ha
   segments' flats differ from 4p + f.
 - **F-1B-3** `READING_CLOUD_SIZES.md:69-70` — DIFFERS (a source's definition), prose feeding the owner's ruling #182.
   "the catalogues' R is an equal-area radius" holds for LD20, not MD17 (inertia-matrix radius, eqs. 18, 22; on LD20's
-  radius MD17's clouds give 57.5 R^2.10); LD20's 78.6 R^1.98 is "for the clouds in the R+16 catalog".
+  radius MD17's clouds give 57.5 R^2.10); LD20's 78.6 R^1.98 is "for the clouds in the R+16 catalog"; on it a 1e7
+  Msun cloud is 378-379 pc (the note gives both), right on the relation as quoted.
   Settle: the MD17 relation "restated on LD20's equal-area radius ... or labelled as MD17's inertia-matrix radius; and
   78.6 R^1.98 is labelled Rice et al. 2016's clouds as fitted by LD20".
 - **F-1B-4** `stages/systems.py:819, 832` (S93 docstrings) — MISATTRIBUTED (a modelling choice attributed to a source),
@@ -169,9 +170,53 @@ Remy-Ruyer 2015 eq. 5, Licquia, Newman & Brinchmann 2015, JDox's NIRCam filters 
 changed lines of `stages/dust.py`, `clouds.py`, `clusters.py`, `bubbles.py`, `chemistry_dtd.py`, `bright.py`,
 `spectra.py`, two `layer/` and three `api/` modules carry no cited claim; #168's two-layer derivation not re-derived.
 
-## 2. What the batches built, re-measured (strand 2)
+## 2. What the batches built, re-measured (strand 2; one Opus builder in a worktree; `tests/test_audit_vi.py`, the one file the audit adds)
 
-*(assembled when the strand's note is in)*
+One Opus builder in its own worktree on `s94-measure` (cut from `session-94` at 766b431), merged at 83c85d8; no byte
+outside `tests/test_audit_vi.py` changed. The mesh is `AUDIT_VI_GRID` (96, 320, 6, 72), which no build pinned; the
+texture seeds are 5151, 6060 and 31337 (pattern 4141 for #218), and each estimator is the audit's own, written in the
+test rather than taken from the build's helpers. Only #164's trough calls the model's point function. The file's 10
+nodes ran in 7 min 42 s (461.96 s) single-threaded with EXIT=0. The file has no strict xfail. **Items examined 10:
+7 hold** (#216, #218, #175, T2 / #114 to its bounds, #197, #164 / #165 / #213, T10 / #119). **#173: neither candidate
+reproduced.** **Not reached:** #160 and #113 / #171; #161 was not measured separately. No measured claim failed. The
+three findings are about evidence and wording, not numbers.
+
+| item | claim | what the build pinned | what was measured (seed, grid, estimator, number) | verdict |
+|---|---|---|---|---|
+| #173 | migration node: hash order or left state | 0.8845979 vs 0.9284296 once, at 16ab0c3 | four numbers bit-identical under hash seeds 0, 1, 2, 12345, 28504 (old -0.2801196316960978 / -0.005541389266041417); test_chemistry.py whole in file order 20 passed (1341 s); three shuffled subsets (9401 / 9402 / 9403) 4 passed each | neither reproduced; F-2-1 |
+| #216 | arm census births bit-independent | records, the oracle the model's `ap.counted` | `ap.census` re-run on the published inputs (8 fields, 6 of 6 cases bit for bit); censuses MW (51, 13), (47, 11), (41, 10), ngc_4414 (21, 21), (18, 18), (24, 24); design counts nudged one ulp both ways, every crossing azimuth one ulp both ways; near-integer rings 3 per MW case, 1 per ngc case; gap ties MW 5151 1 of 7, ngc 2/20, 3/17, 3/23 | holds; see F-3B-2 |
+| #218 | draw bits independent of BLAS threads | AST guard, no two-thread run | 7 answers (/api/region levels 0 and 2, clouds, clusters, remnants, bright at l_min 3000, layer), sha256 at 1 thread vs the machine count: all equal; grep finds no unguarded BLAS product | holds |
+| #175 | the remainder's kept windows sum to the middle | the sum to 1e-12 (part tautological) | ngc_4414, 31337, RGB, l_min 2000, against the answer without kept=: shared arrays within 1e-12, windows >= 0, sum <= middle, spans contiguous | holds; F-2-2 |
+| T2 / #114 | clusters' response through a filter set | rgb ratios 0.93-0.94 | `sho` set, MW 5151: census response against the render's young light, each filter in 0.80-1.20, max/min < 1.03; ratios not printed | holds at the stated bounds |
+| #160 | one placement rule | test_bright one-rule test | draft refused (l_min 100: 4 423 669 expected stars > 200 000) | not reached |
+| #197 (#161 not separate) | ring draws in their own ring | one parent cell, seed 0 | both templates, 5151 and 6060: region, remnants, clouds' birth radius against ring edges (1e-9 kpc): 0 outside (e.g. 1559 remnants, 17 050 clouds) | holds |
+| #164 / #165 / #213 | spur height over the trough; walk ends at the budget | 1440 cell centres | MW, three seeds, the gas_spur table: no foot past the last ring with amplitude > 0; height = crest - trough on 8192 azimuths, within 2e-3 (the builder's bound) | holds; ngc_4414 draws no spur |
+| #113 / #171 | sample along equivalent points | - | - | not reached |
+| T10 / #119 | diffuse gas line ratios | hand formula to 1e-12 | relation from the register's transcription: [N II]/Ha 0.58270, [S II]6716/Ha 0.43868; per-ring equal to 1e-12, both templates x three seeds; 6716/6731 = 1.44818 vs R_max 1.4484 | holds; F-2-3 |
+
+- **F-2-1** mis-ruled debt / stale text. Place: `docs/GALAXY_INPUTS.md` #173. Evidence: the entry records old_lots
+  0.8845979 against old_none 0.9284296. Today's model gives -0.005541389266041417 against -0.2801196316960978,
+  bit-identical under five hash seeds, and the file order and three shuffles are green. "Tell the two apart" cannot
+  be met. Settle: "#173 is closed as not reproducible on the current model: no hash-order dependence (5 seeds,
+  bit-identical) and no order dependence (file order and 3 shuffles), held by test_audit_vi::test_173_."
+- **F-2-2** weak test. Place: `tests/test_v7_header.py:256-259`. Evidence: `rest = middle - sum(parts)` is defined,
+  then `sum(parts) + rest` is checked against `middle` to 1e-12, which is true by construction. The test's other
+  assertions carry content. Settle: "The sum line in test_the_remainder_s_middle_part_s_kept_windows_sum_to_it is
+  dropped or replaced by a check against the answer without kept=."
+- **F-2-3** stale text, minor. Place: `nebular.py` dig_line_ratios. Evidence: it takes the doublet clamped to 1 cm^-3
+  (1.44818). The fit's n_e -> 0 limit is 1.4498, and the cited R_max is 1.4484. No number moves; 1B's note records
+  the same 1.44818 as a non-finding. Settle: "The comment and #119 say 'the doublet at 1 cm^-3, the fit's lower edge
+  (1.4482)' in place of 'the low-density limit'."
+
+**The builder's incident, as the note records it.** Argument files generated with `--collect-only -q` on top of the
+project's `-q` came out empty, so `pytest @empty` started the full suite at about 01:53. It was seen within about a
+minute from "collected 0", the processes were stopped, and no result was taken from the run. Separately, a small
+`uv run python` ran for a few seconds beside a pytest run, against the one-process rule. The note records this too.
+
+**Not reached / not measured.** #160 and #113 / #171 were not reached. #161's own claim (the clouds' sector weights
+per ring) has no separate estimator. #164 / #165 were not measured on ngc_4414, which draws no spur. T2's ratios were
+asserted to bounds, not printed. The 20-id shuffles of the whole test_chemistry.py were written but not run (22 min
+each). Whether a module-level cache inside the model could hold left state was not examined.
 
 ## 3. The re-pins and the gates re-derived, not re-run (strands 3A and 3B; two Opus readers, read-only)
 
@@ -194,7 +239,7 @@ an unregistered red, with two reservations (no `raises=` on #220 / #221; closure
 | power-budget share 0.4-0.9 -> 0.39-0.98 (read 0.934) | test_audit_v | D255 r. 2 | F-3A-2 |
 | WALK_READ_DIFFERENCE_COARSE 0.49 -> 0.58 (read 0.5700) | test_audit_v | D255 r. 4 | F-3A-2; F-3B-1 |
 | "reach boundary" class admitted in `unexpected` steps | test_pieces | D255 r. 5 | decided, reason a mechanism |
-| price `< 3000` -> `< 3500` us, non-strict xfail kept (read 2839-3026) | test_audit | D255 r. 6 | F-3A-1 |
+| price `< 3000` -> `< 3500` us, non-strict xfail kept (2839-3026 us in 3A's answer; 2924-3208 us at S87 in F-3A-1) | test_audit | D255 r. 6 | F-3A-1 |
 | per-cell -> per-ring cloud equality (#161); continuous share (#202); empty named set (#214) | test_audit_v, test_v6_clouds, test_layer | D258, D257, D258 | by design |
 | `top[here]` exact -> `approx(abs=1e-4)` | test_sfh_azimuthal | none found | F-3A-8 |
 | #154 "worst cell and worst ring are one ring" removed; input window 0-1.0 -> 0-1.5 rad (1000-star guard) | test_audit; test_bright | D260 | named |
@@ -229,7 +274,8 @@ an unregistered red, with two reservations (no `raises=` on #220 / #221; closure
 | #216, #218 and the reference, #215 / #219, #217, #160, #114 / #174 | as F-3B-2, 3, 4, 5, 8, 9 state | 3B (below) |
 
 - **F-3A-1** mark / weak test; low, method — `tests/test_audit.py` price test, `xfail(strict=False,
-  reason=PRICE_RECORD)` around `< 3500.0`: "a non-strict xfail around a bound can fail nowhere"; the runner's XPASS.
+  reason=PRICE_RECORD)` around `< 3500.0` (PRICE_OVER at S87: 2924-3208 us vs 3000; 3A's answer gives 2839-3026 us):
+  "a non-strict xfail around a bound can fail nowhere"; the runner's XPASS.
   Settle: "Make it a record (print, no assert; or machine_pinned with the bound) or a gate (strict, under a bound
   measured on the runner); a non-strict xfail with a bound is neither." See F-3B-10.
 - **F-3A-2** moved bound, decided, reason = the failing reading — power share and `WALK_READ_DIFFERENCE_COARSE`, each
@@ -378,6 +424,284 @@ cameraLink.ts, contextLoss.ts, drawerLayout.ts, Workflow.tsx, PictureBeside.tsx 
 grep only; GalaxyTab.tsx read at 410-440 and 712-731; RENDER_PHYSICS.md and VIEWER_TASKS.md not opened; no vitest,
 Playwright or worker test; the zoom stands' wings; the diffuse share's session; the walk (its S73 walker not committed).
 
-## 5. The register pass and what "done" still wants (strand 5)
+## 5. The register pass and what "done" still wants (strand 5; one Opus reader, read-only)
 
-*(assembled when the strand's note is in)*
+One read-only Opus reader at 766b431 with scratch parsers on progress.py's rule (`s94_5_parse.py`, `s94_5_stale.py`,
+`s94_5_rulings.py`); no test run, no source fetched. **The counts agree in six places:** `tools/progress.py --check`,
+`tests/test_audit.py:395`'s pin `(108, 97)`, its map rows (43 / 65), BRIEF.md:12-13, RESUMING.md:104 and D262's
+closing count all read 108 open = 43 permanent + 65 carried, 97 discharged, next #223 / D263, as the parser does;
+every open item in one map row, no duplicates, #223 and D263 unused (at s85: 126 open = 33 + 93, 68 discharged).
+**29 discharges** of the range examined (21 carried -> struck, 8 new -> struck), each saying what met it, every named
+file, test or function grepped existing; **43 permanent**, each with its reason. Of the 108: stands 95 (2 with stale
+wording), stale 10, discharged in fact 1, permanent without reason 0, mis-ruled 0 found. Eleven findings, bookkeeping
+and wording; no wrong number found.
+
+| # | what | stated status | verdict |
+|---|---|---|---|
+| 26, 33 | permanent, frozen history | "The advanced model's ..." | stands, stale text (F-5-11) |
+| 80 | BAR_LENGTH_RATIO's scale length; rows 15-17 misses | M1; "still carried, with its closer as written" (S88) | stale; cites `S55_REFERENCE_MOVED`, gone since #214 |
+| 156 | a chain's excess jumps at a kink | M1; "Carried to S88's look" | stale; the look never recorded |
+| 92, 94, 95, 136, 181 | PAH per radius; gas all in clouds; cloud draws; bluer face-on; HII complexes | M2; S89 read, "What would close it" | stale; no destination after S89 |
+| 162 | young stars' clustering fades in one step | M2; "no ruling needed once the unit is read" | stale; no session named |
+| 159, 163 | lattice cost; normaliser table cost | "the cost pass runs after M3 - at S92's close or Audit VI" | stale; §0's strands hold no cost pass |
+| 160 | two old-star placement rules | M2 -> M3; built S91, test_bright.py:470 | discharged in fact (F-5-1) |
+
+**Discharges by ruling.** Owner: #189 ("Yes, all five", D252), #209 (2026-11-03), #210 (2026-11-10), #212 ("Yes,
+both"). Gate: #166 (cache built, skip reverted), #214 ("re-based, not retired"), #219 (against its kill clause as
+written); #164 / #165 "on the gate's ruling" of an owner-ruled build. Also by the gate: #167 / #168 (D257 (1)), #161 /
+#197 / #213 on build, #215 on its kill clause, #216 a gate read, #218 on the gate's re-base; #175's kept=1 the builder's.
+The owner's own words in the range: D252, D255 (2026-11-03's four), D256 ("Yes, both"), D259 ("Yes, fix them"), D260
+(2026-11-10's twelve, "accept all recommendations"), dd003ee ("Merge if green"); the delegation is dated 2026-11-11.
+
+| # | ruling (gate / lead / builder) | who | entry | in BRIEF? | in D262? |
+|---|---|---|---|---|---|
+| 1 | four proposals ruled permanent | gate S86 | 141 143 155 157 | n/a | n/a |
+| 2 | six declared bounds ruled on the lead's measurements (D255 r. 1-6) | gate S87 | - | n/a | n/a |
+| 3 | five readings held; "a spur does not belong where no ridge stands" (D256) | gate S88 | 197, 213 etc | n/a | n/a |
+| 4 | #167, #168 discharged; #169 carried for the owner's look (D257) | gate S89 | 167 168 169 | n/a | n/a |
+| 5 | #214 re-based, not retired (D258) | gate S90 | 214 | n/a | n/a |
+| 6 | the marks: cherry-pick, #217's mark lifted (D261 (1)) | gate S92 | 216 217 | no | no |
+| 7 | **#219 discharged on the gate's ruling, against its kill clause as written** (D261 (b)) | gate S92 | 219 | **no** | **no** |
+| 8 | #218's remedy = #216's ruling carried to its second cause | gate S92 / lane S93 | 218 | yes | yes (1) |
+| 9 | #164 / #165 discharged on the ruled build; #220, #221 opened (D261 (4)) | gate S92 | 164 165 | n/a | no |
+| 10 | C1-C3 mends (#221's over-clauses split; a docstring; peak identity) | gate S92 | 221 | no | no |
+| 11 | #166 discharged by the gate's ruling | gate S93 | 166 | yes | yes (2) |
+| 12 | `kept=1` opt-in; #222 for the WFC3 size clause | builder S93 | 175 222 | yes | yes (3) |
+| 13 | #115 membership by class | builder S93 | 115 | yes | yes (4) |
+| 14 | #118 (a) the +0.2 dex edge the grid's limit (builder); (b) met on Sanders 2016 (gate) | builder + gate | 118 | yes | yes (5) |
+| 15 | #117 carried on #124's ruling; #124 a build item; #117's blind window -0.043 +- 0.008 | gate S93 | 117 124 | yes | yes (6) |
+| 16 | s83-robust merged, keeping S84's dot | gate S93 | T11 T13 | yes | yes (7) |
+| 17 | #184 a source ruling needed (Robin et al. 2003 proposed), not taken | gate S93 | 184 | "Carried past M3" only | yes (8) |
+| 18 | fixture respelled by hand; jwst_nircam's 17 requests held to wfc3's | gate S93 | T11 | yes | yes (9) |
+| 19 | the three-legs record re-pinned as read, not re-run | gate S93 | - | yes | yes (10) |
+| 20 | the layer-off reference re-based, #218 discharged on it | gate S93 | 218 | **no** | yes (11) |
+| 21 | **"the guard in place of a subprocess pair at two thread counts; the solve and the einsums left unordered and named"** | gate S93 | 218 | **no** | **no** |
+
+**Still owed by the owner (4c):** the look at S93's frames (f9b04ed2; "none materially nearer", BRIEF:38); #107, #179
+(downloads), #203 (T20), #204 (Azure), #205 (ruling 9 says zero), T19; re-ruling any of rows 7-21; #169's look at the
+streaks (only in its entry; F-5-6). #110's "standing" in D258 is stale and harmless; Audit VI's start is answered.
+**Viewer rows not struck (5a):** T2 stale (built S91, #114 struck; F-5-3); T3 in part; T7 in part; T8 a stale
+"waiting on" (the reading is done, the `region.ts` rewrite waits); T11 merged at S93, its head sentence contradicted by
+its tail; T12 stale (built S53, pre-range); T15 not started; T19, T20 the owner's.
+
+**BUILD_V §7, clause by clause (5b).** (1) "Every register item discharged or permanent with its reason": not met, 65
+carried - 5 the owner's word, 6 the viewer's plus three viewer halves, 1 Audit VI's (#173), 26 "carried past M3", 15
+M1 leftovers (11 on "the owner's reading", #80 and #156 stale, #154 / #186 viewer), 11 M2 leftovers and #160; no BUILD_V
+row after 93 takes the carried-past-M3, M1 or M2 leftovers. (2) "the viewer task list empty but for the owner's own
+rows": not met, T3, T7, T8, T11, T15 open (T2, T12 on paper only). (3) "the frames at their closest ... with the
+distance stated": "none materially nearer"; no stated distance read; the look owed. (4) the hash "green in CI at the
+final hash": holds - image run 42976759684 on main at dd003ee prints `model.hash f9b04ed20a06c0a68420f1cc8e13714e`;
+not deployed (#204). (5) "three nightly runs green on the three batch merges": M1's head (1c58051) five nightlies
+11-04..11-08 all failure; M2's (4f06cc9) 11-10 00:28 and 22:00 success; M3's (dd003ee) none listed yet. Dispatched:
+batch-m3 at e2e571f (42952574634) and main at dd003ee (42976759706) success.
+
+- **F-5-1** mis-ruled debt / stale text; high — #160 discharged in fact (995a007, `tests/test_bright.py:470`), still
+  carried, no decision says why; striking it gives 107 / 64 / 98. Settle: "the gate strikes #160 on 995a007 +
+  test_bright.py:470 with a decision, or writes which clause of the closer is still unmet." See F-3B-8.
+- **F-5-2** hidden red / mis-ruled debt; high — `BRIGHT_GATE_READ_OVER` (test_clustering_gate.py:145, :348) named only
+  inside struck #161; #215 struck; #162 does not mention it; D261's "every xfail strict with a register entry" not true
+  of it. Settle: "an open entry (#162, or a new #223) named in the reason string and carrying the hold in its text, or
+  the gate rules the clause." See F-3A-5.
+- **F-5-3** stale text; high — VIEWER_TASKS.md:52 T2 open, built and struck at S91; BRIEF:35 omits it. Settle: "T2
+  struck, 'Done at S91 (D260)'."
+- **F-5-4** ruling taken, not listed; high — D261: "#219's discharge rests on the gate's ruling, not on the entry's
+  kill clause as written"; in neither BRIEF.md:21-29 nor D262's eleven; the "S93 re-reads" its struck text promises
+  is not in D262. Settle: "#219 added to BRIEF's list; S93's read recorded (the runner's node, or a named-node read)."
+- **F-5-5** stale text; high — (a) D262 item 11 not among BRIEF's eight; (b) DECISIONS.md:17341-17342's guard ruling
+  in neither list. Settle: "both added to BRIEF's 'Rulings taken on recommendation' (and (b) to D262's list)."
+- **F-5-6** stale text; medium — #169's and #202's looks, put to the owner in D258, not ruled in D260 nor named in
+  BRIEF:38; #156 and #157 hang on a look never recorded. Settle: "BRIEF's owed list names #156 / #157 / #169 / #202 and
+  what to look for."
+- **F-5-7** stale; high on the text — ten carried entries (#80, #156; #92, #94, #95, #136, #181, #162, #159, #163) name
+  no destination after their batch. Settle: "each entry given a destination (a row, the viewer's pass, the owner's),
+  or BUILD_V gains the row."
+- **F-5-8** owner-facing gap; medium — #81, #129-#131, #138, #144-#147, #149, #153 wait on "the owner's reading"; BRIEF
+  lists only #107, #179, #203-#205 and T19. Settle: "BRIEF lists them, or the entries go to a reading session."
+- **F-5-9** stale text; high — BUILD_V.md:55 "The owner's word (7)" includes #210 and #211, both discharged; #167 /
+  #168's bodies still end "Proposed **discharged**". No settling sentence in the note.
+- **F-5-10** plan; high — §7's "done" not reachable on the plan as written (65 carried, no row after 93; five viewer
+  rows open; M1's nightlies red, M3's unread). Settle: "the owner's word on what follows Audit VI (a next build, or §7
+  restated)."
+- **F-5-11** stale text; low, pre-range — permanent #26 and #33 name `tests/test_models.py`, `bench2.py`,
+  `galaxy/models/advanced.py`, none existing, and "The advanced model's". No settling sentence in the note.
+
+**Not read / not reached.** Each open entry read by its title and last 420 characters, not every middle paragraph
+("mis-ruled 0" means none found that way); #80's closer not re-read in full; the code behind #142 and #148, #119's
+and #211's test names, #189's test_viewer pin and #212's derivation test not grepped; struck viewer rows not re-checked
+beyond the greps; the frames' stated distance not looked for beyond "none materially nearer"; why no scheduled run is
+listed after 2026-11-10 22:00 not investigated; no test run, no source fetched.
+
+## 6. The gate — the lead's verdict (Fable, 2026-11-12; transcribed to D263; the fixes are S95's, B3)
+
+**Read first.** Five strands, seven Opus agents, 50 findings (49 standing, one withdrawn by its reader). **The batches' numbers hold where the audit could
+read them:** of 84 cited claims re-read on fetched pages (49 the arms' and the bar's, 35 the rest's), 69 match, and no
+constant, pin or table row that reaches a computed field differs from its page; no judged bound moved in number without
+a decision naming it (one identity loosened to abs 1e-4 under #154 with no decision found, F-3A-8, named below); no feature of the committed frames is an invention, D2 and D1 hold. **What the audit found is
+what building ahead of the suites costs:** tests that would not see the defect they discharged return (#216's kill
+clause run only as a script, #197's one cell, #166's cache, #217's machine-dependent guard); a bound that now judges a
+statistic other than the one it was measured on (the spurs' walk); bounds re-declared at the reading that failed them;
+one strict hold that lost its register entry when its carrier was discharged; three nodes behind M3's close that no
+machine has seen pass as committed; a request fixture transcribed by hand; and reading notes that state a source more
+narrowly or more widely than its page. The verdict on each class follows; a finding not named is upheld as written and
+goes to S95 as a wording or test fix.
+
+**The citations (strand 1): upheld, all wording or provenance; no number moves.**
+- F-1A-1 (the winding sense "never reverses — the sources measure … not a reversal", while Honig & Reid 2015's Table 5
+  prints −10.3 ± 1.4° on M51's arm B): *upheld as wording.* That no arm reverses is the model's rule (D219), not the
+  sources' finding; the about-lines say so and name the reversed segment as outside what the model draws. The lines
+  are under `model/galaxy`, so the hash moves: **queued for the next model batch's first commit**, with F-1A-6
+  (Erwin 2019's fit covers log M★ 9–11), F-1B-4 (the bound fraction is Lada & Lada's, its independence of mass and
+  age the model's choice) and the isochrone labels' caveat (the CMD FAQ's "not carefully checked").
+- F-1A-2 (the stacks' A₂ peak quoted as 0.76–0.94 r_bar where Díaz-García et al. 2016's Table 5 also prints 0.62–0.68):
+  *upheld.* The reading quotes the table whole; #146's miss is restated against two named rows — the Milky Way
+  template's class (SB, T < 5: 0.78 ± 0.19) and its mass bin (0.90 ± 0.20) — the model's 0.41 a under both. A disclosed
+  check, not a row: no ruling is owed.
+- F-1A-3 (Hart et al. 2017's mean is 18.0, so 1.57σ), F-1A-5 (the "15.0° pooled" is the reader's, labelled so), the
+  minor rows (MJ07's 0.35–0.80; DG16b's "a hint of"): *upheld*, corrected in the readings.
+- F-1A-4 (#153's reading sent to Yu & Ho 2019 §4.3 for a fit the paper does not print): *upheld.* The reading is
+  re-pointed: YH19 prints ρ = −0.49 and no slope; the law's slope and scatter stay `[recall]` until a source that
+  prints a fit is read — #153's closer says so.
+- F-1B-1 (arXiv:2301.01779 is McElwain et al. 2023), F-1B-2 (0.8 % and 0.5 %): *upheld*; `tools/fetch_filters.py`
+  and the set's about text, no curve touched.
+- F-1B-3 (Miville-Deschênes et al. 2017's R is an inertia-matrix radius; on the equal-area radius their clouds read
+  57.5 R^2.10; the 78.6 R^1.98 is Rice et al. 2016's clouds as Lada & Dame fitted them): *upheld*; the reading is
+  corrected. **Told to the owner, no answer awaited:** #182's ruling (permanent, 2026-11-10) rested on this
+  paragraph; corrected, a 10⁷ M☉ cloud reads ~313 pc in place of 296 pc — the same direction, the ruling's reason
+  unchanged.
+- Unread or unreachable (Herrera-Endoqui et al. 2015's NGC 4414 pitch — VizieR down; six sources of
+  `READING_ARM_*`; Bronfman 1988, Malhotra 1994, Rémy-Ruyer 2015's eq. 5, Licquia et al. 2015): *carried as one
+  entry*, each read once at S95 or labelled `[recall — NOT READ]` where it stands.
+
+**The re-pins and the gates (strand 3): no bound moved unsaid; five things the method let through.**
+- F-3B-1 (the walk's read re-defined at S92 — the crest within half a crest width, not the read at the foot — with
+  `WALK_READ_DIFFERENCE` 0.27 and its coarse twin 0.58 carried over): *upheld.* D261's "no bound moved" is true of
+  the number and silent on the estimator. **Ruled:** the two numbers are not bounds of the new statistic until it is
+  measured; S95 measures it over the audit's population (both templates, the production and the coarse mesh, seeds
+  disjoint from the tests'), and the gate then declares the bound from that population (D117, "measured over N") —
+  #220's reading at seed 4242 is judged against it, not before it. No bound is moved at S95 without that table.
+- F-3A-2 and F-3A-4 (four of M1's six ruled bounds re-declared at the failing reading plus a margin; the ring mean's
+  2e-13 on a reason that does not reach its size): *upheld as a method finding; the bounds stand.* Each was the
+  model's own declaration, each decided (D255, D256), each cause measured — B5's letter holds. What the audit asks is
+  D117's: a declared bound is measured over a population the test does not judge. S95 re-measures the power share
+  and the walk's coarse read on disjoint seeds and writes the population beside each; the ring mean's 1e-13 is traced
+  to the component that owns it (`math.fsum` per component) and the tolerance named there.
+- F-3A-5 (`BRIGHT_GATE_READ_OVER`, a strict hold on the young bright stars' two L1 clauses, carried by nothing since
+  #161's discharge): *upheld — the audit's one hidden red.* It was disclosed when held (D256) and lost at S90's
+  strike. **A new entry, #223**, names the hold, its two readings (−0.4750 against −0.64 ± 0.15; 0.8457 against flat
+  within 0.05) and its closer; #161's discharge stands (its own closer was met).
+- F-3B-2 (#216), F-3A-6 (#197), F-3B-6 (#166), F-3B-5 (#217), F-3B-9 (#114's call site, #174's shader): *upheld, one
+  class — the discharge stands on a script, one cell, or a path the test cannot fail.* S95 writes each test (the
+  one-ulp probe as strand 2 built it; every star and remnant inside its own ring over both templates' catalogues; a
+  counter on the cached parts; a source-level check that both thresholds call one function; the viewer's call
+  asserted in vitest). **No discharge is reopened**: none of the five was found broken, and strand 2 re-measured
+  #216, #218, #175, #197, #114, #164 / #165 / #213 and #119 by its own estimators and each holds.
+- F-3B-3 (the three-legs gate re-pinned from a failing read and never re-run; it and the two layer-off reference
+  nodes are `machine_pinned`, so the runner skips them): *upheld.* **Read by name at this gate, on `main`'s model, single-threaded:** the two layer-off reference nodes of
+  `tests/test_layer.py` — five cases, green; the three-legs gate of `tests/test_pieces.py` (360 galaxies, over an
+  hour) was running when this section was written, and its line is D263's. **A cadence for these nodes is a
+  ruling for the owner**; the lead recommends reading the three by name at every model batch's close.
+- F-3A-3 (six of S90a's fourteen marks took judged clauses off the runner): *upheld for S90a → S92, closed since*:
+  M3 lifted the fourteen (strand 3B's count) and the runner read them green. The lesson is kept: a mark goes on the
+  record's own test, a judged clause never rides under it.
+- F-3B-4 (the L1 gate inside its window by 0.0070 and 0.0135 against a seed-to-seed sd of 0.10): *a ruling for the
+  owner*, as D260 said it would be if the slopes stayed at the edge. The lead recommends judging the nine-seed mean
+  (−0.62 / −0.64, the statistic the source measures: a population's) and keeping the default census's slopes as a
+  record.
+- F-3A-1 (`PRICE_RECORD`, a non-strict xfail around a bound: it can fail nowhere): *upheld.* It becomes a record
+  (the price printed and kept, the sanity floor asserted, no upper bound), as #154's text already calls it.
+- F-3B-8 (#160 built at S91, its test green, never struck): *upheld*; discharged at S95's register pass on that test.
+- F-3A-7 (a whole-test strict hold masks every later assert), F-3A-8 (the identities that became records under #154
+  are named here: `test_sfh_azimuthal`'s top-tenth equality, exact → abs 1e-4, and `built == cell_law` with its
+  0.00228 record), F-3A-9, F-3A-10, F-3B-7, the `raises=` on #220's and #221's holds: *upheld*; a lesson, text, and
+  one unit case for the bar's sliver.
+
+**The viewer and the pictures (strand 4): no invention; the fixture is a transcription; the pictures are far.**
+- F-4-1 with F-3B-7 (22 of the fixture's 171 recorded meanings written by hand, `jwst_nircam` never walked, S73's
+  walker never committed): *upheld.* S95 writes the walker as a committed tool, walks the built viewer on `main`'s
+  model with `jwst_nircam`, and diffs the meanings against the fixture; an entry is opened only if the walk is not run.
+- F-4-2 (JWST's strut angles inferred from images): *carried*, tagged as it is; a reading of the telescope's own
+  drawing is ordered at S95. F-4-3 (`WING_BLOCK`): *ruled a sampling bound*, said so in `VIEWER_TASKS.md`.
+- F-4-5 (D262's NGC 4414 goal row quoted at the tool's estimated axis ratio 0.512, the frames at 0.5736): *upheld*;
+  §4's table is the record at one axis ratio. F-4-6 (NGC 4414's field frame reddens outward, +0.185, where its goal
+  blues outward, −0.33; so since S67): *recorded here, told to the owner.*
+- **The yardstick, said plainly** (the owner's word of 2026-10-05): neither field frame is near its goal picture.
+  The Milky Way frame carries a quarter of the goal's two-armed power (A₂ 0.053 against 0.194), five times its dark
+  fraction, no visible bar and no pink knots; NGC 4414's carries a fifth of the goal's dark lanes, two and a half
+  times its A₂ and the opposite colour gradient. Three model batches moved no frame materially nearer. This is the
+  finding the owner should weigh above the others, and it is not a defect any strand can file: the model is honest
+  and the picture is not there.
+
+**The closures re-measured (strand 2): every claim the audit reached holds on seeds and a mesh the builds never
+used.** `tests/test_audit_vi.py`: ten nodes, 7 min 42 s single-threaded, no strict xfail. #216 (the census re-laid
+outside the stage to the published table's bits; one-ulp nudges of the design count and of every crossing azimuth move
+nothing on three seeds and both templates, near-integer counts and gap ties present — F-3B-2's missing kill test,
+now committed), #218 (seven answers' bytes equal at one thread and at the machine's count), #175 (against the answer
+without `kept=`), #197 (no star, remnant or cloud outside its drawn ring), T2 / #114 (through `sho`), #164 / #165 /
+#213 (the Milky Way; a flocculent disc draws no spur), T10 / #119 (to 1e-12). **Not reached, said plainly:** #160's
+two-catalogue comparison, #113 / #171's luminosity function, #161 by an estimator of its own — S95's test lane takes
+what a minute of test time allows, the rest is named in D264.
+- F-2-1 (#173, this audit's own item: the migration test's once-seen failure): the node's numbers are bit-identical
+  under five hash seeds, the file passes in its own order and the node in three shuffled orders, and the numbers the
+  entry recorded (0.88 / 0.93) are an earlier model's — today's read −0.28 / −0.0055, a margin no flake crosses.
+  *Upheld.* **Ruled: #173 is discharged at S95 as not reproducible on the model as it stands** — its closer ("tell
+  the two candidates apart") cannot be met by a failure that does not occur; a ruling taken in the owner's place and
+  listed so.
+- F-2-2 (the kept windows' test sums the parts with a rest defined as the middle minus the parts — true by
+  construction): *upheld*; S95 holds the sum to the unsplit answer. F-2-3 (6731 called "the low-density limit" where
+  the code takes the fit at 1 cm⁻³, 1.4482 against the limit's 1.4498): *upheld as wording*, the register's now, the
+  stage's comment with the next model batch.
+- The builder's own incident is in §2 and is kept as a lesson already written (an empty argument file runs the suite):
+  about a minute of the full suite started and was stopped, no result taken.
+
+**The register (strand 5): the counts agree in all six places; thirteen entries are not plainly as stated; three
+rulings never reached the owner's list.**
+- The counts — 108 open = 43 permanent + 65 carried, 97 discharged — agree between the audit's own parser,
+  `tools/progress.py --check`, `tests/test_audit.py`'s pin and rows, the register's map, `BRIEF.md` / `RESUMING.md`
+  and D262. All 43 permanent entries carry their reason (B5). All 29 discharges of the range say what met them, and
+  every file, test and function they name exists. **No count moves in this session** (B3); S95's register pass moves it.
+- F-5-1 with F-3B-8 (#160): *upheld*; struck at S95 on 995a007 and `tests/test_bright.py`'s one-rule test.
+- F-5-2 with F-3A-5 (`BRIGHT_GATE_READ_OVER`): *upheld*; #223, above. D261's review sentence "every xfail strict with
+  a register entry" was not true of this hold, and this audit says so in its place.
+- F-5-4 (#219 discharged on the gate's ruling against its own kill clause, in neither list the owner reads; the
+  re-read S93 promised never recorded) and F-5-5 (the layer-off reference's re-base and "the guard in place of a
+  subprocess pair; the solve and the einsums left unordered" likewise): *upheld — the lead's own omissions.* All three
+  join `BRIEF.md`'s list at this close. #219's promised re-read is the runner's: `tests/test_clustering_gate.py` is
+  not `machine_pinned` and ran green on `batch-m3` at e2e571f (run 42952574634) — recorded here; F-3B-4's ruling is
+  still the owner's.
+- F-5-6 (the looks owed by #156, #157, #169 and #202, none named in `BRIEF.md`) and F-5-8 (eleven of M1's entries
+  wait on "the owner's reading": #81, #129–#131, #138, #144–#147, #149, #153): *upheld*; `BRIEF.md`'s owed list
+  names each. **Ruled:** a reading is B3-safe and needs no word — the eleven readings are ordered as a reading
+  session after S95, each entry then re-ruled permanent or given a build with its source read.
+- F-5-7 (ten carried entries name a batch that is over or a pass that never ran: #80, #156, #92, #94, #95, #136, #181,
+  #162, #159, #163), F-5-9 (BUILD_V §2a's "owner's word (7)" lists two discharged), F-5-3 (T2 unstruck in
+  `VIEWER_TASKS.md`; T8's "waiting on a reading" that is read; T12), F-5-11 (#26, #33 name the retired model's
+  files): *upheld*; S95's register pass gives each a destination or strikes the stale clause.
+- **F-5-10 — BUILD_V §7's "done" cannot be reached on the plan as written: a ruling for the owner, and the audit's
+  second headline.** Clause by clause: (1) 65 entries are carried and no row after 93 takes them — 26 carried past M3,
+  fifteen of M1's, eleven of M2's, six the viewer's, five the owner's word, one this audit's; (2) the viewer's list
+  still holds T3, T7, T8, T11 and T15 beside the owner's T19 and T20; (3) the frames' distance is stated (§4) and is
+  large; (4) the images are green in CI at the final hash f9b04ed2… (run 42976759684), nothing deployed (#204);
+  (5) of the three batch merges one has a green nightly (M2's, twice), M1's head was red five nights (#216, mended in
+  M2), M3's is unread at this close. The plan has run out of rows before the work ran out. The lead's recommendation
+  is in D263: a sixth build of four short rows — the audit's fixes (S95, taken now), the readings (taken now), one
+  model batch for what M3 carried with a recommendation on record, one viewer pass — **and before any of it the
+  owner's word on the pictures**, since no register item, discharged or not, stands between the frames and the goals.
+
+**The order for S95 (the fixes; Opus builders, the Fable gate):** (1) the tests of the weak-test class and #173's,
+`tests/test_audit_vi.py` kept green; (2) the population tables for the walk's statistic and the two re-declared
+bounds; (3) the walker and the fixture; (4) the readings' corrections and the unread sources; (5) the register pass
+(#160 struck, #223 opened, #173 discharged, the stale entries each given a destination); (6) the three named nodes read on `main`'s model. **Queued for the next model batch** (a byte under
+`model/galaxy`): the four about-lines above. **The owner's rulings, none blocking:** (1) **what follows Audit VI** — the plan has no row left and §7's "done" is out of its reach (F-5-10): the lead
+recommends a short sixth build (the fixes and the readings, taken in this run; one model batch for what M3 carried
+with a recommendation on record and the four queued about-lines; one viewer pass), **after** (2) **the owner's word on
+the pictures** — which features of the two goal pictures matter most (the bar, the lane network, the knots, the
+colour gradient), so the next build is aimed at the frames and not at the register; (3) **the L1 gate's judged
+statistic** (F-3B-4, and #223 with it): one default census, or the nine-seed mean the lead recommends; (4) **a
+cadence for this machine's pinned nodes** (F-3B-3): the lead recommends the three named nodes read by name at every
+model batch's close, as part of its gate; (5) **any re-ruling of the rulings taken in the owner's place** — D262's
+eleven, and the four this audit adds to the list: #219's discharge by the gate's ruling, the layer-off reference's
+re-base, the guard in place of a two-thread-count pair, #173's discharge as not reproducible; (6) **the looks owed**:
+the regenerated frames, #156 and #157 (the step S88's frames might show), #169 (the streaks round NGC 4414's bulge),
+#202 (the circle at 4.72 kpc), and NGC 4414's reversed colour gradient (F-4-6); (7) the standing owner's-word items:
+#107 and #179 (downloads), #203–#205 and T19 (the deploy); (8) the concurrency this run used (three agents at once,
+two of them heavy during S95) — to refuse or keep.
