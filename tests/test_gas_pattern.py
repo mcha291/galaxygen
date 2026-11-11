@@ -355,6 +355,9 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
     # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE: 1.0036e-13 the Milky Way's worst, 9.35e-14 NGC 4414's).
     # Was `off < 1e-13 or (template == "milky_way" and off == pytest.approx(1.0036e-13, rel=1e-3))`.
+    # S95 (Audit VI F-3A-4, D264): the reason is the response solver's own sum tolerance (gas_response.SUM_TOLERANCE,
+    # 1e-13), which the exact cell means inherit - not the rounding of 360 cells (~1e-15). 2e-13 stays. Measured at S95:
+    # 9.970e-14 (Milky Way), 9.348e-14 (NGC 4414).
     off = float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max())
     assert off < 2e-13
     # S58 (D217 item 6): was `g >= taper (1 - B)`, the cosine bar's trough. The bound is w_bar min L - to the rounding
@@ -616,6 +619,11 @@ def test_the_sector_means_are_the_exact_means_of_the_point_function(model):
     # S87 (#209, #80): was the spurred field at 20 and 25 kpc - the default galaxy's spurs now have feet out to 26.6 kpc
     # (59 of them; one at 20.0), so the ring past the last mode and the bar is read on the law the spurs compose on,
     # and the spurred field past every foot.
+    # S95 (Audit VI F-3A-9): that reason is stale - since S90 (#213) the walk ends at the arms' budget's edge and no foot
+    # stands past 12.34 kpc (tests/test_spurs.py: 45 feet, the last inside 12.34), so the spurred field at 20 and 25 kpc
+    # could be read again. NOT restored here (the brief: a restoration is the gate's): restoring is `gp.sector_means(20.0,
+    # edges) == 1.0` and `gp.cell_means([20.0, 25.0], edges) == 1.0` on the spurred pattern, run once on this test's own
+    # galaxy (whose feet are this test's, not the template's) to see that no spur's footprint reaches 20 kpc.
     law = unspurred(gp)
     assert np.all(law.sector_means(20.0, edges) == 1.0) and np.all(law.cell_means(np.array([20.0, 25.0]), edges) == 1.0)
     assert np.all(gp.sector_means(29.0, edges) == 1.0) and np.all(gp.cell_means(np.array([29.0, 35.0]), edges) == 1.0)
@@ -696,7 +704,9 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
     # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
     # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE). Was `< 1e-13 or (milky_way and == approx(1.0036e-13))`.
-    assert got["ring_mean"] < 2e-13  # measured 1.0036e-13 and 9.3e-14: the cell means
+    # S95 (Audit VI F-3A-4, D264): the reason is the response solver's own sum tolerance (gas_response.SUM_TOLERANCE,
+    # 1e-13), inherited by the exact cell means - not the rounding of 360 cells. 2e-13 stays.
+    assert got["ring_mean"] < 2e-13  # measured 1.0036e-13 and 9.3e-14 (S88); 9.970e-14 and 9.348e-14 (S95)
     assert got["steps"] <= gr.MAX_NEWTON_STEPS == 120 and got["halvings"] <= gr.MAX_HALVINGS == 30
     # The bound of D216 item 12 as S58 leaves it, [w_bar min L, max(max s, max L)]. S58 (D217): was `0.0 < margin
     # < 3e-5 and max_g <= max_s` - the cosine bar never passed the response's crest; the lanes do (7.06 on the lane
@@ -709,7 +719,10 @@ def test_gate_every_ring_of_both_templates(prod, template):
     assert gm.GAS_DENSITY_CONTRAST.ramp.hi == 4.0
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=GATE_MAX_G_READ_OVER_S92))
+# S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
+# not held), and masks nothing - the failing assert is the body's only one.
+@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, raises=AssertionError,
+                                                                              reason=GATE_MAX_G_READ_OVER_S92))
                                       if t == "milky_way" else t for t in TEMPLATES])
 def test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes(prod, template):
     """The gate's upper clause of D216 item 12 as S58 leaves it, max g <= max(max s, max L), split from the test

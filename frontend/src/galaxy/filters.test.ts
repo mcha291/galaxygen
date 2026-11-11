@@ -134,7 +134,7 @@ describe("the named instruments (S42)", () => {
     expect(set.psf?.kind).toBe("airy"); // the display sprite without a distance
     const o = set.optics!;
     expect([o.aperture, o.spider_angles_deg, o.pixel_scale_arcsec]).toEqual(["hexagonal-18", [90, 240, 300], [0.063, 0.031, 0.031]]);
-    // The tool's geometry: segments of 1.32 m, 7 mm apart (Feinberg et al. 2023), in pupil radii of the circumscribed
+    // The tool's geometry: segments of 1.32 m, 7 mm apart (McElwain et al. 2023, arXiv:2301.01779), in pupil radii of the circumscribed
     // circle - the farthest corner at (sqrt3 p + f / (2 sqrt3), p + f / 2) for the pitch p = 1.327 m.
     const p = 1.327;
     expect(o.aperture_m).toBeCloseTo(2 * Math.hypot(Math.sqrt(3) * p + 1.32 / (2 * Math.sqrt(3)), p + 0.66), 4);
