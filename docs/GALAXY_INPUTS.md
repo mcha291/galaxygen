@@ -5210,6 +5210,19 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    V7 was the layer in the viewer and V8 the display defaults (D226, D227–D231); BUILD_IV's smoothness phase (W5,
    D222) is where a render's cost is next read, and the owner schedules it. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the starlight by age is the populations' render cost: the two mends in one pass with #184.
+   *S93 (M3, lane REST): built - the two mends in one pass.* (i) A whole-grid `l_min=` render no longer runs `_ages`
+   (its header's `ages` null, no age parts, no weights shipped for them, `stars_placement` among them): the star-first
+   mode's frame draws its remainder; a window or a level with `l_min=` keeps them (`test_s91_t2_closure` reads the
+   young part beside the remainder at level 0). (ii) The parts' anchors are `bright.part_anchors`' arithmetic through
+   the run's cache (`v7_layer.window_anchors` over the three parts' windows; the same bits, held). Measured back to
+   back, single-threaded, on this machine (a fresh service each; f4, RGB): the Milky Way's whole render cold 15.13 ->
+   14.05 s, warm 2.28 / 2.23 -> 1.33 / 1.32 s; its whole `l_min=` render cold 8.81 -> 8.30 s, warm 2.14 / 1.91 -> 1.51 /
+   1.43 s (11.61 -> 9.84 MB); NGC 4414's whole cold 8.08 -> 7.11 s, warm 1.37 / 1.28 -> 0.99 / 1.05 s - every cold call
+   under the owner's 25 s whole-disc bound (D260). Held by `tests/test_render.py::test_an_l_min_render_computes_no_age_
+   parts_and_the_whole_render_s_are_its_cached_bits`; `test_without_l_min_the_render_is_the_one_it_was` now states the
+   l_min body as the plain one less the light by age, byte for byte; `test_v6_bright`'s remainder test reads the
+   weights from the whole render the viewer holds. Expected to move elsewhere: the layer reference's
+   `render/unresolved` request (its `ages` was set beside the digest since S63; the body loses the age arrays).
 167. ~~**The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud**~~ (S64, D224 stop
    condition 1; the probe's measurement; discharged at S89, D257 — retired, a duplicate on another law read by no drawing). The census's `central_extinction_v` is solar dust per hydrogen at one surface
    density (Σ_GMC 42 M☉/pc²; since S67, D231, the inner regime's 82, 5.7977 mag), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
