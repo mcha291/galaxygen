@@ -288,10 +288,13 @@ def mass_on_isochrones(
     mh = nearest_metallicity(feh_history)  # (n_R, n_t)
     n_mh = isochrones().mhs.size
     out = np.zeros((formed.shape[0], w.shape[1], n_mh))
-    for z in range(n_mh):
-        on = mh == z
-        if on.any():
-            out[:, :, z] = np.where(on, formed, 0.0) @ w
+    # S93 (#218, the gate's ruling): summed in an order the model fixes, not by BLAS - step by step from the first,
+    # each step's mass added to the row of the metallicity it formed at. Until S93 it was, per metallicity,
+    # ``np.where(mh == z, formed, 0.0) @ w``: the same terms, each other row's +0 skipped here (adding +0 to a sum of
+    # non-negative terms leaves it), and a step outside the age window, whose weights are all 0, is skipped too.
+    rows = np.arange(formed.shape[0])
+    for j in np.flatnonzero(np.any(w != 0.0, axis=1)):
+        out[rows, :, mh[:, j]] += formed[:, j, None] * w[j][None, :]
     return out
 
 

@@ -63,6 +63,7 @@ import numpy as np
 
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
+from galaxy.core.special import ordered_product
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC, disc_circular_velocity
 from galaxy.stages.halo import hernquist_enclosed
@@ -292,7 +293,8 @@ def radial_transport(formed: np.ndarray, spread: np.ndarray, R: np.ndarray, dR: 
         if np.any(width > 0.0):
             k = np.exp(-0.5 * ((R[None, :] - R[:, None]) / np.maximum(width, 1e-9)[:, None]) ** 2)
             k /= k.sum(axis=1, keepdims=True)
-            out[:, start:stop] = (k.T @ (formed[:, start:stop] * area[:, None])) / area[:, None]
+            # S93 (#218): summed in an order the model fixes, not by BLAS (a seed names one galaxy on every machine).
+            out[:, start:stop] = ordered_product(k.T, formed[:, start:stop] * area[:, None]) / area[:, None]
         start = stop
     return out
 
