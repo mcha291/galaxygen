@@ -3,7 +3,7 @@
 **The state (2026-11-12).** S95 made Audit VI's fixes (no byte under `model/galaxy` moved): tests for #197, #166, #217,
 #114, #175; the walker committed (`tools/walk_requests.py`), the fixture re-recorded from a walk of 409 answers; F-W-1
 mended (a template switch's first star-first press asked at the old threshold; the re-walk 0 computed); reader R's 21
-rows read; 0.27 not relaxed (#220), #224 opened, 2e-13 kept as `SUM_TOLERANCE`; the three-legs read is D263's line.
+rows read; 0.27 not relaxed (#220), #224 opened; the three pinned nodes green by name on `main`'s model (D264).
 **S96, the reading session:** two Opus readers fetched the sources eighteen entries waited on. Three ruled permanent
 (#81, #144, #145); #130 / #95 / #136 / #181 with a sourced build or a rewritten closer; five rulings for the owner; the
 rest carried with what was read; the audit's three unreached re-measurements done - #160, #113 / #171 at migration 0, #161 hold - and #225 found. **109 open = 46 + 63, 99 discharged**; next #226, D266. Still no byte under `model/`.

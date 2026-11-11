@@ -17665,3 +17665,99 @@ dispatch (4 passed, 4 xfailed as marked). **The three pinned nodes D263 left run
 ruling (D263). `session-94` then `session-95` merge into `main` on the run's green, tagged `s94` and `s95`.
 Cost: lanes D 0.30 M, W 0.30 M, T 0.30 M tokens, reader R 0.17 M, the reviewer 0.24 M, the mend builder 0.09 M, the
 close builder 0.22 M — 1.6 M in all (Opus); the lead's context 0.55 M across the three sessions of this run.
+
+### D265. S96, the reading session: the eighteen register entries that waited on a source, read by two Opus readers — #81, #144, #145 ruled permanent on their readings; #130, #95, #136, #181 given a sourced build or a rewritten closer; five rulings put to the owner as named rulesets (#80, #153, #92, #94, #138); the rest carried with what was read; and the pictures' diagnosis (`docs/READING_PICTURES.md`); no model byte moved
+
+**Why a session.** Audit VI found eighteen entries stranded on "a reading" (F-5-7, F-5-8): eleven of M1's on "the
+owner's reading", seven whose batch had closed. D263 ruled that a reading needs no word (B3-safe) and ordered them.
+Two read-only Opus readers (A the arms and the bar, twelve entries; B the clouds, the dust, the gas and the young
+stars, six), each a number only on a page fetched in the session; an Opus docs builder wrote the readings into the
+`READING_*.md` files as "Part S96" and the rulings below into the entries; the Fable gate ruled. Docs and one count
+pin only: `git diff --stat dd003ee -- model/` empty.
+
+**The rulings (the entries carry the source's words; here the verdicts).**
+- **Permanent, with the reason in the entry:** #81 (the contrast's dependence on age is one galaxy's measurement —
+  Peterken et al. 2019 — and no law by age is in the sources), #144 (Baba et al. 2015 print arm-gas offsets, no width
+  for a live disc's ridge), #145 (no source bins the barred fraction by disc dominance; the presence stays a disclosed
+  check on the owner's ruling of 2026-11-03).
+- **A sourced build, a model batch's:** #130 (Mogotsi et al. 2016: σ_HI / σ_CO = 1.4 ± 0.2, independent of radius —
+  the atomic response at 8.4 km/s as S86 designed it); #95's one draw (the model's cluster-to-cloud offset has a
+  median of 0.79 cloud radii and a ceiling of 1, Grasha et al. 2019 measure a median of 2 for clusters under 10 Myr
+  in M 51 — F-96B-1, the session's one finding that a model draw stands against its source; the paper prints medians
+  only, so the build is sourced for the draw's median, not its shape, and the reader's own word was "carried").
+- **A closer rewritten because no source can meet it as written:** #136 (the catalogues carry no face-on
+  A_B − A_V; NGC 4414's own extinction, Vallejo et al. 2002's Table 8, applied by hand brings the frame's colour from
+  0.6458 to about 0.75–0.83 against [0.72, 0.82] — and the model's own dust makes that frame bluer by 0.0155 where
+  every source read reddens it, the entry's open question now); #181 (published HII-region sizes are set by the
+  telescope's resolution — Groves et al. 2023, Hunt & Hirashita 2009 — so no size-luminosity relation fixes a merge
+  level; the build the reading supports is a merge within about 70 pc tested against Santoro et al. 2022's
+  luminosity-function slope, 1.73 with a spread of 0.15 over nineteen discs — a spread, not an error).
+- **For the owner, each two named rulesets (B12), none taken:** **#80** the bar's length — Erwin 2019's Table 3 (as
+  entered: 2.27 kpc on the default disc) or its Table 4 with a broken dependence on stellar mass (the paper's
+  preferred fit; about 2.92 kpc by the reader's arithmetic, on the default disc's scale length with the Milky Way
+  template's stellar mass), which needs a stellar mass at checkpoint 3, a question of rule A1; **#153** the pitch's
+  dependence on shear — the law as it stands (its slope and scatter `[recall]`: the one published fit, Seigar et al.
+  2006's, prints no scatter and later samples find weak or none) or none, with the S4G type mean as the intercept
+  (NGC 4414's check from 2.65σ to about 1.1–1.2σ) — the lead recommends the second;
+  **#92** the PAH fraction — Rémy-Ruyer et al. 2015's metallicity line (entered) or its sSFR line; **#94** the
+  molecular gas outside clouds — none (the catalogues the census's laws come from; the lead's recommendation, the
+  entry then permanent) or Roman-Duval et al. 2016's 25 %; **#138** the arm-number law, the owner's as before, with
+  Hart et al. 2016's Table 2 now read directly.
+- **Carried with what was read:** #129, #131 (no table printed; values in a figure), #146 (the b/a draw; its
+  citation to name the SB row — a comment under `model/galaxy`, queued), #147 (one galaxy), #149 (its driven half
+  closed in words; the arms' inner end unread), #162 (Grasha et al.'s amplitudes read, their separation unit not
+  printed — parsec is the reader's inference).
+No present number of the model was found wrong against its page (Erwin 2019's Table 3, Querejeta et al. 2024's
+Table 1 and Hart et al. 2016's Table 2 each match). Unreachable: Kennicutt 1984, HyperLeda's extinction page.
+
+**The pictures' diagnosis (the session's second part; `docs/READING_PICTURES.md`).** D263's first headline — no frame near its goal picture, three batches moving none nearer — was put to a Fable analyst
+(the model's own face-on maps built in numpy from the published arrays, with no exposure and no tone curve, the tool's
+statistics computed on them) and then to an Opus experiment runner (the committed field captures re-taken through the
+project's own harness with one display setting changed at a time; the controls reproduce the committed PNGs byte for
+byte). **The gaps part three ways, and the split is measured, not argued:**
+- **Display.** *NGC 4414's reversed colour gradient* — the model's own map blues outward (−0.28 with its dust), the
+  capture reddens outward (+0.185); with a linear tone curve and no bloom the capture reads **−0.258** (prediction
+  held; the goal −0.33). *The Milky Way's invisible bar, in good part* — with no bloom and the exposure 1.5 stops down
+  the frame's A₂ rises 0.053 → **0.083** and the bar's own rings read 0.159, the bar and two arms visible to the eye
+  (prediction held in part: the display takes more than half the bar). The cores stand 3.4 and 3.8 stops over.
+  *The twenty dots outside the Milky Way's disc* are HII knots drawn at the field's gain (off, they go) — not the
+  points, whose gain does not reach them (the analyst's mechanism killed, the cause found).
+- **Metric.** *NGC 4414's A₂ of 0.185* against the goal's 0.074 is the inclined disc's projection: face-on it reads
+  **0.032** (held). The statistic compares the frame's thick smeared disc with a thin one.
+- **Model.** *The dark lanes*: the smooth dust, all of it composed, darkens no pixel under the tool's threshold on
+  either template, though the rings carry A_V 4–88 mag inside 3 kpc — the published fields hold no connected narrow
+  lane; the frames' dark pixels are isolated clouds as dashes. With the clouds' extinction off the dark fraction
+  falls 0.0315 → 0.0180 and 0.0309 → 0.0187, not under 0.01 (prediction killed: the clouds are about half of it, the
+  rest unattributed). *The bar's contrast in light*: 0.12–0.14 at 2.5 kpc in the model's own map against the goal's
+  0.29–0.34, and 0.02–0.05 outside the bar against 0.13–0.30 — about 2.4 times under. *NGC 4414's stellar layer* of
+  0.93 kpc smears its disc. *The Milky Way frame's shallow power spectrum* (−1.26 against −1.99) is the uniform
+  three-pixel speckle of the points, not the knots (off, it went shallower, −0.90).
+**What this changes.** The first thing between the frames and the goals is not a register entry but the display
+defaults — which are the owner's (D227) and are sliders: a live pass (the tone curve, bloom, the exposure against the
+core, the knots' gain) is the cheapest move and the experiments say what each buys. The second is two things the
+model does not hold — dust as connected lanes, and a bar two and a half times stronger in light — which are a build's
+aim, not a debt's. Neither is tuned here (C6): the file gives the numbers and the settings to try, nothing is changed.
+
+**Audit VI's strand 2 completed (an Opus builder; `tests/test_audit_vi.py`, fourteen nodes).** The three closures
+D263 named as not reached, each by the audit's own estimator on unpinned seeds: **#160** holds (the two catalogues'
+old stars by sector, a two-sample χ² of 36.1 and 20.1 against a bound of 62.5 at 31 degrees of freedom — an estimator
+that sees a few per cent a sector, so the build's weight test remains the one that separates the two rules); **#161**
+holds (per-ring cloud counts identical layer on and off, masses to 1e-12, 669 and 487 cells differing — not vacuous);
+**#113 / #171** hold *at migration 0* (the sample 1.02–1.03 of the bright table from 0.1 to 100 L☉). **And a finding
+(F-2-4): under the default migration the sample reads 0.97 / 0.90 / 0.88 / 0.84 / 0.76 of the table at 0.1 … 1000 L☉**
+— the table is built on each ring's own formation history, the sample's ages include the churn — so the two readings
+of one galaxy differ by up to a quarter at the bright end on the default inputs. **#225 opened**, held by a strict
+xfail in the audit's file (a finding carried by a probe script is F-3B-2's class); its closer a model batch's or a
+ruling that the difference is the two catalogues' definitions.
+
+**The register.** **109 open — 46 permanent, 63 carried — and 99 discharged**; #225 opened, nothing discharged;
+next #226, D266.
+
+**The gates.** On `session-96` at c939341, single-threaded: the fast job's six files 132 passed, EXIT=0; the register's
+nodes of `tests/test_audit.py` 21 passed; `tools/progress.py --check` 79/79, the board agrees; `tests/test_audit_vi.py`
+whole, 13 passed and 1 xfailed (the strict hold of #225: 0.963 ± 0.005 / 0.895 ± 0.008 / 0.892 ± 0.024 / 0.888 ± 0.068
+of the table at 0.1 / 1 / 10 / 100 L☉ on the node's own draw; the register's five ratios are the probe's) in 8 min 02 s;
+`git diff --stat dd003ee -- model/` empty, the hash unmoved. The new nodes were written after the runner's dispatch on
+`session-95` (run 43083065903) and are first read on the runner by the nightly after the merge. **`session-96` merges
+into `main` after `session-95`, on that run's green**, tagged `s96`. Cost: two readers 0.20 M and 0.17 M tokens, the
+analyst (Fable) 0.24 M, the experiment runner 0.18 M, the measurement builder 0.21 M, the docs builder 0.31 M.
