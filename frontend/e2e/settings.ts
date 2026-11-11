@@ -116,8 +116,14 @@ export const TRANSFER_SLACK = 1e-3;
  * budget's edge, #161 lets the clustering field's cell means move clouds between a ring's cells, #197 redraws the
  * stars inside their rings: measured 0.96827, 0.97247, 0.97922 on the regenerated frames (+5.9e-4, +5.1e-4, +4.1e-4,
  * inside DUSTY_RATIO_PIN before the re-pin).
+ *
+ * S93 (M3's close; the hash f9b04ed2...): was [0.96827, 0.97247, 0.97922] (S90) - M3's model (S91's re-laid arm
+ * census #216 and the old stars by the sample's rule #160, S92's spur heights #164 / #165, S93's young population
+ * T3 / #115, the diffuse gas's lines T10 / #119, the points' dust #174 and #218's ordered sums): measured 0.96835,
+ * 0.97233, 0.97909 on the regenerated frames with the new bundles (+8e-5, -1.4e-4, -1.3e-4, inside DUSTY_RATIO_PIN
+ * before the re-pin; the physics-only frame taken twice the same to 0).
  */
-export const DUSTY_LAYER_RATIO = [0.96827, 0.97247, 0.97922] as const;
+export const DUSTY_LAYER_RATIO = [0.96835, 0.97233, 0.97909] as const;
 // S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
 // (#148), the floor (#209), the Milky Way's pinned 5.0 kpc bar (#80) and MERGER_HEATING 90.6 (#212) move the dust, the
 // clouds (16 940 where 16 577) and the young light; measured with the new bundles on the RTX 4070 (physics only over
