@@ -719,13 +719,16 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S91 | **114, 210, 215** (the region regime's cluster points drawn from their own response through the filter set, T2's closure test green; the clouds' L1 slope inside the window on #216's re-lay, killed by its own clause, not mended; by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 3 |
 | **discharged** at S92 | **164, 165, 211, 216, 219** (the spur's height the gas crest over the ring's trough and the walk at the gas crest, built as ruled; the response tails on their own grid to 10^6 K, the jwst_nircam set inside test_render's bounds; the arm census's births machine-independent - the runner's eleven failing nodes read on this machine at bd0ed0c, every number the runner's, the thirteen marks lifted; the L1 judged clause kept on the default census by the gate's ruling, both slopes inside - D261) | 5 |
 | **discharged** at S93 | **113, 119, 166, 171, 174, 175, 217, 218** (the star sample read along equivalent evolutionary points, its luminosity function and its light per mass on their closure tests; the diffuse gas's [N II] and [S II] by Madsen et al. 2006 at the layer's temperature, drawn beside its Hβ; the starlight by age cached per run, the skip found met where the viewer asks - by the gate's ruling; the points' dust through the march's gas map; the star-first remainder split by kept octaves with `kept=1`, its WFC3 size clause held on #222; one grid threshold read green on the runner; the layer-off reference re-based onto M3's final run in `tests/layer_reference_s93.json` once every draw-path BLAS product was an ordered sum, its two nodes green at one thread and unrestricted - D262) | 8 |
-| **discharged** at S95 | **160** (one placement rule for both catalogues' old stars, built at S91 on the owner's ruling - 995a007, `tests/test_bright.py::test_the_two_catalogues_place_their_old_stars_by_one_rule` - and never struck; struck at Audit VI's register pass, F-5-1 - D264) | 1 |
+| **discharged** at S95 | **160, 173** (one placement rule for both catalogues' old stars, built at S91 on the owner's ruling - 995a007, `tests/test_bright.py::test_the_two_catalogues_place_their_old_stars_by_one_rule` - and never struck; struck at Audit VI's register pass, F-5-1; the migration test's once-seen failure not reproducible on the model as it stands - five hash seeds bit-identical, the file and three shuffled orders green, by the gate's ruling in the owner's place, F-2-1 - D264) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
-| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 162, 163, 169, 170, 173, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 220, 221, 222, 223 | 65 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 220, 221, 222, 223, 224 | 65 |
 
 So the board's **108 open** is 43 permanent and 65 carried, and no item is unruled (S95 (Audit VI's fixes), D264:
 #160 discharged - built at S91 on the owner's ruling and never struck (Audit VI, F-5-1) - and #223 opened, the young
-bright stars' two L1 clauses held strict with no entry carrying them since #161's discharge (F-3A-5, F-5-2); the
+bright stars' two L1 clauses held strict with no entry carrying them since #161's discharge (F-3A-5, F-5-2); at the
+second pass #173 discharged, not reproducible on the model as it stands (F-2-1, the gate's ruling in the owner's
+place), and #224 opened, the arm pieces' realised power over the law's budget on an unpinned Milky Way seed pair
+(S95's population table, F-3A-2), #220 restated as a population finding (F-3B-1); the
 ten carried entries with no destination given one (F-5-7: #80, #92, #94, #95, #136, #156, #159, #162, #163, #181),
 the eleven M1 entries on the owner's reading ordered for the reading session after S95 (F-5-8), #146 / #153 / #182
 restated on the readings' corrections (F-1A-2, F-1A-3, F-1A-4, F-1B-3), #219's runner read recorded (F-5-4), and
@@ -3093,7 +3096,8 @@ never been judged in twenty-three sessions.
    mend reaches without the per-cell conservation. (6) The layered catalogue's price per cell, **re-declared at the
    measurement as a cost record, not a gate** (`tests/test_audit.py`, `PRICE_RECORD`, still non-strict): eight runs
    on an idle machine read 2 839–3 026 µs a cell, the default census **48 pieces on 13 chains** (the law's 2.27 kpc
-   bar; D255's "54" was not this run's count); the bound 3 000 → 3 500 µs, no sourced value (#154).
+   bar; D255's "54" was not this run's count); the bound 3 000 → 3 500 µs, no sourced value (#154). *S95 (Audit VI,
+   F-3A-1; D264):* a record, no bound - `PRICE_RECORD` and the 3 500 µs bound are gone, the sanity floor kept (#154).
    *S88, the owner's answer to D255's question (a), 2026-11-03 ("Yes, both", as the gate recommended):* **the
    acceptance table keeps judging the default inputs** (`spec.run` and rule A5 unchanged). Rows 15–17 stay recorded
    misses under #80 on the default disc: `galaxy.specs` on the final model 2.26984 kpc, the pattern speed's median
@@ -5040,6 +5044,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    0.0246) → (1.7078, 2.1375, 0.6526, 0.0262); the renormalisation's size 2.439e-3 → 2.914e-3 and 1.1286e-3 → 1.8137e-3;
    the debt's bound (`means[2]`, 1.9e-14 / 1.8e-14 under 1e-3) holds - and the worst cell and the worst ring, one ring
    since S59, are two since #216 (rings 29 / 24 and 28 / 26), both inside the bar's reach, which the test now asserts.
+   *S95 (Audit VI, F-3A-1; D264):* the layered catalogue's price per cell is a record with no upper bound since S95, as
+   this entry already said in words ("the point reader's cost is recorded with no bound, none being sourced"):
+   `tests/test_audit.py::test_s21b_the_layered_catalogue_s_price_per_cell` prints and keeps the price, asserts only
+   the sanity floor (150 us), and the non-strict `PRICE_RECORD` hold and its 3 500 us bound are gone.
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
@@ -5605,7 +5613,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (`regionStars.ts starLoads`; the switch `regionStars` per template, "catalogue" / "sampled", the sampled reading
    V3's exactly, kept for the owner's comparison); at NGC 4414's zoom stand in the field mode the region request
    gives way to the bright table, counts and tiles. The captures unmoved (the zoom captures are the star-first mode's).
-173. **A once-seen failure of the migration test in a fresh clone** (S65, D225; S64's `verify_clone --ref main` at
+173. ~~**A once-seen failure of the migration test in a fresh clone**~~ (S65, D225; discharged at S95, D264 — not
+   reproducible on the model as it stands, by the gate's ruling in the owner's place; S64's `verify_clone --ref main` at
    16ab0c3). A fresh clone's whole suite (6 h 08 min on a loaded machine) read 2 failed, 1 561 passed: the per-cell
    pricing timing test (the known load flake, S45 / S60 / S63 / S64) and
    `tests/test_chemistry.py::test_migration_flattens_old_stars_and_leaves_gas_alone[basic]`, which asserted
@@ -5621,6 +5630,14 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    in a shuffled order with a fixed hash seed, its result recorded). The entry is discharged if that run separates
    the two candidates and the cause is fixed, or narrowed to the surviving one. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **Audit VI** — a measurement for Audit VI: the migration test run alone and in a shuffled order with a fixed hash seed, its result recorded (B3-safe).
+   *S95 (Audit VI, F-2-1; D264):* **discharged as not reproducible on the model as it stands**, by the gate's ruling.
+   Audit VI's strand 2 ran the measurement this entry asked (`tests/test_audit_vi.py`'s #173 node; the runs in its
+   note `s94_2.md`): the node's numbers bit-identical under five hash seeds (0, 1, 2, 12345, 28504), the file green in
+   its own order (20 passed), the node green in three shuffled orders (9401 / 9402 / 9403). The numbers this entry
+   recorded (0.8845979 / 0.9284296) are an earlier model's; today's read -0.0055 (`lots`) against -0.28 (`none`), a
+   margin no flake crosses. The closer ("tell the two candidates apart") cannot be met by a failure that does not
+   occur, so the entry is struck on the gate's ruling, a ruling taken in the owner's place and listed so in `BRIEF.md`;
+   should the failure be seen again, it is a new entry with that run's numbers.
 174. ~~**The points' dust is the ring's placed column, not the modulated one**~~ (S66, D226 R7). FluxPoints reads the
    dust along a point's segment from the march's textures in its own pinned shader, which does not include the
    noise: since V7 the field's dust is multiplied by the gas fluctuation map (σ 0.5) and the points' is not, so a
@@ -5967,6 +5984,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    declaration says the measured share and why (finite Gaussian ridges do not fill a ring's variance); filling the
    budget would move a number and is the owner's.
    *S85 register pass (D251):* **permanent** — the declaration says the measured share and why (finite Gaussian ridges do not fill a ring's variance); filling the budget would move a number and is the owner's.
+   *S95 (D264):* the share's upper end on unpinned seeds is #224's - one Milky Way pair (1679 / 2917) reads 1.073 of the budget, over it.
 196. ~~**Three of the layer's declared bounds were samples of ten**~~ (S69, F-2-4, F-2-6, F-2-7, D233). The spur walk's
    read difference 0.052 (measured up to 0.48 over all feet), the gas cell mean's worst 1.83e-2 off its lattice (2.71e-2
    over 60 cells), the clouds' placed radius "at most 976 pc" from the drawn one (1.028 kpc, with 712 of 16 577
@@ -6696,6 +6714,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the closer's second form (the crest read by the point function at the foot, +1.9-2.2 s a lay as S90 measured), the
    hold then lifting by construction - not built here (a model change on every run; the gate's).
    *S93's gate (D262):* **carried past M3**, the lane's recommendation written above; the hold and the bound unmoved.
+   *S95 (Audit VI, F-3B-1; D264):* the walk's read has been a different statistic since S92 - the crest within half a
+   crest width of the foot, not the read at the foot - and 0.27 was measured on the old one. On the new statistic S95's
+   population table (lane T's table A; seed pairs texture / pattern 1000+97k / 2000+131k, disjoint from the tests')
+   reads, on the production grid, the Milky Way's twelve pairs up to **0.6656** (median 0.2139, 95th percentile
+   0.5670), five of twelve over 0.27 (0.2849, 0.3667, 0.4002, 0.4863, 0.6656) and one over 0.58; the default
+   galaxy's twelve up to 0.2815 (one over 0.27); on the coarse mesh none of the Milky Way's eight is over 0.58 (max
+   0.5513). So the over-read is a property of the population, not of seed 4242 (own seed 0 reads 0.2176). The bound
+   is not moved (B5): 0.27 is not relaxed and #220 stands as a population finding. The closer is the model's mend
+   already recommended above (the crest read by the point function at the foot), a model batch's.
 221. **Inside the bar the spur's crest can be a lane's: the Milky Way's published gas reads 7.3027 at 3.94 kpc over
    the bar's clause max(lane peak 7.0556, response 2.3930)** (S92, D261; found by #164 / #165's build). #164 sets a
    spur's height to the ring's crest over its trough; inside the bar's reach the ring's tallest crest is a lane's,
@@ -6741,6 +6768,22 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    reading: both clauses read inside on the unchanged model's default census (the hold then XPASSes strict and the
    numbers above are stale), or the two clauses found to be one population's draw scatter on the nine censuses with the
    mean inside (the hold then the default census's draw, as #219's was).
+224. **The arm pieces' realised power exceeds the law's budget on an unpinned Milky Way seed pair** (S95, D264; found
+   by S95's population table, lane T's table B, on Audit VI F-3A-2). `tests/test_audit_v.py` holds the share of the
+   power budget (the summed realised power over the summed budget, on the rings outside the bar, layer on, the audit's
+   mesh) inside 0.39-0.98 and under 1 - a bound re-declared at S88 from one reading of 0.934 (D255 ruling 2). On seed
+   pairs the tests do not use (texture / pattern 1000+97k / 2000+131k) it reads NGC 4414 0.48-0.57 (eight pairs), the
+   default galaxy 0.40-0.60 (four), the Milky Way 0.43-1.073 (eight): at texture seed 1679 / pattern seed 2917 the
+   Milky Way's pieces carry **1.073** of the budget - over the budget, where the declaration (`arm_pieces._CONSERVES`)
+   says the census carries less, and outside the declared 0.39-0.98 (0.933 at 1582 / 2786, inside). Held
+   `xfail(strict=True, raises=AssertionError)` as
+   `test_arm_pieces_share_of_the_power_budget_on_an_unpinned_milky_way_pair`. Kin of #195 (permanent: the budget met
+   at about half on average). No bound is moved (B5). **Carried.** What closes it: either the declaration restated as
+   a distribution measured over a stated population (the gate's ruling, D117), the hold then lifted against that
+   population's spread; or the census capped at the budget (a model batch), the share then under 1 by construction -
+   the owner's word on the next build decides which. What kills the reading: the 1679 / 2917 share read under 0.98 on
+   the unchanged model (the hold XPASSes strict and the table's row is stale), or the 1.073 found to be the
+   mesh's - the same pair under 1 on the production grid with the share computed as the test computes it.
 
 ---
 
