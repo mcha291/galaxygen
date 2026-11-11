@@ -384,7 +384,10 @@ def test_the_diffuse_gas_carries_its_forbidden_lines_by_madsens_relation(models,
     nii = 1.62e5 * t4**0.4 * math.exp(-2.18 / t4) * 0.8 * 7.5e-5
     sii = nii * 4.62 * math.exp(0.04 / t4) * 0.5 * 1.86e-5 / (0.8 * 7.5e-5)
     assert float(models[DEFAULT_MODEL].constants["DIG_TEMPERATURE"].value) == 8000.0
-    got = nb.dig_line_ratios(8000.0)
+    c = {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
+    # S93 review: the four are level-0 constants (was module constants in nebular.py), the values and outputs unchanged.
+    assert (c["DIG_N_PLUS_FRACTION"], c["DIG_NITROGEN_ABUNDANCE"], c["DIG_SULPHUR_ABUNDANCE"], c["DIG_S_PLUS_FRACTION"]) == (0.8, 7.5e-5, 1.86e-5, 0.5)
+    got = nb.dig_line_ratios(8000.0, c)
     assert got["nii_6583"] == pytest.approx(nii, rel=1e-12) and got["sii_6716"] == pytest.approx(sii, rel=1e-12)
     assert got["sii_6716"] / got["sii_6731"] == pytest.approx(1.4484, abs=5e-4)  # 1.44818 on the printed coefficients
     assert nb.sii_doublet_ratio(np.array([1.0, 1.0e5])) == pytest.approx([1.4484, 0.4375], abs=5e-4)  # Table 1's limits
@@ -392,7 +395,7 @@ def test_the_diffuse_gas_carries_its_forbidden_lines_by_madsens_relation(models,
     assert got["nii_6583"] == pytest.approx(0.5827, abs=1e-4) and got["sii_6716"] == pytest.approx(0.4387, abs=1e-4)
     assert got["nii_6583"] > 0.27 and got["sii_6716"] > 0.11
     # The layer's range, 6000-10000 K, spans 0.21-1.10 in [N II]/Halpha (Madsen's "in some cases exceeds 1.0").
-    assert 0.20 < nb.dig_line_ratios(6000.0)["nii_6583"] < nii < nb.dig_line_ratios(10000.0)["nii_6583"] < 1.11
+    assert 0.20 < nb.dig_line_ratios(6000.0, c)["nii_6583"] < nii < nb.dig_line_ratios(10000.0, c)["nii_6583"] < 1.11
     F = coarse.fields
     dig = np.asarray(F["halpha_surface_brightness_dig"], dtype=float)
     assert float(F["dig_nii_6583_ratio"]) == got["nii_6583"] and float(F["dig_sii_6716_ratio"]) == got["sii_6716"]
