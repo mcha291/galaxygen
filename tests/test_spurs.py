@@ -265,6 +265,15 @@ def hand_crest_and_trough(gp, R: float, phi: float) -> tuple[float, float]:
     return max(at, float(prof[near].max(initial=-math.inf))), float(prof.min())
 
 
+def hand_trough(gp, radius: float) -> float:
+    """The ring's trough the walk reads at ``radius`` (S92, #164): each bracketing grid ring's least unspurred contrast
+    on the solver's cell centres (``hand_crest_and_trough``'s), linear in R between the two rings."""
+    lower, upper, share = ring_bracket(gp.R, np.array([radius]))
+    t0, t1 = (hand_crest_and_trough(gp, float(gp.R[int(r[0])]), 0.0)[1] for r in (lower, upper))
+    w = float(share[0])
+    return (1.0 - w) * t0 + w * t1
+
+
 def hand_ridge(gp, piece: int, radius: float) -> tuple[float, float]:
     """The walk's read of the ridge, written again (S92, #164 / #165): on the two bracketing grid rings, the gas crest
     near the chain's crossing and the ring's trough, each linear in R. Until S92 the unspurred contrast at the chain's
@@ -286,7 +295,16 @@ def test_the_spacing_is_ten_jeans_lengths_of_the_ridge_from_the_published_fields
     # (``gas_spur_contrast``, the crest over the ring's trough); the crest is re-derived by hand below.
     peak = f["gas_spur_peak_surface_density"]
     jeans = SOUND_SPEED_HAND**2 / (G_HAND * 1e6 * peak)
-    assert np.all(peak >= sigma * f["gas_spur_contrast"]) and np.all(f["gas_spur_contrast"] >= 0.0)
+    assert np.all(f["gas_spur_contrast"] >= 0.0)
+    # S92 (the gate's ruling C3): the identity the peak held to 1e-12 before S92, ``peak == column * contrast``, is now
+    # ``peak == column * (contrast + trough)`` - the walk's crest is its height over the ring's trough plus that trough,
+    # the trough read here as the walk reads it (each bracketing grid ring's least on the solver's cell centres,
+    # linear in R). Wherever the height is above 0 (at 0 the walk's max(crest - trough, 0) clips, and only the
+    # inequality is left). Was, at S92's build, `peak >= sigma * contrast`.
+    trough = np.array([hand_trough(gp, float(r)) for r in f["gas_spur_radius"]])
+    up = f["gas_spur_contrast"] > 0.0
+    assert up.any() and np.allclose(peak[up], (sigma * (f["gas_spur_contrast"] + trough))[up], rtol=1e-12, atol=0.0)
+    assert np.all(peak >= sigma * f["gas_spur_contrast"])
     assert np.allclose(f["gas_spur_jeans_length"], jeans, rtol=1e-12) and np.allclose(f["gas_spur_spacing"], 10 * jeans, rtol=1e-12)
     # Along each chain each foot stands one local spacing on from the last.
     for chain in np.unique(f["gas_spur_chain"]):

@@ -41,7 +41,7 @@ from galaxy.layer import gas_fluctuation as gf
 from galaxy.layer import spurs as sp
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
-from galaxy.stages.pattern import rotation_sense
+from galaxy.stages.pattern import ring_bracket, rotation_sense
 from galaxy.stages.systems import CELL_RINGS, CELL_SECTORS, cell_edges
 
 AUDIT_GRID = GridSpec(n_R=130, n_t=450, n_z=9, n_phi=200)
@@ -993,8 +993,17 @@ def test_gas_spurs_stand_ten_jeans_lengths_apart_along_each_chain(audit, K, seed
     assert rel(s["spacing"], 10.0 * s["jeans_length"]) <= 1e-12 and float(K["SPUR_SPACING_JEANS"]) == 10.0
     column = np.interp(s["radius"], R_AUDIT, arr(on, "gas_surface_density"))
     # S92 (#164 / #165): was rel(peak, column * contrast) <= 1e-9 - the peak is the column times the gas crest near the
-    # chain, the contrast the spur's height (the crest over the ring's trough), so the peak is at least column * height.
-    assert np.all(s["peak_surface_density"] >= column * s["contrast"] * (1.0 - 1e-12)) and np.all(s["contrast"] >= 0.0)
+    # chain, the contrast the spur's height (the crest over the ring's trough). S92 (the gate's ruling C3): the exact
+    # identity again, peak == column * (contrast + trough), the trough read as the walk reads it - each bracketing
+    # mesh ring's least on the solver's cell centres (``spurs.ring_profiles``), linear in R - wherever the height is
+    # above 0 (at 0 the walk's max(crest - trough, 0) clips, and only the inequality is left).
+    assert np.all(s["contrast"] >= 0.0) and np.all(s["peak_surface_density"] >= column * s["contrast"] * (1.0 - 1e-12))
+    gas = compose.gas_pattern(on.fields, R_AUDIT, K)
+    lower, upper, share = ring_bracket(R_AUDIT, s["radius"])
+    floors = sp.ring_profiles(gas, R_AUDIT).min(axis=1)
+    trough = (1.0 - share) * floors[lower] + share * floors[upper]
+    up = s["contrast"] > 0.0
+    assert up.any() and rel(s["peak_surface_density"][up], (column * (s["contrast"] + trough))[up]) <= 1e-9
     assert set(np.unique(s["chain"])) <= set(np.unique(t["chain"]))
     # S90 (#213): the walk ends at the arms' budget's edge (the last ring with arm_piece_amplitude > 0), so a chain's
     # walked length is its polyline up to that radius (was the whole polyline).
