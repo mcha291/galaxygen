@@ -19,6 +19,13 @@ formula; read at S43, D195, #120), so each curve is written with ``wavelengths: 
 converts its air lines before reading them; the both-ways transmissions recorded here show what the
 convention is worth (Hα in F656N 0.962 at the air placement, 0.945 at the vacuum one; [S II] 6716 in F673N
 0.983 against 0.958).
+
+S83 (T11; the owner accepted the download on 2026-11-02): a third set, ``jwst_nircam`` - JWST NIRCam's broadband
+F444W, F200W and F090W drawn red, green, blue, SVO's ``JWST/NIRCam.*`` profiles (the total system throughput: the
+telescope, NIRCam's optics, the dichroics and the detectors' QE, as their ``Comments`` say). No template names JWST's
+telescope, so the set carries its own optics (``optics``): the segmented primary as a pupil the viewer's PSF job images
+(frontend/src/galaxy/hstPsf.ts pupilOpen, aperture "hexagonal-18"), every number either read (cited) or derived here
+from read ones, the derivations written beside them.
 """
 
 from __future__ import annotations
@@ -41,6 +48,7 @@ SERVICE = "https://svo2.cab.inta-csic.es/theory/fps/fps.php?ID="
 POINTS = 241
 FLOOR = 1.0e-3  # of the peak: the span a curve is kept over
 FETCHED = "2026-09-27"
+JWST_FETCHED = "2026-11-02"  # S83, T11: NIRCam's three profiles
 ACKNOWLEDGEMENT = (
     "This research has made use of the SVO Filter Profile Service \"Carlos Rodrigo\", funded by "
     "MCIN/AEI/10.13039/501100011033/ through grant PID2023-146210NB-I00 (Rodrigo et al. 2012, 2020, 2024; "
@@ -67,6 +75,16 @@ SETS = {
                   "either side of Halpha fall outside it, where the SHO set's 30 A box also leaves them."),
         "filters": [("F673N", "HST/WFC3_UVIS2.F673N"), ("F656N", "HST/WFC3_UVIS2.F656N"), ("F502N", "HST/WFC3_UVIS2.F502N")],
     },
+    "jwst_nircam": {
+        "label": "NIRCam",
+        "about": ("As JWST, broadband (T11, S83): JWST NIRCam F444W, F200W and F090W as red, green and blue - the total "
+                  "system throughputs, the telescope, NIRCam's optics, the dichroics and the detectors' QE [verified: SVO "
+                  "Filter Profile Service, JWST/NIRCam.*, fetched " + JWST_FETCHED + " by tools/fetch_filters.py], on vacuum "
+                  "wavelengths [inferred: neither SVO's profiles nor JDox's NIRCam filters page says which; a broadband "
+                  "filter moves by 0.03 % between the two, 12 A at F444W's 4.4 um], with JWST's segmented primary as the "
+                  "stars' image where the template has a distance (the set's optics) and the Airy sprite where it has none."),
+        "filters": [("F444W", "JWST/NIRCam.F444W"), ("F200W", "JWST/NIRCam.F200W"), ("F090W", "JWST/NIRCam.F090W")],
+    },
 }
 PSF = {
     "kind": "airy",
@@ -87,6 +105,112 @@ PSF = {
               "314 px and the box 60; the light past the box (0.042 of the red Airy, 0.060 of the red spikes) is drawn "
               "where it falls in blocks of 8 pixels, each block's light spread evenly over it, so none is returned to "
               "the box (S82). Without a distance its scale on screen is a display choice [inferred] (S67, D227)."),
+}
+
+# --- JWST's optics (S83, T11): what is read, and what is derived from it ---------------------------------------------
+_JDOX_OTE = "JDox, JWST Telescope (jwst-docs.stsci.edu, read 2026-11-02)"
+_JDOX_PSF = "JDox, NIRCam Point Spread Functions (jwst-docs.stsci.edu, read 2026-11-02)"
+_OTE_PAPER = "Feinberg et al. 2023, arXiv:2301.01779, the OTE's design and performance, read 2026-11-02"
+# Each segment across its flats and the gap between neighbours [verified: Feinberg et al. 2023: "Each of the 18 primary
+# mirror segments are 1.32 m (flat-to-flat) separated by 7 mm gaps"]. The brief's "6.5 m flat to flat" is JDox's "~6.5 m"
+# diameter; the paper states a circumscribed 6.64 m and a flat-to-flat 6.575 m, which the two numbers here give to 0.5 %.
+SEGMENT_M, GAP_M = 1.32, 0.007
+SEGMENTS = 18  # [verified: JDox JWST Telescope, "18 hexagonal segments"]
+SECONDARY_M = 0.74  # the secondary's diameter [verified: JDox JWST Telescope, "a convex circular mirror 0.74 m in diameter"]
+POLISHED_M2, UNOBSCURED_M2 = 26.3, 25.4  # [verified: JDox JWST Telescope: polished 26.3 m2, the struts leave 25.4 unobscured]
+# The struts' directions, degrees anticlockwise from the frame's +x with +V3 up [inferred]: the upper strut along +V3 makes
+# the horizontal pair of JWST's eight spikes; the lower two, 30 degrees either side of -V3, are perpendicular to the
+# segments' diagonal edges' spikes and so add to them rather than making more - eight spikes in all, as JWST's images
+# show. Not read from a drawing of the tripod; the spikes' relative brightness is not matched to the images (S83 measured
+# the horizontal pair at twice the vertical's light with the derived width, where JWST's images show it fainter).
+STRUT_ANGLES_DEG = [90.0, 240.0, 300.0]
+# The detectors' pixels, red green blue [verified: JDox NIRCam PSFs: 0.031" short-wavelength (F090W, F200W), 0.063"
+# long-wavelength (F444W)].
+NIRCAM_PIXELS = [0.063, 0.031, 0.031]
+# The 18 segments' centres in pitches, a segment and a gap (hstPsf.ts SEGMENT_CENTRES, the same): flat-topped hexagons
+# tiling the plane about a missing centre - six at 1 and six at 2 along the edges' normals, six at sqrt 3 along the
+# corners. Flat-topped, the outermost columns three segments each, as the two wings that fold are [inferred: JDox, "two
+# wings, each supporting three mirror segments"].
+SEGMENT_CENTRES = ([(np.cos(np.radians(30 + 60 * k)), np.sin(np.radians(30 + 60 * k))) for k in range(6)]
+                   + [(2 * np.cos(np.radians(30 + 60 * k)), 2 * np.sin(np.radians(30 + 60 * k))) for k in range(6)]
+                   + [(np.sqrt(3) * np.cos(np.radians(60 * k)), np.sqrt(3) * np.sin(np.radians(60 * k))) for k in range(6)])
+STRUT_GRID = 4001  # samples a side over the pupil's square for the struts' width: 5e-4 pupil radii, 1/70 of a strut
+
+
+def on_segments(x: np.ndarray, y: np.ndarray, s: float, gap: float) -> np.ndarray:
+    """hstPsf.ts onSegment over arrays: on one of the 18 flat-topped hexagons of flat-to-flat width s, gap apart."""
+    out = np.zeros(x.shape, dtype=bool)
+    for cx, cy in SEGMENT_CENTRES:
+        dx, dy = np.abs(x - cx * (s + gap)), np.abs(y - cy * (s + gap))
+        out |= (dy <= s / 2) & (0.5 * dy + (np.sqrt(3) / 2) * dx <= s / 2)
+    return out
+
+
+def on_struts(x: np.ndarray, y: np.ndarray, width: float) -> np.ndarray:
+    """hstPsf.ts pupilOpen's vanes over arrays: a strut of full width `width` from the centre along each direction."""
+    out = np.zeros(x.shape, dtype=bool)
+    for deg in STRUT_ANGLES_DEG:
+        a = np.radians(deg)
+        along, across = x * np.cos(a) + y * np.sin(a), -x * np.sin(a) + y * np.cos(a)
+        out |= (along > 0) & (np.abs(across) < width / 2)
+    return out
+
+
+def jwst_optics() -> dict:
+    """JWST's primary as the viewer's pupil (hexagonal-18), every number read or derived here (its `derived` entry)."""
+    f, p = SEGMENT_M, SEGMENT_M + GAP_M  # a segment across its flats, and the pitch between neighbours' centres
+    # The farthest corner: an outer segment's along a normal, at (sqrt3 p, p), its corner (f/(2 sqrt3), f/2) further out.
+    circum = float(np.hypot(np.sqrt(3) * p + f / (2 * np.sqrt(3)), p + f / 2))
+    across = 4 * p + f  # across the flats, through the column of four above and below the centre
+    segment, gap = f / circum, GAP_M / circum  # in pupil radii (the circumscribed radius the unit)
+    area = SEGMENTS * np.sqrt(3) / 2 * f * f  # against the polished 26.3: the segments' edges past the polish not read
+    grid = np.linspace(-1, 1, STRUT_GRID)
+    x, y = np.meshgrid(grid, grid)
+    seg = on_segments(x, y, segment, gap)
+    want = 1 - UNOBSCURED_M2 / POLISHED_M2  # the share of the segments the struts cover
+    lo, hi = 0.0, 0.2
+    for _ in range(40):  # the covered share rises with the width: bisection
+        mid = 0.5 * (lo + hi)
+        share = np.count_nonzero(seg & on_struts(x, y, mid)) / np.count_nonzero(seg)
+        lo, hi = (mid, hi) if share < want else (lo, mid)
+    width = 0.5 * (lo + hi)
+    return {
+        "about": ("JWST's primary as the pupil the PSF job images (frontend/src/galaxy/hstPsf.ts pupilOpen): 18 flat-topped "
+                  "hexagonal segments in two rings about a missing centre [verified: " + _JDOX_OTE + ", 18 hexagonal "
+                  "segments], each 1.32 m across its flats and 7 mm from its neighbours [verified: " + _OTE_PAPER + "], so "
+                  f"{across:.3f} m across the flats and a circumscribed diameter of {2 * circum:.4f} m, twice the pupil's "
+                  "unit radius [derived; the paper states 6.575 m and 6.64 m, JDox ~6.5 m]; the segments' area "
+                  f"{area:.2f} m2 against JDox's polished 26.3. The gaps, {gap:.5f} pupil radii, are drawn (sampled at a "
+                  "sixteenth of a pupil pixel). The "
+                  f"secondary's 0.74 m shadow [verified: JDox] is obscuration {SECONDARY_M / (2 * circum):.4f} of the unit "
+                  "radius and lies inside the missing centre. Three struts from the centre, at 90, 240 and 300 degrees "
+                  "anticlockwise from the frame's +x with +V3 up [inferred from the eight spikes of JWST's images: the upper "
+                  "strut makes the horizontal pair, the lower two lie on the segments' diagonal spikes; not read from a "
+                  "drawing of the tripod], each " +
+                  f"{width:.5f} pupil radii ({width * circum * 100:.1f} cm) wide [derived: the width at which they cover "
+                  f"1 - 25.4/26.3 = {want:.5f} of the segments, JDox's unobscured over polished area, on a {STRUT_GRID}^2 "
+                  "grid, all of the difference taken as the struts' as JDox says]. The detectors' pixels 0.063\" in red (F444W, long wavelength) and 0.031\" in green and blue "
+                  "(F200W, F090W, short wavelength) [verified: " + _JDOX_PSF + "], each channel's table convolved with its own."),
+        "aperture": "hexagonal-18",
+        "aperture_m": round(float(2 * circum), 4),
+        "segment": round(segment, 6),
+        "gap": round(gap, 7),
+        "obscuration": round(float(SECONDARY_M / (2 * circum)), 5),
+        "spider_width": round(width, 6),
+        "spider_angles_deg": STRUT_ANGLES_DEG,
+        "pixel_scale_arcsec": NIRCAM_PIXELS,
+    }
+
+
+JWST_PSF = {
+    "kind": "airy",
+    "about": ("Without a distance the Airy pattern of a circular aperture, per channel at a radius proportional to its "
+              "pivot (lambda/D) - a display choice [inferred], as WFC3's sprite. Where the template has a distance (NGC "
+              "4414: 17.7 Mpc), a point is the image of JWST's primary (the set's optics) at its physical size, each "
+              "channel's at its pivot, its angle turned into pc by the distance and convolved with the channel's own "
+              "detector pixel: with the spikes' switch off the 18 segments alone, whose outline makes six spikes; on, the "
+              "three struts too - a horizontal pair from the upper strut, the lower two's on the segments' diagonal "
+              "four. The table and the wings' pass are WFC3's (S82)."),
 }
 
 
@@ -145,7 +269,11 @@ def main() -> int:
             sources.append({"filter": name, "svo": svo_id, "pivot": round(params.get("WavelengthPivot", float("nan")), 2),
                             "fwhm": round(params.get("FWHM", float("nan")), 2), "peak_throughput": round(peak, 5),
                             "resample_error": round(error, 5), "lines_air_vacuum": lines})
-        sets[key] = {"label": spec["label"], "about": spec["about"], "psf": PSF, "curves": curves, "sources": sources}
+        if key == "jwst_nircam":  # S83, T11: the set carries its own optics, since no template names its telescope
+            sets[key] = {"label": spec["label"], "about": spec["about"], "psf": JWST_PSF, "optics": jwst_optics(),
+                         "curves": curves, "sources": sources}
+        else:
+            sets[key] = {"label": spec["label"], "about": spec["about"], "psf": PSF, "curves": curves, "sources": sources}
     doc = {
         "about": ("Named-instrument filter sets, generated by tools/fetch_filters.py from the SVO Filter Profile Service "
                   "(the owner's word of 2026-09-27, debt #108); do not edit by hand. Each curve is normalised to its peak "

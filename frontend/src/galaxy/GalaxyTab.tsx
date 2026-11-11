@@ -40,8 +40,7 @@ import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
-import { opticsOf } from "./hstPsf";
-import { instrumentOfSet, instrumentPsf, usePhysicalPsf } from "./psf";
+import { instrumentPsf, usePhysicalPsf, viewOptics } from "./psf";
 import { footprint } from "./frustum";
 import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
@@ -367,11 +366,12 @@ export function GalaxyTab({
   // filter set is that instrument's own, a point is the telescope's image of a point at its physical size (the obscured
   // Airy, or with the spikes' switch the full pupil's), in place of the sprite. Elsewhere - the Milky Way, an artist's
   // impression with no instrument, or another filter set - the sprite stays the display choice it was (R2). The
-  // instrument's own set is the one it names (S67, D227 T1: NGC 4414 opens on RGB, its instrument still WFC3's).
+  // instrument's own set is the one it names (S67, D227 T1: NGC 4414 opens on RGB, its instrument still WFC3's). Since
+  // S83 (T11) a set carrying its own optics (JWST's NIRCam) is drawn physically at any template with a distance (psf.ts
+  // viewOptics).
   const optics = useMemo(() => {
     const ownSet = template ? (template.instrument.filters ?? template.filters) : null;
-    const own = ownSet ? instrumentOfSet(FILTER_SETS[ownSet]) : null;
-    return own && own === instrumentOfSet(FILTER_SETS[filterSet]) ? opticsOf(template?.instrument) : null;
+    return viewOptics(template?.instrument, ownSet ? FILTER_SETS[ownSet] : null, FILTER_SETS[filterSet]);
   }, [template, filterSet]);
   // Built in the PSF table worker since S82 (#178 ii): the last table drawn until the new one arrives. The switch is the
   // drawn template's during a landing's hold (`look`, #188's follow-up).
