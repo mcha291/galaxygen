@@ -13,8 +13,8 @@ test_render). Discharged: #113, #119, #166, #171, #174, #175, #217; opened #222 
 carried, 96 discharged**; next #223, D263.
 
 ## The batch's close (the gate's, after the docs pass; D262 records each)
-- The three-legs gate read by name on the final model; the layer-off reference re-based on a file of its own (#218
-  moves with it); the hash pinned once at the batch's close (the pin today S90's 5a2c097e…), the bundles re-exported,
+- The three-legs gate read by name on the final model; the layer-off reference re-based on a file of its own, `tests/layer_reference_s93.json` (#218
+  moves with it); the hash pinned once at the batch's close (pinned at S93: 5a2c097e… → f9b04ed20a06c0a68420f1cc8e13714e), the bundles re-exported,
   the frames regenerated beside the two goal pictures; the runner's full suite dispatched once, on the final head.
 - `batch-m3` → `main` waits on the owner's word on that run (as M1 and M2 did).
 
