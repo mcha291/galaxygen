@@ -454,7 +454,11 @@ export function GalaxyTab({
   // S82 (#187): the counts, the tiles and the field's remainder follow the table's answer. Inside a swap they read it as
   // soon as it is held (`next`), and wait on the swap while it has not come (`settling`, their `after`), so the swap
   // publishes once with them in. The table itself is never drawn; outside a swap `next` is its value.
-  const tableLoad = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal));
+  // S95 (the review's C-2): each table carries the key it was asked for, so a failed or pending load of the shown key
+  // never reads as the shown galaxy's (shownTable).
+  const tableLoad = useLoad<BrightTable & { key: string }>(brightTableKey, (signal) =>
+    loadBrightTable(query, signal).then((table) => ({ ...table, key: brightTableKey! })),
+  );
   // S95 (Audit VI F-W-1, rule D1): the pick reads the shown galaxy's own table, nothing while it has not come - `next`
   // falls back to the last table drawn, the other template's after a switch, and its threshold went out for this one.
   const brightTable = shownTable(tableLoad, brightTableKey);

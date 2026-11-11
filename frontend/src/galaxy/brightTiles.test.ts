@@ -386,11 +386,16 @@ describe("cellsToFetch: a zoomed frame asks the cells expected to show at least 
 // S95 (Audit VI F-W-1, rule D1): after a template switch the table's loader holds the last galaxy's answer in `next`
 // until the shown galaxy's comes. The walk logged NGC 4414's tiles and remainder asked at the Milky Way's threshold.
 describe("the star-first pick reads the shown galaxy's table only", () => {
-  const milkyWay = handTable();
-  const ngc: BrightTable = { ...handTable(), thresholds: [700, 790, 890, 1000] };
+  // Each table carries the key its loader asked it for (GalaxyTab's tableLoad, S95 C-2).
+  const mwKey = '["brightTable",{"template":"milky_way"}]';
+  const ngcKey = '["brightTable",{"template":"ngc_4414"}]';
+  const milkyWay = { ...handTable(), key: mwKey };
+  const ngc = { ...handTable(), thresholds: [700, 790, 890, 1000], key: ngcKey };
   const tiles = Array.from({ length: 1024 }, (_, c) => c);
+  // What useLoad returns for the table (its `answered`, `next`, `error`), as GalaxyTab passes it.
+  type TableLoad = { answered: boolean; next: (BrightTable & { key: string }) | null; error: string | null };
   // GalaxyTab's chain: the table shown, the pick over it, the tiles asked at the pick.
-  async function asked(load: { answered: boolean; next: BrightTable | null }, key: string | null, galaxy: string) {
+  async function asked(load: TableLoad, key: string | null, galaxy: string) {
     const lMins: number[] = [];
     const table = shownTable(load, key);
     if (table) {
@@ -405,13 +410,22 @@ describe("the star-first pick reads the shown galaxy's table only", () => {
 
   it("asks nothing while the new galaxy's table is pending, though the loader still holds the old one", async () => {
     // The switch: the key is NGC 4414's, nothing has answered it, `next` is the Milky Way's table (useLoad's fallback).
-    expect(await asked({ answered: false, next: milkyWay }, '["brightTable",{"template":"ngc_4414"}]', "ngc")).toEqual([]);
+    expect(await asked({ answered: false, next: milkyWay, error: null }, ngcKey, "ngc")).toEqual([]);
     // The old reading (`tableLoad.next ?? null`) asked at the Milky Way's threshold for NGC 4414 - the defect:
     expect(pickThreshold(milkyWay, tiles, 50_000)).toBe(1);
     // NGC 4414's table answers: asked once, at its own threshold.
-    expect(await asked({ answered: true, next: ngc }, '["brightTable",{"template":"ngc_4414"}]', "ngc")).toEqual([790]);
+    expect(await asked({ answered: true, next: ngc, error: null }, ngcKey, "ngc")).toEqual([790]);
     // No key (the points off): nothing, whatever is held.
-    expect(await asked({ answered: true, next: milkyWay }, null, "ngc")).toEqual([]);
+    expect(await asked({ answered: true, next: milkyWay, error: null }, null, "ngc")).toEqual([]);
+  });
+
+  it("asks nothing when the new galaxy's table load FAILED, though the loader falls back to the old one (C-2)", async () => {
+    // useLoad on a failure: the key counts as answered, and `next` falls back to `value` - published, the error's
+    // `last` (the Milky Way's table); held by a swap, the old `value` with no error yet. Neither may ask for NGC 4414.
+    expect(await asked({ answered: true, next: milkyWay, error: "HTTP 500" }, ngcKey, "ngc")).toEqual([]);
+    expect(await asked({ answered: true, next: milkyWay, error: null }, ngcKey, "ngc")).toEqual([]);
+    // The Milky Way's own key still reads its own table.
+    expect(await asked({ answered: true, next: milkyWay, error: null }, mwKey, "mw")).toEqual([1122]);
   });
 
   it("the remainder's threshold is the shown galaxy's tiles' alone", () => {

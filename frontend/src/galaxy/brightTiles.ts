@@ -348,9 +348,14 @@ export function pickThreshold(table: BrightTable | CellCounts, tiles: readonly n
  * or none while it has not come. useLoad's `next` falls back to the last answer drawn, which after a template switch is
  * the other galaxy's: picked from it, the tiles and the remainder went out once at the Milky Way's threshold for NGC
  * 4414 - half one galaxy and half another, a request no bundle holds. `load` is the table's useLoad, `key` its key.
+ *
+ * S95 (the review's C-2): `answered` was not enough - a FAILED answer for the shown key counts as answered, and `next`
+ * then falls back to the last table drawn (the error's `last`; inside a swap, before the failure is even published,
+ * the old `value`), the other galaxy's again. So the table carries the key it was asked for (`key`, set by its loader)
+ * and is read only when that is the shown key: pending, failed or held, the other galaxy's table asks nothing.
  */
-export function shownTable<T>(load: { answered: boolean; next: T | null }, key: string | null): T | null {
-  return key !== null && load.answered ? load.next : null;
+export function shownTable<T extends { key: string }>(load: { next: T | null }, key: string | null): T | null {
+  return key !== null && load.next !== null && load.next.key === key ? load.next : null;
 }
 
 /**
