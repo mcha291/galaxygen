@@ -266,9 +266,27 @@ def test_arm_pieces_carry_the_declared_share_of_the_power_budget(audit):
     for tpl, seed in LAYER_ON:
         var, _, budget = ring_power(audit[tpl, seed, True])
         ratios[tpl, seed] = math.fsum(var) / math.fsum(budget)
+    # S95 (Audit VI F-3A-2, D264): the bound was re-declared at S88 from the reading that failed it. On seed pairs disjoint
+    # from these (texture / pattern 1000+97k / 2000+131k) on this mesh: NGC 4414 0.482-0.572 (eight pairs), the default
+    # galaxy 0.404-0.599 (four), the Milky Way 0.430-1.073 (eight) - its 1679 / 2917 over the budget (#224, the test
+    # after this one). The bound is not moved.
     assert all(0.39 <= r <= 0.98 and r < 1.0 for r in ratios.values()), ratios  # S88: was 0.4-0.9; measured 0.558 / 0.934 / 0.445
     assert "0.589 of the budget" in ap._CONSERVES and "#195" in ap._CONSERVES and "in expectation" in ap._CONSERVES  # S88: was "0.569 of the budget"
     assert "0.445 to 0.934" in ap._CONSERVES and "the census's draw" in ap._CONSERVES
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
+    "#224 (Audit VI's population table, S95, D264): the pieces' realised power 1.073 of the law's budget on the Milky Way "
+    "at texture / pattern seeds 1679 / 2917; eight unpinned pairs read 0.43-1.073"))
+def test_arm_pieces_share_of_the_power_budget_on_an_unpinned_milky_way_pair(audit_model):
+    """#224: the share of the test before this one, computed the same way (``ring_power`` on this mesh, layer on), on
+    the one unpinned Milky Way pair of Audit VI's population table that reads over the law's budget - texture_seed 1679,
+    pattern_seed 2917 (S95). Held strict: it is to be under 1 and inside the declared 0.39-0.98."""
+    base = templates.overrides(templates.TEMPLATES["milky_way"])
+    on = run(audit_model, {**base, "texture_seed": 1679, "pattern_seed": 2917}, grid=AUDIT_GRID, layer=True)
+    var, _, budget = ring_power(on)
+    r = math.fsum(var) / math.fsum(budget)
+    assert 0.39 <= r <= 0.98 and r < 1.0, r
 
 
 def piece_table(out) -> dict[str, np.ndarray]:
@@ -1035,6 +1053,10 @@ F_2_4 = ("F-2-4: spurs.py:68 (WALK_READ_DIFFERENCE = 0.052) and spurs.py:188 (_C
 # S90a (#216, D259): the worst read is pinned to 1e-3 on this machine's census of seeds 4242 and 777, whose births
 # rounding decides; one runner (41923775720) read 0.5106, inside the bound 0.58, which the mark skips there with it.
 # S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
+# S95 (Audit VI F-3B-1, D264): what the two bounds are now. WALK_READ_DIFFERENCE 0.27 was measured at S70 / S88 on the
+# read at the foot; on the crest statistic (since S92) the Milky Way's own seed reads 0.2176 on the production grid and
+# Audit VI's twelve unpinned Milky Way seed pairs read up to 0.666 there, five over 0.27 (#220, a population finding).
+# WALK_READ_DIFFERENCE_COARSE 0.58 on this mesh: none of eight unpinned Milky Way pairs over, max 0.551 (D264).
 def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K):
     """(b) ``conserves``' last sentence and ``WALK_READ_DIFFERENCE`` as S88 re-measured them: "within 0.27 of the point
     function's value there, relative - measured at S88 over every foot on the production grid ... and within 0.58 on

@@ -17559,3 +17559,109 @@ test file has not run on the runner at this entry: it rides in the full suite di
 `session-94` whole (run 43083065903, started 19:00Z) — **`session-94` merges into `main` on that run's green, before
 `session-95`**, tagged `s94` on its merge; D264 records the run's line. The register is as S93 left it at this close:
 108 open — 43 permanent, 65 carried — and 97 discharged; next #223, D264.
+
+### D264. S95, Audit VI's fixes: the tests the discharges should have had, written; the request walker committed and the fixture re-recorded from a walk — which found a viewer defect, mended (F-W-1); the readings corrected and the unread sources read; three population tables and the gate's rulings on them (0.27 not relaxed, #220 a population finding; #224 opened; 2e-13 kept on its true reason); #160 and #173 struck, #223 and #224 opened; no model byte moved
+
+**The session.** S95 on `session-95`, cut from `session-94` while the audit's own documents closed (the audit's verdict
+was drafted; D263's order is this session's): three Opus lanes in worktrees of their own on disjoint files — **D** the
+readings and the register, **W** the walker and the fixture, **T** the tests and the tables — a read-only Opus reader
+(**R**) for the sources the audit's readers had not reached, an independent Opus reviewer on the integrated branch, an
+Opus mend builder and an Opus close builder; the Fable gate ruling and integrating. Two heavy lanes ran at once beside
+the docs lane (the 5-hour window at 42–59 %): the lead's call on fresh weekly windows, said to the owner in D263's list.
+**No byte under `model/galaxy` changed** (`git diff --stat dd003ee -- model/` empty at every merge; the hash stays
+f9b04ed20a06c0a68420f1cc8e13714e), so no model suite is owed; a fixture and tests changed, so the runner's full suite
+was dispatched on `session-95` (C7; below).
+
+**The weak-test class (lane T; Audit VI F-3A-6, F-3B-6, F-3B-5, F-3B-9, F-3A-10, F-2-2; F-3B-2 by strand 2's node).**
+- #197: `tests/test_hierarchy.py::test_197_every_level_0_star_and_every_remnant_lies_in_its_own_ring` — the whole
+  catalogue, both templates, two seeds, layer on and off: none outside its ring (four nodes, 74 s).
+- #166: the cache test counts the calls the cache spares — capping the cache at zero now fails it.
+- #217: `tests/test_one_threshold.py`, a source-level check that the tile's and the table's thresholds are one
+  function's and no array power of the grid.
+- #114's call site and F-W-1's: source-check vitests on `GalaxyTab.tsx` (`clusterColors.test.ts`,
+  `brightTilesCallSite.test.ts`) — the calls are unreachable without a refactor, so the tests read the source.
+- The bar's sliver exercised where a ring lies in the reach (8.2634e-8, a new record: S86's 8.52e-8 was a longer
+  bar's); the kept windows' sum held to the answer without `kept=` (one-sided by nature: nothing ships the rest).
+- The holds: `raises=AssertionError` on every strict hold; each hold's comment names what it masks; `DUST_COLUMN_OVER`'s
+  whole-frame assert moved first; `BRIGHT_GATE_READ_OVER` names #223.
+- `PRICE_RECORD` is a record (F-3A-1): the floor asserted, no upper bound, the price reported — 5 543–6 632 µs a cell
+  on this machine under three concurrent runs against S88's 2 839–3 026 (a loaded machine; #154 carries the cost).
+- The A₂ miss asserted against the source's whole table, 0.62–0.94 (it asserts more); the stale docstrings corrected.
+
+**The three population tables and the gate's rulings (lane T; seeds disjoint from every test's).**
+- **The walk's read on its crest statistic (F-3B-1):** twelve unpinned Milky Way pairs on the production grid read up
+  to 0.666, **five over 0.27**; on the coarse mesh none of eight is over 0.58 (max 0.551). *Ruled:* 0.27 is not relaxed
+  (B5) — it was never this statistic's bound, and the population says the walk's crest stands off the point function's
+  by more than a quarter on four galaxies in ten. **#220 is restated as a population finding**; its closer is the
+  model's mend (the crest read by the point function), a model batch's. 0.58 kept, its margin stated.
+- **The pieces' share of the power budget (F-3A-2):** NGC 4414 0.48–0.57, the default galaxy 0.40–0.60, the Milky Way
+  0.43–**1.073** (texture seed 1679, pattern seed 2917: over the budget, outside the declared 0.39–0.98). *Ruled:* the
+  bound is not moved; **#224 opened**, held by a strict xfail on that pair; the declaration "less than the budget" is
+  false of one unpinned draw in eight and #195 (permanent: met at half on average) points to it.
+- **The gas ring mean's 1e-13 (F-3A-4):** it is the response solver's `SUM_TOLERANCE`, not the rounding of 360 cells
+  (D255's stated reason was wrong about the cause, right about the size). *Ruled:* 2e-13 stays; the three sites say so.
+
+**The walker and the fixture (lane W; F-4-1, F-3B-7).** `tools/walk_requests.py` (`walk`, `reduce`,
+`--write-fixture`) with `frontend/e2e/walk/walk.probe.ts` and `npm --prefix frontend run walk`: a logging server on
+127.0.0.1:8041 with the template bundles mounted, a Playwright walk of the built viewer through S73's marks plus
+`jwst_nircam` in both modes and physics only (184 marks), a reducer to the fixture's form and a three-way diff against
+the fixture and the bundle plan. **The first walk** (402 s): 409 answers, 406 bundle hits, 190 meanings; **all 171
+recorded meanings reproduced string for string — the 22 hand-written records and the 17 `jwst_nircam` strings
+confirmed**; four planned whole-disc remnants not sent, as at S73; **two requests no plan held (F-W-1).** The fixture
+is re-recorded from the walk (every record's bytes the walk's — the `kept=1` remainders 30–44 kB where the stale
+bytes said 13–28; the 17 `jwst_nircam` records added; S93's two "by hand" entries replaced); `tests/test_bundle.py`
+checks `jwst_nircam` against its own recording and asserts no walk entry is a hand edit and no request unplanned.
+- **F-W-1, a viewer defect of rule D1's class, found by the walk and mended here on the gate's ruling:** after a
+  switch of template the first star-first press asked the tiles and the remainder at the *previous* galaxy's
+  threshold (the bright table read through the loader's last drawn answer) — two computed requests of 37 s and 21 s
+  on NGC 4414 at the Milky Way's 35 481 L☉ before the right pair. Mended in `brightTiles.ts` (`shownTable`,
+  `ofGalaxy`) and `GalaxyTab.tsx`; the re-walk (422 s): 406 hits, **0 computed**, 188 meanings all planned. The
+  reviewer's two concerns on the fix mended in e2183c0: each table is stamped with the key it was asked for, so a
+  *failed* load of the new galaxy's table asks nothing at another's threshold (checking the error alone would not
+  hold: a failed load is held during a swap); the call site held by a source check. vitest 644 passed, 1 skipped.
+
+**The readings (lane D, reader R; F-1A-2 … F-1A-5, F-1B-1 … F-1B-3, F-4-2, F-4-3, F-5-3, F-5-7 … F-5-11).** Each
+corrected line marked "re-read at Audit VI"; Díaz-García et al. 2016b's Table 5 quoted whole and #146 restated against
+its two named rows; Hart et al. 2017's 18.0 (1.57σ); the "15.0° pooled" labelled the reader's; Yu & Ho 2019 print
+ρ = −0.49 only; Miville-Deschênes et al. 2017 on Lada & Dame's radius, 57.5 R^2.10 (a 10⁷ M☉ cloud at 312.9 pc);
+McElwain et al. 2023 for arXiv:2301.01779; `WING_BLOCK` a sampling bound; T2, T8, T11, T12 put right in
+`VIEWER_TASKS.md`. **Reader R**, 21 rows the audit could not reach: 17 match (Herrera-Endoqui et al. 2015's five
+NGC 4414 pitches through the Harvard VizieR mirror, mean 28.88 ± 5.97; Erwin 2019, MNRAS 489, 3553; Nakanishi & Sofue
+2006's bins; Rémy-Ruyer et al. 2015's metallicity line), one differs (`READING_DUST.md` said the sSFR form of #92 was
+not held: the same equation's second line prints it — corrected, #92's closer now a build or a ruling), two adopted
+(JWST's lower struts' directions and every strut's width: no page read prints them; Rigby et al. 2023 confirms the
+vertical strut's two spikes), one unreachable (Elmegreen & Elmegreen 1995, labelled `[recall — NOT READ]`).
+
+**The register.** Struck: **#160** (built at S91, its one-rule test green, never struck — F-5-1) and **#173** (the
+gate's ruling, taken in the owner's place: not reproducible on the model as it stands — five hash seeds bit-identical,
+three shuffled orders green, the recorded numbers an earlier model's). Opened: **#223** (the young bright stars' two L1
+clauses, the strict hold orphaned at #161's discharge — F-3A-5) and **#224** (above). Restated: #220; #146, #153, #182,
+#219, #92; ten stale entries each given a destination and eleven of M1's sent to the reading session (F-5-7, F-5-8).
+**108 open — 43 permanent, 65 carried — and 99 discharged**; next #225, D265.
+
+**The review.** An independent Opus reviewer on d1760d2: no model byte, no judged bound moved (the changed literals:
+0.76 → 0.62 as ruled, asserting more; the price's upper bound removed as ruled), no machine pin without its mark, the
+fixture a conservative re-record (no record removed, 17 added, 160 changed in bytes only). **One blocker** — the #224
+hold cited an entry not yet in the register (the very class of F-3A-5): closed by the register's second pass. Two
+concerns on the viewer fix, mended (above). Carried, said plainly: the kept windows' check is one-sided;
+`test_one_threshold.py` exempts `bright.py`'s `log_l` by name; the price has no bound.
+
+**Not done.** #160's, #113 / #171's and #161's re-measurement by the audit's own estimators (no lane reached them);
+the walk does not visit the view chips, the sampled region stars or the zoom stands; the four about-lines and F-2-3's
+comment under `model/galaxy` wait for a model batch, with #220's and #224's mends.
+
+**The gates.** **The runner's full suite, dispatched on `session-95` at d1760d2 (run 43083065903, C7 — a fixture and
+tests changed): 1772 passed, 27 skipped, 10 xfailed, no xpass, in 3:28:32; specs OK** (pytest's own summary line, read
+from the job's log). It holds `session-94` whole (Audit VI's `tests/test_audit_vi.py` among the passed) and every
+test S95 wrote but the two source-check vitests; after it, on the final head 480af83, by name and single-threaded: the
+viewer's mend (vitest 70 files, 644 passed, 1 skipped; `typecheck` and `typecheck:e2e` clean), **the picture test 14
+passed with every capture byte for byte** (run twice: before the test lane's merge and on the final head, the working
+tree clean after each), `tests/test_bundle.py` 22 passed, the docs tests 26 passed, the register's nodes of
+`tests/test_audit.py` 21 passed, `tools/progress.py --check` 79/79, and the two holds that gained `raises=` after the
+dispatch (4 passed, 4 xfailed as marked). **The three pinned nodes D263 left running (Audit VI F-3B-3), read by name on
+`main`'s model: 6 passed in 2:18:34** — the two layer-off reference nodes (five cases) and the three-legs gate of
+`tests/test_pieces.py` as S93 re-pinned it: the record is right, and the node has now been seen to pass as committed
+(the run was starved at idle priority beside the lanes; 71 minutes alone). A cadence for those nodes stays the owner's
+ruling (D263). `session-94` then `session-95` merge into `main` on the run's green, tagged `s94` and `s95`.
+Cost: lanes D 0.30 M, W 0.30 M, T 0.30 M tokens, reader R 0.17 M, the reviewer 0.24 M, the mend builder 0.09 M, the
+close builder 0.22 M — 1.6 M in all (Opus); the lead's context 0.55 M across the three sessions of this run.

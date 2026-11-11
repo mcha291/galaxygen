@@ -564,11 +564,12 @@ owner's readings.
 
 **D1. #129 — a sample-wide gas ridge width over the arm spacing, with its spread.** What the readers hold:
 - PHANGS's ridge ("narrow") masks: "typical widths between 500 and 1000 pc, so about half the width of the original
-  masks" — top-hat full widths of the union of CO and Hα ridges, dilated by a 7.5″ Gaussian that sets a floor; no
+  masks" — top-hat full widths of the union of CO and Hα ridges, dilated by a 7.5″ Gaussian that sets a floor (the 7.5″ FWHM Gaussian and the dilation read at S95, reader R; "sets
+  a floor" the reader's inference); no
   radial trend, no per-galaxy list, no arm spacing beside them `[verified: Querejeta et al. 2024, Appendix E —
   Reading B §2]`. Reading B's own bracket from them, ≳ 0.12 of the spacing, rests on the broad masks' area share
   (≥ 0.24) and is a bound, not a distribution (Reading B, recommendation 1).
-- Theory and single galaxies: Egusa et al. 2017's M51 inner arms, gas FWHM ≈ 30° of 180° = 0.17 (the check's target);
+- Theory and single galaxies: Egusa et al. 2017's M51 inner arms, gas FWHM ≈ 30° of 180° = 0.17 (the check's target; read at S95, reader R);
   Kim, Kim & Ostriker 2010's 3D arm 10 % of the arm-to-arm distance; Kim & Ostriker 2002's W/L_x 0.05–0.16 (Reading B).
 - The model's side (S86, `tests/test_gas_pattern.py`): the width by the strongest forcing 0.3675 at the median on the
   Milky Way template (0.074–0.530) and 0.390 on `ngc_4414` (0.270–0.752), FWHM over the mode's period.
@@ -592,7 +593,8 @@ instrument to build, not a reading. **The per-galaxy means are not in the reposi
 
 **D3. #130 — the atomic gas's velocity dispersion, from a source.** The second response the entry designs needs the
 atomic gas's dispersion with a tag. What the repository holds: no reader prints one. Corbelli et al. 2018 (M33) say
-"the HI dispersion stays flat" with outward radius, with no number in the text read `[verified: READING_GAS_SPECTRA.md]`;
+"the HI dispersion stays flat" with outward radius, with no number in the text read `[verified: READING_GAS_SPECTRA.md]`
+(read at S95, reader R: the paper says "approximately constant", no number - the quoted words are a paraphrase);
 the model's own `GAS_DISPERSION` (6 km/s, the cold gas Kennicutt 1989 fitted the threshold at) carries "The Milky Way's
 HI reads 7-10 at R_0 and rises inward" as `[recall]` in its about line (`models/level0.py`); every 10 km/s elsewhere
 in the readers is a simulation's sound speed (KSK12, Kim & Kim 2014, KO02) or a drift velocity, not a measured HI

@@ -253,10 +253,20 @@ def test_the_remainder_s_middle_part_s_kept_windows_sum_to_it(api, template):
     assert all(header["axes"][n] == ["R", "filter"] for n in names)
     middle = arrays["stars_unresolved_middle"]
     parts = [arrays[n] for n in names]
-    rest = middle - sum(parts)
-    assert all(np.all(p >= 0.0) for p in parts) and np.all(rest >= -1e-12 * np.maximum(middle, 1e-300))
+    # S95 (Audit VI F-2-2): was `rest = middle - sum(parts)` then `sum(parts) + rest == middle` to 1e-12 - true by
+    # construction. Now against the SAME request WITHOUT kept= (the unsplit middle part S64 shipped; the viewer switches
+    # between the two live), as tests/test_audit_vi.py's #175 test does on the audit's mesh: the kept answer's middle
+    # part is the unsplit one to 1e-12 relative, each kept window is non-negative, and the rest - the unsplit middle
+    # less the three - is non-negative to 1e-12 relative (the three windows sum to at most the unsplit middle).
+    r = api.handle("/api/render", {"template": [template], "layer": ["on"], "only": ["remainder"],
+                                   "filters": [json.dumps(FILTERS["sets"]["rgb"]["curves"])], "l_min": [repr(REMAINDER_L_MIN)]})
+    assert r.status == 200, r.body[:300]
+    unsplit = np.asarray(wire.decode(r.body)[1]["stars_unresolved_middle"], dtype=float)
     lit = middle > 0.0
-    assert np.max(np.abs((sum(parts) + rest)[lit] / middle[lit] - 1.0)) < 1e-12
+    assert unsplit.shape == middle.shape and np.array_equal(unsplit > 0.0, lit)
+    assert np.max(np.abs(middle[lit] / unsplit[lit] - 1.0)) < 1e-12
+    rest = unsplit - sum(parts)
+    assert all(np.all(p >= 0.0) for p in parts) and np.all(rest >= -1e-12 * np.maximum(unsplit, 1e-300))
     windows = [tuple(kept["ages_gyr"][k]) for k in ("3", "2", "1", "rest")]
     f = published(api, template, "stars_formed_history", "feh_history", "disc_light_temperature")
     # At a grid threshold the windows partition resolve's unresolved middle part exactly; between two (log-linear in L,

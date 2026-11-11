@@ -13,7 +13,9 @@ reading; (2) massive clouds sit in a layer as thin as the CO layer or thinner (S
 outside R0 (Nakanishi & Sofue 2006, FWHM 160-186 pc at 8-11 kpc) and the sources conflict inside R0 (Marasco et al.
 2017 falling with R, Malhotra and Nakanishi & Sofue rising); (4) edge-on spirals' CO widths are σ = 31-89 pc plus 1-5
 pc/kpc × R (Yim et al. 2014). The layer is entered as an absolute thickness, the level-0 constant
-`MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.B]` (was §II.A; *re-read at Audit V (S70)*); the clouds' scale height is the sech² h whose FWHM that is,
+`MOLECULAR_LAYER_FWHM` = 120 pc, `[verified: Bronfman et al. 1988 via Ferrière 2001 §II.B]` (was §II.A; *re-read at Audit V (S70)*; the passage is
+in §III "Interstellar Matter", its molecular-gas subsection, III.2 as ar5iv numbers it - the print's lettering not
+checked; re-read at S95, reader R, F-R-3); the clouds' scale height is the sech² h whose FWHM that is,
 h = FWHM / (4 artanh(1/√2)) = FWHM / 3.5255 = 34.04 pc (D229).
 
 ---
@@ -22,12 +24,13 @@ h = FWHM / (4 artanh(1/√2)) = FWHM / 3.5255 = 34.04 pc (D229).
 
 Conversions: a Gaussian's σ = FWHM / 2.3548 = HWHM / 1.1774; a sech²(z/2h) layer's FWHM = 3.5255 h.
 
-- **Malhotra 1994** (ApJ 433, 687; astro-ph/9404028). A Gaussian σ_z rising with R: ~10 pc at 2.6 kpc, 30-52 pc over
+- **Malhotra 1994** (ApJ 433, 687; astro-ph/9404028; "rising" read in the abstract at S95, reader R - the 58 pc and
+  5.5 pc/kpc not). A Gaussian σ_z rising with R: ~10 pc at 2.6 kpc, 30-52 pc over
   3.4-7.2 kpc; the fit "extrapolates to give a scale height 58 pc at R⊙" (FWHM 137 pc); the gradient 5.5 pc/kpc.
-- **Clemens, Sanders & Scoville 1988** (ApJ 327, 139), read via Ferrière 2001 (RMP 73, 1031) §II.B: FWHM 136 ± 17 pc
-  at R0, ∝ R^0.58.
-- **Bronfman et al. 1988** (ApJ 324, 248), read via Ferrière 2001 §II.B: "a FWHM of 120 ± 18 pc, roughly independent
-  of R" from 2 kpc to R0. **The value entered** (`MOLECULAR_LAYER_FWHM`).
+- **Clemens, Sanders & Scoville 1988** (ApJ 327, 139), read via Ferrière 2001 (RMP 73, 1031) §II.B (ar5iv §III.2; F-R-3): FWHM
+  136 ± 17 pc at R0, ∝ R^0.58 (read at S95, reader R).
+- **Bronfman et al. 1988** (ApJ 324, 248), read via Ferrière 2001 §II.B (ar5iv §III.2; F-R-3): "a FWHM of 120 ± 18
+  pc, roughly independent of R" from 2 kpc to R0 (read at S95, reader R). **The value entered** (`MOLECULAR_LAYER_FWHM`).
 - **Bronfman et al. 2000** (A&A 358, 521; astro-ph/0006104), Table 7 and §4.1: a mean half-width of 58-60 pc for
   R/R0 0.2-1.0, "118 pc (FWHM) for the layer of molecular gas traced by CO"; the OB stars' layer FWHM 73 pc, "62% the
   thickness of the molecular gas disk" (a disclosed check on the HII layer, not a pin).
@@ -37,7 +40,8 @@ Conversions: a Gaussian's σ = FWHM / 2.3548 = HWHM / 1.1774; a sech²(z/2h) lay
   beyond 7 kpc) - falling with R inside R0, against Malhotra's and Nakanishi & Sofue's rise.
 - **Su et al. 2021** (ApJ 910, 131): a thin component of FWHM ~85 pc and a thick one of ~280 pc.
 - **Nakanishi & Sofue 2006** (PASJ; astro-ph/0610769), Table 1, the sech² FWHM: 48 pc at 0-1 kpc rising to 90 ± 30 pc
-  at 7-8 kpc, 186 pc at 8-9 kpc, 160 pc at 10-11 kpc - the flaring outside R0.
+  at 7-8 kpc, 186 pc at 8-9 kpc, 160 pc at 10-11 kpc - the flaring outside R0. (The bins read in the table's printed
+  layout, 9-10 kpc 182 ± 20 between them: read at S95, reader R.)
 - **Stark & Lee 2005** (ApJ 619, L159): clouds below ~2 × 10⁵ M☉ have a scale height of ~35 pc, "not significantly
   different" from the CO layer's; the most massive clouds sit in a thinner layer.
 - **Yim et al. 2014** (arXiv 1408.5905), Table 3, edge-on spirals' CO: σ = 89 + 5.0 R pc (NGC 4157), 33 + 1.1 R pc
@@ -59,7 +63,8 @@ of the dust in that layer too, so the layer now reaches the infrared numbers. Wh
   quoted four (48 pc at 0-1 kpc, 90 ± 30 at 7-8, 186 at 8-9, 160 at 10-11), and the two outer bins fall again, so no
   flare law can be fitted to what is held.
 - **Inside R0, a ruling.** Bronfman et al. 1988 (flat, the value entered), Marasco et al. 2017 (falling from ~100 pc HWHM
-  at the centre to ~50 pc at R0) and Malhotra 1994 / Nakanishi & Sofue (rising) conflict: by B12 they are named
+  at the centre to ~50 pc at R0 — the R0 end not measured: the scale height is fixed at 52 pc beyond 7 kpc, their
+  Table 2's 52 ± 40, ad hoc (re-read at Audit VI, 1B's notes)) and Malhotra 1994 / Nakanishi & Sofue (rising) conflict: by B12 they are named
   rulesets, and which one the model draws is the owner's choice, not a reader's.
 - **A mass dependence.** Stark & Lee 2005's table of cloud heights by mass (the reader gave ~35 pc below ~2 × 10⁵ M☉ and
   "thinner" above, no number), or a catalogue's heights binned by mass (Miville-Deschênes et al. 2017's whole-Galaxy

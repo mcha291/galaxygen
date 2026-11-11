@@ -169,6 +169,60 @@ def test_a_deeper_level_contains_its_parents_rows(fields, constants):
     assert not (names(one, np.asarray(one["level"]) == 1) & names(three))
 
 
+def _outside_own_ring(cat, R, column):
+    """(rows, below lo, at or above hi, worst distance outside in kpc) of a catalogue's ``column`` against the ring its
+    level-0 cell names, row by row through ``cat.counts`` (the cell ids in catalogue order)."""
+    edges, _ = sy.cell_edges(R)
+    r = np.asarray(cat[column], dtype=float)
+    below = above = 0
+    worst = 0.0
+    off = 0
+    for cid, n in cat.counts:
+        ring = int(cid) // sy.CELL_SECTORS
+        lo, hi = float(edges[ring]), float(edges[ring + 1])
+        x = r[off:off + n]
+        below += int((x < lo).sum())
+        above += int((x >= hi).sum())
+        if x.size:
+            worst = max(worst, lo - float(x.min()), float(x.max()) - hi)
+        off += n
+    assert off == r.size, (off, r.size)
+    return r.size, below, above, worst
+
+
+@pytest.mark.parametrize("layer", [False, True], ids=["layer_off", "layer_on"])
+@pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])
+def test_197_every_level_0_star_and_every_remnant_lies_in_its_own_ring(template, layer):
+    """#197 over the whole catalogue (S95, Audit VI F-3A-6). #197's discharge (S90) had one test: the children of ONE
+    parent cell (300) of the default galaxy at seed 0 (the test above), which met the defect by chance of the census;
+    the 0-outside count was a probe script (s90_probe197.py) and the remnants' draw had no test at all. Before the mend
+    (the ring draw's inverse CDF began at the grid point below the ring) 955 of the Milky Way's 20 002 sample stars and
+    70 of its 1 549 remnants stood up to 70 pc below their ring; after it, 0. Asserted here: EVERY level-0 star of the
+    whole catalogue (``systems.materialise``, the catalogue's sample) and EVERY remnant (``bubbles.materialise_remnants``)
+    lies in its own ring's [lo, hi) - the ring its cell id names, edges ``systems.cell_edges`` of the production grid -
+    on both templates, layer off and on, at the run's own systems seed and a second seed. No allowance: the draw
+    inverts on the ring's own interval, so a row on the wrong side of an edge is the defect back."""
+    from galaxy import templates
+    from galaxy.stages import bubbles as bb
+
+    models, _, _ = production()
+    model = next(m for m in models if m.name == DEFAULT_MODEL)
+    c = {k: v.value for k, v in model.constants.items()}
+    need = tuple(sorted(set(sy.SYSTEMS.requires) | set(bb.BUBBLES.requires)))
+    o = run(model, templates.overrides(templates.TEMPLATES[template]), only=need, layer=layer)
+    F, R, t = o.fields, o.grid.R, o.grid.t
+    seed0 = int(o.inputs.get("systems_seed", 0))
+    report = {}
+    for seed in (seed0, seed0 + 9173):
+        cat = sy.materialise(F, R, t, seed, sy.CATALOGUE_SAMPLE, migration=float(o.inputs["migration_efficiency"]), constants=c)
+        rem = bb.materialise_remnants(F, R, seed, c)
+        report[seed, "star"] = _outside_own_ring(cat, R, "star_radius")
+        report[seed, "remnant"] = _outside_own_ring(rem, R, "remnant_radius")
+    # Not vacuous: the whole sample and a remnant census of hundreds to thousands each time.
+    assert all(n > 400 for n, _, _, _ in report.values()), report
+    assert all(lo == 0 and hi == 0 for _, lo, hi, _ in report.values()), report
+
+
 def test_the_api_serves_levels_and_opens_a_child_star():
     svc = Service()
     r0 = svc.handle("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4")

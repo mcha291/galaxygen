@@ -260,7 +260,7 @@ DUST_COLUMN_OVER = ("S88 (M1): the Milky Way's dust column on ring 2 reads 3.37 
                     "5.58e-3) against 3, from #80's pinned 5.0 kpc bar (2.93 at S86); the gate's to rule")
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=DUST_COLUMN_OVER)) if t == "milky_way" else t for t in TEMPLATES])
+@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, raises=AssertionError, reason=DUST_COLUMN_OVER)) if t == "milky_way" else t for t in TEMPLATES])
 def test_the_dust_s_column_per_level_0_ring_is_kept_by_the_gas_map_within_its_one_draw_bound(sweeps, template):
     """R2b on the capture's lattice at 16 offsets: every dusty ring within 3 s_r (the module docstring), and the whole
     frame within 3e-3. The measured numbers are the module docstring's MEASURED."""
@@ -270,8 +270,11 @@ def test_the_dust_s_column_per_level_0_ring_is_kept_by_the_gas_map_within_its_on
     whole = max(abs(d[3]) for _, d, _ in rows)
     print(f"{template}: dust column, worst |dev| / s_r {ratio:.3f} on ring {ring} at offset {off} "
           f"(dev {dev:+.3e}, s_r {s:.3e}); worst |dev| any ring {raw:.3e}; whole frame worst {whole:.3e}")
-    assert ratio <= DRAWS, (ring, off, dev, s)
+    # S95 (Audit VI F-3A-7): the whole frame's clause moved above the ring's, so DUST_COLUMN_OVER (which the ring's
+    # clause fails on the Milky Way) masks nothing: the whole frame read 3.5e-4 against 3e-3 at S88. The order of two
+    # independent asserts on numbers computed above is no change of meaning.
     assert whole < WHOLE_FRAME
+    assert ratio <= DRAWS, (ring, off, dev, s)
 
 
 @pytest.mark.parametrize("template", TEMPLATES)

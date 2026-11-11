@@ -5,7 +5,9 @@ and this file holds the build to it, in the gate's order:
 
 - **the predictions** (B4), read before they were judged and recorded here with the as-built numbers - one of them
   failed (the body's share of the disc: 0.1015 against 0.110) and is pinned as it fails, nothing changed to make it
-  hold (B5); the A₂ maximum's place misses the stacks' 0.76-0.94 a, as predicted;
+  hold (B5); the A₂ maximum's place misses the stacks' 0.62-0.94 a, as predicted (DG16b Table 5's whole printed
+  range; the Milky Way template's comparators are its SB, T < 5 row, 0.78 +/- 0.19 a, and its mass bin 10.5-11,
+  0.90 +/- 0.20 a - S95, Audit VI F-1A-2: was "0.76-0.94 a", a part of the table read as the whole);
 - **the gate**: the stellar ring means, nothing clipped; the stellar contrast positive on every suite seed; the m = 2
   amplitude of the published field's bar part equal to the drawn amplitude; the gas with its lanes; an unbarred
   galaxy that leaks no NaN;
@@ -235,7 +237,10 @@ def test_the_gate_s_predictions_as_measured(prod):
     arms ≈ 0.77; lanes from (5.21 kpc, φ_bar) to 0.52 kpc with radius of curvature 4.5 kpc; the gas's base inside
     the footprint-filled rings (R < 2.1 kpc) 0.385; rows 15-17 unchanged". ``ngc_4414``: "unbarred, the bar's
     fields NaN, arms to the centre; its two disclosed checks over 6-10 kpc unchanged to three figures (1.881 and
-    0.512); t_b 0.91 Gyr published beside the pin. Both A₂ peak radii miss 0.76-0.94 a."
+    0.512); t_b 0.91 Gyr published beside the pin. Both A₂ peak radii miss 0.76-0.94 a." (S95, Audit VI F-1A-2:
+    the prediction's words as written; the table it read, DG16b Table 5, prints 0.62-0.94 a over its rows - the SB,
+    T < 5 row 0.78 +/- 0.19 a and the mass bin 10.5-11 0.90 +/- 0.20 a are the Milky Way's - and the miss is asserted
+    against the whole printed range below.)
 
     **As built.** Held: β_max 0.3903; A₂^max = B to rounding at 2.1375 kpc = 0.4103 a; the minimum stellar contrast
     before the arms 0.7641; the lanes' ends and their radius of curvature 4.5302 kpc; the base 0.38462; rows 15-17;
@@ -245,7 +250,8 @@ def test_the_gate_s_predictions_as_measured(prod):
     of 0.262), and that probe's Σ was not the checkpoint-1 total disc the ruling names; on the ruled Σ a share of
     0.10 gives 0.285. Pinned as it fails; nothing is tuned to it (D217 forbids "tuning the share ... to land a
     check"). **Missed, as predicted: the A₂ peak sits at 0.41 a** (``ngc_4414``'s disc, were it barred: 0.42 a),
-    where the S⁴G stacks peak at 0.76-0.94 a; the bulge's dilution of the inner amplitude in the stacks is the
+    where the S⁴G stacks peak at 0.62-0.94 a (DG16b Table 5 over its rows; SB, T < 5: 0.78 +/- 0.19 a; the mass bin
+    10.5-11: 0.90 +/- 0.20 a - S95, F-1A-2: was "0.76-0.94"); the bulge's dilution of the inner amplitude in the stacks is the
     named suspect. ``ngc_4414``'s two disclosed gas checks are in ``tests/test_gas_pattern.py``."""
     o = template_run(prod, "milky_way")
     F, R, phi, edges = o.fields, o.grid.R, o.grid.phi, o.grid["phi"].edges
@@ -265,7 +271,9 @@ def test_the_gate_s_predictions_as_measured(prod):
     inside = R < a
     peak = int(np.argmax(np.where(inside, a2, -1.0)))
     assert float(a2[peak]) == pytest.approx(B, abs=1e-12) and (float(R[peak]), float(R[peak]) / a) == pytest.approx((2.0625, 0.4125), abs=1e-4)  # S87 (#80, #209): was 0.4103, 2.1375 - the bar's law and pinned length, the pitch floor
-    assert not 0.76 <= float(R[peak]) / a <= 0.94  # the recorded miss: the stacks' maximum sits at 0.76-0.94 a
+    # The recorded miss: the stacks' maximum sits at 0.62-0.94 a over DG16b Table 5's rows. S95 (Audit VI F-1A-2, the
+    # gate's ruling): was `not 0.76 <= ... <= 0.94` - the whole printed range asserts more.
+    assert not 0.62 <= float(R[peak]) / a <= 0.94
     # "A₂(0.85 a) ≈ 0.046": 0.0444, read at 0.85 a between the two grid rings (0.0408 on the nearer one).
     assert float(np.interp(0.85 * a, R, a2)) == pytest.approx(0.04287, abs=2e-5)  # S87 (#80, #209): was 0.04444 - the bar's law and pinned length, the pitch floor
     assert float(a2[int(np.argmin(np.abs(R - 0.85 * a)))]) == pytest.approx(0.04418, abs=2e-5)  # S87 (#80, #209): was 0.04081 - the bar's law and pinned length, the pitch floor
@@ -291,7 +299,8 @@ def test_the_gate_s_predictions_as_measured(prod):
     assert (float(n.fields["bar_formation_time"]), float(F["bar_formation_time"])) == pytest.approx((0.9055, 1.4565), abs=5e-5)
     inner = sum(float(np.asarray(n.fields[k])[0]) for k in pt.AMPLITUDE_FIELDS)
     assert inner > 0.3 and sum(float(np.asarray(F[k])[0]) for k in pt.AMPLITUDE_FIELDS) < 1e-6  # no taper against a whole one
-    # "Both A₂ peak radii miss 0.76-0.94 a": the same disc with the pin taken off - the criterion bars it - peaks at 0.42 a.
+    # "Both A₂ peak radii miss 0.76-0.94 a" (0.62-0.94 a over DG16b Table 5's rows, S95): the same disc with the pin
+    # taken off - the criterion bars it - peaks at 0.38 a.
     u = template_run(prod, "ngc_4414", pinned=False)
     assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.03963, abs=2e-5)  # S87 (#80): was 0.11256 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     ua = float(u.fields["bar_half_length"])
@@ -355,7 +364,7 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     for template, want in (("milky_way", (0.4125, 0.1482, 0.3339)), ("ngc_4414", (0.3792, 0.0989, 0.1234))):
         got = np.array(read[template])
         assert got.min(axis=0).tolist() == pytest.approx(want, abs=1e-4) and got.max(axis=0).tolist() == pytest.approx(want, abs=1e-4), template
-        assert not np.any((got[:, 0] >= 0.76) & (got[:, 0] <= 0.94))  # the recorded miss, on every barred seed
+        assert not np.any((got[:, 0] >= 0.62) & (got[:, 0] <= 0.94))  # the recorded miss, on every barred seed (S95, F-1A-2: was 0.76 - DG16b Table 5 prints 0.62-0.94 over its rows)
     # S60 (D219 item 3): the two-armed mode's tie to the bar (D217 item 9) is two chains born at the bar's two ends
     # in an unpinned barred disc - `ngc_4414`'s disc with its pins off, a grand design by the bar - and none in a
     # pinned galaxy, whose chains are its measured arms (the Milky Way template: Reid et al. 2019's six rows).
@@ -491,6 +500,11 @@ RING_MEAN_TOLERANCE = 2e-13
 # NGC 4414's worst 9.35e-14 (ring 129, 9.7125 kpc), six over 5e-14. Not rounding of the sum: the cells are of order 1
 # and each a composition of the response, the lanes and the pieces' cell means, each exact to its own rounding, so a
 # ring's mean carries the sum of 360 such roundings - which is what the composition's bound is (D234's F-2-3).
+# S95 (Audit VI F-3A-4, D264): THAT REASON WAS WRONG IN MECHANISM. Measured at S95 (math.fsum per component, both
+# templates): the residue is the steady response's - the solver's own sum tolerance, gas_response.SUM_TOLERANCE 1e-13
+# (each solved profile's samples average to 1 only to that: 9.93e-14 on ring 105) - which the exact cell means inherit;
+# the lanes' part reads <= 2.0e-14, the spurs' 3e-17, and 360 cells' rounding is ~1e-15. 2e-13 stays (the gate): the
+# solver's 1e-13 and the cell integration's rounding. The Milky Way's worst reads 9.970e-14 at S95, NGC 4414's 9.348e-14.
 
 
 @pytest.mark.parametrize("template", TEMPLATES)
@@ -580,7 +594,9 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     assert 1.0 < float(g[R < gas.bar_length].max())
 
 
-@pytest.mark.xfail(strict=True, reason=GAS_LANES_READ_OVER_S92)
+# S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
+# not held), and masks nothing - the failing assert is the body's last (`gas.barred` before it is asserted).
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=GAS_LANES_READ_OVER_S92)
 def test_gate_the_gas_inside_the_bar_is_under_the_lanes_or_the_response(prod):
     """The upper clause of the gate the test before this one holds, the published gas's largest cell inside the bar
     under max(the lane field's peak, the response's crest), split from it at S92 (the gate's ruling on #221) so that
@@ -868,6 +884,43 @@ def test_the_body_rederived_by_hand_on_the_milky_way_template(prod):
     # Milky Way's bar is its pinned 5.0 kpc now, so the disc's own scale length enters.
     closed = normalisation * a * a * Q_HAND * k_c / 3.0 / (2.0 * math.pi * float(F["disc_central_surface_density"]) * float(F["disc_scale_length_spin"]) ** 2)
     assert closed == pytest.approx(share, rel=5e-4)
+
+
+SLIVER_LENGTH = 5.2097  # kpc: the ratio's half-length until S87, whose reach (5.2132 kpc) holds the grid ring at 5.2125
+
+
+def test_the_body_s_sliver_past_the_half_length_is_held_where_a_ring_lies_in_the_reach(prod):
+    """S95 (Audit VI F-3A-10): at the template's pinned 5.0 kpc no grid ring lies between a and the body's reach
+    a (1 + q⁶)^{1/6}, so the test above asserts ``sliver.sum() == 0`` and the sliver's arithmetic goes unexercised. Here
+    the model's body (``pattern.BarBody``, called directly on the template's own grid and checkpoint-1 disc) at the
+    length that had one - 5.2097 kpc, S86's - against this file's ``hand_body``, the pins S87 removed restored on it:
+    one ring in the reach (5.2125 kpc), its largest unit of order 1e-7 of the central density, the body nothing past the
+    reach; and the conservation: the sliver ring's contrast averages to 1 round the ring (its departure's samples and
+    its cell means), the body's mass share back from its normalisation."""
+    o = template_run(prod, "milky_way")
+    F, R, edges = o.fields, o.grid.R, o.grid["phi"].edges
+    sigma = np.asarray(F["disc_surface_density"], dtype=float)
+    a = SLIVER_LENGTH
+    reach = a * (1.0 + Q_HAND**6) ** (1.0 / 6.0)
+    sliver = (R >= a) & (R < reach)
+    assert int(sliver.sum()) == 1 and float(R[sliver][0]) == pytest.approx(5.2125, abs=1e-9)
+    _, p = hand_body(R, a)
+    # The hand's sliver: S86 pinned 8.52e-8 at the ratio's length to all its digits (5.20971...); at 5.2097 it reads
+    # 8.263e-8 (S95) - the sliver's size is steep in a, so the value as read here, with its order.
+    assert float(p[sliver].max()) == pytest.approx(8.2634e-8, rel=1e-3) and 1e-8 < float(p[sliver].max()) < 3e-7
+    assert not p[R >= reach].any()
+    body = pt.BarBody(R, sigma, a, Q_HAND, C_HAND, N_HAND)
+    assert np.array_equal(body.holds, p.any(axis=1))  # the model holds the sliver's ring, and nothing past the reach
+    assert float(body.unit[sliver].max()) == pytest.approx(float(p[sliver].max()), rel=0.02)  # other cell centres: the same order
+    share = 0.10146  # S86's published share at this length; any share reads the same arithmetic
+    N = body.normalisation(share)
+    assert body.mass_share(N) == pytest.approx(share, rel=1e-13)
+    i = int(np.flatnonzero(sliver)[0])
+    beta, dev = body.ring_share(N)[i], body.deviation(N)[i]
+    assert beta > 0.0 and 1e-8 < float(np.abs(dev).max()) < 3e-7  # the sliver's size in the contrast (S86's pin)
+    assert abs(float(dev.mean())) < 1e-20  # its departure is of mean 0 round the ring: nothing divided
+    contrast_cells = 1.0 - beta + (N / sigma[i]) * body.cell_means(edges, 0.3)[i]
+    assert abs(float(contrast_cells.mean()) - 1.0) < 1e-13 and float(contrast_cells.min()) > 0.0
 
 
 def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod):
@@ -1544,18 +1597,23 @@ def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
     stars, and the bulge's projected Hernquist profile.
 
     **As read on the Milky Way template** (the production grid):
-    - *the share in mass*: the body's stars (β of each ring's ``stellar_surface_density``) are **0.093 of the galaxy's
-      stellar mass**, the bulge in T (the bulge itself 0.162) - against "∼10 %" of all stellar mass in bars and a
+    - *the share in mass*: the body's stars (β of each ring's ``stellar_surface_density``) are **0.0883 of the galaxy's
+      stellar mass**, the bulge in T (the bulge itself 0.1623) - against "∼10 %" of all stellar mass in bars and a
       Bar/T in mass whose peak sits above the light's (`READING_BAR.md` A1.1: W09 §5.2, G11 §3.1);
     - *the share in light*: β of each ring's ``disc_surface_brightness`` over the disc's and the bulge's light,
-      bolometric, **0.047** - against Bar/T in light peaking at ≈ 0.10 (G11, SDSS i) and 0.14 for strong bars (K18):
+      bolometric, **0.0437** - against Bar/T in light peaking at ≈ 0.10 (G11, SDSS i) and 0.14 for strong bars (K18):
       **a miss, low by half**, recorded (B5);
     - *the m = 2 profile*: the body's two-fold amplitude round each ring peaks at **0.41 a** on checkpoint 1's disc and
-      at **0.425 a** once the bulge dilutes it (A₂ × Σ⋆/(Σ⋆ + Σ_bulge)) - against the S⁴G stacks' 0.76-0.94 a
-      (DG16b). **The named suspect, the bulge's dilution, is killed**: it moves the peak by 0.015 a. The miss is the
-      body's own. Read beside it, the profile's exponent alone (the model's 2; S⁴G's flat bars about 0.3, K15): the
-      peak at 0.68 a for n = 0.3, 0.61 for 0.5, 0.51 for 1 - **no profile the decompositions print reaches the
-      stacks**: the body's shape (axis ratio 0.4, boxiness 3), not its profile, is the next suspect.
+      at **0.425 a** once the bulge dilutes it (A₂ × Σ⋆/(Σ⋆ + Σ_bulge)) - against the S⁴G stacks' 0.62-0.94 a over
+      DG16b Table 5's rows (SB, T < 5: 0.78 +/- 0.19 a; the mass bin 10.5-11: 0.90 +/- 0.20 a). **The named suspect,
+      the bulge's dilution, is killed**: it moves the peak by 0.015 a. The miss is the body's own. Read beside it, the
+      profile's exponent alone (the model's 2; S⁴G's flat bars about 0.3, K15): the peak at 0.667 a for n = 0.3,
+      0.612 for 0.5, 0.511 for 1 - none reaches the stacks' rows of the Milky Way's kind (0.76 a and up), though the
+      flat profile's 0.667 a lies inside the table's whole printed range (its SB and late-type rows, 0.62-0.68 a): the
+      body's shape (axis ratio 0.4, boxiness 3), not its profile, is the next suspect.
+
+    S95 (Audit VI F-3A-9, F-1A-2): the numbers above were S86's (0.093 / 0.047 / 0.684 - "0.68"), stale against the
+    S87 pins below; corrected to the pins. The range was "0.76-0.94 a", a part of DG16b Table 5 read as the whole.
 
     Pinned as read; nothing moved to meet a source."""
     model = the_model(prod)
@@ -1583,7 +1641,8 @@ def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
     diluted = amplitude * stars / (stars + bulge)
     peak, peak_diluted = (float(R[np.argmax(np.where(inside, v, -1.0))]) / a for v in (amplitude, diluted))
     assert peak == pytest.approx(0.41, abs=0.01) and peak_diluted == pytest.approx(0.425, abs=0.01)
-    assert abs(peak_diluted - peak) < 0.03 and peak_diluted < 0.76  # the bulge is not the miss; the miss stands
+    # the bulge is not the miss; the miss stands - against the table's whole printed range (S95, F-1A-2: was < 0.76)
+    assert abs(peak_diluted - peak) < 0.03 and peak_diluted < 0.62
 
     def peak_at(n: float) -> float:
         profile = np.where(unit > 0.0, unit ** (n / N_HAND), 0.0)  # (1 − m²)^n from the ruling's n = 2
@@ -1591,7 +1650,12 @@ def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
 
     flat, half, exponential = peak_at(0.3), peak_at(0.5), peak_at(1.0)
     assert (flat, half, exponential) == pytest.approx((0.667, 0.612, 0.511), abs=0.015)  # S87 (#80, #209): was 0.684 - the bar's law and pinned length, the pitch floor
-    assert flat < 0.76  # no printed profile reaches the stacks' peak
+    # No printed profile reaches the stacks' rows of the Milky Way's kind (SB, T < 5 at 0.78 a; the mass bin 10.5-11
+    # at 0.90 a). The kept literal 0.76 is DG16b Table 5's lowest MASS-BIN row (9.5-10), the table's lower end over its
+    # mass bins - not the lower end of those two rows (S95 review N-7: worded so, the literal not moved). S95 (F-1A-2):
+    # NOT moved to 0.62 - the flat profile's 0.667 a lies inside DG16b Table 5's whole range (its SB all-T, SB T >= 5
+    # and T 5-8 rows, 0.62-0.68 a); the gate's to rule.
+    assert flat < 0.76
 
 
 # --- #145: Erwin 2018's frequency as a disclosed check, not a draw (S87; the owner's ruling of 2026-11-03, D255) --------

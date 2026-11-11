@@ -337,13 +337,10 @@ def _sent(doc: dict, r: dict) -> str:
     return rest if r["galaxy"] is None else doc["prefixes"][r["galaxy"]] + ("&" + rest if rest else "")
 
 
-def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
-    """Every galaxy-scale request the probe's walk logged is in the plan of its galaxy, byte for byte, and the
-    landing thresholds are the viewer's pick from the table (MW 10^4.55, NGC 10^4.40 as the walk logged them)."""
+@pytest.fixture(scope="module")
+def planned(service) -> dict[str, set[str]]:
+    """Each galaxy's plan as the viewer's strings, at the landing thresholds the viewer picks from the table."""
     doc = _logged()
-    # S73 (#200): the walk of every set, the physics-only switch under each, the Science tab and the clouds' switches
-    # grew it from 35 to 171 meanings (166 KB, the 1024-cell tiles 6 KB each); the bound is the lead's ~250 KB.
-    assert FIXTURE.stat().st_size < 250_000 and len(doc["requests"]) > 170
     picks = {}
     for galaxy in ("milky_way/on", "ngc_4414/on"):  # the table is computed for the pick; the off layer asks the same
         template = galaxy.split("/")[0]
@@ -352,12 +349,26 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
         picks[template] = pick_threshold(service.handle("/api/bright", q | {"table": "1", "precision": "f4"}).frame())
     assert bundle.js_number(picks["milky_way"]) == "35481.33892335753"
     assert bundle.js_number(picks["ngc_4414"]) == "25118.86431509577"
-    planned: dict[str, set[str]] = {}
+    out: dict[str, set[str]] = {}
     for galaxy in doc["prefixes"]:
         template, layer = galaxy.split("/")
         entries = plan(template, layer, service, l_min=picks[template])
-        planned[galaxy] = {route + "?" + bundle.js_query(query) for route, query in entries}
-        assert planned[galaxy] and len(planned[galaxy]) == len(entries), "no request planned twice"
+        out[galaxy] = {route + "?" + bundle.js_query(query) for route, query in entries}
+        assert out[galaxy] and len(out[galaxy]) == len(entries), "no request planned twice"
+    return out
+
+
+def test_the_plan_is_what_the_viewer_sends_string_for_string(planned):
+    """Every galaxy-scale request the probe's walk logged is in the plan of its galaxy, byte for byte, and the
+    landing thresholds are the viewer's pick from the table (MW 10^4.55, NGC 10^4.40 as the walk logged them)."""
+    doc = _logged()
+    # S73 (#200): the walk of every set, the physics-only switch under each, the Science tab and the clouds' switches
+    # grew it from 35 to 171 meanings (166 KB, the 1024-cell tiles 6 KB each); S95's walk added jwst_nircam's 17
+    # (188 meanings, 196 KB); the bound is the lead's ~250 KB.
+    assert FIXTURE.stat().st_size < 250_000 and len(doc["requests"]) >= 188
+    # S95 (Audit VI F-4-1): every record is a walk's - S93's two hand edits ("by hand, no walk run") were walked over.
+    assert not [w for w in doc["walks"] if "no walk run" in w["by"]]
+    for galaxy in doc["prefixes"]:
         prefix = doc["prefixes"][galaxy]
         inputs = [q for q in planned[galaxy] if "template=" in q]
         # S73 (#199): /api/layer asks the prefix alone - the query every loader spreads and nothing after it.
@@ -375,16 +386,21 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
     # because BUILD_IV's text names the censuses). A plan that drifts from the viewer fails here, not as a silent miss.
     sent_all = {r["path"] + "?" + _sent(doc, r) for r in doc["requests"]}
     unsent = sorted(q for q in anywhere if q not in sent_all)
-    # S93 (D262; T11 "as JWST", aa0eec6): jwst_nircam shipped after the walks and no walk ran under it (the fixture's
-    # walks say so; one is owed). Its seventeen planned entries - a blackbody, and per galaxy and layer two renders, a
-    # bright and a clusters request - are held instead to a walked instrument set's, string for string with the curves
-    # swapped: the plan asks nothing under the new set that the viewer was not seen to ask under wfc3.
-    curves = {name: "filters=" + bundle.js_query({"": bundle.js_json(c)})[1:] for name, c in filter_sets().items()}
-    unwalked = [q for q in unsent if curves["jwst_nircam"] in q]
-    assert len(unwalked) == 17 and all(q.replace(curves["jwst_nircam"], curves["wfc3"]) in sent_all for q in unwalked)
-    unsent = [q for q in unsent if q not in unwalked]
+    # S95 (Audit VI F-4-1): S93 held jwst_nircam's seventeen planned entries to wfc3's by swapping the curves, since no
+    # walk had run under the set. tools/walk_requests.py walked it (both modes, physics only) and the fixture records
+    # them, so every set is held to its own recording, string for string, and the substitution is gone.
     assert all(q.startswith("/api/remnants?") for q in unsent), unsent[:3]
     assert len(unsent) == 4, unsent
+
+
+def test_the_walk_logged_no_galaxy_scale_request_the_plan_does_not_hold():
+    """S95 (F-W-1): the walk's galaxy-scale requests no plan holds are kept apart (the fixture's ``unplanned``, with the
+    steps they were asked at; tools/walk_requests.py writes the list, empty when there are none). The first S95 walk
+    logged two - entering the star-first mode on NGC 4414 after the Milky Way, the tiles and the remainder asked once at
+    the Milky Way's threshold before NGC 4414's table had come (rule D1). The viewer reads the shown galaxy's table only
+    since (brightTiles.ts shownTable, ofGalaxy), and the walk re-recorded after that fix logged none."""
+    doc = _logged()
+    assert doc["unplanned"] == [], [(r["path"], r["galaxy"], r["steps"]) for r in doc["unplanned"]]
 
 
 def test_the_plan_asks_the_remainder_as_the_viewer_s_loader_spells_it(service):

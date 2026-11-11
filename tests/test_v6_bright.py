@@ -234,6 +234,8 @@ def test_the_remainder_alone_placed_by_the_render_s_weights_is_stars_unresolved(
 # s93rm_size.txt): 30 792 / 29 824 / 30 984 bytes through RGB (milky_way on, ngc_4414 on, milky_way off), under it;
 # 43 640 / 42 664 / 43 824 through WFC3, over it by 11.6-11.8 kB - WFC3's header echoes its sampled curves (13.1 kB of
 # its 19.6 kB), so the default answer already read 27 768 there. Held on that clause alone: register entry #222.
+# S95 (Audit VI F-3A-7): the hold masks nothing - the failing size assert is the body's last; the arrays' count and
+# dtype before it are asserted under the hold as everywhere.
 KEPT_OVER_THE_SIZE_GATE = pytest.mark.xfail(
     strict=True, raises=AssertionError,
     reason="#222 (S93): only=remainder with kept=1 through WFC3 reads 42 664-43 824 bytes at f4 against the 32 000 "

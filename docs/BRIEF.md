@@ -1,12 +1,15 @@
-# BRIEF — after S94: Audit VI closed (D263, `docs/AUDIT_VI.md`); S95, the audit's fixes, in flight on `session-95`; then the reading session; what follows them is the owner's word
+# BRIEF — after S95: Audit VI closed (D263) and its fixes made (D264); the reading session S96 next or in flight; what follows is the owner's word
 
-**The state (2026-11-12).** Audit VI (BUILD_V row 93) read M1–M3 again: seven Opus agents, 50 findings (49 standing,
-one withdrawn), none a wrong number. **Held:** of 84 cited claims re-read on fetched pages, no number that reaches a
-field differs; no judged bound moved in number without a decision (one identity loosened to abs 1e-4 under #154,
-F-3A-8); no invention in the viewer; the counts agree in six places; strand 2's closures each hold (`test_audit_vi`,
-ten nodes). **Found:** weak discharge tests, a bound judging a statistic it was not measured on, bounds re-declared at
-the failing reading, one hidden strict hold (#223), three nodes never seen to pass, a hand-written request fixture,
-readings wider or narrower than their pages. **108 open = 43 permanent + 65 carried, 97 discharged**; next #223, D264.
+**The state (2026-11-12).** S95 made Audit VI's fixes; no byte under `model/galaxy` moved. **Tests written:** #197
+over the whole catalogue, #166's cache counted, #217's one threshold read from the source, #114's call site, #175's
+kept windows against the unsplit answer. **The walker committed** (`tools/walk_requests.py`, `npm --prefix frontend run
+walk`), the fixture re-recorded from a walk of 409 answers / 190 meanings, every hand-written and `jwst_nircam` string
+confirmed. **F-W-1, the viewer defect the walk found, mended:** after a template switch the first star-first press
+asked the tiles and the remainder at the previous galaxy's threshold (two unplanned computed requests); fixed in
+`brightTiles.ts` / `GalaxyTab.tsx`, the re-walk 0 computed. **Readings corrected** (reader R: 21 rows, 17 match, one
+still unreachable). **The tables' three rulings:** 0.27 not relaxed (#220 a population finding); #224 opened; 2e-13
+kept with its true reason, the solver's `SUM_TOLERANCE`. The two layer-off reference nodes read green by name on
+`main`'s model (5 cases); the three-legs gate's read is D263's line. **108 open = 43 + 65, 99 discharged**; #225, D265.
 
 ## The two headlines
 - **The yardstick:** neither field frame is near its goal picture. The Milky Way's carries a quarter of the goal's
@@ -15,14 +18,13 @@ readings wider or narrower than their pages. **108 open = 43 permanent + 65 carr
 - **F-5-10:** BUILD_V §7's "done" cannot be reached on the plan as written: 65 carried entries and five viewer rows
   (T3, T7, T8, T11, T15) have no row to take them; M3's nightly is unread. The plan ran out of rows before the work.
 
-## S95 — the fixes (Opus builders, the Fable gate; AUDIT_VI §6's order)
-1. The weak-test class's tests (#216, #197, #166, #217, #114, #174) and #173's; `tests/test_audit_vi.py` kept green.
-2. The population tables: the walk's new statistic (F-3B-1) and the two re-declared bounds, seeds disjoint (D117).
-3. The request walker committed as a tool; the built viewer walked with `jwst_nircam`; the fixture diffed.
-4. The readings' corrections (F-1A-2..5, F-1B-1..3) and the unread sources read or labelled `[recall — NOT READ]`.
-5. Register: #160 struck, #223 opened, #173 discharged, stale entries placed. 6. The three pinned nodes read by name.
-Queued for the next model batch (a byte under `model/galaxy` moves the hash): F-1A-1, F-1A-6, F-1B-4, the isochrone
-labels' caveat, F-2-3's comment. Then the reading session (S96): the eleven owner's readings of M1 (F-5-8).
+## What S95 left
+- Concerns the gate carried: the catalogue's price a record with no bound (5543 µs a cell on a loaded machine, S88's
+  2839–3026; #154, load, not a finding); the kept windows' check one-sided (blind to windows that lose light);
+  `tests/test_one_threshold.py` exempts `stages/bright.py`'s `log_l` by name; the sliver test's absolute 1e-20 on values near 1e-7, first read on Linux by run 43083065903 on `session-95`.
+- Not reached: #160's, #113 / #171's and #161's re-measurement by the audit's estimator; the walk skips the view chips,
+  the sampled region stars, the zoom stands. Queued for the next model batch: F-1A-1, F-1A-6, F-1B-4, the isochrone
+  labels' caveat, F-2-3's comment; #220's and #224's mends. Then the reading session (S96): M1's eleven readings (F-5-8).
 
 ## Rulings taken on recommendation — the owner may re-rule any
 - #218's second part: three more draw-path products ordered (sfh, bright, chemistry_dtd), on #216's ruling.
@@ -38,6 +40,7 @@ labels' caveat, F-2-3's comment. Then the reading session (S96): the eleven owne
 - The guard in place of a subprocess pair at two thread counts; the solve and the einsums left unordered and named (D262).
 - #173 discharged at S95 as not reproducible (D263).
 - At S94's gate: `PRICE_RECORD` a record, `WING_BLOCK` a sampling bound, #146's two named rows, the readings ordered.
+- At S95's gate: 0.27 not relaxed (#220 a population finding); #224 opened, no bound moved; F-W-1 mended in the viewer; the fixture re-recorded from the walk.
 
 ## The owner's, still owed (none blocking)
 1. What follows Audit VI (F-5-10): the lead recommends a short sixth build: fixes, readings, a model batch, a viewer pass.
@@ -49,12 +52,9 @@ labels' caveat, F-2-3's comment. Then the reading session (S96): the eleven owne
 7. The standing owner's-word items: #107, #179 (downloads), #203–#205 and T19 (the deploy).
 8. The concurrency this run used (three agents at once, two heavy during S95): to refuse or keep.
 
-## The rules said again
+## The rules said again, and the traps (S72–S95's stand)
 - **Two-thirds**: a lead past two-thirds of its context hands back. **Commit each item when green** (`git commit -F`).
 - The runner's suite once, on the final head (`gh run view`); the `machine_pinned` nodes a change touches read by name.
-
-## Traps (S72–S94's stand)
 - Never the full suite, `verify_clone` or the pins unprompted (D246); one single-threaded pytest at a time, `tasklist`
-  first; no backtick in a shell string; any byte under `model/galaxy` moves the hash. pytest's collect-only under the
-  project's `-q` prints no ids: an argument file built from it is empty, and an empty argument file runs the whole
-  suite - count the ids first (S94).
+  first; no backtick in a shell string; any byte under `model/galaxy` moves the hash.
+- pytest's collect-only under the project's `-q` prints no ids, and an empty argument file runs the whole suite: count the ids first (S94).

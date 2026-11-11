@@ -320,12 +320,19 @@ question. Nothing below was fetched; the arithmetic is the lead's `[inferred]`.
   scatter is about H17's half-width (26.1 - 12.2)/2 = 6.95 and YH19's ~7. A flat-rotation-curve galaxy (Gamma near 1,
   most of them) is drawn about the Milky Way's pitch, not the population's.
 - **NGC 4414 (Sc, t = 5.2 +/- 0.6, HL in READING_NGC_4414.md) in that distribution.** 28.9 +/- 6.0 deg (five 3.6 um
-  segments, Herrera-Endoqui et al. 2015) is **above H17's 84th percentile (26.1)**, (28.9 - 19.0)/6.95 = **1.4
-  sigma** from H17's mean, and (28.9 - 19.7)/7 = **1.3 sigma** from DG19's T 4-6 mean at YH19's scatter — against
+  segments, Herrera-Endoqui et al. 2015; the five Table 3 rows -30.5, -34.2, -28.1, -44.0, -7.6 deg read through the
+  Harvard VizieR mirror, mean 28.88, error of the mean 5.97 - read at S95, reader R) is **above H17's 84th percentile (26.1)**, (28.9 - 18.0)/6.95 = **1.57
+  sigma** from H17's whole-sample mean (18.0 deg, their sec. 3.1, beside the same percentiles; the 19.0 used here
+  before was the midpoint of the per-arm-number means of the mass-matched subsample) (re-read at Audit VI, F-1A-3),
+  and (28.9 - 19.7)/7 = **1.3 sigma** from DG19's T 4-6 mean at YH19's scatter — against
   **2.65 sigma** from the law's 13.02 at its 6 deg (2.27 at 7 deg). Most of the "2.4 sigma" is the law's intercept,
   not the galaxy.
 - **What that does not settle.** The shear term: no reader prints pitch against Gamma for a sample, so the slope (-8)
   and whether the population's 19 deg belongs at Gamma = 1 are not re-read; H17 is optical arcs and DG19 3.6 um
-  segments, and their means differ from HR15's HII-region segments (15.0 deg pooled, four galaxies). The owner's
-  reading: YH19 section 4.3 (pitch with shear for their sample, the fit and its scatter) or Seigar et al. 2006's
-  shear column with YH19's corrected pitches, to set intercept, slope and scatter at one definition.
+  segments, and their means differ from HR15's HII-region segments (15.0 deg pooled, four galaxies `[inferred]`: the
+  pooling is a repository reader's over HR15's Tables 2-5, the paper prints no pooled mean, only that most pitch
+  angles "are between about 10 and 30 deg") (re-read at Audit VI, F-1A-5). YH19 print the pitch-shear correlation
+  only, rho = -0.49 ("much weaker than previously claimed", sec. IV.3.5), and no slope, intercept or scatter: their
+  section is not a source for the law's fit (re-read at Audit VI, F-1A-4). The reading still owed: a source that
+  prints a pitch-shear fit (or YH19's data, fitted here), or Seigar et al. 2006's shear column with YH19's corrected
+  pitches, to set intercept, slope and scatter at one definition.

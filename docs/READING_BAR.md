@@ -56,7 +56,7 @@ No S4G (3.6 µm, pipeline 4) Bar/T statistic was found on any page read: S15 def
 | Deprojected ε at the isophote of maximum ellipticity, 3.6 µm | spirals: mean "ε ≈ 0.5", "nearly independent of T"; S0s "≈0.2" | 654 bars, i ≤ 65° | [verified: DG16, abstract + §5.3, ×2] |
 | Same quantity in stacked bars | S0 "ε≈0.35"; spirals and irregulars "ε≈0.5" | 748 bars | [verified: DG16b, text, ×1] |
 | Projected maximum ellipticity (ellipse fit, J+H+Ks) | typical 0.5; early (Sa–Sb) 0.54 ± 0.13; late (Sc–Sd) 0.48 ± 0.12 (1σ) | 151 spirals, i < 65°, D < 40 Mpc | [verified: MD07, Table 3, ×2] |
-| Deprojected maximum ellipticity e_bar (ellipse fit, B and H) | range 0.25–0.80; 70% (B), 71% (H) within 0.50–0.75; 7% (B), 10% (H) within 0.25–0.40 | 136 spirals, i < 60° | [verified: MJ07, results, ×1] |
+| Deprojected maximum ellipticity e_bar (ellipse fit, B and H) | range 0.35–0.80 as printed (H band, sec. IV.4, Fig. 17; the 0.25 written here before is the weak bin's lower edge, re-read at Audit VI, 1A's minor rows); 70% (B), 71% (H) within 0.50–0.75; 7% (B), 10% (H) within 0.25–0.40 | 136 spirals, i < 60° | [verified: MJ07, results, ×1] |
 | Boxiness c of the generalised ellipse (|x|/a)^c + (|y|/b)^c = 1 | "peaks at c=3" | G11 sample | [verified: G11, §3.1, ×2] |
 | Boxiness, 3.6 µm | every bar c > 2; no trend with host | 144 S4G | [verified: K15, results, ×2] |
 | Bar Sérsic index n_bar along the bar | typical "≈0.7" (between Gaussian 0.5 and exponential 1) | G11 sample | [verified: G11, §3.1, ×2] |
@@ -145,7 +145,8 @@ Each entry: full tag, what the citation covers, definitions.
   fraction "drops for M⋆ ≲ 10^9.5–10 M☉". Table 3 not carried by the HTML.
 - **DG16b** `[verified: Díaz-García, Salo & Laurikainen 2016, A&A, arXiv:1607.07317, text and Table 5,
   https://arxiv.org/html/1607.07317]`. Covers the stack statements: T < 5 bars flat, late-type exponential; only
-  M⋆ ≥ 10¹⁰ M☉ show flat bars; stack A₂ maximum 0.23 (log M⋆ 8.5–9) and 0.41 (10.5–11). Single fetch.
+  M⋆ ≥ 10¹⁰ M☉ show "a hint of flat bars" in the azimuthally averaged profile (sec. 5.2; the source's "a hint of"
+  restored, re-read at Audit VI, 1A's minor rows); stack A₂ maximum 0.23 (log M⋆ 8.5–9) and 0.41 (10.5–11). Single fetch.
 - **HE15** `[verified: Herrera-Endoqui et al. 2015, A&A 582, A86, arXiv:1509.05328,
   https://ar5iv.labs.arxiv.org/html/1509.05328]`. Covers method only: 1,146 of 1,174 bars measured visually,
   deprojected; bars in 55 % of S0/a–Sc and 81 % of Scd–Sm. No aggregate ellipticity.
@@ -161,7 +162,7 @@ Each entry: full tag, what the citation covers, definitions.
 - **E18** `[verified: Erwin 2018, MNRAS 474, 5372, arXiv:1711.04867, abstract, Tables 2–4,
   https://ar5iv.labs.arxiv.org/html/1711.04867]`. Covers the frequency, the fit, the resolution argument. Bar size:
   slope 0.10 ± 0.03 below and 0.60 ± 0.08 above log M⋆ = 10.16; "considerable scatter" at fixed mass, no number.
-- **E19** `[verified: Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Tables 2–4, https://arxiv.org/html/1908.08423]`.
+- **E19** `[verified: Erwin 2019, MNRAS 489, 3553 (vol. 489, issue 3, pp. 3553-3564: read at S95, reader R), arXiv:1908.08423, Tables 2–4, https://arxiv.org/html/1908.08423]`.
   No dependence of bar size on gas fraction (r = 0.08, P = 0.11) or on type once mass is held.
 - **MA17** `[verified: Méndez-Abreu et al. 2017, A&A 598, A32, arXiv:1610.05324, Table 4,
   https://arxiv.org/html/1610.05324]`. Covers fraction per mass bin; no Bar/T aggregate.
@@ -382,7 +383,7 @@ it; R_CR = corotation.
 | Radial reach, N-body | bar affects the arms within 1.5–2 bar radii; swing amplification explains them beyond | bar ~3 kpc, R_CR ≃ 4 kpc, Ω_b ≈ 47 km s⁻¹ kpc⁻¹ | `[v:Ba15 abstract, conclusions]` 2× |
 | Radius of spiral maximum | r_s ≈ 2 r_b on average | radii of the Q_s and Q_b maxima | `[v:Bu09 Table 7 text]` 2× |
 | Same, strongly barred | ⟨r(Q_b)/r(Q_s)⟩ = 0.57 ± 0.13 (7 galaxies, Q_b > 0.25) | as above | `[v:B04]` 1× |
-| Bar m = 2 amplitude | A₂^max 0.23–0.41, at 0.76–0.94 r_bar | stacked S⁴G bars by mass/type bin, 3.6 µm | `[v:DG16b Table 5, Fig. 18]` 1× (the key was DG16, Part A's DG16b - renamed at Audit V (S70)) |
+| Bar m = 2 amplitude | A₂^max 0.23–0.41, at 0.76–0.90 r_bar over the mass bins; 0.94 only in the T 0–3 and SAB rows, 0.62–0.68 in the T 5–8, SB all-T and SB T ≥ 5 rows (re-read at Audit VI, F-1A-2) | stacked S⁴G bars by mass/type bin, 3.6 µm | `[v:DG16b Table 5, Fig. 18]` 1× (the key was DG16, Part A's DG16b - renamed at Audit V (S70)) |
 | Spiral m = 2 contrast | A₂s 0.063–1.220 (Q_s 0.031–0.497; Q_b 0.102–0.796) | maximum relative m = 2 intensity amplitude of the spiral after removing the bar; AAT 23 | `[v:Bu09]` 1× |
 | Time behaviour | m = 2 arm amplitude cycles with a period ~200 Myr; grand design "only when the spirals connect with the ends of the bar" | N-body | `[v:Ba15]` 1× |
 | Reconnection period | ≈ 63 Myr and ~125 Myr (model 1); ≈ 105 Myr (model 2) | bar meeting slower spiral modes | `[v:Hi20]` 1× |
@@ -649,12 +650,14 @@ the question is not answered by what the readers fetched it says so: those are t
 
 ### C1. #146 — what the stacks' bars are (DG16b), and what that does to the body's peak
 
-- **Profile.** DG16b's stacks: bars in T < 5 are flat, late types exponential, and "only M⋆ ≥ 10¹⁰ M☉ show flat
-  bars" `[verified: DG16b, text and Table 5 — Part A A2]`; K15 the same split by bulge prominence (n_bar ∼ 0.30
+- **Profile.** DG16b's stacks: bars in T < 5 are flat, late types exponential, and only the most massive (M⋆ ≥
+  10¹⁰ M☉) show "a hint of flat bars" (sec. 5.2; re-read at Audit VI, 1A's minor rows) `[verified: DG16b, text and
+  Table 5 — Part A A2]`; K15 the same split by bulge prominence (n_bar ∼ 0.30
   where B/T > 0.2, ∼0.85 with no bulge, the change near 10^10.2 M☉) `[verified: K15, results — A1.2]`. The Milky Way
   template (M⋆ 4.74 × 10¹⁰ M☉, B/T 0.16) is on the flat side of both. The model's body is (1 − m²)ⁿ with n =
   `BAR_PROFILE_INDEX` = 2 for every galaxy — S15's S⁴G fitting form (α = 2, β = 0), which A3 calls "a fitting
-  choice, not a measurement"; A3's adoption was a Sérsic run with n set by the bulge (D217 item 4 took one form,
+  choice, not a measurement" (Salo et al. 2015 eq. 7, α and β fixed with no reason given: read at S95, reader R);
+  A3's adoption was a Sérsic run with n set by the bulge (D217 item 4 took one form,
   chosen before a number was read).
 - **Axis ratio of the stacks.** DG16b's stacked bars: maximum ellipticity ε ≈ 0.5 for spirals and irregulars,
   ≈ 0.35 for S0s `[verified: DG16b, text, ×1 — A1.2]`, i.e. b/a ≈ 0.5 / 0.65 at the isophote of maximum ellipticity
@@ -662,17 +665,23 @@ the question is not answered by what the readers fetched it says so: those are t
   20% lower" in ε `[verified: G11, §3.1 — A1.2]`, so the stacks' spirals at ε ≈ 0.6 as a 2D component, b/a ≈ 0.4 —
   the model's 0.4 (A's own derivation (i)).
 - **What it does to the body's m = 2 peak (S86's probe on the Milky Way template, GALAXY_INPUTS.md #146).** The peak
-  goes nearly as the axis ratio; at the model's exponent 2 it sits at 0.41 a (b/a 0.4) against the stacks'
-  0.76–0.94 a (DG16b Table 5, Fig. 18 — B1.4). With a flat profile (the probe's exponent n = 0.3 of the same
-  form, standing for K15's flat Sérsic n ≈ 0.3 — two different functions, flat in either sense) it reads **0.68 a at
-  the 2D-equivalent b/a 0.4** and **0.76 a at the stacks' ellipse-fit b/a 0.5** (0.80 a with boxiness 4). So the
-  reading names the miss's larger part: **the exponent**, which the sources set flat for a galaxy of the template's
-  mass and type (0.41 → 0.68 a), and leaves the last 0.08 a to which axis ratio the stacks' amplitude should be read
-  against — the stack's A₂ is measured on images (disc and bulge light inside it), which is an ellipse fit's
-  setting, while the model's body is a component. No source read says which.
+  goes nearly as the axis ratio; at the model's exponent 2 it sits at 0.41 a (b/a 0.4). DG16b's Table 5 (Fig. 18 —
+  B1.4) prints the stacks' A₂ maximum at r_A2/r_bar 0.76–0.90 over the five mass bins, 0.94 only in the T 0–3 and
+  SAB rows, and lower in others: T 5–8 0.66 (0.24), SB all T 0.68 (0.25), SB T ≥ 5 0.62 (0.29), SB T < 5 0.78
+  (0.19) — the range "0.76–0.94 a" written here before was narrower than the table (re-read at Audit VI, F-1A-2).
+  The Milky Way template's comparators are two named rows: its class (SB, T < 5: **0.78 ± 0.19**) and its mass bin
+  (10.5–11: **0.90 ± 0.20**); the model's 0.41 a is under both (re-read at Audit VI, F-1A-2). With a flat profile
+  (the probe's exponent n = 0.3 of the same form, standing for K15's flat Sérsic n ≈ 0.3 — two different functions,
+  flat in either sense) it reads **0.68 a at the 2D-equivalent b/a 0.4** and **0.76 a at the stacks' ellipse-fit
+  b/a 0.5** (0.80 a with boxiness 4). So the reading names the miss's larger part: **the exponent**, which the
+  sources set flat for a galaxy of the template's mass and type (0.41 → 0.68 a). The probe's 0.68 a equals the SB
+  all-T row and is not short of the stacks; against the template's two rows it is inside their dispersions (re-read
+  at Audit VI, F-1A-2). Which axis ratio the stacks' amplitude should be read against moves it a further 0.08 a — the
+  stack's A₂ is measured on images (disc and bulge light inside it), which is an ellipse fit's setting, while the
+  model's body is a component. No source read says which.
 - **A b/a distribution.** What the readers hold: K18, "b/a = 0.31 ± 0.12" median and 1σ, range 0.1–0.6, strong
   bars only (a Sérsic component) `[verified: K18, results — A1.2]`; MJ07, deprojected maximum ellipticity (ellipse
-  fits) 0.25–0.80 with 70 % (B) / 71 % (H) of bars in 0.50–0.75 (b/a 0.25–0.50) and 7 % / 10 % in 0.25–0.40 (b/a
+  fits) 0.35–0.80 as printed (H band; re-read at Audit VI, 1A's minor rows) with 70 % (B) / 71 % (H) of bars in 0.50–0.75 (b/a 0.25–0.50) and 7 % / 10 % in 0.25–0.40 (b/a
   0.60–0.75) `[verified: MJ07, results, ×1]`; MD07, projected 0.54 ± 0.13 (Sa–Sb) and 0.48 ± 0.12 (Sc–Sd);
   G11's distribution "peaks at ≈0.6" with its median and σ in a figure "not readable" (A2). **No distribution
   over all bars with its spread is in the repository**: K18's is the only printed σ and it is of strong bars, which

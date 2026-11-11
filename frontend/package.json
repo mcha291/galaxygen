@@ -14,7 +14,8 @@
     "typecheck:e2e": "tsc -p e2e",
     "smooth": "playwright test -c playwright.smooth.config.ts",
     "compile": "playwright test -c playwright.compile.config.ts compile.probe.ts",
-    "march": "playwright test -c playwright.compile.config.ts march.probe.ts"
+    "march": "playwright test -c playwright.compile.config.ts march.probe.ts",
+    "walk": "playwright test -c playwright.walk.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

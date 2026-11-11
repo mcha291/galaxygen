@@ -42,7 +42,7 @@ import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf, usePhysicalPsf, viewOptics } from "./psf";
 import { footprint } from "./frustum";
-import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, pickThreshold, tilesFrame, weighted } from "./brightTiles";
+import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFrame, cellsIn, cellsToFetch, covers, frustumWeights, levelCounts, ofGalaxy, pickThreshold, shownTable, tilesFrame, weighted } from "./brightTiles";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
@@ -454,8 +454,14 @@ export function GalaxyTab({
   // S82 (#187): the counts, the tiles and the field's remainder follow the table's answer. Inside a swap they read it as
   // soon as it is held (`next`), and wait on the swap while it has not come (`settling`, their `after`), so the swap
   // publishes once with them in. The table itself is never drawn; outside a swap `next` is its value.
-  const tableLoad = useLoad<BrightTable>(brightTableKey, (signal) => loadBrightTable(query, signal));
-  const brightTable = tableLoad.next ?? null;
+  // S95 (the review's C-2): each table carries the key it was asked for, so a failed or pending load of the shown key
+  // never reads as the shown galaxy's (shownTable).
+  const tableLoad = useLoad<BrightTable & { key: string }>(brightTableKey, (signal) =>
+    loadBrightTable(query, signal).then((table) => ({ ...table, key: brightTableKey! })),
+  );
+  // S95 (Audit VI F-W-1, rule D1): the pick reads the shown galaxy's own table, nothing while it has not come - `next`
+  // falls back to the last table drawn, the other template's after a switch, and its threshold went out for this one.
+  const brightTable = shownTable(tableLoad, brightTableKey);
   const tileLevel = (mode === "stars" || zoomPoints) && view ? levelFor(view.across) : 0;
   // Where the camera's footprint stands, as the star-first loads read it: what moves them as the user moves (#187's
   // `view` - the camera's loads hold no swap once it has moved).
@@ -514,7 +520,7 @@ export function GalaxyTab({
     if (edges) setHeldRingEdges({ grid: gridKey, edges });
   }, [gridKey]);
   const renderRingEdges = heldRingEdges && heldRingEdges.grid === gridKey ? heldRingEdges.edges : null;
-  const tableRingEdges = brightTable?.layout.ring_edges;
+  const tableRingEdges = tableLoad.next?.layout.ring_edges; // the grid's edges, the same for every galaxy on it
   const ringEdges = useMemo(() => publishedRingEdges(renderRingEdges, tableRingEdges), [renderRingEdges, tableRingEdges]);
   const pickCounts = useMemo(
     () =>
@@ -540,14 +546,14 @@ export function GalaxyTab({
   const tileWhites = useRef(new Map<string, unknown>()).current;
   const tileGalaxy = JSON.stringify([filterSet, whiteKelvin, query]);
   const brightKey = pointsOn && tileFetch && tileK != null ? JSON.stringify([tileFetch.fetch, tileK, tileLevel, tileGalaxy]) : null;
-  const brightLoad = useLoad<TilesFrame>(
+  const brightLoad = useLoad<TilesFrame & { galaxy: string }>(
     brightKey,
     (signal) =>
       tilesFrame(
         tileCache, tileGalaxy, tileFetch!.fetch, tileK!, tileCounts!,
         (cells, l, s) => loadBrightTiles(cells, l, curvesOf(filterSet), whiteKelvin, query, s, tileLevel),
         tileWhites, signal, tileLevel,
-      ),
+      ).then((frame) => ({ ...frame, galaxy: countsGalaxy })), // S95 (F-W-1): which galaxy's threshold it holds
     BRIGHT_SETTLE_MS,
     tilesInput,
     false, // the tiles in view, likewise (S78)
@@ -557,7 +563,8 @@ export function GalaxyTab({
   const bright = pointsOn && brightLoad.value ? brightLoad.value : null;
   // The threshold the field's remainder is asked at (#187): the tiles' newest answer, held by a swap or published, and
   // whether the tiles still hold the swap - the march's render follows them. Outside a swap the drawn tiles' own.
-  const brightAsked = pointsOn && brightLoad.next ? brightLoad.next : null;
+  // S95 (F-W-1): only the shown galaxy's - the last galaxy's tiles, held over a switch, name another galaxy's threshold.
+  const brightAsked = pointsOn ? ofGalaxy(brightLoad.next, countsGalaxy) : null;
   const lMinAsked = brightAsked ? brightAsked.header.threshold.l_min : null;
   const lMinAfter = pointsOn && brightLoad.settling;
   // The young population is the cluster census's (the bright catalogue holds no star under 20 Myr): every cluster
