@@ -5214,19 +5214,24 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    V7 was the layer in the viewer and V8 the display defaults (D226, D227–D231); BUILD_IV's smoothness phase (W5,
    D222) is where a render's cost is next read, and the owner schedules it. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the starlight by age is the populations' render cost: the two mends in one pass with #184.
-   *S93 (M3, lane REST): built - the two mends in one pass.* (i) A whole-grid `l_min=` render no longer runs `_ages`
-   (its header's `ages` null, no age parts, no weights shipped for them, `stars_placement` among them): the star-first
-   mode's frame draws its remainder; a window or a level with `l_min=` keeps them (`test_s91_t2_closure` reads the
-   young part beside the remainder at level 0). (ii) The parts' anchors are `bright.part_anchors`' arithmetic through
-   the run's cache (`v7_layer.window_anchors` over the three parts' windows; the same bits, held). Measured back to
-   back, single-threaded, on this machine (a fresh service each; f4, RGB): the Milky Way's whole render cold 15.13 ->
-   14.05 s, warm 2.28 / 2.23 -> 1.33 / 1.32 s; its whole `l_min=` render cold 8.81 -> 8.30 s, warm 2.14 / 1.91 -> 1.51 /
-   1.43 s (11.61 -> 9.84 MB); NGC 4414's whole cold 8.08 -> 7.11 s, warm 1.37 / 1.28 -> 0.99 / 1.05 s - every cold call
-   under the owner's 25 s whole-disc bound (D260). Held by `tests/test_render.py::test_an_l_min_render_computes_no_age_
-   parts_and_the_whole_render_s_are_its_cached_bits`; `test_without_l_min_the_render_is_the_one_it_was` now states the
-   l_min body as the plain one less the light by age, byte for byte; `test_v6_bright`'s remainder test reads the
-   weights from the whole render the viewer holds. Expected to move elsewhere: the layer reference's
-   `render/unresolved` request (its `ages` was set beside the digest since S63; the body loses the age arrays).
+   *S93 (M3, lane REST): built - the cache; the skip found already met where it is asked.* The parts' anchors are
+   `bright.part_anchors`' arithmetic through the run's cache (`v7_layer.window_anchors` over the three parts' windows;
+   the same bits, held). The skip under `l_min` was built and taken back at the gate (D262): since T28 (S64) the viewer
+   never asks a whole-grid `l_min=` render - it asks the whole render and `only=remainder` (api.ts `loadRender`,
+   `loadRemainder`; tools/export_template.py plans the same two), and `only=remainder` returns before `_ages` runs
+   (`Service.render` -> `v6_tiles.remainder`). The whole-grid `l_min=` render nobody sends keeps the age parts, byte for
+   byte the plain render's plus `stars_unresolved` (`test_without_l_min_the_render_is_the_one_it_was`, unchanged; the
+   layer's `test_i5` names the parts on that request). Measured back to back, single-threaded, on this machine (a fresh
+   service each; f4, RGB; scratchpad `s93_rest_166m.py`, 0bf3c69's parent against the cache alone): the Milky Way's
+   whole render cold 16.46 -> 14.15 s, warm 1.82 / 1.88 -> 1.39 / 1.39 s; its whole `l_min=` render cold 10.33 -> 7.94
+   s, warm 2.38 / 2.33 -> 1.79 / 1.89 s (11.61 MB both, the same bytes); NGC 4414's whole cold 8.98 -> 7.70 s, warm
+   1.34 / 1.36 -> 1.01 / 1.02 s; its `l_min=` cold 5.44 -> 4.61 s - every cold call under the owner's 25 s whole-disc
+   bound (D260). Held by `tests/test_render.py::test_the_whole_render_s_age_parts_are_their_cached_bits_with_and_without_l_min`.
+   The closer's two mends are met on the cache alone in the sense that matters (no request the viewer sends computes
+   the light by age and discards it); the literal first mend is not built, by the gate's ruling. Nothing drawn changes.
+   The cache (`v7_layer`): the runs' own anchors hold two window sets per run (the parts' and the kept windows), so
+   sixteen entries; anchors and responses under a threshold (#175's `kept=1`) are held apart, eight each, so a
+   threshold slider's walk never evicts the runs' own (the review's C6; the same bits).
 167. ~~**The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud**~~ (S64, D224 stop
    condition 1; the probe's measurement; discharged at S89, D257 — retired, a duplicate on another law read by no drawing). The census's `central_extinction_v` is solar dust per hydrogen at one surface
    density (Σ_GMC 42 M☉/pc²; since S67, D231, the inner regime's 82, 5.7977 mag), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
@@ -5371,7 +5376,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    recovered byte for byte with S93's lines taken back). With the layer off the map is never read and the points' frame
    is unchanged (the factor 1.0 exact). The spurs stay their cell means in the points' dust (the entry asks the noise
    only). Not measured on the GPU here (no browser run in the lane); the picture spec's star-first captures move with
-   the layer on.
+   the layer on. *What holds it, plainly (D262):* the pin is a SHA-256 of the shader's text - it proves the text, not
+   that the text is right; `flux.test.ts` reads the TS twin against a constant stub map, and nothing compares the twin
+   to the GLSL numerically (`dustToPoint` has no production caller); and no GPU has compiled the new vertex shader
+   (uint uniforms and three more samplers in a vertex stage, unverified on WebGL2). A point on the camera's side of
+   the midplane reads the map at its own projection where the march reads the crossing behind it: "the same thin
+   screen" is exact only for points behind the midplane.
 175. **The star-first mode's remainder keeps its middle part unmodulated by the clustering field** (S66, D226 R5e).
    The field mode splits the middle part (20–100 Myr) at the octave survival ages — `stars_middle_kept3/2/1`, the
    windows [20, 23.87), [23.87, 31.18), [31.18, 40.71) Myr, each multiplied by its k-octave map over its k-octave
@@ -5394,6 +5404,19 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    remainder's middle to 1e-12, the windows' anchors to `resolve`'s `unresolved_middle` to 1e-12 at a grid threshold
    and 9.49e-5 between two - `bright._between` is log-linear in L, the closure factor takes it up - layer off the same
    bits) and `regimes.test.ts` (the split sums to the placed remainder to 1e-12).
+   *S93 mends (D262, the review's C1-C3, C5):* the bundle plan asks the remainder as the viewer does
+   (`tools/export_template.py`: `kept=1`; a bundle keys on the raw query, so a plan without it misses every bundled
+   remainder), the S72/S73 fixture's twenty remainder records respelled by hand, and
+   `test_bundle::test_the_plan_asks_the_remainder_as_the_viewer_s_loader_spells_it` reads `api.ts loadRemainder`'s
+   literal beside the plan. The viewer keeps asking `kept=1` on every threshold, layer on or off: the clustering switch
+   is live (no refetch), and the layer switch is the one parameter the two settings differ by (`api.test.ts`).
+   The size gate read on that request (`test_v6_bright::test_the_remainder_the_viewer_asks_is_under_the_same_size_gate`):
+   29 824-30 984 bytes through RGB, under it; 42 664-43 824 through WFC3, held `xfail(strict)` on #222. The closure
+   factor's departure is an as-measured record (2.2373e-5 / 1.9365e-5 / 4.0041e-5 Milky Way, 2.2384e-5 / 1.9359e-5 /
+   4.0045e-5 NGC 4414, rel 1e-3) in place of S93's `< 1e-2`, and each kept array is its window's raw response times
+   the factor to 1e-12, as the field mode's test reads it; the 2e-4 between thresholds is named an as-measured margin
+   over 9.49e-5. The kept windows are computed only when `kept=1` asks them (the default answer runs S64's work; the
+   bodies, default and `kept=1`, byte-identical before and after).
 176. **The unit mean per cell holds on the fields' quadrature lattices, not on the frame's pixels** (S66, D226 R2, R5;
    the probe's measurement and `tests/test_v7_layer.py`). The gas map and the clustering maps have unit mean per
    level-0 cell on L1's lattice; on the 1024-frame's pixel lattice (39 pc Milky Way, 28 pc `ngc_4414`) the dust's
@@ -6283,7 +6306,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    reading: the field's maximum inside the bar under the clause on the unchanged model (another ring's read).
    *S93 (M3, lane REST): read, recommendation.* Option (a): inside the bar's taper the walk's crest and trough read from
    the response's profile, not the lanes' (`layer/spurs.py ridge_reads`): a spur is the arms' ridge's feature, both
-   clauses then hold as written and only the Milky Way's spurs inside 5.0 kpc move. Option (b) re-declares a judged
+   clauses would then be expected to hold as written and only the Milky Way's spurs inside 5.0 kpc to move - a prediction,
+   unmeasured. Option (b) re-declares a judged
    clause. Not built or measured here (a model change; the gate's or the owner's ruling).
 
 ---
