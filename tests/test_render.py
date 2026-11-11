@@ -1136,6 +1136,9 @@ GATE = {
     # (TAIL_TEMPERATURES, 1/384 dex to 10^6 K) are read closer to the exact integral; the worst unmoved within 5 %.
     "wfc3": (1.60e-6, 1.89e-5, 1.64e-6),
     "wfc3n": (3.16e-6, 9.50e-6, 3.27e-6),
+    # S93 (T11 merged, #211): JWST NIRCam's F444W, F200W, F090W, measured at S93 on the tails' own grid (S92) - as
+    # measured, not a bound; D200's thresholds hold.
+    "jwst_nircam": (9.55e-7, 6.27e-6, 7.86e-7),
 }
 
 
@@ -1356,11 +1359,13 @@ AGE_FACTORS = {
         "rgb": [4.8901e-06, 2.8865e-06, 1.5218e-06], "sho": [9.5634e-04, 1.2199e-03, 2.4530e-03],
         "hoo": [1.2199e-03, 2.4530e-03, 2.4530e-03], "wfc3": [5.5423e-05, 2.0168e-03, 8.3577e-04],
         "wfc3n": [8.9636e-04, 1.2221e-03, 2.4282e-03],
+        "jwst_nircam": [1.3170e-03, 1.5114e-03, 9.1216e-04],  # S93 (T11 merged, #211): measured at S93, the full grid
     },
     "ngc_4414": {
         "rgb": [3.9888e-06, 2.2993e-06, 1.1286e-06], "sho": [9.1120e-04, 1.1731e-03, 2.2775e-03],
         "hoo": [1.1731e-03, 2.2775e-03, 2.2775e-03], "wfc3": [4.5263e-05, 1.7968e-03, 7.3741e-04],
         "wfc3n": [8.5161e-04, 1.1753e-03, 2.2545e-03],
+        "jwst_nircam": [1.0329e-03, 1.1778e-03, 7.5136e-04],  # S93 (T11 merged, #211): measured at S93, the full grid
     },
 }
 AGE_FACTORS["milky_way"] = AGE_FACTORS[None]
