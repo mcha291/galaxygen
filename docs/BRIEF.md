@@ -9,8 +9,8 @@ reading (`star_cluster_member`, the census's rule); **#113 / #171** the sample r
 points. **T10 / #119** the diffuse gas's [N II] and [S II] (Madsen et al. 2006); **#118** the [S II] pair at the
 region's density. **#174** the points' dust through the gas map, **#175** the remainder split by kept octaves
 (`kept=1`), **#166** the starlight by age cached. **`s83-robust` merged** (T11 "as JWST"; the `jwst_nircam` rows in
-test_render). Discharged: #113, #119, #166, #171, #174, #175, #217; opened #222 — **109 open = 43 permanent + 66
-carried, 96 discharged**; next #223, D263.
+test_render). Discharged: #113, #119, #166, #171, #174, #175, #217, #218; opened #222 — **108 open = 43 permanent + 65
+carried, 97 discharged**; next #223, D263.
 
 ## The batch's close (the gate's, after the docs pass; D262 records each)
 - The three-legs gate read by name on the final model; the layer-off reference re-based on a file of its own, `tests/layer_reference_s93.json` (#218
