@@ -1,4 +1,4 @@
-# BRIEF — after S93: M3 closed on `batch-m3` (the gate's D262 merges `session-93` into it); the merge into `main` waits on the owner's word; next is Audit VI (BUILD_V row 93)
+# BRIEF — after S93: M3 closed (D260–D262) and **merged into `main` 2026-11-11 (e115d7cd2e818ef671660c5cdacf3808161bbae3) on the GitHub runner's full suite, the owner's word**; next is Audit VI (BUILD_V row 93), started on the owner's word
 
 **The state (2026-11-11).** S93 finished BUILD_V row 92 in five parallel Opus lanes, each on its own branch cut from
 `session-92`, each read by an independent Opus reviewer and mended, the Fable gate integrating on `session-93`.
@@ -16,7 +16,7 @@ carried, 97 discharged**; next #223, D263.
 - The three-legs gate read by name on the final model; the layer-off reference re-based on a file of its own, `tests/layer_reference_s93.json` (#218
   moves with it); the hash pinned once at the batch's close (pinned at S93: 5a2c097e… → f9b04ed20a06c0a68420f1cc8e13714e), the bundles re-exported,
   the frames regenerated beside the two goal pictures; the runner's full suite read at 1eb7f2d (6 failed, each a record M3 moved, re-pinned), `batch-m3`'s dispatched after the merge.
-- `batch-m3` → `main` waits on the owner's word on that run (as M1 and M2 did).
+- **`batch-m3` (e2e571f) merged into `main` as e115d7c** on run 42952574634 on `batch-m3`: 1752 passed, 27 skipped, specs OK (the owner's "Merge if green"; D246).
 
 ## Rulings taken on recommendation — the owner may re-rule any (the owner's word of 2026-11-11)
 - #218's second part: the three more draw-path products ordered (sfh, bright, chemistry_dtd), carrying #216's ruling.
@@ -35,7 +35,7 @@ function recommended), #221 (the response's profile inside the bar recommended),
 VIEWER_TASKS: T10 done; T3 in part; T11 unstruck (nothing seen on a GPU or in a browser); T15, T8 not started.
 
 ## The owner's, still owed
-- The merge of `batch-m3` into `main` (the runner's full suite read first); the look at the regenerated frames.
+- The look at the regenerated frames; the word that starts Audit VI (the work stopped at the weekly reset, as told).
 - The owner's-word items (BUILD_V §2a): #107, #179, #203, #204, #205; T19 the deploy (the subscription disabled).
 - Any re-ruling of the list above (none blocks Audit VI).
 
