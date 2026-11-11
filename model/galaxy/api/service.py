@@ -355,8 +355,9 @@ ROUTES: tuple[Route, ...] = (
         "the spurs, and stars_middle_kept3, _kept2 and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
         "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
         "filter, which this render's own stars_middle_placement and stars_old_placement (or stars_placement) turn into "
-        "stars_unresolved exactly; the header's remainder states the rule.",
-        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
+        "stars_unresolved exactly; the header's remainder states the rule - and since S93 (#175), with kept=1, the middle "
+        "part's kept shares under l_min, stars_unresolved_middle_kept3, _kept2 and _kept1 (the header's remainder.middle_kept).",
+        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only", "kept"),
         "render",
     ),
     Route(

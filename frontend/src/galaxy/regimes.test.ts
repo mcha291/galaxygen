@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ALL_AGES, KEPT_OCTAVES, ageParts, agedLight, clumpedLight, keptParts, ringClosure } from "@interface/ages.js";
+import { ALL_AGES, KEPT_OCTAVES, ageParts, agedLight, clumpedLight, keptParts, remainderParts, ringClosure } from "@interface/ages.js";
 
 import { agesOf } from "./components";
 import { CELL_RINGS, CELL_SECTORS, clusterMeanTexels, prepareClustering } from "./noise";
@@ -495,6 +495,41 @@ describe("the starlight by age", () => {
     expect(keptParts(header, keptArrays)).toBeNull(); // a render from before S66
     const { stars_middle_kept2: _k, ...two } = keptArrays;
     expect(keptParts(keptHeader, two)).toBeNull(); // one missing: nothing invented
+  });
+
+  // S93 (#175): the star-first remainder read as parts - middle and old, placed by the weights its header names - and
+  // its middle part's kept shares, so the clustered march splits the remainder as it splits the field mode's parts.
+  it("reads the remainder's two parts and its kept arrays, or none (S93, #175)", () => {
+    const remainder = {
+      rule: "",
+      parts: { middle: { array: "stars_unresolved_middle", weight: "stars_middle_placement" }, old: { array: "stars_unresolved_old", weight: "stars_placement" } },
+      middle_kept: { arrays: { "3": "stars_unresolved_middle_kept3", "2": "stars_unresolved_middle_kept2", "1": "stars_unresolved_middle_kept1" }, weight: "stars_middle_placement" },
+    };
+    const restArrays = {
+      ...arrays,
+      stars_unresolved_middle: perRing(() => middle),
+      stars_unresolved_old: perRing(() => old),
+      stars_unresolved_middle_kept3: perRing(() => kept3),
+      stars_unresolved_middle_kept2: perRing(() => kept2),
+      stars_unresolved_middle_kept1: perRing(() => kept1),
+    };
+    const got = remainderParts({ ...header, remainder }, restArrays)!;
+    expect(got.parts.map((p: { key: string; name: string; weight: string }) => [p.key, p.name, p.weight])).toEqual([
+      ["middle", "stars_unresolved_middle", "stars_middle_placement"],
+      ["old", "stars_unresolved_old", "stars_placement"],
+    ]);
+    expect(got.kept).toEqual({ arrays: { 3: "stars_unresolved_middle_kept3", 2: "stars_unresolved_middle_kept2", 1: "stars_unresolved_middle_kept1" } });
+    // the split sums to the remainder placed (agedLight over its parts) cell by cell; no young clump
+    const { rest, clumps } = clumpedLight(restArrays, got.parts, got.kept, ALL_AGES, n);
+    const whole = agedLight(restArrays, got.parts, ALL_AGES, n);
+    let worst = 0;
+    for (let q = 0; q < whole.length; q += 1) worst = Math.max(worst, Math.abs(rest[q] + clumps[0][q] + clumps[1][q] + clumps[2][q] - whole[q]));
+    expect(worst).toBeLessThan(1e-12);
+    const c = 17 * phi.n + 40;
+    expect(clumps[0][c * 3]).toBeCloseTo(kept3[0] * sfr[c], 12);
+    expect(remainderParts({ ...header, remainder: { ...remainder, middle_kept: undefined } }, restArrays)).toBeNull(); // before S93
+    const { stars_unresolved_old: _o, ...noOld } = restArrays;
+    expect(remainderParts({ ...header, remainder }, noOld)).toBeNull(); // one missing: nothing invented
   });
 
   it("splits the stellar layer into the rest and the clumps, summing to the parts' sum cell by cell", () => {

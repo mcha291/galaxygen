@@ -5363,6 +5363,20 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    **Carried.** The mend is one pass: the remainder split the same way and the star-first march reading the kept
    parts.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3, lane REST): built as the closer states.* `only=remainder` with `kept=1` splits its middle part as the field mode splits
+   `stars_middle` (`v7_layer.middle_kept` under `l_min`): the same four windows, each window's light under the threshold
+   by `resolve`'s rule (`bright.window_anchors(..., l_min)`: every living star less `above_at`'s), scaled by one closure
+   factor per ring and filter to `stars_unresolved_middle` (departure 2.2e-5 / 1.9e-5 / 4.0e-5 in R / G / B on both
+   templates); three more per-ring arrays `stars_unresolved_middle_kept3/2/1` and the header's `remainder.middle_kept`
+   (asked, not sent by default: without `kept=` the answer is S64's two arrays and its 32 000-byte gate holds as it
+   was; with it the f4 answer is 31 kB through RGB, 43-44 kB through WFC3's set). The viewer asks it and carries them (`api.ts loadRender`), reads
+   them as parts (`interface/ages.js remainderParts`: middle and old, no young part) and, with the layer's clustering
+   on, draws the star-first remainder split for the clustered march (`FieldVolume`, the remainder's switches always
+   all on and not offered to the age panel); with it off the march draws `stars_unresolved` as before, byte for byte.
+   Held by `tests/test_v7_header.py::test_the_remainder_s_middle_part_s_kept_windows_sum_to_it` (the four sum to the
+   remainder's middle to 1e-12, the windows' anchors to `resolve`'s `unresolved_middle` to 1e-12 at a grid threshold
+   and 9.49e-5 between two - `bright._between` is log-linear in L, the closure factor takes it up - layer off the same
+   bits) and `regimes.test.ts` (the split sums to the placed remainder to 1e-12).
 176. **The unit mean per cell holds on the fields' quadrature lattices, not on the frame's pixels** (S66, D226 R2, R5;
    the probe's measurement and `tests/test_v7_layer.py`). The gas map and the clustering maps have unit mean per
    level-0 cell on L1's lattice; on the 1024-frame's pixel lattice (39 pc Milky Way, 28 pc `ngc_4414`) the dust's

@@ -331,16 +331,24 @@ def _anchors_of(masses: np.ndarray) -> np.ndarray:
 
 
 def window_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any],
-                   windows: Sequence[tuple[float, float]]) -> np.ndarray:
+                   windows: Sequence[tuple[float, float]], l_min: float | None = None) -> np.ndarray:
     """(len(windows), n_R, 8): :func:`part_anchors`' arithmetic over any age windows ``(age_min, age_max)`` in Gyr - the
     same history, the same isochrone weights and the same clip of the fine-age reading's few 1e-16 negatives. S66
     (D226 R5b): the middle part split at the clustering field's octave survival ages, so that each age window's light
     is modulated by the octaves its stars keep; windows that partition the middle part sum to its anchors to
-    rounding."""
+    rounding. With ``l_min`` (S93, #175) each window's light under that threshold, as :func:`resolve` forms the
+    unresolved parts (every living star less :func:`above_at`'s, the same tables and threshold rule): windows that
+    partition the middle part then sum to ``resolve``'s ``unresolved_middle`` to rounding."""
     formed = np.asarray(fields["stars_formed_history"], dtype=float) / (1.0 - float(constants["RETURN_FRACTION"]))
     feh = fields["feh_history"]
     masses = [mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=float(a), age_max_gyr=float(b)) for a, b in windows]
-    return _anchors_of(np.maximum(np.stack(masses), 0.0))
+    stacked = np.maximum(np.stack(masses), 0.0)
+    if l_min is None:
+        return _anchors_of(stacked)
+    log_l = math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0]))
+    flat = stacked.reshape(*stacked.shape[:2], -1)
+    bands = flat @ population_light().band_flux.reshape(-1, len(BANDS)) - above_at(stacked, luminosity_function().band_above, log_l)
+    return np.stack([band_nu_l_nu(bands[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
 
 
 def part_weights(contrast: np.ndarray, modulation: np.ndarray | None, share: np.ndarray | None = None) -> np.ndarray:
