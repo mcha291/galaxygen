@@ -17083,3 +17083,158 @@ entered the five docs files read 74 passed, 1 xpassed in 113.72 s.
 **The register.** #82, #128, #158, #180, #182 permanent; #114, #210 and #215 discharged; #218 and #219 opened —
 **118 open — 43 permanent, 75 carried — and 84 discharged**; next number #220, decisions from D261. An Opus lead, two
 Opus builders, an Opus reviewer and close builder, the Fable gate.
+
+### D261. S92, BUILD_V row 92 (M3 continued; closed PARTIAL, S93 carries the row): #164 / #165 built as ruled and every layer-on file re-pinned; #217 one grid threshold; #211 the response tails on their own grid; #218's cause named (a BLAS product's bits follow the thread count) and its remedy ruled for S93; #219 read on nine censuses and discharged by ruling; the runner's eleven read here at bd0ed0c - #216 discharged, its thirteen marks and #217's lifted; #220, #221 opened; reviewed, one blocker (test_pieces never run to its end) mended; the gate's run on session-92 read, two failures mended; the three-legs gate unread; the hash in fact 52f03a19…, not pinned
+
+**The commission.** BUILD_V row 92 on `session-92`, cut from `batch-m3` at bd0ed0c. An Opus lead (killed twice by
+network failures, then out of context waiting on queued runs, its work half-committed), an Opus close builder that
+finished it from the disk, an independent Opus reviewer, an Opus fix builder for what the review found, the Fable gate.
+The pin stays lifted for M3 (BUILD_V ruling 4): the hash moves once, at the batch's close.
+
+**Built.**
+- 071202f: the two comments D260 owed - test_bar's Milky Way A2 high 0.107999 (the template pinned, pattern_seed 41,
+  texture_seed 1, the ring at 4.6125 kpc) and test_pieces' WHOLE_RINGS 78 (12 / 24 / 10 / 19 / 13 by texture seed).
+- 2940b36, **#164 / #165** on the owner's ruling of 2026-11-10 (S90's option 4): `layer/spurs.ring_profiles` reads each
+  grid ring the pieces span once on the solver's 1440 cell centres - its trough (`crest_width`'s floor) and its tallest
+  crest's FWHM; the walk reads the gas crest within half that width of the chain, both linear in R between rings; the
+  foot stays on the chain. `gas_spur_contrast` = crest - trough (#164); `gas_spur_peak_surface_density` = the column
+  times the crest (#165). Measured (s92_m164.py, the Milky Way template, seeds 0 / 4242, before = bd0ed0c): the
+  composed over the unspurred contrast at the feet, median 1.9975 / 1.9974 -> 1.5312 / 1.5175; feet 39 / 35 -> 45 / 43;
+  the spurs' ring mean at most 0.0070 / 0.0073 -> 0.0139 / 0.0106.
+- 096dfcb, **#218's cause** (below). ee04a5d, the gate's note (D260): arm_pieces' two tolerances written from the
+  sweep (s92_ptol.py: plateaus at most 8.9e-16 off an integer, off one at least 4.88e-4; ties at most 1.78e-15 rad,
+  the smallest real gap difference 7.69e-5 rad) - 1e-9 stands, comments only.
+- 9db2146, **#217**: `api/v6_tiles.grid_threshold` (`math.pow`, element by element) is `snap_up`'s `l_min_used` and both
+  tables' `threshold`. test_v6b_points 28 passed, test_v6_bright 17 passed.
+- bb78ff1, **#211**: `spectra.TAIL_TEMPERATURES`, 1000 K to 10^6 K at 1/384 dex (1153 rows), the tails' own grid;
+  `RESPONSE_TEMPERATURES` (what `/api/blackbody` and the white point read) unchanged. The jwst_nircam set (aa0eec6)
+  against test_render's bounds: the trapezoid test passes (it failed on F444W), the end row's worst 0.009005 -> 1.6e-6
+  mag. test_render: wfc3's D200 gate re-pinned, median / weighted 1.93e-6 / 2.07e-6 -> 1.60e-6 / 1.64e-6 (closer to the
+  exact integral; worst unmoved); 92 passed + the five object-response nodes.
+
+**Re-pinned, every number with its reason (0de00e4).** #164 / #165 over every layer-on file but one (test_pieces: the
+review's blocker, below): test_audit_v, test_bar, test_clouds, test_clustering_gate (the judged `MEASURED` rows clouds
+(-0.4965, 1.9852, 0.0205) -> (-0.5035, 1.9885, 0.0199), clusters (-0.4791, 1.9997, 0.0287) -> (-0.4970, 2.0176, 0.0282);
+the disclosed `SQUARE_AFTER`), test_dust_layer, test_gas_pattern (among them the cell-mean records 0.5038 -> 0.4928 and
+2.394e-3 -> 1.454e-3, the 36-cell grid 3.275e-2 -> 1.794e-2, the Milky Way gate's max_g 6.694174 -> 7.302670 and min_g
+0.385431 -> 0.385444, the law's ring at 4 kpc (4.972, 0.6904) -> (6.0961, 0.6907), SPURRED's four rings and a fifth,
+10.9875 kpc (1.18706, 0.79716), the default field at R0 (1.39816, 0.74294) -> (1.56734, 0.74235), its mean squares
+1.03968 -> 1.04031 and 1.07829 -> 1.07779, the published-on-mesh 0.7028 -> 0.4447), test_hierarchy, test_layer,
+test_region_synthesis, test_v6_knots, test_v7_header; `SPILL_FEH_BEYOND` 1787 -> 1791 of 16 940 (10.57 %; the
+declaration's 11 % true) - an as-measured record, the model byte this pass moves. **The runner's eleven separated from
+it**: the eleven nodes ci 42796166390 failed were run here at bd0ed0c (s92c_bd0.log) - every count (22, 1722, 39) and
+float (to 1e-13) the runner's: S91's #216 re-lay, never run at S91. Each reason reads old -> bd0ed0c -> now
+(s92c_eleven.md): test_hierarchy 16 -> 22 -> 22 and test_dust_layer's R0 ratio 1.032 -> 1.0194 -> 1.0194 are S91's
+alone; test_clouds' MESH_TV, the dust layer's read[4.0], test_layer's 1694 -> 1722 -> 1705, test_region_synthesis 0.8900
+-> 0.8921 -> 0.8955, r1 0.8910 -> 0.8253 -> 0.8265, z -0.091 -> 0.0142 -> 0.006, test_v7_header 40 -> 39 -> 45 moved
+twice. An assert after a node's first failure at bd0ed0c is marked "S91 and #164 / #165 together". No tolerance widened,
+no bound moved.
+
+**Held strict, no bound moved.** `WALK_READ_OVER_S92` (test_spurs): the walk's crest read against the point
+function's crest at the foot's ring reads 0.2176 at seed 0 (45 feet) and **0.4582 at seed 4242** (43 feet) against
+`WALK_READ_DIFFERENCE` 0.27 - the window's width differs between two grid rings, and its crest can be another ridge's
+(worst feet at 4.44 and 5.40 kpc): **#220**. `GAS_LANES_READ_OVER_S92` (test_bar) and `GATE_MAX_G_READ_OVER_S92`
+(test_gas_pattern, the Milky Way's gate): the published gas inside the bar reads 7.3027 at 3.94 kpc over max(lane
+peak 7.0556, response 2.3930) - a spur's height on a lane's crest: **#221**.
+
+**#218's cause, named by measurement (096dfcb).** No model byte moved between the reference's commit (4303e22) and
+`main`. Single-threaded (the runner script's OMP / OPENBLAS / MKL = 1) 393b4c9 and session-92 read star_age,
+star_ionizing_photons, star_magnitude_v, star_temperature (and star_luminosity on the Milky Way's) off on every label;
+with the threads unrestricted (20 here) session-92 reads no field off and only D260's four named routes;
+`OPENBLAS_NUM_THREADS=1` alone reproduces the red. The mechanism: `systems.Churn`'s arrival law,
+`self._born[:, step].T @ kcol[b]`, a BLAS product whose summation order follows the thread count; its last bits move
+each star's drawn age. The reference was written multi-threaded at S90 and read single-threaded at S91.
+
+**The gate's rulings (S92).** (1) The marks: 3df553c cherry-picked onto session-92 (4e0736f, no conflict); #217's
+mark lifted in its own commit (2eb3c9f, revertible alone); #217 stays open until the gate's next ci run reads it.
+(2) #219: the judged clause stays on the default census (-0.5035 / -0.4970, both inside); the clusters' strict hold
+lifted; nine censuses (the default and systems = texture seed 1-8): clouds mean -0.6177 (sd 0.1030), 9 of 9 inside,
+clusters -0.6367 (sd 0.1064), 8 of 9 - the table in the entry; **#219 discharged**. (3) #218: the remedy is the
+arrival law's product made a sum the model orders itself, so its bits no longer follow OpenBLAS's thread count (the
+owner's #216 ruling carried to its second cause); **not built: S93's first item**, with a sweep of every BLAS-backed
+product on a draw path under model/galaxy, each measured threads-on against threads-off; the reference and its two
+nodes untouched. (4) #164 / #165 discharged on the ruled build; #220 and #221 opened for its two readings.
+
+**The runner's read.** ci 42796166390 on `s91-marks-lifted` (3df553c): 11 failed / 1719 passed; all thirteen lifted
+#216 nodes passed; the eleven failures in five other files, none a lifted mark, each read here at bd0ed0c with the
+runner's numbers: no census parts between the machines - **#216 discharged**.
+
+**Found at the gate.** (a) *The gate's own wrong premise.* Resuming the lead after the network outage, the gate read the
+runner's eleven failures as lifted marks failing and ruled that the marks stay. The lead showed that none of the eleven
+is one of the thirteen lifted nodes (all thirteen passed on the runner); the gate re-ruled (ruling 1), and the eleven
+were then read here at bd0ed0c. A ruling taken on a count without the node ids - the S56 lesson, at the gate this time.
+(b) *#219's discharge rests on the gate's ruling, not on the entry's kill clause as written* ("both slopes inside by
+more than the scatter on one census"): the default census is inside by 0.0135 and 0.0070 against an sd of 0.10 between
+censuses, and one cluster census of nine is out (seed 3, on the steep side). What the nine censuses do show is the seed
+mean inside by 0.128 and 0.147, more than the scatter, so the closer's question to the owner did not arise. #218's
+remedy moves the star sample's bits: **S93 re-reads the two slopes on the default census after it**; a slope back over
+the edge re-opens the hold under a new entry, the window untouched. The close builder's margins (0.0035 / 0.0030) were
+an arithmetic slip, corrected in the entry and the test's comments (28929a9). (c) *#216's discharge stands at bd0ed0c*,
+where this machine and the runner agree on the eleven and on the thirteen. The thirteen nodes' records were re-pinned
+again after #164 / #165 (MW_PAIR_SLOPES, SPURRED, the cell-mean records, F-2-4 / F-2-5): those values are this machine's
+until the runner reads them - the gate's dispatched run on session-92 at 859de1d (ci 42918523059) read all thirteen
+green on the runner with the new records, so the census is one on both machines after #164 / #165 too.
+
+**The review** (an independent Opus reviewer on bd0ed0c..859de1d, read-only). Verified: no model byte unnamed by a
+commit; #164 `contrast = max(top - floor, 0)`, #165 `peak = sigma * top`, the walk's read within half `crest_width`'s
+width; A10 unmarked and green on both templates (test_bar, test_spurs); no tolerance widened, no judged bound moved, no
+test deleted or skipped, no node id changed, every xfail strict with a register entry; s92c_bd0.log against the runner's
+log node for node (counts exact, floats to 1e-14); exactly thirteen marks lifted in 4e0736f and one in 2eb3c9f; the
+register's arithmetic (118 - 5 + 2 = 115, 84 + 5 = 89) and test_audit's literals. **One blocker: tests/test_pieces.py
+had never run to its end after #164 / #165** (its run died with the lead: twelve bytes of log) **and was red at
+859de1d** - the masers' disclosed gas record, and `EXPECTED_LEAST`'s Milky Way largest gas 6.696 against 7.303, with the
+judged ring-mean clause (`worst["gas"] < 2e-13`, A10 over the sweep's galaxies) unread on the new spurs. The close
+builder's "every layer-on file" was false by one file (corrected above). An Opus fix builder mended it: 04f76b0 re-pins
+the masers' record - `EXPECTED_MASERS['gas']` (0.2, {Norma-Outer 0.22, Sct-Cen 0.21, Sgr-Car 0.04, Perseus 0.1, Local
+0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100) -> (0.17, {0.23, 0.24, 0.04, 0.1, 0.17}, 0.14, 0.42, (0.26, 0.7), 1, 100), the
+old value being bd0ed0c's, where the runner passed the file, so the move is #164 / #165's alone - and `EXPECTED_HELD`'s
+"the masers' check keeps its 1st-percentile power" False -> True (the gas percentile 2 -> 1). The whole-file run here
+was stopped after twelve nodes on the owner's word of 2026-11-11 (long tests are GitHub's); the runner then read the
+file at 859de1d and failed one node, the masers', with exactly the record 04f76b0 pins. **Unread anywhere:
+`test_gate_on_the_three_legs_of_the_suite_s_galaxies`** - machine_pinned since S77 (#206), so the runner skips it, and
+over ten minutes here. `EXPECTED_LEAST`'s Milky Way largest gas 6.696 (the template now reads 7.303) and the judged
+ring-mean clause over the sweep's galaxies are not read at S92: **S93's close reads the node by name on the batch's
+final model**, re-pins the as-measured record with its reason, and reports a breach of the judged clause as a model
+fault with the galaxy, the ring and the number. A10 on the two templates is green unmarked (test_bar, test_spurs). Three
+mends ruled by the gate on the review's concerns: C1 (65e36f1): the two #221 over-clauses split into tests of their own
+that carry the strict hold (test_bar `test_gate_the_gas_inside_the_bar_is_under_the_lanes_or_the_response`,
+test_gas_pattern `test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes`), so the two original gates
+run unmarked and assert every other clause, no node id renamed; C2 (50e95f5): layer/spurs.py's docstring says the
+measured walk error (0.2176 at 4.45 kpc on seed 0, 0.4582 at 4.44 kpc on seed 4242; 0.2105 was seed 0's second foot and
+0.4541 no run reads) - a docstring, which moves the hash in fact to 52f03a19…; C3 (aa5ac5f): `peak == column * (contrast
++ trough)` is exact again wherever contrast > 0 (test_spurs to rtol 1e-12, Audit V to rel 1e-9), the trough read
+test-side from `spurs.ring_profiles`, no new published field.
+
+**The runner on session-92** (ci 42918523059, the full suite dispatched on 859de1d on the owner's word of 2026-11-09; no
+local full suite, D246): **2 failed, 1728 passed, 27 skipped, 6 xfailed, 1 xpassed in 2:24:50** (the xpass is
+test_audit's non-strict cost record). (i) test_pieces' masers node: the record 04f76b0 already pins, made after the
+run's head. (ii) `test_v6_bright::test_the_table_is_each_tile_s_expected_count_at_every_grid_threshold`: the test took
+`10.0 ** LOG_L_GRID`, an array power, for the table's threshold and asked equality, while #217 made the table's
+threshold `grid_threshold`'s scalar powers; the two agree to the bit here and part by an ulp on the runner's libm -
+D259's two power paths, left in the test's own oracle. Mended at the gate (fcec70d): the test asks the bytes of
+`grid_threshold`, the function the tile's `l_min_used` is too, and keeps the array power as a closeness within two ulps
+(rtol 5e-16); no model byte, no bound moved; the node and the five docs files 75 passed, 1 xpassed. **#217's lifted node
+(test_v6b_points, 3-milky_way) passed on the runner**: its closer is met, 2eb3c9f stays. Every other file at 859de1d is
+green there, test_systems (which draws layer-on) among them. The commits after 859de1d - 04f76b0, 65e36f1, aa5ac5f,
+50e95f5, 28929a9, fcec70d: tests, comments and one docstring - are the runner's to read in S93's dispatched run.
+
+**Not built, S93's** (BRIEF): #218's ordered sum and the BLAS sweep first; the three-legs gate read by name on the final
+model; #217 moved in the register; T3 / #115 with #113 / #171, #184; the ionized gas (T10 / #119, #117, #118, #100,
+#101); #174-#176, #166, T15, T8 and the rest of M3's list; #220 and #221 to the gate; the batch's close (every model
+file on the final model, the reference re-based by decision, `s83-robust` merged, the hash pinned once, the bundles and
+frames).
+
+**Not run** (D246): the local full suite, verify_clone, the machine-pin set. **The gates** (each its own low-priority
+single-threaded process, CI unset): the files above, and after #211 (0de00e4 + bb78ff1) test_v6b_points 28 passed,
+test_region_synthesis 9, test_v6_knots 18, test_v7_header 18, test_v6_bright 17, test_bright 30 (s92c_verify); the docs
+tests (test_docs, test_progress, test_audit, test_hook, test_graph) 74 passed, 1 xfailed in 141.91 s on 859de1d (2
+failed on 46961c6: the register literals, mended in 859de1d, and #67's wall-clock pricing order under load, green
+alone); `tools/progress.py` 79/79, EXIT=0; vitest 621 passed / 1 skipped, EXIT=0; typecheck and typecheck:e2e EXIT=0;
+the picture test not run (no frame regenerated). **The hash in fact at the merged head
+52f03a1999b410de3940a151c6d20b49** (cf0255bb… at 859de1d, before C2's docstring - no computed byte between them;
+fc2d72cb… at S91's close), not pinned; no frame regenerated (the batch's close does both).
+
+**The register.** #164, #165, #211, #216, #219 discharged; #220, #221 opened - **115 open - 43 permanent, 72 carried -
+and 89 discharged**; next number #222, decisions from D262 (#217's closer is met on the runner, below; the register
+moves it in M3's one pass at the close, so the counts here are the close builder's). An Opus lead, an Opus close
+builder, an Opus reviewer, an Opus fix builder, the Fable gate.
