@@ -68,7 +68,7 @@ MEASURED = {
     "clouds": (-0.5035, 1.9885, 0.0199),  # S92 (#164 / #165, the spurs re-laid): was (-0.4965, 1.9852, 0.0205). S91 (#216's re-laid census, D260): was (-0.4843, 1.9452, 0.0205) - passes the window by 0.0065, not a mend (#219)
     # S70 (D234): was (-0.6908, 2.1129, 0.0221) - the clouds' ring inversion (F-2-7) and the size law's three regimes (#192:
     # the clouds inside 4 kpc and in 7-8.2 kpc larger, so a cluster's source offset reaches further); the window holds.
-    "clusters": (-0.4970, 2.0176, 0.0282),  # S92 (#164 / #165, the spurs re-laid; inside the window by 0.003, the hold lifted - #219): was (-0.4791, 1.9997, 0.0287). S91 (#216's re-laid census, held under #219, D260): was (-0.4991, 2.0255, 0.0301). S90 (#161): was (-0.6578, 2.0842, 0.0210), above. S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
+    "clusters": (-0.4970, 2.0176, 0.0282),  # S92 (#164 / #165, the spurs re-laid; inside the window by 0.0070 (the edge -0.49), the hold lifted - #219): was (-0.4791, 1.9997, 0.0287). S91 (#216's re-laid census, held under #219, D260): was (-0.4991, 2.0255, 0.0301). S90 (#161): was (-0.6578, 2.0842, 0.0210), above. S67 (D231): was (-0.6686, 2.0928, 0.0208) - a cluster's source offset is
     # bounded by its cloud's size, and the giants shrank (the radius cap 150 pc, Sigma 82 inside R_SUN); the judged window holds.
 }
 # The templates, measured by hand with this file's construction at S61 (each run about 30 s, its control 10-20 s):
@@ -160,8 +160,9 @@ BRIGHT_GATE_READ_OVER = ("S88 (M1): the young bright stars' judged clauses read 
 # change that did not aim at it); the clusters' -0.4991 -> -0.4791, 0.161 from -0.64 against 0.15, held strict under
 # register #219 - the gate's own debt, both populations at the edge since #80's census.
 # S92 (#164 / #165's re-laid spurs; #219 read over nine censuses, the register entry): the clusters' slope reads -0.4970
-# (inside by 0.003) and the clouds' -0.5035 (by 0.0035); over nine censuses (the default and systems = texture seed
-# 1-8) the means are -0.6367 (sd 0.106) and -0.6177 (sd 0.103) - not at the edge. The clusters' strict hold read green
+# (inside the edge at -0.49 by 0.0070) and the clouds' -0.5035 (by 0.0135), far under one sd (0.10); over nine
+# censuses (the default and systems = texture seed 1-8) the means are -0.6367 (sd 0.106) and -0.6177 (sd 0.103),
+# inside by 0.147 and 0.128 - not at the edge. The clusters' strict hold read green
 # and is lifted; L1_GATE_READ_OVER_S91 is kept as the record. The gate ruled (D261): the judged clause stays on the
 # default census; #219 discharged.
 L1_GATE_READ_OVER_S91 = ("S91 (#219, after #216's re-laid census): the clusters' judged slope reads -0.4791 against -0.64 +/- 0.15 "

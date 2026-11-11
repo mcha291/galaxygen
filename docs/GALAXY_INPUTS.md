@@ -6185,8 +6185,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    clustering field and the arm census each re-drawn; the control the census's own law under the next four systems
    seeds, as the fixture builds it). **The clouds' slope: mean -0.6177, sd 0.1030 (sem 0.0343), -0.7641 to -0.5035,
    9 of 9 inside the window; the clusters': mean -0.6367, sd 0.1064 (sem 0.0355), -0.7922 to -0.4970, 8 of 9
-   inside.** The default census reads -0.5035 / -0.4970 - both inside, by 0.0035 and 0.0030, far under one sd. The
-   seed mean sits 0.022 and 0.003 from -0.64, not at the edge: the closer's question to the owner does not arise; the
+   inside.** The default census reads -0.5035 / -0.4970 - both inside the edge at -0.49, by 0.0135 and 0.0070, far
+   under one sd (0.10). The seed mean sits 0.022 and 0.003 from -0.64, not at the edge: the closer's question to the owner does not arise; the
    default census's place at the edge is its draw (the mean of nine within 0.7 sem of -0.64 for the clusters). The
    window untouched. The nine censuses (slope, worst residual):
 
@@ -6204,7 +6204,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
 
    **The gate's ruling (S92, D261): the judged clause stays on the one default census** (both inside now); the
    clusters' strict hold `L1_GATE_READ_OVER_S91` lifted (`tests/test_clustering_gate.py`, green), the string kept as
-   the record. **Discharged at S92 (D261).**
+   the record. **Discharged at S92 (D261).** The seed mean is inside the window by 0.128 (the clouds, -0.6177) and
+   0.147 (the clusters, -0.6367) at an sd of 0.10, and S93 re-reads the default census's two slopes after #218's
+   remedy moves the star sample's bits: a slope back over the edge re-opens the hold under a new entry, the window
+   untouched.
 220. **The spurs' walk reads the gas crest over its own bound at texture seed 4242: 0.4582 against
    `WALK_READ_DIFFERENCE` 0.27** (S92, D261; found by #164 / #165's build, 2940b36). The walk now reads each foot's
    gas crest within half the ring's crest width of the chain, linear in R between the two grid rings it lies
