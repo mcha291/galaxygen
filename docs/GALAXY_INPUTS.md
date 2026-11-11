@@ -5560,6 +5560,23 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    a per-age scale height read from a source (the young population's vertical dispersion), published per part, and
    the march reading three heights.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3; T3): not built - the entry names no source; a sourced relation proposed for the gate.* The best-sourced
+   per-age height found: the Besançon model's thin disc, Robin, Reylé, Derrière & Picaud 2003 (A&A 409, 523,
+   astro-ph/0401052), seven age bins each an Einasto ellipsoid of axis ratio ϵ (their Table 2, with σ_W): 0-0.15 Gyr
+   ϵ 0.0140 (σ_W 6 km/s), 0.15-1 0.0268 (8), 1-2 0.0375 (10), 2-3 0.0551 (13.2), 3-5 0.0696 (15.8), 5-7 0.0785
+   (17.4), 7-10 0.0791 (17.5); the density laws their Table 3 (a² = R² + z²/ϵ²; the youngest exp(−(a/5000)²) −
+   exp(−(a/3000)²), the rest exp(−√(0.25 + a²/2530²)) − exp(−√(0.25 + a²/1320²)), pc), the Sun at 8.5 kpc (§3.1); ϵ
+   itself derived there from σ_W by the Boltzmann equation in their potential. Read at S93 (ar5iv's text of the
+   paper). Derived from those laws at R = 8.5 kpc (scratch `s93_t3_robin.py`, nothing fitted): the half-density
+   height z½ = 58.5 / 157 / 220 / 323 / 409 / 461 / 464 pc, i.e. a sech² scale (the catalogue's `sech2_height`)
+   of 33 / 89 / 125 / 184 / 232 / 261 / 263 pc for the seven bins - the young light (the census's 20 Myr, the
+   render's young part) in the 0-0.15 Gyr bin at ~33 pc sech², the clouds' own 34 pc layer (D229). **What a build
+   would need ruled:** (a) this source (a model's fitted Milky Way, not a measurement of other discs; the
+   alternative an age-velocity dispersion relation through the model's own vertical equilibrium, which the
+   vertical stage would have to take); (b) how a ratio read at the Sun scales to another galaxy and radius (ϵ as
+   h_z / R is Robin's own reading, flaring with R; or z½ held as a ratio to the model's thin-disc height at the
+   Sun's radius); (c) the render's three parts (young / bright / unresolved) each given the light-weighted height
+   of the ages it holds. Listed for the gate; nothing built on it.
 185. **The field mode's sampled stars take no dust at galaxy scale** (S67, D230's measurement). GalaxyView's `<Stars>`
    layers (opacity `weights.sampled`, 0.185 at a 40 kpc view) are dimmed only by the region regime's transmission
    (`patchPointsForRegion`), never by the diffuse dust or the clouds' raster, so they draw undimmed over every lane and
