@@ -17463,3 +17463,99 @@ mended at S92's gate in fcec70d, D261). Opened: #222 (carried). Text only: #115,
 next number #223, decisions from D263. After #218's discharge at this close: **108 open - 43 permanent, 65 carried - and
 97 discharged**. Five Opus lanes, four Opus reviewers (the s83 lane's merge read at the gate), Opus mend builders, an
 Opus docs builder, the Fable gate.
+
+### D263. S94, Audit VI (BUILD_V row 93): the fifth build's three batches read again by seven Opus agents — 84 cited claims re-read with no number that reaches a field differing from its page, the batches' closures re-measured on seeds and a mesh they never used, every changed test literal classified against its decision, the viewer held to D5 with no invention, the register re-ruled; 50 findings, the lead's verdict on each; no number moved; the fixes are S95's; BUILD_V's "done" cannot be reached on the plan as written, the owner's word
+
+**The commission and the method (BUILD_V §2 row 93, §6 ruling 5; the owner's word of 2026-11-12, "read the docs and
+continue with the project … continue working unattended for about 6 hours … if my rulings are needed, defer to the
+end").** The aim was written before any audited file was opened in the session (`docs/AUDIT_VI.md` §0, S94's first
+commit 766b431, from BUILD_V's rows, `BRIEF.md`, the headings of D254–D262 and the diff's file names alone) in the
+shape of Audits III–V (D186, D194, D233): the range tag `s85` to `main` (dd003ee), five strands, each one question
+with its own agent — 1A / 1B the citations (blind to the decisions, a number checked only on a fetched page), 2 the
+closures re-measured in `tests/test_audit_vi.py` (the one file the audit adds; a builder in a worktree), 3A / 3B the
+re-pins and the gates re-derived from the test diff against D254–D262, 4 the viewer and the pictures, 5 the register
+and BUILD_V §7. One Markdown note each in the lead's scratchpad; an Opus assembler wrote §1–§5 from the notes; the
+lead (Fable) wrote the verdict as §6. **B3 holds**: no model byte, no frame and no pin moved in this session.
+Concurrency, said in the aim for the owner to refuse: three agents at once while the 5-hour window was under 40 %,
+one heavy — the lead's reading of the rationing rule on windows reset the day before (3 % at the open, 48 % when the
+last reader handed back). The agents' cost: 0.17–0.35 M tokens each, 2.1 M in all with the assembler and the close builder; the lead's own context 0.4 M.
+
+**What held (the headline).** Of **84 cited claims** in the lines the batches added (49 the arms' and the bar's, 35
+the rest's), 69 match their pages and **no constant, pin or table row that reaches a computed field differs from its
+source**; every derivation redone by hand agrees (the age 13.467 Gyr, `MERGER_HEATING` 90.62, the bar law's 2.27 kpc,
+the diffuse gas's 0.583 / 0.439). **No judged bound moved in number without a decision naming it** (about 405 records
+re-pinned across the two slices, each with its cause; twelve judged clauses changed in form or number, each
+decided, and one identity loosened to abs 1e-4 under #154 with no decision found — F-3A-8, named in §6; no test
+deleted; no skip or non-strict xfail added in M3). **Nothing the viewer draws is an invention** (13 changed
+places read against D5; one `fetch`; D1 holds through the comparison view and the swap). **The register's counts agree
+in six places** and every discharge of the range names something that exists. **Every closure the audit re-measured holds** on seeds and a mesh
+the builds never used (`tests/test_audit_vi.py`, ten nodes, 7 min 42 s single-threaded, no strict xfail): #216's
+births under one-ulp nudges, #218's bits at two thread counts, #175, #197, T2 / #114, #164 / #165 / #213, T10 / #119;
+not reached: #160's, #113 / #171's and #161's own estimators.
+
+**What the audit found — 50 findings (49 standing, one withdrawn), none a wrong number; the verdict on each is `AUDIT_VI.md` §6, by class:**
+- *Tests that would not see their defect return* (F-3B-2 #216's probe a script; F-3A-6 #197 one cell; F-3B-6 #166's
+  cache; F-3B-5 #217's guard machine-dependent; F-3B-9 #114's call site, #174's shader): upheld; S95 writes each; no
+  discharge reopened — strand 2 re-measured #216, #197 and #114 and each holds.
+- *A bound judging a statistic it was not measured on* (F-3B-1, the spurs' walk since S92) and *bounds re-declared at
+  the reading that failed them* (F-3A-2, F-3A-4): upheld as method; the bounds stand until S95's population tables,
+  then the gate declares them from a population the tests do not judge (D117).
+- *One hidden red* (F-3A-5 / F-5-2: `BRIGHT_GATE_READ_OVER`, strict, carried by no entry since #161's discharge at
+  S90): upheld; #223 at S95. D261's "every xfail strict with a register entry" was not true of it.
+- *Nodes behind M3's close that no machine had seen pass as committed* (F-3B-3: the three-legs gate re-pinned from a
+  failing read; it and the two layer-off reference nodes `machine_pinned`): upheld; read by name at this gate —
+  the two layer-off reference nodes of `tests/test_layer.py` green on `main`'s model, single-threaded (five cases —
+  the first time the re-based reference has been read on the merged tree); the three-legs gate of `tests/test_pieces.py`
+  still running at this entry, 130 minutes in at idle priority beside the fixes' lanes (71 minutes alone at S93's
+  close) — its line is D264's, and it is the first thing a reader of this entry should look for there.
+- *The fixture a transcription* (F-4-1 / F-3B-7: 22 of 171 records by hand, `jwst_nircam` never walked, S73's walker
+  never committed): upheld; S95 commits a walker and walks.
+- *Readings that state a page too narrowly or too widely* (F-1A-1 … F-1A-6, F-1B-1 … F-1B-4): upheld, wording;
+  the four that lie under `model/galaxy` (F-1A-1, F-1A-6, F-1B-4, the isochrone labels' caveat) are queued for the
+  next model batch, since a comment's byte moves the hash.
+- *The lead's own omissions* (F-5-4, F-5-5: #219's discharge against its own kill clause, the reference's re-base
+  and "the guard in place of a subprocess pair" — three rulings taken in the owner's place and missing from the list
+  the owner reads; F-5-1 #160 built and never struck; F-3A-8 the identities that became records under #154, named in
+  §6): upheld; `BRIEF.md` carries the three from this close.
+- *F-3A-3* (S90a's marks took judged clauses off the runner): true from S90a to S92, closed since by M3's lifting
+  of the fourteen. *F-4-4* withdrawn by its reader.
+
+**The two headlines above the findings.** (1) **The pictures** (the owner's yardstick, 2026-10-05): §4's table at one
+axis ratio. Neither field frame is near its goal: the Milky Way's carries a quarter of the goal's two-armed power
+(A₂ 0.053 against 0.194) and 4.8 times its dark fraction, with no visible bar and no pink knots; NGC 4414's carries a
+fifth of the goal's dark fraction, 2.5 times its A₂, and reddens outward (+0.185) where the goal blues outward
+(−0.33; so since S67, unreported in D262 — F-4-6). Three model batches moved no frame materially nearer. No strand can
+file this as a defect: the model is honest about what it computes, and the picture is not there. (2) **BUILD_V §7's
+"done" cannot be reached on the plan as written** (F-5-10): 65 entries are carried and no row after 93 takes them; the
+viewer's list still holds T3, T7, T8, T11, T15; one of the three batch merges has a green nightly (M2's, twice; M1's
+head was red five nights on #216's records, mended in M2; M3's unread at this close); the images are green at the
+final hash f9b04ed2… (run 42976759684), nothing deployed (#204).
+
+**Rulings for the owner, none blocking** (deferred to the run's end on the owner's word; each with the lead's
+recommendation): (1) **what follows Audit VI** — the plan has no row left and §7's "done" is out of its reach (F-5-10): the lead
+recommends a short sixth build (the fixes and the readings, taken in this run; one model batch for what M3 carried
+with a recommendation on record and the four queued about-lines; one viewer pass), **after** (2) **the owner's word on
+the pictures** — which features of the two goal pictures matter most (the bar, the lane network, the knots, the
+colour gradient), so the next build is aimed at the frames and not at the register; (3) **the L1 gate's judged
+statistic** (F-3B-4, and #223 with it): one default census, or the nine-seed mean the lead recommends; (4) **a
+cadence for this machine's pinned nodes** (F-3B-3): the lead recommends the three named nodes read by name at every
+model batch's close, as part of its gate; (5) **any re-ruling of the rulings taken in the owner's place** — D262's
+eleven, and the four this audit adds to the list: #219's discharge by the gate's ruling, the layer-off reference's
+re-base, the guard in place of a two-thread-count pair, #173's discharge as not reproducible; (6) **the looks owed**:
+the regenerated frames, #156 and #157 (the step S88's frames might show), #169 (the streaks round NGC 4414's bulge),
+#202 (the circle at 4.72 kpc), and NGC 4414's reversed colour gradient (F-4-6); (7) the standing owner's-word items:
+#107 and #179 (downloads), #203–#205 and T19 (the deploy); (8) the concurrency this run used (three agents at once,
+two of them heavy during S95) — to refuse or keep.
+
+**Taken at the gate without waiting (the owner may re-rule):** S95 = the audit's fixes, started in this run; a
+reading needs no word (B3-safe), so the eighteen entries that wait on a source go to a reading session after S95;
+`PRICE_RECORD` a record; `WING_BLOCK` a sampling bound; #146's comparators two named rows of the source's table.
+
+**The gates.** BUILD_V row 93's gate is the docs tests with no number moved without a decision. On `session-94`:
+the fast job's six files (`test_docs`, `test_progress`, `test_hook`, `test_graph`, `test_api`, `test_bundle`) 131
+passed, EXIT=0; `tools/progress.py --check` 79/79, the board agrees; `tests/test_audit_vi.py` ten passed in 7 min 42 s
+single-threaded; `git diff --stat dd003ee -- model/` empty, the hash unmoved, so no model suite is owed (C7). The new
+test file has not run on the runner at this entry: it rides in the full suite dispatched on `session-95`, which holds
+`session-94` whole (run 43083065903, started 19:00Z) — **`session-94` merges into `main` on that run's green, before
+`session-95`**, tagged `s94` on its merge; D264 records the run's line. The register is as S93 left it at this close:
+108 open — 43 permanent, 65 carried — and 97 discharged; next #223, D264.
