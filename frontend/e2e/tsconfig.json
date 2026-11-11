@@ -10,5 +10,5 @@
     "isolatedModules": true,
     "types": ["node"]
   },
-  "include": ["*.ts", "smooth/*.ts", "compile/compile.probe.ts", "compile/march.probe.ts", "../playwright.config.ts", "../playwright.smooth.config.ts", "../playwright.compile.config.ts"]
+  "include": ["*.ts", "smooth/*.ts", "walk/*.ts", "compile/compile.probe.ts", "compile/march.probe.ts", "../playwright.config.ts", "../playwright.smooth.config.ts", "../playwright.walk.config.ts", "../playwright.compile.config.ts"]
 }
