@@ -364,7 +364,7 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(planned):
     doc = _logged()
     # S73 (#200): the walk of every set, the physics-only switch under each, the Science tab and the clouds' switches
     # grew it from 35 to 171 meanings (166 KB, the 1024-cell tiles 6 KB each); S95's walk added jwst_nircam's 17
-    # (188 meanings, 202 KB with its two unplanned records); the bound is the lead's ~250 KB.
+    # (188 meanings, 196 KB); the bound is the lead's ~250 KB.
     assert FIXTURE.stat().st_size < 250_000 and len(doc["requests"]) >= 188
     # S95 (Audit VI F-4-1): every record is a walk's - S93's two hand edits ("by hand, no walk run") were walked over.
     assert not [w for w in doc["walks"] if "no walk run" in w["by"]]
@@ -393,19 +393,14 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(planned):
     assert len(unsent) == 4, unsent
 
 
-@pytest.mark.xfail(strict=True, reason="S95 F-W-1: entering the star-first mode on NGC 4414 after the Milky Way, the "
-                   "viewer asks the bright tiles and the remainder once at the Milky Way's threshold before NGC 4414's "
-                   "table arrives - two galaxy-scale requests no plan holds, computed (the fixture's unplanned)")
-def test_every_galaxy_scale_request_the_walk_logged_is_planned(planned):
-    """S95 (F-W-1): the walk's galaxy-scale requests the plan does not hold are kept apart (the fixture's
-    ``unplanned``, with the steps they were asked at), not as records. Strict: when the viewer stops asking them and a
-    walk is re-recorded, or the plan comes to hold them, this passes and the mark must go."""
+def test_the_walk_logged_no_galaxy_scale_request_the_plan_does_not_hold():
+    """S95 (F-W-1): the walk's galaxy-scale requests no plan holds are kept apart (the fixture's ``unplanned``, with the
+    steps they were asked at; tools/walk_requests.py writes the list, empty when there are none). The first S95 walk
+    logged two - entering the star-first mode on NGC 4414 after the Milky Way, the tiles and the remainder asked once at
+    the Milky Way's threshold before NGC 4414's table had come (rule D1). The viewer reads the shown galaxy's table only
+    since (brightTiles.ts shownTable, ofGalaxy), and the walk re-recorded after that fix logged none."""
     doc = _logged()
-    # None logged (the viewer mended, the walk re-recorded): this passes, and strict turns the pass into a failure.
-    anywhere = set().union(*planned.values())
-    for r in doc.get("unplanned", []):
-        sent = r["path"] + "?" + _sent(doc, r)
-        assert sent in (anywhere if r["galaxy"] is None else planned[r["galaxy"]]), (r["galaxy"], r["steps"])
+    assert doc["unplanned"] == [], [(r["path"], r["galaxy"], r["steps"]) for r in doc["unplanned"]]
 
 
 def test_the_plan_asks_the_remainder_as_the_viewer_s_loader_spells_it(service):
