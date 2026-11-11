@@ -354,7 +354,8 @@ def window_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants:
         return _anchors_of(stacked)
     log_l = math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0]))
     flat = stacked.reshape(*stacked.shape[:2], -1)
-    bands = flat @ population_light().band_flux.reshape(-1, len(BANDS)) - above_at(stacked, luminosity_function().band_above, log_l)
+    light = ordered_product(flat, population_light().band_flux.reshape(-1, len(BANDS)))  # S93 #218: not BLAS
+    bands = light - above_at(stacked, luminosity_function().band_above, log_l)
     return np.stack([band_nu_l_nu(bands[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
 
 
