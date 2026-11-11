@@ -170,9 +170,53 @@ Remy-Ruyer 2015 eq. 5, Licquia, Newman & Brinchmann 2015, JDox's NIRCam filters 
 changed lines of `stages/dust.py`, `clouds.py`, `clusters.py`, `bubbles.py`, `chemistry_dtd.py`, `bright.py`,
 `spectra.py`, two `layer/` and three `api/` modules carry no cited claim; #168's two-layer derivation not re-derived.
 
-## 2. What the batches built, re-measured (strand 2)
+## 2. What the batches built, re-measured (strand 2; one Opus builder in a worktree; `tests/test_audit_vi.py`, the one file the audit adds)
 
-*(assembled when the strand's note is in)*
+One Opus builder in its own worktree on `s94-measure` (cut from `session-94` at 766b431), merged at 83c85d8; no byte
+outside `tests/test_audit_vi.py` changed. The mesh is `AUDIT_VI_GRID` (96, 320, 6, 72), which no build pinned; the
+texture seeds are 5151, 6060 and 31337 (pattern 4141 for #218), and each estimator is the audit's own, written in the
+test rather than taken from the build's helpers. Only #164's trough calls the model's point function. The file's 10
+nodes ran in 7 min 42 s (461.96 s) single-threaded with EXIT=0. The file has no strict xfail. **Items examined 10:
+7 hold** (#216, #218, #175, T2 / #114 to its bounds, #197, #164 / #165 / #213, T10 / #119). **#173: neither candidate
+reproduced.** **Not reached:** #160 and #113 / #171; #161 was not measured separately. No measured claim failed. The
+three findings are about evidence and wording, not numbers.
+
+| item | claim | what the build pinned | what was measured (seed, grid, estimator, number) | verdict |
+|---|---|---|---|---|
+| #173 | migration node: hash order or left state | 0.8845979 vs 0.9284296 once, at 16ab0c3 | four numbers bit-identical under hash seeds 0, 1, 2, 12345, 28504 (old -0.2801196316960978 / -0.005541389266041417); test_chemistry.py whole in file order 20 passed (1341 s); three shuffled subsets (9401 / 9402 / 9403) 4 passed each | neither reproduced; F-2-1 |
+| #216 | arm census births bit-independent | records, the oracle the model's `ap.counted` | `ap.census` re-run on the published inputs (8 fields, 6 of 6 cases bit for bit); censuses MW (51, 13), (47, 11), (41, 10), ngc_4414 (21, 21), (18, 18), (24, 24); design counts nudged one ulp both ways, every crossing azimuth one ulp both ways; near-integer rings 3 per MW case, 1 per ngc case; gap ties MW 5151 1 of 7, ngc 2/20, 3/17, 3/23 | holds; see F-3B-2 |
+| #218 | draw bits independent of BLAS threads | AST guard, no two-thread run | 7 answers (/api/region levels 0 and 2, clouds, clusters, remnants, bright at l_min 3000, layer), sha256 at 1 thread vs the machine count: all equal; grep finds no unguarded BLAS product | holds |
+| #175 | the remainder's kept windows sum to the middle | the sum to 1e-12 (part tautological) | ngc_4414, 31337, RGB, l_min 2000, against the answer without kept=: shared arrays within 1e-12, windows >= 0, sum <= middle, spans contiguous | holds; F-2-2 |
+| T2 / #114 | clusters' response through a filter set | rgb ratios 0.93-0.94 | `sho` set, MW 5151: census response against the render's young light, each filter in 0.80-1.20, max/min < 1.03; ratios not printed | holds at the stated bounds |
+| #160 | one placement rule | test_bright one-rule test | draft refused (l_min 100: 4 423 669 expected stars > 200 000) | not reached |
+| #197 (#161 not separate) | ring draws in their own ring | one parent cell, seed 0 | both templates, 5151 and 6060: region, remnants, clouds' birth radius against ring edges (1e-9 kpc): 0 outside (e.g. 1559 remnants, 17 050 clouds) | holds |
+| #164 / #165 / #213 | spur height over the trough; walk ends at the budget | 1440 cell centres | MW, three seeds, the gas_spur table: no foot past the last ring with amplitude > 0; height = crest - trough on 8192 azimuths, within 2e-3 (the builder's bound) | holds; ngc_4414 draws no spur |
+| #113 / #171 | sample along equivalent points | - | - | not reached |
+| T10 / #119 | diffuse gas line ratios | hand formula to 1e-12 | relation from the register's transcription: [N II]/Ha 0.58270, [S II]6716/Ha 0.43868; per-ring equal to 1e-12, both templates x three seeds; 6716/6731 = 1.44818 vs R_max 1.4484 | holds; F-2-3 |
+
+- **F-2-1** mis-ruled debt / stale text. Place: `docs/GALAXY_INPUTS.md` #173. Evidence: the entry records old_lots
+  0.8845979 against old_none 0.9284296. Today's model gives -0.005541389266041417 against -0.2801196316960978,
+  bit-identical under five hash seeds, and the file order and three shuffles are green. "Tell the two apart" cannot
+  be met. Settle: "#173 is closed as not reproducible on the current model: no hash-order dependence (5 seeds,
+  bit-identical) and no order dependence (file order and 3 shuffles), held by test_audit_vi::test_173_."
+- **F-2-2** weak test. Place: `tests/test_v7_header.py:256-259`. Evidence: `rest = middle - sum(parts)` is defined,
+  then `sum(parts) + rest` is checked against `middle` to 1e-12, which is true by construction. The test's other
+  assertions carry content. Settle: "The sum line in test_the_remainder_s_middle_part_s_kept_windows_sum_to_it is
+  dropped or replaced by a check against the answer without kept=."
+- **F-2-3** stale text, minor. Place: `nebular.py` dig_line_ratios. Evidence: it takes the doublet clamped to 1 cm^-3
+  (1.44818). The fit's n_e -> 0 limit is 1.4498, and the cited R_max is 1.4484. No number moves; 1B's note records
+  the same 1.44818 as a non-finding. Settle: "The comment and #119 say 'the doublet at 1 cm^-3, the fit's lower edge
+  (1.4482)' in place of 'the low-density limit'."
+
+**The builder's incident, as the note records it.** Argument files generated with `--collect-only -q` on top of the
+project's `-q` came out empty, so `pytest @empty` started the full suite at about 01:53. It was seen within about a
+minute from "collected 0", the processes were stopped, and no result was taken from the run. Separately, a small
+`uv run python` ran for a few seconds beside a pytest run, against the one-process rule. The note records this too.
+
+**Not reached / not measured.** #160 and #113 / #171 were not reached. #161's own claim (the clouds' sector weights
+per ring) has no separate estimator. #164 / #165 were not measured on ngc_4414, which draws no spur. T2's ratios were
+asserted to bounds, not printed. The 20-id shuffles of the whole test_chemistry.py were written but not run (22 min
+each). Whether a module-level cache inside the model could hold left state was not examined.
 
 ## 3. The re-pins and the gates re-derived, not re-run (strands 3A and 3B; two Opus readers, read-only)
 
