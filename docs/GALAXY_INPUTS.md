@@ -6196,6 +6196,33 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    labels are the five star columns and `bright_star_radius` (this lane's), and 22 of the 42 routes (the bright,
    region, render and clusters routes and both `system` headers - this lane's and S91's / S92's model moves alike).
    The reference is not re-based here; the re-base at M3's close stands, now in either thread setting.
+   *The gate's ruling (S93, on its own recommendation under the owner's word of 2026-11-11, carrying #216; the owner
+   may re-rule) and its build (fb8871b, eca0ff2, cd12cdd):* **the three left products on a draw path are ordered too**,
+   so the hash moves once at this batch's close and not again for them. `ordered_product` now lives in
+   `core/special.py` (`systems` imports `sfh`, so `sfh` could not import `systems`; `systems` re-exports it). Each
+   measured single-threaded on the default galaxy's full run, then on the six full runs at 1 and 20 threads (no field
+   differing after any of them), then the bits it moved once at one thread:
+   - `sfh.radial_transport` (the mergers' radial spread): `ordered_product`; 16 → 260 ms a call, one call a run
+     (+0.24 s); every field downstream of the history moved - about 100 arrays a run, the largest relative move
+     `feh_history` 2.8e-11 (a logarithm near zero), then `alpha_fe_history` 1.1e-12, `star_metallicity` 7.7e-13,
+     the rest 1e-13 and under (the scalars by an ulp or a few: masses, `gc_count_estimate`, `thin_disc_scale_length`);
+     no count, size or integer array.
+   - `bright.mass_on_isochrones` (`steps_over`'s reading, `part_masses`): an ordered sum of its own beside it, step by
+     step from the first into each step's metallicity row (a window's empty steps and the other rows' +0 skipped);
+     53 → 48 ms a call, three a run (no slower); `bright_star_radius` (1.6e-16) and `bright_star_azimuth` (5.0e-13)
+     moved, with the render's parts and the bright routes.
+   - `chemistry_dtd`'s four transports: one `ordered_product` over the four columns side by side; the stage 260-296 →
+     350 ms (+0.06-0.09 s a run); `giant_occurrence` (4.7e-15), `feh_stars_old`, `feh_stars_young`, `alpha_fe_stars`
+     (1.5e-15) moved - published fields, no star column: as measured these feed no draw.
+   All 42 reference routes and the four fields labels read the same at 1 and 20 after the three. **#216's reach on
+   these three products is closed**; with the arrival law and bright.py's products, every BLAS product on a draw path
+   under `model/galaxy` is now an ordered sum. Left, none of them feeding a draw (a comparison, a rounding, a count, a
+   sort): `chemistry.migrate` (no caller); `spectra.py`'s three (the response tables and `object_response`, published
+   arrays no selection reads); `v6_clouds`' 32 × 32 solve (the render's `dust_diffuse_share`, a published weight);
+   the polyfits (published gradients and scale lengths, read by the specs' windows, by no stage); the `einsum`s and
+   `np.outer` (not BLAS). Every pinned number downstream of the history moves at about 1e-13 relative or less
+   (`feh_history`'s 2.8e-11 the largest), so every bit-exact record of a layer-on or layer-off field moves once: the
+   integration's re-pin from the GitHub run.
 219. ~~**The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**~~
    (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clouds' and the clusters'
    L1 slopes over 47.5-190 pc against their own law read -0.4965 and -0.4791 on #216's re-laid census, against the
