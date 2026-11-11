@@ -426,3 +426,176 @@ def test_119_the_diffuse_gas_s_line_ratios_are_madsen_s_relation_at_the_layer_s_
         doublet = np.asarray(f["sii_6716_surface_brightness_dig"], dtype=float)[lit] / np.asarray(
             f["sii_6731_surface_brightness_dig"], dtype=float)[lit]
         assert np.max(np.abs(doublet / 1.4484 - 1.0)) < 2e-4, (tpl, seed, float(doublet.min()), float(doublet.max()))
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# S96 (strand 2 completed): #160, #113 / #171 and #161, the three items S94's builder did not reach
+# ---------------------------------------------------------------------------------------------------------------------
+
+S96_RINGS = (7, 8)  # level-0 rings 7-8 of the audit mesh: 6.650-8.506 kpc (cell_edges of AUDIT_VI_GRID)
+S96_SYSTEMS_SEED = 77
+
+
+def _ring_window(api, rings) -> dict:
+    """The whole azimuth of level-0 rings ``rings[0]..rings[-1]``, the radii kept a micron inside their outer edges so
+    ``cells_in`` names those rings and no neighbour."""
+    from galaxy.stages.systems import cell_edges
+
+    edges, _ = cell_edges(api.grid.R)
+    return {"r_min": float(edges[rings[0]]) + 1e-6, "r_max": float(edges[rings[-1] + 1]) - 1e-6,
+            "phi_min": 0.0, "phi_max": 2.0 * math.pi}
+
+
+def _level0(api, radius, azimuth):
+    """(ring, sector) of each row, from its own radius and azimuth against the mesh's cell edges - read here, not from
+    any cell column the route ships."""
+    from galaxy.stages.systems import CELL_RINGS, CELL_SECTORS, cell_edges
+
+    edges, _ = cell_edges(api.grid.R)
+    ring = np.clip(np.searchsorted(edges, np.asarray(radius, dtype=float), side="right") - 1, 0, CELL_RINGS - 1)
+    turn = np.mod(np.asarray(azimuth, dtype=float), 2.0 * math.pi)
+    sector = np.clip((turn / (2.0 * math.pi / CELL_SECTORS)).astype(np.int64), 0, CELL_SECTORS - 1)
+    return ring, sector
+
+
+def test_160_the_two_catalogues_old_stars_share_one_azimuthal_placement_per_ring(audit_api):
+    """#160 (S61; built S91 on the owner's ruling of 2026-11-10, struck at S95, D264): one placement rule for the old
+    stars of both catalogues - the star sample's ``c-bar (1 - p)``, in ``bright.part_weights`` too. The build's test
+    (``test_bright.py::test_the_two_catalogues_place_their_old_stars_by_one_rule``) compares the two WEIGHT tables on
+    the default Milky Way, the bright catalogue's against ``Placement.sub_ring_weights`` to 1e-12 - the model's own
+    functions, no star drawn. Measured here on the REALISED stars instead: ngc_4414 at texture seed 31337, systems
+    seed 77, this file's mesh, level-0 rings 7 and 8 (6.65-8.51 kpc) whole; the star sample at stars=3 000 000 (all
+    of a ring's stars are drawn, about 148 000 here) and the bright catalogue at l_min = 1800 Lsun (about 61 000
+    expected in the window; l_min 1000 holds 148 500 and takes 51 s, l_min 100 is refused above 200 000). Old = older
+    than YOUNG_STAR_AGE (0.1 Gyr) in both, by each row's own age column; each row's sector from its own azimuth. The
+    estimator: per ring, the 2 x 32 contingency table of old-star counts by sector, the two-sample Pearson chi-square
+    (31 degrees of freedom: mean 31, sd sqrt(62) = 7.9), held below mean + 4 sd = 62.5. Not vacuous: each catalogue's
+    counts against a uniform azimuth read a chi-square over ten times its degrees of freedom (the arms' contrast,
+    shares 0.78-1.45 of the mean). Its power, stated: with about 2 x 10^4 to 9 x 10^4 old stars a catalogue per ring
+    the test resolves a per-sector share difference of about 3-5 %; the pre-S91 difference (3.9e-3 of a sector's
+    expectation, S61; 1.37e-2 per finest sector) was below it, so this holds the two realised catalogues to one law
+    at the noise and does not, alone, distinguish the S91 rule from the one it replaced (the build's weight test
+    does). Measured at S96: chi-square 36.1 (ring 7: 94 109 / 22 394 old stars) and 20.1 (ring 8: 53 517 / 14 810).
+    Fails if the two catalogues' old stars are placed round a ring by different laws beyond their Poisson noise."""
+    from galaxy.stages.systems import YOUNG_STAR_AGE
+
+    common = dict(template="ngc_4414", texture_seed=31337, systems_seed=S96_SYSTEMS_SEED, **_ring_window(audit_api, S96_RINGS))
+    _, sa = _answer(audit_api, "/api/region", stars=3_000_000, **common)
+    _, ba = _answer(audit_api, "/api/bright", l_min=1800, **common)
+    s_ring, s_sector = _level0(audit_api, sa["star_radius"], sa["star_azimuth"])
+    b_ring, b_sector = _level0(audit_api, ba["bright_star_radius"], ba["bright_star_azimuth"])
+    s_old = np.asarray(sa["star_age"], dtype=float) > YOUNG_STAR_AGE
+    b_old = np.asarray(ba["bright_star_age"], dtype=float) > YOUNG_STAR_AGE
+    dof = 31
+    bound = dof + 4.0 * math.sqrt(2.0 * dof)
+    report = {}
+    for ring in S96_RINGS:
+        a = np.bincount(s_sector[(s_ring == ring) & s_old], minlength=32).astype(float)
+        b = np.bincount(b_sector[(b_ring == ring) & b_old], minlength=32).astype(float)
+        na, nb = a.sum(), b.sum()
+        both = a + b
+        ea, eb = both * na / (na + nb), both * nb / (na + nb)
+        chi = float(np.sum((a - ea) ** 2 / ea + (b - eb) ** 2 / eb))
+        flat_a = float(np.sum((a - na / 32) ** 2 / (na / 32)))
+        flat_b = float(np.sum((b - nb / 32) ** 2 / (nb / 32)))
+        report[ring] = dict(old=(int(na), int(nb)), chi2=round(chi, 1), bound=round(bound, 1),
+                            against_uniform=(round(flat_a), round(flat_b)),
+                            shares=(round(float(a.min() / na * 32), 3), round(float(a.max() / na * 32), 3),
+                                    round(float(b.min() / nb * 32), 3), round(float(b.max() / nb * 32), 3)))
+    assert all(min(r["old"]) > 10_000 for r in report.values()), report
+    assert all(min(r["against_uniform"]) > 10 * dof for r in report.values()), report
+    assert all(r["chi2"] < bound for r in report.values()), report
+
+
+def test_171_the_sample_s_luminosity_function_is_the_bright_table_s_at_its_shape(audit_api, audit_model, K):
+    """#171 / #113 (S65; built S93: ``photometry.lookup`` reads a star along equivalent evolutionary points; struck
+    at S93, D262). Before the mend the sample's count above 10^3 Lsun was 0.14 of the bright table's (S65); the
+    build's tests pin the lookup's light per mass formed within 0.07 (``tests/test_photometry.py``) and its closer
+    re-read the sample's ages with 400 fresh IMF masses each over the whole disc (scratch, not a test). Measured here
+    on the REALISED sample against the published table: the Milky Way at texture seed 6060, systems seed 4242, this
+    file's mesh, level-0 rings 7 and 8 (6.65-8.51 kpc) whole; the sample at stars=4 000 000 (about 440 000 in the
+    window), its rows older than the cluster window (the table's population) counted above 0.1, 1, 10, 100, 1000 Lsun;
+    the table (``/api/bright?table=1``) summed over the window's 64 cells at the same grid thresholds, times the
+    sampling fraction s = stars (1 - RETURN_FRACTION) <m> / (the 32 rings' stellar mass, ``cell_masses`` of a run's
+    ``stellar_surface_density``) - the sample's own ring expectation over the stars the ring formed.
+    **migration_efficiency = 0**: the table reads each ring's own formation history and the sample its arrival law,
+    so with migration on the window's age mix differs between them and the ratio reads migration, not the lookup
+    (measured at S96 with the default migration: 0.968 / 0.898 / 0.883 / 0.838 / 0.764 at 0.1-1000 Lsun, 5 x 10^6
+    stars - the note's F-2-4); with it off the two share one age law and the ratio is the lookup's. Asserted: the
+    faint end (0.1 Lsun) within 5 % of 1 (it checks s); the shape - each threshold's ratio over the faint end's - within
+    3 sigma of 1 (sigma binomial: sqrt(1/n_L - 1/n_faint)) at every threshold whose expected sample count is at least
+    30, which must reach 100 Lsun. 10^3 Lsun expects about 18 sample stars at this size, so it is reported, not held.
+    Measured at S96 (5 x 10^6 stars, the same window): 1.029 +- 0.004 / 1.027 / 1.023 / 1.019 +- 0.065 / 1.26 +- 0.24
+    at 0.1 / 1 / 10 / 100 / 1000 Lsun. Fails if the sample's bright end again falls short of the table's."""
+    from galaxy.stages.systems import cell_masses, cluster_window, imf_mean_mass
+
+    stars = 4_000_000
+    inputs = {**_inputs("milky_way", 6060), "migration_efficiency": 0.0}
+    sigma = run(audit_model, inputs, grid=AUDIT_VI_GRID, only=("stellar_surface_density",)).fields["stellar_surface_density"]
+    mass, _ = cell_masses(np.asarray(sigma, dtype=float), audit_api.grid.R)
+    s = stars * (1.0 - float(K["RETURN_FRACTION"])) * imf_mean_mass() / float(mass.sum())
+    common = dict(template="milky_way", texture_seed=6060, systems_seed=4242, migration_efficiency=0.0)
+    _, sa = _answer(audit_api, "/api/region", stars=stars, **common, **_ring_window(audit_api, S96_RINGS))
+    _, ta = _answer(audit_api, "/api/bright", table=1, **common)
+    threshold = np.asarray(ta["threshold"], dtype=float)
+    table = np.asarray(ta["expected"], dtype=float).reshape(32, 32, -1)[S96_RINGS[0]:S96_RINGS[-1] + 1].sum(axis=(0, 1))
+    older = np.asarray(sa["star_age"], dtype=float) > cluster_window(K)
+    lum = np.asarray(sa["star_luminosity"], dtype=float)[older]
+    rows = {}
+    for L in (0.1, 1.0, 10.0, 100.0, 1000.0):
+        k = int(np.argmin(np.abs(np.log10(threshold) - math.log10(L))))
+        assert abs(math.log10(threshold[k]) - math.log10(L)) < 1e-9, threshold[k]
+        rows[L] = (int(np.sum(lum > threshold[k])), s * float(table[k]))
+    n0, e0 = rows[0.1]
+    report = {L: (n, round(e, 1), round(n / e, 4)) for L, (n, e) in rows.items()}
+    assert abs(n0 / e0 - 1.0) < 0.05, report
+    held = []
+    for L, (n, e) in rows.items():
+        if L == 0.1 or e < 30.0:
+            continue
+        shape = (n / e) / (n0 / e0)
+        sigma_shape = shape * math.sqrt(max(1.0 / max(n, 1) - 1.0 / n0, 0.0))
+        held.append((L, round(shape, 4), round(sigma_shape, 4)))
+        assert abs(shape - 1.0) <= 3.0 * sigma_shape, (L, shape, sigma_shape, report)
+    assert max(L for L, *_ in held) >= 100.0, (held, report)
+
+
+def test_161_the_ring_keeps_its_clouds_count_and_mass_with_the_layer_on_and_off(audit_api):
+    """#161 (S61; built S90, the ring as the unit of the clouds' sector weights: the clustering field's cell means
+    enter the sector allocation and the ring keeps its total). The build's test (``test_audit_v.py::
+    test_census_clustering_keeps_every_ring_s_clouds``, Audit V's mesh 130 x 450 x 9 x 200, texture seeds 4242 / 777)
+    counts clouds per ring by their placed (radius, azimuth) and by the drawn radius, on and off the field / layer,
+    equal, mass to 1e-12. Measured here through ``/api/clouds`` over the whole disc, both templates, texture seed
+    31337, systems seed 77, this file's mesh, layer=on against layer=off, each cloud's ring read three ways - its
+    ``cell`` (the allocation's), its placed ``cloud_radius`` against the mesh's ring edges, and its drawn
+    ``cloud_birth_radius`` likewise: the per-ring count identical and the per-ring cloud mass (``math.fsum``) equal to
+    1e-12 relative, on and off, by each reading; and the per-cell counts NOT identical (the layer moves clouds between
+    a ring's sectors - the test is not vacuous). Fails if the layer moves a cloud, or its mass, between rings."""
+    from galaxy.stages.systems import CELL_COUNT, CELL_RINGS, CELL_SECTORS
+
+    report = {}
+    for tpl in TEMPLATE_NAMES:
+        got = {}
+        for layer in ("on", "off"):
+            _, a = _answer(audit_api, "/api/clouds", template=tpl, texture_seed=31337, systems_seed=S96_SYSTEMS_SEED,
+                           layer=layer, **DISC)
+            cell = np.asarray(a["cell"], dtype=np.int64)
+            mass = np.asarray(a["cloud_mass"], dtype=float)
+            placed, _ = _level0(audit_api, a["cloud_radius"], a["cloud_azimuth"])
+            drawn, _ = _level0(audit_api, a["cloud_birth_radius"], np.zeros(mass.size))
+            got[layer] = dict(cells=np.bincount(cell, minlength=CELL_COUNT), mass=mass,
+                              rings={"cell": cell // CELL_SECTORS, "placed": placed, "drawn": drawn})
+        on, off = got["on"], got["off"]
+        for how in ("cell", "placed", "drawn"):
+            n_on = np.bincount(on["rings"][how], minlength=CELL_RINGS)
+            n_off = np.bincount(off["rings"][how], minlength=CELL_RINGS)
+            m_on = np.array([math.fsum(on["mass"][on["rings"][how] == r]) for r in range(CELL_RINGS)])
+            m_off = np.array([math.fsum(off["mass"][off["rings"][how] == r]) for r in range(CELL_RINGS)])
+            worst = float(np.max(np.abs(m_on - m_off) / np.maximum(np.abs(m_off), 1e-300)))
+            report[tpl, how] = (int(n_on.sum()), int(np.abs(n_on - n_off).sum()), worst)
+            assert np.array_equal(n_on, n_off), (tpl, how, (n_on - n_off).tolist())
+            assert worst <= 1e-12, (tpl, how, worst)
+        moved = int(np.abs(on["cells"] - off["cells"]).sum())
+        report[tpl, "cells moved"] = moved
+        assert moved > 0, report
+    assert all(v[0] > 1000 for k, v in report.items() if k[1] != "cells moved"), report
