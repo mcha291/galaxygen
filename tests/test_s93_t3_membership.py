@@ -70,20 +70,24 @@ def measure(template: str | None, n: int) -> dict:
         "sample_young": float(light.sum() / s), "kept": float(light[member == 0].sum() / s),
         "members_outside": int((member[~young] == 1).sum()), "young_count": int(young.sum()),
         "dissolved_count_share": float(np.mean(state == 2)),
+        "_w": light[young], "_k": member[young] == 0,  # the young stars' expected light and kept flag (the scatter)
     }
 
 
 def test_the_membership_is_the_census_s_own_rule():
     """A sampled star is a member exactly where a cluster of its age, bound or not by the same uniform, is still a
-    point in the census (``clusters.materialise_clusters``: bound below the bound fraction, else unbound below the
-    dissolution age and dissolved past it), and only inside the window."""
+    point in the census, and only inside the window. The census states its clusters by ``systems.cluster_state`` -
+    the one rule both read (the review's mend: no third copy here; tests/test_clusters.py holds the census to it)."""
+    from galaxy.stages import clusters as cu
+
+    assert cu.cluster_state is sy.cluster_state  # the census's own function, not a copy
     constants = {"GMC_PHASE_BLOWN_OPEN": 6.0, "GMC_PHASE_DISPERSING": 14.0, "CLUSTER_DISSOLUTION_AGE": 10.0,
                  "CLUSTER_BOUND_FRACTION": 0.07}
     rng = np.random.default_rng(93)
     age_myr = rng.uniform(0.0, 40.0, 20_000)
     u = rng.random(age_myr.size)
     member = sy.cluster_member(age_myr / 1000.0, u, constants)
-    state = np.where(u < 0.07, 0, np.where(age_myr < 10.0, 1, 2))  # the census's rule, as clusters.py writes it
+    state = sy.cluster_state(age_myr, u, 0.07, 10.0)  # the census's rule, in Myr as clusters.py calls it
     assert np.array_equal(member == 1, (age_myr < 20.0) & (state != 2))
     assert sy.cluster_window(constants) == pytest.approx(0.020)
 
