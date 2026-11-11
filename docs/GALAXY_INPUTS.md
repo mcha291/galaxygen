@@ -3855,7 +3855,10 @@ never been judged in twenty-three sessions.
    Reynolds & Haffner 2006's eqs. 2–3 (ApJ 652, 401, §II: [N II] 6583/Hα = 1.62 × 10⁵ T₄^0.4 e^(−2.18/T₄)(N⁺/N)(N/H),
    [S II] 6716/[N II] = 4.62 e^(0.04/T₄)(S⁺/S)(S/H)/((N⁺/N)(N/H)), energy units, on their N/H 7.5 × 10⁻⁵, S/H 1.86 ×
    10⁻⁵, N⁺/N 0.8) `[verified: arXiv:astro-ph/0609558 via ar5iv, read at S93]`, with S⁺/S the midpoint of Haffner's
-   0.3–0.7 `[inferred]` and the 6731 line by Sanders et al. 2016's low-density limit (eq. 6, R_max 1.4484
+   0.3–0.7 `[inferred]` (Madsen et al. 2006's own summary, §IX, gives the WIM's S⁺/S as about 0.1 to 1 — the Perseus
+   arm near 0.25, the local gas near 0.6 — wider than Haffner's; the four are level-0 constants since the S93
+   review, `DIG_S_PLUS_FRACTION`, `DIG_N_PLUS_FRACTION`, `DIG_NITROGEN_ABUNDANCE`, `DIG_SULPHUR_ABUNDANCE`)
+   and the 6731 line by Sanders et al. 2016's low-density limit (eq. 6, R_max 1.4484
    `[verified: arXiv:1509.03636 §III.1]`). The nebular stage publishes `dig_nii_6583_ratio` = 0.5827 and
    `dig_sii_6716_ratio` = 0.4387 (6731: 0.3029) at the layer's 8000 K — Madsen's "typical value of [N II]/Hα is ≈0.5"
    and the faint local WIM's [S II]/Hα ≳ 0.4 — and three fields `*_surface_brightness_dig`; the render route's
