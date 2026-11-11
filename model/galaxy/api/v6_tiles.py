@@ -471,15 +471,18 @@ def remainder(service: Service, q: Query) -> Response:
         "stages": list(out.needs),
     }
     arrays = [(REMAINDER_PARTS[p], parts[p]) for p in REMAINDER_PARTS]
-    # S93 (#175): the middle part's kept shares, each window's light under l_min (the same arrays with the layer off).
-    constants = {k: c.value for k, c in model.constants.items()}
-    spec = service.grid.spec
-    kept_entry, kept = _v7.middle_kept(
-        _v7.published_entries(declared)["census_clustering"], f, constants, float(spec.t_max), int(spec.n_t), curves,
-        parts["middle"], _bright.cluster_window(constants), _catalogue.YOUNG_STAR_AGE, weight["middle"],
-        l_min=l_min, names=REMAINDER_KEPT)
-    if kept_entry is not None and kept_asked == "1":
-        # The words are the whole render's ages.middle_kept's, named and not repeated (the request stays under 32 kB).
+    # S93 (#175): the middle part's kept shares, each window's light under l_min (the same arrays with the layer off) -
+    # computed only when kept=1 asks them (D262, the review's C5: the default answer runs no more than S64's, D4).
+    kept_entry, kept = None, []
+    if kept_asked == "1":
+        constants = {k: c.value for k, c in model.constants.items()}
+        spec = service.grid.spec
+        kept_entry, kept = _v7.middle_kept(
+            _v7.published_entries(declared)["census_clustering"], f, constants, float(spec.t_max), int(spec.n_t), curves,
+            parts["middle"], _bright.cluster_window(constants), _catalogue.YOUNG_STAR_AGE, weight["middle"],
+            l_min=l_min, names=REMAINDER_KEPT)
+    if kept_entry is not None:
+        # The words are the whole render's ages.middle_kept's, named and not repeated (the f4 answer's size gate, #222).
         kept_entry["rest"] = f"{REMAINDER_PARTS['middle']} less the three kept arrays, modulated by nothing"
         kept_entry["rule"] = "as the whole render's ages.middle_kept.rule, each kept part placed by this weight"
         kept_entry["closure"]["about"] = "as the whole render's ages.middle_kept.closure, over the remainder's middle part"

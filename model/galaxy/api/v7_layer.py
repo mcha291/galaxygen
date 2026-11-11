@@ -238,6 +238,10 @@ def unspurred_placement(fields: Any, constants: Mapping[str, Any], R: np.ndarray
 # are applied after - so it is cached as the k-octave means are (census_clustering.kept_cell_means): by what it reads.
 _ANCHORS: OrderedDict[tuple, np.ndarray] = OrderedDict()
 _ANCHORS_HELD = 8  # runs, as kept_cell_means' lru_cache holds
+# S93 (D262, the review's C6): the anchors under a threshold (only=remainder's kept=1, #175) are held apart, one entry
+# per run and threshold, so a threshold slider's walk never evicts the runs' own anchors; and the runs' own hold two
+# window sets per run since #166 (the three parts' and the kept windows), so twice the runs. Bits unchanged.
+_ANCHORS_UNDER: OrderedDict[tuple, np.ndarray] = OrderedDict()
 
 
 def _digest(value: Any) -> tuple:
@@ -253,19 +257,21 @@ def window_anchors(fields: Any, t_max: float, n_t: int, constants: Mapping[str, 
     key = (_digest(fields["stars_formed_history"]), _digest(fields["feh_history"]), float(t_max), int(n_t),
            float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows),
            None if l_min is None else float(l_min))
-    held = _ANCHORS.get(key)
+    cache, cap = (_ANCHORS, 2 * _ANCHORS_HELD) if l_min is None else (_ANCHORS_UNDER, _ANCHORS_HELD)
+    held = cache.get(key)
     if held is None:
         held = np.array(_bright.window_anchors(fields, t_max, n_t, constants, windows, l_min))
         held.setflags(write=False)
-        _ANCHORS[key] = held
-        while len(_ANCHORS) > _ANCHORS_HELD:
-            _ANCHORS.popitem(last=False)
+        cache[key] = held
+        while len(cache) > cap:
+            cache.popitem(last=False)
     else:
-        _ANCHORS.move_to_end(key)
+        cache.move_to_end(key)
     return held.copy()
 
 
 _RESPONSES: OrderedDict[tuple, np.ndarray] = OrderedDict()
+_RESPONSES_UNDER: OrderedDict[tuple, np.ndarray] = OrderedDict()  # under a threshold, held apart (S93, as the anchors)
 
 
 def window_responses(fields: Any, t_max: float, n_t: int, constants: Mapping[str, Any],
@@ -283,16 +289,17 @@ def window_responses(fields: Any, t_max: float, n_t: int, constants: Mapping[str
            float(constants["RETURN_FRACTION"]), tuple((float(lo), float(hi)) for lo, hi in windows),
            hashlib.blake2b(repr(tuple(curves)).encode("utf-8"), digest_size=16).hexdigest(),
            None if l_min is None else float(l_min))
-    held = _RESPONSES.get(key)
+    cache = _RESPONSES if l_min is None else _RESPONSES_UNDER
+    held = cache.get(key)
     if held is None:
         anchors = window_anchors(fields, t_max, n_t, constants, windows, l_min)
         held = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])
         held.setflags(write=False)
-        _RESPONSES[key] = held
-        while len(_RESPONSES) > _ANCHORS_HELD:
-            _RESPONSES.popitem(last=False)
+        cache[key] = held
+        while len(cache) > _ANCHORS_HELD:
+            cache.popitem(last=False)
     else:
-        _RESPONSES.move_to_end(key)
+        cache.move_to_end(key)
     return held.copy()
 
 
