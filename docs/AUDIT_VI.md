@@ -172,3 +172,123 @@ changed lines of `stages/dust.py`, `clouds.py`, `clusters.py`, `bubbles.py`, `ch
 ## 2. What the batches built, re-measured (strand 2)
 
 *(assembled when the strand's note is in)*
+
+## 3. The re-pins and the gates re-derived, not re-run (strands 3A and 3B; two Opus readers, read-only)
+
+Two read-only Opus readers on `tests/` and `model/galaxy/specs/`; nothing was run or re-measured. **3A** `s85..s90a`
+(M1, M2): 50 files, 49 read (the s90 reference json not), the diff 4 898 lines without it; about 275 records re-pinned
+with a cause, 6 judged bounds changed each with a decision, 1 loosened identity with none found, 3 invariants changed
+by design with decisions, about 10 strengthened, 0 tests deleted. **3B** `s90a..main` (M3): 30 files (6875+ / 238-;
+`specs/` unchanged in M3); about 130 records plus 22 fixture strings, 6 judged clauses changed in form (all named by
+a decision), 0 judged bounds moved in number, 4 strict-xfail sites / 6 cases added (all registered), 14
+machine_pinned and 1 strict xfail lifted, 0 skips or non-strict xfails added, 0 tests removed. **The answers.** 3A:
+no judged bound moved without a decision "among the bounds I read", but four were "reset to the very reading that
+failed, plus a small margin", and one identity was loosened with no decision found (F-3A-8); one mark hides a red no
+register entry carries, `BRIGHT_GATE_READ_OVER` (F-3A-5). 3B: no tolerance widened, no window re-centred, no bound
+number changed, but the walk's bounds now judge a re-defined statistic and no decision says so (F-3B-1); no mark hides
+an unregistered red, with two reservations (no `raises=` on #220 / #221; closures guarded by nodes the runner skips).
+
+| change | where | decision | reader's verdict |
+|---|---|---|---|
+| gas ring mean `< 1e-13` -> `< 2e-13` (worst read 1.0036e-13) | test_bar, test_gas_pattern x2 | D255 r. 1 | F-3A-4 |
+| power-budget share 0.4-0.9 -> 0.39-0.98 (read 0.934) | test_audit_v | D255 r. 2 | F-3A-2 |
+| WALK_READ_DIFFERENCE_COARSE 0.49 -> 0.58 (read 0.5700) | test_audit_v | D255 r. 4 | F-3A-2; F-3B-1 |
+| "reach boundary" class admitted in `unexpected` steps | test_pieces | D255 r. 5 | decided, reason a mechanism |
+| price `< 3000` -> `< 3500` us, non-strict xfail kept (read 2839-3026) | test_audit | D255 r. 6 | F-3A-1 |
+| per-cell -> per-ring cloud equality (#161); continuous share (#202); empty named set (#214) | test_audit_v, test_v6_clouds, test_layer | D258, D257, D258 | by design |
+| `top[here]` exact -> `approx(abs=1e-4)` | test_sfh_azimuthal | none found | F-3A-8 |
+| #154 "worst cell and worst ring are one ring" removed; input window 0-1.0 -> 0-1.5 rad (1000-star guard) | test_audit; test_bright | D260 | named |
+| `count >= counted(design)`, `earlier < births`, ties by identity (#216) | test_pieces | D260 | ruled rule; oracle the model's own |
+| spurs' peak identity re-defined (1e-9 / 1e-12 unchanged) | test_audit_v, test_spurs | D261 C3 | definition change |
+| walk read statistic re-defined, 0.27 / 0.58 carried | test_audit_v, test_spurs | not said | F-3B-1 |
+| #217 oracle -> `v6_tiles.grid_threshold` + 5e-16 | test_v6_bright | D261 | F-3B-5 |
+| upper clauses split into strict xfails (#220, #221) | test_spurs, test_bar, test_gas_pattern | D261 C1 | bound unmoved |
+
+| mark | where | carried by | reader |
+|---|---|---|---|
+| `PRICE_RECORD`, non-strict xfail (S87 / S88) | test_audit | #154 | F-3A-1, F-3B-10 |
+| `BRIGHT_GATE_READ_OVER`, strict (S88), still in main | test_clustering_gate | none (#161 struck) | F-3A-5 |
+| `L1_GATE_READ_OVER_S90`, clouds leg, strict (S88); lifted S91 on XPASS | test_clustering_gate | #215 | 3A; F-3B-4 |
+| `L1_GATE_READ_OVER_S91`, clusters, strict, added S91, lifted S92 | test_clustering_gate | #219 | F-3B-4 |
+| `DUST_COLUMN_OVER`, MW leg, strict (S88) | test_v7_layer | #176 | 3A: OK |
+| `HIERARCHY_197`, `OUTER_SPURS`, L1 clusters (S88): added and lifted inside M1 / M2 | test_hierarchy, test_modes, gate | - | F-3A-7 |
+| 14 `machine_pinned` (S90a): 7 pure records (test_bar x2, test_modes, test_gas_pattern cell-mean and crests MW, test_pieces crest and masers); 6 also skip judged clauses; 1 test_v6b level-3 MW | 6 files | #216 / #217 | F-3A-3; lifted in M3 (3B: 13 for #216, 1 for #217) |
+| `WALK_READ_OVER_S92` (seed 4242); `GAS_LANES_READ_OVER_S92`, `GATE_MAX_G_READ_OVER_S92` (MW only); strict, no `raises=` | test_spurs; test_bar, test_gas_pattern | #220; #221 | 3B reservation (a) |
+| #222 size gate on kept=1, wfc3 x 3, strict, `raises=AssertionError` | test_v6_bright | #222 | 3B: bound unmoved |
+| three-legs gate and two layer-off reference nodes, `machine_pinned` since S77 | test_pieces, test_layer | - | F-3B-3 |
+
+| closure | what the test asserts | could the defect return unseen? |
+|---|---|---|
+| #148, #212, #161, #168, #198, #213 | one clock to 1e-12; `== 90.6`; per-ring counts equal, not all cells; an independent midpoint path; a 15-ring saturation case; `radius <= edge` | No (3A) |
+| #209 | `pitch >= 1.0` on the audit's seeds; the constant == 1.0 | adequate, only on the audit's seeds (3A) |
+| #154 (table) | `array_equal(table, reader cell means)`; statistic rel 0.05 | No; docstring stale (F-3A-9) |
+| #167 | the scalar gone, counts down by one | removal held; per-cloud Z not reached (3A) |
+| #197 | one parent cell, default galaxy, seed 0 | **Yes** (F-3A-6) |
+| #139, #142 | no test written at S86 | not reached (3A) |
+| #166 | bit equality, cached vs cold | **Yes**: removing the cache stays green (F-3B-6) |
+| #216, #218 and the reference, #215 / #219, #217, #160, #114 / #174 | as F-3B-2, 3, 4, 5, 8, 9 state | 3B (below) |
+
+- **F-3A-1** mark / weak test; low, method — `tests/test_audit.py` price test, `xfail(strict=False,
+  reason=PRICE_RECORD)` around `< 3500.0`: "a non-strict xfail around a bound can fail nowhere"; the runner's XPASS.
+  Settle: "Make it a record (print, no assert; or machine_pinned with the bound) or a gate (strict, under a bound
+  measured on the runner); a non-strict xfail with a bound is neither." See F-3B-10.
+- **F-3A-2** moved bound, decided, reason = the failing reading — power share and `WALK_READ_DIFFERENCE_COARSE`, each
+  the failing reading + 0.05 / + 0.01 (D256). Settle: "Re-declare each from seeds disjoint from the ones the test
+  checks, so the bound is not fitted to the draw it judges." See F-3B-1 on the same 0.58.
+- **F-3A-3** mark hides judged clauses from CI (disclosed, mostly) — six S90a `machine_pinned` marks also skip the MW
+  pair-slope law (met by 0.013), the walk bound 0.58, "every chain long enough carries spurs", the hand census's
+  clauses, the whole-ring MW bound and the gas gate-predictions verdicts, which D259 does not list. Settle: "Split each
+  marked test so the record carries the mark and the judged clause runs in CI." 3B counts the fourteen lifted in M3.
+- **F-3A-4** moved bound; the stated reason does not reach the size; medium — D255 r. 1 "each exact to its own
+  rounding": 360 roundings give about 1e-16, the reading is 1.0036e-13. Settle: "math.fsum each component's cell means
+  (response, lanes, pieces) over the ring alone; whichever is off 1 by ~1e-13 owns the tolerance, named there."
+- **F-3A-5** hidden red / mis-ruled debt; high — `tests/test_clustering_gate.py` `BRIGHT_GATE_READ_OVER`: youngest
+  slope -0.4750 (0.165 over 0.15), 40.71-100 Myr 0.8457; held under #161 (D256 (ii)), #161 discharged (D258), #215
+  names the clouds only. Settle: "Open an entry (or widen #162) naming the young bright stars' L1 hold, its two
+  readings, and what closes it." 3B's "no" covers the marks M3 added or lifted; this one M3 neither added nor lifted.
+- **F-3A-6** weak test (#197); high — one parent cell (300), default galaxy, seed 0; the 0-below reading a probe
+  script; the remnants untested. Settle: "A test that every level-0 star's and every remnant's radius lies in its own
+  ring's [lo, hi) over both templates' whole catalogues."
+- **F-3A-7** method — `HIERARCHY_197` hid `parent.size` 9 -> 16 for a batch; `BRIGHT_GATE_READ_OVER` and the L1 clouds
+  leg have the same shape. Settle: "For each strict hold, a measurement run that records every assert after the first
+  failure, written into the hold's comment."
+- **F-3A-8** loosened identity, no decision found; low — test_sfh_azimuthal exact -> `abs=1e-4`; `built[past]` moved to
+  `cell_law[past]` plus a record 0.00228. Settle: "D254's #154 paragraph names the identities that became records."
+- **F-3A-9** stale text; low — test_audit #154 "2.6e-4 in a cell at worst" (pin 2.439e-3); test_bar #146 0.093 / 0.047
+  / 0.684 (pins 0.0883 / 0.0437 / 0.667); test_gas_pattern's "feet out to 26.6 kpc" (none past 12.34 since #213);
+  D259's list. No settling sentence in the note.
+- **F-3A-10** weak scope; low — test_bar's body sliver: at 5.0 kpc no ring in the reach (`sliver.sum() == 0`). No
+  settling sentence in the note.
+- **F-3B-1** moved bound (in substance) / stale text; medium — the walk read was
+  `|contrast / unspurred_contrast_at(foot) - 1|`, from S92 `|peak/column / point_crest - 1|`; 0.27 and 0.58 measured
+  on the old one; D261 "no tolerance widened, no bound moved". Settle: "WALK_READ_DIFFERENCE and its coarse twin are
+  re-derived on the crest statistic, or the decision states that the S70/S88 numbers are carried onto it by ruling."
+  See F-3A-2.
+- **F-3B-2** weak test; medium — #216's one-ulp probe only in scratch scripts; no test pins `BIRTH_COUNT_TOLERANCE` /
+  `GAP_TOLERANCE`. Settle: "a test perturbs a plateau design count and a tied gap by one ulp and asserts the census
+  unchanged." Strand 2 builds this probe.
+- **F-3B-3** weak test / unverified record; low-medium — EXPECTED_LEAST's MW leg (0.1208, 0.1252, 6.696) -> (0.1208,
+  0.1245, 8.214) "not re-run" (D262), the node and #218's two reference nodes `machine_pinned`. Settle: "the three-legs
+  node and the two reference nodes are read by name on main's final model, and a cadence for them is ruled."
+- **F-3B-4** fragile gate (not moved); low-medium — clouds -0.5035, clusters -0.4970 against the -0.49 edge, sd
+  0.1030 / 0.1064. Settle: "the owner rules whether L1's judged clause reads the default census or a seed mean."
+- **F-3B-5** weak test (machine-dependent guard); low — #217: here `10.0 ** LOG_L_GRID` equals math.pow bit for bit.
+  Settle: "a source-level check (as test_ordered_products does) that both thresholds call grid_threshold."
+- **F-3B-6** weak test; low-medium — #166: bit equality only. Settle: "the test asserts the second request does not
+  call part_anchors (spy or counter)."
+- **F-3B-7** stale record; low (wording) — the fixture's 20 respelled `kept=1` records keep the S73 walk's `bytes`
+  (14 680 ... 27 944), kept=1 answers are 30 792-43 824; `tools/smoothness.py` sums them. Settle: "the walk on S93's
+  model re-records the bytes." See F-4-1.
+- **F-3B-8** mis-ruled debt / stale text; low — #160 met and held, still open, no decision says why (3B's brief listed
+  it discharged; the register does not). Settle: "the gate discharges #160 on that test or states what it waits for."
+- **F-3B-9** weak tests at the viewer edge; low — no test asserts GalaxyTab.tsx's `responseColors` call (line 432);
+  #174 discharged with "no GPU has compiled the new vertex shader". No settling sentence in the note.
+- **F-3B-10** note for 3A — the runner's "1 xpassed (test_audit's non-strict cost record)"; not read by 3B. See F-3A-1.
+
+**Not read / not reached.** *3A:* the S60 tests behind #139 / #142; #167's per-cloud A_V against metallicity; the s90
+reference json and its tests; D254 / D257 in full; test_nebular, test_remnants, test_s26 and test_s45 read only as
+changed-assert lines. *3B:* `layer_reference_s93.json` beyond its role, its digests not re-checked; the frontend tests'
+bodies; #113 / #171's LF bright end (0.438 -> 0.948) not pinned and not judged; #211's bound; #119 / #118's source
+values (strand 1's); regimes.test.ts for #175; the #218 guard misses alias imports and np.fft and "does not show
+bits"; no pytest node run; about 30 records sampled against their comments' arithmetic; re-pins matched to D260-D262's
+paragraphs in a sample, not line by line.
