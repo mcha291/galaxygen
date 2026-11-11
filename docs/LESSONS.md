@@ -2276,3 +2276,15 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **A ruling taken in the owner's place enters `BRIEF.md`'s list in the commit that takes it.** #219's
   discharge, the layer-off reference's re-base and the guard ruling were taken at S92 and S93 and found missing from
   the list by the audit. (S94, Audit VI, D263)
+
+## From S95 (Audit VI's fixes: the weak-test class's tests, the walker and a walked fixture, the readings, the register's two passes; Opus lanes, the Fable gate)
+
+- [close] **A recording that tests are held to is re-recorded by the tool that made it, and the tool is committed
+  with the recording.** S73's walker was not, and 22 of the fixture's records were then written by hand; S95's
+  `tools/walk_requests.py` re-records only where the walk confirms every string. (S95, D264)
+- [viewer] **A walk of the real viewer finds what a string comparison cannot.** F-W-1 was two requests no plan held -
+  the tiles and the remainder at the previous galaxy's threshold after a switch - visible only as computed answers in
+  a walk with the bundles mounted. (S95, D264)
+- [audit] **A population table on seeds the tests do not use is run BEFORE a bound is declared.** Twelve unpinned
+  pairs showed one bound exceeded on five (the walk's 0.27) and another on one (the power share's 0.98 on the audit's
+  mesh, #224), where the tests' own seeds all passed. (S95, D264)
