@@ -3835,7 +3835,12 @@ never been judged in twenty-three sessions.
    2010's collision strengths `[verified: arXiv:1509.03636 §III.1, Table 1]`); the Hα-weighted 6716/6731 of the
    default regions 1.2892 → 1.2694, the weighted ratios 0.05447 / 0.04226 → 0.05411 / 0.04262 (inside
    `test_nebular`'s pin), the sum and every other line unmoved; 10⁴ K is the fit's (Sanders: 7000 K moves a density
-   15–20 %), the regions on the 6000 K floor not corrected. **(c) the U convention, measured and not built**: the
+   15–20 %), the regions on the 6000 K floor not corrected. Two limitations named at the S93 review: (i) the
+   split reads the rms density √⟨n²⟩, while a clumpy region's doublet samples the emission-weighted ⟨n²⟩/⟨n⟩,
+   higher by the square root of the clumping; (ii) the closer asked for the atomic data S35 read (PyNeb / NIST), and
+   the build uses a different sourced set, Sanders et al. 2016's fit (Tayal & Zatsarinny 2010's collision strengths,
+   NIST's transition probabilities) — (b) is met on it by the gate's reading; the owner may re-rule.
+   **(c) the U convention, measured and not built**: the
    region whose volume-averaged U matches a Byler shell's (R_in = 10¹⁹ cm, n_H = 100, filled to its Strömgren
    radius) reads the grid at log U₀ = log U + 0.67 (at log U −4) to +0.85 (at the median −2.83) and +1.5 (at −2.0) —
    a shift that grows as the shell thickens and would put the brightest regions past the grid's −1 top; which U the
