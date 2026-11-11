@@ -183,7 +183,7 @@ def plan(template: str, layer: str, service: Any, levels: Sequence[int] = (), on
     template: it runs no stage). arrays: the Galaxy view's (fields=bulge_scale_radius) and, with the layer on (the
     Science tab sends no layer switch), the Science tab's sets (:func:`science_arrays`). render: the layer's tables
     (/api/layer, once; S73), per set the whole render (white, f4) and the star-first remainder at the landing
-    threshold. census: over GalaxyTab.tsx's wholeDisc
+    threshold (with kept=1, as api.ts loadRemainder asks it since S93, #175). census: over GalaxyTab.tsx's wholeDisc
     window (r_min, r_max from the grid, phi 0..2 pi, level 0) - clouds f4, clusters per set with white, remnants - and
     /api/region's whole-galaxy sample (stars=20000). bright: the table (table=1, f4) and the landing's one tile request
     per set, every level-0 cell at the landing threshold; with ``levels``, single-cell tiles at those levels.
@@ -241,7 +241,8 @@ def plan(template: str, layer: str, service: Any, levels: Sequence[int] = (), on
         for s in sets:
             out.append(("/api/render", base | white | {"precision": "f4", "filters": curves[s]}))
         for s in sets:
-            out.append(("/api/render", base | white | {"precision": "f4", "l_min": landing, "only": "remainder", "filters": curves[s]}))
+            # S93 (#175, D262): kept=1 as the viewer asks it (api.ts loadRemainder) - a bundle keys on the raw query.
+            out.append(("/api/render", base | white | {"precision": "f4", "l_min": landing, "only": "remainder", "kept": "1", "filters": curves[s]}))
 
     if "census" in groups:
         out.append(("/api/clouds", base | {"precision": "f4"} | whole_disc))

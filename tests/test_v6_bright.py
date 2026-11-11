@@ -204,23 +204,41 @@ def test_the_table_is_each_tile_s_expected_count_at_every_grid_threshold(service
 def test_the_remainder_alone_placed_by_the_render_s_weights_is_stars_unresolved(service, template, layer, filters):
     q = {"template": template, "layer": layer, "filters": curves(filters), "white": 6500, "l_min": repr(DEPTH)}
     fh, fa, _ = ask(service, "/api/render", **q)
-    # S93 (#166): the l_min= render ships no age parts and so no placing weights; the whole render (no l_min=) the
-    # viewer holds carries them, as the header's rule says.
-    wh, wa, _ = ask(service, "/api/render", **{k: v for k, v in q.items() if k != "l_min"})
     rh, ra, r = ask(service, "/api/render", only="remainder", **q)
     assert set(ra) == {"stars_unresolved_middle", "stars_unresolved_old"} and rh["only"] == "remainder"
     parts = rh["remainder"]["parts"]
     # the weights it names are the ones the whole render's ages names for the same parts
-    assert {p: parts[p]["weight"] for p in parts} == {p: wh["ages"]["parts"][p]["weight"] for p in ("middle", "old")}
-    placed = sum(ra[parts[p]["array"]][:, None, :] * wa[parts[p]["weight"]][..., None] for p in ("middle", "old"))
+    assert {p: parts[p]["weight"] for p in parts} == {p: fh["ages"]["parts"][p]["weight"] for p in ("middle", "old")}
+    placed = sum(ra[parts[p]["array"]][:, None, :] * fa[parts[p]["weight"]][..., None] for p in ("middle", "old"))
     want = fa["stars_unresolved"]
     assert np.max(np.abs(placed - want)) <= 1e-12 * np.max(np.abs(want))
     assert rh["resolved"] == fh["resolved"] and rh["axes"]["stars_unresolved_middle"] == ["R", "filter"]
     assert rh["layer"] == fh["layer"] and ra["stars_unresolved_old"].shape == (service.grid.R.size, 3)
     if layer == "off":  # the physics alone: every placing weight even round its ring
-        assert all(np.allclose(wa[parts[p]["weight"]], 1.0, rtol=0, atol=1e-12) for p in parts)
+        assert all(np.allclose(fa[parts[p]["weight"]], 1.0, rtol=0, atol=1e-12) for p in parts)
     _, _, small = ask(service, "/api/render", only="remainder", precision="f4", **q)
     assert len(small.body) < 32_000
+
+
+# S93 (#175, D262): the size gate above reads only=remainder as S64 sent it; since S93 the viewer asks it with kept=1
+# (api.ts loadRemainder), three more per-ring arrays (3 x 400 x 3 at f4, 14 400 bytes) and their header entry (about
+# 1.5 kB). The same judged bound, unmoved, read on the request the viewer sends - measured at S93 (scratchpad
+# s93rm_size.txt): 30 792 / 29 824 / 30 984 bytes through RGB (milky_way on, ngc_4414 on, milky_way off), under it;
+# 43 640 / 42 664 / 43 824 through WFC3, over it by 11.6-11.8 kB - WFC3's header echoes its sampled curves (13.1 kB of
+# its 19.6 kB), so the default answer already read 27 768 there. Held on that clause alone: register entry #222.
+KEPT_OVER_THE_SIZE_GATE = pytest.mark.xfail(
+    strict=True, raises=AssertionError,
+    reason="#222 (S93): only=remainder with kept=1 through WFC3 reads 42 664-43 824 bytes at f4 against the 32 000 "
+           "bound - the three kept arrays (14 400 bytes) over a header carrying WFC3's sampled curves (13.1 kB)")
+
+
+@pytest.mark.parametrize("template,layer", [("milky_way", "on"), ("ngc_4414", "on"), ("milky_way", "off")])
+@pytest.mark.parametrize("filters", ["rgb", pytest.param("wfc3", marks=KEPT_OVER_THE_SIZE_GATE)])
+def test_the_remainder_the_viewer_asks_is_under_the_same_size_gate(service, template, layer, filters):
+    q = {"template": template, "layer": layer, "filters": curves(filters), "white": 6500, "l_min": repr(DEPTH)}
+    _, arrays, small = ask(service, "/api/render", only="remainder", precision="f4", kept="1", **q)
+    assert len(arrays) == 5 and all(v.dtype == np.float32 for v in arrays.values())
+    assert len(small.body) < 32_000, len(small.body)
 
 
 def test_the_remainder_runs_no_stage_the_l_min_render_does_not():
