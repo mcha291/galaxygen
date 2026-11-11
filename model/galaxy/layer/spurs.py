@@ -47,9 +47,10 @@ height is the crest's excess over the trough** (``gas_spur_contrast``), so the c
 1.9975 / 1.9974 at texture seeds 0 / 4242 before, 1.5312 / 1.5175 after; over the crest, at most 1.7573 / 1.8251);
 **the ridge's peak column is the crest's** (#165: Σ_peak = the ring's column times the crest), so the spacing reads
 the ridge, not the stellar chain. The walk's crest against the point function's crest within the same window at
-the foot's own radius: at most 0.2105 (seed 0, 45 feet) and 0.4541 (seed 4242, 43 feet), the median 7e-4 / 2e-4 -
-the window's width differs from ring to ring, and between two grid rings the crest the window holds can be another
-ridge's (the worst feet at 4.4-4.5 and 5.9-6.1 kpc). 7 / 6 crests stand on the window's edge.
+the foot's own radius: at most 0.2176 (seed 0, 45 feet; the next 0.2105) and 0.4582 (seed 4242, 43 feet; the next
+0.1731), the median 7e-4 / 2e-4 - the window's width differs from ring to ring, and between two grid rings the crest
+the window holds can be another ridge's (the worst feet at 4.45 and 6.06 kpc at seed 0, 4.44 and 5.40 kpc at 4242;
+``tests/test_spurs.py`` pins 0.2176 and 0.4582). 7 / 6 crests stand on the window's edge.
 
 **The walk reads the gas at the stellar chain's polyline, not at the gas crest** (S62's review, finding 4; measured on
 the Milky Way template's 48 spurs, unchanged here - the lead opens the debt): the gas ridge stands near the stellar
