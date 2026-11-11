@@ -2234,8 +2234,8 @@ class Service:
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,
-            "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
-                                                "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
+            "absent": {"lines": absent, "why": "not published by this model; the diffuse ionized gas carries Hbeta and, since S93 (#119), [N II] 6583 and "
+                                                "[S II] 6716 / 6731 by Madsen et al. 2006 at the layer's temperature (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(out.needs),
         }
         if resolved is not None:

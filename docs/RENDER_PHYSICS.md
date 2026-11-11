@@ -58,8 +58,8 @@ sections below as a description of an empty slate.
   (Byler et al. 2017 via FSPS, fetched on the owner's word of 2026-09-27, clamped at its
   edges): per region `hii_{oiii_5007,nii_6583,sii_6716,sii_6731}_ratio` over its own Hα,
   per ring `*_surface_brightness_hii`, and Hβ in both layers; `/api/render` carries them as
-  `lines_hii` / `lines_dig` and `absent.lines` is empty. The diffuse gas has no forbidden
-  line (the grid does not model its field; debt #119).
+  `lines_hii` / `lines_dig` and `absent.lines` is empty. The diffuse gas carries Hβ and,
+  since S93 (#119), [N II] 6583 and [S II] 6716 / 6731 by Madsen et al. 2006 at the layer's temperature.
 - **Since S36 (Phase 10)** the `bubbles` stage publishes the hollow: per cluster
   Weaver et al. 1977's bubble (radius, shell velocity, density, thickness, Hα per
   unit volume in the shell, interior pressure and temperature, phase, stalled),
