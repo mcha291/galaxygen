@@ -602,3 +602,57 @@ dispersion. **So the dispersion is not read, and the second response is not buil
 The owner's reading: a measured HI velocity dispersion with its radial behaviour, from the THINGS / HERACLES
 dispersion maps and stacks `[recall — NOT READ: Tamburro et al. 2009; Ianjamasimanana et al. 2012; Mogotsi et al.
 2016 — names only, none in any reader]`.
+
+## Part S96 — the HI's dispersion, the gas contrast per galaxy and the ridge's width over the spacing (debts #130, #131, #129) (2026-11-12, read at the reading session; reader A)
+
+**The reader's note.** S96's reader A fetched the sources below in this session (its note `s96_A.md` in the
+session's scratchpad). `[verified: source, place]` marks what it quoted from a fetched page; `[inferred]` its own
+arithmetic. The register carries the gate's ruling on each entry (D265).
+
+### S96.1 #130 — Mogotsi et al. 2016: the HI's dispersion over the CO's on matched pixels
+
+- **Source.** Mogotsi et al. 2016, AJ 151, 15, arXiv:1511.06006 (ar5iv; found by a web search for the THINGS HI
+  dispersion). 13 galaxies common to HERACLES (CO 2-1, IRAM 30 m) and THINGS (VLA HI), the HI smoothed to the CO's 13″,
+  velocity resolution 2.6 or 5.2 km/s; four inclined galaxies excluded from the averages.
+- **Abstract:** "we find a CO dispersion value σCO=7.3±1.7 km s-1"; "The corresponding H i dispersion σHI=11.7±2.3 km
+  s-1, yielding a mean dispersion ratio σHI/σCO=1.4±0.2, independent of radius" (single-Gaussian fits, regions with
+  bright CO) `[verified: Mogotsi et al. 2016, abstract]`; the stacked analysis gives a ratio of 1.0 ± 0.2 (the abstract
+  as the fetch paraphrased it).
+- **Table 3** (as the fetch transcribed it): mode σ_CO 7.3 ± 1.7, σ_HI 11.7 ± 2.3; mean 10.5 ± 3.6 / 14.1 ± 4.3; median
+  9.5 ± 3.0 / 13.1 ± 3.0 km/s; the ratio mean 1.4 ± 0.2, mode 1.3 ± 0.2, median 1.4 ± 0.2.
+- **Radial:** both dispersions "decreasing with radius for most of the galaxies" and "flatten off at larger radii"; the
+  values by radius are in Fig. 6 only (not read). Its quotation of Tamburro et al. 2009 (not fetched itself): "They
+  found a mean σHI of ∼10 km s-1 at r25, dropping off to ∼5±2 km s-1 at larger radii."
+- **On the model's number** `[inferred]`: 1.4 × `GAS_DISPERSION` 6 km/s = 8.4 km/s; the absolute 11.7 km/s over the
+  model's 6 would be a ratio of 1.95, outside the measured 1.4 ± 0.2.
+- **Not covered.** The radial fall (Fig. 6 unread); galaxies outside the 13 THINGS / HERACLES discs; the 13″ beam.
+
+### S96.2 #131 — Querejeta et al. 2024: per segment in a figure, no per-galaxy table
+
+- **Source.** Querejeta et al. 2024, A&A 687, A293, arXiv:2405.05364 (arXiv HTML, the first 100k of 182k characters,
+  through Sect. 3.8; the appendices not reached). 27 spirals after excluding NGC 1365 ("28 galaxies before"), **59 spiral
+  segments** with Σ_* and Σ_mol; 21 galaxies (44 segments) with Σ_SFR.
+- **Table 1** (median, −16th / +84th offsets), Σ_mol: Nominal 2.22 (−0.96/+2.19); Grand-design 2.73 (−1.36/+3.06);
+  Rest 1.90 (−0.78/+1.04); High M* 2.70 (−1.34/+3.09); Low M* 1.80 (−0.68/+1.24); Low resolution (1.5 kpc) 1.49
+  (−0.49/+1.35); Narrow masks 2.53 (−1.02/+2.83) `[verified: Querejeta et al. 2024, Table 1]` — Reading A's 1.37–5.79
+  MATCHES.
+- **Table 2** (15 spirals with HI resolution better than 2.5 kpc): HI 1.22 (−0.21/+0.57); HI+H2 1.26 (−0.27/+0.88); H2
+  (HI galaxies) 1.31 (−0.35/+1.31); H2 high resol. 2.43 (−1.08/+3.24); Σ_mol/Σ_atom 1.13 (−0.27/+0.55) `[verified:
+  Querejeta et al. 2024, Table 2]`.
+- **Per galaxy: no table.** Figure 3 shows each spiral segment (galaxies ordered by stellar mass) as a median with 25th–
+  75th percentile bars; the values are not in the text. No per-galaxy spread is printed.
+- **Data.** The narrow masks at the CANFAR vault (footnote 4, www.canfar.net/storage/vault/list/phangs/RELEASES/
+  Querejeta_etal_2024): the listing is rendered by script and came back empty — **unreachable** by the reader's tool; no
+  contrast table is known to be there.
+- **Not read.** Appendices E and F.
+
+### S96.3 #129 — no sample-wide ridge width over the spacing
+
+- **Querejeta et al. 2024** (above): the masks were set "empirically from CO emission for each analytic log-spiral", "a
+  typical width of ∼1−2 kpc" (the fetch's quotation; Reading D's 500–1000 pc is the Appendix E ridge masks, a different
+  product); narrow masks by a 7.5″ Gaussian at threshold 0.01 cover about 50 % of the original area; **no per-galaxy width
+  in pc and no width relative to the spacing** in the text read.
+- **Search.** One web search for a sample-wide CO arm FWHM over the spacing found only single-galaxy measurements (M31,
+  M51, the Milky Way's tangent points — search snippets, not fetched, not used).
+- **Unreachable.** The masks that would give the width are behind the script-rendered listing above; a mask's width is
+  set by eye and the kernel, so even read it would be a bound, not a ridge FWHM.

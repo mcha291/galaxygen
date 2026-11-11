@@ -86,3 +86,58 @@ its floor: the dust as built reddens nothing that could close the gap, and the r
 for an Sc disc, the catalogues' own A_B − A_V (`READING_NGC_4414.md` W-K: RC3 / HyperLeda correct to face-on, not to
 dust-free; V02's line-of-sight A_B − A_V 0.18 at 55–70″ is not face-on). What kills the dust reading, as the entry
 says: a frame still under 0.72 with that reddening applied by hand — at 0.6458 it needs a face-on E(B − V) above 0.074.
+
+## Part S96 — the sSFR line's units and sample (#92), NGC 4414's own extinction (#136) (2026-11-12, read at the reading session; reader B)
+
+S96's reader B fetched the sources below in this session (its note `s96_B.md` in the session's scratchpad).
+`[verified: source, place]` marks what it quoted from a fetched page; `[inferred]` its own arithmetic.
+
+### S96.1 #92 — Rémy-Ruyer et al. 2015's eq. 5, its sSFR line
+
+- **Source.** Rémy-Ruyer et al. 2015, arXiv:1507.05432 (HTML, sec. 4.3, two fetches). Eq. 5 as S95 read it (above);
+  "with a dispersion of 0.35 dex around the relation with metallicity, and of 0.38 dex around the relation with sSFR".
+  Sec. 4.3: the low PAH abundance "is not controlled by a single parameter" and "arises from a joint effect of both low
+  metallicity and high sSFR"; sec. 6: f_PAH "primarily driven by the sSFR", metallicity second-order `[verified:
+  Rémy-Ruyer et al. 2015, secs. 4.3 and 6]`.
+- **Units** (the gap S95 left). The equation states none; the paper's table lists log(sSFR) in yr⁻¹ and a figure
+  caption uses Gyr⁻¹ (the fetch's words). The line is in yr⁻¹ `[inferred]`: at the KINGFISH median the text prints
+  (0.04 Gyr⁻¹ = 4 × 10⁻¹¹ yr⁻¹, log −10.40) it gives log f_PAH = +0.01 (1.0 × Galactic), at the DGS median (0.51 Gyr⁻¹,
+  log −9.29) −0.58 (0.26 × Galactic); read in Gyr⁻¹ the KINGFISH median would give 10^−4.8, impossible. Not printed — a
+  check, not a reading.
+- **Sample.** 109 galaxies (DGS dwarfs + KINGFISH), 98 modelled; log sSFR (yr⁻¹) from −12.08 (KINGFISH minimum) to −8.13
+  (DGS maximum), the fetch's reading of Table 1; SFR from Hα corrected with L_TIR (Kennicutt et al. 2009, Kroupa); M* from
+  IRAC 3.6 / 4.5 (Eskew et al. 2012). Whole-galaxy values, not resolved; no saturation threshold printed.
+- **What entering the sSFR line would take and move** `[inferred, not computed]` (reader B's hand reasoning): in
+  `pah_mass_fraction`, log(f/f_Gal) = −5.5 − 0.53 log₁₀(Σ_SFR / Σ_*) per ring, from `sfr_surface_density` and
+  `stellar_surface_density` (units matched, the ratio in yr⁻¹); two constants (−5.5 ± 0.1, −0.53 ± 0.01); a clamp at the
+  sample's sSFR edges (−12.08, −8.13) in place of the 1.20 Z☉ cap; the dust stage reading the two fields. A Milky-Way-like
+  whole-galaxy sSFR ~ 3 × 10⁻¹¹ yr⁻¹ gives ~1.2 × Galactic (~5.4 %), nearer Draine & Li's 4.58 % than the metallicity
+  line's 9.1 %; both lines fall outward; the inner disc's level is set by the low-sSFR clamp (−12.08 gives 7.9 ×
+  Galactic, 36 %), so the clamp matters more than the slope. The value at R₀ depends on the model's local sSFR, not
+  computed. `pah_fraction` has no consumer outside `dust.py` (a grep), so either line moves one published leaf field.
+- **Not reached.** A resolved per-radius calibration (KINGFISH resolved q_PAH): not searched.
+
+### S96.2 #136 — Vallejo et al. 2002's extinction for NGC 4414, and Driver et al. 2007
+
+- **Vallejo, Braine & Baudry 2002**, arXiv:astro-ph/0202391 (HTML), sec. 4.3 and Table 8 (the fetch's quotes). Method:
+  "the best way to estimate the extinction is through the atomic gas column density"; "The HI column density at these
+  radii is about 2x10^21 cm-2 (Thornley & Mundy 1997b), such that on average the stellar light will be extincted by about
+  10^21" (half the column in front); τ_ext ~ 2.3 × 10⁻²⁶ N_H / λ (Draine & Lee 1984). **Table 8, 55″ ≲ r ≲ 70″:** B τ 0.7,
+  A 0.76; V τ 0.54, A 0.58; I 0.3 / 0.33; K′ 0.05 / 0.05. "In the molecular ring, the extinction is roughly 1.6 mag in B,
+  1.3 in V, 0.9 in I, and 0.2 in K', assuming that the corrected M/L ratios given above are accurate." "These values should
+  be viewed as upper limits, although they are likely quite close to the reality, because extinction due to molecular gas
+  has not been included." `[verified: Vallejo et al. 2002, sec. 4.3, Table 8]`. The paper does not say whether the values
+  are face-on or along the 55° line of sight. So E(B − V) = A_B − A_V = 0.18 at 55–70″ (~5–6 kpc) and ~0.3 in the
+  molecular ring `[inferred]` — a screen of half the HI column from a grain model, not a measured colour excess, local.
+- **Driver et al. 2007**, MNRAS 379, 1022, arXiv:0704.2140 (abstract, "[Abridged]"): 10 095 galaxies with bulge–disc
+  decompositions; "a direct constraint on the mean opacity of spiral discs of Tau_B^f = 3.8 +/- 0.7" (central, face-on);
+  "Depending on inclination, the B-band attenuation correction varies from 0.2 -- 1.1 mag for discs" `[verified: Driver et
+  al. 2007, abstract]` (the ends not labelled face-on / edge-on in the abstract); no V-band value or E(B − V).
+- **The catalogues' own A_B − A_V: unreachable** (HyperLeda's parameter page redirected; the mirror refused). By
+  `READING_NGC_4414.md` W-J (not re-read at S96), RC3 and HyperLeda remove only the inclination-dependent part by a formula
+  in the axis ratio, zero face-on by construction: **the catalogues carry no face-on A_B − A_V to read** — #136's closer
+  as written cannot be met (F-96B-2).
+- **Applied by hand** `[inferred]`: 0.6458 + 0.10…0.18 = 0.75…0.83 against [0.72, 0.82] (0.10 if V02's value is a 55°
+  line-of-sight one scaled by cos i) — inside or at the top of the window. Every source read reddens the frame; the
+  model's dust makes it 0.0155 bluer.
+- **Not reached.** Tuffs et al. 2004's face-on A_B − A_V tables (the population's face-on reddening — the next reading).

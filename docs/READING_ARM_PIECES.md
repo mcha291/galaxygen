@@ -782,3 +782,29 @@ a re-reading of Part A above and of READING_BAR.md; nothing was fetched, the ari
   start radius and growth-zone width of each arm (their decomposition's own parameters), which would source a taper's
   length in h; and Salo et al. 2010's Figure of A2(r) beside Q_T(r) (or DG16b's stacked A2 profiles past r_bar) for a
   driven amplitude against r/a.
+
+## Part S96 — a bar-driven amplitude against radius and where an unbarred arm starts (debt #149) (2026-11-12, read at the reading session; reader A)
+
+S96's reader A fetched the two sources below in this session (its note `s96_A.md` in the session's scratchpad).
+`[verified: source, place]` marks what it quoted from a fetched page.
+
+- **Salo, Laurikainen, Buta & Knapen 2010**, ApJ 715, L56, arXiv:1004.5463 (ar5iv; found by search). **No A₂ or Q_T
+  profile against r/R_bar is printed as numbers**: the radial dependence is in Figs. 2–4 only (Fig. 1 is one galaxy's,
+  NGC 1566). "103 barred galaxies from the magnitude-limited OSUBSGS survey, and 23 barred galaxies in our AAT Survey";
+  the A₂–Q_bar correlation "stays statistically significant until ~1.6 R_bar (rank correlation coefficient r_s=0.25,
+  significance p=0.008)"; AAT: "up to 1.4 Rbar"; conclusion: "up to a radial distance of r~1.5 R_bar" `[verified: Salo et
+  al. 2010, text]`.
+- **Chugunov et al., "Galaxies decomposition with spiral arms - I: 29 galaxies from S4G"** (the arXiv title reads "--
+  II"), arXiv:2311.01848 (abstract and HTML, 0–100k of 120k characters; found through the arXiv API by title). Arms make
+  "a ``bump'' on this profile with a typical height of 0.3--0.7 mag"; "We measure the width of the spiral arms to be 53%
+  of the disc scale length, on average." **The arm's inner end:** Eq. 2's (r₀, φ₀) is "a starting point of the arm",
+  **fixed during decomposition** (Table 2's asterisk), not fitted; growth at the arm's start is implicit in Eq. 3's
+  along-arm profile ("a three-term function to allow the growth of the brightness at the beginning of the arm"); **Table 4
+  has no start-radius or growth-zone column** (S/T, ⟨h_s⟩/h, ⟨w⟩/h, σ_w/⟨w⟩, ⟨A⟩, ⟨μ⟩, σ_μ, Δμ, N_arms). Sect. 6.5:
+  the arms' share "is usually the highest at a distance of 1–2 disc radial scale lengths from the center"; conclusion 7:
+  "decreasing to zero near the center and in the periphery of the galaxy"; the outer truncation r_end ~0.5–0.7 r₂₅
+  (Sect. 6.5, Fig. 17) `[verified: Chugunov et al., arXiv:2311.01848, text and tables]`.
+- **What it gives** `[inferred]`: an inner taper with a sourced shape (zero at the centre, a peak at 1–2 h) and no
+  sourced length — a taper built on the shape alone would put an unsourced length in (A4 / B9).
+- **Not read.** Chugunov, Marchuk & Savchenko 2025 (Galaxies 13, 44; mdpi.com/2075-4434/13/2/44 — found by search, not
+  fetched), on "brightness profile and width variation along the arm"; the last 20k characters of arXiv:2311.01848.

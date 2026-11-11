@@ -259,8 +259,12 @@ no input, no scatter, and arm winding is a strict consequence of the mass
 distribution the model already computed.
 
 `PITCH_YU`. About a third of Seigar's pitch measurements were severely
-overestimated, and once corrected the correlation is much weaker `[verified: Yu
-& Ho 2019 §4.3.5]`. Under this ruleset pitch is **not derivable**. It needs
+overestimated (nine of the 27 re-measured, by more than 10°), and once re-measured
+the pitch "correlates weakly, if at all" with the shear `[verified: Yu et al.
+2018, CGS VI, arXiv:1806.06591 — read at S96; READING_ARM_SEGMENTS.md Part S96]`
+(the sentence was cited to Yu & Ho 2019 §4.3.5 until S96 (S96, F-96A-1; YH19
+itself not re-read); YH19 §IV.3.5 prints the correlation ρ = −0.49, S95).
+Under this ruleset pitch is **not derivable**. It needs
 either a new input or a seeded draw around a weak trend.
 
 ### They are not rival relations — they are rival error bars

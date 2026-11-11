@@ -388,3 +388,38 @@ NOT measured in anything read:
 - Any drift velocity from kinematics: every km/s value is a size/age ratio, a crossing-time argument, or
   the M 33 mock-drift fit (5-10 km/s). One structure's size followed with age past ~10 Myr. Not printed:
   the fit range in pc of Turner's Table 4 slopes; the separation unit of A in Grasha 2018/2019 tables.
+
+## Part S96 — Grasha et al. 2019's separation unit (debt #162) (2026-11-12, read at the reading session; reader B)
+
+S96's reader B fetched the sources below in this session (its note `s96_B.md` in the session's scratchpad).
+`[verified: source, place]` marks what it quoted from a fetched page; `[inferred]` its own arithmetic.
+
+- **Grasha et al. 2019**, MNRAS 483, 4707, arXiv:1812.06109 (abstract and HTML v1, two fetches). Sec. 4.2: "We fit the
+  projected angular two-point correlation function with a power-law", eq. 1 "1+omega(theta) = A_omega theta^alpha", "the
+  slope alpha measures the strength of the clustering and the amplitude A_omega measures the correlation length".
+  **The unit of θ behind A is not stated anywhere in the paper** (the fetch: "The paper never explicitly states the
+  unit"); Fig. 10 plots 1 + ω "as a function of physical scale"; Table 2's caption: "Amplitude A of the angular
+  correlation function"; its only fit range is a footnote for the PAWS rows, "fit over the range 100-3000 pc"; none for
+  the whole-galaxy age rows `[verified: Grasha et al. 2019, sec. 4.2, Fig. 10, Table 2]`.
+- **Table 2** (N, A, α), whole NGC 5194, class 1–2 clusters, D = 7.66 Mpc: ≤ 10 Myr 1031, 23 (3), −0.40 (0.05); 10–50
+  Myr 548, 13 (2), −0.34 (0.05); 50–100 Myr 439, 2.7 (0.2), −0.12 (0.04); > 100 Myr 844, 2.1 (0.2), −0.07 (0.03); all
+  2862, 5.4 (0.5), −0.21 (0.03) — MATCHES this file's transcription above.
+- **The text in pc:** "correlation lengths (1+omega(theta)=1) of a few hundred parsec" (inner 9 kpc clusters, 4.2.2);
+  GMCs "~5000 pc" (4.2.2); "~2 kpc, for clusters outside the co-rotation radius", "~200 pc" inside (4.2.3); "By ~50-100
+  Myr, the clustering signal has dispersed and is statistically the same as a random distribution" (sec. 5); Fig. 10's
+  caption: "consistent with a randomized distribution after 100 Myr".
+- **Grasha et al. 2017a** (arXiv:1704.06321, the PDF through `pdftotext`): its Table 3 note reads "Power law fits for
+  separations measured in angle (theta)" and its Figs. 6 and 8 plot 1 + ω against "angular distance (arcsec)" — in that
+  paper the amplitudes are for θ in arcsec, by the table's own note `[verified: Grasha et al. 2017a, Table 3 note]`.
+- **The unit, by arithmetic** `[inferred, hand-computed — not read]`: solving A θ^α = 1 for the 2019 rows, a pc reading
+  gives all clusters 3.1 kpc, ≤ 4 kpc 0.69 kpc, > 4 kpc 4.6 kpc, GMCs 10 kpc; an arcsec reading (37.1 pc per arcsec at
+  7.66 Mpc) is 37× larger, 26 to 390 kpc, larger than the 9 kpc field. The pc reading lands within a factor 2–3 of the
+  text's own pc statements; the arcsec reading cannot. So Table 2's A is for separations in **parsec** — inferred from the
+  paper's numbers, not printed, and unlike 2017a's arcsec convention (F-96B-3).
+- **What the series gives on that inference** `[inferred]` (1 + ω = A r^α, r in pc): at 47.5 pc 4.91 / 3.50 / 1.70 / 1.60;
+  at 100 pc 3.65 / 2.72 / 1.55 / 1.52 for ≤ 10 / 10–50 / 50–100 / > 100 Myr (47.5 pc is under every printed fit range;
+  100 pc the safer anchor). For a log-normal field ln(1 + ω) gives σ²'s relative fall: at 100 pc σ²(t)/σ²(≤ 10) = 1 : 0.78
+  : 0.34 : 0.33. The series does not reach 1 + ω = 1 past 100 Myr (1.5 at 100 pc), against the paper's "statistically the
+  same as a random distribution".
+- **Not covered.** One galaxy (M 51, an interacting grand design); compact class 1–2 clusters, not field stars; the
+  timescale conflicts with NGC 6503's field-star slopes and the other sources this file compares (40 / 50–100 / ~100 Myr).

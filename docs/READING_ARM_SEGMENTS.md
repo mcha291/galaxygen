@@ -336,3 +336,38 @@ question. Nothing below was fetched; the arithmetic is the lead's `[inferred]`.
   section is not a source for the law's fit (re-read at Audit VI, F-1A-4). The reading still owed: a source that
   prints a pitch-shear fit (or YH19's data, fitted here), or Seigar et al. 2006's shear column with YH19's corrected
   pitches, to set intercept, slope and scatter at one definition.
+
+## Part S96 — the one printed pitch-shear fit and the samples that find none (debt #153) (2026-11-12, read at the reading session; reader A)
+
+S96's reader A fetched the three sources below in this session (its note `s96_A.md` in the session's scratchpad).
+`[verified: source, place]` marks what it quoted from a fetched page; `[inferred]` its own arithmetic.
+
+- **Seigar et al. 2006**, ApJ 645, 1012, arXiv:astro-ph/0603622 (ar5iv). **Eq. 4: "P=(64.25±2.87)−(73.24±5.53)S"**,
+  "correlation coefficient=0.89; significance=99.75%", S = A/ω = ½(1 − (R/V) dV/dR); B-band pitch; 17 earlier + 31 new
+  galaxies (48), the new ones SBab–SBcd; Table 3's S 0.27–0.75, P 8.4–47.3° `[verified: Seigar et al. 2006, eq. 4 and
+  Table 3]`. **No scatter is printed.** In the model's variable `[inferred]`: S = Γ/2, so P = 64.25 − 36.62 Γ, 27.6° at
+  Γ = 1 — a slope 4.6 times the model's −8° per unit Γ.
+- **Yu et al. 2018**, CGS VI, arXiv:1806.06591 (ar5iv), re-measured "27 of the 31 galaxies" of Seigar 2006: "Our new
+  measurements show that the pitch angle correlates weakly, if at all, with the shear rate"; "The spiral arm pitch angles
+  derived by Seigar et al. 2006 are strongly overestimated (more than 10°) for nine galaxies"; "Most of the large pitch
+  angles (>35°) reported by Seigar et al. 2006 were severely overestimated"; Kendall et al. 2015's 13 galaxies "does not
+  reveal a strong correlation" (Kendall not fetched); "large scatter in pitch angle (∼8°) for a given Hubble type"
+  `[verified: Yu et al. 2018, text]`. No fit is printed.
+- **Díaz-García et al. 2019**, A&A 631, A94, arXiv:1908.04246 (ar5iv, the first 100k characters; **Appendix F, the
+  shear appendix, not reached**). Abstract: the mean pitch "is hardly correlated ... with shear, questioning previous
+  results in the literature using smaller samples"; §9.1: "we checked and confirmed the lack of correlation between shear
+  and pitch angle for a subsample of 17 galaxies"; Seigar 2006 "found a connection between pitch and shear only when the
+  latter was measured at a certain physical radius (10 kpc)". **Table 2, "All" row, mean |φ| (error of the mean, N):**
+  T 0–2 15.9 ± 1.3 (19); T 2–4 17.8 ± 0.7 (80); **T 4–6 19.7 ± 0.4 (159)**; T 6–8 21.2 ± 0.8 (97); T 8–10 21.3 ± 1.5
+  (36); 391 S⁴G galaxies at 3.6 µm `[verified: Díaz-García et al. 2019, abstract, §9.1, Table 2]`.
+- **What the reading gives** `[inferred]`: one printed pitch-shear fit (Seigar 2006), with no scatter, on B-band pitches
+  of which nine of 27 were later found overestimated by more than 10°; three later samples (Kendall 2015's 13 as quoted,
+  Yu 2018's 27, DG19's 17 and its 391-galaxy correlation) find the correlation weak or absent and print no line. The
+  model's slope −8 has no source and none exists to give it. With no shear term and DG19's T 4–6 mean, NGC 4414's 28.9°
+  sits 9.2° over 19.7° — about 1.1–1.2σ at a 7–8° per-type spread, against 2.65σ from the law's mean today.
+- **F-96A-1 — the attribution corrected** (S96, F-96A-1; YH19 itself not re-read). The sentence that about a third of
+  Seigar's pitches were severely overestimated, cited in `GALAXY_INPUTS.md` §5 (`PITCH_YU`) and in #153 to "Yu & Ho 2019
+  §4.3.5", is the sentence reader A read in **Yu et al. 2018** (arXiv:1806.06591: nine of 27 by more than 10°). §5 now
+  cites Yu et al. 2018; whether YH19 repeats it is not known.
+- **Not read.** DG19's Appendix F (pitch against shear); Yu & Ho 2019 (not fetched; its ρ = −0.49 is S95's reading);
+  Kendall et al. 2015 (quoted via Yu 2018 only).

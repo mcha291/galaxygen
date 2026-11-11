@@ -687,3 +687,40 @@ D of READING_GAS_PATTERN.md). None is a co-rotating arm's gas width, so #144's s
 the repository and its first is #141's (permanent at S86). The owner's reading: the gas surface-density profile
 across an arm in a live-disc simulation with gas (Baba et al. 2015's dynamic models, Wada et al. 2011's Fig. 4 or 9),
 as FWHM over the arm spacing.
+
+## Part S96 — an arm's contrast by stellar age (debt #81) and a live disc's gas across an arm (debt #144) (2026-11-12, read at the reading session; reader A)
+
+**The reader's note.** S96's reader A fetched the two sources below in this session (its note `s96_A.md` in the
+session's scratchpad). `[verified: source, place]` marks what it quoted from a fetched page; `[inferred]` its own
+inference. The register carries the gate's ruling on each entry (D265).
+
+### S96.1 #81 — Peterken et al. 2019: one galaxy's arm contrast by age
+
+- **Source.** Peterken et al. 2019, MNRAS (doi 10.1093/mnras/stz2204), arXiv:1908.05013 — the abstract page and the PDF
+  (its text taken by `pdftotext -layout`). Found by a web search for arm contrast by stellar age.
+- **Sample.** One galaxy: "MCG+07-28-064 (MaNGA plate-IFU 8332-12701)", z = 0.028, "a mass of 10^9.78 M_sun" (NSA), a
+  grand design with a bar, chosen "as a example galaxy to test our population analysis techniques".
+- **Method.** Starlight SSP fits per spaxel; time-slice images "smoothed to 0.3 dex in age"; spiral and disc masks from
+  Galaxy Zoo:3D (≥ 40 % / < 20 % of users); Eq. 1, S(r,t) = (f_s − f_d)/f_d, its median over radius the contrast S(t).
+- **What it prints:** "A clear trend with age is also apparent in the spiral arm contrast. In the oldest stars the arms
+  are not detected, while at intermediate ages there appears to be about a 75% enhancement of stellar density in the
+  arms, which rises in stars younger than 10^8 years toward the Hα contrast." And: the bar's young-star offset "is only
+  seen in stars younger than 0.1 Gyr because they have not had time to mix around their orbits" `[verified: Peterken et
+  al. 2019, text (PDF)]`.
+- **What it says against the model** `[inferred]`: the one observed time-slice places the young excess over the stellar
+  arm below 10⁸ yr — the model's 0.1 Gyr — at a 0.3 dex age resolution that cannot tell a step from a decay; no decay
+  curve is printed. Separately (not #81's question; one galaxy): the *oldest* stars show no arm, where the model gives
+  every star older than 0.1 Gyr the density contrast.
+- **Not read.** Fig. 2 (the ages at which each regime begins, as numbers); a sample-wide time-slicing follow-up (the paper
+  announces it as future work; not searched).
+
+### S96.2 #144 — Baba et al. 2015: offsets, no width
+
+- **Source.** Baba, Morokuma-Matsui & Egusa 2015, PASJ 67, L4, arXiv:1505.02881 (ar5iv; found by a web search for Baba
+  2015's dynamic arms). Asked for any width or profile number, the fetch answered **"No."**: the paper measures the
+  angular offset of dense gas from the stellar potential minimum (Sect. 3.1, Fig. 2: "the radial distributions of the
+  offset angle of the dense gas relative to the spiral potential"; Sect. 3.2: offsets "show no clear radial dependence
+  in dynamic spiral models"), not a width or a contrast `[verified: Baba et al. 2015, Sects. 3.1–3.2]`.
+- **Wada, Baba & Saitoh 2011** (arXiv:1104.1287) was not re-fetched: Part D above (D2) records that it prints infall at
+  Mach ~2 and no width.
+- **Not searched.** Other live-disc simulations (e.g. Dobbs & Bonnell, Pettitt).

@@ -89,3 +89,87 @@ not hold, or a ruling.
 - **#95, the cloud vector's draws.** An HII-region-to-cloud offset distribution (a PHANGS cloud-HII-region cross-match
   `[recall]`), a measured density gradient across clouds, a remnant shell's visibility time: each a constant with its
   citation in place of the stated draw.
+
+## Part S96 — the diffuse molecular share (#94), a cluster's offset from its cloud (#95), HII regions' sizes and luminosity function (#181) (2026-11-12, read at the reading session; reader B)
+
+S96's reader B fetched the sources below in this session (its note `s96_B.md` in the session's scratchpad; the PDFs of
+Roman-Duval et al. 2016 and Grasha et al. 2017a and their text are in its `s96_B_dl` directory). `[verified: source,
+place]` marks what it quoted from a fetched page; `[inferred]` its own arithmetic.
+
+### S96.1 #94 — what share of the molecular gas is in clouds
+
+- **Roman-Duval et al. 2016**, ApJ 818, 144, arXiv:1601.00937v1 (abstract page and the PDF through `pdftotext -layout`).
+  Abstract: "a high column density component detected in 13CO and 12CO, and a low column density component detected in
+  12CO, but not in 13CO"; "The diffuse component, which globally represents 25% (1.5x10^8 Msun) of the total molecular gas
+  mass (6.5x10^8 Msun), is more extended perpendicular to the Galactic plane. The fraction of diffuse gas increases from
+  10-20% at a galactocentric radius of 3--4 kpc to 50% at 15 kpc, and increases with decreasing surface density." "Only
+  14% of the molecular gas mass traced by 12CO emission is identified as part of molecular clouds in 13CO surveys by cloud
+  identification algorithms." Sec. 4.4: masses integrated "between 3 kpc and 15 kpc"; "Statistical errors on integrated
+  masses are 1%. Systematic uncertainties are 30% due to errors on the assumed abundances (13CO/12CO and 12CO/H2) and the
+  possibly inaccurate assumption of pure LTE at low column densities, which systematically underestimates masses in the
+  diffuse regime." `[verified: Roman-Duval et al. 2016, abstract, sec. 4.4]`.
+- **Table 5, M(H₂)** (pdftotext layout, columns aligned by eye): diffuse 9.3 × 10⁷ inner / 6.0 × 10⁷ outer / 1.5 × 10⁸
+  total; dense 4.6 × 10⁸ / 3.9 × 10⁷ / 4.9 × 10⁸; total 5.5 × 10⁸ / 9.9 × 10⁷ / 6.5 × 10⁸ — diffuse 17 % inner, 61 % outer
+  `[inferred, divided by the reader]`. Sec. 4.5: the dense fraction against the face-on H₂ surface density in 100 pc
+  pixels, "fDG = 0.02 Sigma^(0.24+-0.01)" (Σ in M☉ kpc⁻²; the symbol garbled in the text layer, the form and numbers
+  legible), "<20--30%" at low Σ, "80-90%" at 10⁷ M☉ kpc⁻².
+- **The paper's own caveats:** opacity-broadened ¹²CO wings of dense gas are counted as diffuse, "we may be
+  overestimating the emission and mass of truly diffuse gas"; "at least 40% of the 'diffuse' gas mass fraction reported
+  here in the outer Galaxy corresponds to truly diffuse gas"; "The fraction of diffuse gas scales linearly with the
+  CO-to-H2 conversion factor assumed ... the diffuse gas fraction derived here represents a lower limit".
+- **Miville-Deschênes et al. 2017**, arXiv:1610.05918 (abstract): "a catalog of 8107 molecular clouds" that "includes 98%
+  of the 12CO emission observed within b +-5 deg"; "The total H2 mass in the catalog is 1.2x10^9 Msun" `[verified:
+  Miville-Deschênes et al. 2017, abstract]`.
+- **What it says** `[inferred]`: the two do not conflict in data but in what a cloud is — ¹²CO segmented into clouds
+  (MD17) leaves ~2 % of the emission outside; the ¹³CO-detected split (RD16) leaves 25 % "diffuse" (a lower limit by X_CO,
+  an upper limit by line wings, ±30 % systematic). RD16's global 25 % is under #94's ~30 % kill; its outer disc (50–61 %)
+  is above it. The register's "Roman-Duval et al. 2016's own diffuse fraction `[recall — NEEDS SOURCING]`" is now read.
+- **Not searched.** A completeness limit for the cloud mass function's lower end (the 10⁴ M☉ stays `[inferred]`).
+
+### S96.2 #95 — Grasha et al. 2019: young clusters from their nearest cloud
+
+- **Source.** Grasha et al. 2019, MNRAS 483, 4707, arXiv:1812.06109 (HTML; M 51 = NGC 5194, LEGUS class 1–2 clusters ×
+  PAWS GMCs, 7.66 Mpc), sec. 4.1.1: "the median of the shortest distance for the closest star cluster-GMC pair is 87+-2
+  parsec"; "the star clusters younger and older than 10 Myr exhibit median distances of 71+-3 pc and 107+-4 pc"; "star
+  clusters that are younger than 10 Myr lie at distances twice the size of the cloud's radius whereas clusters older than
+  10 Myr are found at median distances three times the size of the molecular cloud"; "The median radius of the GMC
+  population in NGC 5194 is 36 parsec"; inside 2.7 kpc 66 ± 2 pc (young 59 ± 2, older 74 ± 4), outside 132 ± 6 (118 ± 9,
+  143 ± 7) `[verified: Grasha et al. 2019, sec. 4.1.1]`. Sec. 4.1.2 (the fetch's paraphrase, not verbatim): median ages
+  ~4 Myr within 1 R_GMC, 6 Myr at 1–2 R_GMC, 30 Myr at 2–3, 50 Myr unassociated. Abstract: "After ~6 Myr, the majority of
+  the star clusters lose association with their molecular gas." Only medians are printed; the distributions are in
+  figures, not tabulated (not read).
+- **What it measures** `[inferred]`: a projected distance to the *nearest* cloud, not the parent — both biases shorten it,
+  so 2 R_GMC (71 pc) for clusters under 10 Myr is a rough lower bound on a parent offset. The model draws the offset
+  uniform over the cloud's volume (`cloud_texture.py`, size × ∛u): median 0.79 cloud radii, never beyond 1 (F-96B-1).
+- **Zakardjian et al. 2023**, arXiv:2305.03650 (abstract only): 19 PHANGS galaxies, GMC–HII association by "spatial
+  overlap" of footprints — an association, not an offset distribution. A PHANGS-JWST 21 µm paper (arXiv:2212.01526;
+  80 pc median to the nearest GMC in NGC 628) is a search snippet: **NOT READ**.
+- **Not searched.** A cloud's density gradient; a remnant shell's visible lifetime.
+
+### S96.3 #181 — HII regions' sizes are the resolution's; the luminosity function at 67 pc
+
+- **Groves et al. 2023**, MNRAS 520, 4902, arXiv:2301.03811 (abstract and HTML, the first 100k characters): 19
+  PHANGS-MUSE discs, 30 790 nebulae, "A total of 23,244 nebulae (75%) are classified as HII regions". Sec. 4.2: "the size
+  is taken as the circularized radius that results in an equal area to the area of the H ii region mask"; the authors
+  "purposefully do not include size measurements in our catalogue"; "the vast majority of our regions are unresolved",
+  "most of our regions are unresolved or only marginally resolved", "a median physical resolution of ~70 pc" (Table 1:
+  23–104 pc); Table 3's median radii ~23 pc (NGC 5068) to ~83 pc (NGC 1512), 10th–90th percentiles ~19 to ~126 pc, with
+  "the clear correlation with galaxy distance". "Most (80%) of the H ii regions we detect have L(Halpha) << 10^38 erg s-1",
+  ~3 % (~800) "giant H ii regions" above 10³⁹; "typical completeness limits are 10^36 - 10^37 erg s-1" `[verified: Groves
+  et al. 2023, sec. 4.2, Tables 1 and 3]`. **No size–luminosity relation is printed.**
+- **Santoro et al. 2022**, A&A 658, A188, arXiv:2111.09362 (abstract): "about 23,000 HII regions detected at an average
+  physical resolution of 67pc", 19 spirals; "The mean LF slope alpha in our sample is =1.73 with a sigma of 0.15"; "alpha
+  decreases with the galaxy's star formation rate surface density" `[verified: Santoro et al. 2022, abstract]`. The fit
+  range is not in the abstract (not read).
+- **Hunt & Hirashita 2009**, arXiv:0910.2804 (abstract and ar5iv, the first 100k characters): extragalactic HII regions
+  follow the Galactic size–density relation n ∝ D⁻¹ ("rather than a relation with constant luminosity") over "roughly six
+  orders of magnitude"; densities and sizes "good to a factor of 2 or so"; ground-based sizes of giant regions shrink at
+  HST resolution — M82-A ~450 pc to 4.5 pc, Mrk 71 ~560 pc to 14.4 pc (the fetch's paraphrase). No observed
+  size–luminosity relation is stated (only the Strömgren N_ion ~ D³ n²).
+- **Kennicutt 1984** (ApJ 287, 116): the ADS abstract page returned HTTP 405 — **UNREACHABLE**. A search snippet's "slope
+  3.5" (log L – log D, arXiv:astro-ph/9412016, not fetched) is **NOT READ** and out of the record.
+- **What it says** `[inferred]`: published HII-region sizes are set by the observations' resolution (PHANGS's regions
+  "unresolved or only marginally resolved" at ~70 pc, their sizes tracking distance; the ground-based "giant" sizes
+  collapsing 10–100× at HST resolution), so no physical size–luminosity relation for complexes is there to fix a merge
+  level. What is measured at a stated resolution is the luminosity function: mean slope 1.73, σ 0.15 over 19 discs, at 67
+  pc. NGC 604's "hundreds of pc" stays `[recall]`.
