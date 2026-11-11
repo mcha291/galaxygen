@@ -208,6 +208,152 @@ def test_218_every_draw_reads_the_same_bits_at_one_thread_and_at_the_machine_s_c
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# 4. #175: the remainder's kept windows are a split of the unsplit middle part
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+def _rgb() -> str:
+    import json
+
+    sets = json.loads((ROOT / "frontend/src/galaxy/filters.json").read_text(encoding="utf-8"))["sets"]
+    return json.dumps(sets["rgb"]["curves"])
+
+
+def test_175_the_remainder_s_kept_windows_split_the_middle_part_the_unsplit_answer_ships(audit_api):
+    """#175 (S93, D262): ``only=remainder`` with ``kept=1`` adds three per-ring arrays, the middle part's light in
+    three of its four age windows, and its builder's test sums them with the fourth taken as what is left - which
+    holds by construction. Asked here instead against the answer WITHOUT ``kept=``, the unsplit array S64 shipped
+    (the viewer's switch between the two is live): ngc_4414 at texture seed 31337 on this file's mesh, the RGB set,
+    l_min 2000 Lsun (between two grid thresholds). The kept answer's middle part is the unsplit answer's to 1e-12
+    (every array the two share, the same to 1e-12); each kept window is non-negative and the three sum to at most the
+    middle part (the fourth, the rest, non-negative, to 1e-12); and the windows tile the middle part's age range
+    without a gap or an overlap. Fails if asking ``kept=1`` moves the remainder, or a window is negative, or the
+    windows overlap."""
+    q = dict(template="ngc_4414", texture_seed=31337, only="remainder", filters=_rgb(), l_min=2000)
+    h0, a0 = _answer(audit_api, "/api/render", **q)
+    h1, a1 = _answer(audit_api, "/api/render", **q, kept=1)
+    shared = sorted(set(a0) & set(a1))
+    assert "stars_unresolved_middle" in shared, (sorted(a0), sorted(a1))
+    for name in shared:
+        x, y = np.asarray(a0[name], dtype=float), np.asarray(a1[name], dtype=float)
+        scale = np.maximum(np.abs(x), 1e-300)
+        assert x.shape == y.shape and np.all(np.abs(x - y) <= 1e-12 * scale), (name, float(np.max(np.abs(x - y))))
+    kept = h1["remainder"]["middle_kept"]
+    parts = [np.asarray(a1[kept["arrays"][k]], dtype=float) for k in ("3", "2", "1")]
+    middle = np.asarray(a1["stars_unresolved_middle"], dtype=float)
+    assert all(np.all(p >= 0.0) for p in parts)
+    rest = middle - sum(parts)
+    assert np.all(rest >= -1e-12 * np.maximum(middle, 1e-300)), float(np.min(rest / np.maximum(middle, 1e-300)))
+    assert float(np.sum(sum(parts))) > 0.0
+    ages = [tuple(map(float, kept["ages_gyr"][k])) for k in ("3", "2", "1", "rest")]
+    spans = sorted(ages)
+    assert all(lo < hi for lo, hi in spans), ages
+    assert all(abs(spans[i][1] - spans[i + 1][0]) <= 1e-12 for i in range(len(spans) - 1)), ages
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# 7. #197 (with #161's ring as the unit): every catalogue's ring draw on its ring's own interval
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def audit_api():
+    from galaxy.api.service import Service
+
+    return Service(grid=AUDIT_VI_GRID, cache=2)
+
+
+def _answer(api, path, **q):
+    from galaxy.api import wire
+
+    r = api.handle(path, {k: [str(v)] for k, v in q.items()})
+    assert r.status == 200, (path, q, r.body[:300])
+    return wire.decode(r.body)
+
+
+def _cell_column(arrays, prefix):
+    names = [k for k in arrays if k == "cell" or k == f"{prefix}_cell"]
+    assert len(names) == 1, sorted(arrays)
+    return np.asarray(arrays[names[0]], dtype=np.int64)
+
+
+DISC = {"r_min": 0.0, "r_max": 30.0, "phi_min": 0.0, "phi_max": 2.0 * math.pi}
+
+
+@pytest.mark.parametrize("tpl", TEMPLATE_NAMES)
+def test_197_no_star_remnant_or_cloud_is_drawn_outside_its_level_0_ring(audit_api, tpl):
+    """#197 (S90, D258): the star sample's level-0 radii, the remnants' and the clouds' birth radii are drawn on the
+    ring's own interval (``systems.ring_birth_radius``) - before it about 5 % of stars and remnants stood up to 70 pc
+    below their ring. Re-measured through the routes (the whole disc, level 0) on two texture seeds the build did not
+    pin and this file's mesh, each row's radius against its own cell's ring edges (``cell_edges`` of the mesh, the
+    ring the cell id names): no row outside [lo, hi] (a 1e-9 kpc allowance for the edge's own arithmetic).
+    Fails if any row stands outside its ring."""
+    from galaxy.stages.systems import CELL_SECTORS, cell_edges
+
+    edges, _ = cell_edges(audit_api.grid.R)
+    report = {}
+    for seed in SEEDS[:2]:
+        # brightest= past the sample's size: every star kept, each row named by its cell (level 0 names none).
+        asks = (("star", "/api/region", "star_radius", {"brightest": 200000}), ("remnant", "/api/remnants", "remnant_radius", {}),
+                ("cloud", "/api/clouds", "cloud_birth_radius", {}))
+        for prefix, path, column, extra in asks:
+            _, arrays = _answer(audit_api, path, template=tpl, texture_seed=seed, **DISC, **extra)
+            ring = _cell_column(arrays, prefix) // CELL_SECTORS
+            r = np.asarray(arrays[column], dtype=float)
+            below = edges[ring] - r
+            above = r - edges[ring + 1]
+            report[seed, prefix] = (r.size, int((below > 1e-9).sum()), int((above > 1e-9).sum()),
+                                    float(max(below.max(initial=0.0), above.max(initial=0.0))))
+    assert all(0 < n < 200000 for n, _, _, _ in report.values()), report
+    assert all(lo == 0 and hi == 0 for _, lo, hi, _ in report.values()), report
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# 8. #164, #165, #213: a spur's height over the ring's trough; the walk ends at the arms' budget's edge
+# ---------------------------------------------------------------------------------------------------------------------
+
+TROUGH_SAMPLES = 8192
+
+
+def test_164_165_213_a_spur_is_the_crest_s_excess_over_its_ring_s_trough_inside_the_budget(runs, K):
+    """#164 / #165 (S92, D261) and #213 (S90, D258), re-derived from the published ``gas_spur`` table on the Milky Way
+    at the three seeds and this file's mesh. #213: no foot stands past the last grid ring whose
+    ``arm_piece_amplitude`` (published) is above 0. #165: the table's peak column over the ring's gas column
+    (``gas_surface_density``, linear in R) is the crest the walk read; #164: the height ``gas_spur_contrast`` is that
+    crest less the ring's trough - the trough read here as the least of the unspurred gas contrast on 8192 azimuths
+    of each bracketing grid ring (the build reads 1440 cell centres), linear in R between them; agreement within
+    2e-3 (the two samplings' own difference) on every foot whose height is above 0. Fails if a foot stands past the
+    budget's edge, or a height is not the crest's excess over the trough."""
+    from galaxy.layer import compose
+
+    phis = -math.pi + (np.arange(TROUGH_SAMPLES) + 0.5) * (2.0 * math.pi / TROUGH_SAMPLES)
+    report = {}
+    for seed in SEEDS:
+        out = runs["milky_way", seed]
+        f, R = out.fields, out.grid.R
+        amp = np.asarray(f["arm_piece_amplitude"], dtype=float)
+        edge = float(R[np.flatnonzero(amp > 0.0)[-1]])
+        radius = np.asarray(f["gas_spur_radius"], dtype=float)
+        height = np.asarray(f["gas_spur_contrast"], dtype=float)
+        peak = np.asarray(f["gas_spur_peak_surface_density"], dtype=float)
+        assert radius.size > 0, seed
+        assert float(radius.max()) <= edge, (seed, float(radius.max()), edge)
+        crest = peak / np.interp(radius, R, np.asarray(f["gas_surface_density"], dtype=float))
+        gas = compose.gas_pattern(f, R, K)
+        upper = np.clip(np.searchsorted(R, radius, side="right"), 1, R.size - 1)
+        lower = upper - 1
+        rings = np.unique(np.concatenate([lower, upper]))
+        floor = {int(i): float(np.min(gas.unspurred_contrast_at(np.full(phis.size, R[i]), phis))) for i in rings}
+        w = (radius - R[lower]) / (R[upper] - R[lower])
+        trough = (1.0 - w) * np.array([floor[int(i)] for i in lower]) + w * np.array([floor[int(i)] for i in upper])
+        up = height > 0.0
+        miss = np.abs(crest[up] - trough[up] - height[up])
+        report[seed] = (radius.size, int(up.sum()), float(radius.max()), edge, float(miss.max(initial=0.0)))
+        assert np.all(crest >= trough - 2e-3), (seed, float(np.min(crest - trough)))
+    assert all(m <= 2e-3 for *_, m in report.values()), report
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # 10. T10 / #119: the diffuse gas's [N II] and [S II] against the relation they cite
 # ---------------------------------------------------------------------------------------------------------------------
 
