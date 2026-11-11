@@ -668,13 +668,12 @@ def gate(gp: GasPattern, edges: np.ndarray) -> dict[str, float]:
 
 # S92 (#164 / #165): the gate's clause "max g <= max(max s, the lanes' max)" reads over on the Milky Way - 7.3027 at
 # 3.94 kpc against 7.0556 - a spur's height on a lane's crest; held strict for the gate, the same reading as
-# tests/test_bar.py's GAS_LANES_READ_OVER_S92 (the ramp's assert after it holds, read by the gate on lifting).
+# tests/test_bar.py's GAS_LANES_READ_OVER_S92; split into its own test at S92 (ruling C1).
 GATE_MAX_G_READ_OVER_S92 = ("S92 (#164 / #165): the Milky Way's max g 7.3027 over max(max s, lanes 7.0556) - a spur's height on a "
                             "lane's crest; register #221")
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=GATE_MAX_G_READ_OVER_S92))
-                                      if t == "milky_way" else t for t in TEMPLATES])
+@pytest.mark.parametrize("template", TEMPLATES)
 def test_gate_every_ring_of_both_templates(prod, template):
     """The gate at each template's own seeds, on every ring, with the numbers as read (the module docstring)."""
     model = prod[0].get(DEFAULT_MODEL)
@@ -703,10 +702,25 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # < 3e-5 and max_g <= max_s` - the cosine bar never passed the response's crest; the lanes do (7.06 on the lane
     # field against 6.23). S60 (D219): how near the field comes to its floor (`margin < 3e-5`: rounding where the
     # arm's weight is nothing) is a layer-on reading - `ngc_4414`'s inner rings are no longer emptied under the
-    # thickness factor - and is pinned apart in the test after this one.
-    assert got["max_g"] <= max(got["max_s"], float(gp.lanes.max()) if gp.barred else 0.0)
+    # thickness factor - and is pinned apart in the test after the next one.
+    # S92 (the gate's ruling C1 on #221): the upper bound `max_g <= max(max_s, lanes' max)` moved to the test after
+    # this one, which carries the Milky Way's strict hold, so that every other clause here is asserted unmarked.
     # The declared ramp's top is the viewer's display range, not a cap on the field: nothing clips to it.
     assert gm.GAS_DENSITY_CONTRAST.ramp.hi == 4.0
+
+
+@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=GATE_MAX_G_READ_OVER_S92))
+                                      if t == "milky_way" else t for t in TEMPLATES])
+def test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes(prod, template):
+    """The gate's upper clause of D216 item 12 as S58 leaves it, max g <= max(max s, max L), split from the test
+    before this one at S92 (the gate's ruling on #221) so that the Milky Way's reading over it stays visible without
+    hiding the clauses that hold. Held strict on the Milky Way, the clause not moved: 7.3027 at 3.94 kpc against
+    7.0556, a spur's height on a lane's crest (register #221); `ngc_4414`, unbarred, holds it on its response."""
+    model = prod[0].get(DEFAULT_MODEL)
+    o = template_run(prod, template)
+    gp = shape_of(model, o)
+    got = gate(gp, o.grid["phi"].edges)
+    assert got["max_g"] <= max(got["max_s"], float(gp.lanes.max()) if gp.barred else 0.0)
 
 
 @pytest.mark.parametrize("template", TEMPLATES)

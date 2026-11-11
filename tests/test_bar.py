@@ -513,8 +513,7 @@ GAS_LANES_READ_OVER_S92 = ("S92 (#164 / #165): the Milky Way's published gas ins
                            "clause's max(lane peak 7.0556, response 2.3930) - a spur's height on a lane's crest; register #221")
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=GAS_LANES_READ_OVER_S92))
-                                      if t == "milky_way" else t for t in TEMPLATES])
+@pytest.mark.parametrize("template", TEMPLATES)
 def test_gate_the_gas_with_its_lanes(prod, template):
     """"Gas ring means 1 to 1e-13 with the lanes, g ≥ w_bar·min L > 0". On every ring of the published field, with
     the lane field read from the pattern; an unbarred galaxy's gas is its response alone, w_bar = 0 on every ring.
@@ -574,8 +573,26 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     assert (float(peak.max()), float(R[int(np.argmax(peak))])) == pytest.approx((7.056, 3.1875), abs=2e-3)  # S87 (#80): was (7.058, 3.3375) - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     assert 5.0 < float(peak.max()) < 10.0
     # S60 (D219): the published gas's largest cell inside the bar - a lane's crest and an arm's response together -
-    # is a layer-on number, pinned apart in the test after this one.
-    assert 1.0 < float(g[R < gas.bar_length].max()) <= max(float(peak.max()), float(gas.profiles.max()))
+    # is a layer-on number, pinned apart in the test after the next one.
+    # S92 (the gate's ruling C1 on #221): the clause's upper bound, max(the lane field's peak, the response's crest),
+    # moved to the test after this one, which carries the strict hold, so that every other clause here is asserted
+    # unmarked on both templates (S87's split, above). Was `1.0 < ... <= max(peak.max(), gas.profiles.max())`.
+    assert 1.0 < float(g[R < gas.bar_length].max())
+
+
+@pytest.mark.xfail(strict=True, reason=GAS_LANES_READ_OVER_S92)
+def test_gate_the_gas_inside_the_bar_is_under_the_lanes_or_the_response(prod):
+    """The upper clause of the gate the test before this one holds, the published gas's largest cell inside the bar
+    under max(the lane field's peak, the response's crest), split from it at S92 (the gate's ruling on #221) so that
+    the Milky Way's reading over it stays visible without hiding the clauses that hold. The barred template only:
+    an unbarred galaxy has no lanes and its gas is its response (the test before this one). Held strict, the clause
+    not moved: 7.3027 at 3.94 kpc against max(7.0556, 2.3930), a spur's height on a lane's crest (register #221)."""
+    o = template_run(prod, "milky_way")
+    F, R = o.fields, o.grid.R
+    gas = compose.gas_pattern(F, R, constants(the_model(prod)))
+    g = np.asarray(F["gas_density_contrast"])
+    assert gas.barred
+    assert float(g[R < gas.bar_length].max()) <= max(float(gas.lanes.max()), float(gas.profiles.max()))
 
 
 def test_the_published_gas_s_largest_cell_inside_the_bar_as_measured(prod):
