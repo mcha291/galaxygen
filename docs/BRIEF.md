@@ -15,7 +15,7 @@ carried, 97 discharged**; next #223, D263.
 ## The batch's close (the gate's, after the docs pass; D262 records each)
 - The three-legs gate read by name on the final model; the layer-off reference re-based on a file of its own, `tests/layer_reference_s93.json` (#218
   moves with it); the hash pinned once at the batch's close (pinned at S93: 5a2c097e… → f9b04ed20a06c0a68420f1cc8e13714e), the bundles re-exported,
-  the frames regenerated beside the two goal pictures; the runner's full suite dispatched once, on the final head.
+  the frames regenerated beside the two goal pictures; the runner's full suite read at 1eb7f2d (6 failed, each a record M3 moved, re-pinned), `batch-m3`'s dispatched after the merge.
 - `batch-m3` → `main` waits on the owner's word on that run (as M1 and M2 did).
 
 ## Rulings taken on recommendation — the owner may re-rule any (the owner's word of 2026-11-11)
@@ -26,6 +26,7 @@ carried, 97 discharged**; next #223, D263.
 - #118 (a) the +0.2 dex edge the grid's limit (the builder's); (b) met on Sanders et al. 2016's atomic data (the gate's).
 - #117 carried on #124's ruling; #124 carried past M3 as a build item of its own (the blind window −0.043 ± 0.008).
 - `s83-robust` merged (T11 and T13), the one conflict resolved keeping S84's status dot.
+- The request fixture respelled by hand and `jwst_nircam`'s 17 requests held to `wfc3`'s (a viewer walk owed); the three-legs record re-pinned, not re-run.
 
 ## Carried past M3 with their readings written
 #115 (the realised closure), #118 (c) (which U the lines follow), #100 (a PARSEC download under 4 Myr, with #84),

@@ -2250,3 +2250,11 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   builder writes its notes as it goes, with the commit, the measurement and what is left.
 - [infra] **Re-read before deleting by line number.** An edit by line number after an earlier edit in the same file
   shifted the lines and deleted the wrong one. After any edit, line numbers are stale: re-read, or edit by content.
+- [close] **The local fast gate is the fast job's file list, and the push runs are read.** The gate ran the five docs
+  files at each merge; ci's fast job also runs `test_api` and `test_bundle`, and it was red on every push to
+  `session-93` from the lanes' merge (the request fixture named 20 fields where the Science tab sends 23; a filter
+  set shipped after the walks) until the gate listed the runs. Run the job's own list; read `gh run list` after a push.
+- [close] **A lane names the records it expects to move; the merge greps for them.** T3's and ION's notes listed
+  `test_layer`'s field counts and `test_sfh_azimuthal`'s moved set; the gate left them for the runner, which spent a
+  1:45 run to say so. A count of fields and a list of names move with every new field: read those nodes by name at
+  the merge, before the dispatch.
