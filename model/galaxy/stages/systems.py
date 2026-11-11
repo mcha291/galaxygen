@@ -64,7 +64,7 @@ from galaxy.core import seeds as _seeds
 from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
-from galaxy.core.special import ordered_product  # noqa: F401  (S93 #218: bright.py reads it from here)
+from galaxy.core.special import ordered_product  # S93 #218: _arrival sums with it; bright.py reads it from here
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
@@ -420,11 +420,10 @@ def _arrival(born: np.ndarray, kernel: np.ndarray) -> np.ndarray:
     order the model fixes (S93, #218): birth ring by birth ring, from the centre out, each term one elementwise
     product added to the running total. A BLAS product sums in an order that follows its thread count (OpenBLAS's
     dgemm read the star sample's ages one bit apart at 1 and 20 threads), and a seed names one galaxy whatever
-    the machine (#216's ruling). ``born`` is (birth rings, steps), ``kernel`` (birth rings, cell rings)."""
-    out = np.zeros((born.shape[1], kernel.shape[1]))
-    for i in range(born.shape[0]):
-        out += born[i][:, None] * kernel[i][None, :]
-    return out
+    the machine (#216's ruling). ``born`` is (birth rings, steps), ``kernel`` (birth rings, cell rings). Since the
+    review's mend (S93) it is :func:`core.special.ordered_product` itself - the same terms in the same order, every
+    bit unchanged (measured on the default galaxy layer on and off and the Milky Way's layer on)."""
+    return ordered_product(born.T, kernel)
 
 
 

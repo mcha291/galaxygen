@@ -6517,11 +6517,30 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    these three products is closed**; with the arrival law and bright.py's products, every BLAS product on a draw path
    under `model/galaxy` is now an ordered sum. Left, none of them feeding a draw (a comparison, a rounding, a count, a
    sort): `chemistry.migrate` (no caller); `spectra.py`'s three (the response tables and `object_response`, published
-   arrays no selection reads); `v6_clouds`' 32 × 32 solve (the render's `dust_diffuse_share`, a published weight);
-   the polyfits (published gradients and scale lengths, read by the specs' windows, by no stage); the `einsum`s and
-   `np.outer` (not BLAS). Every pinned number downstream of the history moves at about 1e-13 relative or less
+   arrays no selection reads); the polyfits (published gradients and scale lengths, read by the specs' windows, by no
+   stage); the `einsum`s and `np.outer` (not BLAS). Left too, but a selection does read it: `v6_clouds`' 32 × 32 solve
+   (see the review's mends below). Every pinned number downstream of the history moves at about 1e-13 relative or less
    (`feh_history`'s 2.8e-11 the largest), so every bit-exact record of a layer-on or layer-off field moves once: the
    integration's re-pin from the GitHub run.
+   *S93 (the independent review's mends, on the gate's rulings):* **(a) the 32 × 32 solve is read by a selection.**
+   `v6_clouds.continuous_share`'s `np.linalg.solve` (LAPACK, its bits the CPU kernel's) feeds `bounded_share`'s
+   `raw != clip(raw)` test, which decides which rings are corrected and is published as the header's `held_rings`; a
+   ring flips only when a node sits within an ulp of 0 or 1. A published weight, not a draw: left unordered, named.
+   **(b) What the claim covers: the BLAS products only.** Not covered, and not shown either way: the transcendental
+   functions (`np.exp` / `np.log`, through a CPU-dispatched library) and the `einsum` loops (`bright.py` near line 577,
+   `mass_cell` → `count_cell` → the bright draw; `v6_tiles.py` near line 320). They are not BLAS, so they do not follow
+   the thread count, but nothing here shows they give the same bits on another CPU; the evidence there is the runner's
+   agreement on the pinned records, node for node. "A seed names one galaxy on every machine" is closed for the BLAS
+   products, not beyond. **(c) The cost on per-request paths** (the reviewer's measurement): a layer-on render about
+   +45 ms a request, not cached (`old_share` → `Churn(birth=False)`); `render/unresolved` about +23 ms in `resolve`;
+   neither in a loop. **(d) The reviewer's read**, at 1 and 20 threads in separate processes: 0 of 1173 field digests
+   (the default galaxy layer on and off, the Milky Way's layer on) and 0 of five raw route bodies differ; reverting the
+   lane moves 116 fields, none integer, none a change of shape. **(e) The guard:** `tests/test_ordered_products.py`
+   scans every `.py` under `model/galaxy` (`ast`, no model run) for `@`, `@=`, `dot`, `matmul`, `tensordot`, `inner`,
+   `vdot`, `einsum`, `polyfit` and `linalg`, against an explicit allow-list (file, function, kind, count, each with its
+   reason); a new site fails it, and so does a listed site that is gone. Left, not built: a pair of runs at two thread
+   counts in separate processes (the runner's cores and time). `systems._arrival` now calls `ordered_product` itself
+   (every bit unchanged, measured on the three runs above).
 219. ~~**The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**~~
    (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clouds' and the clusters'
    L1 slopes over 47.5-190 pc against their own law read -0.4965 and -0.4791 on #216's re-laid census, against the
