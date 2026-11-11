@@ -2258,3 +2258,21 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   `test_layer`'s field counts and `test_sfh_azimuthal`'s moved set; the gate left them for the runner, which spent a
   1:45 run to say so. A count of fields and a list of names move with every new field: read those nodes by name at
   the merge, before the dispatch.
+- [audit] **A discharge names a test that fails when the defect returns.** A probe script, one cell, or a bit-equality
+  that survives the feature's removal is not a closer: #216's one-ulp probe ran only as a script, #197 was checked on
+  one cell, #166's cache had no test that could fail; S95 writes each test. (S94, Audit VI, D263)
+- [audit] **A bound re-declared from the reading that failed it is a record of that draw.** Four of M1's six ruled
+  bounds were the failing reading plus a margin; declare a bound from a population the test does not judge (D117),
+  and write the population beside it. (S94, Audit VI, D263)
+- [audit] **When a test's estimator changes, its bound is re-derived in the same commit.** At S92 the spurs' walk was
+  re-read at the crest, and 0.27 and 0.58 went on judging a statistic they were not measured on; re-derive the bound,
+  or the decision says it was carried by ruling. (S94, Audit VI, D263)
+- [close] **Before striking an entry, grep the tests for its number and for every hold it names.** A strict xfail
+  carried by a struck entry is a red nobody owns: `BRIGHT_GATE_READ_OVER` lost its entry when #161 was discharged,
+  and the audit opened #223 for it. (S94, Audit VI, D263)
+- [close] **A mark goes on the record's own test; a judged clause never rides under `machine_pinned`.** A node the
+  runner skips is read by name here before the batch merges: the three-legs gate went into `main` re-pinned and
+  unread. (S94, Audit VI, D263)
+- [close] **A ruling taken in the owner's place enters `BRIEF.md`'s list in the commit that takes it.** #219's
+  discharge, the layer-off reference's re-base and the guard ruling were taken at S92 and S93 and found missing from
+  the list by the audit. (S94, Audit VI, D263)
