@@ -3450,6 +3450,13 @@ never been judged in twenty-three sessions.
    Starburst99's (× 1.41) lands the ratio at 1.0 and row 34 at 2.3 × 10⁵³ (still inside — the row cannot tell);
    the instrument is the ratio, and a Milky Way HII-region line-ratio row (#117) would be a second one.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), read and listed, not built:* measured unchanged, `halpha_sfr_ratio` 0.71227 and Q 1.7577 × 10⁵³
+   s⁻¹ on the default and the Milky Way template. The remedy's larger half (#84's stars above the youngest
+   isochrone's 64 M☉, an estimated 0.489 of the budget) needs PARSEC v1.2S isochrones at log age 6.0–6.5 for the
+   same eleven [M/H] (CMD 3.9 at stev.oapd.inaf.it through `tools/fetch_parsec.py`), a download not in the
+   repository or its cache and not made; the other half, SHP03 Table 2's class III/I q_H by gravity, is
+   `massive_stars.ionizing_photons`, which the star sample's `star_ionizing_photons` also reads (T3's lane at S93):
+   built with the isochrones, after T3, it moves every nebular number once.
 101. **The diffuse ionized gas is 30% of the Hα by construction, and two readings say otherwise** (S35,
    D184). Every HII region loses 30% of its ionizing photons to the diffuse layer (Zurita et al. 2002's
    model `[verified: Haffner et al. 2009, arXiv:0901.0941, §IV]`) and none leave the galaxy, so
@@ -3464,6 +3471,16 @@ never been judged in twenty-three sessions.
    construction: a sourced local fraction near 1/8 — the model would then put twice too much glow between
    the knots.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), read and carried — neither closer met:* Zurita, Beckman, Rozas & Ryder 2002 read whole
+   `[verified: arXiv:astro-ph/0108135 via ar5iv, §3.1–3.3, §4.2, §5, Table 1]`: the mixed law (§3.3) keeps a constant
+   20 % below log L_Hα ≈ 38.6 erg s⁻¹ and above it eq. 10's f = L̂^0.6 ρ̂_c^(−1.6) − 1 (f_esc = f/(1+f), about 80 %
+   from NGC 157's brightest regions) in units normalised to that galaxy's own fitted L_Str and ρ_c, which are not
+   printed as constants a second galaxy could take; §5 and §4.2 say constant-fraction models fit as well, the
+   preference "could well be an incorrect interpretation"; Table 1: a constant 30 % gives 6.81 × 10⁵² of the 12–19 ×
+   10⁵² Lyc s⁻¹ NGC 157's diffuse gas needs (about 70 % constant would match). Haffner et al. 2009 re-read (§II.A):
+   the Milky Way's layer is ionized at "about 1/8th" of the stellar photons, external galaxies "about 1/2", neither
+   with an uncertainty. So no law with usable constants and no Milky Way fraction with a width: the construction
+   stands, 0.30 measured on the default and the Milky Way template alike.
 
 102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**
    (S36, BUILD_II Phase 10, D185). The census draws every supernova as a free object per cell from Phase 6's rate
@@ -3786,6 +3803,12 @@ never been judged in twenty-three sessions.
    defect in full; steeper than −0.05 and LAMOST's N2 gradient is the outlier, the row's source carrying the conflict;
    between, both — then #124's ruling.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), the model side read, the closer left to a blind reader:* after #118 (the [S II] split moves no
+   [N II]) row 37 reads −0.098650 dex kpc⁻¹ layer on and off, the default and the Milky Way template alike, as at S88.
+   The closer is a reader forbidden the repository; the ION builder has read the model's numbers and is not one, so
+   the gate dispatches it: Esteban & García-Rojas 2018 and Arellano-Córdova et al. 2020, the Galactic HII regions'
+   direct-method 12 + log(O/H) gradient over R_G 8–15 kpc with its uncertainty, a window set before any model number
+   is shown.
 118. **3.0 % of the regions read the grid's metal-rich edge (a quarter until S44), and the grid's gas is not the
    region's** (S42, D192; re-stated at S44, D195). The grid spans log(Z/Z☉) −1.98 to +0.2; since S44 enters the
    axis on the grid's own oxygen (8.93, #121, D195) **3.0 % of the default regions** (the inner disc) are richer
