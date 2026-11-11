@@ -124,7 +124,12 @@ POLISHED_M2, UNOBSCURED_M2 = 26.3, 25.4  # [verified: JDox JWST Telescope: polis
 # The struts' directions, degrees anticlockwise from the frame's +x with +V3 up [inferred]: the upper strut along +V3 makes
 # the horizontal pair of JWST's eight spikes; the lower two, 30 degrees either side of -V3, are perpendicular to the
 # segments' diagonal edges' spikes and so add to them rather than making more - eight spikes in all, as JWST's images
-# show. Not read from a drawing of the tripod; the spikes' relative brightness is not matched to the images (S83 measured
+# show. Rigby et al. 2023 (PASP, DOI 10.1088/1538-3873/acb293) sec. 4.3 confirms the vertical strut and the 6 + 2 spikes:
+# "six stronger diffraction spikes at 60 deg intervals created by the segment and aperture edges", "plus two fainter
+# horizontal spikes created by the vertical secondary mirror support". No page read gives the two lower struts'
+# directions (240 / 300 stay [inferred]) or any strut's width (the width stays [derived]); McElwain et al. 2023 sec. III:
+# "a tripod that consists of four composite tubes" (re-read at S95, reader R, F-R-2).
+# Not read from a drawing of the tripod; the spikes' relative brightness is not matched to the images (S83 measured
 # the horizontal pair at twice the vertical's light with the derived width, where JWST's images show it fainter).
 STRUT_ANGLES_DEG = [90.0, 240.0, 300.0]
 # The detectors' pixels, red green blue [verified: JDox NIRCam PSFs: 0.031" short-wavelength (F090W, F200W), 0.063"
@@ -193,7 +198,12 @@ def jwst_optics() -> dict:
                   "drawing of the tripod], each " +
                   f"{width:.5f} pupil radii ({width * circum * 100:.1f} cm) wide [derived: the width at which they cover "
                   f"1 - 25.4/26.3 = {want:.5f} of the segments, JDox's unobscured over polished area, on a {STRUT_GRID}^2 "
-                  "grid, all of the difference taken as the struts' as JDox says]. The detectors' pixels 0.063\" in red (F444W, long wavelength) and 0.031\" in green and blue "
+                  "grid, all of the difference taken as the struts' as JDox says]. Rigby et al. 2023 sec. 4.3 confirms "
+                  "\"two fainter horizontal spikes created by the vertical secondary mirror support\" beside \"six stronger "
+                  "diffraction spikes at 60 deg intervals\"; no page read gives the two lower struts' directions or any "
+                  "strut's width, so they stay [inferred] / [derived] until the STPSF pupil or an OTE drawing is read, and "
+                  "McElwain et al. 2023 describe \"a tripod that consists of four composite tubes\", so three equal-width "
+                  "legs is this tool's simplification (re-read at S95, reader R). The detectors' pixels 0.063\" in red (F444W, long wavelength) and 0.031\" in green and blue "
                   "(F200W, F090W, short wavelength) [verified: " + _JDOX_PSF + "], each channel's table convolved with its own."),
         "aperture": "hexagonal-18",
         "aperture_m": round(float(2 * circum), 4),

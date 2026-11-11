@@ -205,7 +205,8 @@ Along the arm and at its ends
 - The arms' share of the azimuthally averaged profile peaks "at a distance of 1-2 disc radial scale lengths", goes
   to zero at the centre and outside; peak share / (S/T) mostly 1.5-2.5; the bump on the profile is 0.3-0.7 mag; arms
   end at r_end "usually between 0.5 and 0.7" r25 with a wide range; in almost all galaxies the arms are truncated
-  inside the disc [verified: Chugunov 2024, Sect. 6.5, Fig. 17, 20, conclusions (vii)]. Arm radial scale over disc
+  inside the disc [verified: Chugunov 2024, Sect. 6.5, Fig. 17, 20, conclusions (vii)] (the share's profiles are Fig. 16
+  and Fig. 20 right; Fig. 17 is the truncation radii r_end over r25 - re-read at S95, reader R, F-R-4). Arm radial scale over disc
   scale <h_s>/h: 0.09 to 7.58 per galaxy [verified: Table 4].
 - The radial brightness profile along an arm is "far from exponential in many cases"; dropping the exponential term
   raises chi2 by only 1-3%, while sharp ends (no growth or cutoff zone) raise it by more than 10%; Gaussian and cubic
@@ -395,7 +396,7 @@ NUMBER AND LENGTH OF PIECES
 - NOT measured: a length distribution of flocculent pieces; the number of pieces in a flocculent disc.
 WHERE THEY START
 - Arms' share is zero at the centre, peaks at 1-2 h (Chugunov 2024). Inner two-armed part inside about 0.5 R25,
-  ending at twice the bar radius in barred galaxies (Elmegreen & Elmegreen 1995, abstract at fetch level only).
+  ending at twice the bar radius in barred galaxies (Elmegreen & Elmegreen 1995, abstract at fetch level only) `[recall - NOT READ]` (unreachable at S95, reader R).
   Inner rings in about 1/3 of spirals: 50% of S0/a-Sc, 13% of Scd-Sm (Buta 2015).
 - NOT measured: fraction of arms starting at a bar's end against a ring; branch radii; branch frequency.
 INEQUALITY WITHIN A GALAXY
@@ -750,14 +751,15 @@ inner ends (a sourced inner taper for an unbarred disc's arms) and for a driven 
 a re-reading of Part A above and of READING_BAR.md; nothing was fetched, the arithmetic is the lead's `[inferred]`.
 
 - **What Part A holds about an arm's inner end.** The arms' share of the azimuthally averaged light "peaks at a
-  distance of 1-2 disc radial scale lengths" and "goes to zero at the centre" (Chugunov 2024, Sect. 6.5, Fig. 17, 20,
-  conclusions (vii)); along an arm the radial brightness is "far from exponential in many cases", and **ends that are
+  distance of 1-2 disc radial scale lengths" and "goes to zero at the centre" (Chugunov 2024, Sect. 6.5, Fig. 16, 20,
+  conclusions (vii); Fig. 17 written here before is the truncation radii - re-read at S95, reader R, F-R-4); along an arm the radial brightness is "far from exponential in many cases", and **ends that are
   sharp (no growth or cutoff zone) raise chi2 by more than 10 %, while Gaussian and cubic tapers fit equally (0.5 %
   apart)** (Chugunov 2025, Sect. 3.2, 4.1); arms are traced "from the inner galaxy region (the ends of a bar or where
   spirals begin to be visible beyond the main body of a bulge)" (Savchenko 2020, Sect. 6) — a method statement; the
   innermost HII-traced segments lie at 1.09-2.63 kpc in four galaxies (Honig & Reid 2015, Tables 2-5); the inner
   two-armed part ends at twice the bar radius in barred galaxies (Elmegreen & Elmegreen 1995, a search summary of
-  the abstract only). The arms' radial scale over the disc's, <h_s>/h, runs 0.09-7.58 per galaxy (Chugunov 2024,
+  the abstract only `[recall - NOT READ]`: the paper unreachable at S95, reader R; the authors' 1994 AAS abstract
+  read gives resonances, no factor of two). The arms' radial scale over the disc's, <h_s>/h, runs 0.09-7.58 per galaxy (Chugunov 2024,
   Table 4).
 - **What it gives a model.** An inner end is a *growth zone* — measured to exist (a sharp start fits worse by over
   10 %), its shape free between a Gaussian and a cubic — and the arms' share peaks at 1-2 h and is zero at the

@@ -49,16 +49,22 @@ galaxy by 0.009 only, so the colour gap is the stars', not the dust's, under eit
 uncertainties", pointing to Licquia, Newman & Brinchmann 2015 — though a footnote gives typical ~0.1 mag calibration
 errors (re-read at Audit VI, 1B's notes); `lo == hi`, D100), so a published attenuated
 magnitude would be a field no row reads (S41: dead) until a source with errors is read — Licquia, Newman &
-Brinchmann 2015's analogue values with their uncertainties `[recall — NEEDS SOURCING]`. Whether the rows then read
+Brinchmann 2015's analogue values with their uncertainties `[recall — NEEDS SOURCING]` (the source exists and
+prints asymmetric errors - ApJ 809, 96: read at S95, reader R; its values not entered). Whether the rows then read
 intrinsic or attenuated light is the source's statement to make, and the owner's ruling (S28 ruling (b)) if it does
 not.
 
 ## #92 — the PAH fraction's sSFR form
 
-Only the metallicity relation (Rémy-Ruyer et al. 2015 eq. 5) was read (`AUDIT_III.md` A3 row on
-`PAH_METALLICITY_INTERCEPT`); the paper's remark that f_PAH is driven primarily by the sSFR is all the repository holds
-of the other form. **What would close it:** the sSFR relation's coefficients and scatter from the same paper, or a
-resolved per-radius calibration (KINGFISH `[recall]`).
+Until S95 only the metallicity relation (Rémy-Ruyer et al. 2015 eq. 5) was read (`AUDIT_III.md` A3 row on
+`PAH_METALLICITY_INTERCEPT`), and this section said the sSFR form was not held. **It is printed in the same numbered
+equation** (sec. 4.3): "log(f_PAH) = (-11.0 +/- 0.3) + (1.30 +/- 0.04) x (12 + log(O/H)); log(f_PAH) = (-5.5 +/- 0.1)
+- (0.53 +/- 0.01) x log(sSFR)" (5), "with a dispersion of 0.35 dex around the relation with metallicity, and of 0.38
+dex around the relation with sSFR"; f_PAH normalised to the Galactic 4.57 % (Zubko et al. 2004) (read at S95, reader
+R, F-R-1; the metallicity line, its errors and the 0.35 dex MATCH the model's constants). Not read: the sSFR's units
+in eq. 5 and the sample's range. **What closes #92 now:** a build or a ruling - the sSFR line used per radius in
+place of (or beside) the metallicity line, its units read first - or a resolved per-radius calibration (KINGFISH
+`[recall]`).
 
 ## #109 — the scattered light's phase in an inclined disc
 

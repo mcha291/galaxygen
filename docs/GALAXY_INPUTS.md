@@ -3342,6 +3342,9 @@ never been judged in twenty-three sessions.
    stage would read the published `sfr_surface_density` over the stellar surface density per ring.
    *S95 (Audit VI, F-5-7; D264):* the closer is a source to read (Rémy-Ruyer et al. 2015's sSFR relation, or a
    resolved per-radius calibration): its destination is the reading session after S95.
+   *S95 (reader R, F-R-1):* the sSFR relation is read - Rémy-Ruyer et al. 2015's eq. 5 prints it beside the
+   metallicity line, log(f_PAH) = (-5.5 +/- 0.1) - (0.53 +/- 0.01) x log(sSFR), 0.38 dex (`READING_DUST.md` #92) - so
+   the closer is now a build or a ruling, re-ruled at the reading session after S95.
 93. **No acceptance row reads the dust temperature or the infrared luminosity** (S31, D180; headed "Row 32 is
    owed and was not entered" until S70 — row 32 has been the globular-cluster system mass since S34, `spec.py:239`).
    Planck 2013 XI's whole-sky ⟨T_obs⟩ = 19.7 ± 1.4 K `[verified: Table 3, read at S31]` was read while

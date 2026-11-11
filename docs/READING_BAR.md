@@ -162,7 +162,7 @@ Each entry: full tag, what the citation covers, definitions.
 - **E18** `[verified: Erwin 2018, MNRAS 474, 5372, arXiv:1711.04867, abstract, Tables 2–4,
   https://ar5iv.labs.arxiv.org/html/1711.04867]`. Covers the frequency, the fit, the resolution argument. Bar size:
   slope 0.10 ± 0.03 below and 0.60 ± 0.08 above log M⋆ = 10.16; "considerable scatter" at fixed mass, no number.
-- **E19** `[verified: Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Tables 2–4, https://arxiv.org/html/1908.08423]`.
+- **E19** `[verified: Erwin 2019, MNRAS 489, 3553 (vol. 489, issue 3, pp. 3553-3564: read at S95, reader R), arXiv:1908.08423, Tables 2–4, https://arxiv.org/html/1908.08423]`.
   No dependence of bar size on gas fraction (r = 0.08, P = 0.11) or on type once mass is held.
 - **MA17** `[verified: Méndez-Abreu et al. 2017, A&A 598, A32, arXiv:1610.05324, Table 4,
   https://arxiv.org/html/1610.05324]`. Covers fraction per mass bin; no Bar/T aggregate.
@@ -656,7 +656,8 @@ the question is not answered by what the readers fetched it says so: those are t
   where B/T > 0.2, ∼0.85 with no bulge, the change near 10^10.2 M☉) `[verified: K15, results — A1.2]`. The Milky Way
   template (M⋆ 4.74 × 10¹⁰ M☉, B/T 0.16) is on the flat side of both. The model's body is (1 − m²)ⁿ with n =
   `BAR_PROFILE_INDEX` = 2 for every galaxy — S15's S⁴G fitting form (α = 2, β = 0), which A3 calls "a fitting
-  choice, not a measurement"; A3's adoption was a Sérsic run with n set by the bulge (D217 item 4 took one form,
+  choice, not a measurement" (Salo et al. 2015 eq. 7, α and β fixed with no reason given: read at S95, reader R);
+  A3's adoption was a Sérsic run with n set by the bulge (D217 item 4 took one form,
   chosen before a number was read).
 - **Axis ratio of the stacks.** DG16b's stacked bars: maximum ellipticity ε ≈ 0.5 for spirals and irregulars,
   ≈ 0.35 for S0s `[verified: DG16b, text, ×1 — A1.2]`, i.e. b/a ≈ 0.5 / 0.65 at the isophote of maximum ellipticity

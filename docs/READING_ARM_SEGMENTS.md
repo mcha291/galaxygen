@@ -320,7 +320,8 @@ question. Nothing below was fetched; the arithmetic is the lead's `[inferred]`.
   scatter is about H17's half-width (26.1 - 12.2)/2 = 6.95 and YH19's ~7. A flat-rotation-curve galaxy (Gamma near 1,
   most of them) is drawn about the Milky Way's pitch, not the population's.
 - **NGC 4414 (Sc, t = 5.2 +/- 0.6, HL in READING_NGC_4414.md) in that distribution.** 28.9 +/- 6.0 deg (five 3.6 um
-  segments, Herrera-Endoqui et al. 2015) is **above H17's 84th percentile (26.1)**, (28.9 - 18.0)/6.95 = **1.57
+  segments, Herrera-Endoqui et al. 2015; the five Table 3 rows -30.5, -34.2, -28.1, -44.0, -7.6 deg read through the
+  Harvard VizieR mirror, mean 28.88, error of the mean 5.97 - read at S95, reader R) is **above H17's 84th percentile (26.1)**, (28.9 - 18.0)/6.95 = **1.57
   sigma** from H17's whole-sample mean (18.0 deg, their sec. 3.1, beside the same percentiles; the 19.0 used here
   before was the midpoint of the per-arm-number means of the mass-matched subsample) (re-read at Audit VI, F-1A-3),
   and (28.9 - 19.7)/7 = **1.3 sigma** from DG19's T 4-6 mean at YH19's scatter — against
