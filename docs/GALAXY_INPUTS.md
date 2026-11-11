@@ -718,10 +718,14 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
 | **discharged** at S91 | **114, 210, 215** (the region regime's cluster points drawn from their own response through the filter set, T2's closure test green; the clouds' L1 slope inside the window on #216's re-lay, killed by its own clause, not mended; by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 3 |
 | **discharged** at S92 | **164, 165, 211, 216, 219** (the spur's height the gas crest over the ring's trough and the walk at the gas crest, built as ruled; the response tails on their own grid to 10^6 K, the jwst_nircam set inside test_render's bounds; the arm census's births machine-independent - the runner's eleven failing nodes read on this machine at bd0ed0c, every number the runner's, the thirteen marks lifted; the L1 judged clause kept on the default census by the gate's ruling, both slopes inside - D261) | 5 |
+| **discharged** at S93 | **113, 119, 166, 171, 174, 175, 217** (the star sample read along equivalent evolutionary points, its luminosity function and its light per mass on their closure tests; the diffuse gas's [N II] and [S II] by Madsen et al. 2006 at the layer's temperature, drawn beside its Hβ; the starlight by age cached per run, the skip found met where the viewer asks - by the gate's ruling; the points' dust through the march's gas map; the star-first remainder split by kept octaves with `kept=1`, its WFC3 size clause held on #222; one grid threshold read green on the runner - D262) | 7 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
-| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 113, 115, 117, 118, 119, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 166, 169, 170, 171, 173, 174, 175, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 217, 218, 220, 221 | 72 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 169, 170, 173, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 218, 220, 221, 222 | 66 |
 
-So the board's **115 open** is 43 permanent and 72 carried, and no item is unruled (S92 (M3), D261: #164, #165, #211, #216, #219 discharged - #164 / #165 built as ruled, #211 built, #216 read on the runner and here alike, #219 by the gate's ruling; #220 and #221 opened, the walk's crest read over its bound and a spur's crest on a bar lane; S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; #215 discharged on its own kill clause; #218 opened, the layer-off reference off on `main`, and #219, the L1 gate's two slopes at the window's edge; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
+So the board's **109 open** is 43 permanent and 66 carried, and no item is unruled (S93 (M3's close), D262: #113,
+#119, #166, #171, #174, #175, #217 discharged - #113 / #171 on their closure tests (T3's pass), #119 on T10's build,
+#166 by the gate's ruling, #174 on its closer, #175 on its build with #222 opened for its one clause held strict,
+#217 on the runner's read; S92 (M3), D261: #164, #165, #211, #216, #219 discharged - #164 / #165 built as ruled, #211 built, #216 read on the runner and here alike, #219 by the gate's ruling; #220 and #221 opened, the walk's crest read over its bound and a spur's crest on a bar lane; S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; #215 discharged on its own kill clause; #218 opened, the layer-off reference off on `main`, and #219, the L1 gate's two slopes at the window's edge; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3180,6 +3184,8 @@ never been judged in twenty-three sessions.
    supergiants `[inferred]`. **Carried**; closable by reading σ_e (a constant with a citation) and
    applying Γ_e = σ_e L / (4πGMc). Phase 10 (bubbles) reads this luminosity and inherits the error.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — Γ_e is one constant on the stellar wind's escape velocity, read with the populations' sources.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* σ_e needs its source read (Lamers & Leitherer
+   1993, not fetched); a constant with no source in the repository, not closable in the batch.
 84. **Two thirds of the ionizing budget rides on an extension the ruling does not cover, and about half
    of the true budget is in stars the table cannot see** (S28, D177). Ruling (a)'s table (SHP03, class
    V, 32–51 kK) governs 0.328 of a steady solar population's Q; 0.218 comes from cooler B stars and
@@ -3193,6 +3199,8 @@ never been judged in twenty-three sessions.
    with the present Q, which would say the unseen half is not there. *Audit III (D186, A3-9):* #100 is this
    debt measured — the model's Q per unit star formation is 0.71 of Starburst99's — so the two share one remedy.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — shares #100's remedy (the hot stripped stars and giants, isochrones under 4 Myr).
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* needs a sourced hot-star / WR calibration and
+   isochrones under 4 Myr (#100's download); not met by S91-S93's builds; carried with #100.
 85. **The locked stellar mass is 84% stars and remnants: the instantaneous return fraction is 0.30 and
    the isochrones return 0.41** (S29, BUILD_II Phase 4, D178). `stellar_mass_total` counts the mass
    formed times (1 − `RETURN_FRACTION`); Phase 4 integrated what that mass is — living stars at their
@@ -3209,6 +3217,8 @@ never been judged in twenty-three sessions.
    Kroupa population that reads near 0.30 at 12.6 Gyr, which would say the isochrones' present masses
    are what is wrong.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the return fraction from the isochrones is the populations' own tables, a mechanism in `sfh` with its prediction.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* a mechanism in `sfh` (delayed recycling) that
+   moves rows 1 and 20 - a model change on judged rows, the owner's scale.
 86. **The black hole's mass and the remnant boundaries do not depend on metallicity** (S29, D178). A
    black hole weighs 7.8 M☉ (Özel et al. 2010) and a neutron star 1.33 (Özel & Freire 2016) at every
    [Fe/H], and the white-dwarf / neutron-star / black-hole boundaries (8.5 and 25 M☉; Smartt 2009,
@@ -3220,6 +3230,8 @@ never been judged in twenty-three sessions.
    integral's metallicity axis, which `budget` already carries. Prediction: the black-hole mass at
    [Fe/H] = −1 doubles and the remnant fraction moves by under 1% (black holes are 2.5% of it).
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the remnant integral's metallicity axis and one fit read: the remnants are the populations'.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* needs Spera et al. 2015's or Fryer et al.
+   2012's fit read (not extracted) - a source first.
 87. **No acceptance row reads the local white-dwarf surface density** (S29, D178; headed "Row 30 is owed and was
    not entered" until S70 — row 30 has been the core-collapse rate since S30, `spec.py:221`). The one
    remnant target read with an uncertainty is McKee, Parravano & Hollenbach 2015 Table 1: white dwarfs
@@ -3247,6 +3259,8 @@ never been judged in twenty-three sessions.
    Ia iron was 1.87× too much. Prediction (B4): row 31 falls below its floor unless the spheroid's Ia
    (#89) are added; the gas iron at R₀ falls and the wind refits slower; row 22's tilt moves.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the Ia yield is one sourced constant (WAF17 or Maoz & Graur), entered before row 31 is next judged; its reach into `WIND_SPEED` is B10's.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* needs WAF17's text or Maoz & Graur's events per
+   mass with the iron per event sourced, entered before row 31 is judged (D113) - a source and a judged row.
 89. **The spheroid's type Ia are not in the rate** (S30, D179). `type_ia_rate` convolves the disc's
    formation history; the spheroid is old stars the halo stage derives (S17) that the history never
    formed, and the stellar halo does not exist yet (Phase 5). Their Ia are missing — an estimated 0.03–0.05
@@ -3254,6 +3268,8 @@ never been judged in twenty-three sessions.
    tail]` — and row 31 reads low by that share. **Carried**; closable when the spheroid has a formation
    time (a burst at its assembly, the same DTD) and when Phase 5's halo stars join the history.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the spheroid's Ia need its formation time, which the populations' batch gives with #88.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* needs the spheroid's formation time (a burst),
+   a mechanism, with #88.
 90. **The habitable zone's two open readings** (S30, D179). Gowanlock et al. 2011's eq. 5 was read twice as
    d = 8 pc × 10^(−0.4 ΔM) and once as scaling with the square root of the flux ratio, 10^(−0.2 ΔM); the
    two give different zones (hazard at R₀ 2.03 against 0.20 per Gyr, the habitable count peaking at 10.8
@@ -3393,6 +3409,8 @@ never been judged in twenty-three sessions.
    which would also be the acceptance row S33 could not enter. What kills the construction: a measured
    young-cluster function whose slope the census's cannot reach at any efficiency.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the cluster census's mass function and its efficiency are the populations' (the clusters are born of them).
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* needs a sourced cloud-to-cluster relation or
+   smallest cluster mass; T3 (S93) changed the sample's membership, not the census's mass function.
 97. **The bound cluster mass before survival is 72 times the globular clusters' share** (S33, D182).
    `bound_cluster_mass_total` — Lada & Lada 2003's 7% emerging bound, applied to every star formed over the
    history net of return, every star taken to form in a cluster (their 70–90% `[verified: arXiv:astro-ph/
@@ -3411,6 +3429,8 @@ never been judged in twenty-three sessions.
    age at which a survivor counts as a globular *and* a sourced disruption time for halo orbits; then
    `gc_system_mass` is the old survivors and this item and #98 are judged together.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the survivors' age and the halo-orbit disruption time are the populations' sources, with #98.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* S34 built the survival; what remains, the old
+   survivors separated at a halo-orbit disruption time, is a mechanism with a source; with #98.
 
 98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex — 0.25 above the
    blind window's top** (S34, BUILD_II Phase 5, D183; the window re-set at S42, D192). The ensemble median
@@ -3427,6 +3447,8 @@ never been judged in twenty-three sessions.
    10⁷ at any sourced t₀ between the open clusters' and the N-body one, the bound fraction or the mass
    function's scale at high redshift is at fault, not the dissolution.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — row 32's miss closes with #97's separation of the old survivors.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* its kill prediction (the old survivors
+   separated, row 32 within 0.2 dex) rests on #97's mechanism; with #97.
 99. **Row 33, the stellar halo mass, reads 3.0 × 10⁹ against BHG16's 4–7 × 10⁸** (S34, D183). The debris
    integral over `mergers[]` takes each satellite's stars as the mass ratio times the host's disc stars
    formed before the event `[inferred]`: Gaia-Enceladus 0.25 × 9.63 × 10⁹ = 2.41 × 10⁹, Sagittarius 0.02 ×
@@ -3461,6 +3483,7 @@ never been judged in twenty-three sessions.
    repository or its cache and not made; the other half, SHP03 Table 2's class III/I q_H by gravity, is
    `massive_stars.ionizing_photons`, which the star sample's `star_ionizing_photons` also reads (T3's lane at S93):
    built with the isochrones, after T3, it moves every nebular number once.
+   *S93's gate (D262):* **carried past M3** with #84 (the download and the gravities in one pass).
 101. **The diffuse ionized gas is 30% of the Hα by construction, and two readings say otherwise** (S35,
    D184). Every HII region loses 30% of its ionizing photons to the diffuse layer (Zurita et al. 2002's
    model `[verified: Haffner et al. 2009, arXiv:0901.0941, §IV]`) and none leave the galaxy, so
@@ -3485,6 +3508,7 @@ never been judged in twenty-three sessions.
    the Milky Way's layer is ionized at "about 1/8th" of the stellar photons, external galaxies "about 1/2", neither
    with an uncertainty. So no law with usable constants and no Milky Way fraction with a width: the construction
    stands, 0.30 measured on the default and the Milky Way template alike.
+   *S93's gate (D262):* **carried past M3**, neither closer met.
 
 102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**
    (S36, BUILD_II Phase 10, D185). The census draws every supernova as a free object per cell from Phase 6's rate
@@ -3498,6 +3522,8 @@ never been judged in twenty-three sessions.
    free census; the same photons rule (D185: a renderer draws the shell or the region, never both) applied to the
    energy. What kills the construction: a field showing supernova remnants between the arms as densely as in them.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the remnants drawn at the clusters that made them: the populations' census, with the clusters'.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* a census redesign (the core collapses at the
+   clusters), more than the batch's remaining work; after T3's membership.
 103. **The remnant count is set by a visible lifetime read as a lower bound, and its shell physics is inferred**
    (S36, D185). 1 464 remnants = the rates × 60 000 yr — Frail, Goss & Whiteoak 1994's "the mean lifetime of radio
    supernova remnants is > 60,000 years" `[verified: arXiv:astro-ph/9407031, §4.1, read through a garbled text
@@ -3513,6 +3539,8 @@ never been judged in twenty-three sessions.
    for the radiative shell's ionization state; the Sedov jump re-read in a source. What kills the count: a sourced
    Milky Way remnant census above ~3 000 or below ~300 for a complete survey.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the remnants' age distribution and the shell's ionization state are the same census's sources.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* needs Green's catalogue statistics read - a
+   source first.
 
 104. ~~**The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**~~
    **DISCHARGED at S38 (D187)**: the exponent is −0.2, the zone's pins swapped to the printed reading. (S37, Audit III A3-1, D186). `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock
@@ -3676,7 +3704,7 @@ never been judged in twenty-three sessions.
    inside the march, overlaps approximated by a sort on the near surface. **Carried.** What closes it: the star
    layer's depth written and read by the transmission pass (a depth-aware multiply), or the region's objects
    marched inside `FieldVolume`'s own march — one volume, the exact form.
-113. **The stars stay on the level-0 prefix-scaled sample, and the gate tested the clusters' Hα only** (S40, V3,
+113. ~~**The stars stay on the level-0 prefix-scaled sample, and the gate tested the clusters' Hα only**~~ (S40, V3,
    R2's first departure, D190). R2 asked for `/api/region?level=k` as the region's star points; the viewer keeps
    D167's prefix-scaled level-0 sample, which densifies on approach with no star moving, because picking a star
    opens its system by (cell, index) read from the header and level-k rows are named by `level`, `cell`, `index`
@@ -3693,6 +3721,14 @@ never been judged in twenty-three sessions.
    zoomed-in point layer is now the bright catalogue at level-k tiles in the star-first mode (D225 R1), its picker
    naming the level; the level-k sample stays V3's display points in the field mode's region regime.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3; T3 lane, fd57ebc):* the closer as S65 re-ruled it - #171's mend - is built: `photometry.lookup` reads
+   the sample along equivalent evolutionary points (#171's paragraph), the light per mass formed through the lookup
+   0.43-0.98 -> 0.947-1.043 of the population's own integral at 21 ages between isochrones (`tests/test_photometry.py`),
+   the sample's old light over 400 s against the render's older than the window 0.655 -> 0.927 (Milky Way) and 0.599
+   -> 0.878 (`ngc_4414`); the young part's closure, sample + points over the render's, 1.92 -> 0.94 (Milky Way) and
+   2.04 -> 1.03 (`ngc_4414`) at the test's 500 000 stars (`tests/test_s93_t3_membership.py`, #115). **Discharged at
+   S93 (D262)** on the two closure tests. The realised per-patch closure (the sample's light over a patch is its few
+   brightest giants' draw) is #115's, which carries it.
 114. ~~**A point is painted by its bolometric light through a blackbody's share at its temperature, and that is
    about twice its light through an optical filter**~~ (S41, V4, D191). A star's point is `star_luminosity` in the
    declared blackbody ramp's hue at `star_temperature` (D5, A9), and P1 paints a cluster the same way from
@@ -3790,6 +3826,9 @@ never been judged in twenty-three sessions.
    the s convention's 1.17 with the bulge) and a sample dense enough in young stars; and the left items - the
    caption's count, the "sampled" stars painted by the blackbody share (D188's), the star-first mode's dissolved
    clusters still points (its bright catalogue holds no star of the window).
+   *S93's gate (D262):* **carried, met in part.** The membership by class (the census's rule on each star's own
+   uniform), not a per-star `star_cluster_index`, is taken on the builder's recommendation at S93's gate under the
+   owner's word of 2026-11-11 ("don't block on my rulings ... take your own recommendations"); the owner may re-rule.
 116. ~~**A cluster's extent is published and not drawn: every cluster is a point sprite at every level**~~
    **DISCHARGED at S64** (D224, R7, T6: the form ruled Plummer, a = r_h / 1.305; `plummer.ts` draws it in place of a
    cluster's point where 2 r_h fills a pixel, each pixel the profile's exact integral, the sprite summing to the light
@@ -3888,7 +3927,11 @@ never been judged in twenty-three sessions.
    lines follow (inner face, volume mean, the front) is a modelling statement no source read here makes, so the
    read point is unchanged and (c) carries. **Changes what is drawn** only through curves that weigh 6716 and 6731
    differently (WFC3's F673N); the SHO box takes the pair's sum.
-119. **The diffuse ionized gas carries only its recombination lines** (S42, D192). The grid models a
+   *S93's gate (D262):* **carried, open on (c) alone.** (a) the +0.2 dex edge the grid's limit, on the builder's
+   recommendation, and (b) met on Sanders et al. 2016's atomic data, the gate's reading - both taken at S93's gate
+   under the owner's word of 2026-11-11 ("don't block on my rulings ... take your own recommendations"); the owner may
+   re-rule either. What closes (c): a source that says which U a region's lines follow, then the read point moved.
+119. ~~**The diffuse ionized gas carries only its recombination lines**~~ (S42, D192). The grid models a
    radiation-bounded region around a young cluster; the diffuse layer's field is softer and diluted, and its
    observed [N II]/Hα and [S II]/Hα are enhanced above the regions' `[recall: Haffner et al. 2009 §IV, the
    WIM's line ratios; not re-read at S42]`. So `lines_dig` holds Hβ alone, named in the route's header, and a
@@ -3912,7 +3955,10 @@ never been judged in twenty-three sessions.
    `test_render.py`). The width is the layer's: 6000–10000 K gives [N II]/Hα 0.21–1.10. **Changes what is drawn**:
    the diffuse glow in every set whose curves pass 6583–6731 Å (the Hubble palette's red, the broadband R).
    Remains: the ratios are one number for the layer (Madsen's local abundances, not the model's per-ring gas);
-   their rise with height (Haffner §II.C) is not modelled.
+   their rise with height (Haffner §II.C) is not modelled. **Discharged at S93 (D262)**: T10 built (2c797d6, the
+   review's mends 16bd6cf / 0fe4bef / 83dd181), the closer met as written - a sourced relation with the layer's
+   temperature, two scalars of the nebular stage, drawn beside the layer's Hβ (`tests/test_nebular.py`'s closure test,
+   `test_render.py`'s `lines_dig` identities).
 120. ~~**The named instrument's sprite is a display choice, and the curves' wavelength convention is unstated**~~
    **DISCHARGED at S67** (D227 R1, R3: where a template carries an instrument and a distance and the view uses that
    instrument's filters, a point is the instrument's image of a point at its physical size - the obscured Airy of a
@@ -4039,6 +4085,8 @@ never been judged in twenty-three sessions.
    reading of what CMD's bands are), or a consistency solve that is exact for eight anchors (a linear solve in
    the segment basis instead of a multiplicative iteration), either re-pinning V1's gate.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the band curves' real extent re-pins V1's gate: the populations' light tables.
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* closable by an exact linear solve for the
+   eight anchors - a light-table change re-pinning V1's gate and the forty-odd light pins, one pass with #127.
 
 126. ~~**The field's light per isochrone is integrated on a mass grid that aliases the giant branch: the disc's light is
    6.7 % high bolometric and 5–12 % by band**~~ **DISCHARGED at S49** (S48, D202; fixed D204). `photometry.population_light` integrates each isochrone on
@@ -4072,6 +4120,8 @@ never been judged in twenty-three sessions.
    there (both integrals and the count above a threshold are then closed forms), and the forty-odd light pins
    re-read once more.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — the segment quadrature is the light tables' (the forty-odd light pins re-read with #125).
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* closed-form IMF-within-segment integrals and
+   the light pins re-read once - one pass with #125, moving every light table.
 128. **The dust is heated as one mixed slab and drawn in its own thin layer: the picture's geometry and the energy
    budget's differ** (S50, D206). Since D206 the render spreads the dust through the gas's published layer, a few
    tens of parsecs in the inner disc under a stellar layer of 356 pc, and the march composes them in order: a ring
@@ -4310,6 +4360,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    population older than the galaxy's. What closes it: the default galaxy's Υ_K set beside a sourced Milky Way
    value, then the term that differs.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — Υ_K is the populations' light per unit mass (the isochrones' K band, the remnants counted in the mass).
+   *S93 (M3, lane REST), read once, carried past M3 (the gate, D262):* a reading first - the default galaxy's Υ_K
+   beside a sourced Milky Way value; the suspects (#85's locked mass, the K band on the giant branches) untested.
 136. **The model's face-on frame is bluer than the catalogues' face-on colour** (S54, D213). The template's frame
    through its dust reads B − V 0.636 against [0.72, 0.82] (RC3 and HyperLeda agree on 0.77, corrected to face-on,
    not dust-free; disclosed — the first fit, a quenched disc, read 0.819 and passed by 0.001), and the default
@@ -5305,7 +5357,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    **Discharged at S92 (D261), with #164, on the gate's ruling:** the ruled build stands; the two readings it left
    are their own entries, #220 (the walk's read over its bound) and #221 (inside the bar the crest can be a lane's),
    both holds kept strict.
-166. **The render computes the starlight by age on every request, including those that discard it** (S63, D223; the
+166. ~~**The render computes the starlight by age on every request, including those that discard it**~~ (S63, D223; the
    reviewer's finding 3). `_ages` runs on window and level requests (0.30 → 0.81 s and 0.30 → 0.75 s warm) and on the
    star-first mode's requests (`l_min`: 1.24 → 1.61 s), which ship about 1.17 MB the viewer nulls when it draws the
    points; `_unresolved` repeats the same `part_masses` work. The field mode's own request is the recorded warm cost
@@ -5334,6 +5386,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    The cache (`v7_layer`): the runs' own anchors hold two window sets per run (the parts' and the kept windows), so
    sixteen entries; anchors and responses under a threshold (#175's `kept=1`) are held apart, eight each, so a
    threshold slider's walk never evicts the runs' own (the review's C6; the same bits).
+   **Discharged at S93 (D262), by the gate's ruling** - taken at S93's gate under the owner's word of 2026-11-11
+   ("don't block on my rulings ... take your own recommendations"); the owner may re-rule: the cache built (0bf3c69's
+   second half, e34f4d3, 65561b9); the closer's first mend found already met where the viewer asks (`only=remainder`
+   returns before `_ages`), and the literal skip on whole-grid `l_min=` requests reverted, because the layer's
+   `test_i5` names those parts on that request.
 167. ~~**The clouds stage's extinction law ignores the metallicity gradient: 2.9696 mag for every cloud**~~ (S64, D224 stop
    condition 1; the probe's measurement; discharged at S89, D257 — retired, a duplicate on another law read by no drawing). The census's `central_extinction_v` is solar dust per hydrogen at one surface
    density (Σ_GMC 42 M☉/pc²; since S67, D231, the inner regime's 82, 5.7977 mag), no metallicity, so every cloud reads 2.9696 mag; the rings' A_V per unit gas is the
@@ -5421,7 +5478,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    star-first mode by their `line_response`, and the region regime's clusters on the field's scale.
    *S85 register pass (D251):* **the viewer's** — the knots in the star-first mode by their `line_response` is the viewer's; the second half (the region regime's clusters on the field's scale) was done at S82 (#172, the catalogue position).
    *S84 (D253):* T17's port did not reach it (chrome only; the knots' line response is the render's) — the owner's viewer pass.
-171. **The star sample's luminosity function is not the catalogue's: its bright end is 0.14 of the table's at 10³ L☉**
+171. ~~**The star sample's luminosity function is not the catalogue's: its bright end is 0.14 of the table's at 10³ L☉**~~
    (S65, D225; the probe's measurement). `photometry.lookup` interpolates between isochrones at fixed initial mass and
    drops the short evolved phases, so the count of old sample stars above L, over the sampling fraction s times the
    bright catalogue's table expectation, is 0.69 at 0.1 L☉ (1 − the return fraction, 0.70) and falls to 0.14 on the
@@ -5460,6 +5517,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    bulge's share in the faint-end normalisation unseparated; #113's closure is measured on the young part by T3's
    test and on the whole sample here, not as a per-patch test (the realised sample's light over a patch is its few
    brightest giants' draw).
+   **Discharged at S93 (D262)** on its closure tests: the EEP-style interpolation built in one pass as S70 named it
+   (fd57ebc; the review's mend 632f862, the table-age test over the whole track), `tests/test_photometry.py`'s
+   IMF-light test (0.947-1.043, an as-measured margin) and the sample's photometry pins re-read in the same commit
+   (1 M☉ L, T, the Sun's V 4.7727 -> 4.7809; `SUN_V_OFFSET` unmoved). The star sample's other records (the layer-off reference, the layer-on files) are
+   re-read by the batch's close with the reference's re-base. The residual 5-12 % and the 10⁴ L☉ bin stay as
+   measured above; the realised whole-sample closure is #115's.
 172. ~~**The zoomed view is two pictures of one scene**~~ (S65, D225; the probe's finding and the frames). Below 4 kpc the
    field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
    display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
@@ -5485,7 +5548,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    in a shuffled order with a fixed hash seed, its result recorded). The entry is discharged if that run separates
    the two candidates and the cause is fixed, or narrowed to the surviving one. *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **Audit VI** — a measurement for Audit VI: the migration test run alone and in a shuffled order with a fixed hash seed, its result recorded (B3-safe).
-174. **The points' dust is the ring's placed column, not the modulated one** (S66, D226 R7). FluxPoints reads the
+174. ~~**The points' dust is the ring's placed column, not the modulated one**~~ (S66, D226 R7). FluxPoints reads the
    dust along a point's segment from the march's textures in its own pinned shader, which does not include the
    noise: since V7 the field's dust is multiplied by the gas fluctuation map (σ 0.5) and the points' is not, so a
    point behind a dense fold of the map is dimmed as the texel says, where the field it sits in would take ×0.6–1.6
@@ -5507,8 +5570,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    to the GLSL numerically (`dustToPoint` has no production caller); and no GPU has compiled the new vertex shader
    (uint uniforms and three more samplers in a vertex stage, unverified on WebGL2). A point on the camera's side of
    the midplane reads the map at its own projection where the march reads the crossing behind it: "the same thin
-   screen" is exact only for points behind the midplane.
-175. **The star-first mode's remainder keeps its middle part unmodulated by the clustering field** (S66, D226 R5e).
+   screen" is exact only for points behind the midplane. **Discharged at S93 (D262)** on its closer (5e32ca4, the
+   entry's text 04b3c95): the include shared into FluxPoints' shader, its pin moved; what holds it is the paragraph
+   above; no GPU has compiled the shader and the star-first captures with the layer on are not yet re-taken.
+175. ~~**The star-first mode's remainder keeps its middle part unmodulated by the clustering field**~~ (S66, D226 R5e).
    The field mode splits the middle part (20–100 Myr) at the octave survival ages — `stars_middle_kept3/2/1`, the
    windows [20, 23.87), [23.87, 31.18), [31.18, 40.71) Myr, each multiplied by its k-octave map over its k-octave
    cell mean — while `only=remainder` ships one middle array, placed by `sfr_modulation` as before; the star-first
@@ -5543,6 +5608,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the factor to 1e-12, as the field mode's test reads it; the 2e-4 between thresholds is named an as-measured margin
    over 9.49e-5. The kept windows are computed only when `kept=1` asks them (the default answer runs S64's work; the
    bodies, default and `kept=1`, byte-identical before and after).
+   **Discharged at S93 (D262)** on its build (ee39315 and the mends c2ba0b3, 5b3e169, fcd2741, 65561b9): the remainder
+   split as the field mode splits it and the star-first march reading the kept parts. The opt-in `kept=1` is taken on
+   the builder's recommendation at S93's gate under the owner's word of 2026-11-11 ("don't block on my rulings ...
+   take your own recommendations"); the owner may re-rule. The one clause held strict - the 32 000-byte gate on the
+   answer the viewer asks, through WFC3 - is **#222**.
 176. **The unit mean per cell holds on the fields' quadrature lattices, not on the frame's pixels** (S66, D226 R2, R5;
    the probe's measurement and `tests/test_v7_layer.py`). The gas map and the clustering maps have unit mean per
    level-0 cell on L1's lattice; on the 1024-frame's pixel lattice (39 pc Milky Way, 28 pc `ngc_4414`) the dust's
@@ -5570,6 +5640,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the derived bound itself, not a placement-weighted bias; a renormalisation on the frame's lattice is per camera
    (RENDER_PHYSICS section 8). Recommended: the bound re-derived with the placement's own weights (sum w^2 / (sum w)^2 in
    place of 1 / N_r) and measured, or #176 carried to the viewer's pass beside #177.
+   *S93's gate (D262):* **carried past M3**, the lane's recommendation written above; neither form is built.
 177. **The march under-samples the bulge's cusp: the innermost kiloparsec reads 2.3 % low on screen** (S67, D227 R5;
    the picture spec's ring gates). On `milky_way`'s face-on frame, dust and gas off, the ring 0-1 kpc's on-screen
    light over the render's published light plus the bulge is 0.977-0.978 in every state (layer on or off, points on
@@ -5729,6 +5800,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    h_z / R is Robin's own reading, flaring with R; or z½ held as a ratio to the model's thin-disc height at the
    Sun's radius); (c) the render's three parts (young / bright / unresolved) each given the light-weighted height
    of the ages it holds. Listed for the gate; nothing built on it.
+   *S93's gate (D262):* **carried past M3; it needs a source ruling** (Robin et al. 2003 proposed, with (b) and (c)).
 185. **The field mode's sampled stars take no dust at galaxy scale** (S67, D230's measurement). GalaxyView's `<Stars>`
    layers (opacity `weights.sampled`, 0.185 at a 40 kpc view) are dimmed only by the region regime's transmission
    (`patchPointsForRegion`), never by the diffuse dust or the clouds' raster, so they draw undimmed over every lane and
@@ -6337,8 +6409,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    S91, not a machine's draw; no census parts between the two machines (the scratchpad's s92c_eleven.md). The marks
    lifted on `session-92` (the gate's ruling: 3df553c cherry-picked); the eleven re-pinned with their reasons (old ->
    bd0ed0c -> now). **Discharged at S92 (D261).**
-217. **The tile's threshold and the table's are two computations of one power: "the frame's one threshold" holds only
-   where they agree to the bit** (S90a, D259; the nightly run 41923775720). `/api/bright`'s table publishes
+217. ~~**The tile's threshold and the table's are two computations of one power: "the frame's one threshold" holds only
+   where they agree to the bit**~~ (S90a, D259; the nightly run 41923775720). `/api/bright`'s table publishes
    `threshold` as `10.0 ** np.asarray(grid)` (an array power, a CPU-dispatched loop) and its header says "a threshold
    read back is the grid's value"; the tile form snaps `l_min` to the grid and answers `l_min_used` as
    `10.0 ** LOG_L_GRID[k]` (a scalar power, `api/v6_tiles.py` `snap_up`). On one runner the two parted by an ulp
@@ -6352,6 +6424,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    is both answers': `snap_up`'s `l_min_used` and the two tables' `threshold` column. The mark on
    `test_v6b_points`' (3, milky_way) case lifted on the gate's ruling in its own commit (2eb3c9f, revertible alone).
    **Carried until the gate's dispatched run on `session-92` reads the case green on the runner.**
+   *S92's runner, moved at S93 (D261, D262):* the gate's dispatched run on `session-92` at 859de1d (ci 42918523059)
+   read the lifted node, `test_v6b_points`' (3, milky_way) case, green on the runner - the closer met. The one test
+   that still compared an array power, `test_v6_bright`'s table oracle (`10.0 ** LOG_L_GRID` asked equal to the
+   table's `threshold`), failed there alone and was mended at S92's gate (fcec70d, D261): it asks the bytes of
+   `grid_threshold` and keeps the array power as a closeness within two ulps. **Discharged at S93 (D262).**
 218. **The layer-off reference is off on `main`: the star sample's columns no longer read
    `tests/layer_reference_s90.json` at 4f06cc9** (S91's gate, D260; found by the close builder's run of the two
    machine-pinned reference nodes, B2). At `main` (4f06cc9, the hash 5a2c097e…) `tests/test_layer.py`'s
@@ -6502,6 +6579,7 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    between rings; only the 5.403 kpc foot is the width's (0.1731 -> 0.0478). The kill clause is not met. Recommended:
    the closer's second form (the crest read by the point function at the foot, +1.9-2.2 s a lay as S90 measured), the
    hold then lifting by construction - not built here (a model change on every run; the gate's).
+   *S93's gate (D262):* **carried past M3**, the lane's recommendation written above; the hold and the bound unmoved.
 221. **Inside the bar the spur's crest can be a lane's: the Milky Way's published gas reads 7.3027 at 3.94 kpc over
    the bar's clause max(lane peak 7.0556, response 2.3930)** (S92, D261; found by #164 / #165's build). #164 sets a
    spur's height to the ring's crest over its trough; inside the bar's reach the ring's tallest crest is a lane's,
@@ -6518,6 +6596,21 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    clauses would then be expected to hold as written and only the Milky Way's spurs inside 5.0 kpc to move - a prediction,
    unmeasured. Option (b) re-declares a judged
    clause. Not built or measured here (a model change; the gate's or the owner's ruling).
+   *S93's gate (D262):* **carried past M3**, the lane's recommendation (option a) written above; both holds unmoved.
+222. **The remainder the viewer asks reads over its size gate through WFC3: 42 664-43 824 bytes against 32 000** (S93,
+   D262; the REST lane's review, C2). Since S93 (#175) the viewer asks `only=remainder` with `kept=1` on every
+   threshold (`api.ts loadRemainder`): three more per-ring arrays (3 × 400 rings × 3 filters at f4, 14 400 bytes) and
+   the header's `remainder.middle_kept` (about 1.5 kB). Measured at S93 (milky_way layer on, ngc_4414 layer on,
+   milky_way layer off; l_min 2251): 30 792 / 29 824 / 30 984 bytes through RGB, under S64's judged bound (D224);
+   43 640 / 42 664 / 43 824 through WFC3, over it by 11.6-11.8 kB. The cause is two-fold: the kept arrays, and WFC3's
+   header echoing its sampled curves (13.1 kB of its 19.6 kB; the default answer already read 27 768 there). Held:
+   `tests/test_v6_bright.py::test_the_remainder_the_viewer_asks_is_under_the_same_size_gate[wfc3-*]`, `xfail(strict)`;
+   the bound is not moved. **Carried.** What closes it: the answer under 32 000 through every shipped set without the
+   bound moved - the kept arrays sent as shares quantised to 16 bits or at coarser rings (the march reads them per
+   ring, interpolated), or the header's curve echo replaced by a digest of the curves the viewer already holds; or the
+   owner re-rules the bound for the `kept=1` answer (D224's spirit, "9.6 kB against 10.4 MB", is still met). What
+   kills the reading: a WFC3 `kept=1` answer under 32 000 on the unchanged arrays (the measurement wrong), or the
+   viewer found not to need the kept arrays through narrow-band sets.
 
 ---
 
