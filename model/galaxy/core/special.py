@@ -193,3 +193,19 @@ def expn(n: int, x: object) -> np.ndarray:
             h = h * (c * d)
         out[large] = h * np.exp(-xl)
     return out
+
+
+def ordered_product(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """``a @ b`` with ``a``'s last axis summed against ``b``'s first - ``np.tensordot(a, b, axes=1)`` - as a sum in an
+    order the model fixes (S93, #218): index by index along the summed axis, each term one elementwise product added
+    to the running total, so its bits follow neither BLAS's thread count nor its per-CPU kernel (#216's ruling: a seed
+    names one galaxy on every machine). ``a`` is (..., k), ``b`` (k, ...); the result (a's leading axes, b's trailing
+    ones). Here, not in ``stages/systems.py`` where S93 first wrote it, because ``sfh`` and ``chemistry_dtd`` read it
+    too and ``systems`` imports ``sfh``."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    lead, tail = a.shape[:-1], b.shape[1:]
+    out = np.zeros(lead + tail)
+    for i in range(a.shape[-1]):
+        out += a[..., i].reshape(lead + (1,) * len(tail)) * b[i]
+    return out
