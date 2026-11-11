@@ -292,3 +292,92 @@ bodies; #113 / #171's LF bright end (0.438 -> 0.948) not pinned and not judged; 
 values (strand 1's); regimes.test.ts for #175; the #218 guard misses alias imports and np.fft and "does not show
 bits"; no pytest node run; about 30 records sampled against their comments' arithmetic; re-pins matched to D260-D262's
 paragraphs in a sample, not line by line.
+
+## 4. The viewer and the pictures (strand 4; one Opus reader, read-only)
+
+One read-only Opus reader at 766b431 on `s80..main` under `frontend/src` and `interface` (115 files, +9176 / -602, 48
+of them `ui/` components): 11 files or groups read in the diff, the rest screened by a grep of added lines;
+`tools/goal_metrics.py --table` run one process at a time. **Counts:** Part A 13 rows (11 files / groups, D2, D1) — 9
+OK, 3 display, 1 OK with a note; D2 holds (`fetch(` once, `interface/transport.js:71`), D1 by reading; the 2 new
+workers compute nothing new beyond JWST's segments-only image. Part B 8 features — 7 traced to a published array and
+its model field, 1 display overlay on published edges, 0 untraceable; 12 metric rows, D262's frame numbers reproduced
+to the last digit. Part C 22 records hand-edited since s85, jwst_nircam never walked. Findings 5 standing, 1
+withdrawn. **The answer:** "Nothing in a committed frame was found untraceable to a published array or a declared
+display choice"; none is a wrong model number, none an invention under D5.
+
+| file (session, item) | what the diff adds | verdict |
+|---|---|---|
+| FluxPoints.tsx (S93 #174) | points' diffuse dust x the gas map, read once at the midplane crossing, from the march's uniforms | OK under D5; D226's approximation |
+| FluxPoints.tsx, hstPsf.ts (S82 #178) | a clamped point's light past its 60-px box spread over 8-px blocks | conserves the table's light; F-4-3 |
+| hstPsf.ts, psfTableJob.ts, instruments.json (S83 T11) | JWST's pupil: 18 segments, 7 mm gaps, struts at 90 / 240 / 300 deg, 0.039 radii wide | sourced and tagged; F-4-2 |
+| psf.ts viewOptics (S83), colors.ts responseColors (S91 T2), regionStars.ts dropRows (S93 T3), ages.js remainderParts (S93 #175) | JWST at the template's distance; colour from `response` over `white.response`; member rows zeroed; remainder by named weights | OK (dropRows only at "sampled") |
+| FieldVolume.tsx (S81, S82, S93), tuning.ts | texels in a worker, moving-camera cap, remainder clustered; subMoving, settleMs, regionStars, drawnTuning | display; a still frame unchanged |
+| meshTexelsJob, psfTableJob and their workers | the same functions imported, not copied | nothing new but JWST's segments-only image |
+| RegionVolume.tsx, contextLoss.ts; comparison, ComparePane, compare, cameraLink (S83 T16) | re-march on a restored context; a second pane | OK; D1 per pane holds by reading |
+
+| feature (range) | frames | model field behind it | provenance |
+|---|---|---|---|
+| cluster points through the filter set (S91 T2 #114); young population once (S93 T3 #115) | stars, zoom; field knots | `_object_response_header`; `systems.py:811`, `bright.py:316, 558` | derived; dropRows in no frame |
+| points' dust x gas map (S93 #174); the clouds' layer | every frame with points | `api/v6_clouds.py`, v7_layer gas_fluctuation | derived + seeded |
+| spurs' heights (S92 #164 / #165); diffuse share continuous in R | field frames | v7_layer spurs; `api/v6_clouds.py`, service.py | model side; derived (session not traced) |
+| remainder's kept windows (S93 #175) | stars frames | `api/service.py:357-361, 2399` | derived |
+| polar cell grid | stars, ngc_4414-zoom | `systems.cell_edges` | published edges; display overlay |
+| JWST optics, the wings (#178), T14's cap | none confirmed | - | zoom stands' wings not checked |
+
+| image | Δ(B-R) | A1 | A2 | A3 | arm/interarm | dark frac | PS slope | points in / out |
+|---|---|---|---|---|---|---|---|---|
+| **GOAL milky_way** | -0.354 | 0.0515 | 0.1943 | 0.0594 | 1.829 | 0.0066 | -1.99 | 518 / 139 |
+| milky_way-field | -0.322 | 0.0564 | 0.0531 | 0.0528 | 1.604 | 0.0315 | -1.26 | 708 / 3072 |
+| milky_way-physics-only | -0.337 | 0.0055 | 0.0041 | 0.0044 | 1.042 | 0.0213 | -1.28 | 546 / 873 |
+| milky_way-stars | -0.304 | 0.0418 | 0.0916 | 0.0555 | 1.968 | 0.1342 | -3.59 | 177 / 87 |
+| milky_way-zoom | +0.146 | 0.1745 | 0.2282 | 0.1465 | 6.370 | 0.2130 | -0.20 | 162 / 42 |
+| milky_way thumbnail | -0.276 | 0.0525 | 0.0551 | 0.0504 | 1.654 | 0.0621 | - | 44 / 383 |
+| **GOAL ngc_4414 (q 0.5736)** | -0.329 | 0.1013 | 0.0739 | 0.0556 | 2.669 | 0.1543 | -2.10 | 119 / 294 |
+| GOAL ngc_4414 (q 0.512) | -0.274 | 0.0993 | 0.0683 | 0.0550 | 2.720 | 0.1572 | -2.09 | 97 / 311 |
+| ngc_4414-field | +0.185 | 0.0911 | 0.1848 | 0.0423 | 2.568 | 0.0309 | -2.12 | 241 / 2215 |
+| ngc_4414-stars | -0.272 | 0.0619 | 0.0886 | 0.0517 | 2.014 | 0.0172 | -3.59 | 104 / 128 |
+| ngc_4414-zoom | +0.114 | 0.2303 | 0.1538 | 0.1462 | 8.160 | 0.1449 | -3.69 | 74 / 65 |
+| ngc_4414 thumbnail | +0.132 | 0.0674 | 0.2076 | 0.0345 | 2.461 | 0.0523 | - | 30 / 258 |
+
+Milky Way frames at q 1, NGC 4414's at q 0.5736 (D227's convention); the zoom frames are 0.5 kpc views with no
+counterpart in either goal. Nearest: milky_way-field's colour step and A1, ngc_4414-field's slope and A1. Farthest:
+milky_way-field's A2 (a quarter) and dark fraction (4.8 times); ngc_4414-field's dark fraction (a fifth), A2 (2.5
+times) and colour step of the opposite sign. One sentence per frame, the reader's: *milky_way-field*, a small tan disc
+with a burnt-out white core and broad faint tightly wound arms, where the goal is a large blue-white disc with a long
+yellow bar, distinct arms on thin dark lanes and pink HII knots, and about twenty large dots outside the disc;
+*milky_way-physics-only*, a smooth round tan glow peppered with dark spots and no arms; *milky_way-stars*, evenly
+spread blue-white blobs under a polar cell grid, no spiral, bar or lanes; *milky_way-zoom*, overlapping white and amber
+discs on a beige wash, a star field at a scale no goal shows; *ngc_4414-field*, an overexposed bulge glow over a faint
+swirled tan disc, where the goal is a bright flocculent disc threaded by a dense brown lane network, bluer outward
+(the frame gets redder outward); *ngc_4414-stars*, blue-white blobs in an inclined ellipse under the cell grid, no
+spiral and no lanes; *ngc_4414-zoom*, stars on a beige wash with faint streaks and two grid lines, no goal counterpart;
+the two thumbnails measured, not looked at.
+
+- **F-4-1** weak test / owed walk — `tests/fixtures/s72_viewer_requests.json`, `tests/test_bundle.py:378-385`: 22
+  records "respelled by hand", jwst_nircam held to wfc3's by substitution ("one is owed"). Settle: "A walk of the built
+  viewer on main, including jwst_nircam, logs the same distinct meanings as the fixture, the 22 respelled records
+  string for string." See F-3B-7.
+- **F-4-2** ADOPTED-NOT-MEASURED (display of the instrument); low — `instruments.json:3080`: struts "[inferred from the
+  eight spikes of JWST's images ...]", width "[derived ...]". Settle: "A drawing of JWST's secondary support (e.g.
+  JDox's OTE page) gives the struts' directions in the V2/V3 frame and their width; the inferred values agree or are
+  replaced."
+- **F-4-3** display; low — `hstPsf.ts` WING_BLOCK = 8 decides where 4-6 % of a close point's red light lands. Settle:
+  "The lead labels WING_BLOCK display or sampling bound, and VIEWER_TASKS / the Tuning text says it is not offered as a
+  slider and why."
+- **F-4-4** withdrawn — D1 under a landing's hold: `useLoad.ts`'s swap holds every new answer (read, not run).
+- **F-4-5** stale text / method — D262's NGC 4414 goal brackets are the goal at the estimated q 0.512 beside frames at
+  q 0.5736 (A2 8 %, the rest under 3 %). Settle: "The goal row and the frame rows are read at one stated axis ratio,
+  and D262's brackets are re-quoted at it."
+- **F-4-6** display, unreported in D262 — ngc_4414-field Δ(B-R) +0.185 (redder outward) against the goal's -0.329;
+  D227 had +0.187 (S67) / +0.177 (S70); never a target (C6). Settle: "The owner's look names whether the outward
+  reddening of ngc_4414-field is the model's light or the capture's exposure/bulge glow, and D263 records the sign
+  beside D227's."
+
+**Not read / not reached.** App.tsx, api.ts, GalaxyView.tsx, useLoad.ts beyond lines 1-60, fieldLoads.ts,
+cameraLink.ts, contextLoss.ts, drawerLayout.ts, Workflow.tsx, PictureBeside.tsx and the 48 ui/ components screened by
+grep only; GalaxyTab.tsx read at 410-440 and 712-731; RENDER_PHYSICS.md and VIEWER_TASKS.md not opened; no vitest,
+Playwright or worker test; the zoom stands' wings; the diffuse share's session; the walk (its S73 walker not committed).
+
+## 5. The register pass and what "done" still wants (strand 5)
+
+*(assembled when the strand's note is in)*
