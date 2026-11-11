@@ -24,8 +24,9 @@ at the Sun's radius (a declared look; the table's length is the arc's at the foo
     E = (A/F) exp(−(d'² + (t − T)²)/2ς²)          for t > T     (a round cap at the tip),
 
 ς = σ/R with σ the width's dispersion (FWHM ``SPUR_WIDTH``) and R the point's own radius, as a piece's is; λ =
-ln F / T, F = ``SPUR_FALL``; A the ridge's crest contrast at the foot (the table's ``gas_spur_contrast``): "the
-foot's peak equal to the ridge's crest contrast there", falling by F to the tip. E is continuous everywhere: the
+ln F / T, F = ``SPUR_FALL``; A the spur's height at the foot (the table's ``gas_spur_contrast``): since S92 (#164)
+the ridge's crest over the ring's trough there (until S92 the crest itself, "the foot's peak equal to the ridge's
+crest contrast there", which stacked to about twice the crest), falling by F to the tip. E is continuous everywhere: the
 caps meet the middle at t = 0 and t = T in value and in their distance. A point sees the image of the spur within
 half a turn of its middle, ψ ∈ [T cos p/2 − π, T cos p/2 + π).
 

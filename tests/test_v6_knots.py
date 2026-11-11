@@ -189,8 +189,9 @@ def test_gate_ii_points_plus_the_scaled_field_close_on_whole_cells(service, temp
     # K_c / F_c per cell, recorded (the probe's median 0.388, p90 1.67 on the Milky Way, layer on).
     ok = F > 0
     if template == "milky_way" and layer == "on":
-        assert float(np.median(K[ok] / F[ok])) == pytest.approx(0.398, abs=0.002)  # S90 (#161): was 0.395 - the clusters' cells follow the clustering field's cell means (0.39817). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.388
-        assert float(np.percentile(K[ok] / F[ok], 90)) == pytest.approx(1.794, abs=0.01)  # S90 (#161): was 1.755 - the clusters' cells follow the clustering field's cell means (1.79394). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.67
+        # S92 (#164 / #165, the spurs re-laid): the median was 0.398 and the 90th percentile 1.794.
+        assert float(np.median(K[ok] / F[ok])) == pytest.approx(0.3931, abs=0.002)  # S90 (#161): was 0.395 - the clusters' cells follow the clustering field's cell means (0.39817). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.388
+        assert float(np.percentile(K[ok] / F[ok], 90)) == pytest.approx(1.7528, abs=0.01)  # S90 (#161): was 1.755 - the clusters' cells follow the clustering field's cell means (1.79394). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.67
 
 
 @pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])

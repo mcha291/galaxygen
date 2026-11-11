@@ -153,7 +153,7 @@ def test_the_unspurred_placement_composed_with_the_spurs_is_the_dust_s(api, temp
         assert rows["radius"].size == 0 and not any(sp["share"])
         assert np.array_equal(unspurred, placed)
     else:
-        assert rows["radius"].size == 40  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc). S88: was 48 (S66) - #148's clock moved the gas column the spacing reads (tests/test_spurs.py, S87)
+        assert rows["radius"].size == 45  # S92: was 40; 39 at bd0ed0c (S91's #216 re-lay, never run at S91; the runner's number too, ci 42796166390); 45 now (#165: the spacing reads the ridge's crest, so the feet stand closer). S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc). S88: was 48 (S66) - #148's clock moved the gas column the spacing reads (tests/test_spurs.py, S87)
         spurs = Spurs(rows["radius"], rows["azimuth"], rows["contrast"], rows["pitch"], rows["length"], rows["width"],
                       rows["fall"], turn=sp["turn"])
         assert np.array_equal(np.array(sp["share"]), spurs.ring_mean(R))

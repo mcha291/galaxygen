@@ -149,7 +149,9 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     # S90: was 9 - M1's model (S86 10d3a32: 9 against 15.92; s89 a447981: 16 against 19.91 - the census #80's bar
     # re-drew, the line masked since S88 by the HIERARCHY_197 hold above it); unmoved by #197's mend (16 on a447981
     # and on the mend, which moves where in its ring a star stands, not how many a cell holds). s90_probe_cell300.py.
-    assert "level" not in parent and parent.size == 16
+    # S92: was 16 - S91's #216 re-lay (the default census (48, 13, 4) -> (42, 11, 3)) moved it to 22 at bd0ed0c, never
+    # run at S91; the runner (ci 42796166390) and this machine both read 22 there, and #164 / #165 leave it at 22.
+    assert "level" not in parent and parent.size == 22
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields, constants):

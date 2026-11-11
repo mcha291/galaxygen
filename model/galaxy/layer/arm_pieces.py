@@ -108,6 +108,9 @@ ADJACENT = 1e-9
 # over 11.74-12.34 kpc), so "fewer chains cross than the law counts" was decided by the last bit. A count within
 # this distance of an integer is that integer: about 10^6 of its own ulps at 6 (8.9e-16 each), and far under the
 # steps the law's count takes between neighbouring rings off its plateaus.
+# Measured at S92 (the gate's note, D260; s92_ptol.py over test_bar's 300-galaxy sweep, 120 000 counts read): on a
+# plateau at most 8.9e-16 off the integer (78 420 counts), off one at least 4.9e-4 (41 580) - 1e-9 lies 10^6 ulps
+# above the first and 10^5 below the second.
 BIRTH_COUNT_TOLERANCE = 1e-9
 # Two azimuthal gaps between the chains crossing a birth ring within this many radians of each other are one width
 # (#216): the four quarter-turns a barred disc's two chains and the two born between them leave, or the two exact
@@ -115,6 +118,8 @@ BIRTH_COUNT_TOLERANCE = 1e-9
 # from (a few 1e-16 rad on sums of reaches and advances); of such a tie the gap is taken by identity, not by
 # rounding - the one that starts at the crossing of the earliest-laid piece (the lowest chain, then its order).
 # The same tolerance the gate's arithmetic reads a birth's widest gap with (``tests/test_pieces.py``).
+# Measured at S92 (the same sweep, 12 113 gap differences against the widest): ties at most 1.8e-15 rad (924), the
+# smallest real difference 7.7e-5 rad (11 189) - 1e-9 lies between them by 10^5 either way.
 GAP_TOLERANCE = 1e-9
 
 

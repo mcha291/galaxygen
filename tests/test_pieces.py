@@ -655,7 +655,7 @@ def table_of(F) -> np.ndarray:
 # in one of four quarter-turn gaps that tie but for rounding; the runner reads (51, 13, 5), which a one-ulp libm probe
 # reproduces (s90a_jitter.py). The mark skips the hand-laid chains, the births and the no-crossing asserts with it,
 # which held on the runner every night.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_census_by_hand_a_barred_disc_s_chains(prod):
     """D219 items 2-3 and the gate's second follow-up, items 2-3, on the bare default galaxy (barred, no pin: a
     grand design). Chains 0 and 1 start at the bar's two ends - R = a, φ_bar and φ_bar + π - and are this file's
@@ -1421,7 +1421,7 @@ EXPECTED_PREDICTIONS: dict = {'milky_way': {'chains at R0': 5, 'pinned chains at
 # The second follow-up's predictions for the third pass, read before they were judged: held or not held, as measured.
 # S60 fourth pass (re-pinned on the final model): EXPECTED_HELD was {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': True, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': False, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": False, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': False, 'ngc_4414 still a miss': True}
 # S87 (#148, #209, #80): EXPECTED_HELD was {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': False, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': True, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": True, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': True, 'ngc_4414 still a miss': True} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc; re-read as the numbers say: the masers' gas check now 3 seeds under its 1st percentile, and ngc_4414's ratio 1.429 - a hit, out of 1.2-1.3.
-EXPECTED_HELD: dict = {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': False, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': True, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": False, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': False, 'ngc_4414 still a miss': False}
+EXPECTED_HELD: dict = {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': False, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': True, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": True, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': False, 'ngc_4414 still a miss': False}  # S92 (#164 / #165, the spurs re-laid): "the masers' check keeps its 1st-percentile power" was False - the value at bd0ed0c (the runner passed test_pieces there, ci run 42796166390), so the move is #164 / #165's alone: EXPECTED_MASERS' gas percentile 2 -> 1. A recorded verdict re-read, as the numbers say.
 # S60 fourth pass: was {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': False, 'crest over trough 2.5-3': True, 'sum f at 8 kpc 0.6-0.9': False (judged then on the first 128; on m = 2..6, 0.588, it would have read False too), 'gas minimum 0.65-0.75': True, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': False, 'joins 2-4': False, "the masers' check keeps its 1st-percentile power": True, "the young stars' check keeps its 1st-percentile power": True, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': True, 'ngc_4414 still a miss': True}
 
 # The third follow-up's predictions for the fourth pass, read on the final model (the polyline with the fourth
@@ -1562,7 +1562,7 @@ EXPECTED_SPLIT: dict = {'milky_way': ([0.279, 1.242, 1.114, 0.296, 0.33], [0.01,
 
 # S90a (#216, D259): a record rounded to the hundredth on this machine's census (the template's drawn chains are laid by
 # births rounding decides); the runner reads the Outer arm's share 0.94 against 0.93. Recorded, not a verdict.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
     """D219 item 8: "the composed stellar crest lies within 0.1 width of each pinned locus over its β range — by
     construction, asserted, not a test of the model". **What holds by construction is asserted in the test of the
@@ -1603,7 +1603,7 @@ EXPECTED_CREST: dict = {'Norma': (0.31, 0.2), 'Sct-Cen': (0.13, 0.37), 'Sgr-Car'
 
 # S90a (#216, D259): a disclosed check's record rounded to the hundredth on this machine's census; the runner reads the
 # young stars' 0.18 against 0.19 (and Norma-Outer's likewise). No verdict: the check is disclosed, not a spec row.
-@pytest.mark.machine_pinned
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
 def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_crests(prod):
     """D219 item 8: "the model is tested by the gas and young stars' crest against the maser loci within the masers'
     σ (0.34 kpc at R₀), a disclosed check with its null stated". **A disclosed check, not a spec row** (I3). The
@@ -1654,7 +1654,7 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
 # budget are gone (the walk ends at 12.34 kpc), so the gas's outer contrast and its rotated null moved: the as-built 0.19 -> 0.20,
 # Norma-Outer 0.19 -> 0.22, the null's median 0.46 -> 0.50, the percentile 3 -> 2; the young stars' record is unmoved (the
 # star formation contrast keeps no spur). No verdict: a disclosed check.
-EXPECTED_MASERS: dict = {'gas': (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.24, 0.96), 2, 97)}  # S91 (#216): the young stars' null band's low was 0.23 - the template's census re-laid
+EXPECTED_MASERS: dict = {'gas': (0.17, {'Norma-Outer': 0.23, 'Sct-Cen': 0.24, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.17}, 0.14, 0.42, (0.26, 0.7), 1, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.24, 0.96), 2, 97)}  # S92 (#164 / #165, the spurs re-laid): the gas's was (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), the value at bd0ed0c (the runner passed test_pieces there, ci run 42796166390), so the move is #164 / #165's alone - the spur's height the crest over the trough moves the gas's crests, the as-built 0.20 -> 0.17 and the null's median 0.50 -> 0.42, the percentile 2 -> 1; the young stars' record unmoved (their contrast keeps no spur). No verdict: a disclosed check. S91 (#216): the young stars' null band's low was 0.23 - the template's census re-laid
 # S60 fourth pass: was {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 # (the polyline alone, before A and B: gas 0.07 at the 0th percentile of a null of median 0.50, the young stars 0.10 / 0.44)
 
@@ -2201,7 +2201,8 @@ WHOLE_RING_AZIMUTHS = 8192
 # S90a (#216, D259; R1b): the Milky Way leg alone is machine_pinned - its record (the exempted steps' count) is this
 # machine's census over five texture seeds, whose births rounding decides; the runner counts 63 against 67, its
 # structural assert (no step over the bound outside a kink's wedge) holding there. The other legs stay in CI. Ids unchanged.
-@pytest.mark.parametrize("leg", [pytest.param(leg, id=leg, marks=[pytest.mark.machine_pinned] if leg == "milky_way" else [])
+# S91 (D260): the mark lifted on s91-marks-lifted to be read on the runner.
+@pytest.mark.parametrize("leg", [pytest.param(leg, id=leg, marks=[])
                                  for leg in (*LEGS, "default")])
 def test_no_step_round_any_whole_ring(prod, leg):
     """The gate's sixth follow-up, item 1: "The continuity test is widened as the reviewer probed: whole rings
@@ -2270,6 +2271,10 @@ def test_no_step_round_any_whole_ring(prod, leg):
 EXPECTED_WHOLE_RINGS: dict = {
     # S87 (#148, #209, #80): were milky_way (73, 0.055, [...the same kinks...], 0.6, 1.64) and default (0, 0.0, [], 0.11, 0.38) - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
     # S91 (#216): the Milky Way was 67 exempted steps - its five seeds' censuses re-laid by the births made bit-independent.
+    # (S92, the comment D260 owed: the 78 are the Milky Way template's five texture seeds - the template's own 12, seed 1's
+    #  24, seed 2's 10, seed 3's 19, seed 4's 13 - all at Norma's turn-back (rings 3.56-4.24 kpc, azimuth 0.62-0.65 rad,
+    #  each step at most 0.0201) and seed 1's also at its forward kink (rings to 5.1 kpc, azimuth to -1.53 rad), where the
+    #  largest, 0.0609, lies.)
     "milky_way": (78, 0.0609, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
     # S91 (#216): the default's was (0, 0.0, [], 0.1, 0.46) - its five seeds' censuses re-laid by the births made bit-independent.
     "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.12, 0.5),

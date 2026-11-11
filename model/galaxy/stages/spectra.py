@@ -370,6 +370,16 @@ ANCHOR_FLOOR = 1e-12  # [inferred: a numerical floor; it changes no response abo
 RESPONSE_TEMPERATURES = np.logspace(3.0, 5.0, 193)
 _RESPONSE_LOG_MIN = 3.0
 _RESPONSE_PER_DEX = 96.0
+# S92 (#211; the owner's ruling of 2026-11-10: the response grid's tails extended to 4.4 um): the temperatures the
+# tails' factors are tabulated on, apart from the grid above (which /api/blackbody and the white point's range
+# read): 1000 K to 10^6 K, 1/384 dex apart. A tail's ln factor is nearly linear in 1/T (Wien), so read linearly in
+# ln T its error at a row's midpoint is about h^2/8 times hc/k (1/lambda_end - 1/lambda) / T - at 4.4 um beyond K and
+# 1000 K, 2.4e-4 on 1/96 dex (NIRCam's F444W, over test_render's 1e-4) and 1.5e-5 on 1/384; and an object up to
+# 10^6 K reads its own temperature's tails, not 10^5 K's (F444W's end row 0.009 mag off at 2.2e5 K). Until S92 the
+# tails were read on RESPONSE_TEMPERATURES.
+TAIL_TEMPERATURES = np.logspace(3.0, 6.0, 3 * 384 + 1)
+_TAIL_LOG_MIN = 3.0
+_TAIL_PER_DEX = 384.0
 # The log slopes s = ln(P_{k+1}/P_k) a segment's integral is tabulated at: -80 to 80 in steps of 0.02. Read linearly
 # in ln G; outside the span the end step is extended (ln G is asymptotically linear in s).
 RESPONSE_SLOPE_MAX = 80.0
@@ -398,7 +408,7 @@ class _Factors:
     (between anchors k and k + 1), for each curve with grid points in it, ln G(s) = ln Σ_i q_i e^{w_i s} on
     ``RESPONSE_SLOPES`` (q_i the trapezoid weight times the transmission, w_i the point's place in the segment in
     log λ) beside its step to the next row; per curve the two tails Σ_i q_i πB_λi(T)/πB_λend(T) on
-    ``RESPONSE_TEMPERATURES``, as logs floored at ln 1e-300."""
+    ``TAIL_TEMPERATURES`` (S92, #211; until S92 ``RESPONSE_TEMPERATURES``), as logs floored at ln 1e-300."""
 
     # Per segment that any curve reaches: (k, table (n_s, n_k, 2) of [ln G, its step], member (n_k, n_curves)).
     segments: tuple[tuple[int, np.ndarray, np.ndarray], ...]
@@ -410,7 +420,7 @@ class _Factors:
 def _build_factors(curves: Sequence[Curve]) -> _Factors:
     log_x = np.log(SED_WAVELENGTHS)
     per_segment: dict[int, list[tuple[int, np.ndarray]]] = {}
-    tails = np.full((2, RESPONSE_TEMPERATURES.size, len(curves)), -690.0)
+    tails = np.full((2, TAIL_TEMPERATURES.size, len(curves)), -690.0)
     has_tails = np.zeros((2, len(curves)), dtype=bool)
     norm = np.empty(len(curves))
     for c, curve in enumerate(curves):
@@ -435,7 +445,7 @@ def _build_factors(curves: Sequence[Curve]) -> _Factors:
         for side, (beyond, end) in enumerate((((lam < SED_WAVELENGTHS[0]) & (q > 0.0), 0), ((lam > SED_WAVELENGTHS[-1]) & (q > 0.0), -1))):
             if beyond.any():
                 has_tails[side, c] = True
-                ratio = planck_share(lam[beyond], RESPONSE_TEMPERATURES) / planck_share(SED_WAVELENGTHS[end:][:1], RESPONSE_TEMPERATURES)
+                ratio = planck_share(lam[beyond], TAIL_TEMPERATURES) / planck_share(SED_WAVELENGTHS[end:][:1], TAIL_TEMPERATURES)
                 tails[side, :, c] = np.log(np.maximum(ratio @ q[beyond], 1e-300))
     segments = []
     for seg, entries in sorted(per_segment.items()):
@@ -477,8 +487,8 @@ def _through(log_p: np.ndarray, tails: np.ndarray, factors: _Factors) -> np.ndar
 
 
 def _tails_at(factors: _Factors, kelvin: np.ndarray) -> np.ndarray:
-    x = np.clip((np.log10(kelvin) - _RESPONSE_LOG_MIN) * _RESPONSE_PER_DEX, 0.0, RESPONSE_TEMPERATURES.size - 1.0)
-    i = np.minimum(x.astype(np.intp), RESPONSE_TEMPERATURES.size - 2)
+    x = np.clip((np.log10(kelvin) - _TAIL_LOG_MIN) * _TAIL_PER_DEX, 0.0, TAIL_TEMPERATURES.size - 1.0)
+    i = np.minimum(x.astype(np.intp), TAIL_TEMPERATURES.size - 2)
     w = (x - i)[None, :, None]
     log_t = factors.log_tails[:, i, :] * (1.0 - w) + factors.log_tails[:, i + 1, :] * w
     return np.where(factors.has_tails[:, None, :], np.exp(log_t), 0.0)
@@ -496,11 +506,13 @@ def object_response(nu_l_nu: np.ndarray, kelvin: np.ndarray, curves: Sequence[Cu
     ``RESPONSE_SLOPES``, −80 to 80 in steps of 0.02, read linearly in ln G — bounded by h²/32 = 1.25e-5 in ln G
     (ln G is convex in s, its curvature the variance of w, ≤ 1/4), measured at most 4.7e-6 at the rows' midpoints
     over the eight band curves and the viewer's five sets (the largest slope the gate's 2 000 stars reach is 40);
-    the tails on ``RESPONSE_TEMPERATURES`` (1000-100 000 K, 1/96 dex), read linearly in ln, at most 3.3e-5 off
-    at the midpoints. Against ``stellar_response`` on the same floored anchors: within 2e-5 mag at every one of the
-    2 000 isochrone points through every set. A temperature outside the grid reads the end row's tails (a star
-    hotter than 10⁵ K is given 10⁵ K's tails below U and beyond K; between U and K its anchors carry it whatever
-    its temperature): within 0.0014 mag of the exact path at its own temperature for the 87 such points.
+    the tails on ``TAIL_TEMPERATURES`` (1000-10⁶ K, 1/384 dex since S92, #211 - NIRCam's F444W at 4.4 µm; until
+    S92 ``RESPONSE_TEMPERATURES``, 1000-100 000 K at 1/96 dex, at most 3.3e-5 off), read linearly in ln. Against
+    ``stellar_response`` on the same floored anchors: within 2e-5 mag at every one of the 2 000 isochrone points
+    through every set. A temperature outside the grid reads the end row's tails (a star hotter than 10⁶ K is given
+    10⁶ K's tails below U and beyond K; between U and K its anchors carry it whatever its temperature); the 87
+    points of the isochrones hotter than 10⁵ K (to 2.2e5 K) read their own (until S92 10⁵ K's: within 0.0014 mag
+    of the exact path, 0.009 in F444W).
 
     The anchors are floored at ``ANCHOR_FLOOR`` of the object's brightest first (D201), here only, not in the
     field's ``stellar_response``: a dust-shrouded AGB star with M_B +95 and M_K +4.5 has a B that no join of the

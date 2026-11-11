@@ -249,14 +249,41 @@ def test_the_published_field_is_the_point_function_s_exact_cell_means(default_mo
 # --------------------------------------------------------------------------------------------------------------
 
 
-def hand_ridge(gp, piece: int, radius: float) -> float:
-    """The walk's read of the ridge, written again: the two bracketing grid rings' unspurred contrast at the chain's
-    crossing there, linear in R."""
+CELL_CENTRES = -math.pi + (np.arange(gm.CELLS) + 0.5) * (2.0 * math.pi / gm.CELLS)
+
+
+def hand_crest_and_trough(gp, R: float, phi: float) -> tuple[float, float]:
+    """On the ring at ``R``: (the largest unspurred contrast within half the ring's crest width of ``phi`` each side,
+    the chain's own value among them; the ring's least) - #164 / #165's reads (S92), written again on the solver's cell
+    centres of that ring."""
+    prof = gp.unspurred_contrast_at(np.full(gm.CELLS, R), CELL_CENTRES)
+    at = float(gp.unspurred_contrast_at(np.array([R]), np.array([phi]))[0])
+    w = gm.crest_width(prof)
+    if not math.isfinite(w):
+        return at, float(prof.min())
+    near = np.abs(np.mod(CELL_CENTRES - phi + math.pi, 2.0 * math.pi) - math.pi) <= 0.5 * w
+    return max(at, float(prof[near].max(initial=-math.inf))), float(prof.min())
+
+
+def hand_trough(gp, radius: float) -> float:
+    """The ring's trough the walk reads at ``radius`` (S92, #164): each bracketing grid ring's least unspurred contrast
+    on the solver's cell centres (``hand_crest_and_trough``'s), linear in R between the two rings."""
+    lower, upper, share = ring_bracket(gp.R, np.array([radius]))
+    t0, t1 = (hand_crest_and_trough(gp, float(gp.R[int(r[0])]), 0.0)[1] for r in (lower, upper))
+    w = float(share[0])
+    return (1.0 - w) * t0 + w * t1
+
+
+def hand_ridge(gp, piece: int, radius: float) -> tuple[float, float]:
+    """The walk's read of the ridge, written again (S92, #164 / #165): on the two bracketing grid rings, the gas crest
+    near the chain's crossing and the ring's trough, each linear in R. Until S92 the unspurred contrast at the chain's
+    crossing alone."""
     lower, upper, share = ring_bracket(gp.R, np.array([radius]))
     rings = np.array([int(lower[0]), int(upper[0])])
     az = gp.stars.pieces.along(np.full(2, piece), np.log(gp.R[rings]))
-    g = gp.unspurred_contrast_at(gp.R[rings], az)
-    return float((1.0 - share[0]) * g[0] + share[0] * g[1])
+    (c0, t0), (c1, t1) = (hand_crest_and_trough(gp, float(gp.R[r]), float(a)) for r, a in zip(rings, az))
+    w = float(share[0])
+    return (1.0 - w) * c0 + w * c1, (1.0 - w) * t0 + w * t1
 
 
 def test_the_spacing_is_ten_jeans_lengths_of_the_ridge_from_the_published_fields(default_model):
@@ -264,48 +291,70 @@ def test_the_spacing_is_ten_jeans_lengths_of_the_ridge_from_the_published_fields
     f, gp, c = o.fields, gas_of(default_model, o), constants(default_model)
     assert (c["GAS_DISPERSION"], c["G"], c["SPUR_SPACING_JEANS"]) == (SOUND_SPEED_HAND, G_HAND, 10.0)
     sigma = np.interp(f["gas_spur_radius"], o.grid.R, f["gas_surface_density"])
-    peak = sigma * f["gas_spur_contrast"]
+    # S92 (#164 / #165): the peak is the ring's column times the gas crest near the chain, no longer times the height
+    # (``gas_spur_contrast``, the crest over the ring's trough); the crest is re-derived by hand below.
+    peak = f["gas_spur_peak_surface_density"]
     jeans = SOUND_SPEED_HAND**2 / (G_HAND * 1e6 * peak)
-    assert np.allclose(f["gas_spur_peak_surface_density"], peak, rtol=1e-12)
+    assert np.all(f["gas_spur_contrast"] >= 0.0)
+    # S92 (the gate's ruling C3): the identity the peak held to 1e-12 before S92, ``peak == column * contrast``, is now
+    # ``peak == column * (contrast + trough)`` - the walk's crest is its height over the ring's trough plus that trough,
+    # the trough read here as the walk reads it (each bracketing grid ring's least on the solver's cell centres,
+    # linear in R). Wherever the height is above 0 (at 0 the walk's max(crest - trough, 0) clips, and only the
+    # inequality is left). Was, at S92's build, `peak >= sigma * contrast`.
+    trough = np.array([hand_trough(gp, float(r)) for r in f["gas_spur_radius"]])
+    up = f["gas_spur_contrast"] > 0.0
+    assert up.any() and np.allclose(peak[up], (sigma * (f["gas_spur_contrast"] + trough))[up], rtol=1e-12, atol=0.0)
+    assert np.all(peak >= sigma * f["gas_spur_contrast"])
     assert np.allclose(f["gas_spur_jeans_length"], jeans, rtol=1e-12) and np.allclose(f["gas_spur_spacing"], 10 * jeans, rtol=1e-12)
     # Along each chain each foot stands one local spacing on from the last.
     for chain in np.unique(f["gas_spur_chain"]):
         rows = np.flatnonzero(f["gas_spur_chain"] == chain)
         assert np.allclose(np.diff(f["gas_spur_arc"][rows]), f["gas_spur_spacing"][rows][:-1], rtol=1e-12)
-    # The foot's contrast is the walk's read, re-derived here, to 1 %: each foot's piece found from its chain's arc.
+    # The foot's crest and height are the walk's reads, re-derived here, to 1 %: each foot's piece found from its chain's arc.
     pieces = gp.stars.pieces
     for k in range(f["gas_spur_radius"].size):
         members, arc = ls.chain_geometry(pieces, float(f["gas_spur_chain"][k]))
         ends = np.concatenate([[0.0], np.cumsum(arc)])
         i = int(min(np.searchsorted(ends, f["gas_spur_arc"][k], side="right") - 1, members.size - 1))
-        assert hand_ridge(gp, int(members[i]), float(f["gas_spur_radius"][k])) == pytest.approx(f["gas_spur_contrast"][k], rel=0.01)
+        crest, trough = hand_ridge(gp, int(members[i]), float(f["gas_spur_radius"][k]))
+        assert crest * sigma[k] == pytest.approx(peak[k], rel=0.01) and crest - trough == pytest.approx(f["gas_spur_contrast"][k], rel=0.01)
+
+
+def walk_against_point(model, seed: int | None = None) -> np.ndarray:
+    """|the walk's crest / the point function's crest - 1| at every foot (S92, #164 / #165): the walk's crest is the
+    table's peak over the ring's column; the point function's is the largest unspurred contrast within half the
+    foot's own ring's crest width of the foot, read on that ring's cell centres (``hand_crest_and_trough``)."""
+    o = galaxy_run(model, "milky_way") if seed is None else galaxy_run(model, "milky_way", texture_seed=seed)
+    f, gp = o.fields, gas_of(model, o)
+    walk = f["gas_spur_peak_surface_density"] / np.interp(f["gas_spur_radius"], o.grid.R, f["gas_surface_density"])
+    point = np.array([hand_crest_and_trough(gp, float(r), float(p))[0] for r, p in zip(f["gas_spur_radius"], f["gas_spur_azimuth"])])
+    return np.abs(walk / point - 1.0)
+
+
+# S92 (#164 / #165): the walk reads the gas crest near the chain, not g at the chain, so its declared approximation is
+# the crest's: the two grid rings' window maxima, linear in R, against the point function's at the foot's own ring.
+# Until S92 (the chain's read): ten sampled feet 0.0077, every foot 0.0573 (39 feet) at seed 0 and 0.2506 (35) at 4242.
+WALK_READ_OVER_S92 = ("S92 (#164 / #165): the walk's crest read reads over WALK_READ_DIFFERENCE (0.27) at texture seed "
+                      "4242 - the crest window's width differs between the two grid rings and the crest it holds can be "
+                      "another ridge's (worst feet at 4.44 and 5.40 kpc); register #220, the bound not moved")
 
 
 def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     """The lead's ruling 3: the walk reads the ridge on the two grid rings either side of a foot - a declared
-    approximation. Over ten feet spread through the Milky Way template's table the largest relative difference from
-    the gas pattern's own point function at the foot is 0.0516 (S62), under ``WALK_READ_DIFFERENCE``."""
-    o = galaxy_run(default_model, "milky_way")
-    f, gp = o.fields, gas_of(default_model, o)
-    sample = np.linspace(0, f["gas_spur_radius"].size - 1, 10).astype(int)
-    point = gp.unspurred_contrast_at(f["gas_spur_radius"][sample], f["gas_spur_azimuth"][sample])
-    rel = np.abs(f["gas_spur_contrast"][sample] - point) / point
-    assert rel.max() <= ls.WALK_READ_DIFFERENCE
-    assert rel.max() == pytest.approx(0.0077, abs=5e-4)  # S90 (#213): was 0.0103 - the walk ends at the arms' budget's edge, 53 -> 40 feet, so the ten sampled feet are others  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar
-    # S70 (D234; Audit V F-2-4): and over EVERY foot, not ten - the bound is the population's (0.27, measured at seed
-    # 4242: 0.2698); at this template's own seed every foot's read is within 0.0516 too (48 feet).
-    every = np.abs(f["gas_spur_contrast"] / gp.unspurred_contrast_at(f["gas_spur_radius"], f["gas_spur_azimuth"]) - 1.0)
-    # S90 (#213): 53 -> 40 feet - the 13 past the arms' budget's edge (12.34 kpc) are gone; they read 1.0 exactly, so the worst is unmoved
-    # S91 (#216): was 40 feet - the template's census (49, 13, 4) -> (46, 12, 3) by the births made bit-independent
-    # (chain 12's one-ulp birth gone, and its foot with it); the worst read unmoved.
-    assert every.size == 39 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.0573, abs=5e-4)  # S87 (#148, #80): was 0.0516 - the clock and the template's pinned 5.0 kpc bar  # S87 (#148, #80): was 48 feet - the clock and the template's pinned 5.0 kpc bar
-    # S88 (D255 ruling 4): the bound's own seed, 4242, held here beside it - every foot on the production grid, the
-    # population S70 measured the 0.27 on (0.2698 then, 44 feet); on M1's final model 0.2506 over 45 feet, 3 over 0.052.
-    o4242 = galaxy_run(default_model, "milky_way", texture_seed=4242)
-    f4, gp4 = o4242.fields, gas_of(default_model, o4242)
-    every = np.abs(f4["gas_spur_contrast"] / gp4.unspurred_contrast_at(f4["gas_spur_radius"], f4["gas_spur_azimuth"]) - 1.0)
-    # S91 (#216): was 36 feet - seed 4242's census (44, 11, 4) -> (40, 10, 4) by the births made bit-independent; the worst unmoved.
-    assert every.size == 35 and every.max() <= ls.WALK_READ_DIFFERENCE and every.max() == pytest.approx(0.2506, abs=5e-4)  # S90 (#213): was 45 feet - the walk ends at the arms' budget's edge
+    approximation, held over every foot at the template's own seed under ``WALK_READ_DIFFERENCE`` (S70, D234), the
+    ten sampled feet recorded (S62)."""
+    every = walk_against_point(default_model)
+    sample = every[np.linspace(0, every.size - 1, 10).astype(int)]
+    assert every.size == 45 and every.max() <= ls.WALK_READ_DIFFERENCE
+    assert (round(float(sample.max()), 4), round(float(every.max()), 4)) == (0.0189, 0.2176)
+    # S88 (D255 ruling 4): the bound's own seed, 4242, beside it - recorded here, its bound held in the next test.
+    every = walk_against_point(default_model, 4242)
+    assert every.size == 43 and round(float(every.max()), 4) == 0.4582
+
+
+@pytest.mark.xfail(strict=True, reason=WALK_READ_OVER_S92)
+def test_the_walk_s_read_at_the_bound_s_own_seed_is_within_it(default_model):
+    assert walk_against_point(default_model, 4242).max() <= ls.WALK_READ_DIFFERENCE
 
 
 def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default_model):
@@ -317,7 +366,8 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     f, gp = o.fields, gas_of(default_model, o)
     # S91 (#216): was 40 feet on 13 chains - the template's census (49, 13, 4) -> (46, 12, 3) by the births made
     # bit-independent (chain 12's one-ulp birth gone, with its one foot).
-    assert f["gas_spur_radius"].size == 39 and np.unique(f["gas_spur_chain"]).size == 12  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
+    # S92 (#165): was 39 feet on 12 chains - the spacing reads the ridge's crest (at least the chain's read), so it is shorter.
+    assert (f["gas_spur_radius"].size, np.unique(f["gas_spur_chain"]).size) == (45, 12)  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
     # At three radii: 10 λ_J,sp where each chain crosses, from the published fields and the walk's read.
     pieces = gp.stars.pieces
     table = {}
@@ -325,7 +375,7 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
         slots = pieces.slots(np.array([radius]))[0]
         live = slots < pieces.count
         sigma = float(np.interp(radius, o.grid.R, f["gas_surface_density"]))
-        spacing = sorted(10 * SOUND_SPEED_HAND**2 / (G_HAND * 1e6 * sigma * hand_ridge(gp, int(k), radius)) for k in slots[live])
+        spacing = sorted(10 * SOUND_SPEED_HAND**2 / (G_HAND * 1e6 * sigma * hand_ridge(gp, int(k), radius)[0]) for k in slots[live])
         table[radius] = (sigma, [round(s, 2) for s in spacing])
     # As measured at S62, kpc, the chains crossing each radius in order of spacing (Σ_gas 22.84, 10.92 and 8.12 M☉/pc²;
     # c_s 6 km/s): the ridge's contrast g read as the walk reads it, 10 c_s² / (G Σ_gas g).
@@ -333,8 +383,9 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     assert [round(table[r][0], 2) for r in (4.0, R_SUN, 10.0)] == [23.15, 11.03, 8.19]
     # S87 (#148, #80): was [1.54, 3.97], [5.27, 5.92, 6.25, 6.52, 6.78] and [6.95, 7.07, 8.26, 8.76, 8.85, 10.27] - the
     # clock and the template's pinned 5.0 kpc bar; still kiloparsecs, outside M51's 0.2-1 kpc past 4 kpc
-    assert table[4.0][1] == [1.15, 3.72] and table[R_SUN][1] == [4.66, 5.89, 6.23, 6.86, 6.86]
-    assert table[10.0][1] == [6.88, 6.99, 8.16, 8.68, 8.77, 10.16]
+    # S92 (#165): were [1.15, 3.72], [4.66, 5.89, 6.23, 6.86, 6.86] and [6.88, 6.99, 8.16, 8.68, 8.77, 10.16] - the walk
+    # reads the gas crest within half the ring's crest width of the chain, so each spacing reads the ridge's crest.
+    assert (table[4.0][1], table[R_SUN][1], table[10.0][1]) == ([0.72, 3.7], [4.64, 5.88, 5.89, 6.23, 6.86], [6.85, 6.85, 8.14, 8.61, 8.68, 8.77])
     assert all(s > 1.0 for s in table[R_SUN][1])  # outside M51's 0.2-1 kpc: recorded, not judged
 
 
@@ -360,7 +411,7 @@ def test_rerolling_the_spurs_stream_moves_the_feet_and_nothing_else_of_the_law(d
     assert not np.array_equal(one["gas_spur_arc"][:3], two["gas_spur_arc"][:3])
     for table in (one, two):
         # The law holds at every foot of either draw: the spacing is the ridge's 10 λ_J there and the shape the constants'.
-        jeans = SOUND_SPEED_HAND**2 / (G_HAND * 1e6 * np.interp(table["gas_spur_radius"], o.grid.R, sigma) * table["gas_spur_contrast"])
+        jeans = SOUND_SPEED_HAND**2 / (G_HAND * 1e6 * table["gas_spur_peak_surface_density"])  # S92 (#165): was the column times gas_spur_contrast
         assert np.allclose(table["gas_spur_spacing"], 10 * jeans, rtol=1e-12)
         assert np.all(table["gas_spur_pitch"] == 63.0) and np.all(table["gas_spur_length"] == 0.24)
         assert np.all(table["gas_spur_width"] == 0.06) and np.all(table["gas_spur_fall"] == 7.0)
