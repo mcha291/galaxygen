@@ -43,8 +43,8 @@ def test_the_regenerated_table_reads_what_the_old_one_did():
     # S93 (#113 / #171): re-pinned on the lookup along equivalent points - at an age between two isochrones the
     # star is read on the isochrone built point by point between them, not at its initial mass on each; was
     # 1.04704773, 1.08539546, 2.03570423 and 5823.96159307, 5832.87121235, 5729.52982438 (the table unchanged).
-    assert L == pytest.approx([1.0416919899, 1.0850674864, 2.0248682039], rel=1e-8)  # old table: 1.04704773, 1.08539546, 2.03570423
-    assert T == pytest.approx([5819.2982012888, 5832.6463136627, 5744.9645328922], rel=1e-10)  # old table: 5823.96..., 5832.87..., 5729.53...
+    assert L == pytest.approx([1.0416919899, 1.0850674864, 2.0248682039], rel=1e-8)  # the old lookup's values: 1.04704773, 1.08539546, 2.03570423
+    assert T == pytest.approx([5819.2982012888, 5832.6463136627, 5744.9645328922], rel=1e-10)  # the old lookup's values: 5823.96..., 5832.87..., 5729.53...
     tab, pop = isochrones(), population_light()
     solar = int(np.abs(tab.mhs).argmin())
     # old table: 801.433898, 0.147498719 (the same on both tables, S28). # S49 (D204, #126): the light integrated along the isochrone's points; was those
@@ -197,7 +197,9 @@ def test_at_a_table_age_the_lookup_reads_the_isochrone_itself():
     """At an isochrone's own age the isochrone built between it and its neighbour is itself (f = 0 on the union of
     their equivalent points, each piecewise linear in xi between its own points), so a star reads the track in
     initial mass as ``_along`` does - the reading before S93 at the table's ages. Below the giant branch, where no
-    two points share a mass."""
+    two points share a mass, to 1e-9 dex. Over the whole track, giants included, at masses between the track's own
+    distinct masses (a repeated mass is a jump either reading may take a side of): measured 3.7e-8 dex worst (the
+    1e-12 rank separation of xi over a giant step of a few 1e-6 Msun), held at 1e-7 - an as-measured margin."""
     from galaxy.stages.photometry import _along
 
     tab = isochrones()
@@ -212,6 +214,13 @@ def test_at_a_table_age_the_lookup_reads_the_isochrone_itself():
             log_l, log_t = _along(tab.track(a, z), mass)
             assert np.log10(L) == pytest.approx(log_l, abs=1e-9)
             assert np.log10(T) == pytest.approx(log_t, abs=1e-9)
+            step = np.flatnonzero(np.diff(m) > 0.0)
+            whole = np.concatenate([0.5 * (m[step] + m[step + 1]), m[step] + 0.25 * (m[step + 1] - m[step])])
+            L, T = lookup(whole, np.full(whole.size, age[0]), np.full(whole.size, float(tab.mhs[z])))
+            log_l, log_t = _along(tab.track(a, z), whole)
+            assert np.all(np.isfinite(L))
+            assert np.log10(L) == pytest.approx(log_l, abs=1e-7)
+            assert np.log10(T) == pytest.approx(log_t, abs=1e-7)
 
 
 def test_the_imf_s_stars_through_the_lookup_carry_the_population_s_light():
@@ -235,4 +244,6 @@ def test_the_imf_s_stars_through_the_lookup_carry_the_population_s_light():
             L, _ = lookup(m, age, feh)
             ref, _ = population_at(age[:1], feh[:1])
             worst.append(float(np.nansum(L) / (m.size * imf_mean_mass()) / ref[0]))
+    # an as-measured margin over this seed's 0.947-1.043, not a judged window: the Monte Carlo spread of an old
+    # population's light at 10^6 draws is a few per cent; the old reading's 0.43-0.98 fails it.
     assert np.all(np.abs(np.asarray(worst) - 1.0) < 0.07), worst

@@ -827,6 +827,15 @@ def cluster_window(constants: Mapping[str, Any]) -> float:
     return (float(constants["GMC_PHASE_BLOWN_OPEN"]) + float(constants["GMC_PHASE_DISPERSING"])) / 1000.0
 
 
+def cluster_state(age: np.ndarray, u: np.ndarray, bound_fraction: float, dissolution: float) -> np.ndarray:
+    """The census's one rule (``clusters.CLUSTER_BOUND_STATES``): 0 bound - its uniform ``u`` below the bound fraction,
+    whatever its mass and age (Lada & Lada 2003) - else 1 unbound while younger than the dissolution age and 2
+    dissolved past it; ``age`` and ``dissolution`` in one unit. ``clusters.materialise_clusters`` states each cluster
+    by it and :func:`cluster_member` the sample's young stars (S93 review: one rule, not two copies, as S92's #217)."""
+    bound = np.asarray(u, dtype=float) < bound_fraction
+    return np.where(bound, 0, np.where(np.asarray(age, dtype=float) < dissolution, 1, 2)).astype(np.int64)
+
+
 def cluster_member(age_gyr: np.ndarray, u: np.ndarray, constants: Mapping[str, Any]) -> np.ndarray:
     """1 where a sampled star is one the cluster points carry, else 0 (S93, T3 / #115): younger than the census's
     window and in a cluster that is still a point - every cluster younger than the dissolution age (bound or
@@ -836,9 +845,8 @@ def cluster_member(age_gyr: np.ndarray, u: np.ndarray, constants: Mapping[str, A
     object - bound is drawn independent of mass and age (Lada & Lada 2003), so the kept stars hold, over the
     sampling fraction, the dissolved clusters' light in expectation at every age - and no star names its cluster."""
     age = np.asarray(age_gyr, dtype=float)
-    dissolution = float(constants["CLUSTER_DISSOLUTION_AGE"]) / 1000.0
-    bound = np.asarray(u, dtype=float) < float(constants["CLUSTER_BOUND_FRACTION"])
-    return ((age < cluster_window(constants)) & ((age < dissolution) | bound)).astype(np.int64)
+    state = cluster_state(age, u, float(constants["CLUSTER_BOUND_FRACTION"]), float(constants["CLUSTER_DISSOLUTION_AGE"]) / 1000.0)
+    return ((age < cluster_window(constants)) & (state != 2)).astype(np.int64)
 
 
 def star_stream(seed: int, ring: int, name: str, level: int = 0) -> np.random.Generator:

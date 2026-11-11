@@ -3765,26 +3765,31 @@ never been judged in twenty-three sessions.
    field mode's sample, and the dissolved clusters' light handed to the sample or drawn at their spread.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
-   *S93 (M3; T3): built - the closer as S70 narrowed it, by the census's partition.* The catalogue publishes
-   `star_cluster_member` (`systems.cluster_member`, on the `/api/region` rows): 1 for a sampled star younger than the
-   census's window (`systems.cluster_window`, 20 Myr, now the one definition `bright` imports) in a cluster that is
-   still a point - every one younger than `CLUSTER_DISSOLUTION_AGE`, past it a bound one at `CLUSTER_BOUND_FRACTION`,
-   drawn on the star's own `member` uniform (a seventh ring stream; no other draw moves) - the census's own rule, so
-   the kept young stars hold the dissolved clusters' light in expectation at every age. The field mode's "sampled"
-   reading draws the region sample without its members and the census without its dissolved clusters
-   (`regionStars.ts dropRows`; the light only, a painted field shows every star). A membership by class, not by
-   object: no star names its cluster (a `star_cluster_index` would need the census's draw per cell, which the
-   sample's sparse young stars cannot match star by star). Measured (`tests/test_s93_t3_membership.py`, the young
-   part `Y` = the render's, the sample at 10^6 stars read in expectation given its ages, s = n (1 - R) /
-   `star_count_total`): **before**, sample + every point over `Y` **1.9319** on the Milky Way (= the default
-   galaxy; the sample's young 1.0000 `Y`, the census 0.9318 `Y`) and **1.9813** on `ngc_4414` (0.9499 + 1.0314);
-   **after**, kept + the points not dissolved **0.9343** / **1.0241** - the census's own draw against its
-   expectation (T2's 6 %), per unit of the census's light 0.9916 / 1.0056; the sample keeps 0.1513 / 0.1601 of its
-   young light against the census's dissolved light share 0.1597 / 0.1545. Realised (not in expectation) a 10^6
-   sample's young light is a few O stars' coin toss (0.42 / 0.18 `Y`). The whole closure (sample + points = the
-   render's `stars`) is #171's: the sample's light over s was 0.30 of the render's total before #171's mend. **What
-   remains:** the gate's verdict; the "sampled" stars still painted by the blackbody share (D188's, outside this
-   closer); the star-first mode's dissolved clusters still points (its bright catalogue holds no star of the window).
+   *S93 (M3; T3): built in part - the closer as S70 narrowed it met in part, by the census's partition; carried,
+   narrowed (the gate, D262).* The catalogue publishes `star_cluster_member` (`systems.cluster_member`, on the
+   `/api/region` rows): 1 for a sampled star younger than the census's window (`systems.cluster_window`, 20 Myr, the
+   one definition `bright` imports) in a cluster that is still a point - the census's own rule, `systems.cluster_state`,
+   the one function `clusters.materialise_clusters` states its clusters by, read on the star's own `member` uniform
+   (a seventh ring stream; no other draw moves) - so the kept young stars hold the dissolved clusters' light in
+   expectation at every age. The field mode's "sampled" reading draws the region sample without its members and the
+   census without its dissolved clusters (`regionStars.ts dropRows`; the light only, a painted field shows every
+   star; neither layer is pickable since D209, but the caption's "N stars here" still counts the members). A
+   membership by class, not by object: no star names its cluster. Measured (`tests/test_s93_t3_membership.py`; the
+   young part `Y` the render's; the sample read in expectation given its ages, s = n (1 - R) / `star_count_total`),
+   at the 500 000 stars the test runs and at 10^6: **before**, sample + every point over `Y` **1.9196** (10^6:
+   1.9319) on the Milky Way (= the default galaxy) and **2.0381** (1.9813) on `ngc_4414`; **after**, kept + the points
+   not dissolved **0.9405** (0.9343) / **1.0316** (1.0241) - the census's own draw against its expectation (T2's
+   6 %); (kept + points) / census 1.0093 (1.0027) / 1.0001 (0.9929); the ratio once written "per unit of the census's
+   light 0.9916 / 1.0056" is (kept / sample's young x census + points) / census (`s93_t3_measure.py:85`), at 10^6.
+   The sample keeps 0.1594 (0.1513) / 0.1584 (0.1601) of its young light against the census's dissolved light share
+   0.1597 / 0.1545. **Realised**, not in expectation, the closure is not met: a sample's young light is a few O
+   stars' draw (0.41 / 0.18 `Y` at 10^6), and the whole sample's light over s against the render's total read
+   **0.30 before #171's mend and 0.44 after** (10^6, the Milky Way). **What closes it now:** the realised closure,
+   sample + points = the render's `stars` over the same cells through the filter set within the sample's own noise
+   (VIEWER_TASKS row T3's test), which needs the sample's light over s to close on the old part (#171's residual,
+   the s convention's 1.17 with the bulge) and a sample dense enough in young stars; and the left items - the
+   caption's count, the "sampled" stars painted by the blackbody share (D188's), the star-first mode's dissolved
+   clusters still points (its bright catalogue holds no star of the window).
 116. ~~**A cluster's extent is published and not drawn: every cluster is a point sprite at every level**~~
    **DISCHARGED at S64** (D224, R7, T6: the form ruled Plummer, a = r_h / 1.305; `plummer.ts` draws it in place of a
    cluster's point where 2 r_h fills a pixel, each pixel the profile's exact integral, the sprite summing to the light
