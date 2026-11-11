@@ -701,3 +701,87 @@ a = 5.21 kpc — 3.5 times the S⁴G spiral lanes' 150 pc, which are an upper bo
 a bar's. The owner's reading: the width of a bar lane in high-resolution CO (PHANGS' barred galaxies at ~100 pc,
 or the Milky Way's near and far lanes in CO) or in the simulations' maps (KSK12, Sormani et al. 2015), whose text
 the readers fetched without a width.
+
+## Part S96 — the bar's length with its second dependence, its presence against disc dominance, its axis ratio and a lane's width (2026-11-12, read at the reading session; reader A)
+
+**The reader's note.** S96's reader A fetched each source below in this session (arXiv abstract pages and ar5iv / arXiv
+HTML); its note is `s96_A.md` in the session's scratchpad. A number quoted from a fetched page is
+`[verified: source, place]`; the reader's own arithmetic is `[inferred]`. Nothing here moved a constant or a pin: the
+register's entries (#80, #145, #146, #147) carry the gate's ruling on each (D265).
+
+### S96.1 #80 — Erwin 2019: the bar's length on h and on a broken stellar mass
+
+- **Source.** Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423 (abstract page and ar5iv HTML, fetched twice).
+- **Referent.** h is "the exponential disc scale length from the multi-component 2D decompositions of S4G 3.6 um
+  images by Salo et al. (2015)" (the largest exponential where several were fitted); the fits are on the Main Spiral
+  Sample, "588 galaxies, with 367 barred galaxies making up the Main Barred Spiral Sample" `[verified: Erwin 2019, text]`.
+- **Abstract.** "for log M* < 10.1, bar size is almost independent of stellar mass (a ∝ M*^0.1)" and "a strong function
+  for higher masses (a ∝ M*^0.6)" `[verified: Erwin 2019, abstract]`.
+- **Eq. 4** (the paper's notation, as the fetch restated it): log a_vis = α₁ + βX + β₁ log M* below M_brk; α₂ + βX + β₂
+  log M* above, with α₂ = α₁ + (β₁ − β₂) M_brk.
+- **Table 3** (log a on log h alone, the law the model holds): 0.04 ± 0.02, 0.76 ± 0.06 — the model's
+  `BAR_LENGTH_LOG_NORM` / `BAR_LENGTH_SLOPE` MATCH `[verified: Erwin 2019, Table 3]`. No N or σ is printed in Table 3.
+- **Table 4, row "log M* + log h":** α₁ 0.02 (+0.29/−0.27), β₁ 0.00 (±0.03), β₂ 0.35 (+0.06/−0.08), β 0.61 (±0.06),
+  log M_brk 10.13 (+0.02/−0.05) `[verified: Erwin 2019, Table 4]`.
+- **Table 2** (mass alone, broken-linear): Main Spiral α₁ −0.42, β₁ 0.07, β₂ 0.56, log M_brk 10.11; Parent Spiral
+  −0.66 / 0.10 / 0.59 / 10.16 `[verified: Erwin 2019, Table 2]`.
+- **Table 5** (AIC / MSE_pred): log h alone 6242.2 / 0.033; **log h + log M* (broken-linear) 5583.5 / 0.030**, the best
+  of the seven; log M* broken-linear 7870.1 / 0.042; log f_gas 10794.1 / 0.058 `[verified: Erwin 2019, Table 5]`. The
+  MSE_pred is the only scatter-like number: √0.030 = 0.17 dex, √0.033 = 0.18 dex, a prediction error, not a fitted
+  intrinsic scatter `[inferred]`.
+- **What Table 4 gives on the model's numbers** `[inferred: reader A's hand arithmetic, not run]`: at h = 2.605 kpc
+  (the λ_d scale length the law reads) and log M* = 10.676 (4.74 × 10¹⁰ M☉, the Milky Way template's stellar mass as
+  #146 records it), α₂ = 0.02 − 0.35 × 10.13 = −3.5255 and log a = −3.5255 + 0.61 × 0.4158 + 0.35 × 10.676 = 0.4647,
+  **a ≈ 2.92 kpc**, against 2.27 kpc on Table 3's law. The Milky Way's 5.0 kpc sits 0.23 dex over the two-term fit
+  (~1.35 of the 0.17 dex prediction error) and 0.34 dex over the h-only law (~1.9 of 0.18 dex).
+- **Not covered.** The λ_d h against the 3.6 µm h (the referent gap #80 records is not closed by this reading);
+  galaxies outside log M* ~ 9–11. Entering Table 4 needs the bar's stage to read a stellar mass, which checkpoint 1 does
+  not hold (rule A1).
+
+### S96.2 #145 — the barred fraction against disc dominance
+
+- **Search.** One web search for an observed barred fraction against disc dominance found no dedicated study.
+- **Kashfi, Roshan & Famaey 2022**, MNRAS Letters (slac146), arXiv:2211.15599 (abstract and ar5iv). Disc maximality
+  "F_b = V_bary^max(R_p) / V_tot(R_p) < 0.75", R_p the peak of the baryonic curve (chosen over 2.2 R_d); SPARC rotation
+  curves (Li et al. 2018's fits); bars "visually obvious" from SPARC's types, a sample that "explicitly biases against
+  barred galaxies". **SPARC, M* ≥ 10¹⁰: 59 galaxies, 14 submaximal, 5 of them barred (36 %); 3/11 = 27 % after a χ²
+  cut; 0.7 < F_b < 0.75: 9 galaxies, 4 barred; M* ≥ 10^10.5: 45 galaxies, 7 submaximal, "at least 57 %" barred.** TNG50:
+  5.8 % of 155 submaximal discs barred `[verified: Kashfi et al. 2022, text]`. **No barred fraction against F_b is
+  binned; no count of barred maximal discs is given.**
+- **Aquino-Ortiz et al. 2025**, arXiv:2512.21303 (abstract only): bars go with centrally concentrated mass and low
+  λ_Re at fixed M*; no barred fraction against disc dominance.
+- **Against the model** `[inferred]`: F_b < 0.75 in velocity is a V² share under 0.56 (at Kashfi's radius, not 2.2 h);
+  the model bars every disc above f_d ≈ 0.33, SPARC about a third (3/11 to 5/14) of its submaximal discs above 10¹⁰ M☉
+  — tiny N, a different radius, a sample biased against bars. Nothing read gives a fraction at f_d 0.6–0.76, where both
+  templates sit.
+- **Not searched.** Fujii et al. 2018's own second parameter (Q) and a Q-based observed fraction.
+
+### S96.3 #146 — the bars' ellipticity by family (DG16a Table 3)
+
+- **Source.** Díaz-García, Salo, Laurikainen & Herrera-Endoqui 2016a, A&A 587, A160, arXiv:1509.06743 (ar5iv,
+  characters 0–200k of 218k). Abstract: "For spirals the mean ε≈0.5 is nearly independent of T, but it drops among S0s
+  (≈0.2)." Sect. 4: "The length is the radius of the maximum ellipticity"; "the maximum of isophotal ellipticity was
+  used in the conversion to the disk plane" (Herrera-Endoqui et al. 2015's catalogue) — an ellipse-fit, deprojected ε.
+- **Table 3, ε, mean ± standard error of the mean (N):** T < 0 0.40 ± 0.02 (47); T 0–3 0.51 ± 0.01 (131); T 3–5 0.52 ±
+  0.02 (93); T 5–7 0.53 ± 0.01 (198); T > 7 0.54 ± 0.01 (185); **SB 0.59 ± 0.01 (277); SAB 0.46 ± 0.01 (226)**; A2max,
+  same rows: SB 0.48 ± 0.01 (261), SAB 0.38 ± 0.02 (193); T 3–5 0.39, T 5–7 0.36 `[verified: DG16a, Table 3]`. The
+  caption gives "the standard deviation of the mean and the number of galaxies": **no standard deviation of ε is
+  printed** in the part read.
+- **As b/a = 1 − ε** `[inferred]`: spirals 0.46–0.49 by type, **SB 0.41, SAB 0.54** — the model's 0.4 is the SB family's
+  ellipse-fit mean as well as G11's 2D-component value. A spread from SEM × √N (~0.14–0.17) is 0.07–0.25 by the
+  one-figure rounding alone: not a number to draw with.
+- **Not read.** DG16a's per-galaxy table (J/A+A/587/A160, a data download, not done); G11's Fig. 1.
+
+### S96.4 #147 — one bar's dust lane
+
+- **Search.** One web search for a measured bar-lane width in CO or dust found no sample statistic (PHANGS's 2023
+  bar-lane study, by the search snippet, classifies curvature and extent, not width — not fetched).
+- **Laine, Kenney, Yun & Gottesman 1999** (as the page's affiliations suggest; the page names no journal),
+  arXiv:astro-ph/9808328, NGC 7479: the CO ridge along the bar "has a full-width-half-maximum (FWHM) value similar to the
+  width of the beam" — unresolved; "The dust lane, as measured from 0.8 resolution optical and near-infrared images, has
+  a width of about 1.5" [arcsec]"; "1'' = 160 pc" `[verified: Laine et al. 1999, text]`. So the dust lane is ~240 pc
+  wide `[inferred]`; the page gives no bar length, so no width over a.
+- **Against the model** `[inferred]`: the placeholder's FWHM 0.10 a is ~0.5 kpc on the Milky Way template, about twice
+  this one lane — one galaxy and a bound, not a statistic.
+- **Not reached.** Schinnerer et al. 2023 (NGC 1365, JWST + ALMA, ApJL 944, L15), which the search says resolves the two
+  bar lanes — the next reading.

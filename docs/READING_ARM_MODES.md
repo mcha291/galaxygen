@@ -175,3 +175,21 @@ is their square (A3/A2 = 0.58 is a power ratio of 0.34).
   A3(R) or A4(R) profile, or a Fourier spectrum of NGC 4414 itself.
 - `[recall — NOT READ]` Elmegreen et al. 1992 reported three-arm components confined between resonances in 18
   galaxies; radii and amplitudes not confirmed.
+
+## Part S96 — Hart et al. 2016's arm-count demographics read directly (debt #138) (2026-11-12, read at the reading session; reader A)
+
+Row 33 above was `[verified-via-extract]` through Smith et al. 2026. S96's reader A fetched the primary source (its note
+`s96_A.md` in the session's scratchpad).
+
+- **Source.** Hart et al. 2016, MNRAS (doi 10.1093/mnras/stw1588), arXiv:1607.01019 (abstract and ar5iv, 0–100k of 121k
+  characters). Galaxy Zoo 2 votes; luminosity-limited sample 0.03 < z < 0.085, M_r ≤ −21; the mass-limited sample adds
+  log M* ≥ 10.6.
+- **Table 2, debiased fractions, m = 1 / 2 / 3 / 4 / 5+:** luminosity-limited 0.05 / 0.62 / 0.20 / 0.06 / 0.06 (N =
+  17 957); **mass-limited 0.05 / 0.64 / 0.18 / 0.06 / 0.07 (N = 9 413)** `[verified: Hart et al. 2016, Table 2]`. §4.2.1:
+  "62.1±0.4% of the galaxies show two-armed spiral structure". Abstract: "We conclude that two-armed structure is
+  ubiquitous in star-forming disks"; "many-armed spiral structure appears to be a short-lived phase".
+- **Row 33 MATCHES** the mass-limited column (5 / 64 / 18 / 6 / 7 %): the extract was right; the row's tag may now read
+  `[verified: Hart et al. 2016, arXiv:1607.01019, Table 2]`.
+- **Coverage** `[inferred]`: a visual count at SDSS resolution is not the model's arm label (a different statistic);
+  the sample is luminosity / mass limited (M_r ≤ −21, log M* ≥ 10.6), where the Milky Way template (4.7 × 10¹⁰ M☉)
+  belongs.
