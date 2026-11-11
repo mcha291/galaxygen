@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type RegionStars, starLoads } from "./regionStars";
+import { type RegionStars, dropRows, starLoads } from "./regionStars";
 import { LOAD_TUNING_KEYS, TUNING_CONTROLS, TUNING_DEFAULTS, drawnTuning, loadTuning } from "./tuning";
 
 // S82 (#172, the owner's ruling of 2026-11-02): the field mode's region regime draws the star-first mode's points by
@@ -41,5 +41,19 @@ describe("the region's stars (S82, #172)", () => {
     const store = (text: string) => ({ getItem: (key: string) => (key.endsWith(".ngc_4414") ? text : null) });
     expect(loadTuning(store(JSON.stringify({ regionStars: "sampled" })), "ngc_4414").regionStars).toBe("sampled");
     expect(loadTuning(store(JSON.stringify({ regionStars: "both" })), "ngc_4414").regionStars).toBe("catalogue");
+  });
+});
+
+// S93 (T3 / #115): the young population drawn once - the sample's members and the census's dissolved clusters draw nothing.
+describe("the young population drawn once (S93, T3 / #115)", () => {
+  it("zeroes the rows whose column reads the dropped value, and keeps a response without the column whole", () => {
+    const colors = Float32Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(Array.from(dropRows(colors, [0, 1, 0], 1)!)).toEqual([1, 2, 3, 0, 0, 0, 7, 8, 9]);
+    const census = Float32Array.from([1, 1, 1, 2, 2, 2]);
+    expect(Array.from(dropRows(census, [2, 0], 2)!)).toEqual([0, 0, 0, 2, 2, 2]);
+    const whole = Float32Array.from([1, 2, 3]);
+    expect(Array.from(dropRows(whole, undefined, 1)!)).toEqual([1, 2, 3]);
+    expect(Array.from(dropRows(whole, [1, 1], 1)!)).toEqual([1, 2, 3]); // a column of another length: drawn whole
+    expect(dropRows(null, [1], 1)).toBeNull();
   });
 });

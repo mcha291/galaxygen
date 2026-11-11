@@ -782,7 +782,37 @@ def ring_young_share(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, *,
 # The per-star streams of a ring's draw, each an array of the ring's count (D220 item 1). The names are the ones the
 # cells' streams had until S61; ``sector`` (the allocation's uniform) and ``count`` (the ring's seeded rounding) are
 # the ring's own.
-STAR_STREAMS: tuple[str, ...] = ("radius", "age", "azimuth", "birth_radius", "height", "mass")
+STAR_STREAMS: tuple[str, ...] = ("radius", "age", "azimuth", "birth_radius", "height", "mass", "member")
+
+
+# --- the young population drawn once (S93, T3 / #115) ---------------------------------------------------------
+
+# What the membership reads: the cluster census's age window (its clouds' blown-open and dispersing phases) and the
+# rule by which a cluster in it is a point or dissolved (clusters.materialise_clusters: bound at the bound fraction,
+# independent of mass; an unbound one dissolved from the dissolution age).
+CLUSTER_MEMBER_CONSTANTS: tuple[str, ...] = (
+    "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_BOUND_FRACTION",
+)
+
+
+def cluster_window(constants: Mapping[str, Any]) -> float:
+    """Gyr: the ages the cluster census holds (its clouds' blown-open and dispersing phases), which the
+    bright catalogue leaves to it and the sample's membership reads, so that no star is counted twice."""
+    return (float(constants["GMC_PHASE_BLOWN_OPEN"]) + float(constants["GMC_PHASE_DISPERSING"])) / 1000.0
+
+
+def cluster_member(age_gyr: np.ndarray, u: np.ndarray, constants: Mapping[str, Any]) -> np.ndarray:
+    """1 where a sampled star is one the cluster points carry, else 0 (S93, T3 / #115): younger than the census's
+    window and in a cluster that is still a point - every cluster younger than the dissolution age (bound or
+    unbound), and past it a bound one, at the census's own bound fraction drawn on the star's ``member`` uniform.
+    The rest of the window is the dissolved clusters' stars, an association spread over its cell: the sample
+    keeps them and the dissolved clusters are not drawn as points. It is the census's partition by class, not by
+    object - bound is drawn independent of mass and age (Lada & Lada 2003), so the kept stars hold, over the
+    sampling fraction, the dissolved clusters' light in expectation at every age - and no star names its cluster."""
+    age = np.asarray(age_gyr, dtype=float)
+    dissolution = float(constants["CLUSTER_DISSOLUTION_AGE"]) / 1000.0
+    bound = np.asarray(u, dtype=float) < float(constants["CLUSTER_BOUND_FRACTION"])
+    return ((age < cluster_window(constants)) & ((age < dissolution) | bound)).astype(np.int64)
 
 
 def star_stream(seed: int, ring: int, name: str, level: int = 0) -> np.random.Generator:
@@ -1134,6 +1164,9 @@ def materialise(
     # [α/Fe] at birth, read at the same place as [Fe/H].
     alpha = np.asarray(fields["alpha_fe_history"], dtype=float)
     width = 2.0 * math.pi / CELL_SECTORS
+    # S93 (T3 / #115): the membership is published where the census's constants are given (the stage and the routes
+    # give every model constant); a caller that gives none gets a catalogue without the column, never a guessed rule.
+    members = constants is not None and all(k in constants for k in CLUSTER_MEMBER_CONSTANTS)
 
     def rows_for(cell: int, count: int, draw: Callable[[str], np.ndarray], footprint: dict[str, float] | None) -> dict[str, np.ndarray]:
         """One cell's (or one child's extra) stars: every column but the looked-up ones.
@@ -1189,6 +1222,7 @@ def materialise(
         is_thick = thick_at_birth[rows, cols]
         metallicity = feh[rows, cols]
         height = sech2_height(draw("height"), np.where(is_thick, h_thick, h_thin))
+        own = {"star_cluster_member": cluster_member(t[-1] - born, draw("member"), constants)} if members else {}
         return {
             "star_radius": radius,
             "star_azimuth": azimuth,
@@ -1199,6 +1233,7 @@ def materialise(
             "star_alpha": alpha[rows, cols],
             "star_mass": imf_sample(draw("mass")),
             "star_population": is_thick.astype(np.int64),
+            **own,
         }, pending
 
     def place(made: Sequence[tuple[dict[str, np.ndarray], tuple | None]]) -> None:
@@ -1357,6 +1392,8 @@ def materialise(
                       "star_luminosity", "star_temperature", "star_magnitude_v", "star_ionizing_photons",
                       "star_wind_luminosity", "star_remnant_mass", "star_bubble_radius")
         } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}
+        if members:
+            blank["star_cluster_member"] = empty.astype(np.int64)
         if level:
             blank |= {n: empty.astype(np.int64) for n in ("level", "cell", "index")}
         return Catalogue.of(blank, out_counts, out_layout)
@@ -1593,6 +1630,19 @@ STAR_WOLF_RAYET = FieldDecl(
     ),
 )
 
+STAR_CLUSTER_MEMBER = FieldDecl(
+    name="star_cluster_member", label="Carried by a cluster point", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
+    of="star", categories=("field", "cluster"), ramp=Palette(("#5a5a5a", "#6fd3ff")), provenance="seeded",
+    about=(
+        "Whether the cluster census's points carry this star (S93, T3 / #115): a star younger than the census's "
+        "window (its clouds' blown-open and dispersing phases, 20 Myr) in a cluster that is still a point - "
+        "every one younger than the dissolution age, past it a bound one at the census's bound fraction, drawn "
+        "on the star's own uniform. A star the points carry is not drawn as a sampled star, and a dissolved "
+        "cluster is not drawn as a point: its stars are the sample's. The census's partition by class, not a "
+        "star's cluster by name: the light matches in expectation, not star by star."
+    ),
+)
+
 STAR_REMNANT = FieldDecl(
     name="star_remnant", label="Remnant", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=REMNANT_CATEGORIES,
@@ -1679,7 +1729,8 @@ SYSTEMS = IMPLEMENTATIONS.register(
         reads_inputs=("migration_efficiency",),
         # S59 (D218): what the young stars' reader applies the star formation law with - the gas pattern's
         # constants and the law's index. Read only where the model publishes a modulation and the layer is on.
-        reads_constants=YOUNG_CONSTANTS,
+        # S93 (T3 / #115): and the cluster census's window and rule, which the membership is read with.
+        reads_constants=(*YOUNG_CONSTANTS, *CLUSTER_MEMBER_CONSTANTS),
         requires=tuple(dict.fromkeys((
             "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
             "birth_population", "sfr_surface_density_history", "feh_history", "alpha_fe_history",
@@ -1696,7 +1747,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
             STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
             STAR_MAGNITUDE_V, STAR_IONIZING_PHOTONS, STAR_WIND_LUMINOSITY, STAR_WOLF_RAYET,
-            STAR_REMNANT, STAR_REMNANT_MASS, STAR_BUBBLE_RADIUS,
+            STAR_REMNANT, STAR_REMNANT_MASS, STAR_BUBBLE_RADIUS, STAR_CLUSTER_MEMBER,
         ),
     )
 )
