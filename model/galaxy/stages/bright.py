@@ -108,6 +108,7 @@ from galaxy.stages.systems import (
     Catalogue,
     cell_edges,
     children_per_cell,
+    cluster_window,  # S93 (T3 / #115): moved to systems, which the sample's membership reads it in; one definition
     ring_young_share,
     sech2_height,
     young_fraction,
@@ -498,12 +499,6 @@ def octaves_kept(age_gyr: np.ndarray, survival_myr: np.ndarray) -> np.ndarray:
     (an age equal to it keeps the octave). 0 past the coarsest's - the pattern alone places the star."""
     t = np.asarray(age_gyr, dtype=float) * 1000.0
     return (t[:, None] <= np.asarray(survival_myr, dtype=float)[None, :]).sum(axis=1).astype(np.int64)
-
-
-def cluster_window(constants: Mapping[str, Any]) -> float:
-    """Gyr: the ages the cluster census holds (its clouds' blown-open and dispersing phases), which the
-    bright catalogue leaves to it so that no star is counted twice."""
-    return (float(constants["GMC_PHASE_BLOWN_OPEN"]) + float(constants["GMC_PHASE_DISPERSING"])) / 1000.0
 
 
 def _bracket(log_l: float | np.ndarray) -> tuple[np.ndarray, np.ndarray]:

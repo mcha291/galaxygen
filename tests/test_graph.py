@@ -209,6 +209,8 @@ SEEDED_BASIC = {
     "star_magnitude_v", "star_ionizing_photons", "star_wind_luminosity", "star_wolf_rayet",
     # S29 (BUILD_II Phase 4): what a dead star is, looked up from the same columns.
     "star_remnant", "star_remnant_mass",
+    # S93 (T3 / #115): the membership the cluster points carry, drawn on the star's own member uniform.
+    "star_cluster_member",
     "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
     "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
     "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",

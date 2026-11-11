@@ -51,7 +51,7 @@ import { TUNING_CONTROLS, type Tuning, defaultsFor, drawnTuning, heldTemplate, l
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
 import { regimePlace } from "./drawerLayout";
-import { starLoads } from "./regionStars";
+import { dropRows, starLoads } from "./regionStars";
 import { type Column, DataTable } from "../ui/DataTable";
 import { IconButton } from "../ui/IconButton";
 import { StatusDot, type StatusTone } from "../ui/StatusDot";
@@ -428,7 +428,8 @@ export function GalaxyTab({
     if (!shownClusters) return null;
     const c = shownClusters.columns as Record<string, ArrayLike<number>>;
     if (!c.cluster_radius) return null;
-    return responseColors(c.response, shownClusters.header.white?.response, c.cluster_radius.length, exposure, pointGain);
+    // S93 (T3 / #115): a dissolved cluster is not a point - its stars are the sample's (dropRows).
+    return dropRows(responseColors(c.response, shownClusters.header.white?.response, c.cluster_radius.length, exposure, pointGain), c.cluster_bound, 2);
   }, [shownClusters, exposure, pointGain]);
 
   // The star-first mode (D208): the frustum's footprint, and the disc stars in it by tiles (S64, V6, R8): the footprint
@@ -718,7 +719,16 @@ export function GalaxyTab({
   const samplePositions = useMemo(() => positionsOf(sample), [sample]);
   const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable, pointGain), [meta, sample, field, exposure, blackbodyTable, pointGain]);
   const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
-  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure, blackbodyTable, pointGain) : null), [meta, detail, field, exposure, blackbodyTable, pointGain]);
+  // S93 (T3 / #115): at "sampled" the region sample's stars the cluster points carry draw nothing (the model's membership).
+  const detailColors = useMemo(
+    () => {
+      if (!detail) return null;
+      const colors = colorsFor(meta, detail, field, exposure, blackbodyTable, pointGain);
+      // Only where the cluster points are drawn (the light, field === PHOTOMETRIC); a painted field shows every star.
+      return field === PHOTOMETRIC ? dropRows(colors, (detail.columns as Record<string, ArrayLike<number>>).star_cluster_member, 1) : colors;
+    },
+    [meta, detail, field, exposure, blackbodyTable, pointGain],
+  );
   // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each. The
   // comparison's right pane takes the left pane's (`frame`): one camera, one zoom range.
   const ownReach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);

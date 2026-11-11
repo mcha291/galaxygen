@@ -3761,6 +3761,26 @@ never been judged in twenty-three sessions.
    field mode's sample, and the dissolved clusters' light handed to the sample or drawn at their spread.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3; T3): built - the closer as S70 narrowed it, by the census's partition.* The catalogue publishes
+   `star_cluster_member` (`systems.cluster_member`, on the `/api/region` rows): 1 for a sampled star younger than the
+   census's window (`systems.cluster_window`, 20 Myr, now the one definition `bright` imports) in a cluster that is
+   still a point - every one younger than `CLUSTER_DISSOLUTION_AGE`, past it a bound one at `CLUSTER_BOUND_FRACTION`,
+   drawn on the star's own `member` uniform (a seventh ring stream; no other draw moves) - the census's own rule, so
+   the kept young stars hold the dissolved clusters' light in expectation at every age. The field mode's "sampled"
+   reading draws the region sample without its members and the census without its dissolved clusters
+   (`regionStars.ts dropRows`; the light only, a painted field shows every star). A membership by class, not by
+   object: no star names its cluster (a `star_cluster_index` would need the census's draw per cell, which the
+   sample's sparse young stars cannot match star by star). Measured (`tests/test_s93_t3_membership.py`, the young
+   part `Y` = the render's, the sample at 10^6 stars read in expectation given its ages, s = n (1 - R) /
+   `star_count_total`): **before**, sample + every point over `Y` **1.9319** on the Milky Way (= the default
+   galaxy; the sample's young 1.0000 `Y`, the census 0.9318 `Y`) and **1.9813** on `ngc_4414` (0.9499 + 1.0314);
+   **after**, kept + the points not dissolved **0.9343** / **1.0241** - the census's own draw against its
+   expectation (T2's 6 %), per unit of the census's light 0.9916 / 1.0056; the sample keeps 0.1513 / 0.1601 of its
+   young light against the census's dissolved light share 0.1597 / 0.1545. Realised (not in expectation) a 10^6
+   sample's young light is a few O stars' coin toss (0.42 / 0.18 `Y`). The whole closure (sample + points = the
+   render's `stars`) is #171's: the sample's light over s was 0.30 of the render's total before #171's mend. **What
+   remains:** the gate's verdict; the "sampled" stars still painted by the blackbody share (D188's, outside this
+   closer); the star-first mode's dissolved clusters still points (its bright catalogue holds no star of the window).
 116. ~~**A cluster's extent is published and not drawn: every cluster is a point sprite at every level**~~
    **DISCHARGED at S64** (D224, R7, T6: the form ruled Plummer, a = r_h / 1.305; `plummer.ts` draws it in place of a
    cluster's point where 2 r_h fills a pixel, each pixel the profile's exact integral, the sprite summing to the light
@@ -5365,6 +5385,30 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the star sample's pins re-read in the same commit — on the owner's word, since it moves published numbers.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3; T3 lane): built - the closer as S70 named it.* `photometry.lookup` and `lookup_columns` read a star
+   between its two isochrones along equivalent evolutionary points (`_equivalent_points`, `_pair`, `_read`): below
+   the giant branch by initial mass normalised to the first giant point's, then each giant phase - the red giant
+   branch, core helium burning (labels 4-6 one phase), the early AGB, the TP-AGB, the post-AGB - by its path in
+   (log L, log T_eff) normalised to the phase's whole path, so every phase starts and ends at one coordinate on
+   every isochrone (a phase one isochrone lacks holds one table step's mass, next to no stars); the isochrone at the
+   star's age is built point by point, linear in log age at fixed coordinate, and read at the star's initial mass.
+   The dead/alive edge is the old one exactly (the interpolated heaviest mass), so every remnant count is unchanged;
+   at an isochrone's own age the reading is the old one (`tests/test_photometry.py`). The closer measured
+   (scratch `s93_t3_lf.py`: the sample's old stars' ages and [Fe/H], each read with 400 fresh IMF masses, the count
+   above L over 400 s against the bright table's expected count above L summed over every cell; s = n (1 − R) /
+   `star_count_total`, which puts the faint end at 1.17 / 1.16 - the bulge the sample holds and the table does
+   not): at 0.1 / 1 / 10 / 100 / 10³ / 10⁴ L☉ the Milky Way read **1.170 / 1.155 / 0.881 / 0.632 / 0.513 / 0.509
+   before**, **1.170 / 1.148 / 1.084 / 1.103 / 1.109 / 0.933 after** (10³ L☉ over the faint end **0.438 → 0.948**);
+   `ngc_4414` 1.163 / 1.132 / 0.793 / 0.540 / 0.319 / 0.372 → 1.162 / 1.122 / 1.042 / 1.027 / 0.923 / 0.743 (0.275 →
+   0.794; 376 draws above 10³ L☉ of 2 × 10⁷). The old stars' light over 400 s against the render's light older than
+   the window, over the faint end's ratio: **0.655 → 0.927** (Milky Way), **0.599 → 0.878** (`ngc_4414`). Where it
+   lives (`tests/test_photometry.py`, 10⁶ IMF draws at 21 ages between isochrones, 5.6 Myr to 11 Gyr): the light per
+   mass formed through the lookup over the population's own integral read 0.43-0.98 before, 0.947-1.043 after.
+   S65's 0.14 at 10³ L☉ was the sample's own masses at a smaller s (its 0.69 faint end = 1 − R in its convention).
+   **What remains:** the residual 5-12 % of light and the 10⁴ L☉ bin (TP-AGB tips, a few hundred draws), the
+   bulge's share in the faint-end normalisation unseparated; #113's closure is measured on the young part by T3's
+   test and on the whole sample here, not as a per-patch test (the realised sample's light over a patch is its few
+   brightest giants' draw).
 172. ~~**The zoomed view is two pictures of one scene**~~ (S65, D225; the probe's finding and the frames). Below 4 kpc the
    field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
    display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
@@ -5569,6 +5613,23 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    a per-age scale height read from a source (the young population's vertical dispersion), published per part, and
    the march reading three heights.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3; T3): not built - the entry names no source; a sourced relation proposed for the gate.* The best-sourced
+   per-age height found: the Besançon model's thin disc, Robin, Reylé, Derrière & Picaud 2003 (A&A 409, 523,
+   astro-ph/0401052), seven age bins each an Einasto ellipsoid of axis ratio ϵ (their Table 2, with σ_W): 0-0.15 Gyr
+   ϵ 0.0140 (σ_W 6 km/s), 0.15-1 0.0268 (8), 1-2 0.0375 (10), 2-3 0.0551 (13.2), 3-5 0.0696 (15.8), 5-7 0.0785
+   (17.4), 7-10 0.0791 (17.5); the density laws their Table 3 (a² = R² + z²/ϵ²; the youngest exp(−(a/5000)²) −
+   exp(−(a/3000)²), the rest exp(−√(0.25 + a²/2530²)) − exp(−√(0.25 + a²/1320²)), pc), the Sun at 8.5 kpc (§3.1); ϵ
+   itself derived there from σ_W by the Boltzmann equation in their potential. Read at S93 (ar5iv's text of the
+   paper). Derived from those laws at R = 8.5 kpc (scratch `s93_t3_robin.py`, nothing fitted): the half-density
+   height z½ = 58.5 / 157 / 220 / 323 / 409 / 461 / 464 pc, i.e. a sech² scale (the catalogue's `sech2_height`)
+   of 33 / 89 / 125 / 184 / 232 / 261 / 263 pc for the seven bins - the young light (the census's 20 Myr, the
+   render's young part) in the 0-0.15 Gyr bin at ~33 pc sech², the clouds' own 34 pc layer (D229). **What a build
+   would need ruled:** (a) this source (a model's fitted Milky Way, not a measurement of other discs; the
+   alternative an age-velocity dispersion relation through the model's own vertical equilibrium, which the
+   vertical stage would have to take); (b) how a ratio read at the Sun scales to another galaxy and radius (ϵ as
+   h_z / R is Robin's own reading, flaring with R; or z½ held as a ratio to the model's thin-disc height at the
+   Sun's radius); (c) the render's three parts (young / bright / unresolved) each given the light-weighted height
+   of the ages it holds. Listed for the gate; nothing built on it.
 185. **The field mode's sampled stars take no dust at galaxy scale** (S67, D230's measurement). GalaxyView's `<Stars>`
    layers (opacity `weights.sampled`, 0.185 at a 40 kpc view) are dimmed only by the region regime's transmission
    (`patchPointsForRegion`), never by the diffuse dust or the clouds' raster, so they draw undimmed over every lane and

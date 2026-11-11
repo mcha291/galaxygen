@@ -28,3 +28,17 @@ export function starLoads(mode: "field" | "stars", regionStars: RegionStars, com
   if (!inRegion) return { points: false, sampled: false };
   return regionStars === "catalogue" ? { points: compPoints, sampled: false } : { points: false, sampled: true };
 }
+
+/**
+ * The young population drawn once at "sampled" (S93, T3 / #115): a row whose `column` reads `drop` draws nothing - its
+ * three colour channels zeroed in place, the points' positions and names untouched. The region sample drops the stars
+ * the cluster points carry (`star_cluster_member` 1, the model's membership), the census its dissolved clusters
+ * (`cluster_bound` 2), whose stars the sample keeps. A response without the column (an older model) is drawn whole.
+ */
+export function dropRows(colors: Float32Array | null, column: ArrayLike<number> | undefined, drop: number): Float32Array | null {
+  if (!colors || !column || column.length * 3 !== colors.length) return colors;
+  for (let i = 0; i < column.length; i += 1) {
+    if (Number(column[i]) === drop) colors.fill(0, 3 * i, 3 * i + 3);
+  }
+  return colors;
+}
