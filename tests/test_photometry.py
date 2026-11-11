@@ -40,8 +40,11 @@ def test_the_regenerated_table_reads_what_the_old_one_did():
     Re-pinned on the new table, the old table's numbers in the comments: they are equal, because
     the request was the same and CMD answered it with the same rows (compared bit for bit, S28)."""
     L, T = lookup(np.array([1.0, 1.0, 1.0]), np.array([4.57, 5.0, 9.9]), np.zeros(3))
-    assert L == pytest.approx([1.04704773, 1.08539546, 2.03570423], rel=1e-8)  # old: 1.04704773, 1.08539546, 2.03570423
-    assert T == pytest.approx([5823.96159307, 5832.87121235, 5729.52982438], rel=1e-10)  # old: 5823.96..., 5832.87..., 5729.53...
+    # S93 (#113 / #171): re-pinned on the lookup along equivalent points - at an age between two isochrones the
+    # star is read on the isochrone built point by point between them, not at its initial mass on each; was
+    # 1.04704773, 1.08539546, 2.03570423 and 5823.96159307, 5832.87121235, 5729.52982438 (the table unchanged).
+    assert L == pytest.approx([1.0416919899, 1.0850674864, 2.0248682039], rel=1e-8)  # old table: 1.04704773, 1.08539546, 2.03570423
+    assert T == pytest.approx([5819.2982012888, 5832.6463136627, 5744.9645328922], rel=1e-10)  # old table: 5823.96..., 5832.87..., 5729.53...
     tab, pop = isochrones(), population_light()
     solar = int(np.abs(tab.mhs).argmin())
     # old table: 801.433898, 0.147498719 (the same on both tables, S28). # S49 (D204, #126): the light integrated along the isochrone's points; was those
@@ -53,7 +56,9 @@ def test_the_bands_are_the_tables_eight_and_the_sun_is_near_willmers():
     assert BANDS == ("U", "B", "V", "R", "I", "J", "H", "K")
     sun = lookup_columns(np.array([1.0]), np.array([4.57]), np.array([0.0]), ("B", "V", "K", "mbol", "mass_now", "label"))
     print({k: float(v[0]) for k, v in sun.items()})
-    assert sun["V"][0] == pytest.approx(4.7727, abs=5e-4)  # S28: 4.77269, 0.037 brighter than Willmer's Sun
+    # S93 (#113 / #171): re-pinned on the lookup along equivalent points (4.57 Gyr lies between two isochrones); was
+    # 4.7727 (S28: 4.77269, 0.037 brighter than Willmer's Sun), now 0.029 brighter.
+    assert sun["V"][0] == pytest.approx(4.7809, abs=5e-4)
     assert sun["V"][0] == pytest.approx(4.81, abs=SUN_V_OFFSET)
     assert 0.55 < sun["B"][0] - sun["V"][0] < 0.75  # a G2 dwarf
     assert sun["label"][0] == 1.0  # on the main sequence
@@ -183,3 +188,51 @@ def test_the_population_light_against_a_brute_force_integral():
 
 
 PHI_WORST = 1.13e-3  # S49 (D204): the gate's worst against the trapezoid with φ(m), on the 4 Myr [M/H] -0.94 isochrone
+
+
+# --- S93 (#113 / #171): the lookup along equivalent points -----------------------------------------------------
+
+
+def test_at_a_table_age_the_lookup_reads_the_isochrone_itself():
+    """At an isochrone's own age the isochrone built between it and its neighbour is itself (f = 0 on the union of
+    their equivalent points, each piecewise linear in xi between its own points), so a star reads the track in
+    initial mass as ``_along`` does - the reading before S93 at the table's ages. Below the giant branch, where no
+    two points share a mass."""
+    from galaxy.stages.photometry import _along
+
+    tab = isochrones()
+    for a in (3, 12, 20, 28, 34):
+        for z in (1, 6, 10):
+            m, _, _ = tab.track(a, z)
+            label = tab.extra[(a, z)][:, -1]
+            top = m[np.flatnonzero(label >= 3)[0] - 1]
+            mass = np.linspace(m[0], top, 257)[1:-1]
+            age = np.full(mass.size, 10.0 ** tab.log_ages[a] / 1e9)
+            L, T = lookup(mass, age, np.full(mass.size, float(tab.mhs[z])))
+            log_l, log_t = _along(tab.track(a, z), mass)
+            assert np.log10(L) == pytest.approx(log_l, abs=1e-9)
+            assert np.log10(T) == pytest.approx(log_t, abs=1e-9)
+
+
+def test_the_imf_s_stars_through_the_lookup_carry_the_population_s_light():
+    """#171's cause, measured where it lives: 10^6 stars drawn from the IMF (``systems.imf_sample``, seeded) at one age
+    between two isochrones, through ``lookup``, summed over the mass formed (the IMF's mean mass a star), against the
+    population's light per mass formed at that age (``population_at``, the isochrones' own integrals blended in log
+    age). Before S93 the lookup read both isochrones at the star's initial mass and dropped the short evolved phases:
+    0.43-0.49 at 5.6-11 Gyr, 0.50-0.52 at 2.8 Gyr, 0.74-0.78 at 1.1 Gyr, 0.80-0.88 at 355 Myr (measured at S93 on 2 x
+    10^6 draws). Along equivalent points (S93): 0.947-1.043 over these 21 cases at these 10^6 draws (0.952-1.019 over
+    27 at 2 x 10^6), the Monte Carlo spread a few per cent (the light of an old population rides on its few hundred AGB stars)."""
+    from galaxy.stages.photometry import population_at
+    from galaxy.stages.systems import imf_mean_mass, imf_sample
+
+    tab = isochrones()
+    m = imf_sample(np.random.default_rng(171).random(1_000_000))
+    worst = []
+    for log_age in (6.75, 7.55, 8.55, 9.05, 9.45, 9.75, 10.05):
+        for z in (2, 6, 10):
+            age = np.full(m.size, 10.0**log_age / 1e9)
+            feh = np.full(m.size, float(tab.mhs[z]))
+            L, _ = lookup(m, age, feh)
+            ref, _ = population_at(age[:1], feh[:1])
+            worst.append(float(np.nansum(L) / (m.size * imf_mean_mass()) / ref[0]))
+    assert np.all(np.abs(np.asarray(worst) - 1.0) < 0.07), worst

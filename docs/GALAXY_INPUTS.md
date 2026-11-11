@@ -5332,6 +5332,30 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the star sample's pins re-read in the same commit — on the owner's word, since it moves published numbers.
    *(re-ruled at Audit V, S70, D234)*
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (M3; T3 lane): built - the closer as S70 named it.* `photometry.lookup` and `lookup_columns` read a star
+   between its two isochrones along equivalent evolutionary points (`_equivalent_points`, `_pair`, `_read`): below
+   the giant branch by initial mass normalised to the first giant point's, then each giant phase - the red giant
+   branch, core helium burning (labels 4-6 one phase), the early AGB, the TP-AGB, the post-AGB - by its path in
+   (log L, log T_eff) normalised to the phase's whole path, so every phase starts and ends at one coordinate on
+   every isochrone (a phase one isochrone lacks holds one table step's mass, next to no stars); the isochrone at the
+   star's age is built point by point, linear in log age at fixed coordinate, and read at the star's initial mass.
+   The dead/alive edge is the old one exactly (the interpolated heaviest mass), so every remnant count is unchanged;
+   at an isochrone's own age the reading is the old one (`tests/test_photometry.py`). The closer measured
+   (scratch `s93_t3_lf.py`: the sample's old stars' ages and [Fe/H], each read with 400 fresh IMF masses, the count
+   above L over 400 s against the bright table's expected count above L summed over every cell; s = n (1 − R) /
+   `star_count_total`, which puts the faint end at 1.17 / 1.16 - the bulge the sample holds and the table does
+   not): at 0.1 / 1 / 10 / 100 / 10³ / 10⁴ L☉ the Milky Way read **1.170 / 1.155 / 0.881 / 0.632 / 0.513 / 0.509
+   before**, **1.170 / 1.148 / 1.084 / 1.103 / 1.109 / 0.933 after** (10³ L☉ over the faint end **0.438 → 0.948**);
+   `ngc_4414` 1.163 / 1.132 / 0.793 / 0.540 / 0.319 / 0.372 → 1.162 / 1.122 / 1.042 / 1.027 / 0.923 / 0.743 (0.275 →
+   0.794; 376 draws above 10³ L☉ of 2 × 10⁷). The old stars' light over 400 s against the render's light older than
+   the window, over the faint end's ratio: **0.655 → 0.927** (Milky Way), **0.599 → 0.878** (`ngc_4414`). Where it
+   lives (`tests/test_photometry.py`, 10⁶ IMF draws at 21 ages between isochrones, 5.6 Myr to 11 Gyr): the light per
+   mass formed through the lookup over the population's own integral read 0.43-0.98 before, 0.947-1.043 after.
+   S65's 0.14 at 10³ L☉ was the sample's own masses at a smaller s (its 0.69 faint end = 1 − R in its convention).
+   **What remains:** the residual 5-12 % of light and the 10⁴ L☉ bin (TP-AGB tips, a few hundred draws), the
+   bulge's share in the faint-end normalisation unseparated; #113's closure is measured on the young part by T3's
+   test and on the whole sample here, not as a per-patch test (the realised sample's light over a patch is its few
+   brightest giants' draw).
 172. ~~**The zoomed view is two pictures of one scene**~~ (S65, D225; the probe's finding and the frames). Below 4 kpc the
    field mode's region regime draws the volumetric clouds, the HII spheres and the shells with the level-k sample's
    display-colour star points, and the star-first mode draws the light-scaled bright tiles at level k (V6b) over the
