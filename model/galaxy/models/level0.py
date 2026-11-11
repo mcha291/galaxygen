@@ -1821,6 +1821,36 @@ LEVEL0: dict[str, Constant] = {
         "model's choice [inferred]. Published "
         "as the scalar dig_scale_height for the renderer (D180's rule).",
     ),
+    # --- S93 (T10 / #119): the diffuse gas's forbidden lines, Madsen et al. 2006's relation (nebular.dig_line_ratios) ---
+    "DIG_S_PLUS_FRACTION": Constant(
+        0.5,
+        "dimensionless",
+        "S+/S in the warm ionized layer, the midpoint of 'variations in S+/S between 0.3 to 0.7' [verified: Haffner "
+        "et al. 2009, arXiv:0901.0941, section II.C.1, read at S93]; the midpoint is the model's choice [inferred]. "
+        "Madsen, Reynolds & Haffner 2006's own summary (section IX) gives the WIM's S+/S as about 0.1 to 1 (the "
+        "Perseus arm near 0.25, the local gas near 0.6), wider than Haffner's range [verified: arXiv:astro-ph/0609558, "
+        "read at the S93 review]. It sets the layer's [S II] 6716/[N II] 6583 by Madsen's eq. 3.",
+    ),
+    "DIG_N_PLUS_FRACTION": Constant(
+        0.8,
+        "dimensionless",
+        "N+/N in the warm ionized layer, Madsen et al. 2006's assumption: 'we assume that H+/H = 1, and N+/N = 0.8', "
+        "photoionization models having 'shown that N+/N ~0.8 over a wide range of input spectra and ionization "
+        "parameters' [verified: arXiv:astro-ph/0609558 section II, read at S93]. Read by their eqs. 2-3.",
+    ),
+    "DIG_NITROGEN_ABUNDANCE": Constant(
+        7.5e-5,
+        "dimensionless",
+        "N/H of the warm ionized layer's gas, Madsen et al. 2006's assumed 'interstellar gas phase abundances of N/H = "
+        "7.5x10^-5' (Meyer et al. 1997) [verified: arXiv:astro-ph/0609558 section II, read at S93]: the relation is "
+        "taken on its own abundances, not the model's per-ring gas.",
+    ),
+    "DIG_SULPHUR_ABUNDANCE": Constant(
+        1.86e-5,
+        "dimensionless",
+        "S/H of the warm ionized layer's gas, Madsen et al. 2006's assumed 1.86x10^-5 (Anders & Grevesse 1989) "
+        "[verified: arXiv:astro-ph/0609558 section II, read at S93].",
+    ),
     "HII_MASS_PER_HYDROGEN": Constant(
         1.4,
         "dimensionless",

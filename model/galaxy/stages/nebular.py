@@ -95,14 +95,11 @@ ALPHA_B = np.array([4.522e-13, 3.273e-13, 2.585e-13, 2.144e-13, 1.836e-13, 1.428
 # Madsen, Reynolds & Haffner 2006, ApJ 652, 401, section II, eqs. 2 and 3 ("the lines strengths are measured in energy
 # units"; the coefficients from Haffner et al. 1999 and Osterbrock 1989), [N II] being 6583 and [S II] 6716 alone:
 #   [N II]/Ha = 1.62e5 T4^0.4 exp(-2.18/T4) (N+/N)(N/H)(H+/H)^-1,  [S II]/[N II] = 4.62 exp(0.04/T4) (S+/S)(S/H) / ((N+/N)(N/H))
-# with their assumed H+/H = 1, N+/N = 0.8 ("N+/N ~ 0.8 over a wide range of input spectra and ionization parameters"),
-# N/H = 7.5e-5 (Meyer et al. 1997) and S/H = 1.86e-5 (Anders & Grevesse 1989) [verified: arXiv:astro-ph/0609558
-# (ar5iv), read at S93]. S+/S "between 0.3 to 0.7" in the WIM [verified: Haffner et al. 2009, arXiv:0901.0941,
-# section II.C.1, read at S93]; its midpoint 0.5 is the model's choice [inferred], as the layer's temperature is.
+# with their assumed H+/H = 1; N+/N, N/H, S/H and the layer's S+/S are level-0 constants (DIG_N_PLUS_FRACTION,
+# DIG_NITROGEN_ABUNDANCE, DIG_SULPHUR_ABUNDANCE, DIG_S_PLUS_FRACTION), each with its source in its note
+# [verified: arXiv:astro-ph/0609558 (ar5iv), read at S93].
 DIG_NII_COEFF, DIG_NII_T_POWER, DIG_NII_T_EXP = 1.62e5, 0.4, 2.18
 DIG_SII_NII_COEFF, DIG_SII_NII_T_EXP = 4.62, 0.04
-DIG_N_PLUS_FRACTION, DIG_NITROGEN, DIG_SULPHUR = 0.8, 7.5e-5, 1.86e-5
-DIG_S_PLUS_FRACTION = 0.5
 # The [S II] 6716/6731 doublet against the electron density at 10^4 K, Sanders et al. 2016, ApJ 816, 23, eq. 6 and
 # Table 1: R(n_e) = a (b + n_e)/(c + n_e), a = 0.4315, b = 2107, c = 627.1, computed for log n_e = 0-5 (Tayal &
 # Zatsarinny 2010's collision strengths, NIST's transition probabilities), R_max = 1.4484 at 1 cm^-3 and R_min =
@@ -119,14 +116,14 @@ def sii_doublet_ratio(n_e: np.ndarray) -> np.ndarray:
     return SII_DOUBLET_A * (SII_DOUBLET_B + n) / (SII_DOUBLET_C + n)
 
 
-def dig_line_ratios(t_dig: float) -> dict[str, float]:
+def dig_line_ratios(t_dig: float, c: Mapping[str, float]) -> dict[str, float]:
     """The diffuse gas's [N II] 6583, [S II] 6716 and [S II] 6731 over its Halpha (energy) at the layer's temperature:
     Madsen et al. 2006 eqs. 2-3 on their own abundances and ionization fractions, the 6731 line by the doublet's
     low-density limit."""
     t4 = float(t_dig) / 1.0e4
-    n_term = DIG_N_PLUS_FRACTION * DIG_NITROGEN
+    n_term = float(c["DIG_N_PLUS_FRACTION"]) * float(c["DIG_NITROGEN_ABUNDANCE"])
     nii = DIG_NII_COEFF * t4**DIG_NII_T_POWER * math.exp(-DIG_NII_T_EXP / t4) * n_term
-    sii_6716 = nii * DIG_SII_NII_COEFF * math.exp(DIG_SII_NII_T_EXP / t4) * DIG_S_PLUS_FRACTION * DIG_SULPHUR / n_term
+    sii_6716 = nii * DIG_SII_NII_COEFF * math.exp(DIG_SII_NII_T_EXP / t4) * float(c["DIG_S_PLUS_FRACTION"]) * float(c["DIG_SULPHUR_ABUNDANCE"]) / n_term
     low_density = float(sii_doublet_ratio(np.array([0.0]))[0])
     return {"nii_6583": nii, "sii_6716": sii_6716, "sii_6731": sii_6716 / low_density}
 
@@ -630,7 +627,7 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
     weight = np.asarray(regions["hii_halpha_luminosity"], dtype=float)
     radius = np.asarray(clusters["cluster_birth_radius"], dtype=float)  # S61 (D220 item 6): the cloud's radius, not the placement
     lines = {f"{n}_surface_brightness_hii": hii * ring_ratios(radius, weight, regions[f"hii_{n}_ratio"], R) for n in FORBIDDEN}
-    dig_ratios = dig_line_ratios(float(c["DIG_TEMPERATURE"]))  # S93 (#119): the diffuse gas's own forbidden lines
+    dig_ratios = dig_line_ratios(float(c["DIG_TEMPERATURE"]), c)  # S93 (#119): the diffuse gas's own forbidden lines
     decrement_dig = float((case_b_halpha(np.array([float(c["DIG_TEMPERATURE"])])) / case_b_hbeta(np.array([float(c["DIG_TEMPERATURE"])])))[0])
     l_nebular = float(np.trapezoid(total * 2.0 * math.pi * R, R)) * PC_PER_KPC**2  # Lsun
     sfr = float(np.trapezoid(np.asarray(f["sfr_surface_density"], dtype=float) * 2.0 * math.pi * R, R))  # Msun/yr
@@ -667,7 +664,8 @@ NEBULAR = IMPLEMENTATIONS.register(
         compute=compute_nebular,
         reads_constants=(
             "HALPHA_PER_SFR", "HII_ESCAPE_FRACTION", "HII_MASS_PER_HYDROGEN", "HII_LF_MIN_LUMINOSITY",
-            "DIG_TEMPERATURE", "DIG_SCALE_HEIGHT", "TE_METALLICITY_INTERCEPT", "TE_METALLICITY_SLOPE",
+            "DIG_TEMPERATURE", "DIG_SCALE_HEIGHT", "DIG_S_PLUS_FRACTION", "DIG_N_PLUS_FRACTION", "DIG_NITROGEN_ABUNDANCE",
+            "DIG_SULPHUR_ABUNDANCE", "TE_METALLICITY_INTERCEPT", "TE_METALLICITY_SLOPE",
             "TE_VALID_MIN", "TE_VALID_MAX", "NO_PRIMARY_LOG", "NO_SECONDARY_LOG", "OXYGEN_ABUNDANCE_SOLAR",
             "NITROGEN_ABUNDANCE_SOLAR", "SULPHUR_ABUNDANCE_SOLAR", "NEBULAR_GRID_OXYGEN_SOLAR",
         ),

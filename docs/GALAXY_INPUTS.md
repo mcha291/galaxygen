@@ -3855,7 +3855,12 @@ never been judged in twenty-three sessions.
    2010's collision strengths `[verified: arXiv:1509.03636 §III.1, Table 1]`); the Hα-weighted 6716/6731 of the
    default regions 1.2892 → 1.2694, the weighted ratios 0.05447 / 0.04226 → 0.05411 / 0.04262 (inside
    `test_nebular`'s pin), the sum and every other line unmoved; 10⁴ K is the fit's (Sanders: 7000 K moves a density
-   15–20 %), the regions on the 6000 K floor not corrected. **(c) the U convention, measured and not built**: the
+   15–20 %), the regions on the 6000 K floor not corrected. Two limitations named at the S93 review: (i) the
+   split reads the rms density √⟨n²⟩, while a clumpy region's doublet samples the emission-weighted ⟨n²⟩/⟨n⟩,
+   higher by the square root of the clumping; (ii) the closer asked for the atomic data S35 read (PyNeb / NIST), and
+   the build uses a different sourced set, Sanders et al. 2016's fit (Tayal & Zatsarinny 2010's collision strengths,
+   NIST's transition probabilities) — (b) is met on it by the gate's reading; the owner may re-rule.
+   **(c) the U convention, measured and not built**: the
    region whose volume-averaged U matches a Byler shell's (R_in = 10¹⁹ cm, n_H = 100, filled to its Strömgren
    radius) reads the grid at log U₀ = log U + 0.67 (at log U −4) to +0.85 (at the median −2.83) and +1.5 (at −2.0) —
    a shift that grows as the shell thickens and would put the brightest regions past the grid's −1 top; which U the
@@ -3875,7 +3880,10 @@ never been judged in twenty-three sessions.
    Reynolds & Haffner 2006's eqs. 2–3 (ApJ 652, 401, §II: [N II] 6583/Hα = 1.62 × 10⁵ T₄^0.4 e^(−2.18/T₄)(N⁺/N)(N/H),
    [S II] 6716/[N II] = 4.62 e^(0.04/T₄)(S⁺/S)(S/H)/((N⁺/N)(N/H)), energy units, on their N/H 7.5 × 10⁻⁵, S/H 1.86 ×
    10⁻⁵, N⁺/N 0.8) `[verified: arXiv:astro-ph/0609558 via ar5iv, read at S93]`, with S⁺/S the midpoint of Haffner's
-   0.3–0.7 `[inferred]` and the 6731 line by Sanders et al. 2016's low-density limit (eq. 6, R_max 1.4484
+   0.3–0.7 `[inferred]` (Madsen et al. 2006's own summary, §IX, gives the WIM's S⁺/S as about 0.1 to 1 — the Perseus
+   arm near 0.25, the local gas near 0.6 — wider than Haffner's; the four are level-0 constants since the S93
+   review, `DIG_S_PLUS_FRACTION`, `DIG_N_PLUS_FRACTION`, `DIG_NITROGEN_ABUNDANCE`, `DIG_SULPHUR_ABUNDANCE`)
+   and the 6731 line by Sanders et al. 2016's low-density limit (eq. 6, R_max 1.4484
    `[verified: arXiv:1509.03636 §III.1]`). The nebular stage publishes `dig_nii_6583_ratio` = 0.5827 and
    `dig_sii_6716_ratio` = 0.4387 (6731: 0.3029) at the layer's 8000 K — Madsen's "typical value of [N II]/Hα is ≈0.5"
    and the faint local WIM's [S II]/Hα ≳ 0.4 — and three fields `*_surface_brightness_dig`; the render route's
