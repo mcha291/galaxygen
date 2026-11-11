@@ -1040,7 +1040,11 @@ EXPECTED_GATE: dict = {'milky_way': (19800, 19800, (0.0, 0.488, 0.896), 2, 0, 57
 # S87 (#148, #209, #80): EXPECTED_LEAST was {'milky_way': (0.0085, 0.1466, 7.374), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0, 0.0, 5.454)} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
 # S91 (#216): the Milky Way's least stellar value was 0.1163 (as test_bar's lowest cell 0.1163172 -> 0.1208049) and the
 # drawn leg's (0.0001, 0.0003, 4.715) - the censuses re-laid by the births made bit-independent.
-EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.1252, 6.696), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0005, 0.0003, 4.282)}
+# S93 (D262, read at M3's close: the node is machine_pinned, the runner skips it, and it ran 1:11:28 here): the Milky
+# Way leg was (0.1208, 0.1252, 6.696) - S92's #164 / #165 (the spurs re-laid, D261, where the template alone read
+# 7.303) never read on the legs until now: the leg's largest published gas cell is 8.214 and its least 0.1245; the
+# stellar least, both NGC 4414 legs, EXPECTED_GATE and every bound asserted above the records held.
+EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.1245, 8.214), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0005, 0.0003, 4.282)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):

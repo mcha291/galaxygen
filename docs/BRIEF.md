@@ -1,56 +1,59 @@
-# BRIEF — after S92: M3 on `session-92` (from `batch-m3` bd0ed0c), closed PARTIAL; the gate's D261 merges it into `batch-m3`; next is S93 (BUILD_V row 92 continued), M3's close
+# BRIEF — after S93: M3 closed on `batch-m3` (the gate's D262 merges `session-93` into it); the merge into `main` waits on the owner's word; next is Audit VI (BUILD_V row 93)
 
-**The state (2026-11-11).** S92 built, on the owner's ruling of 2026-11-10, **#164 / #165** in one pass (2940b36:
-the spur's height the gas crest over the ring's trough, the walk reading the crest within half the ring's crest
-width of the chain) and re-pinned every layer-on file it moves; **#217** (one `grid_threshold` for the tile's and the
-tables' threshold) and **#211** (the response tails on their own grid, `TAIL_TEMPERATURES` 1000 K–10^6 K at 1/384
-dex). **#218's cause named by measurement**: no bad commit — `systems.Churn`'s arrival law is a BLAS product whose
-bits follow OpenBLAS's thread count; the reference was written multi-threaded, read single-threaded. **#219** read on
-nine censuses (means -0.618 / -0.637; the default -0.5035 / -0.4970 both inside) and discharged by the gate's
-ruling; the runner's eleven failing nodes (ci 42796166390) read on this machine at bd0ed0c, every number the
-runner's: S91's unrun re-pins, so **#216** discharged and its thirteen marks lifted (3df553c). Two holds opened as
-entries: **#220** (the walk's crest read 0.4582 over 0.27 at seed 4242) and **#221** (inside the bar a spur's crest
-on a lane: 7.3027 over 7.0556). The hash in fact moved (not pinned; the batch's close pins it once).
+**The state (2026-11-11).** S93 finished BUILD_V row 92 in five parallel Opus lanes, each on its own branch cut from
+`session-92`, each read by an independent Opus reviewer and mended, the Fable gate integrating on `session-93`.
+**#218**: the churn's arrival law and every BLAS product on a draw path (`bright.py`'s, `sfh.radial_transport`,
+`bright.mass_on_isochrones`, `chemistry_dtd`'s transports) are ordered sums (`core/special.ordered_product`); every
+field and route reads the same bits at 1 and 20 threads. **T3 / #115** the young population drawn once in the sampled
+reading (`star_cluster_member`, the census's rule); **#113 / #171** the sample read along equivalent evolutionary
+points. **T10 / #119** the diffuse gas's [N II] and [S II] (Madsen et al. 2006); **#118** the [S II] pair at the
+region's density. **#174** the points' dust through the gas map, **#175** the remainder split by kept octaves
+(`kept=1`), **#166** the starlight by age cached. **`s83-robust` merged** (T11 "as JWST"; the `jwst_nircam` rows in
+test_render). Discharged: #113, #119, #166, #171, #174, #175, #217, #218; opened #222 — **108 open = 43 permanent + 65
+carried, 97 discharged**; next #223, D263.
 
-## S93 — M3 continued (BUILD_V row 92; an Opus lead, Fable at the gate)
-Take in this order (the gate's ruling at S92, D261):
-1. **#218 first: the arrival law's product made a sum the model orders itself** (`systems.Churn`,
-   `self._born[:, step].T @ kcol[b]`), so its bits no longer follow the BLAS thread count; then **a sweep of every
-   BLAS-backed product on a draw path under `model/galaxy`** (`@`, `dot`, `matmul`, `einsum`, `linalg`), each
-   measured threads-on (20) against threads-off (1), bit for bit. A model change: every census and star column
-   moves once; re-pin over EVERY layer-on file. The reference file and its two nodes untouched until the close.
-2. **The gate's dispatched `ci` run on `session-92`** (`gh workflow run ci.yml --ref session-92`; read it with `gh
-   run view`, never `gh run watch`): #217's mark lifted in its own commit — #217 closes when the runner reads it green.
-3. **T3 / #115** the young population drawn once in the sampled reading, with **#113 / #171** (the EEP-style
-   interpolation in `photometry.lookup`, one pass) and **#184** (a per-age layer height, a source).
-4. The ionized gas: **T10 / #119**, **#117**, **#118**, **#100**, **#101** (the FSPS grid download accepted
-   2026-11-02); then #174–#176, #166, T15, T8 and the rest of M3's list read once: #83–#86, #88–#89, #91, #96–#98,
-   #102–#103, #124–#125, #127, #135; #220 and #221 put to the gate with their measurements.
-5. **The batch's close**: every model test file once on the final model, each its own process; the layer-off
-   reference re-based once (#218's cause named, on a file of its own, the gate switches it); `s83-robust` merged
-   (one conflict, `GalaxyView.tsx`; a measured `jwst_nircam` row in test_render); the hash moved once, the bundles
-   re-exported, the frames regenerated beside the goal pictures; the runner's full suite on the owner's word.
+## The batch's close (the gate's, after the docs pass; D262 records each)
+- The three-legs gate read by name on the final model; the layer-off reference re-based on a file of its own, `tests/layer_reference_s93.json` (#218
+  moves with it); the hash pinned once at the batch's close (pinned at S93: 5a2c097e… → f9b04ed20a06c0a68420f1cc8e13714e), the bundles re-exported,
+  the frames regenerated beside the two goal pictures; the runner's full suite read at 1eb7f2d (6 failed, each a record M3 moved, re-pinned), `batch-m3`'s dispatched after the merge.
+- `batch-m3` → `main` waits on the owner's word on that run (as M1 and M2 did).
 
-## The rules said again (S92's lessons)
+## Rulings taken on recommendation — the owner may re-rule any (the owner's word of 2026-11-11)
+- #218's second part: the three more draw-path products ordered (sfh, bright, chemistry_dtd), carrying #216's ruling.
+- #166 discharged by the gate's ruling: the cache built; the skip met where the viewer asks, the literal skip reverted.
+- #175's `kept=1` opt-in (the builder's); its WFC3 size clause held strict on #222, the 32 kB bound unmoved.
+- #115 met in part: membership by class, not a per-star `star_cluster_index` (the builder's).
+- #118 (a) the +0.2 dex edge the grid's limit (the builder's); (b) met on Sanders et al. 2016's atomic data (the gate's).
+- #117 carried on #124's ruling; #124 carried past M3 as a build item of its own (the blind window −0.043 ± 0.008).
+- `s83-robust` merged (T11 and T13), the one conflict resolved keeping S84's status dot.
+- The request fixture respelled by hand and `jwst_nircam`'s 17 requests held to `wfc3`'s (a viewer walk owed); the three-legs record re-pinned, not re-run.
+
+## Carried past M3 with their readings written
+#115 (the realised closure), #118 (c) (which U the lines follow), #100 (a PARSEC download under 4 Myr, with #84),
+#101, #117 / #124, #184 (a source ruling: Robin et al. 2003 proposed), #176, #91, #220 (the crest by the point
+function recommended), #221 (the response's profile inside the bar recommended), #222, and the fifteen read once.
+VIEWER_TASKS: T10 done; T3 in part; T11 unstruck (nothing seen on a GPU or in a browser); T15, T8 not started.
+
+## The owner's, still owed
+- The merge of `batch-m3` into `main` (the runner's full suite read first); the look at the regenerated frames.
+- The owner's-word items (BUILD_V §2a): #107, #179, #203, #204, #205; T19 the deploy (the subscription disabled).
+- Any re-ruling of the list above (none blocks Audit VI).
+
+## Next — BUILD_V row 93, Audit VI (Fable)
+The three batches (M1, M2, M3) read blind against their sources and the register, as Audit V read BUILD_III; docs
+tests the gate; no number moved without a decision; #173 (the migration test in a shuffled order) is its item. Then
+the owner's row D: T19, the deployed probe (#204, #205), T20.
+
+## The rules said again (S92's and S93's lessons)
 - **The two-thirds rule**: a lead past two-thirds of its context hands back with the disk state, never waits.
-- **Commit each item the moment it is green** (`git commit -F`, the message through a file): S92's lead died twice
-  on the network and once on its context with fifteen files uncommitted.
-- Queue a run, then do the work that does not wait on it (register text, docs, the decision's draft).
-- A census change is read over every layer-on file; each re-pin's reason separates the moves (old -> first -> now).
-- Node ids go to pytest through `@argsfile` (an `&` in an id splits `cmd //c`).
+- **Commit each item the moment it is green** (`git commit -F`, the message through a file); the notes on disk are
+  the handover - an agent gone from the list cannot be resumed.
+- Dispatch the runner's suite once, on the final head; read it with `gh run view`, never `gh run watch`.
+- Name the `machine_pinned` nodes a change touches and read them by name: the runner skips them.
+- A lane's own files are not the suite: grep the tests for every request a change answers differently.
 
-## The gate's notes (D261)
-- Held strict, bounds unmoved: `WALK_READ_OVER_S92` (#220), `GAS_LANES_READ_OVER_S92` and `GATE_MAX_G_READ_OVER_S92`
-  (#221). The L1 judged clause stays on the default census (#219).
-- #211's merge needs `s83-robust`'s set; test_render's wfc3 gate re-pinned (1.93e-6 / 2.07e-6 -> 1.60e-6 / 1.64e-6).
-
-## The gates and the close (each session)
-- `npm --prefix frontend run test` / `typecheck` / `typecheck:e2e`; the picture test where a frame is regenerated
-  knowingly; `tools/progress.py` and the docs tests (`test_docs`, `test_progress`, `test_audit`, `test_hook`,
-  `test_graph`); the register's count pin with every entry. D262… in `DECISIONS.md`; `LESSONS.md` tagged.
-
-## Traps (S72–S92's stand)
+## Traps (S72–S93's stand)
 - Never the full suite, `verify_clone` or the pins unprompted (D246). One low-priority, single-threaded pytest at a
   time through a script that makes and removes its flag; check `tasklist` first. No backtick in a shell string.
 - Any byte under `model/galaxy` moves the hash: write every note before the pin. An empty argument file runs the
-  whole suite; a builder killed by the network leaves its pytest alive: check the process tree.
+  whole suite; node ids go through `@argsfile`; a builder killed by the network leaves its pytest alive.

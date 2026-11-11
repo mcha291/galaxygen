@@ -14,13 +14,14 @@ bolometric corrections), all of which CMD returned from the start and the
 conversion dropped until then. Regenerated at S28 by the same request: mass, log L
 and log T_eff came back bit for bit what they were.
 
-**The lookup.** Nearest metallicity; linear in log age between the two isochrones
-that bracket the star; linear in initial mass along each. A star heavier than the
+**The lookup.** Nearest metallicity; between the two isochrones that bracket the star in
+log age, along equivalent evolutionary points (S93, #113 / #171: the isochrone at the star's age built
+point by point, then read in initial mass along it); until S93 linear in initial mass along each. A star heavier than the
 most massive one still alive at its age — the heaviest mass the two isochrones
 reach, interpolated the same way — has died, and has neither a luminosity nor a
 temperature: NaN rather than a remnant's value the table does not carry (rule B9).
-Where it is alive at the younger isochrone and past the end of the older one, it
-is in a phase the older one no longer has, and the younger one's values stand.
+Until S93 a star alive at the younger isochrone and past the end of the older one
+took the younger one's values: the short evolved phases were all but never drawn (#171).
 
 **What does not hold, recorded rather than hidden.**
 
@@ -153,91 +154,140 @@ def _along(track: tuple[np.ndarray, np.ndarray, np.ndarray], mass: np.ndarray) -
     return np.interp(at, m, log_l), np.interp(at, m, log_teff)
 
 
-def lookup(mass: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Luminosity (L☉) and effective temperature (K) per star; NaN for a star no longer alive."""
+# --- the reading between two isochrones (S93, #113 / #171): along equivalent evolutionary points ------------------
+
+# The giant phases (PARSEC's labels): the red giant branch, core helium burning (its three labels, the blue loop
+# among them, one phase), the early AGB, the thermally pulsing AGB and the post-AGB. Everything before the first -
+# the pre-main sequence, the main sequence and the subgiant branch - is read by initial mass, each of these by the
+# path along it.
+_GIANT_PHASES: tuple[tuple[int, ...], ...] = ((3,), (4, 5, 6), (7,), (8,), (9,))
+# What a star's columns are read from, in this order: log L, log T_eff, then EXTRA but the phase label.
+_VALUES: tuple[str, ...] = ("log_l", "log_teff", *(n for n in EXTRA if n != "label"))
+
+
+def _equivalent_points(age: int, mh: int) -> np.ndarray:
+    """One isochrone's points on the equivalent-point coordinate xi (S93, #113 / #171), increasing. Before the giant
+    branch xi = (m - m_first) / (m_giant - m_first) in [0, 1), m_giant the initial mass of the first giant point. Giant
+    phase g (``_GIANT_PHASES``, its points those whose running maximum of phase is g - PARSEC's labels step back in
+    places) spans xi in (1 + g, 2 + g], by its path length in (log L, log T_eff) from the point before it over the
+    phase's whole path: so every phase starts and ends at the same xi on every isochrone, and two neighbouring
+    isochrones' points at one xi are one phase at one fraction of the way along it. A phase one isochrone lacks has no
+    points there, and between its neighbours' ends the reading is one step of the table (a few thousandths of a solar
+    mass at most): it holds next to no stars, as a phase about to appear or just gone should. Points the running
+    maximum left on one mass, or two at one place in the diagram, are kept apart by one part in 10^12 of their rank."""
+    tab = isochrones()
+    m, log_l, log_t = tab.track(age, mh)
+    label = tab.extra[(age, mh)][:, EXTRA.index("label")].astype(int)
+    of = np.full(m.size, -1)
+    for g, labels in enumerate(_GIANT_PHASES):
+        of[np.isin(label, labels)] = g
+    of = np.maximum.accumulate(of)
+    giant = np.flatnonzero(of >= 0)
+    b = int(giant[0]) if giant.size and giant[0] > 0 else m.size
+    xi = np.empty(m.size)
+    span = m[b] - m[0] if b < m.size else m[-1] - m[0]
+    xi[:b] = (m[:b] - m[0]) / span if span > 0.0 else 0.0
+    for g in range(len(_GIANT_PHASES)):
+        rows = np.flatnonzero(of == g)
+        if not rows.size:
+            continue
+        step = np.hypot(np.diff(log_l[rows[0] - 1 : rows[-1] + 1]), np.diff(log_t[rows[0] - 1 : rows[-1] + 1]))
+        path = np.cumsum(step)
+        xi[rows] = 1.0 + g + (path / path[-1] if path[-1] > 0.0 else np.linspace(1.0 / rows.size, 1.0, rows.size))
+    return xi + 1e-12 * np.arange(m.size)
+
+
+@functools.cache
+def _pair(age: int, mh: int) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Isochrones ``age`` and ``age + 1`` at ``mh`` read on the union of their equivalent points: (initial mass,
+    values (K, len(_VALUES)) and phase label) of each. Both are piecewise linear in xi between their own points, so
+    on the union each is exactly itself."""
+    tab = isochrones()
+    xs = [_equivalent_points(a, mh) for a in (age, age + 1)]
+    union = np.unique(np.concatenate(xs))
+    out = []
+    for a, x in zip((age, age + 1), xs):
+        m, log_l, log_t = tab.track(a, mh)
+        extra = tab.extra[(a, mh)]
+        cols = np.column_stack([log_l, log_t, *(extra[:, EXTRA.index(n)] for n in _VALUES[2:])])
+        mass = np.interp(union, x, m)
+        values = np.column_stack([np.interp(union, x, cols[:, k]) for k in range(cols.shape[1])])
+        nearest = np.clip(np.searchsorted(x, union), 1, x.size - 1)
+        nearest = np.where(np.abs(union - x[nearest - 1]) <= np.abs(x[nearest] - union), nearest - 1, nearest)
+        out.append((mass, values, extra[nearest, EXTRA.index("label")]))
+    return out[0][0], out[1][0], out[0][1], out[1][1], out[0][2], out[1][2]
+
+
+def _read(mass: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray, names: tuple[str, ...]) -> dict[str, np.ndarray]:
+    """The columns ``names`` (of ``_VALUES`` and "label") per star, NaN (label -1) for a star no longer alive: the
+    isochrone at the star's own age built between the two that bracket it along equivalent points (``_pair``) -
+    initial mass and every column linear in log age at fixed xi - and read at the star's initial mass along it.
+    Since S93 (#113 / #171); until then both isochrones were read at the star's initial mass and blended, which
+    put a star whose mass the older one had already killed on the younger one's main sequence or subgiant branch:
+    the short evolved phases, whose initial masses lie a few thousandths of a solar mass apart and move by more than
+    that between isochrones 0.1 dex apart in age, were all but never drawn (the sample's count above 10^3 Lsun was
+    0.14 of the population's)."""
     tab = isochrones()
     mass = np.asarray(mass, dtype=float)
-    luminosity = np.full(mass.shape, np.nan)
-    temperature = np.full(mass.shape, np.nan)
+    out = {n: np.full(mass.shape, -1.0 if n == "label" else np.nan) for n in names}
     if mass.size == 0:
-        return luminosity, temperature
-
+        return out
     step = tab.log_ages[1] - tab.log_ages[0]
     log_age = np.log10(np.maximum(np.asarray(age_gyr, dtype=float), 1e-9) * 1e9)
     position = (np.clip(log_age, tab.log_ages[0], tab.log_ages[-1]) - tab.log_ages[0]) / step
     younger = np.clip(np.floor(position).astype(int), 0, tab.log_ages.size - 2)
     frac = np.clip(position - younger, 0.0, 1.0)
     mh = np.abs(np.asarray(feh, dtype=float)[:, None] - tab.mhs[None, :]).argmin(axis=1)
-
+    index = [_VALUES.index(n) for n in names if n != "label"]
     group = younger * tab.mhs.size + mh
     for g in np.unique(group):
         sel = np.flatnonzero(group == g)
         a, z = divmod(int(g), tab.mhs.size)
-        near, far = tab.track(a, z), tab.track(a + 1, z)
+        m0, m1, v0, v1, lab0, lab1 = _pair(a, z)
         m, f = mass[sel], frac[sel]
-        l0, t0 = _along(near, m)
-        l1, t1 = _along(far, m)
-        # The heaviest star alive at the star's own age, between the two isochrones' ends.
-        alive = m <= (1.0 - f) * near[0][-1] + f * far[0][-1]
-        blend = np.where(m <= far[0][-1], f, 0.0)
-        luminosity[sel] = np.where(alive, 10.0 ** ((1.0 - blend) * l0 + blend * l1), np.nan)
-        temperature[sel] = np.where(alive, 10.0 ** ((1.0 - blend) * t0 + blend * t1), np.nan)
-    return luminosity, temperature
+        k = m0.size
+        # The bracket on the star's own isochrone, (1 - f) m0 + f m1 - non-decreasing in xi - by bisection.
+        lo = np.zeros(m.size, dtype=int)
+        hi = np.full(m.size, k - 1)
+        while True:
+            open_ = hi - lo > 1
+            if not open_.any():
+                break
+            mid = (lo + hi) // 2
+            below = (1.0 - f) * m0[mid] + f * m1[mid] <= m
+            lo = np.where(open_ & below, mid, lo)
+            hi = np.where(open_ & ~below, mid, hi)
+        j = lo
+        mj = (1.0 - f) * m0[j] + f * m1[j]
+        mk = (1.0 - f) * m0[j + 1] + f * m1[j + 1]
+        width = mk - mj
+        w = np.clip(np.where(width > 0.0, (m - mj) / np.where(width > 0.0, width, 1.0), 0.0), 0.0, 1.0)
+        alive = m <= (1.0 - f) * m0[-1] + f * m1[-1]
+        for name, c in zip((n for n in names if n != "label"), index):
+            at_j = (1.0 - f) * v0[j, c] + f * v1[j, c]
+            at_k = (1.0 - f) * v0[j + 1, c] + f * v1[j + 1, c]
+            out[name][sel] = np.where(alive, (1.0 - w) * at_j + w * at_k, np.nan)
+        if "label" in names:
+            point = np.where(w < 0.5, j, j + 1)
+            out["label"][sel] = np.where(alive, np.where(f >= 0.5, lab1[point], lab0[point]), -1.0)
+    return out
 
 
-def _nearest(grid: np.ndarray, x: np.ndarray) -> np.ndarray:
-    """Index of the point of a non-decreasing ``grid`` nearest each ``x``."""
-    right = np.clip(np.searchsorted(grid, x), 1, grid.size - 1) if grid.size > 1 else np.zeros(x.shape, dtype=int)
-    if grid.size == 1:
-        return right
-    left = right - 1
-    return np.where(np.abs(x - grid[left]) <= np.abs(grid[right] - x), left, right)
+def lookup(mass: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Luminosity (L☉) and effective temperature (K) per star; NaN for a star no longer alive."""
+    got = _read(mass, age_gyr, feh, ("log_l", "log_teff"))
+    return 10.0 ** got["log_l"], 10.0 ** got["log_teff"]
 
 
 def lookup_columns(mass: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray, names: tuple[str, ...]) -> dict[str, np.ndarray]:
     """The table's other columns per star (``EXTRA``: band magnitudes, M_bol, present mass, phase).
 
-    The same reading as :func:`lookup` — nearest metallicity, linear in log age between the
-    bracketing isochrones, linear in initial mass along each, the older one dropped where the
-    star has outlived it — so a star's V magnitude and its luminosity belong to one point of
-    the table. The phase label is a category and is not interpolated: it is the label of the
-    nearest tabulated point on whichever isochrone the star's age is nearer. NaN, and phase
-    −1, for a star no longer alive (rule B9).
+    The same reading as :func:`lookup` (since S93 along equivalent points, ``_read``), so a star's V magnitude and
+    its luminosity belong to one point of the table. The phase label is a category and is not interpolated: it is
+    the label of the nearest point of the union of the two isochrones' equivalent points, on whichever isochrone the
+    star's age is nearer. NaN, and phase −1, for a star no longer alive (rule B9).
     """
-    tab = isochrones()
-    index = [EXTRA.index(n) for n in names]
-    mass = np.asarray(mass, dtype=float)
-    out = {n: np.full(mass.shape, np.nan) for n in names}
-    if mass.size == 0:
-        return out
-
-    step = tab.log_ages[1] - tab.log_ages[0]
-    log_age = np.log10(np.maximum(np.asarray(age_gyr, dtype=float), 1e-9) * 1e9)
-    position = (np.clip(log_age, tab.log_ages[0], tab.log_ages[-1]) - tab.log_ages[0]) / step
-    younger = np.clip(np.floor(position).astype(int), 0, tab.log_ages.size - 2)
-    frac = np.clip(position - younger, 0.0, 1.0)
-    mh = np.abs(np.asarray(feh, dtype=float)[:, None] - tab.mhs[None, :]).argmin(axis=1)
-
-    group = younger * tab.mhs.size + mh
-    for g in np.unique(group):
-        sel = np.flatnonzero(group == g)
-        a, z = divmod(int(g), tab.mhs.size)
-        near, far = tab.track(a, z)[0], tab.track(a + 1, z)[0]
-        cols_near, cols_far = tab.extra[(a, z)], tab.extra[(a + 1, z)]
-        m, f = mass[sel], frac[sel]
-        alive = m <= (1.0 - f) * near[-1] + f * far[-1]
-        blend = np.where(m <= far[-1], f, 0.0)
-        at_near, at_far = np.clip(m, near[0], near[-1]), np.clip(m, far[0], far[-1])
-        for name, c in zip(names, index):
-            if name == "label":
-                use_far = blend >= 0.5
-                value = np.where(use_far, cols_far[_nearest(far, at_far), c], cols_near[_nearest(near, at_near), c])
-                out[name][sel] = np.where(alive, value, -1.0)
-            else:
-                v0 = np.interp(at_near, near, cols_near[:, c])
-                v1 = np.interp(at_far, far, cols_far[:, c])
-                out[name][sel] = np.where(alive, (1.0 - blend) * v0 + blend * v1, np.nan)
-    return out
+    return _read(mass, age_gyr, feh, tuple(names))
 
 
 # --- the unresolved population (RENDER_PLAN R3) ----------------------------------

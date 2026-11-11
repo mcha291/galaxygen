@@ -214,6 +214,82 @@ def test_the_middle_part_s_kept_windows_sum_to_it(api, template):
         assert np.array_equal(off[name], on[name]), name
 
 
+REMAINDER_L_MIN = 2251.0  # test_v6_bright's DEPTH: a threshold inside the star-first mode's range
+# The remainder's closure factor's departure per filter (R, G, B), as measured at S93 (#175, D262; scratchpad
+# s93rm_factor.txt; the same bits layer on and off) - an as-measured record, not a bound: the windows' light under l_min
+# through the curves misses the remainder's middle part by the join's non-linearity and bright._between's curvature.
+# Held to rel 1e-3; a history that moves (another lane, a re-pin) moves it with the reason.
+REMAINDER_CLOSURE_DEPARTURE = {
+    "milky_way": (2.237282360217918e-05, 1.9365128695714162e-05, 4.0040810897257195e-05),
+    "ngc_4414": (2.2384396891395042e-05, 1.935901395444528e-05, 4.0045269416255636e-05),
+}
+# Between two grid thresholds the windows' anchors miss resolve's unresolved middle part by 9.49e-5 at most, measured
+# at S93 on both templates; 2e-4 is an as-measured margin (about twice it) over that reading, not a judged bound.
+BETWEEN_THRESHOLDS_MEASURED, BETWEEN_THRESHOLDS_MARGIN = 9.49e-5, 2e-4
+
+
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_the_remainder_s_middle_part_s_kept_windows_sum_to_it(api, template):
+    """S93 (#175): only=remainder splits its middle part as the field mode splits stars_middle - the same four windows,
+    each bright.window_anchors' light under l_min (every living star less above_at's, resolve's rule) through the
+    curves, scaled by one closure factor per ring and filter - so the three kept arrays and the rest sum to
+    stars_unresolved_middle to 1e-12, each non-negative; the windows' anchors sum to resolve's unresolved_middle to
+    1e-12; placed by the remainder's middle weight. Layer off: the same bits, as the field mode's."""
+    c = constants(api)
+    spec = api.grid.spec
+    got = {}
+    for layer in ("on", "off"):
+        r = api.handle("/api/render", {"template": [template], "layer": [layer], "only": ["remainder"],
+                                       "filters": [json.dumps(FILTERS["sets"]["rgb"]["curves"])],
+                                       "l_min": [repr(REMAINDER_L_MIN)], "kept": ["1"]})
+        assert r.status == 200, r.body[:300]
+        got[layer] = wire.decode(r.body)
+    header, arrays = got["on"]
+    kept = header["remainder"]["middle_kept"]
+    assert kept["weight"] == header["remainder"]["parts"]["middle"]["weight"]
+    assert kept["l_min"] == REMAINDER_L_MIN
+    names = [kept["arrays"][k] for k in ("3", "2", "1")]
+    assert names == ["stars_unresolved_middle_kept3", "stars_unresolved_middle_kept2", "stars_unresolved_middle_kept1"]
+    assert all(header["axes"][n] == ["R", "filter"] for n in names)
+    middle = arrays["stars_unresolved_middle"]
+    parts = [arrays[n] for n in names]
+    rest = middle - sum(parts)
+    assert all(np.all(p >= 0.0) for p in parts) and np.all(rest >= -1e-12 * np.maximum(middle, 1e-300))
+    lit = middle > 0.0
+    assert np.max(np.abs((sum(parts) + rest)[lit] / middle[lit] - 1.0)) < 1e-12
+    windows = [tuple(kept["ages_gyr"][k]) for k in ("3", "2", "1", "rest")]
+    f = published(api, template, "stars_formed_history", "feh_history", "disc_light_temperature")
+    # At a grid threshold the windows partition resolve's unresolved middle part exactly; between two (log-linear in L,
+    # bright._between) their sum misses it by the interpolation's curvature: 9.49e-5 at most measured at S93 on both
+    # templates, which the closure factor takes up (its departure above).
+    grid = float(10.0 ** br.LOG_L_GRID[int(np.argmin(np.abs(br.LOG_L_GRID - 3.35)))])
+    for l_min, within in ((grid, 1e-12), (REMAINDER_L_MIN, BETWEEN_THRESHOLDS_MARGIN)):
+        anchors = br.window_anchors(f, spec.t_max, spec.n_t, c, windows, l_min)
+        unresolved = br.resolve(f, spec.t_max, spec.n_t, c, l_min).anchors["unresolved_middle"]
+        on = unresolved > 0.0
+        assert np.max(np.abs(anchors.sum(axis=0)[on] / unresolved[on] - 1.0)) < within, l_min
+    # Each kept array is its window's raw response times the one closure factor, to 1e-12 - the field mode's own check
+    # (test_the_middle_part_s_kept_windows_sum_to_it above) - and the header's departure is that factor's, to rel 1e-9.
+    curves = spectra.parse_curves(FILTERS["sets"]["rgb"]["curves"])
+    raw = np.stack([spectra.stellar_response(a, f["disc_light_temperature"], curves)
+                    for a in br.window_anchors(f, spec.t_max, spec.n_t, c, windows, REMAINDER_L_MIN)])
+    total = raw.sum(axis=0)
+    ok = (total > 0.0) & lit
+    factor = np.where(ok, middle / np.where(ok, total, 1.0), 1.0)
+    for k, p in zip(range(3), parts):
+        assert np.allclose(p, raw[k] * factor, rtol=1e-12, atol=0.0), k
+    assert kept["closure"]["factor"] == pytest.approx(np.max(np.abs(factor - 1.0), axis=0).tolist(), rel=1e-9)
+    assert kept["closure"]["factor"] == pytest.approx(list(REMAINDER_CLOSURE_DEPARTURE[template]), rel=1e-3)
+    # Not asked (no kept=): S64's two arrays alone.
+    r = api.handle("/api/render", {"template": [template], "only": ["remainder"], "l_min": [repr(REMAINDER_L_MIN)],
+                                   "filters": [json.dumps(FILTERS["sets"]["rgb"]["curves"])]})
+    assert "middle_kept" not in wire.decode(r.body)[0]["remainder"]
+    off_header, off = got["off"]
+    assert off_header["remainder"]["middle_kept"]["arrays"] == kept["arrays"]
+    for n in names:
+        assert np.array_equal(off[n], arrays[n]), n
+
+
 def test_the_new_arrays_are_named_and_shaped(api):
     """The four arrays S66 adds, with their axes: the unspurred placement on the (R, phi) grid, the kept parts per ring
     and filter. That no array sent before moves is measured against 3794fc3's bodies on eight requests (RULING_S66 R10;

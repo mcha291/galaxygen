@@ -66,8 +66,8 @@ TOLERANCE = 1e-3
 MEASURED_B_V = 0.561772  # S87 (#148, #80): was 0.569495 - the clock (#148) and the default disc's bar from Erwin's law (#80). # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.561777
 MEASURED_M_V = -21.146766  # S87 (#148, #80): was -21.110365. # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
 # The first cut's record (S38): one blackbody at the colour temperature.
-FIRST_CUT_B_V = 0.583477  # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
-FIRST_CUT_M_V = -21.888969  # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
+FIRST_CUT_B_V = 0.583346  # S93 (D262; #113 / #171, fd57ebc): the first cut is tied to the table's own Sun, and photometry.lookup reads it along equivalent evolutionary points now - both zero points moved; was 0.583477. # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
+FIRST_CUT_M_V = -21.886848  # S93 (D262; #113 / #171, fd57ebc): the Sun's lookup, as above; was -21.888969. # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
 # S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
@@ -212,7 +212,7 @@ def test_the_first_cut_is_recorded(full):
     weight = (f["disc_surface_brightness"] * grid.R)[lit]
     assert d.min() == pytest.approx(-0.0889, abs=1e-3)  # S87 (#148, #80): was -0.0876 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was -0.0796
     assert d.max() == pytest.approx(0.2439, abs=1e-3)  # S87 (#148, #80): was 0.2417 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.2517
-    assert np.average(d, weights=weight) == pytest.approx(0.0563, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
+    assert np.average(d, weights=weight) == pytest.approx(0.0553, abs=1e-3)  # S93 (D262; #113 / #171): the Sun's lookup moved the zero points - reads 0.05535, at the edge of the old pin's tolerance; was 0.0563 (the minimum -0.08901 and the maximum 0.24377 stay inside theirs)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
 
 
 def test_the_viewer_s_rgb_b_and_v_are_the_table_s_bands():
@@ -287,12 +287,20 @@ def test_the_other_lines_are_their_fields_through_each_curve_at_their_wavelength
     assert np.allclose(arrays["lines_hii"][..., 0], sii, rtol=1e-12, atol=0.0)
     assert not arrays["lines_hii"][..., 1].any()
     assert np.allclose(arrays["lines_hii"][..., 2], f["oiii_5007_surface_brightness_hii"][:, None] * placed, rtol=1e-12, atol=0.0)
-    assert not arrays["lines_dig"].any()  # Hbeta falls in none of the three boxes
+    # S93 (#119): was `assert not arrays["lines_dig"].any()` (Hbeta falls in none of the three boxes) - the diffuse gas
+    # carries its [N II] and [S II] since (Madsen et al. 2006's relation), and its [S II] pair lands in red.
+    g = scalars(full, model.name, "sii_6716_surface_brightness_dig", "sii_6731_surface_brightness_dig")
+    assert np.allclose(arrays["lines_dig"][:, 0], g["sii_6716_surface_brightness_dig"] + g["sii_6731_surface_brightness_dig"], rtol=1e-12, atol=0.0)
+    assert not arrays["lines_dig"][:, 1:].any()
     assert header["layers"]["lines_hii"] == header["layers"]["halpha_hii"] and header["layers"]["lines_dig"] == header["layers"]["halpha_dig"]
     # Through the broadband set Hbeta lands in B, in both layers.
     header, arrays = render(full, model.name, "rgb")
-    b = header["components"]["lines_dig"]["lines"]["hbeta"]["transmission"]
-    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], f["hbeta_surface_brightness_dig"][:, None] * np.array(b), rtol=1e-12, atol=0.0)
+    dig_lines = header["components"]["lines_dig"]["lines"]
+    b = dig_lines["hbeta"]["transmission"]
+    assert set(dig_lines) == {"hbeta", "nii_6583", "sii_6716", "sii_6731"}  # S93 (#119): was Hbeta alone
+    g = scalars(full, model.name, *(f"{n}_surface_brightness_dig" for n in dig_lines))
+    summed = sum(g[f"{n}_surface_brightness_dig"][:, None] * np.array(dig_lines[n]["transmission"]) for n in dig_lines)
+    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], summed, rtol=1e-12, atol=0.0)
     # Every HII line is its ring's Halpha times a ratio the census's regions set: finite and non-negative.
     for n in names:
         x = f[f"{n}_surface_brightness_hii"]
@@ -1128,6 +1136,9 @@ GATE = {
     # (TAIL_TEMPERATURES, 1/384 dex to 10^6 K) are read closer to the exact integral; the worst unmoved within 5 %.
     "wfc3": (1.60e-6, 1.89e-5, 1.64e-6),
     "wfc3n": (3.16e-6, 9.50e-6, 3.27e-6),
+    # S93 (T11 merged, #211): JWST NIRCam's F444W, F200W, F090W, measured at S93 on the tails' own grid (S92) - as
+    # measured, not a bound; D200's thresholds hold.
+    "jwst_nircam": (9.55e-7, 6.27e-6, 7.86e-7),
 }
 
 
@@ -1331,11 +1342,13 @@ AGE_FACTORS = {
         "rgb": [4.8901e-06, 2.8865e-06, 1.5218e-06], "sho": [9.5634e-04, 1.2199e-03, 2.4530e-03],
         "hoo": [1.2199e-03, 2.4530e-03, 2.4530e-03], "wfc3": [5.5423e-05, 2.0168e-03, 8.3577e-04],
         "wfc3n": [8.9636e-04, 1.2221e-03, 2.4282e-03],
+        "jwst_nircam": [1.3170e-03, 1.5114e-03, 9.1216e-04],  # S93 (T11 merged, #211): measured at S93, the full grid
     },
     "ngc_4414": {
         "rgb": [3.9888e-06, 2.2993e-06, 1.1286e-06], "sho": [9.1120e-04, 1.1731e-03, 2.2775e-03],
         "hoo": [1.1731e-03, 2.2775e-03, 2.2775e-03], "wfc3": [4.5263e-05, 1.7968e-03, 7.3741e-04],
         "wfc3n": [8.5161e-04, 1.1753e-03, 2.2545e-03],
+        "jwst_nircam": [1.0329e-03, 1.1778e-03, 7.5136e-04],  # S93 (T11 merged, #211): measured at S93, the full grid
     },
 }
 AGE_FACTORS["milky_way"] = AGE_FACTORS[None]
@@ -1472,6 +1485,30 @@ def test_the_parts_shares_of_the_disc_s_light_are_pinned_as_measured(full):
         for p in AGES:
             assert got[p] == pytest.approx(pinned[p], abs=2e-6), (name, p)
         assert np.allclose(sum(np.array(got[p]) for p in AGES), 1.0, rtol=1e-12)
+
+
+def test_the_whole_render_s_age_parts_are_their_cached_bits_with_and_without_l_min(small, model):
+    """S93 (#166): the render's parts read bright.part_anchors' arithmetic through the run's cache - the same bits as
+    bright.part_anchors itself, the same bits on a second (warm) request, and the same bits under a whole-grid l_min=
+    (which adds stars_unresolved and keeps the parts, test_without_l_min_the_render_is_the_one_it_was)."""
+    q = {**_ages_query("rgb"), "model": [model.name]}
+    header, whole = render_q(small, q)
+    _, again = render_q(small, q)
+    lh, lit = render_q(small, {**q, "l_min": ["2251.0"]})
+    assert header["ages"] is not None and lh["ages"] == header["ages"]
+    assert np.array_equal(lit["stars"], whole["stars"]) and "stars_unresolved" in lit
+    for p in AGES:
+        assert np.array_equal(again[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]), p
+        assert np.array_equal(lit[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]), p
+    from galaxy.api import v7_layer
+    from galaxy.stages import bright as br
+    from galaxy.stages import systems as sy
+
+    f = scalars(small, model.name, "stars_formed_history", "feh_history")
+    c = {k: v.value for k, v in model.constants.items()}
+    cut, spec = br.cluster_window(c), small.grid.spec
+    cached = v7_layer.window_anchors(f, spec.t_max, spec.n_t, c, [(0.0, cut), (cut, sy.YOUNG_STAR_AGE), (sy.YOUNG_STAR_AGE, math.inf)])
+    assert np.array_equal(cached, br.part_anchors(f, spec.t_max, spec.n_t, c))
 
 
 def test_the_parts_ride_on_windows_and_region_cells(small):

@@ -18,12 +18,12 @@ PARSEC-ionized, dust-free file at a pinned FSPS commit into `galaxy/data/nebular
 reads it at its gas's log(Z/Z☉) (its [α/H], the oxygen the stage already computes), on the grid's own solar
 oxygen 8.93 (Anders & Grevesse; D195, #121), its cluster's age and its own log U, interpolated linearly in log
 luminosity as FSPS does (``add_nebular.f90``), **clamped at the grid's edges**, as FSPS's own
-``add_nebular.f90`` clamps (``!no extrapolation``; read at S43, D195). What is published is each line **over the grid's own Hα at
+``add_nebular.f90`` clamps (``!no extrapolation``; read at S43, D195); since S93 (#118) the metal-rich edge is ruled the grid's limit, on the builder's recommendation (3 % of the default regions read it). What is published is each line **over the grid's own Hα at
 that point**, times the region's Case B Hα: the lines inherit the region's photon budget (escape, leaking)
 and the grid only says how they split. `[inferred]`: the grid's gas carries its own abundance pattern,
 not the model's published N/H and S/H (those columns are not read by it), and its density is 100 cm⁻³
-whatever the region's. The diffuse ionized gas gets no forbidden lines: its enhanced [N II] and [S II]
-come from a softer, diluted field the grid does not model, and they are named absent by the render route.
+whatever the region's, save that the [S II] pair's sum is split at the region's own rms density (Sanders et al. 2016; S93, #118). The diffuse ionized gas does not read the grid: its enhanced [N II] and [S II]
+come from a softer, diluted field the grid does not model, so since S93 (#119) they are Madsen et al. 2006's relation at the layer's temperature.
 The analytic alternative (a two-level atom on NIST transition probabilities and the PyNeb collision
 strengths) was read at S35 and set aside: without the ionization fractions it makes no line.
 
@@ -90,6 +90,45 @@ CASE_B_HALPHA = np.array([1.048e-24, 6.687e-25, 4.625e-25, 3.536e-25, 2.860e-25,
 # relation being clamped at 6000 K.
 ALPHA_B_T = np.array([5000.0, 7500.0, 10000.0, 12500.0, 15000.0, 20000.0, 30000.0])
 ALPHA_B = np.array([4.522e-13, 3.273e-13, 2.585e-13, 2.144e-13, 1.836e-13, 1.428e-13, 9.911e-14])
+
+# --- The diffuse gas's forbidden lines (S93, T10 / #119) ---------------------------------------------------
+# Madsen, Reynolds & Haffner 2006, ApJ 652, 401, section II, eqs. 2 and 3 ("the lines strengths are measured in energy
+# units"; the coefficients from Haffner et al. 1999 and Osterbrock 1989), [N II] being 6583 and [S II] 6716 alone:
+#   [N II]/Ha = 1.62e5 T4^0.4 exp(-2.18/T4) (N+/N)(N/H)(H+/H)^-1,  [S II]/[N II] = 4.62 exp(0.04/T4) (S+/S)(S/H) / ((N+/N)(N/H))
+# with their assumed H+/H = 1; N+/N, N/H, S/H and the layer's S+/S are level-0 constants (DIG_N_PLUS_FRACTION,
+# DIG_NITROGEN_ABUNDANCE, DIG_SULPHUR_ABUNDANCE, DIG_S_PLUS_FRACTION), each with its source in its note
+# [verified: arXiv:astro-ph/0609558 (ar5iv), read at S93].
+DIG_NII_COEFF, DIG_NII_T_POWER, DIG_NII_T_EXP = 1.62e5, 0.4, 2.18
+DIG_SII_NII_COEFF, DIG_SII_NII_T_EXP = 4.62, 0.04
+# The [S II] 6716/6731 doublet against the electron density at 10^4 K, Sanders et al. 2016, ApJ 816, 23, eq. 6 and
+# Table 1: R(n_e) = a (b + n_e)/(c + n_e), a = 0.4315, b = 2107, c = 627.1, computed for log n_e = 0-5 (Tayal &
+# Zatsarinny 2010's collision strengths, NIST's transition probabilities), R_max = 1.4484 at 1 cm^-3 and R_min =
+# 0.4375 at 1e5 cm^-3 [verified: arXiv:1509.03636 (ar5iv), section III.1, read at S93]. The density is clamped to
+# that range; the warm ionized medium's ~0.1 cm^-3 reads the low-density limit.
+SII_DOUBLET_A, SII_DOUBLET_B, SII_DOUBLET_C = 0.4315, 2107.0, 627.1
+SII_DOUBLET_DENSITY_RANGE = (1.0, 1.0e5)  # cm^-3
+
+
+def sii_doublet_ratio(n_e: np.ndarray) -> np.ndarray:
+    """[S II] 6716/6731 at electron density ``n_e`` (cm^-3), Sanders et al. 2016 eq. 6 at 10^4 K, the density clamped
+    to the 1-1e5 cm^-3 the fit was computed over."""
+    n = np.clip(np.asarray(n_e, dtype=float), *SII_DOUBLET_DENSITY_RANGE)
+    return SII_DOUBLET_A * (SII_DOUBLET_B + n) / (SII_DOUBLET_C + n)
+
+
+def dig_line_ratios(t_dig: float, c: Mapping[str, float]) -> dict[str, float]:
+    """The diffuse gas's [N II] 6583, [S II] 6716 and [S II] 6731 over its Halpha (energy) at the layer's temperature:
+    Madsen et al. 2006 eqs. 2-3 on their own abundances and ionization fractions, the 6731 line by the doublet's
+    low-density limit."""
+    t4 = float(t_dig) / 1.0e4
+    n_term = float(c["DIG_N_PLUS_FRACTION"]) * float(c["DIG_NITROGEN_ABUNDANCE"])
+    nii = DIG_NII_COEFF * t4**DIG_NII_T_POWER * math.exp(-DIG_NII_T_EXP / t4) * n_term
+    sii_6716 = nii * DIG_SII_NII_COEFF * math.exp(DIG_SII_NII_T_EXP / t4) * float(c["DIG_S_PLUS_FRACTION"]) * float(c["DIG_SULPHUR_ABUNDANCE"]) / n_term
+    low_density = float(sii_doublet_ratio(np.array([0.0]))[0])
+    return {"nii_6583": nii, "sii_6716": sii_6716, "sii_6731": sii_6716 / low_density}
+
+
+DIG_LINES: tuple[str, ...] = ("nii_6583", "sii_6716", "sii_6731")
 
 # Physical constants: definitions and CODATA values, not calibrations.
 SPEED_OF_LIGHT = 2.99792458e10  # cm/s, exact
@@ -279,6 +318,11 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
     lines = grid_line_ratios(oxygen - float(c["NEBULAR_GRID_OXYGEN_SOLAR"]),
                              np.log10(np.asarray(clusters["cluster_age"], dtype=float) * 1.0e6),
                              np.where(np.isfinite(log_u), log_u, np.nan))
+    # S93 (#118): the grid gives the [S II] pair at its own 100 cm^-3; the pair's sum is kept and split at the region's
+    # own rms density by Sanders et al. 2016's doublet ratio (10^4 K; at 7000 K a density reads 15-20 % off, theirs).
+    sii_sum = lines["sii_6716"] + lines["sii_6731"]
+    doublet = sii_doublet_ratio(np.sqrt(n_squared))
+    lines["sii_6716"], lines["sii_6731"] = sii_sum * doublet / (1.0 + doublet), sii_sum / (1.0 + doublet)
     out = {
         "hii_stromgren_radius": radius / CM_PER_PC,
         "hii_electron_density": np.sqrt(n_squared),
@@ -318,7 +362,7 @@ def leaked_fraction(clusters: Catalogue, regions: Catalogue, constants: Mapping[
 # drew `hii_balmer_decrement` and the four `hii_*_ratio` columns (region.ts regionLineColour), so they have no entry.
 NOT_DRAWN_WHY: dict[str, str] = {
     "hii_electron_density": "drawn through `hii_halpha_emissivity`, which is this density squared times the Case B "
-                            "coefficient; a density has no look but its emission measure.",
+                            "coefficient, and since S93 (#118) through the [S II] pair's split; a density has no look but these.",
     "hii_temperature": "drawn through the emissivity's Case B coefficient at this temperature; a temperature itself "
                        "is a line ratio's to show.",
     "hii_ionization_parameter": "the axis the photoionization grid reads the forbidden lines along: drawn through "
@@ -404,8 +448,8 @@ HII_LINE_RATIOS = tuple(
                                  "regions; the grid's own N/O, not the model's published N/H, sets it.",
                      "sii_6716": "Singly ionized sulphur, the doublet's blue line: from the region's outskirts, strongest "
                                  "at low log U.",
-                     "sii_6731": "The doublet's red line; the pair's ratio is the grid's at its 100 cm⁻³, not a "
-                                 "measure of this region's density."}[n],
+                     "sii_6731": "The doublet's red line; the grid gives the pair's sum, split at this region's rms density by Sanders et al. "
+                                 "2016's doublet ratio at 10⁴ K (S93, #118)."}[n],
             ramp=Ramp("viridis", scale="log"))
     for n, label in _LINE_LABELS.items()
 )
@@ -500,9 +544,32 @@ LINES_HII = tuple(
         axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True, provenance="seeded",
         about=(f"The HII regions' Hα at this radius times the census's regions' Hα-weighted {label}/Hα in the ring "
                "(a ring without a region takes its neighbours'): the line the grid gives the regions that are there. "
-               "The diffuse gas adds none (the grid does not model its field)."),
+               "The diffuse gas's own line is its own field (S93, #119)."),
     )
     for n, label in _LINE_LABELS.items()
+)
+_DIG_SOURCE = ("Madsen, Reynolds & Haffner 2006's relation for the Milky Way's warm ionized medium at the layer's "
+               "temperature (eqs. 2-3: collisional excitation at T, on their N/H, S/H and ionization fractions, S+/S the "
+               "midpoint of Haffner et al. 2009's 0.3-0.7)")
+LINES_DIG = tuple(
+    FieldDecl(
+        name=f"{n}_surface_brightness_dig", label=f"{_LINE_LABELS[n]} from the diffuse ionized gas Σ(R)", unit="Lsun/pc2",
+        kind=Kind.FIELD, axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True, provenance="seeded",
+        about=(f"The diffuse gas's Hα times its {_LINE_LABELS[n]}/Hα, {_DIG_SOURCE}"
+               + (", the 6731 line by the doublet's low-density limit (Sanders et al. 2016)" if n == "sii_6731" else "")
+               + ": the softer, diluted field heats the layer above the regions' temperatures, so its forbidden lines "
+               "are enhanced over theirs (S93, #119)."),
+    )
+    for n in DIG_LINES
+)
+DIG_RATIOS = tuple(
+    FieldDecl(
+        name=f"dig_{n}_ratio", label=f"Diffuse gas {_LINE_LABELS[n]} / Hα", unit="dimensionless", kind=Kind.SCALAR,
+        meaningful_zero=True, provenance="seeded",
+        about=f"The diffuse ionized gas's {_LINE_LABELS[n]} over its Hα (energy), {_DIG_SOURCE}. One number for the "
+              "whole layer: the relation's temperature is the layer's (S93, #119)." + _D4,
+    )
+    for n in ("nii_6583", "sii_6716")
 )
 HII_LF_SLOPE = FieldDecl(
     name="hii_luminosity_function_slope", label="HII-region luminosity function slope", unit="dimensionless", kind=Kind.SCALAR,
@@ -560,6 +627,7 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
     weight = np.asarray(regions["hii_halpha_luminosity"], dtype=float)
     radius = np.asarray(clusters["cluster_birth_radius"], dtype=float)  # S61 (D220 item 6): the cloud's radius, not the placement
     lines = {f"{n}_surface_brightness_hii": hii * ring_ratios(radius, weight, regions[f"hii_{n}_ratio"], R) for n in FORBIDDEN}
+    dig_ratios = dig_line_ratios(float(c["DIG_TEMPERATURE"]), c)  # S93 (#119): the diffuse gas's own forbidden lines
     decrement_dig = float((case_b_halpha(np.array([float(c["DIG_TEMPERATURE"])])) / case_b_hbeta(np.array([float(c["DIG_TEMPERATURE"])])))[0])
     l_nebular = float(np.trapezoid(total * 2.0 * math.pi * R, R)) * PC_PER_KPC**2  # Lsun
     sfr = float(np.trapezoid(np.asarray(f["sfr_surface_density"], dtype=float) * 2.0 * math.pi * R, R))  # Msun/yr
@@ -571,6 +639,9 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
         "hbeta_surface_brightness_hii": hii * case_b_hbeta(t_gas) / case_b_halpha(t_gas),
         "hbeta_surface_brightness_dig": dig / decrement_dig,
         **lines,
+        **{f"{n}_surface_brightness_dig": dig * dig_ratios[n] for n in DIG_LINES},
+        "dig_nii_6583_ratio": dig_ratios["nii_6583"],
+        "dig_sii_6716_ratio": dig_ratios["sii_6716"],
         "dig_scale_height": float(c["DIG_SCALE_HEIGHT"]),
         "halpha_luminosity_nebular": l_nebular,
         "dig_halpha_fraction": leaked_fraction(clusters, regions, c),
@@ -593,7 +664,8 @@ NEBULAR = IMPLEMENTATIONS.register(
         compute=compute_nebular,
         reads_constants=(
             "HALPHA_PER_SFR", "HII_ESCAPE_FRACTION", "HII_MASS_PER_HYDROGEN", "HII_LF_MIN_LUMINOSITY",
-            "DIG_TEMPERATURE", "DIG_SCALE_HEIGHT", "TE_METALLICITY_INTERCEPT", "TE_METALLICITY_SLOPE",
+            "DIG_TEMPERATURE", "DIG_SCALE_HEIGHT", "DIG_S_PLUS_FRACTION", "DIG_N_PLUS_FRACTION", "DIG_NITROGEN_ABUNDANCE",
+            "DIG_SULPHUR_ABUNDANCE", "TE_METALLICITY_INTERCEPT", "TE_METALLICITY_SLOPE",
             "TE_VALID_MIN", "TE_VALID_MAX", "NO_PRIMARY_LOG", "NO_SECONDARY_LOG", "OXYGEN_ABUNDANCE_SOLAR",
             "NITROGEN_ABUNDANCE_SOLAR", "SULPHUR_ABUNDANCE_SOLAR", "NEBULAR_GRID_OXYGEN_SOLAR",
         ),
@@ -601,7 +673,7 @@ NEBULAR = IMPLEMENTATIONS.register(
         publishes=(
             HII_RADIUS, HII_DENSITY, HII_TEMPERATURE, HII_LOG_U, HII_CLUMPING, HII_HALPHA, HII_EMISSIVITY, HII_DECREMENT,
             HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, *HII_LINE_RATIOS, HII_BOUNDED,
-            HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
+            HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, *LINES_DIG, *DIG_RATIOS, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
             NII_HALPHA_GRADIENT,
         ),
     )

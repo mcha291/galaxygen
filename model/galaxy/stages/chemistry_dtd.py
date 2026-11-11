@@ -61,6 +61,7 @@ import numpy as np
 
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
+from galaxy.core.special import ordered_product
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.chemistry import (
     AGE_BIN, MIGRATION_REFERENCE_AGE, OLD_MIN_AGE, YOUNG_MAX_AGE,
@@ -428,10 +429,10 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         sigma = float(migration_width(0.5 * (edges[b] + edges[b + 1]), width))
         K = transport(R, sigma)
         mass_b, feh_bin, afe_bin = m.sum(axis=1), feh_b[:, in_bin], afe_b[:, in_bin]
-        mass_now[b] = K.T @ mass_b
-        feh_now[b] = K.T @ (m * feh_bin).sum(axis=1)
-        feh2_now[b] = K.T @ (m * feh_bin**2).sum(axis=1)
-        afe_now[b] = K.T @ (m * afe_bin).sum(axis=1)
+        # S93 (#218, the gate's ruling): the four transports summed in an order the model fixes, not by BLAS - one
+        # ordered sum over the birth rings of the four columns side by side, each column its own.
+        sums = np.stack([mass_b, (m * feh_bin).sum(axis=1), (m * feh_bin**2).sum(axis=1), (m * afe_bin).sum(axis=1)], axis=1)
+        mass_now[b], feh_now[b], feh2_now[b], afe_now[b] = ordered_product(K.T, sums).T
         # Every (birth ring, birth step) that reaches R₀, for the distribution there.
         w = m * K[:, at_sun][:, None]
         sun_w.append(w.ravel())

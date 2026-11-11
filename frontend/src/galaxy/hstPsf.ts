@@ -12,6 +12,10 @@
 // - **on, the full pupil's image (R3)**: |FFT(pupil)|^2 of the annulus with the spider's vanes and the mirror's three
 //   pads, computed once at load (one transform: in units of lambda / D the image is the same at every wavelength).
 //
+// Since S83 (T11) a segmented primary too (JWST's, the NIRCam set's own optics): 18 hexagonal segments and their gaps as
+// the pupil, the same transform - the switch off the segments alone (no closed form, so imaged), on with the struts -
+// and each channel's own detector pixel as its box.
+//
 // Either is tabulated on one grid of TABLE_CELLS^2 cells in pc about the point (the cell the bluest channel's lambda/D
 // over CELLS_PER_LAMBDA), each cell the PSF's mean over the cell convolved exactly with the pixel box, the table
 // renormalised to sum to 1 (the light past its edge put back: a truncation, stated as `captured`), and held as its
@@ -37,16 +41,22 @@ export const FFT_SIZE = 2048;
 export const PUPIL_SAMPLES = 128;
 /** Sub-samples per pupil pixel on a side for its coverage (the vanes are 1.4 pupil pixels wide). */
 export const PUPIL_SUBSAMPLES = 4;
+/** The same for a segmented pupil (S83, T11): 16 a side, 1/1024 pupil radii, half the width of JWST's segment gaps. */
+export const SEGMENT_SUBSAMPLES = 16;
 /**
  * The vanes' angle to the frame's axes, degrees: a display choice [inferred]. TinyTim's 135 degree image-axis rotation
  * is a detector convention not read for the frame; the vanes are drawn at 45 degrees to the picture's axes (D227 R3).
  */
 export const VANE_ANGLE_DEG = 45;
 
-/** The telescope and the detector as a template states them (templates.py Instrument; /api/templates). */
+/**
+ * The telescope and the detector as a template states them (templates.py Instrument; /api/templates), or since S83 (T11)
+ * as a filter set carries them (instruments.json `optics`, a set whose telescope no template names: JWST's).
+ */
 export interface Optics {
   distanceMpc: number;
   pixelArcsec: number;
+  /** The diameter the pupil's unit radius is half of: the aperture's (circular), the 18 segments' circumscribed (hexagonal-18). */
   apertureM: number;
   obscuration: number;
   /** Full width of each vane, pupil radii. */
@@ -54,6 +64,21 @@ export interface Optics {
   vanes: number;
   /** Each pad's (V3, V2) centre and radius, pupil radii. */
   pads: readonly (readonly [number, number, number])[];
+  /**
+   * The primary's outline (S83, T11): absent or "circular", HST's annulus; "hexagonal-18", JWST's 18 flat-topped
+   * hexagonal segments in two rings round a missing centre (`segment` their flat-to-flat width and `gap` the gap between
+   * neighbours, pupil radii).
+   */
+  aperture?: "circular" | "hexagonal-18";
+  segment?: number;
+  gap?: number;
+  /**
+   * Each vane's direction from the centre, degrees anticlockwise from the frame's +x (up is 90), in the frame's own axes;
+   * absent, `vanes` vanes evenly spaced and turned by VANE_ANGLE_DEG (HST's).
+   */
+  vaneAngles?: readonly number[];
+  /** Each channel's detector pixel, arcsec (red, green, blue), where the channels' detectors differ (NIRCam's two). */
+  channelPixelArcsec?: readonly number[];
 }
 
 /** A template's instrument as the viewer receives it (workflow/templates.ts), or null where any number is not read. */
@@ -67,26 +92,70 @@ export interface InstrumentFields {
   pads?: readonly (readonly number[])[] | null;
 }
 
-/** The optics R1 needs, all read, or null (R2: an instrument without a distance or a pixel scale draws today's sprite). */
-export function opticsOf(instrument: InstrumentFields | null | undefined): Optics | null {
+/**
+ * A filter set's own optics (S83, T11; instruments.json `optics`, written by tools/fetch_filters.py): the telescope and
+ * the detector of a set no template's instrument names - everything but the distance, which is the template's.
+ */
+export interface SetOptics {
+  aperture: "circular" | "hexagonal-18";
+  aperture_m: number;
+  obscuration: number;
+  /** The segments' flat-to-flat width and the gap between neighbours, pupil radii (hexagonal-18). */
+  segment?: number;
+  gap?: number;
+  spider_width: number;
+  /** Each vane's direction, degrees anticlockwise from the frame's +x. */
+  spider_angles_deg: number[];
+  /** The detector's pixel per channel, red green blue, arcsec. */
+  pixel_scale_arcsec: number[];
+}
+
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * The optics R1 needs, all read, or null (R2: an instrument without a distance or a pixel scale draws today's sprite).
+ * Since S83 (T11) with a set's own optics beside: a number the template's instrument does not read is the set's - the
+ * template's winning where both are read - and the outline, the segments, the vanes' directions and the channels' pixels
+ * come with the set. The distance is only ever the template's. Without `set` the result is S67's, field for field.
+ */
+export function opticsOf(instrument: InstrumentFields | null | undefined, set: SetOptics | null = null): Optics | null {
   if (!instrument) return null;
-  const { distance_mpc, pixel_scale_arcsec, aperture_m, obscuration, spider_width, spider_vanes, pads } = instrument;
+  const { distance_mpc, spider_width, spider_vanes, pads } = instrument;
+  const channels = set?.pixel_scale_arcsec?.length === 3 && set.pixel_scale_arcsec.every((v) => isNum(v) && v >= 0) ? set.pixel_scale_arcsec : null;
+  const pixel_scale_arcsec = isNum(instrument.pixel_scale_arcsec) ? instrument.pixel_scale_arcsec : (channels?.[0] ?? null);
+  const aperture_m = isNum(instrument.aperture_m) ? instrument.aperture_m : (set?.aperture_m ?? null);
+  const obscuration = isNum(instrument.obscuration) ? instrument.obscuration : (set?.obscuration ?? null);
   const nums = [distance_mpc, pixel_scale_arcsec, aperture_m, obscuration];
   if (!nums.every((v) => typeof v === "number" && Number.isFinite(v) && v >= 0) || !(distance_mpc! > 0 && aperture_m! > 0)) return null;
-  return {
+  const optics: Optics = {
     distanceMpc: distance_mpc!,
     pixelArcsec: pixel_scale_arcsec!,
     apertureM: aperture_m!,
     obscuration: obscuration!,
-    spiderWidth: typeof spider_width === "number" ? spider_width : 0,
-    vanes: typeof spider_vanes === "number" ? spider_vanes : 0,
+    spiderWidth: typeof spider_width === "number" ? spider_width : (set?.spider_width ?? 0),
+    vanes: typeof spider_vanes === "number" ? spider_vanes : (set?.spider_angles_deg.length ?? 0),
     pads: (pads ?? []).filter((p) => p.length === 3).map((p) => [p[0], p[1], p[2]] as const),
   };
+  if (!set) return optics;
+  if (set.aperture === "hexagonal-18") {
+    if (!(isNum(set.segment) && set.segment > 0 && isNum(set.gap) && set.gap >= 0)) return null;
+    optics.aperture = "hexagonal-18";
+    optics.segment = set.segment;
+    optics.gap = set.gap;
+  }
+  // The set's vane directions only where the vanes are the set's (the template's own count and width stand otherwise).
+  if (typeof spider_vanes !== "number" && set.spider_angles_deg.length > 0) optics.vaneAngles = [...set.spider_angles_deg];
+  if (!isNum(instrument.pixel_scale_arcsec) && channels) optics.channelPixelArcsec = [...channels];
+  return optics;
 }
 
-/** The instrument's pixel at the galaxy, pc: pixel_scale x distance (0.04" x 17.7 Mpc = 3.43 pc). */
-export function pixelPc(o: Optics): number {
-  return o.pixelArcsec * ARCSEC * o.distanceMpc * PC_PER_MPC;
+/**
+ * The instrument's pixel at the galaxy, pc: pixel_scale x distance (0.04" x 17.7 Mpc = 3.43 pc) - channel `k`'s where the
+ * channels' detectors differ (S83: NIRCam's long-wavelength 0.063" in red, short 0.031" in green and blue).
+ */
+export function pixelPc(o: Optics, k?: number): number {
+  const arcsec = k !== undefined && o.channelPixelArcsec ? (o.channelPixelArcsec[k] ?? o.pixelArcsec) : o.pixelArcsec;
+  return arcsec * ARCSEC * o.distanceMpc * PC_PER_MPC;
 }
 
 /** lambda / D at the galaxy, pc, for a pivot in Angstrom. */
@@ -176,11 +245,58 @@ export function fft2(re: Float64Array, im: Float64Array, n: number): void {
   for (let c = 0; c < n; c += 1) fft1(re, im, n, c, n, wr, wi);
 }
 
-/** Whether a pupil point (pupil radii, the frame's axes) is open: in the annulus, off the vanes and the pads. */
-export function pupilOpen(x: number, y: number, o: Pick<Optics, "obscuration" | "spiderWidth" | "vanes" | "pads">, vanesOn = true): boolean {
+/** What of the optics the pupil is drawn from. */
+export type PupilOptics = Pick<Optics, "obscuration" | "spiderWidth" | "vanes" | "pads" | "aperture" | "segment" | "gap" | "vaneAngles">;
+
+/**
+ * The 18 segments' centres (S83, T11), in units of the pitch (a segment's flat-to-flat width and one gap): flat-topped
+ * hexagons tiling the plane, the centre one missing - six at 1 along the edges' normals (30 + 60 k degrees), six at 2 along the same, six at
+ * sqrt 3 along the corners (60 k degrees). tools/fetch_filters.py's SEGMENT_CENTRES, the same eighteen.
+ */
+export const SEGMENT_CENTRES: readonly (readonly [number, number])[] = (() => {
+  const out: [number, number][] = [];
+  const at = (d: number, deg: number) => out.push([d * Math.cos((deg * Math.PI) / 180), d * Math.sin((deg * Math.PI) / 180)]);
+  for (let k = 0; k < 6; k += 1) at(1, 30 + 60 * k);
+  for (let k = 0; k < 6; k += 1) at(2, 30 + 60 * k);
+  for (let k = 0; k < 6; k += 1) at(Math.sqrt(3), 60 * k);
+  return out;
+})();
+
+/**
+ * Whether (x, y) lies on one of the 18 segments of flat-to-flat width `s`, `gap` apart (flat-topped: edges at +-s/2 in y,
+ * and at 30 degrees either side of the vertical).
+ */
+export function onSegment(x: number, y: number, s: number, gap = 0): boolean {
+  const h = s / 2;
+  const pitch = s + gap;
+  for (const [cx, cy] of SEGMENT_CENTRES) {
+    const dx = Math.abs(x - cx * pitch);
+    const dy = Math.abs(y - cy * pitch);
+    if (dy <= h && 0.5 * dy + (Math.sqrt(3) / 2) * dx <= h) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether a pupil point (pupil radii, the frame's axes) is open: in the annulus (or, since S83, on a segment of the
+ * hexagonal-18 outline and outside the secondary's shadow), off the vanes and the pads.
+ */
+export function pupilOpen(x: number, y: number, o: PupilOptics, vanesOn = true): boolean {
   const r2 = x * x + y * y;
-  if (r2 > 1 || r2 < o.obscuration * o.obscuration) return false;
+  if (o.aperture === "hexagonal-18") {
+    if (r2 < o.obscuration * o.obscuration || !onSegment(x, y, o.segment ?? 0, o.gap ?? 0)) return false;
+  } else if (r2 > 1 || r2 < o.obscuration * o.obscuration) return false;
   if (!vanesOn) return true;
+  if (o.vaneAngles) {
+    // Each vane a strut of full width spiderWidth from the centre outward along its own direction, in the frame's axes.
+    for (const deg of o.vaneAngles) {
+      const a = (deg * Math.PI) / 180;
+      const along = x * Math.cos(a) + y * Math.sin(a);
+      const across = -x * Math.sin(a) + y * Math.cos(a);
+      if (along > 0 && Math.abs(across) < o.spiderWidth / 2) return false;
+    }
+    return true;
+  }
   // The pupil's own axes are the vanes' (V3, V2), turned by VANE_ANGLE_DEG to the frame's.
   const t = (-VANE_ANGLE_DEG * Math.PI) / 180;
   const u = x * Math.cos(t) - y * Math.sin(t);
@@ -204,10 +320,11 @@ export function pupilOpen(x: number, y: number, o: Pick<Optics, "obscuration" | 
  * over the grid (the whole image's light, its far wings aliased into the grid by the transform's period, 128 lambda/D).
  * `vanesOn` false is the annulus alone: the FFT's own error, measured against the obscured Airy (hstPsf.test.ts).
  */
-export function pupilImage(o: Pick<Optics, "obscuration" | "spiderWidth" | "vanes" | "pads">, vanesOn = true, n = FFT_SIZE, m = PUPIL_SAMPLES): Float64Array {
+export function pupilImage(o: PupilOptics, vanesOn = true, n = FFT_SIZE, m = PUPIL_SAMPLES): Float64Array {
   const re = new Float64Array(n * n);
   const im = new Float64Array(n * n);
-  const s = PUPIL_SUBSAMPLES;
+  // The segments' 7 mm gaps are a seventh of a pupil pixel: sampled finer there (S83), so each gap is crossed.
+  const s = o.aperture === "hexagonal-18" ? SEGMENT_SUBSAMPLES : PUPIL_SUBSAMPLES;
   const dx = 2 / m; // pupil radii per pupil pixel
   const lo = -m / 2;
   for (let j = 0; j < m; j += 1) {
@@ -350,7 +467,6 @@ export function psfTable(o: Optics, opts: TableOptions): PsfTable {
   const density = opts.density ?? airyDensity(o.obscuration);
   const pivots = opts.pivots.slice(0, 3);
   const cellPc = lambdaOverDPc(o, Math.min(...pivots)) / per;
-  const box = pixelPc(o);
   const nodes = cells + 1;
   const corners = new Float32Array(nodes * nodes * 4);
   const captured: [number, number, number] = [0, 0, 0];
@@ -372,7 +488,9 @@ export function psfTable(o: Optics, opts: TableOptions): PsfTable {
         grid[j * cells + i] = s / (sub * sub) / (ld * ld);
       }
     }
-    // The instrument's pixel, a box of `box` pc, separably: along each row, then along each column.
+    // The instrument's pixel, a box of `box` pc, separably: along each row, then along each column - the channel's own
+    // pixel where the channels' detectors differ (S83), the one pixel otherwise.
+    const box = pixelPc(o, k);
     const row = new Float64Array(cells);
     for (let j = 0; j < cells; j += 1) {
       for (let i = 0; i < cells; i += 1) row[i] = grid[j * cells + i];

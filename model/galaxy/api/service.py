@@ -103,6 +103,8 @@ RENDER_STARS = (*(f"disc_sed_{b.lower()}" for b in _spectra.SED_BANDS), "disc_li
 RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_light_temperature")
 # Every line but Halpha the render route draws (S42), by the model's line name: its HII-region field.
 RENDER_LINES_HII = tuple(f"{n}_surface_brightness_hii" for n in ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731"))
+# The diffuse gas's lines but Halpha (S42 Hbeta; S93, #119, its [N II] and [S II]).
+RENDER_LINES_DIG = tuple(f"{n}_surface_brightness_dig" for n in ("hbeta", "nii_6583", "sii_6716", "sii_6731"))
 RENDER_OPTIONAL = (
     "pattern_density_contrast", *RENDER_BULGE, "thin_disc_scale_height",
     # The gas's own arm pattern (S51, D210): what places the dust and the HII regions' light.
@@ -110,7 +112,7 @@ RENDER_OPTIONAL = (
     # The line's two layers (S39, V2): the HII regions' share and the diffuse gas's, with its height.
     "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "dig_scale_height",
     # The other lines (S42): Hbeta in both layers, the forbidden lines the grid gives the HII regions.
-    *RENDER_LINES_HII, "hbeta_surface_brightness_dig",
+    *RENDER_LINES_HII, *RENDER_LINES_DIG,
     # The dust's three components (S39, V2): extinction, scattering, thermal emission.
     "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
     "dust_temperature", "dust_infrared_surface_brightness",
@@ -355,8 +357,9 @@ ROUTES: tuple[Route, ...] = (
         "the spurs, and stars_middle_kept3, _kept2 and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
         "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
         "filter, which this render's own stars_middle_placement and stars_old_placement (or stars_placement) turn into "
-        "stars_unresolved exactly; the header's remainder states the rule.",
-        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
+        "stars_unresolved exactly; the header's remainder states the rule - and since S93 (#175), with kept=1, the middle "
+        "part's kept shares under l_min, stars_unresolved_middle_kept3, _kept2 and _kept1 (the header's remainder.middle_kept).",
+        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only", "kept"),
         "render",
     ),
     Route(
@@ -1963,15 +1966,20 @@ class Service:
                 "about": "the diffuse ionized gas's Halpha through each curve, axisymmetric as published, in its own "
                          "published layer: seen edge-on it is a thick glow that brightens toward the limb",
             }
-            if "hbeta_surface_brightness_dig" in f:
-                hbeta_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["hbeta"])
-                components.append(("lines_dig", np.asarray(f["hbeta_surface_brightness_dig"], dtype=float)[:, None] * hbeta_share))
+            # S93 (#119): the diffuse gas's [N II] and [S II] beside its Hbeta, where the model publishes them.
+            dig_lines = [n.removesuffix("_surface_brightness_dig") for n in RENDER_LINES_DIG if n in f]
+            if dig_lines:
+                shares = {n: _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS[n]) for n in dig_lines}
+                summed = sum(np.asarray(f[f"{n}_surface_brightness_dig"], dtype=float)[:, None] * shares[n] for n in dig_lines)
+                components.append(("lines_dig", summed))
                 layers["lines_dig"] = layers["halpha_dig"]
                 about["lines_dig"] = {
-                    "unit": "Lsun/pc2", "fields": ["hbeta_surface_brightness_dig", "dig_scale_height"], "layer": "lines_dig",
-                    "lines": {"hbeta": {"wavelength": _spectra.LINE_WAVELENGTHS["hbeta"], "transmission": hbeta_share.tolist()}},
-                    "about": "the diffuse gas's Hbeta through each curve, in the Halpha's layer; the diffuse gas carries no "
-                             "forbidden line (the grid does not model its field)",
+                    "unit": "Lsun/pc2", "fields": [f"{n}_surface_brightness_dig" for n in dig_lines] + ["dig_scale_height"],
+                    "layer": "lines_dig",
+                    "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in dig_lines},
+                    "about": "the diffuse gas's other lines - Hbeta by Case B, [N II] 6583 and the [S II] pair by Madsen et al. "
+                             "2006's relation at the layer's temperature (S93, #119) - each through each curve at its "
+                             "wavelength, summed, axisymmetric, in the Halpha's layer",
                 }
         if "dust_extinction_v" in f:
             a_v = np.asarray(f["dust_extinction_v"], dtype=float)
@@ -2227,8 +2235,8 @@ class Service:
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,
-            "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
-                                                "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
+            "absent": {"lines": absent, "why": "not published by this model; the diffuse ionized gas carries Hbeta and, since S93 (#119), [N II] 6583 and "
+                                                "[S II] 6716 / 6731 by Madsen et al. 2006 at the layer's temperature (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(out.needs),
         }
         if resolved is not None:
@@ -2286,7 +2294,11 @@ class Service:
         weight for the same ages; ``share`` is each row's young share, ``bright.row_young_share``)."""
         spec = self.grid.spec
         constants = {k: c.value for k, c in model.constants.items()}
-        anchors = _bright.part_anchors(f, float(spec.t_max), int(spec.n_t), constants)  # (3, R, 8)
+        # bright.part_anchors' arithmetic, cached with the run (S93, #166): the three parts as their age windows, the same
+        # bits (part_masses' windows are these, age_min 0 for the young part and age_max inf for the old).
+        cut = _bright.cluster_window(constants)
+        anchors = _v7.window_anchors(f, float(spec.t_max), int(spec.n_t), constants,
+                                     [(0.0, cut), (cut, _catalogue.YOUNG_STAR_AGE), (_catalogue.YOUNG_STAR_AGE, math.inf)])  # (3, R, 8)
         T = f["disc_light_temperature"]
         raw = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])  # (3, R, filter)
         total = raw.sum(axis=0)

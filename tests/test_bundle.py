@@ -375,8 +375,39 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
     # because BUILD_IV's text names the censuses). A plan that drifts from the viewer fails here, not as a silent miss.
     sent_all = {r["path"] + "?" + _sent(doc, r) for r in doc["requests"]}
     unsent = sorted(q for q in anywhere if q not in sent_all)
+    # S93 (D262; T11 "as JWST", aa0eec6): jwst_nircam shipped after the walks and no walk ran under it (the fixture's
+    # walks say so; one is owed). Its seventeen planned entries - a blackbody, and per galaxy and layer two renders, a
+    # bright and a clusters request - are held instead to a walked instrument set's, string for string with the curves
+    # swapped: the plan asks nothing under the new set that the viewer was not seen to ask under wfc3.
+    curves = {name: "filters=" + bundle.js_query({"": bundle.js_json(c)})[1:] for name, c in filter_sets().items()}
+    unwalked = [q for q in unsent if curves["jwst_nircam"] in q]
+    assert len(unwalked) == 17 and all(q.replace(curves["jwst_nircam"], curves["wfc3"]) in sent_all for q in unwalked)
+    unsent = [q for q in unsent if q not in unwalked]
     assert all(q.startswith("/api/remnants?") for q in unsent), unsent[:3]
     assert len(unsent) == 4, unsent
+
+
+def test_the_plan_asks_the_remainder_as_the_viewer_s_loader_spells_it(service):
+    """S93 (#175, D262): the fixture is a recording and does not move when the viewer does, so the remainder's
+    spelling is tied to the loader itself - api.ts loadRemainder's object literal, after the query it spreads, is the
+    plan's remainder entry after the base, key for key and value for value where the literal writes one, then
+    filters (render() appends the curves). A loader that adds, drops or reorders a parameter fails here, not as a
+    bundled landing whose every remainder misses (bundle.py: a raw key can only cost a miss)."""
+    text = (Path(__file__).resolve().parents[1] / "frontend" / "src" / "api.ts").read_text(encoding="utf-8")
+    loader = text[text.index("export async function loadRemainder("):]
+    literal = loader[loader.index("render(curves, { ...query, ") + len("render(curves, { ...query, "):loader.index("}, { signal })")]
+    said = [part.strip() for part in literal.split(",") if part.strip()]
+    keys = [s.split(":")[0].strip() for s in said]
+    values = {s.split(":")[0].strip(): s.split(":", 1)[1].strip().strip('"') for s in said if s.split(":", 1)[1:] and '"' in s}
+    assert keys == ["white", "precision", "l_min", "only", "kept"] and values == {"precision": "f4", "only": "remainder", "kept": "1"}
+    for layer in ("on", "off"):  # the layer switch is the only parameter the two settings differ by (api.test.ts)
+        entries = plan(TEMPLATE, layer, service, l_min=35481.33892335753)
+        rest = [list(q.items()) for r, q in entries if r == "/api/render" and q.get("only") == "remainder"]
+        assert len(rest) == len(filter_sets()), layer
+        for q in rest:
+            tail = q[[k for k, _ in q].index("white"):]
+            assert [k for k, _ in tail] == keys + ["filters"], (layer, [k for k, _ in tail])
+            assert all(dict(tail)[k] == v for k, v in values.items()), layer
 
 
 def test_the_plan_names_every_group_and_only_routes_that_exist(service):

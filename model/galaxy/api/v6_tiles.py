@@ -88,6 +88,9 @@ CHILDREN = (
 TILE_REFUSES = ("n", "view", "r_min", "r_max", "phi_min", "phi_max")
 # What the remainder's two per-ring arrays are called: the remainder's two age parts, as /api/render's l_min= splits it.
 REMAINDER_PARTS = {"middle": "stars_unresolved_middle", "old": "stars_unresolved_old"}
+# S93 (#175): the remainder's middle part split by the clustering octaves its stars keep, as the field mode's is
+# (``v7_layer.middle_kept`` under ``l_min``): per-ring arrays of their own names, beside the whole render's.
+REMAINDER_KEPT = {3: "stars_unresolved_middle_kept3", 2: "stars_unresolved_middle_kept2", 1: "stars_unresolved_middle_kept1"}
 
 
 def grid_threshold(log_l: Any) -> np.ndarray:
@@ -389,7 +392,14 @@ def remainder(service: Service, q: Query) -> Response:
     and ``stars_placement`` both where it does not (bright.part_weights; the whole render's ``ages`` names them; the
     old one by the star sample's rule since S91, #160). Runs the stellar part of an ``l_min=`` render and no more
     (rule D4): the stars' fields, the history, the contrast, and where the model publishes sfr_modulation what the old
-    part's young share reads (``bright.OLD_SHARE_READS``)."""
+    part's young share reads (``bright.OLD_SHARE_READS``).
+
+    S93 (#175): with ``kept=1`` and where the model publishes the clustering field, the remainder's middle part is
+    split as the field mode's is (``v7_layer.middle_kept``), each age window's light under ``l_min``: the header's
+    ``remainder.middle_kept`` names three more per-ring arrays (``REMAINDER_KEPT``), which with the rest sum to
+    ``stars_unresolved_middle``, so the star-first march clusters the remainder's middle part as the field's. Asked,
+    not sent by default: without ``kept=`` the answer is S64's two arrays, its size gate unmoved."""
+    from galaxy.api import v7_layer as _v7
     from galaxy.api.service import (
         EVEN_ROUND_THE_RING, RENDER_MIDDLE_PLACEMENT, RENDER_OLD_PLACEMENT, RENDER_STARS, RENDER_STARS_PLACEMENT,
         BadRequest, NotFound, _inputs_json, _parse_filters, _white_point, old_share,
@@ -397,6 +407,9 @@ def remainder(service: Service, q: Query) -> Response:
 
     if q.one("only") != "remainder":
         raise BadRequest(f"only={q.one('only')!r}: the one part /api/render answers alone is only=remainder")
+    kept_asked = q.one("kept")
+    if kept_asked not in (None, "0", "1"):
+        raise BadRequest(f"kept={kept_asked!r} is not 0 or 1")
     for name in ("level", "r_min", "r_max", "phi_min", "phi_max"):
         if q.one(name) is not None:
             raise BadRequest(f"only=remainder takes no {name}=: its arrays are per ring over the whole grid")
@@ -458,4 +471,25 @@ def remainder(service: Service, q: Query) -> Response:
         "stages": list(out.needs),
     }
     arrays = [(REMAINDER_PARTS[p], parts[p]) for p in REMAINDER_PARTS]
+    # S93 (#175): the middle part's kept shares, each window's light under l_min (the same arrays with the layer off) -
+    # computed only when kept=1 asks them (D262, the review's C5: the default answer runs no more than S64's, D4).
+    kept_entry, kept = None, []
+    if kept_asked == "1":
+        constants = {k: c.value for k, c in model.constants.items()}
+        spec = service.grid.spec
+        kept_entry, kept = _v7.middle_kept(
+            _v7.published_entries(declared)["census_clustering"], f, constants, float(spec.t_max), int(spec.n_t), curves,
+            parts["middle"], _bright.cluster_window(constants), _catalogue.YOUNG_STAR_AGE, weight["middle"],
+            l_min=l_min, names=REMAINDER_KEPT)
+    if kept_entry is not None:
+        # The words are the whole render's ages.middle_kept's, named and not repeated (the f4 answer's size gate, #222).
+        kept_entry["rest"] = f"{REMAINDER_PARTS['middle']} less the three kept arrays, modulated by nothing"
+        kept_entry["rule"] = "as the whole render's ages.middle_kept.rule, each kept part placed by this weight"
+        kept_entry["closure"]["about"] = "as the whole render's ages.middle_kept.closure, over the remainder's middle part"
+        kept_entry["about"] = ("the remainder's middle part split as the whole render's ages.middle_kept splits stars_middle "
+                               "(S66, D226 R5b), each age window's light under l_min (S93, #175)")
+        kept_entry["l_min"] = float(l_min)
+        header["remainder"]["middle_kept"] = kept_entry
+        header["axes"].update({name: ["R", "filter"] for name, _ in kept})
+        arrays += kept
     return _respond(header, arrays, precision, ran)

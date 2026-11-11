@@ -86,7 +86,7 @@ from galaxy.stages.photometry import (
     population_light,
     population_wind,
 )
-from galaxy.stages.systems import Catalogue
+from galaxy.stages.systems import Catalogue, cluster_state
 
 CLUSTER_BOUND_STATES: tuple[str, ...] = ("bound", "unbound", "dissolved")
 
@@ -204,8 +204,8 @@ def materialise_clusters(
     radius, azimuth = offset_position(cloud("cloud_radius"), cloud("cloud_azimuth"), cloud("cloud_source_offset"), cloud("cloud_source_angle"))
     q, wind = per_mass(age, feh)
     light, colour = population_at(age / 1000.0, feh)
-    is_bound = ring_draws(seed, "cluster", hosts, ("bound",))["bound"] < bound_fraction
-    state = np.where(is_bound, 0, np.where(age < dissolution, 1, 2)).astype(np.int64)
+    # S93 (review): the one rule the sample's membership reads too (systems.cluster_state); the same bits as before.
+    state = cluster_state(age, ring_draws(seed, "cluster", hosts, ("bound",))["bound"], bound_fraction, dissolution)
     out = {
         "cluster_radius": radius,
         "cluster_azimuth": azimuth,
