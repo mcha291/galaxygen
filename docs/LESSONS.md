@@ -2210,3 +2210,43 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] **`cmd //c` parses a node id: an `&` in a parametrised id splits the command.** The bd0 queue ran none of
   its eleven nodes (cmd: "not recognized as ... a command"; one id holds `r_min=4.0&r_max=...`); pass node ids
   through pytest's `@argsfile`, which no shell parses.
+
+## From S93 (BUILD_V row 92 continued, M3's close: five parallel lanes - ION, T3, #218, REST, s83 - each reviewed, the Fable gate)
+
+- [close] **Dispatch the runner's suite once, on the final head.** The gate dispatched the full suite before the last
+  lane's mends had landed on `session-93`, then cancelled it and dispatched again: two and a half hours of a runner
+  spent on a head that was never the batch's. The suite reads what is merged; wait for the last merge, then dispatch.
+- [audit] **When a model path is unified, grep the tests for the old path.** #217 made both thresholds
+  `grid_threshold`'s scalar power; `test_v6_bright`'s table oracle still built `10.0 ** LOG_L_GRID`, an array power,
+  and asked equality - green here, red only on the runner's libm (fcec70d). A test's oracle is a second copy of the
+  computation it checks: unify it with the model, or ask a closeness the two paths both meet.
+- [close] **With the long tests on GitHub nobody reads a `machine_pinned` node: name them and read them by name.**
+  The runner skips them under `CI`; the local full suite is the owner's (D246); so the three-legs gate
+  (`test_gate_on_the_three_legs_of_the_suite_s_galaxies`, #206) went unread through S92. A change lists the
+  machine-pinned nodes it touches and the close runs each by name on this machine.
+- [audit] **A lane that runs only its own files can turn another file's node red.** #166's skip of the age parts on a
+  whole-grid `l_min=` render passed every file the REST lane ran and failed `test_layer`'s `test_i5` in both
+  parameters; only the independent review ran it. A lane that changes an answer greps the tests for every request of
+  that shape before it hands back.
+- [api] **A bundle keys on the raw query: a parameter the viewer adds must reach the export plan.** #175's `kept=1`
+  was sent by `api.ts` and missing from `tools/export_template.py`, so every bundled remainder would have missed; a
+  test now reads the loader's literal beside the plan (`test_bundle`).
+- [audit] **A gate kept green by making the new payload opt-in guards a request nobody sends.** #175's arrays were made
+  `kept=1` so the 32 kB gate stayed green, while the viewer asks `kept=1` every time; the gate was re-read on the
+  request the viewer sends and its WFC3 half held strict (#222). Read a size or cost gate on the request the client
+  actually makes.
+- [audit] **"Equal at 1 and 20 threads here" is not "machine-independent".** #218's products left to BLAS summed in
+  the order the CPU's kernel picks; the ordered sums (`core/special.ordered_product`) and an AST scan of `model/galaxy`
+  with an allow-list (`tests/test_ordered_products.py`) guard the property on any machine; a thread sweep on one
+  machine only shows it there.
+- [catalogue] **A rule two stages need is one function both call.** The sample's cluster membership first restated the
+  census's bound / unbound / dissolved rule, and its test hard-coded the rule rather than calling the census; the
+  review's mend made `systems.cluster_state` the one rule, so a change to the census moves both.
+- [field] **A closure number names the sample size it was read at, and which ratio it is.** T3's records were quoted
+  at 10^6 while the test ran 500 000, and "0.9916 per unit of the census's light" was a different ratio from (kept +
+  points) / census; the review re-measured both. Write the size and the formula beside the number.
+- [infra] **An agent gone from the list cannot be resumed: the notes on disk are the handover.** A lane whose agent
+  dropped was continued from its `*_notes.md`, its commits and its logs, not from a resumed conversation. Every
+  builder writes its notes as it goes, with the commit, the measurement and what is left.
+- [infra] **Re-read before deleting by line number.** An edit by line number after an earlier edit in the same file
+  shifted the lines and deleted the wrong one. After any edit, line numbers are stale: re-read, or edit by content.
