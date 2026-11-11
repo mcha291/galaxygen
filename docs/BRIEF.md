@@ -9,7 +9,7 @@ rows read; 0.27 not relaxed (#220), #224 opened, 2e-13 kept as `SUM_TOLERANCE`; 
 rest carried with what was read. **108 open = 46 + 62, 99 discharged**; next #225, D266. Still no byte under `model/`.
 
 ## The two headlines
-The pictures' diagnosis (S96, second part): `docs/READING_PICTURES.md`.
+The pictures' diagnosis (S96, second part): `docs/READING_PICTURES.md` - display: NGC 4414's colour sign, more than half the Milky Way's bar, the dots (HII knots); metric: NGC 4414's A₂ (its inclination); model: no connected dust lanes, the bar 2.4 times under the goal in light. A live display pass by the owner is the cheapest first move.
 - **The yardstick:** neither field frame is near its goal picture. The Milky Way's carries a quarter of the goal's
   A₂ (0.053 against 0.194), five times its dark fraction, no visible bar, no pink knots; NGC 4414's a fifth of the
   goal's dark lanes, 2.5 times its A₂ and the opposite colour gradient. Three batches moved no frame materially nearer.
