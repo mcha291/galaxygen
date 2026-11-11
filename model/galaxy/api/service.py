@@ -103,6 +103,8 @@ RENDER_STARS = (*(f"disc_sed_{b.lower()}" for b in _spectra.SED_BANDS), "disc_li
 RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_light_temperature")
 # Every line but Halpha the render route draws (S42), by the model's line name: its HII-region field.
 RENDER_LINES_HII = tuple(f"{n}_surface_brightness_hii" for n in ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731"))
+# The diffuse gas's lines but Halpha (S42 Hbeta; S93, #119, its [N II] and [S II]).
+RENDER_LINES_DIG = tuple(f"{n}_surface_brightness_dig" for n in ("hbeta", "nii_6583", "sii_6716", "sii_6731"))
 RENDER_OPTIONAL = (
     "pattern_density_contrast", *RENDER_BULGE, "thin_disc_scale_height",
     # The gas's own arm pattern (S51, D210): what places the dust and the HII regions' light.
@@ -110,7 +112,7 @@ RENDER_OPTIONAL = (
     # The line's two layers (S39, V2): the HII regions' share and the diffuse gas's, with its height.
     "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "dig_scale_height",
     # The other lines (S42): Hbeta in both layers, the forbidden lines the grid gives the HII regions.
-    *RENDER_LINES_HII, "hbeta_surface_brightness_dig",
+    *RENDER_LINES_HII, *RENDER_LINES_DIG,
     # The dust's three components (S39, V2): extinction, scattering, thermal emission.
     "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
     "dust_temperature", "dust_infrared_surface_brightness",
@@ -1963,15 +1965,20 @@ class Service:
                 "about": "the diffuse ionized gas's Halpha through each curve, axisymmetric as published, in its own "
                          "published layer: seen edge-on it is a thick glow that brightens toward the limb",
             }
-            if "hbeta_surface_brightness_dig" in f:
-                hbeta_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["hbeta"])
-                components.append(("lines_dig", np.asarray(f["hbeta_surface_brightness_dig"], dtype=float)[:, None] * hbeta_share))
+            # S93 (#119): the diffuse gas's [N II] and [S II] beside its Hbeta, where the model publishes them.
+            dig_lines = [n.removesuffix("_surface_brightness_dig") for n in RENDER_LINES_DIG if n in f]
+            if dig_lines:
+                shares = {n: _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS[n]) for n in dig_lines}
+                summed = sum(np.asarray(f[f"{n}_surface_brightness_dig"], dtype=float)[:, None] * shares[n] for n in dig_lines)
+                components.append(("lines_dig", summed))
                 layers["lines_dig"] = layers["halpha_dig"]
                 about["lines_dig"] = {
-                    "unit": "Lsun/pc2", "fields": ["hbeta_surface_brightness_dig", "dig_scale_height"], "layer": "lines_dig",
-                    "lines": {"hbeta": {"wavelength": _spectra.LINE_WAVELENGTHS["hbeta"], "transmission": hbeta_share.tolist()}},
-                    "about": "the diffuse gas's Hbeta through each curve, in the Halpha's layer; the diffuse gas carries no "
-                             "forbidden line (the grid does not model its field)",
+                    "unit": "Lsun/pc2", "fields": [f"{n}_surface_brightness_dig" for n in dig_lines] + ["dig_scale_height"],
+                    "layer": "lines_dig",
+                    "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in dig_lines},
+                    "about": "the diffuse gas's other lines - Hbeta by Case B, [N II] 6583 and the [S II] pair by Madsen et al. "
+                             "2006's relation at the layer's temperature (S93, #119) - each through each curve at its "
+                             "wavelength, summed, axisymmetric, in the Halpha's layer",
                 }
         if "dust_extinction_v" in f:
             a_v = np.asarray(f["dust_extinction_v"], dtype=float)

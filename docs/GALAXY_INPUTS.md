@@ -3450,6 +3450,13 @@ never been judged in twenty-three sessions.
    Starburst99's (× 1.41) lands the ratio at 1.0 and row 34 at 2.3 × 10⁵³ (still inside — the row cannot tell);
    the instrument is the ratio, and a Milky Way HII-region line-ratio row (#117) would be a second one.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), read and listed, not built:* measured unchanged, `halpha_sfr_ratio` 0.71227 and Q 1.7577 × 10⁵³
+   s⁻¹ on the default and the Milky Way template. The remedy's larger half (#84's stars above the youngest
+   isochrone's 64 M☉, an estimated 0.489 of the budget) needs PARSEC v1.2S isochrones at log age 6.0–6.5 for the
+   same eleven [M/H] (CMD 3.9 at stev.oapd.inaf.it through `tools/fetch_parsec.py`), a download not in the
+   repository or its cache and not made; the other half, SHP03 Table 2's class III/I q_H by gravity, is
+   `massive_stars.ionizing_photons`, which the star sample's `star_ionizing_photons` also reads (T3's lane at S93):
+   built with the isochrones, after T3, it moves every nebular number once.
 101. **The diffuse ionized gas is 30% of the Hα by construction, and two readings say otherwise** (S35,
    D184). Every HII region loses 30% of its ionizing photons to the diffuse layer (Zurita et al. 2002's
    model `[verified: Haffner et al. 2009, arXiv:0901.0941, §IV]`) and none leave the galaxy, so
@@ -3464,6 +3471,16 @@ never been judged in twenty-three sessions.
    construction: a sourced local fraction near 1/8 — the model would then put twice too much glow between
    the knots.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), read and carried — neither closer met:* Zurita, Beckman, Rozas & Ryder 2002 read whole
+   `[verified: arXiv:astro-ph/0108135 via ar5iv, §3.1–3.3, §4.2, §5, Table 1]`: the mixed law (§3.3) keeps a constant
+   20 % below log L_Hα ≈ 38.6 erg s⁻¹ and above it eq. 10's f = L̂^0.6 ρ̂_c^(−1.6) − 1 (f_esc = f/(1+f), about 80 %
+   from NGC 157's brightest regions) in units normalised to that galaxy's own fitted L_Str and ρ_c, which are not
+   printed as constants a second galaxy could take; §5 and §4.2 say constant-fraction models fit as well, the
+   preference "could well be an incorrect interpretation"; Table 1: a constant 30 % gives 6.81 × 10⁵² of the 12–19 ×
+   10⁵² Lyc s⁻¹ NGC 157's diffuse gas needs (about 70 % constant would match). Haffner et al. 2009 re-read (§II.A):
+   the Milky Way's layer is ionized at "about 1/8th" of the stellar photons, external galaxies "about 1/2", neither
+   with an uncertainty. So no law with usable constants and no Milky Way fraction with a width: the construction
+   stands, 0.30 measured on the default and the Milky Way template alike.
 
 102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**
    (S36, BUILD_II Phase 10, D185). The census draws every supernova as a free object per cell from Phase 6's rate
@@ -3786,6 +3803,12 @@ never been judged in twenty-three sessions.
    defect in full; steeper than −0.05 and LAMOST's N2 gradient is the outlier, the row's source carrying the conflict;
    between, both — then #124's ruling.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), the model side read, the closer left to a blind reader:* after #118 (the [S II] split moves no
+   [N II]) row 37 reads −0.098650 dex kpc⁻¹ layer on and off, the default and the Milky Way template alike, as at S88.
+   The closer is a reader forbidden the repository; the ION builder has read the model's numbers and is not one, so
+   the gate dispatches it: Esteban & García-Rojas 2018 and Arellano-Córdova et al. 2020, the Galactic HII regions'
+   direct-method 12 + log(O/H) gradient over R_G 8–15 kpc with its uncertainty, a window set before any model number
+   is shown.
 118. **3.0 % of the regions read the grid's metal-rich edge (a quarter until S44), and the grid's gas is not the
    region's** (S42, D192; re-stated at S44, D195). The grid spans log(Z/Z☉) −1.98 to +0.2; since S44 enters the
    axis on the grid's own oxygen (8.93, #121, D195) **3.0 % of the default regions** (the inner disc) are richer
@@ -3803,6 +3826,22 @@ never been judged in twenty-three sessions.
    it is 3 % of the regions), the U convention reconciled, and the [S II] ratio computed at the region's own
    density from the atomic data S35 read (the one forbidden-line quantity that needs no ionization fraction).
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), two parts of three built, one measured:* **(a) the edge ruled the grid's limit — taken on the
+   builder's recommendation under the owner's word of 2026-11-11** ("take your own recommendations"; the owner may
+   re-rule): 3.1 % of the default regions (the inner disc) read the +0.2 dex edge, clamped as FSPS clamps; the
+   alternative, a grid spanning the inner disc, names no file (FSPS's PARSEC-ionized grid stops at +0.2). **(b) the
+   [S II] pair at the region's own density, built:** the grid's sum is kept and split at the region's rms density by
+   Sanders et al. 2016's eq. 6 (R = 0.4315 (2107 + n_e)/(627.1 + n_e) at 10⁴ K, 1–10⁵ cm⁻³, Tayal & Zatsarinny
+   2010's collision strengths `[verified: arXiv:1509.03636 §III.1, Table 1]`); the Hα-weighted 6716/6731 of the
+   default regions 1.2892 → 1.2694, the weighted ratios 0.05447 / 0.04226 → 0.05411 / 0.04262 (inside
+   `test_nebular`'s pin), the sum and every other line unmoved; 10⁴ K is the fit's (Sanders: 7000 K moves a density
+   15–20 %), the regions on the 6000 K floor not corrected. **(c) the U convention, measured and not built**: the
+   region whose volume-averaged U matches a Byler shell's (R_in = 10¹⁹ cm, n_H = 100, filled to its Strömgren
+   radius) reads the grid at log U₀ = log U + 0.67 (at log U −4) to +0.85 (at the median −2.83) and +1.5 (at −2.0) —
+   a shift that grows as the shell thickens and would put the brightest regions past the grid's −1 top; which U the
+   lines follow (inner face, volume mean, the front) is a modelling statement no source read here makes, so the
+   read point is unchanged and (c) carries. **Changes what is drawn** only through curves that weigh 6716 and 6731
+   differently (WFC3's F673N); the SHO box takes the pair's sum.
 119. **The diffuse ionized gas carries only its recombination lines** (S42, D192). The grid models a
    radiation-bounded region around a young cluster; the diffuse layer's field is softer and diluted, and its
    observed [N II]/Hα and [S II]/Hα are enhanced above the regions' `[recall: Haffner et al. 2009 §IV, the
@@ -3811,6 +3850,20 @@ never been judged in twenty-three sessions.
    DIG [N II]/Hα and [S II]/Hα (a value with a width, or a relation with the layer's temperature) published as
    two scalars of the nebular stage and drawn beside the layer's Hβ.
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), built — the closer met:* Haffner et al. 2009 re-read (ar5iv) gives the WIM's ratios as trends, no
+   single value ("a few tenths to unity or higher", §II.A); the relation with the layer's temperature is Madsen,
+   Reynolds & Haffner 2006's eqs. 2–3 (ApJ 652, 401, §II: [N II] 6583/Hα = 1.62 × 10⁵ T₄^0.4 e^(−2.18/T₄)(N⁺/N)(N/H),
+   [S II] 6716/[N II] = 4.62 e^(0.04/T₄)(S⁺/S)(S/H)/((N⁺/N)(N/H)), energy units, on their N/H 7.5 × 10⁻⁵, S/H 1.86 ×
+   10⁻⁵, N⁺/N 0.8) `[verified: arXiv:astro-ph/0609558 via ar5iv, read at S93]`, with S⁺/S the midpoint of Haffner's
+   0.3–0.7 `[inferred]` and the 6731 line by Sanders et al. 2016's low-density limit (eq. 6, R_max 1.4484
+   `[verified: arXiv:1509.03636 §III.1]`). The nebular stage publishes `dig_nii_6583_ratio` = 0.5827 and
+   `dig_sii_6716_ratio` = 0.4387 (6731: 0.3029) at the layer's 8000 K — Madsen's "typical value of [N II]/Hα is ≈0.5"
+   and the faint local WIM's [S II]/Hα ≳ 0.4 — and three fields `*_surface_brightness_dig`; the render route's
+   `lines_dig` sums Hβ, [N II] and the [S II] pair through each curve (`tests/test_nebular.py`,
+   `test_render.py`). The width is the layer's: 6000–10000 K gives [N II]/Hα 0.21–1.10. **Changes what is drawn**:
+   the diffuse glow in every set whose curves pass 6583–6731 Å (the Hubble palette's red, the broadband R).
+   Remains: the ratios are one number for the layer (Madsen's local abundances, not the model's per-ring gas);
+   their rise with height (Haffner §II.C) is not modelled.
 120. ~~**The named instrument's sprite is a display choice, and the curves' wavelength convention is unstated**~~
    **DISCHARGED at S67** (D227 R1, R3: where a template carries an instrument and a distance and the view uses that
    instrument's filters, a point is the instrument's image of a point at its physical size - the obscured Airy of a
