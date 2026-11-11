@@ -152,7 +152,8 @@ Marasco 2017's R0 end fixed at 52 pc, V02's A_B - A_V derived, the CMD FAQ's "ha
   segments' flats differ from 4p + f.
 - **F-1B-3** `READING_CLOUD_SIZES.md:69-70` — DIFFERS (a source's definition), prose feeding the owner's ruling #182.
   "the catalogues' R is an equal-area radius" holds for LD20, not MD17 (inertia-matrix radius, eqs. 18, 22; on LD20's
-  radius MD17's clouds give 57.5 R^2.10); LD20's 78.6 R^1.98 is "for the clouds in the R+16 catalog".
+  radius MD17's clouds give 57.5 R^2.10); LD20's 78.6 R^1.98 is "for the clouds in the R+16 catalog"; on it a 1e7
+  Msun cloud is 378-379 pc (the note gives both), right on the relation as quoted.
   Settle: the MD17 relation "restated on LD20's equal-area radius ... or labelled as MD17's inertia-matrix radius; and
   78.6 R^1.98 is labelled Rice et al. 2016's clouds as fitted by LD20".
 - **F-1B-4** `stages/systems.py:819, 832` (S93 docstrings) — MISATTRIBUTED (a modelling choice attributed to a source),
@@ -194,7 +195,7 @@ an unregistered red, with two reservations (no `raises=` on #220 / #221; closure
 | power-budget share 0.4-0.9 -> 0.39-0.98 (read 0.934) | test_audit_v | D255 r. 2 | F-3A-2 |
 | WALK_READ_DIFFERENCE_COARSE 0.49 -> 0.58 (read 0.5700) | test_audit_v | D255 r. 4 | F-3A-2; F-3B-1 |
 | "reach boundary" class admitted in `unexpected` steps | test_pieces | D255 r. 5 | decided, reason a mechanism |
-| price `< 3000` -> `< 3500` us, non-strict xfail kept (read 2839-3026) | test_audit | D255 r. 6 | F-3A-1 |
+| price `< 3000` -> `< 3500` us, non-strict xfail kept (2839-3026 us in 3A's answer; 2924-3208 us at S87 in F-3A-1) | test_audit | D255 r. 6 | F-3A-1 |
 | per-cell -> per-ring cloud equality (#161); continuous share (#202); empty named set (#214) | test_audit_v, test_v6_clouds, test_layer | D258, D257, D258 | by design |
 | `top[here]` exact -> `approx(abs=1e-4)` | test_sfh_azimuthal | none found | F-3A-8 |
 | #154 "worst cell and worst ring are one ring" removed; input window 0-1.0 -> 0-1.5 rad (1000-star guard) | test_audit; test_bright | D260 | named |
@@ -229,7 +230,8 @@ an unregistered red, with two reservations (no `raises=` on #220 / #221; closure
 | #216, #218 and the reference, #215 / #219, #217, #160, #114 / #174 | as F-3B-2, 3, 4, 5, 8, 9 state | 3B (below) |
 
 - **F-3A-1** mark / weak test; low, method — `tests/test_audit.py` price test, `xfail(strict=False,
-  reason=PRICE_RECORD)` around `< 3500.0`: "a non-strict xfail around a bound can fail nowhere"; the runner's XPASS.
+  reason=PRICE_RECORD)` around `< 3500.0` (PRICE_OVER at S87: 2924-3208 us vs 3000; 3A's answer gives 2839-3026 us):
+  "a non-strict xfail around a bound can fail nowhere"; the runner's XPASS.
   Settle: "Make it a record (print, no assert; or machine_pinned with the bound) or a gate (strict, under a bound
   measured on the runner); a non-strict xfail with a bound is neither." See F-3B-10.
 - **F-3A-2** moved bound, decided, reason = the failing reading — power share and `WALK_READ_DIFFERENCE_COARSE`, each
@@ -378,6 +380,109 @@ cameraLink.ts, contextLoss.ts, drawerLayout.ts, Workflow.tsx, PictureBeside.tsx 
 grep only; GalaxyTab.tsx read at 410-440 and 712-731; RENDER_PHYSICS.md and VIEWER_TASKS.md not opened; no vitest,
 Playwright or worker test; the zoom stands' wings; the diffuse share's session; the walk (its S73 walker not committed).
 
-## 5. The register pass and what "done" still wants (strand 5)
+## 5. The register pass and what "done" still wants (strand 5; one Opus reader, read-only)
 
-*(assembled when the strand's note is in)*
+One read-only Opus reader at 766b431 with scratch parsers on progress.py's rule (`s94_5_parse.py`, `s94_5_stale.py`,
+`s94_5_rulings.py`); no test run, no source fetched. **The counts agree in six places:** `tools/progress.py --check`,
+`tests/test_audit.py:395`'s pin `(108, 97)`, its map rows (43 / 65), BRIEF.md:12-13, RESUMING.md:104 and D262's
+closing count all read 108 open = 43 permanent + 65 carried, 97 discharged, next #223 / D263, as the parser does;
+every open item in one map row, no duplicates, #223 and D263 unused (at s85: 126 open = 33 + 93, 68 discharged).
+**29 discharges** of the range examined (21 carried -> struck, 8 new -> struck), each saying what met it, every named
+file, test or function grepped existing; **43 permanent**, each with its reason. Of the 108: stands 95 (2 with stale
+wording), stale 10, discharged in fact 1, permanent without reason 0, mis-ruled 0 found. Eleven findings, bookkeeping
+and wording; no wrong number found.
+
+| # | what | stated status | verdict |
+|---|---|---|---|
+| 26, 33 | permanent, frozen history | "The advanced model's ..." | stands, stale text (F-5-11) |
+| 80 | BAR_LENGTH_RATIO's scale length; rows 15-17 misses | M1; "still carried, with its closer as written" (S88) | stale; cites `S55_REFERENCE_MOVED`, gone since #214 |
+| 156 | a chain's excess jumps at a kink | M1; "Carried to S88's look" | stale; the look never recorded |
+| 92, 94, 95, 136, 181 | PAH per radius; gas all in clouds; cloud draws; bluer face-on; HII complexes | M2; S89 read, "What would close it" | stale; no destination after S89 |
+| 162 | young stars' clustering fades in one step | M2; "no ruling needed once the unit is read" | stale; no session named |
+| 159, 163 | lattice cost; normaliser table cost | "the cost pass runs after M3 - at S92's close or Audit VI" | stale; §0's strands hold no cost pass |
+| 160 | two old-star placement rules | M2 -> M3; built S91, test_bright.py:470 | discharged in fact (F-5-1) |
+
+**Discharges by ruling.** Owner: #189 ("Yes, all five", D252), #209 (2026-11-03), #210 (2026-11-10), #212 ("Yes,
+both"). Gate: #166 (cache built, skip reverted), #214 ("re-based, not retired"), #219 (against its kill clause as
+written); #164 / #165 "on the gate's ruling" of an owner-ruled build. Also by the gate: #167 / #168 (D257 (1)), #161 /
+#197 / #213 on build, #215 on its kill clause, #216 a gate read, #218 on the gate's re-base; #175's kept=1 the builder's.
+The owner's own words in the range: D252, D255 (2026-11-03's four), D256 ("Yes, both"), D259 ("Yes, fix them"), D260
+(2026-11-10's twelve, "accept all recommendations"), dd003ee ("Merge if green"); the delegation is dated 2026-11-11.
+
+| # | ruling (gate / lead / builder) | who | entry | in BRIEF? | in D262? |
+|---|---|---|---|---|---|
+| 1 | four proposals ruled permanent | gate S86 | 141 143 155 157 | n/a | n/a |
+| 2 | six declared bounds ruled on the lead's measurements (D255 r. 1-6) | gate S87 | - | n/a | n/a |
+| 3 | five readings held; "a spur does not belong where no ridge stands" (D256) | gate S88 | 197, 213 etc | n/a | n/a |
+| 4 | #167, #168 discharged; #169 carried for the owner's look (D257) | gate S89 | 167 168 169 | n/a | n/a |
+| 5 | #214 re-based, not retired (D258) | gate S90 | 214 | n/a | n/a |
+| 6 | the marks: cherry-pick, #217's mark lifted (D261 (1)) | gate S92 | 216 217 | no | no |
+| 7 | **#219 discharged on the gate's ruling, against its kill clause as written** (D261 (b)) | gate S92 | 219 | **no** | **no** |
+| 8 | #218's remedy = #216's ruling carried to its second cause | gate S92 / lane S93 | 218 | yes | yes (1) |
+| 9 | #164 / #165 discharged on the ruled build; #220, #221 opened (D261 (4)) | gate S92 | 164 165 | n/a | no |
+| 10 | C1-C3 mends (#221's over-clauses split; a docstring; peak identity) | gate S92 | 221 | no | no |
+| 11 | #166 discharged by the gate's ruling | gate S93 | 166 | yes | yes (2) |
+| 12 | `kept=1` opt-in; #222 for the WFC3 size clause | builder S93 | 175 222 | yes | yes (3) |
+| 13 | #115 membership by class | builder S93 | 115 | yes | yes (4) |
+| 14 | #118 (a) the +0.2 dex edge the grid's limit (builder); (b) met on Sanders 2016 (gate) | builder + gate | 118 | yes | yes (5) |
+| 15 | #117 carried on #124's ruling; #124 a build item; #117's blind window -0.043 +- 0.008 | gate S93 | 117 124 | yes | yes (6) |
+| 16 | s83-robust merged, keeping S84's dot | gate S93 | T11 T13 | yes | yes (7) |
+| 17 | #184 a source ruling needed (Robin et al. 2003 proposed), not taken | gate S93 | 184 | "Carried past M3" only | yes (8) |
+| 18 | fixture respelled by hand; jwst_nircam's 17 requests held to wfc3's | gate S93 | T11 | yes | yes (9) |
+| 19 | the three-legs record re-pinned as read, not re-run | gate S93 | - | yes | yes (10) |
+| 20 | the layer-off reference re-based, #218 discharged on it | gate S93 | 218 | **no** | yes (11) |
+| 21 | **"the guard in place of a subprocess pair at two thread counts; the solve and the einsums left unordered and named"** | gate S93 | 218 | **no** | **no** |
+
+**Still owed by the owner (4c):** the look at S93's frames (f9b04ed2; "none materially nearer", BRIEF:38); #107, #179
+(downloads), #203 (T20), #204 (Azure), #205 (ruling 9 says zero), T19; re-ruling any of rows 7-21; #169's look at the
+streaks (only in its entry; F-5-6). #110's "standing" in D258 is stale and harmless; Audit VI's start is answered.
+**Viewer rows not struck (5a):** T2 stale (built S91, #114 struck; F-5-3); T3 in part; T7 in part; T8 a stale
+"waiting on" (the reading is done, the `region.ts` rewrite waits); T11 merged at S93, its head sentence contradicted by
+its tail; T12 stale (built S53, pre-range); T15 not started; T19, T20 the owner's.
+
+**BUILD_V §7, clause by clause (5b).** (1) "Every register item discharged or permanent with its reason": not met, 65
+carried - 5 the owner's word, 6 the viewer's plus three viewer halves, 1 Audit VI's (#173), 26 "carried past M3", 15
+M1 leftovers (11 on "the owner's reading", #80 and #156 stale, #154 / #186 viewer), 11 M2 leftovers and #160; no BUILD_V
+row after 93 takes the carried-past-M3, M1 or M2 leftovers. (2) "the viewer task list empty but for the owner's own
+rows": not met, T3, T7, T8, T11, T15 open (T2, T12 on paper only). (3) "the frames at their closest ... with the
+distance stated": "none materially nearer"; no stated distance read; the look owed. (4) the hash "green in CI at the
+final hash": holds - image run 42976759684 on main at dd003ee prints `model.hash f9b04ed20a06c0a68420f1cc8e13714e`;
+not deployed (#204). (5) "three nightly runs green on the three batch merges": M1's head (1c58051) five nightlies
+11-04..11-08 all failure; M2's (4f06cc9) 11-10 00:28 and 22:00 success; M3's (dd003ee) none listed yet. Dispatched:
+batch-m3 at e2e571f (42952574634) and main at dd003ee (42976759706) success.
+
+- **F-5-1** mis-ruled debt / stale text; high — #160 discharged in fact (995a007, `tests/test_bright.py:470`), still
+  carried, no decision says why; striking it gives 107 / 64 / 98. Settle: "the gate strikes #160 on 995a007 +
+  test_bright.py:470 with a decision, or writes which clause of the closer is still unmet." See F-3B-8.
+- **F-5-2** hidden red / mis-ruled debt; high — `BRIGHT_GATE_READ_OVER` (test_clustering_gate.py:145, :348) named only
+  inside struck #161; #215 struck; #162 does not mention it; D261's "every xfail strict with a register entry" not true
+  of it. Settle: "an open entry (#162, or a new #223) named in the reason string and carrying the hold in its text, or
+  the gate rules the clause." See F-3A-5.
+- **F-5-3** stale text; high — VIEWER_TASKS.md:52 T2 open, built and struck at S91; BRIEF:35 omits it. Settle: "T2
+  struck, 'Done at S91 (D260)'."
+- **F-5-4** ruling taken, not listed; high — D261: "#219's discharge rests on the gate's ruling, not on the entry's
+  kill clause as written"; in neither BRIEF.md:21-29 nor D262's eleven; the "S93 re-reads" its struck text promises
+  is not in D262. Settle: "#219 added to BRIEF's list; S93's read recorded (the runner's node, or a named-node read)."
+- **F-5-5** stale text; high — (a) D262 item 11 not among BRIEF's eight; (b) DECISIONS.md:17341-17342's guard ruling
+  in neither list. Settle: "both added to BRIEF's 'Rulings taken on recommendation' (and (b) to D262's list)."
+- **F-5-6** stale text; medium — #169's and #202's looks, put to the owner in D258, not ruled in D260 nor named in
+  BRIEF:38; #156 and #157 hang on a look never recorded. Settle: "BRIEF's owed list names #156 / #157 / #169 / #202 and
+  what to look for."
+- **F-5-7** stale; high on the text — ten carried entries (#80, #156; #92, #94, #95, #136, #181, #162, #159, #163) name
+  no destination after their batch. Settle: "each entry given a destination (a row, the viewer's pass, the owner's),
+  or BUILD_V gains the row."
+- **F-5-8** owner-facing gap; medium — #81, #129-#131, #138, #144-#147, #149, #153 wait on "the owner's reading"; BRIEF
+  lists only #107, #179, #203-#205 and T19. Settle: "BRIEF lists them, or the entries go to a reading session."
+- **F-5-9** stale text; high — BUILD_V.md:55 "The owner's word (7)" includes #210 and #211, both discharged; #167 /
+  #168's bodies still end "Proposed **discharged**". No settling sentence in the note.
+- **F-5-10** plan; high — §7's "done" not reachable on the plan as written (65 carried, no row after 93; five viewer
+  rows open; M1's nightlies red, M3's unread). Settle: "the owner's word on what follows Audit VI (a next build, or §7
+  restated)."
+- **F-5-11** stale text; low, pre-range — permanent #26 and #33 name `tests/test_models.py`, `bench2.py`,
+  `galaxy/models/advanced.py`, none existing, and "The advanced model's". No settling sentence in the note.
+
+**Not read / not reached.** Each open entry read by its title and last 420 characters, not every middle paragraph
+("mis-ruled 0" means none found that way); #80's closer not re-read in full; the code behind #142 and #148, #119's
+and #211's test names, #189's test_viewer pin and #212's derivation test not grepped; struck viewer rows not re-checked
+beyond the greps; the frames' stated distance not looked for beyond "none materially nearer"; why no scheduled run is
+listed after 2026-11-10 22:00 not investigated; no test run, no source fetched.
