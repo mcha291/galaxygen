@@ -3291,6 +3291,10 @@ never been judged in twenty-three sessions.
    and `log_l` for every point) or ultraviolet bands — a light-stage change, proposed for M3 beside T2 / #114
    (`READING_DUST.md`). The CMB floor's source is not read; since S52 no unheated grain is drawn, so it moves no
    published temperature.
+   *S93 (M3, lane REST): read, not built.* D260 adds nothing to S89's reading (T2 painted the cluster points; it gives
+   the light no ultraviolet). The closer stays a light-stage change - the PARSEC points as blackbodies at their own
+   log_teff / log_l shortward of U, per ring through the isochrone weights, absorbed at the grain curve's depth there -
+   moving L_IR, T_d(R) and G0 and re-reading every dust and render pin: a session's model change, carried past M3.
 92. **The PAH fraction is a cross-galaxy fit applied per radius, and the Milky Way sits 0.30 dex above its
    own value** (S31, D180). Rémy-Ruyer et al. 2015's eq. 5 relates f_PAH to 12 + log O/H across 109
    galaxies `[verified: read at S31]`; applied to the gas's abundance at each radius it reads 9.1% at R₀
@@ -5412,6 +5416,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (dev -1.8802e-2, s_r 5.5849e-3) against the pinned 3 - 2.9287 at S86 (the docstring's 2.93), unmoved by the clock
    and the floor, 3.3666 from #80's pinned 5.0 kpc bar (ring 2, 1.86-2.79 kpc, inside the bar); the whole frame
    3.5e-4 against 3e-3; NGC 4414's worst 2.8243. Held strict for the gate (`tests/test_v7_layer.py`, `DUST_COLUMN_OVER`). *The gate (D256): held with its cause — #80's pinned bar inside ring 2 — not loosened; M3's with this entry.*
+   *S93 (M3, lane REST): read, not built.* Neither mend answers the hold's named cause (#80's bar inside ring 2, the
+   dust's placement weighting the ring's one draw of the map): a footprint average lowers the per-pixel variance and so
+   the derived bound itself, not a placement-weighted bias; a renormalisation on the frame's lattice is per camera
+   (RENDER_PHYSICS section 8). Recommended: the bound re-derived with the placement's own weights (sum w^2 / (sum w)^2 in
+   place of 1 / N_r) and measured, or #176 carried to the viewer's pass beside #177.
 177. **The march under-samples the bulge's cusp: the innermost kiloparsec reads 2.3 % low on screen** (S67, D227 R5;
    the picture spec's ring gates). On `milky_way`'s face-on frame, dust and gas off, the ring 0-1 kpc's on-screen
    light over the render's published light plus the bulge is 0.977-0.978 in every state (layer on or off, points on
@@ -6255,6 +6264,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    read with its measurement over the suite's seeds, or the crest read by the point function at the foot (S90
    measured +1.94 s / +2.23 s on the walk's 1.80 / 1.91 s), the hold then lifted. What kills the reading: the
    seed-4242 read under 0.27 with the window held to the foot's own ridge on the unchanged walk (a test artefact).
+   *S93 (M3, lane REST): measured.* The window's width is not what reads over: one window (the foot's own ring's width)
+   on both grid rings reads 0.4547 at seed 4242 (0.2144 at seed 0) against 0.4582 (0.2176); the worst foot (4.444 kpc,
+   inside the pinned 5.0 kpc bar) reads its two grid rings' crests ~45 % off its own ring's - the linear-in-R crest
+   between rings; only the 5.403 kpc foot is the width's (0.1731 -> 0.0478). The kill clause is not met. Recommended:
+   the closer's second form (the crest read by the point function at the foot, +1.9-2.2 s a lay as S90 measured), the
+   hold then lifting by construction - not built here (a model change on every run; the gate's).
 221. **Inside the bar the spur's crest can be a lane's: the Milky Way's published gas reads 7.3027 at 3.94 kpc over
    the bar's clause max(lane peak 7.0556, response 2.3930)** (S92, D261; found by #164 / #165's build). #164 sets a
    spur's height to the ring's crest over its trough; inside the bar's reach the ring's tallest crest is a lane's,
@@ -6266,6 +6281,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    inside the bar (no spur on a lane's crest, the clause then holding as written), or the clause re-declared as the
    lane or the response plus the spurs' own height, with its measurement; the two holds lifted. What kills the
    reading: the field's maximum inside the bar under the clause on the unchanged model (another ring's read).
+   *S93 (M3, lane REST): read, recommendation.* Option (a): inside the bar's taper the walk's crest and trough read from
+   the response's profile, not the lanes' (`layer/spurs.py ridge_reads`): a spur is the arms' ridge's feature, both
+   clauses then hold as written and only the Milky Way's spurs inside 5.0 kpc move. Option (b) re-declares a judged
+   clause. Not built or measured here (a model change; the gate's or the owner's ruling).
 
 ---
 
