@@ -630,7 +630,12 @@ function wholeRender(curves: Curve[], white: number, query: Query): Promise<Rend
 export interface RemainderFrame {
   header: {
     window: { R: { n: number } };
-    remainder: { rule: string; parts: Record<"middle" | "old", { array: string; weight: string }> };
+    remainder: {
+      rule: string;
+      parts: Record<"middle" | "old", { array: string; weight: string }>;
+      /** S93 (#175): the middle part's kept shares, as the whole render's ages.middle_kept (absent before S93). */
+      middle_kept?: { arrays: Record<string, string>; weight: string; [key: string]: unknown };
+    };
     resolved: unknown;
     [key: string]: unknown;
   };
@@ -638,7 +643,8 @@ export interface RemainderFrame {
 }
 
 export async function loadRemainder(curves: Curve[], white: number, query: Query, lMin: number, signal?: AbortSignal): Promise<RemainderFrame> {
-  const got = await render(curves, { ...query, white, precision: "f4", l_min: lMin, only: "remainder" }, { signal });
+  // S93 (#175): kept=1 asks the middle part's kept shares beside the two parts (about 15-30 kB more at f4).
+  const got = await render(curves, { ...query, white, precision: "f4", l_min: lMin, only: "remainder", kept: "1" }, { signal });
   return { header: got.header as RemainderFrame["header"], arrays: got.arrays as RemainderFrame["arrays"] };
 }
 
@@ -663,8 +669,12 @@ export async function loadRender(curves: Curve[], white: number, query: Query = 
   const placed = parts
     ? placeRemainder(rest.arrays[parts.middle.array], rest.arrays[parts.old.array], a[parts.middle.weight], a[parts.old.weight], rest.header.window?.R?.n)
     : null;
+  // S93 (#175): where the remainder splits its middle part by kept octaves, its per-ring arrays come too (about 25 kB at
+  // f4), so the star-first march can cluster the remainder as the field mode's (interface/ages.js remainderParts).
+  const keptNames = rest.header.remainder?.middle_kept ? Object.values(rest.header.remainder.middle_kept.arrays) : [];
+  const perRing = parts && keptNames.length ? Object.fromEntries([parts.middle.array, parts.old.array, ...keptNames].filter((n) => n in rest.arrays).map((n) => [n, rest.arrays[n]])) : {};
   return {
     header: { ...frame.header, resolved: rest.header.resolved, remainder: rest.header.remainder },
-    arrays: placed ? { ...a, stars_unresolved: placed } : a,
+    arrays: placed ? { ...a, ...perRing, stars_unresolved: placed } : a,
   };
 }

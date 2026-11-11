@@ -1235,7 +1235,9 @@ def _old_rows(api: Service, model) -> np.ndarray | None:
 def test_without_l_min_the_render_is_the_one_it_was(full, model):
     """l_min= adds one component, its entry in components and axes, and the header's resolved; nothing else moves.
     Asserted byte for byte: the body without it is the body with it, the additions taken out (both warm, so both
-    name the same stages run: none)."""
+    name the same stages run: none). Since S93 (#166) l_min= also leaves out the light by age (the header's ages null, its
+    parts and the weights shipped for them), which the star-first mode never drew: the body without l_min= with those
+    taken out is the body with it, its additions taken out, byte for byte."""
     for l_min in (None, 1000.0, None, 1000.0):
         got = full.handle("/api/render", _unresolved_query(model.name, l_min))
         assert got.status == 200
@@ -1243,14 +1245,29 @@ def test_without_l_min_the_render_is_the_one_it_was(full, model):
             plain = got
         else:
             header, arrays = wire.decode(got.body)
-    assert got.stages == () and set(arrays) - {"stars_unresolved"} == set(wire.decode(plain.body)[1])
+    plain_header, plain_arrays = wire.decode(plain.body)
+    ages = plain_header["ages"]
+    def named(entry) -> set:  # every array name the ages entry mentions (its parts, their weights, the kept shares)
+        if isinstance(entry, dict):
+            return set().union(*(named(v) for v in entry.values())) if entry else set()
+        if isinstance(entry, list):
+            return set().union(*(named(v) for v in entry)) if entry else set()
+        return {entry} if isinstance(entry, str) and entry in plain_arrays else set()
+
+    by_age = named(ages) | {"stars_placement"}  # and the stars' own placement, shipped with the parts (Service._ages)
+    gone = set(plain_arrays) - set(arrays)
+    assert got.stages == () and header["ages"] is None and gone and gone <= by_age
+    assert set(arrays) - {"stars_unresolved"} == set(plain_arrays) - gone
     # Since S72 the header's stages is the closure each answer needs: l_min= may read more, never less.
-    plain_stages = wire.decode(plain.body)[0]["stages"]
+    plain_stages = plain_header["stages"]
     assert set(plain_stages) <= set(header["stages"])
+    without = {k: (None if k == "ages" else v) for k, v in plain_header.items()}
+    without["axes"] = {k: v for k, v in plain_header["axes"].items() if k not in gone}
     stripped = {k: v for k, v in header.items() if k != "resolved"} | {"stages": plain_stages}
     stripped["components"] = {k: v for k, v in header["components"].items() if k != "stars_unresolved"}
     stripped["axes"] = {k: v for k, v in header["axes"].items() if k != "stars_unresolved"}
-    assert plain.body == wire.encode(stripped, [(k, v) for k, v in arrays.items() if k != "stars_unresolved"])
+    assert wire.encode(without, [(k, v) for k, v in plain_arrays.items() if k not in gone]) == wire.encode(
+        stripped, [(k, v) for k, v in arrays.items() if k != "stars_unresolved"])
 
 
 def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_them(full, model):
@@ -1480,6 +1497,31 @@ def test_the_parts_shares_of_the_disc_s_light_are_pinned_as_measured(full):
         for p in AGES:
             assert got[p] == pytest.approx(pinned[p], abs=2e-6), (name, p)
         assert np.allclose(sum(np.array(got[p]) for p in AGES), 1.0, rtol=1e-12)
+
+
+def test_an_l_min_render_computes_no_age_parts_and_the_whole_render_s_are_its_cached_bits(small, model):
+    """S93 (#166): under a whole-grid l_min= the render ships stars_unresolved and no age parts (the star-first mode draws its
+    remainder; the parts were computed and discarded), its stars and remainder unchanged; and the whole render's parts
+    read bright.part_anchors' arithmetic through the run's cache - the same bits as bright.part_anchors itself, and the
+    same bits on a second (warm) request."""
+    q = {**_ages_query("rgb"), "model": [model.name]}
+    header, whole = render_q(small, q)
+    _, again = render_q(small, q)
+    lh, lit = render_q(small, {**q, "l_min": ["2251.0"]})
+    assert header["ages"] is not None and lh["ages"] is None
+    assert not {"stars_young", "stars_middle", "stars_old", "stars_middle_kept3"} & set(lit)
+    assert np.array_equal(lit["stars"], whole["stars"]) and "stars_unresolved" in lit
+    for p in AGES:
+        assert np.array_equal(again[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]]), p
+    from galaxy.api import v7_layer
+    from galaxy.stages import bright as br
+    from galaxy.stages import systems as sy
+
+    f = scalars(small, model.name, "stars_formed_history", "feh_history")
+    c = {k: v.value for k, v in model.constants.items()}
+    cut, spec = br.cluster_window(c), small.grid.spec
+    cached = v7_layer.window_anchors(f, spec.t_max, spec.n_t, c, [(0.0, cut), (cut, sy.YOUNG_STAR_AGE), (sy.YOUNG_STAR_AGE, math.inf)])
+    assert np.array_equal(cached, br.part_anchors(f, spec.t_max, spec.n_t, c))
 
 
 def test_the_parts_ride_on_windows_and_region_cells(small):

@@ -328,8 +328,11 @@ sub-step); per level-0 ring on a
 capture's own pixel lattice, at 16 offsets, the dust's column and every clustered part,
 young and kept, within the derived one-draw bound 3 sqrt((e^v - 1) g^2 / N_r) of a log-normal map
 point-sampled on the ring's pixels (worst 2.93 of it; debt #176) `[verified: tests/test_v7_layer.py,
-frontend/e2e/picture.spec.ts]`. Not modulated: the star-first points' dust (the ring's placed
-column, R7) and the star-first remainder's middle part (R5e) - debts.
+frontend/e2e/picture.spec.ts]`. Since S93 (#174) the star-first points' diffuse dust takes the same gas map,
+read once per point as the same thin screen (where the segment to the camera crosses the midplane, else
+at the point's own projection; the spurs as their cell means, the clouds unmapped), and the star-first
+remainder's middle part is split by kept octaves as the field mode's (#175, `only=remainder`'s
+`remainder.middle_kept`) and clustered in the march with the young light clustered.
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,

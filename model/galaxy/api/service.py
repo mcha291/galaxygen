@@ -357,8 +357,9 @@ ROUTES: tuple[Route, ...] = (
         "the spurs, and stars_middle_kept3, _kept2 and _kept1 the middle part's light that keeps 3, 2 and 1 clustering octaves (the header's ages.middle_kept). "
         "only=remainder with l_min= (S64, V6) returns only stars_unresolved_middle and stars_unresolved_old per ring and "
         "filter, which this render's own stars_middle_placement and stars_old_placement (or stars_placement) turn into "
-        "stars_unresolved exactly; the header's remainder states the rule.",
-        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only"),
+        "stars_unresolved exactly; the header's remainder states the rule - and since S93 (#175), with kept=1, the middle "
+        "part's kept shares under l_min, stars_unresolved_middle_kept3, _kept2 and _kept1 (the header's remainder.middle_kept).",
+        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min", "only", "kept"),
         "render",
     ),
     Route(
@@ -2097,9 +2098,14 @@ class Service:
                          "dust stage's modified blackbody at the published temperature and its emissivity index, "
                          "optically thin. Zero through an optical filter; a curve holding the far infrared gets it all",
             }
-        # The stars' light by age (S63, D223): three per-ring arrays and the (R, phi) arrays that place them.
+        # The stars' light by age (S63, D223): three per-ring arrays and the (R, phi) arrays that place them. Not on a
+        # whole-grid l_min= request (S93, #166): the star-first mode's frame draws its remainder (stars_unresolved), never
+        # the age parts, so that request no longer computes the light it discarded. A window or a level with l_min=
+        # keeps them (the region cells' closures read the young part beside the remainder, test_s91_t2_closure).
+        whole_l_min = l_min is not None and level is None and not any(
+            q.one(n) is not None for n in ("r_min", "r_max", "phi_min", "phi_max"))
         ages, age_rings, age_weights = None, [], []
-        if all(n in f for n in _bright.RESOLVE_READS[:2]):
+        if not whole_l_min and all(n in f for n in _bright.RESOLVE_READS[:2]):
             ages, age_rings, age_weights = self._ages(
                 model, f, curves, per_ring, placed, contrast_fields, placed_gas, gas_fields,
                 RENDER_DUST_PLACEMENT if placement is not None else None, even, clustering_declared, old_rows,
@@ -2293,7 +2299,11 @@ class Service:
         weight for the same ages; ``share`` is each row's young share, ``bright.row_young_share``)."""
         spec = self.grid.spec
         constants = {k: c.value for k, c in model.constants.items()}
-        anchors = _bright.part_anchors(f, float(spec.t_max), int(spec.n_t), constants)  # (3, R, 8)
+        # bright.part_anchors' arithmetic, cached with the run (S93, #166): the three parts as their age windows, the same
+        # bits (part_masses' windows are these, age_min 0 for the young part and age_max inf for the old).
+        cut = _bright.cluster_window(constants)
+        anchors = _v7.window_anchors(f, float(spec.t_max), int(spec.n_t), constants,
+                                     [(0.0, cut), (cut, _catalogue.YOUNG_STAR_AGE), (_catalogue.YOUNG_STAR_AGE, math.inf)])  # (3, R, 8)
         T = f["disc_light_temperature"]
         raw = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])  # (3, R, filter)
         total = raw.sum(axis=0)
