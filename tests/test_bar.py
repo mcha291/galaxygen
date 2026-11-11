@@ -500,6 +500,11 @@ RING_MEAN_TOLERANCE = 2e-13
 # NGC 4414's worst 9.35e-14 (ring 129, 9.7125 kpc), six over 5e-14. Not rounding of the sum: the cells are of order 1
 # and each a composition of the response, the lanes and the pieces' cell means, each exact to its own rounding, so a
 # ring's mean carries the sum of 360 such roundings - which is what the composition's bound is (D234's F-2-3).
+# S95 (Audit VI F-3A-4, D264): THAT REASON WAS WRONG IN MECHANISM. Measured at S95 (math.fsum per component, both
+# templates): the residue is the steady response's - the solver's own sum tolerance, gas_response.SUM_TOLERANCE 1e-13
+# (each solved profile's samples average to 1 only to that: 9.93e-14 on ring 105) - which the exact cell means inherit;
+# the lanes' part reads <= 2.0e-14, the spurs' 3e-17, and 360 cells' rounding is ~1e-15. 2e-13 stays (the gate): the
+# solver's 1e-13 and the cell integration's rounding. The Milky Way's worst reads 9.970e-14 at S95, NGC 4414's 9.348e-14.
 
 
 @pytest.mark.parametrize("template", TEMPLATES)

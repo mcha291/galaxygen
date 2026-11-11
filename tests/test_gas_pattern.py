@@ -355,6 +355,9 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
     # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE: 1.0036e-13 the Milky Way's worst, 9.35e-14 NGC 4414's).
     # Was `off < 1e-13 or (template == "milky_way" and off == pytest.approx(1.0036e-13, rel=1e-3))`.
+    # S95 (Audit VI F-3A-4, D264): the reason is the response solver's own sum tolerance (gas_response.SUM_TOLERANCE,
+    # 1e-13), which the exact cell means inherit - not the rounding of 360 cells (~1e-15). 2e-13 stays. Measured at S95:
+    # 9.970e-14 (Milky Way), 9.348e-14 (NGC 4414).
     off = float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max())
     assert off < 2e-13
     # S58 (D217 item 6): was `g >= taper (1 - B)`, the cosine bar's trough. The bound is w_bar min L - to the rounding
@@ -701,7 +704,9 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
     # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
     # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE). Was `< 1e-13 or (milky_way and == approx(1.0036e-13))`.
-    assert got["ring_mean"] < 2e-13  # measured 1.0036e-13 and 9.3e-14: the cell means
+    # S95 (Audit VI F-3A-4, D264): the reason is the response solver's own sum tolerance (gas_response.SUM_TOLERANCE,
+    # 1e-13), inherited by the exact cell means - not the rounding of 360 cells. 2e-13 stays.
+    assert got["ring_mean"] < 2e-13  # measured 1.0036e-13 and 9.3e-14 (S88); 9.970e-14 and 9.348e-14 (S95)
     assert got["steps"] <= gr.MAX_NEWTON_STEPS == 120 and got["halvings"] <= gr.MAX_HALVINGS == 30
     # The bound of D216 item 12 as S58 leaves it, [w_bar min L, max(max s, max L)]. S58 (D217): was `0.0 < margin
     # < 3e-5 and max_g <= max_s` - the cosine bar never passed the response's crest; the lanes do (7.06 on the lane

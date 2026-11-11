@@ -336,7 +336,12 @@ def walk_against_point(model, seed: int | None = None) -> np.ndarray:
 # Until S92 (the chain's read): ten sampled feet 0.0077, every foot 0.0573 (39 feet) at seed 0 and 0.2506 (35) at 4242.
 WALK_READ_OVER_S92 = ("S92 (#164 / #165): the walk's crest read reads over WALK_READ_DIFFERENCE (0.27) at texture seed "
                       "4242 - the crest window's width differs between the two grid rings and the crest it holds can be "
-                      "another ridge's (worst feet at 4.44 and 5.40 kpc); register #220, the bound not moved")
+                      "another ridge's (worst feet at 4.44 and 5.40 kpc); a population finding since S95: 5 of 12 unpinned "
+                      "Milky Way seed pairs read over, max 0.666 (D264); register #220, the bound not moved")
+# S95 (Audit VI F-3B-1, D264): what WALK_READ_DIFFERENCE is now. 0.27 was measured at S70 / S88 on the read AT THE FOOT;
+# on the crest statistic (since S92) the template's own seed reads 0.2176 (below) and Audit VI's twelve unpinned Milky
+# Way texture / pattern seed pairs on the production grid read up to 0.666, five of twelve over 0.27 (#220, restated as
+# a population finding; its closer is a model mend). Not relaxed (B5): a failed check is recorded, not widened.
 
 
 def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
