@@ -2288,3 +2288,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [audit] **A population table on seeds the tests do not use is run BEFORE a bound is declared.** Twelve unpinned
   pairs showed one bound exceeded on five (the walk's 0.27) and another on one (the power share's 0.98 on the audit's
   mesh, #224), where the tests' own seeds all passed. (S95, D264)
+
+## From S96 (the reading session: eighteen register entries' sources read by two Opus readers, the register re-ruled; the Fable gate)
+
+- [audit] **A closer that names "a reading" is ordered the session it is written.** Eighteen entries waited up to nine
+  sessions on readings that took two readers an hour (S96): a reading needs no model batch and no owner's word, so
+  nothing but an order stands between the closer and its answer. (S96, D265)
+- [audit] **A closer is checked against what the sources can give before it is entered.** #136's asked for the
+  catalogues' face-on A_B − A_V, which no catalogue carries (they correct to face-on by a formula that is zero there),
+  and #181's for a size–luminosity relation of HII complexes, where the published sizes are the telescopes'
+  resolution; both closers had to be rewritten once read. (S96, D265)
