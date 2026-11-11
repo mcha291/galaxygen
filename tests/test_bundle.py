@@ -375,6 +375,14 @@ def test_the_plan_is_what_the_viewer_sends_string_for_string(service, exported):
     # because BUILD_IV's text names the censuses). A plan that drifts from the viewer fails here, not as a silent miss.
     sent_all = {r["path"] + "?" + _sent(doc, r) for r in doc["requests"]}
     unsent = sorted(q for q in anywhere if q not in sent_all)
+    # S93 (D262; T11 "as JWST", aa0eec6): jwst_nircam shipped after the walks and no walk ran under it (the fixture's
+    # walks say so; one is owed). Its seventeen planned entries - a blackbody, and per galaxy and layer two renders, a
+    # bright and a clusters request - are held instead to a walked instrument set's, string for string with the curves
+    # swapped: the plan asks nothing under the new set that the viewer was not seen to ask under wfc3.
+    curves = {name: "filters=" + bundle.js_query({"": bundle.js_json(c)})[1:] for name, c in filter_sets().items()}
+    unwalked = [q for q in unsent if curves["jwst_nircam"] in q]
+    assert len(unwalked) == 17 and all(q.replace(curves["jwst_nircam"], curves["wfc3"]) in sent_all for q in unwalked)
+    unsent = [q for q in unsent if q not in unwalked]
     assert all(q.startswith("/api/remnants?") for q in unsent), unsent[:3]
     assert len(unsent) == 4, unsent
 

@@ -18,6 +18,12 @@
    "date": "2026-11-11",
    "by": "the S93 REST mend (D262; by hand, no walk run)",
    "covered": "no new walk: the twenty only=remainder records respelled with kept=1 before filters=, as api.ts loadRemainder sends since S93 (#175); tests/test_bundle.py reads that loader beside the plan so the two cannot part again."
+  },
+  {
+   "session": "S93",
+   "date": "2026-11-11",
+   "by": "the S93 gate (D262; by hand, no walk run)",
+   "covered": "no new walk: the Science tab's plots request at the ionized gas's checkpoint (two records, one per template, layer on) respelled with the three line fields the diffuse gas declares since S93 (#118: nii_6583, sii_6716 and sii_6731 _surface_brightness_dig), each in its unit's group where /api/fields declares it - Preview.tsx builds that list from /api/fields and is unchanged since the S73 walk, tools/export_template.py's science_arrays mirrors it; bytes are the S73 walk's. No walk ran under jwst_nircam either, the set shipped at S93 with T11 (as JWST): tests/test_bundle.py holds its seventeen planned entries to wfc3's with the curves swapped. A walk of the built viewer on S93's model, the new set under it, is owed to confirm both."
   }
  ],
  "prefixes": {
@@ -630,7 +636,7 @@
   {
    "path": "/api/arrays",
    "galaxy": "milky_way/on",
-   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
+   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_dig%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_dig%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_dig%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
    "bytes": 36440
   },
   {
@@ -1020,7 +1026,7 @@
   {
    "path": "/api/arrays",
    "galaxy": "ngc_4414/on",
-   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
+   "rest": "fields=halpha_surface_brightness_dig%2Chalpha_surface_brightness_hii%2Chalpha_surface_brightness_nebular%2Chbeta_surface_brightness_dig%2Chbeta_surface_brightness_hii%2Cnii_6583_surface_brightness_dig%2Cnii_6583_surface_brightness_hii%2Coiii_5007_surface_brightness_hii%2Csii_6716_surface_brightness_dig%2Csii_6716_surface_brightness_hii%2Csii_6731_surface_brightness_dig%2Csii_6731_surface_brightness_hii%2Chot_phase_porosity%2Ccensus_clustering_seed%2Cgc_metal_poor_fraction%2Cgc_survival_fraction%2Cmean_stellar_mass%2Cplanetary_nebula_count%2Cremnant_mass_fraction%2Cstar_count_total%2Cgc_count_estimate%2Cgc_system_mass%2Cgas_fluctuation_seed",
    "bytes": 35480
   },
   {
