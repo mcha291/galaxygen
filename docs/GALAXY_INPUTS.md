@@ -6137,6 +6137,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    1.64e-6: the finer tails read closer to the exact integral); test_render green (92 passed, then the five
    object-response nodes). **Discharged at S92 (D261)**: the model's tables hold the 4.4 µm band; `s83-robust`'s merge
    (its set, the conflict, the measured `jwst_nircam` row) is the batch's close, no longer this debt's.
+   *S93 (M3's close, the merge, on `s93-s83`):* `s83-robust` merged at 6a37b77. T13's commit (1dc8446) is a no-op,
+   byte-identical to 328c67d on `main`; the one conflict hunk is GalaxyView's lost-context line (S84 T17's StatusDot
+   kept before T13's words). `tools/fetch_filters.py --convert-only` on S83's VOTables rewrites `instruments.json` byte
+   for byte (no network). The set's as-measured rows in `tests/test_render.py`, measured at S93 on the merged line
+   (s93s83_measure.py; wfc3 beside it reproduced its pins): `GATE` median / max / weighted 9.55e-7 / 6.27e-6 / 7.86e-7
+   mag (D200's 0.02 / 0.1 met by four orders); the end row's worst 1.57e-6 mag (bound 0.002); `AGE_FACTORS` default and
+   Milky Way [1.3170e-3, 1.5114e-3, 9.1216e-4], `ngc_4414` [1.0329e-3, 1.1778e-3, 7.5136e-4], the three parts closing
+   to 1e-14. No bound read over, none held. Rows measured before the other S93 lanes merge: a lane that moves the
+   stars' spectra moves these with the other sets' rows at the integration's re-pin.
 212. ~~**`MERGER_HEATING` is derived on the old clock: its own derivation reads 90.62 on the model's cosmology, the
    constant is 88.8**~~ (S87, M1; found by #148's build; discharged at S88's close, D256). S20 derived the constant (D128) as √(σ_W² − ⟨σ_sec² + σ₀²⟩)/0.25
    over the pre-merger population at R₀ — σ_W = 35 km/s, the model's own secular heating then 27.06 km/s — and set it

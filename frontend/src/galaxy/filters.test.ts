@@ -17,7 +17,7 @@ const passes = (curve: Curve, lambda: number) => {
 
 describe("the filter sets", () => {
   it("offers RGB, SHO and HOO, three curves each, red to blue", () => {
-    expect(FILTER_SET_NAMES).toEqual(["rgb", "sho", "hoo", "wfc3", "wfc3n"]) // the named instruments since S42;
+    expect(FILTER_SET_NAMES).toEqual(["rgb", "sho", "hoo", "wfc3", "wfc3n", "jwst_nircam"]) // the named instruments since S42, JWST's since S83;
     for (const name of FILTER_SET_NAMES) expect(FILTER_SETS[name].curves).toHaveLength(3);
     const [r, v, b] = FILTER_SETS.rgb.curves;
     expect(r.shape === "gaussian" && v.shape === "gaussian" && b.shape === "gaussian").toBe(true);
@@ -115,6 +115,34 @@ describe("the named instruments (S42)", () => {
     for (const name of ["rgb", "sho", "hoo"] as const) {
       for (const c of FILTER_SETS[name].curves) expect("wavelengths" in c).toBe(false);
     }
+  });
+
+  it("hold JWST's NIRCam F444W, F200W, F090W red to blue (S83, T11): SVO's curves, the tool's text, the set's own optics", () => {
+    const set = FILTER_SETS.jwst_nircam;
+    expect(set.label).toBe("NIRCam");
+    expect(set.curves.map((c) => c.name)).toEqual(["F444W", "F200W", "F090W"]);
+    expect(set.sources?.map((s) => s.svo)).toEqual(["JWST/NIRCam.F444W", "JWST/NIRCam.F200W", "JWST/NIRCam.F090W"]);
+    const pivots = set.sources!.map((s) => s.pivot);
+    expect(pivots[0]).toBeGreaterThan(pivots[1]);
+    expect(pivots[1]).toBeGreaterThan(pivots[2]);
+    for (const c of set.curves) {
+      expect(c.shape).toBe("sampled");
+      expect(c.wavelengths).toBe("vacuum");
+      if (c.shape === "sampled") expect([Math.max(...c.transmission), c.wavelength.length]).toEqual([1, 241]);
+    }
+    expect(set.about).toContain("[verified: SVO Filter Profile Service, JWST/NIRCam.*");
+    expect(set.psf?.kind).toBe("airy"); // the display sprite without a distance
+    const o = set.optics!;
+    expect([o.aperture, o.spider_angles_deg, o.pixel_scale_arcsec]).toEqual(["hexagonal-18", [90, 240, 300], [0.063, 0.031, 0.031]]);
+    // The tool's geometry: segments of 1.32 m, 7 mm apart (Feinberg et al. 2023), in pupil radii of the circumscribed
+    // circle - the farthest corner at (sqrt3 p + f / (2 sqrt3), p + f / 2) for the pitch p = 1.327 m.
+    const p = 1.327;
+    expect(o.aperture_m).toBeCloseTo(2 * Math.hypot(Math.sqrt(3) * p + 1.32 / (2 * Math.sqrt(3)), p + 0.66), 4);
+    expect(o.segment! * (o.aperture_m / 2)).toBeCloseTo(1.32, 4);
+    expect(o.gap! * (o.aperture_m / 2)).toBeCloseTo(0.007, 5);
+    expect(o.obscuration).toBeCloseTo(0.74 / o.aperture_m, 4);
+    // Every other set carries none: its optics are a template's (NGC 4414's WFC3) or there are none.
+    for (const name of FILTER_SET_NAMES) if (name !== "jwst_nircam") expect(FILTER_SETS[name].optics).toBeUndefined();
   });
 
   it("put each palette line in its own channel", () => {
