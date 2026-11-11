@@ -530,3 +530,178 @@ batch-m3 at e2e571f (42952574634) and main at dd003ee (42976759706) success.
 and #211's test names, #189's test_viewer pin and #212's derivation test not grepped; struck viewer rows not re-checked
 beyond the greps; the frames' stated distance not looked for beyond "none materially nearer"; why no scheduled run is
 listed after 2026-11-10 22:00 not investigated; no test run, no source fetched.
+
+## 6. The gate — the lead's verdict (Fable, 2026-11-12; transcribed to D263; the fixes are S95's, B3)
+
+**Read first.** Five strands, seven Opus agents, 50 findings (49 standing, one withdrawn by its reader). **The batches' numbers hold where the audit could
+read them:** of 84 cited claims re-read on fetched pages (49 the arms' and the bar's, 35 the rest's), 69 match, and no
+constant, pin or table row that reaches a computed field differs from its page; no judged bound moved in number without
+a decision naming it (one identity loosened to abs 1e-4 under #154 with no decision found, F-3A-8, named below); no feature of the committed frames is an invention, D2 and D1 hold. **What the audit found is
+what building ahead of the suites costs:** tests that would not see the defect they discharged return (#216's kill
+clause run only as a script, #197's one cell, #166's cache, #217's machine-dependent guard); a bound that now judges a
+statistic other than the one it was measured on (the spurs' walk); bounds re-declared at the reading that failed them;
+one strict hold that lost its register entry when its carrier was discharged; three nodes behind M3's close that no
+machine has seen pass as committed; a request fixture transcribed by hand; and reading notes that state a source more
+narrowly or more widely than its page. The verdict on each class follows; a finding not named is upheld as written and
+goes to S95 as a wording or test fix.
+
+**The citations (strand 1): upheld, all wording or provenance; no number moves.**
+- F-1A-1 (the winding sense "never reverses — the sources measure … not a reversal", while Honig & Reid 2015's Table 5
+  prints −10.3 ± 1.4° on M51's arm B): *upheld as wording.* That no arm reverses is the model's rule (D219), not the
+  sources' finding; the about-lines say so and name the reversed segment as outside what the model draws. The lines
+  are under `model/galaxy`, so the hash moves: **queued for the next model batch's first commit**, with F-1A-6
+  (Erwin 2019's fit covers log M★ 9–11), F-1B-4 (the bound fraction is Lada & Lada's, its independence of mass and
+  age the model's choice) and the isochrone labels' caveat (the CMD FAQ's "not carefully checked").
+- F-1A-2 (the stacks' A₂ peak quoted as 0.76–0.94 r_bar where Díaz-García et al. 2016's Table 5 also prints 0.62–0.68):
+  *upheld.* The reading quotes the table whole; #146's miss is restated against two named rows — the Milky Way
+  template's class (SB, T < 5: 0.78 ± 0.19) and its mass bin (0.90 ± 0.20) — the model's 0.41 a under both. A disclosed
+  check, not a row: no ruling is owed.
+- F-1A-3 (Hart et al. 2017's mean is 18.0, so 1.57σ), F-1A-5 (the "15.0° pooled" is the reader's, labelled so), the
+  minor rows (MJ07's 0.35–0.80; DG16b's "a hint of"): *upheld*, corrected in the readings.
+- F-1A-4 (#153's reading sent to Yu & Ho 2019 §4.3 for a fit the paper does not print): *upheld.* The reading is
+  re-pointed: YH19 prints ρ = −0.49 and no slope; the law's slope and scatter stay `[recall]` until a source that
+  prints a fit is read — #153's closer says so.
+- F-1B-1 (arXiv:2301.01779 is McElwain et al. 2023), F-1B-2 (0.8 % and 0.5 %): *upheld*; `tools/fetch_filters.py`
+  and the set's about text, no curve touched.
+- F-1B-3 (Miville-Deschênes et al. 2017's R is an inertia-matrix radius; on the equal-area radius their clouds read
+  57.5 R^2.10; the 78.6 R^1.98 is Rice et al. 2016's clouds as Lada & Dame fitted them): *upheld*; the reading is
+  corrected. **Told to the owner, no answer awaited:** #182's ruling (permanent, 2026-11-10) rested on this
+  paragraph; corrected, a 10⁷ M☉ cloud reads ~313 pc in place of 296 pc — the same direction, the ruling's reason
+  unchanged.
+- Unread or unreachable (Herrera-Endoqui et al. 2015's NGC 4414 pitch — VizieR down; six sources of
+  `READING_ARM_*`; Bronfman 1988, Malhotra 1994, Rémy-Ruyer 2015's eq. 5, Licquia et al. 2015): *carried as one
+  entry*, each read once at S95 or labelled `[recall — NOT READ]` where it stands.
+
+**The re-pins and the gates (strand 3): no bound moved unsaid; five things the method let through.**
+- F-3B-1 (the walk's read re-defined at S92 — the crest within half a crest width, not the read at the foot — with
+  `WALK_READ_DIFFERENCE` 0.27 and its coarse twin 0.58 carried over): *upheld.* D261's "no bound moved" is true of
+  the number and silent on the estimator. **Ruled:** the two numbers are not bounds of the new statistic until it is
+  measured; S95 measures it over the audit's population (both templates, the production and the coarse mesh, seeds
+  disjoint from the tests'), and the gate then declares the bound from that population (D117, "measured over N") —
+  #220's reading at seed 4242 is judged against it, not before it. No bound is moved at S95 without that table.
+- F-3A-2 and F-3A-4 (four of M1's six ruled bounds re-declared at the failing reading plus a margin; the ring mean's
+  2e-13 on a reason that does not reach its size): *upheld as a method finding; the bounds stand.* Each was the
+  model's own declaration, each decided (D255, D256), each cause measured — B5's letter holds. What the audit asks is
+  D117's: a declared bound is measured over a population the test does not judge. S95 re-measures the power share
+  and the walk's coarse read on disjoint seeds and writes the population beside each; the ring mean's 1e-13 is traced
+  to the component that owns it (`math.fsum` per component) and the tolerance named there.
+- F-3A-5 (`BRIGHT_GATE_READ_OVER`, a strict hold on the young bright stars' two L1 clauses, carried by nothing since
+  #161's discharge): *upheld — the audit's one hidden red.* It was disclosed when held (D256) and lost at S90's
+  strike. **A new entry, #223**, names the hold, its two readings (−0.4750 against −0.64 ± 0.15; 0.8457 against flat
+  within 0.05) and its closer; #161's discharge stands (its own closer was met).
+- F-3B-2 (#216), F-3A-6 (#197), F-3B-6 (#166), F-3B-5 (#217), F-3B-9 (#114's call site, #174's shader): *upheld, one
+  class — the discharge stands on a script, one cell, or a path the test cannot fail.* S95 writes each test (the
+  one-ulp probe as strand 2 built it; every star and remnant inside its own ring over both templates' catalogues; a
+  counter on the cached parts; a source-level check that both thresholds call one function; the viewer's call
+  asserted in vitest). **No discharge is reopened**: none of the five was found broken, and strand 2 re-measured
+  #216, #218, #175, #197, #114, #164 / #165 / #213 and #119 by its own estimators and each holds.
+- F-3B-3 (the three-legs gate re-pinned from a failing read and never re-run; it and the two layer-off reference
+  nodes are `machine_pinned`, so the runner skips them): *upheld.* **Read by name at this gate, on `main`'s model, single-threaded:** the two layer-off reference nodes of
+  `tests/test_layer.py` — five cases, green; the three-legs gate of `tests/test_pieces.py` (360 galaxies, over an
+  hour) was running when this section was written, and its line is D263's. **A cadence for these nodes is a
+  ruling for the owner**; the lead recommends reading the three by name at every model batch's close.
+- F-3A-3 (six of S90a's fourteen marks took judged clauses off the runner): *upheld for S90a → S92, closed since*:
+  M3 lifted the fourteen (strand 3B's count) and the runner read them green. The lesson is kept: a mark goes on the
+  record's own test, a judged clause never rides under it.
+- F-3B-4 (the L1 gate inside its window by 0.0070 and 0.0135 against a seed-to-seed sd of 0.10): *a ruling for the
+  owner*, as D260 said it would be if the slopes stayed at the edge. The lead recommends judging the nine-seed mean
+  (−0.62 / −0.64, the statistic the source measures: a population's) and keeping the default census's slopes as a
+  record.
+- F-3A-1 (`PRICE_RECORD`, a non-strict xfail around a bound: it can fail nowhere): *upheld.* It becomes a record
+  (the price printed and kept, the sanity floor asserted, no upper bound), as #154's text already calls it.
+- F-3B-8 (#160 built at S91, its test green, never struck): *upheld*; discharged at S95's register pass on that test.
+- F-3A-7 (a whole-test strict hold masks every later assert), F-3A-8 (the identities that became records under #154
+  are named here: `test_sfh_azimuthal`'s top-tenth equality, exact → abs 1e-4, and `built == cell_law` with its
+  0.00228 record), F-3A-9, F-3A-10, F-3B-7, the `raises=` on #220's and #221's holds: *upheld*; a lesson, text, and
+  one unit case for the bar's sliver.
+
+**The viewer and the pictures (strand 4): no invention; the fixture is a transcription; the pictures are far.**
+- F-4-1 with F-3B-7 (22 of the fixture's 171 recorded meanings written by hand, `jwst_nircam` never walked, S73's
+  walker never committed): *upheld.* S95 writes the walker as a committed tool, walks the built viewer on `main`'s
+  model with `jwst_nircam`, and diffs the meanings against the fixture; an entry is opened only if the walk is not run.
+- F-4-2 (JWST's strut angles inferred from images): *carried*, tagged as it is; a reading of the telescope's own
+  drawing is ordered at S95. F-4-3 (`WING_BLOCK`): *ruled a sampling bound*, said so in `VIEWER_TASKS.md`.
+- F-4-5 (D262's NGC 4414 goal row quoted at the tool's estimated axis ratio 0.512, the frames at 0.5736): *upheld*;
+  §4's table is the record at one axis ratio. F-4-6 (NGC 4414's field frame reddens outward, +0.185, where its goal
+  blues outward, −0.33; so since S67): *recorded here, told to the owner.*
+- **The yardstick, said plainly** (the owner's word of 2026-10-05): neither field frame is near its goal picture.
+  The Milky Way frame carries a quarter of the goal's two-armed power (A₂ 0.053 against 0.194), five times its dark
+  fraction, no visible bar and no pink knots; NGC 4414's carries a fifth of the goal's dark lanes, two and a half
+  times its A₂ and the opposite colour gradient. Three model batches moved no frame materially nearer. This is the
+  finding the owner should weigh above the others, and it is not a defect any strand can file: the model is honest
+  and the picture is not there.
+
+**The closures re-measured (strand 2): every claim the audit reached holds on seeds and a mesh the builds never
+used.** `tests/test_audit_vi.py`: ten nodes, 7 min 42 s single-threaded, no strict xfail. #216 (the census re-laid
+outside the stage to the published table's bits; one-ulp nudges of the design count and of every crossing azimuth move
+nothing on three seeds and both templates, near-integer counts and gap ties present — F-3B-2's missing kill test,
+now committed), #218 (seven answers' bytes equal at one thread and at the machine's count), #175 (against the answer
+without `kept=`), #197 (no star, remnant or cloud outside its drawn ring), T2 / #114 (through `sho`), #164 / #165 /
+#213 (the Milky Way; a flocculent disc draws no spur), T10 / #119 (to 1e-12). **Not reached, said plainly:** #160's
+two-catalogue comparison, #113 / #171's luminosity function, #161 by an estimator of its own — S95's test lane takes
+what a minute of test time allows, the rest is named in D264.
+- F-2-1 (#173, this audit's own item: the migration test's once-seen failure): the node's numbers are bit-identical
+  under five hash seeds, the file passes in its own order and the node in three shuffled orders, and the numbers the
+  entry recorded (0.88 / 0.93) are an earlier model's — today's read −0.28 / −0.0055, a margin no flake crosses.
+  *Upheld.* **Ruled: #173 is discharged at S95 as not reproducible on the model as it stands** — its closer ("tell
+  the two candidates apart") cannot be met by a failure that does not occur; a ruling taken in the owner's place and
+  listed so.
+- F-2-2 (the kept windows' test sums the parts with a rest defined as the middle minus the parts — true by
+  construction): *upheld*; S95 holds the sum to the unsplit answer. F-2-3 (6731 called "the low-density limit" where
+  the code takes the fit at 1 cm⁻³, 1.4482 against the limit's 1.4498): *upheld as wording*, the register's now, the
+  stage's comment with the next model batch.
+- The builder's own incident is in §2 and is kept as a lesson already written (an empty argument file runs the suite):
+  about a minute of the full suite started and was stopped, no result taken.
+
+**The register (strand 5): the counts agree in all six places; thirteen entries are not plainly as stated; three
+rulings never reached the owner's list.**
+- The counts — 108 open = 43 permanent + 65 carried, 97 discharged — agree between the audit's own parser,
+  `tools/progress.py --check`, `tests/test_audit.py`'s pin and rows, the register's map, `BRIEF.md` / `RESUMING.md`
+  and D262. All 43 permanent entries carry their reason (B5). All 29 discharges of the range say what met them, and
+  every file, test and function they name exists. **No count moves in this session** (B3); S95's register pass moves it.
+- F-5-1 with F-3B-8 (#160): *upheld*; struck at S95 on 995a007 and `tests/test_bright.py`'s one-rule test.
+- F-5-2 with F-3A-5 (`BRIGHT_GATE_READ_OVER`): *upheld*; #223, above. D261's review sentence "every xfail strict with
+  a register entry" was not true of this hold, and this audit says so in its place.
+- F-5-4 (#219 discharged on the gate's ruling against its own kill clause, in neither list the owner reads; the
+  re-read S93 promised never recorded) and F-5-5 (the layer-off reference's re-base and "the guard in place of a
+  subprocess pair; the solve and the einsums left unordered" likewise): *upheld — the lead's own omissions.* All three
+  join `BRIEF.md`'s list at this close. #219's promised re-read is the runner's: `tests/test_clustering_gate.py` is
+  not `machine_pinned` and ran green on `batch-m3` at e2e571f (run 42952574634) — recorded here; F-3B-4's ruling is
+  still the owner's.
+- F-5-6 (the looks owed by #156, #157, #169 and #202, none named in `BRIEF.md`) and F-5-8 (eleven of M1's entries
+  wait on "the owner's reading": #81, #129–#131, #138, #144–#147, #149, #153): *upheld*; `BRIEF.md`'s owed list
+  names each. **Ruled:** a reading is B3-safe and needs no word — the eleven readings are ordered as a reading
+  session after S95, each entry then re-ruled permanent or given a build with its source read.
+- F-5-7 (ten carried entries name a batch that is over or a pass that never ran: #80, #156, #92, #94, #95, #136, #181,
+  #162, #159, #163), F-5-9 (BUILD_V §2a's "owner's word (7)" lists two discharged), F-5-3 (T2 unstruck in
+  `VIEWER_TASKS.md`; T8's "waiting on a reading" that is read; T12), F-5-11 (#26, #33 name the retired model's
+  files): *upheld*; S95's register pass gives each a destination or strikes the stale clause.
+- **F-5-10 — BUILD_V §7's "done" cannot be reached on the plan as written: a ruling for the owner, and the audit's
+  second headline.** Clause by clause: (1) 65 entries are carried and no row after 93 takes them — 26 carried past M3,
+  fifteen of M1's, eleven of M2's, six the viewer's, five the owner's word, one this audit's; (2) the viewer's list
+  still holds T3, T7, T8, T11 and T15 beside the owner's T19 and T20; (3) the frames' distance is stated (§4) and is
+  large; (4) the images are green in CI at the final hash f9b04ed2… (run 42976759684), nothing deployed (#204);
+  (5) of the three batch merges one has a green nightly (M2's, twice), M1's head was red five nights (#216, mended in
+  M2), M3's is unread at this close. The plan has run out of rows before the work ran out. The lead's recommendation
+  is in D263: a sixth build of four short rows — the audit's fixes (S95, taken now), the readings (taken now), one
+  model batch for what M3 carried with a recommendation on record, one viewer pass — **and before any of it the
+  owner's word on the pictures**, since no register item, discharged or not, stands between the frames and the goals.
+
+**The order for S95 (the fixes; Opus builders, the Fable gate):** (1) the tests of the weak-test class and #173's,
+`tests/test_audit_vi.py` kept green; (2) the population tables for the walk's statistic and the two re-declared
+bounds; (3) the walker and the fixture; (4) the readings' corrections and the unread sources; (5) the register pass
+(#160 struck, #223 opened, #173 discharged, the stale entries each given a destination); (6) the three named nodes read on `main`'s model. **Queued for the next model batch** (a byte under
+`model/galaxy`): the four about-lines above. **The owner's rulings, none blocking:** (1) **what follows Audit VI** — the plan has no row left and §7's "done" is out of its reach (F-5-10): the lead
+recommends a short sixth build (the fixes and the readings, taken in this run; one model batch for what M3 carried
+with a recommendation on record and the four queued about-lines; one viewer pass), **after** (2) **the owner's word on
+the pictures** — which features of the two goal pictures matter most (the bar, the lane network, the knots, the
+colour gradient), so the next build is aimed at the frames and not at the register; (3) **the L1 gate's judged
+statistic** (F-3B-4, and #223 with it): one default census, or the nine-seed mean the lead recommends; (4) **a
+cadence for this machine's pinned nodes** (F-3B-3): the lead recommends the three named nodes read by name at every
+model batch's close, as part of its gate; (5) **any re-ruling of the rulings taken in the owner's place** — D262's
+eleven, and the four this audit adds to the list: #219's discharge by the gate's ruling, the layer-off reference's
+re-base, the guard in place of a two-thread-count pair, #173's discharge as not reproducible; (6) **the looks owed**:
+the regenerated frames, #156 and #157 (the step S88's frames might show), #169 (the streaks round NGC 4414's bulge),
+#202 (the circle at 4.72 kpc), and NGC 4414's reversed colour gradient (F-4-6); (7) the standing owner's-word items:
+#107 and #179 (downloads), #203–#205 and T19 (the deploy); (8) the concurrency this run used (three agents at once,
+two of them heavy during S95) — to refuse or keep.
