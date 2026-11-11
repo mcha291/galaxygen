@@ -10,8 +10,8 @@ drawn on the star's ``member`` uniform - so the viewer draws the sample without 
 its dissolved clusters (``regionStars.ts dropRows``). It is the census's partition by class, not by object: the light
 matches in expectation.
 
-What is measured (``measure``; S93, the sample at 10^6 stars on the Milky Way and the default galaxy -
-the numbers in each test's docstring). The young part ``Y`` is the render's (``resolved.light.young``, the census's
+What is measured (``measure``; S93, the sample at SAMPLE = 500 000 stars on the Milky Way - the default galaxy -
+and ``ngc_4414``: the numbers in each test's docstring and ``RECORDS``, with the 10^6 ones beside them). The young part ``Y`` is the render's (``resolved.light.young``, the census's
 ages). The sample's young light is read **in expectation given its ages**: each star younger than the window weighted
 by the mass formed one sampled star stands for (the IMF's mean mass) times the population's light per mass at its age
 and [Fe/H] (``photometry.population_at``), over the sampling fraction ``s = n (1 - R) / star_count_total`` - a
@@ -97,20 +97,53 @@ def milky_way():
     return measure("milky_way", SAMPLE)
 
 
-def test_the_young_population_is_drawn_once(milky_way):
-    """Before S93 the sample's young stars, over the sampling fraction, were the young part a second time beside every
-    cluster point: (sample + points) / Y = 1.9319 on the Milky Way at 10^6 stars (the sample's young 1.0000 Y, the
-    census's 0.9318 Y; the Milky Way is the default galaxy), 1.9813 on ngc_4414. After: the sample keeps the dissolved clusters' share (0.1513 of
-    its young light against the census's dissolved light share 0.1597; by count 0.466 of the census is dissolved) and
-    the points drop the dissolved, (kept + points) / Y = 0.9343 - the census's own 6 % shortfall (T2: the census's draw
-    against its expectation, its seed-to-seed spread 4.4 %, D210), per unit of the census's light 0.9916 (ngc_4414: 1.0241, the kept share 0.1601 against 0.1545, per unit 1.0056)."""
-    m = milky_way
+@pytest.fixture(scope="module")
+def ngc_4414():
+    return measure("ngc_4414", SAMPLE)
+
+
+# What each galaxy's run at SAMPLE = 500 000 measured (S93, the review's mend; the seed fixed, so a record): the double
+# count before, the closure after, the sample's young light over Y, (kept + points) over the census's light, the kept
+# share of the sample's young light and its scatter. The scatter: a bootstrap of the young stars (4 000 resamples of
+# the 294 / 121 stars younger than the window, their expected light and kept flag; scratch s93_t3_boot.py) - the
+# sampling spread of the share at this sample size, 0.0171 / 0.0265.
+RECORDS = {
+    "milky_way": {"before": 1.9196, "after": 0.9405, "young": 0.9878, "of_census": 1.0093, "kept": 0.1594, "sd": 0.0171},
+    "ngc_4414": {"before": 2.0381, "after": 1.0316, "young": 1.0066, "of_census": 1.0001, "kept": 0.1584, "sd": 0.0265},
+}
+RECORD_REL = 2e-3  # as-measured records: the fixed seed reads them to rounding; this is a margin, not a judged bound
+
+
+def _drawn_once(m: dict, rec: dict) -> None:
     Y = m["Y"]
     assert m["members_outside"] == 0
-    assert m["young_count"] > 150
-    assert abs(m["sample_young"] / Y - 1.0) < 0.15, m  # the sample is the young part in expectation (measured 1.000)
-    assert (m["sample_young"] + m["census"]) / Y > 1.75, m  # the double count the membership removes (1.93)
-    after = (m["kept"] + m["points"]) / Y
-    assert 0.85 < after < 1.10, after  # T2's bound on the census's bolometric light (measured 0.934)
-    # the light the sample keeps is the dissolved clusters', share for share (measured 0.151 against 0.160)
-    assert abs(m["kept"] / m["sample_young"] - m["dissolved"] / m["census"]) < 0.05, m
+    # as-measured records (not judged windows)
+    assert (m["sample_young"] + m["census"]) / Y == pytest.approx(rec["before"], rel=RECORD_REL)  # the double count
+    assert (m["kept"] + m["points"]) / Y == pytest.approx(rec["after"], rel=RECORD_REL)
+    assert m["sample_young"] / Y == pytest.approx(rec["young"], rel=RECORD_REL)
+    assert (m["kept"] + m["points"]) / m["census"] == pytest.approx(rec["of_census"], rel=RECORD_REL)
+    # the borrowed judged bound: T2's on the census's bolometric light over the young part
+    # (tests/test_s91_t2_closure.py:120, 0.85 < census / Y < 1.10), held by the closure after
+    assert 0.85 < (m["kept"] + m["points"]) / Y < 1.10
+    # the kept share against the census's dissolved light share and against its record, each within three of the
+    # share's own bootstrap spread at this sample size (the RECORDS comment): a derived tolerance, not a judged one
+    share = m["kept"] / m["sample_young"]
+    assert abs(share - rec["kept"]) < 3.0 * rec["sd"], share
+    assert abs(share - m["dissolved"] / m["census"]) < 3.0 * rec["sd"], (share, m["dissolved"] / m["census"])
+
+
+def test_the_young_population_is_drawn_once(milky_way):
+    """The Milky Way (the default galaxy) at 500 000 stars: before S93 the sample's young stars over the sampling
+    fraction were the young part a second time beside every cluster point, (sample + points) / Y = 1.9196 (the
+    sample's young 0.9878 Y, the census's 0.9318 Y); after, the sample keeps the dissolved clusters' share (0.1594 of
+    its young light against the census's dissolved light share 0.1597) and the points drop the dissolved, (kept +
+    points) / Y = 0.9405 - the census's own 6 % shortfall (T2: its draw against its expectation, its seed-to-seed
+    spread 4.4 %, D210); (kept + points) / census = 1.0093. At 10^6 stars: 1.9319 / 0.9343 / 0.1513."""
+    _drawn_once(milky_way, RECORDS["milky_way"])
+
+
+def test_the_young_population_is_drawn_once_in_ngc_4414(ngc_4414):
+    """``ngc_4414`` at 500 000 stars: before 2.0381 (the sample's young 1.0066 Y, the census 1.0314 Y), after 1.0316;
+    the kept share 0.1584 against the census's dissolved share 0.1545; (kept + points) / census 1.0001. At 10^6
+    stars: 1.9813 / 1.0241 / 0.1601."""
+    _drawn_once(ngc_4414, RECORDS["ngc_4414"])
