@@ -3803,6 +3803,22 @@ never been judged in twenty-three sessions.
    it is 3 % of the regions), the U convention reconciled, and the [S II] ratio computed at the region's own
    density from the atomic data S35 read (the one forbidden-line quantity that needs no ionization fraction).
    *S85 register pass (D251):* **batch M3 (the populations and the ionized gas)** — named in BUILD_V row 91–92.
+   *S93 (ION lane), two parts of three built, one measured:* **(a) the edge ruled the grid's limit — taken on the
+   builder's recommendation under the owner's word of 2026-11-11** ("take your own recommendations"; the owner may
+   re-rule): 3.1 % of the default regions (the inner disc) read the +0.2 dex edge, clamped as FSPS clamps; the
+   alternative, a grid spanning the inner disc, names no file (FSPS's PARSEC-ionized grid stops at +0.2). **(b) the
+   [S II] pair at the region's own density, built:** the grid's sum is kept and split at the region's rms density by
+   Sanders et al. 2016's eq. 6 (R = 0.4315 (2107 + n_e)/(627.1 + n_e) at 10⁴ K, 1–10⁵ cm⁻³, Tayal & Zatsarinny
+   2010's collision strengths `[verified: arXiv:1509.03636 §III.1, Table 1]`); the Hα-weighted 6716/6731 of the
+   default regions 1.2892 → 1.2694, the weighted ratios 0.05447 / 0.04226 → 0.05411 / 0.04262 (inside
+   `test_nebular`'s pin), the sum and every other line unmoved; 10⁴ K is the fit's (Sanders: 7000 K moves a density
+   15–20 %), the regions on the 6000 K floor not corrected. **(c) the U convention, measured and not built**: the
+   region whose volume-averaged U matches a Byler shell's (R_in = 10¹⁹ cm, n_H = 100, filled to its Strömgren
+   radius) reads the grid at log U₀ = log U + 0.67 (at log U −4) to +0.85 (at the median −2.83) and +1.5 (at −2.0) —
+   a shift that grows as the shell thickens and would put the brightest regions past the grid's −1 top; which U the
+   lines follow (inner face, volume mean, the front) is a modelling statement no source read here makes, so the
+   read point is unchanged and (c) carries. **Changes what is drawn** only through curves that weigh 6716 and 6731
+   differently (WFC3's F673N); the SHO box takes the pair's sum.
 119. **The diffuse ionized gas carries only its recombination lines** (S42, D192). The grid models a
    radiation-bounded region around a young cluster; the diffuse layer's field is softer and diluted, and its
    observed [N II]/Hα and [S II]/Hα are enhanced above the regions' `[recall: Haffner et al. 2009 §IV, the

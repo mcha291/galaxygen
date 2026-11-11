@@ -398,3 +398,19 @@ def test_the_diffuse_gas_carries_its_forbidden_lines_by_madsens_relation(models,
     assert float(F["dig_nii_6583_ratio"]) == got["nii_6583"] and float(F["dig_sii_6716_ratio"]) == got["sii_6716"]
     for n in nb.DIG_LINES:
         assert np.array_equal(np.asarray(F[f"{n}_surface_brightness_dig"]), dig * got[n]), n
+
+
+def test_the_regions_sii_pair_is_split_at_their_own_density(coarse):
+    """#118's third part (S93): the grid gives the [S II] pair at its own 100 cm^-3; the model keeps the pair's sum off
+    the grid and splits it at the region's rms density by Sanders et al. 2016's ratio (eq. 6, 10^4 K). The first two
+    parts: the metal-rich edge is ruled the grid's limit (the builder's recommendation under the owner's word of
+    2026-11-11; 3.1 % of the default regions, test_the_default_regions_on_the_grid_and_their_lines), and the U
+    convention is measured, not reconciled (no source says which U the lines follow; #118's paragraph)."""
+    F = coarse.fields
+    oxygen = np.asarray(F["hii_oxygen_abundance"], dtype=float)
+    age = np.log10(np.asarray(F["cluster_age"], dtype=float) * 1e6)
+    grid = nb.grid_line_ratios(oxygen - 8.93, age, np.asarray(F["hii_ionization_parameter"], dtype=float))
+    s1, s2 = (np.asarray(F[f"hii_sii_{w}_ratio"], dtype=float) for w in ("6716", "6731"))
+    assert np.allclose(s1 + s2, grid["sii_6716"] + grid["sii_6731"], rtol=1e-12, atol=0.0)
+    assert np.allclose(s1 / s2, nb.sii_doublet_ratio(np.asarray(F["hii_electron_density"], dtype=float)), rtol=1e-12)
+    # Measured at S93 on the default census: the Halpha-weighted 6716/6731 1.2694 (was 1.2892, the grid's own density).

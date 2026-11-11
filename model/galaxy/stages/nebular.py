@@ -18,11 +18,11 @@ PARSEC-ionized, dust-free file at a pinned FSPS commit into `galaxy/data/nebular
 reads it at its gas's log(Z/Z☉) (its [α/H], the oxygen the stage already computes), on the grid's own solar
 oxygen 8.93 (Anders & Grevesse; D195, #121), its cluster's age and its own log U, interpolated linearly in log
 luminosity as FSPS does (``add_nebular.f90``), **clamped at the grid's edges**, as FSPS's own
-``add_nebular.f90`` clamps (``!no extrapolation``; read at S43, D195). What is published is each line **over the grid's own Hα at
+``add_nebular.f90`` clamps (``!no extrapolation``; read at S43, D195); since S93 (#118) the metal-rich edge is ruled the grid's limit, on the builder's recommendation (3 % of the default regions read it). What is published is each line **over the grid's own Hα at
 that point**, times the region's Case B Hα: the lines inherit the region's photon budget (escape, leaking)
 and the grid only says how they split. `[inferred]`: the grid's gas carries its own abundance pattern,
 not the model's published N/H and S/H (those columns are not read by it), and its density is 100 cm⁻³
-whatever the region's. The diffuse ionized gas does not read the grid: its enhanced [N II] and [S II]
+whatever the region's, save that the [S II] pair's sum is split at the region's own rms density (Sanders et al. 2016; S93, #118). The diffuse ionized gas does not read the grid: its enhanced [N II] and [S II]
 come from a softer, diluted field the grid does not model, so since S93 (#119) they are Madsen et al. 2006's relation at the layer's temperature.
 The analytic alternative (a two-level atom on NIST transition probabilities and the PyNeb collision
 strengths) was read at S35 and set aside: without the ionization fractions it makes no line.
@@ -321,6 +321,11 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
     lines = grid_line_ratios(oxygen - float(c["NEBULAR_GRID_OXYGEN_SOLAR"]),
                              np.log10(np.asarray(clusters["cluster_age"], dtype=float) * 1.0e6),
                              np.where(np.isfinite(log_u), log_u, np.nan))
+    # S93 (#118): the grid gives the [S II] pair at its own 100 cm^-3; the pair's sum is kept and split at the region's
+    # own rms density by Sanders et al. 2016's doublet ratio (10^4 K; at 7000 K a density reads 15-20 % off, theirs).
+    sii_sum = lines["sii_6716"] + lines["sii_6731"]
+    doublet = sii_doublet_ratio(np.sqrt(n_squared))
+    lines["sii_6716"], lines["sii_6731"] = sii_sum * doublet / (1.0 + doublet), sii_sum / (1.0 + doublet)
     out = {
         "hii_stromgren_radius": radius / CM_PER_PC,
         "hii_electron_density": np.sqrt(n_squared),
@@ -360,7 +365,7 @@ def leaked_fraction(clusters: Catalogue, regions: Catalogue, constants: Mapping[
 # drew `hii_balmer_decrement` and the four `hii_*_ratio` columns (region.ts regionLineColour), so they have no entry.
 NOT_DRAWN_WHY: dict[str, str] = {
     "hii_electron_density": "drawn through `hii_halpha_emissivity`, which is this density squared times the Case B "
-                            "coefficient; a density has no look but its emission measure.",
+                            "coefficient, and since S93 (#118) through the [S II] pair's split; a density has no look but these.",
     "hii_temperature": "drawn through the emissivity's Case B coefficient at this temperature; a temperature itself "
                        "is a line ratio's to show.",
     "hii_ionization_parameter": "the axis the photoionization grid reads the forbidden lines along: drawn through "
@@ -446,8 +451,8 @@ HII_LINE_RATIOS = tuple(
                                  "regions; the grid's own N/O, not the model's published N/H, sets it.",
                      "sii_6716": "Singly ionized sulphur, the doublet's blue line: from the region's outskirts, strongest "
                                  "at low log U.",
-                     "sii_6731": "The doublet's red line; the pair's ratio is the grid's at its 100 cm⁻³, not a "
-                                 "measure of this region's density."}[n],
+                     "sii_6731": "The doublet's red line; the grid gives the pair's sum, split at this region's rms density by Sanders et al. "
+                                 "2016's doublet ratio at 10⁴ K (S93, #118)."}[n],
             ramp=Ramp("viridis", scale="log"))
     for n, label in _LINE_LABELS.items()
 )
