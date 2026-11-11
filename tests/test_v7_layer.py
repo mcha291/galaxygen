@@ -260,7 +260,7 @@ DUST_COLUMN_OVER = ("S88 (M1): the Milky Way's dust column on ring 2 reads 3.37 
                     "5.58e-3) against 3, from #80's pinned 5.0 kpc bar (2.93 at S86); the gate's to rule")
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=DUST_COLUMN_OVER)) if t == "milky_way" else t for t in TEMPLATES])
+@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, raises=AssertionError, reason=DUST_COLUMN_OVER)) if t == "milky_way" else t for t in TEMPLATES])
 def test_the_dust_s_column_per_level_0_ring_is_kept_by_the_gas_map_within_its_one_draw_bound(sweeps, template):
     """R2b on the capture's lattice at 16 offsets: every dusty ring within 3 s_r (the module docstring), and the whole
     frame within 3e-3. The measured numbers are the module docstring's MEASURED."""

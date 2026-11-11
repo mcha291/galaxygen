@@ -1651,8 +1651,10 @@ def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
     flat, half, exponential = peak_at(0.3), peak_at(0.5), peak_at(1.0)
     assert (flat, half, exponential) == pytest.approx((0.667, 0.612, 0.511), abs=0.015)  # S87 (#80, #209): was 0.684 - the bar's law and pinned length, the pitch floor
     # No printed profile reaches the stacks' rows of the Milky Way's kind (SB, T < 5 at 0.78 a; the mass bin 10.5-11
-    # at 0.90 a; their rows' lower end 0.76). S95 (F-1A-2): NOT moved to 0.62 - the flat profile's 0.667 a lies inside
-    # DG16b Table 5's whole range (its SB all-T, SB T >= 5 and T 5-8 rows, 0.62-0.68 a); the gate's to rule.
+    # at 0.90 a). The kept literal 0.76 is DG16b Table 5's lowest MASS-BIN row (9.5-10), the table's lower end over its
+    # mass bins - not the lower end of those two rows (S95 review N-7: worded so, the literal not moved). S95 (F-1A-2):
+    # NOT moved to 0.62 - the flat profile's 0.667 a lies inside DG16b Table 5's whole range (its SB all-T, SB T >= 5
+    # and T 5-8 rows, 0.62-0.68 a); the gate's to rule.
     assert flat < 0.76
 
 

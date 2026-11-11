@@ -13,12 +13,15 @@ S73 (#200, D236) recorded it with a walker that was never committed; this is tha
     ``/api/version?walk=<step>`` is the walk's mark: the answers after it are that step's.
 ``walk``
     ``serve`` in a child process, then the Playwright walk (``frontend/e2e/walk/walk.probe.ts``,
-    ``npm --prefix frontend run walk``) against it, then the server stopped and ``reduce`` run on the log.
+    ``npm --prefix frontend run walk``) against it, then the server stopped and ``reduce`` run on the log. An existing
+    file at ``--log`` is replaced (deleted before the server starts), and the server's and Playwright's output are
+    written beside it, at the log's path with ``.server.txt`` and ``.probe.txt`` in place of its suffix.
 ``reduce``
     The log turned into the fixture's own format and a three-way diff: the walk's meanings against the committed
     fixture's and the mounted bundles' plan (their manifests' queries) - meanings only in the walk, only in the fixture,
     only in the plan; for every meaning both hold, whether the walk's string is the fixture's; the hits and misses.
-    ``--write-fixture`` re-records the fixture conservatively (see :func:`rerecord`).
+    ``--write-fixture`` re-records the fixture conservatively (see :func:`rerecord`); it is refused without
+    ``--bundles`` (the plan would be empty, every new meaning ``unplanned`` and the jwst_nircam guard vacuous).
 
     npm --prefix frontend run build
     uv run python tools/walk_requests.py walk --bundles <dir> --log <file.jsonl> --report <file.json>
@@ -436,6 +439,10 @@ def main(argv: list[str] | None = None) -> int:
         if name == "walk":
             p.add_argument("--only", default="", help="GALAXYGEN_WALK_ONLY: a comma list of the walk's parts to run")
     args = parser.parse_args(argv)
+    if getattr(args, "write_fixture", False) and args.bundles is None:
+        # S95 (review N-8): without the bundles the plan is empty - every new meaning would go to ``unplanned`` and
+        # the jwst_nircam guard in rerecord would hold vacuously - so the fixture is never re-recorded without them.
+        parser.error("--write-fixture needs --bundles (or GALAXY_BUNDLES): the plan is empty without them")
     return {"serve": serve, "walk": walk, "reduce": reduce}[args.command](args)
 
 
