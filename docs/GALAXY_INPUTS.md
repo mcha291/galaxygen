@@ -718,12 +718,12 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S90 | **161, 197, 213, 214** (the clouds' sector weights take the field's cell means with the ring as the unit, A10 measured on and off; the stars' and remnants' ring draws on the ring's own interval; the spurs' walk ends at the arms' budget's edge; the layer-off reference re-based onto M2's final run in `tests/layer_reference_s90.json`, S55's kept as `test_modes`' oracle - D258) | 4 |
 | **discharged** at S91 | **114, 210, 215** (the region regime's cluster points drawn from their own response through the filter set, T2's closure test green; the clouds' L1 slope inside the window on #216's re-lay, killed by its own clause, not mended; by the owner's ruling of 2026-11-10: a within-tolerance byte change in a capture needs no name, the capture re-taken at the next knowing change, the picture test's verdict lines the close's gate - D260) | 3 |
 | **discharged** at S92 | **164, 165, 211, 216, 219** (the spur's height the gas crest over the ring's trough and the walk at the gas crest, built as ruled; the response tails on their own grid to 10^6 K, the jwst_nircam set inside test_render's bounds; the arm census's births machine-independent - the runner's eleven failing nodes read on this machine at bd0ed0c, every number the runner's, the thirteen marks lifted; the L1 judged clause kept on the default census by the gate's ruling, both slopes inside - D261) | 5 |
-| **discharged** at S93 | **113, 119, 166, 171, 174, 175, 217** (the star sample read along equivalent evolutionary points, its luminosity function and its light per mass on their closure tests; the diffuse gas's [N II] and [S II] by Madsen et al. 2006 at the layer's temperature, drawn beside its Hβ; the starlight by age cached per run, the skip found met where the viewer asks - by the gate's ruling; the points' dust through the march's gas map; the star-first remainder split by kept octaves with `kept=1`, its WFC3 size clause held on #222; one grid threshold read green on the runner - D262) | 7 |
+| **discharged** at S93 | **113, 119, 166, 171, 174, 175, 217, 218** (the star sample read along equivalent evolutionary points, its luminosity function and its light per mass on their closure tests; the diffuse gas's [N II] and [S II] by Madsen et al. 2006 at the layer's temperature, drawn beside its Hβ; the starlight by age cached per run, the skip found met where the viewer asks - by the gate's ruling; the points' dust through the march's gas map; the star-first remainder split by kept octaves with `kept=1`, its WFC3 size clause held on #222; one grid threshold read green on the runner; the layer-off reference re-based onto M3's final run in `tests/layer_reference_s93.json` once every draw-path BLAS product was an ordered sum, its two nodes green at one thread and unrestricted - D262) | 8 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 82, 87, 90, 93, 99, 128, 132, 133, 134, 141, 143, 152, 155, 157, 158, 180, 182, 195 | 43 |
-| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 169, 170, 173, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 218, 220, 221, 222 | 66 |
+| **carried** | 80, 81, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 101, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 144, 145, 146, 147, 149, 153, 154, 156, 159, 160, 162, 163, 169, 170, 173, 176, 177, 179, 181, 183, 184, 185, 186, 202, 203, 204, 205, 220, 221, 222 | 65 |
 
-So the board's **109 open** is 43 permanent and 66 carried, and no item is unruled (S93 (M3's close), D262: #113,
-#119, #166, #171, #174, #175, #217 discharged - #113 / #171 on their closure tests (T3's pass), #119 on T10's build,
+So the board's **108 open** is 43 permanent and 65 carried, and no item is unruled (S93 (M3's close), D262: #113,
+#119, #166, #171, #174, #175, #217, #218 discharged - #218 on its closer (the reference re-based onto M3's final run, its two nodes green at one thread and unrestricted), #113 / #171 on their closure tests (T3's pass), #119 on T10's build,
 #166 by the gate's ruling, #174 on its closer, #175 on its build with #222 opened for its one clause held strict,
 #217 on the runner's read; S92 (M3), D261: #164, #165, #211, #216, #219 discharged - #164 / #165 built as ruled, #211 built, #216 read on the runner and here alike, #219 by the gate's ruling; #220 and #221 opened, the walk's crest read over its bound and a spur's crest on a bar lane; S91 (M3), D260: #82, #128, #158, #180, #182 permanent and #210 discharged, on the owner's rulings of 2026-11-10; #114 discharged, T2 built and its closure test green; #215 discharged on its own kill clause; #218 opened, the layer-off reference off on `main`, and #219, the L1 gate's two slopes at the window's edge; S90a (beside S90), D259: #216, #217 opened — the census's births decided by rounding, the tile's and the table's threshold two computations of one power; S90 (M2's close), D258: #161, #197, #213, #214 discharged, #215 opened; S89 (M2), D257: #167, #168 discharged; S88 (M1's close), D256: #212 discharged, #152 permanent, #213, #214 opened; S87 (M1): #148 discharged, the clock built, and #212 opened, MERGER_HEATING derived on the old clock; #209 discharged on the owner's ruling of 2026-11-03, D255, the 1.0° floor; S86's close, D254: #141, #143, #155, #157 ruled permanent on the lead's measurements; D252: #189 discharged by BUILD_V ruling 3; S85's register pass, D251: every carried item permanent with its reason, a batch's, the viewer's, the owner's or Audit VI's). (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
@@ -6429,8 +6429,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    that still compared an array power, `test_v6_bright`'s table oracle (`10.0 ** LOG_L_GRID` asked equal to the
    table's `threshold`), failed there alone and was mended at S92's gate (fcec70d, D261): it asks the bytes of
    `grid_threshold` and keeps the array power as a closeness within two ulps. **Discharged at S93 (D262).**
-218. **The layer-off reference is off on `main`: the star sample's columns no longer read
-   `tests/layer_reference_s90.json` at 4f06cc9** (S91's gate, D260; found by the close builder's run of the two
+218. ~~**The layer-off reference is off on `main`: the star sample's columns no longer read
+   `tests/layer_reference_s90.json` at 4f06cc9**~~ (S91's gate, D260; found by the close builder's run of the two
    machine-pinned reference nodes, B2). At `main` (4f06cc9, the hash 5a2c097e…) `tests/test_layer.py`'s
    `test_layer_off_every_field_is_the_reference_bit_for_bit` fails on all four cases - `star_age`,
    `star_ionizing_photons`, `star_magnitude_v`, `star_temperature`, and `star_luminosity` on the Milky Way's - and
@@ -6541,6 +6541,19 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    reason); a new site fails it, and so does a listed site that is gone. Left, not built: a pair of runs at two thread
    counts in separate processes (the runner's cores and time). `systems._arrival` now calls `ordered_product` itself
    (every bit unchanged, measured on the three runs above).
+   *S93 (M3's close; the close builder, D262): the closer met - **discharged**.* The model final at c161965 (the hash
+   f9b04ed2…, pinned at this close), the reference re-based onto it once, naming the cause: `tests/layer_reference.py
+   write` single-threaded (`OMP_NUM_THREADS` = `OPENBLAS_NUM_THREADS` = `MKL_NUM_THREADS` = 1) to a new file,
+   `tests/layer_reference_s93.json` (fa68351; digest d77cbbd1…, 398 / 397 fields a label, 42 routes); the script read
+   again with the three variables unset gave the same digest. Against `tests/layer_reference_s90.json` it moves 117
+   fields on each Milky Way label (the history downstream of `sfh.radial_transport` and the star columns), 14 on each
+   NGC 4414 label (the star columns, `bright_star_radius`, the old and young [Fe/H] and α, `giant_occurrence`, the
+   HII regions' [S II]), adds six on every label (the diffuse gas's [N II] / [S II], T10; `star_cluster_member`, T3),
+   loses none, and 39 of the 42 routes; no single-mode digest. `tests/test_layer.py`'s two nodes read the new file with
+   both named lists empty (`NAMED_SINCE_REBASE`, and `NAMED_ROUTES_SINCE_REBASE` - S91's four render routes carried by
+   the re-base) and the cause beside them; read by name through the queue's wrapper, single-threaded:
+   **5 passed in 42.23s**; with the three variables unset (unrestricted, 20 threads): **5 passed in 41.71s**.
+   `tests/layer_reference_s90.json` is kept untouched as history; no test reads it (`tests/test_modes.py` reads S55's).
 219. ~~**The L1 gate's two judged slopes sit at the window's edge, and which of them reads over is the census's draw**~~
    (S91's gate, D260; `tests/test_clustering_gate.py`, red at 3f16d0f, green on `main`). The clouds' and the clusters'
    L1 slopes over 47.5-190 pc against their own law read -0.4965 and -0.4791 on #216's re-laid census, against the
