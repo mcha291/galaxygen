@@ -225,6 +225,10 @@ def test_every_shared_field_is_sfhs_own(coarse, models):
              # azimuthal - so the rows stand in other cells, in another order: every column of the catalogue differs as
              # an array though no star's radius, height, mass or population does (the next test, by ring identity).
              "star_radius", "star_height", "star_mass", "star_population",
+             # S93 (D262; T3 / #115, 8672ff9): whether a cluster point carries the star - one more column of the same
+             # ring-first sample, so it differs as an array for S61's reason (the rows stand in other cells, in another
+             # order); the members are as many in both models (2 of the 20005 rows, measured).
+             "star_cluster_member",
              } | {n for n in b.fields if n.startswith("planet_")} | {
         "star_planet_count", "mean_planets_per_star", "giant_fraction_sample"}  # the planets' sample statistics
     # S48 (D200, D203): the bright catalogue's cells carry the azimuthal weight - the contrast for the old stars, the

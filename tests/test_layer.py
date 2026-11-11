@@ -1881,7 +1881,9 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S62 (D221 item 7 as amended): was 372 - the gas spurs' twelve columns. S62 (D221): was 384 - the gas fluctuation
     # field's eight.
     # S89 (#167): was 392 - the clouds stage's scalar cloud_extinction_v retired.
-    assert len(columns) > 100 and len(b.fields) == 391
+    # S93 (D262): was 391 - six added: the diffuse gas's three line maps and its two line ratios (T10 / #119, 2c797d6)
+    # and the star sample's star_cluster_member (T3 / #115, 8672ff9).
+    assert len(columns) > 100 and len(b.fields) == 397
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1959,7 +1961,10 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     same_sample = ["star_bubble_radius", "star_population", "star_wind_luminosity", "star_wolf_rayet"]
     # S61 (D220 II.5): was 269 - bright_star_radius leaves what is held (above).
     # S89 (#167): was 268 - cloud_extinction_v, a galaxy scalar held on and off, retired.
-    assert len(held) == 267 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
+    # S93 (D262): was 267 - the diffuse gas's five (T10 / #119: its [N II] and [S II] maps and the two ratios, laws of
+    # the ring, the same bits on and off) join what is held; the sixth field M3 adds, star_cluster_member (T3 / #115),
+    # is a placed column of the sample whose rows stand in other cells, and is not held (nor in same_sample, below).
+    assert len(held) == 272 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
     assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)

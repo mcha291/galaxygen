@@ -66,8 +66,8 @@ TOLERANCE = 1e-3
 MEASURED_B_V = 0.561772  # S87 (#148, #80): was 0.569495 - the clock (#148) and the default disc's bar from Erwin's law (#80). # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.561777
 MEASURED_M_V = -21.146766  # S87 (#148, #80): was -21.110365. # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
 # The first cut's record (S38): one blackbody at the colour temperature.
-FIRST_CUT_B_V = 0.583477  # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
-FIRST_CUT_M_V = -21.888969  # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
+FIRST_CUT_B_V = 0.583346  # S93 (D262; #113 / #171, fd57ebc): the first cut is tied to the table's own Sun, and photometry.lookup reads it along equivalent evolutionary points now - both zero points moved; was 0.583477. # S87 (#148, #80): was 0.590914. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
+FIRST_CUT_M_V = -21.886848  # S93 (D262; #113 / #171, fd57ebc): the Sun's lookup, as above; was -21.888969. # S87 (#148, #80): was -21.844831. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
 # S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
@@ -212,7 +212,7 @@ def test_the_first_cut_is_recorded(full):
     weight = (f["disc_surface_brightness"] * grid.R)[lit]
     assert d.min() == pytest.approx(-0.0889, abs=1e-3)  # S87 (#148, #80): was -0.0876 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was -0.0796
     assert d.max() == pytest.approx(0.2439, abs=1e-3)  # S87 (#148, #80): was 0.2417 - the clock (#148) and the default disc's bar from Erwin's law (#80)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.2517
-    assert np.average(d, weights=weight) == pytest.approx(0.0563, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
+    assert np.average(d, weights=weight) == pytest.approx(0.0553, abs=1e-3)  # S93 (D262; #113 / #171): the Sun's lookup moved the zero points - reads 0.05535, at the edge of the old pin's tolerance; was 0.0563 (the minimum -0.08901 and the maximum 0.24377 stay inside theirs)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
 
 
 def test_the_viewer_s_rgb_b_and_v_are_the_table_s_bands():
