@@ -352,7 +352,9 @@ def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     assert every.size == 43 and round(float(every.max()), 4) == 0.4582
 
 
-@pytest.mark.xfail(strict=True, reason=WALK_READ_OVER_S92)
+# S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
+# not held), and masks nothing - the failing assert is the body's only one.
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=WALK_READ_OVER_S92)
 def test_the_walk_s_read_at_the_bound_s_own_seed_is_within_it(default_model):
     assert walk_against_point(default_model, 4242).max() <= ls.WALK_READ_DIFFERENCE
 

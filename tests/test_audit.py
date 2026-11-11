@@ -541,9 +541,11 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
     statistic of S59 and S70 compared the reader *at the cells' centres* with the table, so on today's table it
     reads what no grid holds - the point function's own variation inside a cell (0.923 at 4.39 kpc, 0.51 % of the
     worst ring; 0.998, 0.93 % at pattern seed 3), the footprint's edge and an arm's crest now, not two laws. The
-    debt's own statistic is the table against the reader's **cell means**: **2.6e-4 in a cell at worst** (5.5e-5 at
-    pattern seed 3) - the renormalisation's size, the reader's normaliser being a quadrature - and **under 1e-3 % of
-    any ring's young weight** (S70: 1.07 and 0.59 %).
+    debt's own statistic is the table against the reader's **cell means**: **2.914e-3 in a cell at worst** (1.8137e-3
+    at pattern seed 3; the pins below - 2.6e-4 / 5.5e-5 when S86 wrote this, 2.439e-3 / 1.1286e-3 from S87's bar, the
+    numbers since S91's re-laid census; S95, Audit VI F-3A-9, corrected the text to the pins) - the renormalisation's
+    size, the reader's normaliser being a quadrature - and **under 1e-3 % of any ring's young weight** (S70: 1.07 and
+    0.59 %).
 
     S91 (D260): the worst cell and the worst ring, one ring since S59, are two rings since #216's re-laid census, both
     inside the bar's reach - which is what is asserted now."""
@@ -950,16 +952,16 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
 # record, not a gate. Measured eight times on M1's final model (galaxy.specs.performance.catalogue_cost, this call):
 # 2839-3026 us a cell (3026, 2956, 3019, 3014, 2839, 2843, 2912, 2925), the default census 48 pieces on 13 chains
 # (bar 2.2698 kpc). The bound 3500 us: the measured spread and S87's 3208 under it, a stall's 4865 over it.
-PRICE_RECORD = (
-    "S88 (D255 ruling 6): a cost record, not a gate - the layered catalogue's price per cell re-declared at its "
-    "measurement on an idle machine, 2839-3026 us over eight runs, the default census 48 pieces on 13 chains (the law's "
-    "2.27 kpc bar); bound 3500 us, no sourced value (#154). Non-strict: a loaded machine's stall reads over it.")
+# S95 (Audit VI F-3A-1, the gate's ruling): a non-strict xfail around a bound can fail nowhere - the runner's XPASS, this
+# machine's xfail, both green - so it was neither a gate nor a clean record. It is a RECORD: the xfail and the upper
+# bound are gone, the measurement is reported (record_property "per_cell_us" and a printed line), and only the sanity
+# floor (150 us: a timing that small means the catalogue was not built) is asserted. Register #154 carries the cost in
+# its own words: "The point reader's cost is recorded with no bound, none being sourced".
 
 
-@pytest.mark.xfail(strict=False, reason=PRICE_RECORD)
-def test_s21b_the_layered_catalogue_s_price_per_cell(default_model):
-    """The layer-on half of the test before this one, split from it at S87: the marginal cost per star recorded, and
-    the bound on the price of a cell - a cost record, re-declared at S88 at the measurement (PRICE_RECORD)."""
+def test_s21b_the_layered_catalogue_s_price_per_cell(default_model, record_property):
+    """The layer-on half of the test before this one, split from it at S87: the marginal cost per star and the price
+    of a cell recorded - a cost record (S88), with no upper bound since S95 (Audit VI F-3A-1; #154 carries the cost)."""
     from galaxy.specs import performance
 
     on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), repeats=3)
@@ -970,7 +972,11 @@ def test_s21b_the_layered_catalogue_s_price_per_cell(default_model):
     # ratio first/last read 1.7-2.7 against S59's 5.5-8.0). Recorded, the ordering not asserted layer on - as #154
     # and D218 did for the two per-cell timing statements; the layer-off part below keeps its assertion.
     print("layer on, marginal cost per star (s):", on_marginal)  # a record: no ordering asserted
-    assert 150.0 < on["per_cell_us"] < 3500.0, on["per_cell_us"]  # S88: was < 3000 (800-1230 us at S59); 2839-3026 us on M1's final model, 48 pieces on 13 chains
+    # S95 (F-3A-1): the price of a cell recorded, not bounded above. Was `150.0 < price < 3500.0` under a non-strict
+    # xfail (S88: was < 3000; 800-1230 us at S59; 2839-3026 us on M1's final model, 48 pieces on 13 chains).
+    record_property("per_cell_us", float(on["per_cell_us"]))
+    print(f"layer on, price per cell: {float(on['per_cell_us']):.1f} us (a record, #154; no bound)")
+    assert 150.0 < on["per_cell_us"], on["per_cell_us"]  # the sanity floor only
 
 
 def test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share():

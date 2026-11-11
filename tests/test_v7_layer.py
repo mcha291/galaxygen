@@ -270,8 +270,11 @@ def test_the_dust_s_column_per_level_0_ring_is_kept_by_the_gas_map_within_its_on
     whole = max(abs(d[3]) for _, d, _ in rows)
     print(f"{template}: dust column, worst |dev| / s_r {ratio:.3f} on ring {ring} at offset {off} "
           f"(dev {dev:+.3e}, s_r {s:.3e}); worst |dev| any ring {raw:.3e}; whole frame worst {whole:.3e}")
-    assert ratio <= DRAWS, (ring, off, dev, s)
+    # S95 (Audit VI F-3A-7): the whole frame's clause moved above the ring's, so DUST_COLUMN_OVER (which the ring's
+    # clause fails on the Milky Way) masks nothing: the whole frame read 3.5e-4 against 3e-3 at S88. The order of two
+    # independent asserts on numbers computed above is no change of meaning.
     assert whole < WHOLE_FRAME
+    assert ratio <= DRAWS, (ring, off, dev, s)
 
 
 @pytest.mark.parametrize("template", TEMPLATES)

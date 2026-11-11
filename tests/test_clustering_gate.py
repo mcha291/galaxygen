@@ -144,7 +144,7 @@ L1_GATE_READ_OVER = ("S88 (M1): the L1 gate's judged slope read over on the fina
                      "against -0.64 +/- 0.15 (inside at the clock: -0.6360 / -0.6699; the step is #80's census); the gate's to rule")
 BRIGHT_GATE_READ_OVER = ("S88 (M1): the young bright stars' judged clauses read over on the final model - the youngest bin's "
                          "slope -0.4750 (0.165 over the 0.15), the 40.71-100 Myr bin's finest 1 + omega 0.8457 (flat within 0.05: "
-                         "out since #148's clock, 1.1887 there); the gate's to rule")
+                         "out since #148's clock, 1.1887 there); register #223 (Audit VI F-3A-5), the gate's to rule")
 
 
 # S90 (#161): the clusters' case lifted - with the field's cell means in the clouds' sector weights their slope reads
@@ -345,7 +345,14 @@ def _merged(corr: C.Correlation, lo: float, hi: float) -> float:
     return float(2.0 + (ddn.sum() - 2.0 * drn.sum()) / rrn.sum())
 
 
-@pytest.mark.xfail(strict=True, reason=BRIGHT_GATE_READ_OVER)
+# S95 (Audit VI F-3A-5 / F-3A-7; register #223): the hold names its failure (raises=AssertionError: the body fails only
+# by assertion; an error of another kind is red, not held). What it MASKS while it stands: the failing assert is the
+# youngest bin's slope (-0.4750 against -0.64 +/- 0.15); after it, (a) the 40.71-100 Myr bin's flatness (1 + omega at
+# the finest, the pair-merged [47.5, 190] pc and the worst beyond 380 pc, each within 0.05 of 1 - read 0.8457 at S88,
+# over), and (b) the four bins' BRIGHT_MEASURED records (S61's numbers, unrun since the hold: the youngest's slope
+# alone already differs, -0.570 there). Neither is moved above the slope: (b) is stale and would fail first, masking the
+# judged clauses instead; (a) is judged and over as well - moving it would only change which judged clause fails.
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=BRIGHT_GATE_READ_OVER)
 def test_the_young_bright_stars_lose_the_field_s_octaves_as_they_age(bright, census):
     """D220 part II item 7c, the predictions of item 5 measured, not tuned. **Judged**: the youngest bin (20-23.87 Myr,
     every octave) returns the hierarchy's slope, within 0.15 of -0.64; the oldest (40.71-100 Myr, no octave: the

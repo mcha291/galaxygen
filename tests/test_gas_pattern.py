@@ -616,6 +616,11 @@ def test_the_sector_means_are_the_exact_means_of_the_point_function(model):
     # S87 (#209, #80): was the spurred field at 20 and 25 kpc - the default galaxy's spurs now have feet out to 26.6 kpc
     # (59 of them; one at 20.0), so the ring past the last mode and the bar is read on the law the spurs compose on,
     # and the spurred field past every foot.
+    # S95 (Audit VI F-3A-9): that reason is stale - since S90 (#213) the walk ends at the arms' budget's edge and no foot
+    # stands past 12.34 kpc (tests/test_spurs.py: 45 feet, the last inside 12.34), so the spurred field at 20 and 25 kpc
+    # could be read again. NOT restored here (the brief: a restoration is the gate's): restoring is `gp.sector_means(20.0,
+    # edges) == 1.0` and `gp.cell_means([20.0, 25.0], edges) == 1.0` on the spurred pattern, run once on this test's own
+    # galaxy (whose feet are this test's, not the template's) to see that no spur's footprint reaches 20 kpc.
     law = unspurred(gp)
     assert np.all(law.sector_means(20.0, edges) == 1.0) and np.all(law.cell_means(np.array([20.0, 25.0]), edges) == 1.0)
     assert np.all(gp.sector_means(29.0, edges) == 1.0) and np.all(gp.cell_means(np.array([29.0, 35.0]), edges) == 1.0)
@@ -709,7 +714,10 @@ def test_gate_every_ring_of_both_templates(prod, template):
     assert gm.GAS_DENSITY_CONTRAST.ramp.hi == 4.0
 
 
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, reason=GATE_MAX_G_READ_OVER_S92))
+# S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
+# not held), and masks nothing - the failing assert is the body's only one.
+@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, raises=AssertionError,
+                                                                              reason=GATE_MAX_G_READ_OVER_S92))
                                       if t == "milky_way" else t for t in TEMPLATES])
 def test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes(prod, template):
     """The gate's upper clause of D216 item 12 as S58 leaves it, max g <= max(max s, max L), split from the test
