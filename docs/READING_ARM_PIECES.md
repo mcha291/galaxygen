@@ -762,12 +762,17 @@ a re-reading of Part A above and of READING_BAR.md; nothing was fetched, the ari
 - **What it gives a model.** An inner end is a *growth zone* — measured to exist (a sharp start fits worse by over
   10 %), its shape free between a Gaussian and a cubic — and the arms' share peaks at 1-2 h and is zero at the
   centre. **No reader prints the growth zone's length or the start radius per galaxy** (in h or in r25), so a taper
-  would carry an unsourced length — the rule A4 / B9 case the entry already named. Today's model (S86's line in
+  would carry an unsourced length — the rule A4 / B9 case the entry already named. Chugunov 2025's growth and cutoff
+  zones are azimuthal, measured along the arm (phi_growth, phi_cutoff), not radial: a length in h or in r25 needs a
+  conversion through the arm's pitch and radius that this reading does not make (re-read at Audit VI, 1A's minor
+  rows). Today's model (S86's line in
   GALAXY_INPUTS.md #149): the default galaxy pinned unbarred carries its largest rms contrast, 0.507, at 0.11 kpc,
   and `ngc_4414` 0.086 there against its peak 0.40 at 2.03 scale lengths — the second is inside "1-2 h" and near
   zero at the centre; the first is not.
-- **A driven A2 against r/a.** READING_BAR.md holds the bar's own A2 maximum, 0.23-0.41 at 0.76-0.94 r_bar (DG16b's
-  stacks; "No A2 values at 1.5 or 2 r_bar are tabulated", B2), Salo et al. 2010's correlation of the local bar
+- **A driven A2 against r/a.** READING_BAR.md holds the bar's own A2 maximum, 0.23-0.41 at 0.76-0.90 r_bar over
+  DG16b's five mass bins, 0.94 only in the T 0-3 and SAB rows, and lower in others (T 5-8 0.66 (0.24); SB all T
+  0.68 (0.25); SB T >= 5 0.62 (0.29); SB T < 5 0.78 (0.19)) (DG16b's stacks, Table 5 whole; re-read at Audit VI,
+  F-1A-2) ("No A2 values at 1.5 or 2 r_bar are tabulated", B2), Salo et al. 2010's correlation of the local bar
   forcing with the local A2 out to ~1.4-1.6 R_bar with "No amplitude-against-radius table is printed" (B2), Buta et
   al. 2009's spiral A2s 0.063-1.220 at maximum, and the spiral maximum at about 2 bar radii (Bu09). **No driven
   amplitude as a function of r/a is in the repository.**

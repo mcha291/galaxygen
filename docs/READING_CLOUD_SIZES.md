@@ -66,9 +66,18 @@ not hold, or a ruling.
 - **#182, the giants.** The two mass-radius relations above (Miville-Deschênes et al. 2017, M = 36.7 R^2.2; Lada & Dame
   2020, M = 78.6 R^1.98) put a 10⁷ M☉ cloud at R = 296 and 378 pc and a 10⁶ M☉ cloud at 104 and 118 pc; the model's
   regimes give 62 pc (Σ 82) and 95 pc (Σ 35) at 10⁶ and cap every cloud at 150 pc. A relation in place of the cap makes
-  the giants larger than the owner chose at S67 ("Smaller giant clouds (model)", D231), and the catalogues' R is an
-  equal-area radius of a CO footprint, not √(M/πΣ_GMC): a ruling, the owner's. A Σ_GMC profile across the molecular
-  ring's edge (Lada & Dame's regimes are joined by none) and NGC 4414's own cloud census are not held.
+  the giants larger than the owner chose at S67 ("Smaller giant clouds (model)", D231), and the catalogues' R is a
+  radius of a CO footprint, not √(M/πΣ_GMC): a ruling, the owner's. A Σ_GMC profile across the molecular
+  ring's edge (Lada & Dame's regimes are joined by none; their ring's 82 is "likely an upper limit", blending, §V) and
+  NGC 4414's own cloud census are not held.
+- **#182's radii restated (re-read at Audit VI, F-1B-3).** The two relations above are on different radii and
+  catalogues. Miville-Deschênes et al. 2017's R is an inertia-matrix radius, R = D tan(R_ang) with R_ang =
+  (R_max R_min R_min)^(1/3) (their eq. 18), not an equal-area one; on Lada & Dame's equal-area radius √(A/π) their
+  clouds read **M = 57.5 R^2.10** (Lada & Dame 2020, §III.1), which puts a 10⁷ M☉ cloud at about **313 pc** and a 10⁶
+  at 104 pc (`[inferred]`: (M/57.5)^(1/2.10), computed at S95). Lada & Dame's 78.6 R^1.98 is their fit to Rice et al.
+  2016's catalogue ("for the clouds in the R+16 catalog"), not to clouds of their own. On one radius the two
+  catalogues' 10⁷ M☉ clouds sit at about 313 and 378 pc; the paragraph's conclusion is unchanged — a relation in
+  place of the cap makes the giants larger than the owner chose (re-read at Audit VI, F-1B-3).
 - **#181, the HII complexes.** A size-luminosity relation for giant HII regions in nearby discs and their luminosity
   function (candidates `[recall — NEEDS SOURCING]`: Kennicutt 1984's giant HII region sizes; the PHANGS-MUSE nebular
   catalogue's HII region sizes and luminosities). With one read, the census's regions in one clustering cell can be

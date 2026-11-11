@@ -45,7 +45,9 @@ corrected light the model is 0.22 mag short and 0.17 bluer; if observed light, 0
 readings do not separate on the colour** — the entry's prediction (B4) said they would: attenuation reddens the
 galaxy by 0.009 only, so the colour gap is the stars', not the dust's, under either reading.
 
-**What would close it:** the rows have no window (BHG16 quote no errors; `lo == hi`, D100), so a published attenuated
+**What would close it:** the rows have no window (BHG16's Table 2 quotes no errors — "presented in Table 2 without the
+uncertainties", pointing to Licquia, Newman & Brinchmann 2015 — though a footnote gives typical ~0.1 mag calibration
+errors (re-read at Audit VI, 1B's notes); `lo == hi`, D100), so a published attenuated
 magnitude would be a field no row reads (S41: dead) until a source with errors is read — Licquia, Newman &
 Brinchmann 2015's analogue values with their uncertainties `[recall — NEEDS SOURCING]`. Whether the rows then read
 intrinsic or attenuated light is the source's statement to make, and the owner's ruling (S28 ruling (b)) if it does

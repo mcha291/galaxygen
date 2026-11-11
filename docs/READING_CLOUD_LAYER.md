@@ -59,7 +59,8 @@ of the dust in that layer too, so the layer now reaches the infrared numbers. Wh
   quoted four (48 pc at 0-1 kpc, 90 ± 30 at 7-8, 186 at 8-9, 160 at 10-11), and the two outer bins fall again, so no
   flare law can be fitted to what is held.
 - **Inside R0, a ruling.** Bronfman et al. 1988 (flat, the value entered), Marasco et al. 2017 (falling from ~100 pc HWHM
-  at the centre to ~50 pc at R0) and Malhotra 1994 / Nakanishi & Sofue (rising) conflict: by B12 they are named
+  at the centre to ~50 pc at R0 — the R0 end not measured: the scale height is fixed at 52 pc beyond 7 kpc, their
+  Table 2's 52 ± 40, ad hoc (re-read at Audit VI, 1B's notes)) and Malhotra 1994 / Nakanishi & Sofue (rising) conflict: by B12 they are named
   rulesets, and which one the model draws is the owner's choice, not a reader's.
 - **A mass dependence.** Stark & Lee 2005's table of cloud heights by mass (the reader gave ~35 pc below ~2 × 10⁵ M☉ and
   "thinner" above, no number), or a catalogue's heights binned by mass (Miville-Deschênes et al. 2017's whole-Galaxy

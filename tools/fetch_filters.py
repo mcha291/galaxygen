@@ -110,10 +110,13 @@ PSF = {
 # --- JWST's optics (S83, T11): what is read, and what is derived from it ---------------------------------------------
 _JDOX_OTE = "JDox, JWST Telescope (jwst-docs.stsci.edu, read 2026-11-02)"
 _JDOX_PSF = "JDox, NIRCam Point Spread Functions (jwst-docs.stsci.edu, read 2026-11-02)"
-_OTE_PAPER = "Feinberg et al. 2023, arXiv:2301.01779, the OTE's design and performance, read 2026-11-02"
-# Each segment across its flats and the gap between neighbours [verified: Feinberg et al. 2023: "Each of the 18 primary
-# mirror segments are 1.32 m (flat-to-flat) separated by 7 mm gaps"]. The brief's "6.5 m flat to flat" is JDox's "~6.5 m"
-# diameter; the paper states a circumscribed 6.64 m and a flat-to-flat 6.575 m, which the two numbers here give to 0.5 %.
+_OTE_PAPER = ("McElwain et al. 2023, PASP, DOI 10.1088/1538-3873/acada0, arXiv:2301.01779, the OTE's design and "
+              "performance, read 2026-11-02")
+# The paper's first author is McElwain, Feinberg the second (cited as Feinberg et al. until S95; re-read at Audit VI,
+# F-1B-1). Each segment across its flats and the gap between neighbours [verified: McElwain et al. 2023: "Each of the 18
+# primary mirror segments are 1.32 m (flat-to-flat) separated by 7 mm gaps"]. The brief's "6.5 m flat to flat" is JDox's
+# "~6.5 m" diameter; the paper states a circumscribed 6.64 m and a flat-to-flat 6.575 m, which the two numbers here give
+# to 0.5 % (circumscribed, 6.6717 m) and 0.8 % (flat-to-flat, 6.628 m) (re-read at Audit VI, F-1B-2).
 SEGMENT_M, GAP_M = 1.32, 0.007
 SEGMENTS = 18  # [verified: JDox JWST Telescope, "18 hexagonal segments"]
 SECONDARY_M = 0.74  # the secondary's diameter [verified: JDox JWST Telescope, "a convex circular mirror 0.74 m in diameter"]
@@ -179,7 +182,8 @@ def jwst_optics() -> dict:
                   "hexagonal segments in two rings about a missing centre [verified: " + _JDOX_OTE + ", 18 hexagonal "
                   "segments], each 1.32 m across its flats and 7 mm from its neighbours [verified: " + _OTE_PAPER + "], so "
                   f"{across:.3f} m across the flats and a circumscribed diameter of {2 * circum:.4f} m, twice the pupil's "
-                  "unit radius [derived; the paper states 6.575 m and 6.64 m, JDox ~6.5 m]; the segments' area "
+                  "unit radius [derived; the paper states 6.575 m and 6.64 m, met to 0.8 % and 0.5 %, JDox ~6.5 m]; the "
+                  "segments' area "
                   f"{area:.2f} m2 against JDox's polished 26.3. The gaps, {gap:.5f} pupil radii, are drawn (sampled at a "
                   "sixteenth of a pupil pixel). The "
                   f"secondary's 0.74 m shadow [verified: JDox] is obscuration {SECONDARY_M / (2 * circum):.4f} of the unit "
