@@ -275,6 +275,11 @@ def sector_placement(fields: Mapping[str, Any], R: np.ndarray, constants: Mappin
     if field is None and (pattern is None or pattern.flat):
         return pattern, None
     rings, sectors = cell_edges(R)
+    # The weight is the gas contrast to the first power (S99, #229, the gate's ruling on the reading): the one
+    # area-normalised source read, Colombo et al. 2014 (ApJ 784, 3), Table 2, M 51 at 40 pc - arm over inter-arm 3.78
+    # in molecular gas, 4.05 in cloud mass per area (an exponent 1.05 on the gas; 0.86 without the catalogue's
+    # extrapolation) and 2.43 in cloud number per area (0.67). One grand-design galaxy, no flocculent disc, no law
+    # printed.
     weights = np.ones((CELL_RINGS, CELL_SECTORS)) if pattern is None or pattern.flat else np.maximum(
         np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)]), 0.0
     )

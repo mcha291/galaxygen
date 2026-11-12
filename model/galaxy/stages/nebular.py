@@ -104,7 +104,8 @@ DIG_SII_NII_COEFF, DIG_SII_NII_T_EXP = 4.62, 0.04
 # Table 1: R(n_e) = a (b + n_e)/(c + n_e), a = 0.4315, b = 2107, c = 627.1, computed for log n_e = 0-5 (Tayal &
 # Zatsarinny 2010's collision strengths, NIST's transition probabilities), R_max = 1.4484 at 1 cm^-3 and R_min =
 # 0.4375 at 1e5 cm^-3 [verified: arXiv:1509.03636 (ar5iv), section III.1, read at S93]. The density is clamped to
-# that range; the warm ionized medium's ~0.1 cm^-3 reads the low-density limit.
+# that range; the warm ionized medium's ~0.1 cm^-3 reads the doublet at 1 cm^-3, the fit's lower edge (1.4482) -
+# not the fit's own n_e -> 0 limit, 1.4498 (Audit VI, F-2-3; was "reads the low-density limit").
 SII_DOUBLET_A, SII_DOUBLET_B, SII_DOUBLET_C = 0.4315, 2107.0, 627.1
 SII_DOUBLET_DENSITY_RANGE = (1.0, 1.0e5)  # cm^-3
 
@@ -118,8 +119,8 @@ def sii_doublet_ratio(n_e: np.ndarray) -> np.ndarray:
 
 def dig_line_ratios(t_dig: float, c: Mapping[str, float]) -> dict[str, float]:
     """The diffuse gas's [N II] 6583, [S II] 6716 and [S II] 6731 over its Halpha (energy) at the layer's temperature:
-    Madsen et al. 2006 eqs. 2-3 on their own abundances and ionization fractions, the 6731 line by the doublet's
-    low-density limit."""
+    Madsen et al. 2006 eqs. 2-3 on their own abundances and ionization fractions, the 6731 line by the doublet at
+    1 cm^-3, the fit's lower edge (1.4482; Audit VI, F-2-3: was "the doublet's low-density limit")."""
     t4 = float(t_dig) / 1.0e4
     n_term = float(c["DIG_N_PLUS_FRACTION"]) * float(c["DIG_NITROGEN_ABUNDANCE"])
     nii = DIG_NII_COEFF * t4**DIG_NII_T_POWER * math.exp(-DIG_NII_T_EXP / t4) * n_term
@@ -556,7 +557,7 @@ LINES_DIG = tuple(
         name=f"{n}_surface_brightness_dig", label=f"{_LINE_LABELS[n]} from the diffuse ionized gas Σ(R)", unit="Lsun/pc2",
         kind=Kind.FIELD, axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True, provenance="seeded",
         about=(f"The diffuse gas's Hα times its {_LINE_LABELS[n]}/Hα, {_DIG_SOURCE}"
-               + (", the 6731 line by the doublet's low-density limit (Sanders et al. 2016)" if n == "sii_6731" else "")
+               + (", the 6731 line by the doublet at 1 cm^-3, the fit's lower edge (1.4482; Sanders et al. 2016)" if n == "sii_6731" else "")
                + ": the softer, diluted field heats the layer above the regions' temperatures, so its forbidden lines "
                "are enhanced over theirs (S93, #119)."),
     )

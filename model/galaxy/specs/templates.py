@@ -176,6 +176,114 @@ def face_on_colour(header: Mapping[str, Any], arrays: Mapping[str, Any]) -> floa
     return float(band_magnitude(dimmed[0], FACE_ON_BANDS[0]) - band_magnitude(dimmed[1], FACE_ON_BANDS[1]))
 
 
+# --- the per-radius checks (S99, #136) -----------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class RadialCheck:
+    """A check read per radius off one published radial field (S99, #136): the field read at every grid ring inside a
+    band of radii and at the band's two edges, the largest of those reads judged against the window - an upper limit
+    read as a window from 0. Judged, reported and recorded as a miss exactly as a template's own checks are
+    (:func:`judge`, :data:`CHECK_MISSES`); it lives here, beside the ledger, not in the template's data. The band is
+    given in arcseconds, turned into kpc by the template's own distance (``instrument.distance_mpc``), or as the name
+    of one of the template's pins whose value is a band of radii in kpc."""
+
+    name: str
+    label: str
+    unit: str
+    window: tuple[float, float]
+    quantity: str
+    mismatch: str
+    source: str
+    field: str
+    arcsec: tuple[float, float] | None = None
+    pin: str | None = None
+    standing: str = "disclosed"
+    standing_about: str = ""
+    first_reading: Any = None
+
+    def __post_init__(self) -> None:
+        if (self.arcsec is None) == (self.pin is None):
+            raise ValueError(f"check {self.name}: a band is given in arcseconds or by a pin, one of the two")
+        if not self.window[0] < self.window[1] or not self.source.strip() or not self.standing_about.strip():
+            raise ValueError(f"check {self.name}: a window lo < hi, a source and the sentence that says it is disclosed")
+
+    def holds(self, model: float) -> bool:
+        return self.window[0] <= model <= self.window[1]
+
+    def band_kpc(self, template: _templates.Template) -> tuple[float, float]:
+        """The band in kpc: arcseconds at the template's own distance, or the pin's (first) band."""
+        if self.arcsec is not None:
+            kpc_per_arcsec = float(template.instrument.distance_mpc) * 1.0e3 * math.pi / (180.0 * 3600.0)
+            return self.arcsec[0] * kpc_per_arcsec, self.arcsec[1] * kpc_per_arcsec
+        value = next(p.value for p in template.pins if p.name == self.pin)
+        return float(value[0][0]), float(value[0][1])
+
+    def measure(self, template: _templates.Template, field: Any, radius: Any) -> float:
+        """The largest read of the field over the band: at its two edges (linear between rings) and every ring inside."""
+        lo, hi = self.band_kpc(template)
+        radius, field = np.asarray(radius, dtype=float), np.asarray(field, dtype=float)
+        inside = (radius > lo) & (radius < hi)
+        return float(max(np.interp(lo, radius, field), np.interp(hi, radius, field), *field[inside]))
+
+
+# Vallejo, Braine & Baudry 2002 (V02) read at S96 (docs/READING_DUST.md Part S96, S96.2): their Table 8's extinction
+# at 55-70 arcsec, A_B 0.76 and A_V 0.58, and "roughly 1.6 mag in B, 1.3 in V" in the molecular ring - "upper limits"
+# - so E(B - V) = A_B - A_V at most 0.18 and about 0.3 [inferred]: half the HI column in front of the light through a
+# grain model, not a measured colour excess, and not said to be face-on. The catalogues (RC3, HyperLeda) hold no
+# face-on attenuation to set beside the model's: they correct to face-on by a formula in the axis ratio that is zero
+# face-on (READING_NGC_4414.md W-J), so this per-radius read is the closest a source comes (#136's closer, rewritten
+# at S96, F-96B-2). The numbers were read with the model's value at those radii unknown; the model's was first read at
+# S99 (lane M) and is recorded below, nothing tuned.
+_V02 = (
+    "[verified: Vallejo, Braine & Baudry 2002, A&A, arXiv:astro-ph/0202391, sect. 4.3 and Table 8, read at S96 "
+    "(docs/READING_DUST.md Part S96): 55'' < r < 70'' A_B 0.76, A_V 0.58; the molecular ring 'roughly 1.6 mag in B, "
+    "1.3 in V'; 'These values should be viewed as upper limits'] [inferred: E(B - V) = A_B - A_V]"
+)
+_V02_DISCLOSED = (
+    "Its window was read before the model's value at those radii, but it is judged on the template's second fit, "
+    "decided after four of its five own checks had been read on the first."
+)
+_V02_MISMATCH = (
+    "V02's is half the HI column in front of the light through a grain model, along the line of sight or face-on "
+    "(not said), from atomic gas only; the model's is the whole disc's dust face-on. The catalogues hold no face-on "
+    "attenuation (RC3 and HyperLeda correct to face-on by a formula zero face-on)"
+)
+RADIAL_CHECKS: Mapping[str, tuple[RadialCheck, ...]] = {
+    "ngc_4414": (
+        RadialCheck(
+            name="colour_excess_55_70_arcsec",
+            label="E(B − V) face-on at 55–70″, at most",
+            unit="mag",
+            window=(0.0, 0.18),
+            quantity="the largest dust_colour_excess_b_v over 55-70 arcsec at the template's own distance",
+            mismatch=_V02_MISMATCH,
+            source=_V02,
+            field="dust_colour_excess_b_v",
+            arcsec=(55.0, 70.0),
+            standing_about=_V02_DISCLOSED,
+        ),
+        RadialCheck(
+            name="colour_excess_molecular_ring",
+            label="E(B − V) face-on in the molecular ring, about, at most",
+            unit="mag",
+            window=(0.0, 0.3),
+            quantity="the largest dust_colour_excess_b_v over the template's pinned molecular ring",
+            mismatch=_V02_MISMATCH,
+            source=_V02,
+            field="dust_colour_excess_b_v",
+            pin="molecular_ring",
+            standing_about=_V02_DISCLOSED,
+        ),
+    ),
+}
+
+
+def stated(name: str) -> tuple[str, ...]:
+    """Every check judged for template ``name``: its own, then the per-radius ones held here."""
+    return (*(c.name for c in _templates.get(name).checks), *(c.name for c in RADIAL_CHECKS.get(name, ())))
+
+
 # --- the ledger ----------------------------------------------------------------------------
 
 
@@ -270,6 +378,39 @@ CHECK_MISSES: Mapping[str, Mapping[str, CheckMiss]] = {
                 "would land inside, and one that stays bluer than 0.72 puts the miss in the stars' colour."
             ),
         ),
+        # S99 (#136): the per-radius checks (RADIAL_CHECKS), read first at S99 on the production grid, layer off.
+        "colour_excess_55_70_arcsec": CheckMiss(
+            debt=136,
+            since="S99",
+            reason=(
+                "0.3476 against at most 0.18 (V02's Table 8, an upper limit): the model's face-on E(B - V) over 55-70 "
+                "arcsec (4.72-6.01 kpc at 17.7 Mpc) falls from 0.3476 at the inner edge to 0.161 at the outer, "
+                "under the limit only past about 5.8 kpc. The catalogues hold no face-on attenuation; V02's is half "
+                "the HI column through a grain model, from the atomic gas alone, the model's the whole disc's dust."
+            ),
+            prediction=(
+                "A model whose dust follows the gas V02 reads (the HI) lands under 0.18 here; one whose excess here "
+                "stays over 0.18 with its dust at the HI's column puts the miss in the grain model's E(B - V) per "
+                "column."
+            ),
+        ),
+        "colour_excess_molecular_ring": CheckMiss(
+            debt=136,
+            since="S99",
+            reason=(
+                "31.21 against about 0.3 at most (V02's 'roughly 1.6 mag in B, 1.3 in V', an upper limit): the "
+                "model's face-on E(B - V) in the pinned ring (0.43-4.29 kpc) rises inward from 0.461 at its outer edge "
+                "to 31.21 at its inner, a hundred times the limit there and over it at every radius of the ring. "
+                "V02's screen is half the atomic gas and leaves out the molecular (their words); the model's is the "
+                "whole disc's dust. The catalogues hold no face-on attenuation. The integrated face-on frame is "
+                "bluer through this dust than without it (colour_b_v_face_on, S89's split)."
+            ),
+            prediction=(
+                "V02's ring value leaves out the molecular gas (their words); a sourced extinction through the ring's "
+                "H2 column that also reads several magnitudes kills this as a model miss and makes it the source's "
+                "bound; one near 0.3 puts it in the model's dust-to-gas ratio or its molecular column inside 4.3 kpc."
+            ),
+        ),
     },
 }
 
@@ -315,7 +456,9 @@ def evaluate_template(template: _templates.Template, service: Any) -> list[Resul
         return [judge(template, c, None, f"model {template.model!r} is not registered") for c in template.checks]
     model = service.models.get(template.model)
     declared = service._declared(model)
-    fields = tuple(dict.fromkeys(c.field for c in template.checks if c.field is not None and c.field in declared))
+    radial = RADIAL_CHECKS.get(template.name, ())
+    wanted = (*(c.field for c in template.checks), *(c.field for c in radial))
+    fields = tuple(dict.fromkeys(f for f in wanted if f is not None and f in declared))
     out, _ = service.compute(model, _templates.overrides(template), fields, layer=JUDGED_LAYER)
     results: list[Result] = []
     for check in template.checks:
@@ -326,6 +469,12 @@ def evaluate_template(template: _templates.Template, service: Any) -> list[Resul
         else:
             value = _templates.measure(check.statistic, out.fields[check.field], out.grid.R, check.inside_kpc)
             results.append(judge(template, check, value))
+    # S99 (#136): the per-radius checks, after the template's own, judged the same way.
+    for check in radial:
+        if check.field not in out.fields:
+            results.append(judge(template, check, None, f"field {check.field!r} is not published by model {model.name!r}"))
+        else:
+            results.append(judge(template, check, check.measure(template, out.fields[check.field], out.grid.R)))
     return results
 
 

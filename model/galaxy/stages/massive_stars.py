@@ -243,7 +243,9 @@ def wind_luminosity(luminosity: np.ndarray, teff: np.ndarray, mass: np.ndarray, 
 #
 # PARSEC's phase label does not name Wolf-Rayet stars, so the flag is a **stated proxy**, not a
 # classification: a star past the main sequence (label >= 2; CMD's labels are 0 pre-main
-# sequence and 1 main sequence [recall: the CMD output documentation]), born at least as massive
+# sequence and 1 main sequence [recall: the CMD output documentation]; labels its FAQ says "have not
+# been carefully checked for all masses and metallicities" [verified: CMD 3.7 FAQ, read at Audit VI,
+# S94]), born at least as massive
 # as the lowest initial mass that becomes a WR star at solar metallicity, hotter than the coolest
 # WR stars and at least as luminous as the faintest. The three numbers are Crowther 2007, ARA&A
 # 45, 177 [verified: arXiv:astro-ph/0610356 (ar5iv), read at S28]: "At Solar metallicity the
