@@ -42,7 +42,7 @@ from galaxy.layer import compose as _compose
 from galaxy.layer import gas_fluctuation as _gas
 from galaxy.stages import bright as _bright
 from galaxy.stages import pieces as _pieces
-from galaxy.stages.gas_pattern import GAS_PATTERN_READS
+from galaxy.stages.gas_pattern import BLEND_READS, GAS_PATTERN_READS, placed_gas_contrast
 from galaxy.stages.spurs import SPUR_FIELDS
 
 GAS_READS = tuple(d.name for d in _gas.PUBLISHES)
@@ -230,7 +230,13 @@ def unspurred_placement(fields: Any, constants: Mapping[str, Any], R: np.ndarray
     shape = _compose.gas_pattern(fields, R, constants)
     if shape is None or shape.flat:
         return None
-    return np.maximum(shape.unspurred_cell_means(R, phi_edges), 0.0)
+    unspurred = shape.unspurred_cell_means(R, phi_edges)
+    # S100 (#130): the placement is the blend of the molecular and the atomic responses by the ring's molecular
+    # fraction, formed by the one function the spurs stage forms it by, before the spurs: so composed with the spurs'
+    # table it is dust_placement to the bit, as before. (The atomic contrast is published on the grid's own cells.)
+    if all(n in fields for n in BLEND_READS):
+        unspurred = placed_gas_contrast(unspurred, fields[BLEND_READS[0]], fields[BLEND_READS[1]])
+    return np.maximum(unspurred, 0.0)
 
 
 # The middle part's window anchors per run (S66 fix pass, review M1): bright.window_anchors is 0.2-0.7 s of history on

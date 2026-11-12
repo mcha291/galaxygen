@@ -2008,7 +2008,9 @@ def test_nothing_of_the_ridge_builds_the_field(prod):
     # S60 (D219 item 5): and the stellar layer's flattening h_R/h_z, which the forcing's thickness factor reads.
     assert GAS_PATTERN_CONSTANTS == ("G", "GAS_DISPERSION", "ARM_LAYER_FLATTENING", "BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH")
     assert gm.LANE_CONSTANTS == GAS_PATTERN_CONSTANTS[3:] and not hasattr(gm, "GAS_CHECK_CONSTANTS")
-    assert GAS_PATTERN.reads_constants == GAS_PATTERN_CONSTANTS and "gas_arm_contrast" not in GAS_PATTERN_READS
+    # S100 (#130): was `GAS_PATTERN.reads_constants == GAS_PATTERN_CONSTANTS` - the stage reads the atomic gas's
+    # dispersion ratio too, for its second response; the pattern built from fields reads the law's constants alone.
+    assert GAS_PATTERN.reads_constants == (*GAS_PATTERN_CONSTANTS, "HI_DISPERSION_RATIO") and "gas_arm_contrast" not in GAS_PATTERN_READS
     retired = ("GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH")
     for m in models:
         assert not set(retired) & set(m.constants), m.name
@@ -2029,7 +2031,10 @@ def test_nothing_of_the_ridge_builds_the_field(prod):
     R, edges = o.grid.R, o.grid["phi"].edges
     c = constants(model)
     lean = compose.gas_pattern(o.fields, R, {k: c[k] for k in GAS_PATTERN_CONSTANTS})
-    assert lean.cell_means(R, edges).tobytes() == np.asarray(o.fields["gas_density_contrast"]).tobytes()
+    # S100 (#130): was `lean.cell_means(R, edges)` against the published field - which since S100 is the spurs composed
+    # on the blend of this molecular response and the published atomic one by the ring's molecular fraction.
+    blend = gm.placed_gas_contrast(lean.unspurred_cell_means(R, edges), *(o.fields[n] for n in gm.BLEND_READS))
+    assert lean.spurs.compose_cells(R, edges, blend).tobytes() == np.asarray(o.fields["gas_density_contrast"]).tobytes()
     # S62 (D221): was GAS_PATTERN_READS alone - the published field carries the spurs, read from their table.
     fields = {n: o.fields[n] for n in (*GAS_PATTERN_READS, *SPUR_READS)}
     # S60 (D219): the gas answers the stellar pattern of pieces, handed over by `compose`; its own door takes it.
@@ -2316,7 +2321,8 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     # must not drive a census"). Its about says what it is and why, and names no constant (rule D5).
     # S62 (D221 item 7 as amended): was ["gas_density_contrast", "star_formation_gas_contrast"] - the gas's own
     # contrast is published by the `spurs` stage after the gas column the spurs' spacing reads; its declaration stays here.
-    assert [d.name for d in GAS_PATTERN.publishes] == ["star_formation_gas_contrast"]
+    # S100 (#130): was ["star_formation_gas_contrast"] - beside it the atomic gas's own response (tests/test_s100_atomic.py).
+    assert [d.name for d in GAS_PATTERN.publishes] == ["star_formation_gas_contrast", "atomic_gas_density_contrast"]
     assert [d.name for d in SPURS.publishes] == ["gas_density_contrast"] and SPURS.publishes[0] is gm.GAS_DENSITY_CONTRAST
     second = GAS_PATTERN.publishes[0]
     assert second.composed and second.neutral == 1.0 and second.axes == ("R", "phi") and second.provenance == "seeded"
