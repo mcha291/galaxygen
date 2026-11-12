@@ -1103,3 +1103,57 @@ hatched components in numbers; whether Portail et al.'s map carries spiral struc
 re-derivation test not run under pytest (the tool ran). Every record the pin moves outside the lane's files — the
 layer reference, `test_modes`, `test_gas_pattern`, `test_pieces`, `test_audit_v`, the renders, the frames — is listed
 in `s99_B.md` section 8 for the batch's one re-pin pass, not re-pinned here.
+
+## Part S100 — the length by Table 4 (2026-11-12, BUILD_VI row 100; builder B2 and the re-pin pass)
+
+**The notes.** Builder B2 (`s100_B2.md`, branch `s100-barlen`, 373117c and 02113b7, merged into `session-100`); the
+re-pin builders (`s100_P.md`, `s100_P2.md`). The gate's ruling is D270 ruling 1 (on D268 ruling 5) and register #80.
+
+### S100.1 The form and the row, fetched again (ar5iv 1908.08423)
+
+Eq. 1 / 4 as the fetch quotes it: "log a_vis = alpha1 + beta X + beta1 log M* if log M* < M_brk; alpha2 + beta X +
+beta2 log M* if log M* > M_brk", with "alpha2 = alpha1 + (beta1 - beta2) M_brk". Table 4's row "log(M*/Msun) + log h":
+α₁ 0.02 (+0.29/−0.27), β₁ 0.00 (±0.03), β₂ 0.35 (+0.06/−0.08), β 0.61 (±0.06), log M_brk 10.13 (+0.02/−0.05) —
+MATCH with Part S96.1. **No scatter is printed**: neither Table 4 nor the text gives a residual scatter for the fit
+(only bootstrap uncertainties on the parameters; Table 5's MSE_pred 0.030 is a prediction error), and the bar stage
+draws none about its law (D55) — nothing replaced. **No h range is printed** for the barred sample (log M★ 9-11 is the
+sample's mass range); the law is used as fitted outside it.
+
+### S100.2 The stand-in and its excess
+
+The bar stage is checkpoint 3 and the stellar mass is published at checkpoint 4, so the law reads
+`baryon_mass_total` (checkpoint 1; rule A1 kept) — **the retained baryons' mass for the stellar, disclosed in the
+constants' abouts and not corrected** (D270 ruling 1; Part S99.6's table is the reading it rests on):
+
+| galaxy | log M, baryons | log M★ | the excess | h (kpc) |
+|---|---|---|---|---|
+| bare defaults | 10.768 | 10.676 | +0.092 dex (0.09187) | 2.605 |
+| `milky_way` (the disc; its bar pinned) | 10.768 | 10.676 | +0.092 dex (0.09187) | 2.605 |
+| `ngc_4414` (unbarred, pinned) | 10.659 | 10.591 | +0.068 dex (0.06817) | 1.755 |
+
+All three sit above the break and inside 9-11. Above the break the length moves by β₂ × the excess: **+0.032 dex in
+log a on the defaults**. The constants (`models/level0.py`): `BAR_LENGTH_LOG_NORM` 0.04 → 0.02 and
+`BAR_LENGTH_SLOPE` 0.76 → 0.61 (the names kept, their values Table 4's), new `BAR_LENGTH_MASS_SLOPE_LOW` 0.00,
+`BAR_LENGTH_MASS_SLOPE_HIGH` 0.35 and `BAR_LENGTH_MASS_BREAK` 10.13; `pattern.bar_length_law(scale_length, mass, c)`.
+
+### S100.3 What it moved
+
+- **The default galaxy's `bar_half_length` 2.2698 → 3.1395 kpc** (log M 10.768, above the break; by hand 3.139507 at
+  h 2.6049; Table 3 put back reads 2.2698417984554817 exactly — `tests/test_s100_bar_length.py`).
+- **Rows 15-17, still misses** (`s100_B2_spec.log`; of 37 rows on the bare defaults 3 moved, no verdict changed): row
+  15 2.26984 → **3.13951** kpc against 5.0 ± 0.2; row 16's median 81.9702 → **64.4722** km/s/kpc (central 95 %
+  53.2-82.4) against 34-52; row 17's median 2.65068 → **3.66626** kpc (2.63-4.61) against 4.5-7.0.
+- **The templates do not move**: the Milky Way's bar pinned at 5.0 kpc, `ngc_4414` pinned unbarred — every field equal
+  to the Table 3 model's on the lane's branch, layer on and off.
+- **On the default galaxy** (the re-pin pass): the arm label reads **6 on all 30 seeds** on both models (was 5 or 6;
+  the {5, 6} encoded S87's 2.27 kpc bar); the hierarchy's level-0 cell 300 holds 16 stars where it held 22; the
+  default arm census (53, 12, 5) → (45, 10, 4); the bright young stars' disclosed square and the default gas field
+  re-pinned as records. **The census's flatness**: the default census against its own law, flat beyond 380 pc within
+  0.05, reads **0.0529 (clouds) and 0.0558 (clusters)** where session-99's head read 0.0169 / 0.0297; 061e5ed (#80
+  merged, #130 not) reads the head bit for bit, so #80 alone moves it. The counts do not move (17 127 clouds, 13 124
+  clusters); the longer bar re-weights the clouds' sectors inside 3.1 kpc and 1 + ω dips to **0.947 / 0.944** in the
+  first bins past 380 pc (440-560 pc), the rest within 0.034. The clause is held strict, not moved: **#233** (D270
+  ruling 6). The slopes themselves read −0.5772 / −0.5746, inside the window by 0.085.
+
+**Not closed**: the referent — the model's h is λ_d's, Erwin's the 3.6 µm disc scale length; and the stand-in's
+excess (#80, carried).
