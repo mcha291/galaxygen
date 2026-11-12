@@ -96,6 +96,7 @@ describe("tuning defaults (D199)", () => {
       cloudElongation: 1, // S67, D230: the gas field's own shear (R2, the owner's choice)
       // S64 (V6): the HII regions as knots and the clusters with their radius, both on.
       knots: true,
+      knotsIntensity: 1, // S97: the knots' drawn light at the closure's
       clusterRadius: true,
       regionStars: "catalogue", // S82 (#172, the owner's ruling): the region regime draws the catalogue's points
       // S66 (V7, D226 R3-R5): the randomness layer in the march, each on (drawn only with the layer on).
@@ -349,7 +350,9 @@ describe("the display defaults per template (S67, D227 R4; T1)", () => {
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
     expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "cloudsExtinction", "clusterRadius", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading", "knots", "regionStars"]);
     // ...and, since S67 (D228, the owner's ruling), the extinction strength: linear from 0 to 2, at 1 the model's.
-    for (const c of group.filter((c) => !c.switch && c.key !== "extinctionStrength")) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
+    // S97: the knots' intensity reaches lower (0.05) to judge the knots under the owner's bloom.
+    for (const c of group.filter((c) => !c.switch && c.key !== "extinctionStrength" && c.key !== "knotsIntensity")) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
+    expect(group.find((c) => c.key === "knotsIntensity")).toMatchObject({ kind: "range", min: 0.05, max: 4, log: true });
     const strength = group.find((c) => c.key === "extinctionStrength")!;
     expect(strength).toMatchObject({ kind: "range", min: 0, max: 2, step: 0.01 });
     expect((strength as { log?: boolean }).log).toBeFalsy();

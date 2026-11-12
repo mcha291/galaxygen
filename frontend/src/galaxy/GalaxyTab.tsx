@@ -34,7 +34,7 @@ import { wholeDiscOf } from "./fieldLoads";
 import { type AgePart, FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
-import { knotsOf, undrawnShare } from "./knots";
+import { knotsGain as knotsGainOf, knotsOf, undrawnShare } from "./knots";
 import { CLUSTER_SUMMARY, STAR_SUMMARY, type SummaryRow, summaryRows } from "./summary";
 import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
@@ -629,9 +629,10 @@ export function GalaxyTab({
   const scaledDust = useMemo(() => (fieldDust && strength !== 1 ? { ...fieldDust, depthScale: strength } : fieldDust), [fieldDust, strength]);
   // In the field mode's region regime (S82, #172) the field's march's dust, as it acts there, as the knots read it.
   const pointDust = mode === "stars" ? (look.compDust && look.dustReading === "acts" ? scaledDust : null) : zoomPoints ? scaledDust : null;
-  // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight.
+  // The knots' (S64): the field mode's march's dust, as it acts there; their gain the field's at its weight, times the
+  // knots' intensity (S97, a display balance; 1 by default, the closure; FluxPoints' one gain reaches every pass).
   const knotDust = mode === "field" ? scaledDust : null;
-  const knotsGain = LIGHT_PER_LSUN_PC2 * look.fieldGain * 2 ** exposure * weights.field;
+  const knotsGain = knotsGainOf(LIGHT_PER_LSUN_PC2, look.fieldGain, exposure, weights.field, look.knotsIntensity);
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
   // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
   // the surface-brightness gate's per-ring reading of the points' draw. Since the fix pass (F3) also what FluxPoints
@@ -1170,7 +1171,7 @@ export function GalaxyTab({
           )}
         </div>
 
-        <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} template={template?.name ?? null} filterSet={filterSet} exposure={exposure} defaults={tuningDefaults} />
+        <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} template={template?.name ?? null} filterSet={filterSet} exposure={exposure} defaults={tuningDefaults} onExposure={onExposure} />
       </div>
       )}
 
