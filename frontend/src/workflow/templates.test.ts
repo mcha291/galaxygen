@@ -173,6 +173,10 @@ describe("a template's pins (S58, D217 item 2)", () => {
       "Measured arm pieces (a template's pin): 6 rows by arm: Norma, Sct-Cen, Sgr-Car, Local, Perseus, Outer (as observed)",
       // S87 (#80; the owner's ruling of 2026-11-03, D255): the Milky Way's measured bar half-length, in place of the law.
       "Bar half-length (a template's pin): 5 kpc (as observed)",
+      // S100 (batch P, D270; #146, S99): the template's eighth pin, the bar's amplitude set so that the measured
+      // non-axisymmetric mass is Portail et al. 2017's. The panel words every pin "as observed"; this one is derived
+      // from an observed mass, which D270 notes for the owner (the words are the viewer's, not changed here).
+      "Bar amplitude (a template's pin): 0.6862 (as observed)",
     ]);
     expect(ngc.pins.map((p) => pinWords(p, FIELDS))).toEqual([
       "Barred: no (as observed)",
