@@ -26,31 +26,34 @@ Sun's radius: the model's gas crest there is 1.1-1.55 times the ring's mean (#15
 column about 12-17 M☉/pc², not M51's dust lanes' 100-300 - the law's honest answer, a disclosed check, not tuned
 (the lead's ruling 1; the choice between Kim & Ostriker's 10 and 2.5 is the owner's).
 
-**What the walk reads at a foot** (the lead's ruling 3, a declared approximation): the gas contrast g on the two grid
+**What the walk reads at a foot** (S99, #220; the gate's ruling, the closer's second form): the gas pattern's point
+function on the foot's own ring - that ring at the foot's radius read whole on the solver's cell centres
+(``foot_reads``), the crest and the trough below taken from it. It is therefore the point function's read by
+construction, and :data:`WALK_READ_DIFFERENCE` holds with nothing to spare: the walk's crest against the point
+function's at every foot reads 0 exactly (the Milky Way template at texture seeds 0 and 4242, 44 and 42 feet, and four
+of S95's population pairs that read over the bound before: 0.3667, 0.4863, 0.6656, 0.4002 -> 0). The cost is one ring
+solved at each foot's radius, about two seconds a lay on the Milky Way template (S90 measured +1.9-2.2 s; S99 the run
+3.5-5.1 -> 5.3-7.7 s). Was, from S62 to S99 (the lead's ruling 3, a declared approximation): g read on the two grid
 rings that bracket the foot's radius, each at the azimuth where the foot's chain crosses that ring (its polyline
-followed, ``Pieces.along``), linear in R between them - so the walk solves no ring between the grid's (a point read
-off the grid's rings would solve the mid-gap rings, about two seconds on the Milky Way template). Against the gas
-pattern's point function at the foot itself it differs by at most :data:`WALK_READ_DIFFERENCE` of the point
-function's value, measured over every foot of two seeds on the production grid (S70, D234: was 0.052 over the ten feet
-``tests/test_spurs.py`` samples - Audit V F-2-4); the median foot reads within 1e-4, and where the few far ones lie
-is not explained here. Until S92 the foot's contrast was the spur's height there: "the foot's peak equal to the
-ridge's crest contrast there".
+followed, ``Pieces.along``), linear in R between them, so that the walk solved no ring between the grid's; against the
+point function at the foot it differed by up to 0.27 (S70, D234; S88's 0.2506). Until S92 the foot's contrast was the
+spur's height there: "the foot's peak equal to the ridge's crest contrast there".
 
 **Since S92 (#164 / #165; the owner's ruling of 2026-11-10, "accept all recommendations" - S90's option 4):** the foot
-stays on the chain; the walk reads, on each of the two grid rings, the gas crest - the largest of g over the ring's
-profile cells (``ring_profiles``: the solver's 1440 cell centres) within half the ring's crest width of the chain
-each side, the width ``gas_pattern.crest_width``'s (the full width at half maximum of the ring's tallest crest, the
-half level midway between the ring's trough and that crest), the chain's own read among them - and the ring's trough,
-that profile's least value (``crest_width``'s floor). Both are linear in R between the two rings. **The spur's
+stays on the chain; the walk reads the gas crest - the largest of g over the ring's profile cells (``ring_profiles``:
+the solver's 1440 cell centres) within half the ring's crest width of the foot each side, the width
+``gas_pattern.crest_width``'s (the full width at half maximum of the ring's tallest crest, the half level midway
+between the ring's trough and that crest), the foot's own read among them - and the ring's trough, that profile's
+least value (``crest_width``'s floor). Since S99 both on the foot's own ring (above); S92 to S99 on each of the two
+bracketing grid rings, linear in R between them. **The spur's
 height is the crest's excess over the trough** (``gas_spur_contrast``), so the composed contrast at a foot is about
 2 crest - trough where it was twice the crest (#164: the composed over the unspurred contrast at the feet, median
 1.9975 / 1.9974 at texture seeds 0 / 4242 before, 1.5312 / 1.5175 after; over the crest, at most 1.7573 / 1.8251);
 **the ridge's peak column is the crest's** (#165: Σ_peak = the ring's column times the crest), so the spacing reads
-the ridge, not the stellar chain. The walk's crest against the point function's crest within the same window at
-the foot's own radius: at most 0.2176 (seed 0, 45 feet; the next 0.2105) and 0.4582 (seed 4242, 43 feet; the next
-0.1731), the median 7e-4 / 2e-4 - the window's width differs from ring to ring, and between two grid rings the crest
-the window holds can be another ridge's (the worst feet at 4.45 and 6.06 kpc at seed 0, 4.44 and 5.40 kpc at 4242;
-``tests/test_spurs.py`` pins 0.2176 and 0.4582). 7 / 6 crests stand on the window's edge.
+the ridge, not the stellar chain. From S92 to S99 the walk's crest against the point function's crest within the same
+window at the foot's own radius read at most 0.2176 (seed 0, 45 feet) and 0.4582 (seed 4242, 43 feet), over the
+bound (#220): between two grid rings the crest the window held could be another ridge's (the worst feet at 4.44-4.45
+kpc, inside the pinned bar); read at the foot since S99, 0.
 
 **The walk reads the gas at the stellar chain's polyline, not at the gas crest** (S62's review, finding 4; measured on
 the Milky Way template's 48 spurs, unchanged here - the lead opens the debt): the gas ridge stands near the stellar
@@ -89,7 +92,6 @@ from galaxy.core.registry import ARM_CLASSES, IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.gas_pattern import CELLS, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS, crest_width
-from galaxy.stages.pattern import ring_bracket
 from galaxy.stages.spurs import SPUR_FIELDS
 
 FLOCCULENT = ARM_CLASSES[2]
@@ -105,6 +107,8 @@ MAX_SPURS = 4096  # the most spurs one chain holds (rule A1): a 40 kpc chain at 
 # #148's clock moved the mesh's worst foot 0.4804 -> 0.5680 (the spurs' spacing reads the gas column the clock
 # moved, so the feet stand elsewhere), #209's floor to 0.5687, #80's pinned bar to 0.5700; the worst feet stand at
 # 5.9-6.1 kpc, just past the bar's end, where the mesh's rings are 0.23 kpc apart. Was 0.49.
+# S99 (#220): the walk reads the crest by the point function at the foot (``foot_reads``), so both bounds hold by
+# construction (0 at every foot measured); neither is moved (B5).
 WALK_READ_DIFFERENCE = 0.27
 WALK_READ_DIFFERENCE_COARSE = 0.58
 SPUR_CONSTANTS: tuple[str, ...] = ("SPUR_SPACING_JEANS", "SPUR_PITCH", "SPUR_LENGTH", "SPUR_WIDTH", "SPUR_FALL")
@@ -142,32 +146,22 @@ def ring_profiles(gas: Any, radii: np.ndarray) -> np.ndarray:
     return gas.unspurred_contrast_at(radii[:, None], centres[None, :])
 
 
-def ridge_reads(gas: Any, R: np.ndarray, rings: np.ndarray, crossing: np.ndarray, at_chain: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """(the gas crest, the ring's trough) at each crossing of a chain with a grid ring (S92, #164 / #165): ``rings``
-    the grid indices, ``crossing`` the chain's azimuth there, ``at_chain`` g read at it. The trough is the ring
-    profile's least value (``crest_width``'s floor); the crest the largest of g over the profile's cells whose
-    centres lie within half the ring's crest width of the chain, and the chain's own read. A flat ring (no crest:
-    the width NaN) reads the chain's g as its crest."""
-    rings = np.asarray(rings, dtype=np.int64)
-    crest = np.asarray(at_chain, dtype=float).copy()
-    trough = np.empty(crest.size)
-    if not rings.size:
-        return crest, trough
+def foot_reads(gas: Any, radius: float, phi: float) -> tuple[float, float]:
+    """(the gas crest, the ring's trough) at a foot (``radius``, ``phi``), by the gas pattern's point function on the
+    foot's own ring (S99, #220; was ``ridge_reads``, the two bracketing grid rings' reads linear in R - S92, #164 /
+    #165): the ring at ``radius`` read whole on the solver's cell centres (``ring_profiles``); the trough its least
+    value (``crest_width``'s floor), the crest the largest of g over its cells whose centres lie within half its crest
+    width of ``phi``, and g at the foot itself. A flat ring (no crest: the width NaN) reads the foot's g as its
+    crest."""
     centres = -math.pi + (np.arange(CELLS) + 0.5) * (2.0 * math.pi / CELLS)
-    unique, back = np.unique(rings, return_inverse=True)
-    profiles = ring_profiles(gas, R[unique])
-    floors = profiles.min(axis=1)
-    widths = np.array([crest_width(p) for p in profiles])
-    trough[:] = floors[back]
-    for j in range(crest.size):
-        u = int(back[j])
-        if not math.isfinite(widths[u]):
-            continue
-        off = np.abs(np.mod(centres - crossing[j] + math.pi, 2.0 * math.pi) - math.pi)
-        near = off <= 0.5 * widths[u]
+    profile = ring_profiles(gas, np.array([radius]))[0]
+    crest = float(gas.unspurred_contrast_at(np.array([radius]), np.array([phi]))[0])
+    width = crest_width(profile)
+    if math.isfinite(width):
+        near = np.abs(np.mod(centres - phi + math.pi, 2.0 * math.pi) - math.pi) <= 0.5 * width
         if near.any():
-            crest[j] = max(crest[j], float(profiles[u][near].max()))
-    return crest, trough
+            crest = max(crest, float(profile[near].max()))
+    return crest, float(profile.min())
 
 
 def lay(
@@ -187,36 +181,14 @@ def lay(
     sigma_gas = np.asarray(sigma_gas, dtype=float)
     shape = (c["SPUR_PITCH"], c["SPUR_LENGTH"], c["SPUR_WIDTH"], c["SPUR_FALL"])
 
-    # The ridge's contrast where each piece's chain crosses each grid ring the piece spans (and the two beyond its
-    # ends): one read of the gas pattern on the grid's own rings, no ring between them solved.
-    table: dict[int, dict[int, float]] = {}
-    pieces_rings: list[tuple[int, np.ndarray]] = []
-    for k in range(pieces.count):
-        lo = int(ring_bracket(R, np.array([pieces.start_radius[k]]))[0][0])
-        hi = int(ring_bracket(R, np.array([math.exp(min(pieces.x_end[k], 700.0))]))[1][0])
-        pieces_rings.append((k, np.arange(lo, hi + 1)))
-    slots = np.concatenate([np.full(r.size, k, dtype=np.int64) for k, r in pieces_rings])
-    rings = np.concatenate([r for _, r in pieces_rings])
-    crossing = pieces.along(slots, np.log(R[rings]))
-    g = gas.unspurred_contrast_at(R[rings], crossing)
-    # S92 (#164 / #165, the owner's ruling of 2026-11-10, "accept all recommendations" - S90's option 4): each grid
-    # ring the pieces span is read whole once, on the solver's cell centres (``ring_profiles``): its trough - the
-    # floor of ``gas_pattern.crest_width``, the repository's one rule for a ridge - and the full width at half
-    # maximum of its tallest crest. Where a chain crosses the ring the walk reads the gas crest, the largest of g
-    # within that width of the chain (half of it each side; the chain's own read among them), not g at the chain.
-    crest, trough = ridge_reads(gas, R, rings, crossing, g)
-    start = 0
-    for k, r in pieces_rings:
-        table[k] = {int(i): (float(c), float(t)) for i, c, t in zip(r, crest[start:start + r.size], trough[start:start + r.size])}
-        start += r.size
-
-    def ridge(piece: int, radius: float) -> tuple[float, float]:
-        """(the gas crest, the ring's trough) at ``radius`` on piece ``piece``'s chain: the two bracketing grid
-        rings' reads, each linear in R."""
-        lower, upper, share = ring_bracket(R, np.array([radius]))
-        at, w = table[piece], float(share[0])
-        (c0, t0), (c1, t1) = at[int(lower[0])], at[int(upper[0])]
-        return (1.0 - w) * c0 + w * c1, (1.0 - w) * t0 + w * t1
+    # S99 (#220; the gate's ruling, the closer's second form): the ridge is read at each foot by the gas pattern's
+    # point function on the foot's own ring (``foot_reads``) - its trough, the floor of ``gas_pattern.crest_width``
+    # (the repository's one rule for a ridge), and the gas crest, the largest of g within half that ring's crest width
+    # of the foot (the foot's own g among them). Was (S92, #164 / #165): each grid ring the pieces span read whole once
+    # and, where the chain crosses it, its window's crest and its trough; at a foot the two bracketing rings' reads
+    # linear in R - the crest the window held on a grid ring could be another ridge's, and the linear read between two
+    # rings missed the foot's own crest by up to 0.4582 at texture seed 4242 (#220). The cost: one ring solved at each
+    # foot's radius (S90 measured +1.9-2.2 s a lay).
 
     # S90 (#213; the gate's ruling at S88's close, D256: a spur does not belong where no ridge stands): the walk ends
     # at the arms' budget's edge - the last grid ring where the pieces carry any amplitude. Past it the gas ridge is
@@ -244,8 +216,9 @@ def lay(
             radius, phi = point_on(pieces, int(members[i]), fraction)
             # S92 (#164): the spur's height is the crest's excess over the ring's trough, so the foot's sum is about
             # 2 crest - trough, not twice the crest; (#165) the ridge's peak column is the crest's. Was: g at the
-            # chain, both the height and the peak's contrast.
-            top, floor = ridge(int(members[i]), radius)
+            # chain, both the height and the peak's contrast. S99 (#220): both read at the foot itself (``foot_reads``);
+            # was the two bracketing grid rings' reads, linear in R.
+            top, floor = foot_reads(gas, radius, phi % (2.0 * math.pi))
             contrast = max(top - floor, 0.0)
             peak = float(np.interp(radius, R, sigma_gas)) * top
             spacing = c["SPUR_SPACING_JEANS"] * jeans_scale / peak if peak > 0.0 else math.inf
@@ -288,9 +261,11 @@ _CONSERVES = (
     "clusters' sector shares on a ring do. It does not keep the interarm gas's share of a ring, which falls by the "
     "spurs' mean there: <S> at most 0.0139 of a ring (S92, #164 / #165, the Milky Way template at texture seed 0; was "
     "0.0092). Since S92 the walk reads the gas crest near each foot - the largest contrast within half the ring's crest "
-    "width of the chain - and the ring's trough, on the two grid rings either side: the crest within 0.27 of the point "
-    "function's crest at the foot's own ring, relative, over the 45 feet at seed 0 (0.2176), and 0.4582 over the 43 at "
-    "seed 4242, over the bound - held for the gate's re-declaration (S92). Until S92 it read g at the chain's polyline: "
+    "width of the foot - and the ring's trough; since S99 on the foot's own ring by the gas pattern's point function, "
+    "so the crest is the point function's to the bit (0 at every foot of the Milky Way template at texture seeds 0 and "
+    "4242 and of four seed pairs of S95's population that read 0.37-0.67 before). S92 to S99 it read them on the two "
+    "grid rings either side, linear in R: 0.2176 over the 45 feet at seed 0 and 0.4582 over the 43 at seed 4242, over "
+    "the bound 0.27 (#220). Until S92 it read g at the chain's polyline: "
     "within 0.27 of the point function's value there, relative - measured "
     "at S88 over every foot on the production grid (98 feet of the Milky Way template at texture seeds 0 and 4242: "
     "at most 0.2506, 4 over 0.052, the median 2e-5; S70: 92 feet, at most 0.2698), and within 0.58 on Audit V's "
@@ -334,11 +309,11 @@ GAS_SPUR_COLUMNS: tuple[FieldDecl, ...] = (
     _column("gas_spur_jeans_length", "Jeans length at a spur's foot", "kpc", "The square of the cold gas's sound speed over the gravitational constant times the ridge's peak column at the foot."),
     _column("gas_spur_peak_surface_density", "Ridge's peak column at a spur's foot", "Msun/pc2",
             "The ring's gas column times the gas crest at the foot: the largest gas contrast within half the ring's crest "
-            "width of the chain, read on the two grid rings either side of it."),
+            "width of the foot, read on the ring at the foot's own radius."),
     _column("gas_spur_contrast", "Height of a spur at its foot", "dimensionless",
             "The spur's height where it leaves its chain: the gas crest's excess over the ring's trough there (the crest the "
-            "largest gas contrast within half the ring's crest width of the chain, the trough the ring's least), read on "
-            "the two grid rings either side of the foot."),
+            "largest gas contrast within half the ring's crest width of the foot, the trough the ring's least), read on "
+            "the ring at the foot's own radius."),
     _column("gas_spur_pitch", "Pitch of a gas spur", "deg", "The angle the spur makes with the circle at its foot, trailing, on the ridge's outer side."),
     _column("gas_spur_length", "Length of a gas spur", "kpc", "How far the spur runs from the ridge."),
     _column("gas_spur_width", "Width of a gas spur", "kpc", "The spur's full width at half maximum across itself."),
