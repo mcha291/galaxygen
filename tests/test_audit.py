@@ -357,20 +357,36 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
 
 
 def test_row_15_is_the_bar_constant_times_the_scale_length(model):
-    f = run(model, only=("bar_half_length",)).fields
-    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `BAR_LENGTH_RATIO * disc_scale_length_spin` (2.0 x 2.605 = 5.210, out by 0.010 since S25). Erwin
-    # 2019's law of the scale length: log10 a = 0.04 + 0.76 log10 h, h the lambda_d one (checkpoint 1) - 2.270 kpc,
-    # row 15 out by 2.73 from its 5.0, recorded under #80; the Milky Way template pins the measured 5.0. The name
-    # keeps the record of the constant this test held from S22 to S87.
-    norm, slope = model.constants["BAR_LENGTH_LOG_NORM"].value, model.constants["BAR_LENGTH_SLOPE"].value
-    assert (norm, slope) == (0.04, 0.76) and "BAR_LENGTH_RATIO" not in model.constants
-    assert f["bar_half_length"] == pytest.approx(10.0 ** (norm + slope * math.log10(f["disc_scale_length_spin"])), rel=1e-12)
-    assert f["bar_half_length"] == pytest.approx(2.2698, abs=1e-4) and not inside(15, f["bar_half_length"])
-    # Until S87 (the ratio 2.0, 5.2097 out by 0.01) a scale length outside 2.4-2.6 kpc took row 15 out of its window -
-    # a check on R_d, not on the bar. On the law the window needs h of 7.0-7.8 kpc: the Milky Way's 5.0 is 1.92 of its
-    # discs' 2.6, which no h of a disc like it reaches (S87, #80) - a check on the law, not on R_d.
-    h_lo, h_hi = (10.0 ** ((math.log10(edge) - norm) / slope) for edge in (Q[15].lo, Q[15].hi))
-    assert (h_lo, h_hi) == pytest.approx((6.978, 7.753), abs=5e-3)
+    """Since S100 (batch P, D270; #80, D268 ruling 5) the bar's half-length on an unpinned barred disc is Erwin 2019's
+    Table 4, log a on log h and a broken log M (the retained baryons' mass checkpoint 1 publishes); the name keeps the
+    record of the constant this test held from S22 to S87 and of Table 3's law (log a on log h alone) from S87 to S100.
+    The default disc's bar reads 3.1395 kpc (2.2698 on Table 3), row 15 (5.0 +/- 0.2) still a recorded miss."""
+    f = run(model, only=("bar_half_length", "baryon_mass_total", "disc_scale_length_spin")).fields
+    # S100 (batch P, D270; #80): was Table 3 - `(norm, slope) == (0.04, 0.76)`, `bar_half_length ==
+    # 10 ** (norm + slope log10 h)` to 1e-12, 2.2698 kpc, and the window in h at (6.978, 7.753) kpc. Now Table 4's
+    # row "log M* + log h" (alpha1 0.02, beta 0.61, beta1 0.00, beta2 0.35, log M_brk 10.13), the law by hand to the
+    # same 1e-12, as tests/test_s100_bar_length.py states it.
+    c = {k: model.constants[k].value for k in ("BAR_LENGTH_LOG_NORM", "BAR_LENGTH_SLOPE", "BAR_LENGTH_MASS_SLOPE_LOW",
+                                                "BAR_LENGTH_MASS_SLOPE_HIGH", "BAR_LENGTH_MASS_BREAK")}
+    assert tuple(c.values()) == (0.02, 0.61, 0.00, 0.35, 10.13) and "BAR_LENGTH_RATIO" not in model.constants
+    norm, slope, low, high, brk = c.values()
+    log_m, h = math.log10(float(f["baryon_mass_total"])), float(f["disc_scale_length_spin"])
+    by_hand = (10.0 ** (norm + slope * math.log10(h) + low * log_m) if log_m < brk else
+               10.0 ** (norm + (low - high) * brk + slope * math.log10(h) + high * log_m))
+    assert f["bar_half_length"] == pytest.approx(by_hand, rel=1e-12)
+    assert f["bar_half_length"] == pytest.approx(3.1395, abs=1e-4) and not inside(15, f["bar_half_length"])
+    # At the default disc's own mass (above the break) row 15's window needs h of the range below: a check on the
+    # law, not on R_d, as since S87.
+    assert log_m > brk
+    h_lo, h_hi = (10.0 ** ((math.log10(edge) - norm - (low - high) * brk - high * log_m) / slope)
+                  for edge in (Q[15].lo, Q[15].hi))
+    assert (h_lo, h_hi) == pytest.approx((5.2245, 5.9571), abs=5e-3)  # S100 (batch P, D270; #80): Table 4 at the default disc's own mass; on Table 3 it was (6.978, 7.753)
+    # S87 (#80, the owner's ruling of 2026-11-03, D255): was `BAR_LENGTH_RATIO * disc_scale_length_spin` (2.0 x 2.605
+    # = 5.210, out by 0.010 since S25). Erwin 2019's law of the scale length: log10 a = 0.04 + 0.76 log10 h, h the
+    # lambda_d one (checkpoint 1) - 2.270 kpc, row 15 out by 2.73 from its 5.0, recorded under #80; the Milky Way
+    # template pins the measured 5.0. Until S87 (the ratio 2.0, 5.2097 out by 0.01) a scale length outside 2.4-2.6 kpc
+    # took row 15 out of its window - a check on R_d, not on the bar. On Table 3 the window needed h of 7.0-7.8 kpc:
+    # the Milky Way's 5.0 is 1.92 of its discs' 2.6, which no h of a disc like it reaches (S87, #80).
 
 
 # --- the register moved with the findings ----------------------------------------
@@ -566,7 +582,11 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
     0.59 %).
 
     S91 (D260): the worst cell and the worst ring, one ring since S59, are two rings since #216's re-laid census, both
-    inside the bar's reach - which is what is asserted now."""
+    inside the bar's reach - which is what is asserted now.
+
+    S100 (batch P, D270; #80's 3.140 kpc bar, #130, #227): the table against the reader's cell means reads 7.197e-4 at
+    worst (1.1807e-4 at pattern seed 3), the pins below; still under 1e-3 % of any ring's young weight, and the worst
+    cell's ring and the worst ring (2.9625 / 2.7375 kpc) still inside the bar's reach."""
     from galaxy.stages import systems
 
     reads = ("sfr_modulation", "gas_surface_density", "sf_threshold_surface_density", "star_formation_gas_contrast", "bar_half_length")
@@ -577,8 +597,8 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
         # S87 (#80): the default disc's bar is Erwin 2019's 2.27 kpc (was 5.21): the worst cell moves inward with the
         # footprint's edge, and the table against the reader's cell means reads 2.4e-3 (was 2.6e-4) - the reader's
         # quadrature normaliser on rings where a small footprint's edge crosses the pattern's cells.
-        (None, (1.9223, 2.2125, 1.1179, 0.0324), 2.914e-3),  # S91 (#216's re-laid census, D260): was (1.7956, 2.2125, 1.1720, 0.0335), 2.439e-3  # S87 (#80): was (0.9069, 4.3875, 0.5019, 0.0381), 2.63e-4 - the bar's law  # S87 (#148): was (0.9230, ..., 0.5104, ...) - the clock
-        ({"pattern_seed": 3}, (1.7078, 2.1375, 0.6526, 0.0262), 1.8137e-3),  # S91 (#216's re-laid census, D260): was (1.5197, 1.9875, 0.6370, 0.0246), 1.1286e-3  # S87 (#80): was (0.9808, 4.1625, 0.9125, 0.0556), 5.17e-5 - the bar's law  # S87 (#148): was (0.9979, ..., 0.9263, ...), 5.5e-5 - the clock  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)
+        (None, (1.2809, 2.9625, 0.6752, 0.0303), 7.197e-4),  # S91 (#216's re-laid census, D260): was (1.7956, 2.2125, 1.1720, 0.0335), 2.439e-3  # S87 (#80): was (0.9069, 4.3875, 0.5019, 0.0381), 2.63e-4 - the bar's law  # S87 (#148): was (0.9230, ..., 0.5104, ...) - the clock  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130, #227): was (None, (1.9223, 2.2125, 1.1179, 0.0324), 2.914e-3)
+        ({"pattern_seed": 3}, (1.7469, 2.7375, 1.0893, 0.0432), 1.1807e-4),  # S91 (#216's re-laid census, D260): was (1.5197, 1.9875, 0.6370, 0.0246), 1.1286e-3  # S87 (#80): was (0.9808, 4.1625, 0.9125, 0.0556), 5.17e-5 - the bar's law  # S87 (#148): was (0.9979, ..., 0.9263, ...), 5.5e-5 - the clock  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)  # S100 (batch P, D270; #80, #130, #227): was ({"pattern_seed": 3}, (1.7078, 2.1375, 0.6526, 0.0262), 1.8137e-3)
     ):
         o = run(default_model, inputs, only=reads)
         R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
@@ -625,7 +645,7 @@ def test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_star
         return np.where(m > 0, a / np.where(m > 0, m, 1.0), 1.0)
 
     for inputs, (worst, at, weighted) in (
-        (None, (0.1048, 2.25, 0.00542)),  # S91 (#216, D260): was (0.1167, 11.175, 0.00677) - the default galaxy's census re-laid by the births made bit-independent (red at 3f16d0f, green on main); the templates' rows read the same  # S87 (#80): was (0.0562, 2.100, 0.00405) - the default disc's bar is the law's 2.27 kpc
+        (None, (0.0702, 1.275, 0.00504)),  # S91 (#216, D260): was (0.1167, 11.175, 0.00677) - the default galaxy's census re-laid by the births made bit-independent (red at 3f16d0f, green on main); the templates' rows read the same  # S87 (#80): was (0.0562, 2.100, 0.00405) - the default disc's bar is the law's 2.27 kpc  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130, #227; the templates' rows unmoved): was (None, (0.1048, 2.25, 0.00542))
         (templates.overrides(templates.TEMPLATES["milky_way"]), (0.2516, 5.925, 0.01271)),  # S87 (#80): was (0.2600, 5.925, 0.01306) - its pinned 5.0 kpc bar
         (templates.overrides(templates.TEMPLATES["ngc_4414"]), (0.0706, 0.675, 0.00824)),  # S87 (#209): the weighted mean was 0.00693 - the owner's floor redrew its pieces
     ):

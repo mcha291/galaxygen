@@ -35,9 +35,13 @@ CASES = [(t, layer) for t in ("milky_way", "ngc_4414") for layer in ("on", "off"
 # S88: was with "gas_pattern" after "arm_pieces" - since S86 (#154's table, f9d8502) sfh_azimuthal reads the gas
 # pattern's own reads and builds the pattern itself (GAS_PATTERN_READS), so the route asks the gas_pattern stage for
 # no field and a fresh service does not run it (D4); measured on a fresh service at S88, layer on and off alike.
-RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces",
-                 "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs", "vertical_alpha",
-                 "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular"]
+# S100 (batch P, D270; #130): was without "gas_pattern" and with "spurs" after "light" - the spurs stage forms the
+# placed gas as the blend of the molecular and the atomic responses (BLEND_READS: the gas_pattern stage's
+# atomic_gas_density_contrast and the ism stage's gas_molecular_fraction_profile), so the route runs gas_pattern
+# again (after arm_pieces) and spurs after ism; measured on a fresh service at S100.
+RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
+                 "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "vertical_alpha",
+                 "ism", "dust", "spurs", "clouds", "cloud_texture", "clusters", "nebular"]
 # S66 (D226 R6; the review's M1): the render ran gas_fluctuation on every request - its header carried the field's
 # cell normalisers. S73 (#199): the field's table is /api/layer's, and the render runs the stages above, without it.
 # The disc's realised clouds' share of its dust and the first three rings' expected shares (S64's probe, measured;

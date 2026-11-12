@@ -104,30 +104,30 @@ def test_the_heights_as_read_at_s50(galaxy):
     f, R = galaxy.fields, np.asarray(galaxy.grid.R)
     h = np.asarray(f["gas_scale_height"], dtype=float)
     h_star = float(f["thin_disc_scale_height"])
-    assert at(R, h, 0.1) == pytest.approx(21.01, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 21.31
-    assert at(R, h, 2.0) == pytest.approx(30.78, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 31.20
-    assert at(R, h, 4.0) == pytest.approx(46.28, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 46.89
-    assert at(R, h, 8.2) == pytest.approx(111.66, abs=0.1)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 113.08
-    assert at(R, h, 8.2) / h_star == pytest.approx(0.323, abs=0.002)  # a third of the thin disc's 355.7 pc  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.318
-    assert at(R, h, 15.0) == pytest.approx(434.5, abs=0.5)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 437.9
+    assert at(R, h, 0.1) == pytest.approx(20.65, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 21.31  # S100 (batch P, D270; #227, the stars' height 345.9 -> 334.2 pc): was 21.01
+    assert at(R, h, 2.0) == pytest.approx(30.26, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 31.20  # S100 (batch P, D270; #227): was 30.78
+    assert at(R, h, 4.0) == pytest.approx(45.49, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 46.89  # S100 (batch P, D270; #227): was 46.28
+    assert at(R, h, 8.2) == pytest.approx(109.76, abs=0.1)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 113.08  # S100 (batch P, D270; #227): was 111.66
+    assert at(R, h, 8.2) / h_star == pytest.approx(0.328, abs=0.002)  # a third of the thin disc's 355.7 pc  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.318  # S100 (batch P, D270; #227): was 0.323
+    assert at(R, h, 15.0) == pytest.approx(427.1, abs=0.5)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 437.9  # S100 (batch P, D270; #227): was 434.5
     inside = R <= 20.0
     # A flare, monotonic across the stellar disc from the second ring out (the first reads 21.69 against the
     # second's 21.31: the innermost cell of the stellar profile).
-    assert np.all(np.diff(h[inside][1:]) > 0.0) and h[0] == pytest.approx(21.26, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 21.69
-    assert float(R[inside][np.argmin(np.abs(h[inside] - h_star))]) == pytest.approx(12.86, abs=0.08)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 13.09
+    assert np.all(np.diff(h[inside][1:]) > 0.0) and h[0] == pytest.approx(20.90, abs=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 21.69  # S100 (batch P, D270; #227): was 21.26
+    assert float(R[inside][np.argmin(np.abs(h[inside] - h_star))]) == pytest.approx(12.71, abs=0.08)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 13.09  # S100 (batch P, D270; #227): was 12.86
     held = np.isfinite(h)
     weight = np.asarray(f["dust_surface_density"], dtype=float) * R
-    assert float(np.trapezoid((weight * h)[held], R[held]) / np.trapezoid(weight[held], R[held])) == pytest.approx(64.47, abs=0.1)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 65.33
+    assert float(np.trapezoid((weight * h)[held], R[held]) / np.trapezoid(weight[held], R[held])) == pytest.approx(63.37, abs=0.1)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 65.33  # S100 (batch P, D270; #227): was 64.47
     # Past the stellar disc's edge the quotient runs away (1.2 kpc at 23 kpc, 10 kpc at 24, 118 kpc at 26) and
     # the field holds no number from the first ring of the edge, 23.66 kpc, where the stars' scale length drops
     # under the layer's height (it is 3.1 kpc against 1.3 one ring inside, and never under 2.3 heights inside
     # that): every ring inside has a height, none outside, and the dust left without one is 1.5 × 10⁻⁵ of the
     # dust's mass, dimming by a thousandth of a magnitude face-on at most.
-    assert at(R, h, 23.0) == pytest.approx(1199.0, abs=2.0)
+    assert at(R, h, 23.0) == pytest.approx(1177.1, abs=2.0)  # S100 (batch P, D270; #227): was 1199.0
     first = int(np.argmin(held))
     assert held[:first].all() and not held[first:].any()
     assert float(R[first]) == pytest.approx(23.66, abs=0.04)
-    assert h[first - 1] == pytest.approx(1319.3, abs=2.0)
+    assert h[first - 1] == pytest.approx(1295.9, abs=2.0)  # S100 (batch P, D270; #227): was 1319.3
     assert float(np.asarray(f["dust_extinction_v"])[first]) < 1.1e-3
     assert float(np.trapezoid(weight[~held], R[~held]) / np.trapezoid(weight, R)) < 2e-5
 
@@ -231,9 +231,9 @@ def test_the_layered_geometry_is_applied(galaxy, prod):
     per_ring = np.asarray(f["dust_absorbed_surface_brightness"], dtype=float)
     np.testing.assert_allclose(per_ring, light * two, rtol=2e-6, atol=0.0)
     assert float(f["dust_absorbed_luminosity"]) == pytest.approx(float(np.trapezoid(light * two * area, R)), rel=1e-7)
-    assert float(f["dust_absorbed_luminosity"]) / layered == pytest.approx(0.99774, abs=5e-5)  # S89 (#168): the clouds' layer
+    assert float(f["dust_absorbed_luminosity"]) / layered == pytest.approx(0.99832, abs=5e-5)  # S89 (#168): the clouds' layer  # S100 (batch P, D270; #227, the clouds' layer over the stars' height): was 0.99774
     assert np.array_equal(per_ring > 0.0, np.isfinite(ratio))  # no gas height, nothing absorbed (D211 ruling 2)
-    assert slab == pytest.approx(1.6273e10, rel=1e-4) and layered == pytest.approx(1.2499e10, rel=1e-4)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.5675e10, 1.2006e10
+    assert slab == pytest.approx(1.6273e10, rel=1e-4) and layered == pytest.approx(1.25164e10, rel=1e-4)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.5675e10, 1.2006e10  # S100 (batch P, D270; #227): was 1.2499e10
     assert layered / slab == pytest.approx(0.7681, abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7659
     assert slab / float(f["disc_luminosity"]) == pytest.approx(0.3415, abs=0.001)  # the infrared share until S52
     assert layered / float(f["disc_luminosity"]) == pytest.approx(0.2616, abs=0.001)  # the published one since
@@ -506,12 +506,12 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # Were (0.0866, 0.0736, 0.9439), (0.0531, 0.0123, 0.2104) and (0.0125, -0.0182, 0.0361).
     # S92: was (0.0117, 0.0018, 0.1299); at bd0ed0c (S91's #216 re-lay, never run at S91) (0.0137, 0.0025, 0.1516), the runner's
     # numbers too (ci 42796166390); now (#164 / #165, the spurs re-laid move the gas the dust is placed by) as below.
-    assert read[4.0][:3] == pytest.approx((0.0134, 0.0018, 0.1486), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0563, 0.0525, 0.5908
+    assert read[4.0][:3] == pytest.approx((0.0104, 0.0020, 0.1150), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0563, 0.0525, 0.5908  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130 the placed gas a blend): was (0.0134, 0.0018, 0.1486)
     # S92: 6 kpc's was (0.0103, -0.0078, 0.0404) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's value not read:
     # the test stops at 4 kpc there).
-    assert read[6.0][:3] == pytest.approx((0.0131, -0.0100, 0.0514), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0063, -0.0033, 0.025
+    assert read[6.0][:3] == pytest.approx((0.0059, -0.0060, 0.0232), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0063, -0.0033, 0.025  # S100 (batch P, D270; #80, #130): was (0.0131, -0.0100, 0.0514)
     # S92: R0's was (0.0025, -0.0098, 0.0073) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read).
-    assert read[8.2][:3] == pytest.approx((0.0014, -0.0060, 0.0041), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.001, -0.0043, 0.0028
+    assert read[8.2][:3] == pytest.approx((0.0019, -0.0093, 0.0056), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.001, -0.0043, 0.0028  # S100 (batch P, D270; #80, #130): was (0.0014, -0.0060, 0.0041)
     # D210 (i), read and failed: the ring's light at R₀ still falls with the dust on the gas's pattern (S51 read
     # -0.85 %, S56's ranked ridge on five modes -0.89 %). S57 (D216): was `and read[8.2][1] > -0.0128` - "less than
     # D207's -1.28 %", which held on the narrow ridge and **does not hold on the gas's steady response: -1.82 %**.
@@ -540,25 +540,25 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # now (1.62 of the ring's mean), so the crest lets through less; the gap and the flank are the cells they were.
     # S92: was (0.665, 0.864, 0.804) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the test stops at
     # 4 kpc there); the crest lets through more now that a spur's height is the crest over the trough.
-    assert read[8.2][3:] == pytest.approx((0.736, 0.847, 0.823), abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.718, 0.838, 0.807
+    assert read[8.2][3:] == pytest.approx((0.705, 0.855, 0.817), abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.718, 0.838, 0.807  # S100 (batch P, D270; #80, #130): was (0.736, 0.847, 0.823)
     # S60 (D219, the gate's ruling): was `read[8.2][3] < 0.747 and read[8.2][4] > 0.874` - D210 (iii), the crest under
     # D207's arm (0.747) and a gap over its 0.874, as S51 read them. S60 (D219, #155): the arms carry 45-80 % of the
     # law's power on the median ring, so the lanes at R0 are fainter than at S51 - the crest lets through 0.750 and a
     # gap 0.838. A pinned record of the measured crest and gap now, not D210's bounds.
-    assert read[8.2][3] == pytest.approx(0.7360, abs=5e-4) and read[8.2][4] == pytest.approx(0.8475, abs=5e-4)  # S92: was 0.6646, 0.8639 (S91 and #164 / #165 together, as above). S62 (D221): was 0.750, a spur's foot  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7178, 0.8375
+    assert read[8.2][3] == pytest.approx(0.7055, abs=5e-4) and read[8.2][4] == pytest.approx(0.8547, abs=5e-4)  # S92: was 0.6646, 0.8639 (S91 and #164 / #165 together, as above). S62 (D221): was 0.750, a spur's foot  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7178, 0.8375  # S100 (batch P, D270; #80, #130): was 0.7360, 0.8475
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
     # S58 (D217): was (0.454, 0.935, 0.706)
     # S59 (D218): was (0.450, 0.911, 0.676) - the flank is another cell, the crest and the gap the ring's as they were
     # S60 (D219): was (0.450, 0.911, 0.626) - the arms a census of pieces
     # S62 (D221): was (0.590, 0.723, 0.656) - the crest at 6 kpc a spur's foot on the ridge (1.40 of the ring's mean)
-    assert read[6.0][3:] == pytest.approx((0.5136, 0.7548, 0.6467), abs=0.002)  # S92: was (0.5315, 0.737, 0.651) - S91 and #164 / #165 together (bd0ed0c's not read). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.5835, 0.723, 0.656
+    assert read[6.0][3:] == pytest.approx((0.5854, 0.7354, 0.6592), abs=0.002)  # S92: was (0.5315, 0.737, 0.651) - S91 and #164 / #165 together (bd0ed0c's not read). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.5835, 0.723, 0.656  # S100 (batch P, D270; #80, #130): was (0.5136, 0.7548, 0.6467)
     # S57 (D216): was (0.452, 0.577, 0.520); S56 (D215): was (0.451, 0.576, 0.531)
     # S58 (D217): was (0.441, 0.630, 0.519) - the crest at 4 kpc is a lane's
     # S59 (D218): was (0.404, 0.641, 0.503) - inside the bar's half-length the arms turn against the lanes
     # S59 (D218 follow-up): was (0.404, 0.641, 0.503); first pass (0.403, 0.641, 0.526) - the crest is a lane's with
     # an arm's response on it at another angle (the ring's largest gas contrast 5.37 where the first pass read 4.99)
     # S60 (D219): was (0.400, 0.641, 0.526) - the arms a census of pieces
-    assert read[4.0][3:] == pytest.approx((0.4638, 0.5709, 0.5118), abs=0.002)  # S92: was (0.458, 0.560, 0.508) - S91 and #164 / #165 together (bd0ed0c's not read). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.402, 0.549, 0.549
+    assert read[4.0][3:] == pytest.approx((0.4641, 0.5523, 0.5106), abs=0.002)  # S92: was (0.458, 0.560, 0.508) - S91 and #164 / #165 together (bd0ed0c's not read). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.402, 0.549, 0.549  # S100 (batch P, D270; #80, #130): was (0.4638, 0.5709, 0.5118)
 
 
 def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
@@ -633,11 +633,11 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     # winding laid in seeded segments, turn against the bar's body and lanes; the solar ring is the ring it was.
     # S60 (D219): were 0.9504 over the disc and 1.052 at R0 - the dust and the light are placed by the pieces' c and g,
     # which at R0 are flatter than S59's (g 0.81-1.37 of its mean): the solar ring is no longer the ring it was.
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0001, abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9495
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(0.9878, abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9495  # S100 (batch P, D270; #80, #130; a record, still measured and not applied): was 1.0001
     # S92: R0's was 1.032 - S91's #216 re-lay, never run at S91: bd0ed0c reads 1.0194, the runner's number too (ci
     # 42796166390); #164 / #165 leave it there.
-    assert at(R, placed / mean, 8.2) == pytest.approx(1.0194, abs=0.002)  # S57 (D216): was 1.024; S56 (D215): was 1.023; S50: 1.041  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.014
-    assert at(R, placed / mean, 2.0) == pytest.approx(0.9814, abs=0.002)  # S59 (D218): was 0.8485; S58 (D217): was 1.001; S50: 1.001  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8525
+    assert at(R, placed / mean, 8.2) == pytest.approx(1.0301, abs=0.002)  # S57 (D216): was 1.024; S56 (D215): was 1.023; S50: 1.041  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.014  # S100 (batch P, D270; #80, #130): was 1.0194
+    assert at(R, placed / mean, 2.0) == pytest.approx(0.9407, abs=0.002)  # S59 (D218): was 0.8485; S58 (D217): was 1.001; S50: 1.001  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8525  # S100 (batch P, D270; #80, #130): was 0.9814
     # S56 (D215): was `every = 4` - every fourth azimuth carried the ring's mean of the placement to rounding on
     # one mode's analytic ridge. A ranked ridge's subsample did not (4.8e-3 on every fourth, 1.1e-3 on every second),
     # so the layered quadrature reads every cell.
@@ -666,7 +666,7 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     # 6.34 kpc).
     # S92: were 7.140e-3 and 2.157e-3 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the test stops at
     # R0's ratio there).
-    assert read_sub[4] == pytest.approx(3.708e-3, rel=0.05) and read_sub[2] == pytest.approx(1.289e-3, rel=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 3.281e-3, 1.410e-3
+    assert read_sub[4] == pytest.approx(1.677e-3, rel=0.05) and read_sub[2] == pytest.approx(1.096e-3, rel=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 3.281e-3, 1.410e-3  # S100 (batch P, D270; #80, #130): was 3.708e-3, 1.289e-3
     every = 1
     sub = (c[:, ::every] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::every])).mean(axis=1)
     assert np.allclose(sub, placed, rtol=1e-8, atol=0.0)
@@ -685,12 +685,12 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     # the placed geometry - reported to the lead.
     # S59 (D218): was 0.9652 - the rings inside the bar's half-length, where the arms turn against the lanes
     # S60 (D219): was 0.9656 - the arms a census of pieces
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0047, abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9679
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(0.9982, abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9679  # S100 (batch P, D270; #80, #130): was 1.0047
     # S57 (D216): was 1.014 (S55's, read again at S56); S52 (D211): was 1.023 (mixed slab)
     # S60 (D219): was 1.044 - at R0 the pieces' c and g are flatter than S59's
     # S92: was 1.029 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the test stops at R0's ratio there).
-    assert at(R, q, 8.2) == pytest.approx(1.0180, abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.013
-    assert at(R, q, 2.0) == pytest.approx(0.9906, abs=0.002)  # S59 (D218): was 0.9036; S58 (D217): was 0.9995; S52 (D211): was 1.001 (mixed slab)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9067
+    assert at(R, q, 8.2) == pytest.approx(1.0279, abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.013  # S100 (batch P, D270; #80, #130): was 1.0180
+    assert at(R, q, 2.0) == pytest.approx(0.9679, abs=0.002)  # S59 (D218): was 0.9036; S58 (D217): was 0.9995; S52 (D211): was 1.001 (mixed slab)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9067  # S100 (batch P, D270; #80, #130): was 0.9906
     # S59 (D218 follow-up): was 0.9408; first pass 0.9387 - at 4 kpc the arms turn against the lanes at other angles
     # on the relative residual's winding. (The other four layered and slab readings here still read inside the first
     # pass's pins: 0.9502 and 0.9654 over the disc, 0.8522 and 0.9065 at 2 kpc; R₀'s are the ring's as they were.)
@@ -765,6 +765,6 @@ def test_the_clouds_dust_is_heated_in_the_clouds_layer(prod):
     one = dust.layered_absorbed_fraction(tau, ratio)
     two = dust.absorbed_fraction(tau, ratio, share, cratio)
     np.testing.assert_allclose(np.asarray(f["dust_absorbed_surface_brightness"]), np.asarray(f["disc_surface_brightness"]) * two, rtol=1e-12, atol=0.0)
-    assert float(np.trapezoid(light * two, R) / np.trapezoid(light * one, R)) == pytest.approx(0.99774, abs=5e-5)
+    assert float(np.trapezoid(light * two, R) / np.trapezoid(light * one, R)) == pytest.approx(0.99832, abs=5e-5)  # S100 (batch P, D270; #227, the clouds' layer over the stars' height): was 0.99774
     q = np.where(one > 0.0, two / np.where(one > 0.0, one, 1.0), np.nan)
-    assert [round(at(R, q, r), 4) for r in (2.0, 4.0, 8.2, 12.0)] == pytest.approx([1.0071, 0.9901, 0.9921, 0.9979], abs=2e-4)
+    assert [round(at(R, q, r), 4) for r in (2.0, 4.0, 8.2, 12.0)] == pytest.approx([1.0086, 0.9904, 0.9919, 0.9978], abs=2e-4)  # S100 (batch P, D270; #227): was [1.0071, 0.9901, 0.9921, 0.9979]
