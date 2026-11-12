@@ -137,6 +137,11 @@ export interface Tuning {
   // The HII regions as knots and the clusters with their radius (S64, BUILD_III V6; RULING_S64 R5-R7).
   /** The field mode's HII regions drawn as knots, the field's HII layers scaled by each cell's undrawn share. */
   knots: boolean;
+  /**
+   * A multiplier on the knots' drawn light (S97): their FluxPoints gain, in every regime they are drawn in (point, disc,
+   * instrument image, its wings). At 1 the closure; at k the knots carry k times the H-alpha the field gave up.
+   */
+  knotsIntensity: number;
   /** A cluster drawn with its Plummer profile once its half-mass diameter fills a pixel. */
   clusterRadius: boolean;
   /** The field mode's region regime's stars (S82, #172): the bright catalogue's points, or V3's sample (regionStars.ts). */
@@ -190,6 +195,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   cloudRaster: CLOUD_RASTER,
   cloudElongation: 1,
   knots: true,
+  knotsIntensity: 1,
   clusterRadius: true,
   regionStars: "catalogue",
   gasInMarch: true,
@@ -429,6 +435,18 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
       "target) (S64, V6). A display choice.",
   },
   {
+    key: "knotsIntensity", label: "HII knots intensity", group: "Components", kind: "range", min: 0.05, max: 4, step: 0.01, log: true, unit: "×",
+    about:
+      "Multiplies the HII knots' drawn light and nothing else (S97): the field mode's knots at galaxy scale, in every " +
+      "regime they are drawn in - a point, a disc of the Stromgren radius once that fills a pixel, the instrument's image " +
+      "and its wings' pass - through their one gain. Not the field's HII layers, which stay scaled per level-0 cell by " +
+      "the knots' undrawn share; not the region regime's HII regions (a different drawing, not reached). At 1 the screen " +
+      "carries the census's Halpha exactly where every knot is drawn (the knots switch's closure); at any other value " +
+      "the knots' light departs from the share the field gave up by exactly this factor - the field's remainder plus k " +
+      "times the drawn knots, not the model's Halpha. The ionized gas intensity does not reach the knots (it multiplies " +
+      "the field's HII and diffuse layers only). Down to 0.05: the knots under a strong bloom. A display balance.",
+  },
+  {
     key: "clusterRadius", label: "clusters with their radius", group: "Components", kind: "toggle", switch: true,
     about:
       "A cluster drawn as a Plummer sphere of its half-mass radius (a = r_h / 1.305) once 2 r_h fills a pixel, in place " +
@@ -614,6 +632,80 @@ export function changed(t: Tuning, defaults: Readonly<Tuning> = TUNING_DEFAULTS)
     if (t[control.key] !== defaults[control.key]) out[control.key] = t[control.key];
   }
   return out as Partial<Tuning>;
+}
+
+/** The photometric exposure slider's range and grain, stops (Exposure.tsx; App's state, outside the tuning object). */
+export const EXPOSURE_RANGE = Object.freeze({ min: -6, max: 8, step: 0.5 });
+
+/** An exposure made valid for the slider: clamped to its range and snapped to its step; null if not a finite number. */
+export function clampExposure(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const { min, max, step } = EXPOSURE_RANGE;
+  const snapped = min + Math.round((Math.min(max, Math.max(min, value)) - min) / step) * step;
+  return Math.min(max, Math.max(min, snapped));
+}
+
+/**
+ * The Tuning panel's copy box (S67, D227; lifted here at S97 so the panel and the paste box share it): the template
+ * tuned on, its filter set and the exposure's stops, then every choice that differs from the template's defaults.
+ */
+export function copyBoxText(t: Tuning, defaults: Readonly<Tuning>, template: string | null | undefined, filterSet: string | null | undefined, exposure: number | null | undefined): string {
+  return JSON.stringify({ template: template ?? null, filters: filterSet ?? null, exposure: exposure ?? 0, ...changed(t, defaults) });
+}
+
+/** What a pasted combination gives (S97): see parseCombination. */
+export interface Combination {
+  /** The defaults with the pasted values laid over, each made valid; null on an error. */
+  tuning: Tuning | null;
+  /** The pasted exposure clamped to the slider's range and step; null where absent or not a finite number. */
+  exposure: number | null;
+  /** The template and filter set the box names (null where absent): reported, never switched to. */
+  template: string | null;
+  filters: string | null;
+  /** Keys that are no tuning value and not the box's own three: shown, not an error. */
+  ignored: string[];
+  /** Values of known keys that could not be used (wrong type, an unknown option): the default kept, shown. */
+  rejected: string[];
+  /** Bad JSON or not an object: nothing applied. */
+  error: string | null;
+}
+
+const BOX_KEYS = new Set(["template", "filters", "exposure"]);
+
+/**
+ * A pasted copy box read back (S97, "load a combination"): the tuning is `defaults` (the template on screen's) with the
+ * pasted values laid over, each made valid by clampValue as sanitize does - the copy box lists only what differs from
+ * its template's defaults, so applying a box on the template it was copied from reproduces the combination. Unknown
+ * keys are returned in `ignored`; bad JSON or a non-object is an `error` and nothing is applied.
+ */
+export function parseCombination(text: string, defaults: Readonly<Tuning> = TUNING_DEFAULTS): Combination {
+  const fail = (error: string): Combination => ({ tuning: null, exposure: null, template: null, filters: null, ignored: [], rejected: [], error });
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch (e) {
+    return fail(`not JSON: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return fail("not a JSON object");
+  const entries = raw as Record<string, unknown>;
+  const ignored: string[] = [];
+  const rejected: string[] = [];
+  for (const [key, value] of Object.entries(entries)) {
+    if (BOX_KEYS.has(key)) continue;
+    const control = controlOf(key);
+    if (!control) ignored.push(key);
+    else if (clampValue(control, value) === null) rejected.push(key);
+  }
+  const text_ = (v: unknown) => (typeof v === "string" ? v : null);
+  return {
+    tuning: sanitize(entries, defaults),
+    exposure: clampExposure(entries.exposure),
+    template: text_(entries.template),
+    filters: text_(entries.filters),
+    ignored,
+    rejected,
+    error: null,
+  };
 }
 
 /** A range control's slider position, 0 to 1000, for a value: linear in the value, or in its log. */
