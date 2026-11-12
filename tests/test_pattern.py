@@ -111,7 +111,10 @@ def test_arm_multiplicity_is_a_label_from_the_closed_set_and_no_longer_a_draw(mo
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was `seen == {6.0}`. With the bar on Erwin 2019's law (2.27 kpc,
     # was 5.21) its taper covers fewer rings, the saturation - the seed's one way in - weighs the rings differently on
     # some seeds, and they read 5: the label is still the disc's at nearly every seed, no longer at all thirty.
-    assert seen == {5.0, 6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
+    # S100 (batch P, D270; #80, Erwin 2019's Table 4: the default bar 2.270 -> 3.140 kpc): was {5.0, 6.0} - the {5, 6}
+    # encoded S87's shorter bar; with the taper over more rings every one of the thirty seeds reads 6 again (both
+    # models, scratchpad s100_P_arms.log): the label varies less with the seed, not more - the disc's, as S56 ruled.
+    assert seen == {6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
     # The disc moves it: a disc-dominated disc's label is four arms where the default's and a halo-dominated one's
     # are six (the label weighs the published amplitudes, the bar's taper in them, so it leans to the outer disc's
     # arm numbers; on the X / 2 window these read 6 and 2 beside the default's 3).

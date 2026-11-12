@@ -107,16 +107,26 @@ def test_the_hazard_is_the_two_histories_through_the_stellar_layer(model, coarse
 
 
 def test_a_thin_disc_with_no_thickness_leaves_the_hazard_undefined(prod):
-    """Determinism's grid (n_t = 8) builds a thin disc whose scale height reads zero: no layer to
-    spread the supernovae through, so the hazard and everything it feeds is NaN, never a number
-    divided by zero (rule B9) - and no warning is raised on the way."""
+    """A thin disc whose scale height reads zero has no layer to spread the supernovae through, so
+    the hazard and everything it feeds is NaN, never a number divided by zero (rule B9) - and no
+    warning is raised on the way.
+
+    S100 (batch P, D270; #227, the stellar layer one height h_R / 7.3): was determinism's grid (n_t = 8),
+    whose thin disc read a zero height under the old law; the layer is now a length over a constant
+    (297.04 pc there), so no grid gives a zero. The guard is fed one directly: the stage's reads run
+    on that grid, thin_disc_scale_height replaced by 0.0 before the stage runs (resume=)."""
+    import dataclasses
     import warnings
 
     from galaxy.specs.determinism import SMALL
 
+    model = prod[0].get(DEFAULT_MODEL)
+    before = run(model, grid=SMALL, only=READS[len(ZONE):])
+    assert float(before.fields["thin_disc_scale_height"]) > 0.0  # the substitution is what makes it zero
+    zero = dataclasses.replace(before, fields={**dict(before.fields), "thin_disc_scale_height": 0.0})
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        f = run(prod[0].get(DEFAULT_MODEL), grid=SMALL, only=ZONE + ("thin_disc_scale_height",)).fields
+        f = run(model, grid=SMALL, only=ZONE, resume=zero).fields
     assert float(f["thin_disc_scale_height"]) == 0.0
     assert np.all(np.isnan(np.asarray(f["sterilization_rate_history"])))
     for name in ("habitable_fraction", "habitable_zone_peak_radius", "habitable_zone_half_radius"):
@@ -135,11 +145,11 @@ def test_the_zone_as_the_criteria_read_it(model, coarse):
     read twice as -0.4; S37 re-read the LaTeX and settled it (D186, D187)."""
     out = coarse[model.name]
     f, R = out.fields, out.grid.R
-    assert float(f["habitable_zone_half_radius"]) == pytest.approx(6.5524, abs=1e-3)  # S87 (#148): was 6.4414 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 6.5580
-    assert float(f["habitable_zone_peak_radius"]) == pytest.approx(6.625, abs=1e-9)
-    assert float(f["habitable_fraction"]) == pytest.approx(5.4537e-3, rel=1e-4)  # S87 (#148): was 5.9613e-3 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 5.4403e-3
+    assert float(f["habitable_zone_half_radius"]) == pytest.approx(6.6466, abs=1e-3)  # S100 (batch P, D270; #227, the stellar layer one height h_R / 7.3): was 6.5524. S87 (#148): was 6.4414 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 6.5580
+    assert float(f["habitable_zone_peak_radius"]) == pytest.approx(6.875, abs=1e-9)  # S100 (batch P, D270; #227, the stellar layer one height h_R / 7.3): was 6.625
+    assert float(f["habitable_fraction"]) == pytest.approx(5.2331e-3, rel=1e-4)  # S100 (batch P, D270; #227, the stellar layer one height h_R / 7.3): was 5.4537e-3. S87 (#148): was 5.9613e-3 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 5.4403e-3
     i = int(np.argmin(abs(R - 8.2)))
-    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(0.21844, abs=5e-5)  # S87 (#148): was 0.20278 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.21898
+    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(0.22751, abs=5e-5)  # S100 (batch P, D270; #227, the stellar layer one height h_R / 7.3): was 0.21844. S87 (#148): was 0.20278 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.21898
 
 
 def test_the_dropped_root_reading_of_eq_5_is_kept_visible(prod, monkeypatch):
@@ -150,9 +160,9 @@ def test_the_dropped_root_reading_of_eq_5_is_kept_visible(prod, monkeypatch):
     monkeypatch.setattr(hz, "sterilization_distance", lambda mag, base, m_std: base * 10.0 ** (-0.4 * (mag - m_std)))
     out = run(prod[0].get(DEFAULT_MODEL), grid=COARSE, only=ZONE)
     f, R = out.fields, out.grid.R
-    assert float(f["habitable_fraction"]) == pytest.approx(4.1314e-4, rel=1e-4)  # S87 (#148): was 4.7514e-4 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 4.1198e-4
+    assert float(f["habitable_fraction"]) == pytest.approx(3.9415e-4, rel=1e-4)  # S100 (batch P, D270; #227, the stellar layer one height h_R / 7.3): was 4.1314e-4. S87 (#148): was 4.7514e-4 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 4.1198e-4
     assert float(f["habitable_zone_peak_radius"]) == pytest.approx(10.875, abs=1e-9)
-    assert float(f["habitable_zone_half_radius"]) == pytest.approx(12.0946, abs=1e-3)  # S87 (#148): was 12.0517 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 12.1025
+    assert float(f["habitable_zone_half_radius"]) == pytest.approx(12.2287, abs=1e-3)  # S100 (batch P, D270; #227, the stellar layer one height): was 12.0946. S87 (#148): was 12.0517 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 12.1025
     assert int(np.argmax(np.asarray(f["habitability"]))) == R.size - 1  # the edge, not an interior maximum
     i = int(np.argmin(abs(R - 8.2)))
-    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(2.2391, abs=5e-4)  # S87 (#148): was 2.0834 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 2.2446
+    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(2.3321, abs=5e-4)  # S100 (batch P, D270; #227): was 2.2391. S87 (#148): was 2.0834 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 2.2446
