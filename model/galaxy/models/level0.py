@@ -276,7 +276,8 @@ LEVEL0: dict[str, Constant] = {
         "dimensionless",
         "The bar's half-length law, log10(a / kpc) = BAR_LENGTH_LOG_NORM + BAR_LENGTH_SLOPE log10(h / kpc): its "
         "zero point, 0.04 +- 0.02, a the deprojected visual bar length and h the disc's 3.6 um scale length, both "
-        "kpc, fitted over 367 S4G barred spirals (Spearman 0.61) [verified: Erwin 2019, MNRAS 489, 3553, "
+        "kpc, fitted over 367 S4G barred spirals of log M* 9-11 (Spearman 0.61; outside that mass range the law "
+        "is extrapolated - Audit VI F-1A-6) [verified: Erwin 2019, MNRAS 489, 3553, "
         "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2 and A2 (E19)]. Adopted on the owner's ruling of "
         "2026-11-03 (D255) on debt #80, replacing BAR_LENGTH_RATIO = 2.0 (bars 'about 1.5-2.5 R_d [recall]', a fit "
         "to the one galaxy row 15 reads). The model's h is the lambda_d scale length (disc_scale_length_spin), the "
@@ -335,7 +336,11 @@ LEVEL0: dict[str, Constant] = {
         "[verified: Gadotti 2011, MNRAS 415, 3308, arXiv:1003.1719, §2–3.1, "
         "https://ar5iv.labs.arxiv.org/html/1003.1719] (docs/READING_BAR.md A1.2 and A2, G11; b/a = 1 - "
         "ellipticity is the reader's derivation). The medians and scatters sit in a figure and were not "
-        "readable, so no draw of it is built: one value for every bar, a debt (D217 item 4).",
+        "readable, so no draw of it is built: one value for every bar, a debt (D217 item 4). Beside it, the "
+        "deprojected ellipse-fit ellipticity of the S4G strongly barred (SB) galaxies, 0.59 +/- 0.01 (a standard "
+        "error, N = 277; b/a 0.41 by 1 - ellipticity, the reader's arithmetic) [verified: Diaz-Garcia et al. 2016a, "
+        "A&A 587, A160, arXiv:1509.06743, Table 3, the SB row] (docs/READING_BAR.md Part S96; debt #146, S96): the "
+        "table prints means with their standard errors and no spread, so it does not give the draw either.",
     ),
     "BAR_BOXINESS": Constant(
         3.0,
@@ -413,7 +418,12 @@ LEVEL0: dict[str, Constant] = {
         "gas or of the dust lanes is what would settle it - so this number is declared, not measured, and is "
         "carried as a debt (D217 item 8; docs/READING_BAR.md B5: 'Not found in anything read: a lane width') "
         "[inferred]. Nothing is tuned to it: the lane's peak over the ring's mean follows from it and is read "
-        "as a check against one simulation's factor of about ten (Kim, Seo & Kim 2012).",
+        "as a check against one simulation's factor of about ten (Kim, Seo & Kim 2012). Kept on the owner's word "
+        "(D268 ruling 10), with the bracket the readings found beside it - single galaxies, no sample statistic in "
+        "six papers read across S86-S98: NGC 7479's bar dust lane about 240 pc wide (about 1.5 arcsec at 160 pc an "
+        "arcsec; Laine et al. 1999), NGC 1097's resolved and 'wider than' 320-640 pc, a lower bound (Quillen et al. "
+        "1995) (docs/READING_BAR.md Parts S96 and S98; debt #147). On the Milky Way template's 5.0 kpc bar the "
+        "placeholder is 0.50 kpc, between them, neither contradicting it; neither is in units of a bar's length.",
     ),
     "FAST_BAR_RATIO": Constant(
         1.2,

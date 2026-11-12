@@ -1029,7 +1029,9 @@ BAR_CONTRAST = _scalar(
     "ring. Since S26 drawn log-normally on pattern_seed about the S4G barred sample's median "
     "with its 16th–84th-percentile width, capped at 0.9 (D175); until then an experimental input (D171); until "
     "S58 the amplitude of a single cosine tapered off beyond the bar's half-length. Drawn on the same stream "
-    "whether the galaxy is barred or not, and not a number for an unbarred galaxy.",
+    "whether the galaxy is barred or not, and not a number for an unbarred galaxy. Since S99 a template may pin "
+    "it (D268 ruling 8): the Milky Way's is the amplitude at which the finished model holds the Galaxy's printed "
+    "non-axisymmetric long-bar mass (Portail et al. 2017), derived, and the draw is still made on its stream.",
     provenance="seeded",
 )
 
@@ -1125,10 +1127,14 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
     coherence = swing_weight(2.0, m_lo, m_hi, x_high, x_dead, x_low, x_floor)
     mag = floc + (grand - floc) * coherence + ctx.rng("pattern_seed", "arm_contrast").normal(0.0, float(c["ARM_INTERARM_SCATTER"]))
     arm_contrast = contrast_amplitude(mag)
-    bar_contrast = min(
+    bar_contrast_drawn = min(
         math.exp(math.log(float(c["BAR_CONTRAST_MEDIAN"])) + ctx.rng("pattern_seed", "bar_contrast").normal(0.0, float(c["BAR_CONTRAST_LOG_SCATTER"]))),
         BAR_CONTRAST_CAP,
     )
+    # S99 (D268 ruling 8, #146): a template's bar amplitude replaces the draw - made above on its stream all the
+    # same, as the pitch's is. Read with .get: given by no template, the draw stands.
+    pinned_contrast = ctx.inputs.get("bar_contrast")
+    bar_contrast = bar_contrast_drawn if pinned_contrast is None else float(pinned_contrast)
     # The law of several modes (S56, D215): the swing window at every radius splits the sourced power A²
     # among the arm numbers, the gain capped at one; the bar's taper; the saturation. A law: no draw in it,
     # and the same with the randomness layer on or off.
@@ -1209,8 +1215,9 @@ PATTERN = IMPLEMENTATIONS.register(
         compute=compute_pattern,
         reads_seeds=("pattern_seed",),
         # S59 (D218 items 5-6): two pins - a template's measured mean pitch, and the bar's angle to the
-        # Sun-centre line - given by a template or not at all (read with .get).
-        reads_inputs=("pitch_angle", "sun_bar_angle"),
+        # Sun-centre line - given by a template or not at all (read with .get). S99 (D268 ruling 8, #146): a third,
+        # a template's bar amplitude.
+        reads_inputs=("pitch_angle", "sun_bar_angle", "bar_contrast"),
         reads_constants=(
             "FAST_BAR_RATIO", "FAST_BAR_SCATTER",
             "PITCH_SHEAR_INTERCEPT", "PITCH_SHEAR_SLOPE", "PITCH_SCATTER",
