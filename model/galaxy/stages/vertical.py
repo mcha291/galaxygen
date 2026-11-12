@@ -12,6 +12,11 @@ so a galaxy with no major merger had no thick disc by construction (debt #20).
 That criterion is retired with the simple model; the arithmetic below — the
 populations, the dispersions and the scale heights — is shared through ``split``.
 
+**Since S99 (#227) the thin layer's height is not this law**: it is one exponential height per galaxy, the
+stellar mass scale length over ``ARM_LAYER_FLATTENING`` (Kregel, van der Kruit & de Grijs 2002), and the law's
+value at ``R_SUN`` is published beside it as ``thin_disc_scale_height_dynamical``, a check. The thick disc's
+height keeps the law.
+
 **Scale heights are arithmetic** once sigma_z exists (GALAXY_INPUTS.md §4b puts
 h_z at verdict A). For a self-gravitating isothermal sheet the density goes as
 sech^2(z / 2 h_z) with
@@ -91,7 +96,14 @@ THIN_LENGTH = _decl("thin_disc_scale_length_fitted", "Thin disc scale length", "
 THICK_LENGTH = _decl("thick_disc_scale_length", "Thick disc scale length", "kpc",
                      "Acceptance row 5. Shorter than the thin disc's because the disc was smaller then.")
 THIN_HEIGHT = _decl("thin_disc_scale_height", "Thin disc scale height", "pc",
-                    "Acceptance row 6, at R₀. Arithmetic once σ_z exists (verdict A).")
+                    "Acceptance row 6, and the stellar layer every reader places stars, gas and dust against: one "
+                    "exponential height per galaxy, the stellar disc's fitted mass scale length over the observed "
+                    "flattening of edge-on discs, constant with radius as the source assumes. Since S99 (#227); "
+                    "until then it was the dynamical height below, read at the solar radius on every galaxy.")
+THIN_HEIGHT_DYNAMICAL = _decl("thin_disc_scale_height_dynamical", "Thin disc dynamical scale height at R₀", "pc",
+                              "The isothermal sheet's height that the thin population's vertical dispersion and the "
+                              "whole disc's column give at the solar radius (verdict A arithmetic). A check on the "
+                              "layer's height, not the layer: no stage reads it.")
 THICK_HEIGHT = _decl("thick_disc_scale_height", "Thick disc scale height", "pc",
                      "Acceptance row 7, at R₀. The merger's kick, squared, divided by the same Σ.")
 SURFACE_RATIO = _decl("thick_thin_surface_density_ratio", "Thick/thin surface density ratio",
@@ -140,7 +152,13 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
 
     sig_thin, sig_thick = dispersion_at_sun(~thick_mask), dispersion_at_sun(thick_mask)
     total_at_sun = float(np.interp(R_sun, R, thin + thick + ctx.fields["gas_surface_density"]))
-    h_thin = float(scale_height(sig_thin, total_at_sun, G)) * PC_PER_KPC
+    # S99 (#227, D268 ruling 7): the law read at R_SUN is kept as a check, published bit for bit as it was.
+    h_dynamical = float(scale_height(sig_thin, total_at_sun, G)) * PC_PER_KPC
+    # The layer: one exponential height per galaxy, h_R / h_z = ARM_LAYER_FLATTENING (Kregel, van der Kruit & de
+    # Grijs 2002: fitted over the whole disc, constant with radius assumed), h_R the stellar disc's fitted mass
+    # scale length (sfh, checkpoint 4) - not the spin length the pattern stage reads (it runs before sfh). Until
+    # S99 the layer was the law above, read at the Milky Way's R_SUN on every template (926 pc on ngc_4414).
+    h_thin = float(ctx.fields["thin_disc_scale_length"]) * PC_PER_KPC / float(ctx.constants["ARM_LAYER_FLATTENING"])
     h_thick = float(scale_height(sig_thick, total_at_sun, G)) * PC_PER_KPC if sig_thick > 0.0 else 0.0
 
     s_thin = float(np.interp(R_sun, R, thin))
@@ -156,6 +174,7 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
         "thin_disc_scale_length_fitted": fit_scale_length(thin, R, *SCALE_LENGTH_FIT),
         "thick_disc_scale_length": fit_scale_length(thick, R, *SCALE_LENGTH_FIT) if s_thick > 0.0 else 0.0,
         "thin_disc_scale_height": h_thin,
+        "thin_disc_scale_height_dynamical": h_dynamical,
         "thick_disc_scale_height": h_thick,
         "thick_thin_surface_density_ratio": ratio,
         "thick_thin_local_density_ratio": ratio * (h_thin / h_thick) if h_thick > 0.0 else 0.0,
@@ -171,6 +190,6 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
 PUBLISHES: tuple[FieldDecl, ...] = (
     BIRTH_POPULATION,
     THIN_SURFACE, THICK_SURFACE, THIN_MASS, THICK_MASS, THIN_LENGTH, THICK_LENGTH,
-    THIN_HEIGHT, THICK_HEIGHT, SURFACE_RATIO, LOCAL_RATIO,
+    THIN_HEIGHT, THIN_HEIGHT_DYNAMICAL, THICK_HEIGHT, SURFACE_RATIO, LOCAL_RATIO,
     THIN_DISPERSION, THICK_DISPERSION,
 )

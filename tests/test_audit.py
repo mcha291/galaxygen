@@ -230,7 +230,8 @@ def test_the_thick_disc_a_valley_would_find_is_a_compact_one(default_model):
     assert f["thick_disc_scale_length"] == pytest.approx(0.60, abs=0.05) and not inside(5, f["thick_disc_scale_length"])  # 0.64 until S20 (the smaller kick); 0.66 until S18
     assert f["thick_disc_scale_height"] == pytest.approx(1069.0, abs=30.0) and inside(7, f["thick_disc_scale_height"])  # 1379 until S20 (the kick re-derived, D128); 1398 until S18; 1202 until S17; 1113 until S16
     assert f["thick_thin_surface_density_ratio"] == pytest.approx(0.0014, abs=0.001)  # row 9: 0.0032 until S20; 0.0096 until S18 - the threshold holds the reservoir here too
-    assert f["thin_disc_scale_height"] == pytest.approx(452.0, abs=15.0) and not inside(6, f["thin_disc_scale_height"])  # 512 until S20; 552 until S18; 478 until S17; 443 until S16
+    # S99 (#227): the law at R_0 is the dynamical check since the layer became h_R / 7.3; its number unchanged.
+    assert f["thin_disc_scale_height_dynamical"] == pytest.approx(452.0, abs=15.0) and not inside(6, f["thin_disc_scale_height_dynamical"])  # 512 until S20; 552 until S18; 478 until S17; 443 until S16
 
 
 # --- debt #28: the flattening, measured ------------------------------------------
@@ -259,7 +260,10 @@ def test_debt_28_migration_flattens_the_old_population_from_a_steeper_start(mode
 
 # --- debt #42: row 6 at the edge -----------------------------------------------
 
-HEIGHTS = ("thin_disc_scale_height", "thick_disc_scale_height")
+# S99 (#227, D268 ruling 7): debt #42 measures the heating's law at R_0, which since S99 is published as the
+# dynamical check (bit for bit the number the layer published before); the layer itself is h_R / 7.3 and reads no
+# heating. Repointed, every number unchanged; row 6's window still the yardstick the law is read against.
+HEIGHTS = ("thin_disc_scale_height_dynamical", "thick_disc_scale_height")
 
 
 def test_debt_42_row_6_is_at_the_edge_of_its_window(default_model):
@@ -268,10 +272,10 @@ def test_debt_42_row_6_is_at_the_edge_of_its_window(default_model):
     # 0.33 Gyr younger carry less secular heating; Sigma*(R0) 36.14 -> 36.03 alone raises it. Its recorded miss went.
     # Until S87: 356 against a ceiling of 350, a recorded miss since S13 (373 until S20 re-derived the kick; 439
     # until S18's threshold held more gas at R₀; 384 until S17; 358 until S16). Σ(R₀) falls, h_z = σ²/2πGΣ rises.
-    assert Q[6].hi - 6.0 < a["thin_disc_scale_height"] <= Q[6].hi - 4.0  # S87 (#148): was Q[6].hi + 3 < h <= Q[6].hi + 10 - the clock
+    assert Q[6].hi - 6.0 < a["thin_disc_scale_height_dynamical"] <= Q[6].hi - 4.0  # S87 (#148): was Q[6].hi + 3 < h <= Q[6].hi + 10 - the clock
     # SECULAR_HEATING was set from the 10 Gyr end of the AVR (D54); 30 km/s fails row 6 high (483), and 20 km/s
     # failed the pre-D170 simple model low (228), which is why S20 left it at 25 (D128).
-    high_a = run(with_constant(default_model, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height"]
+    high_a = run(with_constant(default_model, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height_dynamical"]
     assert high_a > Q[6].hi
     # MERGER_HEATING calibrates row 6 here, where the heated stars are thin (it calibrated row 7 in the simple
     # model). S18 read 60 km/s landing it (346); S20 did not set it there - it derived the constant from the thick
@@ -281,9 +285,9 @@ def test_debt_42_row_6_is_at_the_edge_of_its_window(default_model):
     # derivation now reads 90.62 (debt #212), 345.9, still inside; row 6 leaves the window above about 99.
     for k, row6 in ((60.0, 335.0), (120.0, 362.6), (180.0, 420.1)):  # S87 (#148): was 346, 373, 429 - the clock  # 375 and 544 until S18; 326 and 482 until S17
         hot_a = run(with_constant(default_model, "MERGER_HEATING", k), only=HEIGHTS).fields
-        assert hot_a["thin_disc_scale_height"] == pytest.approx(row6, rel=0.02)
+        assert hot_a["thin_disc_scale_height_dynamical"] == pytest.approx(row6, rel=0.02)
         assert hot_a["thick_disc_scale_height"] == 0.0
-    assert inside(6, run(with_constant(default_model, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thin_disc_scale_height"])
+    assert inside(6, run(with_constant(default_model, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thin_disc_scale_height_dynamical"])
 
 
 THICK_SIGMA_W = 35.0  # km/s, the thick disc's vertical dispersion [recall: Bensby, Feltzing & Lundstrom 2003]
@@ -729,7 +733,7 @@ def test_debt_26_the_iron_at_the_centre_reaches_the_planets(default_model):
 
 # --- S20: the valley's mechanisms, probed by substituting the first infall's law (D114, D128) ---
 
-VALLEY = ("alpha_sequence", "alpha_dip_depth", "alpha_split", "thin_disc_scale_height")
+VALLEY = ("alpha_sequence", "alpha_dip_depth", "alpha_split", "thin_disc_scale_height_dynamical")
 
 
 def dynamical_time_at(z: float, model) -> float:
@@ -765,7 +769,7 @@ def test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_an
     # It opens no valley - the dip is 0.15 at N_t 1000, 2000 and 4000 - and row 6 goes to 594 (710 on the 120 km/s kick).
     f = run(default_model, only=VALLEY).fields
     assert f["alpha_sequence"] == "single" and f["alpha_dip_depth"] == pytest.approx(0.151, abs=0.02)
-    assert f["thin_disc_scale_height"] == pytest.approx(594.0, abs=15.0)
+    assert f["thin_disc_scale_height_dynamical"] == pytest.approx(594.0, abs=15.0)
 
 
 def test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike(default_model):
