@@ -333,7 +333,7 @@ BRIGHT_MEASURED = {
 # the S60 census in the probe -0.33 / 1.77 (20-40 Myr) and -0.36 / 2.02 (40-100 Myr); the branch before the field
 # (0969929) -0.285 / 1.74 / 1.90 / 1.88 and -0.441 / 2.20 / 3.42 / 1.93; after, below. milky_way after: -0.208 / 1.55 /
 # 2.14 / 1.42 and -0.111 / 1.61 / 1.28 / 1.42; ngc_4414 after: -0.359 / 1.86 / 2.88 / 1.80 and -0.065 / 1.45 / 2.23 / 2.31.
-BRIGHT_SQUARE_AFTER = {"20-40": (-0.122, 1.283, 2.267, 1.292), "40-100": (-0.080, 1.195, -1.688, 1.831)}  # S91 (#216's re-laid census - the 20-40 Myr bin read -0.1217 on bb25415 and the same four numbers at HEAD, so #160's placement did not move it; the gate's ruling, D260; S92's #164 / #165 will move it again): was -0.286, 2.203, 3.75, 2.12, -0.289, 1.79, 1.604, 1.756  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.302, 1.75, 2.39, 1.72, -0.415, 2.14, 3.31, 1.79
+BRIGHT_SQUARE_AFTER = {"20-40": (-0.331, 2.071, 2.858, 2.072), "40-100": (-0.093, 1.912, 1.411, 2.677)}  # S100 (batch P, D270; #80, the default bar 2.27 -> 3.14 kpc: 061e5ed reads these four bit for bit, #130 none; s100_P2_flat_*.log): was -0.122, 1.283, 2.267, 1.292, -0.080, 1.195, -1.688, 1.831  # S91 (#216's re-laid census - the 20-40 Myr bin read -0.1217 on bb25415 and the same four numbers at HEAD, so #160's placement did not move it; the gate's ruling, D260; S92's #164 / #165 will move it again): was -0.286, 2.203, 3.75, 2.12, -0.289, 1.79, 1.604, 1.756  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.302, 1.75, 2.39, 1.72, -0.415, 2.14, 3.31, 1.79
 
 
 @pytest.fixture(scope="module")

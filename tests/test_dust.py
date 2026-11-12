@@ -232,11 +232,11 @@ def test_the_temperature_profile_and_the_infrared_share(model, coarse):
     T = np.asarray(f["dust_temperature"])
     # S49 (D204, #126): the light integrated along the isochrone's points; was 17.955, 20.414, 19.543, 16.621, 16.485
     # S52 (D211): was 18.268, 20.207, 18.829, 16.597, 16.458
-    for r, want in ((2.0, 17.147), (5.0, 19.661), (8.2, 18.644), (12.0, 16.687), (16.0, 16.407)):  # S89 (#168: the clouds' dust in the clouds' layer): was 17.126, 19.701, 18.671, 16.694, 16.410  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 16.956, 19.510, 18.524, 16.577, 16.487
+    for r, want in ((2.0, 17.158), (5.0, 19.666), (8.2, 18.649), (12.0, 16.690), (16.0, 16.407)):  # S89 (#168: the clouds' dust in the clouds' layer): was 17.126, 19.701, 18.671, 16.694, 16.410  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 16.956, 19.510, 18.524, 16.577, 16.487  # S100 (batch P, D270; #227): 2 kpc was 17.147, 5 kpc 19.661, 8.2 kpc 18.644, 12 kpc 16.687
         assert float(np.interp(r, R, T)) == pytest.approx(want, abs=2e-3)
     L = float(f["dust_infrared_luminosity"])
-    assert L == pytest.approx(1.2457e10, rel=2e-4)  # S89 (#168): was 1.2487e10  # S52 (D211): was 1.5665e10  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.1999e10
-    assert L / float(f["disc_luminosity"]) == pytest.approx(0.2609, abs=2e-4)  # S52 (D211): was 0.3414  # S89 (#168): was 0.2615
+    assert L == pytest.approx(1.24857e10, rel=2e-4)  # S100 (batch P, D270; #227): was 1.2457e10. # S89 (#168): was 1.2487e10  # S52 (D211): was 1.5665e10  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.1999e10
+    assert L / float(f["disc_luminosity"]) == pytest.approx(0.26152, abs=2e-4)  # S52 (D211): was 0.3414  # S89 (#168): was 0.2615  # S100 (batch P, D270; #227 the layer's height, #130 the placed gas): was 0.2609
 
 
 # --- scattering, the field G0 and the PAHs -----------------------------------------------------
