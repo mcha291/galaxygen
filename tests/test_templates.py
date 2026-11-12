@@ -1195,12 +1195,15 @@ def test_every_route_answers_for_ngc_4414(route, query):
 
 
 def test_the_checks_are_judged_on_the_template_s_own_run():
-    """On a small grid, for speed: five results for NGC 4414, none for the Milky Way, each a number against its window."""
+    """On a small grid, for speed: seven results for NGC 4414 (its five own checks and, since S99, #136's two
+    per-radius ones), none for the Milky Way, each a number against its window."""
     api = Service(grid=SMALL)
     results = checks.evaluate(service=api)
     assert list(results) == ["milky_way", "ngc_4414"] and results["milky_way"] == []
     judged = results["ngc_4414"]
-    assert [r.name for r in judged] == [c.name for c in NGC_4414.checks]
+    # S99 (#136): was the template's five checks alone.
+    assert [r.name for r in judged] == [c.name for c in NGC_4414.checks] + [c.name for c in checks.RADIAL_CHECKS["ngc_4414"]]
+    assert checks.stated("ngc_4414") == tuple(r.name for r in judged) and checks.stated("milky_way") == ()
     for r, c in zip(judged, NGC_4414.checks):
         assert r.status in ("pass", "fail") and math.isfinite(r.value)
         assert (r.status == "pass") == c.holds(r.value)
@@ -1225,6 +1228,15 @@ def test_the_checks_are_judged_on_the_template_s_own_run():
     assert by_name["colour_b_v_face_on"] == checks.face_on_colour(header, arrays)
     bare = checks.frame_total(header, arrays)
     assert by_name["colour_b_v_face_on"] != float(checks.band_magnitude(bare[0], "B") - checks.band_magnitude(bare[1], "V"))
+    # S99 (#136): the per-radius checks - the largest face-on E(B - V) over each band, read again here: 55-70 arcsec at
+    # the template's own 17.7 Mpc, and the template's pinned molecular ring (0.43-4.29 kpc), edges by linear reads.
+    dust, _ = api.compute(api.models.get(NGC_4414.model), templates.overrides(NGC_4414), ("dust_colour_excess_b_v",), layer=False)
+    e, R = np.asarray(dust.fields["dust_colour_excess_b_v"], dtype=float), np.asarray(dust.grid.R, dtype=float)
+    arcsec = 17.7e3 * math.pi / (180.0 * 3600.0)
+    for name, (lo, hi) in (("colour_excess_55_70_arcsec", (55 * arcsec, 70 * arcsec)), ("colour_excess_molecular_ring", (0.43, 4.29))):
+        inside = e[(R > lo) & (R < hi)]
+        assert by_name[name] == max(np.interp(lo, R, e), np.interp(hi, R, e), *inside), name
+        assert by_name[name] > (0.18 if name.startswith("colour_excess_55") else 0.3)  # a recorded miss on this grid too
 
 
 def test_the_colour_check_s_computation_is_the_render_gate_s_record():
@@ -1313,7 +1325,7 @@ def test_every_verdict_on_the_fit_that_stands_is_disclosed_and_fit_a_s_reading_i
 
 def test_the_ledger_names_only_checks_a_template_states():
     for name, entries in checks.CHECK_MISSES.items():
-        stated = {c.name for c in templates.get(name).checks}
+        stated = set(checks.stated(name))  # S99 (#136): was the template's own checks; the per-radius ones beside them
         assert set(entries) <= stated, name
         assert all(isinstance(m, checks.CheckMiss) for m in entries.values())
 
