@@ -263,3 +263,113 @@ on `ngc_4414`, against a row standard deviation of about 0.23-0.24.
 - The clustering field's part of NGC 4414's shortfall (S98.6): not separated.
 - The step's cause (S98.7): not traced; the gas solver's radial sampling (`gas_response.CELLS` per ring) not read.
 - No file in any repository changed; no server started; one python process at a time.
+
+## Part S99 — the clouds' arm contrast against the gas's in mapped galaxies: the weight's power read (2026-11-12, BUILD_VI row 99; the reader)
+
+**The note.** S99's reader (`s99_R.md`, item 2) fetched each paper below from arxiv.org this session, the text by
+`pdftotext -layout`; Colombo et al.'s Table 2 also through ar5iv by a summarising fetch asked for the rows verbatim —
+the two agree row for row. `[verified: source, place]` marks a quotation from those texts; `[inferred]` the reader's
+own arithmetic (`s99_R_c14.py`, its log ending EXIT=0). The question was #229's closer: the arm to inter-arm contrast
+of molecular clouds, in number or mass per area, set against the gas's in the same mask. The gate's ruling is D269
+ruling 5 and the register's #229 / #231.
+
+### S99.1 Colombo et al. 2014 — M 51's clouds by environment (READ)
+
+- **Source.** Colombo et al. 2014, "The PdBI Arcsecond Whirlpool Survey (PAWS): Environmental Dependence of Giant
+  Molecular Cloud Properties in M51", ApJ 784, 3, arXiv:1401.1505v1. Beam "(1.16 x 0.97)" arcsec, "~40 pc" at 7.6 Mpc;
+  CO(1-0), CPROPS, 1507 GMCs; X_CO 2 × 10²⁰ constant (Sect. 5.2).
+- **The mask.** Centre R_gal < 1.3 kpc; the "disk" 1.3 ≤ R_gal ≤ 5 kpc "divided azimuthally into spiral arm (SA) and
+  inter-arm (IA) zones". App. C: the arm width is kinematic — "take the width of the signal at 95% maximum as our
+  measure of the kinematic arm width", "centered on the spiral arm ridge located by eye", "assumed to be symmetric".
+  **No width in pc is printed.** From Table 2's areas the arm mask is 14.6 / (14.6 + 27.8) = **0.344 of the disc's
+  area** `[inferred]`.
+- **Table 2, the three rows verbatim** (columns: (1) A kpc², (2) L_CO 10⁷ K km/s pc², (3) Σ_H2 M☉/pc², (4) A_work, (5)
+  L_CO work, (6) L_NX, (7) L_EX, (8) %NX, (9) %EX, (10) #, (11) N_GMC kpc⁻²) `[verified: Colombo et al. 2014, Table 2]`:
+  - "SA | 14.6 | 43.44 | 129.94 | 2.3 | 35.10 | 8.16 | 23.22 | 21 | 59 | 657 | 45"
+  - "IA | 27.8 | 21.88 | 34.37 | 1.0 | 9.12 | 4.93 | 10.93 | 19 | 42 | 514 | 19"
+  - "CR | 4.7 | 25.47 | 237.02 | 1.2 | 22.85 | 4.71 | 14.48 | 18 | 57 | 335 | 73"
+  - Sect. 5.2: "The number density of clouds, NGMC, shows a similar trend as Sigma_H2, decreasing from 72 kpc-2 in the
+    central region to 45 kpc-2 in the spiral arms and 19 kpc-2 in the inter-arm region."
+- **The arithmetic** `[inferred: s99_R_c14.py]`, arm over inter-arm in the same mask:
+
+| statistic | SA / IA | exponent against the gas (ln ratio / ln 3.781) |
+|---|---|---|
+| all CO, Σ_H2 (the gas) | **3.78** | 1 |
+| GMC number per area | **2.43** | **0.67** |
+| GMC CO luminosity per area, extrapolated (mass at constant X) | **4.05** | **1.05** |
+| GMC CO luminosity per area, not extrapolated | 3.15 | 0.86 |
+| mean GMC luminosity per cloud | 1.66 | — |
+
+  Shares in the arm mask (34 % of the area): the gas 0.665, the cloud mass 0.680, the cloud number 0.561.
+- **The table's own inconsistency.** L_CO × 4.37 / A reproduces Σ_H2 on every row (α 4.35-4.38), so the SA, IA and CR
+  rows are internally consistent. **The sub-environment rows are not**: L_EX exceeds the region's whole L_CO for DWI
+  (7.23 > 5.50) and MAT (5.27 > 3.50), and %EX does not equal L_EX / L_CO for SA (0.53 against 59) or IA (0.50
+  against 42) — as printed in both the PDF and ar5iv. The sub-region rows are not used. (An inconsistency of the
+  source's table, not a model finding.)
+- **Against the model** `[inferred: the reader]`: the model's crest over the inter-arm median (1.4-1.8) is not this
+  statistic — Colombo's is a ratio of means over a broad kinematic mask, a third of the area. The model's equivalent
+  would be the mean gas and the mean cloud count / mass inside an arm mask holding 34 % of a ring band's area centred on
+  the ridge, over the mean outside; the exponent (the clouds against the gas in the same mask) is the mask-robust
+  quantity to carry, not the contrast itself.
+
+### S99.2 Koda et al. 2009 — M 51's GMAs (READ, a letter)
+
+ApJ 700, L132, arXiv:0907.1656v1; CARMA + NRO45, CO(1-0), "4 resolution" (arcsec as extracted; no pc read).
+Qualitative only: "clearly indicating many GMCs with mass exceeding 4 x 10^5 Msun in the inter-arm regions"; "only 36%
+of the inter-arm CO emission is seen in the detected discrete clouds"; "The most massive structures with 10^7-8 Msun,
+referred to as GMAs, are found only in spiral arms, not in inter-arm regions" `[verified: Koda et al. 2009]`. **No
+number or mass per area by environment, no areas** — the direction of S99.1 (the arm's excess carried by heavier
+structures), not a number.
+
+### S99.3 Rosolowsky et al. 2021 — PHANGS-ALMA's clouds in four discs with arms (READ: Sects. 2, 6.2.2, Table 5)
+
+arXiv:2101.04697, "Giant Molecular Cloud Catalogues for PHANGS-ALMA"; "a common 90 pc" resolution. The arm and
+inter-arm populations are for "the four galaxies with defined spiral arms" "(NGC 0628, NGC 1637, NGC 3627, NGC 5643)";
+Table 5: arm N = 931, inter-arm N = 903 (clouds, no areas). Sect. 6.2.2: "the truncation mass in the Spiral Arms is a
+factor of 2.5 higher than the truncation mass in the Interarm regions, showing that more massive clouds are found in
+Spiral Arms"; the masks "set Spiral Arm regions to have a minimum width of 1 kpc. If we defined the Spiral Arm region
+with a more restricted area around the molecular gas ridge line, the Arm-Interarm contrast would likely become
+stronger" `[verified: Rosolowsky et al. 2021, Sect. 6.2.2, Table 5]`. **No per-area statistic** in what was read;
+independent of Colombo on the mass-per-cloud half only.
+
+### S99.4 Hirota et al. 2024 — M 83 (READ: Sects. 3.3, 4)
+
+arXiv:2410.05424v1, "Whole-disk sampling of molecular clouds in M83"; "a spatial resolution of 46 pc", "5724 molecular
+clouds". The mask: "each of the logarithmic spiral arm regions has a width of 40" (880 pc)"; "Out of 734 clouds with >
+10^6 Msun in M83, 498 clouds reside in the arm/bar/center mask. The total mass of > 10^6 Msun clouds is 2.2 x 10^9
+Msun and about 80% of the mass is included in the mask" `[verified: Hirota et al. 2024, Sect. 3.3]`. **The mask's area
+share is not printed** in what was read, so no contrast.
+
+### S99.5 What no source gives
+
+- **No source read prints a law** (an exponent of the clouds' density on the gas's contrast). The one area-normalised
+  table is Colombo et al. 2014's: **one galaxy** (M 51, grand design, interacting), 1.3-5 kpc, a broad kinematic mask.
+- **No flocculent disc**: none of the four papers covers NGC 4414's kind; Rosolowsky et al. exclude galaxies without
+  arms from the arm / inter-arm populations ("GMCs from galaxies without arms or bars (NGC 3521, NGC 3621, NGC 4826)
+  are not included").
+- **Not read**: Meidt et al. 2021 and Querejeta et al. 2021 (they compare CO against the stellar contrast — the gas's
+  contrast, which the model takes from Querejeta et al. 2024, #130), Hughes et al. 2013 (CO brightness PDFs; gas, not
+  clouds) — stopped on the time box.
+- No scatter is printed (one galaxy); the 0.86-1.05 bracket from the catalogue's extrapolation is the only spread.
+
+### S99.6 The reader's recommendation and the gate's ruling
+
+- **The reader**: keep the first power, close #229 as permanent with the reason written in, plus one optional sourced
+  build. By mass M 51's clouds follow the gas to the first power in the same mask (1.05; 0.86 without CPROPS's
+  extrapolation) — the model's linear weight is what the one area-normalised source supports; a squared weight (S98's
+  0.41-0.50 top-quarter share) has no source. By number the clouds are less concentrated than the gas (0.67): the
+  arm's excess is carried by heavier clouds (mean luminosity 1.66 times in the arms; Rosolowsky et al.'s truncation mass
+  2.5 times over four galaxies; Koda et al.'s GMAs "only in spiral arms"; Hirota et al.'s 498 of 734 clouds over 10⁶ M☉
+  and about 80 % of their mass in M 83's mask). The optional build, in the reader's words: "number weight
+  contrast^0.67 with the mass function's upper cut scaled by contrast^0.38 (so mass stays ~linear) - Colombo's one
+  galaxy, or the truncation-mass factor 2.5 arm/inter-arm from Rosolowsky et al. as the cut's step". Sureness (the
+  reader): the exponents' arithmetic high; Colombo's SA / IA rows high; "first power by mass" as a general law
+  **low-medium** (one galaxy, one mask, a grand design, masses at constant X); the flocculent case **not covered**.
+- **What it settles for a lane** (#228, #144): no sourced weight gathers the clouds onto a ridge more tightly than the
+  gas; a shallow lane is the gas field's, not the clouds' weight.
+- **The gate's ruling (D269 ruling 5): #229 discharged on evidence** — by mass the one area-normalised source has the
+  clouds follow the molecular gas to the power 1.05, the model's first power; the citation is in the code
+  (`stages/clouds.py` `sector_placement` and `layer/census_clustering.py` `place`, lane M's 6ae82ab: the cloud census
+  read the same before and after, `cloud_count_total` 17263.580633491907 both). What the reading leaves is **#231**
+  (carried): the model's cloud mass function does not know the arm — a sourced build the adopted list (D268) does not
+  hold, the owner's to order. **A lane cannot come from the clouds' weight**; the gas law's frame is ruling 9's.

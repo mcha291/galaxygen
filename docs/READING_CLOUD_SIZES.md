@@ -173,3 +173,145 @@ place]` marks what it quoted from a fetched page; `[inferred]` its own arithmeti
   collapsing 10–100× at HST resolution), so no physical size–luminosity relation for complexes is there to fix a merge
   level. What is measured at a stated resolution is the luminosity function: mean slope 1.73, σ 0.15 over 19 discs, at 67
   pc. NGC 604's "hundreds of pc" stays `[recall]`.
+
+## Part S99 — the knots as regions measured: the census, Santoro et al.'s estimator, two merges and the merged radius (2026-11-12, BUILD_VI row 99; the measurer)
+
+**The note.** S99's measurer (`s99_KP.md`; read and run only, no repository file changed, no test run) took the
+census through `Service()` in memory, the production grid (400 rings, 0.037-29.96 kpc), `/api/clusters
+template=<t>`, the layer on, the whole disc; positions in the plane (heights ignored: |z| median 37-38 pc, p99 ~180
+pc); Hα in L☉ as published (erg/s = × 3.828 × 10³³). Scripts and logs in the session's scratchpad (`s99_KP_lf.py`,
+`s99_KP_more.py`, `s99_KP_dump.py`). Santoro et al. 2022 was read at arxiv.org/html (Sects. 4.1 and 5)
+`[verified: Santoro et al. 2022, place]`; `[inferred]` the measurer's own reading. The gate's ruling is D269 ruling 6.
+
+### S99.1 The census as it is
+
+| | `milky_way` | `ngc_4414` |
+|---|---|---|
+| HII regions (every cluster has L_Hα > 0) | 13 124 | 7 632 |
+| L_Hα, L☉: median / p90 / p99 / max | 191 / 5.69e3 / 4.81e4 / 4.75e5 | 100 / 3.82e3 / 3.06e4 / 7.40e5 |
+| Strömgren radius, pc: median / p90 / p99 / max | 0.77 / 2.92 / 7.67 / 25.7 | 0.54 / 2.63 / 6.85 / 24.6 |
+| density-bounded regions | 0 | 0 |
+| row 35 (binned, L ≥ 10³⁷ erg/s), unmerged | −2.049 (inside −2.5…−1.5) | −1.975 |
+| Santoro's MLE + KS floor, unmerged | 1.832 ± 0.016 (L_min 8.3e36) — inside 1.73 ± 0.15 | 1.467 ± 0.008 (L_min 3.8e35) — outside |
+| MLE at a fixed floor 10³⁷, unmerged | 1.871 ± 0.018 (inside, at the edge) | 1.911 ± 0.029 (outside, at the edge) |
+| the frame's pixel (`captures.json`) | 39.06 pc | 29.30 pc (major axis) |
+
+The register's 12 710 regions on `milky_way` were S67's; on S99's model (#227's layer built) 13 124. Above 10³⁷ erg/s:
+2 331 (the Milky Way) and 975 (NGC 4414). The electron density the radius is formed in (the host cloud's ⟨n²⟩^½):
+median 154 / 174 cm⁻³, p90 541 / 686, max 767. **The model's luminosity function is curved, not a power law**: the
+continuous MLE slope at a fixed floor runs on the Milky Way 1.34 (10³⁵ erg/s), 1.50 (10³⁶), 1.62 (3 × 10³⁶), 1.87
+(10³⁷), 2.05 (3 × 10³⁷), 2.22 (10³⁸); on NGC 4414 1.37, 1.53, 1.65, 1.91, 2.19, 2.23.
+
+### S99.2 Santoro et al. 2022's estimator, as quoted
+
+- The form, a PDF: "p(L) = (alpha-1) L_min^(alpha-1) L^(-alpha)" for L ≥ L_min (Sect. 4.1).
+- Not binned: binned least squares "can give incorrect results under relatively common conditions"; the MLE "does not
+  depend on any binning scheme"; the python `powerlaw` package, which "follows the prescription given in Clauset et al.
+  (2009)".
+- L_min: an "MLE fit by recursively fixing L_min equal to each empirical data point", the model kept "the one that
+  minimizes the KS statistic", the search limited to "an interval of +-1 sigma around the median of the distribution";
+  per galaxy, on extinction-corrected Hα. Slopes "in the interval of alpha=1.5-2 with a mean value of 1.73 and a sigma
+  of 0.15"; resolution 67 pc (abstract), "about 70 pc" (Sect. 1).
+- Sect. 5: blending "will cause nearby H ii regions to blend and be detected as a single H ii region, leading to a
+  flattening of the LF"; L_min is "driven by resolution of the observations".
+- Their α is positive (dN/dL ∝ L^−α); row 35 publishes the exponent, negative.
+- **The measurer's implementation** `[inferred]`: the continuous Clauset MLE α = 1 + n / Σ ln(L / L_min), error (α −
+  1) / √n, the KS distance over the tail, L_min over the data points within the median ± 1 std of log₁₀ L (the
+  measurer's reading of "the distribution"; `powerlaw` is not in the environment and nothing was installed).
+- **The caveat that decides the comparison**: Santoro's window sits where their catalogue's completeness puts it
+  (completeness 10³⁶-10³⁷ erg/s, Groves et al. 2023); the model's census is complete to ~10³³, so the same rule
+  searches 6.5 × 10³⁴-8 × 10³⁶ (the Milky Way) and 2.7 × 10³⁴-5.5 × 10³⁶ (NGC 4414), where the model's function is
+  flatter. **The estimator transplanted to a complete synthetic census is not the same test.**
+
+### S99.3 The two merges
+
+(a) **A square lattice of 67 pc** in the plane, origin at the centre and shifted by half a cell (33.5 pc):
+
+| | `milky_way` (origin / shifted) | `ngc_4414` (origin / shifted) |
+|---|---|---|
+| complexes | 10 570 / 10 587 | 6 142 / 6 164 |
+| Hα share in multi-region complexes | 0.165 / 0.130 | 0.108 / 0.128 |
+| Santoro MLE + KS | 1.900 / 1.896 — outside | 1.450 / 1.462 — outside |
+| MLE at 10³⁷; row 35 | 1.864 / 1.858; −2.050 / −2.049 | 1.911 / 1.911; −1.976 / −1.977 |
+
+On the Milky Way multiplicity 1: 9 055, 2: 1 051, 3-4: 340, 5-9: 109, 10-29: 15; the extent of multi-region complexes
+median 55 pc, max 146-156. The origin moves α by ≤ 0.012 and the Hα share by 3.5 points.
+
+(b) **Friends-of-friends in the plane**, linking 60 / 70 / 80 pc:
+
+| | `milky_way` | `ngc_4414` |
+|---|---|---|
+| complexes | 8 607 / 8 045 / 7 522 | 4 951 / 4 636 / 4 390 |
+| Hα share in multi-region complexes | 0.292 / 0.333 / 0.365 | 0.234 / 0.284 / 0.310 |
+| largest complex (regions, 2 r_max) | 144, 682 pc / 181, 931 pc / 322, 1753 pc | 55, 703 / 56, 659 / 99, 870 pc |
+| Santoro MLE + KS | 1.956 / 1.954 / 1.940 — outside | 1.952 / 1.999 / 2.006 — outside |
+| MLE at 10³⁷; row 35 | 1.830 / 1.814 / 1.802; −2.034 / −2.025 / −2.013 | 1.905 / 1.907 / 1.901; −1.977 / −1.973 / −1.973 |
+
+**It percolates**: on the Milky Way the largest complex at 70 pc holds 181 regions over 931 pc (R 0.20-0.91 kpc,
+109° of azimuth), at 80 pc 322 regions over 1.75 kpc, a ring round the centre; outside 1.5 kpc the largest at 70 pc is
+114 regions, 805 pc along R 2.05-2.38 kpc. The nearest-neighbour separation is 59 pc (the Milky Way) and 57 pc (NGC
+4414) at the median; 52 % of regions lie within 70 pc of another.
+
+**What the merges do to the test**: at a fixed floor every merge flattens the slope (as Santoro's Sect. 5 says blending
+does) by 0.04-0.07 on the Milky Way and ~0.01 on NGC 4414; with the KS-chosen floor it steepens, because the merged
+census's median moves up and the window with it. **No merge moves the slope by more than 0.07 at a fixed floor, while
+the floor alone moves it from 1.3 to 2.2; under Santoro's floor rule the unmerged Milky Way passes (1.83) and every
+merge fails (1.90-1.96), NGC 4414 fails unmerged (1.47) and merged (1.45-2.01). The test cannot tell a merge from
+none.** Row 35 stays inside its window under every merge.
+
+### S99.4 The merged region's radius
+
+`nebular.materialise_nebular` forms R_S from Q_trapped = (1 − 0.30) Q = α_B ⟨n²⟩ (4/3) π R³, ⟨n²⟩ = e^{σ_s²} ⟨n⟩²,
+⟨n⟩ the host cloud's mean, capped at the cloud's size. For a complex the measurer took the members' summed Q, trapped by
+the same 0.30 escape, in the brightest member's ⟨n²⟩ and α_B at its T_e, uncapped (the cap would only lower it):
+
+| friends-of-friends 70 pc | median | p90 | p99 | max |
+|---|---|---|---|---|
+| `milky_way`, pc | 1.11 | 3.72 | 9.41 | 25.7 |
+| `ngc_4414`, pc | 0.96 | 3.41 | 8.73 | 24.6 |
+
+The lattice and the other lengths alike (the Milky Way's lattice median 0.93, max 25.7); the volume-sum radius gives the
+same to 1 %. **Over half a pixel** (19.5 pc, 14.6 pc): 7 complexes on the Milky Way and 11-12 on NGC 4414 under every
+rule — the same handful as unmerged (7 and 11); over a whole pixel, none. The sphere of the sum spans its members in
+5-8 of 1 500-1 800 multi-region complexes on the Milky Way and none of ~900 on NGC 4414: a complex's members lie 55-100
+pc apart, its ionized volume a few pc — **the merged "region" is not one ionized volume in the model's gas**. Drawn at
+the 67 pc resolution element (≥ 1.7 px) every complex would be a disc: a size the catalogue's telescope sets, not the
+model (D5).
+
+### S99.5 Hunt & Hirashita 2009 — the page not reached
+
+One fetch was allowed (arxiv.org/abs/0910.2804): it returned the abstract only — the measurer's choice of URL. So the
+normalisation, the scatter and the sample of the size-density relation stay **NOT READ**. The abstract: extragalactic
+regions "follow the same size (D)--density (n) relation as Galactic ones", which "reflects a sequence with different
+initial gas densities". From the form alone `[inferred: the measurer's arithmetic]`, with n = k / D the diameter is
+D = 6 Q / (π α_B k²), linear in Q: across the friends-of-friends census (the Milky Way's merged L median 495, p99 8.05
+× 10⁴, max 4.75 × 10⁵ L☉) diameters would span 1 : 163 : 960 for any k — a median complex of 1 pc puts the brightest
+at ~1 kpc. A build would need the printed k with its scatter from the paper's body, a statement of which sizes
+(HST-resolved, not ground-based blends) it rests on, and a rule replacing the cloud's density in
+`materialise_nebular` — a change of the region's physics, not of the knot's drawing.
+
+### S99.6 What the viewer would have to change (read only)
+
+Today one knot is one cluster row of `/api/clusters` (`api/v6_knots.py`: the light column `hii_halpha_luminosity`, the
+header's size `hii_stromgren_radius`, rule R5 the level-0 cell closure); `frontend/src/galaxy/plummer.ts` draws a point
+(the sprite, or the instrument's PSF) until 2 × extent reaches the pixel's side, then a light-conserving disc. For a
+complex to be one knot the API must serve complex rows (summed `line_response` and L, a centroid, a size column, one
+naming cell per complex) — a grouping step after `materialise_nebular`; a friends-of-friends or a Cartesian lattice
+crosses the level-0 cells the census is drawn by, so a complex would depend on its neighbours' draws (D60's "a region
+alone is its slice" breaks unless the merge is confined to a cell). `knots.ts`, `plummer.ts`'s disc path, FluxPoints
+and the header-named size column would not change.
+
+### S99.7 What the numbers support, and the gate's ruling
+
+The measurer: (i) the merge as the model's catalogue, tested by the luminosity function and drawn at the physical
+radius — the test cannot rule on it, and at a 39 pc pixel the merge draws **fewer, brighter points** (the Milky Way at
+70 pc: 8 045 knots instead of 13 124, median L 495 against 191 L☉, a third of the Hα moved to centroids) and no new
+size; what would visibly change is the bloom, a display effect. (ii) **Permanent**: the knots stay one Strömgren
+sphere each; at a 39 pc pixel nothing visible changes from today. The numbers support (ii) for the size.
+**The gate's ruling (D269 ruling 6): #181 permanent, on the measurement** (the entry's own named alternative, S96).
+What stands between the model and the goal pictures' pink regions is the density the photons see: **#232** opened
+(carried) — the regions' sizes are set in the cloud's clumped gas (150-770 cm⁻³); the reading owed is a size-density
+relation's normalisation (Hunt & Hirashita 2009, the page not reached at S99).
+
+**Not done** (the measurer): no repository file changed, no test run, no bundle or frame touched; heights ignored in
+the merges; no extinction applied to L (Santoro et al. correct theirs; the model's L is intrinsic).

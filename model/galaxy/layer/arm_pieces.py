@@ -22,7 +22,9 @@ item 1, below).
 **A chain** (item 2) is pieces joined end to start, laid outward from its start: each piece's Δβ log-normal
 (median 60°, log-width 0.35, drawn again outside 20°-180°) and its pitch p(1 + 0.56 z), z a unit normal drawn
 again while the pitch is under 1° (the owner's ruling of 2026-11-03, D255, debt #209: a resolution floor; until
-S87 while it was not positive - the gate's sixth follow-up, item 1: an arm's winding sense never reverses)
+S87 while it was not positive - the gate's sixth follow-up, item 1: an arm's winding sense never reverses; the
+model's rule, not the sources' finding - Honig & Reid 2015's Table 5 prints a reversed segment, M51's arm B at
+-10.3 ± 1.4° at 7.1 kpc, outside what the model draws, M51 being interacting: Audit VI, F-1A-1)
 - S59's draws, now per arm as the sources measure them - and the chain's total length a normal, 273° ± 143° in a grand
 design and 244° ± 131° in a multi-armed disc, drawn again under 90° (the sources' definition of an arm), the last
 piece cut to it. A chain that has left the grid is not continued (no ring would cross the rest).
@@ -314,7 +316,9 @@ def draw_piece(generator: Any, law: Law) -> tuple[float, float]:
     floor - ``ARM_SEGMENT_PITCH_FLOOR``). Until S87 it was drawn again while the pitch was not positive (D219, the
     gate's sixth follow-up, item 1: "an arm's winding sense never reverses - the sources measure the pitch's
     variation along an arm, not a reversal of its sense, and a trailing arm stays trailing"), which the floor
-    keeps. As the extent is drawn again outside its range: the deviate's draws come first on the stream, then the
+    keeps. That no piece reverses is the model's rule, not the sources' finding (Audit VI, F-1A-1): Honig & Reid
+    2015's Table 5 prints a reversed segment, M51's arm B at -10.3 ± 1.4° at 7.1 kpc, which lies outside what the
+    model draws - M51 is interacting. As the extent is drawn again outside its range: the deviate's draws come first on the stream, then the
     extent's. A pinned piece keeps its measured pitch and sign; it is not drawn here."""
     for _ in range(MAX_PITCH_DRAWS):
         deviate = float(generator.normal())
@@ -563,7 +567,9 @@ _STATISTIC = (
     "while the pitch it makes is under 1 degree - the smallest non-reversed segment pitches the readers hold "
     "(Reid et al. 2019 Table 2, Honig & Reid 2015), a resolution floor, the owner's ruling of 2026-11-03 "
     "(DECISIONS.md D255, debt #209; until S87 while it was not positive, DECISIONS.md D219, the gate's sixth "
-    "follow-up: an arm's winding sense never reverses) - the measured variation of the pitch along an arm, 0.56 +- 0.25 over Savchenko 2020's 67 stage-2 "
+    "follow-up: an arm's winding sense never reverses - the model's rule, not the sources' finding: Honig & Reid "
+    "2015's Table 5 prints a reversed segment, M51's arm B at -10.3 +- 1.4 degrees at 7.1 kpc, outside what the "
+    "model draws, M51 being interacting; Audit VI, F-1A-1) - the measured variation of the pitch along an arm, 0.56 +- 0.25 over Savchenko 2020's 67 stage-2 "
     "galaxies (sections 3.3 and 4.2; was '155 galaxies', the whole sample - corrected at Audit V, S70) [verified: Savchenko, Marchuk, "
     "Mosenkov & Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; docs/READING_ARM_SEGMENTS.md A1.1]. A chain's "
     "whole length normal, 273 +- 143 degrees in a grand design and 244 +- 131 in a multi-armed disc, drawn again "
@@ -626,7 +632,8 @@ ARM_PIECE_PITCH = _column(
     "arm_piece_pitch", "Pitch of an arm piece", "deg",
     "The piece's own pitch angle: the disc's pitch times one plus the measured relative spread times a unit "
     "normal draw, drawn again while the pitch it makes is under 1 degree - an arm's winding sense never "
-    "reverses, so a drawn piece is always trailing, and none is flatter than the flattest measured stretch "
+    "reverses here (the model's rule, not a measured law: a reversed segment is printed in the interacting M51, "
+    "outside what the model draws), so a drawn piece is always trailing, and none is flatter than the flattest measured stretch "
     "(the owner's floor, S87). A template's measured piece holds its fitted pitch, of either sign. The pitch sets how wide the piece lies on a ring and how hard it pulls the gas.",
 )
 ARM_PIECE_EXTENT = _column(

@@ -714,6 +714,28 @@ _INPUTS: tuple[Input, ...] = (
         checkpoint_hypothesis=3,
     ),
     Input(
+        "bar_contrast",
+        "Bar amplitude (a template's pin)",
+        "pin",
+        "A pin, not a control (S99, D268 ruling 8, on debt #146): the bar amplitude of one named galaxy - the "
+        "largest two-fold amplitude of its bar's body round a ring - stated by a template in place of the amplitude "
+        "the model draws log-normally about the S4G barred sample's median. It replaces the drawn value in the "
+        "published bar_contrast - the body's mass share, its depth, the arms' saturation, the gas's response and "
+        "everything placed by them read it - and the law's own draw is still made on its stream, so no other "
+        "number of the pattern seed moves; the drawn value is the bar_contrast of a run of the same seeds with no "
+        "template. It is not used where the galaxy has no bar. The Milky Way's is derived, not read off a page: "
+        "the amplitude at which the finished model's face-on stellar density holds the Galaxy's printed "
+        "non-axisymmetric long-bar mass (Portail et al. 2017; galaxy/specs/bar_mass.py), as its length and its "
+        "angle are pinned - a mass, not a picture. It is held to the range of the draw it replaces, 0 to the draw's "
+        "cap 0.9, and refused outside it, by a template and by a run. No request offers it: the API takes it from "
+        "template=<name> alone, it has no default, and it does not count against the ceiling.",
+        unit="dimensionless",
+        default=None,
+        lo=0.0,
+        hi=0.9,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
         "pitch_angle",
         "Arm pitch angle (a template's pin)",
         "pin",

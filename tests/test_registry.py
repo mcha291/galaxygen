@@ -20,6 +20,7 @@ from galaxy.core.registry import (
     production,
     seeds,
 )
+from galaxy.stages.pattern import BAR_CONTRAST_CAP
 
 PLAN_INPUTS = {
     # GALAXY_PLAN.md §8: the seven, plus four seeds and mergers[].
@@ -53,6 +54,9 @@ PLAN_INPUTS = {
     "molecular_ring",
     # S87 (#80; the owner's ruling of 2026-11-03, D255): a seventh pin, a measured number - a bar's half-length in kpc.
     "bar_half_length",
+    # S99 (#146; D268 ruling 8): an eighth pin, a number - a bar's amplitude, derived for the Milky Way from its
+    # printed non-axisymmetric long-bar mass.
+    "bar_contrast",
 }
 
 
@@ -68,9 +72,15 @@ def test_input_vector_is_closed():
     # S60 (D219 items 3 and 8): was three pins and 7 + 5 + 1 + 3 - a named class and a table join them.
     # S70 (D234): was five pins and 7 + 5 + 1 + 5 - the molecular ring joins them, a table of one row (#192).
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was six pins and 7 + 5 + 1 + 6 - the bar's measured half-length joins them, a number in kpc.
-    assert [i.name for i in pins()] == ["bar_present", "bar_half_length", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
-    assert len(INPUTS) == 7 + 5 + 1 + 7
+    # S99 (#146, D268 ruling 8): was seven pins and 7 + 5 + 1 + 7 - the bar's amplitude joins them, a number held to
+    # the range of the draw it replaces, 0 to the draw's cap.
+    assert [i.name for i in pins()] == ["bar_present", "bar_half_length", "bar_contrast", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
+    assert len(INPUTS) == 7 + 5 + 1 + 8
     assert (INPUTS["bar_half_length"].shape, INPUTS["bar_half_length"].unit, INPUTS["bar_half_length"].lo, INPUTS["bar_half_length"].hi) == ("number", "kpc", 0.1, 30.0)
+    contrast = INPUTS["bar_contrast"]
+    assert (contrast.shape, contrast.unit, contrast.lo, contrast.hi, contrast.hi_open, contrast.default, contrast.checkpoint_hypothesis) == (
+        "number", "dimensionless", 0.0, BAR_CONTRAST_CAP, False, None, 3)
+    assert "not a control" in contrast.about and "template" in contrast.about and "No request offers it" in contrast.about
     # The four shapes a pin takes, told apart by the declaration: True or False, one of its named classes, a number
     # in its unit, or rows of its columns.
     assert [INPUTS[n].shape for n in ("bar_present", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces")] == ["class", "number", "number", "named", "table"]

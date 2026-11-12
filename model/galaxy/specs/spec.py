@@ -332,9 +332,9 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(3, "Solar tangential velocity", "km/s", "v_tangential_sun", 245.0, 251.0, "pointwise", "248 ± 3 km/s", _BHG16),
     Quantity(4, "Thin disc scale length", "kpc", "thin_disc_scale_length", 2.1, 3.1, "pointwise", "2.6 ± 0.5 kpc", _BHG16),
     Quantity(5, "Thick disc scale length", "kpc", "thick_disc_scale_length", 1.8, 2.2, "pointwise", "2.0 ± 0.2 kpc", _BHG16),
-    Quantity(6, "Thin disc scale height", "pc", "thin_disc_scale_height", 250.0, 350.0, "pointwise", "300 ± 50 pc", _BHG16),
+    Quantity(6, "Thin disc scale height", "pc", "thin_disc_scale_height", 250.0, 350.0, "pointwise", "300 ± 50 pc", _BHG16, note="S99 (#227, D268 ruling 7): the row reads the stellar layer, one height per galaxy - the disc's fitted mass scale length over the flattening of edge-on discs (Kregel, van der Kruit & de Grijs 2002), 334.2 pc on the defaults. Until S99 the layer was the isothermal sheet's law read at R_0 (345.9 pc on the defaults); that law's value is still published as thin_disc_scale_height_dynamical, a check the row does not read, and debt #42's heating tests read it. Window unchanged (B5)."),
     Quantity(7, "Thick disc scale height", "pc", "thick_disc_scale_height", 720.0, 1080.0, "pointwise", "900 ± 180 pc", _BHG16),
-    Quantity(8, "Thick/thin local density ratio", "dimensionless", "thick_thin_local_density_ratio", 0.02, 0.06, "pointwise", "4% ± 2%", _BHG16),
+    Quantity(8, "Thick/thin local density ratio", "dimensionless", "thick_thin_local_density_ratio", 0.02, 0.06, "pointwise", "4% ± 2%", _BHG16, note="Row 9's ratio times the thin over the thick height. Since S99 (#227) the thin height is the stellar layer (the mass scale length over the flattening), the thick one still the isothermal sheet's law at R_0. With no thick disc on the defaults (debt #27) the row reads 0 whatever the thin height is."),
     Quantity(9, "Thick/thin surface density ratio", "dimensionless", "thick_thin_surface_density_ratio", 0.08, 0.16, "pointwise", "12% ± 4%", _BHG16),
     Quantity(10, "Thin disc stellar mass", "Msun", "thin_disc_stellar_mass", 2.5e10, 4.5e10, "pointwise", "3.5 ± 1 × 10¹⁰ M☉", _BHG16),
     Quantity(11, "Thick disc stellar mass", "Msun", "thick_disc_stellar_mass", 3.0e9, 9.0e9, "pointwise", "6 ± 3 × 10⁹ M☉", _BHG16),
@@ -580,8 +580,11 @@ _MISSES: tuple[Miss, ...] = (
         prediction=(
             "The weighting or the stellar scale height, which is where the killed prediction said to "
             "look next. f_H2 reads 0.53 at 4 kpc, 0.20 at R_0 and 0.055 at 12 kpc, and the row is "
-            "gas-mass weighted over the whole 30 kpc grid; the pressure reads one scale height, "
-            "thin_disc_scale_height at R_0, at every radius. If a radius-dependent h_* does not bring "
+            "gas-mass weighted over the whole 30 kpc grid; the pressure reads one scale height at "
+            "every radius - until S99 thin_disc_scale_height at R_0, since S99 (#227) the stellar "
+            "layer's one height per galaxy, the mass scale length over the flattening (334.2 pc on "
+            "the defaults, 345.9 before), so the row's value moved a little and not its verdict; the "
+            "0.20 at R_0 above is S24's reading. If a radius-dependent h_* does not bring "
             "the row below 0.15, the remaining suspect is how Nakanishi & Sofue's H2 mass was derived "
             "(the CO-to-H2 conversion) rather than the partition [inferred]. Not a lever: the pressure "
             "pair, DUST_TO_GAS_SOLAR or the extinction coefficient, which this row does not read; nor "

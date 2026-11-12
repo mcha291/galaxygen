@@ -146,3 +146,68 @@ its own image. It is not in Kregel et al.'s nor in Ranaivoharimina et al.'s samp
 Kregel et al.'s Figs. 5e and 6c (figures, no fits printed); de Grijs & Peletier's Fig. 2 slopes (a figure only);
 Ranaivoharimina et al.'s per-galaxy tables (the fetch summarised; only the equations were asked verbatim); van der
 Kruit & Searle 1981-82 and Shaw & Gilmore 1990 (only as quoted). No model run (a reader).
+
+## Part S99 — the height built: which length, the gate's slip, the readers before and after (2026-11-12, BUILD_VI row 99; the scout and builder L)
+
+**The notes.** S99's scout (`s99_S.md`, section 1; one probe run, nothing changed) and builder L (`s99_L.md`, branch
+`s99-layer`, 1042f02, merged 7796cf3). The gate's rulings are D269 rulings 1 and 2 and register #227.
+
+### S99.1 Two lengths stand in the model (the scout's finding)
+
+| length | what it is | `milky_way` (= the defaults) | `ngc_4414` | ÷ 7.3 |
+|---|---|---|---|---|
+| `thin_disc_scale_length` | sfh's whole-disc stellar mass fit, checkpoint 4 | 2.4396 kpc | 1.6752 kpc | **334.2 / 229.5 pc** |
+| `disc_scale_length_spin` (λ_d) | checkpoint 1; what the gas pattern's thickness factor reads (`gas_pattern.py` line 701) | 2.6049 kpc | 1.7551 kpc | 356.8 / 240.4 pc |
+
+The 334 / 229 pc the owner ruled on (D268 ruling 7) are the stellar fit's; on λ_d the Milky Way would read 356.8 pc and
+**row 6 (250-350) would go out** by 7 pc (345.9 before, inside). "One length in the model" can only be λ_d (the gas
+pattern is checkpoint 3 and cannot read checkpoint 4); the vertical stage is checkpoint 4, after sfh, so either is
+readable under A1. The scout found this before anything was built.
+
+### S99.2 The gate's ruling and its recorded slip (D269 ruling 1)
+
+**#227's length is the stellar disc's fitted mass scale length** (`thin_disc_scale_length`): 334.2 pc on the defaults
+and the Milky Way template, 229.5 pc on `ngc_4414` — the two numbers the owner was shown. **A slip of the gate's,
+recorded**: BUILD_VI §6 and D267 put that length as "the one the pattern stage already uses"; it is not — the gas
+pattern reads `disc_scale_length_spin`. The ruling stands on what the owner was shown (the numbers, and mass against
+photometric); "one length in the model" does not hold (two stand, at two checkpoints), and the owner may re-rule.
+Kregel et al.'s h_R is the stellar disc's, as the fitted length is. **Ruling 2**: the old law's value at `R_SUN` stays
+published as `thin_disc_scale_height_dynamical`, bit for bit — a check and no stage's input; debt #42's heating tests
+read it, their numbers unchanged. Row 6 reads the layer.
+
+### S99.3 Builder L's build, before and after per galaxy
+
+`stages/vertical.py`: `h_thin = thin_disc_scale_length × 1000 / ARM_LAYER_FLATTENING` (pc); the law at `R_SUN`
+computed as before and published as `thin_disc_scale_height_dynamical`; the thick height keeps its law (0 on every
+galaxy measured). `stages/vertical_alpha.py` reads the constant and requires the length (no order change, no cycle).
+Measured on the azimuthal model, the DEFAULT grid, the layer on; the rows on the layer-off run (`s99_L_table.md`). The
+bare defaults and `milky_way` are identical in every number (the template pins only the bar).
+
+| quantity | defaults / `milky_way` before → after | × | `ngc_4414` before → after | × |
+|---|---|---|---|---|
+| `thin_disc_scale_height` (pc) | 345.899 → **334.191** | 0.9662 | 926.405 → **229.473** | 0.2477 |
+| `thin_disc_scale_height_dynamical` (pc, new) | — → 345.899 | | — → 926.405 | |
+| `gas_h2_fraction` | 0.20319 → 0.204895 | 1.0084 | 0.17804 → 0.245794 | 1.3806 |
+| f_H2 at 4 / 8 kpc | 0.52892 / 0.211267 → 0.532865 / 0.213919 | 1.0075 / 1.0126 | 0.349616 / 0.0621355 → 0.505296 / 0.111813 | 1.4453 / 1.7995 |
+| midplane pressure at 4 kpc | 39327.5 → 40010.5 | 1.0174 | 17661.2 → 35485.7 | 2.0093 |
+| the gas's layer over the stars' at 4 / 8 kpc | 0.133456 / 0.308152 → 0.135773 / 0.313503 | 1.0174 | 0.0910578 / 0.343223 → 0.182958 / 0.689621 | 2.0093 |
+| the clouds' layer ratio | 0.0984037 → 0.101851 | 1.0350 | 0.0367418 → 0.14833 | 4.0371 |
+| `cloud_count_total` | 17077.1 → 17263.6 | 1.0109 | 6664.83 → 9892.75 | 1.4843 |
+| `cloud_mass_total` (M☉) | 2.04902e9 → 2.0638e9 | 1.0072 | 1.24449e9 → 1.70004e9 | 1.3661 |
+| clusters = HII regions (L_Hα > 0) | 12989 → 13124 | 1.0104 | 5121 → 7632 | 1.4903 |
+| the star sample's median \|z\| at 7-9 kpc (pc) | 375.533 → 362.822 | 0.9662 | 1017.17 → 251.957 | 0.2477 |
+| the render's `layers.stars` (kpc) | 0.345899 → 0.334191 | 0.9662 | 0.926405 → 0.229473 | 0.2477 |
+| `hydrogen_mass_30kpc`, the catalogue's size, the star count at 7-9 kpc | unmoved | 1 | unmoved | 1 |
+
+**The rows** (the layer off): row 6 345.899 pass → **334.191 pass**; row 8 0 → 0 (no thick disc: the ratio is 0
+whatever the thin height — unchanged); row 20 unmoved; row 21 0.20319 → 0.20490, still a miss (a zero-width target).
+On `ngc_4414` row 6's field reads 229.5 (the Milky Way's window, not judged on the template). `ngc_4414`'s colour check
+0.6457810 → 0.6440710 (all five template checks still fail). On the SMALL test grid the old law read **0.0 pc** and the
+layer now reads 297.04 pc — the habitable zone's zero-thickness test loses its premise; the gate's ruling (D269's
+gates paragraph): feed the stage a zero height directly at the re-pin pass.
+
+**What is left** (#227, carried): the per-star heights' flare by birth time — the published vertical dispersion no
+longer gives the layer's height away from the solar radius (a constant height wants a dispersion falling with the
+column; the model's is set by birth time alone) — a later batch's. Not built: a thick disc on the templates; any
+change to the seven readers (they read the scalar and follow it). Every record outside the lane's files is listed in
+`s99_L.md` section 7 for the batch's one re-pin pass.

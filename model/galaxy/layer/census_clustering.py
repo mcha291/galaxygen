@@ -202,6 +202,10 @@ class ClusteringField:
         r_mid, phi_mid = self.lattice(lo, hi, p_lo, p_hi)
         rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
         w = self.map(rr * np.cos(pp), rr * np.sin(pp)) * (np.interp(r_mid, R, sigma_h2) * r_mid)[:, None]
+        # The pattern's point function to the first power (S99, #229), as the clouds' sector weights take it: Colombo
+        # et al. 2014 (ApJ 784, 3), Table 2, M 51 at 40 pc - arm over inter-arm 3.78 in molecular gas, 4.05 in cloud
+        # mass per area (an exponent 1.05; 0.86 without the catalogue's extrapolation), 2.43 in cloud number per area
+        # (0.67). One grand-design galaxy, no flocculent disc, no law printed.
         law = mesh_factor(pattern, (lo, hi, p_lo, p_hi), r_mid, phi_mid)
         if law is not None:
             w = w * law

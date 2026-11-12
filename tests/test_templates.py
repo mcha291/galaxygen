@@ -65,7 +65,10 @@ B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} f
 # Local arm - and NGC 4414's its observed arm class, a name.
 MW_ARMS = tuple(row for row in templates.REID_2019_TABLE2 if row[0] in templates.MILKY_WAY_PINNED_ARMS)
 # S87 (#80, the owner's ruling of 2026-11-03, D255): and the Milky Way's measured bar half-length, 5.0 kpc, in place of Erwin 2019's law (2.27 on its disc).
-MW_PINS = {"bar_present": True, "bar_half_length": 5.0, "sun_bar_angle": 30.0, "arm_pieces": MW_ARMS}
+# S99 (#146, D268 ruling 8): and its bar's amplitude, derived from the Galaxy's printed non-axisymmetric long-bar mass
+# in place of the seeded draw (the template's own value, read from it: its derivation is tests/test_bar_mass.py's).
+MW_PINS = {"bar_present": True, "bar_half_length": 5.0, "sun_bar_angle": 30.0, "arm_pieces": MW_ARMS,
+           "bar_contrast": templates.pinned(templates.MILKY_WAY)["bar_contrast"]}
 # S70 (D234; the owner's ruling D233 on #192): was without "molecular_ring" - NGC 4414 pins its own molecular ring.
 NGC_PINS = {"bar_present": False, "pitch_angle": 28.9, "arm_class": "flocculent", "molecular_ring": ((0.43, 4.29),)}
 assert len(MW_ARMS) == 6 and [row[0] for row in MW_ARMS] == ["Norma", "Sct-Cen", "Sgr-Car", "Local", "Perseus", "Outer"]
@@ -106,7 +109,8 @@ def test_two_templates_are_registered_and_the_default_leads():
         assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == (
             # S70 (D234): NGC 4414 was without "molecular_ring" (its own ring, #192).
             # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way was without "bar_half_length", its measured bar, pinned last.
-            ["bar_present", "sun_bar_angle", "arm_pieces", "bar_half_length"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class", "molecular_ring"]
+            # S99 (#146, D268 ruling 8): the Milky Way was without "bar_contrast", its bar's derived amplitude, pinned last.
+            ["bar_present", "sun_bar_angle", "arm_pieces", "bar_half_length", "bar_contrast"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class", "molecular_ring"]
         )
     # S67 (D227 T1): was ("rgb", "wfc3") - the owner's "Switch to RGB": NGC 4414 opens on RGB, and its instrument
     # names its own set, WFC3, where the PSF and the spikes draw.
@@ -223,7 +227,10 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # bare defaults **and its measured bar**: run with the same length pinned, the bare run below is its twin.
     law = run(model, layer=False, only=("bar_half_length",))
     assert float(law.fields["bar_half_length"]) == pytest.approx(2.2698, abs=1e-4)
-    bare = run(model, {"bar_half_length": 5.0})
+    # S99 (#146, D268 ruling 8): was `run(model, {"bar_half_length": 5.0})` - the twin carries the template's bar
+    # amplitude too, a pin like the length: the bare defaults draw theirs.
+    twin = {"bar_half_length": 5.0, "bar_contrast": MW_PINS["bar_contrast"]}
+    bare = run(model, twin)
     named = run(model, templates.resolve(MILKY_WAY))
     # S58 (D217 item 2): was `named.inputs == bare.inputs`. The template pins the Milky Way barred; the bare run
     # pins nothing and derives - barred, at the defaults - so the two differ by the pin among their inputs and
@@ -240,6 +247,7 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # table is judged on (below).
     assert named.inputs == {**bare.inputs, **MW_PINS} and "bar_present" not in bare.inputs and named.order == bare.order
     assert bare.inputs["bar_half_length"] == named.inputs["bar_half_length"] == 5.0  # S87 (#80): the twin's one pin
+    assert bare.inputs["bar_contrast"] == named.inputs["bar_contrast"] == MW_PINS["bar_contrast"]  # S99 (#146): and its second
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was 1.09539 - the bar's angle is a closed form of its half-length and the pitch (pattern.bar_terms), and
     # the half-length is the pinned 5.0 where it was 5.2097: the Sun stands 30 degrees from a bar that turned.
     assert math.isnan(float(bare.fields["sun_azimuth"])) and float(named.fields["sun_azimuth"]) == pytest.approx(0.92475, abs=2e-5)
@@ -318,7 +326,7 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     assert arrays > 150  # the comparison is on arrays, not on a handful of scalars
     # ... and with the layer off, the run the acceptance table is judged on: bit-identical but for the Sun. S87 (#80, D255):
     # was `run(model, layer=False)` - the twin with the same bar length pinned; the bare defaults read the law (2.27 kpc).
-    off, named_off = run(model, {"bar_half_length": 5.0}, layer=False), run(model, templates.resolve(MILKY_WAY), layer=False)
+    off, named_off = run(model, twin, layer=False), run(model, templates.resolve(MILKY_WAY), layer=False)  # S99 (#146): was {"bar_half_length": 5.0}
     for name, value in off.fields.items():
         assert name == "sun_azimuth" or same(value, named_off.fields[name]), f"{name} differs between the template and the bare run, layer off"
     assert float(named_off.fields["sun_azimuth"]) == float(named.fields["sun_azimuth"])  # a law's number: the layer does not move it
@@ -357,7 +365,8 @@ def test_ngc_4414_states_the_controls_its_targets_measure_and_invents_nothing():
     assert NGC_4414.mergers == ()
     # S59 (D218): the Sun is the Milky Way's. S60 (D219 item 8): and so are the measured arms.
     # S87 (#80, the owner's ruling of 2026-11-03, D255): and so is the measured bar length - NGC 4414 has no bar.
-    assert set(resolved) == set(INPUTS) - {"sun_bar_angle", "arm_pieces", "bar_half_length"} and resolved["mergers"] == ()
+    # S99 (#146, D268 ruling 8): and so is the bar's pinned amplitude - NGC 4414 keeps no bar to pin.
+    assert set(resolved) == set(INPUTS) - {"sun_bar_angle", "arm_pieces", "bar_half_length", "bar_contrast"} and resolved["mergers"] == ()
     # S58 (D217 item 2): the pin joins what the template states - a measured class, not a control.
     # S59 (D218 item 6): and the measured mean pitch. S60 (D219 item 3): and the observed arm class.
     assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers", *NGC_PINS} and {n: given[n] for n in NGC_PINS} == NGC_PINS
@@ -1195,12 +1204,15 @@ def test_every_route_answers_for_ngc_4414(route, query):
 
 
 def test_the_checks_are_judged_on_the_template_s_own_run():
-    """On a small grid, for speed: five results for NGC 4414, none for the Milky Way, each a number against its window."""
+    """On a small grid, for speed: seven results for NGC 4414 (its five own checks and, since S99, #136's two
+    per-radius ones), none for the Milky Way, each a number against its window."""
     api = Service(grid=SMALL)
     results = checks.evaluate(service=api)
     assert list(results) == ["milky_way", "ngc_4414"] and results["milky_way"] == []
     judged = results["ngc_4414"]
-    assert [r.name for r in judged] == [c.name for c in NGC_4414.checks]
+    # S99 (#136): was the template's five checks alone.
+    assert [r.name for r in judged] == [c.name for c in NGC_4414.checks] + [c.name for c in checks.RADIAL_CHECKS["ngc_4414"]]
+    assert checks.stated("ngc_4414") == tuple(r.name for r in judged) and checks.stated("milky_way") == ()
     for r, c in zip(judged, NGC_4414.checks):
         assert r.status in ("pass", "fail") and math.isfinite(r.value)
         assert (r.status == "pass") == c.holds(r.value)
@@ -1225,6 +1237,15 @@ def test_the_checks_are_judged_on_the_template_s_own_run():
     assert by_name["colour_b_v_face_on"] == checks.face_on_colour(header, arrays)
     bare = checks.frame_total(header, arrays)
     assert by_name["colour_b_v_face_on"] != float(checks.band_magnitude(bare[0], "B") - checks.band_magnitude(bare[1], "V"))
+    # S99 (#136): the per-radius checks - the largest face-on E(B - V) over each band, read again here: 55-70 arcsec at
+    # the template's own 17.7 Mpc, and the template's pinned molecular ring (0.43-4.29 kpc), edges by linear reads.
+    dust, _ = api.compute(api.models.get(NGC_4414.model), templates.overrides(NGC_4414), ("dust_colour_excess_b_v",), layer=False)
+    e, R = np.asarray(dust.fields["dust_colour_excess_b_v"], dtype=float), np.asarray(dust.grid.R, dtype=float)
+    arcsec = 17.7e3 * math.pi / (180.0 * 3600.0)
+    for name, (lo, hi) in (("colour_excess_55_70_arcsec", (55 * arcsec, 70 * arcsec)), ("colour_excess_molecular_ring", (0.43, 4.29))):
+        inside = e[(R > lo) & (R < hi)]
+        assert by_name[name] == max(np.interp(lo, R, e), np.interp(hi, R, e), *inside), name
+        assert by_name[name] > (0.18 if name.startswith("colour_excess_55") else 0.3)  # a recorded miss on this grid too
 
 
 def test_the_colour_check_s_computation_is_the_render_gate_s_record():
@@ -1313,7 +1334,7 @@ def test_every_verdict_on_the_fit_that_stands_is_disclosed_and_fit_a_s_reading_i
 
 def test_the_ledger_names_only_checks_a_template_states():
     for name, entries in checks.CHECK_MISSES.items():
-        stated = {c.name for c in templates.get(name).checks}
+        stated = set(checks.stated(name))  # S99 (#136): was the template's own checks; the per-radius ones beside them
         assert set(entries) <= stated, name
         assert all(isinstance(m, checks.CheckMiss) for m in entries.values())
 

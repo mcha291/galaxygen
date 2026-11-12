@@ -61,13 +61,19 @@ def test_no_major_merger_means_no_thick_disc(model):
 
 
 def test_scale_heights_are_arithmetic_from_the_dispersions(model):
-    """Verdict A: h_z has no freedom once sigma_z and Sigma exist."""
+    """Verdict A: h_z has no freedom once sigma_z and Sigma exist.
+
+    S99 (#227, D268 ruling 7): the thin disc's law at R_0 is published as ``thin_disc_scale_height_dynamical``, a
+    check; the layer ``thin_disc_scale_height`` is the mass scale length over the flattening (tests/test_s99_layer.py).
+    """
     o = out(model)
     R = o.grid.R
     total = float(np.interp(R_SUN, R, o.fields["thin_disc_surface_density"]
                             + o.fields["thick_disc_surface_density"]
                             + o.fields["gas_surface_density"]))
-    for disp, height in (("thin_disc_dispersion", "thin_disc_scale_height"),
+    assert o.fields["thin_disc_scale_height"] == pytest.approx(
+        o.fields["thin_disc_scale_length"] * 1000.0 / float(model.constants["ARM_LAYER_FLATTENING"].value), rel=1e-12)
+    for disp, height in (("thin_disc_dispersion", "thin_disc_scale_height_dynamical"),
                          ("thick_disc_dispersion", "thick_disc_scale_height")):
         if o.fields[disp] == 0.0:
             assert o.fields[height] == 0.0  # an empty population has no height, not a small one
@@ -107,6 +113,7 @@ def test_scale_height_reads_the_registered_G_not_a_copy(prod):
     from galaxy.stages.vertical_alpha import VERTICAL_ALPHA
 
     assert "G" in VERTICAL_ALPHA.reads_constants
-    G = float(prod[0].get(DEFAULT_MODEL).constants["G"].value)
+    assert "ARM_LAYER_FLATTENING" in VERTICAL_ALPHA.reads_constants  # S99 (#227): the layer's flattening, declared
+    G =float(prod[0].get(DEFAULT_MODEL).constants["G"].value)
     assert scale_height(20.0, 50.0, G) == pytest.approx(20.0**2 / (2.0 * np.pi * G * 50.0 * 1000.0**2))
     assert scale_height(20.0, 50.0, 2.0 * G) == pytest.approx(0.5 * scale_height(20.0, 50.0, G))

@@ -223,7 +223,9 @@ CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is h
 # ``arm_multiplicity``, and no longer a mode's amplitude or a phase.
 GAS_PATTERN_READS: tuple[str, ...] = (*PATTERN_READS, "epicyclic_frequency", "disc_scale_length_spin")
 # The lanes' four numbers (S58): the arcs' curvature, where they end, the gas inside the footprint over the gas
-# outside it, and the lane's width - the last a declared placeholder (D217 item 8).
+# outside it, and the lane's width - the last a declared placeholder (D217 item 8), kept on the owner's word (D268
+# ruling 10) with the readings' bracket of single galaxies beside it: about 240 pc (NGC 7479) to 'wider than'
+# 320-640 pc (NGC 1097), against the placeholder's 0.50 kpc on the Milky Way template (BAR_LANE_WIDTH's about; #147).
 LANE_CONSTANTS: tuple[str, ...] = ("BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH")
 # ... the gas's sound speed and G, and since S60 the stellar layer's flattening (D219 item 5).
 GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION", "ARM_LAYER_FLATTENING", *LANE_CONSTANTS)

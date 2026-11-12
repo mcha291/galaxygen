@@ -282,6 +282,8 @@ def test_production_graphs_hold(prod):
             "molecular_ring": 5,
             # S87 (#80; D255): a seventh, the bar's measured half-length, read by the bar stage at the pattern's checkpoint.
             "bar_half_length": 3,
+            # S99 (#146; D268 ruling 8 b): an eighth, the bar's amplitude, read by the pattern stage at its checkpoint.
+            "bar_contrast": 3,
         }
         # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's - and (the gate's follow-up,
         # item 2) the spread of a segment's pitch relative to the disc's, a law's number the winding's readers take.
@@ -295,7 +297,7 @@ def test_production_graphs_hold(prod):
         # law's arm number, from the bar's end, placed by the Sun where a template pins arms.
         assert g.stages["arm_pieces"].requires == ("pitch_angle", "arm_class", "bar_half_length", "arm_design_count", "sun_azimuth")
         assert g.stages["arm_pieces"].reads_inputs == ("arm_pieces",) and g.stages["arm_pieces"].reads_seeds == ("texture_seed",)
-        assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle") and g.stages["pattern"].reads_seeds == ("pattern_seed",)
+        assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle", "bar_contrast") and g.stages["pattern"].reads_seeds == ("pattern_seed",)  # S99 (#146): and the bar's pinned amplitude
         assert {g.producer[n] for n in ARM_PIECES} == {"arm_pieces"}
         # S59 (D218): the columns are a table's (domain "table"), and the graph's provenance covers them as it
         # covers any field: computed synthetic, the layer stage's, and declared so.

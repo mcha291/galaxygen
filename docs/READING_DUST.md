@@ -141,3 +141,35 @@ S96's reader B fetched the sources below in this session (its note `s96_B.md` in
   line-of-sight one scaled by cos i) — inside or at the top of the window. Every source read reddens the frame; the
   model's dust makes it 0.0155 bluer.
 - **Not reached.** Tuffs et al. 2004's face-on A_B − A_V tables (the population's face-on reddening — the next reading).
+
+## Part S99 — NGC 4414's face-on E(B − V) by radius against Vallejo et al. 2002 (#136): the check built, both readings miss (2026-11-12, BUILD_VI row 99; builder M)
+
+**The note.** Builder M (`s99_M.md`, item 2; branch `s99-mends`, 0b6eece, merged 5510370) built the check S96 rewrote
+#136's closer to: a per-radius check of the `ngc_4414` template's `dust_colour_excess_b_v` against Vallejo, Braine &
+Baudry 2002's Table 8 (Part S96.2: E(B − V) 0.18 at 55-70″ and ~0.3 in the molecular ring, both `[inferred]` from
+A_B − A_V, both upper limits). A check, not a change to the light. The gate's ruling is D269 ruling 8.
+
+- **Where it lives.** `model/galaxy/specs/templates.py`: a `RadialCheck` (the fields `judge` reads), `RADIAL_CHECKS
+  ["ngc_4414"]` (two checks), evaluated after the template's own checks and recorded as misses in `CHECK_MISSES`
+  (debt 136, since S99). The statistic: the largest read of `dust_colour_excess_b_v` over the band, at both edges
+  (linear between rings) and every ring inside. The bands: **55-70″ = 4.7197-6.0068 kpc** at the template's 17.7 Mpc
+  (0.085812 kpc per arcsec, `instrument.distance_mpc`), window (0, 0.18); and the template's pinned
+  `molecular_ring`, **0.43-4.29 kpc**, window (0, 0.3). (The template's other checks are `Check` objects in
+  `model/galaxy/templates.py`, another lane's file; moving these there would need a new statistic — noted by the
+  builder.)
+- **The readings** (production grid, the layer off; `s99_M_dust.log`, `s99_M_checks.log`):
+
+| band | the model's face-on E(B − V) | Vallejo et al. 2002 (upper limits) | verdict |
+|---|---|---|---|
+| 55-70″ (4.72-6.01 kpc) | **0.3476** at the inner edge; 0.161 at the outer; the rings inside 0.165-0.338 | ≤ 0.18 | **miss** — under 0.18 only past ~5.8 kpc |
+| the molecular ring (0.43-4.29 kpc) | **31.21** at the inner edge; 0.461 at the outer; the rings 0.478-28.47 | ~0.3 | **miss at every radius**, ~100× at the inner edge |
+
+- **The model's face-on dust column on `ngc_4414` by radius**: E(B − V) **12.99 at 1 kpc, 3.52 at 2, 0.56 at 4, 0.044
+  at 8**, peak 47.2 at 0.11 kpc. Both readings are recorded as misses (debt #136, since S99); nothing tuned. The
+  template's report: 0 pass, 7 fail of 7, all recorded.
+- **What it is, by the gate's ruling** (D269 ruling 8): the inner reservoir #47 owns — the gas the star-formation
+  threshold strands inside 4 kpc — written into #47 with these numbers; no entry opened. The entry's open question
+  stands: the model's dust makes NGC 4414's frame bluer where every source read reddens it. Beside it, on the same
+  branch, the colour check reads 0.6441 (was 0.6458) — #227's thinner stellar layer (builder L), not this check.
+- **What the frame shows** (`READING_PICTURES.md` section 18): the inner disc did not go dark behind this column on the
+  uncommitted look — it brightened, 207.6 → 220.7 of 255 at the defaults.
