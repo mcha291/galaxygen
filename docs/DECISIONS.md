@@ -17968,3 +17968,44 @@ open — 46 permanent, 68 carried — and 99 discharged**; next #231, D268.
 **The gates.** The docs and register tests at the close (the fast job's six files 132 passed, the register's nodes of `tests/test_audit.py` 21 passed, `tools/progress.py --check` agreeing, on 3b90571; `s98g_gates.log`); `git diff --stat main -- model/ frontend/` empty.
 `session-98` merges into `main` on these (documents and the count pin: C7), tagged `s98`. Cost: reader A 0.20 M
 tokens, reader B 0.15 M, the measurer 0.23 M over two passes, the docs builder 0.28 M.
+
+### D268. The owner's word of 2026-11-12 ("Adopt as recommended"): BUILD_VI adopted, its section 6's ten rulings taken as recommended — the order of the model batch by what a source supports, the pin lifted once for batch P, the bar's length law by Table 4 with the stellar mass at checkpoint 3, one stellar height on the mass scale length, the Milky Way template's bar pinned to the Galaxy's printed mass, the gas law's frame left as D216 has it, the bar lanes' placeholder kept with its bracket
+
+**The word.** At S98's close the owner was asked "Adopt BUILD_VI with its ten rulings as recommended?" beside the
+other answer on offer, the display pass first. The owner answered **"Adopt as recommended"** on 2026-11-12. Each
+recommendation of `BUILD_VI.md` §6 is now the ruling, recorded here as S99's first commit on `session-99` (cut from
+`batch-p`, cut from `main` at 5173ded, S98's close; rulings first, as D252 ran).
+
+**The rulings.** (1) **The plan is adopted**, in its order: rows 97 and 98 ran on the owner's first word (D266,
+D267); rows 99–100 are batch P, the model's half; row 101 reads the yardstick again. (2) **The model batch's order
+is by what a source supports**: #227, the stellar layer's one height; #146, the Milky Way template's bar pinned;
+#181, the knots as regions; #229, the clouds' weight once its source is read; the gas law last and not in this
+build (ruling 9). (3) **The display pass stays the owner's**, at the dev tab, whenever the owner takes it: the
+tools are in (D266), no session rules a display value (D227), and the batch does not wait on it — the frames the
+batch regenerates at its close are drawn at the committed defaults, and the pass's paste becomes
+`TEMPLATE_TUNING` by its own short session. (4) **The pin is lifted once for batch P**: on `batch-p` every change
+under `model/galaxy` that a row names is allowed, the hash moves in fact and is pinned once at the batch's close
+with the bundles re-exported and the frames regenerated beside the goals; the subset mid-session, the runner's
+full suite once on the final head, the merge into `main` on the owner's word (D246). (5) **#80, the bar's length
+law: Table 4 with the stellar mass at checkpoint 3 (rule A1)** — S98's reading of the bar's light changed the
+amplitude's question, not the length's, so the recommendation's condition is met. (6) **The concurrency: two
+agents at once, one heavy.** (7) **#227: one stellar height per galaxy, the mass scale length the pattern stage
+already uses over the flattening 7.3** (Kregel, van der Kruit & de Grijs 2002, constant with radius): 229 pc on
+`ngc_4414`, 334 pc on `milky_way` as S98 measured them; the Milky Way's solar-neighbourhood row is read from the
+same height and the present law at `R_SUN` is kept as a check, not as the layer. (8) **#146 (b): the Milky Way
+template's bar amplitude is pinned by derivation to the Galaxy's printed non-axisymmetric long-bar mass** (Portail
+et al. 2017, 0.46 ± 0.03 × 10¹⁰ M☉), as its length and angle are pinned; the cut "outside the bulge" is read on the
+source's own page before the pin is built, and the axis ratio at 2 kpc is then a check. The pin is a mass, not a
+picture (C6). Every other galaxy keeps the seeded draw. (9) **#144 (i): D216 stands.** The arms' gas keeps its
+co-rotating frame in this build; lanes come only as far as the clouds make them; the frames are read again before
+the gas law is touched, and re-opening D216 stays a ruling of the owner's. (10) **#147: the placeholder 0.10 a is
+kept**, the bracket (about 240 pc to more than 320–640 pc, single galaxies) written beside it.
+
+**What it changes at once.** `BUILD_VI.md`'s status line and §6 (each row marked taken); nothing under
+`model/galaxy`. The register's entries are amended where a ruling settles a question (#80, #144, #146, #147,
+#227) when S99's builds enter them, with the counts; the counts stand at 114 open — 46 permanent, 68 carried —
+and 99 discharged, next #231, D269.
+
+**What stays the owner's.** The display pass (ruling 3). Whether the ionized gas intensity should reach the knots.
+The owed list of S94–S96 in `BRIEF.md` (the L1 gate's judged statistic, the pinned nodes' cadence, D265's other
+four rulings — #153, #92, #94, #138 — the looks, the downloads, the deploy). The merge of `batch-p` into `main`.
