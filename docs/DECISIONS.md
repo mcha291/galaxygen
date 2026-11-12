@@ -18109,12 +18109,18 @@ solar radius — carried), #146 (the pin, the light share's hit, the axis ratio 
 carried), #147 (the bracket), #136 (the check and its misses), #47 (NGC 4414's inner column), #144 and #228 (no lane from the clouds' weight).
 **114 open — 47 permanent, 67 carried — and 101 discharged**; next #233, D270.
 
-**The gates.** On the merged head (0123c7f): the lanes' own files — `test_s99_layer`, `test_vertical`,
-`test_bar_mass`, `test_bar`, `test_registry`, `test_templates`, `test_spurs`, `test_graph`, the docs tests —
-green. **Not green, by design until the batch's re-pin pass**: every record the three builds move elsewhere (the
-builders' lists: the layer reference, the censuses' counts, `test_spec`'s row 21, the habitable zone's zero-height
-fixture — the gate's ruling: feed the stage a zero height directly, the grid no longer gives one — the seed sweeps
-on the pinned template, `test_audit_v`'s spur nodes). The runner's whole suite is dispatched on the merged head
+**The gates.** Each lane's own files green on its own branch; on the merged head (0123c7f) `test_s99_layer`,
+`test_vertical`, `test_bar_mass`, `test_registry`, `test_graph` and the docs tests green, the register's nodes of
+`test_audit` 21 passed, the board agreeing. **Not green, by design until the batch's re-pin pass**: every record
+the three builds move elsewhere (the builders' lists: the layer reference, the censuses' counts, `test_spec`'s row
+21, the habitable zone's zero-height fixture — the gate's ruling: feed the stage a zero height directly, the grid
+no longer gives one — the seed sweeps on the pinned template, `test_audit_v`'s spur nodes), and two things the
+merge itself showed: **the fast job has one red node**, `test_bundle`'s plan against the request fixture (the
+viewer's field lists gained the new scalar; the fixture is re-recorded from a walk at the batch's close, with the
+bundles — never by hand, S95), so the push's fast run on `batch-p` is red until then; and in `test_bar` **#221's
+strict hold passes** on the merged head (the Milky Way's gas maximum inside the bar 7.303 → 6.766, lanes M and B
+together) with two records beside it — the gate rules on #221 at S100 from the runner's read, the hold neither
+lifted nor re-pinned here. The runner's whole suite is dispatched on the merged head
 (run 43206552351) and is read at S100; the hash moves in fact and is pinned at the batch's close. `session-99`
 merges into `batch-p`, not `main`, tagged `s99`. Cost: the scout 0.23 M tokens, the reader 0.15 M, builder L
 0.25 M, B 0.37 M, M 0.27 M, the measurer 0.15 M, the runner 0.17 M.
