@@ -1,4 +1,4 @@
-# BRIEF — after S97: the pictures, first part (D266) — the display pass is the owner's; BUILD_VI waits on its adoption
+# BRIEF — after S98: the pictures' display pass is the owner's, the model's half is read (D266, D267); BUILD_VI waits on its adoption
 
 **The state (2026-11-12).** S94–S96 (Audit VI, its fixes, the reading session; D263–D265) are in `main`. Asked what
 follows, the owner said **"The pictures"**: `docs/BUILD_VI.md` is drafted on that word, not adopted. **S97 ran its row
@@ -6,25 +6,24 @@ follows, the owner said **"The pictures"**: `docs/BUILD_VI.md` is drafted on tha
 and the Tuning panel's "load a combination" (a copy box pasted back); the diagnosis's experiments finished - the bloom,
 not the tone curve, reverses NGC 4414's colour and makes the burnt core, the 6500 K white makes the tan; sixteen
 combinations measured for the owner to load (`READING_PICTURES.md` §11); the three model gaps traced to their laws (§13).
-No display default, no frame, no model byte moved. **112 open = 46 + 66, 99 discharged**; next #229, D267. The nightly on `main` green (run 43117828717).
+No display default, no frame, no model byte moved. The nightly on `main` green (run 43117828717). **S98 ran row 98 (D267):** the readings
+for what the model lacks (`READING_DISC_HEIGHT.md` new; Parts S98; `READING_PICTURES.md` §14–17); nothing built. **114 open = 46 + 68, 99 discharged**; next #231, D268.
 
 ## The two headlines
 - **The display pass is ready, and it is the owner's** (BUILD_VI row P-2): paste a box from `READING_PICTURES.md` §11 into the Tuning panel's
   "load a combination", press Apply, tune live, paste the copy box back. The two display choices that carry most: the bloom's strength and threshold
   (the white ball, NGC 4414's reversed colour, half the bar's ring) and the white point (the tan). With the bloom off or at 0.35 and a white point
   near 4500 K the Milky Way reads as a blue-white barred spiral and NGC 4414's colour step takes the goal's sign.
-- **What the model lacks is now named by law:** #227 a defect (the stellar height read at the Milky Way's `R_SUN` on every template: 926 pc on
-  NGC 4414, where the same law's mass-weighted mean is 222); #181 the knots as regions; #144 / #147 the lanes (no shock in a co-rotating arm;
-  the bar lanes' placeholder width); #146 the bar's amplitude a seeded draw, not a loss. The frames: byte for byte yesterday's, as far from their goals.
+- **What the model lacks is read (D267):** #227's mend is sourced and already in the model (h_R / 7.3); the Milky Way template's bar is short
+  of the Galaxy's own by Portail et al. 2017's two numbers (#146); no source gives a co-rotating arm's gas a profile and a real lane is 20-81 pc
+  wide - the clouds', which follow a shallow gas linearly (#229); the knots as regions sourced at S96 (#181). The frames: as far from their goals.
 
 ## What S97 left (and what S95–S96 still carry)
 - The viewer: the paste box's Apply click has no committed test (the runner's end-to-end bytes are the evidence); `gasIntensity` does not reach the knots; #226, the field's circle at 23.6 kpc under a cool white point, cause unknown.
-- Noted, not pursued: neither template publishes a thick disc (`thick_disc_stellar_mass` 0) - S98 checks an entry owns it.
-  S98 (row 98) reads: Kregel et al. 2002 (#227); Díaz-García et al. 2016's A₂ and the Milky Way's own bar (#146); Kim
-  & Ostriker 2002, Wada et al. 2011 (#144); a bar lane's width (#147); the clouds' angles against the arms (#228).
-- From S95: the catalogue's price a record with no bound (#154); the kept windows' check one-sided; the exemption in
-  `tests/test_one_threshold.py`; the sliver test's 1e-20. Queued for batch P: F-1A-1, F-1A-6, F-1B-4, the isochrone
-  labels' caveat, F-2-3's comment; #220's, #224's, #225's mends; S96's builds (#130, #95, #136, #181), #146's citation.
+- S98 left unread: Elmegreen 1980 (unreachable); Portail et al.'s own cut "outside the bulge" (#146's pin needs it first); the
+  clouds' arm to inter-arm contrast (#229's reading); #230's cause. The thick disc none publishes: #27's, permanent.
+- From S95: the price a record (#154); the kept windows' check one-sided; `tests/test_one_threshold.py`'s exemption; the sliver test's 1e-20.
+  Batch P's queue: F-1A-1, F-1A-6, F-1B-4, the isochrone labels' caveat, F-2-3; #220's, #224's, #225's mends; S96's builds (#130, #95, #136, #181), #146's citation.
 
 ## Rulings taken on recommendation — the owner may re-rule any
 - #218's second part: three more draw-path products ordered (sfh, bright, chemistry_dtd); #166 discharged by the gate's ruling. #173 discharged at S95 as not reproducible (D263).
@@ -35,11 +34,12 @@ No display default, no frame, no model byte moved. **112 open = 46 + 66, 99 disc
 - At S94's gate: `PRICE_RECORD` a record, `WING_BLOCK` a sampling bound, #146's two named rows, the readings ordered.
 - At S95's gate: 0.27 not relaxed (#220 a population finding); #224 opened, no bound moved; F-W-1 mended in the viewer; the fixture re-recorded from the walk.
 - At S97's gate: no default moved; `knotsIntensity` a display balance; #144 kept permanent pending S98's reading; #226-#228 opened.
+- At S98's gate: #227 a build on the flattening; #144 kept permanent, sharpened; #146's miss entered with no bound; #229, #230 opened.
 
 ## The owner's, still owed (none blocking)
-1. Adopt BUILD_VI (drafted on your word; its section 6 holds six rulings, each with a recommendation).
-2. The display pass: load, tune, paste (BUILD_VI row P-2) - and with it the order of features for the model batch
-   (recommended: #227, the knots as regions, the bar's amplitude if S98 finds the Milky Way's, the arms' lanes last).
+1. Adopt BUILD_VI (its section 6 now holds ten rulings, each with a recommendation: 7 the scale length for #227's height, 8 the bar's pin
+   or draw, 9 the gas law's frame, 10 the bar lanes' width).
+2. The display pass: load, tune, paste (BUILD_VI row P-2) - and with it the model batch's order (recommended: #227, the knots, the bar, the lanes last).
 3. The L1 gate's judged statistic (F-3B-4, #223): one default census, or the nine-seed mean (recommended).
 4. A cadence for the pinned nodes (F-3B-3): the three read by name at every model batch's close (recommended).
 5. Any re-ruling of the rulings above: D262's eleven and the four Audit VI adds.

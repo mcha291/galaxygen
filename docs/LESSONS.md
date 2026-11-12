@@ -2312,3 +2312,17 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   #192 was the same class. A template other than the Milky Way is checked for every `R_SUN`. (S97, D266)
 - [audit] **A ratio is written with its denominator.** "a = 0.29 of the half-side" was a share of the width (0.59 of
   the half-side against the goal's 0.72), and a comparison stood on it for a session. (S97, D266)
+
+## From S98 (the readings for what the model lacks: two Opus readers, an Opus measurer in two passes; the Fable gate)
+
+- [audit] **Two numbers are set side by side only component for component.** "0.64 of Portail's mass" compared a
+  classical bulge plus the bar's body (1.21 × 10¹⁰ M☉) with a box/peanut bulge plus the long bar (1.88 × 10¹⁰): component
+  for component the body (0.44) stands against the long bar (0.54 ± 0.04), and the two bulges are not one kind
+  (F-98A-1). (S98, D267)
+- [audit] **A quoted range carries its statistic's definition.** Kim & Ostriker 2002's width W/L_x 0.05–0.16 is taken
+  half way between peak and trough and its peak is over the mean; it stood for two sessions beside the model's FWHM and
+  a crest over the median (F-98B-1). The range was right; the comparison was not of one statistic. (S98, D267)
+- [field] **A template of a measured object is checked against that object's own measurements before a population's
+  distribution is drawn for it.** The Milky Way template's bar amplitude was a draw from 587 other galaxies, while
+  Portail et al. 2017 print the Galaxy's own bar: 1.60 against "about 4" at 2 kpc, 0.23 against 0.46 × 10¹⁰ M☉ (#146).
+  (S98, D267)
