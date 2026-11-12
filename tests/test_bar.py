@@ -302,7 +302,7 @@ def test_the_gate_s_predictions_as_measured(prod):
     # which the two statistical rows' ensemble medians read 81.97 and 2.65 (41.10 and 6.08 until S87).
     assert float(F["bar_half_length"]) == pytest.approx(5.0, abs=5e-6)
     ensemble = spec.ensemble(the_model(prod), ("bar_pattern_speed", "bar_corotation_radius"))
-    assert (float(np.median(ensemble["bar_pattern_speed"])), float(np.median(ensemble["bar_corotation_radius"]))) == pytest.approx((81.97, 2.65), abs=0.01)
+    assert (float(np.median(ensemble["bar_pattern_speed"])), float(np.median(ensemble["bar_corotation_radius"]))) == pytest.approx((64.47, 3.67), abs=0.01)  # S100 (#80, D270): was (81.97, 2.65) - the default disc's bar on Erwin 2019's Table 4, 3.1395 kpc (was Table 3's 2.2698)
     # ngc_4414: "unbarred, the bar's fields NaN, arms to the centre; ... t_b 0.91 Gyr published beside the pin".
     n = template_run(prod, "ngc_4414")
     assert n.fields["bar_present"] == "no" and all(math.isnan(float(n.fields[k])) for k in BAR_NUMBERS)
@@ -312,12 +312,12 @@ def test_the_gate_s_predictions_as_measured(prod):
     # "Both A₂ peak radii miss 0.76-0.94 a" (0.62-0.94 a over DG16b Table 5's rows, S95): the same disc with the pin
     # taken off - the criterion bars it - peaks at 0.38 a.
     u = template_run(prod, "ngc_4414", pinned=False)
-    assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.03963, abs=2e-5)  # S87 (#80): was 0.11256 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
+    assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.06275, abs=2e-5)  # S100 (#80, D270): was 0.03963 - the unpinned disc's bar on Erwin 2019's Table 4  # S87 (#80): was 0.11256 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     ua = float(u.fields["bar_half_length"])
     upart = np.asarray(u.fields["pattern_density_contrast"]) - 1.0 - arms_of(u.fields, R, edges)
     ua2 = hand_fourier(upart, phi)
     upeak = int(np.argmax(np.where(R < ua, ua2, -1.0)))
-    assert float(ua2[upeak]) == pytest.approx(float(u.fields["bar_contrast"]), abs=1e-12) and float(R[upeak]) / ua == pytest.approx(0.3792, abs=1e-4)  # S87 (#80): was 0.4167 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
+    assert float(ua2[upeak]) == pytest.approx(float(u.fields["bar_contrast"]), abs=1e-12) and float(R[upeak]) / ua == pytest.approx(0.4147, abs=1e-4)  # S100 (#80, D270): was 0.3792 - Table 4's length  # S87 (#80): was 0.4167 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
 
 
 # --- the gate -----------------------------------------------------------------------------------------------------
@@ -368,10 +368,10 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     # and is pinned apart in the test after this one, awaiting the re-pin; the bound (> 0 on every cell) is held
     # in the sweep itself. The body's own lowest contrast is the number it was.
     assert sweep["lowest"] > 0.0
-    assert sweep["lowest_body"] == pytest.approx(0.2433, abs=2e-4) and sweep["lowest_body"] > 0.0  # S87 (#80, #209): was 0.2658 - the bar's law and pinned length, the pitch floor
+    assert sweep["lowest_body"] == pytest.approx(0.2474, abs=2e-4) and sweep["lowest_body"] > 0.0  # S100 (#80, D270): was 0.2433 - the unpinned NGC 4414 disc's bar on Table 4 (the bound > 0 holds)  # S87 (#80, #209): was 0.2658 - the bar's law and pinned length, the pitch floor
     # S87 (#80, #209): were (0.4103, 0.1536, 0.3508) and (0.4167, 0.1538, 0.3506) - the Milky Way's bar is its pinned 5.0 kpc
     # (was the ratio's 5.21) and the barred NGC 4414 disc's is the law's, shorter against its disc than the ratio's 2.0.
-    for template, want in (("milky_way", (0.4125, 0.1482, 0.3339)), ("ngc_4414", (0.3792, 0.0989, 0.1234))):
+    for template, want in (("milky_way", (0.4125, 0.1482, 0.3339)), ("ngc_4414", (0.4147, 0.1130, 0.1954))):  # S100 (#80, D270): ngc_4414's were (0.3792, 0.0989, 0.1234) - its unpinned disc's bar on Table 4
         got = np.array(read[template])
         assert got.min(axis=0).tolist() == pytest.approx(want, abs=1e-4) and got.max(axis=0).tolist() == pytest.approx(want, abs=1e-4), template
         assert not np.any((got[:, 0] >= 0.62) & (got[:, 0] <= 0.94))  # the recorded miss, on every barred seed (S95, F-1A-2: was 0.76 - DG16b Table 5 prints 0.62-0.94 over its rows)
@@ -473,7 +473,7 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # (S92, the comment D260 owed: the high 0.107999 is the Milky Way template's, pinned, at pattern_seed 41 and
     #  texture_seed 1, on the ring at R = 4.6125 kpc - 0.9225 of a = 5.0 kpc; measured with s92_owed.py.)
     for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.107999), (0.4125, 0.9975)),
-                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.3792, 0.3792))):
+                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.4147, 0.4147))):  # S100 (#80, D270): ngc_4414's (near, far) were (0.3792, 0.3792) - its unpinned disc's bar on Table 4
         got = np.array(sweep["whole"][template])
         assert (float(got[:, 0].min()), float(got[:, 0].max())) == pytest.approx((low, high), abs=2e-6), template
         assert (float(got[:, 1].min()), float(got[:, 1].max())) == pytest.approx((near, far), abs=1e-4), template
@@ -733,7 +733,7 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     # a trough of the response the segments have turned.
     # S59 (D218 follow-up): was 4.806e-11 - turned otherwise by segments of relative pitch.
     # S60 fourth pass: was 4.829e-11; the barred disc's lowest cell is 0.3854 on the pieces' response.
-    assert float(low.min()) == pytest.approx(0.1969, rel=2e-3)  # S87 (#80, #209): was 0.3854 - the bar's law and pinned length, the pitch floor
+    assert float(low.min()) == pytest.approx(0.38543, rel=2e-3)  # S100 (#80, D270): was 0.1969 - the corner's barred disc's bar on Table 4  # S87 (#80, #209): was 0.3854 - the bar's law and pinned length, the pitch floor
 
 
 # --- by hand -------------------------------------------------------------------------------------------------------
