@@ -621,7 +621,10 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
             # pins its measured bar half-length (5.0 kpc, `bar_half_length`), so its half-length and the two numbers
             # read from it (corotation at FAST_BAR_RATIO times it, the pattern speed) are the pin's - by ruling, not by a
             # moved stream; its pitch and the amplitudes are S55's bits still.
-            mw_pinned = ["bar_corotation_radius", "bar_pattern_speed", "bar_half_length"]
+            # S100 (batch P, D270; #146, D268 ruling 8): was without "bar_contrast" - the Milky Way pins its bar's
+            # contrast (0.6862, the Galaxy's printed long-bar mass) since S99; the draw is still made on its own stream
+            # (pattern.py), so no other number moves: its pitch and arm amplitudes are S55's bits still.
+            mw_pinned = ["bar_contrast", "bar_corotation_radius", "bar_pattern_speed", "bar_half_length"]
             assert moved == (mw_pinned if template == "milky_way" else ["pitch_angle", *bar_s]), (template, layer)
             drawn = run(the_model(prod), inputs_of(template), only=("pitch_angle_drawn",), layer=layer).fields["pitch_angle_drawn"]
             assert layer_reference.value_digest(drawn) == held[label]["pitch_angle"], (template, layer)
