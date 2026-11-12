@@ -1353,7 +1353,12 @@ EXPECTED_CARRIED_PHI_STEPS: dict = {
     # (9, 0.0057, 0.04), (7, 0.0131, 0.07)] and the drawn leg [(10, 0.0015, 0.06), (10, 0.0502, 0.68), (14, 0.0024, 0.09)]
     # - the censuses re-laid by the births made bit-independent (the template's seed 2 (53, 15, 6) -> (50, 13, 6); the
     # flocculent discs' counts unmoved, their exact ties taken by identity).
-    "milky_way": [(1, 0.0423, 4.46), (1, 0.042, 4.46), (2, 0.0415, 4.46)],
+    # S100 (batch P, D270; neither #146 nor #130 - measured: the bar's pin or its old draw 0.28926, and the trees
+    # before and at #130's commit, give the same step to the bit): was (1, 0.0423, 4.46) on the template's seed. Read
+    # on this machine the unrounded step was already 0.042361067574617106 at 5173ded (before batch P; the node is
+    # machine-pinned, so no runner read it); S99's #220 (the spurs' walk reads the crest at the foot) moved it to
+    # 0.042377539404965026. No fold, as before.
+    "milky_way": [(1, 0.0424, 4.46), (1, 0.042, 4.46), (2, 0.0415, 4.46)],
     "ngc_4414": [(4, 0.001, 0.06), (7, 0.0053, 0.04), (7, 0.0096, 0.07)],
     "ngc_4414 drawn": [(8, 0.0003, 0.04), (13, 0.0914, 0.68), (13, 0.0044, 0.09)],
     "default": [(0, 0.0, 0.0), (0, 0.0, 0.0), (0, 0.0, 0.0)],
