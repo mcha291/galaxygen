@@ -1169,7 +1169,10 @@ LEVEL0: dict[str, Constant] = {
         "deg [verified: docs/READING_ARM_SEGMENTS.md A1.3 and HR15 Tables 2-5] - the disc draw's own 1 deg "
         "clip (pattern.compute_pattern). **A resolution floor, not a physical one**: both pitches are consistent "
         "with zero at their +-2 deg errors, so it bounds what a measured stretch of arm has been resolved as, "
-        "1/sin p at 57 instead of thousands, and says nothing of a real arc of no pitch.",
+        "1/sin p at 57 instead of thousands, and says nothing of a real arc of no pitch. That a drawn piece never "
+        "reverses its winding sense is the model's rule (DECISIONS.md D219), not the sources' finding: Honig & Reid "
+        "2015's Table 5 prints a reversed segment, M51's arm B at -10.3 +- 1.4 deg at 7.1 kpc, outside what the "
+        "model draws - M51 is interacting (Audit VI, F-1A-1).",
     ),
     "ARM_SEGMENT_PITCH_RELATIVE_SCATTER": Constant(
         0.56,

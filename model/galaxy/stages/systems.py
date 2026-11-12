@@ -816,7 +816,9 @@ def cluster_window(constants: Mapping[str, Any]) -> float:
 
 def cluster_state(age: np.ndarray, u: np.ndarray, bound_fraction: float, dissolution: float) -> np.ndarray:
     """The census's one rule (``clusters.CLUSTER_BOUND_STATES``): 0 bound - its uniform ``u`` below the bound fraction,
-    whatever its mass and age (Lada & Lada 2003) - else 1 unbound while younger than the dissolution age and 2
+    whatever its mass and age (the fraction Lada & Lada 2003's; its independence of mass and age the model's choice -
+    their sect. 2.5 names a mass cut, "only the most massive clusters" candidates for survival; Audit VI, F-1B-4) -
+    else 1 unbound while younger than the dissolution age and 2
     dissolved past it; ``age`` and ``dissolution`` in one unit. ``clusters.materialise_clusters`` states each cluster
     by it and :func:`cluster_member` the sample's young stars (S93 review: one rule, not two copies, as S92's #217)."""
     bound = np.asarray(u, dtype=float) < bound_fraction
@@ -829,7 +831,8 @@ def cluster_member(age_gyr: np.ndarray, u: np.ndarray, constants: Mapping[str, A
     unbound), and past it a bound one, at the census's own bound fraction drawn on the star's ``member`` uniform.
     The rest of the window is the dissolved clusters' stars, an association spread over its cell: the sample
     keeps them and the dissolved clusters are not drawn as points. It is the census's partition by class, not by
-    object - bound is drawn independent of mass and age (Lada & Lada 2003), so the kept stars hold, over the
+    object - bound is drawn independent of mass and age (the bound fraction Lada & Lada 2003's, the independence the
+    model's choice: their sect. 2.5 names a mass cut; Audit VI, F-1B-4), so the kept stars hold, over the
     sampling fraction, the dissolved clusters' light in expectation at every age - and no star names its cluster."""
     age = np.asarray(age_gyr, dtype=float)
     state = cluster_state(age, u, float(constants["CLUSTER_BOUND_FRACTION"]), float(constants["CLUSTER_DISSOLUTION_AGE"]) / 1000.0)
