@@ -36,9 +36,12 @@ recalled (rule B9).**
 - *Half-mass radius* (ruling (c)): the constant half-mass density Portegies Zwart, McKee & Gieles
   2010 read for clusters younger than 10 Myr, r_hm = (3M / 8πρ_hm)^⅓; the constant radius they and
   Larsen 2004 read for older clusters is the named alternative.
-- *Where*: at the cloud's embedded source — the cloud's centre plus its source offset, in the plane,
-  the angle measured from the outward radial direction toward increasing azimuth ``[inferred]``: the
-  cloud census states no reference direction — and at the cloud's height and gas abundance.
+- *Where*: the cloud's centre plus its source offset scaled by the cluster's age, in the plane, the angle
+  measured from the outward radial direction toward increasing azimuth ``[inferred]``: the cloud census
+  states no reference direction — and at the cloud's height and gas abundance. **Since S100 (#95, D270)**
+  the offset's median is Grasha et al. 2019's: 2 cloud radii under 10 Myr, 3 at and over it (projected
+  distances to the nearest cloud in M 51, a rough lower bound); the shape is the layer's unit draw rescaled,
+  a stated guess. Until S100 the cluster stood at the unit draw itself, inside its cloud (median 0.79 radii).
 - *What it emits*: **the sums over the members the IMF gives it**, integrated rather than sampled
   (rule B8): Q(H⁰) and the wind's power per unit mass formed at the cluster's age and [Fe/H], read
   off the same isochrone integrals the light stage uses (``photometry``), times the cluster's mass.
@@ -142,6 +145,33 @@ def offset_position(radius: np.ndarray, azimuth: np.ndarray, offset_pc: np.ndarr
     return np.hypot(x, y), np.mod(np.asarray(azimuth, dtype=float) + np.arctan2(y, x), 2.0 * math.pi)
 
 
+# S100 (#95, D270): how far a cluster lies from its cloud's centre, by its age - Grasha et al. 2019's two printed
+# medians: "the star clusters younger and older than 10 Myr exhibit median distances of 71+-3 pc and 107+-4 pc";
+# "star clusters that are younger than 10 Myr lie at distances twice the size of the cloud's radius whereas clusters
+# older than 10 Myr are found at median distances three times the size of the molecular cloud" (on "The median radius
+# of the GMC population in NGC 5194 is 36 parsec") [verified: Grasha et al. 2019, MNRAS 483, 4707, arXiv:1812.06109,
+# sec. 4.1.1; docs/READING_CLOUD_SIZES.md Part S96]. Read by this stage alone, so module constants beside the
+# placement (D29's rule: level 0 holds what more than one stage reads). What they do not keep: the source's distances
+# are projected and to the NEAREST cloud, both of which shorten them, so the medians are a rough lower bound on a
+# parent offset, and from one galaxy (M 51); the "about one radius at about 4 Myr" of sec. 4.1.2 is a paraphrase, not
+# a printed median, and is not built. The shape is not the source's (only medians are printed): it is the layer's
+# unit draw, uniform over the cloud's volume, rescaled - a stated guess (#95).
+CLUSTER_OFFSET_MEDIAN_YOUNG = 2.0  # cloud radii, a cluster younger than CLUSTER_OFFSET_AGE_SPLIT
+CLUSTER_OFFSET_MEDIAN_OLD = 3.0  # cloud radii, a cluster as old or older
+CLUSTER_OFFSET_AGE_SPLIT = 10.0  # Myr, the source's own split
+# The median of the unit draw in cloud radii, cbrt(u) for u uniform on [0, 1): the cube root of one half.
+_UNIT_OFFSET_MEDIAN = 0.5 ** (1.0 / 3.0)
+
+
+def offset_scale(age_myr: np.ndarray) -> np.ndarray:
+    """What the layer's unit offset (``cloud_source_offset``: the cloud's size times the cube root of a uniform,
+    median 0.794 radii) is multiplied by to place a cluster of this age: the ruled median over the unit draw's own,
+    a step at the source's age - 2 / 0.5^(1/3) under 10 Myr, 3 / 0.5^(1/3) at and over it."""
+    age = np.asarray(age_myr, dtype=float)
+    median = np.where(age < CLUSTER_OFFSET_AGE_SPLIT, CLUSTER_OFFSET_MEDIAN_YOUNG, CLUSTER_OFFSET_MEDIAN_OLD)
+    return median / _UNIT_OFFSET_MEDIAN
+
+
 def per_mass(age_myr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """(Q in photons/s, wind power in L☉) per M☉ formed, for single bursts of these ages and [Fe/H]."""
     age = np.asarray(age_myr, dtype=float) / 1000.0
@@ -201,7 +231,11 @@ def materialise_clusters(
     mass = eps * cloud("cloud_mass")
     age = np.maximum(cloud("cloud_age") - embedded, 0.0)
     feh = cloud("cloud_metallicity")
-    radius, azimuth = offset_position(cloud("cloud_radius"), cloud("cloud_azimuth"), cloud("cloud_source_offset"), cloud("cloud_source_angle"))
+    # S100 (#95, D270): the layer's unit offset scaled by the cluster's age to the source's median (offset_scale); the
+    # cloud's column keeps its bits, and with the layer off it is 0, so the cluster stands at its cloud's centre.
+    # Was offset_position(..., cloud("cloud_source_offset"), ...) - the unit draw, median 0.79 radii, never beyond 1.
+    reach = cloud("cloud_source_offset") * offset_scale(age)
+    radius, azimuth = offset_position(cloud("cloud_radius"), cloud("cloud_azimuth"), reach, cloud("cloud_source_angle"))
     q, wind = per_mass(age, feh)
     light, colour = population_at(age / 1000.0, feh)
     # S93 (review): the one rule the sample's membership reads too (systems.cluster_state); the same bits as before.
@@ -267,7 +301,7 @@ NOT_DRAWN_WHY: dict[str, str] = {
     # S61 (D220 item 6): the binners' radius. The viewer draws the cluster where it stands, `cluster_radius`.
     "cluster_birth_radius": "the radius the binning stages read: `nebular` and `bubbles` bin a cluster by the radius "
                             "its cloud's ring drew, a draw the layer does not move; the viewer draws the cluster where it stands "
-                            "(`cluster_radius`, the cloud's centre plus the source's offset).",
+                            "(`cluster_radius`, the cloud's centre plus the source's offset scaled by its age).",
 }
 
 
@@ -285,8 +319,14 @@ def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("vir
 
 
 CLUSTER_RADIUS = _column("cluster_radius", "Galactocentric radius", "kpc",
-                         "Where its cloud's embedded source sits: the cloud's centre plus the source's offset, "
-                         "so a cluster lies inside the cloud that made it, where the ionization front starts.",
+                         "Where it stands: its cloud's centre plus the layer's source offset scaled by the cluster's "
+                         "age, so that the median distance from its cloud's centre is 2 cloud radii for a cluster "
+                         "younger than 10 Myr and 3 for an older one - Grasha et al. 2019's two printed medians "
+                         "(arXiv:1812.06109, sec. 4.1.1; M 51). Those are projected distances to the nearest cloud, "
+                         "both of which shorten them, from one galaxy: a rough lower bound on a parent offset. The "
+                         "shape is not the source's (only medians are printed): the layer's draw uniform over the "
+                         "cloud's volume, rescaled, a stated guess (#95). Most clusters therefore stand outside "
+                         "the cloud that made them.",
                          placement=True)
 CLUSTER_AZIMUTH = _column("cluster_azimuth", "Azimuth", "rad",
                           "The embedded source's azimuth. The source's direction is read from the outward radial "

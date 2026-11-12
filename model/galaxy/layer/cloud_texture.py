@@ -102,7 +102,8 @@ def neutral(n: int) -> dict[str, np.ndarray]:
 # D191's ruling for the two the viewer does not read, moved here with their declarations (tests/test_v4.py).
 NOT_DRAWN_WHY: dict[str, str] = {
     "cloud_source_offset": "it is drawn where the cluster stands: the cluster census places its cluster by this "
-                           "offset, and the cavity is carved at the cluster's position.",
+                           "offset scaled by the cluster's age (S100, #95), and the cavity is carved at the "
+                           "cluster's position.",
     "cloud_source_angle": "it is drawn where the cluster stands, as the offset is.",
 }
 
@@ -136,12 +137,18 @@ _CONSERVES_GRADIENT = (
 # S70 (D234): re-read again when the size law took the source's three regimes (#192: the clouds inside 4 kpc and in
 # 7-8.2 kpc grow by 1.53) and the ring's inversion its own interval (F-2-7) - was 146 pc, 1 376 of 12 710, 10.8 % and
 # 31.8 %, 119 (S67); the 140 pc radial reach did not move.
+# S100 (#95, D270): re-read when the cluster census came to scale this offset by the cluster's age (median 2 cloud
+# radii under 10 Myr, 3 over; the column itself unchanged) - was "at S70 ... by up to 140 pc in radius (its own length
+# reaches 148 pc) ... 1 591 of 12 710 clusters (12.5 %, 34.3 % of the cluster mass) ... and 132 in another cell ring";
+# at session-99's head, before the change, the default run read 140.5 pc, 148.4 pc, 1 725 of 13 124 (13.1 %, 35.3 %),
+# 126 and 359 (2.7 %) in another level-0 cell, all inside their cloud (s100_G1 measure).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S70 the offset moves a cluster by up to 140 pc in radius (its own length reaches 148 pc) "
-    "against a 75 pc radial step and puts 1 591 of 12 710 "
-    "clusters (12.5 %, 34.3 % of the cluster mass) in another radial ring and 132 in another cell ring than their "
-    "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
+    "its cloud's ring: at S100 the offset, scaled by the cluster's age to Grasha et al. 2019's medians (#95), moves "
+    "a cluster by up to 525 pc in radius (its own length reaches 560 pc) against a 75 pc radial step and puts 4 667 "
+    "of 13 124 clusters (35.6 %, 63.6 % of the cluster mass) in another radial ring, 405 in another cell ring and "
+    "1 014 (7.7 %) in another level-0 cell than their cloud; 4.0 % stand inside their cloud's radius. "
+    "What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
     "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "
     "stream (D220 item 6 and part II; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
 )
@@ -169,9 +176,14 @@ def _column(name: str, label: str, unit: str, about: str, law: str, conserves: s
 
 CLOUD_SOURCE_OFFSET = _column(
     "cloud_source_offset", "Embedded source offset", "pc",
-    "How far from the cloud's centre its embedded cluster sits, drawn uniformly over the cloud's volume: pillars "
-    "are the shadows of clumps that survived the ionization front eating the cloud from one side, so this is what "
-    "makes them point one way. No source gives the distribution (debt #95).",
+    "How far from the cloud's centre its embedded source sits, drawn uniformly over the cloud's volume (median "
+    "0.79 cloud radii, never beyond 1): pillars are the shadows of clumps that survived the ionization front eating "
+    "the cloud from one side, so this is what makes them point one way. It is the unit the cluster census scales: "
+    "since S100 (#95, D270) a cluster stands at this offset times its age's factor, so that its median distance "
+    "from the cloud's centre is Grasha et al. 2019's - 2 cloud radii under 10 Myr, 3 over (projected distances to "
+    "the nearest cloud in M 51, a rough lower bound) - and most clusters stand outside their cloud. A cloud that "
+    "holds no cluster keeps the unit draw, which places nothing. The shape is a stated guess: no source gives the "
+    "distribution, only its two medians (debt #95).",
     "uniform over the cloud's volume", _CONSERVES_PLACEMENT,
 )
 CLOUD_SOURCE_ANGLE = _column(

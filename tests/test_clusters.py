@@ -115,13 +115,16 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
             # S61 (D220 part II as amended): was F["cloud_radius"] - the radius the cloud's ring drew, which the
             # cloud carries beside its placed radius.
             assert np.array_equal(F["cluster_birth_radius"][got], F["cloud_birth_radius"][hosts])
-            # Inside its cloud: no farther from the cloud's centre than the cloud's radius.
+            # S100 (#95, D270): at the layer's unit offset scaled by its age to Grasha et al. 2019's medians - so no
+            # farther from the cloud's centre than that factor times the cloud's radius. Until S100: at the unit
+            # offset itself, inside its cloud (no farther than the cloud's radius).
             x0 = F["cloud_radius"][hosts] * np.cos(F["cloud_azimuth"][hosts])
             y0 = F["cloud_radius"][hosts] * np.sin(F["cloud_azimuth"][hosts])
             x1 = F["cluster_radius"][got] * np.cos(F["cluster_azimuth"][got])
             y1 = F["cluster_radius"][got] * np.sin(F["cluster_azimuth"][got])
-            assert np.allclose(np.hypot(x1 - x0, y1 - y0) * 1000.0, F["cloud_source_offset"][hosts])
-            assert np.all(np.hypot(x1 - x0, y1 - y0) * 1000.0 <= F["cloud_size"][hosts] + 1e-9)
+            scale = cu.offset_scale(F["cluster_age"][got])
+            assert np.allclose(np.hypot(x1 - x0, y1 - y0) * 1000.0, F["cloud_source_offset"][hosts] * scale)
+            assert np.all(np.hypot(x1 - x0, y1 - y0) * 1000.0 <= F["cloud_size"][hosts] * scale * (1.0 + 1e-12) + 1e-9)
         offset += count
         row += k
     assert row == len(F["cluster_mass"]) and offset == len(F["cloud_mass"])
