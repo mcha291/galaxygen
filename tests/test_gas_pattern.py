@@ -178,6 +178,19 @@ def unspurred(gp: GasPattern) -> GasPattern:
     return dataclasses.replace(gp, spurs=None)
 
 
+def placed_of(F, gp: GasPattern, R: np.ndarray, edges: np.ndarray, molecular: np.ndarray | None = None) -> np.ndarray:
+    """S100 (#130, D270; the gate's ruling 10): the published ``gas_density_contrast`` as the spurs stage now forms it,
+    term by term as ``tests/test_bar.py``'s ``placed_by_hand`` writes it - on each ring f c_mol + (1 - f) c_atom, f the
+    ism stage's molecular fraction (1 where it is not a number), c_mol the pattern's unspurred cell means (or the rows
+    given), c_atom the published atomic response; the spurs composed on the blend. Until S100 the published field was
+    the spurs composed on c_mol alone."""
+    f = np.asarray(F["gas_molecular_fraction_profile"], dtype=float)
+    f = np.where(np.isfinite(f), f, 1.0)[:, None]
+    mol = unspurred(gp).cell_means(R, edges) if molecular is None else molecular
+    blend = f * np.asarray(mol, dtype=float) + (1.0 - f) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)
+    return blend if gp.spurs is None else gp.spurs.compose_cells(R, edges, blend)
+
+
 def row(o, R: float) -> int:
     return int(np.argmin(np.abs(o.grid.R - R)))
 
@@ -348,9 +361,17 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
     g = np.asarray(o.fields["gas_density_contrast"])
     gp = shape_of(model, o)
-    assert g.tobytes() == gp.cell_means(R, edges).tobytes()
+    # S100 (#130, D270; ruling 10): was `g == gp.cell_means(R, edges)` and each row `gp.sector_means(R_i, edges)` - the
+    # published gas is now the blend with the atomic response, the spurs composed on it (`placed_of`), to the bit; a
+    # row is the same blend of the law's own sector means at that ring's radius.
+    assert g.tobytes() == placed_of(o.fields, gp, R, edges).tobytes()
+    frac = np.asarray(o.fields["gas_molecular_fraction_profile"], dtype=float)
+    atom = np.asarray(o.fields["atomic_gas_density_contrast"], dtype=float)
     for i in (3, 60, 106, 133, 160, 399):
-        assert g[i].tobytes() == gp.sector_means(float(R[i]), edges).tobytes(), i
+        row = frac[i] * unspurred(gp).sector_means(float(R[i]), edges) + (1.0 - frac[i]) * atom[i]
+        if gp.spurs is not None:
+            row = gp.spurs.compose_cells(R[i : i + 1], edges, row[None, :])[0]
+        assert g[i].tobytes() == row.tobytes(), i
     # S87 (#80, the owner's ruling of 2026-11-03, D255): the Milky Way's ring 105 (7.9125 kpc) reads 1 + 1.0036e-13,
     # over the gate's 1e-13; S87 pinned the reading here. S88 (D255 ruling 1): the tolerance is 2e-13 with the
     # measurement (tests/test_bar.py, RING_MEAN_TOLERANCE: 1.0036e-13 the Milky Way's worst, 9.35e-14 NGC 4414's).
@@ -377,10 +398,9 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     # as before), and the published field is the spurs composed on the law's cell means, to the bit.
     law = unspurred(gp)
     law_cells = law.cell_means(R, edges)
-    if gp.spurs is None:
-        assert g.tobytes() == law_cells.tobytes()
-    else:
-        assert g.tobytes() == gp.spurs.compose_cells(R, edges, law_cells).tobytes()
+    # S100 (#130, D270; ruling 10): was `g == law_cells` (no spur) or the spurs composed on them - the blend with the
+    # atomic response comes between (`placed_of`, which composes the spurs where there are any).
+    assert g.tobytes() == placed_of(o.fields, gp, R, edges, molecular=law_cells).tobytes()
     point = law.contrast(R, phi)
     assert 0.0 < float(np.abs(law_cells - point).max()) < 0.1 and point.tobytes() != law_cells.tobytes()
     # 360 divides 1440, so the response's centre samples average to 1 to rounding - but the lanes are laid in the
@@ -1192,7 +1212,9 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
     # S62 (D221): was the published field, which carries the spurs since S62 (the Milky Way's at 4 kpc: 1.12 off the
     # hand's composition); the hand rederives the gas pattern's law, and the field is the spurs composed on it.
     published = unspurred(gp).cell_means(R, edges)
-    assert np.asarray(F["gas_density_contrast"]).tobytes() == gp.spurs.compose_cells(R, edges, published).tobytes()
+    # S100 (#130, D270; ruling 10): was `gas_density_contrast == spurs composed on published` - the blend with the
+    # atomic response comes between (`placed_of`); `published` stays the molecular law's cell means, what the hand rederives.
+    assert np.asarray(F["gas_density_contrast"]).tobytes() == placed_of(F, gp, R, edges, molecular=published).tobytes()
     n = gr.CELLS
     assert n == 1440
     # S60 (D219 item 5): was `f = m A_m(untapered)/(X sin p)`, the five modes' forcing by hand, held to the module's
@@ -1783,8 +1805,11 @@ def test_the_gate_s_predictions_as_measured(prod):
     # heights the crest over the trough.
     # S92 (#164 / #165): the spurs reach 11 kpc's ring too (its crest 1.18706 where the law's is 1.1866; the trough unmoved).
     # S100 (batch P, D270; the merged head): 4.0125's were 6.09613, 0.69071; 5.9625's 2.07978, 0.43880; 7.9875's 1.54836, 0.63462.
-    SPURRED = {4.0125: (6.20599, 0.69511), 5.9625: (2.00254, 0.46441), 7.9875: (1.50730, 0.66216), 10.0125: (1.48884, 0.75681),
-               10.9875: (1.18706, 0.79716)}
+    # S100 (#130, D270; builder three): 10.0125's were 1.48884, 0.75681, 10.9875's 1.18706, 0.79716 - the placed gas the
+    # blend with the atomic response; 12.0375 enters the table (was the law's composed (1.0964, 0.89920), which the
+    # published field no longer is where no spur reaches).
+    SPURRED = {4.0125: (6.20599, 0.69511), 5.9625: (2.00254, 0.46441), 7.9875: (1.50730, 0.66216), 10.0125: (1.44218, 0.78041),
+               10.9875: (1.16812, 0.81380), 12.0375: (1.08537, 0.90764)}
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
         assert float(R[i]) == pytest.approx(radius, abs=1e-9)
@@ -2157,16 +2182,18 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     # S57 (D216 G3): was `on_mesh.tobytes() == published` - the first build published these samples. The published
     # field is the cells' means; the point function at a cell's centre is within 1.7e-3 of its cell's mean.
     published = np.asarray(o.fields["gas_density_contrast"])
-    assert published.tobytes() == gp.cell_means(R, edges).tobytes() and published.tobytes() != on_mesh.tobytes()
+    # S100 (#130, D270; ruling 10): was `published == gp.cell_means(R, edges)` - the published field is now the blend of
+    # the law's cell means with the atomic response, the spurs composed on it (`placed_of`), to the bit.
+    assert published.tobytes() == placed_of(o.fields, gp, R, edges).tobytes() and published.tobytes() != on_mesh.tobytes()
     # S58 (D217): was 1.718e-3; the lanes are a few cells wide inside 3 kpc, and a cell's mean is 1.2e-2 from its centre.
     # S59 (D218): was 1.198e-2 - on a ring the winding's segments have turned, inside the bar's reach (3.79 kpc).
     # S62 (D221): was 1.222e-2 - a spur, narrower than a cell, puts a cell's mean 0.665 from its centre; the law's own,
     # without the spurs, reads 1.198e-2, held to the old pin.
     # S91 (#216): was 0.7229 - the default galaxy's census (48, 13, 4) -> (42, 11, 3) by the births made bit-independent.
     # S92 (#164 / #165): was 0.7028 - the spurs' heights the crest over the trough.
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.4447, rel=0.02)  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.3565, rel=0.02)  # S100 (#130, D270): was 0.4447 - the published gas the blend with the atomic response  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
     law = unspurred(gp)
-    assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.252e-2, rel=0.02)  # S87 (#148, #209, #80): was 1.222e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.186e-2, rel=0.02)  # S100 (#80, D270): was 1.252e-2 - the default bar 2.270 -> 3.140 kpc (Table 4), the molecular law's own  # S87 (#148, #209, #80): was 1.222e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
     assert np.array_equal(gp.contrast_at(R[idx[0]], phi[idx[1]]), on_mesh[idx])
     assert np.array_equal(gp.contrast_at(R[:, None], phi[None, :]), on_mesh)
@@ -2178,7 +2205,16 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     # A cell's mean is the dense average of the point function over the cell (the same measure, G3 item 4).
     i, j = 106, 200
     dense = edges[j] + (np.arange(2000) + 0.5) * (edges[j + 1] - edges[j]) / 2000
-    assert float(gp.contrast_at(np.full_like(dense, R[i]), dense).mean()) == pytest.approx(float(published[i, j]), abs=1e-7)
+    # S100 (#130, D270; ruling 10): was `gp.contrast_at(...)` averaged - the published cell is now the blend's: the
+    # molecular and the atomic patterns' unspurred contrasts at the point by the ring's molecular fraction f, the spurs
+    # composed on that; the same cell, the same 1e-7.
+    f = float(np.asarray(o.fields["gas_molecular_fraction_profile"], dtype=float)[i])
+    ring = np.full_like(dense, R[i])
+    atom = gp.atomic(float(constants(model)["HI_DISPERSION_RATIO"]))
+    point = f * gp.unspurred_contrast_at(ring, dense) + (1.0 - f) * atom.unspurred_contrast_at(ring, dense)
+    if gp.spurs is not None:
+        point = gp.spurs.compose_at(ring, dense, point)
+    assert float(point.mean()) == pytest.approx(float(published[i, j]), abs=1e-7)
 
 
 def test_a_point_reads_its_two_rings_carried_to_its_radius_and_its_own_bar_term(model):
