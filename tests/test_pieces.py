@@ -910,6 +910,18 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     worst = {"stars": 0.0, "gas": 0.0, "expected": 0.0, "bound": 0.0}
     read = {leg: {"ratio": [], "cut": 0, "no_arm": 0, "no_chain": 0, "least": math.inf, "least_gas": math.inf, "most_gas": 0.0, "zeros": 0,
                   "budget": 0, "pitch": [], "steps": 0, "armless": 0, "wide": 0, "joins": [], "alone": 0, "pinned": 0, "kept": [0, 0], "ratio_max": []} for leg in LEGS}
+    # S100 (#130, D270; the gate's ruling at batch P's close): the placed gas is the blend of the molecular and the
+    # atomic responses by the ring's molecular fraction, so the stage that publishes gas_density_contrast reads ism's
+    # gas_molecular_fraction_profile and only=PATTERN runs chemistry_dtd, vertical_alpha and ism as well (12 -> 15
+    # stages). Their fields hold NaN by design (rule B9): feh_history and alpha_fe_history where a ring holds no iron
+    # yet (the log of nothing), alpha_split where the [alpha/Fe] histogram has one mode (no valley), gas_scale_height
+    # where there is no midplane density or the height passes the stars' local scale length. The NaN clause is the
+    # pattern's: it reads the fields of the closure before #130 (the spurs stage's reads less the blend's two).
+    pattern_graph = graph.analyse(model, prod[1], prod[2])
+    spurs_stage = pattern_graph.stages[pattern_graph.producer["gas_density_contrast"]]
+    before_blend = [n for n in PATTERN if n != "gas_density_contrast"] + [n for n in spurs_stage.requires + spurs_stage.requires_optional if n not in gm.BLEND_READS]
+    pattern_stages = {st.id for st in pattern_graph.needed_for(before_blend)} | {spurs_stage.id}
+    pattern_own = {n for n, sid in pattern_graph.producer.items() if sid in pattern_stages}
     for leg in LEGS:
         got = read[leg]
         for pattern_seed in range(60):
@@ -924,7 +936,7 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                 assert stars.min() >= 0.0 and gas.min() > 0.0, label
                 got["least"], got["least_gas"], got["most_gas"] = min(got["least"], float(stars.min())), min(got["least_gas"], float(gas.min())), max(got["most_gas"], float(gas.max()))
                 got["zeros"] += int((stars == 0.0).sum())
-                nan = {n for n, v in F.items() if not isinstance(v, (str, tuple)) and np.isnan(np.asarray(v, dtype=float)).any()}
+                nan = {n for n, v in F.items() if n in pattern_own and not isinstance(v, (str, tuple)) and np.isnan(np.asarray(v, dtype=float)).any()}
                 assert nan == (set() if leg == "milky_way" else UNBARRED_NAN), (label, sorted(nan))
                 off = run(model, given, only=LAWS, layer=False).fields
                 assert all(np.asarray(off[k]).tobytes() == np.asarray(F[k]).tobytes() for k in LAWS), label
@@ -1044,7 +1056,14 @@ EXPECTED_GATE: dict = {'milky_way': (19800, 19800, (0.0, 0.488, 0.896), 2, 0, 57
 # Way leg was (0.1208, 0.1252, 6.696) - S92's #164 / #165 (the spurs re-laid, D261, where the template alone read
 # 7.303) never read on the legs until now: the leg's largest published gas cell is 8.214 and its least 0.1245; the
 # stellar least, both NGC 4414 legs, EXPECTED_GATE and every bound asserted above the records held.
-EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.1245, 8.214), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0005, 0.0003, 4.282)}
+# S100 (batch P's close, D270; read on 8abe5fd with the NaN clause restricted to the pattern's own fields, 2:20:42
+# single-threaded on a machine shared with another lane's pytest): was {'milky_way': (0.1208, 0.1245, 8.214),
+# 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0005, 0.0003, 4.282)} - the gas's least and largest cell
+# on every leg: #130 places the published gas as the blend of the molecular and the atomic responses by the ring's
+# molecular fraction (the atomic one at 1.4 times the dispersion, shallower), with #220's spurs' feet on it; the
+# stellar least on all three legs, EXPECTED_GATE, the NaN clause and every bound asserted above the records held.
+# Re-pinned as read and not re-run: the record is the node's last assertion.
+EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.1401, 8.309), 'ngc_4414': (0.4632, 0.0731, 3.302), 'ngc_4414 drawn': (0.0005, 0.0033, 4.21)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):

@@ -49,6 +49,19 @@ S93 made that product and every other BLAS product on a draw path an ordered sum
 lane 218's 3e36ae7, 052a464, the gate's fb8871b, eca0ff2, cd12cdd, the review's mends merged at cfa1670 and
 c161965's ``bright.window_anchors``), so the model's bits moved once and the run reads the same bits at 1 and 20
 threads. ``tests/layer_reference_s90.json`` (``REFERENCE_S90``) is kept untouched as history; no test reads it.
+
+**At S100, batch P's close (D269, D270), the reference is re-based again**, onto batch P's final layer-off run
+(``content_hash`` 42be4d56..., session-100 at cfb78af), written single-threaded by ``... write`` to a new file,
+``tests/layer_reference_s100.json`` (``REFERENCE``; sha256 f84bffda..., fields 400 / 399 / 400 / 399, 42 routes), and
+the same digest read again with the threads unrestricted. The cause: batch P's builds - #227 the stellar layer's one
+height (``thin_disc_scale_height``, ``thin_disc_scale_height_dynamical`` added), #146 the Milky Way template's pinned
+bar amplitude, #80 the bar's length by Erwin 2019's Table 4, #220 the spurs' feet, #130 the atomic gas's own response
+(``atomic_gas_density_contrast`` added) and the placed gas a blend. Against S93's file: 100 fields moved on each Milky
+Way label and 97 on each NGC 4414 label (the vertical stage's heights and the ism, dust, clouds, clusters, HII and
+remnants that read them; the bar's amplitude and mass share on the Milky Way), two added on every label, none lost,
+all 42 routes moved and the four single-mode digests (their scalars are read with the pins off, so the bar's numbers
+follow #80 and #146). ``tests/layer_reference_s93.json`` (``REFERENCE_S93``) is kept untouched as history; no test
+reads it.
 """
 
 from __future__ import annotations
@@ -62,7 +75,8 @@ from typing import Any
 
 import numpy as np
 
-REFERENCE = Path(__file__).resolve().parent / "layer_reference_s93.json"  # S93 (#218, D262): was layer_reference_s90.json (S90, #214, D258: was layer_reference_s55.json)
+REFERENCE = Path(__file__).resolve().parent / "layer_reference_s100.json"  # S100 (batch P, D270): was layer_reference_s93.json (S93, #218, D262: was layer_reference_s90.json; S90, #214, D258: was layer_reference_s55.json)
+REFERENCE_S93 = Path(__file__).resolve().parent / "layer_reference_s93.json"  # M3's final run (S93), kept as history
 REFERENCE_S90 = Path(__file__).resolve().parent / "layer_reference_s90.json"  # M2's final run (S90), kept as history
 REFERENCE_S55 = Path(__file__).resolve().parent / "layer_reference_s55.json"  # S55's run, kept: test_modes' oracle
 
