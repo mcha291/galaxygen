@@ -785,3 +785,163 @@ register's entries (#80, #145, #146, #147) carry the gate's ruling on each (D265
   this one lane — one galaxy and a bound, not a statistic.
 - **Not reached.** Schinnerer et al. 2023 (NGC 1365, JWST + ALMA, ApJL 944, L15), which the search says resolves the two
   bar lanes — the next reading.
+
+## Part S98 — the amplitude's definition, the Galaxy's own bar against the template, and a bar lane's width (2026-11-12, BUILD_VI row 98; reader A and the measurer)
+
+**The note.** S98's reader A fetched each source below in this session (the PDFs from arxiv.org, text by `pdftotext
+-layout`; others by ar5iv through a summarising fetch, said where so); its note is `s98_A.md` in the session's
+scratchpad. The measurer's second pass (SP-2, `s98_M.md`) read the Milky Way template against Portail et al. 2017's
+two numbers. `[verified: source, place]` marks a quotation from a page fetched in S98; `[inferred]` the reader's or
+the measurer's own arithmetic or reading. Nothing here moved a constant, a pin or a model byte; the register (#146,
+#147) carries the gate's ruling (D267).
+
+### S98.1 #146 — Díaz-García et al. 2016: what A₂ is
+
+- **Source.** Díaz-García, Salo, Laurikainen & Herrera-Endoqui 2016, A&A 587, A160, arXiv:1509.06743 (id checked:
+  "Characterization of galactic bars from 3.6 um S4G imaging") — READ, the full text.
+- **Eq. 7, Sect. 3.1** (the definition): the deprojected image's surface density in radial zones, Σ(r, φ) = I0(r) [1 +
+  Σ_m Am(r) cos(m (φ − φ_m(r)))]; "The amplitude of each Fourier component, Am, was tabulated separately as a function
+  of radius (we note that amplitudes are normalized with respect to the azimuthally averaged m = 0 component)"; "The
+  maximum of the m = 2 Fourier amplitude in the bar region was used as another proxy of the prominence of the bar
+  (denoted by A2max). The radius where this maximum is found is called rA2." `[verified: DG16, Sect. 3.1, eq. 7]`
+- So A₂ is the cosine's amplitude I₂ / I₀ per ring, and I₀(r) is the ring's azimuthal mean of the deprojected 3.6 µm
+  image ("3.6 um science-ready P1 images", sky subtracted, masked regions filled): the whole image's light, **bulge
+  included** — no bulge subtraction is described for A₂. The bulge "stretching correction" of Sect. 3.1.1 is described
+  for the FORCE only ("The obtained force then represents the disk-only contribution"). The maximum is over "the bar
+  region", no radial range stated beyond that.
+- **Against the model.** `bar_contrast` is the cosine's amplitude — **MATCH in convention** (S97 inferred it from the
+  tool's docstring; now on the source's eq. 7) — and a maximum over the rings inside the half-length — MATCH in kind.
+  The denominator **DIFFERS, as declared**: the model's is checkpoint 1's disc without the bulge (`pattern.py` lines
+  81-83), the source's I₀ holds the bulge — 0.289 against **0.260** with it (S97). The source is 3.6 µm light taken as
+  mass; the model's is checkpoint 1's stars + gas mass.
+- **UNREACHABLE.** The VizieR ReadMe for tablea3 (the column the median `BAR_CONTRAST_MEDIAN` was reduced from): CDS
+  refused the connection; the CfA mirror lists tablea3, "Bar intrinsic ellipticity and parameters from the Fourier
+  dissection of bars" (587 rows), but not its column notes. The paper's definition stands for the column.
+
+### S98.2 #146 — Portail et al. 2017 and Wegg, Gerhard & Portail 2015: the Galaxy's bar, no amplitude printed
+
+- **Portail et al. 2017**, MNRAS, arXiv:1608.07954 — READ, the full text (Sect. 9.1). **No A₂ / A2max is printed.** The
+  m = 2 decomposition is used only for a length: "Lm=2: radius at which the relative m=2 component of the Fourier
+  decomposition of the surface density drops to 20% of its maximum value", Lm=2 = 5.02 kpc; the three methods' mean
+  5.30 ± 0.36 kpc.
+- **The one printed contrast**, Sect. 9.1: "This is very clear at the edge of the bulge where the surface density
+  along the minor axis at 2 kpc is a factor of about 4 smaller than along the major axis. Both profiles cross at 6.3
+  kpc from the centre, close to the corotation radius." `[verified: Portail et al. 2017, Sect. 9.1]`
+- **The masses**, Sect. 9.1: "a 'photometric' bar/bulge stellar mass of Mbar/bulge = 1.88 +/- 0.12 x 10^10 Msun, among
+  which 1.34 +/- 0.04 x 10^10 Msun is located in the bulge and 0.54 +/- 0.04 x 10^10 Msun in the long bar"; the inner
+  disc in the bar region 1.29 ± 0.12 × 10¹⁰; "By integrating the residuals for radii inside 5.3 kpc and outside the
+  bulge, we find a non-axisymmetric long bar mass of Mnon-axi = 0.46 +/- 0.03 x 10^10 Msun"; "the bar outside the bulge
+  has slightly less than half the mass of the disk in the same radial range"; mass on bar-supporting orbits 1.04 ±
+  0.06 × 10¹⁰ `[verified: Portail et al. 2017, Sect. 9.1]`. The errors are the variation models' systematics. Their
+  bulge is the box/peanut bulge, "the bar which formed a bulge in its inner part".
+- **Wegg, Gerhard & Portail 2015**, MNRAS 450, 4050, arXiv:1504.01401 — READ (Sects. 5-6, Table 2). No A₂ printed;
+  Lm=2 a length only (Table 2: 4.96 kpc, two-component model). Table 2's bar masses (10⁹ M☉), "N-body model + 2
+  components": N-body 10.9, thin bar 4.0, super-thin 3.3, total 18.1 (the one-component row 11.1 + 8.8 = 19.9); the
+  N-body part "calculated by integrating the face-on surface density over all radii with the minor axis profile in the
+  surface density subtracted" — a non-axisymmetric mass, the bulge region included. Sect. 6: "Our estimated total bar
+  mass in our fiducial parametric model is 1.8 x 10^10 Msun" (Kroupa; Salpeter × 1.43; a constant star formation rate
+  "reduces the mass by a factor of 2.0") `[verified: Wegg, Gerhard & Portail 2015, Table 2, Sect. 6]`.
+- **No Milky Way amplitude is printed** in either (both texts searched for A2 / Fourier / m=2 / contrast). An amplitude
+  from "a factor of about 4" needs an assumed azimuthal shape (a pure cosine gives (1+A)/(1−A) = 4, A = 0.6; but DG16:
+  "The main modes in the bar region are m=2, 4, 6, and 8") — the reader calls that an invention, not a reading.
+
+### S98.3 F-98A-1 — "0.64 of Portail's mass" set unlike components side by side (wording; no model number moves)
+
+| | Portail et al. 2017's 1.88 × 10¹⁰ M☉ | the model's 1.21 × 10¹⁰ M☉ (S97) |
+|---|---|---|
+| the bulge | 1.34 — a box/peanut bulge, the bar's own inner part | 0.77 — a classical Hernquist bulge |
+| the bar | 0.54 ± 0.04 — the long bar (0.46 ± 0.03 non-axisymmetric) | 0.44 — the Ferrers body (0.093 × 4.74) |
+
+- Where it stood: register #146's S97 paragraph (and `s97_R.md`, `READING_PICTURES.md` section 13): "Portail et al.
+  2017's bar and bulge stellar mass ... 1.88 × 10¹⁰ M☉, against the model's bulge and body together, 1.21 × 10¹⁰ M☉
+  (0.64 of it ...)". The two sums are of unlike components.
+- Component for component, the model's BODY (0.44) stands against the long bar's 0.54 ± 0.04 (0.81 of it) or the
+  non-axisymmetric long bar's 0.46 ± 0.03 (0.96) `[inferred: the reader's arithmetic; the model's body is not cut at
+  Portail et al.'s bulge edge, so part of its 0.44 lies where they count bulge — the true ratio is lower]`. How sure:
+  high that the components differ; medium on the ratio. The "0.64" is withdrawn where it stands (D267).
+- The sentence the reader gave that would settle it: the model's face-on surface density minus its minor-axis profile,
+  integrated outside Portail et al.'s bulge and inside 5.3 kpc, set beside 0.46 ± 0.03 × 10¹⁰ M☉ — the measurer's SP-2
+  below.
+
+### S98.4 #146 — the Milky Way template against Portail et al.'s two numbers (the measurer, SP-2)
+
+**What the measurer used** (`s98_M.md` SP-2; read and run only, no server started):
+Σ_disc(R, φ) = `stellar_surface_density`(R) (`/api/arrays` on the s93 bundles, 400 rings) × the render's `stars_old_placement`(R, φ),
+checked against `pattern_density_contrast` in its place (the same to 1 % everywhere); the bulge `bulge_stellar_mass`
+7.712 × 10⁹ M☉ as a projected Hernquist profile at `bulge_scale_radius` 0.3647 kpc, axisymmetric; the bar's major axis
+the mass-weighted m = 2 phase of Σ_disc over 1.5-4 kpc, φ = 22.2°; each axis profile the mean of 3 one-degree cells
+either side of both ends. The template's `bar_half_length` 5.0 kpc, `bar_contrast` 0.2893.
+
+| R kpc | major / minor, disc only | major / minor, with the bulge | Portail et al. 2017 |
+|---|---|---|---|
+| 1 | 1.21 | 1.14 | — |
+| 2 | **1.69** | **1.60** | "a factor of about 4" |
+| 3 | 1.51 | 1.48 | — |
+| 4 | 1.38 | 1.36 | — |
+| crossing | **6.94 kpc** (the first radius where major < minor; a near-touch, 1.05, at 5.5 kpc) | the same | 6.3 kpc |
+
+The largest ratio is 1.69 at 2.0 kpc: the template's bar is about 2.4 times weaker than the factor of 4 at the radius
+Portail et al. name; the crossing, 6.94 against 6.3 kpc, is near. Beyond 5.5 kpc the ratio of 1.3 mixes in the arms.
+
+**The non-axisymmetric mass** = the integral of [Σ_disc − Σ_minor(R)] over the full azimuth (the bulge, axisymmetric,
+cancels; "positive part" integrates only the excess above the minor axis):
+
+| radial range | residual mass (10¹⁰ M☉) | positive part only | Portail et al. 2017 |
+|---|---|---|---|
+| 0 ≤ R < 5.3 kpc (no cut) | 0.349 | 0.354 | — |
+| 0.365 (one bulge scale radius) ≤ R < 5.3 | 0.349 | 0.354 | — |
+| 1.0 ≤ R < 5.3 | 0.339 | 0.344 | — |
+| 2.0 ≤ R < 5.3 ("outside the bulge") | **0.233** | 0.238 | **0.46 ± 0.03** |
+
+**The cut is the measurer's reading, not Portail et al.'s stated definition**: "outside the bulge" was taken as R ≥ 2
+kpc on their sentence that 2 kpc is "the edge of the bulge"; their bulge is a 3-D box/peanut and how they cut it
+face-on was not read. Read that way the template holds about half their non-axisymmetric mass (0.23 against 0.46);
+even with no cut, 0.35. For scale `[inferred: the measurer's arithmetic]`: disc plus bulge inside 5.3 kpc is 3.28 ×
+10¹⁰ M☉ in the template, Portail et al.'s bar/bulge plus inner disc 1.88 + 1.29 = 3.17 × 10¹⁰ — the totals comparable,
+the template's bar holding less of it. **No bound is written** (D267); the gate's two rulesets for the owner are in
+register #146 (the draw kept with the miss recorded; the amplitude pinned by derivation to the printed mass —
+recommended — with the cut read on Portail et al.'s own page first).
+
+### S98.5 #147 — a bar lane's width: one more galaxy, a lower bound, and no sample statistic
+
+How found (reader A): three web searches (bar dust lane width in pc with ALMA / PHANGS; "dust lane" bar "width of" pc
+for NGC 1530, 5383, 1300, 1097; the Milky Way bar's dust lanes, Sormani & Barnes 2019), then the named next reading.
+
+- **Quillen, Frogel, Kuchinski & Terndrup 1995**, AJ, arXiv:astro-ph/9503067, NGC 1097 multi-band — READ (the PDF's
+  text, Sect. 3.5). **The text layer is garbled at the key line**; as extracted: "We note that we do re8s00ol=ve the dust
+  lanes in the B J and B K color maps; in other words they are wider than 4 ... 320 640pc." Read by the reader as: the
+  lanes are RESOLVED in the B−J and B−K maps, "wider than 4″-8″ = 320-640 pc" (the paper's "corresponds to 80 pc" per
+  arcsec, H0 = 75, consistent with 4″ = 320 pc). Ground-based; **a LOWER bound on the width, not a measured width**; no
+  FWHM definition. They add that the dense gas "could be confined to an extremely narrow region so that higher
+  resolution images would be required". **Medium confidence** (the garbled layer; the numbers 320 and 640 and "wider
+  than" are legible). NGC 1097's bar length was not read, so no value in units of a.
+- **Schinnerer et al. 2023**, ApJL 944, L15, arXiv:2212.09168 (id found by search), NGC 1365, JWST/MIRI 0.3″ = 30 pc +
+  ALMA CO(2-1) — READ (the PDF's text, searched for width / wide / pc). No spatial width of the bar lanes is printed:
+  the paper's "widths" are CO line widths (km/s) and the ScousePy sub-region size (35 px = 1.9″, a method setting); the
+  lanes are described ("two well-known bright bar lanes"), not measured across. **Not a source for the width.**
+- **Sormani et al. 2023**, arXiv:2305.14437 ("Fuelling the nuclear ring of NGC 1097") — READ (ar5iv, a summarising
+  fetch). No lane width (CO at ~110 pc resolution, 13.58 Mpc). Sect. 1 on NGC 1530: "the bar lane width was only
+  marginally resolved in their observations" (Regan et al. 1997); Sect. 5.5 quotes Prieto et al. 2019 "approximating the
+  bar lane as a cylinder with diameter D=600 pc" — that paper's assumption, secondary here, not a measurement.
+- **Regan, Sheth & Vogel 1999**, arXiv:astro-ph/9908121 ("Molecular Gas Kinematics in Barred Spiral Galaxies") — READ
+  (searched). No lane width; the CO in the bars "only partially resolved by our beam". Not a source for the width.
+- **What stands.** No sample statistic of a bar dust lane's width in anything reached — now six papers across S86-S98.
+  The two numbers on record are single galaxies and of different kinds: NGC 7479's lane "about 1.5″" ~ 240 pc (Laine et
+  al. 1999, Part S96) and NGC 1097's lanes resolved, "wider than" 320-640 pc (Quillen et al. 1995) — a lower bound.
+  The placeholder's FWHM 0.10 a = 0.50-0.52 kpc on the Milky Way template lies between them; neither contradicts it;
+  neither is in units of the bar's length (the bar lengths not read). S97's point stands apart from the sources: at
+  0.5-0.9 kpc the model's lanes fill the metric's window — the statistic's window against the placeholder, not a
+  source. The reader: high that the four papers read print no width beyond what is quoted; medium on Quillen et al.'s
+  exact wording.
+- **The reader's three rulesets for #147** (B12): (i) keep 0.10 a as the declared placeholder with the bracket 240 pc
+  to "wider than" 320-640 pc written beside it — recommended at the gate (D267); (ii) a width in pc, not in a (both
+  observations are in pc), e.g. NGC 7479's — a single galaxy, so a choice; (iii) the owner's own alternative, the width
+  as a live slider (display-only would not be honest: the width sets the gas and the clusters — S58's measurement of
+  what it carries). What would settle it: a high-resolution (≲ 50 pc) CO or extinction map of several barred galaxies
+  with a printed lane FWHM; JWST/MIRI's PHANGS bars at 30 pc are the likeliest place, and no paper reached prints it.
+
+### S98.6 Not read or unreachable
+
+DG16's tablea3 ReadMe (CDS refused; one alternative tried); Prieto et al. 2019 and Regan et al. 1997 (only as quoted);
+Laine et al. 1999 not re-read (S96's); NGC 1097's and NGC 7479's bar lengths (so no width in a); Sormani & Barnes 2019
+(the Milky Way's lanes) not fetched; Portail et al.'s face-on cut of their bulge (the measurer's 2 kpc is a reading).

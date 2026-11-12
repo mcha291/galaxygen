@@ -4,7 +4,10 @@
 next build aims at first). Not adopted.** Rows 97 and 98 run on that word: neither moves a byte under `model/galaxy`
 nor a display default. Rows 99 on wait on §6's rulings 1 and 2. **S97 ran row 97 on 2026-11-12 (D266): the two
 controls built, the experiments finished, sixteen combinations measured for the owner's pass, the model gaps traced
-(#226–#228 opened; no default, no frame, no model byte moved).** Everything here is `[inferred]` design unless tagged;
+(#226–#228 opened; no default, no frame, no model byte moved).** **S98 ran row 98 the same day (D267): the sources
+read — the layer's mend sourced and in the model already, the template's bar short of the Galaxy's own by two printed
+numbers, no profile in print for a co-rotating arm's gas, real lanes 20–81 pc wide and the clouds'; §6 gains rulings
+7–10; #229, #230 opened.** Everything here is `[inferred]` design unless tagged;
 the gaps are named by `READING_PICTURES.md`'s rows, the register's items by their numbers in `GALAXY_INPUTS.md`.
 
 ---
@@ -66,11 +69,15 @@ geometry and at the tool's) and says in plain words what a viewer sees nearer an
 | # | Question | Recommendation |
 |---|---|---|
 | 1 | Adopt the plan and its order | adopt; S97 already runs row 97 |
-| 2 | Which of the goal's features matter most, for the model batch's order | re-made on S97's trace (D266): NGC 4414's layer first (#227: a defect — the height read at the Milky Way's `R_SUN` — with the model's own sourced number beside it, and the floor under that galaxy's lanes); the knots as regions (#181, sourced at S96); the bar's amplitude if S98 finds the Milky Way's own (#146); the arms' lanes last (#144: a change of the gas law's frame, D216, and so a ruling of the owner's on two rulesets once S98 has read the sources) |
+| 2 | Which of the goal's features matter most, for the model batch's order | re-made on S97's trace (D266): NGC 4414's layer first (#227: a defect — the height read at the Milky Way's `R_SUN` — with the model's own sourced number beside it, and the floor under that galaxy's lanes); the knots as regions (#181, sourced at S96); the bar's amplitude if S98 finds the Milky Way's own (#146); the arms' lanes last (#144: a change of the gas law's frame, D216, and so a ruling of the owner's on two rulesets once S98 has read the sources). **After S98 (D267), by what a source supports**: #227 (ruling 7), #146's pin (ruling 8), #181, the clouds' weight once read (#229), the gas law last (ruling 9) |
 | 3 | The display pass (row P-2) | the owner's, when the tools are in: an hour at the dev tab |
 | 4 | The pin lifted for batch P | yes, once, the hash moving at the batch's close |
 | 5 | The bar's length law (#80, D265's two rulesets), since batch P touches the bar | Table 4 with the stellar mass at checkpoint 3 (rule A1), if S98's reading of the bar's light does not change the question |
 | 6 | The concurrency | two at once, one heavy, unless the owner says three |
+| 7 | #227, the one stellar height (S98, D267: Kregel et al. 2002's h_R / 7.3, constant with radius): which scale length stands for the source's I-band h_R, and whether the Milky Way keeps the law at `R_SUN` beside it for its solar-neighbourhood row | the mass length the pattern stage already uses (229 pc on NGC 4414, 334 on the Milky Way) — one length and one height in the model; the photometric length gives 320 / 571 pc. The Milky Way's row read from the same height, the law at the Sun kept as a check |
+| 8 | #146, the Milky Way template's bar (S98, D267: against Portail et al. 2017 the template reads 1.60 where the Galaxy's axis ratio at 2 kpc is "about 4", and 0.23 × 10¹⁰ M☉ of non-axisymmetric mass where the Galaxy's is 0.46 ± 0.03): (a) keep the seeded draw, the miss recorded; (b) pin the template's amplitude to the Galaxy's printed mass, as its length and angle are pinned | (b): the template is the Galaxy and the number is the Galaxy's — a mass, not a picture; the cut "outside the bulge" read on the source's page first |
+| 9 | The arms' gas (#144; S98, D267): no source gives a co-rotating arm's gas a profile; the one in print is a shock's (Kim & Ostriker 2002), which needs the pattern speed D216 removed. (i) Keep D216: lanes only as far as the clouds make them (#229's reading first); (ii) re-open D216 for a shock where an arm has a pattern speed | (i) for this build: rows 99–100 take the layer, the bar, the knots and the clouds' weight, and the frames are read again before the gas law is touched |
+| 10 | #147, the bar's lane width (the bracket 240 pc – more than 320–640 pc, single galaxies): the placeholder 0.10 a kept with the bracket beside it; a width in parsecs from one galaxy; or the width an input | the placeholder kept, the bracket written beside it |
 
 ## 7. What done means
 

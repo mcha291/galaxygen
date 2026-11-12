@@ -209,7 +209,8 @@ line, the tables and the scripts are the note `s97_R.md` (the session's scratchp
   0.12–0.14, section 3's row 3. By the same tool the goal's bar is 2.4 times that in either convention (0.58–0.68 in
   the stage's, near the 84th percentile of the source's distribution): an artist's impression, no target (C6). What a
   source could say is the Milky Way's own bar: `READING_BAR.md` holds Portail et al. 2017's bar and bulge mass, 1.88 ×
-  10¹⁰ M☉, against the model's 1.21 × 10¹⁰ (0.64 of it; the analyst's arithmetic `[inferred]`). #146's, amended.
+  10¹⁰ M☉, against the model's 1.21 × 10¹⁰ (0.64 of it; the analyst's arithmetic `[inferred]` — withdrawn at S98, F-98A-1: unlike components; section 15 has
+the like-for-like reading). #146's, amended.
   Outside the bar the m = 2 share of the arms' power is 0.077, as the pinned census gives (#138, the owner's).
 - **No lane, for three different reasons by place.** *The arms (Milky Way 6–10 kpc, NGC 4414 beyond 4 kpc):* the gas
   answers its arms with no shock (D216's co-rotating frame; #144): its crest stands 1.5–2.0 times the ring's median
@@ -233,3 +234,76 @@ Kim & Ostriker 2002's Table 1 (the width's and the peak's definitions) and any p
 arm (Wada, Baba & Saitoh 2011; Dobbs & Baba 2014); a measured dust-lane width in a bar; how dark a lane is in a
 face-on spiral's optical image. Not done: no re-render at another height, amplitude or gas law (none is a request
 parameter and no model byte may move in this session).
+
+---
+
+# Part S98 — what the sources say about the three things the model lacks (D267)
+
+**What this part is (2026-11-12, S98, BUILD_VI row 98).** Two Opus readers fetched the sources section 13's questions
+named; a measurer read the model beside them. The readings themselves are in `READING_DISC_HEIGHT.md`,
+`READING_BAR.md`, `READING_GAS_SHOCK.md` and `READING_CLOUD_LAYER.md` (each a part S98); this is what they do to the
+pictures' gaps. Tags as those files carry them. No model byte moved; nothing is built here.
+
+## 14. The stellar layer (#227): the sources hold one height per galaxy, constant with radius
+
+Kregel, van der Kruit & de Grijs 2002 fit one exponential height per galaxy over the whole disc (34 edge-on spirals,
+I band), assume it constant with radius on de Grijs & Peletier 1997's measurement, and print h_R / h_z = 7.3 ± 2.2
+(volume-corrected) — the number the pattern stage already holds. De Grijs & Peletier: constant to first order, rising
+by at most a factor 1.5 per scale length in early types and by about nothing in the latest; Ranaivoharimina et al.
+2024 (46 S4G edge-ons): a factor 1.3–2.4 from the centre to R₂₅ by type. No source shows the 7.5- to 32-fold flare
+the model's law gives inside the disc, and none defines "the" height at a radius. NGC 4414's own thickness: not found.
+**So the mend is sourced** — the flattening the model already holds, 229 pc on NGC 4414's mass scale length (320 pc on
+its photometric one; which length stands for Kregel's I-band h_R is a ruling) against the 926 pc published.
+
+## 15. The bar (#146): the amplitude's definition matches; the Galaxy's own bar is stronger than the template's
+
+Díaz-García et al. 2016's A₂ is the cosine's amplitude over the ring's mean of the whole 3.6 µm image (eq. 7): the
+model's convention, on a denominator that holds the bulge (0.260 against the model's 0.289). Neither Portail et al.
+2017 nor Wegg, Gerhard & Portail 2015 prints an m = 2 amplitude for the Milky Way. Portail et al. do print two
+things the template can be read against, and it falls short of both `[verified: s98 measurer; the like-for-like cut
+"outside the bulge" taken at 2 kpc, the measurer's reading]`:
+
+| Portail et al. 2017, Sect. 9.1 | the Galaxy | the Milky Way template |
+|---|---|---|
+| surface density along the bar's major axis over the minor axis, at 2 kpc | "a factor of about 4" | 1.60 with the bulge (1.69 the disc alone) |
+| where the two profiles cross | 6.3 kpc | 6.94 kpc |
+| the non-axisymmetric long-bar mass inside 5.3 kpc, outside the bulge | 0.46 ± 0.03 × 10¹⁰ M☉ | 0.23 × 10¹⁰ outside 2 kpc (0.35 with no cut) |
+
+This is a miss against the Galaxy's own measured bar, not against a picture: the seeded draw (0.2893, below the
+population's median) gives a bar about half the mass of the one the sources fit. S97's "0.64 of Portail's mass" set
+unlike components side by side (F-98A-1: their 1.88 × 10¹⁰ is a box/peanut bulge plus the long bar) and is withdrawn.
+
+## 16. The lanes: real ones are thin, and nothing read gives the model's gas one
+
+- **How thin and how dark.** M 51's lanes are 0.5–2″ wide in HST's V image, 20–81 pc (Schinnerer et al. 2010); at a
+  lane's centre the colour against the surrounding arm changes by V−K 0.58–0.79 mag (Rix & Rieke 1993, Table 1), a V
+  transmission of about 0.44–0.58 of the surroundings `[inferred: the reader's arithmetic]`; lanes lit only by their
+  own galaxy dim I to no less than 0.75 of a 0.86 kpc running median (Keel & White 2001, one Sc). Rix & Rieke put the
+  lanes' dust at 0.25–0.6 of the stars' height (the model: 0.09–0.50 on the Milky Way, 0.044–0.068 on NGC 4414 —
+  #227 again).
+- **The model's ridge** `[verified: s98 measurer]`: FWHM across the arm 1.2–2.3 kpc on the Milky Way at 6–10 kpc
+  (0.35–0.47 of the spacing), 1.1–2.0 kpc on NGC 4414; crest over the inter-arm median 1.43–1.61 and 1.60–1.82.
+  Twenty to a hundred times a real lane's width at a third of its depth.
+- **No source gives a profile for a co-rotating arm's gas** (Wada, Baba & Saitoh 2011: no number, one figure of
+  cloud spikes on an undefined, clipped ordinate; Dobbs & Baba 2014 §3.7: qualitative; Baba et al. 2015 at S96:
+  offsets). **A profile exists only for a shock in an arm with a pattern speed** (Kim & Ostriker 2002, Table 1: the
+  width at half way between peak and trough 0.05–0.16 of the arm spacing, peak over mean 2.1–6.5, for forcings of
+  1–3 %), which D216 removed. Even that arm (155–500 pc) is wider than M 51's lanes: a lane is the dense gas at the
+  ridge — the clouds — not the ridge.
+- **The clouds follow the gas linearly, and the gas is shallow** `[verified: s98 measurer]`: a cloud's sector and its
+  place in the cell are both weighted by the gas contrast to the first power (`stages/clouds.py`,
+  `layer/census_clustering.py`); a row's 90th percentile of that contrast is 1.3–1.5 times its median, so a third of
+  the clouds sit in the top quarter where a quarter would at random; 16–25 % touch a neighbour end to end along the
+  ridge, the longest chains under 0.6 kpc. Their orientation is not what stops a lane (laid along the ridge the share
+  rises by at most 0.14; they lean 11–18° more open than it). No source was read for the weight's power (#229).
+- **A step in the gas field**: a band two rows wide at 5.96–6.04 kpc on the Milky Way, jumps of 0.7–0.9 of the row's
+  scatter, on no ring edge; cause not traced `[inferred: 1.2 bar half-lengths, where the bar's gas template may
+  end]` (#230).
+
+## 17. Where this leaves the model's half (the lead's reading)
+
+In order of what a source now supports: **the layer** (#227) has a sourced mend the model already holds; **the bar**
+(#146) has a sourced miss and a choice — keep the draw with the two checks failing on record, or pin the template to
+the Galaxy's own bar; **the knots as regions** (#181) were sourced at S96; **the lanes** have no sourced law in the
+model's frame — a shock needs a pattern speed (the owner's, D216), and before that the clouds' weight wants a reading
+(the arm to inter-arm contrast of molecular clouds in a mapped galaxy) since the clouds are what a lane is.
