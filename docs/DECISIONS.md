@@ -18009,3 +18009,112 @@ and 99 discharged, next #231, D269.
 **What stays the owner's.** The display pass (ruling 3). Whether the ionized gas intensity should reach the knots.
 The owed list of S94–S96 in `BRIEF.md` (the L1 gate's judged statistic, the pinned nodes' cadence, D265's other
 four rulings — #153, #92, #94, #138 — the looks, the downloads, the deploy). The merge of `batch-p` into `main`.
+
+### D269. S99, batch P's first session (BUILD_VI row 99): the stellar layer one height per galaxy (#227: the stellar mass scale length over 7.3 — 334 pc on the Milky Way, 229 pc on NGC 4414, where it was 926), the Milky Way template's bar pinned to the Galaxy's printed non-axisymmetric mass (#146: amplitude 0.289 → 0.686, the body's light at Gadotti's tenth unfitted), the spurs' walk read at the foot (#220 discharged), the clouds' first power sourced (#229 discharged), the knots as regions measured and ruled permanent (#181), NGC 4414's dust check built and missed (#136); both field frames visibly nearer their goals on the uncommitted look, neither near
+
+**Why a session.** D268 adopted BUILD_VI; row 99 is the model's half on the lifted pin, on `session-99` from
+`batch-p` (= `main` 5173ded). Fable at the gate; an Opus scout (the batch's map), an Opus reader, three Opus
+builders in their own worktrees on disjoint files (L the layer, B the bar, M the mends), an Opus measurer (the
+knots) and an Opus runner (the frames), never more than two at once. No lane re-pinned outside its own files: the
+records the batch moves are re-pinned once, from the runner's whole suite on the merged head (S93's lesson).
+
+**What was read first (the reader's note; `READING_BAR.md` and `READING_CLOUD_LAYER.md`, Parts S99).**
+- **Portail et al. 2017, Sect. 9.1 (ii) and Sect. 3**: the long bar's non-axisymmetric mass is the face-on stellar
+  surface density less "a maximum axisymmetric model using the minor axis profile", the residuals integrated at
+  "radii inside 5.3 kpc" — 0.46 ± 0.03 × 10¹⁰ M☉, no |z| cut. Sect. 9.1 does not restate the cut "outside the
+  bulge"; the paper's only printed bulge region is Sect. 3's ellipse, 2.2 kpc along the bar by 1.4 kpc across.
+  F-99R-1: S98's R ≥ 2 kpc was the measurer's reading of one sentence, not the paper's.
+- **Colombo et al. 2014, Table 2** (M 51 at 40 pc; a kinematic arm mask over 34 % of the disc's area): arm over
+  inter-arm 3.78 in molecular gas, 4.05 in cloud mass per area (an exponent 1.05 against the gas; 0.86 without the
+  catalogue's extrapolation), 2.43 in cloud number per area (0.67). Rosolowsky et al. 2021 (four PHANGS discs with
+  arms): the mass function's truncation mass 2.5 times higher in the arms; Koda et al. 2009 and Hirota et al. 2024
+  agree in direction. No source prints a law; none covers a flocculent disc.
+
+**The gate's rulings.**
+1. **#227's length is the stellar disc's fitted mass scale length** (`thin_disc_scale_length`, sfh's, checkpoint
+   4): 334.2 pc on the defaults and the Milky Way template, 229.5 pc on `ngc_4414` — the two numbers the owner
+   ruled on (D268 ruling 7). **A slip of the gate's, recorded:** BUILD_VI §6 and D267 put that length as "the one
+   the pattern stage already uses". It is not: the gas pattern's thickness factor reads `disc_scale_length_spin`
+   (checkpoint 1; 2.605 / 1.755 kpc, which would give 356.8 / 240.4 pc and put the Milky Way 7 pc outside row 6's
+   250–350). The scout found it before anything was built. The ruling stands on what the owner was shown — the
+   numbers, and mass against photometric; "one length in the model" does not hold (two stand, at two checkpoints),
+   and the owner may re-rule. Kregel et al.'s h_R is the stellar disc's, as the fitted length is.
+2. **The old law's value at `R_SUN` stays published as `thin_disc_scale_height_dynamical`**, bit for bit, a check
+   and no stage's input; debt #42's heating tests read it, their numbers unchanged. Row 6 reads the layer.
+3. **#146's cut is the paper's own printed bulge region, the ellipse**, chosen before any number was read; R ≥ 2
+   kpc is the named alternative, measured beside. The pin is the template's eighth, by `pitch_angle`'s mechanism;
+   every other galaxy keeps the seeded draw bit for bit (tested); the draw is still made on its stream.
+4. **#146's light share: the recorded miss is removed with its reason** (rule #29). The body's light was 0.0437 of
+   the galaxy's, "low by half against Gadotti 2011's tenth"; pinned to Portail's mass it reads 0.1037. The pin's
+   target was a mass in another paper: the tenth is met unfitted. The value is held as measured (the re-pin pass).
+5. **#229 is discharged on evidence**: by mass the one area-normalised source has the clouds follow the molecular
+   gas to the power 1.05, the model's first power; the citation is in the code. What the reading leaves is a new
+   entry, **#231** (carried): the model's cloud mass function does not know the arm (the truncation mass 2.5
+   times higher in arms; the cloud number's exponent 0.67), a sourced build the adopted list does not hold — the
+   owner's to order. **A lane cannot come from the clouds' weight**: no sourced weight gathers the clouds onto a
+   ridge more tightly than the gas, and the gas law's frame is ruling 9's.
+6. **#181 is permanent, on the measurement** (the entry's own named alternative, S96). The measurer read Santoro et
+   al. 2022's estimator on its page (Clauset's maximum likelihood, the floor by minimum KS per galaxy) and merged
+   the census two ways. A 67 pc lattice makes 10 570 complexes of the Milky Way's 13 124 regions (6 142 of 7 632 on
+   `ngc_4414`); friends-of-friends at 70 pc percolates (complexes 0.9 and 1.75 kpc long). At a fixed floor no
+   merge moves the slope by more than 0.07; under Santoro's floor rule every merge reads outside 1.73 ± 0.15 on
+   both templates (1.45–2.01), and the unmerged census reads 1.83 and 1.47: **the test cannot tell a merge from
+   none.** A merged region's Strömgren radius (in its brightest member's gas, 150–770 cm⁻³) is 1.1 pc at the
+   median and 25.7 pc at most — 7 complexes on the Milky Way and 11–12 on `ngc_4414` exceed half a pixel, as many
+   as unmerged — and drawing at the 67 pc element would draw the source catalogue's resolution as a size (D5).
+   What stands between the model and the goal pictures' pink regions is the density the photons see: **#232**
+   opened (carried) — the regions' sizes are set in the cloud's clumped gas, real giant regions' hundreds of
+   parsecs are low-density envelopes, and the reading owed is a size–density relation's normalisation (Hunt &
+   Hirashita 2009's n ∝ 1/D; the one fetch reached the abstract only).
+7. **#220 is discharged**: the walk reads the crest and the trough by the point function on the foot's own ring
+   (the closer's second form); the six over-reads (0.2176, 0.4582 on the tests' seeds; 0.3667, 0.4863, 0.6656,
+   0.4002 on S95's pairs) read 0, an identity now; 0.27 and 0.58 unmoved, the hold lifted. A lay costs 5.3–7.7 s
+   where it cost 3.5–5.1.
+8. **#136's check is built and misses**, recorded (two radial checks in `specs/templates.py`): `ngc_4414`'s face-on
+   E(B−V) reads 0.348 at 55–70″ against Vallejo et al. 2002's upper limit 0.18, and 31.2 at the pinned molecular
+   ring's inner edge against about 0.3. **The model's face-on dust column on `ngc_4414` is 13 mag of E(B−V) at 1
+   kpc, 3.5 at 2, 0.56 at 4** — the inner reservoir #47 owns (the gas the star-formation threshold strands inside
+   4 kpc), written into #47 with these numbers; no entry opened.
+9. **#224 and #225 are not built**: each entry leaves its choice to the owner's word, and D268 did not take it.
+10. **#147**: the bracket is beside the placeholder (ruling 10). F-1A-1, F-1A-6, F-1B-4, F-2-3, the isochrone
+    labels' caveat and #146's citation are in.
+
+**What the builds measure.**
+- **The layer.** `thin_disc_scale_height` 345.9 → 334.2 pc (defaults, `milky_way`), 926.4 → 229.5 pc
+  (`ngc_4414`). On `ngc_4414` the midplane pressure doubles (× 2.01), the molecular fraction rises × 1.38–1.80,
+  the clouds × 1.48, the clusters × 1.49, the clouds' layer over the stars' × 4.04, the star sample's median |z|
+  × 0.248; on the Milky Way everything moves by 1–3.5 %. Row 6 passes at 334.2; rows 8 and 20 do not move; row 21
+  is still a miss (0.2032 → 0.2049).
+- **The bar.** `bar_contrast` 0.2893 (the draw) → **0.6862** (the pin): the measure 0.4600 × 10¹⁰ M☉ against
+  0.46 ± 0.03, linear in the amplitude, (0.080 + 0.554 B) × 10¹⁰ — the 0.080 the arm pieces' two-fold part. As
+  measured, never judged: the alternative cut 0.449; the axis ratio at 2 kpc 3.17 (the paper's "about 4"; was
+  1.60); the profiles' crossing 6.95 kpc (6.3; unmoved); the residual 0.33 of the disc's mass over the same radii
+  ("under half"). The body holds 0.229 of the checkpoint-1 disc (was 0.097) and 0.946 of its densest ring, at
+  0.71 kpc: near its ceiling, noted.
+
+**The yardstick (the runner's uncommitted look on the merged head, the committed display defaults; no frame
+re-committed: the batch's close does that once).** `milky_way-field`: the bar shows, short and tilted — the ring's
+A₂ at 0.21 a 0.060 → 0.160 (0.093 → 0.253 under the measured box M4), the headline A₂ 0.053 → 0.078 against the
+goal's 0.194, the arm contrast 1.60 → 2.08 (past the goal's 1.83); colour and dark fraction unmoved. **Nearer.**
+`ngc_4414-field`: a flat inclined disc with arms and dust flecks where a tall glow stood — A₂ 0.185 → 0.128 (goal
+0.074), but A₁ 0.091 → 0.059 (0.101), the arm contrast 2.57 → 1.99 (2.67) and the slope −2.12 → −1.59 (−2.10)
+move away; the colour step is still reversed at the defaults (+0.185 → +0.166 against −0.329; under the box N6
+−0.347 → −0.459). The inner disc did not go dark behind its dust column: it brightened (207.6 → 220.7 of 255).
+**Nearer by eye, mixed by the numbers.** Neither is near: no lanes (ruling 9's), no pink regions (#232), and at
+the owner's display defaults the white ball and the tan still stand (the display pass, the owner's).
+
+**The register.** #220 and #229 discharged; #181 permanent; #231 and #232 opened; #227 amended (the
+height built; what is left is that the published dispersion no longer gives the layer's height away from the
+solar radius — carried), #146 (the pin, the light share's hit, the axis ratio 3.17; the other galaxies' draw —
+carried), #147 (the bracket), #136 (the check and its misses), #47 (NGC 4414's inner column), #144 and #228 (no lane from the clouds' weight).
+**114 open — 47 permanent, 67 carried — and 101 discharged**; next #233, D270.
+
+**The gates.** On the merged head (0123c7f): the lanes' own files — `test_s99_layer`, `test_vertical`,
+`test_bar_mass`, `test_bar`, `test_registry`, `test_templates`, `test_spurs`, `test_graph`, the docs tests —
+green. **Not green, by design until the batch's re-pin pass**: every record the three builds move elsewhere (the
+builders' lists: the layer reference, the censuses' counts, `test_spec`'s row 21, the habitable zone's zero-height
+fixture — the gate's ruling: feed the stage a zero height directly, the grid no longer gives one — the seed sweeps
+on the pinned template, `test_audit_v`'s spur nodes). The runner's whole suite is dispatched on the merged head
+(run 43206552351) and is read at S100; the hash moves in fact and is pinned at the batch's close. `session-99`
+merges into `batch-p`, not `main`, tagged `s99`. Cost: the scout 0.23 M tokens, the reader 0.15 M, builder L
+0.25 M, B 0.37 M, M 0.27 M, the measurer 0.15 M, the runner 0.17 M.
