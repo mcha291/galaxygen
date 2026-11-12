@@ -24,7 +24,10 @@ class, True or False - ``milky_way`` pins barred and ``ngc_4414`` unbarred; ``su
 angle of the bar to the Sun-centre line in degrees, which ``milky_way`` gives (30) and which places
 the published Sun's azimuth and moves no other field; and ``pitch_angle``, the measured mean pitch of
 the arms in degrees, which ``ngc_4414`` gives (28.9) in place of the pitch the model draws - the draw
-is still published beside it. **A pin that is a measured number is held to the range of what it
+is still published beside it. Since S99 (#146, D268 ruling 8) ``milky_way`` pins ``bar_contrast``, its bar's
+amplitude, in place of the seeded draw: not read off a page but derived - the amplitude at which the finished
+model holds the Galaxy's printed non-axisymmetric long-bar mass (``tools/derive_bar_contrast.py``), as its
+length and its angle are pinned. **A pin that is a measured number is held to the range of what it
 replaces** (the gate's follow-up, item 7: the pitch 1-60 degrees, the Sun's angle 0 up to 360) and
 refused outside it, here (:meth:`Template.validate`) and at ``run()``. A pin travels with the
 template's inputs (:func:`overrides`, :func:`resolve`), so every run of a template is the pinned
@@ -580,8 +583,12 @@ MILKY_WAY = Template(
         "nothing else of the galaxy; and its mapped arms - the four major arms and the Local arm, as fitted to "
         "the masers' parallaxes over the third of the disc on the Sun's side - lie where they were measured, "
         "each continued past its measured range by drawn pieces, with the randomness layer's own arm pieces "
-        "filling the radii no measured arm crosses. With the layer off no arm is placed, and the galaxy is the "
-        "bare default one but for its bar's measured length and what reads it (until S87, number for number). "
+        "filling the radii no measured arm crosses. Since S99 (D268 ruling 8) its bar's amplitude is pinned too, "
+        "derived and not drawn: 0.6862, the amplitude at which the finished model holds the Galaxy's printed "
+        "non-axisymmetric long-bar mass, 0.46 x 10^10 solar masses inside 5.3 kpc and outside the bulge, where "
+        "the seeded draw gave 0.2893. With the layer off no arm is placed, and the galaxy is the "
+        "bare default one but for its bar's measured length, its derived amplitude and what reads them (until "
+        "S87, number for number). "
         "Seen face-on."
     ),
     model="azimuthal",
@@ -662,8 +669,19 @@ MILKY_WAY = Template(
         # stellar density holds the Galaxy's printed non-axisymmetric long-bar mass, in place of the seeded draw.
         Pin(
             name="bar_contrast",
-            value=0.28926359920045497,
-            source="[inferred] the seeded draw itself, pinned before the derivation (S99 step 2): nothing moves",
+            value=0.6862,
+            source=(
+                "[verified: Portail, Gerhard, Wegg & Ness 2017, arXiv:1608.07954v3, Sect. 9.1 (ii) and Table 2: a "
+                "non-axisymmetric long bar mass inside 5.3 kpc and outside the bulge of 0.46 +/- 0.03 x 10^10 Msun; "
+                "Sect. 3: the bulge region, an ellipse of 2.2 kpc along the bar and 1.4 kpc across it] derived, not "
+                "read: the amplitude at which galaxy/specs/bar_mass.py's measure of the finished model (layer on) "
+                "reads 0.46 x 10^10, by tools/derive_bar_contrast.py's bracketed root-find over the draw's range "
+                "0-0.9 (S99: the measure is linear in the amplitude, (0.080 + 0.554 B) x 10^10; root 0.686196, "
+                "stored to four figures) [verified: tests/test_bar_mass.py::"
+                "test_the_milky_way_template_holds_the_galaxy_s_non_axisymmetric_mass]; the seeded draw it replaces "
+                "is 0.2893 [verified: DECISIONS.md D268 ruling 8: the Milky Way template's bar amplitude pinned by "
+                "derivation to the Galaxy's printed non-axisymmetric long-bar mass]"
+            ),
         ),
     ),
     sources={

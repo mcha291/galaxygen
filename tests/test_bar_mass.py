@@ -166,3 +166,44 @@ def same(a, b) -> bool:
     if isinstance(a, float) and isinstance(b, float):
         return a == b or (math.isnan(a) and math.isnan(b))
     return a == b
+
+
+# --- the value (S99 ruling 5): derived, then held to the source's own error -----------------------------------------
+
+
+def test_the_milky_way_template_holds_the_galaxy_s_non_axisymmetric_mass(prod):
+    """**Judged** (the source's error, not ours): the template's measure inside Portail et al. 2017's 0.46 +/- 0.03 x
+    10^10 Msun, the bulge cut their own ellipse. The amplitude is ``tools/derive_bar_contrast.py``'s root, 0.686196,
+    stored to four figures; the measure is linear in it, (0.080 + 0.554 B) x 10^10 over the draw's whole range 0-0.9
+    (S99's scan: 0.0802 at 0, 0.5783 at 0.9 - the 0.080 at B = 0 is the arm pieces' two-fold part inside 5.3 kpc).
+
+    **Recorded as measured beside it, never judged** (S99, the template at 0.6862, the layer on; before the pin, at the
+    draw's 0.2893, in brackets): the named alternative cut R >= 2 kpc 0.4485 (0.2354) x 10^10; no cut 0.7171 (0.3486);
+    Sigma along the major axis over the minor at 2 kpc, the bulge in, 3.166 (1.595) - the paper's "a factor of about
+    4"; the disc alone 3.738 (1.688); the axis profiles cross at 6.954 kpc (6.954: beyond the body) against the paper's
+    6.3; the residual over the maximum axisymmetric disc of the same region 0.328 (0.144) against "slightly less than
+    half"."""
+    pinned = templates.pinned(templates.MILKY_WAY)["bar_contrast"]
+    assert pinned == 0.6862 == float(f"{pinned:.4g}")
+    model = prod[0].get(DEFAULT_MODEL)
+    out = run(model, templates.resolve(templates.MILKY_WAY), only=bm.READS)
+    assert float(out.fields["bar_contrast"]) == pinned
+    m = bm.measure(out)
+    assert abs(m["mass"] - bm.PORTAIL_NON_AXISYMMETRIC_MASS) <= bm.PORTAIL_NON_AXISYMMETRIC_ERROR  # JUDGED
+    assert m["mass"] == pytest.approx(0.46000e10, abs=0.00005e10)  # as measured: 0.460002
+    assert (m["mass_circle"], m["mass_no_cut"]) == pytest.approx((0.44854e10, 0.71707e10), abs=0.00005e10)
+    assert (m["axis_ratio_2kpc"], m["axis_ratio_2kpc_disc"], m["crossing"], m["disc_share"]) == pytest.approx(
+        (3.1661, 3.7376, 6.9538, 0.32758), abs=1e-4)
+    # with the layer off the face-on disc is round every ring (the contrast's neutral 1): nothing to measure
+    off = bm.measure(run(model, templates.resolve(templates.MILKY_WAY), only=bm.READS, layer=False))
+    assert abs(off["mass"]) < 1.0 and off["axis_ratio_2kpc"] == 1.0
+
+
+@pytest.mark.skipif(not __import__("os").environ.get("GALAXYGEN_REDERIVE"), reason="the root-find re-run (about 3 min) is opt-in: GALAXYGEN_REDERIVE=1")
+def test_the_committed_amplitude_is_where_the_root_find_lands():
+    """tools/derive_bar_contrast.py from its bracket: monotone over the scan, the root to four figures the pin."""
+    import derive_bar_contrast as tool
+
+    root, seen = tool.derive(say=lambda *_: None)
+    assert tool.four_figures(root) == templates.pinned(templates.MILKY_WAY)["bar_contrast"]
+    assert root == pytest.approx(0.686196, abs=2e-6)
