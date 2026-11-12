@@ -387,7 +387,8 @@ def redrawn_at_s61(out, held) -> set[str]:
 # a contrast and the cut are 1 with the layer off, a power, a count and an amplitude 0.
 COMPOSED_FIELDS = {"pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast",
                    "arm_piece_amplitude", "arm_piece_saturation", "arm_chain_count", "arm_ring_power",
-                   *(f"arm_mode_power_{m}" for m in range(2, 7))}
+                   *(f"arm_mode_power_{m}" for m in range(2, 7)),
+                   "atomic_gas_density_contrast"}  # S100 (batch P, D270; #130): the atomic gas's own contrast, a tenth
 COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ring_power": 0.0, **{f"arm_mode_power_{m}": 0.0 for m in range(2, 7)}}
 
 
@@ -1015,7 +1016,8 @@ def test_i1_the_walk_holds_at_another_template_and_seed(variants, case):
     on, off = variants[case]
     if case == "milky_way SMALL saturated":
         s_on, s_off = (np.asarray(r.fields["arm_saturation"], dtype=float) for r in (on, off))
-        assert int((s_on < 1.0).sum()) == 15 and float(s_on.min()) == pytest.approx(0.5777, abs=2e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 10 rings, 0.6436 - the cut acts on more of the 48
+        # S100 (batch P, D270; new in the runner's log 2, so #80 or #130): was 15 rings, 0.5777 - the cut still acts (13 of 48, s down to 0.5843).
+        assert int((s_on < 1.0).sum()) == 13 and float(s_on.min()) == pytest.approx(0.5843, abs=2e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 10 rings, 0.6436 - the cut acts on more of the 48
         assert np.array_equal(s_on, s_off)
     unbarred = not np.isfinite(float(on.fields["bar_half_length"]))
     neutral = {"arm_piece_saturation"} | ({"star_formation_gas_contrast"} if unbarred else set())
@@ -1107,7 +1109,7 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     # the re-pin); the layer-off census is S55's own, unmoved, and the two differ by the draw alone.
     # S61 (D220 items 1 and 10): was n_off == 16754 and the two differing by the draw alone. Drawn ring-first, each
     # ring's count is one draw at the ring's expected total, which no placement enters: the same count on and off.
-    assert n_off == 16940 and abs(n_off / 16822 - 1.0) < 0.03 and n_on == n_off, (n_on, n_off)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16577
+    assert n_off == 17127 and abs(n_off / 16822 - 1.0) < 0.03 and n_on == n_off, (n_on, n_off)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16577  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was 16940
 
 
 @pytest.mark.parametrize("name", MODELS)
@@ -1115,7 +1117,7 @@ def test_the_layer_on_cloud_count_as_measured(runs, name):
     """The realised layer-on cloud count as measured on the final model (S60, D219): placed by the arms' census it
     is another draw each time the pattern moves; the invariant is test_i2's."""
     # S61 (D220): was 16753 (S60 fourth pass: was 16713) - drawn ring-first, the layer-off count.
-    assert len(runs[name, True].fields["cloud_radius"]) == 16940 == len(runs[name, False].fields["cloud_radius"])  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16577
+    assert len(runs[name, True].fields["cloud_radius"]) == 17127 == len(runs[name, False].fields["cloud_radius"])  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16577  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was 16940
 
 
 @pytest.mark.parametrize("name", MODELS)
@@ -1318,12 +1320,12 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         # S55 (D214): was -1.98926 (the layer-on census), read layer-off
         # S61 (D220 item 10): was -2.08124 - the layer-off census redrawn ring-first, the one move D220 allows the row
         # S70 (D234): was -2.05555 - the ring's inversion on its own interval (F-2-7) alone moves it; #192's sizes do not.
-        assert float(off["hii_luminosity_function_slope"]) == pytest.approx(-2.044737, abs=1e-5)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -2.05571
+        assert float(off["hii_luminosity_function_slope"]) == pytest.approx(-2.048910, abs=1e-5)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -2.05571  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was -2.044737 (row 35's verdict unchanged)
         # S55 (D214): was -0.105511 (the layer-on census), read layer-off
         # S61 (D220 item 10): was -0.102973 - the layer-off census redrawn ring-first
         # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities; still a miss (#117).
         # S70 (D234): was -0.097902 - the inversion (F-2-7) to -0.098171, then the three Sigma regimes (#192) to -0.098309.
-        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.0986497, abs=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
+        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.0986426, abs=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309  # S100 (batch P, D270; #227, the stellar layer one height): was -0.0986497 (row 37's verdict unchanged)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
         # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
@@ -2104,7 +2106,7 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S61 (D220 part II as amended): was `cloud_r`, the cloud's radius - since the clouds are placed within their cells,
     # the binners' radius is the one the cloud's ring drew.
     assert np.array_equal(np.asarray(F["cluster_birth_radius"]), np.asarray(F["cloud_birth_radius"])[hosts])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12989  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S61 (D220): was 12916; S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 13124  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S61 (D220): was 12916; S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was 12989
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
@@ -2123,17 +2125,17 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S92: was 1694 and 0.1304; at bd0ed0c (S91's #216 re-lay, never run at S91) 1722, the runner's number too (its mean and
     # the share below not read there - the count fails first); now (#164 / #165, the spurs re-laid move the clouds' sector
     # shares and the clusters' offsets with them) 1705 and 0.1313.
-    assert int(moved.sum()) == 1705 and moved.mean() == pytest.approx(0.1313, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252
+    assert int(moved.sum()) == 1719 and moved.mean() == pytest.approx(0.1310, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252  # S100 (batch P, D270; #227, the stellar layer one height): was 1705 and 0.1313
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
     # S92: was 0.3593 (0.3541 now) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read there).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3541, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3564, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741  # S100 (batch P, D270; #227, the census +1 %): was 0.3541
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
     # S92: was 137 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the moved count fails first there).
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 125  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 139  # S100 (batch P, D270; #227, the census +1 %): was 125. # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -2145,7 +2147,7 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S61 (D220): were 248.5 and 265.2 pc - the ring-first census is a new draw and its texture is drawn on
     # texture_seed (D220 item 5), so the offsets are other numbers: 229.5 and 248.4 pc.
     # S67 (D231): were 229.9 and 248.4 pc - the largest clouds held at 150 pc by the size law, so no offset can pass it.
-    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(140.5, abs=0.1)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 140.4  # S61 (D220 part II as amended): was 229.5
+    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(140.4, abs=0.1)  # S100 (batch P, D270; #227, the census +1 %): was 140.5. # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 140.4  # S61 (D220 part II as amended): was 229.5
     assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(148.4, abs=0.1)  # S70 (D234): was 146.4 (#192's larger clouds)
 
 
