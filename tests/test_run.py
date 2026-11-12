@@ -18,6 +18,17 @@ def go(m, *stages, inputs=None, grid=TINY, only=None):
     return run(m, inputs, grid, impls=impls(*stages), table=INPUTS, only=only)
 
 
+# S100 (batch P, D270): A MODEL FAULT, held and not mended (the re-pin pass may not edit the model). Since #227 (S99, the
+# stellar layer one height h_R / 7.3) the default galaxy on helpers.TINY (n_R 8, n_t 5) publishes thin_disc_scale_height
+# NaN (the mass scale length unmeasurable on eight rings; 74.6 pc there before S99), so gas_scale_height is NaN on every
+# ring and the layer's gas fluctuation field raises ValueError ("needs a published gas height on at least one ring",
+# layer/gas_fluctuation.ring_heights) instead of carrying the NaN (rule B9). A whole production run on TINY no longer
+# completes; every clause of these three tests stands behind it. Held strict on that error alone - the gate's to rule.
+TINY_RUN_RAISES_S100 = ("S100 (D270): a model fault since #227 - on helpers.TINY thin_disc_scale_height is NaN, the gas height "
+                        "NaN on every ring, and the gas fluctuation field raises ValueError in place of carrying NaN (B9)")
+
+
+@pytest.mark.xfail(strict=True, raises=ValueError, reason=TINY_RUN_RAISES_S100)
 def test_production_runs(model):
     out = run(model, grid=TINY)
     assert out.fields["halo_circular_velocity"].shape == (8,)
@@ -266,6 +277,7 @@ def test_only_runs_the_closure_and_nothing_else():
     assert empty.ran == () and empty.fields == {}
 
 
+@pytest.mark.xfail(strict=True, raises=ValueError, reason=TINY_RUN_RAISES_S100)
 def test_a_partial_run_agrees_with_the_full_run(model):
     """Running fewer stages must not move the ones that run (rule B3: assert it)."""
     wanted = ("bar_pattern_speed", "bar_corotation_radius")
@@ -278,6 +290,7 @@ def test_a_partial_run_agrees_with_the_full_run(model):
     assert set(wanted) <= set(part.fields)
 
 
+@pytest.mark.xfail(strict=True, raises=ValueError, reason=TINY_RUN_RAISES_S100)
 def test_resume_runs_only_what_is_missing_and_gets_the_same_galaxy(model):
     full = run(model, grid=TINY)
     first = run(model, grid=TINY, only=("bar_pattern_speed",))

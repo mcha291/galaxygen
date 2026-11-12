@@ -424,11 +424,13 @@ def test_rows_1_to_24_are_where_s27_left_them(judged):
     for results in judged.values():
         v = {r.n: r.value for r in results}
         # S87 (#80, the owner's ruling of 2026-11-03, D255): were 5.20971, 41.1036 and 6.08381 - the bar's length is Erwin 2019's law on the default inputs.
-        assert v[15] == pytest.approx(2.26984, abs=5e-6)
-        assert v[16] == pytest.approx(81.9702, abs=5e-5)
-        assert v[17] == pytest.approx(2.65068, abs=5e-6)
+        # S100 (batch P, D270; #80, Erwin 2019's Table 4 on the retained baryons' mass, the default bar 2.270 -> 3.140
+        # kpc): were 2.26984, 81.9702 and 2.65068 - all three still misses (B5), the verdicts unchanged.
+        assert v[15] == pytest.approx(3.13951, abs=5e-6)
+        assert v[16] == pytest.approx(64.4722, abs=5e-5)
+        assert v[17] == pytest.approx(3.66626, abs=5e-6)
         assert v[3] == pytest.approx(251.0175, abs=5e-4)  # S87 (#148): was 251.026 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 251.0217
-        assert v[21] == pytest.approx(0.2032, abs=5e-5)  # S87 (#148): was 0.2001 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.2033
+        assert v[21] == pytest.approx(0.2049, abs=5e-5)  # S100 (batch P, D270; #227, the stellar layer one height): was 0.2032, still a miss. S87 (#148): was 0.2001 - the clock  # S88 (#212: MERGER_HEATING 88.8 -> 90.6): was 0.2033
 
 
 def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
