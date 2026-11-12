@@ -18,17 +18,6 @@ def go(m, *stages, inputs=None, grid=TINY, only=None):
     return run(m, inputs, grid, impls=impls(*stages), table=INPUTS, only=only)
 
 
-# S100 (batch P, D270): A MODEL FAULT, held and not mended (the re-pin pass may not edit the model). Since #227 (S99, the
-# stellar layer one height h_R / 7.3) the default galaxy on helpers.TINY (n_R 8, n_t 5) publishes thin_disc_scale_height
-# NaN (the mass scale length unmeasurable on eight rings; 74.6 pc there before S99), so gas_scale_height is NaN on every
-# ring and the layer's gas fluctuation field raises ValueError ("needs a published gas height on at least one ring",
-# layer/gas_fluctuation.ring_heights) instead of carrying the NaN (rule B9). A whole production run on TINY no longer
-# completes; every clause of these three tests stands behind it. Held strict on that error alone - the gate's to rule.
-TINY_RUN_RAISES_S100 = ("S100 (D270): a model fault since #227 - on helpers.TINY thin_disc_scale_height is NaN, the gas height "
-                        "NaN on every ring, and the gas fluctuation field raises ValueError in place of carrying NaN (B9)")
-
-
-@pytest.mark.xfail(strict=True, raises=ValueError, reason=TINY_RUN_RAISES_S100)
 def test_production_runs(model):
     out = run(model, grid=TINY)
     assert out.fields["halo_circular_velocity"].shape == (8,)
@@ -37,8 +26,9 @@ def test_production_runs(model):
     # S3 set the last default, so every input resolves. S58 (D217): was `== set(INPUTS)` - a pin has no default,
     # so one that is not given is not among a run's inputs, and the stage that reads it derives.
     # S59 (D218): was - {"bar_present"}; two more pins. S60 (D219): two more, the arm class and the measured arms.
-    # S70 (D234): was - the five pins above; the molecular ring is a sixth (#192).
-    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present", "bar_half_length", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring"}  # S87 (#80, the owner's ruling of 2026-11-03, D255): the bar's length a seventh
+    # S70 (D234): was - the five pins above; the molecular ring is a sixth (#192). S100 (batch P, D270; #146, S99 lane
+    # B): the bar's contrast an eighth (unseen while the TINY run raised, S99-S100).
+    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present", "bar_half_length", "pitch_angle", "sun_bar_angle", "arm_class", "arm_pieces", "molecular_ring", "bar_contrast"}  # S87 (#80, the owner's ruling of 2026-11-03, D255): the bar's length a seventh
     assert out.fields["bar_present"] == "yes"  # derived, at the defaults
 
 
@@ -277,7 +267,6 @@ def test_only_runs_the_closure_and_nothing_else():
     assert empty.ran == () and empty.fields == {}
 
 
-@pytest.mark.xfail(strict=True, raises=ValueError, reason=TINY_RUN_RAISES_S100)
 def test_a_partial_run_agrees_with_the_full_run(model):
     """Running fewer stages must not move the ones that run (rule B3: assert it)."""
     wanted = ("bar_pattern_speed", "bar_corotation_radius")
@@ -290,7 +279,6 @@ def test_a_partial_run_agrees_with_the_full_run(model):
     assert set(wanted) <= set(part.fields)
 
 
-@pytest.mark.xfail(strict=True, raises=ValueError, reason=TINY_RUN_RAISES_S100)
 def test_resume_runs_only_what_is_missing_and_gets_the_same_galaxy(model):
     full = run(model, grid=TINY)
     first = run(model, grid=TINY, only=("bar_pattern_speed",))

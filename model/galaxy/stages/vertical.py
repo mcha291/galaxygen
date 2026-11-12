@@ -99,7 +99,9 @@ THIN_HEIGHT = _decl("thin_disc_scale_height", "Thin disc scale height", "pc",
                     "Acceptance row 6, and the stellar layer every reader places stars, gas and dust against: one "
                     "exponential height per galaxy, the stellar disc's fitted mass scale length over the observed "
                     "flattening of edge-on discs, constant with radius as the source assumes. Since S99 (#227); "
-                    "until then it was the dynamical height below, read at the solar radius on every galaxy.")
+                    "until then it was the dynamical height below, read at the solar radius on every galaxy; since "
+                    "S100 that height is still the layer where the fit publishes no length (a grid too coarse "
+                    "for the fit), a fallback flagged to the owner.")
 THIN_HEIGHT_DYNAMICAL = _decl("thin_disc_scale_height_dynamical", "Thin disc dynamical scale height at R₀", "pc",
                               "The isothermal sheet's height that the thin population's vertical dispersion and the "
                               "whole disc's column give at the solar radius (verdict A arithmetic). A check on the "
@@ -158,7 +160,13 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
     # Grijs 2002: fitted over the whole disc, constant with radius assumed), h_R the stellar disc's fitted mass
     # scale length (sfh, checkpoint 4) - not the spin length the pattern stage reads (it runs before sfh). Until
     # S99 the layer was the law above, read at the Milky Way's R_SUN on every template (926 pc on ngc_4414).
-    h_thin = float(ctx.fields["thin_disc_scale_length"]) * PC_PER_KPC / float(ctx.constants["ARM_LAYER_FLATTENING"])
+    # S100 (D270, the gate's ruling): where the history's fit publishes no length (sfh.fit_scale_length needs three
+    # rings with stars inside 1 kpc < R < 3 R_d, which a grid too coarse for the fit lacks - TINY's eight rings put
+    # two there - and returns NaN), the layer's height is the dynamical law's above, the model's own law until S99:
+    # a run on a grid too coarse for the fit keeps a gas layer. The choice of fallback is flagged to the owner.
+    length = float(ctx.fields["thin_disc_scale_length"])
+    h_thin = (length * PC_PER_KPC / float(ctx.constants["ARM_LAYER_FLATTENING"])
+              if np.isfinite(length) and length > 0.0 else h_dynamical)
     h_thick = float(scale_height(sig_thick, total_at_sun, G)) * PC_PER_KPC if sig_thick > 0.0 else 0.0
 
     s_thin = float(np.interp(R_sun, R, thin))
