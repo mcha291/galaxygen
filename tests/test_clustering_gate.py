@@ -223,31 +223,15 @@ def test_the_spill_s_cost_to_the_abundances_is_the_declared_one(census):
     got = {"median": np.median(d), "p90": np.percentile(d, 90), "p99": np.percentile(d, 99), "max": d.max()}
     assert got == pytest.approx(CC.SPILL_FEH_DEX, abs=1e-3), got
     assert born[np.argmax(d)] == pytest.approx(CC.SPILL_FEH_MAX_AT_KPC, abs=0.05)
-    # S100 (batch P, D270): the count beyond 0.06 dex against the declaration's own (1826 of 17 127 against the model's
-    # declared 1 791 of 16 940 - #227's census +1 %) is held alone, strict, in the test after this one: the declaration
-    # lives in the model (census_clustering.SPILL_FEH_BEYOND), which this pass may not edit.
-    # S100: the [alpha/Fe] maximum against the declaration (0.2281 against the declared 0.222) held with the count below.
+    at, beyond, total = CC.SPILL_FEH_BEYOND
+    assert (int(np.sum(d > at)), d.size) == (beyond, total)
+    assert np.abs(np.interp(placed, R, alpha) - np.interp(born, R, alpha)).max() == pytest.approx(CC.SPILL_ALPHA_MAX_DEX, abs=1e-3)
+    # S100 (D270): held strict in a split test while the model's declaration read 1791 of 16 940 and 0.222; the
+    # declaration re-read in the model at S100 (1826 of 17 127, 0.228: #227, #80) and the clause folded back.
     text = CC.CENSUS_CLUSTERING_SEED.conserves  # the declaration is built from the same numbers
     for v in (*CC.SPILL_FEH_DEX.values(), CC.SPILL_FEH_MAX_AT_KPC, CC.SPILL_ALPHA_MAX_DEX):
         assert f"{v}" in text, v
     assert "about 0.06 dex" not in text
-
-
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    "S100 (D270): the model's declaration is stale - census_clustering.SPILL_FEH_BEYOND says 1 791 of 16 940 clouds beyond "
-    "0.06 dex and an [alpha/Fe] maximum 0.222; the merged head reads 1 826 of 17 127 (#227's census; 10.66 %, 'the declaration's 11 %' still true) and 0.2281. "
-    "A model text to re-read at the batch's close, not a re-pin of the test"))
-def test_the_spill_s_count_beyond_the_declared_dex_is_the_declaration_s(census):
-    """The count clause of the test before this one, split from it at S100 (the model's declared numbers must be
-    re-read in the model; this pass edits tests only)."""
-    F, R = census["out"].fields, census["out"].grid.R
-    placed, born = np.asarray(F["cloud_radius"], dtype=float), np.asarray(F["cloud_birth_radius"], dtype=float)
-    feh, alpha = np.asarray(F["feh_gas"], dtype=float), np.asarray(F["alpha_fe_gas"], dtype=float)
-    d = np.abs(np.interp(placed, R, feh) - np.interp(born, R, feh))
-    at, beyond, total = CC.SPILL_FEH_BEYOND
-    alpha_max = float(np.abs(np.interp(placed, R, alpha) - np.interp(born, R, alpha)).max())
-    # both the count (1 826 of 17 127) and the [alpha/Fe] maximum (0.2281, declared 0.222 to 1e-3) read off the declaration
-    assert (int(np.sum(d > at)), d.size) == (beyond, total) and alpha_max == pytest.approx(CC.SPILL_ALPHA_MAX_DEX, abs=1e-3)
 
 
 def test_the_disclosed_square_at_r_sun_as_measured(census):
