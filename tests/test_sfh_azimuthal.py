@@ -267,9 +267,11 @@ def test_every_acceptance_row_reads_the_same_in_both_models(judged):
     for results in (basic, azimuthal):
         # S87 (#80; the owner's ruling of 2026-11-03, D255): were 5.20971 fail, 41.1036 pass, 6.08381 pass - the bar's
         # length is Erwin 2019's law on the default inputs (2.27 kpc), and rows 16 and 17 follow it out.
-        assert results[15].value == pytest.approx(2.26984, abs=1e-4) and results[15].status == "fail"
-        assert results[16].value == pytest.approx(81.9702, abs=1e-3) and results[16].status == "fail"
-        assert results[17].value == pytest.approx(2.65068, abs=1e-4) and results[17].status == "fail"
+        # S100 (batch P, D270; #80 Erwin 2019's Table 4 on the baryons' mass, ruling 13): were 2.26984, 81.9702 and
+        # 2.65068 - the default bar 2.270 -> 3.140 kpc; the verdicts unchanged (fail, fail, fail).
+        assert results[15].value == pytest.approx(3.13951, abs=1e-4) and results[15].status == "fail"
+        assert results[16].value == pytest.approx(64.4722, abs=1e-3) and results[16].status == "fail"
+        assert results[17].value == pytest.approx(3.66626, abs=1e-4) and results[17].status == "fail"
 
 
 # --- the catalogue ----------------------------------------------------------------------
@@ -436,7 +438,13 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     gp = compose.gas_pattern(F, R, {k: c.value for k, c in azimuthal.constants.items()})
     assert gp is not None and gp.spurs is not None
     laned_gas, footprint_gas = dataclasses.replace(gp, spurs=None).cell_means(R, edges), np.asarray(F["star_formation_gas_contrast"])
-    assert np.asarray(F["gas_density_contrast"]).tobytes() == gp.spurs.compose_cells(R, edges, laned_gas).tobytes()
+    # S100 (#130, D270; ruling 10): was `gas_density_contrast == spurs composed on laned_gas` - the published gas is now
+    # the blend f laned_gas + (1 - f) c_atom with the published atomic response, f the ism stage's molecular fraction on
+    # the ring, the spurs composed on the blend. `laned_gas` stays the molecular law's laned alternative.
+    frac = np.asarray(F["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)[:, None]
+    blend = frac * laned_gas + (1.0 - frac) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)
+    assert np.asarray(F["gas_density_contrast"]).tobytes() == gp.spurs.compose_cells(R, edges, blend).tobytes()
     a = float(F["bar_half_length"])
     past = R >= a
     assert F["bar_present"] == "yes" and int(past.sum()) == 333 and int((~past).sum()) == 67  # S87 (#80): were 331 and 69 - the template's pinned 5.0 kpc bar (was 5.21)
@@ -493,5 +501,10 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # An unbarred galaxy has no lanes and no footprint: one field, twice.
     n = run(azimuthal, templates.overrides(templates.TEMPLATES["ngc_4414"]), only=only)
     assert n.fields["bar_present"] == "no"
-    assert np.asarray(n.fields["gas_density_contrast"]).tobytes() == np.asarray(n.fields["star_formation_gas_contrast"]).tobytes()
+    # S100 (#130, D270; ruling 10): was `gas_density_contrast == star_formation_gas_contrast` bit for bit - with no bar
+    # and no spur the published gas is the blend of that contrast with the atomic response by ism's fraction.
+    nfrac = np.asarray(n.fields["gas_molecular_fraction_profile"], dtype=float)
+    nfrac = np.where(np.isfinite(nfrac), nfrac, 1.0)[:, None]
+    nblend = nfrac * np.asarray(n.fields["star_formation_gas_contrast"], dtype=float) + (1.0 - nfrac) * np.asarray(n.fields["atomic_gas_density_contrast"], dtype=float)
+    assert np.asarray(n.fields["gas_density_contrast"]).tobytes() == nblend.tobytes()
     assert n.fields["gas_density_contrast"] is not n.fields["star_formation_gas_contrast"]
