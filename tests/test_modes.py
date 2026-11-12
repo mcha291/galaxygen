@@ -763,7 +763,14 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     # S57 (D216 G3 item 4): the gas's published field is the law's exact mean over each grid cell's extent in
     # azimuth at the ring's own radius, bit for bit, and its ring mean is 1 to rounding with nothing divided.
     law = gas.cell_means(R, o.grid["phi"].edges)
-    assert law.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
+    # S100 (#130, D270; ruling 10): was `law == gas_density_contrast` - the published gas is now the blend
+    # f c_mol + (1 - f) c_atom of the law's unspurred cell means and the published atomic response, f the ism stage's
+    # molecular fraction on the ring, with the spurs composed on the blend; to the bit as before.
+    frac = np.asarray(F["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)[:, None]
+    blend = frac * gas.unspurred_cell_means(R, o.grid["phi"].edges) + (1.0 - frac) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)
+    placed = blend if gas.spurs is None else gas.spurs.compose_cells(R, o.grid["phi"].edges, blend)
+    assert placed.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
     assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 2e-13  # S88 (D255 ruling 1): was < 1e-13; the Milky Way 1.0036e-13 (tests/test_bar.py RING_MEAN_TOLERANCE)
     for shape in (stars, gas):
         on_grid = shape.contrast(R, phi)
