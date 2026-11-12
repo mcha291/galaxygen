@@ -16,6 +16,9 @@ import math
 import numpy as np
 import pytest
 
+from galaxy import templates
+from galaxy.models import DEFAULT as DEFAULT_MODEL
+from galaxy.run import run
 from galaxy.specs import bar_mass as bm
 
 N_R, N_PHI, R_MAX = 400, 360, 30.0
@@ -107,3 +110,59 @@ def test_the_bulge_s_projection_is_its_line_of_sight_integral():
         rho = mass * a / (2.0 * math.pi * r * (r + a) ** 3)
         column = 2.0 * float((0.5 * (rho[1:] + rho[:-1]) * np.diff(z)).sum()) / 1e6
         assert float(bm.hernquist_projected(np.array([radius]), mass, a)[0]) == pytest.approx(column, rel=1e-4)
+
+
+# --- the pin (S99 ruling 4): the template's amplitude replaces the draw, the draw keeps its stream -------------------
+
+MW_PATTERN = ("bar_contrast", "bar_mass_share", "pitch_angle", "pitch_angle_drawn", "arm_contrast", "bar_corotation_radius",
+              "bar_pattern_speed", "arm_saturation", "arm_power_budget", "pattern_density_contrast")
+# The draw on pattern_seed 0 (the registry's) and on 4414 (NGC 4414's, its bar pin taken off), as the stage drew them
+# before the pin existed [tests/layer_reference_s93.json, bar_contrast, recorded at S93].
+DRAWN_DEFAULT, DRAWN_4414 = 0.28926359920045497, 0.32104666953110067
+
+
+def unpinned(name: str, *off: str) -> dict:
+    """A template's inputs with the named pins taken off."""
+    return {k: v for k, v in templates.overrides(templates.TEMPLATES[name]).items() if k not in off}
+
+
+def test_the_pin_replaces_the_draw_and_every_other_galaxy_keeps_it_bit_for_bit(prod):
+    """The pin is ``pitch_angle``'s mechanism (S59, D218 item 6), copied: declared as a numeric pin held to the range
+    of the draw it replaces, read by the stage with ``.get`` from a template's inputs alone, and the draw still made on
+    its stream - so a galaxy no template pins draws the number it drew, bit for bit, and the template's other seeded
+    numbers (the drawn pitch, the arms' amplitude, the fast-bar ratio) are the bits they were."""
+    model = prod[0].get(DEFAULT_MODEL)
+    bare = run(model, only=MW_PATTERN, layer=False)
+    assert float(bare.fields["bar_contrast"]) == DRAWN_DEFAULT
+    ngc = run(model, unpinned("ngc_4414", "bar_present"), only=MW_PATTERN, layer=False)
+    assert ngc.fields["bar_present"] == "yes" and float(ngc.fields["bar_contrast"]) == DRAWN_4414
+    drawn = run(model, unpinned("milky_way", "bar_contrast"), only=MW_PATTERN, layer=False)
+    pinned = run(model, templates.resolve(templates.MILKY_WAY), only=MW_PATTERN, layer=False)
+    assert float(drawn.fields["bar_contrast"]) == DRAWN_DEFAULT
+    assert float(pinned.fields["bar_contrast"]) == templates.pinned(templates.MILKY_WAY)["bar_contrast"]
+    for name in ("pitch_angle", "pitch_angle_drawn", "arm_contrast", "bar_corotation_radius", "bar_pattern_speed"):
+        assert float(pinned.fields[name]) == float(drawn.fields[name]), name
+    # refused outside the draw's range, by a run
+    with pytest.raises(Exception, match="bar_contrast"):
+        run(model, {**unpinned("milky_way"), "bar_contrast": 0.95}, only=("bar_contrast",), layer=False)
+
+
+def test_pinned_at_the_drawn_value_nothing_moves(prod):
+    """S99 step 2: the template with its amplitude pinned to the value the draw gives is the template with the draw,
+    bit for bit, on every published field of the whole pipeline, the layer on."""
+    model = prod[0].get(DEFAULT_MODEL)
+    drawn = run(model, unpinned("milky_way", "bar_contrast"))
+    again = run(model, {**unpinned("milky_way", "bar_contrast"), "bar_contrast": DRAWN_DEFAULT})
+    assert set(drawn.fields) == set(again.fields) and len(drawn.fields) > 300
+    differ = [n for n, v in drawn.fields.items() if not same(v, again.fields[n])]
+    assert differ == []
+
+
+def same(a, b) -> bool:
+    """Bit for bit: arrays by dtype, shape and bytes; scalars by value, NaN equal to NaN."""
+    if isinstance(a, np.ndarray) or isinstance(b, np.ndarray):
+        a, b = np.asarray(a), np.asarray(b)
+        return a.dtype == b.dtype and a.shape == b.shape and a.tobytes() == b.tobytes()
+    if isinstance(a, float) and isinstance(b, float):
+        return a == b or (math.isnan(a) and math.isnan(b))
+    return a == b

@@ -658,6 +658,13 @@ MILKY_WAY = Template(
                 "2026-11-03 (D255) on debt #80 - Erwin 2019's law for the model, the Milky Way's measured length pinned"
             ),
         ),
+        # S99 (#146; D268 ruling 8): the bar's amplitude, derived - the one at which the finished model's face-on
+        # stellar density holds the Galaxy's printed non-axisymmetric long-bar mass, in place of the seeded draw.
+        Pin(
+            name="bar_contrast",
+            value=0.28926359920045497,
+            source="[inferred] the seeded draw itself, pinned before the derivation (S99 step 2): nothing moves",
+        ),
     ),
     sources={
         "camera.inclination_deg": "[inferred] a display choice: the Milky Way stands face-on [verified: BUILD_III.md section 2]",
