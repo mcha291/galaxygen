@@ -1904,7 +1904,10 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S89 (#167): was 392 - the clouds stage's scalar cloud_extinction_v retired.
     # S93 (D262): was 391 - six added: the diffuse gas's three line maps and its two line ratios (T10 / #119, 2c797d6)
     # and the star sample's star_cluster_member (T3 / #115, 8672ff9).
-    assert len(columns) > 100 and len(b.fields) == 397
+    # S100 (batch P, D270; #227 and #130): was 397 - two added: the vertical stage's scalar
+    # thin_disc_scale_height_dynamical (S99, #227: the isothermal sheet's height at R0, kept as a check beside the
+    # layer's one height) and the gas pattern's composed atomic_gas_density_contrast (S100, #130).
+    assert len(columns) > 100 and len(b.fields) == 399
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1985,7 +1988,12 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # S93 (D262): was 267 - the diffuse gas's five (T10 / #119: its [N II] and [S II] maps and the two ratios, laws of
     # the ring, the same bits on and off) join what is held; the sixth field M3 adds, star_cluster_member (T3 / #115),
     # is a placed column of the sample whose rows stand in other cells, and is not held (nor in same_sample, below).
-    assert len(held) == 272 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
+    # S100 (batch P, D270; #227): was 272 - thin_disc_scale_height_dynamical (S99) joins what is held: the vertical
+    # stage's scalar, the isothermal sheet's height at R0 from the dispersion and the column, a law the layer cannot
+    # move (the same bits on and off, named in the clause). The other field added since, #130's
+    # atomic_gas_density_contrast, is composed and so outside what is held by this test's own rule.
+    assert "thin_disc_scale_height_dynamical" in held and "atomic_gas_density_contrast" not in held
+    assert len(held) == 273 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
     assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
