@@ -643,7 +643,10 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # `dig_halpha_fraction`, sums over the same clouds and regions in another order (the census of 16 940 clouds).
     # S92 (#164 / #165): `dig_halpha_fraction` left the set - on the spurs' re-laid census its two sums round alike on
     # and off again (the layer-on sum's last bit; the layer-off one unmoved).
-    assert rounded == {"hot_phase_porosity", "cloud_mass_total",
+    # S100 (batch P, D270; #227, #80): was without `dig_halpha_fraction` - on the final head's census (13 124 clusters and regions,
+    # measured) the same objects on and off, bit for bit as a multiset, summed in another cell order: the absorbed
+    # photons' sum rounds one last bit apart (1.1337823500881082e+53 on, ...084e+53 off), so the entry is back in.
+    assert rounded == {"hot_phase_porosity", "cloud_mass_total", "dig_halpha_fraction",
                        *(f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731"))}, sorted(rounded)
     # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
     # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.
@@ -651,7 +654,8 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # S61 (D220): was (0.29999999999999993, 0.29999999999999993) - the ring-first census, the same regions on and off
     # summed in another order: one rounding of three tenths each.
     # S70 (D234): was (0.29999999999999993, 0.30000000000000016) - F-2-7 and #192, another rounding of three tenths.
-    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000016, 0.30000000000000016)  # S92 (#164 / #165): the layer-on sum was 0.30000000000000004  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the layer-off sum was 0.30000000000000004
+    # S100 (batch P, D270; #227, #80): was (0.30000000000000016, 0.30000000000000016) - the final head's census, its sums in another order.
+    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000004, 0.29999999999999993)  # S92 (#164 / #165): the layer-on sum was 0.30000000000000004  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the layer-off sum was 0.30000000000000004
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
@@ -687,9 +691,13 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # S60 (D219): the layer-on bits are the pieces' rounding now (measured one unit above the layer-off value on
     # the third pass) and are pinned apart, in the test after this one, awaiting the re-pin; the layer-off value
     # is S55's own bits, unmoved, and the bound is held here.
-    assert float(off.fields["cloud_count_total"]) == 17077.12110001153  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16693.432987509994
+    # S100 (batch P, D270; #227: the stellar layer's height, every census +1 %): was 17077.12110001153.
+    assert float(off.fields["cloud_count_total"]) == 17263.580633491907  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16693.432987509994
     assert same_expected_total(on.fields["cloud_count_total"], off.fields["cloud_count_total"])
-    assert same(on.fields["bright_star_count_1e3"], off.fields["bright_star_count_1e3"])
+    # S100 (batch P, D270; #227, #80): was `same(...)`, the measured 0 units - on the final head's census the bright stars' layer-on
+    # total is one unit in the last place from the layer-off one (measured; pinned in the test after this), inside
+    # I1's bound, which is what this test holds.
+    assert same_expected_total(on.fields["bright_star_count_1e3"], off.fields["bright_star_count_1e3"])
 
 
 @pytest.mark.parametrize("case", ["production", "ngc_4414 SMALL"])
@@ -727,7 +735,8 @@ def test_the_clouds_expected_total_s_layer_on_bits_as_measured(runs, name):
     # S90 (#161): was 17077.121100011533, one step above the layer-off value - each ring's weights are now divided by
     # their mean round the ring (census_clustering.ring_unit), so they tile the ring to the rounding of that division
     # and the layer-on total lands on the layer-off bits.
-    assert float(on.fields["cloud_count_total"]) == 17077.12110001153  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16693.432987509997; still one step above the layer-off 17077.12110001153
+    # S100 (batch P, D270; #227: the stellar layer's height, every census +1 %): was 17077.12110001153.
+    assert float(on.fields["cloud_count_total"]) == 17263.580633491907  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 16693.432987509997; still one step above the layer-off 17077.12110001153
     # S59 (D218 follow-up): was `== np.nextafter(off, inf)`, one step; two steps then.
     # S60 fourth pass: was two steps; one step now, as before S59's follow-up.
     # S90 (#161): was `== np.nextafter(off, inf)`, one step; the same bits now.
@@ -736,7 +745,8 @@ def test_the_clouds_expected_total_s_layer_on_bits_as_measured(runs, name):
         apart = abs(float(on.fields[n]) - float(off.fields[n])) / float(np.spacing(max(abs(float(on.fields[n])), abs(float(off.fields[n])))))
         # S59 (D218 follow-up): the clouds' was 1.0. S60 fourth pass: was 2.0.
         # S90 (#161): the clouds' was 1.0.
-        assert apart == {"cloud_count_total": 0.0, "bright_star_count_1e3": 0.0}[n] and apart <= EXPECTED_TOTAL_BOUND, (n, apart)
+        # S100 (batch P, D270; #227, #80): the bright stars' was 0.0 - one unit apart on the final head's census, inside the bound.
+        assert apart == {"cloud_count_total": 0.0, "bright_star_count_1e3": 1.0}[n] and apart <= EXPECTED_TOTAL_BOUND, (n, apart)
     # S59 (D218, the gate): "every `arm_mode_amplitude_m` bit-identical layer on and off" - radial fields of the
     # pattern stage, held by the walk above with every other field; named here because the gate names them.
     # S60 fourth pass: was `n not in moved_statistics and ...` - a name of test_i1's walk, left behind when these
@@ -1371,8 +1381,10 @@ def test_rows_35_and_37_on_the_layer_on_census_as_measured(runs):
         # S60 fourth pass: were -2.03559 and -0.102201.
         # S61 (D220 item 4): were -2.03381 and -0.101488 - drawn ring-first, the layer-on census is the layer-off
         # census's regions, placed: the two rows read the layer-off numbers (here the same bits).
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.044737, abs=1e-5)  # S70 (D234): was -2.05555 (F-2-7)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -2.05571
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.0986497, abs=1e-6)  # S70 (D234): was -0.097902 (F-2-7, #192). S67 (D231): was -0.097717  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
+        # S100 (batch P, D270; #227: every census +1 %): was -2.044737.
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.048910, abs=1e-5)  # S70 (D234): was -2.05555 (F-2-7)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -2.05571
+        # S100 (batch P, D270; #227: every census +1 %): was -0.0986497 - the layer-off reading test_i3 pins, the same bits.
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.0986426, abs=1e-6)  # S70 (D234): was -0.097902 (F-2-7, #192). S67 (D231): was -0.097717  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
         off = runs[name, False].fields
         for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii"):
             assert same(on[n], off[n]), n
@@ -2739,12 +2751,25 @@ def test_the_template_checks_layer_off_are_the_numbers_d213_recorded():
     checks are radial and are the bits they were; the colour reads the face-on render, whose frame sums each ring
     round the ring, and moved in its thirteenth decimal (0.6355279197563419 layer-on). No verdict changed. S70 (D234,
     #128(b)): the colour is read through the layered dust (``checks.face_on``), the geometry the dust stage has used
-    since S52 - a check moves, not a row; still a recorded miss (#136)."""
+    since S52 - a check moves, not a row; still a recorded miss (#136).
+
+    Since S99 (#136) the template carries seven checks: D213's five, read as before, and the two radial checks
+    S99 added (``RADIAL_CHECKS["ngc_4414"]``, the colour excess over 55-70 arcsec and over the pinned molecular ring),
+    both recorded misses, pinned as measured at S100."""
     results = {r.name: r for r in checks.evaluate(["ngc_4414"])["ngc_4414"]}
-    assert {n: r.status for n, r in results.items()} == dict.fromkeys(results, "fail") and len(results) == 5
+    d213 = ("curve_shape", "star_formation_rate", "hydrogen_mass", "absolute_magnitude_k", "colour_b_v_face_on")
+    s99 = ("colour_excess_55_70_arcsec", "colour_excess_molecular_ring")
+    # S100 (batch P, D270; #136): was `len(results) == 5` - the two radial checks S99 added; D213's five unchanged.
+    assert {n: r.status for n, r in results.items()} == dict.fromkeys(results, "fail") and set(results) == {*d213, *s99} and len(results) == 7
+    # S100 (batch P, D270; #136): the two S99 checks as measured on the production grid, layer off (S99's reading:
+    # 0.3476 against at most 0.18, and 31.21 against about 0.3 - both at the band's inner edge), recorded misses.
+    assert results["colour_excess_55_70_arcsec"].value == pytest.approx(0.34762906124053505, abs=1e-11)
+    assert results["colour_excess_molecular_ring"].value == pytest.approx(31.20851123400395, abs=1e-9)
     assert results["curve_shape"].value == 0.6532426864889841
     assert results["star_formation_rate"].value == 0.6860535140228378  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.6528663372411139 (D213's reading on the 13.8 Gyr clock)
     assert results["hydrogen_mass"].value == 4838898115.005813  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 4803633219.748805
     assert results["absolute_magnitude_k"].value == -23.289649026321634  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -23.270507283088264
     # S70 (D234, #128(b)): was 0.6355279197563419 - the frame through the mixed slab, abandoned by the dust stage at S52.
-    assert results["colour_b_v_face_on"].value == pytest.approx(0.6457810235493007, abs=1e-11)  # S89 (#168: the clouds' share of the dust in the clouds' layer, the face-on transmission with it): was 0.645984252811246  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.6517106309907312
+    # S100 (batch P, D270; #227: ngc_4414's stellar height 926 -> 229 pc, the dust's layer ratios with it): was
+    # 0.6457810235493007 - the face-on colour through the layered dust; still a recorded miss, verdict unchanged.
+    assert results["colour_b_v_face_on"].value == pytest.approx(0.6440709739203747, abs=1e-11)  # S89 (#168: the clouds' share of the dust in the clouds' layer, the face-on transmission with it): was 0.645984252811246  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.6517106309907312
