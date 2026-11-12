@@ -1312,7 +1312,7 @@ def test_the_carried_map_never_folds(prod, leg):
 # default's (48, 13, 4) -> (42, 11, 3), (52, 13, 6) -> (48, 12, 6), (54, 13, 4) -> (52, 12, 4); the drawn leg's counts
 # unmoved, its exact ties taken by identity); no fold anywhere still.
 EXPECTED_CONTINUED: dict = {"milky_way": [(1750, 37), (1820, 44), (1850, 56)], "ngc_4414": [(1495, 182), (1475, 171), (1425, 168)],
-                            "ngc_4414 drawn": [(1825, 295), (1785, 275), (1745, 248)], "default": [(1660, 45), (1770, 47), (1890, 47)]}
+                            "ngc_4414 drawn": [(1825, 295), (1785, 275), (1745, 248)], "default": [(1640, 35), (1760, 38), (1860, 48)]}  # S100 (batch P, D270; #80, the default bar 2.270 -> 3.140 kpc): default was [(1660, 45), (1770, 47), (1890, 47)]; no fold
 EXPECTED_CARRIED_PHI_STEPS: dict = {
     # S62 (D221): was [(1, 0.0377, 4.46), (1, 0.0373, 4.46), (1, 0.037, 4.46)] - ``contrast_at`` carries the spurs,
     # g' = (1 - <S>) g + S: S is smooth across the clipped anchor, so the step is g's scaled by (1 - <S>) at 4.46 kpc.
@@ -2282,7 +2282,7 @@ EXPECTED_WHOLE_RINGS: dict = {
     #  largest, 0.0609, lies.)
     "milky_way": (78, 0.0609, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
     # S91 (#216): the default's was (0, 0.0, [], 0.1, 0.46) - its five seeds' censuses re-laid by the births made bit-independent.
-    "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.12, 0.5),
+    "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.09, 0.43),  # S100 (batch P, D270; #80, the default bar 2.270 -> 3.140 kpc): default was (0, 0.0, [], 0.12, 0.5); no step over the bound
 }
 # (The twelfth follow-up, item 3: the wedges read the law's width and the largest step is recorded outside every
 #  wedge and inside one apart. Was milky_way (73, 0.055, [...the same kinks...], 0.99), ngc_4414 (0, 0.0, [], 0.07),

@@ -151,7 +151,10 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     # and on the mend, which moves where in its ring a star stands, not how many a cell holds). s90_probe_cell300.py.
     # S92: was 16 - S91's #216 re-lay (the default census (48, 13, 4) -> (42, 11, 3)) moved it to 22 at bd0ed0c, never
     # run at S91; the runner (ci 42796166390) and this machine both read 22 there, and #164 / #165 leave it at 22.
-    assert "level" not in parent and parent.size == 22
+    # S100 (batch P, D270; #80, the default bar 2.270 -> 3.140 kpc re-draws the stellar pattern's sector weight in this
+    # cell): was 22 - the level-0 parent cell's stars at 20 000, seed 0; the union, prefix and determinism halves above
+    # hold untouched (the runner on cfb78af reached this line, the last).
+    assert "level" not in parent and parent.size == 16
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields, constants):

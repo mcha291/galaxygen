@@ -94,8 +94,14 @@ def constants(m) -> dict[str, float]:
     return {k: c.value for k, c in m.constants.items()}
 
 
-def inputs_of(template: str, **more) -> dict:
-    return {**templates.overrides(templates.TEMPLATES[template]), **{k: v for k, v in more.items() if v is not None}}
+def inputs_of(template: str, drawn: bool = False, **more) -> dict:
+    """A template's inputs. S100 (batch P, D270; #146, the gate's ruling 4): ``drawn=True`` takes the bar's amplitude
+    pin off (the Milky Way template carries 0.6862 on every seed since S99), so a sweep over pattern seeds that means
+    to read the seeds' draws reads them - tests/test_bar.py's mechanism."""
+    given = templates.overrides(templates.TEMPLATES[template])
+    if drawn:
+        given = {k: v for k, v in given.items() if k != "bar_contrast"}
+    return {**given, **{k: v for k, v in more.items() if v is not None}}
 
 
 STELLAR_FIELDS = tuple(n for n in PATTERN_FIELDS if n != "gas_density_contrast")
@@ -121,7 +127,9 @@ def lowest_cell(prod) -> tuple[float, int]:
             for texture_seed in (0, 1):
                 # The stellar field alone: the gas's response on the same 240 galaxies is held to its own gate in
                 # tests/test_gas_pattern.py (D216: the residual, the ring mean, positivity, the bar's bound).
-                o = pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=texture_seed)
+                # S100 (D270; #146, ruling 4): the seeds' own draws of the bar's amplitude (drawn=True) - the sweep's
+                # intent is the spread over seeds, and the pin carries 0.6862 on every one.
+                o = pattern_run(prod, template, gas=False, drawn=True, pattern_seed=pattern_seed, texture_seed=texture_seed)
                 field = np.asarray(o.fields["pattern_density_contrast"])
                 lowest = min(lowest, float(field.min()))
                 assert field.min() >= 0.0, (template, pattern_seed, texture_seed, float(field.min()))
@@ -199,8 +207,9 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     lowest, drawn = lowest_cell(prod)
     for template in TEMPLATES:
         for pattern_seed in range(60):
-            law = law_of(pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=0), c)
-            s = np.asarray(pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=0).fields["arm_saturation"])
+            # S100 (D270; #146, ruling 4): the seeds' own draws (drawn=True), as lowest_cell reads them.
+            law = law_of(pattern_run(prod, template, gas=False, drawn=True, pattern_seed=pattern_seed, texture_seed=0), c)
+            s = np.asarray(pattern_run(prod, template, gas=False, drawn=True, pattern_seed=pattern_seed, texture_seed=0).fields["arm_saturation"])
             assert np.array_equal(s, law.saturation) and np.all((s > 0.0) & (s <= 1.0))
             # What the saturation guarantees: the modes' amplitudes and the bar's add up to at most 1 on every ring.
             # S58 (D217 item 5): "the bar's" is the body's depth under the ring's mean, 1 - min of its contrast.
