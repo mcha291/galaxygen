@@ -772,9 +772,9 @@ arithmetic or reading; "by eye" a figure read off its image. The register (#144,
 - **Peak over trough**, Sect. IV.1 (a partial quote): H2 and H3 have "a realistic arm-interarm contrast in surface
   density of Sigma_max/Sigma_min=6.2 and 11.5"; Sect. IV.3: in ME1-ME4 "the maximum to minimum density ratios are
   smaller than 6" `[verified: KO02, Sects. IV.1, IV.3]`.
-- **F-98B-1 (stale text / a definition; wording, not a wrong number; the reader: high).** Part D (D2) above and register
-  #144's S87 paragraph list KO02's "W/L_x 0.05-0.16" among the widths the readers hold, beside the model's "FWHM 0.37 of
-  the arm spacing" and its crest over the ring's median. **The range is right; the statistics are unlike**: KO02's W is
+- **F-98B-1 (stale text / a definition; wording, not a wrong number; the reader: high).** Part D (D2) above lists KO02's
+  "W/L_x 0.05-0.16" among the widths the readers hold (register #144's S87 paragraph names KO02's width among them,
+  without the range), beside the model's "FWHM 0.37 of the arm spacing" and its crest over the ring's median. **The range is right; the statistics are unlike**: KO02's W is
   the width at the mid level between peak and trough (close to a FWHM about the trough for a peaked profile with a deep
   trough `[inferred]`), and its peak is over the mean, not the median. Any comparison must recompute the model's width
   at (max + min)/2 and its crest over the mean. Applied at S98: the definition added in brackets where D2 quotes the
