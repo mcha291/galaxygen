@@ -28,14 +28,25 @@ def out(model, **inputs):
 
 
 def test_the_bar_scales_with_the_disc(model):
+    """The bar's half-length is a law of the disc's scale length - since S100 (#80, D268 ruling 5, D270) Erwin 2019's
+    Table 4, row "log M* + log h": log a = alpha1 + 0.61 log h + beta1 log M below log M_brk 10.13 and alpha2 + 0.61 log h
+    + 0.35 log M above it (alpha1 0.02, beta1 0.00, alpha2 = alpha1 + (beta1 - beta2) M_brk), M the retained baryons'
+    mass checkpoint 1 publishes. The name is kept (ruling 13): the bar still scales with the disc, now with its mass
+    beside it. From S87 to S100 Table 3, 10^0.04 h^0.76; before S87 2.0 times the scale length."""
     o = out(model)
     # The lambda_d scale length since S25, when the pattern moved ahead of star formation (D174);
     # the thin disc's fitted stellar one, a star-formation result, until then.
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was 2.0 times the scale length - Erwin 2019's law of it since S87, 10^0.04 h^0.76.
-    assert o.fields["bar_half_length"] == pytest.approx(10.0 ** 0.04 * o.fields["disc_scale_length_spin"] ** 0.76)
-    # Row 15: 2.2698 since S87, out by 2.73 and a recorded miss (debt #80; the template pins 5.0); 5.2097 from S25 to
-    # S87, out by 0.01; 4.8828 and inside before.
-    assert o.fields["bar_half_length"] == pytest.approx(2.2698, abs=2e-3)  # S87 (#80): was 5.2097 - the law
+    # S100 (#80, D270; ruling 13): was `10.0 ** 0.04 * h ** 0.76` (Table 3) - Table 4 on the baryons' mass, written here.
+    h, log_m = float(o.fields["disc_scale_length_spin"]), float(np.log10(float(o.fields["baryon_mass_total"])))
+    if log_m < 10.13:
+        law = 10.0 ** (0.02 + 0.61 * np.log10(h) + 0.00 * log_m)
+    else:
+        law = 10.0 ** (0.02 + (0.00 - 0.35) * 10.13 + 0.61 * np.log10(h) + 0.35 * log_m)
+    assert log_m > 10.13 and o.fields["bar_half_length"] == pytest.approx(law, rel=1e-12)
+    # Row 15: 3.1395 since S100 (#80, Table 4), out by 1.86 and still a recorded miss (debt #80; the template pins 5.0);
+    # 2.2698 from S87 to S100, out by 2.73; 5.2097 from S25 to S87, out by 0.01; 4.8828 and inside before.
+    assert o.fields["bar_half_length"] == pytest.approx(3.1395, abs=2e-3)  # S100 (#80, D270): was 2.2698 - Table 4's law  # S87 (#80): was 5.2097 - the law
 
 
 def test_the_bar_length_is_reproducible_not_drawn(model):
