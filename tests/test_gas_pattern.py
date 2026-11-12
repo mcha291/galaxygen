@@ -715,15 +715,19 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # thickness factor - and is pinned apart in the test after the next one.
     # S92 (the gate's ruling C1 on #221): the upper bound `max_g <= max(max_s, lanes' max)` moved to the test after
     # this one, which carries the Milky Way's strict hold, so that every other clause here is asserted unmarked.
+    # S100 (batch P, D270; #221's hold lifted, the gate's ruling 3): the upper bound is back here on both templates -
+    # the Milky Way's max g 6.759 at 3.94 kpc under the lanes' 7.0556 since #220 (the spur's foot read on its own ring,
+    # S99: 7.3027 -> 6.7660; #130's blend 6.759), `ngc_4414` 2.4949 under its response's 2.5078.
+    assert got["max_g"] <= max(got["max_s"], float(gp.lanes.max()) if gp.barred else 0.0)
     # The declared ramp's top is the viewer's display range, not a cap on the field: nothing clips to it.
     assert gm.GAS_DENSITY_CONTRAST.ramp.hi == 4.0
 
 
 # S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
 # not held), and masks nothing - the failing assert is the body's only one.
-@pytest.mark.parametrize("template", [pytest.param(t, marks=pytest.mark.xfail(strict=True, raises=AssertionError,
-                                                                              reason=GATE_MAX_G_READ_OVER_S92))
-                                      if t == "milky_way" else t for t in TEMPLATES])
+# S100 (batch P, D270; the gate's ruling 3): the Milky Way's strict hold lifted - the clause holds on both templates
+# on the merged head and is back in the test before this one; this test keeps asserting it, unmarked.
+@pytest.mark.parametrize("template", TEMPLATES)
 def test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes(prod, template):
     """The gate's upper clause of D216 item 12 as S58 leaves it, max g <= max(max s, max L), split from the test
     before this one at S92 (the gate's ruling on #221) so that the Milky Way's reading over it stays visible without
@@ -888,7 +892,10 @@ def suite_gate(prod) -> dict:
     for template in TEMPLATES:
         for pattern_seed in range(60):
             for texture_seed in (0, 1):
-                given = {**templates.overrides(templates.TEMPLATES[template]), "pattern_seed": pattern_seed, "texture_seed": texture_seed}
+                # S100 (batch P, D270; #146, the gate's ruling 4): the bar's amplitude pin taken off (the seeds' own
+                # draws, tests/test_bar.py's drawn=True) - the sweep's intent is the spread over the suite's seeds.
+                given = {**{k: v for k, v in templates.overrides(templates.TEMPLATES[template]).items() if k != "bar_contrast"},
+                         "pattern_seed": pattern_seed, "texture_seed": texture_seed}
                 o = run(model, given, only=GAS_PATTERN_READS)
                 gp = compose.gas_pattern(o.fields, o.grid.R, c)
                 assert gp is not None and not gp.flat
@@ -1304,8 +1311,10 @@ def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(p
     from 0.069 to 2.36; at 6.56 kpc Σf 1.222, ε 0.0456, s from 0.162 to 2.13. What is tested holds as it did: the
     published pitch gives the stage's f and ε by this file's arithmetic, and the saturation is in them."""
     model = prod[0].get(DEFAULT_MODEL)
+    # S100 (batch P, D270; #146, ruling 4): the search over the seeds reads their own draws - the bar's amplitude pin off.
     lowest = min(
-        (float(np.min(run(model, {**templates.overrides(templates.TEMPLATES[t]), "pattern_seed": seed, "texture_seed": 0},
+        (float(np.min(run(model, {**{k: v for k, v in templates.overrides(templates.TEMPLATES[t]).items() if k != "bar_contrast"},
+                                  "pattern_seed": seed, "texture_seed": 0},
                           only=("arm_saturation",)).fields["arm_saturation"])), t, seed)
         for t in TEMPLATES for seed in range(60))
     # S58 (D217): was 0.5744 (the same seed, with a bar's taper on its inner rings).
@@ -2459,7 +2468,10 @@ def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     for seed in range(1, gm.SOLUTIONS_KEPT + 3):
         other = run(model, {"texture_seed": seed}, only=GAS_PATTERN_READS)
         assert compose.gas_pattern(other.fields, R, c).profiles.tobytes() != cold.tobytes()
-    assert len(gm._SOLUTIONS) == gm.SOLUTIONS_KEPT == 4
+    # S100 (batch P, D270; #130, the gate's ruling 11): was 4 - the atomic response is solved beside the molecular one
+    # (one forcing between them), so the caches hold twice the patterns' room by design; the cache-changes-no-bit half
+    # above holds untouched (the runner on cfb78af failed on this line alone, the last).
+    assert len(gm._SOLUTIONS) == gm.SOLUTIONS_KEPT == 8
     again = compose.gas_pattern(o.fields, R, c)
     assert again.profiles.tobytes() == cold.tobytes()
     gm.forget_solutions()

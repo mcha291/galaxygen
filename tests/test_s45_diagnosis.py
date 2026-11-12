@@ -205,7 +205,7 @@ def test_row_37s_parts(models, default):
     assert d["published"] == pytest.approx(-0.0977, abs=0.002)  # S55 (D214): was -0.1055, read layer-off
     # S61 (D220): was 12860 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["n_regions"] == pytest.approx(12997, abs=130)  # S87 (#148): was 12710 - the clock  # S45 diagnosis (D196)
-    assert d["n_fit"] == pytest.approx(5413, abs=55)  # S87 (#148): was 5337 - the clock  # S45 diagnosis (D196)
+    assert d["n_fit"] == pytest.approx(5485, abs=55)  # S100 (batch P, D270; #227, the census +1 %): was 5413. S87 (#148): was 5337 - the clock  # S45 diagnosis (D196)
     assert d["n_rings"] == 96  # S45 diagnosis (D196)
     # (a)
     assert d["Zp"] == pytest.approx(-0.0809, abs=0.002)  # S87 (#148): was -0.0784 - the clock  # S45 diagnosis (D196)
@@ -231,7 +231,7 @@ def test_row_37s_parts(models, default):
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
     assert d["G_age_clamped"] == pytest.approx(0.246, abs=0.02)  # S45 diagnosis (D196)
     # S61 (D220): was 770 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["oneside_age"] == pytest.approx(714, abs=8)  # S87 (#148): was 702 - the clock  # S45 diagnosis (D196); S51 (D210): was 759, the census redrawn on the gas's ridge
+    assert d["oneside_age"] == pytest.approx(726, abs=8)  # S100 (batch P, D270; #227, the census +1 %): was 714. S87 (#148): was 702 - the clock  # S45 diagnosis (D196); S51 (D210): was 759, the census redrawn on the gas's ridge
     # S45 diagnosis (D196): below the 0.5 Myr floor; S51 (D210): was 126, the census redrawn on the gas's ridge
     assert d["outside_age"] == pytest.approx(143, abs=3)  # S87 (#148): was 136 - the clock  # S55 (D214): was 119, read layer-off
     assert d["G_U"] == pytest.approx(-0.378, abs=0.02)  # S45 diagnosis (D196)
@@ -252,14 +252,14 @@ def test_row_37s_parts(models, default):
     assert d["P_age"] == pytest.approx(0.0001, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0017, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0013 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["P_U"] == pytest.approx(0.0008, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0002, the census redrawn on the gas's ridge
-    assert d["P_sum"] == pytest.approx(-0.0979, abs=0.002)  # S45 diagnosis (D196)
+    assert d["P_sum"] == pytest.approx(-0.0999, abs=0.002)  # S45 diagnosis (D196)  # S100 (batch P, D270; #227, the census +1 %): was -0.0979
     # S45 diagnosis (D196); S51 (D210): was 0.0056, the census redrawn on the gas's ridge
     # S61 (D220): was 0.0062 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["P_sum_minus_published"] == pytest.approx(-0.0021, abs=0.002)  # S55 (D214): was 0.0088, read layer-off
     # (d)
     # S45 diagnosis (D196)
     # S61 (D220): was 777 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["n_near"] == pytest.approx(779, abs=8)  # S87 (#148): was 760 - the clock  # S55 (D214): was 786 (783 on the layer-on census at S54), read layer-off
+    assert d["n_near"] == pytest.approx(794, abs=8)  # S87 (#148): was 760 - the clock  # S55 (D214): was 786 (783 on the layer-on census at S54), read layer-off  # S100 (batch P, D270; #227, the census +1 %): was 779
     assert d["lz0"] == pytest.approx(-0.175, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.170, the census redrawn on the gas's ridge
     # S61 (D220): was 6.365 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["la0"] == pytest.approx(6.321, abs=0.01)  # S45 diagnosis (D196); S51 (D210): was 6.288, the census redrawn on the gas's ridge

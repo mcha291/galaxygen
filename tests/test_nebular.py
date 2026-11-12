@@ -156,7 +156,7 @@ def test_the_default_census_numbers(default, default_layer_off):
     # follow-up: the winding is another, and the census another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: another draw of the census)
     # S61 (D220): was 12916 - the clouds drawn ring-first, a new draw of the census (the same on and off since)
-    assert L.size == 12989  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    assert L.size == 13124  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was 12989. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S58 (D217): was 0.720 (0.7304 now, a hair past the tolerance: another draw of the census)
     # S61 (D220): was 0.730 (0.7157 on the ring-first census, a new draw)
     # S67 (D231): were 0.716 pc, 193.7 cm^-3 and -2.826 - the clouds' size law (Lada & Dame's 82 / 35 Msun/pc2 either
@@ -173,7 +173,7 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
     # S60 (D219): was 7734 (another draw, 76 more regions)
     # S61 (D220): was 7799 (the ring-first census, a new draw: 206 fewer regions)
-    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7809  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 7694
+    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7872  # S100 (batch P, D270; #227, the census +1 %): was 7809. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 7694
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
     assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.4382e7, rel=1e-3)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 6.0770e7  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
@@ -212,12 +212,12 @@ def test_the_default_census_numbers(default, default_layer_off):
     # slope reads -2.0338, the gradient -0.101488. Not judged; the judged, layer-off rows above did not move.
     # S61 (D220 item 4): were -2.0338 and -0.101488. The census is drawn ring-first: the same regions on and off, so
     # the layer-on readings are the layer-off ones, to rounding (the regions are summed in another order).
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.04474, abs=1e-5)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -2.05571  # S70 (D234): was -2.05555 - the clouds' ring inversion (F-2-7)
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.04891, abs=1e-5)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -2.05571  # S70 (D234): was -2.05555 - the clouds' ring inversion (F-2-7)  # S100 (batch P, D270; #227, the census +1 %): was -2.04474 (row 35's verdict unchanged)
     # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities, so their [N II]/Halpha
     # (-0.097717 -> -0.097902, on and off alike); row 37 above a recorded miss still, 0.0002 further out.
     # S70 (D234): was -0.097902 - the clouds' ring inversion on its own interval (F-2-7) to -0.098171, then the three
     # Sigma regimes (#192, the owner's ruling D233) to -0.098309; row 37 a recorded miss still, 0.0004 further out.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098650, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098643, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309  # S100 (batch P, D270; #227, the census +1 %): was -0.098650 (row 37's verdict unchanged)
     for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
         assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
 
