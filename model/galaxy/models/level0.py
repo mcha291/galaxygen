@@ -193,6 +193,18 @@ LEVEL0: dict[str, Constant] = {
         "one without the other breaks the calibration (see TOOMRE_ALPHA). At 8 km/s the gas at R_0 "
         "reads 13.6 and row 9 falls to 0.025 (D119's probe): the pair is read as one number.",
     ),
+    "HI_DISPERSION_RATIO": Constant(  # read by gas_pattern (S100, #130): the atomic gas's own response
+        1.4,
+        "dimensionless",
+        "The atomic gas's velocity dispersion over the molecular gas's, measured on the same pixels: "
+        "\"σHI=11.7±2.3 km s-1, yielding a mean dispersion ratio σHI/σCO=1.4±0.2, independent of "
+        "radius\", 13 THINGS / HERACLES discs, HI and CO at 13 arcsec [verified: Mogotsi et al. 2016, "
+        "AJ 151, 15, abstract; docs/READING_GAS_PATTERN.md Part S96]. The gas pattern solves the atomic "
+        "gas's own steady response to the arms at this ratio times GAS_DISPERSION - 8.4 km/s on the "
+        "model's 6 [inferred] - beside the molecular one. The absolute 11.7 km/s is not used: over the "
+        "model's 6 it would be a ratio of 1.95, outside the measured 1.4 ± 0.2. Flat with radius, as the "
+        "source's text says; the dispersions' own fall with radius (its Fig. 6) is unread.",
+    ),
     "GAS_DISC_SCALE_RATIO": Constant(
         1.0,
         "dimensionless",

@@ -87,19 +87,22 @@ def chk(m, *stages):
 # gas's contrast (`spurs`), both after the star formation history whose gas column the spacing reads.
 # S62 (D221): and the layer's gas_fluctuation stage (it reads the gas's height and the rotation curve), after the
 # clouds by the tie-break.
+# S100 (#130): `spurs` reads the ism stage's molecular fraction (the blend of the molecular and the atomic responses
+# that places the dust), so it runs the round after `ism`'s - after `dust` by the tie-break - in both models. Until
+# S100 it stood after `ism` in `basic` and after `light` in `azimuthal`. Recomputed from graph.analyse.
 ORDER = {
     "basic": (
         "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "arm_ring_power", "gas_pattern", "stellar_pattern", "gas_spurs", "light", "vertical_alpha", "cluster_survival", "population", "ism",
-        "spurs", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
+        "bright_stars", "globular_clusters",
+        "formation", "habitable_zone", "dust", "spurs", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
         "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "arm_ring_power", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
         "gas_spurs", "stellar_halo",
-        "supernovae", "light", "spurs", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
+        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
+        "formation", "habitable_zone", "dust", "spurs", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
 }
 # The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's stages publish, in both
@@ -203,6 +206,8 @@ SEEDED_BASIC = {
     # S58 (D217 follow-up): the same stage's second field - the gas's contrast as the star formation law reads
     # it, the lanes' excess spread over the bar's footprint - seeded by the same reads.
     "star_formation_gas_contrast",
+    # S100 (#130): and its third - the atomic gas's own response, the same law at the atomic gas's dispersion.
+    "atomic_gas_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
