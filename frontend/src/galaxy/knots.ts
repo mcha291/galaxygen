@@ -27,6 +27,15 @@ export interface KnotsHeader {
   about: string;
 }
 
+/**
+ * The knots' drawn gain (S97): the field's light per L_sun/pc^2, its gain, the exposure's stops and the field's weight -
+ * the knots stand on the field's scale at its weight (S64) - times the knots' own intensity (tuning.ts knotsIntensity),
+ * a display balance. At intensity 1 this is the product GalaxyTab drew with before it, to the bit (x * 1 = x).
+ */
+export function knotsGain(lightPerUnit: number, fieldGain: number, stops: number, fieldWeight: number, intensity: number): number {
+  return lightPerUnit * fieldGain * 2 ** stops * fieldWeight * intensity;
+}
+
 /** The census's knots entry, or null where the route sends none (an API from before S64, or no region light). */
 export function knotsOf(census: Census | null | undefined): KnotsHeader | null {
   const k = census?.header.knots as KnotsHeader | undefined;

@@ -6,12 +6,15 @@ import { Switch } from "../ui/Switch";
 import type { MarchStats } from "./FieldVolume";
 import { gpuWords } from "./gpuTimer";
 import {
+  type Combination,
   type RangeControl,
   type Tuning,
   type TuningControl,
   TUNING_CONTROLS,
   TUNING_DEFAULTS,
   changed,
+  copyBoxText,
+  parseCombination,
   positionOf,
   valueAt,
 } from "./tuning";
@@ -55,6 +58,24 @@ interface Props {
   exposure?: number;
   /** The defaults the choices are compared with and reset to: the template's own (S67, D227 R4: tuning.ts defaultsFor). */
   defaults?: Tuning;
+  /** Sets the exposure's stops (App's state, the Exposure slider's) when a pasted combination names one (S97). */
+  onExposure?(stops: number): void;
+  /** Open on first draw (the panel's test; the page opens it closed). */
+  initiallyOpen?: boolean;
+}
+
+/** The one-line notice after a paste is applied (S97): what was applied, and anything not. */
+export function combinationNotice(c: Combination, template: string | null | undefined, filterSet: string | null | undefined, exposureApplied: boolean): string {
+  if (c.error !== null) return `Not applied - ${c.error}.`;
+  const parts = [`Applied over ${template ?? "the"} defaults`];
+  const other: string[] = [];
+  if (c.template !== null && c.template !== (template ?? null)) other.push(`template ${c.template}`);
+  if (c.filters !== null && c.filters !== (filterSet ?? null)) other.push(`filters ${c.filters}`);
+  if (other.length) parts.push(`the box was copied on ${other.join(", ")}; applied here anyway, nothing switched`);
+  if (c.exposure !== null) parts.push(exposureApplied ? `exposure ${c.exposure} stops` : "exposure not applied here");
+  if (c.ignored.length) parts.push(`ignored (no such choice): ${c.ignored.join(", ")}`);
+  if (c.rejected.length) parts.push(`kept the default (value unusable): ${c.rejected.join(", ")}`);
+  return parts.join("; ") + ".";
 }
 
 /**
@@ -62,8 +83,17 @@ interface Props {
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS }: Props) {
-  const [open, setOpen] = useState(false);
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false }: Props) {
+  const [open, setOpen] = useState(initiallyOpen);
+  const [paste, setPaste] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
+  const apply = () => {
+    const c = parseCombination(paste, defaults);
+    if (c.tuning) onChange(c.tuning);
+    const exposureApplied = c.tuning !== null && c.exposure !== null && onExposure !== undefined;
+    if (exposureApplied) onExposure!(c.exposure!);
+    setNotice(combinationNotice(c, template, filterSet, exposureApplied));
+  };
   const [march, setMarch] = useState<MarchStats>({ ...stats });
   useEffect(() => {
     if (!open) return;
@@ -169,10 +199,34 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
               className={styles.tuningCopy}
               readOnly
               rows={3}
-              value={JSON.stringify({ template: template ?? null, filters: filterSet ?? null, exposure: exposure ?? 0, ...diff })}
+              value={copyBoxText(tuning, defaults, template, filterSet, exposure)}
               aria-label="The changed display choices, as JSON"
               onFocus={(e) => e.currentTarget.select()}
             />
+            {/* Load a combination (S97): the copy box's own JSON, pasted back. */}
+            <p className={styles.muted}>
+              Load a combination: paste a copy box here and apply it. The box lists only what differs from its template's
+              defaults, so it is laid over this template's defaults: on the template it was copied from it reproduces that
+              combination exactly. Its template and filter set are not switched to.
+            </p>
+            <textarea
+              className={styles.tuningCopy}
+              rows={3}
+              value={paste}
+              placeholder='{"template":"milky_way","filters":"rgb","exposure":0,...}'
+              aria-label="A combination to load, as the copy box's JSON"
+              onChange={(e) => setPaste(e.target.value)}
+            />
+            <div className={styles.tuningActions}>
+              <Button disabled={paste.trim() === ""} onClick={apply}>
+                Apply
+              </Button>
+            </div>
+            {notice && (
+              <div className={styles.muted} role="status">
+                {notice}
+              </div>
+            )}
           </div>
         </>
       )}
