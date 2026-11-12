@@ -2,7 +2,9 @@
 
 **Status: DRAFT 2026-11-12 at S97's open, on the owner's word "The pictures" (asked, at the close of S94–S96, what the
 next build aims at first). Not adopted.** Rows 97 and 98 run on that word: neither moves a byte under `model/galaxy`
-nor a display default. Rows 99 on wait on §6's rulings 1 and 2. Everything here is `[inferred]` design unless tagged;
+nor a display default. Rows 99 on wait on §6's rulings 1 and 2. **S97 ran row 97 on 2026-11-12 (D266): the two
+controls built, the experiments finished, sixteen combinations measured for the owner's pass, the model gaps traced
+(#226–#228 opened; no default, no frame, no model byte moved).** Everything here is `[inferred]` design unless tagged;
 the gaps are named by `READING_PICTURES.md`'s rows, the register's items by their numbers in `GALAXY_INPUTS.md`.
 
 ---
@@ -34,7 +36,7 @@ display that hides what it has.
 |---|---|---|---|---|---|
 | 97 | S97 | P-1 | **The display pass's tools, and the diagnosis finished**: the knots' intensity as a control (E4: no slider reaches the dots); the Tuning panel's "load a combination" (the copy box read back in); the experiments S96 left unrun (rows 7 and 8; E1 and E3 separated; the dark fraction's unattributed half); combinations measured at the frames' geometry for the owner to load; the three model gaps traced to the fields and laws that set them | Fable; an Opus builder, an Opus runner, one analyst | fast gates; the picture test byte for byte (no default moves) |
 | — | the owner | P-2 | **The display pass, live**: load, tune, paste. Then a short session: the paste into `TEMPLATE_TUNING`, the field captures' camera with it (row 8), the frames re-captured knowingly, the yardstick's table re-read | the owner; then Opus | the picture test re-captured with the reason; `READING_PICTURES.md` a second part |
-| 98 | S98 | P-3 | **The readings for what the model lacks**: the lanes (where published dust lanes sit and how narrow and how deep — the shock's compression, the feathers; `READING_GAS_SHOCK.md`, `READING_SPURS.md`, `READING_DUST.md` beside it); the bar's contrast in light (the S4G amplitudes the model already draws from, against what its light reads); NGC 4414's stellar layer (the number's source); the knots as regions (#181's sourced build, #183). Each ends as a sourced build, a permanent ruling with its reason, or a two-ruleset question for the owner (B12) | Fable; Opus readers | docs and register tests |
+| 98 | S98 | P-3 | **The readings for what the model lacks**, the questions S97's trace left (`READING_PICTURES.md` §13): Kregel, van der Kruit & de Grijs 2002 — the radius h_z is fitted at and its constancy with radius (#227); Díaz-García et al. 2016's definition of A₂ and a measured amplitude or mass for the Milky Way's own bar (Portail et al. 2017; Wegg, Gerhard & Portail 2015; #146); Kim & Ostriker 2002's Table 1 and any gas profile across a dynamic arm (Wada, Baba & Saitoh 2011; Dobbs & Baba 2014; #144); a measured dust-lane width in a bar (#147); how dark a lane is in a face-on spiral's optical image; the clouds' angles against the arms' pitch, measured (#228); whether an entry owns the templates' absent thick disc. Each ends as a sourced build, a permanent ruling with its reason, or a two-ruleset question for the owner (B12) | Fable; Opus readers | docs and register tests |
 | 99–100 | S99–S100 | P-4 | **Batch P, the model's half** (the pin lifted for the batch): what S98 sourced, in the order of the owner's word on the features (§6 ruling 2); with it what is already sourced and waiting — S96's builds (#130, #95, #136, #181), #220's, #224's and #225's mends, the about-lines queued since Audit VI (F-1A-1, F-1A-6, F-1B-4, the isochrone labels' caveat, F-2-3's comment, #146's citation) | Opus lead per session, Fable at the gates; two Opus builders on disjoint stages | subset mid-session; `galaxy.specs`; the three machine-pinned nodes read by name; **the runner's full suite once on the final head**; the frames regenerated beside the goals; the merge on the owner's word |
 | 101 | S101 | P-5 | **The yardstick read again, and a done that can be reached**: the eight gaps' table after the batch; every carried register item left ruled permanent with its reason or named to a later build by the owner | Fable alone | docs and register tests; the count pin moved once |
 
@@ -64,7 +66,7 @@ geometry and at the tool's) and says in plain words what a viewer sees nearer an
 | # | Question | Recommendation |
 |---|---|---|
 | 1 | Adopt the plan and its order | adopt; S97 already runs row 97 |
-| 2 | Which of the goal's features matter most, for the model batch's order | the lanes first (the one feature both goals share and the fields do not hold), then the bar's light, then the knots as regions, then NGC 4414's layer |
+| 2 | Which of the goal's features matter most, for the model batch's order | re-made on S97's trace (D266): NGC 4414's layer first (#227: a defect — the height read at the Milky Way's `R_SUN` — with the model's own sourced number beside it, and the floor under that galaxy's lanes); the knots as regions (#181, sourced at S96); the bar's amplitude if S98 finds the Milky Way's own (#146); the arms' lanes last (#144: a change of the gas law's frame, D216, and so a ruling of the owner's on two rulesets once S98 has read the sources) |
 | 3 | The display pass (row P-2) | the owner's, when the tools are in: an hour at the dev tab |
 | 4 | The pin lifted for batch P | yes, once, the hash moving at the batch's close |
 | 5 | The bar's length law (#80, D265's two rulesets), since batch P touches the bar | Table 4 with the stellar mass at checkpoint 3 (rule A1), if S98's reading of the bar's light does not change the question |
