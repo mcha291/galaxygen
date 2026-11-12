@@ -17761,3 +17761,121 @@ of the table at 0.1 / 1 / 10 / 100 L☉ on the node's own draw; the register's f
 `session-95` (run 43083065903) and are first read on the runner by the nightly after the merge. **`session-96` merges
 into `main` after `session-95`, on that run's green**, tagged `s96`. Cost: two readers 0.20 M and 0.17 M tokens, the
 analyst (Fable) 0.24 M, the experiment runner 0.18 M, the measurement builder 0.21 M, the docs builder 0.31 M.
+
+### D266. S97, the pictures, first part (BUILD_VI row 97, the build drafted on the owner's word "The pictures"): the knots' intensity and the Tuning panel's "load a combination" built; the diagnosis's unrun experiments run — the bloom, not the tone curve, reverses NGC 4414's colour and makes the burnt core, the 6500 K white makes the tan; sixteen combinations measured for the owner to load; the three model gaps traced to their laws — NGC 4414's stellar layer is the height read at the Milky Way's R_SUN (#227), the bar's light is the bar the law drew, the lanes fail for three reasons by place; #226–#228 opened; no display default, no frame and no model byte moved
+
+**Why a session.** S94–S96 closed with BUILD_V out of rows and the yardstick unmoved; asked what the next build aims
+at first, the owner answered **"The pictures"** (2026-11-12). `docs/BUILD_VI.md` is drafted on that word — the display
+first and the display the owner's (D227), a goal picture never a target (C6), then one model batch — and is **not
+adopted**: its rows 97 and 98 move no model byte and no display default and run on the word; the batch waits on the
+adoption and on the owner's order of features. This is row 97: what the owner's live display pass lacks, built; what
+S96's diagnosis left unrun, run; what the model lacks, traced. Four agents, never more than two at once: an Opus
+builder (lane V), an Opus runner (lane X, resumed once), a Fable analyst (lane R); the lead at the gate.
+
+**What was built (lane V; f562fde, merged 6cdef57).** (1) **`knotsIntensity`** (`tuning.ts`, "HII knots intensity", a
+log range 0.05–4, 1 by default): it multiplies the field mode's knots' one gain (`knots.ts` `knotsGain`: the point,
+the Strömgren disc, the instrument's image and its wings' pass) and nothing else; not a load key. S96's E4 had found
+that no slider reaches the stray dots: the point gain does not enter the knots' gain and the only control was the
+switch. At 1 the product is the old expression to the bit and closure (ii) holds; at k the screen carries the field's
+remainder plus k times the drawn knots — declared in the control's text (A9), a display balance as the three
+intensities are (D5). Found and left: `gasIntensity` does not reach the knots (it scales the field's HII remainder
+and the diffuse gas only), so closure (ii) already departs at any gas intensity but 1; whether it should reach them is
+the owner's. (2) **"Load a combination"**: `parseCombination` and `copyBoxText` in `tuning.ts`, a paste box and an
+Apply button under the panel's copy box. A pasted box is laid over the defaults of the template on screen (the box
+lists only what differs, so on its own template it reproduces the combination); the exposure, which lives outside
+the tuning object, is set through a new `onExposure`, clamped to the slider's range and step (`EXPOSURE_RANGE`, now
+the slider's own); a box from another template is applied and said so, nothing switched; unknown keys are named,
+bad JSON applies nothing. Twenty-one new vitest cases.
+
+**The experiments (lane X; `READING_PICTURES.md` part S97, sections 8–11).** 36 captures by S96's method for what it
+left unrun, 24 more on the session's build; both controls byte for byte the committed frames on both builds.
+- **The bloom, not the tone curve.** NGC 4414's colour step: `toneMapping: "linear"` alone +0.185 → −0.036 (and a
+  clipped core of 2259 px); `bloomStrength: 0` alone → −0.142; with the bloom off every curve keeps the model's sign.
+  S96's E1 had changed both and credited the pair. The Milky Way's bar ring at 0.21 a: the bloom off alone 0.060 →
+  0.120, Exposure −1.5 alone → 0.125, together 0.159. The burnt core (never run): almost no pixel is clipped (3 and
+  61); the white ball is the bloom's glow and is gone at exposure 0 with the bloom off, where with it kept it goes
+  only at −2 / −3 stops with the outer disc black.
+- **The tan is the white point.** `whiteKelvin` moves the colour level about 0.5 mag per 1000 K: the Milky Way's
+  B−R (in / out) +0.64 / +0.32 at 6500 K, −0.14 / −0.85 at 4000 K beside the goal's −0.46 / −0.81. The camera's
+  radius moves no statistic; the diagnosis's "a = 0.29 of the half-side" was a share of the width (0.59 of the
+  half-side against the goal's 0.72) — corrected in the reading.
+- **The dark dashes' other half is the gas fluctuation in the march** (clouds off 0.0180; with `gasInMarch: false`
+  0.0005); **the speckle is the young light's clustering in the march**, not the points (`spriteSize`, `pointGain`:
+  no effect; `clumpsInMarch: false` −1.49 → −1.99, the goal's slope).
+- **The knots.** `knotsIntensity` 0.3 / 0.1 under the owner's bloom takes the Milky Way's ten large dots to 1 / 0 and
+  NGC 4414's fifteen to 6 / 4 — and the pink knots inside the disc with them: a knot is under one pixel and is seen
+  only as its bloom. No display keeps knots without dots; the goal's pink regions are the model's to hold (#181).
+- **The paste box, end to end**: three combinations pasted through the panel gave the same bytes as the stored
+  route; a wrong key is named and ignored; a line that is not JSON changes nothing.
+- **Sixteen combinations** as copy boxes (the note `s97_X2_boxes.md`; the reading's section 11), each with its
+  statistics at the committed frame's geometry. Not defaults and not recommendations: places for the owner's pass to
+  start. With the bloom off or at the viewer's plain 0.35 and a white point near 4500 K the Milky Way reads as a
+  blue-white barred spiral (the bar ring 0.09–0.12, B−R −0.12 / −0.78) and NGC 4414's step takes the goal's sign and
+  size (−0.29 to −0.37 against −0.33).
+- **A defect the white point shows**: at 4000–4500 K the sky is a pale blue disc ending at a circle 23.6 kpc from
+  the centre, with the bloom off as with it on; the cause not established. #226.
+
+**The trace (lane R; the reading's section 13).** Each model gap followed from its field to its constant, read and
+run only.
+- **NGC 4414's 0.926 kpc stellar layer is the height read at the Milky Way's `R_SUN`.** `thin_disc_scale_height` is
+  one scalar, σ_z² / (2πGΣ) at 8.2 kpc on every template: 4.90 scale lengths out in `ngc_4414`, Σ 17.19 M☉/pc²
+  against 47.13 at the same σ_z — 926 against 346 pc, reproduced to five digits. The same law's stellar-mass-weighted
+  mean is 222 pc there and 215 on the Milky Way; the pattern stage's own sourced flattening (`ARM_LAYER_FLATTENING`
+  7.3, Kregel et al. 2002) gives 229 pc. Seven call sites in six files read the scalar; it is also why no depth of dust dims
+  NGC 4414's inner disc by a quarter (the dust layer 0.044–0.068 of the stars' height) and why its bloom-off frames
+  show a glow drawn out along the minor axis. **A defect, not a scope: #227**, the precedent #192's.
+- **The bar's light is the bar the law drew.** The tool's A_m is half a cosine's amplitude; `bar_contrast` is the
+  amplitude. The template's is a seeded draw, 0.2893 (median 0.374); the light holds 0.25–0.29, the tool's 0.12–0.14.
+  S96's "2.4 times under the goal's" stands tool against tool and is the goal's own bar (an artist's, near the 84th
+  percentile of the source's distribution) against a draw below the median: **no model inconsistency, and no target**
+  (C6). What a source can say is the Milky Way's own bar (Portail et al. 2017's bar and bulge mass in `READING_BAR.md`,
+  1.88 × 10¹⁰ M☉ against the model's 1.21): #146's, amended. The arms' m = 2 share outside the bar, 0.077, is the
+  pinned census's (#138, the owner's).
+- **No lane, for three reasons by place.** The arms: the gas has no shock (D216's co-rotating frame, #144): a crest
+  1.5–2.0 times the median over kiloparsecs, transmission 0.82–0.95 of the median, where the tool's threshold needs
+  2.6–4.5 times inside half a kiloparsec. The Milky Way's bar: lanes deep enough (0.60–0.73) and a placeholder wide
+  (#147's 0.5 kpc), so the statistic reads none. NGC 4414 inside 3 kpc: #227's number. The grid's cell and the
+  diffuse / cloud split do not bind. The clouds make dashes by their size at the pixel (median length 40–50 pc = one
+  pixel; neighbours en echelon along the fluctuation field's shear): #228.
+
+**The gate's rulings.**
+1. **No display default moves in this session** (D227): the sixteen combinations are offered measured; the paste and
+   the frames' re-capture are BUILD_VI's next row, the owner's.
+2. **`knotsIntensity` stands as a display balance** with its departure from closure (ii) declared; `gasIntensity`'s
+   reach is left and named to the owner.
+3. **#227 opened, carried, for batch P**: the vertical stage reads one height at the Milky Way's `R_SUN` on every
+   template. Its mend is not ruled here: S98 reads Kregel et al. 2002 (the radius h_z is fitted at; its constancy
+   with radius) first.
+4. **#144 stays permanent as S96 ruled it, and is named the lanes' binding cause in the arms.** S96's reading found
+   no width for a live disc's gas ridge in the source the entry names; the trace names two it did not reach (Kim &
+   Ostriker 2002's Table 1; Wada, Baba & Saitoh 2011's figures). S98 reads them; if either prints a profile across an
+   arm, returning #144 to carried — which re-opens D216's frame — is put to the owner as two named rulesets (B12).
+   #146 and #147 amended with the trace's numbers; #228 opened for the clouds.
+5. **#226 opened** for the field's circular edge; a viewer session finds the cause.
+6. **The reading corrected in three places** (the half-side share; the bar's row, section 4; row 6's speckle, which
+   S96 laid on the points) and BUILD_VI §6's recommended order re-made on the trace: #227 first (a defect with the
+   model's own sourced number beside it, which also lifts NGC 4414's lane floor), the knots as regions (#181, sourced
+   at S96), the bar's amplitude if S98 finds the Milky Way's, the arms' lanes last (a law's change and the owner's
+   ruling).
+7. **Noted, not pursued**: both templates publish no thick disc in the s93 bundles (`thick_disc_stellar_mass` 0,
+   `alpha_split` nan) — S98 checks whether an entry owns it. The paste box's Apply has no committed test of its click
+   (the runner's end-to-end bytes are the evidence); the next viewer session adds one.
+
+**The yardstick (said plainly).** No frame changed: both committed field frames are byte for byte yesterday's, and as
+far from their goals — the Milky Way a small tan disc with a white ball and twenty haloed dots where the goal is a
+blue-white barred spiral threaded with dark lanes and pink regions; NGC 4414 a bloom ball over a faint tan swirl where
+the goal is a bright flocculent disc laced with brown lanes. What changed is what is known and what the owner can
+do in an hour: two display choices (the bloom's strength and threshold; the white point) carry the white ball, the
+tan, NGC 4414's reversed colour and half the bar; the lanes, the knots as regions and NGC 4414's thick glow are the
+model's, each now with its law named.
+
+**The register.** #226, #227, #228 opened (carried); #144, #146, #147 amended; nothing discharged: **112 open — 46
+permanent, 66 carried — and 99 discharged**; next #229, D267.
+
+**The gates.** vitest 665 passed, 1 skipped (was 644); `typecheck`, `typecheck:e2e` and the build clean; the picture
+test from the bundles **14 passed, every committed frame byte for byte** (`s97g_picture.log`, 4 min 32 s); the docs
+and register tests at the close (the fast job's six files 132 passed, the register's nodes of `tests/test_audit.py` 21 passed, `tests/test_viewer.py` 13 passed and 1 skipped, `tools/progress.py --check` agreeing, on bba32de; `s97g_gates.log`). `git diff --stat main -- model/` empty: the hash stays
+f9b04ed20a06c0a68420f1cc8e13714e. The nightly on `main` after S94–S96's merge (run 43117828717, 2026-11-11T23:11Z)
+is green: the first runner read of the nodes added to `tests/test_audit_vi.py` after S95's dispatch. `session-97`
+merges into `main` on these gates (a viewer row and documents: C7), tagged `s97`. Cost: the builder 0.16 M tokens,
+the runner 0.24 M over its two batches, the analyst (Fable) 0.33 M, the docs builder 0.27 M.

@@ -200,7 +200,7 @@ line, the tables and the scripts are the note `s97_R.md` (the session's scratchp
   law flares 32-fold between 1 and 8.2 kpc on `ngc_4414`, and its stellar-mass-weighted mean is 222 pc (215 on the
   Milky Way): by the model's own law the two discs are equally thin where their stars are. The pattern stage already
   holds a sourced height for any disc (`ARM_LAYER_FLATTENING` 7.3, Kregel et al. 2002): 229 pc on this template, 334
-  on the Milky Way's (346 published). Seven readers carry the scalar (the dust's and the clouds' layer ratio, the gas's
+  on the Milky Way's (346 published). Seven call sites in six files read the scalar (the dust's and the clouds' layer ratio, the gas's
   midplane, the catalogues' heights, the render). Entered as #227.
 - **The bar's light is the bar the law drew: nothing is lost inside the model.** `tools/goal_metrics.py`'s A_m is half
   a cosine's amplitude (its own docstring); the bar stage's `bar_contrast` is the amplitude, as its source's is. The
