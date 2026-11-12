@@ -415,9 +415,13 @@ S73_LAYER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pat
 # S88: was with "gas_pattern" after "arm_pieces" - since S86 (#154's table, f9d8502) sfh_azimuthal reads the gas
 # pattern's own reads and builds the pattern itself (GAS_PATTERN_READS), so the route asks the gas_pattern stage for
 # no field and a fresh service does not run it (D4); measured on a fresh service at S88, layer on and off alike.
-S65_RENDER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces",
-                     "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light", "spurs",
-                     "vertical_alpha", "ism", "dust", "clouds", "cloud_texture", "clusters", "nebular")
+# S100 (batch P, D270; #130): was without "gas_pattern" and with "spurs" after "light" - the spurs stage forms the
+# placed gas as the blend of the molecular and the atomic responses (BLEND_READS: the gas_pattern stage's
+# atomic_gas_density_contrast and the ism stage's gas_molecular_fraction_profile), so the route runs gas_pattern
+# again (after arm_pieces) and spurs after ism; measured on a fresh service at S100. The name is S65's, kept.
+S65_RENDER_STAGES = ("halo", "census_clustering", "disc", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern",
+                     "stellar_pattern", "sfh_azimuthal", "chemistry_dtd", "gas_spurs", "light",
+                     "vertical_alpha", "ism", "dust", "spurs", "clouds", "cloud_texture", "clusters", "nebular")
 EIGHT = {"default on": {}, "default off": {"layer": ["off"]},
          "milky_way on": {"template": ["milky_way"]}, "milky_way off": {"template": ["milky_way"], "layer": ["off"]},
          "ngc_4414 on": {"template": ["ngc_4414"]}, "ngc_4414 off": {"template": ["ngc_4414"], "layer": ["off"]},
