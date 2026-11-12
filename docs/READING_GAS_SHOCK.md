@@ -680,7 +680,9 @@ condition, read from observation. What the readers hold, closest first:
 of co-rotating arms (S7 Dobbs & Baba 2014 section 3.7; S8 Wada et al. 2011; S10; S11) print that gas falls into the
 minimum from both sides, at Mach ~2, and that the arm density changes over ~100 Myr — **no ridge width** (read at
 S95, reader R: the infall from both sides is Dobbs & Baba's §3.7, Mach ~2 and ~100 Myr Wada et al. 2011's). The widths
-the readers hold are a steady shock's (Kim & Ostriker 2002 W/L_x 0.05-0.16; Kim, Kim & Ostriker 2010's 3D arm at 10 %
+the readers hold are a steady shock's (Kim & Ostriker 2002 W/L_x 0.05-0.16 [KO02's W: the full width at
+(Σ_max + Σ_min)/2, half way between peak and trough, of a rigid-pattern shock's 1-D stationary solution, its peak over
+the mean - not a FWHM, not over the median (S98, F-98B-1)]; Kim, Kim & Ostriker 2010's 3D arm at 10 %
 of the arm-to-arm distance, both rigid patterns), one galaxy's measured gas arm (Egusa et al. 2017, M51 inner 0.17; read at S95, reader R),
 a maser arm's 1 sigma (Reid et al. 2019) and PHANGS's ridge masks (Querejeta et al. 2024, 500-1000 pc top-hat; Reading
 D of READING_GAS_PATTERN.md). None is a co-rotating arm's gas width, so #144's second closer is not met by anything in
@@ -724,3 +726,219 @@ inference. The register carries the gate's ruling on each entry (D265).
 - **Wada, Baba & Saitoh 2011** (arXiv:1104.1287) was not re-fetched: Part D above (D2) records that it prints infall at
   Mach ~2 and no width.
 - **Not searched.** Other live-disc simulations (e.g. Dobbs & Bonnell, Pettitt).
+
+## Part S98 — a shock's profile with its definitions, a live disc's gas, how dark and how wide a real lane is, and the model's ridge across the arm (2026-11-12, BUILD_VI row 98; reader B and the measurer)
+
+**The note.** S98's reader B fetched each source below in this session (ar5iv HTML through a summarising fetch, which
+would not quote long sentences — numbers were asked for cell by cell; one PDF by `pdftotext -layout`); its note is
+`s98_B.md` in the session's scratchpad. The measurer's first pass, item 2 (`s98_M.md`), read the model's gas ridge
+across the arm. `[verified: source, place]` marks a quotation from a page fetched in S98; `[inferred]` the reader's own
+arithmetic or reading; "by eye" a figure read off its image. The register (#144, #129) carries the gate's ruling
+(D267). Nothing here moved a constant, a pin or a model byte.
+
+### S98.1 #144 — Kim & Ostriker 2002: the setting, Table 1, and what its columns are
+
+- **Source.** Kim & Ostriker, "Formation and Fragmentation of Gaseous Spurs in Spiral Galaxies", arXiv:astro-ph/0111398
+  ("Accepted for publication in ApJ"; DOI 10.1086/339352; the ApJ 570, 132 volume and page NOT printed on the abs page,
+  not checked) — ar5iv HTML, three fetches.
+- **The setting**, Sect. II.2: "Omega_p = Omega_0/2 and pitch angle sin i = 0.1"; "cs = 7 km s-1"; "R0 = 10 kpc"; "Lx =
+  pi R0 sin i = 3.1 kpc"; "Omega0 = 26 km s-1 kpc-1"; F (eq. 9) = (2/sin i)(|Φ_0|/Ω_0² R_0²), "the amplitude of the
+  perturbed radial force" relative to the mean axisymmetric force; "In the absence of external potential perturbation,
+  our model disks have uniform surface density Sigma_0" — the mean `[verified: KO02, Sect. II.2]`. A shearing box,
+  isothermal, self-gravitating, magnetised or not; a **RIGID pattern** (Ω_p = Ω_0/2: the gas flows through the arm at
+  R(Ω − Ω_p)) — the steady-shock case, not the co-rotating one.
+- **What the columns are**, Sect. IV: "The peak surface density Sigma_max and local Qsp of the 1D, stationary solution
+  are listed, respectively, in columns (5) and (6), while column (7) gives the arm width determined at
+  Sigma=(Sigma_max+Sigma_min)/2." The table's note: "W is the arm width at Sigma = 1/2 (Sigma_max + Sigma_min)."
+  `[verified: KO02, Sect. IV, Table 1 note]` So **W is the full width at the MID level between peak and trough (not at
+  half the peak), of the 1-D stationary shock profile (before spurs), in units of Lx, the arm-to-arm distance**; column
+  (5), Σ_max/Σ_0, is **peak over the MEAN**; Σ_min has no column.
+- **Table 1**, "Parameters of Nonaxisymmetric Simulations" `[verified: KO02, Table 1, cell by cell, one read on one
+  host; F printed as 1, 2, 3 = per cent by the text's "F=3%", the header's unit not seen]`:
+
+| Model | β0 | Q0 | F | Σmax/Σ0 | Qsp | W/Lx | ly/Lx | ly/W | Ky,max |
+|---|---|---|---|---|---|---|---|---|---|
+| H1 | ∞ | 1.7 | 1 | 2.36 | 1.11 | 0.16 | 0.67 | 4.2 | 0.21 |
+| H2 | ∞ | 2.1 | 2 | 3.91 | 1.06 | 0.06 | ... | ... | ... |
+| H3 | ∞ | 2.3 | 3 | 6.49 | 0.90 | 0.05 | ... | ... | ... |
+| MS1 | 10 | 1.6 | 1 | 2.77 | 0.96 | 0.11 | 0.67 | 6.1 | 0.16 |
+| MS2 | 10 | 1.8 | 2 | 4.91 | 0.81 | 0.07 | 0.22 | 3.1 | 0.31 |
+| MS3 | 10 | 2.0 | 3 | 5.59 | 0.85 | 0.06 | 0.25 | 4.2 | 0.27 |
+| ME1 | 1 | 1.2 | 1 | 2.11 | 0.83 | 0.16 | 0.20 | 1.3 | 0.54 |
+| ME2 | 1 | 1.4 | 2 | 2.45 | 0.89 | 0.16 | 0.22 | 1.4 | 0.49 |
+| ME3 | 1 | 1.5 | 3 | 2.84 | 0.89 | 0.16 | 0.22 | 1.4 | 0.45 |
+| ME4 | 1 | 1.6 | 3 | 2.72 | 0.97 | 0.16 | 0.25 | 1.6 | 0.45 |
+
+- **Peak over trough**, Sect. IV.1 (a partial quote): H2 and H3 have "a realistic arm-interarm contrast in surface
+  density of Sigma_max/Sigma_min=6.2 and 11.5"; Sect. IV.3: in ME1-ME4 "the maximum to minimum density ratios are
+  smaller than 6" `[verified: KO02, Sects. IV.1, IV.3]`.
+- **F-98B-1 (stale text / a definition; wording, not a wrong number; the reader: high).** Part D (D2) above and register
+  #144's S87 paragraph list KO02's "W/L_x 0.05-0.16" among the widths the readers hold, beside the model's "FWHM 0.37 of
+  the arm spacing" and its crest over the ring's median. **The range is right; the statistics are unlike**: KO02's W is
+  the width at the mid level between peak and trough (close to a FWHM about the trough for a peaked profile with a deep
+  trough `[inferred]`), and its peak is over the mean, not the median. Any comparison must recompute the model's width
+  at (max + min)/2 and its crest over the mean. Applied at S98: the definition added in brackets where D2 quotes the
+  range, and in the register.
+- Every KO02 row is a rigid-pattern (Ω_p = Ω/2) shock at R0 = 10 kpc, F = 1-3 %: ruleset (ii)'s source, never a
+  co-rotating arm's. In parsecs, 0.05-0.16 Lx is 155-500 pc `[inferred: × 3.1 kpc]`.
+
+### S98.2 #144 — Wada, Baba & Saitoh 2011: no number; one figure, by eye
+
+- **Source.** Wada, Baba & Saitoh 2011, "Interplay between Stellar Spirals and the ISM in Galactic Disks",
+  arXiv:1104.1287 — ar5iv HTML (three fetches) and Fig. 4's image (ar5iv's figure4.png, viewed directly by the reader);
+  the journal not on the ar5iv page, not checked.
+- **Printed.** No number for a gas arm / inter-arm contrast, peak over mean, compression ratio or arm width anywhere in
+  the text (the fetch, asked, answered none). Gas velocity relative to the stellar arms "should be ~15 km s-1 or
+  smaller"; median Mach ~2 in the live model against "M ~10-40" in the rigid one (Sect. III.2); "there are four arms at
+  R=8.6 kpc" (t = 1.441 Gyr); ASURA N-body/SPH, 10 pc softening, a multiphase ISM; stellar scale length 4.3 kpc, gas
+  8.6 kpc (Table 1); R_CR = 14 kpc. On Fig. 4: "Total gas density, on the other hand, is more spiky."; "Each peak
+  corresponds to a high density clouds or internal substructures of them."; "It is clear that high density peaks of
+  the gas tend to be associated with stellar arms." The gas structure "is not steady" `[verified: WBS11, text]`.
+- **"Density contrast" is NOT DEFINED in the paper** (asked: no formula, no surface against volume, no radial bin).
+  Fig. 4's caption: "Azimuth distributions of stellar (red) and total gas (blue) density contrasts at R=4.3, 8.6 and
+  12.9 kpc at t=1.441 Gyr."
+- **Fig. 4, BY EYE** (the reader's read-off of the image, not printed; the y axis labelled "Density Contrast", −1 to
+  about 2.8, **the gas curve clipped at the top in every panel**): at R = 8.6 kpc the stellar curve has broad bumps
+  peaking about +0.7 to +1.4 near 65, 170, 255-265 and 325° (four arms, ~90° apart); the gas is a forest of narrow
+  spikes, each about 2-5° wide (about 0.3-0.75 kpc of arc at 8.6 kpc), many reaching the clip (> 2.8), troughs about
+  −0.5 to −0.9; the spikes cluster within about 10-20° of each stellar bump (0.11-0.22 of the 90° arm spacing along
+  the ring), but spikes also stand between arms (near 10-30 and 120-130°). If "contrast" is ρ/⟨ρ⟩ − 1 `[inferred —
+  undefined in the paper]`, the gas peaks exceed 3.8 × the azimuthal mean and the troughs are 0.1-0.5 ×. No single gas
+  ridge with a width is drawn: the arm's gas is several clouds, not a profile.
+- **Verdict for #144.** No profile printed; the only usable thing is a figure read by eye, of one snapshot, with an
+  undefined ordinate and a clipped curve — not a source for a number under rule D1 `[inferred]`.
+
+### S98.3 #144 — Dobbs & Baba 2014 section 3.7: qualitative
+
+- **Source.** Dobbs & Baba 2014, "Dawes Review 4: Spiral Structures in Disc Galaxies", PASA, arXiv:1407.5062 — ar5iv
+  HTML, characters 0-200 000 (200 000 to the end, the references area, NOT read).
+- **Sect. 3.7, "Gas flow in dynamic spiral arms"**: "Thus the gas, stars and spiral arms will have the same angular
+  velocities and there is no gas flow through the arms."; "gas effectively falls in to the minimum of the potential,
+  from both sides of the spiral arm."; "For dynamic arms, a systematic offset is not expected between the density peak
+  of the gas, and the stellar minimum."; "Gas can still clearly undergo shocks as it falls into the minimum of the
+  potential, particularly if it has cooled."; "the gaseous arm remains until the stellar arm disperses"; "spurs are not
+  typically seen in simulations" `[verified: DB14, Sect. 3.7]`. **No gas density, contrast or arm width for dynamic arms
+  is printed in 3.7** (asked twice; the only numbers are cloud masses, "a few 10^5 Msun compared to a few 10^6 Msun",
+  arms against no arms).
+- The density-wave against dynamic comparison is qualitative only (Sect. 3.5, Roberts 1969: "for warm gas and moderate
+  forcing, a narrow shock is expected ahead of the minimum of the potential"; Sect. 3.5.2 "Typically the gas density
+  peaks after, or coincident with the minimum of the potential"; Sect. 3.6, tidal arms, "the gas will flow through the
+  arms and experience a spiral shock"). For the steady shock DB14 reports Shu et al. 1972 `[secondary: as the review
+  reports it; not opened]`: a steady two-phase shock with "density enhancements (of around 10 and 40)" for the two
+  phases and "a width of the shocked region of 50 pc". Sect. 4.7: Dobbs et al. 2011's "only a factor of ~2 increase
+  with spiral arms compared to without" — the quantity not named in the sentence (context: star formation), not a gas
+  profile. Dust: Sect. 1.1 "dark dust lanes alongside spiral arms" (Sandage 1961; Lynds 1970), no number.
+- **So**: with S96's Baba et al. 2015 (offsets only), three of the dynamic-arm sources named so far print no profile.
+  Ruleset (i) — keep the co-rotating frame with a sourced profile — is NOT SOURCED; ruleset (ii) — a shock where an arm
+  has a pattern speed — is sourced (KO02) only in a frame the model does not have, and taking it re-opens D216: the
+  owner's (D267).
+
+### S98.4 How dark and how wide a dust lane is in a face-on spiral's optical image
+
+How found (reader B): web searches (M51 dust lane extinction A_V width pc HST; Thornley & Mundy 1997 NGC 4414 dust
+lanes; Elmegreen 1980 dust lanes; Holwerda 2005 arm inter-arm), then the papers' own pages.
+
+- **Schinnerer, Weiss, Aalto & Scoville 2010**, "Multi-Transition Study of M51's Molecular Gas Spiral Arms",
+  arXiv:1007.0692 — ar5iv HTML, one fetch (the journal not checked). "D=8.4 Mpc with 1'' ~ 40.7 pc" (Sect. I). **Width**:
+  "The widths of the dust lanes visible in the HST V band image range from about 0.5'' to 2''" (Sect. V) = **20-81 pc**
+  `[inferred: the reader's arithmetic at 40.7 pc per arcsec]`; "enhanced extinction is present across the full width of
+  the gas spiral arms of ~ 7''" (~285 pc `[inferred]`); "the extincting material can not have a larger vertical extent
+  than a dust lane is wide" — a gas scale height under 20-80 pc. These are M51's INNER arms (the CO field). **Darkness,
+  as a column**: "The derived extinction is about AV~12-18" (Sect. V), from N(H2) = 1.87e21 A_V (Nakai & Kuno 1995)
+  applied to the CO-derived N(H2) (2.3-3.3)e22 cm⁻²; the abstract "AV about 15 - 30 mag"; HII regions A_V ~3.0
+  `[verified: Schinnerer et al. 2010, Sects. I, V, abstract]`. That is the FULL column through the disc from the gas,
+  NOT the dimming of the starlight seen (stars in front of the dust are not dimmed); no surface brightness or lane over
+  surroundings ratio printed (asked; none).
+- **Rix & Rieke 1993**, "M51 Stripped To Its Bones", arXiv:astro-ph/9304006 (submitted to ApJ, the PDF says) — the PDF,
+  text by `pdftotext -layout`. Abstract: "From modeling the color changes across the main dust lanes in M51, we find the
+  optical depths to be ~0.5 in the K-band." Sect. 3.2: "optical depths in the dust lanes at K are about 0.5,
+  corresponding to tau_V ~ 4"; "the dust lanes are optically thin at K, semi-transparent at J and I, and optically
+  thick at B,V and R"; the dust's scale height relative to the stars' "is found to range from 0.25 to 0.6, decreasing
+  with radius"; "in all cases the dust in the lanes appear to be more vertically extended than inferred from global
+  edge-on estimates, zeta = 0.2". Fig. 8's caption: a lane at ~25″, τ_K ~0.4 "(corresponding to tau_V ~ 3.5) with a
+  scale height of 60% of the star's"; a lane in a dominant arm at R ~90″, the dust's height "only ~ 35% of the star's",
+  τ_K = 0.4-1, "corresponding to tau_V = 3.5 - 9". Sect. 3.2 cites Elmegreen 1980, "the optical depths in the lanes can
+  be large, tau_V ~ 10" (secondary) `[verified: Rix & Rieke 1993, abstract, Sect. 3.2, Fig. 8]`.
+  **Table 1 (p. 25), the OBSERVED colour change between the lane's centre and "the surrounding innerarm regions"**, mag,
+  Lane 86 / Lane 45: J−K 0.21 / 0.13, I−K 0.50 / 0.38, R−K 0.64 / 0.53, **V−K 0.79 / 0.58**, **B−K 1.01 / 0.69** (each ±
+  0.04) `[verified: Rix & Rieke 1993, Table 1]` (the labels as printed; Fig. 7 places the two lanes at ~25″ and ~90″ —
+  which label is which was not read). **The arithmetic, marked** `[inferred: the reader's, not printed]`: K is
+  attenuated "only by ~10%" (Sect. 3.2), ≤ 0.11 mag, so the lane's V deficit against the adjacent arm is about 0.58-0.79
+  mag plus ≤ 0.11, i.e. **0.6-0.9 mag in V, a transmission of about 0.44-0.58 of the surroundings**; in B about 0.7-1.1
+  mag (0.36-0.52). Caveat: a lane-centre colour at ground resolution (images 1.8″ per pixel rebinned; high-resolution J
+  / K 0.6″ per pixel with 1.2″ seeing; ~40 pc per arcsec), so the lane averaged over ~50-100 pc. **Width: not printed**
+  (Fig. 7, the cut, not seen).
+- **Keel & White 2001**, "Seeing Galaxies though Thick and Thin. IV. The Superimposed Spiral Galaxies of NGC 3314",
+  arXiv:astro-ph/0106056 (AJ, "in press, September 2001" per the page) — ar5iv HTML, two fetches. NGC 3314A, a
+  foreground Sc, HST B and I (F814W), "a scale of 172 pc/arcsecond". The one source found that measures a lane's
+  darkness against its OWN galaxy's light (the face-on image's case) apart from the backlit case, Sect. V: "Histograms
+  of the relative I intensity showed the backlit dust to have many pixels with values as low as 0.3, while the
+  non-backlit dust lanes have no values below 0.75, as predicted for a thin dust lane." "Comparable covering fractions
+  are reached at, for example, 0.4 for the backlit case and 0.65 for the non-backlit areas." The relative intensity is
+  the I image over "a median-filtered image with a 5.0'' window" (= 0.86 kpc `[inferred]`); "the changes in B-I at
+  transmission 0.75 are 0.08 and 0.20 magnitude for the backlit and non-backlit regions"; "most of the dust must be
+  well-concentrated to the disk midplane." `[verified: Keel & White 2001, Sect. V]` Backlit (an occultation, not a face-on
+  image's look): Fig. 8's caption, "The darkest areas in (e) have a B transmission near 0.40" (R ~3.7 kpc); Sect. III.2,
+  "Spiral arms can include dust clouds on 15-pc scales with optical depths up to tau_B=1 at any radius within the disk";
+  the conclusions, "dusty arms can include regions of high opacity A_B>1"; the inter-arm rises "by about Delta A_B=0.12
+  per kpc" (Sect. III.1 says ~0.25 mag/kpc; the paper does not reconcile them). **Width not printed** (no width column
+  in Table 2; Fig. 11 draws the lanes "with the proper radius and width" but prints none). Lanes at R 1.7-3.8 kpc.
+  For a face-on image `[inferred]`: a lane in its own galaxy's light dims I to no less than 0.75 of the 0.86 kpc running
+  median (one Sc); in V deeper (the B−I change says the lane reddens), not printed.
+- **Holwerda et al.** (counts of distant galaxies), arXiv:astro-ph/0508261 (proceedings; the authors not on the page):
+  32 HST/WFPC2 fields; opacity shows "a strong radial relation in the arms and a much flatter profile in the rest of
+  the disk", values in a figure only, binned in 0.25 R₂₅ annuli `[verified: Holwerda et al., text]`. **No lane-scale
+  number** (arm masks over annuli). Domingue, Keel & White 2000 and White, Keel & Conselice 1996 surfaced only in a
+  search summary — NOT READ, kept out.
+- **Elmegreen 1980** (ApJS 43, 37, per a search listing) — **UNREACHABLE** (the ADS abstract returned HTTP 405; the full
+  scan's redirect not followed). Its "tau_V ~ 10" is known here only as Rix & Rieke 1993 report it.
+- **Thornley & Mundy 1997** (ApJ 490, 682), NGC 4414 — a search snippet only (Hα, CO, HI against near-infrared
+  armlets); NOT fetched; no dust number expected from it `[inferred from the abstract's scope]`. **Unread.**
+- **Against the model** `[inferred: the reader's]`: the model's stars' transmission at the gas crest, 0.82-0.95 of the
+  ring median's (S97), is LIGHTER than M51's lanes (0.44-0.58 in V) and comparable to or lighter than NGC 3314A's I-band
+  floor (0.75); the observed lanes are 20-80 pc wide, a few render cells, where the model's ridge is kpc-wide. Even
+  KO02's narrowest shocked arm (0.05 Lx, ~155 pc at mid level) is 2-8 times wider than M51's lanes: a sourced lane would
+  be a thin feature at the ridge (the shock front or the clouds), not the gas ridge's FWHM — #129's width check (0.17 of
+  the spacing, Egusa et al.) and a dust lane's width are different statistics and are not to be merged.
+
+### S98.5 The model's gas ridge across the arm (the measurer, first pass item 2)
+
+**Method** (`s98_M.md` section 2; logs `s98_M_ridge_milky_way.log`, `s98_M_ridge_ngc_4414.log`; the field S96's saved
+`/api/render` grid `dust_placement_unspurred` — `gas_density_contrast`'s cell means without the spurs, 75 pc × 1°, 0-30
+kpc; no server, no new model run): per ring row, crests = local maxima with prominence ≥ 0.15 × the row's range; the
+trough = the mean of the minima between a crest and its two neighbours; the FWHM along the ring at (crest + trough)/2
+(also at (crest + inter-arm median)/2); the arm spacing along the ring = the mean arc gap to the two neighbouring
+crests; ACROSS = along × sin(the tracked pitch, crest by crest over ±6 rows). FWHM / spacing is pitch-free. The
+inter-arm median = the row's cells outside every crest's FWHM. A ring's number = the median over its crests, then the
+median over the five rows R0 − 150 pc to R0 + 150 pc, [min..max over rows].
+
+| template | R kpc | crests | crest / ring median | crest / inter-arm median | pitch (tracked) ° | FWHM across pc | spacing across pc | FWHM / spacing (trough base) | (inter-arm-median base) |
+|---|---|---|---|---|---|---|---|---|---|
+| milky_way | 4 (bar lanes) | 2 | 6.33 [5.81..6.87] | 6.34 [5.83..6.88] | 55.7 | 520 [515..528] | (two lanes 180° apart: not a spacing) | — | — |
+| milky_way | 6 | 3 | 1.30 [1.21..1.46] | 1.61 [1.44..1.91] | 25.0 [21.5..32.9] | 2256 [1590..3347] | 4965 [3423..6732] | 0.47 [0.34..0.52] | 0.38 [0.26..0.47] |
+| milky_way | 8 | 4 | 1.31 [1.29..1.33] | 1.50 [1.48..1.52] | 15.6 [15.4..19.0] | 1210 [1167..1337] | 3435 [3169..4178] | 0.35 [0.33..0.43] | 0.28 [0.26..0.37] |
+| milky_way | 10 | 4 | 1.25 [1.24..1.28] | 1.43 [1.40..1.46] | 18.9 [16.2..19.6] | 1679 [1495..1819] | 5238 [4328..5768] | 0.36 [0.32..0.40] | 0.35 [0.30..0.37] |
+| ngc_4414 | 4 | 5 | 1.53 [1.49..1.66] | 1.82 [1.80..1.85] | 31.7 [30.9..33.7] | 1082 [1003..1090] | 3103 [3045..3406] | 0.29 [0.27..0.33] | 0.27 [0.26..0.33] |
+| ngc_4414 | 6 | 5 | 1.54 [1.53..1.55] | 1.66 [1.64..1.68] | 32.8 [27.0..42.7] | 1269 [1223..1372] | 4520 [4055..4841] | 0.29 [0.29..0.31] | 0.27 [0.26..0.29] |
+| ngc_4414 | 8 | 4 | 1.38 [1.37..1.40] | 1.60 [1.58..1.68] | 48.6 [26.0..53.5] | 2048 [1966..2159] | 9320 [4951..9901] | 0.37 [0.36..0.39] | 0.33 [0.33..0.37] |
+| ngc_4414 | 10 | 0 | the pattern is flat (1.0000 everywhere at R 10.01); it fades from a range of 0.53 at 9.0 kpc to 0.05 at 9.94 and is absent from 10.0 kpc out | | | | | | |
+
+- **The method's check**: the bar lanes at 4 kpc read FWHM 510-531 pc against `BAR_LANE_WIDTH` 0.10 a = 0.5 kpc.
+- **Caveats, as the measurer gives them.** The per-crest scatter is large (`milky_way` 8 kpc: FWHM / spacing 0.29-0.38,
+  crest / ring median 1.21-1.55; 10 kpc: one crest 58.6° long with a tracked pitch of 69° — a merged double, kept in the
+  median). The pc columns inherit the tracked pitch's error (±20 % on `milky_way` at 8-10 kpc, worse at 6 kpc and on
+  `ngc_4414` at 8 kpc); the FWHM / spacing column does not. NGC 4414's flocculent pattern's direction is poorly defined.
+- **Against #144's / #129's pinned reading** (FWHM 0.37 of the arm spacing on `milky_way`, 0.39 on `ngc_4414`): the
+  measurer's 0.35-0.47 on `milky_way` (6-10 kpc) and 0.29-0.37 on `ngc_4414` (4-8 kpc) are the same order; how the
+  pinned number was measured was not read, so the definitions may differ (the half level, the baseline). The crest over
+  the ring median here (1.25-1.54 at 6-10 kpc) is below S97's "1.5-2.0" because S97 took each ring's single largest
+  cell; this is the median crest. The crests here are over the ring's and the inter-arm median, not KO02's mean
+  (F-98B-1): the columns are set beside KO02's range, not ruled against it.
+
+### S98.6 Not read or unreachable
+
+Elmegreen 1980 (unreachable); Thornley & Mundy 1997's full text; Domingue, Keel & White 2000 and White, Keel &
+Conselice 1996 / 2000 (search summaries only); Pettitt et al. 2015 and Dobbs & Bonnell 2008 (live-disc gas; not
+fetched); KO02's table read once on one host and ApJ 570, 132 not confirmed on a page; Rix & Rieke's Fig. 7 (the lane
+cuts, which would give a width) not seen; DB14's characters 200 000 to the end not read; Shu et al. 1972 (only as DB14
+reports it).
