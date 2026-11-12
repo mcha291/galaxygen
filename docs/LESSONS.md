@@ -2298,3 +2298,17 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   catalogues' face-on A_B − A_V, which no catalogue carries (they correct to face-on by a formula that is zero there),
   and #181's for a size–luminosity relation of HII complexes, where the published sizes are the telescopes'
   resolution; both closers had to be rewritten once read. (S96, D265)
+
+## From S97 (the pictures, first part: the display pass's two controls, the diagnosis's experiments finished, the model gaps traced; Opus builder and runner, a Fable analyst, the Fable gate)
+
+- [audit] **An experiment that changes two settings at once credits the pair; one change against the control each.**
+  S96's E1 turned NGC 4414's colour step with the tone curve and the bloom together and named both; S97 ran them apart
+  and the bloom alone turns the sign (+0.185 → −0.142), the curve alone only brings it to about zero. (S97, D266)
+- [audit] **A statistic's convention is read before two numbers are set side by side.** The tool's A_m is half the
+  cosine's amplitude the bar stage publishes, and "2.4 times under" was the goal's bar against a seeded draw below the
+  source's median, both read by the same tool - not a loss inside the model. (S97, D266)
+- [field] **A scalar read "at the Sun" is a Milky Way quantity.** On another template it is read at an arbitrary
+  radius: the stellar height at 8.2 kpc is 4.9 scale lengths out in NGC 4414 and 2.7 times the Milky Way's (#227);
+  #192 was the same class. A template other than the Milky Way is checked for every `R_SUN`. (S97, D266)
+- [audit] **A ratio is written with its denominator.** "a = 0.29 of the half-side" was a share of the width (0.59 of
+  the half-side against the goal's 0.72), and a comparison stood on it for a session. (S97, D266)
