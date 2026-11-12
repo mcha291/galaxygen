@@ -710,8 +710,10 @@ def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
     # S62 (D221 item 7 as amended): was `star_formation_gas_contrast == g`, bit for bit - the gas's own contrast now carries
     # the spurs, composed on the star-formation contrast's numbers (an unbarred galaxy: the same response), and the
     # star-formation contrast does not.
+    # S100 (#130, D270; ruling 10): was `gas.spurs.compose_cells(R, edges, sf) == g` - the published gas is now the
+    # blend f sf + (1 - f) c_atom with the spurs composed on it (an unbarred galaxy: sf is the molecular cell means).
     sf = np.asarray(F["star_formation_gas_contrast"])
-    assert gas.spurs is not None and gas.spurs.compose_cells(R, edges, sf).tobytes() == g.tobytes()
+    assert gas.spurs is not None and placed_by_hand(F, gas, R, edges, molecular=sf).tobytes() == g.tobytes()
     # No NaN where the barred galaxy has none, and the whole pipeline ran: the same fields, the modulation finite.
     assert barred.fields["bar_present"] == "yes" and set(barred.fields) == set(F)
     low = np.asarray(barred.fields["gas_density_contrast"])
@@ -752,7 +754,8 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     assert int((g == 0.0).sum()) == 0 and int((g < tiny).sum()) == 0
     # S92 (#164 / #165): the lowest cell was 5.1621415e-6 - the spurs' ring mean, which every cell of a ring gives in
     # proportion, is taken from heights now the crest over the trough.
-    assert float(g.min()) == pytest.approx(5.0614312e-6, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
+    # S100 (batch P, D270; #130 the placed gas a blend with the atomic response, #227): was 5.0614312e-6.
+    assert float(g.min()) == pytest.approx(5.1328827e-5, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
     s = compose.gas_pattern(F, R, constants(the_model(prod))).profiles
     assert (int((s == 0.0).sum()), int(((s > 0.0) & (s < tiny)).sum())) == (0, 0)
     assert float(s.min()) == pytest.approx(5.3832547e-6, rel=2e-3)  # S87 (#80, #209): was 3.3725e-64 - the bar's law and pinned length, the pitch floor
@@ -1378,7 +1381,9 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
     published = np.asarray(F["star_formation_gas_contrast"])
     assert published.tobytes() == gas.star_formation_cell_means(R, edges).tobytes()
     both = gas.published_cell_means(R, edges)
-    assert both[0].tobytes() == np.asarray(F["gas_density_contrast"]).tobytes() and both[1].tobytes() == published.tobytes()
+    # S100 (#130, D270; ruling 10): was `both[0] == gas_density_contrast` - the molecular pattern's spurred cell means
+    # were the published gas; the published gas is now the blend with the atomic response, the spurs composed on it.
+    assert placed_by_hand(F, gas, R, edges).tobytes() == np.asarray(F["gas_density_contrast"]).tobytes() and both[1].tobytes() == published.tobytes()
     taper, _, angle = pt.bar_terms(R, gas.pitch_deg, gas.bar_length)
     # S59 (D218): was `pt.bar_terms(...)[1]`, ln R · cot p - the response read at the segments' winding. S60 (D219):
     # no winding - the response is solved in the galaxy's own azimuth, and a grid cell's extent is its φ edges.
@@ -1408,7 +1413,9 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
             assert gas.spurs.compose_cells(np.array([r]), sectors, means[None, :])[0].tobytes() == gas.sector_means(r, sectors).tobytes(), r
     past = R >= a
     # S62: was `published[past] == gas_density_contrast[past]` - the same, with the spurs composed on.
-    assert gas.spurs.compose_cells(R[past], edges, published[past]).tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 333  # S87 (#80): was 331 - the template's pinned 5.0 kpc bar (was 5.21)
+    # S100 (#130, D270; ruling 10): was `gas.spurs.compose_cells(R[past], edges, published[past]) == gdc[past]` - the
+    # same with the blend with the atomic response formed before the spurs compose.
+    assert placed_by_hand(F, gas, R, edges, molecular=published)[past].tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 333  # S87 (#80): was 331 - the template's pinned 5.0 kpc bar (was 5.21)
     # An unbarred pattern has no footprint to ask for; its star-formation readings are its own.
     n4414 = template_run(prod, "ngc_4414")
     bare = compose.gas_pattern(n4414.fields, R, constants(the_model(prod)))
@@ -1416,7 +1423,10 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
         bare.footprint
     assert np.array_equal(bare.star_formation_contrast_at(radius, phi), bare.contrast_at(radius, phi))
     assert bare.star_formation_sector_means(3.0, sectors).tobytes() == bare.sector_means(3.0, sectors).tobytes()
-    assert np.asarray(n4414.fields["star_formation_gas_contrast"]).tobytes() == np.asarray(n4414.fields["gas_density_contrast"]).tobytes()
+    # S100 (#130, D270; ruling 10): was `star_formation_gas_contrast == gas_density_contrast` bit for bit - the
+    # published gas is now the blend of that molecular contrast with the atomic response.
+    sf4414 = np.asarray(n4414.fields["star_formation_gas_contrast"])
+    assert placed_by_hand(n4414.fields, bare, R, edges, molecular=sf4414).tobytes() == np.asarray(n4414.fields["gas_density_contrast"]).tobytes()
 
 
 def test_the_gas_at_a_point_inside_the_bar_is_the_blend_of_the_response_and_the_lanes(prod):
@@ -1443,6 +1453,10 @@ def test_the_gas_at_a_point_inside_the_bar_is_the_blend_of_the_response_and_the_
         # S59 (D218): the cells' means with the hand's winding; S60 (D219): over the cell's φ edges themselves.
         cell = (1.0 - t) * hand_cell_means(gas.profiles[i], edges[:-1], edges[1:]) + t * hand_cell_means(gas.lanes[i], edges[:-1] - angle, edges[1:] - angle)
         # S62 (D221 item 7 as amended): the hand blend with the spurs composed on it (the spurs reach the ring at 4.54 kpc).
+        # S100 (#130, D270; ruling 10): the hand blend is the molecular term of the placed gas, f c_mol + (1 - f) c_atom,
+        # f the ism stage's fraction on the ring and c_atom the published atomic response; the spurs composed on that.
+        f = float(np.asarray(F["gas_molecular_fraction_profile"], dtype=float)[i])
+        cell = f * cell + (1.0 - f) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)[i]
         cell = gas.spurs.compose_cells(R[i:i + 1], edges, cell[None, :])[0]
         assert float(np.abs(np.asarray(F["gas_density_contrast"])[i] - cell).max()) < 1e-11, i
 
