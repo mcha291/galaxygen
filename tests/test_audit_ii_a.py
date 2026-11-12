@@ -249,7 +249,7 @@ def test_debt_42_row_6_lands_at_74_not_78(default_model):
     dispersion at R0 is lower for stars 0.33 Gyr younger, so every kick reads about 11 pc lower and the default 88.8
     lands it (345.09); 95 reads 348.0 (in), 100 reads 350.5 (out). The name keeps S21's number as its record."""
     for k, h in ((78.0, 340.7), (75.0, 339.6), (70.0, 337.9), (95.0, 348.0), (100.0, 350.5)):  # S87 (#148): was (78, 351.4), (75, 350.3), (70, 348.7) - the clock
-        v = run(with_constant(default_model, "MERGER_HEATING", k), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"]
+        v = run(with_constant(default_model, "MERGER_HEATING", k), only=("thin_disc_scale_height_dynamical",)).fields["thin_disc_scale_height_dynamical"]
         assert v == pytest.approx(h, abs=0.5) and inside(6, v) == (k < 99.0)  # S87 (#148): was (k < 74.0) - the clock
 
 
@@ -288,4 +288,4 @@ def test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6(defaul
         f = run(with_constant(default_model, "MERGER_HEATING", k), only=("v_tangential_sun",)).fields
         assert f["v_tangential_sun"] == pytest.approx(row3, abs=0.05)
     assert inside(3, 250.97)
-    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"] == pytest.approx(357.6, abs=1.0)  # S87 (#148): was 368.0 - the clock
+    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height_dynamical",)).fields["thin_disc_scale_height_dynamical"] == pytest.approx(357.6, abs=1.0)  # S87 (#148): was 368.0 - the clock

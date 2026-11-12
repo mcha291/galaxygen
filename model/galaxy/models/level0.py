@@ -1301,8 +1301,11 @@ LEVEL0: dict[str, Constant] = {
         "Part B 1.2 and 1.8]. Named "
         "alternatives: the sech^2 layer's factor, up to 13.7 % higher at the same height; by type the ratio "
         "is 4, 5 and 9 (de Grijs 1998). Which profile an observed height stands for moves the factor between "
-        "0.39 and 0.57 at k h = 1 (a debt). The model's own thin-disc scale height is not used: it is a later "
-        "checkpoint's.",
+        "0.39 and 0.57 at k h = 1 (a debt). The pattern does not read the model's own thin-disc scale height: it "
+        "is a later checkpoint's. Since S99 (#227, D268) that height is this same flattening's second use: the "
+        "vertical stage sets the stellar layer, one height per galaxy, as the stellar disc's fitted mass scale "
+        "length (checkpoint 4) over this number, constant with radius as the source assumes, in place of the "
+        "isothermal sheet's law read at R_SUN (kept as a check, thin_disc_scale_height_dynamical).",
     ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,

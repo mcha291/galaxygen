@@ -54,12 +54,15 @@ VERTICAL_ALPHA = IMPLEMENTATIONS.register(
         about=(
             "Sorts the stellar populations into thin and thick by their birth [α/Fe] against the "
             "valley the chemistry found, and turns their dispersions into scale heights. The "
-            "criterion does not name the merger."
+            "criterion does not name the merger. The thin layer itself is one height per galaxy, "
+            "the stellar mass scale length over the observed flattening of edge-on discs (S99)."
         ),
         compute=compute,
-        reads_constants=("R_SUN", "G"),
+        # S99 (#227): the flattening and sfh's fitted mass scale length give the layer's height; sfh is checkpoint 4
+        # and already upstream (stars_formed_history), so the graph's order does not move (rule A1).
+        reads_constants=("R_SUN", "G", "ARM_LAYER_FLATTENING"),
         requires=(
-            "stars_formed_history", "gas_surface_density",
+            "stars_formed_history", "gas_surface_density", "thin_disc_scale_length",
             "disc_heating", "alpha_fe_history", "alpha_split",
         ),
         publishes=vertical.PUBLISHES,
