@@ -44,8 +44,8 @@ RENDER_STAGES = ["halo", "census_clustering", "disc", "assembly", "bar", "patter
 # recorded in D224, not targets: the realised share is the census's draw, the expected the ring's molecular fraction).
 # S70 (D234): was {"milky_way": 0.4899973, "ngc_4414": 0.6327142} - the clouds' ring inversion on the ring's own interval
 # (Audit V F-2-7) moves the birth radius each cloud's dust-to-gas ratio is read at; the masses and #192's sizes do not enter.
-CLOUDS_SHARE_DISC = {"milky_way": 0.4945250, "ngc_4414": 0.6392899}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.4922158, 0.6379672
-EXPECTED_FIRST_THREE = {"milky_way": (0.8296523, 0.7433026, 0.6686863), "ngc_4414": (0.7940028, 0.6756346, 0.5582309)}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8264951, 0.7385616, 0.6628994, 0.7907958, 0.6709560, 0.5524492
+CLOUDS_SHARE_DISC = {"milky_way": 0.4964010, "ngc_4414": 0.7481381}  # S100 (batch P, D270; #227 the layer's height - ngc_4414's 926 -> 229 pc - and #130): was 0.4945250, 0.6392899. S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.4922158, 0.6379672
+EXPECTED_FIRST_THREE = {"milky_way": (0.8318591, 0.7463057, 0.6721785), "ngc_4414": (0.8792190, 0.7978492, 0.7053634)}  # S100 (batch P, D270; #227, the molecular fraction): the Milky Way's were 0.8296523, 0.7433026, 0.6686863, ngc_4414's 0.7940028, 0.6756346, 0.5582309.  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.8264951, 0.7385616, 0.6628994, 0.7907958, 0.6709560, 0.5524492
 
 
 @pytest.fixture(scope="module")
@@ -92,7 +92,7 @@ def ring_integral(sigma, R):
 
 
 # S89 (#202): the largest change of the diffuse share between neighbouring grid rings, measured (layer on and off alike).
-LARGEST_STEP = {"milky_way": 0.0259, "ngc_4414": 0.0334}
+LARGEST_STEP = {"milky_way": 0.02543, "ngc_4414": 0.03801}  # S100 (batch P, D270; #227 the layer's height, #130 the placed gas): was 0.0259, 0.0334
 HELD_RINGS = {"milky_way": [26, 27, 28, 29, 30, 31], "ngc_4414": list(range(20, 32))}
 
 @pytest.mark.parametrize("template,layer", CASES)
