@@ -211,3 +211,15 @@ longer gives the layer's height away from the solar radius (a constant height wa
 column; the model's is set by birth time alone) — a later batch's. Not built: a thick disc on the templates; any
 change to the seven readers (they read the scalar and follow it). Every record outside the lane's files is listed in
 `s99_L.md` section 7 for the batch's one re-pin pass.
+
+## Part S100 — where the fit publishes no length (2026-11-12, BUILD_VI row 100; the second re-pin builder, D270 ruling 4)
+
+`sfh.fit_scale_length` needs three rings with stars inside 1 kpc < R < 3 R_d (R_d the spin length), and
+`helpers.TINY`'s eight rings put two there, so on that grid the fitted length is NaN and since #227 the layer's height
+was NaN too — the gas had no height on any ring and the fluctuation field raised (`s100_P2.md`, step A1). The gate's
+ruling: **where the fit publishes no length the layer's height is the dynamical law's**, which the stage already
+computes and publishes (`thin_disc_scale_height_dynamical`; 74.6 pc on TINY, the pre-S99 value bit for bit), no new
+read and no graph change. Probed on both models: TINY, SMALL (48 rings: 2.42746 kpc, 332.529 pc), the default grid
+(2.43959 kpc, 334.191 pc) and both templates (`ngc_4414` 1.67515 kpc, 229.473 pc) — only TINY lacks the length, every
+other grid reads length / 7.3 bit for bit, unchanged; **the choice of fallback is flagged to the owner** (the
+alternative the spin length over 7.3, a new read), and it reaches no galaxy the viewer draws (#227).

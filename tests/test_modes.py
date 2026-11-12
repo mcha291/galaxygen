@@ -94,8 +94,14 @@ def constants(m) -> dict[str, float]:
     return {k: c.value for k, c in m.constants.items()}
 
 
-def inputs_of(template: str, **more) -> dict:
-    return {**templates.overrides(templates.TEMPLATES[template]), **{k: v for k, v in more.items() if v is not None}}
+def inputs_of(template: str, drawn: bool = False, **more) -> dict:
+    """A template's inputs. S100 (batch P, D270; #146, the gate's ruling 4): ``drawn=True`` takes the bar's amplitude
+    pin off (the Milky Way template carries 0.6862 on every seed since S99), so a sweep over pattern seeds that means
+    to read the seeds' draws reads them - tests/test_bar.py's mechanism."""
+    given = templates.overrides(templates.TEMPLATES[template])
+    if drawn:
+        given = {k: v for k, v in given.items() if k != "bar_contrast"}
+    return {**given, **{k: v for k, v in more.items() if v is not None}}
 
 
 STELLAR_FIELDS = tuple(n for n in PATTERN_FIELDS if n != "gas_density_contrast")
@@ -121,7 +127,9 @@ def lowest_cell(prod) -> tuple[float, int]:
             for texture_seed in (0, 1):
                 # The stellar field alone: the gas's response on the same 240 galaxies is held to its own gate in
                 # tests/test_gas_pattern.py (D216: the residual, the ring mean, positivity, the bar's bound).
-                o = pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=texture_seed)
+                # S100 (D270; #146, ruling 4): the seeds' own draws of the bar's amplitude (drawn=True) - the sweep's
+                # intent is the spread over seeds, and the pin carries 0.6862 on every one.
+                o = pattern_run(prod, template, gas=False, drawn=True, pattern_seed=pattern_seed, texture_seed=texture_seed)
                 field = np.asarray(o.fields["pattern_density_contrast"])
                 lowest = min(lowest, float(field.min()))
                 assert field.min() >= 0.0, (template, pattern_seed, texture_seed, float(field.min()))
@@ -199,8 +207,9 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     lowest, drawn = lowest_cell(prod)
     for template in TEMPLATES:
         for pattern_seed in range(60):
-            law = law_of(pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=0), c)
-            s = np.asarray(pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=0).fields["arm_saturation"])
+            # S100 (D270; #146, ruling 4): the seeds' own draws (drawn=True), as lowest_cell reads them.
+            law = law_of(pattern_run(prod, template, gas=False, drawn=True, pattern_seed=pattern_seed, texture_seed=0), c)
+            s = np.asarray(pattern_run(prod, template, gas=False, drawn=True, pattern_seed=pattern_seed, texture_seed=0).fields["arm_saturation"])
             assert np.array_equal(s, law.saturation) and np.all((s > 0.0) & (s <= 1.0))
             # What the saturation guarantees: the modes' amplitudes and the bar's add up to at most 1 on every ring.
             # S58 (D217 item 5): "the bar's" is the body's depth under the ring's mean, 1 - min of its contrast.
@@ -612,7 +621,10 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
             # pins its measured bar half-length (5.0 kpc, `bar_half_length`), so its half-length and the two numbers
             # read from it (corotation at FAST_BAR_RATIO times it, the pattern speed) are the pin's - by ruling, not by a
             # moved stream; its pitch and the amplitudes are S55's bits still.
-            mw_pinned = ["bar_corotation_radius", "bar_pattern_speed", "bar_half_length"]
+            # S100 (batch P, D270; #146, D268 ruling 8): was without "bar_contrast" - the Milky Way pins its bar's
+            # contrast (0.6862, the Galaxy's printed long-bar mass) since S99; the draw is still made on its own stream
+            # (pattern.py), so no other number moves: its pitch and arm amplitudes are S55's bits still.
+            mw_pinned = ["bar_contrast", "bar_corotation_radius", "bar_pattern_speed", "bar_half_length"]
             assert moved == (mw_pinned if template == "milky_way" else ["pitch_angle", *bar_s]), (template, layer)
             drawn = run(the_model(prod), inputs_of(template), only=("pitch_angle_drawn",), layer=layer).fields["pitch_angle_drawn"]
             assert layer_reference.value_digest(drawn) == held[label]["pitch_angle"], (template, layer)
@@ -754,7 +766,14 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     # S57 (D216 G3 item 4): the gas's published field is the law's exact mean over each grid cell's extent in
     # azimuth at the ring's own radius, bit for bit, and its ring mean is 1 to rounding with nothing divided.
     law = gas.cell_means(R, o.grid["phi"].edges)
-    assert law.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
+    # S100 (#130, D270; ruling 10): was `law == gas_density_contrast` - the published gas is now the blend
+    # f c_mol + (1 - f) c_atom of the law's unspurred cell means and the published atomic response, f the ism stage's
+    # molecular fraction on the ring, with the spurs composed on the blend; to the bit as before.
+    frac = np.asarray(F["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)[:, None]
+    blend = frac * gas.unspurred_cell_means(R, o.grid["phi"].edges) + (1.0 - frac) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)
+    placed = blend if gas.spurs is None else gas.spurs.compose_cells(R, o.grid["phi"].edges, blend)
+    assert placed.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
     assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 2e-13  # S88 (D255 ruling 1): was < 1e-13; the Milky Way 1.0036e-13 (tests/test_bar.py RING_MEAN_TOLERANCE)
     for shape in (stars, gas):
         on_grid = shape.contrast(R, phi)

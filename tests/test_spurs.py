@@ -119,7 +119,10 @@ def test_the_table_the_stages_and_the_graph_s_order(default_model, prod):
     assert [d.name for d in spurs_stage.publishes] == ["gas_density_contrast"] and spurs_stage.publishes[0] is gm.GAS_DENSITY_CONTRAST
     assert set(sp.SPUR_READS) <= set(spurs_stage.requires) and spurs_stage.reads_seeds == ()
     # The gas pattern's stage keeps the contrast the star formation law reads, which carries neither lanes nor spurs.
-    assert [d.name for d in gm.GAS_PATTERN.publishes] == ["star_formation_gas_contrast"]
+    # S100 (#130, D270): was ["star_formation_gas_contrast"] alone - the stage also publishes the atomic gas's own
+    # response (its lanes, no spurs), which the spurs stage blends with the molecular one by ism's fraction.
+    assert [d.name for d in gm.GAS_PATTERN.publishes] == ["star_formation_gas_contrast", "atomic_gas_density_contrast"]
+    assert set(gm.BLEND_READS) <= set(spurs_stage.requires)
     impls = prod[1]
     for stage in ("clouds", "cloud_texture", "clusters"):
         assert set(sp.SPUR_READS) <= set(impls.get(stage).requires), stage
@@ -234,12 +237,22 @@ def test_the_published_field_is_the_point_function_s_exact_cell_means(default_mo
     gp = gas_of(default_model, o)
     edges = o.grid["phi"].edges
     published = np.asarray(o.fields["gas_density_contrast"])
-    assert np.array_equal(published, gp.cell_means(o.grid.R, edges))
-    # On the ring that holds the most spur, the published cells against a dense mean of the point function.
+    # S100 (#130, D270; ruling 10): was `published == gp.cell_means(R, edges)` - the published gas is now the blend
+    # f c_mol + (1 - f) c_atom of the molecular pattern's unspurred cell means and the published atomic response, f the
+    # ism stage's molecular fraction on the ring, with the spurs composed on the blend (written here term by term).
+    frac = np.asarray(o.fields["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)
+    blend = frac[:, None] * gp.unspurred_cell_means(o.grid.R, edges) + (1.0 - frac[:, None]) * np.asarray(o.fields["atomic_gas_density_contrast"], dtype=float)
+    assert np.array_equal(published, gp.spurs.compose_cells(o.grid.R, edges, blend))
+    # On the ring that holds the most spur, the published cells against a dense mean of the point function - since
+    # S100 the blend's point function: the two patterns' unspurred contrasts at the point, the spurs composed on it.
     i = int(np.argmax(gp.spurs.ring_mean(o.grid.R)))
     n = (edges.size - 1) * 96
     phi = edges[0] + (np.arange(n) + 0.5) * ((edges[-1] - edges[0]) / n)
-    dense = gp.contrast_at(np.full(n, o.grid.R[i]), phi).reshape(edges.size - 1, -1).mean(axis=1)
+    atom = gp.atomic(float(constants(default_model)["HI_DISPERSION_RATIO"]))
+    ring = np.full(n, o.grid.R[i])
+    point = frac[i] * gp.unspurred_contrast_at(ring, phi) + (1.0 - frac[i]) * atom.unspurred_contrast_at(ring, phi)
+    dense = gp.spurs.compose_at(ring, phi, point).reshape(edges.size - 1, -1).mean(axis=1)
     assert np.abs(published[i] - dense).max() < 5e-5  # the midpoint rule's h² on a spur 0.43 degrees wide at 96 points a degree: 2.6e-5, measured (S62)
 
 
@@ -398,7 +411,13 @@ def test_a_flocculent_disc_carries_no_spur_and_its_gas_contrast_is_the_pattern_s
     assert o.fields["arm_class"] == "flocculent" and o.fields["gas_spur_radius"].size == 0
     gp = gas_of(default_model, o)
     assert gp.spurs is None
-    assert np.array_equal(o.fields["gas_density_contrast"], gp.cell_means(o.grid.R, o.grid["phi"].edges))
+    # S100 (#130, D270; ruling 10): was `gas_density_contrast == gp.cell_means(R, edges)` - with no spur the published
+    # gas is the blend f c_mol + (1 - f) c_atom of the pattern's cell means and the published atomic response, f the
+    # ism stage's molecular fraction on the ring, and nothing composed on it.
+    frac = np.asarray(o.fields["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)[:, None]
+    blend = frac * gp.cell_means(o.grid.R, o.grid["phi"].edges) + (1.0 - frac) * np.asarray(o.fields["atomic_gas_density_contrast"], dtype=float)
+    assert np.array_equal(o.fields["gas_density_contrast"], blend)
 
 
 # --------------------------------------------------------------------------------------------------------------

@@ -193,6 +193,18 @@ LEVEL0: dict[str, Constant] = {
         "one without the other breaks the calibration (see TOOMRE_ALPHA). At 8 km/s the gas at R_0 "
         "reads 13.6 and row 9 falls to 0.025 (D119's probe): the pair is read as one number.",
     ),
+    "HI_DISPERSION_RATIO": Constant(  # read by gas_pattern (S100, #130): the atomic gas's own response
+        1.4,
+        "dimensionless",
+        "The atomic gas's velocity dispersion over the molecular gas's, measured on the same pixels: "
+        "\"σHI=11.7±2.3 km s-1, yielding a mean dispersion ratio σHI/σCO=1.4±0.2, independent of "
+        "radius\", 13 THINGS / HERACLES discs, HI and CO at 13 arcsec [verified: Mogotsi et al. 2016, "
+        "AJ 151, 15, abstract; docs/READING_GAS_PATTERN.md Part S96]. The gas pattern solves the atomic "
+        "gas's own steady response to the arms at this ratio times GAS_DISPERSION - 8.4 km/s on the "
+        "model's 6 [inferred] - beside the molecular one. The absolute 11.7 km/s is not used: over the "
+        "model's 6 it would be a ratio of 1.95, outside the measured 1.4 ± 0.2. Flat with radius, as the "
+        "source's text says; the dispersions' own fall with radius (its Fig. 6) is unread.",
+    ),
     "GAS_DISC_SCALE_RATIO": Constant(
         1.0,
         "dimensionless",
@@ -272,27 +284,66 @@ LEVEL0: dict[str, Constant] = {
         "on (AUDIT_II_A.md A-14, debt #42).",
     ),
     "BAR_LENGTH_LOG_NORM": Constant(
-        0.04,
+        0.02,
         "dimensionless",
-        "The bar's half-length law, log10(a / kpc) = BAR_LENGTH_LOG_NORM + BAR_LENGTH_SLOPE log10(h / kpc): its "
-        "zero point, 0.04 +- 0.02, a the deprojected visual bar length and h the disc's 3.6 um scale length, both "
-        "kpc, fitted over 367 S4G barred spirals of log M* 9-11 (Spearman 0.61; outside that mass range the law "
-        "is extrapolated - Audit VI F-1A-6) [verified: Erwin 2019, MNRAS 489, 3553, "
-        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2 and A2 (E19)]. Adopted on the owner's ruling of "
-        "2026-11-03 (D255) on debt #80, replacing BAR_LENGTH_RATIO = 2.0 (bars 'about 1.5-2.5 R_d [recall]', a fit "
-        "to the one galaxy row 15 reads). The model's h is the lambda_d scale length (disc_scale_length_spin), the "
-        "only scale length checkpoint 1 holds (A1) - not the source's 3.6 um fit, a referent recorded under #80. "
-        "At the Milky Way's 2.605 kpc the law gives 2.27 kpc against the Milky Way's measured 5.0 +- 0.2: the "
-        "Milky Way's bar is long for its disc, so its template pins the measured length (bar_half_length) and the "
-        "law's own miss is row 15's, recorded (B5), nothing tuned back (B10). GALAXY_INPUTS.md 4b's chain disc "
-        "dominance -> bar length is still not modelled (debt #21).",
+        "The bar's half-length law's zero point alpha1, 0.02 (+0.29/-0.27), in Erwin 2019's two-term fit of log a "
+        "on log h and a broken log M*: log10(a / kpc) = alpha1 + beta log10(h / kpc) + beta1 log10(M / Msun) below "
+        "the break, and alpha2 + beta log10(h / kpc) + beta2 log10(M / Msun) above it, alpha2 = alpha1 + "
+        "(beta1 - beta2) log10(M_brk / Msun), so the law is continuous at the break; a the deprojected visual bar "
+        "length and h the disc's 3.6 um scale length, both kpc, fitted over 367 S4G barred spirals of log M* 9-11, "
+        "the paper's preferred fit of seven (Table 5: AIC 5583.5, MSE_pred 0.030, against h alone 6242.2 / 0.033) "
+        "[verified: Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, eq. 4 and Table 4, row 'log M* + log h'; "
+        "docs/READING_BAR.md S96.1]. Neither the table nor the text prints a residual scatter, and the law is drawn "
+        "with none, as before. Outside log M* 9-11 (and at any h: the paper states no range in h) the law is used "
+        "as fitted, an extrapolation (Audit VI F-1A-6). Adopted on the owner's word of 2026-11-12 (D268 ruling 5, "
+        "S100, D270) on debt #80, in place of Erwin 2019's Table 3 (log a on log h alone, 0.04 + 0.76 log h: 2.27 "
+        "kpc on the default disc), which since S87 (D255) replaced a recalled 2.0 scale lengths. The model's h is "
+        "the lambda_d scale length (checkpoint 1's only one, A1) - not the source's 3.6 um fit, a referent still "
+        "carried under #80. The mass the law reads is the retained baryons' (checkpoint 1): the bar is at "
+        "checkpoint 3 and the stellar mass is published at 4, downstream of the bar (A1). It stands for the "
+        "stellar mass with the gas in it, not corrected (no sourced correction exists at checkpoint 1): "
+        "+0.092 dex over the stellar mass on the default disc and on the Milky Way template, +0.068 dex on "
+        "NGC 4414 (S99's measurement), which above the break lifts log a by beta2 times that - +0.032 dex, 7.7 % "
+        "of the length, on the default disc; held as measured in tests/test_s100_bar_length.py. On the default "
+        "disc (h 2.605 kpc, log M 10.77, above the break) the law gives 3.14 kpc against the Milky Way's "
+        "measured 5.0 +- 0.2: row 15 still a recorded miss (B5), nothing tuned back (B10); the Milky Way "
+        "template pins its measured length. GALAXY_INPUTS.md 4b's chain disc dominance -> bar length is still "
+        "not modelled (debt #21).",
     ),
     "BAR_LENGTH_SLOPE": Constant(
-        0.76,
+        0.61,
         "dimensionless",
-        "The bar's half-length law's slope in log10 h, 0.76 +- 0.06 [verified: Erwin 2019, MNRAS 489, 3553, "
-        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2]: see BAR_LENGTH_LOG_NORM. The owner's ruling of "
-        "2026-11-03 (D255).",
+        "The bar's half-length law's slope beta in log10 h, 0.61 +- 0.06, on both sides of the mass break "
+        "[verified: Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; "
+        "docs/READING_BAR.md S96.1]: the law is the zero point's. Was 0.76 +- 0.06 (Table 3, h alone) from S87 "
+        "to S100. The owner's word of 2026-11-12 (D268 ruling 5).",
+    ),
+    "BAR_LENGTH_MASS_SLOPE_LOW": Constant(
+        0.00,
+        "dimensionless",
+        "The bar's half-length law's slope beta1 in log10 M below the mass break, 0.00 +- 0.03 [verified: "
+        "Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; docs/READING_BAR.md "
+        "S96.1]: below the break the bar's length does not depend on the mass at fixed h. M is the retained "
+        "baryons' mass standing for the stellar mass (see the law's zero point). The owner's word of 2026-11-12 "
+        "(D268 ruling 5).",
+    ),
+    "BAR_LENGTH_MASS_SLOPE_HIGH": Constant(
+        0.35,
+        "dimensionless",
+        "The bar's half-length law's slope beta2 in log10 M above the mass break, 0.35 (+0.06/-0.08) [verified: "
+        "Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; docs/READING_BAR.md "
+        "S96.1]. M is the retained baryons' mass standing for the stellar mass, high by the gas (+0.07 to +0.09 "
+        "dex on the model's three named galaxies), which this slope carries into log a uncorrected (see the "
+        "law's zero point). The owner's word of 2026-11-12 (D268 ruling 5).",
+    ),
+    "BAR_LENGTH_MASS_BREAK": Constant(
+        10.13,
+        "dex",
+        "The bar's half-length law's mass break, log10(M_brk / Msun) = 10.13 (+0.02/-0.05) [verified: Erwin "
+        "2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; docs/READING_BAR.md S96.1]; "
+        "the abstract's 'for log M* < 10.1, bar size is almost independent of stellar mass'. Compared with "
+        "the retained baryons' mass, which is high by the gas (see the law's zero point). The owner's word of "
+        "2026-11-12 (D268 ruling 5).",
     ),
     # --- the bar's presence, body and lanes (S58, BUILD_III Phase P3; DECISIONS.md D217) ----------------------
     "BAR_FORMATION_TIME_SCALE": Constant(

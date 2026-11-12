@@ -656,3 +656,71 @@ arithmetic. The register carries the gate's ruling on each entry (D265).
   M51, the Milky Way's tangent points — search snippets, not fetched, not used).
 - **Unreachable.** The masks that would give the width are behind the script-rendered listing above; a mask's width is
   set by eye and the kernel, so even read it would be a bound, not a ridge FWHM.
+
+## Part S100 — the atomic response built (debt #130) (2026-11-12, BUILD_VI row 100; builder G2)
+
+**The note.** Builder G2 (`s100_G2.md`, branch `s100-atomic`, 9fa9d21, merged into `session-100`). The gate's ruling
+is D270 ruling 2 and register #130.
+
+### S100.1 What is built, and where the blend enters
+
+The same solver at `HI_DISPERSION_RATIO` 1.4 (Mogotsi et al. 2016, Part S96.1) × `GAS_DISPERSION` — 8.4 km/s on the
+model's 6; the absolute 11.7 km/s not used. The gas pattern stage publishes it at checkpoint 3 as
+`atomic_gas_density_contrast` (the atomic pattern's exact cell means with the lanes, no spurs, ring mean 1). The order
+today is response s → lanes (g = w_arm s + w_bar L) → spurs; the dust stage reads no azimuthal contrast, and the one
+placement of the diffuse gas and dust is the published `gas_density_contrast` (the `spurs` stage, checkpoint 4). **So
+the blend enters on g, after the lanes and before the spurs**: g = f g_mol + (1 − f) g_atom, f the ism stage's
+molecular fraction per ring (checkpoint 4: rule A1 kept, no cycle), the spurs composed on the blend. The lanes are one
+template in both and w_arm + w_bar = 1, so blending g is blending s inside the lanes; and blending before the spurs
+keeps the viewer's identity — `dust_placement_unspurred` composed with the spurs' table is `dust_placement` to the bit.
+One function forms the blend (`gas_pattern.placed_gas_contrast`), called from the `spurs` stage (the published field)
+and from `api/v7_layer.unspurred_placement` (the viewer's unspurred twin, which must be the same blend). The `spurs`
+stage now runs after ism in both models (an order change; values unmoved by the order). **The clouds, the clusters and
+the star formation law keep the molecular response bit for bit** (measured: `star_formation_gas_contrast`,
+`sfr_modulation` and the molecular profiles' digests unchanged; 17 127 / 13 124 and 9 891 / 7 632 clouds / clusters,
+18 cloud columns bit-identical).
+
+### S100.2 Before and after (layer on, production grid; `s100_G2_measure_{before,after}.json`)
+
+| | `milky_way` before → after | `ngc_4414` before → after |
+|---|---|---|
+| the molecular ratio of means, median over 6-10 kpc | 1.4311 → 1.4311 | 1.4294 → 1.4294 |
+| the atomic ratio of means | — → **1.3995** | — → **1.4050** |
+| atomic / molecular (median; range) | — → 0.9744 (0.9636-0.9852) | — → 0.9814 (0.9715-0.9974) |
+| `gas_density_contrast` digest | 3aa466da… → 9270edb2… | db7ae90a… → bb2f6c22… |
+| the stage's cold time (s) | 1.84 → 1.92 | 1.64 → 1.37 |
+
+The dust's placed contrast, the crest over the ring's median (f the molecular fraction there):
+
+| R (kpc) | `milky_way` f | before → after | `ngc_4414` f | before → after |
+|---|---|---|---|---|
+| 2 | 0.700 | 16.744 → 16.744 (a lane) | 0.739 | 1.927 → 1.917 |
+| 4 | 0.532 | 8.141 → 8.133 | 0.504 | 1.687 → 1.687 |
+| 6 | 0.360 | 2.057 → 2.076 | 0.270 | 1.611 → 1.565 |
+| 8 | 0.215 | 1.548 → 1.500 | 0.112 | 1.507 → 1.453 |
+| 12 | 0.055 | 1.091 → 1.081 | 0.041 | 1.000 → 1.000 |
+
+The blend's ring means: max |mean − 1| 6.6 × 10⁻¹⁴ (`milky_way`), 8.1 × 10⁻¹⁴ (`ngc_4414`).
+
+### S100.3 The check against Querejeta et al. 2024 — disclosed, not judged
+
+The atomic response's ratio of means over 6-10 kpc reads **2.6 %** (`milky_way`) and **1.9 %** (`ngc_4414`) under
+the molecular one's (ring by ring 1.5-3.6 % and 0.3-2.9 %), against Querejeta et al. 2024's "typically ~10 % lower":
+**the sign, a quarter of the size**. S86's probe at 8 km/s read 2.4 % on the Milky Way template — consistent. Pinned
+as measured in `tests/test_s100_atomic.py`; no bound.
+
+### S100.4 The cost
+
+The stage's cold time 1.84 → 1.92 s on `milky_way` (1.64 → 1.37 s on `ngc_4414`; whole-run times noisy, another
+lane's pytest beside): the forcing (1.42 / 0.91 s) dominates and is shared — its cache key leaves out the sound speed —
+and each solve is about 0.15 s (molecular 0.17 / 0.15, atomic 0.15 / 0.14). `SOLUTIONS_KEPT` 4 → 8; a kept store is
+about 14 MB, so eight can hold about 110 MB where four held 55.
+
+### S100.5 Not covered, and the remainder
+
+Not covered: the dispersions' radial fall (Mogotsi et al.'s Fig. 6 unread; the ratio is printed flat); a separate HI
+column; the viewer; the clouds' weight. **The remainder, carried in #130** (D270 ruling 2): the render's placed gas
+(`api/service.py`'s `placed_gas`, the published `gas_density_contrast`) places more than the dust — the HII regions'
+Hα (`halpha_hii`) and lines (`lines_hii`) and the unresolved youngest starlight (`RENDER_YOUNG_PLACEMENT`) — and those
+sit in the clouds, which are molecular. Since S100 they ride the blend; keeping them molecular needs the service to
+read a second, molecular placement — not built.

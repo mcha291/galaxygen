@@ -2343,3 +2343,20 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **Lanes that move the same records re-pin nothing outside their own files.** Three builders moved the layer
   reference, the censuses and the seed sweeps at once; each listed what it moved, and the records are re-pinned once:
   one run of the whole suite on the merged head, one re-pin pass. (S99, D269)
+
+## From S100 (batch P's close: three Opus builders, four re-pin builders in turn, a close builder and a docs builder; the Fable gate)
+
+- [field] **A law that lets a fit's NaN through takes the layer with it.** Since #227 the layer's height was a fitted
+  length over 7.3; on `helpers.TINY` the fit had two rings where it needs three, the length was NaN, the gas had no
+  height and the fluctuation field raised, so the run machinery's tests could not run. When a stage's input changes
+  from a computed number to a fitted one, the coarsest grid the suite runs is read before the merge, not found by
+  the re-pin pass. (S100, D270)
+- [close] **A re-pin pass over two heads is briefed in thirds from the start.** Two builders in turn ran out of
+  context on 142 failed nodes; the split on disjoint files in two worktrees is what finished it. (S100, D270)
+- [close] **A lane that pins digests "as at the untouched head" pins them to its own base.** The next lane's merge
+  moves them by design (#80's template digests, moved by #130's blend): pin such identities on the merged head, or
+  name the base they hold on. (S100, D270)
+- [audit] **An identity of a composition is re-stated when the composition changes, term by term at the same
+  tightness** — never re-pinned as a record and never loosened. The published gas, once the molecular cell means, is
+  now the blend: its hand check holds the blend to the bit, and the cell's mean against its centre is read on the
+  molecular term, holding NGC 4414's 1.931 × 10⁻³ as before. (S100, D270)

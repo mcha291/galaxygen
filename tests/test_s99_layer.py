@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 
 from galaxy import templates
+from galaxy.core.grids import GridSpec
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs.graph import build
@@ -147,3 +148,37 @@ def test_the_two_models_agree_as_they_did(prod):
     b = run(models.get("basic"), only=HEIGHTS).fields
     for k in ("thin_disc_scale_height", "thin_disc_scale_height_dynamical", "thin_disc_scale_length"):
         assert float(a[k]) == float(b[k]), k
+
+
+# S100 (D270, the gate's ruling): where the history's fit publishes no length the layer is the dynamical law's.
+# sfh.fit_scale_length needs three rings with stars inside 1 kpc < R < 3 R_d; helpers.TINY's eight rings (3.75 kpc
+# wide) put two there, so the fitted length is NaN, and from S99 to S100 the layer's height was NaN with it: the gas
+# height NaN on every ring and the gas fluctuation field raising (its own rule: a field needs one published height).
+# The fallback is the law the model held until S99 (74.6 pc on TINY, as at 93ff47f); it is flagged to the owner.
+TINY = GridSpec(n_R=8, n_t=5, n_z=4, n_phi=6)
+SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+
+
+@pytest.mark.parametrize("model_name", ("azimuthal", "basic"))
+def test_s100_on_a_grid_too_coarse_for_the_fit_the_layer_is_the_dynamical_height(prod, model_name):
+    model = prod[0].get(model_name)
+    f = run(model, None, TINY, only=HEIGHTS).fields
+    assert math.isnan(float(f["thin_disc_scale_length"]))
+    h = float(f["thin_disc_scale_height"])
+    assert math.isfinite(h)
+    assert h == float(f["thin_disc_scale_height_dynamical"])
+    assert h == pytest.approx(74.611296, abs=1e-6)
+    # And a full run completes (it raised from S99 to S100), the gas published on at least one ring.
+    out = run(model, None, TINY)
+    assert np.isfinite(np.asarray(out.fields["gas_scale_height"], dtype=float)).any()
+
+
+@pytest.mark.parametrize("galaxy", (*GALAXIES, "bare_small"))
+def test_s100_where_the_fit_publishes_a_length_the_layer_is_it_over_the_flattening_bit_for_bit(prod, runs, galaxy):
+    if galaxy == "bare_small":
+        f = run(prod[0].get(DEFAULT_MODEL), None, SMALL, only=HEIGHTS).fields
+    else:
+        f = runs[galaxy].fields
+    length = float(f["thin_disc_scale_length"])
+    assert math.isfinite(length) and length > 0.0
+    assert float(f["thin_disc_scale_height"]) == length * 1000.0 / 7.3

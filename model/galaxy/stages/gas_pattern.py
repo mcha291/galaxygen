@@ -174,6 +174,22 @@ after this stage (``sfh_azimuthal`` reads this stage's star-formation contrast),
 since S62 by the ``spurs`` stage; this stage publishes ``star_formation_gas_contrast`` alone.
 :meth:`GasPattern.unspurred_contrast_at` is g, what the spurs' walk reads on the grid's rings.
 
+**Since S100 the atomic gas has its own response (#130; the gate's rulings for S100, D270).** The same solver solves
+the same equation a second time at the atomic gas's dispersion, ``HI_DISPERSION_RATIO`` (1.4, Mogotsi et al. 2016's
+σ_HI/σ_CO on matched pixels, flat with radius) times ``GAS_DISPERSION`` - :meth:`GasPattern.atomic`, the same forcing,
+lanes and spurs - and this stage publishes its exact cell means with the lanes and without spurs beside the
+star-formation contrast, ``atomic_gas_density_contrast``, of ring mean 1 as the molecular one's is. **Who reads
+which:** the clouds (and so the clusters and the cloud texture) and the star formation law keep the molecular
+response bit for bit - they are the molecular gas's. The diffuse gas and the dust are placed by the blend
+f g_mol + (1 − f) g_atom (:func:`placed_gas_contrast`), f the ring's molecular fraction as the ism stage publishes it -
+a function of radius alone, so the blend's ring mean is 1 exactly as the two are. **Where the blend enters**: on g,
+after the lanes and before the spurs, in the ``spurs`` stage (checkpoint 4, after the ism stage; the pattern here at
+checkpoint 3 cannot read the fraction, rule A1) - the stage whose ``gas_density_contrast`` is the render's placed gas;
+the spurs are composed on the blend, and the render's unspurred placement is the same blend, so the viewer's
+composition keeps the placement to the bit. Blending g is blending s (the lanes are one template in both and the
+taper's two weights sum to 1), and the spurs compose linearly, so the order changes rounding only. The atomic
+response's forcing is the molecular one's, kept once (the forcing's cache key leaves out the sound speed).
+
 **One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
 them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
 cluster census), so the last few solutions are also kept by content - a digest of the forcing amplitudes,
@@ -192,7 +208,7 @@ import hashlib
 import math
 import threading
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import numpy as np
@@ -229,8 +245,17 @@ GAS_PATTERN_READS: tuple[str, ...] = (*PATTERN_READS, "epicyclic_frequency", "di
 LANE_CONSTANTS: tuple[str, ...] = ("BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH")
 # ... the gas's sound speed and G, and since S60 the stellar layer's flattening (D219 item 5).
 GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION", "ARM_LAYER_FLATTENING", *LANE_CONSTANTS)
+# S100 (#130): the atomic gas's dispersion over the molecular gas's, which the stage's second response is solved at.
+# The stage's own read: the stages that build the pattern from fields (``compose.gas_pattern``) build the molecular one.
+ATOMIC_CONSTANTS: tuple[str, ...] = ("HI_DISPERSION_RATIO",)
+# What the blend that places the diffuse gas and the dust reads beside the molecular contrast (S100, #130; the
+# ``spurs`` stage's and the render's): the atomic contrast this stage publishes and the ism stage's molecular fraction.
+BLEND_READS: tuple[str, ...] = ("atomic_gas_density_contrast", "gas_molecular_fraction_profile")
 
-SOLUTIONS_KEPT = 4  # how many patterns' solved rings the content-keyed cache holds (about 4.6 MB each)
+# How many patterns' solved rings the content-keyed caches hold (a forcing about 4.6 MB, a store of solved rings about
+# 14 MB on the production grid, S100's measure). S100 (#130): was 4 - a run solves two responses per pattern since
+# then, the molecular and the atomic (one forcing between them), so twice the patterns' room.
+SOLUTIONS_KEPT = 8
 TWO_PI = 2.0 * math.pi
 # An image interval narrower than this (rad) is read at its middle: the mean of a profile over it is that value
 # to the square of the width, and the difference of two integrals would be rounding.
@@ -492,7 +517,11 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "lengths of the ridge's peak apart along the arm, each as dense at its foot as the ridge there and fading "
         "to a seventh of that over a quarter of a kiloparsec, their excess taken from the whole ring in proportion "
         "to its gas so the ring's mean stays 1 exactly; published since then by the stage that lays them on, after "
-        "the gas column their spacing reads."
+        "the gas column their spacing reads. Since S100 the response it carries is the blend of two: the molecular "
+        "gas's, described above, and the atomic gas's, the same equation at 1.4 times the dispersion, weighted on "
+        "each ring by the ring's molecular fraction - so where the disc is mostly atomic its arms are a little "
+        "lower and broader. The blend is taken after the bar's lanes and before the spurs; the clouds, the "
+        "clusters and the star formation law keep the molecular response itself."
     ),
 )
 
@@ -523,6 +552,39 @@ STAR_FORMATION_GAS_CONTRAST = FieldDecl(
         "layer off it is 1 everywhere."
     ),
 )
+
+
+ATOMIC_GAS_DENSITY_CONTRAST = FieldDecl(
+    name="atomic_gas_density_contrast", label="Atomic gas density contrast Σ_HI(R, φ)/Σ_HI(R)",
+    unit="dimensionless", kind=Kind.FIELD, axes=("R", "phi"),
+    ramp=Ramp("magma", lo=0.0, hi=4.0), meaningful_zero=True, provenance="seeded",
+    # S100 (#130): composed, as the molecular contrast is, and 1 everywhere with the randomness layer off.
+    composed=True, neutral=1.0,
+    about=(
+        "The atomic gas's own density contrast round every ring: mean 1 round every ring, each value the exact "
+        "mean over its azimuthal cell on its ring. The same steady response to the stellar arms as the gas's own "
+        "contrast, solved by the same equation on the same cells, but at the atomic gas's velocity dispersion - "
+        "1.4 times the molecular gas's, the ratio measured on the same pixels of thirteen nearby discs and flat "
+        "with radius - so its pressure reaches further against the arms' pull and its arms are a little lower "
+        "and broader than the molecular gas's. Inside a bar's reach it gives way to the bar's gas lanes by the "
+        "bar's taper, as the gas's own contrast does; it carries no gas spurs. Nothing is put in, clipped or "
+        "divided by a mean taken after the fact. It places nothing itself: the diffuse gas and the dust are "
+        "placed by the blend of the two responses weighted by each ring's molecular fraction (the gas's own "
+        "contrast, published after the gas's partition), while the clouds and the star formation law keep the "
+        "molecular response. A composed field: with the randomness layer off it is 1 everywhere."
+    ),
+)
+
+
+def placed_gas_contrast(molecular: np.ndarray, atomic: np.ndarray, fraction: np.ndarray) -> np.ndarray:
+    """The contrast that places the diffuse gas and the dust (S100, #130): f c_mol + (1 − f) c_atom on each ring, f
+    the ring's molecular fraction (the ism stage's ``gas_molecular_fraction_profile``, a function of radius alone),
+    ``molecular`` and ``atomic`` shaped (R, cells) on the same cells and ``fraction`` (R,). Both contrasts average
+    to 1 round a ring, so the blend does, exactly as they do. Where f is not a number the ring keeps the molecular
+    contrast: the blend is formed where the fraction exists."""
+    f = np.asarray(fraction, dtype=float)
+    f = np.where(np.isfinite(f), f, 1.0)[:, None]
+    return f * np.asarray(molecular, dtype=float) + (1.0 - f) * np.asarray(atomic, dtype=float)
 
 
 def _hold_at_neighbours(key: np.ndarray, moved: np.ndarray, live: np.ndarray, past: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -707,6 +769,13 @@ class GasPattern:
             spurs,
         )
 
+    def atomic(self, ratio: float) -> "GasPattern":
+        """The atomic gas's pattern (S100, #130): this one with the sound speed ``ratio`` times its own - the same
+        forcing, lanes and spurs, the response solved afresh at the atomic gas's dispersion (``HI_DISPERSION_RATIO``,
+        Mogotsi et al. 2016). Its rings are kept by content apart from this pattern's (the digest holds the sound
+        speed); its forcing is this pattern's, kept once."""
+        return replace(self, sound_speed=self.sound_speed * float(ratio))
+
     # --- the law's inputs ------------------------------------------------------------------------------
 
     @property
@@ -763,14 +832,15 @@ class GasPattern:
         back to the cells. Its mean round a ring is 0."""
         return np.fft.irfft(self.forcing_spectrum(radii), n=CELLS, axis=1)
 
-    def _digest(self) -> bytes:
+    def _digest(self, sound: bool = True) -> bytes:
         """A digest of everything the solved rings are made of - the census, the law's fields, the disc and the
-        constants: what the content-keyed caches are held under."""
+        constants: what the content-keyed caches are held under. ``sound`` False leaves out the sound speed, which
+        the forcing does not read (S100, #130: the atomic response shares the molecular one's forcing)."""
         stars = self.stars
         digest = hashlib.sha256()
         pieces = stars.pieces
-        scalars = np.array([self.pitch_deg, self.bar_length, self.gravity, self.layer_height, self.sound_speed, stars.bar, stars.axis_ratio,
-                            stars.boxiness, stars.index, stars.share, pieces.turn], dtype=float)
+        scalars = np.array([self.pitch_deg, self.bar_length, self.gravity, self.layer_height, *((self.sound_speed,) if sound else ()),
+                            stars.bar, stars.axis_ratio, stars.boxiness, stars.index, stars.share, pieces.turn], dtype=float)
         for part in (self.R, self.epicyclic, self.surface_density, scalars, stars.budget, stars.design, stars.width,
                      pieces.chain, pieces.order, pieces.start_radius, pieces.start_azimuth, pieces.pitch_deg, pieces.extent,
                      pieces.pinned, pieces.join, np.zeros(0) if stars.surface_density is None else stars.surface_density):
@@ -781,11 +851,12 @@ class GasPattern:
     def _ring_forcing(self) -> np.ndarray:
         """:meth:`forcing` on the grid rings, kept by content: several stages of one run build the same pattern,
         and the last few patterns' forcings are held under a digest of everything the forcing is made of
-        (:meth:`_digest`) and handed back as made (read-only). The bits are :meth:`forcing`'s."""
+        (:meth:`_digest`, without the sound speed: the atomic response's forcing is the molecular one's) and handed
+        back as made (read-only). The bits are :meth:`forcing`'s."""
         stars = self.stars
         if stars is None or self.flat:
             return np.zeros((self.R.size, CELLS))
-        key = self._digest()
+        key = self._digest(sound=False)
         with _SOLUTIONS_LOCK:
             held = _FORCINGS.get(key)
         if held is None:
@@ -1539,16 +1610,34 @@ def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     # own contrast, ``gas_density_contrast``, is published by the ``spurs`` stage, after the gas column its spurs
     # read; this stage publishes the contrast the star formation law reads, which keeps neither lanes nor spurs.
     cells = (R.size, ctx.grid.phi.size)
+    built: list[Any] = []
+
+    def shape() -> Any:
+        if not built:
+            built.append(_compose.gas_pattern(ctx.fields, R, ctx.constants))
+        return built[0]
 
     def make() -> np.ndarray:
-        shape = _compose.gas_pattern(ctx.fields, R, ctx.constants)
-        if shape is None or shape.flat:
+        gas = shape()
+        if gas is None or gas.flat:
             return _compose.neutral(STAR_FORMATION_GAS_CONTRAST, cells)
         # The law's mean over each of the grid's φ cells, on each grid ring (gate G3 item 4): the interpolant
         # integrated exactly, so a ring's cells average to 1 to rounding on any grid and nothing is divided.
-        return shape.star_formation_cell_means(R, ctx.grid["phi"].edges)
+        return gas.star_formation_cell_means(R, ctx.grid["phi"].edges)
 
-    return {STAR_FORMATION_GAS_CONTRAST.name: _compose.field(ctx.fields, STAR_FORMATION_GAS_CONTRAST, cells, make)}
+    def make_atomic() -> np.ndarray:
+        # S100 (#130): the atomic gas's own response, solved by the same solver at HI_DISPERSION_RATIO times the
+        # gas's dispersion, with the bar's lanes as the gas's own contrast has them and no spurs (they are the
+        # ``spurs`` stage's, after the gas column): its exact cell means, as the molecular contrast's are.
+        gas = shape()
+        if gas is None or gas.flat:
+            return _compose.neutral(ATOMIC_GAS_DENSITY_CONTRAST, cells)
+        return gas.atomic(float(ctx.constants["HI_DISPERSION_RATIO"])).unspurred_cell_means(R, ctx.grid["phi"].edges)
+
+    return {
+        STAR_FORMATION_GAS_CONTRAST.name: _compose.field(ctx.fields, STAR_FORMATION_GAS_CONTRAST, cells, make),
+        ATOMIC_GAS_DENSITY_CONTRAST.name: _compose.field(ctx.fields, ATOMIC_GAS_DENSITY_CONTRAST, cells, make_atomic),
+    }
 
 
 GAS_PATTERN = IMPLEMENTATIONS.register(
@@ -1573,14 +1662,18 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
             "evenly over the bar's footprint, because the lanes' width is a placeholder and star formation "
             "must not ride it; elsewhere the response's numbers; never the gas spurs. The gas's own contrast, "
             "with the lanes and the spurs, is published by the stage that lays the spurs on, after the gas "
-            "column. It draws nothing; "
+            "column. Beside it, the atomic gas's own response: the same equation at the atomic gas's velocity "
+            "dispersion, 1.4 times the molecular gas's as measured on the same pixels, with the bar's lanes and "
+            "no spurs - the half of the blend, weighted by each ring's molecular fraction, that places the "
+            "diffuse gas and the dust. It draws nothing; "
             "its fields are seeded through the pattern's drawn pitch and amplitudes and the layer's pieces."
         ),
         compute=compute_gas_pattern,
-        reads_constants=GAS_PATTERN_CONSTANTS,
+        reads_constants=(*GAS_PATTERN_CONSTANTS, *ATOMIC_CONSTANTS),  # S100 (#130): and the atomic dispersion's ratio
         requires=GAS_PATTERN_READS,
         # S62 (D221 item 7 as amended): was (GAS_DENSITY_CONTRAST, STAR_FORMATION_GAS_CONTRAST) - the gas's own
         # contrast is published by the ``spurs`` stage, which composes the spurs on it after the gas column.
-        publishes=(STAR_FORMATION_GAS_CONTRAST,),
+        # S100 (#130): and the atomic gas's own contrast.
+        publishes=(STAR_FORMATION_GAS_CONTRAST, ATOMIC_GAS_DENSITY_CONTRAST),
     )
 )

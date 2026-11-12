@@ -226,7 +226,7 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # every field downstream of the bar's length differs. What this gate still says is that the template is the
     # bare defaults **and its measured bar**: run with the same length pinned, the bare run below is its twin.
     law = run(model, layer=False, only=("bar_half_length",))
-    assert float(law.fields["bar_half_length"]) == pytest.approx(2.2698, abs=1e-4)
+    assert float(law.fields["bar_half_length"]) == pytest.approx(3.1395, abs=1e-4)  # S100 (#80, D270): was 2.2698 - Erwin 2019's Table 4 on the baryons' mass (a record)
     # S99 (#146, D268 ruling 8): was `run(model, {"bar_half_length": 5.0})` - the twin carries the template's bar
     # amplitude too, a pin like the length: the bare defaults draw theirs.
     twin = {"bar_half_length": 5.0, "bar_contrast": MW_PINS["bar_contrast"]}
@@ -651,7 +651,8 @@ def test_a_pin_is_given_by_a_template_and_by_no_query_parameter():
     assert (bare["scalars"]["bar_present"], mw["scalars"]["bar_present"], ngc["scalars"]["bar_present"]) == ("yes", "yes", "no")
     assert "bar_present" not in bare["inputs"] and mw["inputs"]["bar_present"] is True and ngc["inputs"]["bar_present"] is False
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was `bare == mw` - the Milky Way pins its measured 5.0 kpc; the bare disc reads Erwin 2019's law.
-    assert bare["scalars"]["bar_half_length"] == pytest.approx(2.2698, abs=1e-4) and mw["scalars"]["bar_half_length"] == 5.0
+    # S100 (#80, D270): the bare disc's law-read length was 2.2698 - Erwin 2019's Table 4 on the baryons' mass (a record).
+    assert bare["scalars"]["bar_half_length"] == pytest.approx(3.1395, abs=1e-4) and mw["scalars"]["bar_half_length"] == 5.0
     assert ngc["scalars"]["bar_half_length"] is None and "bar_half_length" not in bare["inputs"] and mw["inputs"]["bar_half_length"] == 5.0
     assert ngc["scalars"]["bar_formation_time"] == pytest.approx(0.905, abs=0.01)  # published beside the pin
     # "Edit galaxy" from a template keeps its pin: the query moves a control, the template still says the class.

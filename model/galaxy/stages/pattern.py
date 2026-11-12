@@ -584,10 +584,14 @@ def _scalar(name, label, unit, about, provenance="derived"):
 BAR_HALF_LENGTH = _scalar(
     "bar_half_length", "Bar half-length", "kpc",
     "Acceptance row 15, and pointwise rather than statistical — which is why it lives in the "
-    "derived stage. Since S87 (the owner's ruling of 2026-11-03, D255, debt #80) Erwin 2019's law of the "
-    "disc's scale length, log10 a = 0.04 + 0.76 log10 h, h the λ_d scale length (checkpoint 1): 2.27 kpc "
-    "on the Milky Way's disc; a template's measured length, where one is pinned (the Milky Way's 5.0 kpc), "
-    "replaces it. From S25 to S87 2.0 times the λ_d scale length, and until S25 2.0 times the thin disc's "
+    "derived stage. Since S100 (the owner's word of 2026-11-12, D268 ruling 5, debt #80) Erwin 2019's "
+    "preferred law, of the disc's scale length and a broken stellar mass: log10 a = 0.02 + 0.61 log10 h "
+    "below log M = 10.13, plus 0.35 (log M - 10.13) above it, h the λ_d scale length and M the retained "
+    "baryons' mass, both checkpoint 1's - the stellar mass is published downstream of the bar, so the "
+    "gas rides in M uncorrected (+0.09 dex on the Milky Way's disc, a 7.7 % longer bar): 3.14 kpc on the "
+    "Milky Way's disc; a template's measured length, where one is pinned (the Milky Way's 5.0 kpc), "
+    "replaces it. From S87 to S100 the same paper's law of the scale length alone, log10 a = 0.04 + 0.76 "
+    "log10 h (2.27 kpc); from S25 to S87 2.0 times the λ_d scale length, and until S25 2.0 times the thin disc's "
     "fitted stellar one, a star-formation result 6% shorter (D174, debt #80). The disc-dominance link "
     "GALAXY_INPUTS.md §4b describes is published beside it but not modelled (debt #21). "
     "Not a number for a galaxy with no bar: an unbarred disc has no bar length, and the bar's shape, "
@@ -758,6 +762,18 @@ ARM_PATTERN_SPEED = FieldDecl(
 )
 
 
+def bar_length_law(scale_length: float, mass: float, c: Mapping[str, Any]) -> float:
+    """The bar's half-length (kpc) on an unpinned barred disc: Erwin 2019's Table 4, log a on log h and a broken
+    log M (S100, #80, D268 ruling 5). Eq. 4's two branches, alpha1 + beta log h + beta1 log M below the break and
+    alpha2 + beta log h + beta2 log M above it with alpha2 = alpha1 + (beta1 - beta2) log M_brk, written as the low
+    branch plus the slope's change times the mass's excess over the break - continuous there by construction.
+    ``scale_length`` in kpc, ``mass`` in Msun (the model passes the retained baryons' mass, see the stage)."""
+    log_mass = math.log10(mass)
+    low, high = float(c["BAR_LENGTH_MASS_SLOPE_LOW"]), float(c["BAR_LENGTH_MASS_SLOPE_HIGH"])
+    return 10.0 ** (float(c["BAR_LENGTH_LOG_NORM"]) + float(c["BAR_LENGTH_SLOPE"]) * math.log10(scale_length)
+                    + low * log_mass + (high - low) * max(0.0, log_mass - float(c["BAR_LENGTH_MASS_BREAK"])))
+
+
 def compute_bar(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
     c = ctx.constants
@@ -790,8 +806,13 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
     # S87 (#80; the owner's ruling of 2026-11-03, D255): the half-length is Erwin 2019's law of the disc's scale
     # length, or a template's measured length where one is pinned (the Milky Way's 5.0 kpc). An unbarred galaxy has
     # none, pinned or not. Until S87: BAR_LENGTH_RATIO (2.0) times the scale length.
+    # S100 (#80; the owner's word of 2026-11-12, D268 ruling 5, D270): Erwin 2019's Table 4 in place of its Table 3 -
+    # log a on log h and a broken log M, continuous at the break (eq. 4: alpha2 = alpha1 + (beta1 - beta2) log M_brk),
+    # written here as the low branch plus the slope's change times the mass's excess over the break. M is the retained
+    # baryons' mass (checkpoint 1) standing for the stellar mass, which is published at checkpoint 4, downstream of the
+    # bar (rule A1); high by the gas and not corrected (tests/test_s100_bar_length.py holds the excess as measured).
     pinned_length = ctx.inputs.get("bar_half_length")
-    law_length = 10.0 ** (float(c["BAR_LENGTH_LOG_NORM"]) + float(c["BAR_LENGTH_SLOPE"]) * math.log10(R_d))
+    law_length = bar_length_law(R_d, float(ctx.fields["baryon_mass_total"]), c)
     half_length = (law_length if pinned_length is None else float(pinned_length)) if present else nan
     return {
         "bar_formation_time": formation,
@@ -843,14 +864,18 @@ BAR = IMPLEMENTATIONS.register(
         # ... and since S87 (#80, D255) the bar's measured half-length, read the same way.
         reads_inputs=("halo_assembly_z", "bar_present", "arm_class", "bar_half_length"),
         reads_constants=(
-            "BAR_LENGTH_LOG_NORM", "BAR_LENGTH_SLOPE", "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
+            "BAR_LENGTH_LOG_NORM", "BAR_LENGTH_SLOPE",
+            "BAR_LENGTH_MASS_SLOPE_LOW", "BAR_LENGTH_MASS_SLOPE_HIGH", "BAR_LENGTH_MASS_BREAK",  # S100 (#80): Table 4
+            "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
             "ARM_INTERARM_GRAND_DESIGN", "ARM_INTERARM_FLOCCULENT",
             "GAS_ARM_CONTRAST_GRAND_DESIGN", "GAS_ARM_CONTRAST_OTHER",
             "BAR_FORMATION_TIME_SCALE", "BAR_FORMATION_EXPONENT", "H0", "OMEGA_M",
             "BAR_AXIS_RATIO", "BAR_BOXINESS", "BAR_PROFILE_INDEX",
             "ARM_PIECE_WIDTH", "ARM_PIECE_WIDTH_ZERO_POINT", "ARM_PIECE_WIDTH_RADIUS",  # S60 (D219 item 1): the width law
         ),
-        requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity"),
+        # S100 (#80, D270): and the retained baryons' mass (checkpoint 1), the bar length law's stand-in for the
+        # stellar mass.
+        requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity", "baryon_mass_total"),
         publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR, SWING_X, SWING_ARM_MIN, SWING_ARM_MAX, ARM_CONTRAST_MEAN,
                    GAS_ARM_CONTRAST, ARM_PATTERN_SPEED,
                    BAR_FORMATION_TIME, BAR_PRESENT_DECL, BAR_AXIS_RATIO, BAR_BOXINESS, BAR_PROFILE_INDEX,

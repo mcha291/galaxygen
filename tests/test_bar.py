@@ -161,6 +161,19 @@ def hand_fourier(values: np.ndarray, phi: np.ndarray, m: int = 2) -> np.ndarray:
     return 2.0 * np.abs((values * np.exp(-1j * m * phi)[None, :]).mean(axis=1))
 
 
+def placed_by_hand(F, gas, R: np.ndarray, edges: np.ndarray, molecular: np.ndarray | None = None) -> np.ndarray:
+    """S100 (#130, D270; the gate's ruling 10): the published gas as the spurs stage now forms it, written out term by
+    term from s100_G2.md - on each ring f c_mol + (1 - f) c_atom, f the ism stage's molecular fraction (the molecular
+    contrast where f is not a number), c_mol the pattern's unspurred cell means (lanes and response), c_atom the
+    published atomic response; the spurs composed on the blend. Until S100: ``gas.cell_means(R, edges)``, the spurs
+    composed on the molecular response alone."""
+    f = np.asarray(F["gas_molecular_fraction_profile"], dtype=float)
+    f = np.where(np.isfinite(f), f, 1.0)[:, None]
+    mol = gas.unspurred_cell_means(R, edges) if molecular is None else molecular
+    blend = f * np.asarray(mol, dtype=float) + (1.0 - f) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)
+    return blend if gas.spurs is None else gas.spurs.compose_cells(R, edges, blend)
+
+
 def hand_cell_means(profile: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
     """The mean, over each interval [lo_j, hi_j], of the periodic piecewise-linear function through ``profile`` on a
     ring's cell centres -π + (k + ½) 2π/n: the trapezoid rule on the function's own breakpoints, which is its exact
@@ -302,7 +315,7 @@ def test_the_gate_s_predictions_as_measured(prod):
     # which the two statistical rows' ensemble medians read 81.97 and 2.65 (41.10 and 6.08 until S87).
     assert float(F["bar_half_length"]) == pytest.approx(5.0, abs=5e-6)
     ensemble = spec.ensemble(the_model(prod), ("bar_pattern_speed", "bar_corotation_radius"))
-    assert (float(np.median(ensemble["bar_pattern_speed"])), float(np.median(ensemble["bar_corotation_radius"]))) == pytest.approx((81.97, 2.65), abs=0.01)
+    assert (float(np.median(ensemble["bar_pattern_speed"])), float(np.median(ensemble["bar_corotation_radius"]))) == pytest.approx((64.47, 3.67), abs=0.01)  # S100 (#80, D270): was (81.97, 2.65) - the default disc's bar on Erwin 2019's Table 4, 3.1395 kpc (was Table 3's 2.2698)
     # ngc_4414: "unbarred, the bar's fields NaN, arms to the centre; ... t_b 0.91 Gyr published beside the pin".
     n = template_run(prod, "ngc_4414")
     assert n.fields["bar_present"] == "no" and all(math.isnan(float(n.fields[k])) for k in BAR_NUMBERS)
@@ -312,12 +325,12 @@ def test_the_gate_s_predictions_as_measured(prod):
     # "Both A₂ peak radii miss 0.76-0.94 a" (0.62-0.94 a over DG16b Table 5's rows, S95): the same disc with the pin
     # taken off - the criterion bars it - peaks at 0.38 a.
     u = template_run(prod, "ngc_4414", pinned=False)
-    assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.03963, abs=2e-5)  # S87 (#80): was 0.11256 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
+    assert u.fields["bar_present"] == "yes" and float(u.fields["bar_mass_share"]) == pytest.approx(0.06275, abs=2e-5)  # S100 (#80, D270): was 0.03963 - the unpinned disc's bar on Erwin 2019's Table 4  # S87 (#80): was 0.11256 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
     ua = float(u.fields["bar_half_length"])
     upart = np.asarray(u.fields["pattern_density_contrast"]) - 1.0 - arms_of(u.fields, R, edges)
     ua2 = hand_fourier(upart, phi)
     upeak = int(np.argmax(np.where(R < ua, ua2, -1.0)))
-    assert float(ua2[upeak]) == pytest.approx(float(u.fields["bar_contrast"]), abs=1e-12) and float(R[upeak]) / ua == pytest.approx(0.3792, abs=1e-4)  # S87 (#80): was 0.4167 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
+    assert float(ua2[upeak]) == pytest.approx(float(u.fields["bar_contrast"]), abs=1e-12) and float(R[upeak]) / ua == pytest.approx(0.4147, abs=1e-4)  # S100 (#80, D270): was 0.3792 - Table 4's length  # S87 (#80): was 0.4167 - the bar's law on the default disc, the Milky Way's pinned 5.0 kpc
 
 
 # --- the gate -----------------------------------------------------------------------------------------------------
@@ -368,10 +381,10 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     # and is pinned apart in the test after this one, awaiting the re-pin; the bound (> 0 on every cell) is held
     # in the sweep itself. The body's own lowest contrast is the number it was.
     assert sweep["lowest"] > 0.0
-    assert sweep["lowest_body"] == pytest.approx(0.2433, abs=2e-4) and sweep["lowest_body"] > 0.0  # S87 (#80, #209): was 0.2658 - the bar's law and pinned length, the pitch floor
+    assert sweep["lowest_body"] == pytest.approx(0.2474, abs=2e-4) and sweep["lowest_body"] > 0.0  # S100 (#80, D270): was 0.2433 - the unpinned NGC 4414 disc's bar on Table 4 (the bound > 0 holds)  # S87 (#80, #209): was 0.2658 - the bar's law and pinned length, the pitch floor
     # S87 (#80, #209): were (0.4103, 0.1536, 0.3508) and (0.4167, 0.1538, 0.3506) - the Milky Way's bar is its pinned 5.0 kpc
     # (was the ratio's 5.21) and the barred NGC 4414 disc's is the law's, shorter against its disc than the ratio's 2.0.
-    for template, want in (("milky_way", (0.4125, 0.1482, 0.3339)), ("ngc_4414", (0.3792, 0.0989, 0.1234))):
+    for template, want in (("milky_way", (0.4125, 0.1482, 0.3339)), ("ngc_4414", (0.4147, 0.1130, 0.1954))):  # S100 (#80, D270): ngc_4414's were (0.3792, 0.0989, 0.1234) - its unpinned disc's bar on Table 4
         got = np.array(read[template])
         assert got.min(axis=0).tolist() == pytest.approx(want, abs=1e-4) and got.max(axis=0).tolist() == pytest.approx(want, abs=1e-4), template
         assert not np.any((got[:, 0] >= 0.62) & (got[:, 0] <= 0.94))  # the recorded miss, on every barred seed (S95, F-1A-2: was 0.76 - DG16b Table 5 prints 0.62-0.94 over its rows)
@@ -473,7 +486,7 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     # (S92, the comment D260 owed: the high 0.107999 is the Milky Way template's, pinned, at pattern_seed 41 and
     #  texture_seed 1, on the ring at R = 4.6125 kpc - 0.9225 of a = 5.0 kpc; measured with s92_owed.py.)
     for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.107999), (0.4125, 0.9975)),
-                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.3792, 0.3792))):
+                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.4147, 0.4147))):  # S100 (#80, D270): ngc_4414's (near, far) were (0.3792, 0.3792) - its unpinned disc's bar on Table 4
         got = np.array(sweep["whole"][template])
         assert (float(got[:, 0].min()), float(got[:, 0].max())) == pytest.approx((low, high), abs=2e-6), template
         assert (float(got[:, 1].min()), float(got[:, 1].max())) == pytest.approx((near, far), abs=1e-4), template
@@ -551,7 +564,9 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     F, R, edges = o.fields, o.grid.R, o.grid["phi"].edges
     gas = compose.gas_pattern(F, R, constants(the_model(prod)))
     g = np.asarray(F["gas_density_contrast"])
-    assert g.tobytes() == gas.cell_means(R, edges).tobytes()
+    # S100 (batch P, D270; #130, ruling 10): was `g.tobytes() == gas.cell_means(R, edges).tobytes()` - the published gas
+    # is the blend of the molecular and atomic responses with the spurs on it; the identity re-stated, to the bit.
+    assert g.tobytes() == placed_by_hand(F, gas, R, edges).tobytes()
     # S87 (#80): the ring-mean clause moved to the test after this one, where the Milky Way's reads over its bound.
     assert np.all(np.isfinite(g)) and g.min() > 0.0
     taper = pt.bar_terms(R, gas.pitch_deg, gas.bar_length)[0]
@@ -562,9 +577,12 @@ def test_gate_the_gas_with_its_lanes(prod, template):
         # a cell's mean is the ring's profile over the cell's φ edges themselves (the model's own exact mean, and
         # this file's trapezoid on the interpolant's breakpoints to rounding).
         on = gas.carries  # the rings a piece forces: the response's own cell means, to the bit; the rest are 1
-        assert g.tobytes() == gas.response_cell_means(R, edges).tobytes() and np.all(g[~on] == 1.0)
+        # S100 (batch P, D270; #130, ruling 10): was `g == gas.response_cell_means(R, edges)` to the bit - the molecular
+        # term of the blend is the response's own cell means; the hand check below reads that term (was `g[i]`).
+        mol = gas.response_cell_means(R, edges)
+        assert g.tobytes() == placed_by_hand(F, gas, R, edges, mol).tobytes() and np.all(g[~on] == 1.0)
         for i in np.flatnonzero(on)[[0, 40, 90, -1]]:
-            assert float(np.abs(g[i] - hand_cell_means(gas.profiles[i], edges[:-1], edges[1:])).max()) < 1e-11, i
+            assert float(np.abs(mol[i] - hand_cell_means(gas.profiles[i], edges[:-1], edges[1:])).max()) < 1e-11, i
         return
     L = gas.lanes
     assert L.shape == (R.size, gr.CELLS) and float(np.abs(L.sum(axis=1) / gr.CELLS - 1.0).max()) < 1e-13
@@ -603,18 +621,26 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     # S92 (the gate's ruling C1 on #221): the clause's upper bound, max(the lane field's peak, the response's crest),
     # moved to the test after this one, which carries the strict hold, so that every other clause here is asserted
     # unmarked on both templates (S87's split, above). Was `1.0 < ... <= max(peak.max(), gas.profiles.max())`.
-    assert 1.0 < float(g[R < gas.bar_length].max())
+    # S100 (batch P, D270; #221's hold lifted, the gate's ruling 3): the upper bound is back in this test (the barred
+    # template's branch, where S92 took it from). The Milky Way's largest cell inside the bar reads 6.759 at 3.94 kpc (published, the blend #130) under
+    # the lane field's peak 7.0556: since #220 (S99) the spur's crest and trough are read on the foot's own ring and the
+    # spur at 3.94 kpc no longer stacks a lane's height (7.3027 -> 6.7660 on 5510370, before #146's pin; the pin moved
+    # nothing here - read on 8a6f848 too, scratchpad s100_P_221_*.log).
+    assert float(g[R < gas.bar_length].max()) <= max(float(L.max()), float(gas.profiles.max()))
 
 
 # S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
 # not held), and masks nothing - the failing assert is the body's last (`gas.barred` before it is asserted).
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=GAS_LANES_READ_OVER_S92)
+# S100 (batch P, D270; the gate's ruling 3): the strict hold lifted - the clause holds on the merged head (6.759 at
+# 3.94 kpc under 7.0556; the cause #220, the spur's foot read on its own ring), and is back in the test before the
+# one before this; this test keeps asserting it on the barred template, unmarked.
 def test_gate_the_gas_inside_the_bar_is_under_the_lanes_or_the_response(prod):
     """The upper clause of the gate the test before this one holds, the published gas's largest cell inside the bar
     under max(the lane field's peak, the response's crest), split from it at S92 (the gate's ruling on #221) so that
     the Milky Way's reading over it stays visible without hiding the clauses that hold. The barred template only:
-    an unbarred galaxy has no lanes and its gas is its response (the test before this one). Held strict, the clause
-    not moved: 7.3027 at 3.94 kpc against max(7.0556, 2.3930), a spur's height on a lane's crest (register #221)."""
+    an unbarred galaxy has no lanes and its gas is its response (the test before this one). Held strict S92-S99, the
+    clause not moved: 7.3027 at 3.94 kpc against max(7.0556, 2.3930), a spur's height on a lane's crest (register
+    #221); S100: holds, 6.759 at 3.94 kpc (the hold lifted, above)."""
     o = template_run(prod, "milky_way")
     F, R = o.fields, o.grid.R
     gas = compose.gas_pattern(F, R, constants(the_model(prod)))
@@ -634,7 +660,9 @@ def test_the_published_gas_s_largest_cell_inside_the_bar_as_measured(prod):
     # S59 (D218 follow-up): was (6.679, 2.0625) - on the relative residual's winding the largest cell is a lane's
     # and an arm's together on another ring, 6.761 at 2.81 kpc (wound at one pitch: 6.664 at 2.06 kpc still).
     # S60 fourth pass: was (6.761, 2.8125); on the pieces' response 6.657 at 2.06 kpc, S59's ring again.
-    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((7.303, 3.9375), abs=2e-3)  # S92 (#164 / #165): was (6.694, 1.9875) - a spur's foot on a lane's crest at 3.94 kpc (the height the crest over the trough). S87 (#80, #209): was 2.0625, 6.657 - the bar's law and pinned length, the pitch floor
+    # S100 (batch P, D270): was (7.303, 3.9375) - #220 (the spur's crest and trough read on the foot's own ring: 6.766)
+    # and #130 (the published gas the blend of the molecular and atomic responses: 6.759).
+    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.759, 3.9375), abs=2e-3)  # S92 (#164 / #165): was (6.694, 1.9875) - a spur's foot on a lane's crest at 3.94 kpc (the height the crest over the trough). S87 (#80, #209): was 2.0625, 6.657 - the bar's law and pinned length, the pitch floor
 
 
 def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
@@ -682,8 +710,10 @@ def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
     # S62 (D221 item 7 as amended): was `star_formation_gas_contrast == g`, bit for bit - the gas's own contrast now carries
     # the spurs, composed on the star-formation contrast's numbers (an unbarred galaxy: the same response), and the
     # star-formation contrast does not.
+    # S100 (#130, D270; ruling 10): was `gas.spurs.compose_cells(R, edges, sf) == g` - the published gas is now the
+    # blend f sf + (1 - f) c_atom with the spurs composed on it (an unbarred galaxy: sf is the molecular cell means).
     sf = np.asarray(F["star_formation_gas_contrast"])
-    assert gas.spurs is not None and gas.spurs.compose_cells(R, edges, sf).tobytes() == g.tobytes()
+    assert gas.spurs is not None and placed_by_hand(F, gas, R, edges, molecular=sf).tobytes() == g.tobytes()
     # No NaN where the barred galaxy has none, and the whole pipeline ran: the same fields, the modulation finite.
     assert barred.fields["bar_present"] == "yes" and set(barred.fields) == set(F)
     low = np.asarray(barred.fields["gas_density_contrast"])
@@ -724,7 +754,8 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     assert int((g == 0.0).sum()) == 0 and int((g < tiny).sum()) == 0
     # S92 (#164 / #165): the lowest cell was 5.1621415e-6 - the spurs' ring mean, which every cell of a ring gives in
     # proportion, is taken from heights now the crest over the trough.
-    assert float(g.min()) == pytest.approx(5.0614312e-6, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
+    # S100 (batch P, D270; #130 the placed gas a blend with the atomic response, #227): was 5.0614312e-6.
+    assert float(g.min()) == pytest.approx(5.1328827e-5, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
     s = compose.gas_pattern(F, R, constants(the_model(prod))).profiles
     assert (int((s == 0.0).sum()), int(((s > 0.0) & (s < tiny)).sum())) == (0, 0)
     assert float(s.min()) == pytest.approx(5.3832547e-6, rel=2e-3)  # S87 (#80, #209): was 3.3725e-64 - the bar's law and pinned length, the pitch floor
@@ -733,7 +764,7 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     # a trough of the response the segments have turned.
     # S59 (D218 follow-up): was 4.806e-11 - turned otherwise by segments of relative pitch.
     # S60 fourth pass: was 4.829e-11; the barred disc's lowest cell is 0.3854 on the pieces' response.
-    assert float(low.min()) == pytest.approx(0.1969, rel=2e-3)  # S87 (#80, #209): was 0.3854 - the bar's law and pinned length, the pitch floor
+    assert float(low.min()) == pytest.approx(0.38543, rel=2e-3)  # S100 (#80, D270): was 0.1969 - the corner's barred disc's bar on Table 4  # S87 (#80, #209): was 0.3854 - the bar's law and pinned length, the pitch floor
 
 
 # --- by hand -------------------------------------------------------------------------------------------------------
@@ -1299,7 +1330,7 @@ def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     # S62 (D221 item 7 as amended): were [3.222, 2.974, 2.689] and 1.535 - the gas spurs: a ring's gas gives the spurs'
     # mean there in proportion, and a spur's foot stands on two of the three rings' crests.
     # S92 (#164 / #165): the middle ring was 2.919 and the ring past the half-length 2.126 - the spurs' heights (the crest over the trough).
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.212, 2.911, 2.488], abs=2e-3) and float(g[after].max()) == pytest.approx(1.955, abs=2e-3)  # S87 (#80, #209): was 1.679, 2.684, 2.966, 3.222 - the bar's law and pinned length, the pitch floor  # S87 (#148): was 1.664 - the clock
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.208, 2.905, 2.484], abs=2e-3) and float(g[after].max()) == pytest.approx(1.939, abs=2e-3)  # S87 (#80, #209): was 1.679, 2.684, 2.966, 3.222 - the bar's law and pinned length, the pitch floor  # S87 (#148): was 1.664 - the clock  # S100 (batch P, D270; #130, the published gas the blend): were 3.212, 2.911, 2.488 and 1.955
 
 
 def test_the_gas_the_star_formation_law_reads_by_hand(prod):
@@ -1350,7 +1381,9 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
     published = np.asarray(F["star_formation_gas_contrast"])
     assert published.tobytes() == gas.star_formation_cell_means(R, edges).tobytes()
     both = gas.published_cell_means(R, edges)
-    assert both[0].tobytes() == np.asarray(F["gas_density_contrast"]).tobytes() and both[1].tobytes() == published.tobytes()
+    # S100 (#130, D270; ruling 10): was `both[0] == gas_density_contrast` - the molecular pattern's spurred cell means
+    # were the published gas; the published gas is now the blend with the atomic response, the spurs composed on it.
+    assert placed_by_hand(F, gas, R, edges).tobytes() == np.asarray(F["gas_density_contrast"]).tobytes() and both[1].tobytes() == published.tobytes()
     taper, _, angle = pt.bar_terms(R, gas.pitch_deg, gas.bar_length)
     # S59 (D218): was `pt.bar_terms(...)[1]`, ln R · cot p - the response read at the segments' winding. S60 (D219):
     # no winding - the response is solved in the galaxy's own azimuth, and a grid cell's extent is its φ edges.
@@ -1380,7 +1413,9 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
             assert gas.spurs.compose_cells(np.array([r]), sectors, means[None, :])[0].tobytes() == gas.sector_means(r, sectors).tobytes(), r
     past = R >= a
     # S62: was `published[past] == gas_density_contrast[past]` - the same, with the spurs composed on.
-    assert gas.spurs.compose_cells(R[past], edges, published[past]).tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 333  # S87 (#80): was 331 - the template's pinned 5.0 kpc bar (was 5.21)
+    # S100 (#130, D270; ruling 10): was `gas.spurs.compose_cells(R[past], edges, published[past]) == gdc[past]` - the
+    # same with the blend with the atomic response formed before the spurs compose.
+    assert placed_by_hand(F, gas, R, edges, molecular=published)[past].tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 333  # S87 (#80): was 331 - the template's pinned 5.0 kpc bar (was 5.21)
     # An unbarred pattern has no footprint to ask for; its star-formation readings are its own.
     n4414 = template_run(prod, "ngc_4414")
     bare = compose.gas_pattern(n4414.fields, R, constants(the_model(prod)))
@@ -1388,7 +1423,10 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
         bare.footprint
     assert np.array_equal(bare.star_formation_contrast_at(radius, phi), bare.contrast_at(radius, phi))
     assert bare.star_formation_sector_means(3.0, sectors).tobytes() == bare.sector_means(3.0, sectors).tobytes()
-    assert np.asarray(n4414.fields["star_formation_gas_contrast"]).tobytes() == np.asarray(n4414.fields["gas_density_contrast"]).tobytes()
+    # S100 (#130, D270; ruling 10): was `star_formation_gas_contrast == gas_density_contrast` bit for bit - the
+    # published gas is now the blend of that molecular contrast with the atomic response.
+    sf4414 = np.asarray(n4414.fields["star_formation_gas_contrast"])
+    assert placed_by_hand(n4414.fields, bare, R, edges, molecular=sf4414).tobytes() == np.asarray(n4414.fields["gas_density_contrast"]).tobytes()
 
 
 def test_the_gas_at_a_point_inside_the_bar_is_the_blend_of_the_response_and_the_lanes(prod):
@@ -1415,6 +1453,10 @@ def test_the_gas_at_a_point_inside_the_bar_is_the_blend_of_the_response_and_the_
         # S59 (D218): the cells' means with the hand's winding; S60 (D219): over the cell's φ edges themselves.
         cell = (1.0 - t) * hand_cell_means(gas.profiles[i], edges[:-1], edges[1:]) + t * hand_cell_means(gas.lanes[i], edges[:-1] - angle, edges[1:] - angle)
         # S62 (D221 item 7 as amended): the hand blend with the spurs composed on it (the spurs reach the ring at 4.54 kpc).
+        # S100 (#130, D270; ruling 10): the hand blend is the molecular term of the placed gas, f c_mol + (1 - f) c_atom,
+        # f the ism stage's fraction on the ring and c_atom the published atomic response; the spurs composed on that.
+        f = float(np.asarray(F["gas_molecular_fraction_profile"], dtype=float)[i])
+        cell = f * cell + (1.0 - f) * np.asarray(F["atomic_gas_density_contrast"], dtype=float)[i]
         cell = gas.spurs.compose_cells(R[i:i + 1], edges, cell[None, :])[0]
         assert float(np.abs(np.asarray(F["gas_density_contrast"])[i] - cell).max()) < 1e-11, i
 
@@ -1675,14 +1717,15 @@ def test_debt_146_the_body_read_at_checkpoint_4_as_measured(prod):
     assert flat < 0.76
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    "S99 (#146, D268 ruling 8): the Milky Way template's amplitude pinned to the Galaxy's printed non-axisymmetric "
-    "mass (0.6862, was the draw's 0.28926) lifts the body's light to 0.1037 of the galaxy's - the recorded miss 'low by "
-    "half' against Gadotti 2011's tenth becomes a hit; the bound is not moved (B5), the re-ruling is the gate's"))
 def test_debt_146_the_body_s_light_is_a_miss_low_by_half(prod):
-    """S86's recorded miss, split from the record above at S99 so the bound stands unmoved while it fails: the body's
-    light, beta of each ring's bolometric surface brightness over the disc's and the bulge's light, under two thirds
-    of G11's peak at a tenth."""
+    """S86's recorded miss, split from the record above at S99: the body's light, beta of each ring's bolometric
+    surface brightness over the disc's and the bulge's light.
+
+    S100 (batch P, D270; #146, the gate's ruling 2): the recorded miss is removed with its reason (a miss that starts
+    passing is removed and the reason written). Was a strict xfail of `light_share < 0.10 / 1.5` - the light 0.0437 of
+    the galaxy's, "low by half" against Gadotti 2011's peak at a tenth. Once the template's amplitude is pinned to
+    Portail et al. 2017's non-axisymmetric mass (0.6862, was the draw's 0.28926; S99, D268 ruling 8) the body's light
+    reads 0.1037 of the galaxy's against G11's "about a tenth": met, unfitted. Held as measured; the name is kept."""
     model = the_model(prod)
     o = run(model, inputs_of("milky_way"), only=CHECKPOINT_4)
     F, R = o.fields, o.grid.R
@@ -1696,7 +1739,8 @@ def test_debt_146_the_body_s_light_is_a_miss_low_by_half(prod):
     area = 2.0 * math.pi * R * np.gradient(R) * 1e6
     light_share = float((beta * np.asarray(F["disc_surface_brightness"], dtype=float) * area).sum()) / (
         float(F["disc_luminosity"]) + float(F["bulge_luminosity"]))
-    assert light_share < 0.10 / 1.5  # the light: a miss, low by half against G11's peak at a tenth
+    # S100 (batch P, D270; #146 met once pinned): was `light_share < 0.10 / 1.5`, the miss at 0.0437, low by half.
+    assert light_share == pytest.approx(0.1037, abs=5e-4)  # as measured; G11's tenth met unfitted
 
 
 # --- #145: Erwin 2018's frequency as a disclosed check, not a draw (S87; the owner's ruling of 2026-11-03, D255) --------

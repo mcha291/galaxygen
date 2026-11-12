@@ -28,14 +28,25 @@ def out(model, **inputs):
 
 
 def test_the_bar_scales_with_the_disc(model):
+    """The bar's half-length is a law of the disc's scale length - since S100 (#80, D268 ruling 5, D270) Erwin 2019's
+    Table 4, row "log M* + log h": log a = alpha1 + 0.61 log h + beta1 log M below log M_brk 10.13 and alpha2 + 0.61 log h
+    + 0.35 log M above it (alpha1 0.02, beta1 0.00, alpha2 = alpha1 + (beta1 - beta2) M_brk), M the retained baryons'
+    mass checkpoint 1 publishes. The name is kept (ruling 13): the bar still scales with the disc, now with its mass
+    beside it. From S87 to S100 Table 3, 10^0.04 h^0.76; before S87 2.0 times the scale length."""
     o = out(model)
     # The lambda_d scale length since S25, when the pattern moved ahead of star formation (D174);
     # the thin disc's fitted stellar one, a star-formation result, until then.
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was 2.0 times the scale length - Erwin 2019's law of it since S87, 10^0.04 h^0.76.
-    assert o.fields["bar_half_length"] == pytest.approx(10.0 ** 0.04 * o.fields["disc_scale_length_spin"] ** 0.76)
-    # Row 15: 2.2698 since S87, out by 2.73 and a recorded miss (debt #80; the template pins 5.0); 5.2097 from S25 to
-    # S87, out by 0.01; 4.8828 and inside before.
-    assert o.fields["bar_half_length"] == pytest.approx(2.2698, abs=2e-3)  # S87 (#80): was 5.2097 - the law
+    # S100 (#80, D270; ruling 13): was `10.0 ** 0.04 * h ** 0.76` (Table 3) - Table 4 on the baryons' mass, written here.
+    h, log_m = float(o.fields["disc_scale_length_spin"]), float(np.log10(float(o.fields["baryon_mass_total"])))
+    if log_m < 10.13:
+        law = 10.0 ** (0.02 + 0.61 * np.log10(h) + 0.00 * log_m)
+    else:
+        law = 10.0 ** (0.02 + (0.00 - 0.35) * 10.13 + 0.61 * np.log10(h) + 0.35 * log_m)
+    assert log_m > 10.13 and o.fields["bar_half_length"] == pytest.approx(law, rel=1e-12)
+    # Row 15: 3.1395 since S100 (#80, Table 4), out by 1.86 and still a recorded miss (debt #80; the template pins 5.0);
+    # 2.2698 from S87 to S100, out by 2.73; 5.2097 from S25 to S87, out by 0.01; 4.8828 and inside before.
+    assert o.fields["bar_half_length"] == pytest.approx(3.1395, abs=2e-3)  # S100 (#80, D270): was 2.2698 - Table 4's law  # S87 (#80): was 5.2097 - the law
 
 
 def test_the_bar_length_is_reproducible_not_drawn(model):
@@ -111,7 +122,10 @@ def test_arm_multiplicity_is_a_label_from_the_closed_set_and_no_longer_a_draw(mo
     # S87 (#80, the owner's ruling of 2026-11-03, D255): was `seen == {6.0}`. With the bar on Erwin 2019's law (2.27 kpc,
     # was 5.21) its taper covers fewer rings, the saturation - the seed's one way in - weighs the rings differently on
     # some seeds, and they read 5: the label is still the disc's at nearly every seed, no longer at all thirty.
-    assert seen == {5.0, 6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
+    # S100 (batch P, D270; #80, Erwin 2019's Table 4: the default bar 2.270 -> 3.140 kpc): was {5.0, 6.0} - the {5, 6}
+    # encoded S87's shorter bar; with the taper over more rings every one of the thirty seeds reads 6 again (both
+    # models, scratchpad s100_P_arms.log): the label varies less with the seed, not more - the disc's, as S56 ruled.
+    assert seen == {6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
     # The disc moves it: a disc-dominated disc's label is four arms where the default's and a halo-dominated one's
     # are six (the label weighs the published amplitudes, the bar's taper in them, so it leans to the outer disc's
     # arm numbers; on the X / 2 window these read 6 and 2 beside the default's 3).
