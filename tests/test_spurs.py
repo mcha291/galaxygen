@@ -35,7 +35,6 @@ from galaxy.run import run
 from galaxy.specs import graph as _graph
 from galaxy.stages import gas_pattern as gm
 from galaxy.stages import spurs as sp
-from galaxy.stages.pattern import ring_bracket
 
 R_SUN = 8.122
 G_HAND = 4.30091727e-6  # kpc (km/s)^2 / Msun, written here
@@ -120,7 +119,10 @@ def test_the_table_the_stages_and_the_graph_s_order(default_model, prod):
     assert [d.name for d in spurs_stage.publishes] == ["gas_density_contrast"] and spurs_stage.publishes[0] is gm.GAS_DENSITY_CONTRAST
     assert set(sp.SPUR_READS) <= set(spurs_stage.requires) and spurs_stage.reads_seeds == ()
     # The gas pattern's stage keeps the contrast the star formation law reads, which carries neither lanes nor spurs.
-    assert [d.name for d in gm.GAS_PATTERN.publishes] == ["star_formation_gas_contrast"]
+    # S100 (#130, D270): was ["star_formation_gas_contrast"] alone - the stage also publishes the atomic gas's own
+    # response (its lanes, no spurs), which the spurs stage blends with the molecular one by ism's fraction.
+    assert [d.name for d in gm.GAS_PATTERN.publishes] == ["star_formation_gas_contrast", "atomic_gas_density_contrast"]
+    assert set(gm.BLEND_READS) <= set(spurs_stage.requires)
     impls = prod[1]
     for stage in ("clouds", "cloud_texture", "clusters"):
         assert set(sp.SPUR_READS) <= set(impls.get(stage).requires), stage
@@ -235,12 +237,22 @@ def test_the_published_field_is_the_point_function_s_exact_cell_means(default_mo
     gp = gas_of(default_model, o)
     edges = o.grid["phi"].edges
     published = np.asarray(o.fields["gas_density_contrast"])
-    assert np.array_equal(published, gp.cell_means(o.grid.R, edges))
-    # On the ring that holds the most spur, the published cells against a dense mean of the point function.
+    # S100 (#130, D270; ruling 10): was `published == gp.cell_means(R, edges)` - the published gas is now the blend
+    # f c_mol + (1 - f) c_atom of the molecular pattern's unspurred cell means and the published atomic response, f the
+    # ism stage's molecular fraction on the ring, with the spurs composed on the blend (written here term by term).
+    frac = np.asarray(o.fields["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)
+    blend = frac[:, None] * gp.unspurred_cell_means(o.grid.R, edges) + (1.0 - frac[:, None]) * np.asarray(o.fields["atomic_gas_density_contrast"], dtype=float)
+    assert np.array_equal(published, gp.spurs.compose_cells(o.grid.R, edges, blend))
+    # On the ring that holds the most spur, the published cells against a dense mean of the point function - since
+    # S100 the blend's point function: the two patterns' unspurred contrasts at the point, the spurs composed on it.
     i = int(np.argmax(gp.spurs.ring_mean(o.grid.R)))
     n = (edges.size - 1) * 96
     phi = edges[0] + (np.arange(n) + 0.5) * ((edges[-1] - edges[0]) / n)
-    dense = gp.contrast_at(np.full(n, o.grid.R[i]), phi).reshape(edges.size - 1, -1).mean(axis=1)
+    atom = gp.atomic(float(constants(default_model)["HI_DISPERSION_RATIO"]))
+    ring = np.full(n, o.grid.R[i])
+    point = frac[i] * gp.unspurred_contrast_at(ring, phi) + (1.0 - frac[i]) * atom.unspurred_contrast_at(ring, phi)
+    dense = gp.spurs.compose_at(ring, phi, point).reshape(edges.size - 1, -1).mean(axis=1)
     assert np.abs(published[i] - dense).max() < 5e-5  # the midpoint rule's h² on a spur 0.43 degrees wide at 96 points a degree: 2.6e-5, measured (S62)
 
 
@@ -266,24 +278,19 @@ def hand_crest_and_trough(gp, R: float, phi: float) -> tuple[float, float]:
 
 
 def hand_trough(gp, radius: float) -> float:
-    """The ring's trough the walk reads at ``radius`` (S92, #164): each bracketing grid ring's least unspurred contrast
-    on the solver's cell centres (``hand_crest_and_trough``'s), linear in R between the two rings."""
-    lower, upper, share = ring_bracket(gp.R, np.array([radius]))
-    t0, t1 = (hand_crest_and_trough(gp, float(gp.R[int(r[0])]), 0.0)[1] for r in (lower, upper))
-    w = float(share[0])
-    return (1.0 - w) * t0 + w * t1
+    """The ring's trough the walk reads at ``radius`` (S92, #164): the least unspurred contrast on the solver's cell
+    centres of the ring at the foot's own radius (``hand_crest_and_trough``'s; S99, #220). S92 to S99: each bracketing
+    grid ring's least, linear in R between the two rings."""
+    return hand_crest_and_trough(gp, radius, 0.0)[1]
 
 
 def hand_ridge(gp, piece: int, radius: float) -> tuple[float, float]:
-    """The walk's read of the ridge, written again (S92, #164 / #165): on the two bracketing grid rings, the gas crest
-    near the chain's crossing and the ring's trough, each linear in R. Until S92 the unspurred contrast at the chain's
-    crossing alone."""
-    lower, upper, share = ring_bracket(gp.R, np.array([radius]))
-    rings = np.array([int(lower[0]), int(upper[0])])
-    az = gp.stars.pieces.along(np.full(2, piece), np.log(gp.R[rings]))
-    (c0, t0), (c1, t1) = (hand_crest_and_trough(gp, float(gp.R[r]), float(a)) for r, a in zip(rings, az))
-    w = float(share[0])
-    return (1.0 - w) * c0 + w * c1, (1.0 - w) * t0 + w * t1
+    """The walk's read of the ridge, written again (S92, #164 / #165; S99, #220): on the ring at ``radius`` itself, the
+    gas crest near where piece ``piece``'s chain crosses it and the ring's trough (``hand_crest_and_trough``). S92 to
+    S99: the same reads on the two bracketing grid rings, each linear in R. Until S92 the unspurred contrast at the
+    chain's crossing alone."""
+    phi = float(gp.stars.pieces.along(np.array([piece]), np.log(np.array([radius])))[0])
+    return hand_crest_and_trough(gp, radius, phi % (2.0 * math.pi))
 
 
 def test_the_spacing_is_ten_jeans_lengths_of_the_ridge_from_the_published_fields(default_model):
@@ -334,14 +341,14 @@ def walk_against_point(model, seed: int | None = None) -> np.ndarray:
 # S92 (#164 / #165): the walk reads the gas crest near the chain, not g at the chain, so its declared approximation is
 # the crest's: the two grid rings' window maxima, linear in R, against the point function's at the foot's own ring.
 # Until S92 (the chain's read): ten sampled feet 0.0077, every foot 0.0573 (39 feet) at seed 0 and 0.2506 (35) at 4242.
-WALK_READ_OVER_S92 = ("S92 (#164 / #165): the walk's crest read reads over WALK_READ_DIFFERENCE (0.27) at texture seed "
-                      "4242 - the crest window's width differs between the two grid rings and the crest it holds can be "
-                      "another ridge's (worst feet at 4.44 and 5.40 kpc); a population finding since S95: 5 of 12 unpinned "
-                      "Milky Way seed pairs read over, max 0.666 (D264); register #220, the bound not moved")
 # S95 (Audit VI F-3B-1, D264): what WALK_READ_DIFFERENCE is now. 0.27 was measured at S70 / S88 on the read AT THE FOOT;
-# on the crest statistic (since S92) the template's own seed reads 0.2176 (below) and Audit VI's twelve unpinned Milky
-# Way texture / pattern seed pairs on the production grid read up to 0.666, five of twelve over 0.27 (#220, restated as
-# a population finding; its closer is a model mend). Not relaxed (B5): a failed check is recorded, not widened.
+# on the crest statistic (since S92) the template's own seed read 0.2176 and Audit VI's twelve unpinned Milky Way
+# texture / pattern seed pairs on the production grid read up to 0.666, five of twelve over 0.27 (#220, restated as a
+# population finding; its closer is a model mend). Not relaxed (B5): a failed check is recorded, not widened.
+# S99 (#220, the gate's ruling): the mend - the walk reads the crest by the point function at the foot
+# (``spurs.foot_reads``), so the read is the point function's by construction: 0 at every foot of seeds 0 and 4242
+# here and of S95's four pairs over the bound (1194/2262 0.3667, 1582/2786 0.4863, 1679/2917 0.6656, 1970/3310 0.4002
+# -> 0, s99_M_walk.py). The hold WALK_READ_OVER_S92 (xfail strict at seed 4242: 0.4582) lifted; the bound unmoved.
 
 
 def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
@@ -350,16 +357,16 @@ def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     ten sampled feet recorded (S62)."""
     every = walk_against_point(default_model)
     sample = every[np.linspace(0, every.size - 1, 10).astype(int)]
-    assert every.size == 45 and every.max() <= ls.WALK_READ_DIFFERENCE
-    assert (round(float(sample.max()), 4), round(float(every.max()), 4)) == (0.0189, 0.2176)
+    assert every.size == 44 and every.max() <= ls.WALK_READ_DIFFERENCE  # S99 (#220): was 45 feet
+    # S99 (#220): was (0.0189, 0.2176) - the walk reads the crest by the point function at the foot, 0 by construction.
+    assert (round(float(sample.max()), 4), round(float(every.max()), 4)) == (0.0, 0.0)
     # S88 (D255 ruling 4): the bound's own seed, 4242, beside it - recorded here, its bound held in the next test.
     every = walk_against_point(default_model, 4242)
-    assert every.size == 43 and round(float(every.max()), 4) == 0.4582
+    assert every.size == 42 and round(float(every.max()), 4) == 0.0  # S99 (#220): was 43 feet, 0.4582
 
 
-# S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
-# not held), and masks nothing - the failing assert is the body's only one.
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=WALK_READ_OVER_S92)
+# S95 (Audit VI F-3B-9, F-3A-7): the hold named its failure and masked nothing. S99 (#220): the hold
+# (xfail strict, WALK_READ_OVER_S92) lifted - the walk reads the crest by the point function at the foot.
 def test_the_walk_s_read_at_the_bound_s_own_seed_is_within_it(default_model):
     assert walk_against_point(default_model, 4242).max() <= ls.WALK_READ_DIFFERENCE
 
@@ -374,7 +381,8 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     # S91 (#216): was 40 feet on 13 chains - the template's census (49, 13, 4) -> (46, 12, 3) by the births made
     # bit-independent (chain 12's one-ulp birth gone, with its one foot).
     # S92 (#165): was 39 feet on 12 chains - the spacing reads the ridge's crest (at least the chain's read), so it is shorter.
-    assert (f["gas_spur_radius"].size, np.unique(f["gas_spur_chain"]).size) == (45, 12)  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
+    # S99 (#220): was (45, 12) - the walk reads the crest at the foot, so the spacings move.
+    assert (f["gas_spur_radius"].size, np.unique(f["gas_spur_chain"]).size) == (44, 12)  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
     # At three radii: 10 λ_J,sp where each chain crosses, from the published fields and the walk's read.
     pieces = gp.stars.pieces
     table = {}
@@ -392,7 +400,9 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     # clock and the template's pinned 5.0 kpc bar; still kiloparsecs, outside M51's 0.2-1 kpc past 4 kpc
     # S92 (#165): were [1.15, 3.72], [4.66, 5.89, 6.23, 6.86, 6.86] and [6.88, 6.99, 8.16, 8.68, 8.77, 10.16] - the walk
     # reads the gas crest within half the ring's crest width of the chain, so each spacing reads the ridge's crest.
-    assert (table[4.0][1], table[R_SUN][1], table[10.0][1]) == ([0.72, 3.7], [4.64, 5.88, 5.89, 6.23, 6.86], [6.85, 6.85, 8.14, 8.61, 8.68, 8.77])
+    # S99 (#220): R_SUN's first was 4.64 and 10 kpc's fourth 8.61 - the crest read on the ring at the radius itself, not
+    # linear between two grid rings.
+    assert (table[4.0][1], table[R_SUN][1], table[10.0][1]) == ([0.72, 3.7], [4.66, 5.88, 5.89, 6.23, 6.86], [6.85, 6.85, 8.14, 8.62, 8.68, 8.77])
     assert all(s > 1.0 for s in table[R_SUN][1])  # outside M51's 0.2-1 kpc: recorded, not judged
 
 
@@ -401,7 +411,13 @@ def test_a_flocculent_disc_carries_no_spur_and_its_gas_contrast_is_the_pattern_s
     assert o.fields["arm_class"] == "flocculent" and o.fields["gas_spur_radius"].size == 0
     gp = gas_of(default_model, o)
     assert gp.spurs is None
-    assert np.array_equal(o.fields["gas_density_contrast"], gp.cell_means(o.grid.R, o.grid["phi"].edges))
+    # S100 (#130, D270; ruling 10): was `gas_density_contrast == gp.cell_means(R, edges)` - with no spur the published
+    # gas is the blend f c_mol + (1 - f) c_atom of the pattern's cell means and the published atomic response, f the
+    # ism stage's molecular fraction on the ring, and nothing composed on it.
+    frac = np.asarray(o.fields["gas_molecular_fraction_profile"], dtype=float)
+    frac = np.where(np.isfinite(frac), frac, 1.0)[:, None]
+    blend = frac * gp.cell_means(o.grid.R, o.grid["phi"].edges) + (1.0 - frac) * np.asarray(o.fields["atomic_gas_density_contrast"], dtype=float)
+    assert np.array_equal(o.fields["gas_density_contrast"], blend)
 
 
 # --------------------------------------------------------------------------------------------------------------

@@ -65,7 +65,7 @@ import numpy as np
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
-from galaxy.stages.gas_pattern import GAS_DENSITY_CONTRAST, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
+from galaxy.stages.gas_pattern import BLEND_READS, GAS_DENSITY_CONTRAST, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS, placed_gas_contrast
 from galaxy.stages.pieces import FWHM_PER_SIGMA, REACH, TWO_PI
 
 # The table's columns (``layer/spurs.py`` declares them), in their order; what every stage that composes the spurs
@@ -330,7 +330,13 @@ def compute_spurs(ctx: Context) -> Mapping[str, Any]:
         shape = _compose.gas_pattern(ctx.fields, R, ctx.constants)
         if shape is None or shape.flat:
             return _compose.neutral(GAS_DENSITY_CONTRAST, cells)
-        return shape.cell_means(R, ctx.grid["phi"].edges)
+        edges = ctx.grid["phi"].edges
+        # S100 (#130): the diffuse gas and the dust are placed by the blend of the molecular and the atomic responses,
+        # weighted by the ring's molecular fraction (gas_pattern.placed_gas_contrast), formed here - after the lanes,
+        # before the spurs, which are composed on the blend. Until S100: shape.cell_means(R, edges), the molecular
+        # response alone (the same arithmetic as the spurs composed on its unspurred cell means).
+        blend = placed_gas_contrast(shape.unspurred_cell_means(R, edges), ctx.fields[BLEND_READS[0]], ctx.fields[BLEND_READS[1]])
+        return blend if shape.spurs is None else shape.spurs.compose_cells(R, edges, blend)
 
     return {GAS_DENSITY_CONTRAST.name: _compose.field(ctx.fields, GAS_DENSITY_CONTRAST, cells, make)}
 
@@ -343,14 +349,17 @@ SPURS = IMPLEMENTATIONS.register(
             "lanes, and on it the feathers the layer laid off each arm chain's gas ridge - each a short trailing "
             "streak of gas at a steep pitch on the ridge's outer side, as dense at its foot as the ridge there and "
             "fading to a seventh of that at its tip - their excess taken from the whole ring in proportion to its "
-            "gas, so every ring keeps its gas exactly. It publishes the gas contrast the dust, the HII regions, the "
-            "clouds and the clusters are placed by (the star formation law reads the pattern's other contrast, "
-            "without lanes or spurs). It stands after the star formation history because the spurs' spacing reads "
-            "the ring's gas column; it draws nothing."
+            "gas, so every ring keeps its gas exactly. It publishes the gas contrast the dust and the HII regions' "
+            "light are placed by (the clouds and the clusters read the pattern's molecular response itself, and the "
+            "star formation law the pattern's other contrast, without lanes or spurs). It stands after the star formation history because the spurs' spacing reads "
+            "the ring's gas column; it draws nothing. Since S100 the contrast it publishes is the blend of the "
+            "molecular gas's response and the atomic gas's, weighted on each ring by the molecular fraction, "
+            "with the spurs composed on the blend: the diffuse gas the dust follows is mostly atomic outside "
+            "the molecular ring. The clouds and the clusters keep the molecular response."
         ),
         compute=compute_spurs,
         reads_constants=GAS_PATTERN_CONSTANTS,
-        requires=(*GAS_PATTERN_READS, *SPUR_READS),
+        requires=(*GAS_PATTERN_READS, *SPUR_READS, *BLEND_READS),  # S100 (#130): and the blend's two reads
         publishes=(GAS_DENSITY_CONTRAST,),
     )
 )

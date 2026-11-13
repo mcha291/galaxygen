@@ -360,7 +360,8 @@ def test_164_165_213_a_spur_is_the_crest_s_excess_over_its_ring_s_trough_inside_
     ``arm_piece_amplitude`` (published) is above 0. #165: the table's peak column over the ring's gas column
     (``gas_surface_density``, linear in R) is the crest the walk read; #164: the height ``gas_spur_contrast`` is that
     crest less the ring's trough - the trough read here as the least of the unspurred gas contrast on 8192 azimuths
-    of each bracketing grid ring (the build reads 1440 cell centres), linear in R between them; agreement within
+    of the foot's own ring (the build reads 1440 cell centres; S100: was each bracketing grid ring, linear in R between
+    them - #220); agreement within
     2e-3 (the two samplings' own difference) on every foot whose height is above 0. Fails if a foot stands past the
     budget's edge, or a height is not the crest's excess over the trough."""
     from galaxy.layer import compose
@@ -379,12 +380,10 @@ def test_164_165_213_a_spur_is_the_crest_s_excess_over_its_ring_s_trough_inside_
         assert float(radius.max()) <= edge, (seed, float(radius.max()), edge)
         crest = peak / np.interp(radius, R, np.asarray(f["gas_surface_density"], dtype=float))
         gas = compose.gas_pattern(f, R, K)
-        upper = np.clip(np.searchsorted(R, radius, side="right"), 1, R.size - 1)
-        lower = upper - 1
-        rings = np.unique(np.concatenate([lower, upper]))
-        floor = {int(i): float(np.min(gas.unspurred_contrast_at(np.full(phis.size, R[i]), phis))) for i in rings}
-        w = (radius - R[lower]) / (R[upper] - R[lower])
-        trough = (1.0 - w) * np.array([floor[int(i)] for i in lower]) + w * np.array([floor[int(i)] for i in upper])
+        # S100 (batch P, D270; #220, the gate's ruling 5): the trough read on the foot's own ring (8192 azimuths at the
+        # foot's radius), as the walk reads it since S99 (spurs.foot_reads). Was each bracketing grid ring's least,
+        # linear in R between them - off by up to 0.15 once the walk moved (the runner on 0123c7f).
+        trough = np.array([float(np.min(gas.unspurred_contrast_at(np.full(phis.size, r), phis))) for r in radius])
         up = height > 0.0
         miss = np.abs(crest[up] - trough[up] - height[up])
         report[seed] = (radius.size, int(up.sum()), float(radius.max()), edge, float(miss.max(initial=0.0)))

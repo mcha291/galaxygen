@@ -194,7 +194,7 @@ section 4's model gaps from the field back to its constant `[verified: s97 analy
 line, the tables and the scripts are the note `s97_R.md` (the session's scratchpad). What it found re-words section 4.
 
 - **NGC 4414's 0.926 kpc stellar layer is a radius, not a galaxy.** `thin_disc_scale_height` is one scalar per galaxy,
-  h = σ_z² / (2πGΣ) evaluated at `R_SUN` = 8.2 kpc on every template (`stages/vertical.py`). In `ngc_4414` that is
+  h = σ_z² / (2πGΣ) evaluated at `R_SUN` = 8.2 kpc on every template (`stages/vertical.py`) (S99: built as h_R / 7.3, the law kept as `thin_disc_scale_height_dynamical`, D269). In `ngc_4414` that is
   4.90 mass scale lengths out (3.36 in the Milky Way), where Σ is 17.19 M☉/pc² against 47.13 at the same σ_z (20.74 /
   20.99 km/s): 926 against 346 pc, reproduced to five digits. No template input sets it. Read ring by ring the same
   law flares 32-fold between 1 and 8.2 kpc on `ngc_4414`, and its stellar-mass-weighted mean is 222 pc (215 on the
@@ -205,8 +205,8 @@ line, the tables and the scripts are the note `s97_R.md` (the session's scratchp
 - **The bar's light is the bar the law drew: nothing is lost inside the model.** `tools/goal_metrics.py`'s A_m is half
   a cosine's amplitude (its own docstring); the bar stage's `bar_contrast` is the amplitude, as its source's is. The
   template's amplitude is a seeded draw, 0.2893 (the S4G median 0.374, −0.49σ; the template pins presence, length and
-  angle, not amplitude); the light holds 0.294 without the bulge, 0.274 with it, 0.252 with the dust — the tool's
-  0.12–0.14, section 3's row 3. By the same tool the goal's bar is 2.4 times that in either convention (0.58–0.68 in
+  angle, not amplitude) (S99: pinned, D269); the light holds 0.294 without the bulge, 0.274 with it, 0.252 with the dust — the tool's
+  0.12–0.14, section 3's row 3. By the same tool the goal's bar is 2.4 times that (S99: pinned, D269) in either convention (0.58–0.68 in
   the stage's, near the 84th percentile of the source's distribution): an artist's impression, no target (C6). What a
   source could say is the Milky Way's own bar: `READING_BAR.md` holds Portail et al. 2017's bar and bulge mass, 1.88 ×
   10¹⁰ M☉, against the model's 1.21 × 10¹⁰ (0.64 of it; the analyst's arithmetic `[inferred]` — withdrawn at S98, F-98A-1: unlike components; section 15 has
@@ -307,3 +307,133 @@ In order of what a source now supports: **the layer** (#227) has a sourced mend 
 the Galaxy's own bar; **the knots as regions** (#181) were sourced at S96; **the lanes** have no sourced law in the
 model's frame — a shock needs a pattern speed (the owner's, D216), and before that the clouds' weight wants a reading
 (the arm to inter-arm contrast of molecular clouds in a mapped galaxy) since the clouds are what a lane is.
+
+---
+
+# Part S99 — the mid-batch look (D269)
+
+## 18. What batch P's first builds do to the frames, uncommitted
+
+**What this is (2026-11-12, S99, BUILD_VI row 99).** An Opus runner (`s99_X.md`; worktree detached at `session-99`'s
+merged head 0123c7f — NGC 4414's stellar layer 926 → 229 pc, the Milky Way's bar pinned at `bar_contrast` 0.6862)
+re-took the field and stars captures through the project's own Playwright path, the API on a spare port **without**
+bundles (every answer computed live), at the **committed display defaults**, plus the two boxes M4 and N6 of section
+11. The "before" pictures are the committed frames; the boxes' old pictures are S97's saved PNGs (`s97_X2_M4.png`,
+`s97_X2_N6.png`, on 6cdef57 with the s93 bundles; no frontend change since, so the boxes differ only in the model).
+The statistics are `tools/goal_metrics.py`'s at the committed field frame's geometry, the tool's own estimate in
+[brackets] where it differs. **Nothing is re-committed**: no frame, no bundle, no display default — the batch's close
+(S100) regenerates the frames once. **Rule C6: no number here is a target.** The first NGC 4414 field take failed the
+harness's 30 s stand under live answers and was retaken with a 900 s stand; no picture is from a timed-out run.
+
+**The Milky Way** (frame geometry: centre 519.805, 515.349, q 1, PA 25.52, a 300.3 px):
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm B | dark | slope | ring A₂ at r/a 0.21 | A₂ profile max (r/a) |
+|---|---|---|---|---|---|---|---|---|---|
+| GOAL (section 1) | −0.354 (−0.46 / −0.81) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 | — | — |
+| committed `milky_way-field` | −0.322 (+0.639 / +0.318) | 0.056 | 0.053 | 0.053 | 1.60 | 0.0315 | −1.26 | 0.060 | 0.130 (0.89) |
+| **new field, defaults** | −0.304 (+0.630 / +0.326) [−0.300] | 0.055 | **0.078** | 0.060 | **2.08** [2.07] | 0.0317 [0.0320] | −1.27 [−1.28] | **0.160** | **0.168 (0.24)** |
+| committed `milky_way-stars` | −0.354 (+0.236 / −0.118) [−0.304] | 0.051 | 0.042 [0.092] | 0.042 | 1.90 [1.97] | 0.0056 [0.134] | −3.62 | 0.048 | 0.143 (0.84) |
+| new stars, defaults | −0.358 (+0.241 / −0.117) [−0.328] | 0.061 | 0.054 [0.090] | 0.049 | 1.96 [1.94] | 0.0062 [0.132] | −3.57 | 0.106 | 0.137 (0.84) |
+| old model, box M4 | −0.659 (−0.109 / −0.768) | 0.051 | 0.062 | 0.063 | 1.56 | 0.0460 | −0.79 | 0.093 | 0.110 (0.19) |
+| **new model, box M4** | −0.660 (−0.108 / −0.768) | 0.050 | **0.091** | 0.070 | **2.01** [1.98] | 0.0471 | −0.79 | **0.253** | **0.269 (0.19)** |
+
+In the runner's words: the pinned bar is the one visible change. At the defaults the committed frame's faint, round
+inner lens becomes a short tilted bar of tan light through the white core ball; the A₂ profile's peak moves from the
+outer arms (0.130 at r/a 0.89) to the bar (0.168 at r/a 0.24). Colour, levels, dark fraction and slope do not move
+beyond noise. Under M4 the bar is plain and long; in the stars frame it is barely seen under the points.
+
+**NGC 4414** (frame geometry: centre 519.388, 499.717, q 0.5736, PA 175.22, a 286.5 px; the inner disc r/a < 0.25):
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm B | dark | slope | inner disc: level, B−R |
+|---|---|---|---|---|---|---|---|---|
+| GOAL (section 1) | −0.329 (+0.51 / +0.18) | 0.101 | 0.074 | 0.056 | 2.67 | 0.154 | −2.10 | — |
+| committed `ngc_4414-field` | +0.185 (+0.311 / +0.496) | 0.091 | 0.185 | 0.042 | 2.57 | 0.0309 | −2.12 | 207.6, +0.157 |
+| **new field, defaults** | +0.166 (+0.299 / +0.464) [+0.175] | **0.059** [0.032] | **0.128** [0.129] | 0.038 [0.021] | **1.99** [2.01] | 0.0278 [0.0289] | **−1.59** [−1.62] | **220.7, +0.144** |
+| committed `ngc_4414-stars` | −0.256 (+0.127 / −0.129) [−0.272] | 0.052 | 0.084 [0.089] | 0.037 | 1.57 [2.01] | 0.0000 [0.017] | −3.63 | 219.7, +0.085 |
+| new stars, defaults | −0.208 (+0.131 / −0.077) [−0.305] | 0.034 | 0.074 [0.078] | 0.034 | 1.71 [1.81] | 0.0010 [0.041] | −3.58 | 229.6, +0.081 |
+| old model, box N6 | −0.347 (−0.066 / −0.414) [−0.533] | 0.152 | 0.099 | 0.033 | 2.02 | 0.0578 | −1.19 | 196.3, −0.057 |
+| **new model, box N6** | **−0.459** (−0.022 / −0.481) [−0.804] | **0.063** | **0.034** [0.052] | 0.035 | **1.45** [1.62] | 0.0623 [0.0363] | −1.19 [−0.62] | **205.9, −0.028** |
+
+The inner B−R is −2.5 log₁₀(ΣB / ΣR) on sRGB-decoded pixels — not the tool's band colour, computed the same way on old
+and new. In the runner's words: the visible change is the shape. The old thick layer drew a tall, vertical,
+bulge-like glow above the disc, with dust shown only on the near side; the new frame is a flat, inclined ellipse, the
+disc's arms and dark dust flecks on both sides of the core, and under N6 the sky glow and the speckle form a flat
+ellipse instead of a near circle. At the defaults the white core ball and its halo are unchanged in kind. **The inner
+disc did not go dark or red behind its dust column: it brightened** (207.6 → 220.7 of 255 at the defaults, 196.3 →
+205.9 under N6) and its colour moved by 0.013-0.03 mag; the outer disc dims a little (r/a 1.0: 46 → 43, 64 → 57). The
+runner's reason — the thinner layer puts more of the inner light into the midplane and less into the wide vertical
+glow — is `[inferred, not traced]`. The stars frames and the default fields also differ in the random draw of knots
+and points (the model's inputs changed); single-point changes there are not attributed.
+
+**The yardstick (D269), the lead's verdicts.** `milky_way-field`: the bar shows, short and tilted — the ring's A₂ at
+0.21 a 0.060 → 0.160 (0.093 → 0.253 under M4), the headline A₂ 0.053 → 0.078 against the goal's 0.194, the arm
+contrast 1.60 → 2.08 (past the goal's 1.83); colour and dark fraction unmoved. **Nearer.** `ngc_4414-field`: a flat
+inclined disc with arms and dust flecks where a tall glow stood — A₂ 0.185 → 0.128 (goal 0.074), but A₁ 0.091 →
+0.059 (0.101), the arm contrast 2.57 → 1.99 (2.67) and the slope −2.12 → −1.59 (−2.10) move away; the colour step is
+still reversed at the defaults (+0.185 → +0.166 against −0.329; under N6 −0.347 → −0.459). **Nearer by eye, mixed by
+the numbers.** **Neither is near**: no lanes (ruling 9's: the gas law's frame is not touched, and no sourced weight
+gathers the clouds onto a ridge — #229, #144, #228), no pink regions (#232: the regions' sizes are set in their clouds'
+clumped gas), and at the owner's display defaults the white ball and the tan still stand (the display pass, the
+owner's). Not captured: the thumbnails, the physics-only frame, the zoom frames; no goal picture re-measured (the goal
+rows are section 1's).
+
+---
+
+# Part S100 — batch P's committed frames (D270)
+
+## 19. The frames regenerated at the batch's close
+
+**What this is (2026-11-12, S100, BUILD_VI row 100).** The close builder (`s100_C.md`) regenerated the nine frames on
+batch P's final model (hash 27561e8d381b992b4ead3bccc0615aa7) from its exported bundles, at the **committed display
+defaults** the owner has not yet tuned (no display default touched; `frontend/src` as on `main`): the seven captures,
+both thumbnails and `frames.json`. `DUSTY_LAYER_RATIO` was re-pinned as measured (0.96977 / 0.97354 / 0.97990, was
+0.96835 / 0.97233 / 0.97909); every judged check of the picture test — the dust's column, the surface-brightness gates
+A and B, the GPU light check — passed unmoved, and the picture test reads all nine "the committed picture, byte for
+byte" (again after the re-pin pass's two model mends, on the final bundles). "Before" is `main`'s committed frame
+(S93's model with S97's display defaults). The statistics are `tools/goal_metrics.py`'s at the **old** field frame's
+geometry, the tool's own estimate in [brackets] where it differs; the stars frames at their field frame's geometry.
+**Rule C6: no number here is a target.**
+
+| picture | D(B−R) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope |
+|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` (section 1) | −0.354 | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 |
+| before, `milky_way-field` | −0.322 | 0.0564 | 0.0531 | 0.0528 | 1.604 | 0.0315 | −1.26 |
+| **S100, `milky_way-field`** | −0.304 [−0.301] | 0.0546 | **0.0778** [0.0783] | 0.0600 | **2.091** [2.083] | 0.0320 [0.0324] | −1.27 [−1.28] |
+| before, `milky_way-stars` | −0.354 | 0.0512 | 0.0416 | 0.0424 | 1.901 | 0.0056 | −3.62 |
+| S100, `milky_way-stars` | −0.358 | 0.0605 | 0.0543 | 0.0490 | 1.965 | 0.0063 | −3.57 |
+| GOAL `ngc_4414` (q 0.5736) | −0.329 | 0.101 | 0.074 | 0.056 | 2.67 | 0.154 | −2.10 |
+| before, `ngc_4414-field` | +0.185 | 0.0911 | 0.1848 | 0.0423 | 2.568 | 0.0309 | −2.12 |
+| **S100, `ngc_4414-field`** | +0.166 [+0.175] | **0.0593** [0.0320] | **0.1281** [0.1291] | 0.0379 [0.0214] | **1.992** [2.015] | 0.0277 [0.0288] | **−1.59** [−1.62] |
+| before, `ngc_4414-stars` | −0.256 | 0.0521 | 0.0837 | 0.0372 | 1.573 | 0.0000 | −3.63 |
+| S100, `ngc_4414-stars` | −0.208 | 0.0341 | 0.0736 | 0.0341 | 1.707 | 0.0009 | −3.58 |
+
+At the frame's geometry: the Milky Way field's ring A₂ at r/a 0.21 0.060 → 0.160, its A₂ profile's peak 0.130 at r/a
+~0.89 (the outer arms) → 0.168 at r/a ~0.24 (the bar); NGC 4414's inner disc (r/a < 0.25) level 207.6 → 220.7, B−R
++0.157 → +0.144.
+
+**In the close builder's words.** *`milky_way`*: one visible change, and it is the bar — the committed frame's round
+inner lens becomes a short tilted tan bar through the white core ball, the two main arms leaving from its ends. Nearer
+the goal: A₂ 0.053 → 0.078 (still 40 % of the goal's 0.194), A₃ and A₁ a hair. No nearer: the dark fraction (five
+times the goal's), the slope, the levels and the disc's colour (the same tan-grey, no blue outer disc, no pink HII
+knots). Worse: the colour step −0.322 → −0.304 (goal −0.354), and the arm contrast 1.60 → 2.09 overshoots the goal's
+1.83 by more than it fell short before. *`ngc_4414`*: the visible change is the shape — the tall round glow round the
+bulge (the thick 926 pc layer) is gone, and the disc is a flat inclined ellipse with dark flecks on both sides of the
+core and a faint flat elliptical sky halo, by eye nearer HST's tilted disc. The metrics are mixed: A₂ 0.185 → 0.128
+(goal 0.074, nearer), D(B−R) +0.185 → +0.166 (a hair nearer, still the wrong sign); further: A₁ 0.091 → 0.059 (0.101),
+the arm contrast 2.57 → 1.99 (2.67), the slope −2.12 → −1.59 (−2.10), the dark fraction 0.031 → 0.028 (0.154). The
+centre is brighter and the white core ball larger; none of the goal's brown lane network, flocculent fragments or
+blue-white outer disc. *The stars frames*: blobs under the cell grid, as before; no spiral in either; the Milky Way's
+bar barely shows (ring A₂ 0.048 → 0.106).
+
+**The yardstick (D270), the lead's verdicts.** **The Milky Way frame is nearer in one thing**: a short, tilted, tan
+bar now crosses the white core and the arms leave from its ends; the goal's bar is three times as strong, long and
+yellow in a blue disc with pink knots, and the frame is a tan disc with none of them. **The NGC 4414 frame is nearer in
+silhouette**: the tall round glow is gone and a flat inclined ellipse with dark flecks stands in its place; three of
+its six statistics moved away from the goal, the colour step is still the wrong sign, and there is none of the Hubble
+picture's brown lane network or blue outer disc. **Neither is near.** What stands between: no lanes (D268 ruling 9;
+#144), no large pink regions (#232), and the white ball and the tan, which are the display pass's — the owner's.
+
+**Against S99's mid-batch look (section 18).** The field frames' numbers match section 18's to the third figure — on
+NGC 4414 every column; on the Milky Way all but the arm contrast (2.08 there, 2.091 here) and the dark fraction
+(0.0317, 0.0320) — so batch P's later builds change neither frame visibly: #80's law moves the default galaxy only
+(the templates' bars are pinned), and #130's blend moves the dust's crest by a few per cent. The frames' bytes differ.

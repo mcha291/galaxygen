@@ -549,7 +549,7 @@ def test_census_clustering_places_each_cloud_within_the_declared_reach_of_its_dr
         report[tpl, seed] = (float(np.max(np.abs(placed - drawn))), int((ring_of(placed) != ring_of(drawn)).sum()), placed.size)
         total += placed.size
     assert all(far < width and far <= 0.927 + 1e-3 and moved == 0 for far, moved, _ in report.values()), report
-    assert total == 40147, report  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 40163 (16 767 on each Milky Way seed, 6 613 on ngc_4414). S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
+    assert total == 43727, report  # S100 (batch P, D270; #227, the stellar layer one height): was 40147 - 16 948 on each Milky Way seed, 9 831 on ngc_4414 (its height 926 -> 229 pc, its clouds x1.48). S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 40163 (16 767 on each Milky Way seed, 6 613 on ngc_4414). S87 (BUILD_V M1; #148 the clock, #209 the floor, #80 the bar's law and pin): was 39264 - the clouds' count moved with the clock (16 775 on each Milky Way seed, 6 613 on ngc_4414)
     assert "A cloud's ring is the ring that drew it" in cc._CONSERVES and "0.932 kpc" in cc._CONSERVES
 
 
@@ -629,7 +629,7 @@ def clustering_excess(on, control) -> np.ndarray:
 # S91 (#216): the births bit-independent re-lay both seeds' censuses on this mesh (4242: 41 pieces on 9 chains -> 41 on
 # 10; 777: 44 on 9 -> 39 on 10); the slopes (-0.5626, -0.4616), mean -0.5121, still inside the law's 0.15 (0.128); the
 # 380-760 pc ratio 0.978 / 0.926 (mean 0.952).
-MW_PAIR_SLOPES = (-0.5624, -0.4486)  # S92 (#164 / #165): was (-0.5626, -0.4616) - the spurs' heights and spacing re-placed the clouds; S91 (#216): was (-0.5561, -0.4497); S90 (#161): was (-0.4846, -0.4327)
+MW_PAIR_SLOPES = (-0.5594, -0.4480)  # S100 (batch P, D270; #227, the census +1 %; the judged mean -0.5037 inside 0.15 of -0.64): was (-0.5624, -0.4486). S92 (#164 / #165): was (-0.5626, -0.4616) - the spurs' heights and spacing re-placed the clouds; S91 (#216): was (-0.5561, -0.4497); S90 (#161): was (-0.4846, -0.4327)
 
 
 # S90a (#216, D259): the Milky Way leg alone is machine_pinned - its two slopes are pinned as measured to 1e-3 on this
@@ -1016,10 +1016,12 @@ def test_gas_spurs_stand_ten_jeans_lengths_apart_along_each_chain(audit, K, seed
     # mesh ring's least on the solver's cell centres (``spurs.ring_profiles``), linear in R - wherever the height is
     # above 0 (at 0 the walk's max(crest - trough, 0) clips, and only the inequality is left).
     assert np.all(s["contrast"] >= 0.0) and np.all(s["peak_surface_density"] >= column * s["contrast"] * (1.0 - 1e-12))
+    # S100 (batch P, D270; #220, the gate's ruling 5): the trough read on the foot's own ring, as the walk reads it
+    # since S99 (``spurs.foot_reads``: the crest and the trough of one profile at the foot's radius). Was the bracketing
+    # mesh rings' floors, linear in R: `floors = sp.ring_profiles(gas, R_AUDIT).min(axis=1)`, `trough = (1 - share) *
+    # floors[lower] + share * floors[upper]` (ring_bracket) - off by up to 0.105 relative once the walk moved.
     gas = compose.gas_pattern(on.fields, R_AUDIT, K)
-    lower, upper, share = ring_bracket(R_AUDIT, s["radius"])
-    floors = sp.ring_profiles(gas, R_AUDIT).min(axis=1)
-    trough = (1.0 - share) * floors[lower] + share * floors[upper]
+    trough = sp.ring_profiles(gas, s["radius"]).min(axis=1)
     up = s["contrast"] > 0.0
     assert up.any() and rel(s["peak_surface_density"][up], (column * (s["contrast"] + trough))[up]) <= 1e-9
     assert set(np.unique(s["chain"])) <= set(np.unique(t["chain"]))
@@ -1086,7 +1088,9 @@ def test_gas_spurs_walk_reads_the_ridge_within_the_declared_difference(audit, K)
     # elsewhere; 0.5106, the value one runner read on night 1 (D259), now this machine's too; the bound 0.58 kept.
     # S92 (#164 / #165): was 0.5106 (the chain's read) - the walk's crest read against the point function's crest, 0.4413
     # at seed 4242 and 0.2279 at 777 on this mesh, inside the coarse bound 0.58.
-    assert max(worst.values()) == pytest.approx(0.4413, abs=1e-3) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
+    # S100 (batch P, D270; #220, the walk reads the crest by the point function at the foot since S99): was 0.4413 -
+    # the walk's crest IS the point function's now (same ring, same cells): 2.2e-16 at both seeds, rounding.
+    assert max(worst.values()) == pytest.approx(0.0, abs=1e-12) and sp.WALK_READ_DIFFERENCE == 0.27, worst  # S88: was 0.4804 (S70) - the clock, the floor, the pinned bar
     assert sp.WALK_READ_DIFFERENCE_COARSE == 0.58  # S88 (D255 ruling 4): was 0.49
 
 

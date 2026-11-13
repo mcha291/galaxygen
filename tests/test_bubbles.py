@@ -133,7 +133,7 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     # another and the census another draw again - 12 840 clusters, 2556 this young expected, 45 the spread)
     # S60 (D219): was 2643 (the arms a census of pieces: another draw of the census - 12 916 clusters)
     # S61 (D220): was 2614 (the clouds drawn ring-first, a new draw of the census)
-    assert young.sum() == 2633  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 2572. S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
+    assert young.sum() == 2664  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was 2633. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 2572. S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
     assert power[young] == pytest.approx(wind[young], rel=1e-9)
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
@@ -174,7 +174,7 @@ def test_the_default_numbers(default):
     # S59 (D218 follow-up): was 12826; first pass 12839 (a segment's pitch relative to the disc's: another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: another draw of the census)
     # S61 (D220): was 12916 (the clouds drawn ring-first, a new draw of the census)
-    assert radius.size == 12989  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    assert radius.size == 13124  # S100 (batch P, D270; #227, the stellar layer one height: the census +1 %): was 12989. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12710. S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S59 (D218 follow-up): was 8.963 (S36's pin, which every draw since had read inside its 1 %: 8.912 at S57); this
     # draw's median bubble reads 8.863 pc, 1.1 % under it - re-read, the tolerance kept.
     # S61 (D220): was 8.863 (the ring-first census, a new draw: 8.766 pc, 1.1 % under)
@@ -190,7 +190,7 @@ def test_the_default_numbers(default):
     # S59 (D218 follow-up): was 12499; first pass 12496 (another draw of the census). S58 (D217): was 12503 (another draw of the census)
     # S60 (D219): was 12502 (another draw of the census, 76 more clusters)
     # S61 (D220): was 12575 (the ring-first census, a new draw: 206 fewer clusters)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12649  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12391  # S70 (D234): was 12445 (#192, F-2-7). S67 (D231): was 12373, the clouds' size law
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12786  # S100 (batch P, D270; #227, the census +1 %): was 12649. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12391  # S70 (D234): was 12445 (#192, F-2-7). S67 (D231): was 12373, the clouds' size law
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -228,7 +228,7 @@ def test_the_default_numbers(default):
     # birth radii: 0.0136, inside the sixteen seeds' spread (0.022 +/- 0.008, S51); one ring's draw, not judged.
     assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0136, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
-    assert n_mid == pytest.approx(0.703, abs=0.002)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.688
+    assert n_mid == pytest.approx(0.7151, abs=0.002)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.688  # S100 (batch P, D270; #227, the census +1 %): was 0.703
 
 
 def test_the_midplane_density_is_the_pressure_over_the_dispersion_squared(default, constants):

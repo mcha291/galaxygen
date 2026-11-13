@@ -38,20 +38,20 @@ HALPHA_BOX = json.dumps([{"name": "ha", "shape": "box", "centre": 6564.0, "width
 # The knots' Halpha over the field's whole-disc Halpha (sum of hii_halpha_luminosity over the trapezoid integral of
 # halpha_surface_brightness_hii * 2 pi R), measured at S64 (the probe's 0.921 and 1.081): a check on the census
 # against the field, recorded, never a target. Layer on and off alike (the ring-first draw).
-DISC_RATIO = {"milky_way": 0.9243091256912261, "ngc_4414": 1.069384589562499}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9215601826222295, 1.081882028213476
+DISC_RATIO = {"milky_way": 0.9214437439710879, "ngc_4414": 0.9755752972103547}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.9215601826222295, 1.081882028213476  # S100 (batch P, D270; #227 the census's counts (ngc_4414's layer 926 -> 229 pc), #80, #130): was 0.9243091256912261, 1.069384589562499
 # S70 (D234): was {"milky_way": 0.9207954271231651, "ngc_4414": 1.0814612378969841} - the clouds' three regimes (#192,
 # NGC 4414 on its own molecular ring) and the ring draw's fix (clouds.ring_birth_radius); the HII regions follow
 # their clouds.
 # The per-ring ratio's range over the lit rings (measured, recorded: the census's own heavy-tailed Poisson noise).
 # S70 (D234): milky_way was (0.531, 1.428) - the clouds' three regimes (#192) and the ring draw's fix; ngc_4414's
 # range moved inside the 1e-3 it is read to (0.371131, 2.149445).
-RING_RANGE = {"milky_way": (0.504, 1.418), "ngc_4414": (0.3587, 2.104)}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.535, 1.428, 0.371, 2.149
+RING_RANGE = {"milky_way": (0.4960, 1.4326), "ngc_4414": (0.6146, 1.5531)}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.535, 1.428, 0.371, 2.149  # S100 (batch P, D270; #227, #80, #130): was (0.504, 1.418), (0.3587, 2.104)
 FORBIDDEN = ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")
 # The share of the field's HII Halpha in level-0 cells that name no knot (measured at S64, recorded): Halpha no knot
 # realised, which the knots replace when all are drawn (the rule gives such a cell 1 - d, d the disc's drawn share).
 # S90 (#161): the layer-on shares were 0.013971 (milky_way) and 0.051035 (ngc_4414) - the clouds' sector weights carry the
 # clustering field's cell means, so more level-0 cells hold no cluster (352bdec passes at the old values; the layer-off ones unmoved)
-EMPTY_CELLS_FIELD = {("milky_way", "on"): 0.016055, ("milky_way", "off"): 0.013972, ("ngc_4414", "on"): 0.056165, ("ngc_4414", "off"): 0.054166}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.012877, 0.012878, 0.055367, 0.057198
+EMPTY_CELLS_FIELD = {("milky_way", "on"): 0.015292, ("milky_way", "off"): 0.013208, ("ngc_4414", "on"): 0.015904, ("ngc_4414", "off"): 0.015595}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.012877, 0.012878, 0.055367, 0.057198  # S100 (batch P, D270; #227 (ngc_4414's layer 926 -> 229 pc), #80, #130): was 0.016055, 0.013972, 0.056165, 0.054166
 
 
 @pytest.fixture(scope="module")
@@ -191,7 +191,7 @@ def test_gate_ii_points_plus_the_scaled_field_close_on_whole_cells(service, temp
     if template == "milky_way" and layer == "on":
         # S92 (#164 / #165, the spurs re-laid): the median was 0.398 and the 90th percentile 1.794.
         assert float(np.median(K[ok] / F[ok])) == pytest.approx(0.3931, abs=0.002)  # S90 (#161): was 0.395 - the clusters' cells follow the clustering field's cell means (0.39817). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.388
-        assert float(np.percentile(K[ok] / F[ok], 90)) == pytest.approx(1.7528, abs=0.01)  # S90 (#161): was 1.755 - the clusters' cells follow the clustering field's cell means (1.79394). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.67
+        assert float(np.percentile(K[ok] / F[ok], 90)) == pytest.approx(1.7804, abs=0.01)  # S90 (#161): was 1.755 - the clusters' cells follow the clustering field's cell means (1.79394). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.67  # S100 (batch P, D270; #227, #80, #130): was 1.7528
 
 
 @pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])

@@ -1,8 +1,9 @@
 # BUILD_VI — the sixth build: the pictures
 
-**Status: DRAFT 2026-11-12 at S97's open, on the owner's word "The pictures" (asked, at the close of S94–S96, what the
-next build aims at first). Not adopted.** Rows 97 and 98 run on that word: neither moves a byte under `model/galaxy`
-nor a display default. Rows 99 on wait on §6's rulings 1 and 2. **S97 ran row 97 on 2026-11-12 (D266): the two
+**Status: ADOPTED 2026-11-12 on the owner's word "Adopt as recommended" (D268): §6's ten rulings are taken as
+recommended, batch P (rows 99–100) runs on `batch-p`, and the display pass stays the owner's.** Drafted the same day
+at S97's open, on the owner's word "The pictures" (asked, at the close of S94–S96, what the next build aims at
+first); rows 97 and 98 ran on that word: neither moved a byte under `model/galaxy` nor a display default. **S97 ran row 97 on 2026-11-12 (D266): the two
 controls built, the experiments finished, sixteen combinations measured for the owner's pass, the model gaps traced
 (#226–#228 opened; no default, no frame, no model byte moved).** **S98 ran row 98 the same day (D267): the sources
 read — the layer's mend sourced and in the model already, the template's bar short of the Galaxy's own by two printed
@@ -65,6 +66,9 @@ changes what is drawn reads the yardstick's table again** (`tools/goal_metrics.p
 geometry and at the tool's) and says in plain words what a viewer sees nearer and what not.
 
 ## 6. Rulings from the owner
+
+**All ten taken as recommended on 2026-11-12 ("Adopt as recommended"; D268 words each as a ruling).** The table is
+kept as it was put.
 
 | # | Question | Recommendation |
 |---|---|---|

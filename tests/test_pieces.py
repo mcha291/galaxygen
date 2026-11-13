@@ -733,7 +733,7 @@ def test_the_census_by_hand_a_barred_disc_s_chains(prod):
 # from that bar's ends (#209's floor redraws none of this galaxy's pieces).
 # S91 (#216): was (54, 13, 6) - the births made bit-independent: chain 4's quarter-turn tie at 2.29 kpc taken by
 # identity (the gap at the earliest-laid piece), not by the last bit; a one-ulp probe no longer moves it.
-EXPECTED_DEFAULT_CENSUS: tuple = (53, 12, 5)
+EXPECTED_DEFAULT_CENSUS: tuple = (45, 10, 4)  # S100 (batch P, D270; #80, the default disc's bar 2.270 -> 3.140 kpc; the runner's log 2 reading): was (53, 12, 5)
 
 
 def test_a_flocculent_disc_is_single_pieces_and_an_unbarred_one_has_no_chain_from_a_bar(prod):
@@ -910,6 +910,18 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     worst = {"stars": 0.0, "gas": 0.0, "expected": 0.0, "bound": 0.0}
     read = {leg: {"ratio": [], "cut": 0, "no_arm": 0, "no_chain": 0, "least": math.inf, "least_gas": math.inf, "most_gas": 0.0, "zeros": 0,
                   "budget": 0, "pitch": [], "steps": 0, "armless": 0, "wide": 0, "joins": [], "alone": 0, "pinned": 0, "kept": [0, 0], "ratio_max": []} for leg in LEGS}
+    # S100 (#130, D270; the gate's ruling at batch P's close): the placed gas is the blend of the molecular and the
+    # atomic responses by the ring's molecular fraction, so the stage that publishes gas_density_contrast reads ism's
+    # gas_molecular_fraction_profile and only=PATTERN runs chemistry_dtd, vertical_alpha and ism as well (12 -> 15
+    # stages). Their fields hold NaN by design (rule B9): feh_history and alpha_fe_history where a ring holds no iron
+    # yet (the log of nothing), alpha_split where the [alpha/Fe] histogram has one mode (no valley), gas_scale_height
+    # where there is no midplane density or the height passes the stars' local scale length. The NaN clause is the
+    # pattern's: it reads the fields of the closure before #130 (the spurs stage's reads less the blend's two).
+    pattern_graph = graph.analyse(model, prod[1], prod[2])
+    spurs_stage = pattern_graph.stages[pattern_graph.producer["gas_density_contrast"]]
+    before_blend = [n for n in PATTERN if n != "gas_density_contrast"] + [n for n in spurs_stage.requires + spurs_stage.requires_optional if n not in gm.BLEND_READS]
+    pattern_stages = {st.id for st in pattern_graph.needed_for(before_blend)} | {spurs_stage.id}
+    pattern_own = {n for n, sid in pattern_graph.producer.items() if sid in pattern_stages}
     for leg in LEGS:
         got = read[leg]
         for pattern_seed in range(60):
@@ -924,7 +936,7 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                 assert stars.min() >= 0.0 and gas.min() > 0.0, label
                 got["least"], got["least_gas"], got["most_gas"] = min(got["least"], float(stars.min())), min(got["least_gas"], float(gas.min())), max(got["most_gas"], float(gas.max()))
                 got["zeros"] += int((stars == 0.0).sum())
-                nan = {n for n, v in F.items() if not isinstance(v, (str, tuple)) and np.isnan(np.asarray(v, dtype=float)).any()}
+                nan = {n for n, v in F.items() if n in pattern_own and not isinstance(v, (str, tuple)) and np.isnan(np.asarray(v, dtype=float)).any()}
                 assert nan == (set() if leg == "milky_way" else UNBARRED_NAN), (label, sorted(nan))
                 off = run(model, given, only=LAWS, layer=False).fields
                 assert all(np.asarray(off[k]).tobytes() == np.asarray(F[k]).tobytes() for k in LAWS), label
@@ -1044,7 +1056,14 @@ EXPECTED_GATE: dict = {'milky_way': (19800, 19800, (0.0, 0.488, 0.896), 2, 0, 57
 # Way leg was (0.1208, 0.1252, 6.696) - S92's #164 / #165 (the spurs re-laid, D261, where the template alone read
 # 7.303) never read on the legs until now: the leg's largest published gas cell is 8.214 and its least 0.1245; the
 # stellar least, both NGC 4414 legs, EXPECTED_GATE and every bound asserted above the records held.
-EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.1245, 8.214), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0005, 0.0003, 4.282)}
+# S100 (batch P's close, D270; read on 8abe5fd with the NaN clause restricted to the pattern's own fields, 2:20:42
+# single-threaded on a machine shared with another lane's pytest): was {'milky_way': (0.1208, 0.1245, 8.214),
+# 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0005, 0.0003, 4.282)} - the gas's least and largest cell
+# on every leg: #130 places the published gas as the blend of the molecular and the atomic responses by the ring's
+# molecular fraction (the atomic one at 1.4 times the dispersion, shallower), with #220's spurs' feet on it; the
+# stellar least on all three legs, EXPECTED_GATE, the NaN clause and every bound asserted above the records held.
+# Re-pinned as read and not re-run: the record is the node's last assertion.
+EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.1401, 8.309), 'ngc_4414': (0.4632, 0.0731, 3.302), 'ngc_4414 drawn': (0.0005, 0.0033, 4.21)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):
@@ -1148,8 +1167,20 @@ def test_the_gas_carried_between_rings_and_the_rings_solved_between_the_grid_s(p
     k = int(np.flatnonzero(radii == R[i])[0])
     assert np.array_equal(gp.carried(np.array([k]), R[i : i + 1], phi[None, :])[0], gr.interpolate(gp.profiles[i], phi))
     # The published field is the grid's rings' own, the same bits with the mid-gap rings looked for or not.
+    # S100 (batch P, D270; #130, the gate's ruling 10): was `gp.cell_means(R, edges) == gas_density_contrast` to the
+    # bit - the spurs composed on the molecular response alone. The published gas is the blend f c_mol + (1 - f) c_atom
+    # formed after the lanes, f the ism stage's molecular fraction (the molecular contrast where f is not a number),
+    # c_mol the pattern's unspurred cell means, c_atom the published atomic response, the spurs composed on the blend
+    # (s100_G2.md; spurs.compute_spurs): re-stated term by term and held to the bit as before.
     edges_phi = o.grid["phi"].edges
-    assert np.array_equal(gp.cell_means(R, edges_phi), bare.cell_means(R, edges_phi)) and np.array_equal(gp.cell_means(R, edges_phi), np.asarray(F["gas_density_contrast"]))
+    B = template_run(prod, template, fields=gm.BLEND_READS).fields
+    f = np.asarray(B["gas_molecular_fraction_profile"], dtype=float)
+    f = np.where(np.isfinite(f), f, 1.0)[:, None]
+    for g in (gp, bare):
+        blend = f * g.unspurred_cell_means(R, edges_phi) + (1.0 - f) * np.asarray(B["atomic_gas_density_contrast"], dtype=float)
+        placed = blend if g.spurs is None else g.spurs.compose_cells(R, edges_phi, blend)
+        assert np.array_equal(placed, np.asarray(F["gas_density_contrast"]))
+    assert np.array_equal(gp.cell_means(R, edges_phi), bare.cell_means(R, edges_phi))
 
 
 # S60 fourth pass (re-pinned on the final model): EXPECTED_GAPS was {"milky_way": (18, 14, 8.74, 354, [3.572, 4.453, 5.916, 6.047, 6.366, 7.266, 7.416, 7.566, 7.622, 7.809, 8.878, 11.803, 11.841, 11.897], 8.0, 0.109), "ngc_4414": (17, 12, 13.79, 277, [0.272, 0.778, 0.816, 3.103, 3.122, 3.141, 3.159, 3.178], 5.2, 0.203)}
@@ -1312,7 +1343,7 @@ def test_the_carried_map_never_folds(prod, leg):
 # default's (48, 13, 4) -> (42, 11, 3), (52, 13, 6) -> (48, 12, 6), (54, 13, 4) -> (52, 12, 4); the drawn leg's counts
 # unmoved, its exact ties taken by identity); no fold anywhere still.
 EXPECTED_CONTINUED: dict = {"milky_way": [(1750, 37), (1820, 44), (1850, 56)], "ngc_4414": [(1495, 182), (1475, 171), (1425, 168)],
-                            "ngc_4414 drawn": [(1825, 295), (1785, 275), (1745, 248)], "default": [(1660, 45), (1770, 47), (1890, 47)]}
+                            "ngc_4414 drawn": [(1825, 295), (1785, 275), (1745, 248)], "default": [(1640, 35), (1760, 38), (1860, 48)]}  # S100 (batch P, D270; #80, the default bar 2.270 -> 3.140 kpc): default was [(1660, 45), (1770, 47), (1890, 47)]; no fold
 EXPECTED_CARRIED_PHI_STEPS: dict = {
     # S62 (D221): was [(1, 0.0377, 4.46), (1, 0.0373, 4.46), (1, 0.037, 4.46)] - ``contrast_at`` carries the spurs,
     # g' = (1 - <S>) g + S: S is smooth across the clipped anchor, so the step is g's scaled by (1 - <S>) at 4.46 kpc.
@@ -1322,7 +1353,12 @@ EXPECTED_CARRIED_PHI_STEPS: dict = {
     # (9, 0.0057, 0.04), (7, 0.0131, 0.07)] and the drawn leg [(10, 0.0015, 0.06), (10, 0.0502, 0.68), (14, 0.0024, 0.09)]
     # - the censuses re-laid by the births made bit-independent (the template's seed 2 (53, 15, 6) -> (50, 13, 6); the
     # flocculent discs' counts unmoved, their exact ties taken by identity).
-    "milky_way": [(1, 0.0423, 4.46), (1, 0.042, 4.46), (2, 0.0415, 4.46)],
+    # S100 (batch P, D270; neither #146 nor #130 - measured: the bar's pin or its old draw 0.28926, and the trees
+    # before and at #130's commit, give the same step to the bit): was (1, 0.0423, 4.46) on the template's seed. Read
+    # on this machine the unrounded step was already 0.042361067574617106 at 5173ded (before batch P; the node is
+    # machine-pinned, so no runner read it); S99's #220 (the spurs' walk reads the crest at the foot) moved it to
+    # 0.042377539404965026. No fold, as before.
+    "milky_way": [(1, 0.0424, 4.46), (1, 0.042, 4.46), (2, 0.0415, 4.46)],
     "ngc_4414": [(4, 0.001, 0.06), (7, 0.0053, 0.04), (7, 0.0096, 0.07)],
     "ngc_4414 drawn": [(8, 0.0003, 0.04), (13, 0.0914, 0.68), (13, 0.0044, 0.09)],
     "default": [(0, 0.0, 0.0), (0, 0.0, 0.0), (0, 0.0, 0.0)],
@@ -1514,7 +1550,7 @@ def test_the_fourth_follow_up_s_predictions_as_measured(prod):
 # S87 (#148, #209, #80): EXPECTED_FOURTH was {'milky_way': {'max realised over budget': (2.343, 4.463)}, 'ngc_4414': {'max realised over budget': (2.521, 3.562), 'B at 0.11 kpc': 0.782, 'sqrt(budget / v) at 0.11 kpc': 0.782, 'count at 0.11 kpc': 1.0}, 'default': {'max realised over budget': (0.759, 5.213), "arms' excess past the bar's end": 0.329, "arms' excess at 8 kpc": 0.314}} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
 # S91 (#216): the default's were (1.448, 10.988), 0.332 and 0.684 - the default galaxy's census (48, 13, 4) -> (42, 11, 3)
 # by the births made bit-independent; the verdicts (EXPECTED_FOURTH_HELD) unmoved.
-EXPECTED_FOURTH: dict = {'milky_way': {'max realised over budget': (2.223, 4.463)}, 'ngc_4414': {'max realised over budget': (1.269, 3.112), 'B at 0.11 kpc': 0.782, 'sqrt(budget / v) at 0.11 kpc': 0.782, 'count at 0.11 kpc': 1.0}, 'default': {'max realised over budget': (1.017, 6.262), "arms' excess past the bar's end": 0.276, "arms' excess at 8 kpc": 0.543}}
+EXPECTED_FOURTH: dict = {'milky_way': {'max realised over budget': (2.223, 4.463)}, 'ngc_4414': {'max realised over budget': (1.269, 3.112), 'B at 0.11 kpc': 0.782, 'sqrt(budget / v) at 0.11 kpc': 0.782, 'count at 0.11 kpc': 1.0}, 'default': {'max realised over budget': (0.976, 8.512), "arms' excess past the bar's end": 0.305, "arms' excess at 8 kpc": 0.715}}  # S100 (batch P, D270; #80 on the default; the templates' entries and EXPECTED_FOURTH_HELD unmoved): was 'default': {'max realised over budget': (1.017, 6.262), "arms' excess past the bar's end": 0.276, "arms' excess at 8 kpc": 0.543}
 # S87 (#148, #209, #80): EXPECTED_FOURTH_HELD was {"max realised over budget under 1.5 on both templates": False, "end-of-bar excess at most the arms' own at 8 kpc": False, "ngc_4414's B at 0.11 kpc under sqrt(budget/v)": True} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc; the default disc's end-of-bar excess 0.332 is now under its arms' own at 8 kpc, 0.684.
 EXPECTED_FOURTH_HELD: dict = {"max realised over budget under 1.5 on both templates": False, "end-of-bar excess at most the arms' own at 8 kpc": True, "ngc_4414's B at 0.11 kpc under sqrt(budget/v)": True}
 
@@ -1601,7 +1637,7 @@ def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
 # S60 fourth pass (re-pinned on the final model): EXPECTED_CREST was {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.41), 'Sgr-Car': (0.01, 0.88), 'Local': (0.03, 1.0), 'Perseus': (0.03, 0.9), 'Outer': (0.05, 0.82)}
 # S87 (#148, #209, #80): EXPECTED_CREST was {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.38), 'Sgr-Car': (0.01, 0.88), 'Local': (0.04, 1.0), 'Perseus': (0.03, 0.82), 'Outer': (0.04, 0.88)} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
 # S91 (#216): Perseus was (0.02, 0.83), Outer (0.04, 0.93) - the template's census (49, 13, 4) -> (46, 12, 3), chain 12's one-ulp birth gone.
-EXPECTED_CREST: dict = {'Norma': (0.31, 0.2), 'Sct-Cen': (0.13, 0.37), 'Sgr-Car': (0.01, 0.8), 'Local': (0.04, 1.0), 'Perseus': (0.02, 0.85), 'Outer': (0.04, 0.89)}
+EXPECTED_CREST: dict = {'Norma': (0.33, 0.04), 'Sct-Cen': (0.14, 0.29), 'Sgr-Car': (0.01, 0.8), 'Local': (0.04, 1.0), 'Perseus': (0.02, 0.85), 'Outer': (0.04, 0.89)}  # S100 (batch P, D270; #146, the template's bar_contrast pinned 0.6862 - Norma and Sct-Cen, in the bar's reach): was {'Norma': (0.31, 0.2), 'Sct-Cen': (0.13, 0.37), 'Sgr-Car': (0.01, 0.8), 'Local': (0.04, 1.0), 'Perseus': (0.02, 0.85), 'Outer': (0.04, 0.89)}
 # S60 fourth pass: was {'Norma': (0.26, 0.22), 'Sct-Cen': (0.16, 0.12), 'Sgr-Car': (0.01, 0.95), 'Local': (0.01, 1.0), 'Perseus': (0.01, 0.83), 'Outer': (0.05, 0.76)}
 
 
@@ -1658,7 +1694,7 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
 # budget are gone (the walk ends at 12.34 kpc), so the gas's outer contrast and its rotated null moved: the as-built 0.19 -> 0.20,
 # Norma-Outer 0.19 -> 0.22, the null's median 0.46 -> 0.50, the percentile 3 -> 2; the young stars' record is unmoved (the
 # star formation contrast keeps no spur). No verdict: a disclosed check.
-EXPECTED_MASERS: dict = {'gas': (0.17, {'Norma-Outer': 0.23, 'Sct-Cen': 0.24, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.17}, 0.14, 0.42, (0.26, 0.7), 1, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.24, 0.96), 2, 97)}  # S92 (#164 / #165, the spurs re-laid): the gas's was (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), the value at bd0ed0c (the runner passed test_pieces there, ci run 42796166390), so the move is #164 / #165's alone - the spur's height the crest over the trough moves the gas's crests, the as-built 0.20 -> 0.17 and the null's median 0.50 -> 0.42, the percentile 2 -> 1; the young stars' record unmoved (their contrast keeps no spur). No verdict: a disclosed check. S91 (#216): the young stars' null band's low was 0.23 - the template's census re-laid
+EXPECTED_MASERS: dict = {'gas': (0.18, {'Norma-Outer': 0.23, 'Sct-Cen': 0.2, 'Sgr-Car': 0.04, 'Perseus': 0.09, 'Local': 0.18}, 0.13, 0.42, (0.26, 0.68), 1, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.48, (0.24, 0.96), 2, 97)}  # S92 (#164 / #165, the spurs re-laid): the gas's was (0.2, {'Norma-Outer': 0.22, 'Sct-Cen': 0.21, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.2}, 0.13, 0.5, (0.25, 0.88), 2, 100), the value at bd0ed0c (the runner passed test_pieces there, ci run 42796166390), so the move is #164 / #165's alone - the spur's height the crest over the trough moves the gas's crests, the as-built 0.20 -> 0.17 and the null's median 0.50 -> 0.42, the percentile 2 -> 1; the young stars' record unmoved (their contrast keeps no spur). No verdict: a disclosed check. S91 (#216): the young stars' null band's low was 0.23 - the template's census re-laid  # S100 (batch P, D270; #130 the placed gas a blend, #146; the young stars' record unmoved): was 'gas': (0.17, {'Norma-Outer': 0.23, 'Sct-Cen': 0.24, 'Sgr-Car': 0.04, 'Perseus': 0.1, 'Local': 0.17}, 0.14, 0.42, (0.26, 0.7), 1, 100)
 # S60 fourth pass: was {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 # (the polyline alone, before A and B: gas 0.07 at the 0th percentile of a null of median 0.50, the young stars 0.10 / 0.44)
 
@@ -1776,7 +1812,8 @@ def test_a_pin_is_a_class_a_named_class_a_number_or_a_table(prod):
     assert not {"arm_class", "arm_pieces"} & {i["name"] for kind in ("controls", "seeds", "events") for i in listed[kind]}
     # The wire: /api/templates serves each pin in its shape.
     served = {t["name"]: {p["name"]: p for p in t["pins"]} for t in api.handle("/api/templates").json()["templates"]}
-    assert set(served["milky_way"]) == {"bar_present", "bar_half_length", "sun_bar_angle", "arm_pieces"} and set(served["ngc_4414"]) == {"bar_present", "pitch_angle", "arm_class", "molecular_ring"}  # S87 (#80, D255): the Milky Way's bar length joins its pins  # S70 (D234): was without the ring (#192)
+    # S100 (batch P, D270; #146): the Milky Way's bar amplitude joins its pins (S99, 0.6862 by Portail et al. 2017).
+    assert set(served["milky_way"]) == {"bar_present", "bar_half_length", "bar_contrast", "sun_bar_angle", "arm_pieces"} and set(served["ngc_4414"]) == {"bar_present", "pitch_angle", "arm_class", "molecular_ring"}  # S87 (#80, D255): the Milky Way's bar length joins its pins  # S70 (D234): was without the ring (#192)
     klass = served["ngc_4414"]["arm_class"]
     assert set(klass) == {"name", "label", "unit", "value", "source", "classes"} and klass["value"] == "flocculent" and klass["unit"] is None
     assert klass["classes"] == ["grand_design", "multi_armed", "flocculent"]
@@ -2038,7 +2075,7 @@ def test_the_count_s_steps_are_the_record_s(prod, template):
 # S87 (#148, #209, #80): EXPECTED_STEPS was {"milky_way": (55, 1, 3, 0.349), "ngc_4414": (61, 0, 1, 0.0), "default": (31, 0, 1, 0.0)} - the clock, the floor (the owner's ruling of 2026-11-03, D255) and the bar's law with the Milky Way's pinned 5.0 kpc.
 # S91 (#216): were milky_way (59, 1, 4, 0.349) and default (56, 0, 4, 0.0) - the censuses re-laid by the births made
 # bit-independent (the template's (49, 13, 4) -> (46, 12, 3), the default's (48, 13, 4) -> (42, 11, 3)).
-EXPECTED_STEPS: dict = {"milky_way": (55, 1, 3, 0.349), "ngc_4414": (58, 0, 0, 0.0), "default": (50, 0, 3, 0.0)}
+EXPECTED_STEPS: dict = {"milky_way": (55, 1, 3, 0.349), "ngc_4414": (58, 0, 0, 0.0), "default": (42, 0, 1, 0.0)}  # S100 (batch P, D270; #80; the runner's log 2 reading. milky_way's record is machine_pinned and not read here): was "default": (50, 0, 3, 0.0)
 
 
 # --- no square edge anywhere: continuity across every kink and join (the gate's third follow-up) ---------------------
@@ -2281,7 +2318,7 @@ EXPECTED_WHOLE_RINGS: dict = {
     #  largest, 0.0609, lies.)
     "milky_way": (78, 0.0609, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
     # S91 (#216): the default's was (0, 0.0, [], 0.1, 0.46) - its five seeds' censuses re-laid by the births made bit-independent.
-    "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.12, 0.5),
+    "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.09, 0.43),  # S100 (batch P, D270; #80, the default bar 2.270 -> 3.140 kpc): default was (0, 0.0, [], 0.12, 0.5); no step over the bound
 }
 # (The twelfth follow-up, item 3: the wedges read the law's width and the largest step is recorded outside every
 #  wedge and inside one apart. Was milky_way (73, 0.055, [...the same kinks...], 0.99), ngc_4414 (0, 0.0, [], 0.07),

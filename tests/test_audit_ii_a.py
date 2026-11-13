@@ -249,7 +249,7 @@ def test_debt_42_row_6_lands_at_74_not_78(default_model):
     dispersion at R0 is lower for stars 0.33 Gyr younger, so every kick reads about 11 pc lower and the default 88.8
     lands it (345.09); 95 reads 348.0 (in), 100 reads 350.5 (out). The name keeps S21's number as its record."""
     for k, h in ((78.0, 340.7), (75.0, 339.6), (70.0, 337.9), (95.0, 348.0), (100.0, 350.5)):  # S87 (#148): was (78, 351.4), (75, 350.3), (70, 348.7) - the clock
-        v = run(with_constant(default_model, "MERGER_HEATING", k), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"]
+        v = run(with_constant(default_model, "MERGER_HEATING", k), only=("thin_disc_scale_height_dynamical",)).fields["thin_disc_scale_height_dynamical"]
         assert v == pytest.approx(h, abs=0.5) and inside(6, v) == (k < 99.0)  # S87 (#148): was (k < 74.0) - the clock
 
 
@@ -267,8 +267,11 @@ def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(default
     # hold" at 39.48 / 6.33. On Erwin 2019's law the defaults' bar is 2.27 kpc and both rows are recorded misses under
     # #80 on either sample: seeds 41-81 read 79.69 and 2.760 (0-40: 81.97 and 2.651) - the verdicts still agree
     # between the samples, so the fixed sample still decides no verdict of these two.
-    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(79.69, abs=0.3) and not inside(16, np.median(vals["bar_pattern_speed"]))
-    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(2.760, abs=0.05) and not inside(17, np.median(vals["bar_corotation_radius"]))
+    # S100 (batch P, D270; #80, D268 ruling 5): the defaults' bar is Erwin 2019's Table 4 on the baryons' mass, 3.140
+    # kpc (was Table 3's 2.270): seeds 41-81 read 62.43 and 3.817 (0-40: 64.47 and 3.666, test_spec's rows 16 / 17) -
+    # both still recorded misses on either sample, so the verdicts are unchanged and still agree between the samples.
+    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(62.43, abs=0.3) and not inside(16, np.median(vals["bar_pattern_speed"]))  # S100 (batch P, D270; #80): was 79.69
+    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(3.817, abs=0.05) and not inside(17, np.median(vals["bar_corotation_radius"]))  # S100 (batch P, D270; #80): was 2.760
 
 
 # --- row 7: the constant's citation, read (A-14) -----------------------------------------------------------
@@ -288,4 +291,4 @@ def test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6(defaul
         f = run(with_constant(default_model, "MERGER_HEATING", k), only=("v_tangential_sun",)).fields
         assert f["v_tangential_sun"] == pytest.approx(row3, abs=0.05)
     assert inside(3, 250.97)
-    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"] == pytest.approx(357.6, abs=1.0)  # S87 (#148): was 368.0 - the clock
+    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height_dynamical",)).fields["thin_disc_scale_height_dynamical"] == pytest.approx(357.6, abs=1.0)  # S87 (#148): was 368.0 - the clock

@@ -2326,3 +2326,37 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   distribution is drawn for it.** The Milky Way template's bar amplitude was a draw from 587 other galaxies, while
   Portail et al. 2017 print the Galaxy's own bar: 1.60 against "about 4" at 2 kpc, 0.23 against 0.46 × 10¹⁰ M☉ (#146).
   (S98, D267)
+
+## From S99 (batch P's first session: an Opus scout, reader, three builders, a measurer and a runner; the Fable gate)
+
+- [audit] **A recommendation put to the owner is checked against the code before it is put.** BUILD_VI and D267 named
+  #227's length "the one the pattern stage already uses", but the pattern stage reads `disc_scale_length_spin` (357 /
+  240 pc) while the numbers beside the phrase were the stellar fit's (334 / 229 pc): the owner ruled on both at once,
+  and the scout found it after the owner's word, before anything was built. (S99, D269)
+- [audit] **A build whose test cannot tell it from no build is measured before it is built.** The knots' merge (#181)
+  was to be tested by Santoro et al. 2022's slope; the measurer showed that no merge moves the slope by more than 0.07
+  at a fixed floor while the floor alone moves it by 0.9, and that a merged region stays a few parsecs — one
+  measurer's half hour instead of a lane. (S99, D269)
+- [audit] **A cut is quoted from the page that defines it, or marked as the reader's.** "Outside the bulge" was read
+  as R ≥ 2 kpc from one sentence about "the edge of the bulge" and stood for a session as Portail et al.'s; the
+  paper's only printed bulge region is Sect. 3's 2.2 × 1.4 kpc ellipse (F-99R-1). (S99, D269)
+- [close] **Lanes that move the same records re-pin nothing outside their own files.** Three builders moved the layer
+  reference, the censuses and the seed sweeps at once; each listed what it moved, and the records are re-pinned once:
+  one run of the whole suite on the merged head, one re-pin pass. (S99, D269)
+
+## From S100 (batch P's close: three Opus builders, four re-pin builders in turn, a close builder and a docs builder; the Fable gate)
+
+- [field] **A law that lets a fit's NaN through takes the layer with it.** Since #227 the layer's height was a fitted
+  length over 7.3; on `helpers.TINY` the fit had two rings where it needs three, the length was NaN, the gas had no
+  height and the fluctuation field raised, so the run machinery's tests could not run. When a stage's input changes
+  from a computed number to a fitted one, the coarsest grid the suite runs is read before the merge, not found by
+  the re-pin pass. (S100, D270)
+- [close] **A re-pin pass over two heads is briefed in thirds from the start.** Two builders in turn ran out of
+  context on 142 failed nodes; the split on disjoint files in two worktrees is what finished it. (S100, D270)
+- [close] **A lane that pins digests "as at the untouched head" pins them to its own base.** The next lane's merge
+  moves them by design (#80's template digests, moved by #130's blend): pin such identities on the merged head, or
+  name the base they hold on. (S100, D270)
+- [audit] **An identity of a composition is re-stated when the composition changes, term by term at the same
+  tightness** — never re-pinned as a record and never loosened. The published gas, once the molecular cell means, is
+  now the blend: its hand check holds the blend to the bit, and the cell's mean against its centre is read on the
+  molecular term, holding NGC 4414's 1.931 × 10⁻³ as before. (S100, D270)

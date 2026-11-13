@@ -122,8 +122,14 @@ export const TRANSFER_SLACK = 1e-3;
  * T3 / #115, the diffuse gas's lines T10 / #119, the points' dust #174 and #218's ordered sums): measured 0.96835,
  * 0.97233, 0.97909 on the regenerated frames with the new bundles (+8e-5, -1.4e-4, -1.3e-4, inside DUSTY_RATIO_PIN
  * before the re-pin; the physics-only frame taken twice the same to 0).
+ *
+ * S100 (batch P's close, D270; the hash 42be4d56...): was [0.96835, 0.97233, 0.97909] (S93) - batch P's model (#227
+ * the stellar layer's one height, #146 the Milky Way template's pinned bar amplitude, #80 the bar's length law, #220
+ * the spurs' feet, #130 the placed gas and the dust the blend of the molecular and the atomic responses): measured
+ * 0.96977, 0.97354, 0.97990 on the regenerated frames with the S100 bundles (+1.42e-3, +1.21e-3, +8.1e-4: past
+ * DUSTY_RATIO_PIN in R and G, inside it in B; the physics-only frame taken twice the same to 0).
  */
-export const DUSTY_LAYER_RATIO = [0.96835, 0.97233, 0.97909] as const;
+export const DUSTY_LAYER_RATIO = [0.96977, 0.97354, 0.9799] as const;
 // S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
 // (#148), the floor (#209), the Milky Way's pinned 5.0 kpc bar (#80) and MERGER_HEATING 90.6 (#212) move the dust, the
 // clouds (16 940 where 16 577) and the young light; measured with the new bundles on the RTX 4070 (physics only over

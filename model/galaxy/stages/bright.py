@@ -486,7 +486,9 @@ RADIUS_STEPS = 8  # intervals a star's radius is inverted over across its cell's
 AZIMUTH_STEPS = 24  # and its azimuth (as the catalogue's)
 CELL_SAMPLES = 8  # radii a cell's mass on the isochrones is averaged at, area-weighted
 # PARSEC's evolutionary-phase labels 0-8, in order [recall: the CMD output documentation, as massive_stars
-# reads labels 0 and 1]: the table's own vocabulary, every label the committed isochrones carry.
+# reads labels 0 and 1]: the table's own vocabulary, every label the committed isochrones carry. The labels are
+# CMD's own, which its FAQ says "have not been carefully checked for all masses and metallicities" [verified: CMD
+# 3.7 FAQ, stev.oapd.inaf.it/cmd_3.7/faq.html, read at Audit VI, S94] - what rests on them rests on that caveat.
 PHASES: tuple[str, ...] = (
     "pre_main_sequence", "main_sequence", "subgiant", "red_giant", "core_helium_burning",
     "blue_loop", "red_loop", "early_agb", "thermally_pulsing_agb",

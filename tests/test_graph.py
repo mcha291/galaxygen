@@ -87,19 +87,22 @@ def chk(m, *stages):
 # gas's contrast (`spurs`), both after the star formation history whose gas column the spacing reads.
 # S62 (D221): and the layer's gas_fluctuation stage (it reads the gas's height and the rotation curve), after the
 # clouds by the tie-break.
+# S100 (#130): `spurs` reads the ism stage's molecular fraction (the blend of the molecular and the atomic responses
+# that places the dust), so it runs the round after `ism`'s - after `dust` by the tie-break - in both models. Until
+# S100 it stood after `ism` in `basic` and after `light` in `azimuthal`. Recomputed from graph.analyse.
 ORDER = {
     "basic": (
         "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "arm_ring_power", "gas_pattern", "stellar_pattern", "gas_spurs", "light", "vertical_alpha", "cluster_survival", "population", "ism",
-        "spurs", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
+        "bright_stars", "globular_clusters",
+        "formation", "habitable_zone", "dust", "spurs", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
         "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "arm_ring_power", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
         "gas_spurs", "stellar_halo",
-        "supernovae", "light", "spurs", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
+        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
+        "formation", "habitable_zone", "dust", "spurs", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
 }
 # The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's stages publish, in both
@@ -203,6 +206,8 @@ SEEDED_BASIC = {
     # S58 (D217 follow-up): the same stage's second field - the gas's contrast as the star formation law reads
     # it, the lanes' excess spread over the bar's footprint - seeded by the same reads.
     "star_formation_gas_contrast",
+    # S100 (#130): and its third - the atomic gas's own response, the same law at the atomic gas's dispersion.
+    "atomic_gas_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
@@ -282,6 +287,8 @@ def test_production_graphs_hold(prod):
             "molecular_ring": 5,
             # S87 (#80; D255): a seventh, the bar's measured half-length, read by the bar stage at the pattern's checkpoint.
             "bar_half_length": 3,
+            # S99 (#146; D268 ruling 8 b): an eighth, the bar's amplitude, read by the pattern stage at its checkpoint.
+            "bar_contrast": 3,
         }
         # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's - and (the gate's follow-up,
         # item 2) the spread of a segment's pitch relative to the disc's, a law's number the winding's readers take.
@@ -295,7 +302,7 @@ def test_production_graphs_hold(prod):
         # law's arm number, from the bar's end, placed by the Sun where a template pins arms.
         assert g.stages["arm_pieces"].requires == ("pitch_angle", "arm_class", "bar_half_length", "arm_design_count", "sun_azimuth")
         assert g.stages["arm_pieces"].reads_inputs == ("arm_pieces",) and g.stages["arm_pieces"].reads_seeds == ("texture_seed",)
-        assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle") and g.stages["pattern"].reads_seeds == ("pattern_seed",)
+        assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle", "bar_contrast") and g.stages["pattern"].reads_seeds == ("pattern_seed",)  # S99 (#146): and the bar's pinned amplitude
         assert {g.producer[n] for n in ARM_PIECES} == {"arm_pieces"}
         # S59 (D218): the columns are a table's (domain "table"), and the graph's provenance covers them as it
         # covers any field: computed synthetic, the layer stage's, and declared so.

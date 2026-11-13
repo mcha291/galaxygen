@@ -891,7 +891,7 @@ cancels; "positive part" integrates only the excess above the minor axis):
 | 0 ≤ R < 5.3 kpc (no cut) | 0.349 | 0.354 | — |
 | 0.365 (one bulge scale radius) ≤ R < 5.3 | 0.349 | 0.354 | — |
 | 1.0 ≤ R < 5.3 | 0.339 | 0.344 | — |
-| 2.0 ≤ R < 5.3 ("outside the bulge") | **0.233** | 0.238 | **0.46 ± 0.03** |
+| 2.0 ≤ R < 5.3 ~~("outside the bulge")~~ (S99, F-99R-1: the measurer's reading; the paper's only printed bulge region is Sect. 3's ellipse) | **0.233** | 0.238 | **0.46 ± 0.03** |
 
 **The cut is the measurer's reading, not Portail et al.'s stated definition**: "outside the bulge" was taken as R ≥ 2
 kpc on their sentence that 2 kpc is "the edge of the bulge"; their bulge is a 3-D box/peanut and how they cut it
@@ -945,3 +945,215 @@ for NGC 1530, 5383, 1300, 1097; the Milky Way bar's dust lanes, Sormani & Barnes
 DG16's tablea3 ReadMe (CDS refused; one alternative tried); Prieto et al. 2019 and Regan et al. 1997 (only as quoted);
 Laine et al. 1999 not re-read (S96's); NGC 1097's and NGC 7479's bar lengths (so no width in a); Sormani & Barnes 2019
 (the Milky Way's lanes) not fetched; Portail et al.'s face-on cut of their bulge (the measurer's 2 kpc is a reading).
+
+## Part S99 — Portail et al. 2017's cut read on the page, and the Milky Way template's bar pinned to the Galaxy's non-axisymmetric mass (2026-11-12, BUILD_VI row 99; the reader and builder B)
+
+**The notes.** S99's reader (`s99_R.md`, item 1) fetched Portail, Gerhard, Wegg & Ness 2017 (arXiv:1608.07954v3, the
+full PDF from arxiv.org, text by `pdftotext -layout`); every quotation below is from that text `[verified: Portail et
+al. 2017, place]`. Builder B (`s99_B.md`, branch `s99-bar`, merged 8a6f848) measured the template before and after
+the pin and built it. `[inferred]` marks the reader's or the builder's own reading or arithmetic. The gate's rulings
+are D269 (rulings 3 and 4) and register #146.
+
+### S99.1 #146 — what Portail et al. integrate (Sect. 9.1 (ii), Sect. 3, Table 2)
+
+- **Sect. 9.1 (ii)**, verbatim: "Non-axisymmetric long bar from 2D 'photometry': An alternative way to define the bar
+  component is to search for non axisymmetries in the face-on surface density. We first define a maximum
+  axisymmetric model using the minor axis profile and remove this maximum axisymmetric model from the original
+  surface density map. By integrating the residuals for radii inside 5.3 kpc and outside the bulge, we find a
+  non-axisymmetric long bar mass of Mnon-axi = 0.46 +/- 0.03 x 10^10 Msun." The paragraph ends: "From both estimates
+  combined, the bar outside the bulge has slightly less than half the mass of the disk in the same radial range."
+- **Table 2** (the text layer shifts the value column one row against its labels; re-aligned by the reader against
+  Sect. 9.1, which prints the same numbers), "Mass of the bulge, bar and inner disk" (× 10¹⁰ M☉): 'photometric'
+  bulge + bar 1.88 ± 0.12; inner disk 1.29 ± 0.12; 'photometric' bulge 1.34 ± 0.04; 'photometric' long bar 0.54 ±
+  0.04; non-axisymmetric long bar 0.46 ± 0.03; bar-supporting orbits 1.04 ± 0.06. "Mass inside a box of (±2.2 x ±1.4
+  x ±1.2) kpc along the bar axes": smooth bulge traced by RCGs 1.32 ± 0.08, nuclear disk 0.20, dark matter 0.32 ±
+  0.05, dynamical 1.85 ± 0.05. The errors are "systematics derived from the variation models".
+- **The 5.3 kpc** is a radius in the face-on map ("for radii inside 5.3 kpc"; Fig. 20: "The bar extends to 5.3 kpc
+  from the centre") — read as a cylindrical radius, high confidence.
+- **No |z| limit enters the 0.46**: the map is the face-on surface density (Fig. 20); the ±1.2 kpc z-extent belongs
+  only to Table 2's box masses. High confidence.
+- **The bulge's boundary is not stated in Sect. 9.1.** The paper's only numerical bulge region is Sect. 3's, in the
+  initial model's construction: "In the bulge region, approximated as the interior of an ellipse reaching 2.2 kpc
+  along the bar major axis and 1.4 kpc along the intermediate axis, the 'bulge' model already represents the entire
+  stellar density" — the face-on footprint of the RCG box of Table 2 and Sect. 9.2. Sect. 9.1's "at the edge of the
+  bulge where the surface density along the minor axis at 2 kpc" places an edge near 2 kpc on the minor axis, which
+  does not fit an ellipse with a 1.4 kpc minor semi-axis exactly. **Not settled by the page** (the reader).
+- **The mass convention**, partly read: Sect. 3.2 adopts "the fiducial value of M/nRCG = 1000 for the main stellar
+  population in the bulge and bar" (Kroupa or Calamida IMF, 10 Gyr). The words "remnant", "white dwarf" and
+  "neutron" do not occur in the text: **whether the stellar mass includes remnants is not stated on this page**. The
+  reader's argument that they are in (the dynamical 1.85 and the 'photometric' 1.88 agree, and the kinematics count
+  all mass) is `[inferred by the reader]`, medium-low confidence — an assumption to state, not a reading.
+
+### S99.2 The recipe (the reader's five lines, with the sureness of each term)
+
+1. On the face-on stellar Σ(R, φ) (stars and remnants, all z, the axisymmetric bulge included — it cancels), take
+   Σ_minor(R) = Σ along the bar's in-plane minor axis (φ_bar ± 90°, both sides averaged).
+2. M_nonaxi = the integral of [Σ(R, φ) − Σ_minor(R)] dA over R < 5.3 kpc (cylindrical) and outside the bulge.
+3. Target **0.46 ± 0.03 × 10¹⁰ M☉** (the systematic half-range of the variation models; Table 2).
+4. The bulge cut is not stated in Sect. 9.1. Reading (a), recommended by the reader: the paper's own bulge region, the
+   face-on ellipse of semi-axes 2.2 kpc (the bar's major axis) by 1.4 kpc (the in-plane minor axis). Reading (b): a
+   circle R ≥ 2 kpc (S98's). On a bar whose excess lies on the major axis (a) gives a slightly lower residual than (b)
+   `[inferred: the reader]`; both to be computed.
+5. Sureness (the reader): the Σ_minor subtraction high (verbatim); 5.3 kpc as a cylindrical radius high; face-on, no
+   |z| cut high; the residuals integrated signed **medium** (the word is "residuals"); the bulge cut **low,
+   unsettled** (two readings); remnants in the mass **unsettled** (not on the page).
+
+### S99.3 F-99R-1 — S98's cut was the measurer's reading, not the paper's (provenance; no model number)
+
+| where | the words |
+|---|---|
+| this file, Part S98.4 (S98's measurer) | "'outside the bulge' was taken as R ≥ 2 kpc on their sentence that 2 kpc is 'the edge of the bulge'" |
+| Portail et al. 2017, Sect. 3 | "the interior of an ellipse reaching 2.2 kpc along the bar major axis and 1.4 kpc along the intermediate axis" |
+| Portail et al. 2017, Sect. 9.1 (ii) | "radii inside 5.3 kpc and outside the bulge" — the cut not restated |
+
+The 0.233 of Part S98.4 is one of two readings; the table row there that labelled the R ≥ 2 kpc band with the paper's
+words is struck in place (S99). The reader: high that the ellipse is the paper's only printed bulge region; low on
+which cut Sect. 9.1 used. **The gate's ruling (D269 ruling 3):** the cut is the paper's own printed bulge region,
+the ellipse, chosen before any number was read; R ≥ 2 kpc is the named alternative, measured beside it. F-99R-2
+(wording): Part S98.4's "the integral of [Σ_disc − Σ_minor(R)]" matches Portail et al.'s "remove this maximum
+axisymmetric model ... integrating the residuals" — no action.
+
+### S99.4 The numbers the template can be checked against (not fitted)
+
+All Sect. 9.1 unless marked; each is a check only while the amplitude is pinned to the 0.46 alone (the reader):
+- L_prof = 5.12 kpc, "radius at which the major and minor axes agree within 30%"; L_m=2 = 5.02 kpc, "radius at which
+  the relative m=2 component of the Fourier decomposition of the surface density drops to 20% of its maximum value";
+  L_drop = 5.77 kpc — they depend on the template's pinned half-length 5.0 kpc as much as on the amplitude.
+- The major / minor ratio "a factor of about 4" at 2 kpc; the profiles' crossing at 6.3 kpc.
+- The 'photometric' long bar 0.54 ± 0.04 and inner disk 1.29 ± 0.12 — a weak check (the paper's three-regime split of
+  the axis profiles is not given numerically).
+- "the bar outside the bulge has slightly less than half the mass of the disk in the same radial range": the
+  residual over the Σ_minor integral of the same region, under 0.5.
+- "Along the major axis, the density of the bar is close to exponential."
+
+### S99.5 Builder B's measurement and the pin
+
+**The measure** (`model/galaxy/specs/bar_mass.py`, copied verbatim from the builder's scratch module; hand cases in
+`tests/test_bar_mass.py`: an axisymmetric field 0 under every cut, one cosine by hand under no cut, circle and
+ellipse). Production grid, `template=milky_way`, the layer on (with the layer off `pattern_density_contrast` is its
+neutral 1 and the measure is 0 by construction); Σ = `stellar_surface_density` × the render's old-star weight, plus
+the bulge's projected Hernquist (it cancels); the axis the model's bar angle (22.98°); the minor axis read over ±1.5°
+at both ends; the region exact in R. The check against S98: with S98's own axis (the m = 2 phase) it reads 0.244 /
+0.356 against S98's 0.233 / 0.349; with the model's axis the R ≥ 2 kpc reading is within 1.5 % of S98's.
+
+**The linear scan** (`tools/derive_bar_contrast.py`, seven points over the pin's range 0-0.9, then Illinois regula
+falsi to 10⁻⁶ in B; log `s99_B_derive.log`):
+
+| B | 0 | 0.15 | 0.30 | 0.45 | 0.60 | 0.75 | 0.90 |
+|---|---|---|---|---|---|---|---|
+| M (10¹⁰ M☉) | 0.0802 | 0.1632 | 0.2462 | 0.3293 | 0.4123 | 0.4953 | 0.5783 |
+
+Strictly increasing and **exactly linear**, (0.0802 + 0.5535 B) × 10¹⁰ M☉; one Illinois step lands: root B =
+0.686196287, **stored 0.6862** (the cap 0.9 not reached). M(B = 0) = 0.080 × 10¹⁰ is not the bar's: it is the arm
+pieces' two-fold part inside 5.3 kpc outside the ellipse, which the ruled measure counts — the bar's own share of the
+0.46 is therefore 0.38 `[inferred: builder B]`; whether Portail et al.'s map carries spiral structure in that annulus
+was not read. Reported, not acted on.
+
+**The pin** (the template's eighth, by `pitch_angle`'s mechanism: a pin replacing a seeded draw, the draw still made
+on its stream `("pattern_seed", "bar_contrast")`, range 0 to 0.9 = `BAR_CONTRAST_CAP`, checkpoint 3). `bar_contrast`
+**0.2893 (the draw) → 0.6862**; every other galaxy keeps the seeded draw bit for bit (tested: the bare defaults
+0.28926…, `ngc_4414`'s unpinned 0.32104…). One difference from `pitch_angle`, deliberate: no `bar_contrast_drawn`
+field (the drawn value is the bare-defaults run's `bar_contrast`; a new field would move the field lists outside the
+lane's files) — the lead's to order.
+
+**Before and after** (`template=milky_way`, the layer on; logs `s99_B_measure_before2.log` / `s99_B_measure_after.log`):
+
+| quantity | before (B 0.2893, drawn) | after (B 0.6862, pinned) | Portail et al. 2017 |
+|---|---|---|---|
+| M, the ellipse cut (ruled) | 0.2403 × 10¹⁰ | **0.4600 × 10¹⁰** | 0.46 ± 0.03 |
+| M, R ≥ 2 kpc (the named alternative) | 0.2354 | **0.4485** | — |
+| M, no cut | 0.3486 | 0.7171 | — |
+| major / minor at 2 kpc, the bulge in (the disc alone) | 1.595 (1.688) | **3.166** (3.738) | "about 4" |
+| the profiles' crossing | 6.954 kpc | **6.954 kpc** (beyond the body: unmoved) | 6.3 |
+| M over the maximum-axisymmetric disc's mass, the same region | 0.144 | **0.328** | "slightly less than half" |
+| `bar_mass_share` (of the checkpoint-1 disc) | 0.09658 | 0.22912 | |
+| the body's share of its densest ring (β max) | 0.3988 | **0.9461** (at ~0.71 kpc) | |
+| the stellar contrast's minimum, whole field | 0.5290 | 0.4385 | |
+| the gas crest inside the bar; arm pieces; clouds < 5 kpc; `stellar_mass_total` | 7.3027 at 3.94 kpc; 46; 5714; 4.7417 × 10¹⁰ | the same (unmoved) | |
+
+The four checks are **as measured, never judged** (D269): the alternative cut 0.449, the axis ratio at 2 kpc 3.17
+(was 1.60) against "about 4", the crossing 6.95 kpc against 6.3 (unmoved), the residual 0.33 of the disc's mass over
+the same region against "under half". **The body at 0.946 of its densest ring** (0.71 kpc): the model has no guard
+at β ≤ 1 and 0.6862 does not cross it, but it is near its ceiling — noted.
+
+**The light share** (`tests/test_bar.py`, debt 146's record): the body's light was **0.0437** of the galaxy's — S86's
+"a miss, low by half" against Gadotti 2011's Bar/T ≈ 0.10 — and pinned to Portail et al.'s mass it reads **0.1037**:
+the miss becomes a hit, unfitted (the pin's target was a mass in another paper). The builder held the judged clause
+strict xfail for the gate; **the gate's ruling (D269 ruling 4): the recorded miss is removed with its reason (rule
+#29), the value held as measured** at the batch's re-pin pass. The body's other numbers in `tests/test_bar.py` moved
+exactly × 2.3723 (linear in the normalisation), re-pinned with "was" comments in the lane's own file.
+
+### S99.6 Checkpoint-1 masses against the stellar mass (for #80; builder B, read only, the layer off)
+
+| case | M★ total (checkpoint 4) | checkpoint-1 disc (integral of `disc_surface_density` to 30 kpc) | `bulge_stellar_mass` | disc + bulge | `baryon_mass_total` |
+|---|---|---|---|---|---|
+| bare defaults (= `milky_way`) | 4.742 × 10¹⁰ (log 10.676) | 5.858 × 10¹⁰: × 1.2355, +0.092 dex | 7.71 × 10⁹: × 0.1626, −0.789 dex | 6.629 × 10¹⁰: × 1.398, +0.146 dex | 5.859 × 10¹⁰: × 1.2356, +0.092 dex |
+| `ngc_4414` | 3.900 × 10¹⁰ (log 10.591) | 4.563 × 10¹⁰: × 1.1700, +0.068 dex | 6.35 × 10⁹: × 0.1628, −0.788 dex | 5.198 × 10¹⁰: × 1.333, +0.125 dex | 4.563 × 10¹⁰: × 1.1700, +0.068 dex |
+
+The checkpoint-1 disc integral equals `baryon_mass_total` to 10⁻⁴: checkpoint 1's disc holds every retained baryon
+(gas included, debt #11), so "disc + bulge" counts the bulge twice. The nearest stand-in for the stellar mass at
+checkpoint 3 is `baryon_mass_total`, +0.09 dex (the Milky Way) and +0.07 dex (NGC 4414) over it; the templates are
+identical to the bare defaults at checkpoint 1 (no pin acts before checkpoint 3). What the gate made of it is S100's
+(#80's build, on its own branch).
+
+### S99.7 Not read or not run
+
+Portail et al.'s population model (P15) and Zoccali et al. 2000's field mass (the remnants' share); Fig. 21's
+hatched components in numbers; whether Portail et al.'s map carries spiral structure inside 5.3 kpc. The opt-in
+re-derivation test not run under pytest (the tool ran). Every record the pin moves outside the lane's files — the
+layer reference, `test_modes`, `test_gas_pattern`, `test_pieces`, `test_audit_v`, the renders, the frames — is listed
+in `s99_B.md` section 8 for the batch's one re-pin pass, not re-pinned here.
+
+## Part S100 — the length by Table 4 (2026-11-12, BUILD_VI row 100; builder B2 and the re-pin pass)
+
+**The notes.** Builder B2 (`s100_B2.md`, branch `s100-barlen`, 373117c and 02113b7, merged into `session-100`); the
+re-pin builders (`s100_P.md`, `s100_P2.md`). The gate's ruling is D270 ruling 1 (on D268 ruling 5) and register #80.
+
+### S100.1 The form and the row, fetched again (ar5iv 1908.08423)
+
+Eq. 1 / 4 as the fetch quotes it: "log a_vis = alpha1 + beta X + beta1 log M* if log M* < M_brk; alpha2 + beta X +
+beta2 log M* if log M* > M_brk", with "alpha2 = alpha1 + (beta1 - beta2) M_brk". Table 4's row "log(M*/Msun) + log h":
+α₁ 0.02 (+0.29/−0.27), β₁ 0.00 (±0.03), β₂ 0.35 (+0.06/−0.08), β 0.61 (±0.06), log M_brk 10.13 (+0.02/−0.05) —
+MATCH with Part S96.1. **No scatter is printed**: neither Table 4 nor the text gives a residual scatter for the fit
+(only bootstrap uncertainties on the parameters; Table 5's MSE_pred 0.030 is a prediction error), and the bar stage
+draws none about its law (D55) — nothing replaced. **No h range is printed** for the barred sample (log M★ 9-11 is the
+sample's mass range); the law is used as fitted outside it.
+
+### S100.2 The stand-in and its excess
+
+The bar stage is checkpoint 3 and the stellar mass is published at checkpoint 4, so the law reads
+`baryon_mass_total` (checkpoint 1; rule A1 kept) — **the retained baryons' mass for the stellar, disclosed in the
+constants' abouts and not corrected** (D270 ruling 1; Part S99.6's table is the reading it rests on):
+
+| galaxy | log M, baryons | log M★ | the excess | h (kpc) |
+|---|---|---|---|---|
+| bare defaults | 10.768 | 10.676 | +0.092 dex (0.09187) | 2.605 |
+| `milky_way` (the disc; its bar pinned) | 10.768 | 10.676 | +0.092 dex (0.09187) | 2.605 |
+| `ngc_4414` (unbarred, pinned) | 10.659 | 10.591 | +0.068 dex (0.06817) | 1.755 |
+
+All three sit above the break and inside 9-11. Above the break the length moves by β₂ × the excess: **+0.032 dex in
+log a on the defaults**. The constants (`models/level0.py`): `BAR_LENGTH_LOG_NORM` 0.04 → 0.02 and
+`BAR_LENGTH_SLOPE` 0.76 → 0.61 (the names kept, their values Table 4's), new `BAR_LENGTH_MASS_SLOPE_LOW` 0.00,
+`BAR_LENGTH_MASS_SLOPE_HIGH` 0.35 and `BAR_LENGTH_MASS_BREAK` 10.13; `pattern.bar_length_law(scale_length, mass, c)`.
+
+### S100.3 What it moved
+
+- **The default galaxy's `bar_half_length` 2.2698 → 3.1395 kpc** (log M 10.768, above the break; by hand 3.139507 at
+  h 2.6049; Table 3 put back reads 2.2698417984554817 exactly — `tests/test_s100_bar_length.py`).
+- **Rows 15-17, still misses** (`s100_B2_spec.log`; of 37 rows on the bare defaults 3 moved, no verdict changed): row
+  15 2.26984 → **3.13951** kpc against 5.0 ± 0.2; row 16's median 81.9702 → **64.4722** km/s/kpc (central 95 %
+  53.2-82.4) against 34-52; row 17's median 2.65068 → **3.66626** kpc (2.63-4.61) against 4.5-7.0.
+- **The templates do not move**: the Milky Way's bar pinned at 5.0 kpc, `ngc_4414` pinned unbarred — every field equal
+  to the Table 3 model's on the lane's branch, layer on and off.
+- **On the default galaxy** (the re-pin pass): the arm label reads **6 on all 30 seeds** on both models (was 5 or 6;
+  the {5, 6} encoded S87's 2.27 kpc bar); the hierarchy's level-0 cell 300 holds 16 stars where it held 22; the
+  default arm census (53, 12, 5) → (45, 10, 4); the bright young stars' disclosed square and the default gas field
+  re-pinned as records. **The census's flatness**: the default census against its own law, flat beyond 380 pc within
+  0.05, reads **0.0529 (clouds) and 0.0558 (clusters)** where session-99's head read 0.0169 / 0.0297; 061e5ed (#80
+  merged, #130 not) reads the head bit for bit, so #80 alone moves it. The counts do not move (17 127 clouds, 13 124
+  clusters); the longer bar re-weights the clouds' sectors inside 3.1 kpc and 1 + ω dips to **0.947 / 0.944** in the
+  first bins past 380 pc (440-560 pc), the rest within 0.034. The clause is held strict, not moved: **#233** (D270
+  ruling 6). The slopes themselves read −0.5772 / −0.5746, inside the window by 0.085.
+
+**Not closed**: the referent — the model's h is λ_d's, Erwin's the 3.6 µm disc scale length; and the stand-in's
+excess (#80, carried).

@@ -193,6 +193,18 @@ LEVEL0: dict[str, Constant] = {
         "one without the other breaks the calibration (see TOOMRE_ALPHA). At 8 km/s the gas at R_0 "
         "reads 13.6 and row 9 falls to 0.025 (D119's probe): the pair is read as one number.",
     ),
+    "HI_DISPERSION_RATIO": Constant(  # read by gas_pattern (S100, #130): the atomic gas's own response
+        1.4,
+        "dimensionless",
+        "The atomic gas's velocity dispersion over the molecular gas's, measured on the same pixels: "
+        "\"σHI=11.7±2.3 km s-1, yielding a mean dispersion ratio σHI/σCO=1.4±0.2, independent of "
+        "radius\", 13 THINGS / HERACLES discs, HI and CO at 13 arcsec [verified: Mogotsi et al. 2016, "
+        "AJ 151, 15, abstract; docs/READING_GAS_PATTERN.md Part S96]. The gas pattern solves the atomic "
+        "gas's own steady response to the arms at this ratio times GAS_DISPERSION - 8.4 km/s on the "
+        "model's 6 [inferred] - beside the molecular one. The absolute 11.7 km/s is not used: over the "
+        "model's 6 it would be a ratio of 1.95, outside the measured 1.4 ± 0.2. Flat with radius, as the "
+        "source's text says; the dispersions' own fall with radius (its Fig. 6) is unread.",
+    ),
     "GAS_DISC_SCALE_RATIO": Constant(
         1.0,
         "dimensionless",
@@ -272,26 +284,66 @@ LEVEL0: dict[str, Constant] = {
         "on (AUDIT_II_A.md A-14, debt #42).",
     ),
     "BAR_LENGTH_LOG_NORM": Constant(
-        0.04,
+        0.02,
         "dimensionless",
-        "The bar's half-length law, log10(a / kpc) = BAR_LENGTH_LOG_NORM + BAR_LENGTH_SLOPE log10(h / kpc): its "
-        "zero point, 0.04 +- 0.02, a the deprojected visual bar length and h the disc's 3.6 um scale length, both "
-        "kpc, fitted over 367 S4G barred spirals (Spearman 0.61) [verified: Erwin 2019, MNRAS 489, 3553, "
-        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2 and A2 (E19)]. Adopted on the owner's ruling of "
-        "2026-11-03 (D255) on debt #80, replacing BAR_LENGTH_RATIO = 2.0 (bars 'about 1.5-2.5 R_d [recall]', a fit "
-        "to the one galaxy row 15 reads). The model's h is the lambda_d scale length (disc_scale_length_spin), the "
-        "only scale length checkpoint 1 holds (A1) - not the source's 3.6 um fit, a referent recorded under #80. "
-        "At the Milky Way's 2.605 kpc the law gives 2.27 kpc against the Milky Way's measured 5.0 +- 0.2: the "
-        "Milky Way's bar is long for its disc, so its template pins the measured length (bar_half_length) and the "
-        "law's own miss is row 15's, recorded (B5), nothing tuned back (B10). GALAXY_INPUTS.md 4b's chain disc "
-        "dominance -> bar length is still not modelled (debt #21).",
+        "The bar's half-length law's zero point alpha1, 0.02 (+0.29/-0.27), in Erwin 2019's two-term fit of log a "
+        "on log h and a broken log M*: log10(a / kpc) = alpha1 + beta log10(h / kpc) + beta1 log10(M / Msun) below "
+        "the break, and alpha2 + beta log10(h / kpc) + beta2 log10(M / Msun) above it, alpha2 = alpha1 + "
+        "(beta1 - beta2) log10(M_brk / Msun), so the law is continuous at the break; a the deprojected visual bar "
+        "length and h the disc's 3.6 um scale length, both kpc, fitted over 367 S4G barred spirals of log M* 9-11, "
+        "the paper's preferred fit of seven (Table 5: AIC 5583.5, MSE_pred 0.030, against h alone 6242.2 / 0.033) "
+        "[verified: Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, eq. 4 and Table 4, row 'log M* + log h'; "
+        "docs/READING_BAR.md S96.1]. Neither the table nor the text prints a residual scatter, and the law is drawn "
+        "with none, as before. Outside log M* 9-11 (and at any h: the paper states no range in h) the law is used "
+        "as fitted, an extrapolation (Audit VI F-1A-6). Adopted on the owner's word of 2026-11-12 (D268 ruling 5, "
+        "S100, D270) on debt #80, in place of Erwin 2019's Table 3 (log a on log h alone, 0.04 + 0.76 log h: 2.27 "
+        "kpc on the default disc), which since S87 (D255) replaced a recalled 2.0 scale lengths. The model's h is "
+        "the lambda_d scale length (checkpoint 1's only one, A1) - not the source's 3.6 um fit, a referent still "
+        "carried under #80. The mass the law reads is the retained baryons' (checkpoint 1): the bar is at "
+        "checkpoint 3 and the stellar mass is published at 4, downstream of the bar (A1). It stands for the "
+        "stellar mass with the gas in it, not corrected (no sourced correction exists at checkpoint 1): "
+        "+0.092 dex over the stellar mass on the default disc and on the Milky Way template, +0.068 dex on "
+        "NGC 4414 (S99's measurement), which above the break lifts log a by beta2 times that - +0.032 dex, 7.7 % "
+        "of the length, on the default disc; held as measured in tests/test_s100_bar_length.py. On the default "
+        "disc (h 2.605 kpc, log M 10.77, above the break) the law gives 3.14 kpc against the Milky Way's "
+        "measured 5.0 +- 0.2: row 15 still a recorded miss (B5), nothing tuned back (B10); the Milky Way "
+        "template pins its measured length. GALAXY_INPUTS.md 4b's chain disc dominance -> bar length is still "
+        "not modelled (debt #21).",
     ),
     "BAR_LENGTH_SLOPE": Constant(
-        0.76,
+        0.61,
         "dimensionless",
-        "The bar's half-length law's slope in log10 h, 0.76 +- 0.06 [verified: Erwin 2019, MNRAS 489, 3553, "
-        "arXiv:1908.08423, Table 3; docs/READING_BAR.md A1.2]: see BAR_LENGTH_LOG_NORM. The owner's ruling of "
-        "2026-11-03 (D255).",
+        "The bar's half-length law's slope beta in log10 h, 0.61 +- 0.06, on both sides of the mass break "
+        "[verified: Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; "
+        "docs/READING_BAR.md S96.1]: the law is the zero point's. Was 0.76 +- 0.06 (Table 3, h alone) from S87 "
+        "to S100. The owner's word of 2026-11-12 (D268 ruling 5).",
+    ),
+    "BAR_LENGTH_MASS_SLOPE_LOW": Constant(
+        0.00,
+        "dimensionless",
+        "The bar's half-length law's slope beta1 in log10 M below the mass break, 0.00 +- 0.03 [verified: "
+        "Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; docs/READING_BAR.md "
+        "S96.1]: below the break the bar's length does not depend on the mass at fixed h. M is the retained "
+        "baryons' mass standing for the stellar mass (see the law's zero point). The owner's word of 2026-11-12 "
+        "(D268 ruling 5).",
+    ),
+    "BAR_LENGTH_MASS_SLOPE_HIGH": Constant(
+        0.35,
+        "dimensionless",
+        "The bar's half-length law's slope beta2 in log10 M above the mass break, 0.35 (+0.06/-0.08) [verified: "
+        "Erwin 2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; docs/READING_BAR.md "
+        "S96.1]. M is the retained baryons' mass standing for the stellar mass, high by the gas (+0.07 to +0.09 "
+        "dex on the model's three named galaxies), which this slope carries into log a uncorrected (see the "
+        "law's zero point). The owner's word of 2026-11-12 (D268 ruling 5).",
+    ),
+    "BAR_LENGTH_MASS_BREAK": Constant(
+        10.13,
+        "dex",
+        "The bar's half-length law's mass break, log10(M_brk / Msun) = 10.13 (+0.02/-0.05) [verified: Erwin "
+        "2019, MNRAS 489, 3553, arXiv:1908.08423, Table 4, row 'log M* + log h'; docs/READING_BAR.md S96.1]; "
+        "the abstract's 'for log M* < 10.1, bar size is almost independent of stellar mass'. Compared with "
+        "the retained baryons' mass, which is high by the gas (see the law's zero point). The owner's word of "
+        "2026-11-12 (D268 ruling 5).",
     ),
     # --- the bar's presence, body and lanes (S58, BUILD_III Phase P3; DECISIONS.md D217) ----------------------
     "BAR_FORMATION_TIME_SCALE": Constant(
@@ -335,7 +387,11 @@ LEVEL0: dict[str, Constant] = {
         "[verified: Gadotti 2011, MNRAS 415, 3308, arXiv:1003.1719, §2–3.1, "
         "https://ar5iv.labs.arxiv.org/html/1003.1719] (docs/READING_BAR.md A1.2 and A2, G11; b/a = 1 - "
         "ellipticity is the reader's derivation). The medians and scatters sit in a figure and were not "
-        "readable, so no draw of it is built: one value for every bar, a debt (D217 item 4).",
+        "readable, so no draw of it is built: one value for every bar, a debt (D217 item 4). Beside it, the "
+        "deprojected ellipse-fit ellipticity of the S4G strongly barred (SB) galaxies, 0.59 +/- 0.01 (a standard "
+        "error, N = 277; b/a 0.41 by 1 - ellipticity, the reader's arithmetic) [verified: Diaz-Garcia et al. 2016a, "
+        "A&A 587, A160, arXiv:1509.06743, Table 3, the SB row] (docs/READING_BAR.md Part S96; debt #146, S96): the "
+        "table prints means with their standard errors and no spread, so it does not give the draw either.",
     ),
     "BAR_BOXINESS": Constant(
         3.0,
@@ -413,7 +469,12 @@ LEVEL0: dict[str, Constant] = {
         "gas or of the dust lanes is what would settle it - so this number is declared, not measured, and is "
         "carried as a debt (D217 item 8; docs/READING_BAR.md B5: 'Not found in anything read: a lane width') "
         "[inferred]. Nothing is tuned to it: the lane's peak over the ring's mean follows from it and is read "
-        "as a check against one simulation's factor of about ten (Kim, Seo & Kim 2012).",
+        "as a check against one simulation's factor of about ten (Kim, Seo & Kim 2012). Kept on the owner's word "
+        "(D268 ruling 10), with the bracket the readings found beside it - single galaxies, no sample statistic in "
+        "six papers read across S86-S98: NGC 7479's bar dust lane about 240 pc wide (about 1.5 arcsec at 160 pc an "
+        "arcsec; Laine et al. 1999), NGC 1097's resolved and 'wider than' 320-640 pc, a lower bound (Quillen et al. "
+        "1995) (docs/READING_BAR.md Parts S96 and S98; debt #147). On the Milky Way template's 5.0 kpc bar the "
+        "placeholder is 0.50 kpc, between them, neither contradicting it; neither is in units of a bar's length.",
     ),
     "FAST_BAR_RATIO": Constant(
         1.2,
@@ -1169,7 +1230,10 @@ LEVEL0: dict[str, Constant] = {
         "deg [verified: docs/READING_ARM_SEGMENTS.md A1.3 and HR15 Tables 2-5] - the disc draw's own 1 deg "
         "clip (pattern.compute_pattern). **A resolution floor, not a physical one**: both pitches are consistent "
         "with zero at their +-2 deg errors, so it bounds what a measured stretch of arm has been resolved as, "
-        "1/sin p at 57 instead of thousands, and says nothing of a real arc of no pitch.",
+        "1/sin p at 57 instead of thousands, and says nothing of a real arc of no pitch. That a drawn piece never "
+        "reverses its winding sense is the model's rule (DECISIONS.md D219), not the sources' finding: Honig & Reid "
+        "2015's Table 5 prints a reversed segment, M51's arm B at -10.3 +- 1.4 deg at 7.1 kpc, outside what the "
+        "model draws - M51 is interacting (Audit VI, F-1A-1).",
     ),
     "ARM_SEGMENT_PITCH_RELATIVE_SCATTER": Constant(
         0.56,
@@ -1301,8 +1365,11 @@ LEVEL0: dict[str, Constant] = {
         "Part B 1.2 and 1.8]. Named "
         "alternatives: the sech^2 layer's factor, up to 13.7 % higher at the same height; by type the ratio "
         "is 4, 5 and 9 (de Grijs 1998). Which profile an observed height stands for moves the factor between "
-        "0.39 and 0.57 at k h = 1 (a debt). The model's own thin-disc scale height is not used: it is a later "
-        "checkpoint's.",
+        "0.39 and 0.57 at k h = 1 (a debt). The pattern does not read the model's own thin-disc scale height: it "
+        "is a later checkpoint's. Since S99 (#227, D268) that height is this same flattening's second use: the "
+        "vertical stage sets the stellar layer, one height per galaxy, as the stellar disc's fitted mass scale "
+        "length (checkpoint 4) over this number, constant with radius as the source assumes, in place of the "
+        "isothermal sheet's law read at R_SUN (kept as a check, thin_disc_scale_height_dynamical).",
     ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,

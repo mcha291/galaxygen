@@ -107,9 +107,15 @@ def ngc_4414():
 # share of the sample's young light and its scatter. The scatter: a bootstrap of the young stars (4 000 resamples of
 # the 294 / 121 stars younger than the window, their expected light and kept flag; scratch s93_t3_boot.py) - the
 # sampling spread of the share at this sample size, 0.0171 / 0.0265.
+# S100 (batch P, D270; #227 the stellar layer's one height, every census's counts, on ngc_4414 the clusters x 1.49;
+# #146 the Milky Way's pinned bar amplitude, the clusters placed inside the bar): the census's light and Y moved, the
+# sample did not (the same 294 / 121 young stars, the same young-over-Y ratios and kept shares to the last place
+# recorded), so the bootstrap's spread stands as measured. Re-pinned to S100's head:
+# milky_way was before 1.9196, after 0.9405, of_census 1.0093; ngc_4414 was before 2.0381, after 1.0316,
+# of_census 1.0001. Unmoved: young 0.9878 / 1.0066, kept 0.1594 / 0.1584, sd 0.0171 / 0.0265.
 RECORDS = {
-    "milky_way": {"before": 1.9196, "after": 0.9405, "young": 0.9878, "of_census": 1.0093, "kept": 0.1594, "sd": 0.0171},
-    "ngc_4414": {"before": 2.0381, "after": 1.0316, "young": 1.0066, "of_census": 1.0001, "kept": 0.1584, "sd": 0.0265},
+    "milky_way": {"before": 1.9167, "after": 0.9376, "young": 0.9878, "of_census": 1.0094, "kept": 0.1594, "sd": 0.0171},
+    "ngc_4414": {"before": 1.9974, "after": 0.9819, "young": 1.0066, "of_census": 0.9911, "kept": 0.1584, "sd": 0.0265},
 }
 RECORD_REL = 2e-3  # as-measured records: the fixed seed reads them to rounding; this is a margin, not a judged bound
 
@@ -138,12 +144,18 @@ def test_the_young_population_is_drawn_once(milky_way):
     sample's young 0.9878 Y, the census's 0.9318 Y); after, the sample keeps the dissolved clusters' share (0.1594 of
     its young light against the census's dissolved light share 0.1597) and the points drop the dissolved, (kept +
     points) / Y = 0.9405 - the census's own 6 % shortfall (T2: its draw against its expectation, its seed-to-seed
-    spread 4.4 %, D210); (kept + points) / census = 1.0093. At 10^6 stars: 1.9319 / 0.9343 / 0.1513."""
+    spread 4.4 %, D210); (kept + points) / census = 1.0093. At 10^6 stars: 1.9319 / 0.9343 / 0.1513.
+    S100 (batch P, D270; #227, #146), at 500 000 stars: before 1.9167 (the sample's young 0.9878 Y, the census's
+    0.9289 Y), the kept share 0.1594 against the census's dissolved light share 0.1602, after 0.9376 - the census's
+    shortfall 6.2 % - and (kept + points) / census 1.0094; the 10^6-star figures not re-read."""
     _drawn_once(milky_way, RECORDS["milky_way"])
 
 
 def test_the_young_population_is_drawn_once_in_ngc_4414(ngc_4414):
     """``ngc_4414`` at 500 000 stars: before 2.0381 (the sample's young 1.0066 Y, the census 1.0314 Y), after 1.0316;
     the kept share 0.1584 against the census's dissolved share 0.1545; (kept + points) / census 1.0001. At 10^6
-    stars: 1.9813 / 1.0241 / 0.1601."""
+    stars: 1.9813 / 1.0241 / 0.1601.
+    S100 (batch P, D270; #227: the clusters x 1.49 on this template): before 1.9974 (the sample's young 1.0066 Y,
+    the census 0.9908 Y), after 0.9819; the kept share 0.1584 against the census's dissolved share 0.1699; (kept +
+    points) / census 0.9911. The 10^6-star figures not re-read."""
     _drawn_once(ngc_4414, RECORDS["ngc_4414"])

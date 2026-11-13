@@ -202,6 +202,10 @@ class ClusteringField:
         r_mid, phi_mid = self.lattice(lo, hi, p_lo, p_hi)
         rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
         w = self.map(rr * np.cos(pp), rr * np.sin(pp)) * (np.interp(r_mid, R, sigma_h2) * r_mid)[:, None]
+        # The pattern's point function to the first power (S99, #229), as the clouds' sector weights take it: Colombo
+        # et al. 2014 (ApJ 784, 3), Table 2, M 51 at 40 pc - arm over inter-arm 3.78 in molecular gas, 4.05 in cloud
+        # mass per area (an exponent 1.05; 0.86 without the catalogue's extrapolation), 2.43 in cloud number per area
+        # (0.67). One grand-design galaxy, no flocculent disc, no law printed.
         law = mesh_factor(pattern, (lo, hi, p_lo, p_hi), r_mid, phi_mid)
         if law is not None:
             w = w * law
@@ -432,10 +436,14 @@ _STANDS_IN_FOR = (
 # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; 16 940 clouds): re-measured -
 # were p99 0.121, max 1.258, 1807 of 16 577 beyond 0.06 dex and the [alpha/Fe] maximum 0.226; the median 0.0217, the
 # 90th percentile 0.0617 and the maximum's ring 23.622 kpc read the declared digits still.
+# S100 (#227 the layer's height, #80 the bar's length; 17 127 clouds): re-measured - were 1791 of 16 940 beyond 0.06
+# dex, the [alpha/Fe] maximum 0.222, at most 0.335 dex inside 5 kpc and 0.149 in 10-15 kpc, the gas's [Fe/H] -1.23
+# and -2.92 at 23 and 24 kpc; the median 0.0217, percentiles 0.0617 / 0.1193, maximum 1.2608 at 23.622 kpc read the
+# declared digits still.
 SPILL_FEH_DEX = {"median": 0.022, "p90": 0.062, "p99": 0.119, "max": 1.261}
 SPILL_FEH_MAX_AT_KPC = 23.6
-SPILL_FEH_BEYOND = (0.06, 1791, 16940)  # S92 (#164 / #165): was 1787 - the spurs re-laid move clouds between the sectors of a ring (10.57 %, the declaration's 11 % still true). S91 (#216, D260): was 1785 - the census re-laid by the births made bit-independent. S90 (#161): was 1795 - the field's cell means move clouds between the sectors of a ring (the other spill figures read the declared digits still). S88: was 1807 of 16577. S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
-SPILL_ALPHA_MAX_DEX = 0.222  # S88: was 0.226. S70 (D234): was 0.232 (F-2-7)
+SPILL_FEH_BEYOND = (0.06, 1826, 17127)  # S100 (#227 the layer's height, #80 the bar's length): was 1791 of 16940 - the census +1 % (10.66 %, the declaration's 11 % still true; the other spill figures read the declared digits still). S92 (#164 / #165): was 1787 - the spurs re-laid move clouds between the sectors of a ring (10.57 %, the declaration's 11 % still true). S91 (#216, D260): was 1785 - the census re-laid by the births made bit-independent. S90 (#161): was 1795 - the field's cell means move clouds between the sectors of a ring (the other spill figures read the declared digits still). S88: was 1807 of 16577. S70 (D234): was 1863 (F-2-7). S62 (D221): was 1862 - the gas spurs move the clouds' placement
+SPILL_ALPHA_MAX_DEX = 0.228  # S100 (#227 the layer's height, #80 the bar's length): was 0.222 (read 0.2281). S88: was 0.226. S70 (D234): was 0.232 (F-2-7)
 
 _CONSERVES = (
     "Every ring's expected and realised total of every census it places - the ring is the unit (S90, register "
@@ -462,8 +470,8 @@ _CONSERVES = (
     f"the gas's [Fe/H] at the placed radius differs from that at the ring's by a median {SPILL_FEH_DEX['median']} "
     f"dex, {SPILL_FEH_DEX['p90']} at the 90th percentile and {SPILL_FEH_DEX['p99']} at the 99th, at most "
     f"{SPILL_FEH_DEX['max']} dex - a cloud the ring drew at {SPILL_FEH_MAX_AT_KPC} kpc, where the gas's [Fe/H] falls "
-    "from -1.23 to -2.92 dex between 23 and 24 kpc (6.4 dex/kpc, against a ring 0.94 kpc wide); at most 0.335 dex "
-    f"inside 5 kpc and 0.149 in 10-15 kpc; {SPILL_FEH_BEYOND[1]} of {SPILL_FEH_BEYOND[2]} clouds (11 %) more than "
+    "from -1.25 to -2.93 dex between 23 and 24 kpc (6.4 dex/kpc, against a ring 0.94 kpc wide); at most 0.329 dex "
+    f"inside 5 kpc and 0.146 in 10-15 kpc; {SPILL_FEH_BEYOND[1]} of {SPILL_FEH_BEYOND[2]} clouds (11 %) more than "
     f"{SPILL_FEH_BEYOND[0]} dex apart; [alpha/Fe] at most {SPILL_ALPHA_MAX_DEX} apart. And its "
     "placed azimuth lies anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
     "of the map runs from 0.264 to 2.402 over all 1 024 cells (measured at S61 on the default galaxy; the review's "
