@@ -1,7 +1,7 @@
-# BRIEF — after S100: batch P closed on `batch-p` (D268-D270); `main` waits on the owner's word and the runner's green
+# BRIEF — after S100: batch P is in `main` (D268-D270; merge 12d2600, 2026-11-13); the owner's display pass is next
 
-**The state (2026-11-12).** S94–S98 (D263–D267) are in `main` (s98). BUILD_VI is adopted with its ten rulings (D268);
-batch P, its model half, ran S99 (D269) and **S100 (D270), its close**, both merged into `batch-p`, not `main`:
+**The state (2026-11-13).** BUILD_VI is adopted with its ten rulings (D268); batch P, its model half, ran S99 (D269)
+and **S100 (D270), its close**; **`batch-p` → `main` at 12d2600, on the owner's word and run 43313689515's green**:
 - the default bar's length by Erwin 2019's Table 4 on the baryons' mass, a stand-in disclosed (#80: 2.270 → 3.140 kpc;
   rows 15-17 still misses; the templates' bars pinned and unmoved);
 - the atomic gas its own response at 1.4 × the dispersion, the placed gas a blend by the molecular fraction (#130: the
@@ -23,8 +23,8 @@ batch P, its model half, ran S99 (D269) and **S100 (D270), its close**, both mer
   not flat beyond 380 pc (0.0529 / 0.0558 against 0.05); held strict, not moved; #80 kept in the batch over it.
 
 ## What the next session does
-1. Nothing until the owner's word: `batch-p` → `main` on the runner's green (a dispatched run on `batch-p`).
-2. Then the owner's display pass (BUILD_VI P-2: load, tune, paste; then a short session for the paste and the frames).
+1. Nothing until the owner's word (batch P merged on the runner's 1846 passed, none failed, on `batch-p` at 1d8bcf8).
+2. First the owner's display pass (BUILD_VI P-2: load, tune, paste; then a short session for the paste and the frames).
 3. Then BUILD_VI row 101 (S101, P-5): the yardstick read again; every carried item ruled permanent or named to a later
    build by the owner; the count pin moved once.
 

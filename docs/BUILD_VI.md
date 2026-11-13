@@ -1,7 +1,8 @@
 # BUILD_VI — the sixth build: the pictures
 
 **Status: ADOPTED 2026-11-12 on the owner's word "Adopt as recommended" (D268): §6's ten rulings are taken as
-recommended, batch P (rows 99–100) runs on `batch-p`, and the display pass stays the owner's.** Drafted the same day
+recommended, batch P (rows 99–100) runs on `batch-p`, and the display pass stays the owner's.** **Batch P is in
+`main` since 2026-11-13 (merge 12d2600; D269, D270), on the owner's word and the runner's green on its closing head.** Drafted the same day
 at S97's open, on the owner's word "The pictures" (asked, at the close of S94–S96, what the next build aims at
 first); rows 97 and 98 ran on that word: neither moved a byte under `model/galaxy` nor a display default. **S97 ran row 97 on 2026-11-12 (D266): the two
 controls built, the experiments finished, sixteen combinations measured for the owner's pass, the model gaps traced
