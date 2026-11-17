@@ -1005,7 +1005,8 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # under 1 degree (at 1.78 degrees most of them): 5 steps.
     # S91 (#216): the floors were 1.7000e-11 and 1.5028e-11 - `ngc_4414`'s census at its drawn 1.78 degrees re-laid by the
     # births made bit-independent (its ties taken by identity); the residuals within their pins, 5 steps still.
-    for label, residual, floor in ((("ngc_4414", 33, 0), 7.4043e-12, 1.4355e-11), (("ngc_4414", 33, 1), 6.8227e-12, 1.8343e-11)):
+    # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): the residuals were 7.4043e-12 and 6.8227e-12; the floors and steps unmoved.
+    for label, residual, floor in ((("ngc_4414", 33, 0), 6.4793e-12, 1.4355e-11), (("ngc_4414", 33, 1), 6.5532e-12, 1.8343e-11)):
         got = drawn[label]
         assert got["floor"] == pytest.approx(floor, rel=0.01) and got["residual"] == pytest.approx(residual, rel=0.01), label
         assert got["steps"] == 5 and got["residual"] < 1e-10 and got["over"] < 0.2, label  # S87 (#209): was 6
@@ -1019,7 +1020,8 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # S87 (#209): was 6.1927e-12 under 1.5478e-11, 6 steps - the floor.
     # S91 (#216): was 5 steps - its census at the drawn 2.065 degrees re-laid by the births made bit-independent; the
     # residual (4.959e-12) and the floor (1.1516e-11) within their pins.
-    assert moved["residual"] == pytest.approx(4.7484e-12, rel=0.01) and moved["floor"] == pytest.approx(1.1516e-11, rel=0.01) and moved["steps"] == 6
+    # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): the residual was 4.7484e-12.
+    assert moved["residual"] == pytest.approx(4.9591e-12, rel=0.01) and moved["floor"] == pytest.approx(1.1516e-11, rel=0.01) and moved["steps"] == 6
     assert drawn_at[("ngc_4414", 1, 1)] == pytest.approx(2.065, abs=2e-3)
     # The worst seen over the 240, recorded: Newton's counts (the maxima are 120 and 30); the largest floor and the
     # residual nearest its bound - under half of it everywhere, since the bound carries a factor 2 for the
@@ -1045,7 +1047,9 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     assert worst["floor"] == pytest.approx(1.5611e-11, rel=0.01) and worst["over"] == pytest.approx(0.9357, abs=2e-3)
     assert worst["residual"] == pytest.approx(9.3572e-11, rel=0.01) and worst["relogged"] < 5e-10
     assert worst["mean"] < 2e-13 and worst["ring_mean"] < 2e-13 and worst["sum"] < 1e-13
-    assert worst["min_s"] == pytest.approx(3.8254e-3, rel=0.02) and worst["max_s"] == pytest.approx(3.7842, abs=0.02)
+    # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): s's least was 3.8254e-3 - the troughs under a lead-pitch step filled (now 0.052782, the Milky Way's inputs at
+    # pattern seed 28, texture seed 0); its largest 3.7992 (pin 3.7842 inside its 0.02).
+    assert worst["min_s"] == pytest.approx(0.052782, rel=0.02) and worst["max_s"] == pytest.approx(3.7842, abs=0.02)
     # S57 (D216 G3, the reviewer's second pass): the second build had loosened these two to `> 1e-3` and `abs=0.03`;
     # re-read on the cell-averaged field: 0.0016862 (ngc_4414, pattern seed 55) and 6.77163 (Milky Way, seed 40).
     # S58 (D217): were 1.6862e-3 and 6.7716. **`ngc_4414`'s inputs, unbarred, publish their innermost rings as the
@@ -1095,7 +1099,8 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # S87 (#148, #209, #80): was [9485, 1740, 9197, 14552] - the clock, the floor and the Milky Way's pinned 5.0 kpc bar, read on suite_gate's own sweep.
     # S91 (#216): was [9967, 1408, 8648, 14951] - the 240's censuses re-laid by the births made bit-independent; both
     # sides still, at most 20 cells over 6-10 kpc still.
-    assert sides.tolist() == [10018, 1443, 8709, 14804] and mid_most == 20
+    # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): was [10018, 1443, 8709, 14804]; both sides still, at most 20 cells over 6-10 kpc still.
+    assert sides.tolist() == [10212, 1549, 8899, 14314] and mid_most == 20
 
 
 def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod, monkeypatch):
