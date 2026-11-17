@@ -98,6 +98,14 @@ disclosed check's definitions and its two measurements re-made by hand, the cach
 changing no bit. **Every layer-on number** - a crest, a trough, a count of Newton's steps, a floor, a cell's value,
 the disclosed check's reading, the interpolation errors - awaits the re-pin after the model's last pass and is set
 apart under a strict xfail, its last pinned value kept, the gate's own bounds live beside it.
+
+**On the held head ``batch-q-lanes`` only (S102, batch Q, D272; register #234 ruleset (ii), lane L): the arms'
+molecular gas is the measured relation** - c^γ over its ring mean, one γ per galaxy, no solve; the pattern's
+``diagnostics`` are None and its ``profiles`` the relation's. What this file holds of D216's law (the gate's solver
+clauses, the hand derivations, the h² law, the interpolation errors, the predictions, the crests' separation, the
+caches and the criterion) is read on ``steady_response()``, the law the run still solves for the atomic gas; what
+it holds of the published field is read on the pattern as built, re-pinned as measured with ``# S102`` beside
+each old value. One judged clause is held strict: ``GATE_MAX_G_OVER_STEADY_S102``.
 """
 
 from __future__ import annotations
@@ -422,10 +430,21 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     # (`_carried_mean`), not a `.mean(` of samples; at a grid ring's own radius nothing is divided.
     assert not hasattr(gm, "RING_MEAN_TOLERANCE")
     source = Path(gm.__file__).read_text(encoding="utf-8")
-    assert source.count("ring_quadrature(") == 3  # its definition, the footprint's share, the weight
+    # S102 (batch Q, D272; #234 ruleset (ii), lane L, HELD): was `== 3` and the two means of `misplaced_weight` alone. The
+    # relation's profile is c^γ over its ring mean, ⟨⟩ the exact quadrature - "part of the law's definition, as the
+    # lanes' is" (`_relation_profiles`; the gate's rulings on lane L) - a template's normalisation, not a published
+    # field divided; and three means of per-ring ratios over the arm rings (the relation's fit, `relation_exponent`,
+    # and its disclosed record, `arm_relation_ratios`), which divide no field.
+    assert source.count("ring_quadrature(") == 4  # its definition, the footprint's share, the weight, the relation's power
+    assert source.count("power / ring_quadrature(power)") == 1 and source.index("def _relation_profiles") < source.index("power / ring_quadrature(power)") < source.index("def arm_gas_exponent")
     means = [line.strip() for line in source.splitlines() if ".mean(" in line]
-    assert len(means) == 2 and all("one.mean(" in m or "other.mean(" in m or "np.abs(a - b).mean(" in m for m in means), means
-    assert source.index("def misplaced_weight") < source.index(means[0]) < source.index(means[1]) < source.index("def blend_weights")
+    weights = [m for m in means if "one.mean(" in m or "other.mean(" in m or "np.abs(a - b).mean(" in m]
+    assert len(weights) == 2, means
+    assert source.index("def misplaced_weight") < source.index(weights[0]) < source.index(weights[1]) < source.index("def blend_weights")
+    ratios = [m for m in means if m not in weights]
+    assert len(ratios) == 3 and all("stars.mean(" in m or "gas.mean(" in m or "np.mean([ratio_of_means(" in m for m in ratios), ratios
+    assert all(source.index("def arm_relation_ratios") < source.index(m) < source.index("def profiles") for m in ratios[:2])
+    assert source.index("def relation_exponent") < source.index(ratios[2]) < source.index("def crest_width")
     # Any φ grid: the ring keeps its gas to rounding, and the centre samples do not.
     given = templates.overrides(templates.TEMPLATES[template])
     for n_phi in (36, 108, 500):
@@ -456,8 +475,11 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # without the spurs, are the ones pinned before (S60 fourth pass), held below.
     law = unspurred(gp)
     law_point = law.contrast(R, phi)
-    assert float(np.abs(law.cell_means(R, edges) - law_point).max()) == pytest.approx({"milky_way": 2.971e-2, "ngc_4414": 1.931e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.243e-3, 1.200e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
-    assert float(np.abs(law_point.sum(axis=1) / law_point.shape[1] - 1.0).max()) == pytest.approx({"milky_way": 1.625e-4, "ngc_4414": 5.0916e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6, 9.774e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): the molecular law is the measured relation's, c^γ over its ring
+    # mean (no solve) - a sharper crest than the steady response's. ngc_4414's first was 1.931e-3 (the Milky Way's 2.976e-2
+    # inside its pin); the centre samples' ring means were 1.625e-4 and 5.0916e-7.
+    assert float(np.abs(law.cell_means(R, edges) - law_point).max()) == pytest.approx({"milky_way": 2.971e-2, "ngc_4414": 1.8481e-2}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.243e-3, 1.200e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert float(np.abs(law_point.sum(axis=1) / law_point.shape[1] - 1.0).max()) == pytest.approx({"milky_way": 1.7483e-4, "ngc_4414": 6.7819e-5}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6, 9.774e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     # S58 (D217): were 1.718e-3 and 1.716e-3. The Milky Way's lanes are narrow - half a kiloparsec across, a few
     # cells of this grid inside 3 kpc - so a cell's mean and its centre differ by 1.2 % of the ring's mean there;
     # `ngc_4414`, unbarred, shows its innermost rings untapered, where the response swings hardest.
@@ -482,13 +504,15 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # against its centre. The molecular term's own cell means (the spurs composed on them, the old composition) stand
     # against the point function at the centre as before; the blend's identity is held in tests/test_bar.py.
     g = gp.cell_means(R, edges)
-    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.5343, "ngc_4414": 1.931e-3}[template], rel=0.02)  # S100 (D270; the merged head: #227, #146, #220 on the molecular term): the Milky Way's was 0.4928 (read 0.53425)  # S87 (#148, #209, #80): was 2.243e-3, 0.6558 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6167 - the clock
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): were 0.5343 and 1.931e-3 - the relation's molecular term.
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 1.3420, "ngc_4414": 1.8481e-2}[template], rel=0.02)  # S100 (D270; the merged head: #227, #146, #220 on the molecular term): the Milky Way's was 0.4928 (read 0.53425)  # S87 (#148, #209, #80): was 2.243e-3, 0.6558 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6167 - the clock
     sampled = float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max())
     # S92 (#164 / #165): the Milky Way's was 2.394e-3 - the spurs re-laid (heights the crest over the trough) move the
     # centre samples' worst ring mean.
     # S100 (batch P, D270; the merged head): the Milky Way's was 1.454e-3 (read 1.7508e-3).
     # S102 (batch Q, lane G, #230): the Milky Way's was 1.7508e-3 - the forcing's pitch averaged over the layer's height.
-    assert sampled == pytest.approx({"milky_way": 1.3451e-3, "ngc_4414": 5.0916e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.523e-3 - the clock
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): were 1.3451e-3 and 5.0916e-7 - the relation's molecular term.
+    assert sampled == pytest.approx({"milky_way": 3.6908e-3, "ngc_4414": 6.7819e-5}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.0655e-6 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.523e-3 - the clock
     # S58 (D217): the 36-cell centre samples read 1.257e-3 and 1.056e-3; with the lanes, and with `ngc_4414`'s
     # inner rings untapered, 2.53e-2 and 7.26e-3 - the cells' means are 1 to 5e-14 as before.
     # S59 (D218): were 2.529e-2 and 7.263e-3 - the centre samples of rings the segments have turned (the Milky
@@ -503,9 +527,11 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # S91 (#216): `ngc_4414`'s was 1.568e-3 here and below - its flocculent census's exact ties on this coarse grid now
     # taken by identity (the gap at the earliest-laid piece), not by the lesser azimuth: the births made bit-independent.
     # S92 (#164 / #165): the Milky Way's was 3.275e-2 - the spurs re-laid (the law's own, held below, unmoved).
-    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 1.746e-2, "ngc_4414": 2.222e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.469e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.534e-2 - the clock  # S100 (batch P, D270; the merged head): the Milky Way's was 1.794e-2
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): `ngc_4414`'s was 2.222e-3 here and below - the relation's
+    # molecular term (the Milky Way's 1.7453e-2 inside its pin).
+    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 1.746e-2, "ngc_4414": 7.9294e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.469e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 2.534e-2 - the clock  # S100 (batch P, D270; the merged head): the Milky Way's was 1.794e-2
     centre = unspurred(coarse_gp).contrast(coarse.grid.R, coarse.grid.phi)
-    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 1.746e-2, "ngc_4414": 2.222e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.791e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 1.746e-2, "ngc_4414": 7.9294e-3}[template], rel=0.02)  # S87 (#148, #209, #80): was 2.791e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
 
 @pytest.mark.parametrize("template", TEMPLATES)
@@ -554,7 +580,10 @@ def h2_law(prod, template: str) -> dict:
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, template)
     R, edges = o.grid.R, o.grid["phi"].edges
-    gp = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the h² law is the solver's - read on `steady_response()` (was
+    # `shape_of(model, o)`, whose profiles were the solve); `published` below is then the steady law's own cell means,
+    # which the published molecular field no longer is under (ii) (the relation's, no solve).
+    gp = shape_of(model, o).steady_response()
     carries = gp.carries
     eps = gp.epsilon()[carries]
     taper = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[0]
@@ -634,14 +663,17 @@ def test_the_sector_means_are_the_exact_means_of_the_point_function(model):
         means = gp.sector_means(radius, edges)
         assert float(means.mean()) == pytest.approx(1.0, abs=1e-12)
         dense = []
+        # S102 (batch Q, D272; #234 ruleset (ii), HELD): was 4000 points a sector - the relation's profile (c^γ, γ 2.7
+        # on this galaxy) curves harder than the steady response, and the 4000-point midpoint sum read 4.8e-7 off the
+        # exact means against the 2e-7 below: a finer instrument (16000), the bound unmoved.
         for a, b in zip(edges[:-1], edges[1:]):
-            phi = a + (np.arange(4000) + 0.5) * (b - a) / 4000
+            phi = a + (np.arange(16000) + 0.5) * (b - a) / 16000
             dense.append(float(gp.contrast_at(np.full_like(phi, radius), phi).mean()))
         worst = max(worst, float(np.abs(means - np.array(dense)).max()))
         assert means.max() > 1.0 > means.min()  # the arms are resolved: not a flat ring
         # and the many-radii form the stage publishes with is this one, at any radius
         assert gp.cell_means(np.array([radius]), edges)[0].tobytes() == means.tobytes()
-    assert worst < 2e-7  # measured 4e-8: the midpoint rule's, not the means'
+    assert worst < 2e-7  # measured 4e-8: the midpoint rule's, not the means' (S102, 16000 points, the relation: 3.0e-8)
     # Thirty-two sectors, unequal ones, and a ring past the last mode and the bar: every sector exactly 1.
     uneven = np.concatenate([[0.0], np.sort(np.random.default_rng(5).uniform(0.0, 2.0 * np.pi, 31)), [2.0 * np.pi]])
     means = gp.sector_means(8.0, uneven)
@@ -670,8 +702,16 @@ def gate(gp: GasPattern, edges: np.ndarray) -> dict[str, float]:
     The solver's own residual and floor are its report's (per ring: the largest of each; the cell-by-cell rule is
     the solver's convergence itself). The re-logged statement is asserted here on every cell of every ring, from
     the profile the pattern holds, with ``gas_response.residual`` and ``gas_response.rounding_floor``. Everything
-    else is recomputed from the profiles."""
+    else is recomputed from the profiles.
+
+    S102 (batch Q, D272; #234 ruleset (ii), lane L - HELD head): the arms' molecular gas is the measured relation, no
+    solve, and the pattern's ``diagnostics`` are None. The solver's clauses (the residual, the floor, the counts, the
+    ring mean on the solver's cells, s) are read on ``gp.steady_response()`` - D216's law, which the run still solves
+    for the atomic gas and the checks; the published field's (its ring mean, the margin, its extremes) on ``gp``, the
+    pattern as the stage publishes it."""
     R = gp.R
+    published = gp
+    gp = gp.steady_response()  # S102 (#234 ii): the solver's law; was `gp` itself, whose profiles were the solve
     s, carries, d = gp.profiles, gp.carries, gp.diagnostics
     eps = gp.epsilon()
     forcing = gp.forcing()[carries]  # S60 (D219): the pieces' forcing on the cells; was the five modes' cosines
@@ -688,7 +728,7 @@ def gate(gp: GasPattern, edges: np.ndarray) -> dict[str, float]:
     assert np.all((floor.max(axis=1) <= 2.0 * d.floor) & (d.floor <= 2.0 * floor.max(axis=1)))
     assert np.all(s[~carries] == 1.0)  # a ring with no mode has s = 1
     floor_g = lane_floor(gp, R)  # S58 (D217 item 6): w_bar min L, where it was w_bar (1 − B)
-    field = gp.cell_means(R, edges)  # what the stage publishes
+    field = published.cell_means(R, edges)  # what the stage publishes (S102: the relation's, under (ii))
     assert np.all(np.isfinite(s)) and np.all(np.isfinite(field))
     return {
         "residual": float(d.worst_residual), "relogged": float(relogged.max()), "floor": float(d.floor.max()),
@@ -701,6 +741,8 @@ def gate(gp: GasPattern, edges: np.ndarray) -> dict[str, float]:
         "ring_mean": float(np.abs(field.sum(axis=1) / field.shape[1] - 1.0).max()),
         "steps": float(d.worst_steps), "halvings": float(d.worst_halvings),
         "max_g": float(field.max()), "min_g": float(field.min()),
+        # S102 (#234 ii): the published molecular profile's largest (the relation's), read beside the solver's max_s
+        "max_p": float(published.profiles.max()),
     }
 
 
@@ -748,16 +790,32 @@ def test_gate_every_ring_of_both_templates(prod, template):
     # S100 (batch P, D270; #221's hold lifted, the gate's ruling 3): the upper bound is back here on both templates -
     # the Milky Way's max g 6.759 at 3.94 kpc under the lanes' 7.0556 since #220 (the spur's foot read on its own ring,
     # S99: 7.3027 -> 6.7660; #130's blend 6.759), `ngc_4414` 2.4949 under its response's 2.5078.
-    assert got["max_g"] <= max(got["max_s"], float(gp.lanes.max()) if gp.barred else 0.0)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): the upper bound moved to the test after this one again (as at
+    # S92, the gate's ruling C1), which holds `ngc_4414` strict (GATE_MAX_G_OVER_STEADY_S102): under the relation its
+    # published molecular field's largest cell, 3.9372, is over the steady response's max s, 2.5078. Was asserted here.
     # The declared ramp's top is the viewer's display range, not a cap on the field: nothing clips to it.
     assert gm.GAS_DENSITY_CONTRAST.ramp.hi == 4.0
+
+
+# S102 (batch Q, D272; #234 ruleset (ii), lane L - the HELD head `batch-q-lanes` only): the clause read on `ngc_4414`
+# goes red and is held strict, the clause not moved. The published molecular field is the measured relation's,
+# c^γ / <c^γ>_ring (γ 2.868 on this template), no longer the steady response s it was the cells' means of; the gate's
+# s is the solver's (`gate`: `steady_response()`). Read: max g 3.9372 against max s 2.5078 (unbarred: no lanes) - the
+# relation's own profile reaches 3.9486 (`gate`'s max_p; the Milky Way's 3.9870). The Milky Way holds the clause (max g
+# 6.7162 under its lanes' 7.0556).
+GATE_MAX_G_OVER_STEADY_S102 = ("S102 (#234 ruleset ii, HELD head): ngc_4414's max g 3.9372 over max s 2.5078 - the published molecular "
+                               "field is the measured relation's, not the steady response s the clause bounds it by; the gate's")
 
 
 # S95 (Audit VI F-3B-9, F-3A-7): the hold names its failure (raises=AssertionError: an error of another kind is red,
 # not held), and masks nothing - the failing assert is the body's only one.
 # S100 (batch P, D270; the gate's ruling 3): the Milky Way's strict hold lifted - the clause holds on both templates
 # on the merged head and is back in the test before this one; this test keeps asserting it, unmarked.
-@pytest.mark.parametrize("template", TEMPLATES)
+# S102 (batch Q, D272; #234 ruleset (ii), HELD): `ngc_4414` held strict (GATE_MAX_G_OVER_STEADY_S102); ids unchanged.
+@pytest.mark.parametrize("template", [
+    pytest.param("milky_way", id="milky_way"),
+    pytest.param("ngc_4414", id="ngc_4414", marks=pytest.mark.xfail(strict=True, raises=AssertionError, reason=GATE_MAX_G_OVER_STEADY_S102)),
+])
 def test_gate_every_ring_s_largest_cell_is_under_the_response_or_the_lanes(prod, template):
     """The gate's upper clause of D216 item 12 as S58 leaves it, max g <= max(max s, max L), split from the test
     before this one at S92 (the gate's ruling on #221) so that the Milky Way's reading over it stays visible without
@@ -809,10 +867,13 @@ def test_gate_s_numbers_on_both_templates_as_measured(prod, template):
         # is a spur's height on a lane's crest at 3.94 kpc (GATE_MAX_G_READ_OVER_S92, #221).
         # S102 (batch Q, lane G, #230): the Milky Way's were min_s=0.34650, max_s=2.3930, max_g=6.766027, floor=2.4257e-13 -
         # the forcing's pitch averaged over the layer's height (the Sgr-Car stretch's 3.4-fold factor gone).
-        "milky_way": dict(rings=162, steps=6, halvings=0, min_s=0.42813, max_s=2.4035, min_g=0.385444, max_g=6.769697, floor=1.4524e-13, margin=4.8621e-6),  # S100 (batch P, D270; the merged head - #227's layer, #146's pin, #220's spurs, #130's blend): max_g was 7.302670
-        "ngc_4414": dict(rings=133, steps=6, halvings=0, min_s=0.39336, max_s=2.5078, min_g=0.393569, max_g=2.506026, floor=7.6041e-14, margin=0.393569),
+        # S102 (batch Q, D272; #234 ruleset (ii), HELD head): the published molecular field is the measured relation's -
+        # the Milky Way's min_g / max_g were 0.385444 / 6.769697 (its margin 4.8619e-6 inside its pin), `ngc_4414`'s
+        # min_g / max_g / margin 0.393569 / 2.506026 / 0.393569. Everything of s (the gate's `steady_response()`) unmoved.
+        "milky_way": dict(rings=162, steps=6, halvings=0, min_s=0.42813, max_s=2.4035, min_g=0.176879, max_g=6.716189, floor=1.4524e-13, margin=4.8621e-6),  # S100 (batch P, D270; the merged head - #227's layer, #146's pin, #220's spurs, #130's blend): max_g was 7.302670
+        "ngc_4414": dict(rings=133, steps=6, halvings=0, min_s=0.39336, max_s=2.5078, min_g=0.264420, max_g=3.937195, floor=7.6041e-14, margin=0.264420),
     }[template]
-    assert int(gp.carries.sum()) == want["rings"]
+    assert int(gp.steady_response().carries.sum()) == want["rings"]  # S102 (#234 ii): the solver's rings; was `gp.carries`
     # The residual: at these pitches (13.5 and - pinned since S59 - 28.9 degrees) every ring's floor is far under
     # 1e-10 and the absolute tolerance governs, as it did before G3. Measured 5.8e-12 and 5.3e-12, re-logged the same.
     assert got["floor"] == pytest.approx(want["floor"], rel=0.01)
@@ -960,10 +1021,13 @@ def suite_gate(prod) -> dict:
                 saturated_most = max(saturated_most, excess)
                 # Where the gas's tallest crest sits against the stellar sum's, in solver cells, signed (the
                 # offset's test, below): counted where the two are the same arm's crest (within 20 cells).
-                apart = crest_separation(gp)[gp.carries]
+                # S102 (#234 ii): the solver's crest, `gp.steady_response()` - was `gp`, whose profiles were the solve
+                # (the relation's crest is the stars' own cell: c^γ peaks where c does).
+                law = gp.steady_response()
+                apart = crest_separation(law)[law.carries]
                 same = np.abs(apart) <= 20
                 sides += np.array([(apart[same] < 0).sum(), (apart[same] == 0).sum(), (apart[same] > 0).sum(), (~same).sum()])
-                mid = same & (o.grid.R[gp.carries] >= 6.0) & (o.grid.R[gp.carries] <= 10.0)
+                mid = same & (o.grid.R[law.carries] >= 6.0) & (o.grid.R[law.carries] <= 10.0)
                 mid_most = max(mid_most, int(np.abs(apart[mid]).max(initial=0)))
                 for key, value in got.items():
                     worst[key] = min(worst.get(key, value), value) if key in ("min_s", "margin", "min_g") else max(worst.get(key, value), value)
@@ -992,6 +1056,8 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     sweep = suite_gate(prod)
     held, worst, on_floor, drawn, drawn_at = sweep["held"], sweep["worst"], sweep["on_floor"], sweep["drawn"], sweep["drawn_at"]
     sides, mid_most = sweep["sides"], sweep["mid_most"]
+    # S102 (batch Q, D272): the whole record printed (shown on a failure), so that a re-pin reads every number at once.
+    print(f"the sweep's worst: {worst}; on their floor: {on_floor}; drawn: {drawn}")
     for label in (("ngc_4414", 33, 0), ("ngc_4414", 33, 1), ("ngc_4414", 1, 1)):
         assert held[label]["on_floor"] == 0 and held[label]["residual"] < 1e-11 and label not in on_floor, label
     # The two that raised at the first build, as they converge now (their floors and residuals, as read).
@@ -1069,7 +1135,10 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
     # seed 1) to 6.673 (the Milky Way's at seed 47), and its margin over w_bar min L 6.2e-7 at the least (the Milky
     # Way's at seed 28) - no cell sits on the lanes' floor to rounding now. S60 fourth pass: were `-2e-13 < margin
     # < 0`, min_g 2.624e-23, max_g 8.223.
-    assert worst["margin"] == pytest.approx(1.2221e-6, rel=0.02) and worst["min_g"] == pytest.approx(0.064482, rel=0.02) and worst["max_g"] == pytest.approx(6.6963, abs=2e-3)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): min_g and max_g were 0.064482 and 6.6963 - the published molecular
+    # field is the measured relation's over the 240 (its profile's largest 9.8711, the gate's max_p); the margin and
+    # everything of s above unmoved.
+    assert worst["margin"] == pytest.approx(1.2221e-6, rel=0.02) and worst["min_g"] == pytest.approx(3.1676e-3, rel=0.02) and worst["max_g"] == pytest.approx(9.6292, abs=2e-3)
     assert worst["min_g"] > 0.0
     # Which galaxies have a ring whose floor is the bound: seven, at the lowest drawn pitches.
     # S58 (D217): were seventeen under 7.7 degrees, at most 50 rings; `ngc_4414` at pattern seed 28 left the list
@@ -1119,7 +1188,10 @@ def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod, m
     # With the steps it needs (10 at most) this galaxy - the pattern seed that raised before G3 - is solved, its
     # worst ring on a rounding floor above the absolute tolerance.
     gm.forget_solutions()
-    solved = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the molecular pattern takes the measured relation and solves
+    # nothing; the solver's doors are the steady response's (`steady_response()`, the law D216 rules) and the run's
+    # (the atomic gas is still solved). Was `compose.gas_pattern(...)` itself, here and below.
+    solved = compose.gas_pattern(o.fields, o.grid.R, constants(model)).steady_response()
     # S60 (D219): Newton's count and the floor on this galaxy are layer-on numbers, pinned apart in the test after
     # this one; that it is solved, positive, under the solver's maxima is the gate's.
     assert 0 < solved.diagnostics.worst_steps <= gr.MAX_NEWTON_STEPS and solved.profiles.min() > 0.0
@@ -1128,7 +1200,7 @@ def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod, m
     # Refused its steps, it raises - and nothing between the solver and the caller catches it.
     gm.forget_solutions()  # the cache must not hand back the solution just made
     monkeypatch.setattr(gr, "solve", functools.partial(gr.solve, max_steps=4))
-    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model)).steady_response()  # S102 (#234 ii): the solver's
     assert not gp.flat
     with pytest.raises(gr.ConvergenceError, match="Newton did not converge") as failure:
         gp.profiles
@@ -1158,7 +1230,9 @@ def test_the_tightly_wound_galaxy_s_newton_count_and_floor_as_measured(prod, mon
     model = prod[0].get(DEFAULT_MODEL)
     o = run(model, drawn_pitch("ngc_4414", pattern_seed=33), only=GAS_PATTERN_READS)
     gm.forget_solutions()
-    solved = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the solver's numbers are the steady response's (`steady_response()`);
+    # the molecular pattern under the relation solves nothing (its `diagnostics` None). Was `compose.gas_pattern(...)`.
+    solved = compose.gas_pattern(o.fields, o.grid.R, constants(model)).steady_response()
     # S60 (D219), on the final model: 6 steps, and its largest floor 2.08e-11 - under the absolute tolerance now: the
     # pieces' gentler response keeps ln s small. S60 fourth pass: was `5 < steps <= 10 and floor > 1e-10`.
     # S87 (#209): was 6 steps and 2.082e-11 - the floor redraws the pieces under 1 degree.
@@ -1168,7 +1242,7 @@ def test_the_tightly_wound_galaxy_s_newton_count_and_floor_as_measured(prod, mon
     gm.forget_solutions()
     monkeypatch.setattr(gr, "solve", functools.partial(gr.solve, max_steps=4))
     with pytest.raises(gr.ConvergenceError) as failure:
-        compose.gas_pattern(o.fields, o.grid.R, constants(model)).profiles
+        compose.gas_pattern(o.fields, o.grid.R, constants(model)).steady_response().profiles  # S102 (#234 ii)
     monkeypatch.undo()
     gm.forget_solutions()
     # S60 (D219): still not converged in four, but the residual it carries is 1.20e-11, over the ring's own floor
@@ -1218,13 +1292,17 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
     assert o.decls["disc_surface_density"].unit == "Msun/pc2" and o.decls["epicyclic_frequency"].unit == "km/s/kpc"
     pitch = math.radians(float(F["pitch_angle"]))
     a_bar = float(F["bar_half_length"])
-    gp = shape_of(model, o)
+    shaped = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the hand rederives D216's law, the solver's - `steady_response()`;
+    # the published molecular field is the measured relation's (no solve), its identity held on the pattern as built.
+    # Was `gp = shape_of(model, o)` and `molecular=published` in the identity below.
+    gp = shaped.steady_response()
     # S62 (D221): was the published field, which carries the spurs since S62 (the Milky Way's at 4 kpc: 1.12 off the
     # hand's composition); the hand rederives the gas pattern's law, and the field is the spurs composed on it.
     published = unspurred(gp).cell_means(R, edges)
     # S100 (#130, D270; ruling 10): was `gas_density_contrast == spurs composed on published` - the blend with the
     # atomic response comes between (`placed_of`); `published` stays the molecular law's cell means, what the hand rederives.
-    assert np.asarray(F["gas_density_contrast"]).tobytes() == placed_of(F, gp, R, edges, molecular=published).tobytes()
+    assert np.asarray(F["gas_density_contrast"]).tobytes() == placed_of(F, shaped, R, edges).tobytes()
     n = gr.CELLS
     assert n == 1440
     # S60 (D219 item 5): was `f = m A_m(untapered)/(X sin p)`, the five modes' forcing by hand, held to the module's
@@ -1290,7 +1368,9 @@ def test_the_law_s_three_rings_as_measured(prod):
     o = template_run(prod, "milky_way")
     R = o.grid.R
     published = np.asarray(o.fields["gas_density_contrast"])
-    gp = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the spectral residual and the law's cell means are the solver's -
+    # `steady_response()` (was `shape_of(model, o)`); the published field's crest and trough are the relation's.
+    gp = shape_of(model, o).steady_response()
     n = gr.CELLS
     k = np.fft.rfftfreq(n, d=1.0 / n)
     # S60 (D219, the gate's fifth follow-up, item 4): the spectral residual is the pieces' forcing's own - its tapers'
@@ -1317,7 +1397,8 @@ def test_the_law_s_three_rings_as_measured(prod):
     # S92 (#164 / #165): was (4.972, 0.6904) - the spurs' heights the crest over the trough: a spur on the lane's crest
     # at 4 kpc lifts it (the law's own, below, unmoved).
     # S100 (batch P, D270; the merged head): the crest and trough were 6.0961, 0.6907.
-    assert float(published[i].max()) == pytest.approx(6.2060, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6951, abs=1e-3)  # S87 (#148, #209, #80): was 0.6783, 6.011 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 5.910 - the clock
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): were 6.2060, 0.6951 - the published molecular term the relation's.
+    assert float(published[i].max()) == pytest.approx(6.2302, abs=2e-3) and float(published[i].min()) == pytest.approx(0.7213, abs=1e-3)  # S87 (#148, #209, #80): was 0.6783, 6.011 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 5.910 - the clock
     law = unspurred(gp).cell_means(R[i : i + 1], o.grid["phi"].edges)[0]
     assert float(law.max()) == pytest.approx(5.007, abs=2e-3) and float(law.min()) == pytest.approx(0.6953, abs=1e-3)  # S87 (#148, #209, #80): was 0.6815, 5.320 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
@@ -1362,7 +1443,7 @@ def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(p
     given = {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 28, "texture_seed": 0}
     o = run(model, given, only=PATTERN_FIELDS + ("bar_contrast",))
     F, R = o.fields, o.grid.R
-    gp = shape_of(model, o)
+    gp = shape_of(model, o).steady_response()  # S102 (batch Q, D272; #234 ii, HELD): the solver's ring; was `shape_of(model, o)`
     saturation = np.asarray(F["arm_saturation"], dtype=float)
     kappa, sigma = (np.asarray(F[k], dtype=float) for k in ("epicyclic_frequency", "disc_surface_density"))
     pitch = math.radians(float(F["pitch_angle"]))
@@ -1413,7 +1494,7 @@ def test_the_most_saturated_seed_s_two_rings_as_measured(prod):
     given = {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 28, "texture_seed": 0}
     o = run(model, given, only=PATTERN_FIELDS + ("bar_contrast",))
     R = o.grid.R
-    gp = shape_of(model, o)
+    gp = shape_of(model, o).steady_response()  # S102 (batch Q, D272; #234 ii, HELD): s is the solver's; was `shape_of(model, o)`
     saturation = np.asarray(o.fields["arm_saturation"], dtype=float)
     most = int(np.argmin(saturation))
     far = np.flatnonzero(R >= 6.5)
@@ -1534,7 +1615,9 @@ def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, templat
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, template)
     R = o.grid.R
-    gp = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the prediction is the solver's - read on `steady_response()`
+    # (was `shape_of(model, o)`, whose profiles were the solve; the relation's crest is the stars' own cell).
+    gp = shape_of(model, o).steady_response()
     signed = crest_separation(gp)
     carries = np.flatnonzero(gp.carries)
     band = collections.Counter(int(signed[i]) for i in carries if 6.0 <= R[i] <= 10.0)
@@ -1669,7 +1752,9 @@ def test_the_interpolation_errors_as_measured(prod, template):
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, template)
     R = o.grid.R
-    gp = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the errors of s, the solver's - `steady_response()` (was
+    # `shape_of(model, o)`, whose profiles were the solve; under the relation `solve_at` solves nothing).
+    gp = shape_of(model, o).steady_response()
     s, carries = gp.profiles, gp.carries
     taper = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[0]
     # In χ.
@@ -1781,7 +1866,9 @@ def test_the_gate_s_predictions_as_measured(prod):
     o = template_run(prod, "milky_way")
     R = o.grid.R
     g = np.asarray(o.fields["gas_density_contrast"])
-    gp = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): D216's predictions are of s, the solver's - `steady_response()` (was
+    # `shape_of(model, o)`); the published g (SPURRED) is the relation's blend, re-read.
+    gp = shape_of(model, o).steady_response()
     s, ratio = gp.profiles, gp.arm_ratio(MASK_WIDTH)
     f_sum = gp.forcing_amplitudes()[:, 1:6].sum(axis=1)  # S60 (D219): m = 2…6 of every harmonic the cells hold
     table = (
@@ -1834,8 +1921,11 @@ def test_the_gate_s_predictions_as_measured(prod):
     # S102 (batch Q, lane G, #230): were (6.20599, 0.69511), (2.00254, 0.46441), (1.50730, 0.66216), (1.44218, 0.78041),
     # (1.16812, 0.81380), (1.08537, 0.90764) - the forcing's pitch averaged over the layer's height; then 5.9625's was
     # (1.38689, 0.65098) - the count tapered at a chain's turn back (the spurs re-laid).
-    SPURRED = {4.0125: (6.20706, 0.69498), 5.9625: (1.44028, 0.65067), 7.9875: (1.47566, 0.67578), 10.0125: (1.60163, 0.78045),
-               10.9875: (1.16539, 0.81055), 12.0375: (1.09756, 0.90402)}
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): were (6.20706, 0.69498), (1.44028, 0.65067), (1.47566, 0.67578),
+    # (1.60163, 0.78045), (1.16539, 0.81055), (1.09756, 0.90402) - the published molecular term the measured relation's
+    # (the built s and the composed law above are the steady response's, unmoved).
+    SPURRED = {4.0125: (6.23022, 0.72131), 5.9625: (1.76567, 0.56613), 7.9875: (1.68335, 0.58881), 10.0125: (1.71934, 0.72573),
+               10.9875: (1.46943, 0.77201), 12.0375: (1.17907, 0.88579)}
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
         assert float(R[i]) == pytest.approx(radius, abs=1e-9)
@@ -1990,8 +2080,12 @@ def test_disclosed_check_s_readings_as_measured(prod, template):
         # 3.1184), width=(0.3675, 0.0741, 0.5301) - the clock, the floor and the Milky Way's pinned 5.0 kpc bar; its ten rings under the 16th percentile are 9.04-9.94 kpc.
         # S102 (batch Q, lane G, #230): the Milky Way's were ratio=(1.4311, 1.3399, 2.1051), inside=43, below_from=9.0375,
         # times=(0.4690, 3.6379), width=(0.3561, 0.0797, 0.6184) - the forcing's pitch averaged over the layer's height; its eight rings under the 16th percentile 9.11-9.94 kpc.
-        "milky_way": dict(rings=53, ratio=(1.4287, 1.3466, 1.5884), inside=45, tied=52, below_from=9.1125, wider=False, times=(0.5911, 3.4968),
-                          width=(0.3671, 0.1005, 0.5945), lower=(0.3107, 0.2141, 0.4807), higher=(0.4660, 0.3568, 0.4807)),
+        # S102 (batch Q, D272; #234 ruleset (ii), lane L - the HELD head): the arms' molecular gas is the measured
+        # relation's (γ 2.898 on the Milky Way, 2.868 on `ngc_4414`), met over the arm rings at the stars' own ratio -
+        # the check reads it: the Milky Way's were ratio=(1.4287, 1.3466, 1.5884), inside=45, below_from=9.1125,
+        # times=(0.5911, 3.4968), width=(0.3671, 0.1005, 0.5945); every ring inside PHANGS's percentiles now.
+        "milky_way": dict(rings=53, ratio=(2.8782, 2.2109, 3.2750), inside=53, tied=52, below_from=None, wider=False, times=(0.8412, 2.6932),
+                          width=(0.3106, 0.1430, 0.4578), lower=(0.3107, 0.2141, 0.4807), higher=(0.4660, 0.3568, 0.4807)),
         # S59 (D218 item 6): `ngc_4414`'s were ratio=(1.8814, 1.0762, 2.8299), inside=46, width=(0.5120, 0.4790,
         # 0.5260), lower=(0.4218, 0.2620, 0.5083), higher=(0.5061, 0.4366, 0.5253), below from 9.4875 kpc - read at the
         # drawn pitch of 14.33 degrees. At the pinned 28.9 (ε and f both × 0.5121) the gate predicted a median of
@@ -1999,8 +2093,10 @@ def test_disclosed_check_s_readings_as_measured(prod, template):
         # S87 (#209, the owner's ruling of 2026-11-03, D255): `ngc_4414`'s were ratio=(1.2517, 1.0245, 1.7486), inside=17,
         # below_from=7.3125, times=(1.5900, 4.4250), width=(0.3896, 0.2703, 0.7522) - the floor redraws its pieces under
         # 1 degree, and the median is inside PHANGS's percentiles again.
-        "ngc_4414": dict(rings=53, ratio=(1.4294, 1.0243, 1.6373), inside=29, tied=32, below_from=8.2125, wider=True, times=(1.1058, 7.7245),
-                         width=(0.4235, 0.1880, 1.3132), lower=(0.4532, 0.2940, 0.5448), higher=(0.5428, 0.4900, 0.5822)),
+        # S102 (batch Q, D272; #234 ruleset (ii), HELD head): `ngc_4414`'s were ratio=(1.4294, 1.0243, 1.6373), inside=29,
+        # below_from=8.2125, wider=True, times=(1.1058, 7.7245), width=(0.4235, 0.1880, 1.3132) - the relation's.
+        "ngc_4414": dict(rings=53, ratio=(2.5763, 1.2204, 3.2937), inside=51, tied=32, below_from=9.8625, wider=False, times=(0.9255, 7.3062),
+                         width=(0.3687, 0.1573, 1.2421), lower=(0.4532, 0.2940, 0.5448), higher=(0.5428, 0.4900, 0.5822)),
     }[template]
     assert int(band.sum()) == want["rings"]
     assert (float(np.median(ratio)), float(ratio.min()), float(ratio.max())) == pytest.approx(want["ratio"], abs=2e-3)
@@ -2027,8 +2123,11 @@ def test_disclosed_check_s_readings_as_measured(prod, template):
         # S87 (#209, D255): were `median - RATIO_LOW == -0.118`, `not 1.4 <= median <= 1.5` and `below.size == 36 > 53 / 2`
         # - with the floor the median is 0.059 over the 16th percentile and inside S59's predicted 1.4-1.5 again, and
         # 24 of 53 rings are under it, from 8.21 kpc: "most" not held.
-        assert float(np.median(ratio)) - RATIO_LOW == pytest.approx(0.0594, abs=2e-3) and 1.4 <= float(np.median(ratio)) <= 1.5
-        assert below.size == 24 and below.size < want["rings"] / 2 and np.all(np.diff(np.flatnonzero(ratio < RATIO_LOW)) == 1)
+        # S102 (batch Q, D272; #234 ruleset (ii), HELD head): were `== 0.0594`, `1.4 <= median <= 1.5` and `below.size == 24`
+        # - under the relation the median is 1.206 over the 16th percentile, out of S59's predicted 1.4-1.5, and 2 of 53
+        # rings are under it (9.86 and 9.94 kpc): "most" not held, as read.
+        assert float(np.median(ratio)) - RATIO_LOW == pytest.approx(1.2063, abs=2e-3) and not 1.4 <= float(np.median(ratio)) <= 1.5
+        assert below.size == 2 and below.size < want["rings"] / 2 and np.all(np.diff(np.flatnonzero(ratio < RATIO_LOW)) == 1)
     # ... and the width a miss on every ring, under every reading: wider than the measured arm - by 2.5 to 3.1 times
     # as the check reads it. S60 (D219): on `ngc_4414` still (1.59 to 4.42 times); on the Milky Way no longer - 0.44
     # to 3.12 times, some rings narrower than the measured arm. S60 fourth pass: was `np.all(values > WIDTH_TARGET)`
@@ -2079,8 +2178,12 @@ def test_nothing_of_the_ridge_builds_the_field(prod):
     # arcs' curvature, the nuclear ring's radius, the gas inside the footprint over the gas outside, and the lane's
     # width - a declared placeholder. Each is read (`lane_profiles`), so each is declared.
     # S60 (D219 item 5): and the stellar layer's flattening h_R/h_z, which the forcing's thickness factor reads.
-    assert GAS_PATTERN_CONSTANTS == ("G", "GAS_DISPERSION", "ARM_LAYER_FLATTENING", "BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH")
-    assert gm.LANE_CONSTANTS == GAS_PATTERN_CONSTANTS[3:] and not hasattr(gm, "GAS_CHECK_CONSTANTS")
+    # S102 (batch Q, D272; #234 ruleset (ii), lane L, HELD): and the measured relation's three - its slope, its
+    # intercept and its mask width (the gate's ruling on lane L: a model constant, asserted equal to tests/gas_check's
+    # GAS_ARM_MASK_WIDTH in tests/test_arm_gas_relation.py). Was the seven above, `LANE_CONSTANTS == [3:]`.
+    assert GAS_PATTERN_CONSTANTS == ("G", "GAS_DISPERSION", "ARM_LAYER_FLATTENING", "BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH",
+                                     "ARM_GAS_RELATION_SLOPE", "ARM_GAS_RELATION_INTERCEPT", "ARM_GAS_RELATION_MASK_WIDTH")
+    assert gm.LANE_CONSTANTS == GAS_PATTERN_CONSTANTS[3:7] and gm.RELATION_CONSTANTS == GAS_PATTERN_CONSTANTS[7:] and not hasattr(gm, "GAS_CHECK_CONSTANTS")
     # S100 (#130): was `GAS_PATTERN.reads_constants == GAS_PATTERN_CONSTANTS` - the stage reads the atomic gas's
     # dispersion ratio too, for its second response; the pattern built from fields reads the law's constants alone.
     assert GAS_PATTERN.reads_constants == (*GAS_PATTERN_CONSTANTS, "HI_DISPERSION_RATIO") and "gas_arm_contrast" not in GAS_PATTERN_READS
@@ -2221,7 +2324,9 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     # without the spurs, reads 1.198e-2, held to the old pin.
     # S91 (#216): was 0.7229 - the default galaxy's census (48, 13, 4) -> (42, 11, 3) by the births made bit-independent.
     # S92 (#164 / #165): was 0.7028 - the spurs' heights the crest over the trough.
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.4675, rel=0.02)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer): was 0.3565  # S100 (#130, D270): was 0.4447 - the published gas the blend with the atomic response  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): was 0.4675 - the point function is the molecular pattern's (the
+    # relation's crest), the published cell the blend with the atomic response: the gap is the blend's, as at S100.
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(2.9338, rel=0.02)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer): was 0.3565  # S100 (#130, D270): was 0.4447 - the published gas the blend with the atomic response  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
     law = unspurred(gp)
     assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.186e-2, rel=0.02)  # S100 (#80, D270): was 1.252e-2 - the default bar 2.270 -> 3.140 kpc (Table 4), the molecular law's own  # S87 (#148, #209, #80): was 1.222e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
@@ -2323,7 +2428,9 @@ def test_the_ring_s_mean_square_at_8_kpc_as_measured(model):
     # S60 (D219): the pieces' response at 8 kpc is far gentler than the modes' (the crest 1.36, the trough 0.80).
     # S60 fourth pass: was 1.358.
     # S91 (#216): was 1.0630 - the default galaxy's census (48, 13, 4) -> (42, 11, 3) by the births made bit-independent.
-    assert mean_square == pytest.approx(1.0520, abs=0.005)  # S100 (batch P, D270; #80, #130): was 1.0437  # S87 (#148, #209, #80): was 1.0276 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): was 1.0520 - the molecular point function the measured relation's
+    # (the crest at 8 kpc c^γ over its ring mean, γ 2.705 on the default galaxy).
+    assert mean_square == pytest.approx(1.6544, abs=0.005)  # S100 (batch P, D270; #80, #130): was 1.0437  # S87 (#148, #209, #80): was 1.0276 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
 
 
 def test_the_default_field_s_range_and_its_mean_square(model):
@@ -2358,10 +2465,13 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # the trough.
     # S102 (batch Q, lane G, #230): R0's crest and trough were (1.73294, 0.71552), its mean square 1.05383 and the
     # gas-mass mean square 1.10857 - the forcing's pitch averaged over the layer's height (the range unmoved).
-    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((1.69335, 0.72135), abs=2e-5)  # S100 (batch P, D270; #80 the default bar, #130 the blend): was (1.56734, 0.74235)  # S87 (#148, #209, #80): was 0.80136, 1.76292 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.80108, 1.87998 - the clock
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD head): R0's crest and trough were (1.69335, 0.72135), its mean square
+    # 1.04971 and the gas-mass mean square 1.10819 - the arms' molecular term the measured relation's (the range above
+    # unmoved, as read).
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.10162, 0.67918), abs=2e-5)  # S100 (batch P, D270; #80 the default bar, #130 the blend): was (1.56734, 0.74235)  # S87 (#148, #209, #80): was 0.80136, 1.76292 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.80108, 1.87998 - the clock
     # S57 (D216): was 1.603 at R0 and 1.194 by gas mass. S57 (D216 G3): was 1.3443 and 1.1157 on the centre samples.
     # S60 fourth pass: was 1.34398.
-    assert float((g[i] ** 2).mean()) == pytest.approx(1.04971, abs=2e-5)  # S100 (batch P, D270; #80, #130): was 1.04031  # S87 (#148, #209, #80): was 1.02757 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 1.02810 - the clock  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
+    assert float((g[i] ** 2).mean()) == pytest.approx(1.11711, abs=2e-5)  # S100 (batch P, D270; #80, #130): was 1.04031  # S87 (#148, #209, #80): was 1.02757 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 1.02810 - the clock  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
     weight = np.asarray(F["gas_surface_density"]) * R
     # S58 (D217): was 1.11562. The lanes: inside the bar the gas is thinned to four tenths of the ring's mean off two
     # narrow lanes at seven times it, so a process quadratic in the gas gains there - 1.312 over the disc by gas mass.
@@ -2369,7 +2479,7 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # mean square of their sum moves with it: 1.31031.
     # S59 (D218 follow-up): was 1.31031.
     # S60 fourth pass: was 1.31098.
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.10819, abs=2e-5)  # S100 (batch P, D270; #80, #130): was 1.07779  # S92 (#164 / #165): was 1.07829 - the spurs re-laid. S91 (#216): was 1.07991 - the default galaxy's census re-laid  # S87 (#148, #209, #80): was 1.21204 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 1.21081 - the clock  # S62 (D221): was 1.21063, the spurs
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.12856, abs=2e-5)  # S100 (batch P, D270; #80, #130): was 1.07779  # S92 (#164 / #165): was 1.07829 - the spurs re-laid. S91 (#216): was 1.07991 - the default galaxy's census re-laid  # S87 (#148, #209, #80): was 1.21204 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 1.21081 - the clock  # S62 (D221): was 1.21063, the spurs
 
 
 # --- what the stage reads, where it sits ---------------------------------------------------------------------
@@ -2526,10 +2636,13 @@ def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     c = constants(model)
     R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
     gm.forget_solutions()
-    first = compose.gas_pattern(o.fields, R, c)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the molecular pattern under the relation solves nothing, so the
+    # solves counted here are the steady response's (`steady_response()`, the law the atomic gas and the checks still
+    # solve); was `compose.gas_pattern(...)` itself in each of the four places below.
+    first = compose.gas_pattern(o.fields, R, c).steady_response()
     cold = first.profiles
     assert len(gm._SOLUTIONS) == 1 and first.profiles is cold  # kept on the object: no second solve, no second look-up
-    second = compose.gas_pattern(o.fields, R, c)
+    second = compose.gas_pattern(o.fields, R, c).steady_response()
     assert second.profiles.tobytes() == cold.tobytes() and len(gm._SOLUTIONS) == 1
     assert second.contrast(R, phi).tobytes() == first.contrast(R, phi).tobytes()
     assert second.cell_means(R, edges).tobytes() == first.cell_means(R, edges).tobytes()
@@ -2545,12 +2658,12 @@ def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     # The cache is bounded, and another pattern does not get this one's rings.
     for seed in range(1, gm.SOLUTIONS_KEPT + 3):
         other = run(model, {"texture_seed": seed}, only=GAS_PATTERN_READS)
-        assert compose.gas_pattern(other.fields, R, c).profiles.tobytes() != cold.tobytes()
+        assert compose.gas_pattern(other.fields, R, c).steady_response().profiles.tobytes() != cold.tobytes()
     # S100 (batch P, D270; #130, the gate's ruling 11): was 4 - the atomic response is solved beside the molecular one
     # (one forcing between them), so the caches hold twice the patterns' room by design; the cache-changes-no-bit half
     # above holds untouched (the runner on cfb78af failed on this line alone, the last).
     assert len(gm._SOLUTIONS) == gm.SOLUTIONS_KEPT == 8
-    again = compose.gas_pattern(o.fields, R, c)
+    again = compose.gas_pattern(o.fields, R, c).steady_response()
     assert again.profiles.tobytes() == cold.tobytes()
     gm.forget_solutions()
     assert len(gm._SOLUTIONS) == 0
@@ -2581,7 +2694,9 @@ def test_the_criterion_s_shortcut_changes_no_bit_of_the_model_s_rings(prod, monk
         # its pitch (no ring on its floor). The tightly wound galaxy is the same disc with the pitch's pin off.
         o = run(model, drawn_pitch("ngc_4414", pattern_seed=33), only=GAS_PATTERN_READS)
         assert float(o.fields["pitch_angle"]) == pytest.approx(1.780, abs=2e-3)
-    gp = shape_of(model, o)
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the model's rings the solver solves are the steady response's
+    # (`steady_response()`; was `shape_of(model, o)`, whose profiles were the solve) - the atomic gas's law too.
+    gp = shape_of(model, o).steady_response()
     f, eps, carries = gp.forcing(), gp.epsilon(), gp.carries  # S60 (D219): the forcing on the cells
     shortcut, d = gm.respond(f[carries], eps[carries], cache=False)
     monkeypatch.setattr(gr, "solve", functools.partial(gr.solve, _every_floor=True))
@@ -2635,7 +2750,8 @@ def test_the_suite_galaxy_whose_bits_moved_with_the_criterion_moved_by_rounding(
     # taken off. The solver's numbers below are in χ and read nothing of the winding's segments: unmoved.
     given = drawn_pitch("ngc_4414", pattern_seed=1, texture_seed=1)
     o = run(model, given, only=GAS_PATTERN_READS)
-    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    # S102 (batch Q, D272; #234 ruleset (ii), HELD): the solver's rings - `steady_response()`; was the pattern itself.
+    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model)).steady_response()
     assert not gp.barred and float(o.fields["pitch_angle"]) == pytest.approx(2.065, abs=2e-3)
     f, eps, carries = gp.forcing(), gp.epsilon(), gp.carries  # S60 (D219): the forcing on the cells
     now, d = gm.respond(f[carries], eps[carries], cache=False)
