@@ -193,8 +193,9 @@ response's forcing is the molecular one's, kept once (the forcing's cache key le
 **Since S102 the arms' MOLECULAR gas takes the measured relation (register #234 ruleset (ii), batch Q lane L; built on
 a HELD branch: the law is the owner's to adopt, D216's frame kept - no pattern speed, no shock, no offset).** On every
 solved ring (the grid's and the mid-gap ones) s = c^γ/⟨c^γ⟩_ring, c = 1 + ψ the stellar arm pieces' field over its ring
-mean (:meth:`GasPattern.stellar_sum`, the field the stars' ratio of means is taken on - with the bar's taper in it, as
-the stars carry it), γ one exponent per galaxy (:meth:`GasPattern.arm_gas_exponent`, :func:`relation_exponent`): the
+mean (:meth:`GasPattern.arms_field`, the field the stars' ratio of means is taken on - with the bar's taper in it, as the
+stars carry it; the untapered field is not a density on every galaxy), γ one exponent per galaxy
+(:meth:`GasPattern.arm_gas_exponent`, :func:`relation_exponent`): the
 mean over the galaxy's arm rings (:meth:`GasPattern.arm_rings`) of the molecular gas's :func:`ratio_of_means` meets
 log10 C_mol = 1.83 log10 C_star + 0.16 at the mean of the stars' own (Querejeta et al. 2024, A&A 687, A293, Table 4,
 nominal, individual spiral segments; the constants ``ARM_GAS_RELATION_*``). The power's shape inside a ring is the
@@ -205,7 +206,9 @@ response** (:meth:`GasPattern.atomic` sets ``relation`` None), so the solver sti
 molecular steady response is no longer computed in a run (:meth:`GasPattern.steady_response` gives it, a check for the
 tests). γ is not published: this stage's scalars are held the same bits with the layer on and off (D214, test_layer's
 i4), and γ is the layer's. Where the galaxy has no arm ring, or its stars' mean ratio is within 1e-6 of 1, γ is NaN and
-the molecular arm contrast 1; a root outside [1, 12] raises naming the stellar ratio.
+the molecular arm contrast 1. Where the stars are too weakly armed for any power in [1, 12] to meet the fit's intercept,
+γ is held at 12 and :attr:`GasPattern.arm_relation_met` is False - the shortfall declared, the fit not extrapolated to a
+disc without arms `[inferred]`; no galaxy the inputs reach fails.
 
 **One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
 them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
@@ -292,7 +295,7 @@ _HARMONIC = np.arange(HARMONICS + 1, dtype=float)  # 0 … CELLS/2: the arm numb
 MISPLACED_LIMIT = 0.01
 MID_GAP_DEPTH = 2
 STORE_KEYS = ("radii", "profiles", "carries", "level", "running", "turn", "grid", "grid_profiles", "grid_carries", "diagnostics", "checked", "complete",
-              "exponent")
+              "exponent", "met")
 # S102 (#234 ruleset ii, HELD): the arms' molecular contrast by the measured relation. The galaxy's one exponent is
 # solved by bisection inside a fixed bracket for a fixed number of halvings (rule A1: termination known in advance;
 # no tolerance-dependent branch, so the same inputs give the same bits and an input one unit in the last place off
@@ -967,12 +970,13 @@ class GasPattern:
                 solved.update(held)
                 return solved
         diagnostics = None
-        exponent = math.nan
+        exponent, met = math.nan, True
         if self.relation is not None and key is not None:
-            # S102 (#234 ruleset ii): the arms' molecular gas by the measured relation - the stars' own field on each
-            # ring to the galaxy's one exponent, over its ring mean (:meth:`_relation_profiles`). No solve.
-            psi = self.stellar_sum()
-            exponent = self._exponent(psi)
+            # S102 (#234 ruleset ii): the arms' molecular gas by the measured relation - the stars' arm field on each
+            # ring (the bar's taper in it: :meth:`arms_field`), to the galaxy's one
+            # exponent, over its ring mean (:meth:`_relation_profiles`). No solve.
+            psi = self.arms_field()
+            exponent, met = self._exponent(psi)
             profiles, carries = self._relation_profiles(psi, exponent)
         else:
             g, eps = self._ring_forcing(), self.epsilon()
@@ -982,7 +986,7 @@ class GasPattern:
                 s, diagnostics = respond(g[carries], eps[carries])
                 profiles[carries] = s
         self._store(self.R, profiles, carries, np.zeros(self.R.size, dtype=np.int64))
-        solved.update(diagnostics=diagnostics, checked=(), complete=key is None or self.R.size < 2, exponent=exponent)
+        solved.update(diagnostics=diagnostics, checked=(), complete=key is None or self.R.size < 2, exponent=exponent, met=met)
         self._keep(key)
         return solved
 
@@ -1050,7 +1054,7 @@ class GasPattern:
         the relation's profiles at those radii, at the galaxy's one exponent: no solve."""
         if self.relation is not None and self.stars is not None and not self.flat:
             exponent = self._rings()["exponent"]
-            return self._relation_profiles(self.stars.ring_profile(radii, CELLS), exponent)
+            return self._relation_profiles(self.arms_field(radii), exponent)
         g = self.forcing(radii)
         kappa, _ = self._disc_at(radii)
         eps = _response.epsilon(self.sound_speed, kappa, radii, self.sin_pitch)
@@ -1062,8 +1066,10 @@ class GasPattern:
 
     # --- the arms' molecular gas by the measured relation (S102, #234 ruleset ii; HELD for the owner) ------------
     #
-    # g_mol(R, φ) = c(R, φ)^γ / ⟨c^γ⟩_ring, c = 1 + ψ the stellar arm pieces' field over its ring mean (``stellar_sum``,
-    # the field the stars' ratio of means is taken on) and γ ONE exponent per galaxy, solved so that the galaxy's
+    # g_mol(R, φ) = c(R, φ)^γ / ⟨c^γ⟩_ring, c = 1 + ψ the stellar arm pieces' field over its ring mean (:meth:`arms_field`,
+    # the field the stars' ratio of means is taken on, with the bar's taper in it: inside the bar's reach the arms'
+    # term is so tapered in c and again by w_arm - the untapered field the gate asked for is not a density on every
+    # galaxy, see :meth:`arms_field`) and γ ONE exponent per galaxy, solved so that the galaxy's
     # molecular ratio of means over its arm rings meets Querejeta et al. 2024's Table 4 (nominal, individual
     # segments) at the galaxy's own stellar ratio: log10 G(γ) = intercept + slope log10 S. S and G are the means over
     # the arm rings of each ring's :func:`ratio_of_means` (the mask rule unchanged: the share :func:`mask_share` of
@@ -1071,6 +1077,32 @@ class GasPattern:
     # across each spiral segment" [inferred]. The power's shape inside a ring is the model's choice [inferred]: the
     # source fits mask means only. The ratio is unchanged by the ring normalisation, and rises with γ on every ring
     # (the mask holds the ring's highest c), so the bracketed root is unique.
+    #
+    # **Weak arms: the exponent is held, the shortfall declared** (the gate's ruling 2 on lane L) `[inferred]`. The
+    # relation is a fit to segments whose stellar contrasts are those of mapped arms; its intercept (a factor 1.45 at a
+    # stellar contrast of 1) cannot be met by any power of a nearly flat field. Below the stellar ratio at which the
+    # bracket's top is reached the model holds γ at the top and declares the shortfall (:attr:`arm_relation_met`
+    # False): it does not extrapolate the fit's intercept to a disc without arms, and no galaxy the inputs reach fails.
+
+    def arms_field(self, radii: np.ndarray | None = None, untapered: bool = False) -> np.ndarray:
+        """ψ: the stellar arm pieces' sum on the solver's cells' centres of each ring (``radii`` None: the grid's),
+        shaped (rings, CELLS) - the field c = 1 + ψ the relation raises to γ, **with the bar's taper in it**, as the
+        stars carry it. ``untapered`` True divides it by 1 − the taper at the ring's radius (0 where the taper is 1), the
+        amplitude the gas's forcing reads (:meth:`forcing_spectrum`): the gate's ruling 1 on lane L asked for that field,
+        and it is NOT what the law reads, because 1 + ψ_u is not a density on every galaxy - measured below zero on 2 of
+        60 default seed pairs, on one ring each inside the bar's reach (3.11 kpc, taper 0.38; S102 lane L's notes). Kept
+        for the gate's comparison; no stage asks for it."""
+        if self.stars is None or self.flat:
+            n = self.R.size if radii is None else np.size(radii)
+            return np.zeros((n, CELLS))
+        R = self.R if radii is None else np.asarray(radii, dtype=float)
+        psi = self.stellar_sum() if radii is None else self.stars.ring_profile(R, CELLS)
+        if not untapered:
+            return psi
+        taper = np.asarray(bar_terms(R, self.pitch_deg, self.bar_length)[0], dtype=float)
+        with np.errstate(divide="ignore"):
+            scale = np.where(taper < 1.0, 1.0 / np.where(taper < 1.0, 1.0 - taper, 1.0), 0.0)
+        return psi * scale[:, None]
 
     def arm_rings(self, psi: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
         """(the arm rings, (R,) bool; the relation's mask share on every grid ring, (R,)): the grid rings a stellar arm
@@ -1080,7 +1112,7 @@ class GasPattern:
         none = np.zeros(self.R.size, dtype=bool)
         if self.relation is None or self.stars is None or self.flat:
             return none, np.full(self.R.size, np.nan)
-        psi = self.stellar_sum() if psi is None else psi
+        psi = self.arms_field() if psi is None else psi
         count = np.zeros(self.R.size) if self.design_count is None else np.asarray(self.design_count, dtype=float)
         share = mask_share(np.where(count > 0.0, count, np.nan), self.R, self.sin_pitch, self.relation[2])
         taper = np.asarray(bar_terms(self.R, self.pitch_deg, self.bar_length)[0], dtype=float)
@@ -1089,11 +1121,8 @@ class GasPattern:
             rings[i] = ratio_of_means(1.0 + psi[i], psi[i], float(share[i])) > 1.0 + NO_ARM_CONTRAST
         return rings, share
 
-    def _exponent(self, psi: np.ndarray) -> float:
-        """γ: the galaxy's one exponent (the comment above), NaN where the galaxy has no arms - no arm ring, or the
-        arm rings' mean stellar ratio within :data:`NO_ARM_CONTRAST` of 1. Bisection in :data:`EXPONENT_BRACKET` for
-        :data:`EXPONENT_HALVINGS` halvings, the last bracket's middle. A root outside the bracket raises, naming the
-        galaxy's stellar ratio: nothing is clamped."""
+    def _exponent(self, psi: np.ndarray) -> tuple[float, bool]:
+        """(γ, whether the relation is met): :func:`relation_exponent` on the arm rings of the untapered field ``psi``."""
         slope, intercept, _ = self.relation
         rings, share = self.arm_rings(psi)
         idx = np.flatnonzero(rings)
@@ -1124,11 +1153,18 @@ class GasPattern:
         scalars are held the same bits with the layer on and off (D214), and γ is the layer's."""
         return float(self._rings()["exponent"])
 
+    @property
+    def arm_relation_met(self) -> bool:
+        """Whether the arms' molecular ratio of means meets the relation (S102, the gate's ruling 2): False where the
+        galaxy's stars are too weakly armed for any exponent in the bracket and γ is held at its top - the shortfall
+        declared. True without arms (nothing is asked) and on a pattern that keeps the steady response."""
+        return bool(self._rings()["met"])
+
     def arm_relation_ratios(self) -> dict:
         """The relation's numbers as the model meets them (a disclosed record): the arm rings' count, the means over
-        them of the stars' and the molecular gas's ratios of means, the relation's ask at the stars' ratio, and the
-        per-ring ratios. NaN where there are no arm rings."""
-        psi = self.stellar_sum()
+        them of the stars' (untapered: the field γ is solved on) and the molecular gas's ratios of means, the
+        relation's ask at the stars' ratio, and the per-ring ratios. NaN where there are no arm rings."""
+        psi = self.arms_field()
         rings, share = self.arm_rings(psi)
         idx = np.flatnonzero(rings)
         profiles = self.profiles
@@ -1138,7 +1174,7 @@ class GasPattern:
         slope, intercept, _ = self.relation if self.relation is not None else (math.nan, math.nan, math.nan)
         return {"rings": idx, "stellar": stellar, "molecular": float(gas.mean()) if idx.size else math.nan,
                 "asked": 10.0 ** (intercept + slope * math.log10(stellar)) if idx.size else math.nan,
-                "ring_stellar": stars, "ring_molecular": gas, "exponent": self.arm_gas_exponent}
+                "ring_stellar": stars, "ring_molecular": gas, "exponent": self.arm_gas_exponent, "met": self.arm_relation_met}
 
     @property
     def profiles(self) -> np.ndarray:
@@ -1728,50 +1764,59 @@ def ratio_of_means(profile: np.ndarray, order_by: np.ndarray, share: float) -> f
     return (inside / cells) / (outside / (ranked.size - cells))
 
 
-def relation_exponent(lifted: np.ndarray, order_by: np.ndarray, share: np.ndarray, slope: float, intercept: float) -> float:
-    """γ such that the mean over the rings of :func:`ratio_of_means` of ``lifted``^γ meets the measured relation at the
+def relation_exponent(lifted: np.ndarray, order_by: np.ndarray, share: np.ndarray, slope: float, intercept: float) -> tuple[float, bool]:
+    """(γ, met): γ such that the mean over the rings of :func:`ratio_of_means` of ``lifted``^γ meets the measured relation at the
     mean of the rings' own ratios: log10 G(γ) = ``intercept`` + ``slope`` log10 S (S102, #234 ruleset ii; Querejeta et
     al. 2024, Table 4). ``lifted`` (rings, cells) the stellar field over its ring mean, positive; ``order_by`` what each
     ring's mask is laid on (the stellar pieces' sum); ``share`` (rings,) the mask's share of each ring.
 
-    NaN where there are no arms: no ring, or S within :data:`NO_ARM_CONTRAST` of 1. Otherwise bisection inside
-    :data:`EXPONENT_BRACKET` for exactly :data:`EXPONENT_HALVINGS` halvings - each step keeps the half whose upper end
-    meets or passes the relation - and the last bracket's middle (rule A1: termination fixed in advance, no tolerance
-    branch). A root outside the bracket raises ``ValueError`` naming S: nothing is clamped."""
+    (NaN, True) where there are no arms: no ring, or S within :data:`NO_ARM_CONTRAST` of 1 - nothing is asked. Otherwise
+    bisection inside :data:`EXPONENT_BRACKET` for exactly :data:`EXPONENT_HALVINGS` halvings - each step keeps the half
+    whose upper end meets or passes the relation - and the last bracket's middle, met True (rule A1: termination fixed
+    in advance, no tolerance branch). **A root above the bracket's top** (a nearly flat stellar field, whose power cannot
+    reach the fit's intercept): γ held at the top, met False - the shortfall declared, the fit's intercept not
+    extrapolated to a disc without arms `[inferred]` (the gate's ruling 2 on lane L); a root under the bottom likewise
+    held there. ``ValueError`` only where the bisection's own invariant fails: a ratio that is not a finite positive
+    number."""
     lifted = np.asarray(lifted, dtype=float)
     order_by = np.asarray(order_by, dtype=float)
     share = np.asarray(share, dtype=float)
     rings = lifted.shape[0]
     if rings == 0:
-        return math.nan
+        return math.nan, True
     if not np.all(lifted > 0.0):
         raise ArithmeticError("the stellar arm pieces' field reaches the ring's mean below zero on an arm ring: no power of it is a density")
 
     def mean_ratio(power: float) -> float:
         values = lifted if power == 1.0 else lifted ** power
-        return float(np.mean([ratio_of_means(values[k], order_by[k], float(share[k])) for k in range(rings)]))
+        ratio = float(np.mean([ratio_of_means(values[k], order_by[k], float(share[k])) for k in range(rings)]))
+        if not (math.isfinite(ratio) and ratio > 0.0):
+            raise ValueError(
+                f"the arms' molecular ratio of means at the exponent {power:.17g} is {ratio!r} over {rings} arm rings: "
+                "the bisection needs a finite positive ratio"
+            )
+        return ratio
 
     stellar = mean_ratio(1.0)
     if abs(stellar - 1.0) <= NO_ARM_CONTRAST:
-        return math.nan
+        return math.nan, True
     target = float(intercept) + float(slope) * math.log10(stellar)
 
     def meets(power: float) -> bool:
         return math.log10(mean_ratio(power)) - target >= 0.0
 
     lo, hi = EXPONENT_BRACKET
-    if meets(lo) or not meets(hi):
-        raise ValueError(
-            f"the arms' molecular exponent is outside [{lo:g}, {hi:g}]: the galaxy's stellar ratio of means over its "
-            f"{rings} arm rings is {stellar:.6g}, and the relation asks {10.0 ** target:.6g} of the molecular gas"
-        )
+    if not meets(hi):
+        return hi, False  # held at the top: the shortfall declared
+    if meets(lo):
+        return lo, False  # held at the bottom (an intercept under 0 at a strong arm): the excess declared
     for _ in range(EXPONENT_HALVINGS):
         middle = 0.5 * (lo + hi)
         if meets(middle):
             hi = middle
         else:
             lo = middle
-    return 0.5 * (lo + hi)
+    return 0.5 * (lo + hi), True
 
 
 def crest_width(profile: np.ndarray) -> float:

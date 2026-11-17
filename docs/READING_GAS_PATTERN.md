@@ -746,15 +746,20 @@ again here; the text's "negative contrasts in the logarithmic scale" (Sect. 3.1)
 
 In `stages/gas_pattern.py`: on every solved ring (the grid's and the mid-gap ones) the molecular arm profile is
 s = c^γ / ⟨c^γ⟩_ring, c = 1 + ψ the stellar arm pieces' field (`stellar_sum`, the field the stars' ratio of means is
-taken on; the bar's taper is in it as the stars carry it), γ one exponent per galaxy (`relation_exponent`): the mean
+taken on, `arms_field`; the bar's taper is in it as the stars carry it - the gate's ruling 1, the field untapered as
+the solver's forcing reads it, was built and measured and is NOT the law: 1 + ψ_u falls below zero on 2 of 60 default
+seed pairs, one ring each at 3.11 kpc where the taper is 0.38, so no power of it is a density; held for the gate),
+γ one exponent per galaxy (`relation_exponent`): the mean
 over the galaxy's arm rings of the molecular `ratio_of_means` meets log10 C_mol = 1.83 log10 C_star + 0.16 at the
 mean of the stars' own. **Arm rings** (`GasPattern.arm_rings`): a piece reaches the ring, the law's arm number is a
 count (the mask is laid for it), the bar's taper weight is at most 0.01 (the composed gas is the arms' term to 1 %),
 and the ring's stellar ratio is over 1 + 1e-6. The mask is the disclosed check's rule (share m W/(2π R sin p) at most a
 half, laid where ψ is highest) at W = `ARM_GAS_RELATION_MASK_WIDTH` 1.5 kpc, the check's own number, now a model
 constant beside `ARM_GAS_RELATION_SLOPE` 1.83 and `ARM_GAS_RELATION_INTERCEPT` 0.16 (`models/level0.py`). γ: bisection
-in [1, 12], exactly 40 halvings, the last bracket's middle (rule A1); a root outside the bracket raises naming the
-stellar ratio; no arm ring, or a mean stellar ratio within 1e-6 of 1, gives γ NaN and a molecular arm contrast of 1.
+in [1, 12], exactly 40 halvings, the last bracket's middle (rule A1); since the gate's ruling 2 a root above the
+bracket's top (stars too weakly armed for any power to reach the fit's intercept) holds γ at 12 and the pattern says so
+(`arm_relation_met` False): the fit is not extrapolated to a disc without arms `[inferred]`, and only a non-finite
+ratio raises; no arm ring, or a mean stellar ratio within 1e-6 of 1, gives γ NaN and a molecular arm contrast of 1.
 The power's shape inside a ring is the model's choice `[inferred]`. The bar's lanes, the taper's blend, the spurs, the
 carried map between rings and the exact cell means are unchanged. **The atomic gas keeps D216's steady response**
 (#130, `atomic()` sets the relation off), so the solver still runs once per pattern; the molecular steady response is
@@ -807,5 +812,11 @@ The dust follows the new molecular contrast only through the blend: at the mid d
 on the Milky Way) the atomic response, unchanged, carries most of the placed column, so the dust's crest rises far less
 than the molecular gas's (row p90 / median 1.30 → 1.39 against 1.32 → 1.80). The clouds, their texture, the clusters
 and the star formation law read the molecular pattern itself and follow it in full. The top of the Milky Way's range
-(6.7) is the bar's lanes, unchanged. `sfr_modulation` reaches 1.5e-4 of the ring's rate between the arms (from 3.9e-3):
-the gas there falls to about a fifth of the ring's mean.
+(6.7) is the bar's lanes, unchanged.
+
+For the record (the gate's ruling 4 on lane L):
+- Between the arms on `milky_way` star formation falls to 1.5e-4 of the ring's mean rate (from 3.9e-3), because the
+  threshold switches off on gas at 0.18 of the ring's mean; disclosed, not mended.
+- The dust's placement gains little (row p90 / median 1.30 → 1.39): the placed gas is the S100 blend, and at a molecular
+  fraction of 0.2-0.35 the unchanged atomic response carries most of it; so what the relation gathers is the clouds.
+- The star-formation contrast reads 0.70 of Table 4's Sigma_star - Sigma_SFR row at the same stellar ratios; disclosed.

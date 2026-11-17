@@ -65,8 +65,8 @@ def test_the_exponent_by_hand_on_a_two_level_ring(a, b, top):
     """On a ring of two levels whose mask is exactly the upper one, the ratio of means of c^gamma is (a/b)^gamma, so the
     relation asks gamma = slope + intercept / log10(a/b): the root-find meets it to the bracket's last halving."""
     c, psi, share = two_level(a, b, gm.CELLS, top)
-    gamma = gm.relation_exponent(c[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
-    assert gamma == pytest.approx(SLOPE + INTERCEPT / math.log10(a / b), abs=1e-10)
+    gamma, met = gm.relation_exponent(c[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
+    assert met and gamma == pytest.approx(SLOPE + INTERCEPT / math.log10(a / b), abs=1e-10)
     g = c**gamma / gm.ring_quadrature(c**gamma)
     assert abs(gm.ring_quadrature(g) - 1.0) <= 1e-14
     assert math.log10(gm.ratio_of_means(g, psi, share)) == pytest.approx(INTERCEPT + SLOPE * math.log10(a / b), abs=1e-9)
@@ -75,24 +75,51 @@ def test_the_exponent_by_hand_on_a_two_level_ring(a, b, top):
 def test_two_rings_meet_the_relation_on_their_mean():
     """Two rings: gamma meets the relation between the means of their ratios (not ring by ring) - the definition."""
     (c1, p1, s1), (c2, p2, s2) = two_level(1.6, 0.9, gm.CELLS, 360), two_level(1.2, 0.97, gm.CELLS, 360)
-    gamma = gm.relation_exponent(np.stack([c1, c2]), np.stack([p1, p2]), np.array([s1, s2]), SLOPE, INTERCEPT)
+    gamma, met = gm.relation_exponent(np.stack([c1, c2]), np.stack([p1, p2]), np.array([s1, s2]), SLOPE, INTERCEPT)
+    assert met
     stellar = 0.5 * (1.6 / 0.9 + 1.2 / 0.97)
     gas = 0.5 * ((1.6 / 0.9) ** gamma + (1.2 / 0.97) ** gamma)
     assert math.log10(gas) == pytest.approx(INTERCEPT + SLOPE * math.log10(stellar), abs=1e-9)
 
 
 def test_no_arms_and_the_bracket():
-    """A flat ring, or none, has no arms: NaN. A stellar ratio so near 1 that the intercept asks more than the bracket's
-    top exponent can give raises, naming the ratio - nothing is clamped. A field below zero is no density."""
+    """A flat ring, or none, has no arms: (NaN, met). A field below zero is no density. A non-finite ratio fails the
+    bisection's invariant and raises."""
     flat = np.ones((1, gm.CELLS))
-    assert math.isnan(gm.relation_exponent(flat, flat - 1.0, np.array([0.25]), SLOPE, INTERCEPT))
-    assert math.isnan(gm.relation_exponent(np.ones((0, gm.CELLS)), np.ones((0, gm.CELLS)), np.zeros(0), SLOPE, INTERCEPT))
-    c, psi, share = two_level(1.01, 1.0, gm.CELLS, 360)
-    with pytest.raises(ValueError, match="stellar ratio of means"):
-        gm.relation_exponent(c[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
+    gamma, met = gm.relation_exponent(flat, flat - 1.0, np.array([0.25]), SLOPE, INTERCEPT)
+    assert math.isnan(gamma) and met
+    gamma, met = gm.relation_exponent(np.ones((0, gm.CELLS)), np.ones((0, gm.CELLS)), np.zeros(0), SLOPE, INTERCEPT)
+    assert math.isnan(gamma) and met
+    c, psi, share = two_level(1.6, 0.9, gm.CELLS, 360)
+    with pytest.raises(ValueError, match="finite positive ratio"):
+        gm.relation_exponent(np.where(np.arange(c.size) == 0, np.inf, c)[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
     c, psi, share = two_level(1.6, -0.1, gm.CELLS, 360)
     with pytest.raises(ArithmeticError):
         gm.relation_exponent(c[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
+
+
+# Where the hold begins on a two-level ring: (a/b)^12 = 10^intercept (a/b)^slope, so a/b = 10^(intercept / (12 - slope)).
+HOLD_RATIO = 10.0 ** (INTERCEPT / (12.0 - SLOPE))  # 1.0369
+
+
+@pytest.mark.parametrize("a", [1.01, HOLD_RATIO * (1.0 - 1e-6)])
+def test_a_weak_ring_holds_the_exponent_and_declares_the_shortfall(a):
+    """The gate's ruling 2: a stellar ratio under the hold's threshold gives gamma = the bracket's top, met False, ring
+    mean 1, and a molecular ratio under the relation's ask - no raise."""
+    c, psi, share = two_level(a, 1.0, gm.CELLS, 360)
+    gamma, met = gm.relation_exponent(c[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
+    assert gamma == gm.EXPONENT_BRACKET[1] and not met
+    g = c**gamma / gm.ring_quadrature(c**gamma)
+    assert abs(gm.ring_quadrature(g) - 1.0) <= 1e-14
+    assert gm.ratio_of_means(g, psi, share) < 10.0 ** (INTERCEPT + SLOPE * math.log10(a))
+
+
+@pytest.mark.parametrize("a", [HOLD_RATIO * (1.0 + 1e-6), 1.04])
+def test_just_above_the_threshold_the_relation_solves(a):
+    c, psi, share = two_level(a, 1.0, gm.CELLS, 360)
+    gamma, met = gm.relation_exponent(c[None, :], psi[None, :], np.array([share]), SLOPE, INTERCEPT)
+    assert met and gamma < gm.EXPONENT_BRACKET[1]
+    assert gamma == pytest.approx(SLOPE + INTERCEPT / math.log10(a), abs=1e-9)
 
 
 def test_the_constants_are_the_tables_and_the_mask_is_the_check_s(prod):
@@ -112,14 +139,14 @@ def test_the_relation_is_met_and_every_ring_keeps_its_gas(prod, template):
     gp = pattern(prod, template)
     rel = gp.arm_relation_ratios()
     gamma = gp.arm_gas_exponent
-    assert 1.0 < gamma < 12.0 and rel["rings"].size >= 20
+    assert 1.0 < gamma < 12.0 and rel["rings"].size >= 20 and gp.arm_relation_met and rel["met"]
     assert abs(math.log10(rel["molecular"]) - (INTERCEPT + SLOPE * math.log10(rel["stellar"]))) <= 1e-6
     o = template_run(prod, template)
     for name in ("gas_density_contrast", "star_formation_gas_contrast", "atomic_gas_density_contrast"):
         field = np.asarray(o.fields[name], dtype=float)
         assert np.abs(field.mean(axis=1) - 1.0).max() <= 1e-12, name
     # The molecular profiles are the relation's on every solved ring; the atomic pattern is the solver's.
-    psi = gp.stellar_sum()
+    psi = gp.arms_field()
     on = gp.carries
     power = (1.0 + psi[on]) ** gamma
     assert np.array_equal(gp.profiles[on], power / gm.ring_quadrature(power)[:, None])
@@ -144,8 +171,8 @@ def test_a_pattern_without_arms_takes_no_molecular_contrast(prod):
     gp = pattern(prod, "ngc_4414")
     psi = np.zeros_like(gp.stellar_sum())
     rings, _ = gp.arm_rings(psi)
-    assert not rings.any() and math.isnan(gp._exponent(psi))
-    profiles, carries = gp._relation_profiles(gp.stellar_sum(), math.nan)
+    assert not rings.any() and math.isnan(gp._exponent(psi)[0]) and gp._exponent(psi)[1]
+    profiles, carries = gp._relation_profiles(gp.arms_field(), math.nan)
     assert np.all(profiles == 1.0) and not carries.any()
 
 
@@ -163,7 +190,7 @@ def test_disclosed_records(prod, template, record_property):
     over = rel["ring_molecular"] / ask
     R = gp.R
     idx = rel["rings"]
-    stellar = 1.0 + gp.stellar_sum()
+    stellar = 1.0 + gp.arms_field()
     widths = np.array([gm.crest_width(gp.profiles[i]) / gm.crest_width(stellar[i]) for i in idx])
     o = template_run(prod, template)
     edges = o.grid["phi"].edges
