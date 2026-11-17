@@ -69,6 +69,17 @@ strengths) was read at S35 and set aside: without the ionization fractions it ma
   cavity, computed apart, and no law coupling them was read, so each keeps the medium it was derived in
   `[inferred: the gate's ruling 4, S102]`.
   Assumed, as the sources do: a uniform ambient medium, a constant Q, a sphere, no dust in the region.
+- *The rate's history* (S104, batch R, #235; ``docs/READING_HII_SIZES.md`` Part S104): the law above holds Q constant,
+  and the cluster's Q falls 20-140x by 4-20 Myr on the model's own table (``population_light().ionizing_per_mass``,
+  read as the clusters stage reads it; no new constant). The front is driven by the PEAK of that rate over the
+  cluster's life (the birth rate on this table, flat for its first 4 Myr): R_St, R_D and R_STAG are the peak rate's,
+  and their minimum, capped at the cloud, is the shell (``hii_shell_radius``). Inside it the gas is at the density
+  photon balance with the peak rate gives at the shell, n_i = n_rms (R_St,peak / R_shell)^(3/2); today's photons
+  ionize it to R_ion = R_shell (Q_now / Q_peak)^(1/3), which is ``hii_radius`` (photon balance with today's kept
+  photons at n_i) `[inferred: recombination taken as instantaneous, the cavity's gas held at n_i (no refilling), a
+  capped shell's density by photon balance at the peak rate at the cloud's edge - the gate's ruling, S104]`. A region
+  whose peak Strömgren sphere passed its cloud is its cloud at the clump's density, ionized to today's Strömgren
+  radius, at most the cloud. The Hα (today's photons, today's leaking rule) and the bubbles are unchanged.
 - *Diffuse ionized gas*: 30% of each region's ionizing photons escape it (the model Zurita et al. 2002
   fitted to NGC 157, "30% of emitted Lyman continuum photons escape from each H II region", the range
   30–60% named) `[verified: Haffner et al. 2009, arXiv:0901.0941 §IV]`; none leave the galaxy (Leitherer
@@ -103,6 +114,7 @@ from galaxy.stages.clouds import sound_speed
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import CM_PER_PC, SOLAR_MASS_G
 from galaxy.stages.massive_stars import SECONDS_PER_YEAR, SOLAR_LUMINOSITY
+from galaxy.stages.photometry import peak_per_mass_at, per_mass_at, population_light
 from galaxy.stages.systems import Catalogue
 
 # --- Case B, Storey & Hummer 1995 (CDS VI/64), n_e = 1e2 cm^-3 ------------------------------------------
@@ -177,6 +189,7 @@ HII_COLUMNS: tuple[str, ...] = (
     "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio",
     "hii_radius",  # S102 (#232): the region's radius now
     "hii_natal_density",  # S102 (#232, the gate's ruling 4): the Stromgren state's density, the bubbles' ambient
+    "hii_shell_radius",  # S104 (#235): the shell the front drove at the cluster's peak rate; hii_radius sits inside it
 )
 CM_PER_KM = 1.0e5
 # The forbidden lines the grid is read for (S42), each published over the region's Halpha.
@@ -328,6 +341,18 @@ def expanded_density(n_st: np.ndarray, r_st: np.ndarray, r: np.ndarray) -> np.nd
     return np.where(r > 0.0, scaled, n_st)
 
 
+def peak_rate_ratio(age_myr: np.ndarray, feh: np.ndarray) -> np.ndarray:
+    """Q_peak / Q_now for clusters of these ages (Myr) and [Fe/H]: the largest ionizing rate per mass formed over the
+    cluster's life so far over today's, both off the model's own table (``population_light().ionizing_per_mass``, read
+    as the clusters stage reads it). Exactly 1.0 where today's rate is the peak (the table's first 4 Myr are the
+    youngest isochrone's) and where the rate is zero (S104, #235)."""
+    table = population_light().ionizing_per_mass
+    age_gyr = np.asarray(age_myr, dtype=float) / 1000.0
+    now = per_mass_at(table, age_gyr, feh)
+    peak = peak_per_mass_at(table, age_gyr, feh)
+    return np.where(now > 0.0, peak / np.where(now > 0.0, now, 1.0), 1.0)
+
+
 def luminosity_function_slope(l_erg: np.ndarray, l_min: float, bin_dex: float = 0.2) -> float:
     """dN/dL ∝ L^α over the regions above ``l_min``: α is the least-squares slope of log N per log-L bin
     against the bin's centre, minus one. NaN with fewer than three occupied bins."""
@@ -380,18 +405,28 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
         absorbed = np.where(leaking, q_trapped * (r_cloud / np.where(r_s > 0, r_s, 1.0)) ** 3, q_trapped)
     l_halpha = absorbed * halpha_per_recombination(t_e)  # erg/s
     # S102 (#232): the region since: the D-type front at the cluster's age, stopped at stagnation, capped at the cloud.
+    # S104 (#235): the front was driven by the cluster's ionizing rate at its peak, not today's: the shell is grown from
+    # the Strömgren sphere of the peak rate; today's ionized sphere sits inside it.
     c_i = float(c["SHELL_SOUND_SPEED"]) * CM_PER_KM
     c_0 = effective_sound_speed(sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"])),
                                 cloud("cloud_velocity_dispersion")) * CM_PER_KM
-    t_s = np.asarray(clusters["cluster_age"], dtype=float) * 1.0e6 * SECONDS_PER_YEAR
-    r_d = d_type_radius(r_s, c_i, t_s)
-    r_stag = stagnation_radius(r_s, c_i, c_0)
+    age_myr = np.asarray(clusters["cluster_age"], dtype=float)
+    drive = peak_rate_ratio(age_myr, feh)
+    r_s_peak = stromgren_radius_cm(q_trapped * drive, n_squared, alpha)
+    leaking_peak = r_s_peak > r_cloud
+    t_s = age_myr * 1.0e6 * SECONDS_PER_YEAR
+    r_d = d_type_radius(r_s_peak, c_i, t_s)
+    r_stag = stagnation_radius(r_s_peak, c_i, c_0)
     r_free = np.minimum(r_d, r_stag)
-    capped = leaking | (r_free > r_cloud)
-    r_now = np.where(capped, r_cloud, r_free)
+    capped = leaking_peak | (r_free > r_cloud)
+    r_shell = np.where(capped, r_cloud, r_free)
     limit = np.where(capped, 2, np.where(r_stag < r_d, 1, 0)).astype(np.int64)
-    # Photon balance at the new radius; a leaking region is its whole cloud at the clump's density, as before.
-    n_e = np.where(leaking, np.sqrt(n_squared), expanded_density(np.sqrt(n_squared), r_s, r_now))
+    # The gas inside the shell: photon balance with the peak rate at the shell, n_i = n_rms (R_St,peak / R_shell)^(3/2);
+    # a region whose peak Strömgren sphere passed its cloud is its whole cloud at the clump's density, as before.
+    n_e = np.where(leaking_peak, np.sqrt(n_squared), expanded_density(np.sqrt(n_squared), r_s_peak, r_shell))
+    # Today's photons ionize, at that density, R_shell (Q_now / Q_peak)^(1/3) - never more than the shell; in a cloud the
+    # peak rate overran, today's Strömgren sphere at the clump's density, at most the cloud.
+    r_now = np.where(leaking_peak, np.minimum(r_cloud, r_s), np.minimum(r_shell, r_shell * np.cbrt(1.0 / drive)))
     volume = 4.0 / 3.0 * math.pi * r_now**3
     with np.errstate(divide="ignore", invalid="ignore"):
         emissivity = np.where(volume > 0, l_halpha / np.where(volume > 0, volume, 1.0), 0.0)
@@ -407,6 +442,7 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
     out = {
         "hii_stromgren_radius": radius / CM_PER_PC,
         "hii_radius": r_now / CM_PER_PC,
+        "hii_shell_radius": r_shell / CM_PER_PC,
         "hii_natal_density": np.sqrt(n_squared),
         "hii_electron_density": n_e,
         "hii_temperature": t_e,
@@ -468,6 +504,9 @@ NOT_DRAWN_WHY: dict[str, str] = {
     "hii_radius_limit": "the category is not a look: it says which of three limits `hii_radius` stopped at.",
     "hii_natal_density": "the medium the wind bubble expands into (the bubbles stage reads it); the region drawn "
                          "is the expanded one, whose density is `hii_electron_density`.",
+    # S104 (#235)
+    "hii_shell_radius": "the cavity the front drove at the cluster's peak rate: the light is today's ionized sphere "
+                        "inside it, `hii_radius`, which is what is drawn; the neutral shell itself makes no Hα here.",
 }
 
 
@@ -498,18 +537,27 @@ HII_NATAL_DENSITY = _column("hii_natal_density", "Natal ionized density (rms)", 
                             "region's expanded density is `hii_electron_density` (S102, #232).",
                             ramp=Ramp("magma", scale="log"))
 HII_RADIUS_NOW = _column("hii_radius", "HII region radius, expanded", "pc",
-                         "The region's radius at its cluster's age: the Strömgren sphere grown by its D-type front "
-                         "(Hosokawa & Inutsuka 2006, as Bisbas et al. 2015 eq. 13) since the region appeared, stopped "
-                         "where its pressure meets the cloud's thermal and turbulent pressure (Bisbas eq. 17, the "
-                         "turbulence as Tremblin et al. 2014's), and capped at the cloud's radius as the Strömgren "
-                         "radius is. `hii_radius_limit` says which. The density, emissivity and log U are this "
-                         "sphere's.", ramp=Ramp("viridis", scale="log"))
+                         "The region's ionized radius at its cluster's age: the sphere today's photons keep ionized "
+                         "inside the shell its front drove (`hii_shell_radius`), at the density the shell left its gas "
+                         "at — the shell's radius times the cube root of today's ionizing rate over the cluster's peak "
+                         "(S104, #235), the whole shell while the cluster is younger than its rate's first fall. Never "
+                         "smaller than the natal Strömgren sphere `hii_stromgren_radius`. The density, emissivity and "
+                         "log U are this sphere's.", ramp=Ramp("viridis", scale="log"))
+HII_SHELL_RADIUS = _column("hii_shell_radius", "HII region shell radius", "pc",
+                           "The cavity the region's front has driven by its cluster's age: the Strömgren sphere of the "
+                           "cluster's peak ionizing rate grown by its D-type front (Hosokawa & Inutsuka 2006, as Bisbas "
+                           "et al. 2015 eq. 13), stopped where its pressure meets the cloud's thermal and turbulent "
+                           "pressure (Bisbas eq. 17, the turbulence as Tremblin et al. 2014's), capped at the cloud's "
+                           "radius as the Strömgren radius is; `hii_radius_limit` says which (S102, #232; the peak rate "
+                           "since S104, #235).", ramp=Ramp("viridis", scale="log"))
 HII_DENSITY = _column("hii_electron_density", "Electron density (rms)", "1/cm3",
                       "The root mean square density of the region's ionized gas at its radius now (`hii_radius`): "
                       "at the start, the cloud's mean density times the square root of its clumping, because "
                       "emission measure goes as n² and the mean gets it wrong by that factor (RENDER_PHYSICS §6); "
-                      "as the region grows on the same photons, that times (R_St / R)^(3/2), photon balance "
-                      "(S102, #232). The clumping is the natal clump's and applies at the start only.",
+                      "as the region grows, that times (R_St / R_shell)^(3/2) with R_St the Strömgren sphere of its "
+                      "cluster's peak ionizing rate, photon balance at the shell `hii_shell_radius` (S102, #232; the "
+                      "peak rate since S104, #235): today's fewer photons ionize this gas out to `hii_radius`. The "
+                      "clumping is the natal clump's and applies at the start only.",
                       ramp=Ramp("magma", scale="log"))
 HII_TEMPERATURE = _column("hii_temperature", "Electron temperature", "K",
                           "From the gas's oxygen abundance by the temperature–metallicity relation of star-forming "
@@ -574,8 +622,9 @@ HII_RADIUS_LIMIT = FieldDecl(
     name="hii_radius_limit", label="Region radius set by", unit="dimensionless", kind=Kind.CATEGORY_COLUMN, of="cluster",
     categories=HII_RADIUS_LIMITS, ramp=Palette(("#3b6fb6", "#e0a030", "#7a7a7a")), provenance="seeded",
     about=(
-        "Expansion: the region is still growing at its cluster's age. Stagnation: it has stopped where its pressure "
-        "meets the cloud's. Cloud: it would outgrow its cloud and is capped at the cloud's radius (S102, #232)."
+        "Which limit the region's shell (`hii_shell_radius`) stopped at. Expansion: the shell is still growing at its "
+        "cluster's age. Stagnation: it has stopped where its pressure meets the cloud's. Cloud: it would outgrow its "
+        "cloud and is capped at the cloud's radius (S102, #232; the shell is the peak rate's since S104, #235)."
         + _not_drawn("hii_radius_limit")
     ),
 )
@@ -791,7 +840,7 @@ NEBULAR = IMPLEMENTATIONS.register(
         publishes=(
             HII_RADIUS, HII_DENSITY, HII_TEMPERATURE, HII_LOG_U, HII_CLUMPING, HII_HALPHA, HII_EMISSIVITY, HII_DECREMENT,
             HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, *HII_LINE_RATIOS, HII_BOUNDED, HII_RADIUS_NOW, HII_RADIUS_LIMIT,
-            HII_NATAL_DENSITY,
+            HII_NATAL_DENSITY, HII_SHELL_RADIUS,
             HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, *LINES_DIG, *DIG_RATIOS, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
             NII_HALPHA_GRADIENT,
         ),

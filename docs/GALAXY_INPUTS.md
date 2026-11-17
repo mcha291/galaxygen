@@ -8174,6 +8174,25 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    rate's history (the model's own table; no new constant), keep the ionized radius inside the shell at today's rate
    `[inferred]`, and compare only above Barnes's detection limit; the gate rules on the builder's measurement. Leakage:
    no closed form read, not built. Carried.
+   *S104 (batch R, lane RH; `READING_HII_SIZES.md` Part S104):* the defect the S103 reading named - the region grown
+   to its cluster's age at today's ionizing rate held fixed, while the model's own table falls 20-140x by 4-20 Myr - is
+   mended: the front is driven at the **peak** of the cluster's rate over its life (the model's table; no new constant;
+   the gate's ruling), the shell (`hii_shell_radius`) is S102's law from the peak rate's Strömgren sphere, and today's
+   ionized sphere `hii_radius` = R_shell (Q_now / Q_peak)^(1/3) sits inside it at the density the shell left, photon
+   balance with today's photons `[inferred: recombination instant, the cavity's gas held at that density, a capped
+   shell's density by photon balance at the peak rate at the cloud's edge]`. The Hα and the bubbles are batch Q's bit
+   for bit; regions under 3.98 Myr (20 % of them) are unchanged. On `milky_way` the radius median / p99 / max 11.0 /
+   36.4 / 70.6 -> **5.47 / 26.3 / 52.9 pc** (`ngc_4414` 9.57 / 36.2 / 79.7 -> 4.25 / 25.5 / 47.6); the regions under
+   10³⁷ erg/s shrink 2-3x; the 10³⁷ decade 12.7 -> 11.9 pc (Barnes Eq. 1 11.6, Eq. 3 4.7). **It does NOT bring the slope
+   above Barnes et al.'s completeness into range**: over the regions with log L ≥ 38 (their 50 % point; a disclosed
+   cut) 0.254 -> **0.268** against 0.47-0.52 (`ngc_4414` 0.243 -> 0.250) - those regions are young, and the model's
+   rate is flat for its first 4 Myr. That flat start is the isochrone table's floor (the youngest isochrone's), where
+   Starburst99 falls 32 % by 3 Myr: **the next cause to look at**, not mended. The shell's limits move: on `milky_way`
+   stagnation binds 4 % of the regions (was 32 %) and the cloud 73 % (was 45 %), because R_STAG scales with the peak
+   rate's R_St. Williams et al. 2018 eq. 48 (a front law with the rate's change in it) was READ and not built: an ODE
+   tested only on a 20 % rise; a 20-140x fall makes a recombination front outside its D-type limit. **Carried**; the
+   lane proposes the head restated as "the grown regions' size-luminosity slope above the measured completeness is
+   about half the measured one" - the gate rules the wording at the close.
 236. **At the 2.2 kpc stand near `ngc_4414`'s nucleus the dust draws as stair-stepped patches and the young light as
    pixel speckle** (S102, D272; the close's runner X, `s102_X.md`, on the gate's order V4). At the N6 box's 2.2 kpc zoom
    stand (4.4 kpc across, about 4.3 pc per pixel) the dust clouds draw as blocky, stair-stepped dark patches with
