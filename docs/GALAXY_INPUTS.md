@@ -4770,6 +4770,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    0.34]`, to be recorded as measured and its cause named by the builder (which populations carry the K light) before
    anything is mended. The entry's recalled M_K,☉ 3.27 is now READ (Just et al. 2015 sect. 3.2, citing Casagrande et
    al. 2012). Carried. `READING_ROW_105.md` #135.
+   *S104 (batch R, lane RC): the disclosed check, measured; a miss, its cause named, nothing mended.* The column
+   through the disc at R_SUN (the 8.2125 kpc ring; production grid, the default galaxy): Σ_K 66.89 L_K☉/pc², the
+   locked mass 36.04 M☉/pc², **M/L_K 0.539 against Just et al. 2015's 0.34 for the solar cylinder (0.31 ± 0.02
+   locally) - a miss of 1.6x**; the "about 0.73" (2.1x) is the whole galaxy's, 0.703 now, a galaxy set against a
+   local column. Just et al. sects. 3.2-3.4 (READ again, an extracting fetch): Σ_K 98.7 (giants 82.5, 84 %; dwarfs
+   16.2) and 33.3 M☉/pc² with white and brown dwarfs. **The cause: too little K light, not too much mass.** The mass
+   is 1.08x Just's as counted; by what it is (`remnants.population_mass`), living 24.84 + white dwarfs 4.49 + neutron
+   stars 0.53 + black holes 0.92 = 30.78, under Just's 33.3 (no brown dwarfs in the model) - the other 5.26 is mass
+   the isochrones return beyond RETURN_FRACTION 0.30, still counted locked (on the physical mass M/L_K 0.460, 1.35x).
+   The K light is 0.68x Just's in every phase (PARSEC labels): giants 54.6 against 82.5 (SGB+RGB 23.27, core He
+   burning 10.30, AGB 21.01), the main sequence 12.31 against the dwarfs' 16.2; by age < 1 Gyr 26 %, 1-6 Gyr 48 %,
+   older 25 %. `tests/test_disclosed_s104.py`. Carried.
 136. **The model's face-on frame is bluer than the catalogues' face-on colour** (S54, D213). The template's frame
    through its dust reads B − V 0.636 against [0.72, 0.82] (RC3 and HyperLeda agree on 0.77, corrected to face-on,
    not dust-free; disclosed — the first fit, a quenched disc, read 0.819 and passed by 0.001), and the default
