@@ -133,8 +133,14 @@ export const TRANSFER_SLACK = 1e-3;
  * G's arms #230, lane H's regions grown to hii_radius #232) and lane V's knots drawn as spheres of hii_radius: measured
  * 0.96993, 0.97367, 0.97993 on the regenerated frames with the S102 bundles (+1.6e-4, +1.3e-4, +3e-5, inside
  * DUSTY_RATIO_PIN before the re-pin; the physics-only frame taken twice the same to 0).
+ *
+ * S102 held head (batch-q-lanes, #234 ruleset (ii), never merged; the hash 9712fa14...): was [0.96993, 0.97367,
+ * 0.97993] (batch Q) - lane L's arms' molecular gas by the measured relation c^gamma / <c^gamma>, which moves the
+ * clouds and the dust's placement: measured 0.97057, 0.97462, 0.98144 on the regenerated frames with the held head's
+ * bundles (+6.4e-4, +9.5e-4, +1.51e-3: past DUSTY_RATIO_PIN in B, inside it in R and G; the physics-only frame taken
+ * twice the same to 0, byte for byte batch Q's).
  */
-export const DUSTY_LAYER_RATIO = [0.96993, 0.97367, 0.97993] as const;
+export const DUSTY_LAYER_RATIO = [0.97057, 0.97462, 0.98144] as const;
 // S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
 // (#148), the floor (#209), the Milky Way's pinned 5.0 kpc bar (#80) and MERGER_HEATING 90.6 (#212) move the dust, the
 // clouds (16 940 where 16 577) and the young light; measured with the new bundles on the RTX 4070 (physics only over
