@@ -1,0 +1,243 @@
+"""S104 (batch R, lane RC; D272 item 7, D273 items 5-6; docs/READING_ROW_105.md): the disclosed checks the reading row
+sourced - the unchanged model measured against published numbers and recorded AS MEASURED, the source's number beside
+it. DISCLOSED, not judged: each source was read after the model's number was known or near it (D273), so no window here
+is a bound and a miss is named, never mended here (B5, D1). Every record is the default galaxy (the registry's
+defaults, which ``milky_way``'s template restates) on the production grid, one run shared by the module."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
+from galaxy.run import run
+from galaxy.stages import photometry as ph
+from galaxy.stages import remnants as rm
+
+M_K_SUN = 3.27  # Just et al. 2015 (arXiv:1504.05808) sect. 3.2, READ at S103 (citing Casagrande et al. 2012)
+
+
+@pytest.fixture(scope="module")
+def default():
+    ms, _, _ = production()
+    model = ms.get(DEFAULT_MODEL)
+    return run(model), {k: v.value for k, v in model.constants.items()}
+
+
+def _solar_column(res, C) -> dict[str, float]:
+    """The column through the disc at the grid ring nearest R_SUN: its K light (each formation step's mass formed
+    times a Kroupa population's K flux per unit mass formed, averaged over the step's ages - ``light.py``'s own sum),
+    its mass as the model counts it (``stellar_surface_density``: the locked mass, formed x (1 - RETURN_FRACTION)),
+    the same mass by what it is (``remnants``' population integral: the living stars at their present mass, the white
+    dwarfs, neutron stars and black holes), and the K light by PARSEC phase label and by age."""
+    F, R, t, spec = res.fields, res.grid.R, res.grid.t, res.grid.spec
+    i0 = int(np.argmin(np.abs(R - float(C["R_SUN"]))))
+    formed = np.asarray(F["stars_formed_history"], float)[i0] / (1.0 - float(C["RETURN_FRACTION"]))
+    dt = float(spec.t_max) / float(spec.n_t)
+    youngest = float(spec.t_max) - (t + 0.5 * dt)
+    feh = np.asarray(F["feh_history"], float)[i0 : i0 + 1]
+    sun = 10.0 ** (0.4 * M_K_SUN)
+    k_step = formed * ph.population_over(youngest, youngest + dt, feh)["K"][0] * sun  # L_K,sun / pc2 per step
+    per = rm._per_formed(youngest, youngest + dt, feh)[0]
+    kind = {q: float((formed * per[:, k]).sum()) for k, q in enumerate(rm.MASS_QUANTITIES) if q != "living_initial"}
+    # the K flux per isochrone split by the PARSEC label at each segment's heavier end
+    tab, K = ph.isochrones(), ph.BANDS.index("K")
+    groups = ((0, 1), (2, 3), (4, 6), (7, 8))  # MS (with the pre-MS), SGB + RGB, core He burning, AGB
+    per_iso = np.zeros((tab.log_ages.size, tab.mhs.size, len(groups)))
+    for (a, z) in tab.tracks:
+        seg = ph.segments(a, z)
+        flux = seg.number * ph.log_linear_integral(seg.neg_mag[:, 0, K], seg.neg_mag[:, 1, K], 0.0, 1.0)
+        for g, (lo, hi) in enumerate(groups):
+            per_iso[a, z, g] = float(flux[(seg.label[:, 1] >= lo) & (seg.label[:, 1] <= hi)].sum())
+    by_phase = (formed[:, None] * ph.steps_over(ph.cumulative_over_age(ph.on_fine_ages(per_iso)), youngest, youngest + dt, feh)[0]).sum(axis=0) * sun
+    age = youngest + 0.5 * dt
+    return {
+        "R": float(R[i0]), "mass": float(np.asarray(F["stellar_surface_density"], float)[i0]), "K": float(k_step.sum()),
+        **kind, "MS": float(by_phase[0]), "RGB": float(by_phase[1]), "CHeB": float(by_phase[2]), "AGB": float(by_phase[3]),
+        "K_young": float(k_step[age < 1.0].sum()), "K_1_6": float(k_step[(age >= 1.0) & (age < 6.0)].sum()),
+        "K_old": float(k_step[age >= 6.0].sum()),
+    }
+
+
+def test_135_the_k_band_mass_to_light_ratio_in_the_solar_cylinder_disclosed(default):
+    """#135, DISCLOSED as measured at S104 (D273 item 5). The source: Just et al. 2015 (arXiv:1504.05808), READ at
+    S103 (sects. 3.3-3.4) and again at S104 (sects. 3.2-3.4, an extracting fetch of ar5iv): M/L_K 0.31 +/- 0.02 in the
+    local volume, 0.34 for the solar cylinder - Sigma_K 98.7 L_K,sun/pc2 (giants 82.5, 84 %; dwarfs 16.2, 16 %) and a
+    stellar column of 33.3 Msun/pc2 counting white and brown dwarfs (locally: main sequence 0.0315, giants 0.00058,
+    brown dwarfs 0.002, white dwarfs 0.0032 Msun/pc3 of 0.0373). Empirical masses, no IMF.
+
+    The model, the column at R_SUN (8.2125 kpc, the nearest ring): Sigma_K 66.89, the locked mass 36.04, M/L_K
+    **0.539 - a miss of 1.6x against 0.34** (the entry's "about 0.73", 2.1x, is the whole galaxy's: 0.703 now). The
+    cause, by measurement: **too little K light, not too much mass.** The mass as the model counts it is 1.08x Just's;
+    by what it is, living stars 24.84 + white dwarfs 4.49 + neutron stars 0.53 + black holes 0.92 = 30.78, under
+    Just's 33.3 (the model has no brown dwarfs, Just's ~5 %); the other 5.26 is mass the isochrones return beyond
+    the instantaneous RETURN_FRACTION 0.30 and still counted locked. The K light is 0.68x Just's, in every phase:
+    the giants (SGB+RGB 23.27, core He burning 10.30, AGB 21.01) 54.6 against 82.5 (0.66x), the main sequence 12.31
+    against the dwarfs' 16.2 (0.76x) - PARSEC's labels against Just's split by M_K, so the phases are compared only
+    roughly. By age, stars younger than 1 Gyr give 0.26 of the K light, 1-6 Gyr 0.48, older 0.25. On the physical
+    mass the ratio is 0.460 (1.35x Just's): the locked-mass bookkeeping carries a quarter of the miss, the light the
+    rest. No mend (D273: the cause named before anything is mended)."""
+    res, C = default
+    col = _solar_column(res, C)
+    assert col["R"] == pytest.approx(8.2125)
+    assert col["K"] == pytest.approx(66.89, rel=2e-3)
+    assert col["mass"] == pytest.approx(36.04, rel=2e-3)
+    assert col["mass"] / col["K"] == pytest.approx(0.539, abs=2e-3)  # Just et al. 2015: 0.34 (solar cylinder), 0.31 +/- 0.02 (local)
+    assert [col[k] for k in ("living", "white_dwarf", "neutron_star", "black_hole")] == pytest.approx([24.84, 4.489, 0.530, 0.916], rel=3e-3)
+    physical = col["living"] + col["white_dwarf"] + col["neutron_star"] + col["black_hole"]
+    assert physical == pytest.approx(30.78, rel=2e-3) and physical / col["K"] == pytest.approx(0.460, abs=2e-3)  # Just: 33.3 Msun/pc2
+    assert col["MS"] + col["RGB"] + col["CHeB"] + col["AGB"] == pytest.approx(col["K"], rel=1e-9)  # the phase split closes
+    assert [col[k] for k in ("MS", "RGB", "CHeB", "AGB")] == pytest.approx([12.31, 23.27, 10.30, 21.01], rel=3e-3)  # Just: dwarfs 16.2, giants 82.5
+    assert [col[k] / col["K"] for k in ("K_young", "K_1_6", "K_old")] == pytest.approx([0.262, 0.484, 0.254], abs=3e-3)
+    # the whole galaxy, the entry's number: stellar_mass_total over L_K from absolute_magnitude_k
+    F = res.fields
+    l_k = 10.0 ** (-0.4 * (float(F["absolute_magnitude_k"]) - M_K_SUN))
+    assert float(F["stellar_mass_total"]) / l_k == pytest.approx(0.703, abs=2e-3)  # S54's "about 0.73" (M_K -23.77)
+
+
+def test_162_the_clusters_correlation_at_300_pc_by_age_disclosed(default):
+    """#162, DISCLOSED as measured at S104 (D273 item 5). The source: Turner et al. 2022 (arXiv:2209.02872) Table 4,
+    READ at S103: 1 + omega at 300 pc of eleven PHANGS-HST galaxies' clusters, medians over the rows 3.43 at <= 10 Myr
+    and 2.26 above `[inferred]` (S103's medians, not printed in the paper). The model: the cluster census (0-20 Myr,
+    every cluster past its cloud's embedded phase, every mass) through ``specs.clustering`` - Landy & Szalay 1993
+    against uniform randoms ten times the data, ``A`` the power law's 1 + omega at 300 pc fitted over 100-2000 pc, and
+    the 300 pc bin read directly. How it differs from Turner's: one galaxy seen face-on in 2-D positions (Turner's are
+    projected sky positions in angle converted to pc), every cluster (Turner's are detected, so mass- and
+    luminosity-limited), a 6 kpc square at R_SUN (the project's PHANGS-like pointing, ``solar_pointing``) where Turner
+    uses each galaxy's HST footprint and a fit range per galaxy not printed in pc, and the model's "above 10 Myr" is
+    10-20 Myr only (the census ends at 20 Myr). The square (the clustering gate's own convention; its <= 10 Myr numbers
+    are the gate's disclosed SQUARE_AFTER row, the anchor): **A 1.375 at <= 10 Myr and 1.197 at 10-20 Myr against
+    3.43 and 2.26 - a miss, both under**; the 300 pc bin itself 1.066 and 1.093 (the fall with age inverted there);
+    ln A(>10) / ln A(<=10) 0.56 against Turner's 0.66 `[inferred]`. The whole disc (the annulus to the grid's edge)
+    reads A 10.33 and 10.78, set by the disc's radial profile against uniform randoms - over, and no fall with age.
+    ``ngc_4414`` (s104_RC_cl_n4414.log, not pinned): the square 1.342 / 1.273, the annulus 18.03 / 18.07."""
+    from galaxy.specs import clustering as CL
+
+    res, C = default
+    F, R = res.fields, res.grid.R
+    age = np.asarray(F["cluster_age"], float)
+    assert age.size == 13124 and float(age.max()) < 20.0
+    xy = CL.positions_pc(np.asarray(F["cluster_radius"], float), np.asarray(F["cluster_azimuth"], float))
+    got = {}
+    for fname, fp in (("square", CL.solar_pointing(float(C["R_SUN"]))), ("annulus", CL.Annulus(float(R[0]) * 1000.0, float(R[-1]) * 1000.0))):
+        for key, sel in (("<=10", age <= 10.0), (">10", age > 10.0)):
+            corr = CL.against_uniform(xy[sel], fp, multiple=10.0, seed=61)
+            law = CL.fit_power_law(corr, 100.0, 2000.0)
+            got[fname, key] = (corr.n_data, law.amplitude, law.alpha, corr.at(300.0))
+    # (clusters in the footprint, A at 300 pc from the 100-2000 pc fit, the slope, 1 + omega in the 300 pc bin)
+    assert got["square", "<=10"][0] == 281 and got["square", ">10"][0] == 259
+    assert got["square", "<=10"][1:] == pytest.approx((1.375, -0.202, 1.066), abs=3e-3)  # Turner median 3.43; test_clustering_gate SQUARE_AFTER
+    assert got["square", ">10"][1:] == pytest.approx((1.197, -0.141, 1.093), abs=3e-3)  # Turner median 2.26 (their > 10 Myr reaches far older)
+    assert got["annulus", "<=10"][1:] == pytest.approx((10.335, -0.375, 9.247), rel=2e-3)
+    assert got["annulus", ">10"][1:] == pytest.approx((10.777, -0.364, 9.425), rel=2e-3)
+
+
+def _mass_function_slopes(m: np.ndarray, lo: float = 1e3, hi: float = 1e5) -> tuple[int, float, float, float]:
+    """(n, the maximum-likelihood index alpha of dN/dM ~ M^alpha truncated to [lo, hi] on a 0.001 grid, its Fisher
+    error, the least-squares slope of log dN/dM on ten logarithmic bins)."""
+    m = m[(m >= lo) & (m <= hi)]
+    n, s = m.size, float(np.log(m).sum())
+
+    def ll(a: float) -> float:
+        p = a + 1.0
+        return n * float(np.log(p / (hi**p - lo**p))) + a * s
+
+    grid = np.round(np.arange(-4.0, -1.1, 0.001), 3)
+    best = float(grid[int(np.argmax([ll(a) for a in grid]))])
+    h = 1e-3
+    err = float(1.0 / np.sqrt(-(ll(best + h) - 2.0 * ll(best) + ll(best - h)) / h**2))
+    edges = np.geomspace(lo, hi, 11)
+    count = np.histogram(m, bins=edges)[0]
+    slope = float(np.polyfit(np.log10(np.sqrt(edges[1:] * edges[:-1])), np.log10(count / np.diff(edges)), 1)[0])
+    return n, best, err, slope
+
+
+def test_96_the_young_clusters_mass_function_slope_disclosed(default):
+    """#96, DISCLOSED as measured at S104 (D273 item 6). The source: Krumholz, McKee & Bland-Hawthorn 2019
+    (arXiv:1812.01615) sect. 2.2, READ at S103 through an extracting fetch: disc clusters "with values of alpha_M = -2
+    +- 0.2", measured over ~1e3 to 1e5 Msun - a review's summary across studies, not one estimator's number (which
+    fit each study used is not in the part read `[inferred]`). The model: the realised cluster census (every cluster
+    0-20 Myr old, bound or not) in 1e3-1e5 Msun: **the maximum-likelihood index -1.870 +/- 0.014 (5 420 clusters) and
+    -1.947 by a least-squares fit to ten logarithmic bins of dN/dM - both inside -2 +/- 0.2, a hit**; at <= 10 Myr
+    -1.889 +/- 0.020 and -1.969 (2 774). The census follows the clouds' function (-1.6 inner, -2.2 outer, the entry's
+    head), so this is the two slopes' blend over the range. ``ngc_4414`` (s104_RC_cl_n4414.log, not pinned): -1.912
+    +/- 0.022 and -1.996 (2 310)."""
+    res, _ = default
+    F = res.fields
+    m, age = np.asarray(F["cluster_mass"], float), np.asarray(F["cluster_age"], float)
+    n, mle, err, binned = _mass_function_slopes(m)
+    assert n == 5420 and mle == pytest.approx(-1.870, abs=1.5e-3) and err == pytest.approx(0.014, abs=1e-3)  # Krumholz et al. 2019: -2 +/- 0.2
+    assert binned == pytest.approx(-1.947, abs=2e-3)
+    n, mle, err, binned = _mass_function_slopes(m[age <= 10.0])
+    assert n == 2774 and mle == pytest.approx(-1.889, abs=1.5e-3) and binned == pytest.approx(-1.969, abs=2e-3)
+
+
+def test_103_the_remnants_count_against_a_prediction_and_the_sedov_jump_disclosed(default):
+    """#103, DISCLOSED as measured at S104 (D273 item 5). The source: Ball et al. 2023 (arXiv:2307.01948) sect. 1, READ
+    at S103: "1000 to 2700 radio supernova remnants should be detectable in our Galaxy" - **a prediction** (a rate times
+    a Sedov-Taylor lifetime), not a survey; "somewhere in the range of 300 to 400" found. The model: remnant_count_total,
+    the supernova rate times REMNANT_VISIBLE_LIFETIME 60 000 yr over the disc - **1 529.6 (the entry's 1 464 is S36's),
+    inside 1000-2700, a hit against a prediction** made the model's own way; 1 549 drawn (652 Sedov, 897 radiative).
+    ``ngc_4414`` (not pinned; the prediction is the Galaxy's): 626.7. The Sedov jump: Leahy & Williams 2017
+    (arXiv:1701.05942) sect. III.1.4, READ at S103, "a strong shock with compression ratio of 4"; the code's factor is
+    that 4 (``stages/bubbles.py``, the shell density ``4.0 * n0`` for a Sedov remnant, its comment still citing
+    Rankine-Hugoniot `[inferred]`) and every Sedov remnant's shell reads four times its ambient density."""
+    res, C = default
+    F = res.fields
+    assert float(C["REMNANT_VISIBLE_LIFETIME"]) == 60000.0
+    assert float(F["remnant_count_total"]) == pytest.approx(1529.6, abs=0.1)  # Ball et al. 2023: 1000-2700, predicted
+    phase = np.asarray(F["remnant_phase"])
+    assert phase.size == 1549 and int((phase == 0).sum()) == 652
+    sedov = phase == 0
+    shell, ambient = np.asarray(F["remnant_shell_density"], float)[sedov], np.asarray(F["remnant_ambient_density"], float)[sedov]
+    assert np.allclose(shell, 4.0 * ambient, rtol=1e-12)  # Leahy & Williams 2017: compression ratio 4
+
+
+@pytest.mark.parametrize("name, want", [
+    # (disc A_B extinction only, A_B with the scattered light, A_V with it, the frame's disc + undimmed bulge A_B)
+    ("milky_way", (0.3774, 0.3255, 0.3285, 0.3084)),
+    ("ngc_4414", (0.4042, 0.3589, 0.3878, 0.3236)),
+])
+def test_136_the_frame_s_face_on_attenuation_disclosed(name, want):
+    """#136, DISCLOSED as measured at S104 (D272 item 7). The sources, READ by S101's reader R3 (``s101_R3.md``):
+    Driver et al. 2007 (arXiv:0704.2140): the face-on B attenuation "for discs of (0.20+-0.04) mag" (tau_B^f 3.8 +-
+    0.7); Tuffs et al. 2004 (astro-ph/0401630) Tables 4-6, the face-on term a0 at tau_B^f 4: E(B-V) 0.067 for the disc,
+    0.088 for the thin disc `[inferred from the READ tables]`. The model: the render's frame (``/api/render``, layer
+    off as the colour check is judged; no viewer), face-on through its dust by the colour check's own computation
+    (``specs.templates.face_on``: each ring's stars and dust in their own sech^2 layers, the clouds' share in theirs),
+    integrated over the disc in the table's B and V; A = the frame's magnitude through the dust less the stars' alone.
+    The disc (Driver's is a disc's): **A_B 0.326 (milky_way) and 0.359 (ngc_4414) against 0.20 +/- 0.04 - a miss, over
+    by 1.6-1.8x**; extinction alone 0.377 and 0.404, the scattered light giving back 0.05. **E(B-V) of the disc -0.003
+    and -0.029 against Tuffs' 0.067-0.088 - a miss, of the wrong sign**: the dust makes the frame bluer. The cause is
+    where the dust is (#47's inner reservoir, D272's reading): the B light-weighted face-on tau_B is 3.1 and 9.0, the
+    disc dimmed by A_B 0.96 / 1.11 inside 2 kpc and 0.011 / 0.007 beyond 13 kpc, so the redder inner light loses most -
+    A_V above A_B. The frame with its undimmed bulge (as the colour check sums it): A_B 0.308 and 0.324; the check's
+    B - V 0.5664 and 0.6441 (``ngc_4414``'s S99 number, the anchor). No mend (#47 is the dust geometry's)."""
+    import json
+
+    from galaxy.api.service import Service
+    from galaxy.specs import templates as checks
+    from galaxy.stages import spectra
+
+    curves = json.dumps([spectra.band_curve(b).json() for b in ("B", "V")])
+    got = Service().handle("/api/render", {"template": [name], "filters": [curves], "layer": ["off"]})
+    assert got.ok
+    header, arrays = got.frame()
+    area = checks.cell_areas(header)[..., None]
+    tau = -np.log(arrays["dust_extinction"])
+    share, cloud_ratio = checks.face_on_clouds(header, arrays)
+    own = checks.layered_face_on_transmission(tau, checks.face_on_ratio(header, arrays)[:, None], share[:, None], cloud_ratio)[:, None, :]
+    stars = np.asarray(arrays["stars"], float)
+    bare = (stars * area).sum(axis=(0, 1))
+    ext = (stars * own * area).sum(axis=(0, 1))
+    bulge = np.asarray(header["bulge"], float)
+    full = checks.frame_total(header, checks.face_on(header, arrays)) - bulge  # + scattered + thermal (none in B, V)
+
+    def att(dim: np.ndarray, base: np.ndarray, b: int) -> float:
+        return float(checks.band_magnitude(dim[b], ("B", "V")[b]) - checks.band_magnitude(base[b], ("B", "V")[b]))
+
+    got_ = (att(ext, bare, 0), att(full, bare, 0), att(full, bare, 1), att(full + bulge, bare + bulge, 0))
+    assert got_ == pytest.approx(want, abs=1e-3)  # Driver et al. 2007: discs 0.20 +/- 0.04 in B, face-on
+    assert got_[1] - got_[2] == pytest.approx(want[1] - want[2], abs=1e-3)  # E(B-V); Tuffs et al. 2004: 0.067-0.088
+    assert checks.face_on_colour(header, arrays) == pytest.approx({"milky_way": 0.5664, "ngc_4414": 0.6441}[name], abs=1e-4)

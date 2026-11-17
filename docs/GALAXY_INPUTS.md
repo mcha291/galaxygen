@@ -3674,6 +3674,12 @@ never been judged in twenty-three sessions.
    M☉ - a DISCLOSED CHECK (the census's slopes are printed: -1.6 inner outside by 0.2, -2.2 outer inside `[inferred]`).
    The cloud-to-cluster mass relation was not found (Krumholz sect. 4 NOT READ): that clause is declared permanent
    within the entry. Carried to batch R. `READING_ROW_105.md` #96.
+   *S104 (batch R, lane RC): the disclosed check, measured - a hit.* The realised census (every cluster 0-20 Myr,
+   production grid, the default galaxy) over 1e3-1e5 M☉: the maximum-likelihood index of dN/dM **-1.870 ± 0.014**
+   (5 420 clusters) and **-1.947** by least squares on ten logarithmic bins, both inside Krumholz et al. 2019's -2 ± 0.2
+   (a review's summary across studies, its estimator not one `[inferred]`); <= 10 Myr -1.889 ± 0.020 and -1.969; the
+   blend of the clouds' -1.6 and -2.2 over the range. `ngc_4414` (not pinned): -1.912 ± 0.022, -1.996.
+   `tests/test_disclosed_s104.py`. Carried (the cloud-to-cluster clause permanent within the entry, D273).
 97. **The bound cluster mass before survival is 72 times the globular clusters' share** (S33, D182).
    `bound_cluster_mass_total` — Lada & Lada 2003's 7% emerging bound, applied to every star formed over the
    history net of return, every star taken to form in a cluster (their 70–90% `[verified: arXiv:astro-ph/
@@ -3837,6 +3843,14 @@ never been judged in twenty-three sessions.
    - a prediction, said so. The Sedov jump clause CLOSES on Leahy & Williams 2017 (arXiv:1701.05942) sect. III.1.4,
    READ: "a strong shock with compression ratio of 4". What is left: the radiative shell's ionization state (one
    recombination per swept-up H atom), NOT READ - a reading. `READING_ROW_105.md` #103.
+   *S104 (batch R, lane RC): the disclosed check, measured, and the Sedov clause's code read.* `remnant_count_total`
+   on this model (production grid, the default galaxy) is **1 529.6** (the 1 464 above is S36's; 1 549 drawn, 652
+   Sedov, 897 radiative), inside Ball et al. 2023's 1 000-2 700 - a hit against **a prediction** (a rate times a
+   Sedov-Taylor lifetime, the model's own construction), not a survey (300-400 found). `ngc_4414`: 626.7. The Sedov
+   jump: the code's factor is Leahy & Williams 2017's compression ratio of 4 - `stages/bubbles.py:349` (`4.0 * n0`,
+   the Sedov remnant's shell density; its comment at :344 still tags it "[inferred: Rankine-Hugoniot]", a citation the
+   next hash move can update), and every Sedov remnant's shell reads exactly four times its ambient.
+   `tests/test_disclosed_s104.py`. The head is the gate's to rule.
 
 104. ~~**The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**~~
    **DISCHARGED at S38 (D187)**: the exponent is −0.2, the zone's pins swapped to the printed reading. (S37, Audit III A3-1, D186). `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock
@@ -4770,6 +4784,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    0.34]`, to be recorded as measured and its cause named by the builder (which populations carry the K light) before
    anything is mended. The entry's recalled M_K,☉ 3.27 is now READ (Just et al. 2015 sect. 3.2, citing Casagrande et
    al. 2012). Carried. `READING_ROW_105.md` #135.
+   *S104 (batch R, lane RC): the disclosed check, measured; a miss, its cause named, nothing mended.* The column
+   through the disc at R_SUN (the 8.2125 kpc ring; production grid, the default galaxy): Σ_K 66.89 L_K☉/pc², the
+   locked mass 36.04 M☉/pc², **M/L_K 0.539 against Just et al. 2015's 0.34 for the solar cylinder (0.31 ± 0.02
+   locally) - a miss of 1.6x**; the "about 0.73" (2.1x) is the whole galaxy's, 0.703 now, a galaxy set against a
+   local column. Just et al. sects. 3.2-3.4 (READ again, an extracting fetch): Σ_K 98.7 (giants 82.5, 84 %; dwarfs
+   16.2) and 33.3 M☉/pc² with white and brown dwarfs. **The cause: too little K light, not too much mass.** The mass
+   is 1.08x Just's as counted; by what it is (`remnants.population_mass`), living 24.84 + white dwarfs 4.49 + neutron
+   stars 0.53 + black holes 0.92 = 30.78, under Just's 33.3 (no brown dwarfs in the model) - the other 5.26 is mass
+   the isochrones return beyond RETURN_FRACTION 0.30, still counted locked (on the physical mass M/L_K 0.460, 1.35x).
+   The K light is 0.68x Just's in every phase (PARSEC labels): giants 54.6 against 82.5 (SGB+RGB 23.27, core He
+   burning 10.30, AGB 21.01), the main sequence 12.31 against the dwarfs' 16.2; by age < 1 Gyr 26 %, 1-6 Gyr 48 %,
+   older 25 %. `tests/test_disclosed_s104.py`. Carried.
 136. **The model's face-on frame is bluer than the catalogues' face-on colour** (S54, D213). The template's frame
    through its dust reads B − V 0.636 against [0.72, 0.82] (RC3 and HyperLeda agree on 0.77, corrected to face-on,
    not dust-free; disclosed — the first fit, a quenched disc, read 0.819 and passed by 0.001), and the default
@@ -4824,6 +4850,17 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S102's gate (D272):* **the reader's verdict ruled: a sourced DISCLOSED check, batch R** (BUILD_VII rows 106-107) -
    the frame's face-on A_B against Driver et al. 2007's 0.20 ± 0.04 and the dust term's E(B−V) against Tuffs et al.
    2004's 0.067-0.088; the miss is the dust's radial geometry (#47's), not the stars. Carried.
+   *S104 (batch R, lane RC): the disclosed check, measured - both miss.* The render's frame (`/api/render`, layer off
+   as the colour check is judged), face-on through its dust by the check's own computation (`specs.templates.face_on`),
+   integrated over the disc in B and V, A = through the dust less the stars alone: **disc A_B 0.326 (milky_way) and
+   0.359 (ngc_4414) against Driver et al. 2007's 0.20 ± 0.04 - over by 1.6-1.8x** (extinction alone 0.377 / 0.404, the
+   scattered light giving back 0.05); **disc E(B−V) −0.003 and −0.029 against Tuffs et al. 2004's 0.067-0.088 - the
+   wrong sign.** Where: the B light-weighted face-on τ_B 3.1 / 9.0, the disc dimmed by A_B 0.96 / 1.11 inside 2 kpc and
+   ~0.01 beyond 13 kpc, so the redder inner light loses most (A_V > A_B) - #47's inner reservoir, as D272 read it. With
+   the undimmed bulge (the frame as summed): A_B 0.308 / 0.324; the check's B − V 0.5664 / 0.6441 (the anchor). Only a
+   rendered frame gives the disc-integrated number (the model's own fields give the per-ring τ and light, which the
+   frame composes); no viewer involved. Recorded in `tests/test_disclosed_s104.py`, not in `specs/templates.py` beside
+   `RADIAL_CHECKS` as S101's reader proposed (that is a text under `model/`, outside this lane). Carried.
 137. ~~**The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first**~~
    **DISCHARGED at S70** (Audit V, F-5-1, D234; discharged in fact at S61). Its own closer — "L1's ring-first draw
    … after which the list is empty and the realised ring totals are identical with the layer on or off" — was met
@@ -5965,6 +6002,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    pc across 10 Myr). The four-bin width law still rests on Grasha et al. 2019 and stays `[inferred]` (pc), Turner's
    two bins cannot shape it. The slip at `READING_CLUSTERING.md` line 139 (the medians' labels; the "all" median 2.86
    missing) mended. Carried. `READING_ROW_105.md` #162.
+   *S104 (batch R, lane RC): the disclosed check, measured - a miss.* The cluster census (0-20 Myr, every mass;
+   production grid, the default galaxy) through `specs.clustering` (Landy-Szalay against uniform randoms, A = the
+   100-2000 pc power law's 1 + ω at 300 pc): in the 6 kpc square at R_SUN (the gate's PHANGS-like pointing) **A 1.375
+   at <= 10 Myr and 1.197 at 10-20 Myr, against Turner et al.'s medians 3.43 and 2.26 - both under**; the 300 pc bin
+   itself 1.066 and 1.093 (no fall with age there); ln A ratio 0.56 against 0.66 `[inferred]`. The whole disc (the
+   annulus) reads 10.33 and 10.78, the radial profile's. Not like for like, said in the record: one face-on galaxy,
+   every cluster (Turner's detected ones), a footprint and fit range not Turner's, and the model's "above 10 Myr" ends
+   at 20 Myr. `ngc_4414` (not pinned): square 1.342 / 1.273, annulus 18.03 / 18.07. `tests/test_disclosed_s104.py`.
+   Carried.
 163. **The gas fluctuation field's per-cell normaliser table costs about 5 s a run** (S62, D221; the field builder's
    measurement). The table that gives the field unit mean per level-0 cell is evaluated on L1's lattice - 2 points per
    47.5 pc, 5.26 million points, six octaves of value noise in float64 - at 4.6-5.1 s cold; a sparser lattice breaks the

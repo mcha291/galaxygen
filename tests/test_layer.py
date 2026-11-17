@@ -2131,10 +2131,12 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # clouds the offset is drawn inside (the giants held at 150 pc), so the declaration was re-read to the model.
     # S70 (D234): were "at S67 ...", "(its own length reaches 146 pc)", "1 376 of 12 710 clusters (10.8 %, 31.8 % ...)"
     # and "119 in another cell ring" - the size law's three regimes (#192) and the ring's inversion (F-2-7).
-    for phrase in ("at S70 the offset moves a cluster",
+    # S104 (batch R, D272 (e)): were "at S70", "1 591 of 12 710 clusters (12.5 %, 34.3 % of the cluster mass)" and "132 in
+    # another cell ring" - S70's numbers, which the pins below had followed since S88 and the text had not; re-read.
+    for phrase in ("at S104 the offset moves a cluster",
                    "by up to 140 pc in radius (its own length reaches 148 pc) against a 75 pc radial step",
-                   "1 591 of 12 710 clusters (12.5 %, 34.3 % of the cluster mass)",  # S62 (D221 item 7 as amended): was 1 582 - the spurs move the clouds' sector shares
-                   "132 in another cell ring", "`nebular` and `bubbles` bin a cluster by the radius its cloud's ring drew",
+                   "1 678 of 13 124 clusters (12.8 %, 35.5 % of the cluster mass)",  # S62 (D221 item 7 as amended): was 1 582 - the spurs move the clouds' sector shares
+                   "138 in another cell ring", "`nebular` and `bubbles` bin a cluster by the radius its cloud's ring drew",
                    "`cluster_birth_radius`", "No clamp"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
