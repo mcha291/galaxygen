@@ -2384,3 +2384,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   #226 sent the mend to a softer star-formation threshold; a second reader read `sfh.py` and found the switch already a
   tanh and the cliff in the gas itself (the infall tail's hard end), so the first mend could not work under any law of
   index one or more. The ruling was corrected and the correction said in D273. (S103, D273)
+
+## From S104 (batch R: four Opus lanes - two built, two measured only - an integrator, a runner, a docs builder; the Fable gate)
+
+- [audit] **A reading rules what is published; a measurement rules what the model can take.** Twice in one day a
+  reading's "sourced, build it" was withdrawn when a builder measured first: #86's fit (Spera et al. 2015), read and
+  checked against its own tables, jumps 5.9 M☉ at its own seam in metallicity and doubles the measured mean; #226's
+  graft (Wang et al.'s outer exponential) adds 3-5 % of the budget from nowhere and a new edge at the grid's end - and
+  the gate's own first ruling on #226 (S103) had put the mend in the threshold, where the code shows none can work. A
+  reading's "sourced" sends an entry to a builder who measures what it moves before anything is built, and the gate
+  rules on that table, not on the reading. (S104, D274)

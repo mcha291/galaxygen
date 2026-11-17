@@ -1,57 +1,56 @@
-# BRIEF — after S103: the reading row (D273); `batch-q` and the held head `batch-q-lanes` await the owner
+# BRIEF — after S104: batch R's close (D274); `batch-r`, `batch-q` and the held head await the owner
 
-**First, plainly: the reading found no source for a lane's share of the gas, its offset from the stars' crest or its
-continuity, so the largest thing a viewer misses - the dark lanes - cannot be built by the project's own rule (D1).**
-A lane's width is measured (20-150 pc, a handful of grand designs) and its darkness (V transmission about 0.5); the
-rest is not, and no closed form gives a thin lane (`READING_LANES.md`). Whether to draw one anyway is the owner's (1).
+**First, plainly: against the two goal pictures, batch R moved nothing a viewer sees.** Its frames are batch Q's to the
+eye (runner X, `docs/goals/batch_r_s104/`): every picture measure equal to the third or fourth figure, 99.1-99.8 % of
+pixels identical, nothing missing or broken. The regions' median radius halved (11 -> 5.5 pc) and it does not show:
+the bright discs a viewer sees are the young regions, which the mend leaves at their full size. So the distance to the
+goals is S102's: the Milky Way a tan disc with a white ball, no pink knot strings, no lanes; NGC 4414 a white ball over
+a faint tan ellipse, dark flecks, no brown lane network. Nothing looks wrong.
 
-**What the frames show (S102's verdict, unchanged; S103 moved no frame).** Batch Q moved nothing a viewer sees against
-the goal pictures: the Milky Way a tan disc with a white ball, no pink knot strings, no lanes; NGC 4414 a white ball
-over a faint tan ellipse, dark flecks, no brown lane network. The held head (#234's (ii)): no dark lanes in any frame.
-
-**The state (2026-11-17).** S103 = BUILD_VII row 105, the reading row, documents only, on `session-103` from
-`batch-q`'s closing head fccecee (tag s102). Three files new (`READING_LANES.md`, `READING_DISC_EDGE.md`,
-`READING_ROW_105.md`), `READING_HII_SIZES.md` Part S103. Sourced for batch R: #235 (the region grown at today's ionizing
-rate, a defect - grow it at the rate's history), #226 (the cliff is the gas's own: the infall tail's hard end; Wang et
-al.'s outer HI profile, a lane that measures first), #86 (Spera et al. 2015), #83 (σ_e 0.34), #96, #135 (M/L_K a 2.1x
-miss), #162, #103's check. #131 permanent; #118 (c) closed by the reading. **The masers' question (D272's item (b)) is
-answered**: the match improved (0.18 -> 0.13 σ gas, 0.19 -> 0.15 young stars); the null widened because the field has
-fewer crests - nothing is owed before `batch-q` -> `main` is asked for. Nothing merged into `main` (b5d421c; hash
-27561e8d...); `batch-q`'s run 44108837489 green (1860 passed). **115 open = 50 + 65, 104 discharged**; next #237, D274.
+**The state (2026-11-17).** S104 = batch R (BUILD_VII rows 106-107, a draft) on `batch-r` from `batch-q` 8fed299.
+Built: #235's mend - each HII region's shell grown at its cluster's peak ionizing rate, the ionized sphere inside it at
+today's rate (`READING_HII_SIZES.md` Part S104); the regions under 10³⁷ erg/s two- to threefold smaller, but the
+slope above the measured completeness 0.268 against 0.47-0.52, so #235 stays (head restated). The disclosed checks
+(`READING_ROW_105.md` Part S104): #135 M/L_K a 1.6x miss (too little K light), #136 the dust reddens the wrong way,
+#162 a miss, #96 a hit (permanent), #103 a hit (1 529.6, the Sedov clause closed). Measured and NOT built: #226 (the
+edge - your question, below; `READING_DISC_EDGE.md` Part S104), #86 (Spera et al.'s fit jumps at its own seam in
+metallicity and doubles Özel's measured mean: D273's "sourced" withdrawn), #83 (133 nodes at Γ_e ≥ 1). Opened: #237
+(every star forms in the threshold switch's unsourced lower wing). The close: [[LEAD: run]]; hash [[LEAD: hash]];
+closing head [[LEAD: sha]]. **116 open = 51 + 65, 104 discharged**; next #238, D275. Nothing merged into `main`.
 
 ## The owner's choices now (recommendations are the gate's, each re-rulable)
-1. **#234, the lanes:** (i) no lane - the model keeps what is measured, the goals' lanes declared outside it -
-   **recommended**; or (ii) a disclosed lane (width 20-150 pc, a share with no source, zero offset: picture-driven).
-2. **`batch-q` -> `main`** on its green run. **The held head (#234):** the gate recommends NOT taking (ii) for the
-   picture's sake; with (1)'s (i) it stays held or is dropped.
-3. **#149:** pin NGC 4414's arms' inner radius to Herrera-Endoqui et al.'s innermost segment, 1.66 kpc - **recommended**.
-4. **#88:** (i) WAF17's own pair (row 31 reads 0.594 against 0.6 until #89) - **recommended**; (ii) Maoz & Graur's.
-5. **#97 with #98:** (i) Baumgardt & Makino for clusters older than ~9 Gyr, Lamers et al.'s time for the disc -
-   **recommended** (chosen after S34's measurement, disclosed); (ii) the model as it is.
-6. **#129:** (i) permanent - **recommended**; (ii) measure it from the PHANGS-ALMA maps (a download).
-7. **#95** joins the clustering questions (#80, #233, #223): the window is the clusters', the clouds' target borrowed.
-8. **#231: do not order it.** **#184:** (i) the clouds' 34 pc layer - recommended. Adopt BUILD_VII or re-order it.
-9. Still owed from S101: #80 with #233 ((i) Table 4's bar); #223 / #233 / #224 (nine seeds); #84 / #100 (PARSEC);
-   #85; #225 ((i)); #92, #94, #138, #153; #107, #179; #203-#205; the looks #156, #202; #227's fallback; the cadences.
+1. **#226, the disc's edge (new):** (i) the edge stays as declared - the disc ends where its infall's tail ends,
+   outside the measured range and said so; or (ii) Wang et al.'s outer HI exponential grafted on as a DISCLOSED term
+   (the added 3-5 % of mass declared, the grid's end at 30 kpc settled first) - **recommended**: the cliff is seen in
+   the frames, nothing inside 0.8 of the edge moves, the outer scale and break ratio land in the measured ranges.
+   Against it: those agreements were read after it was chosen, the break stays at 9.7 scale lengths, mass from nowhere.
+2. **#234, the lanes:** (i) no lane - **recommended**; (ii) a disclosed lane (picture-driven).
+3. **`batch-q` -> `main`** (green), then **`batch-r`** on it. The held head (#234): not (ii) for the picture's sake.
+4. **#149:** pin NGC 4414's arms' inner radius at 1.66 kpc - **recommended**. **#88:** (i) WAF17's pair - recommended.
+5. **#97 with #98:** (i) Baumgardt & Makino / Lamers et al. - **recommended** (chosen after S34's measurement).
+6. **#129:** (i) permanent - **recommended**. **#231: do not order it.** **#184:** (i) recommended.
+7. **The clustering questions** (#80, #233, #223, #95, and now #162's miss): (i) Table 4's bar; the nine-seed reading.
+8. Still owed from S101: #84 / #100 (PARSEC); #85; #225 ((i)); #92, #94, #138, #153; #107, #179; #203-#205; the looks
+   #156, #202; #227's fallback; the cadences. Adopt BUILD_VII or re-order it.
 
 ## What the next session does
-1. The gate enters D273 from the scratchpad draft, tags `s103` on `session-103`'s closing head (MANUAL_TODO row 103).
-2. On the owner's word: the merge of `batch-q`; the held head kept, merged or dropped; the rulings above.
-3. Then batch R = S104 (BUILD_VII rows 106-107): #235, #226 (measure first), #86, #83, #96, #135, #162, #103's check -
-   every coefficient re-checked against the PDF before it is built (every S103 number came through an extracting fetch).
+1. The gate enters D274 from the scratchpad draft, tags `s104` on `batch-r`'s closing head (MANUAL_TODO row 104).
+2. On the owner's word: `batch-q` and `batch-r` into `main`; #226 (i) or (ii) - under (ii) a batch builds the graft
+   with the grid's end settled first; the rulings above.
+3. Readings owed before any build: #86's seam (Fryer et al. 2012), #83's σ_e by hydrogen, #237's width, #135's giants'
+   K light, #235's next causes (the flat first 4 Myr of the ionizing table).
 
 ## Rulings taken on recommendation — the owner may re-rule any
-- At S97-S102's gates: as BRIEF said at S102 (no default moved; #80 over #233; #95 not merged; #101, #147 permanent;
-  #232's c_0, the cap, the natal density; D219's pitch clause; #234's weak arms held; #136, #183 to batch R).
-- At S103's gate: #131 permanent; #118 (c) closed on Byler's thin-shell sentence; #103's lifetime clause permanent,
-  its Sedov clause closed; #95's compact-cluster row not chosen (B5); #226's first ruling corrected on a second reading.
+- At S97-S103's gates: as BRIEF said at S103 (#131 permanent; #118 (c) closed; #103's lifetime clause permanent).
+- At S104's gate: #235's shell at the PEAK rate (not the time-mean); #96 permanent; #86's and #83's builds withdrawn on
+  the measurement; #226's C1 / C2 not taken by the gate; #136's record kept in the test file.
 
-## The rules said again, and the traps (S72-S103's stand)
+## The rules said again, and the traps (S72-S104's stand)
 - **Two-thirds**: a lead past two-thirds of its context hands back. **Commit each item when green** (`git commit -F`).
 - The runner's suite once per head (`gh run view`); the `machine_pinned` nodes a change touches read by name.
 - Never the full suite, `verify_clone` or the pins unprompted (D246); one single-threaded pytest at a time, `tasklist`
   first; no backtick in a shell string; any byte under `model/galaxy` moves the hash.
-- `--collect-only -q` prints no ids, an empty id file runs all (S94); one change per experiment; defaults fixed (D227).
 - A lane re-pins nothing outside its own files (S99); a re-pin pass is briefed in thirds on disjoint files (S100).
 - A held head is never merged on a recommendation (BUILD_VII §1); a frames-only branch is never gated or merged.
-- A number from an extracting fetch is checked against the PDF before a build (S103).
+- A number from an extracting fetch is checked against the PDF before a build (S103); a reading's "sourced" is a
+  build only after a builder measures what it moves (S104).

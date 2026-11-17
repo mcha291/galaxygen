@@ -39,6 +39,28 @@ second reading). #136 and #184 were ruled at S102 and not re-read. D272's item (
 defect of lane G; a line on #230). Nothing opened or discharged: 115 open = 50 + 65, 104 discharged. Next: batch R
 (rows 106-107) = S104.
 
+**Batch R (rows 106-107) run at S104 (2026-11-17, D274), still a DRAFT**, on `batch-r` cut from `batch-q` 8fed299
+(S103's close; `batch-q` is not in `main`). Four Opus lanes, two integrated. **Built:** #235's mend (lane RH) - the
+HII region's shell driven at its cluster's PEAK ionizing rate from the model's own table, today's ionized radius
+inside it at today's rate (a new column `hii_shell_radius`); the radius median 10.99 -> 5.47 pc on `milky_way`, the
+regions under 10³⁷ erg/s two- to threefold smaller, every Hα and every region under 3.98 Myr batch Q's bit for bit -
+and it does NOT bring the slope above Barnes et al.'s completeness into range (0.254 -> 0.268 against 0.47-0.52), so
+#235 stays carried with its head restated; the disclosed checks (lane RC, `tests/test_disclosed_s104.py`): #135 a
+miss of 1.6x at the solar column (too little K light, not too much mass), #136 both miss (E(B−V) of the wrong sign),
+#162 a miss and not like for like, #96 a hit (ruled permanent), #103 a hit against a prediction (1 529.6; its Sedov
+clause closed); the clusters' offset declaration's text mended to the measured 1 678 of 13 124. **Measured and not
+built, and why:** #226 (lane RG) - no candidate is a law the gate can take (C1, Wang et al.'s outer exponential
+grafted, is a measured shape used where its source does not use it, adding 3-5 % of the budget and a new edge at the
+grid's end; C2, the angular-momentum distribution at the cause, reshapes the bulge and the whole outer disc): **the
+owner's**, (i) the edge as declared or (ii) C1 as a disclosed graft, (ii) recommended (§5 row 13); #86 (lane RS) -
+Spera et al. 2015's fit, read from the PDF and checked against its own tables, jumps at its own seam in Z (up to 5.9
+M☉ at Z = 5e-4) and doubles Özel's measured mean: D273's "sourced" withdrawn, a reading first; #83 (lane RS) - 133
+isochrone nodes at Γ_e ≥ 1 and the wind energy −14 to −20 %: σ_e by the surface hydrogen and the recipe's range in
+Γ_e read first. Found on the way: the gas is under the star-formation threshold at every radius, every star forming
+in the switch's unsourced lower wing - **#237** opened. The frames: batch R is batch Q to the eye (runner X,
+`docs/goals/batch_r_s104/`). 116 open = 51 + 65, 104 discharged. The close: [[LEAD: run]]; the hash [[LEAD: hash]];
+the closing head [[LEAD: sha]]. Nothing merges into `main` or `batch-q` without the owner's word.
+
 ---
 
 ## 0. What this build is for
@@ -101,6 +123,7 @@ batch's for the owner's choice.
 | 10 | #92, #94, #138, #153 (S96's four) | as written there: #92 none; #94 (i) a ¹²CO catalogue, then permanent; #138 (i) the local swing window kept, then permanent; #153 (ii) no shear dependence |
 | 11 | #107 / #179, downloads (an atmosphere library; WFPC2's set) | none written |
 | 12 | The concurrency: S101 ran three to five light readers at once on the owner's "as much as you can" | the rule stays two at once, one heavy, for builders unless the owner says otherwise |
+| 13 | #226 (S104's gate, D274): (i) the disc's edge as S102 declared it, outside the measured range and said so; (ii) Wang et al.'s outer exponential as a DISCLOSED graft (the added mass declared, the grid's end settled first) | (ii) - against it: its two agreements were read after it was chosen, the break stays at 9.7 scale lengths, 3-5 % of the budget appears from nowhere |
 
 The two looks, #156 and #202, are the owner's at the frames (`BRIEF.md`).
 
