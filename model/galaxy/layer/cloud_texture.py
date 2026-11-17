@@ -136,11 +136,13 @@ _CONSERVES_GRADIENT = (
 # S70 (D234): re-read again when the size law took the source's three regimes (#192: the clouds inside 4 kpc and in
 # 7-8.2 kpc grow by 1.53) and the ring's inversion its own interval (F-2-7) - was 146 pc, 1 376 of 12 710, 10.8 % and
 # 31.8 %, 119 (S67); the 140 pc radial reach did not move.
+# S104 (batch R, D272's ruling at entry (e)): re-read to the model as measured on batch-q's head (8fed299) - was
+# "at S70", 1 591 of 12 710, 12.5 % and 34.3 %, 132 (S70's numbers, which M1's model and batch P's had drifted from).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S70 the offset moves a cluster by up to 140 pc in radius (its own length reaches 148 pc) "
-    "against a 75 pc radial step and puts 1 591 of 12 710 "
-    "clusters (12.5 %, 34.3 % of the cluster mass) in another radial ring and 132 in another cell ring than their "
+    "its cloud's ring: at S104 the offset moves a cluster by up to 140 pc in radius (its own length reaches 148 pc) "
+    "against a 75 pc radial step and puts 1 678 of 13 124 "
+    "clusters (12.8 %, 35.5 % of the cluster mass) in another radial ring and 138 in another cell ring than their "
     "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
     "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "
     "stream (D220 item 6 and part II; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
