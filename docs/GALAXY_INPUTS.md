@@ -7825,6 +7825,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    `batch-q-lanes`, beside `batch-q`, with frames for both, so the owner chooses a head; no merge of the held head into
    `batch-q` or `main` without the owner's word. What closes it: the owner's ruling. What kills (ii): the ratio of
    means not met within the fit's printed slope error on a template, or the frames no nearer a lane by the owner's eye.
+   *S102 (batch Q, D272; built held):* ruleset (ii) built HELD on `q-lanes` (49afe20, the gate's rulings 40eab4b),
+   merged only into the held head `batch-q-lanes`: the arms' molecular contrast s = c^γ / ⟨c^γ⟩_ring, γ one per galaxy
+   so the mean molecular ratio of means over the arm rings (bar taper <= 0.01, 1.5 kpc mask) meets Querejeta et al.
+   2024 Table 4 (nominal, segments) at the stars' own: γ 2.898 (`milky_way`), 2.868 (`ngc_4414`), 2.29-3.56 over 20
+   default seeds (none outside [1, 12]). Disclosed check 6-10 kpc 1.431 -> 2.878 and 1.429 -> 2.576; the crest 0.67 /
+   0.77 of the stars' width; a row's top quarter holds 0.44-0.52 of the clouds (was 0.31-0.36); spurs 44 -> 58;
+   inter-arm `sfr_modulation` down to 1.5e-4. The atomic gas keeps D216's response; the dust (the blend) gains little
+   (row p90/median 1.30 -> 1.39). γ not published (D214). The gate's rulings: on arms too weak for any power in
+   [1, 12] γ is held at 12 and the shortfall declared (`arm_relation_met` False; 0 of 60 seed pairs held)
+   `[inferred]`; the relation is taken on the tapered stellar field, so inside the bar's reach the arms' term carries
+   the bar's taper twice - the untapered field falls below zero on 2 of 60 default seed pairs near 3.1 kpc - disclosed
+   `[inferred]`. Stays the owner's.
 
 ---
 

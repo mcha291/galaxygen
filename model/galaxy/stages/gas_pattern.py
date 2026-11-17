@@ -208,7 +208,10 @@ tests). γ is not published: this stage's scalars are held the same bits with th
 i4), and γ is the layer's. Where the galaxy has no arm ring, or its stars' mean ratio is within 1e-6 of 1, γ is NaN and
 the molecular arm contrast 1. Where the stars are too weakly armed for any power in [1, 12] to meet the fit's intercept,
 γ is held at 12 and :attr:`GasPattern.arm_relation_met` is False - the shortfall declared, the fit not extrapolated to a
-disc without arms `[inferred]`; no galaxy the inputs reach fails.
+disc without arms `[inferred]`; no galaxy the inputs reach fails. **Disclosed (the gate's ruling on lane L's
+measurement):** inside the bar's reach the arms' term carries the bar's taper twice - once in c, once by w_arm - because
+the relation is taken on the tapered stellar field: the untapered one falls below zero on 2 of 60 default seed pairs
+near 3.1 kpc `[inferred]`.
 
 **One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
 them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
