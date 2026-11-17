@@ -2162,18 +2162,18 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # shares and the clusters' offsets with them) 1705 and 0.1313.
     # S102 (batch Q, D272; #230 lane G, the forcing's pitch averaged moves the default disc's gas, so the clouds' sector
     # shares and the clusters' offsets with them): was 1719 and 0.1310.
-    assert int(moved.sum()) == 1678 and moved.mean() == pytest.approx(0.1279, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252  # S100 (batch P, D270; #227, the stellar layer one height): was 1705 and 0.1313
+    assert int(moved.sum()) == 1699 and moved.mean() == pytest.approx(0.1295, abs=5e-4)  # S102 (held head, #234 ruleset ii, lane L: the clouds placed on the arms' molecular gas by the measured relation, the clusters' offsets with them): was 1678 and 0.1279  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252  # S100 (batch P, D270; #227, the stellar layer one height): was 1705 and 0.1313
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
     # S92: was 0.3593 (0.3541 now) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read there).
     # S102 (batch Q, D272; #230 lane G): was 0.3564.
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3545, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741  # S100 (batch P, D270; #227, the census +1 %): was 0.3541
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3507, abs=5e-4)  # S102 (held head, #234 ruleset ii, lane L): was 0.3545  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741  # S100 (batch P, D270; #227, the census +1 %): was 0.3541
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
     # S92: was 137 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the moved count fails first there).
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 138  # S102 (batch Q, D272; #230 lane G): was 139.  # S100 (batch P, D270; #227, the census +1 %): was 125. # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 145  # S102 (held head, #234 ruleset ii, lane L): was 138.  # S102 (batch Q, D272; #230 lane G): was 139.  # S100 (batch P, D270; #227, the census +1 %): was 125. # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).

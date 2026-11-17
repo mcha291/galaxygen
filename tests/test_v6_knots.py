@@ -51,7 +51,8 @@ FORBIDDEN = ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")
 # realised, which the knots replace when all are drawn (the rule gives such a cell 1 - d, d the disc's drawn share).
 # S90 (#161): the layer-on shares were 0.013971 (milky_way) and 0.051035 (ngc_4414) - the clouds' sector weights carry the
 # clustering field's cell means, so more level-0 cells hold no cluster (352bdec passes at the old values; the layer-off ones unmoved)
-EMPTY_CELLS_FIELD = {("milky_way", "on"): 0.015292, ("milky_way", "off"): 0.013208, ("ngc_4414", "on"): 0.015904, ("ngc_4414", "off"): 0.015595}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.012877, 0.012878, 0.055367, 0.057198  # S100 (batch P, D270; #227 (ngc_4414's layer 926 -> 229 pc), #80, #130): was 0.016055, 0.013972, 0.056165, 0.054166
+# S102 (held head, #234 ruleset ii, lane L - the field's HII Halpha placed by the arms' molecular gas by the measured relation): ngc_4414 on was 0.015904.
+EMPTY_CELLS_FIELD = {("milky_way", "on"): 0.015292, ("milky_way", "off"): 0.013208, ("ngc_4414", "on"): 0.021118, ("ngc_4414", "off"): 0.015595}  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.012877, 0.012878, 0.055367, 0.057198  # S100 (batch P, D270; #227 (ngc_4414's layer 926 -> 229 pc), #80, #130): was 0.016055, 0.013972, 0.056165, 0.054166
 
 
 @pytest.fixture(scope="module")
@@ -193,8 +194,8 @@ def test_gate_ii_points_plus_the_scaled_field_close_on_whole_cells(service, temp
         # S102 (batch Q, D272; #230 lane G, the Milky Way's gas pattern - the pitch averaged and the turn-back taper -
         # moves the field's HII Halpha and the clusters' cells with it): was 0.3931 (0.39658 now; the 90th percentile
         # 1.7719, inside its pin).
-        assert float(np.median(K[ok] / F[ok])) == pytest.approx(0.3966, abs=0.002)  # S90 (#161): was 0.395 - the clusters' cells follow the clustering field's cell means (0.39817). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.388
-        assert float(np.percentile(K[ok] / F[ok], 90)) == pytest.approx(1.7804, abs=0.01)  # S90 (#161): was 1.755 - the clusters' cells follow the clustering field's cell means (1.79394). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.67  # S100 (batch P, D270; #227, #80, #130): was 1.7528
+        assert float(np.median(K[ok] / F[ok])) == pytest.approx(0.3794, abs=0.002)  # S102 (held head, #234 ruleset ii, lane L): was 0.3966  # S90 (#161): was 0.395 - the clusters' cells follow the clustering field's cell means (0.39817). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.388
+        assert float(np.percentile(K[ok] / F[ok], 90)) == pytest.approx(1.7625, abs=0.01)  # S102 (held head, #234 ruleset ii, lane L): was 1.7804  # S90 (#161): was 1.755 - the clusters' cells follow the clustering field's cell means (1.79394). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 1.67  # S100 (batch P, D270; #227, #80, #130): was 1.7528
 
 
 @pytest.mark.parametrize("template", ["milky_way", "ngc_4414"])

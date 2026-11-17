@@ -414,7 +414,10 @@ def test_the_young_stars_the_field_places_stand_in_their_level_0_cell(galaxy, se
     # S91 (#216): the window was 0-1.0 rad - the default galaxy's census re-laid by the births made bit-independent
     # leaves it 964 field stars (1 234 on 4f06cc9) under the test's own 1 000; 0-1.5 rad holds 2 184 field stars of
     # 4 452, the guard and every assert unchanged.
-    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.5)
+    # S102 (held head, #234 ruleset ii, lane L - the young stars placed by sfr_modulation, which reads the arms' molecular gas by
+    # the measured relation, crowd onto the arms): 0-1.5 rad leaves 658 field stars of 2 546 under the test's own 1 000;
+    # 0-2.0 rad holds 1 084 of 3 644, 0-2.5 rad 2 306 of 5 871 - the window widened to 2.5, the guard and every assert unchanged.
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 2.5)
     cat = br.materialise_bright(galaxy, seed, cells, 1.0e4)
     radius, azimuth = np.asarray(cat["bright_star_radius"]), np.asarray(cat["bright_star_azimuth"])
     field = np.asarray(cat["bright_star_age"]) * 1000.0 <= galaxy.octave_ages[0]

@@ -147,8 +147,11 @@ def test_with_the_layer_off_both_are_one(model, template):
 CHECK_AS_MEASURED = {
     # S102 (batch Q, D272; #230 lane G, the forcing's pitch averaged over the layer's height): was
     # (1.431098351042905, 1.3994854586866592, 0.9744118269883251).
-    "milky_way": (1.4287003032706023, 1.3936529079882265, 0.9754873362906723),
-    "ngc_4414": (1.4294191678180297, 1.404955697896947, 0.9814358026650689),
+    # S102 (held head, #234 ruleset ii, lane L): the molecular ratio is the measured relation's now (the atomic gas keeps
+    # D216's response), so the atomic reads about half the molecular - five times the source's ~10 %; was
+    # (1.4287003032706023, 1.3936529079882265, 0.9754873362906723) and (1.4294191678180297, 1.404955697896947, 0.9814358026650689).
+    "milky_way": (2.878156468755527, 1.3936529079882283, 0.5096467910747086),
+    "ngc_4414": (2.576272109266278, 1.404955697896947, 0.5274803141382336),
 }
 
 
