@@ -357,7 +357,7 @@ def test_the_walk_s_read_against_the_point_function_as_measured(default_model):
     ten sampled feet recorded (S62)."""
     every = walk_against_point(default_model)
     sample = every[np.linspace(0, every.size - 1, 10).astype(int)]
-    assert every.size == 44 and every.max() <= ls.WALK_READ_DIFFERENCE  # S99 (#220): was 45 feet
+    assert every.size == 43 and every.max() <= ls.WALK_READ_DIFFERENCE  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer and the count tapered at a turn back): was 44 feet  # S99 (#220): was 45 feet
     # S99 (#220): was (0.0189, 0.2176) - the walk reads the crest by the point function at the foot, 0 by construction.
     assert (round(float(sample.max()), 4), round(float(every.max()), 4)) == (0.0, 0.0)
     # S88 (D255 ruling 4): the bound's own seed, 4242, beside it - recorded here, its bound held in the next test.
@@ -382,7 +382,7 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     # bit-independent (chain 12's one-ulp birth gone, with its one foot).
     # S92 (#165): was 39 feet on 12 chains - the spacing reads the ridge's crest (at least the chain's read), so it is shorter.
     # S99 (#220): was (45, 12) - the walk reads the crest at the foot, so the spacings move.
-    assert (f["gas_spur_radius"].size, np.unique(f["gas_spur_chain"]).size) == (44, 12)  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
+    assert (f["gas_spur_radius"].size, np.unique(f["gas_spur_chain"]).size) == (43, 12)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer and the count tapered at a turn back): was (44, 12)  # S90 (#213): was 53 - the walk ends at the arms' budget's edge (12.34 kpc)  # S87 (#148, #80): was 48 on 12 chains - the clock and the pinned 5.0 kpc bar
     # At three radii: 10 λ_J,sp where each chain crosses, from the published fields and the walk's read.
     pieces = gp.stars.pieces
     table = {}
@@ -402,7 +402,9 @@ def test_the_milky_way_s_spurs_and_spacing_as_measured_a_disclosed_check(default
     # reads the gas crest within half the ring's crest width of the chain, so each spacing reads the ridge's crest.
     # S99 (#220): R_SUN's first was 4.64 and 10 kpc's fourth 8.61 - the crest read on the ring at the radius itself, not
     # linear between two grid rings.
-    assert (table[4.0][1], table[R_SUN][1], table[10.0][1]) == ([0.72, 3.7], [4.66, 5.88, 5.89, 6.23, 6.86], [6.85, 6.85, 8.14, 8.62, 8.68, 8.77])
+    # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer and the count tapered at a turn back): were
+    # [4.66, 5.88, 5.89, 6.23, 6.86] at R_SUN and the fifth at 10 kpc 8.68 - the contrast of the ridge the walk reads moves.
+    assert (table[4.0][1], table[R_SUN][1], table[10.0][1]) == ([0.72, 3.7], [4.72, 5.83, 6.14, 6.4, 6.69], [6.85, 6.85, 8.14, 8.62, 8.69, 8.77])
     assert all(s > 1.0 for s in table[R_SUN][1])  # outside M51's 0.2-1 kpc: recorded, not judged
 
 
