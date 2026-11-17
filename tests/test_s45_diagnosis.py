@@ -202,7 +202,7 @@ def test_row_37s_parts(models, default):
     assert d["probe_reeval"] == pytest.approx(d["published"], abs=1e-9), T
     # S45 diagnosis (D196); S51 (D210): was -0.1035, the census redrawn
     # S61 (D220): was -0.1030 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["published"] == pytest.approx(-0.0977, abs=0.002)  # S55 (D214): was -0.1055, read layer-off
+    assert d["published"] == pytest.approx(-0.1033, abs=0.002)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was -0.0977 (row 37 still a miss).  # S55 (D214): was -0.1055, read layer-off
     # S61 (D220): was 12860 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["n_regions"] == pytest.approx(12997, abs=130)  # S87 (#148): was 12710 - the clock  # S45 diagnosis (D196)
     assert d["n_fit"] == pytest.approx(5485, abs=55)  # S100 (batch P, D270; #227, the census +1 %): was 5413. S87 (#148): was 5337 - the clock  # S45 diagnosis (D196)
@@ -212,50 +212,50 @@ def test_row_37s_parts(models, default):
     assert d["Zp_ring"] == pytest.approx(-0.0780, abs=0.002)  # S45 diagnosis (D196)
     # (b)
     # S61 (D220): was 1.224 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_Z"] == pytest.approx(1.259, abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_Z"] == pytest.approx(1.238, abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 1.259.  # S45 diagnosis (D196)
     # S61 (D220): was (0.958, 1.279, 1.522) - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_Z_pct"] == pytest.approx((0.990, 1.321, 1.546), abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_Z_pct"] == pytest.approx((0.980, 1.281, 1.496), abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was (0.990, 1.321, 1.546).  # S45 diagnosis (D196)
     # S61 (D220): was 1.224 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_Z_clamped"] == pytest.approx(1.259, abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_Z_clamped"] == pytest.approx(1.238, abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 1.259.  # S45 diagnosis (D196)
     assert (d["oneside_Z"], d["outside_Z"]) == (0, 0)  # S45 diagnosis (D196): no fit-range region near a Z edge
     # S61 (D220): was 0.213 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     # S67 (D231): was 0.267 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
-    assert d["G_age"] == pytest.approx(0.247, abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_age"] == pytest.approx(0.084, abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 0.247.  # S45 diagnosis (D196)
     # S61 (D220): was (0.004, 0.074, 0.745) - the layer-off census drawn ring-first, a new draw (the same on and off since)
     # S67 (D231): was (0.005, 0.083, 0.973) - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
-    assert d["G_age_pct"] == pytest.approx((0.004, 0.079, 0.908), abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_age_pct"] == pytest.approx((-0.025, 0.055, 0.461), abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was (0.004, 0.079, 0.908).  # S45 diagnosis (D196)
     # S61 (D220): was 0.213 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     # S67 (D231): was 0.266 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
-    assert d["G_age_clamped"] == pytest.approx(0.246, abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_age_clamped"] == pytest.approx(0.083, abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 0.246.  # S45 diagnosis (D196)
     # S61 (D220): was 770 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["oneside_age"] == pytest.approx(726, abs=8)  # S100 (batch P, D270; #227, the census +1 %): was 714. S87 (#148): was 702 - the clock  # S45 diagnosis (D196); S51 (D210): was 759, the census redrawn on the gas's ridge
     # S45 diagnosis (D196): below the 0.5 Myr floor; S51 (D210): was 126, the census redrawn on the gas's ridge
     assert d["outside_age"] == pytest.approx(143, abs=3)  # S87 (#148): was 136 - the clock  # S55 (D214): was 119, read layer-off
-    assert d["G_U"] == pytest.approx(-0.378, abs=0.02)  # S45 diagnosis (D196)
+    assert d["G_U"] == pytest.approx(-0.401, abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was -0.378.  # S45 diagnosis (D196)
     # S45 diagnosis (D196). The 84th percentile: S55 (D214): was -0.177, read layer-off (0.019 of its 0.02 tolerance)
     # S61 (D220): was (-0.483, -0.450, -0.196) - the layer-off census drawn ring-first, a new draw (the same on and off since)
     # S67 (D231): was (-0.480, -0.428, -0.193) - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
-    assert d["G_U_pct"] == pytest.approx((-0.482, -0.450, -0.197), abs=0.02)
-    assert (d["oneside_U"], d["outside_U"]) == (0, 0)  # S45 diagnosis (D196)
+    assert d["G_U_pct"] == pytest.approx((-0.516, -0.469, -0.215), abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was (-0.482, -0.450, -0.197).
+    assert (d["oneside_U"], d["outside_U"]) == (12, 0)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was (0, 0) - twelve fit-range regions now within the half-step of the grid's U edge (lane H's declared log U floor).  # S45 diagnosis (D196)
     # S45 diagnosis (D196); S51 (D210): was -0.0081, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0059 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["agep"] == pytest.approx(0.0004, abs=0.002)  # S55 (D214): was 0.0005, read layer-off
     # S45 diagnosis (D196); S51 (D210): was 0.0005, the census redrawn on the gas's ridge
-    assert d["Up"] == pytest.approx(-0.0032, abs=0.002)  # S87 (#148): was -0.0005 - the clock  # S55 (D214): was 0.0034, read layer-off
+    assert d["Up"] == pytest.approx(0.0055, abs=0.002)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was -0.0032.  # S87 (#148): was -0.0005 - the clock  # S55 (D214): was 0.0034, read layer-off
     # (c)
     # S61 (D220): was -0.0960 - the layer-off census drawn ring-first, a new draw (the same on and off since)
     assert d["P_Z"] == pytest.approx(-0.1008, abs=0.002)  # S45 diagnosis (D196)
     assert d["P_age"] == pytest.approx(0.0001, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0017, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0013 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["P_U"] == pytest.approx(0.0008, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0002, the census redrawn on the gas's ridge
-    assert d["P_sum"] == pytest.approx(-0.0999, abs=0.002)  # S45 diagnosis (D196)  # S100 (batch P, D270; #227, the census +1 %): was -0.0979
+    assert d["P_U"] == pytest.approx(-0.0022, abs=0.002)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 0.0008.  # S45 diagnosis (D196); S51 (D210): was -0.0002, the census redrawn on the gas's ridge
+    assert d["P_sum"] == pytest.approx(-0.1023, abs=0.002)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was -0.0999.  # S45 diagnosis (D196)  # S100 (batch P, D270; #227, the census +1 %): was -0.0979
     # S45 diagnosis (D196); S51 (D210): was 0.0056, the census redrawn on the gas's ridge
     # S61 (D220): was 0.0062 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["P_sum_minus_published"] == pytest.approx(-0.0021, abs=0.002)  # S55 (D214): was 0.0088, read layer-off
+    assert d["P_sum_minus_published"] == pytest.approx(0.0010, abs=0.002)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was -0.0021.  # S55 (D214): was 0.0088, read layer-off
     # (d)
     # S45 diagnosis (D196)
     # S61 (D220): was 777 - the layer-off census drawn ring-first, a new draw (the same on and off since)
@@ -267,16 +267,16 @@ def test_row_37s_parts(models, default):
     # S67 (D231): was -2.112 - the clouds' size law (82 / 35 Msun/pc2 either side of R_SUN, the 150 pc cap; was one 42)
     # moves each region's density, so its ionization parameter and the grid's response to age and U at it
     # S70 (D234): was -2.030 - the size law's three regimes (#192) and the clouds' ring inversion (F-2-7) move each region's U.
-    assert d["lu0"] == pytest.approx(-2.125, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
+    assert d["lu0"] == pytest.approx(-2.375, abs=0.02)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was -2.125.  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
     # S61 (D220): was -0.0028 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["probe_ageU"] == pytest.approx(0.0042, abs=0.002)  # S45 diagnosis (D196): (i) Z frozen; S51 (D210): was -0.0016, the census redrawn on the gas's ridge
+    assert d["probe_ageU"] == pytest.approx(-0.0008, abs=0.002)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 0.0042.  # S45 diagnosis (D196): (i) Z frozen; S51 (D210): was -0.0016, the census redrawn on the gas's ridge
     assert d["probe_Z"] == pytest.approx(-0.1158, abs=0.002)  # S45 diagnosis (D196): (ii) age, U frozen; S51 (D210): was -0.1177, the census redrawn on the gas's ridge
     assert d["probe_none"] == pytest.approx(-0.0005, abs=0.002)  # S45 diagnosis (D196): (iii) all frozen
     # (e)
     assert PP04 == pytest.approx(1.754, abs=1e-3)  # S45 diagnosis (D196)
     # S61 (D220): was 0.697 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_Z_over_PP04"] == pytest.approx(0.718, abs=0.01)  # S45 diagnosis (D196)
+    assert d["G_Z_over_PP04"] == pytest.approx(0.706, abs=0.01)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 0.718.  # S45 diagnosis (D196)
     # S61 (D220): was 0.729 - the layer-off census drawn ring-first, a new draw (the same on and off since)
-    assert d["G_Z_median_over_PP04"] == pytest.approx(0.753, abs=0.01)  # S45 diagnosis (D196)
+    assert d["G_Z_median_over_PP04"] == pytest.approx(0.730, abs=0.01)  # S102 (batch Q, D272; #232 lane H, the region grown past its clump, n_e by photon balance, so each region's U and the grid's responses at it): was 0.753.  # S45 diagnosis (D196)
     # (f)
     assert d["row22"] == pytest.approx(-0.0698, abs=0.002)  # S45 diagnosis (D196)
