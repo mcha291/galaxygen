@@ -75,6 +75,19 @@ lost; 14 of the 42 routes moved (every clusters route and every render route: th
 render header's stars about #226's sentence), the four single-mode digests unmoved. Lane G's arms (the turn-back
 taper, the pitch averaging) move no layer-off field. ``tests/layer_reference_s100.json`` (``REFERENCE_S100``) is kept
 untouched as history; no test reads it.
+
+**At S104, batch R's close (D274), the reference is re-based again**, onto batch R's final layer-off run
+(``content_hash`` 00a5c504..., batch-r at 9671b62), written single-threaded by ``... write`` to a new file,
+``tests/layer_reference_s104.json`` (``REFERENCE``; sha256 7606d81d..., fields 404 / 403 / 404 / 403, 42 routes), and
+read green at one thread and with the threads unrestricted. The cause: lane RH's regions (#235) - today's ionized
+sphere inside a shell driven at the cluster's peak ionizing rate (``hii_shell_radius`` added), so ``hii_radius``,
+``hii_radius_limit``, the density, emissivity, ionization parameter and line ratios read over it move. Against S102's
+file: 14 fields moved on every label (``hii_electron_density``, ``hii_halpha_emissivity``,
+``hii_ionization_parameter``, ``hii_radius``, ``hii_radius_limit``, the four HII line ratios, the four HII line
+surface brightnesses and ``nii_halpha_gradient_hii``), one added on every label, none lost; the same 14 of the 42
+routes as at S102 moved (every clusters route and every render route), the four single-mode digests unmoved: 74
+entries in all. Lane RC (disclosed checks, a text) moves no layer-off field. ``tests/layer_reference_s102.json``
+(``REFERENCE_S102``) is kept untouched as history; no test reads it.
 """
 
 from __future__ import annotations
@@ -88,7 +101,8 @@ from typing import Any
 
 import numpy as np
 
-REFERENCE = Path(__file__).resolve().parent / "layer_reference_s102.json"  # S102 (batch Q, D272): was layer_reference_s100.json (S100, batch P, D270: was layer_reference_s93.json; S93, #218, D262: was layer_reference_s90.json; S90, #214, D258: was layer_reference_s55.json)
+REFERENCE = Path(__file__).resolve().parent / "layer_reference_s104.json"  # S104 (batch R, D274): was layer_reference_s102.json (S102, batch Q, D272: was layer_reference_s100.json; S100, batch P, D270: was layer_reference_s93.json; S93, #218, D262: was layer_reference_s90.json; S90, #214, D258: was layer_reference_s55.json)
+REFERENCE_S102 = Path(__file__).resolve().parent / "layer_reference_s102.json"  # batch Q's final run (S102), kept as history
 REFERENCE_S100 = Path(__file__).resolve().parent / "layer_reference_s100.json"  # batch P's final run (S100), kept as history
 REFERENCE_S93 = Path(__file__).resolve().parent / "layer_reference_s93.json"  # M3's final run (S93), kept as history
 REFERENCE_S90 = Path(__file__).resolve().parent / "layer_reference_s90.json"  # M2's final run (S90), kept as history
