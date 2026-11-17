@@ -7459,7 +7459,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    end, so no taper): the ring's count N falls 1.825 -> 1.000 between 4.4575 and 4.46 kpc and every chain's amplitude
    rises 35 % (0.309 -> 0.418), the misplaced weight 0.0405 under (B). Proposed, not built: taper a chain's count weight
    to zero over one width as the ring nears the chain's radial extreme, as at an end (the gate's ninth follow-up's
-   rule extended to a turning point). Tests: `tests/test_forcing_pitch.py`. Not struck: the 4.456 kpc step stays.
+   rule extended to a turning point). Tests: `tests/test_forcing_pitch.py`. On the gate's ruling it was then built
+   (`ring_state`, `Pieces.turn_before` / `turn_after`; `[inferred]`): N is continuous across every turn (4.4575 -> 4.46
+   kpc: 1.825 -> 1.000 before, 1.116 -> 1.000 after), the misplaced weight 0.0405 -> 0.0172 (now at 4.45 kpc: chain 0's
+   -1° piece spans 18 pc of R, so the free-end taper along it is a bump in N to 1.35 over those 18 pc, not a step),
+   the mid-gap rings 2 -> 0, the default galaxy and `ngc_4414` (no turn) unchanged to the bit. Not struck.
 231. **The clouds' mass function does not know the arm** (S99, D269; the reader, `READING_CLOUD_LAYER.md` Part S99).
    The model draws every cloud's mass from one mass function per radial zone, the same on an arm and between arms;
    the clouds are placed by the gas contrast to the first power (#229's discharge). The reader: drawn so, the model
