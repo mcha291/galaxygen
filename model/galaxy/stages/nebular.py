@@ -50,17 +50,24 @@ strengths) was read at S35 and set aside: without the ionization fractions it ma
   R_St)^(4/7), the Hosokawa & Inutsuka 2006 form with the shocked gas's inertia `[verified: Bisbas et al. 2015,
   arXiv:1507.05621 §2.1.2 eq. 13, read at S102]`, until it stagnates where the ionized gas's pressure meets the
   cloud's, R_STAG = R_St (8/3)^(2/3) (c_i/c_0)^(4/3) (the same inertial model at late times, §2.2.2 eq. 17,
-  `[verified: ibid.]`). The cloud's c_0 carries its turbulence, c_0² = c_s² + σ_v²/3, Tremblin et al. 2014's
-  effective turbulent temperature (eq. 8) and turbulent pressure (eq. 16, ⟨ρ⟩(c_0² + ⟨σ⟩²/3)) `[verified:
-  arXiv:1406.1801, read at S102]`, on the model's own cloud sound speed (10 K molecular gas, the clouds stage's) and
-  the cloud's published σ_v; Tremblin's σ is a 3-D dispersion `[inferred]` and Heyer's σ_v a line-of-sight one, a
-  difference the reading records. c_i is the ionized shell's sound speed the bubbles already read (Weaver's C_II).
+  `[verified: ibid.]`). The cloud's c_0 carries its turbulence: Tremblin et al. 2014's effective turbulent
+  temperature (eq. 8, T_0 + μ m_H σ_0²/3k, σ_0 "the ... velocity field of the simulation", its rms over the box) and
+  turbulent pressure (eq. 16, ⟨ρ⟩(c_0² + ⟨σ⟩²/3)) `[verified: arXiv:1406.1801, read at S102]` add a third of a
+  three-dimensional variance; the cloud's published σ_v is Heyer et al. 2009's line-of-sight dispersion, one
+  dimension, so c_0² = c_s² + σ_v² (the gate's ruling 1, S102), c_s the model's own 10 K cloud gas (the clouds
+  stage's). c_i is the ionized shell's sound speed the bubbles already read (Weaver's C_II).
   t is ``cluster_age``: the cloud's age less the embedded phase, the time since the region appeared (S33).
   R_HII = min(R_D, R_STAG), then capped at the cloud's radius as R_St is. **Photon balance at the new radius**:
   Q = α_B n² (4/3)π R³ holds at R_St with the clump's ⟨n²⟩ and at R_HII with the expanded gas's, so n_e(R_HII) =
   n_rms (R_St / R_HII)^(3/2); the clumping is the natal clump's and applies at R_St only. The region keeps every
   photon it kept (the Hα is unchanged; the leaking rule is R_St's against the cloud, as before), spread over a
-  larger, thinner sphere: the density, the emissivity, log U and the [S II] split follow the expanded region.
+  larger, thinner sphere: the density, the emissivity, log U and the [S II] split follow the expanded region. A
+  region whose front reaches its cloud's edge keeps its photons there, ionization-bounded at the cloud's radius at
+  the density photon balance gives it `[inferred: the gate's ruling 2, S102; no size law for a champagne flow was
+  read]`. The natal density (the Strömgren state's, ``hii_natal_density``) is published apart: the bubbles stage
+  reads it, not the expanded one - the wind bubble (Weaver, stalled) and the D-type front are two laws for one
+  cavity, computed apart, and no law coupling them was read, so each keeps the medium it was derived in
+  `[inferred: the gate's ruling 4, S102]`.
   Assumed, as the sources do: a uniform ambient medium, a constant Q, a sphere, no dust in the region.
 - *Diffuse ionized gas*: 30% of each region's ionizing photons escape it (the model Zurita et al. 2002
   fitted to NGC 157, "30% of emitted Lyman continuum photons escape from each H II region", the range
@@ -169,6 +176,7 @@ HII_COLUMNS: tuple[str, ...] = (
     "hii_nitrogen_abundance", "hii_sulphur_abundance",
     "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio",
     "hii_radius",  # S102 (#232): the region's radius now
+    "hii_natal_density",  # S102 (#232, the gate's ruling 4): the Stromgren state's density, the bubbles' ambient
 )
 CM_PER_KM = 1.0e5
 # The forbidden lines the grid is read for (S42), each published over the region's Halpha.
@@ -303,9 +311,12 @@ def stagnation_radius(r_st: np.ndarray, c_i: float, c_0: np.ndarray) -> np.ndarr
     return np.asarray(r_st, dtype=float) * (8.0 / 3.0) ** (2.0 / 3.0) * (c_i / np.asarray(c_0, dtype=float)) ** (4.0 / 3.0)
 
 
-def effective_sound_speed(c_s: float, sigma: np.ndarray) -> np.ndarray:
-    """The cloud's sound speed with its turbulence as pressure: √(c_s² + σ²/3), Tremblin et al. 2014 eqs. 8 and 16."""
-    return np.sqrt(c_s**2 + np.asarray(sigma, dtype=float) ** 2 / 3.0)
+def effective_sound_speed(c_s: float, sigma_1d: np.ndarray) -> np.ndarray:
+    """The cloud's sound speed with its turbulence as pressure: √(c_s² + σ_1D²). Tremblin et al. 2014's eqs. 8 and 16
+    add σ²/3 of their simulation's rms velocity field, a three-dimensional σ (the kinetic form); the model's σ_v is
+    a line-of-sight, one-dimensional dispersion (Heyer et al. 2009), whose variance is that σ²/3 (S102, the gate's
+    ruling 1)."""
+    return np.sqrt(c_s**2 + np.asarray(sigma_1d, dtype=float) ** 2)
 
 
 def expanded_density(n_st: np.ndarray, r_st: np.ndarray, r: np.ndarray) -> np.ndarray:
@@ -396,6 +407,7 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
     out = {
         "hii_stromgren_radius": radius / CM_PER_PC,
         "hii_radius": r_now / CM_PER_PC,
+        "hii_natal_density": np.sqrt(n_squared),
         "hii_electron_density": n_e,
         "hii_temperature": t_e,
         "hii_ionization_parameter": np.where(np.isfinite(log_u), log_u, np.nan),
@@ -454,6 +466,8 @@ NOT_DRAWN_WHY: dict[str, str] = {
     # S102 (#232): the region's radius now, and which limit set it.
     "hii_radius": "the viewer draws a knot at its Stromgren radius until batch Q's viewer lane reads this.",
     "hii_radius_limit": "the category is not a look: it says which of three limits `hii_radius` stopped at.",
+    "hii_natal_density": "the medium the wind bubble expands into (the bubbles stage reads it); the region drawn "
+                         "is the expanded one, whose density is `hii_electron_density`.",
 }
 
 
@@ -476,6 +490,12 @@ HII_RADIUS = _column("hii_stromgren_radius", "HII region radius", "pc",
                      "supports — or the cloud's radius where the region would outgrow it and leaks instead. "
                      "A renderer draws the ionized sphere at this radius around the cluster. Since S102 (#232) "
                      "it is the region's start: the region now is `hii_radius`.", ramp=Ramp("viridis", scale="log"))
+HII_NATAL_DENSITY = _column("hii_natal_density", "Natal ionized density (rms)", "1/cm3",
+                            "The root mean square density of the region's gas at its start, the Strömgren sphere in its "
+                            "cloud's clumped gas: the cloud's mean density times the square root of its clumping. The "
+                            "cluster's wind bubble expands into this medium, as it was derived for one (S36); the "
+                            "region's expanded density is `hii_electron_density` (S102, #232).",
+                            ramp=Ramp("magma", scale="log"))
 HII_RADIUS_NOW = _column("hii_radius", "HII region radius, expanded", "pc",
                          "The region's radius at its cluster's age: the Strömgren sphere grown by its D-type front "
                          "(Hosokawa & Inutsuka 2006, as Bisbas et al. 2015 eq. 13) since the region appeared, stopped "
@@ -770,6 +790,7 @@ NEBULAR = IMPLEMENTATIONS.register(
         publishes=(
             HII_RADIUS, HII_DENSITY, HII_TEMPERATURE, HII_LOG_U, HII_CLUMPING, HII_HALPHA, HII_EMISSIVITY, HII_DECREMENT,
             HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, *HII_LINE_RATIOS, HII_BOUNDED, HII_RADIUS_NOW, HII_RADIUS_LIMIT,
+            HII_NATAL_DENSITY,
             HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, *LINES_DIG, *DIG_RATIOS, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
             NII_HALPHA_GRADIENT,
         ),

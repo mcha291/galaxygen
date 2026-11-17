@@ -7461,19 +7461,26 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S102 (batch Q, D272):* the reading done (S101's reader; `READING_HII_SIZES.md`) and the build made (lane H):
    each region now grows from its Strömgren sphere R_St (published unchanged as `hii_stromgren_radius`) by the D-type
    front R_St (1 + (7/4) √(4/3) c_i t / R_St)^(4/7) at its cluster's age (Bisbas et al. 2015 eq. 13, HI06's form),
-   stops at R_St (8/3)^(2/3) (c_i/c_0)^(4/3) (eq. 17), c_0² = c_s² + σ_v²/3 (Tremblin et al. 2014 eqs. 8, 16; c_s the
-   clouds' own 10 K, σ_v the cloud's), and is capped at its cloud; all re-read at their pages in S102. New columns
-   `hii_radius` and `hii_radius_limit` (not drawn); the density follows photon balance, n_e = n_rms (R_St/R)^(3/2), and
-   with it the emissivity, log U and the [S II] split; every region's Hα unchanged bit for bit. On `milky_way`: radius
-   **11.9 / 39.7 / 70.6 pc** (median / p99 / max; was 0.77 / 7.67 / 25.7), n_e median 154 → 2.3 cm⁻³, the cloud
-   binds 54 % of the regions (stagnation 13 %, still expanding 34 %), 1 956 regions wider than 19.5 pc holding 51 % of
-   the census's Hα (was 7, 6 %); `ngc_4414` 10.0 / 40.0 / 79.7 pc. Moved downstream: the bubbles (ambient = n_e) grow to
-   a median 87 pc (was 9.6), 81 % stalled (was 97 %); 10.6 % of the regions read the line grid's log U = −4 floor; row
-   37's layer-off gradient −0.0977 → −0.1033 (a miss still; its record held strict, `ROW37_READ_OVER_S102`). Open for
-   the gate: σ_v is Heyer's line-of-sight dispersion and Tremblin's σ three-dimensional `[inferred]`; the cap keeps
-   the photons of a region capped only after expanding (the builder's reading); the HST comparison (Barnes et al.
-   2025) is disclosed in the reading with its units inferred, not tested — the size-L slope fell 0.44 → 0.19 against
-   their 0.47-0.52. Complexes and envelopes stay #181's.
+   stops at R_St (8/3)^(2/3) (c_i/c_0)^(4/3) (eq. 17), c_0² = c_s² + σ_v² (Tremblin et al. 2014 eqs. 8, 16, whose
+   σ_0 is the simulation's rms velocity field, three-dimensional, so its σ_0²/3 is the one-dimensional σ_v² the cloud
+   publishes: the gate's ruling 1; c_s the clouds' own 10 K), and is capped at its cloud; all re-read at their pages in
+   S102. A region that reaches its cloud's edge keeps its photons, ionization-bounded there `[inferred: the gate's
+   ruling 2]`; the alternative, a front past the edge leaking 1 − (r_cloud/R_D)³ of its photons, would move the Hα of
+   about half the regions and the census/field closure, and no champagne-flow size law was read. New columns
+   `hii_radius`, `hii_radius_limit` and `hii_natal_density` (not drawn); the density follows photon balance, n_e =
+   n_rms (R_St/R)^(3/2), and with it the emissivity, log U and the [S II] split; every region's Hα unchanged bit for
+   bit. The bubbles read `hii_natal_density`, the Strömgren state's, and are main's bit for bit: the wind bubble and
+   the D-type front are two laws for one cavity, computed apart, and no law coupling them was read, so each keeps the
+   medium it was derived in `[inferred: the gate's ruling 4]`. On `milky_way`: radius **11.0 / 36.4 / 70.6 pc**
+   (median / p99 / max; was 0.77 / 7.67 / 25.7), n_e median 154 → 3.2 cm⁻³; the limit by count expansion /
+   stagnation / cloud 23 / 32 / 45 %, by Hα 70 / 7 / 22 %; 1 482 regions wider than 19.5 pc holding 49 % of the
+   census's Hα (was 7, 6 %); `ngc_4414` 9.6 / 36.2 / 79.7 pc. 8.5 % of the regions (0.01 % of the Hα) read the line
+   grid's log U = −4 floor, recorded, not mended (ruling 5). Row 37's layer-off gradient −0.0977 → −0.1033, re-pinned
+   as a record (ruling 3), a miss still. **Two disclosed misses of the law as built** against Barnes et al. 2025's HST
+   fits (units inferred, not tested, nothing tuned): the size-L slope fell 0.44 → 0.20 against their 0.47-0.52,
+   because R_D ~ R_St^(3/7) (c_i t)^(4/7) cuts R_St's power by 3/7; and the 10³⁷-10³⁸ decade's median, 12.7 pc, sits
+   above even their circularised 11.6, because at its median 3 Myr c_i t is 31 pc whatever Q is (constant Q grows the
+   old faint regions; the cloud's cap is what stops many). Complexes and envelopes stay #181's.
 233. **The default census's own-law estimator is not flat beyond 380 pc since the longer bar** (S100, D270; the re-pin
    pass, `s100_P.md` and `s100_P2.md`). `tests/test_clustering_gate.py` judges the census against its own law flat
    beyond 380 pc within 0.05 (1 + ω within 0.05 of 1): on batch P's final model the default galaxy reads **0.0529

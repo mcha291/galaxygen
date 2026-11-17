@@ -21,7 +21,7 @@ gas layer's, ring by ring. The single star's own bubble is a column of the catal
   youngest isochrone, as the wind column is — the bubble is Weaver's at ``cluster_wind_luminosity`` itself.
   The supernovae are the stars born above the core-collapse limit that the isochrones hold dead at the
   cluster's age, each giving the sourced energy.
-- *(b) The ambient density* is the HII region's rms density (S35's ``hii_electron_density``) times 1.4 m_H: the
+- *(b) The ambient density* is the HII region's rms density (S35's, published as ``hii_natal_density`` since S102: the Strömgren state's, not the expanded region's, #232) times 1.4 m_H: the
   bubble expands into the region its cluster ionized. For a single star, the gas's midplane density at its
   radius (``ism``'s P/σ², the volume average over every phase), because stars and clouds are placed
   independently and a star found inside a cloud would be a coincidence of two draws.
@@ -108,7 +108,7 @@ REMNANT_KINDS: tuple[str, ...] = ("core_collapse", "type_ia")
 CLUSTER_READS: tuple[str, ...] = (
     "cluster_birth_radius", "cluster_mass", "cluster_age", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
 )
-REGION_READS: tuple[str, ...] = ("hii_electron_density", "hii_temperature")
+REGION_READS: tuple[str, ...] = ("hii_natal_density", "hii_temperature")  # S102 (#232, ruling 4): was hii_electron_density
 # What the remnant census reads: the rates, the gas it expands into, the metallicity factor.
 REMNANT_READS: tuple[str, ...] = ("core_collapse_rate", "type_ia_rate", "gas_midplane_density", "gas_surface_density", "feh_gas")
 
@@ -193,7 +193,7 @@ def materialise_bubbles(clusters: Catalogue, regions: Catalogue, constants: Mapp
     age = np.asarray(clusters["cluster_age"], dtype=float)  # Myr
     feh = np.asarray(clusters["cluster_metallicity"], dtype=float)
     q = np.asarray(clusters["cluster_ionizing_photons"], dtype=float)
-    n0 = np.asarray(regions["hii_electron_density"], dtype=float)
+    n0 = np.asarray(regions["hii_natal_density"], dtype=float)
     t_e = np.asarray(regions["hii_temperature"], dtype=float)
     m_min = float(c["CORE_COLLAPSE_MIN_MASS"])
 

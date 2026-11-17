@@ -53,7 +53,9 @@ def test_the_law_by_hand_at_two_points():
     # the cloud's effective sound speed: 10 K molecular gas (0.19 km/s, Bergin & Tafalla's 0.2) with sigma = 3 km/s
     c_s = sound_speed(10.0, 2.33)
     assert c_s == pytest.approx(0.189, abs=1e-3)
-    assert nb.effective_sound_speed(c_s, np.array([3.0]))[0] == pytest.approx(math.sqrt(c_s**2 + 3.0), rel=1e-12)
+    # the gate's ruling 1 (S102): Tremblin's sigma^2/3 is a third of a 3-D variance; the cloud's sigma_v is 1-D, so
+    # c_0^2 = c_s^2 + sigma_v^2 (was + sigma_v^2/3 in the lane's first commit)
+    assert nb.effective_sound_speed(c_s, np.array([3.0]))[0] == pytest.approx(math.sqrt(c_s**2 + 9.0), rel=1e-12)
     assert nb.effective_sound_speed(c_s, np.array([0.0]))[0] == c_s
     # photon balance: n = n_St (R_St/R)^(3/2), so n^2 R^3 is conserved
     n = nb.expanded_density(np.array([100.0]), np.array([1.0]), np.array([4.0]))[0]
@@ -87,7 +89,7 @@ def _synthetic(constants, ages, masses, sigmas, size=30.0, q=1.0e48):
 
 def test_each_limit_and_the_cap_on_a_synthetic_census(constants):
     """Q = 1e48 /s in 30 pc clouds: four of 1e5 Msun (R_St 2.3 pc) at age 0 (the Stromgren sphere, 'expansion'),
-    0.5 Myr (expanding), 1000 Myr at sigma 5 km/s (stagnated inside the cloud, R_STAG ~ 23 pc), 1000 Myr at
+    0.5 Myr (expanding), 1000 Myr at sigma 5 km/s (stagnated inside the cloud, R_STAG ~ 11 pc), 1000 Myr at
     sigma 0.5 km/s (capped at the cloud); one of 1e3 Msun too thin to hold its Stromgren sphere (R_St ~ 50 pc):
     leaking as before, its radius the cloud's, its density the clump's."""
     _, _, reg = _synthetic(constants, [0.0, 0.5, 1000.0, 1000.0, 0.0], [1e5, 1e5, 1e5, 1e5, 1e3], [5.0, 5.0, 5.0, 0.5, 5.0])
@@ -131,7 +133,7 @@ def test_photon_balance_closes_and_the_halpha_is_unchanged(constants, coarse):
     assert np.allclose(L[ok], (kept * nb.halpha_per_recombination(t_e))[ok], rtol=1e-12)
     em = np.asarray(F["hii_halpha_emissivity"], dtype=float)
     assert np.allclose((em * 4.0 / 3.0 * math.pi * r**3)[ok], L[ok], rtol=1e-9)
-    # R_STAG < R_St would need sigma_v above ~18 km/s ((8/3)^(2/3) (c_i/c_0)^(4/3) < 1): no cloud of the census has it
+    # R_STAG < R_St would need c_0 above ~16 km/s ((8/3)^(2/3) (c_i/c_0)^(4/3) < 1): no cloud of the census has it
     assert np.all(r >= rs)
     cloud = np.asarray(F["cloud_size"], dtype=float)[np.flatnonzero(np.asarray(F["cloud_cluster_index"]) >= 0)] * PC
     assert np.all(r <= cloud * (1.0 + 1e-12))
@@ -151,19 +153,24 @@ def test_the_default_regions_under_the_law_disclosed(default):
     F = default.fields
     r = np.asarray(F["hii_radius"], dtype=float)
     L = np.asarray(F["hii_halpha_luminosity"], dtype=float)
-    assert [float(np.median(r)), float(np.percentile(r, 99)), float(r.max())] == pytest.approx([11.900, 39.72, 70.57], rel=2e-3)
+    assert [float(np.median(r)), float(np.percentile(r, 99)), float(r.max())] == pytest.approx([10.992, 36.36, 70.57], rel=2e-3)  # first commit (sigma^2/3): 11.900 / 39.72 / 70.57
     assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.770, abs=0.01)  # unchanged
-    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(2.305, rel=0.01)
-    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-3.457, abs=0.01)
+    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(3.196, rel=0.01)  # first commit: 2.305
+    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-3.426, abs=0.01)  # first commit: -3.457
     lim = np.asarray(F["hii_radius_limit"])
-    # which limit binds, by count: expansion / stagnation / cloud; by Halpha 0.763 / 0.013 / 0.224
-    assert [float((lim == k).mean()) for k in range(3)] == pytest.approx([0.3353, 0.1278, 0.5370], abs=2e-3)
-    assert [float(L[lim == k].sum() / L.sum()) for k in range(3)] == pytest.approx([0.763, 0.013, 0.224], abs=5e-3)
+    # which limit binds, by count: expansion / stagnation / cloud; by Halpha 0.704 / 0.073 / 0.223 (first commit 0.763 / 0.013 / 0.224)
+    assert [float((lim == k).mean()) for k in range(3)] == pytest.approx([0.2308, 0.3209, 0.4483], abs=2e-3)  # first commit: 0.3353 / 0.1278 / 0.5370
+    assert [float(L[lim == k].sum() / L.sum()) for k in range(3)] == pytest.approx([0.704, 0.073, 0.223], abs=5e-3)
     wide = r > 19.5  # half the frame's 39 pc pixel
-    assert int(wide.sum()) == 1956 and float(L[wide].sum() / L.sum()) == pytest.approx(0.511, abs=2e-3)
-    # low U now reads the grid's floor (clamped, as FSPS clamps; reported, not mended): 10.6 % of the regions, 0.02 % of the light
+    assert int(wide.sum()) == 1482 and float(L[wide].sum() / L.sum()) == pytest.approx(0.490, abs=2e-3)  # first commit: 1956, 0.511
+    # low U now reads the grid's floor (clamped, as FSPS clamps; recorded, not mended): 8.5 % of the regions, 0.01 % of the light
     floor = np.asarray(F["hii_ionization_parameter"]) <= -4.0
-    assert float(floor.mean()) == pytest.approx(0.1064, abs=2e-3) and float(L[floor].sum() / L.sum()) < 1e-3
-    # the bubbles' ambient density is the region's (bubbles.py): their median radius was 9.58 pc, 97.4 % stalled
-    assert float(np.median(np.asarray(F["bubble_radius"]))) == pytest.approx(86.69, rel=5e-3)
-    assert float(np.mean(np.asarray(F["bubble_stalled"]) == 1)) == pytest.approx(0.8119, abs=3e-3)
+    assert float(floor.mean()) == pytest.approx(0.0850, abs=2e-3) and float(L[floor].sum() / L.sum()) < 1e-3
+    # the gate's ruling 4 (S102): the bubbles read the natal density (hii_natal_density), so they are main's bit for
+    # bit - median 9.575 pc, 97.42 % stalled (the first commit, reading the expanded density: 86.69 pc, 81.19 %)
+    assert float(np.median(np.asarray(F["bubble_radius"]))) == pytest.approx(9.575127483783945, rel=1e-12)
+    assert float(np.mean(np.asarray(F["bubble_stalled"]) == 1)) == pytest.approx(0.9742456568119475, rel=1e-12)
+    rs = np.asarray(F["hii_stromgren_radius"], dtype=float)
+    n_st = np.asarray(F["hii_natal_density"], dtype=float)
+    bounded = np.asarray(F["hii_density_bounded"]) == 0
+    assert np.allclose(np.asarray(F["hii_electron_density"])[bounded], (n_st * (rs / r) ** 1.5)[bounded], rtol=1e-12)
