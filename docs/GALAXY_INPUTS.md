@@ -727,10 +727,17 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S99 | **220, 229** (the spurs' walk reads the crest and the trough by the point function on the foot's own ring, an identity now, 0.27 unmoved and the hold lifted; the clouds' first power sourced by mass on Colombo et al. 2014's Table 2, exponent 1.05, the citation in the code - D269) | 2 |
 | **discharged** at S100 | **221** (the gas inside the bar under the lanes or the response on both templates since #220's mend - the Milky Way 6.7590 against 7.0556, `ngc_4414` 2.4949 against 2.5078 - the two strict holds lifted, the clause back in its original tests - D270) | 1 |
 | **discharged** at S102 | **230, 232** (batch Q: the forcing's pitch averaged over the layer's height and a chain's count tapered at its turn back, D219's clause re-ruled on the lane's table; the HII region grown past its natal clump by the D-type front to the stagnation radius and the cloud's cap, its Hα unchanged, what is left #235 - D272) | 2 |
-| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 81, 82, 87, 90, 93, 99, 101, 128, 132, 133, 134, 141, 143, 144, 145, 147, 152, 155, 157, 158, 180, 181, 182, 195 | 49 |
-| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 146, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 183, 184, 185, 186, 202, 203, 204, 205, 222, 223, 224, 225, 226, 227, 228, 231, 233, 234, 235, 236 | 66 |
+| **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 81, 82, 87, 90, 93, 99, 101, 128, 131, 132, 133, 134, 141, 143, 144, 145, 147, 152, 155, 157, 158, 180, 181, 182, 195 | 50 |
+| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 135, 136, 138, 146, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 183, 184, 185, 186, 202, 203, 204, 205, 222, 223, 224, 225, 226, 227, 228, 231, 233, 234, 235, 236 | 65 |
 
-So the board's **115 open** is 49 permanent and 66 carried, and no item is unruled (S102 (batch Q's close), D272:
+So the board's **115 open** is 50 permanent and 65 carried, and no item is unruled (S103 (the reading row, BUILD_VII
+row 105), D273: #131 ruled permanent at the gate - no scatter number and no per-galaxy table printed for the
+relation; the lanes read and put to the owner under #229 and #234 ((i) no lane recommended); #235's defect named
+(the region grown at today's ionizing rate) and #226's truncations read, the cliff the gas's own (the infall tail's
+hard end), both to batch R; #149 read (1.66 kpc, the owner's); #118 (c) closed by the reading; #103 restated to the
+shell's ionization state; #86, #96, #135, #162 sourced for batch R; #83's closer restated (σ_e 0.34 back-solved
+from Vink et al. 2000, batch R); #88, #97 with #98, #129 the owner's; #95's window read as the clusters'; a line
+on #230's discharged entry (the masers' trace answered); nothing opened or discharged; S102 (batch Q's close), D272:
 #230 discharged - the forcing's pitch averaged over the layer's height and a chain's count tapered at its turn back,
 the residual bump declared; #232 discharged on its closer - the reading, then the sourced build, the region grown past
 its natal clump; #235 opened, what #232's build leaves - the grown regions' size-luminosity relation flatter than the
@@ -3316,6 +3323,15 @@ never been judged in twenty-three sessions.
    1993, not fetched); a constant with no source in the repository, not closable in the batch.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: σ_e read with its citation
    (Lamers & Leitherer 1993, not fetched at S93), then Γ_e applied.
+   *S103 (BUILD_VII row 105, D273):* **carried, the closer restated; destination batch R** (the gate's item 9,
+   replacing item 6's "not done"). Vink et al. 2001 eq. 11 READ (Γ_e = 7.66e-5 σ_e (L/L☉)(M/M☉)^-1; σ_e "described in
+   Lamers & Leitherer 1993", no number printed). The second reading (`s104_RT.md` B): σ_e = 0.340 ± 0.002 cm²/g
+   back-solved from Vink et al. 2000 Table 1 (11 of 12 series; series 5 gives 0.355) `[inferred from a READ table]`,
+   Vink et al. 1999 sect. 5 agreeing (0.339); Lamers & Leitherer 1993 still NOT READ; the Thomson closed form RECALL.
+   The code read: the model applies no Γ_e at all - the escape speed is Newtonian (`massive_stars.py`, `VINK_JUMP` eq.
+   23 without its 3.2 Γ_e term). What closes it: the recipe's effective escape speed (1 - Γ_e) applied with σ_e 0.34,
+   the builder's measurement of what it moves first (`[inferred]`: v_inf 1.02-1.33x, the wind power 1.04-1.77x over
+   Vink's grid). `READING_ROW_105.md` #83.
 84. **Two thirds of the ionizing budget rides on an extension the ruling does not cover, and about half
    of the true budget is in stars the table cannot see** (S28, D177). Ruling (a)'s table (SHP03, class
    V, 32–51 kK) governs 0.328 of a steady solar population's Q; 0.218 comes from cooler B stars and
@@ -3373,6 +3389,12 @@ never been judged in twenty-three sessions.
    2012's fit read (not extracted) - a source first.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: Spera et al. 2015's or Fryer et
    al. 2012's remnant-mass fit read, the budget given its metallicity axis.
+   *S103 (BUILD_VII row 105, D273):* **sourced, destination batch R.** Spera, Mapelli & Bressan 2015 (arXiv:1505.05201)
+   App. C eqs. 22-36 READ: the remnant mass from the CO core and Z, the CO core from M_ZAMS and Z (so the model's
+   missing CO core is no obstacle); delayed mechanism, M_ZAMS >~ 7 M☉, within ~10 % of SEVN. Every coefficient came
+   through an extracting fetch: the builder checks them against the PDF first. Özel et al. 2010's measured 7.8 M☉
+   becomes the DISCLOSED CHECK on the fit's mean, and the gate rules on the builder's measurement. The 8.5 M☉
+   white-dwarf / neutron-star boundary is not in the fit and stays as it is. `READING_ROW_105.md` #86.
 87. **No acceptance row reads the local white-dwarf surface density** (S29, D178; headed "Row 30 is owed and was
    not entered" until S70 — row 30 has been the core-collapse rate since S30, `spec.py:221`). The one
    remnant target read with an uncertainty is McKee, Parravano & Hollenbach 2015 Table 1: white dwarfs
@@ -3404,6 +3426,14 @@ never been judged in twenty-three sessions.
    mass with the iron per event sourced, entered before row 31 is judged (D113) - a source and a judged row.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: WAF17's text or Maoz & Graur
    2017's events per mass read before row 31 is judged; #89 follows it in batch R.
+   *S103 (BUILD_VII row 105, D273):* **the owner's.** WAF17 (arXiv:1604.07435) sect. II.2 and Table 1 READ: 0.0017 =
+   0.77 M☉ of iron per Ia (Iwamoto W70) x 2.2e-3 events per M☉ (Maoz & Mannucci 2012). Maoz & Graur 2017
+   (arXiv:1703.04540) sect. II READ: two field values, 1.3 ± 0.1 (volumetric) and 1.6 ± 0.3 (DTD-combined) per 1000 M☉
+   - the head's single "measured" 1.3 is one of two. **The model's present 2.43e-3 events per M☉ (WAF17's iron over
+   MG17's 0.7 M☉ per event) is stated by neither paper.** Row 31 `[inferred: linear in the yield over the iron per
+   event]`: WAF17 whole 0.594 /century, MG17 0.430 (1.6e-3) or 0.350 (1.3e-3), as now 0.653. The owner's: (i) WAF17's
+   own pair - **recommended**: the one pair printed together, it misses row 31's floor by 0.006 (0.594 against 0.6 per
+   century) and #89 is the named mend - or (ii) MG17's 1.3e-3 or 1.6e-3. `READING_ROW_105.md` #88; `BRIEF.md`.
 89. **The spheroid's type Ia are not in the rate** (S30, D179). `type_ia_rate` convolves the disc's
    formation history; the spheroid is old stars the halo stage derives (S17) that the history never
    formed, and the stellar halo does not exist yet (Phase 5). Their Ia are missing — an estimated 0.03–0.05
@@ -3613,6 +3643,14 @@ never been judged in twenty-three sessions.
    is the clusters' (D270 ruling 3); the offsets by age built at S100 stay unmerged until it is read. The head's "half
    the thin disc's scale height" is stale: the clouds' layer has been the molecular layer's own since S67 (D229, #180),
    and the thin disc's height itself moved at S99 (#227: 334 / 229 pc).
+   *S103 (BUILD_VII row 105, D273):* **the reading is in: the window is the clusters'.** The -0.64 is Grasha et al.
+   2017a (arXiv:1704.06321) Table 4, READ: classes 1-3, <= 40 Myr, α1 -0.85(3) over α2 -0.21(2) - a
+   clusters-and-associations paper with no molecular clouds; the model's clusters (0 to ~20 Myr `[inferred]`) are
+   inside its cut. So S100's built-not-merged offset stays unmerged (it fails the clusters' own clause by 0.130), and
+   the borrowed target is the clouds' (clouds measure about -0.2, `READING_CLUSTERING.md` sect. 3.1). The
+   compact-cluster row (classes 1-2, -0.60 - (-0.139) = -0.461) is disclosed and NOT chosen: picking a target with the
+   answer known is B5's breach. Carried; it joins the owner's clustering questions (#80, #233, #223).
+   `READING_ROW_105.md` #95.
 
 96. **The cluster census inherits the clouds' mass function, not the review's** (S33, BUILD_II Phase 11,
    D182). One cluster per cloud past its embedded phase at an efficiency derived from the local depletion
@@ -3630,6 +3668,12 @@ never been judged in twenty-three sessions.
    smallest cluster mass; T3 (S93) changed the sample's membership, not the census's mass function.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: a sourced cloud-to-cluster
    relation or a young clusters' mass function with its lower mass (e.g. Krumholz et al. 2019's review `[recall]`).
+   *S103 (BUILD_VII row 105, D273):* **a definition and a disclosed check, destination batch R.** Lada & Lada 2003
+   sect. II.1 READ: a cluster is "a group of 35 or more physically related stars whose stellar mass density exceeds
+   1.0" M☉ pc^-3 - the definition. Krumholz et al. 2019 (arXiv:1812.01615) sect. 2.2 READ: slope -2 ± 0.2 over 1e3-1e5
+   M☉ - a DISCLOSED CHECK (the census's slopes are printed: -1.6 inner outside by 0.2, -2.2 outer inside `[inferred]`).
+   The cloud-to-cluster mass relation was not found (Krumholz sect. 4 NOT READ): that clause is declared permanent
+   within the entry. Carried to batch R. `READING_ROW_105.md` #96.
 97. **The bound cluster mass before survival is 72 times the globular clusters' share** (S33, D182).
    `bound_cluster_mass_total` — Lada & Lada 2003's 7% emerging bound, applied to every star formed over the
    history net of return, every star taken to form in a cluster (their 70–90% `[verified: arXiv:astro-ph/
@@ -3652,6 +3696,15 @@ never been judged in twenty-three sessions.
    survivors separated at a halo-orbit disruption time, is a mechanism with a source; with #98.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row, with #98: a sourced age threshold
    for the globular clusters and a halo-orbit disruption time.
+   *S103 (BUILD_VII row 105, D273):* **the owner's, with #98.** Baumgardt & Makino 2003 eqs. 7-8 READ (T_diss = β (N /
+   ln(0.02 N))^x R_G (V_G / 220 km/s)^-1; W0 = 5: x 0.75, β 1.91; a smooth potential, no clouds); Lamers et al. 2005
+   READ (t0 = 3.3 Myr, "a factor 5 shorter" than N-body, the cause offered the giant molecular clouds); VandenBerg et
+   al. 2013 READ for Pal 12's "age near 9 Gyr" (Table 2 NOT READ). **Disclosed:** S34 already measured the old
+   survivors at both dissolution times (-1.87 dex at 3.3 Myr, +0.09 dex at the N-body t0), so any choice now is made
+   after the measurement. The owner's: (i) BM03 for clusters older than about 9 Gyr (halo orbits, no molecular clouds)
+   and Lamers et al. 2005's five-times-shorter time for the disc - **recommended**, on the physical ground only (the
+   two papers name the cause of the difference) - or (ii) the model as it is. `READING_ROW_105.md` #97 with #98;
+   `BRIEF.md`.
 
 98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex — 0.25 above the
    blind window's top** (S34, BUILD_II Phase 5, D183; the window re-set at S42, D192). The ensemble median
@@ -3672,6 +3725,8 @@ never been judged in twenty-three sessions.
    separated, row 32 within 0.2 dex) rests on #97's mechanism; with #97.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row, with #97: its kill rests on #97's
    separation.
+   *S103 (BUILD_VII row 105, D273):* the owner's with #97 (#97's S103 line): row 32's window was set blind and is not
+   moved; the choice of mechanism is made after S34's measurement, disclosed. `READING_ROW_105.md` #97 with #98.
 99. **Row 33, the stellar halo mass, reads 3.0 × 10⁹ against BHG16's 4–7 × 10⁸** (S34, D183). The debris
    integral over `mergers[]` takes each satellite's stars as the mass ratio times the host's disc stars
    formed before the event `[inferred]`: Gaia-Enceladus 0.25 × 9.63 × 10⁹ = 2.41 × 10⁹, Sagittarius 0.02 ×
@@ -3774,6 +3829,14 @@ never been judged in twenty-three sessions.
    source first.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: Green's catalogue statistics read
    - a remnant age distribution with its selection.
+   *S103 (BUILD_VII row 105, D273):* **restated to one clause, the shell's ionization state; carried.** The count's
+   lifetime clause is PERMANENT within the entry: no survey prints a complete age distribution - Green 2019
+   (arXiv:1907.02638) sect. 4.2 prints selection limits and no ages; Ranasinghe & Leahy 2023 (arXiv:2302.06593) sect.
+   III.3: "the incompleteness is a factor of ∼2 for SNR ages <14 kyr" (both READ). One disclosed check for batch R: the
+   model's 1 464 inside Ball et al. 2023's (arXiv:2307.01948, sect. 1, READ) predicted 1 000-2 700 detectable remnants
+   - a prediction, said so. The Sedov jump clause CLOSES on Leahy & Williams 2017 (arXiv:1701.05942) sect. III.1.4,
+   READ: "a strong shock with compression ratio of 4". What is left: the radiative shell's ionization state (one
+   recombination per swept-up H atom), NOT READ - a reading. `READING_ROW_105.md` #103.
 
 104. ~~**The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**~~
    **DISCHARGED at S38 (D187)**: the exponent is −0.2, the zone's pins swapped to the printed reading. (S37, Audit III A3-1, D186). `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock
@@ -4184,6 +4247,12 @@ never been judged in twenty-three sessions.
    re-rule either. What closes (c): a source that says which U a region's lines follow, then the read point moved.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row, on (c) alone: the U convention a
    region's lines follow (Byler et al. 2017).
+   *S103 (BUILD_VII row 105, D273):* **(c) closed by the reading, the gate's.** Byler et al. 2017 (arXiv:1611.08305)
+   sect. II.1.4, READ: the inner face against the Strömgren radius - "The distinction does not matter for a thin
+   spherical shell, the geometry assumed in this work." The model keeps its read point (U at the Strömgren radius) and
+   nothing moves. The volume-mean alternative, named and not taken: Gutkin et al. 2016 (arXiv:1607.06086) eq. 8, U_S
+   about <U>/3 (S93's +0.67 to +1.5 dex). #118's other clauses are untouched; the entry stays carried as it stood on
+   them. `READING_ROW_105.md` #118 (c).
 119. ~~**The diffuse ionized gas carries only its recombination lines**~~ (S42, D192). The grid models a
    radiation-bounded region around a young cluster; the diffuse layer's field is softer and diluted, and its
    observed [N II]/Hα and [S II]/Hα are enhanced above the regions' `[recall: Haffner et al. 2009 §IV, the
@@ -4523,6 +4592,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (`READING_ARM_GAS_CONTRAST.md` S101.2), and Egusa's one galaxy stays a check. The model's gas crest is 1.28 / 2.09
    kpc FWHM against the stars' 1.59 / 2.41 (0.87 / 0.99 of them). Under #234's (ii) the width follows the power,
    0.64-0.79 of the stars' (scout L's probe), with no width put in. Carried.
+   *S103 (BUILD_VII row 105, D273):* **the owner's.** No sample-wide gas ridge width over the arm spacing is published:
+   Querejeta et al. 2024 prints none (no per-galaxy or per-segment table, READ); SEDIGISM (Colombo et al. 2022, sect.
+   5.3, READ) is one galaxy with a non-FWHM width. The owner's: (i) permanent - **recommended** - or (ii) measured from
+   the PHANGS-ALMA maps, a download, which is the owner's to order. `READING_ROW_105.md` #129; `BRIEF.md`.
 130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
    contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
    and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
@@ -4641,6 +4714,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    S101's reader RQ: Querejeta et al. 2024 prints no scatter about its gas-against-stars fit - only ρ 0.73, the fit's
    errors and the per-point errors 0.11 / 0.14 dex (`READING_ARM_GAS_CONTRAST.md` S101.2); under #234's (ii) the
    scatter is not drawn and stays this entry's. Carried.
+   *S103 (BUILD_VII row 105, D273):* **permanent**, the gate's: no scatter number and no per-galaxy table is printed
+   for the relation (Querejeta et al. 2024, sects. 3.1, 4.1-4.2 READ; Fig. 3 an image, and a digitised figure is not a
+   READ number, D1); the model's spread stays the stellar draws', no residual drawn. `READING_ROW_105.md` #131.
 132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
    amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
    the lower bound of its range, 0.5: a disc this compact and massive (1.68 kpc, 3.9e10 M☉) makes a peak above
@@ -4688,6 +4764,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    beside a sourced Milky Way value; the suspects (#85's locked mass, the K band on the giant branches) untested.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: a sourced Milky Way Υ_K read
    beside the default's.
+   *S103 (BUILD_VII row 105, D273):* **a sourced disclosed check, destination batch R.** Just et al. 2015
+   (arXiv:1504.05808) sects. 3.3-3.4, READ: M/L_K 0.31 ± 0.02 M☉/L_K☉ locally, 0.34 for the solar cylinder (white and
+   brown dwarfs counted, empirical masses), against the model's about 0.73 - **a miss of 2.1x** `[inferred: 0.73 /
+   0.34]`, to be recorded as measured and its cause named by the builder (which populations carry the K light) before
+   anything is mended. The entry's recalled M_K,☉ 3.27 is now READ (Just et al. 2015 sect. 3.2, citing Casagrande et
+   al. 2012). Carried. `READING_ROW_105.md` #135.
 136. **The model's face-on frame is bluer than the catalogues' face-on colour** (S54, D213). The template's frame
    through its dust reads B − V 0.636 against [0.72, 0.82] (RC3 and HyperLeda agree on 0.77, corrected to face-on,
    not dust-free; disclosed — the first fit, a quenched disc, read 0.819 and passed by 0.001), and the default
@@ -5351,6 +5433,13 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S102's gate (D272):* NGC 4414's arms' inner radius is in Herrera-Endoqui et al. 2015's table, **unread** (VizieR
    down): BUILD_VII row 105, the reading row, reads it; then the owner's - pin the template's inner end, or permanent.
    Carried.
+   *S103 (BUILD_VII row 105, D273):* **read; the owner's.** Herrera-Endoqui et al. 2015 (A&A 582, A86,
+   **arXiv:1509.05328** - not 1509.06743, which is Díaz-García et al. 2016a) Table 3 READ on VizieR's CfA mirror
+   (J/A+A/582/A86/table3): NGC 4414 flocculent (F), five segments, all quality 2; inner radii 28.7, 19.4, 32.7, 29.2,
+   57.9 arcsec - the innermost **19.4 arcsec = 1.66 kpc** at the template's 17.7 Mpc, the median 2.51 kpc `[inferred
+   arithmetic]`; no segment traced inside 1.66 kpc (an upper bound on where arm structure starts). The owner's: (i) pin
+   the template's arms' inner radius to the catalogue's innermost segment, 1.66 kpc - **recommended**, a measured row
+   replacing an unsourced default - or (ii) permanent. `READING_ROW_105.md` #149; `BRIEF.md`.
 150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
    S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
@@ -5870,6 +5959,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    this paper; a build waits on a source that prints the unit. Still carried.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: a source printing the
    separation's unit beyond Grasha 2017 / 2019; if none is found, permanent with that reason.
+   *S103 (BUILD_VII row 105, D273):* **a sourced disclosed check, destination batch R.** Turner et al. 2022
+   (arXiv:2209.02872) Table 4, READ: the amplitudes are 1 + ω at 300 pc, the unit printed; medians over the eleven
+   galaxies 3.43 at <= 10 Myr and 2.26 above `[inferred]` (the check: the young-star field's fall in ln(1 + ω) at 300
+   pc across 10 Myr). The four-bin width law still rests on Grasha et al. 2019 and stays `[inferred]` (pc), Turner's
+   two bins cannot shape it. The slip at `READING_CLUSTERING.md` line 139 (the medians' labels; the "all" median 2.86
+   missing) mended. Carried. `READING_ROW_105.md` #162.
 163. **The gas fluctuation field's per-cell normaliser table costs about 5 s a run** (S62, D221; the field builder's
    measurement). The table that gives the field unit mean per level-0 cell is evaluated on L1's lattice - 2 points per
    47.5 pc, 5.26 million points, six octaves of value noise in float64 - at 4.6-5.1 s cold; a sparser lattice breaks the
@@ -7506,6 +7601,30 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    restated to what is left:** whether real discs end within 0.3 kpc (truncations; Pohlen & Trujillo 2006 NOT READ) -
    BUILD_VII row 105, the reading row. What closes it: that reading, then the edge kept as the model's law with its
    source, or a build.
+   *S103 (BUILD_VII row 105, D273):* **the reading is done; carried, destination batch R, a lane that MEASURES first**
+   (`READING_DISC_EDGE.md` Part S103; the gate's item 3 as corrected by item 8 on a second reading - item 3's mend
+   "what the threshold law's source says about star formation below the threshold" is withdrawn). Read: truncations at
+   2-5 scale lengths (van der Kruit 2008's review), Type II breaks at 2.5 ± 0.6 with h_in/h_out 2.1 (1.3-3.6) and Type
+   I discs unbroken to 6-8 (Pohlen & Trujillo 2006), the fall-off length beyond a truncation 1.5 ± 0.1 kpc
+   (Martín-Navarro et al. 2012), face-on "a very soft bump" (Chamba et al. 2022). The model's edge at 9.7 / 10.7 scale
+   lengths falling with a 37 pc length `[inferred]` is **outside the measured range on both counts; no fall that steep
+   is measured anywhere read.** The Milky Way's own edge is disputed (13.9 kpc, Minniti et al. 2011; none to 26-31 kpc,
+   López-Corredoira et al. 2018). The code read: the star-formation switch is not a step but a tanh of width 0.25
+   Σ_crit (`sfh.py`), Σ_crit = α κ σ_g / (3.36 G) with α 0.69 and σ_g 6 km/s - both now READ in Martin & Kennicutt 2001
+   sect. 5 (marked recall in `level0.py`); 3.26 M☉/pc² at 23.66 kpc; the `milky_way` gas under the threshold from about
+   14 kpc out. **The cliff is the gas's own**: the infall's tail ends at a hard j_max (`halo.py`, Bullock et al. 2001),
+   the gas falls 25.6-fold between 23.66 and 24.19 kpc (an e-fold of 0.16 kpc), the Kennicutt-Schmidt power makes that
+   94-fold in star formation and the tanh 370-fold more. Under any law of index one or more the stars cannot fall more
+   gently than the gas, so no law below the threshold mends the edge (Krumholz 2013 eq. 21 READ - no threshold at all,
+   it replaces the law everywhere - recorded, not taken; Bigiel et al. 2010 READ, its normalisation not printed). The
+   sourced statements at the cause: Bullock et al. 2001 call their own j_max edge "clearly unphysical" and expect
+   "smoother edges" (sect. VI, Fig. 21; no form given); Wang et al. 2016 (arXiv:1605.01489, READ): outer HI profiles
+   exponential with a scale about 0.2 R_HI, about 4.8 kpc here - the model's gas edge about thirty times steeper
+   `[inferred]`; with it the stars would e-fold at about 2.4-2.8 kpc, the measured order `[inferred]`. Batch R: the
+   gas's outer profile carried to Wang et al.'s exponential beyond the radius where the tail's own profile becomes
+   steeper than it (the mass-conserving form and the join `[inferred]`, the builder's table before any build; R_HI by
+   the model's own 1 M☉/pc² radius), and the gate rules on the measurement; the measured fall-off length (1.5 kpc) the
+   disclosed check. **A clause of its own: the tanh's width 0.25 has no source** (its comment calls it numerical).
 227. **The published vertical dispersion no longer gives the stellar layer's height away from the solar radius**
    (restated at S99, D269, on the build; was "The vertical stage reads one stellar height at the Milky Way's R_SUN on
    every template") (S97, D266; the analyst's trace, lane R, `READING_PICTURES.md` section 13). `thin_disc_scale_height` is one scalar per galaxy: the
@@ -7660,6 +7779,23 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    (candidates to READ, none read: the PHANGS-HST/JWST dust-filament papers; the shock's compression in a spiral
    potential, Roberts 1969 and Kim & Ostriker's), then a sourced build or permanent. (The gate's verdict V2 on the
    sheets, `READING_PICTURES.md` section 25; no new entry, #229 stays discharged.)
+   *S103 (BUILD_VII row 105, D273):* **the reading row read the lanes, and the lanes are the owner's question**
+   (`READING_LANES.md` Part S103; the gate's item 1). Read: a lane's width 20-81 pc in M51's inner arms (Schinnerer et
+   al. 2010) and about 150 pc in five S4G grand designs (Elmegreen et al. 2014); the CO ridge about 100 pc to the
+   concave side of M51's 15 micron arm inside corotation (Patrikeev et al. 2006) - warm dust, not the old stars' crest;
+   halving the PHANGS arm mask moves the molecular contrast only 2.22 -> 2.53 (Querejeta et al. 2024 Table 1), so no
+   thin ridge holds the arm's gas `[inferred]`; no covering fraction printed anywhere read; no closed form for a
+   shock's width (Kim, Kim & Ostriker 2020's time-averaged arm is a broad ridge, hundreds of parsecs). **A lane cannot
+   enter the model by D1: its share of the gas, its offset from the stellar crest and its continuity have no source.**
+   The closer restated: the owner's ruling between (i) **no lane** - the model keeps what is measured (the kiloparsec
+   contrast, the clouds), the frames keep dark flecks, and the goal pictures' lanes are declared outside what the model
+   holds; and (ii) **a disclosed lane** - a thin ridge on the gas crest (the reader's R1), width a declared bracket
+   20-150 pc, share a declared number with no source, zero offset: a picture-driven term, which C6 and D1 forbid a
+   session to take and only the owner can order. **The gate recommends (i)**, and says what it costs: the lanes are the
+   largest thing a viewer misses. R2 (a steady shock per ring) recorded and not recommended: it reopens D216, needs a
+   pattern speed NGC 4414 does not have, and still gives hundreds of parsecs. The gate's words are "stays carried"; the
+   struck head is left as S99 struck it and no count moves at S103 - the question is on the owner's list (`BRIEF.md`)
+   and under #234 (open).
 230. ~~**The Milky Way's gas field steps across two rows at 5.96-6.04 kpc**~~ (S98, D267; discharged at S102, D272 —
    the forcing's pitch averaged over the layer's height and a chain's count tapered at its turn back, both built in
    batch Q's lane G, the residual bump declared; the measurer's second pass, SP-3, `READING_CLOUD_LAYER.md` Part S98). In S96's saved render (`dust_placement_unspurred`, 75 pc × 1°), the median
@@ -7729,6 +7865,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    left; clearing it would need a taper in R, a different rule, not taken. Under #234's (ii) on the held head the
    stars' kink there steps the molecular field by 0.029 (#234's S102 paragraph); on `batch-q` the steady solve reads
    0.0172 at 4.450 kpc.
+   *S103 (BUILD_VII row 105, D273):* **the masers' trace (D272's item (b)) answered; stays discharged, no count moves**
+   (the gate's item 7; tracer's note `s103_M.md`). The probe's anchor holds (both of lane G's changes off reproduces
+   `main`'s record, both on `batch-q`'s pin). The match to the masers got better: the as-built statistic 0.18 -> 0.13 σ
+   for the gas and 0.19 -> 0.15 for the young stars (σ Reid's measured width, 336 + 36 (R - 8.15) pc), its percentile
+   among the rotated nulls 1 -> 0 and 2 -> 1. What widened is the null (within one σ 100 -> 76 % and 97 -> 62 %;
+   medians 0.42 -> 0.77, 0.48 -> 0.87): fewer crests per azimuth over 3-13 kpc (20.3 -> 15.9 gas, 21.6 -> 16.9 young
+   stars), mostly the pitch averaging's doing. **No defect of lane G.** `main`'s close match at 4.46 kpc was with the
+   count step's own edge, the artefact this entry named `[inferred from lane G's trace; the radial profiles along those
+   azimuths not re-measured]`; every arm still reads inside one σ. **Disclosed:** the tail is worse (up to about 1 kpc,
+   3 σ, at single inner points; the 90th percentile of the raw offset 0.185 -> 0.298 kpc), and the turn's taper takes
+   the crest off Norma's measured near-circular stretch (4.44-4.46 kpc) - whether a chain's turn back should keep a
+   crest there has no source read. Only `milky_way` at the default seeds was read.
 231. **The clouds' mass function does not know the arm** (S99, D269; the reader, `READING_CLOUD_LAYER.md` Part S99).
    The model draws every cloud's mass from one mass function per radial zone, the same on an arm and between arms;
    the clouds are placed by the gas contrast to the first power (#229's discharge). The reader: drawn so, the model
@@ -7954,6 +8102,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    solve) **and no longer on the picture: the frames give no reason to prefer either. The gate recommends the owner
    NOT take (ii) for the picture's sake, and leave `batch-q-lanes` held until the reading (#229's line) is in.**
    Carried, the owner's.
+   *S103 (BUILD_VII row 105, D273):* the reading is in (#229's S103 line, `READING_LANES.md` Part S103): no source
+   gives a lane's share of the gas, offset or continuity, so neither ruleset of this entry holds a lane, and a lane is
+   the owner's question (i) / (ii) put under #229. Carried, the owner's.
 235. **The grown regions' size-luminosity relation is flatter than the measured one and the faint regions too large**
    (S102, D272; what #232's build leaves, lane H, `READING_HII_SIZES.md` section 3). Each HII region now grows by the
    D-type front to its cluster's age, stops at the stagnation radius and is capped at its cloud (#232's S102
@@ -7966,6 +8117,16 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the reading row - a region's ionizing rate falling with its cluster's age; Barnes et al.'s units and size
    distribution read; the leak at the cloud's edge (#232's ruling (b)'s alternative). What kills it: the slope read
    within the measured range on the unchanged model once the units are read.
+   *S103 (BUILD_VII row 105, D273):* **read; destination batch R** (`READING_HII_SIZES.md` Part S103; the gate's item
+   2). Barnes et al. 2025 (arXiv:2510.11778) READ: the faint end of the measured relation is incomplete (5 % at log L
+   37, 50 % at 38; Sect. 4.1) and by the authors' own word misses the diffuse extended regions (Sect. 5.1), so the
+   "faint regions too large" clause is restated: against the circularised fit the 10^37-10^38 decade is 1.09x, against
+   the deconvolved fit 2.7x; units still not printed. **A defect of the law as built is named:** the region is grown to
+   the cluster's age at TODAY's ionizing rate held fixed, while the model's own table
+   (`population_light().ionizing_per_mass`) has the rate falling a hundredfold by 8 Myr. Batch R: grow the front at the
+   rate's history (the model's own table; no new constant), keep the ionized radius inside the shell at today's rate
+   `[inferred]`, and compare only above Barnes's detection limit; the gate rules on the builder's measurement. Leakage:
+   no closed form read, not built. Carried.
 236. **At the 2.2 kpc stand near `ngc_4414`'s nucleus the dust draws as stair-stepped patches and the young light as
    pixel speckle** (S102, D272; the close's runner X, `s102_X.md`, on the gate's order V4). At the N6 box's 2.2 kpc zoom
    stand (4.4 kpc across, about 4.3 pc per pixel) the dust clouds draw as blocky, stair-stepped dark patches with
