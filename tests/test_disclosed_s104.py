@@ -94,3 +94,40 @@ def test_135_the_k_band_mass_to_light_ratio_in_the_solar_cylinder_disclosed(defa
     F = res.fields
     l_k = 10.0 ** (-0.4 * (float(F["absolute_magnitude_k"]) - M_K_SUN))
     assert float(F["stellar_mass_total"]) / l_k == pytest.approx(0.703, abs=2e-3)  # S54's "about 0.73" (M_K -23.77)
+
+
+def test_162_the_clusters_correlation_at_300_pc_by_age_disclosed(default):
+    """#162, DISCLOSED as measured at S104 (D273 item 5). The source: Turner et al. 2022 (arXiv:2209.02872) Table 4,
+    READ at S103: 1 + omega at 300 pc of eleven PHANGS-HST galaxies' clusters, medians over the rows 3.43 at <= 10 Myr
+    and 2.26 above `[inferred]` (S103's medians, not printed in the paper). The model: the cluster census (0-20 Myr,
+    every cluster past its cloud's embedded phase, every mass) through ``specs.clustering`` - Landy & Szalay 1993
+    against uniform randoms ten times the data, ``A`` the power law's 1 + omega at 300 pc fitted over 100-2000 pc, and
+    the 300 pc bin read directly. How it differs from Turner's: one galaxy seen face-on in 2-D positions (Turner's are
+    projected sky positions in angle converted to pc), every cluster (Turner's are detected, so mass- and
+    luminosity-limited), a 6 kpc square at R_SUN (the project's PHANGS-like pointing, ``solar_pointing``) where Turner
+    uses each galaxy's HST footprint and a fit range per galaxy not printed in pc, and the model's "above 10 Myr" is
+    10-20 Myr only (the census ends at 20 Myr). The square (the clustering gate's own convention; its <= 10 Myr numbers
+    are the gate's disclosed SQUARE_AFTER row, the anchor): **A 1.375 at <= 10 Myr and 1.197 at 10-20 Myr against
+    3.43 and 2.26 - a miss, both under**; the 300 pc bin itself 1.066 and 1.093 (the fall with age inverted there);
+    ln A(>10) / ln A(<=10) 0.56 against Turner's 0.66 `[inferred]`. The whole disc (the annulus to the grid's edge)
+    reads A 10.33 and 10.78, set by the disc's radial profile against uniform randoms - over, and no fall with age.
+    ``ngc_4414`` (s104_RC_cl_n4414.log, not pinned): the square 1.342 / 1.273, the annulus 18.03 / 18.07."""
+    from galaxy.specs import clustering as CL
+
+    res, C = default
+    F, R = res.fields, res.grid.R
+    age = np.asarray(F["cluster_age"], float)
+    assert age.size == 13124 and float(age.max()) < 20.0
+    xy = CL.positions_pc(np.asarray(F["cluster_radius"], float), np.asarray(F["cluster_azimuth"], float))
+    got = {}
+    for fname, fp in (("square", CL.solar_pointing(float(C["R_SUN"]))), ("annulus", CL.Annulus(float(R[0]) * 1000.0, float(R[-1]) * 1000.0))):
+        for key, sel in (("<=10", age <= 10.0), (">10", age > 10.0)):
+            corr = CL.against_uniform(xy[sel], fp, multiple=10.0, seed=61)
+            law = CL.fit_power_law(corr, 100.0, 2000.0)
+            got[fname, key] = (corr.n_data, law.amplitude, law.alpha, corr.at(300.0))
+    # (clusters in the footprint, A at 300 pc from the 100-2000 pc fit, the slope, 1 + omega in the 300 pc bin)
+    assert got["square", "<=10"][0] == 281 and got["square", ">10"][0] == 259
+    assert got["square", "<=10"][1:] == pytest.approx((1.375, -0.202, 1.066), abs=3e-3)  # Turner median 3.43; test_clustering_gate SQUARE_AFTER
+    assert got["square", ">10"][1:] == pytest.approx((1.197, -0.141, 1.093), abs=3e-3)  # Turner median 2.26 (their > 10 Myr reaches far older)
+    assert got["annulus", "<=10"][1:] == pytest.approx((10.335, -0.375, 9.247), rel=2e-3)
+    assert got["annulus", ">10"][1:] == pytest.approx((10.777, -0.364, 9.425), rel=2e-3)

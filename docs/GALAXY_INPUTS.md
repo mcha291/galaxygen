@@ -5977,6 +5977,15 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    pc across 10 Myr). The four-bin width law still rests on Grasha et al. 2019 and stays `[inferred]` (pc), Turner's
    two bins cannot shape it. The slip at `READING_CLUSTERING.md` line 139 (the medians' labels; the "all" median 2.86
    missing) mended. Carried. `READING_ROW_105.md` #162.
+   *S104 (batch R, lane RC): the disclosed check, measured - a miss.* The cluster census (0-20 Myr, every mass;
+   production grid, the default galaxy) through `specs.clustering` (Landy-Szalay against uniform randoms, A = the
+   100-2000 pc power law's 1 + ω at 300 pc): in the 6 kpc square at R_SUN (the gate's PHANGS-like pointing) **A 1.375
+   at <= 10 Myr and 1.197 at 10-20 Myr, against Turner et al.'s medians 3.43 and 2.26 - both under**; the 300 pc bin
+   itself 1.066 and 1.093 (no fall with age there); ln A ratio 0.56 against 0.66 `[inferred]`. The whole disc (the
+   annulus) reads 10.33 and 10.78, the radial profile's. Not like for like, said in the record: one face-on galaxy,
+   every cluster (Turner's detected ones), a footprint and fit range not Turner's, and the model's "above 10 Myr" ends
+   at 20 Myr. `ngc_4414` (not pinned): square 1.342 / 1.273, annulus 18.03 / 18.07. `tests/test_disclosed_s104.py`.
+   Carried.
 163. **The gas fluctuation field's per-cell normaliser table costs about 5 s a run** (S62, D221; the field builder's
    measurement). The table that gives the field unit mean per level-0 cell is evaluated on L1's lattice - 2 points per
    47.5 pc, 5.26 million points, six octaves of value noise in float64 - at 4.6-5.1 s cold; a sparser lattice breaks the
