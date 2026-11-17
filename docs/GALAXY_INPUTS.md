@@ -727,10 +727,13 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S99 | **220, 229** (the spurs' walk reads the crest and the trough by the point function on the foot's own ring, an identity now, 0.27 unmoved and the hold lifted; the clouds' first power sourced by mass on Colombo et al. 2014's Table 2, exponent 1.05, the citation in the code - D269) | 2 |
 | **discharged** at S100 | **221** (the gas inside the bar under the lanes or the response on both templates since #220's mend - the Milky Way 6.7590 against 7.0556, `ngc_4414` 2.4949 against 2.5078 - the two strict holds lifted, the clause back in its original tests - D270) | 1 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 81, 82, 87, 90, 93, 99, 101, 128, 132, 133, 134, 141, 143, 144, 145, 147, 152, 155, 157, 158, 180, 181, 182, 195 | 49 |
-| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 146, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 183, 184, 185, 186, 202, 203, 204, 205, 222, 223, 224, 225, 226, 227, 228, 230, 231, 232, 233 | 65 |
+| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 131, 135, 136, 138, 146, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 183, 184, 185, 186, 202, 203, 204, 205, 222, 223, 224, 225, 226, 227, 228, 230, 231, 232, 233, 234 | 66 |
 
-So the board's **114 open** is 49 permanent and 65 carried, and no item is unruled (S101 (the register's
-destinations), D271: #101 and #147 ruled permanent at the gate on their own records - no escape-fraction law with usable
+So the board's **115 open** is 49 permanent and 66 carried, and no item is unruled (S101 (the register's
+destinations), D271: #234 opened - the arms' molecular gas answers its stars at a gain of about one where Querejeta et
+al. 2024's relation amplifies, the owner's with (ii) recommended and built held; #226's cause named, the model's
+stellar disc edge; #230's cause named, the forcing's pitch stepping where a chain's lead piece changes, a mend in batch
+Q; #233's named, one draw's scatter, the owner's with #223; #101 and #147 ruled permanent at the gate on their own records - no escape-fraction law with usable
 constants and no Milky Way fraction with a width in print; the owner's placeholder for the bar's lanes kept with its
 bracket and no lane-width sample in print; every carried entry given one dated line naming a destination that exists -
 batch Q (BUILD_VII rows 102-103), the viewer row (104), the reading row (105), batch R (106-107), the cost pass (108),
@@ -4506,6 +4509,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    over crests and five rows): **0.47 / 0.35 / 0.36 at 6 / 8 / 10 kpc on the Milky Way template (1.2-2.3 kpc across),
    0.29 / 0.29 / 0.37 at 4 / 6 / 8 kpc on `ngc_4414` (1.1-2.0 kpc)**, the same order as the pinned readings (how those
    were measured not read by the measurer). Nothing moved; still carried.
+   *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row. S101's scout found no sourced law
+   for the gas ridge's width against the stellar arm's: Querejeta et al. 2024 never measures it
+   (`READING_ARM_GAS_CONTRAST.md` S101.2), and Egusa's one galaxy stays a check. The model's gas crest is 1.28 / 2.09
+   kpc FWHM against the stars' 1.59 / 2.41 (0.87 / 0.99 of them). Under #234's (ii) the width follows the power,
+   0.64-0.79 of the stars' (scout L's probe), with no width put in. Carried.
 130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
    contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
    and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
@@ -4620,6 +4628,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    table and no per-galaxy spread in the text; Table 1's 2.73 (−1.36/+3.06) and 1.90 MATCH; the data listing at CANFAR
    came back empty, unreachable (`READING_GAS_PATTERN.md` Part S96). Still carried; what would settle it cheaply: Fig. 3's
    59 segment medians read off the published figure, their spread per galaxy against the suite's 240 galaxies' medians.
+   *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row (Fig. 3's per-segment medians).
+   S101's reader RQ: Querejeta et al. 2024 prints no scatter about its gas-against-stars fit - only ρ 0.73, the fit's
+   errors and the per-point errors 0.11 / 0.14 dex (`READING_ARM_GAS_CONTRAST.md` S101.2); under #234's (ii) the
+   scatter is not drawn and stays this entry's. Carried.
 132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
    amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
    the lower bound of its range, 0.5: a disc this compact and massive (1.68 kpc, 3.9e10 M☉) makes a peak above
@@ -4993,6 +5005,11 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S99 (batch P, D269):* no sourced weight gathers the clouds onto a ridge more tightly than the gas (#229 discharged
    on Colombo et al. 2014's exponent 1.05 by mass, D269 ruling 5), so a lane cannot come from the clouds' weight; the
    gas law's frame stays ruling 9's. Still permanent.
+   *S101 (BUILD_VI row 101, D271):* D268 ruling 9's condition is met (the frames were read again, `READING_PICTURES.md`
+   sections 19 and 20: no lanes), so the question returns to the owner in **#234**'s form - the arms' molecular
+   contrast by the measured relation inside D216's frame. Re-opening D216 for a shock stays not recommended (S57's
+   gates G2 / G3 still bind; `ngc_4414` has no pattern speed; the ridge a shock gives is still 155-500 pc). Still
+   permanent.
 145. **The bar's presence is a criterion that bars nearly everything, and is wrong for the one unbarred galaxy the
    build holds** (S58, D217 items 1–2). Barred where Fujii et al. 2018's formation time, 0.146 exp(1.38/f_d) Gyr
    with f_d the disc's share of V² at 2.2 scale lengths, is under the disc's age `[verified: Fujii et al. 2018,
@@ -7541,6 +7558,13 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S99 (batch P, D269):* #229's reading is in (discharged, D269 ruling 5): no sourced weight gathers the clouds onto a
    ridge more tightly than the gas — the one area-normalised source has them follow it to the power 1.05 by mass and
    0.67 by number — so the shallow field they follow is the gas's, not the weight's. Still carried.
+   *S101 (BUILD_VI row 101, D271):* **restated to what is left of it**: the clouds follow a gas field that follows its
+   stars at a gain of one. S101's scout L (`READING_ARM_GAS_CONTRAST.md` Part S101) measured the chain on the pinned
+   check's instrument: the stars' ratio of means 1.458 / 1.405, the gas's 1.431 / 1.429 (Milky Way / `ngc_4414`, 6-10
+   kpc, the 1.5 kpc mask), the net rms gain 1.035, the steady co-rotating response linear to four digits - so the
+   shallow field the clouds follow (S98, #229) is the response's, and what the measured relation says of it is
+   **#234**. Still carried. Destination - the owner's, with #234: under (ii) the clouds are re-read on the held head
+   `batch-q-lanes`; under (i) the lanes come only as far as the clouds make them.
 229. ~~**The clouds are placed in proportion to the gas contrast to the first power, and no source was read for the
    power**~~ (S98, D267; discharged at S99, D269 — on evidence: by mass the one area-normalised source read has the
    clouds follow the molecular gas to the power 1.05; the measurer's second pass, SP-1, `READING_CLOUD_LAYER.md` Part
@@ -7622,6 +7646,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    clusters, HII regions and bubbles born in it). **Not in D268's adopted list: the owner's to order.** **Carried.**
    What closes it: built (the mass function's upper cut stepped or scaled by the arm, with its source and its
    measurement), or ruled permanent with the reason written in.
+   *S101 (BUILD_VI row 101, D271):* destination - the owner's to order (B12; listed in `BRIEF.md`): (i) the arm-stepped
+   upper cut built; (ii) permanent, one galaxy's measurement. The gate has (i) built on the held head `batch-q-lanes`
+   after #234's (ii), as its own commit with frames (BUILD_VII rows 102-103), so the owner sees (ii) alone and (ii) +
+   #231; nothing merges from that head without the owner's word. No recommendation at S101.
 232. **An HII region's size is set in its cloud's clumped gas, so no region is ever large** (S99, D269; the measurer,
    `READING_CLOUD_SIZES.md` Part S99). Each region is a Strömgren sphere formed in its host cloud's mean density with
    its clumping (`nebular.materialise_nebular`): the electron density **150-770 cm⁻³** (median 154 / 174, max 767), so
@@ -7671,6 +7699,27 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    ruling with #223: (i) the default census judged; (ii) the nine-seed reading - **recommended**; the bound 0.05 stays
    either way. On #80's question: #233 is one draw's scatter, not a defect of the longer bar, so the recommendation to
    keep Table 4's bar is the stronger for it.
+234. **The arms' molecular gas answers its stars at a gain of about one, where the measured relation amplifies** (S101,
+   D271; scout L and reader RQ, `READING_ARM_GAS_CONTRAST.md` Part S101). On the pinned check's instrument (the
+   production grid, layer on, 6-10 kpc, the 1.5 kpc mask) the stars' ratio of means reads **1.458** on `milky_way` and
+   **1.405** on `ngc_4414`, the gas's **1.431** and **1.429**: the steady co-rotating response is linear to four
+   digits, its net rms gain **1.035**, the thickness factor (0.66 at the median, sourced) the largest single loss, and
+   the gas crest **1.28 / 2.09 kpc** FWHM against the stars' **1.59 / 2.41**. The measured relation (Querejeta et al.
+   2024, arXiv:2405.05364, Table 4, nominal, individual spiral segments; READ): **log10 C_mol = 1.83 log10 C_star +
+   0.16** (slope ± 0.46, intercept ± 0.03; ρ 0.73; the scatter about the fit not printed) - at the model's stellar
+   contrasts **2.89 / 2.69** (`[inferred]`: reader RQ's arithmetic) against 1.43 / 1.43. The sample is mostly grand
+   design (17 grand design, 9 multi-armed, 2 flocculent). Meidt et al. 2021's physical form is zero in a co-rotating
+   frame; the simulations read print no contrast. `gas_arm_contrast` 2.73 is a target nothing aims at. **Carried. The
+   owner's (B12), two rulesets:** (i) D216's steady response kept for the molecular gas: nothing measured is met, the
+   arms stay kpc-wide ridges at 1.43, and lanes come only as far as the clouds make them; (ii) the arms' **molecular**
+   contrast set by the measured relation inside D216's frame (no pattern speed, no shock, no offset; the atomic gas
+   keeps D216's own response; the bar's lanes unchanged): one exponent per galaxy, g = c_star^γ over its ring mean,
+   γ solved so that the galaxy's ratio of means over its arm rings meets Table 4's nominal row at the galaxy's own
+   stellar ratio - the power's shape inside a ring the model's choice `[inferred]`, the per-ring ratio a disclosed
+   check, the fit's scatter not drawn (#131's). **The gate recommends (ii)** and has it built in batch Q on a held head,
+   `batch-q-lanes`, beside `batch-q`, with frames for both, so the owner chooses a head; no merge of the held head into
+   `batch-q` or `main` without the owner's word. What closes it: the owner's ruling. What kills (ii): the ratio of
+   means not met within the fit's printed slope error on a template, or the frames no nearer a lane by the owner's eye.
 
 ---
 
