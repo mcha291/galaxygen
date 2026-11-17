@@ -1073,7 +1073,11 @@ EXPECTED_GATE: dict = {'milky_way': (19800, 19800, (0.0, 0.489, 0.909), 2, 0, 57
 # back: the gas's troughs filled; read on batch-q 0433cd1, 1:42:34 single-threaded on a shared machine, EXPECTED_GATE
 # as RB re-pinned it and every bound above held): the Milky Way leg was (0.1208, 0.1401, 8.309) - its least gas cell
 # 0.1401 -> 0.3128, its largest 8.309 -> 8.311; the stellar least and both NGC 4414 legs unmoved. Re-pinned as read.
-EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.3128, 8.311), 'ngc_4414': (0.4632, 0.0731, 3.302), 'ngc_4414 drawn': (0.0005, 0.0033, 4.21)}
+# S102 (held head, #234 ruleset (ii), lane L; read on 5bc28d8 in 1:22:40 single-threaded, EXPECTED_GATE and every bound
+# above held): was {'milky_way': (0.1208, 0.3128, 8.311), 'ngc_4414': (0.4632, 0.0731, 3.302), 'ngc_4414 drawn':
+# (0.0005, 0.0033, 4.21)} - the gas's least and largest cell on every leg under the measured relation (the arms'
+# molecular contrast deeper between the arms and higher on them); the stellar least unmoved. Re-pinned as read.
+EXPECTED_LEAST: dict = {'milky_way': (0.1208, 0.244, 8.257), 'ngc_4414': (0.4632, 0.0961, 4.76), 'ngc_4414 drawn': (0.0005, 0.0041, 6.317)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):
