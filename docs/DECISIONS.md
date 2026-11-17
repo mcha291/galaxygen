@@ -18628,3 +18628,199 @@ a `cd`) and started the bare suite for about three minutes before LB killed it (
 **What did not move.** No display default (`TEMPLATE_TUNING`, D227); no judged bound (B5); no goal picture used as a
 target (C6); nothing merged into `main`, which stays at b5d421c with the hash 27561e8d381b992b4ead3bccc0615aa7 until the
 owner's word; the held head never merged into `batch-q`; `q-231` never merged and never gated.
+
+### D273. S103, the reading row (BUILD_VII row 105): the lanes read and found unbuildable by D1 - no source for a lane's share of the gas, its offset or its continuity - and put to the owner under #234 ((i) no lane recommended); #235's defect named (the region grown at today's ionizing rate, not its history) and #226's cliff traced to the gas's own end (the infall tail's hard j_max; the gate's first ruling corrected on a second reading), both to batch R; #86, #83, #96, #135, #162 sourced for batch R; #131 permanent; #118 (c) closed by the reading; #149, #88, #97 with #98, #129 the owner's; #95's window read as the clusters'; the masers' trace (D272's item (b)) answered - no defect of lane G; documents only (2026-11-17)
+
+**Why a session.** BUILD_VII row 105, the reading row (a DRAFT, run on the owner's word of 2026-11-17 as D271 read
+it), run before row 104 on `session-103`, cut from `batch-q`'s closing head fccecee (tag s102). Documents only: no byte
+under `model/galaxy`, no frontend file, no frame, no display default. Fable at the gate; Opus for everything else:
+reader RL (the lanes, `s103_RL.md`), reader RB (#235, #226, #149, `s103_RB.md`), reader R1 (#83, #86, #88, #95, #96,
+#97/#98, `s103_R1.md`), reader R2 (#103, #118 (c), #129, #131, #135, #162, `s103_R2.md`), a second reader RT (#226's
+code and star formation below the threshold; #83's σ_e, `s104_RT.md`), a tracer M (the masers' check, D272's item (b),
+`s103_M.md`), and a docs builder. All read-only but the docs builder; every web number came through an extracting
+(summarising) fetch.
+
+**The gate's rulings.**
+
+1. **The lanes (#229, and the owner's #234).** Read: a lane's width 20-81 pc in M51's inner arms (Schinnerer et al.
+   2010) and about 150 pc in five S4G grand designs (Elmegreen et al. 2014); the CO ridge about 100 pc to the concave
+   side of M51's 15 micron arm inside corotation (Patrikeev et al. 2006) - warm dust, not the old stars' crest; halving
+   the PHANGS arm mask moves the molecular contrast only 2.22 -> 2.53 (Querejeta et al. 2024 Table 1), so no thin ridge
+   holds the arm's gas `[inferred]`; no covering fraction printed anywhere read; no closed form for a shock's width
+   (Kim, Kim & Ostriker 2020's time-averaged arm is a broad ridge, hundreds of parsecs). **A lane cannot enter the
+   model by D1 - its share of the gas, its offset from the stellar crest and its continuity have no source.** #229 stays
+   discharged (S99) and gets a dated S103 line; the lanes become **the owner's question, carried under #234**: (i) **no lane** - the model keeps what
+   is measured (the kiloparsec contrast, the clouds), the frames keep dark flecks, and the goal pictures' lanes are
+   declared outside what the model holds; or (ii) **a disclosed lane** - a thin ridge on the gas crest (the reader's
+   R1), width a declared bracket 20-150 pc, share a declared number with no source, zero offset: a picture-driven term,
+   which C6 and D1 forbid a session to take and only the owner can order. **The gate recommends (i)**, and says plainly
+   what it costs: the lanes are the largest thing a viewer misses. R2 (a steady shock per ring) is recorded and not
+   recommended: it reopens D216, needs a pattern speed NGC 4414 does not have, and still gives hundreds of parsecs.
+2. **#235 (the grown regions' size-luminosity slope).** Read: Barnes et al. 2025 (arXiv:2510.11778) - the faint end of
+   the measured relation is incomplete (5 % at log L 37, 50 % at 38) and by the authors' own word misses the diffuse
+   extended regions, so the "faint regions too large" clause is restated: against the circularised fit the 10^37-10^38
+   decade is 1.09x, against the deconvolved fit 2.7x. **A defect of the law as built is named**: the region is grown to
+   the cluster's age at TODAY's ionizing rate held fixed, while the model's own table
+   (`population_light().ionizing_per_mass`) has the rate falling a hundredfold by 8 Myr. **Destination: batch R** -
+   grow the front at the rate's history (the model's own table; no new constant), keep the ionized radius inside the
+   shell at today's rate `[inferred]`, and compare only above Barnes's detection limit; the gate rules on the builder's
+   measurement. Leakage: no closed form read, not built.
+3. **#226 (the disc's edge), the first ruling - corrected by item 8.** Read: truncations at 2-5 scale lengths (van der
+   Kruit's review), Type II breaks at 2.5 ± 0.6 with h_in/h_out 2.1 (1.3-3.6) (Pohlen & Trujillo 2006), Type I discs
+   unbroken to 6-8; the fall-off length beyond a truncation 1.5 ± 0.1 kpc (Martín-Navarro et al. 2012); face-on "a very
+   soft bump" (Chamba et al. 2022). The model: an edge at 9.7 / 10.7 scale lengths falling with a 37 pc length -
+   **outside the measured range on both counts; no fall that steep is measured anywhere read.** The Milky Way's own edge
+   is disputed (13.9 kpc, Minniti et al. 2011; none to 26-31 kpc, López-Corredoira et al. 2018). The entry's reading is
+   done; it stays carried with a sourced destination, batch R. *Withdrawn by item 8:* "the cause is two hard switches
+   meeting ..., so the mend is at the cause - what the threshold law's source says about star formation below the
+   threshold (a soft cut-off is in Kennicutt's and Schaye 2004's own text: READ before build) - not an outer exponential
+   pasted on; the measured fall-off length (1.5 kpc) is then the disclosed check."
+4. **#149 (NGC 4414's arms' inner radius).** Read (VizieR, Herrera-Endoqui et al. 2015, arXiv:1509.05328 - the id
+   corrected: 1509.06743 is Díaz-García et al. 2016a; the register never carried the wrong id): flocculent, five
+   segments, innermost 19.4 arcsec = 1.66 kpc at the template's 17.7 Mpc, median 2.51 kpc. **The owner's**: (i) pin the
+   template's arms' inner radius to the catalogue's innermost segment (1.66 kpc) - **recommended**, a measured row
+   replacing an unsourced default - or (ii) permanent.
+5. **Reader R2's rows.**
+   - **#103** - the count's lifetime clause is PERMANENT within the entry (no survey prints an age distribution that is
+     complete: Green 2019 sect. 4.2, Ranasinghe & Leahy 2023 sect. III.3, both READ), with one disclosed check for batch
+     R (the model's 1 464 inside Ball et al. 2023's predicted 1000-2700 detectable remnants - a prediction, said so);
+     the Sedov jump clause CLOSES on Leahy & Williams 2017's stated compression ratio of 4; the shell's ionization-state
+     clause was NOT READ. The entry stays carried, restated to that one clause (a reading).
+   - **#118 (c)** - CLOSED by the reading, the gate's: Byler et al. 2017 sect. II.1.4 (READ) says the inner face against
+     the Strömgren radius "does not matter for a thin spherical shell"; the model keeps its read point and nothing moves.
+     The volume-mean alternative (Gutkin et al. 2016 eq. 8, U_S about <U>/3) is named in the entry. #118's other clauses
+     are untouched. (The reader had proposed the owner's, (i) recommended; the gate closed it as its own.)
+   - **#129** - no sample-wide gas ridge width over the arm spacing is published (Querejeta et al. 2024 prints none;
+     SEDIGISM is one galaxy). **The owner's**: (i) permanent - **recommended** - or (ii) measured from the PHANGS-ALMA
+     maps, a download, which is the owner's to order.
+   - **#131** - **PERMANENT, the gate's**: no scatter number and no per-galaxy table is printed for the relation
+     (Querejeta et al. 2024; Fig. 3 an image, and a digitised figure is not a READ number); the model's spread stays the
+     stellar draws', no residual drawn. (The reader had proposed the owner's.)
+   - **#135** - a SOURCED disclosed check for batch R: Just et al. 2015 (arXiv:1504.05808 sect. 3.3-3.4) M/L_K 0.31 ±
+     0.02 locally, 0.34 for the solar cylinder, against the model's about 0.73 - a miss of 2.1x, to be recorded as
+     measured, and its cause named by the builder (which populations carry the K light) before anything is mended. The
+     entry's recalled M_K,☉ 3.27 is now READ (sect. 3.2). Stays carried.
+   - **#162** - a SOURCED disclosed check for batch R (Turner et al. 2022, arXiv:2209.02872, Table 4: 1 + ω at 300 pc,
+     medians 3.43 at <= 10 Myr and 2.26 above `[inferred]`); the four-bin width law still rests on Grasha et al. 2019 and
+     stays `[inferred]`. Stays carried. The slip at `READING_CLUSTERING.md` line 139 (the medians' labels; the "all"
+     median 2.86) mended.
+6. **Reader R1's rows.** Every number came through an extracting fetch: a builder checks coefficients against the PDF
+   before any build.
+   - **#83** - NOT DONE (Vink et al. 2001 eq. 11 READ, but the electron-scattering opacity's number is in Lamers &
+     Leitherer 1993, NOT READ; the Thomson closed form is RECALL). *Replaced by item 9.*
+   - **#86** - SOURCED, destination batch R: Spera, Mapelli & Bressan 2015 App. C eqs. 22-36 (the remnant mass from the
+     CO core and Z; the CO core from M_ZAMS and Z), coefficients checked against the PDF first. Özel's measured 7.8 M☉
+     is not thrown away: it becomes the DISCLOSED CHECK on the fit's mean, and the gate rules on the builder's
+     measurement. The 8.5 M☉ white-dwarf / neutron-star boundary is not in the fit and stays as it is.
+   - **#88** - **the owner's**: (i) Weinberg, Andrews & Freudenburg 2017's own pair (0.0017 = 0.77 M☉ of iron per Ia x
+     2.2e-3 events per M☉) - **recommended**: it is the one pair printed together, it misses row 31's floor by 0.006
+     (0.594 against 0.6 per century) and #89 is the named mend - or (ii) Maoz & Graur's 1.3e-3 or 1.6e-3 (0.350, 0.430).
+     The model's present 2.43e-3 is stated by neither paper: said plainly in the entry.
+   - **#95** - the reading is in: the -0.64 is Grasha et al. 2017a Table 4, clusters only, <= 40 Myr, classes 1-3; the
+     window IS the clusters'. So S100's built-not-merged offset stays unmerged, and the borrowed target is the clouds'
+     (clouds measure about -0.2). The compact-cluster row (-0.461) is disclosed and NOT chosen: picking a target with the
+     answer known is B5's breach. Stays carried; it joins the owner's clustering questions (#80, #233, #223).
+   - **#96** - a definition (Lada & Lada 2003 sect. II.1) and a DISCLOSED CHECK for batch R (Krumholz et al. 2019 sect.
+     2.2: slope -2 ± 0.2 over 1e3-1e5 M☉); the cloud-to-cluster mass relation was not found and that clause is
+     declared permanent within the entry. Stays carried to batch R.
+   - **#97 with #98** - **the owner's**, with the disclosure the reader asked for: S34 already measured the old
+     survivors at both dissolution times, so any choice now is made after the measurement. (i) Baumgardt & Makino 2003
+     eqs. 7-8 for clusters older than about 9 Gyr (halo orbits, no molecular clouds), Lamers et al. 2005's
+     five-times-shorter time for the disc - **recommended**, on the physical ground only (the two papers name the cause
+     of the difference) - or (ii) the model as it is.
+7. **The masers' trace (D272's item (b), owed before `batch-q` -> `main` is asked for; tracer M), the gate's ruling.**
+   The probe's anchor holds (both of lane G's changes off reproduces `main`'s record exactly; both on reproduces
+   `batch-q`'s pin exactly). **The model's match to the masers did not get worse; it got better**: the as-built
+   statistic 0.18 -> 0.13 σ for the gas and 0.19 -> 0.15 for the young stars, its percentile among the rotated nulls
+   1 -> 0 and 2 -> 1; σ is Reid's measured width (336 + 36 (R - 8.15) pc) and cannot move. What widened is the NULL
+   (the Sun rotated to 360 azimuths: within one σ 100 -> 76 % and 97 -> 62 %; medians 0.42 -> 0.77, 0.48 -> 0.87): the
+   field has fewer crests per azimuth over 3-13 kpc (20.3 -> 15.9 gas, 21.6 -> 16.9 young stars), so a rotated locus
+   lands farther from any crest - on `main` every rotation matched, i.e. the check could not tell the model's Sun from
+   any other; on `batch-q` it can a little. Mostly the pitch averaging's doing (null median +0.31 / +0.25; about 4
+   crests per azimuth removed) against the turn's taper (+0.10 / +0.04; 0.6). By place: the taper removed the crest at
+   4.435-4.465 kpc along Norma and Sct-Cen (gas Sct-Cen at β 45 0.06 -> 1.11 kpc, Norma at β 7-10 0.01 -> 0.55 kpc; per
+   arm Norma-Outer 0.23 -> 0.30 σ, Sct-Cen 0.20 -> 0.27); the averaging moved Perseus off at single points (gas at β 55
+   0.31 -> 0.91 kpc) and brought Sgr-Car, Local and Outer closer; the median raw offset at the model's Sun 0.039 ->
+   0.043 kpc, the 90th percentile 0.185 -> 0.298 kpc. **Ruling: no defect of lane G; D272's item (b) is answered and
+   nothing is held for it.** `main`'s close match at 4.46 kpc was with the count step's own edge (N 1.825 -> 1.0 at
+   chain 0's turn back), the artefact #230 named `[inferred from lane G's trace; the radial profiles along those
+   azimuths not re-measured]`; every arm still reads inside one σ. Disclosed: the tail is worse (up to about 1 kpc,
+   3 σ, at single inner points), and the taper also takes the crest off Norma's measured near-circular stretch
+   (4.44-4.46 kpc) - whether a chain's turn back should keep a crest there has no source read; a dated S103 line on
+   #230's discharged entry records it. Only `milky_way` at the default seeds was read.
+8. **Item 3 CORRECTED on a second reading (reader RT); item 3's last sentence ("the mend is ... what the threshold
+   law's source says about star formation below the threshold") is WITHDRAWN.** The code read: the star-formation
+   switch is not a step but a tanh of width 0.25 Σ_crit (`sfh.py`; the width has no source, its comment calls it
+   numerical), Σ_crit = α κ σ_g / (3.36 G) with α 0.69 and σ_g 6 km/s - both now READ in Martin & Kennicutt 2001 sect.
+   5 (they were marked recall); 3.26 M☉/pc² at 23.66 kpc. The `milky_way` gas is under the threshold from about 14 kpc
+   out. **The cliff is the gas's own**: the infall's tail ends at a hard j_max (`halo.py`, Bullock et al. 2001), the gas
+   falls 25.6-fold between 23.66 and 24.19 kpc (e-fold 0.16 kpc), the Kennicutt-Schmidt power makes that 94-fold in star
+   formation and the tanh 370-fold more. Under any law of index one or more the stars cannot fall more gently than the
+   gas, so no law below the threshold mends the edge (Krumholz 2013 eq. 21 READ - no threshold at all, it replaces the
+   law everywhere - recorded, not taken; Bigiel et al. 2010 READ, its normalisation not printed). **The sourced
+   statements at the cause:** Bullock et al. 2001 call their own j_max edge "clearly unphysical" and expect "smoother
+   edges" (sect. VI, Fig. 21; no form given); Wang et al. 2016 (arXiv:1605.01489, READ): outer HI profiles are
+   exponential with a scale about 0.2 R_HI, about 4.8 kpc here - the model's gas edge is about thirty times steeper
+   `[inferred]`; with it the stars would e-fold at about 2.4-2.8 kpc, the measured order `[inferred]`. **Ruling: #226
+   stays carried, destination batch R, a lane that MEASURES first** - the gas's outer profile carried to Wang et al.'s
+   exponential beyond the radius where the tail's own profile becomes steeper than it (mass-conserving form and the
+   join `[inferred]`, the builder's table before any build; R_HI by the model's own 1 M☉/pc² radius) - and the gate
+   rules on the measurement. The tanh's unsourced width 0.25 is named in the entry as its own clause. **The gate's first
+   ruling on #226 (item 3) was corrected on the second reading**: it had put the mend in the threshold, where the code
+   shows none can work.
+9. **#83, second reading (reader RT):** σ_e = 0.340 ± 0.002 cm²/g back-solved from Vink et al. 2000 Table 1 (11 of 12
+   series; series 5 gives 0.355) `[inferred from a READ table]`, Vink et al. 1999 sect. 5 agreeing (0.339); Lamers &
+   Leitherer 1993 still NOT READ. The code read: the model applies no Γ_e at all - the escape speed is Newtonian
+   (`massive_stars.py`). **Ruling: #83 stays carried, its closer restated: the recipe's effective escape speed (1 - Γ_e)
+   applied with σ_e 0.34, destination batch R, the builder's measurement of what it moves first.** This replaces item
+   6's "#83 NOT DONE".
+
+**The readings' files.** `READING_LANES.md` (new; Part S103: width, offset, continuity and contrast tables, the theory,
+what a model could carry, R1 and R2, what was not read); `READING_HII_SIZES.md` Part S103 (Barnes et al.'s fits,
+completeness and bias; Starburst99's Q(t) as a check; the defect; the candidates (a)-(e)); `READING_DISC_EDGE.md`
+(new; RB's truncation reading, the gate's first ruling, RT's second reading and item 8); `READING_ROW_105.md` (new; one
+section per entry: #149, #83 with RT's σ_e, #86, #88, #95, #96, #97 with #98, #103, #118 (c), #129, #131, #135,
+#162). `READING_CLUSTERING.md` line 139 mended.
+
+**The register.** A dated S103 line on #83, #86, #88, #95, #96, #97, #98, #103, #118, #129, #131, #135, #149, #162,
+#226, #229, #230 (discharged; the masers' trace), #234, #235. #131 ruled permanent and moved to the permanent row;
+nothing opened, nothing discharged. **115 open = 50 permanent + 65 carried, 104 discharged; next #237, D274.** #229
+stays discharged as S99 left it (the gate's rulings file had called it carried - the gate's error, corrected at
+entry); no count moves; the lanes' question is carried under #234. `tests/test_audit.py`: the permanent and carried rows re-pinned,
+the debt_counts line's comment (counts unchanged, (115, 104)).
+
+**The gates** (`galaxygen-s94-m`, `session-103`, single-threaded, one at a time, each to a scratchpad log with its
+EXIT line): `tests/test_docs.py` 20 passed (EXIT=0); `tests/test_progress.py` 6 passed (EXIT=0);
+`tests/test_audit.py::test_the_register_carries_the_s10_findings` 1 passed (EXIT=0, run after the register, again after
+items 8-9's amendments and at the close); `tools/progress.py --check` "79/79 closed; board agrees" (EXIT=0). Nothing
+else run: no byte under `model/galaxy`, `tests/` (but the two pins' rows) or `frontend` moved, so no suite, no frame,
+no hash.
+
+**Not verified** (by entry; everything NOT READ):
+- The lanes (#229, #234): Roberts 1969, Shu, Milione & Roberts 1973, Elmegreen 1980, Lynds 1970 (secondary only);
+  Thornley & Mundy 1997 (ADS 405); Chandar et al. 2017; Williams et al. 2022; Kreckel et al. 2018; Querejeta et al.
+  2024's Table 4 fit form; Kim & Ostriker 2006, Wada 2008, Shetty & Ostriker 2006, Kim, Kim & Ostriker 2008/2010;
+  TIGRESS's Fig. 11 profile values. Querejeta 2024 Table 1 cell by cell not re-checked.
+- #235: Barnes et al.'s units (r and L, still not printed) and the 1-99 percentile's L range; Starburst99's column
+  identity (RECALL); a published closed form for Q(t) (none found); BPASS, Slug; Williams et al. 2018 for a falling Q
+  and its c_0; Rahner et al. 2017, Geen et al. 2016-2020, Della Bruna et al. 2021, Chevance et al. 2022.
+- #226: van der Kruit & Searle 1981/82, van der Kruit 2007, Trujillo et al. 2020, Carraro et al. 2010; Kennicutt 1989
+  (scan only); Elmegreen & Hunter 2015; Maloney 1993; Bluedisks; Bigiel et al. 2010's last 15 000 characters and its
+  Fig. 9 normalisation; MK01's resolution element in kpc. The join to Wang et al.'s exponential and its mass
+  conservation are `[inferred]`, not built or measured.
+- #149: cdsarc (ECONNREFUSED); the ReadMe's notes.
+- #83: Lamers & Leitherer 1993 (scan only); Kudritzki & Puls 2000; the Thomson form RECALL; σ_e 0.34 back-solved, not
+  printed; series 5's 0.355 unexplained.
+- #86: Fryer et al. 2012; Spera's coefficients unchecked against the PDF. #96: Krumholz et al. 2019 sect. 4.
+  #97/#98: VandenBerg et al. 2013 Table 2. #95: He et al. 2026; #95's other clauses not searched.
+- #103: the radiative shell's ionization state. #118: Byler's page past 100 000 characters. #129: none exists in what
+  was read. #131: Querejeta 2024 Fig. 3 (image), CANFAR not retried. #135: arXiv:2311.17202, Martinsson 2013, Drimmel
+  & Spergel 2001 (snippets only); whether the model's Υ_K at R0 was ever printed (the gate to confirm blind or
+  disclosed). #162: Turner's fit ranges in pc.
+- The masers (item 7): only `milky_way` at the default seeds; the radial profiles along the Norma / Sct-Cen azimuths
+  not re-measured.
+- All web numbers came through an extracting fetch (some quotes fragments); a builder re-checks before any build.
+
+**What did not move.** No byte under `model/galaxy` (the hash 5a862a70d3760c426ca51c2cffa2b0c2 on `batch-q`, `main`
+27561e8d381b992b4ead3bccc0615aa7); no frontend file, no frame, no display default (`TEMPLATE_TUNING`, D227); no judged
+bound (B5); no goal picture used as a target (C6); nothing merged into `main` (b5d421c) or into `batch-q`; no push.

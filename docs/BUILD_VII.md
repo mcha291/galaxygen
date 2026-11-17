@@ -32,7 +32,7 @@ own; a lane that measures first: the gas carried to Wang et al.'s outer exponent
 on the second reading), #86 (Spera et al. 2015 App. C, Özel's 7.8 the disclosed check), #83 (σ_e 0.34, the effective
 escape speed), #96 (a definition and a disclosed check), #135 (a disclosed check, M/L_K 2.1x), #162 (a disclosed
 check), #103 (its count's disclosed check; restated to the shell's ionization state, NOT READ); **permanent** - #131;
-**closed by the reading** - #118 (c); **the owner's** - #229 (the lanes: (i) no lane recommended; #234 points to it),
+**closed by the reading** - #118 (c); **the owner's** - #234 (the lanes, on #229's reading: (i) no lane recommended),
 #149 (1.66 kpc recommended), #88 ((i) recommended), #97 with #98 ((i) recommended), #129 ((i) recommended), #95 (with
 the clustering questions; the window the clusters'); **not done** - none (#83's first "not done" replaced on the
 second reading). #136 and #184 were ruled at S102 and not re-read. D272's item (b), the masers' trace, answered (no

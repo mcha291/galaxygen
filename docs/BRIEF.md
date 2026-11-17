@@ -20,7 +20,7 @@ fewer crests - nothing is owed before `batch-q` -> `main` is asked for. Nothing 
 27561e8d...); `batch-q`'s run 44108837489 green (1860 passed). **115 open = 50 + 65, 104 discharged**; next #237, D274.
 
 ## The owner's choices now (recommendations are the gate's, each re-rulable)
-1. **#229 the lanes:** (i) no lane - the model keeps what is measured, the goals' lanes declared outside it -
+1. **#234, the lanes:** (i) no lane - the model keeps what is measured, the goals' lanes declared outside it -
    **recommended**; or (ii) a disclosed lane (width 20-150 pc, a share with no source, zero offset: picture-driven).
 2. **`batch-q` -> `main`** on its green run. **The held head (#234):** the gate recommends NOT taking (ii) for the
    picture's sake; with (1)'s (i) it stays held or is dropped.

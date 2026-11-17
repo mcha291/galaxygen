@@ -7793,9 +7793,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    20-150 pc, share a declared number with no source, zero offset: a picture-driven term, which C6 and D1 forbid a
    session to take and only the owner can order. **The gate recommends (i)**, and says what it costs: the lanes are the
    largest thing a viewer misses. R2 (a steady shock per ring) recorded and not recommended: it reopens D216, needs a
-   pattern speed NGC 4414 does not have, and still gives hundreds of parsecs. The gate's words are "stays carried"; the
-   struck head is left as S99 struck it and no count moves at S103 - the question is on the owner's list (`BRIEF.md`)
-   and under #234 (open).
+   pattern speed NGC 4414 does not have, and still gives hundreds of parsecs. This entry stays
+   discharged, as S99 left it (the gate's rulings file had called it carried - the gate's error, corrected at D273's
+   entry); no count moves; the lanes' question is carried under #234, the owner's.
 230. ~~**The Milky Way's gas field steps across two rows at 5.96-6.04 kpc**~~ (S98, D267; discharged at S102, D272 —
    the forcing's pitch averaged over the layer's height and a chain's count tapered at its turn back, both built in
    batch Q's lane G, the residual bump declared; the measurer's second pass, SP-3, `READING_CLOUD_LAYER.md` Part S98). In S96's saved render (`dust_placement_unspurred`, 75 pc × 1°), the median
@@ -8104,7 +8104,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    Carried, the owner's.
    *S103 (BUILD_VII row 105, D273):* the reading is in (#229's S103 line, `READING_LANES.md` Part S103): no source
    gives a lane's share of the gas, offset or continuity, so neither ruleset of this entry holds a lane, and a lane is
-   the owner's question (i) / (ii) put under #229. Carried, the owner's.
+   the owner's question (i) no lane / (ii) a disclosed lane, carried HERE as this entry's second question (#229 stays
+   discharged). Carried, the owner's.
 235. **The grown regions' size-luminosity relation is flatter than the measured one and the faint regions too large**
    (S102, D272; what #232's build leaves, lane H, `READING_HII_SIZES.md` section 3). Each HII region now grows by the
    D-type front to its cluster's age, stops at the stagnation radius and is capped at its cloud (#232's S102
