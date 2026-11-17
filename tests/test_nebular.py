@@ -166,8 +166,10 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S70 (D234): were 0.605 pc, 177.9 cm^-3 and -2.788 - the size law's three regimes (#192, the owner's ruling D233:
     # the clouds inside 4 kpc and in 7-8.2 kpc 1.53x larger, so less dense) and the clouds' ring inversion (F-2-7).
     assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.770, abs=0.01)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.759
-    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(153.7, rel=0.01)
-    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.835, abs=0.01)
+    # S102 (batch Q, #232): the Stromgren radius above is the region's start, unchanged bit for bit; the density and
+    # log U are the expanded region's (tests/test_hii_expansion.py). Were 153.7 cm^-3 and -2.835 (-2.831 measured).
+    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(2.305, rel=0.01)
+    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-3.457, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
     # S57 (D216): was 7775 (another draw); S56 (D215): was 7792 (another draw)
     # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
@@ -193,7 +195,9 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S61 (D220 item 10): was -0.1030 - the layer-off census redrawn ring-first (-0.102973 -> -0.097717), the one
     # move D220 allows the row; still a miss, 0.0053 nearer the window.
     # S67 (D231): reads -0.097902 under the clouds' size law, inside the tolerance; still a miss.
-    assert float(judged["nii_halpha_gradient_hii"]) == pytest.approx(-0.0977, abs=0.002)
+    # S102 (batch Q, #232): reads -0.103320 (the expanded regions' lower U); the record's pin is held strict below
+    # (test_row_37_record_under_the_expanded_regions, ROW37_READ_OVER_S102), the verdict asserted here: still a miss.
+    assert not (-0.045 <= float(judged["nii_halpha_gradient_hii"]) <= -0.005)
     # The layer-on census, which the viewer draws: not judged, read for the record. S56 (D215): were -1.9893 and
     # -0.105511 ("keeps the numbers it had", held bit for bit to S54's reference until then); the census placed by
     # five arm modes is another draw.
@@ -217,9 +221,21 @@ def test_the_default_census_numbers(default, default_layer_off):
     # (-0.097717 -> -0.097902, on and off alike); row 37 above a recorded miss still, 0.0002 further out.
     # S70 (D234): was -0.097902 - the clouds' ring inversion on its own interval (F-2-7) to -0.098171, then the three
     # Sigma regimes (#192, the owner's ruling D233) to -0.098309; row 37 a recorded miss still, 0.0004 further out.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.098643, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309  # S100 (batch P, D270; #227, the census +1 %): was -0.098650 (row 37's verdict unchanged)
+    # S102 (batch Q, #232): was -0.098643 - the expanded regions' density and U move each region's [N II]/Halpha.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.103320, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309  # S100 (batch P, D270; #227, the census +1 %): was -0.098650 (row 37's verdict unchanged)
     for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
         assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
+
+
+ROW37_READ_OVER_S102 = ("S102 (batch Q, #232): the layer-off [N II]/Halpha gradient reads -0.103320 under the expanded "
+                        "regions against the record's -0.0977 +/- 0.002; row 37 a recorded miss either way")
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=ROW37_READ_OVER_S102)
+def test_row_37_record_under_the_expanded_regions(default_layer_off):
+    """Row 37's record (the layer-off census's [N II]/Halpha gradient, a recorded miss under #117, D195), split from
+    test_the_default_census_numbers at S102 so the record's move stays visible and the gate rules on it (B5)."""
+    assert float(default_layer_off.fields["nii_halpha_gradient_hii"]) == pytest.approx(-0.0977, abs=0.002)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
@@ -313,7 +329,7 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     """Where the default census's regions sit on the grid, and what it gives them. Recorded, not judged: no row
     reads these lines yet. On the grid's own solar oxygen (8.93, Anders & Grevesse; D195, #121) the inner disc's
     gas is richer than the grid's +0.2 dex edge for 3.0% of the regions, which read the edge; the youngest 2.6%
-    read the 0.5 Myr floor; every log U is inside."""
+    read the 0.5 Myr floor; every log U was inside until S102 (#232), whose expanded regions put 10.6 % on the -4 floor."""
     F = default.fields
     g = nb._line_grid()
     solar = float(models[DEFAULT_MODEL].constants["NEBULAR_GRID_OXYGEN_SOLAR"].value)
@@ -325,7 +341,9 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # S61 (D220): was 0.0302 (the ring-first census, a new draw: 3.30 %)
     assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.0313, abs=1e-3) and not (log_z < g["log_z"][0]).any()  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0330
     assert (age < g["log_age_yr"][0]).mean() == pytest.approx(0.0257, abs=1e-3) and not (age > g["log_age_yr"][-1]).any()
-    assert np.all((log_u >= g["log_u"][0]) & (log_u <= g["log_u"][-1]))
+    # S102 (batch Q, #232): was "every log U is inside" - the expanded regions' U is lower, and 10.6 % of the regions
+    # (0.02 % of the Halpha; down to log U = -4.71) read the grid's -4 floor, clamped as FSPS clamps. Reported, not mended.
+    assert (log_u < g["log_u"][0]).mean() == pytest.approx(0.1064, abs=2e-3) and not (log_u > g["log_u"][-1]).any()
     w = np.asarray(F["hii_halpha_luminosity"])
     weighted = {n: float(np.sum(np.asarray(F[f"hii_{n}_ratio"]) * w) / w.sum()) for n in nb.FORBIDDEN}
     # S44: was 0.477 / 0.131 / 0.053 / 0.041 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93
@@ -346,7 +364,9 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # tolerance.
     # S70 (D234): [O III] 0.775 -> 0.772 and [N II] 0.078 -> 0.080 - the size law's three regimes (#192) and the clouds'
     # ring inversion (F-2-7) move each region's density and U; the [S II] pair inside the tolerance.
-    assert weighted == pytest.approx({"oiii_5007": 0.779, "nii_6583": 0.080, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.772
+    # S102 (batch Q, #232): were 0.779 / 0.080 / 0.054 / 0.042 - the expanded regions' lower U and density: [O III]
+    # falls, the low-ionization lines rise, the [S II] pair splits at ~2 cm^-3 (6716/6731 1.421 Halpha-weighted).
+    assert weighted == pytest.approx({"oiii_5007": 0.689, "nii_6583": 0.100, "sii_6716": 0.080, "sii_6731": 0.057}, abs=2e-3)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.772
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])
@@ -416,4 +436,4 @@ def test_the_regions_sii_pair_is_split_at_their_own_density(coarse):
     s1, s2 = (np.asarray(F[f"hii_sii_{w}_ratio"], dtype=float) for w in ("6716", "6731"))
     assert np.allclose(s1 + s2, grid["sii_6716"] + grid["sii_6731"], rtol=1e-12, atol=0.0)
     assert np.allclose(s1 / s2, nb.sii_doublet_ratio(np.asarray(F["hii_electron_density"], dtype=float)), rtol=1e-12)
-    # Measured at S93 on the default census: the Halpha-weighted 6716/6731 1.2694 (was 1.2892, the grid's own density).
+    # Measured at S93 on the default census: the Halpha-weighted 6716/6731 1.2694 (was 1.2892, the grid's own density); S102 (#232): 1.4212, split at the expanded regions' density.

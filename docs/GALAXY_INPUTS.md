@@ -7458,6 +7458,22 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    physics, not of the knot's drawing (by the form alone the diameter is linear in the ionising rate, `[inferred: the
    measurer's arithmetic]`). **The goal pictures' pink regions wait on it.** **Carried.** What closes it: the reading —
    then a sourced build, or permanent with the reason written in.
+   *S102 (batch Q, D272):* the reading done (S101's reader; `READING_HII_SIZES.md`) and the build made (lane H):
+   each region now grows from its Strömgren sphere R_St (published unchanged as `hii_stromgren_radius`) by the D-type
+   front R_St (1 + (7/4) √(4/3) c_i t / R_St)^(4/7) at its cluster's age (Bisbas et al. 2015 eq. 13, HI06's form),
+   stops at R_St (8/3)^(2/3) (c_i/c_0)^(4/3) (eq. 17), c_0² = c_s² + σ_v²/3 (Tremblin et al. 2014 eqs. 8, 16; c_s the
+   clouds' own 10 K, σ_v the cloud's), and is capped at its cloud; all re-read at their pages in S102. New columns
+   `hii_radius` and `hii_radius_limit` (not drawn); the density follows photon balance, n_e = n_rms (R_St/R)^(3/2), and
+   with it the emissivity, log U and the [S II] split; every region's Hα unchanged bit for bit. On `milky_way`: radius
+   **11.9 / 39.7 / 70.6 pc** (median / p99 / max; was 0.77 / 7.67 / 25.7), n_e median 154 → 2.3 cm⁻³, the cloud
+   binds 54 % of the regions (stagnation 13 %, still expanding 34 %), 1 956 regions wider than 19.5 pc holding 51 % of
+   the census's Hα (was 7, 6 %); `ngc_4414` 10.0 / 40.0 / 79.7 pc. Moved downstream: the bubbles (ambient = n_e) grow to
+   a median 87 pc (was 9.6), 81 % stalled (was 97 %); 10.6 % of the regions read the line grid's log U = −4 floor; row
+   37's layer-off gradient −0.0977 → −0.1033 (a miss still; its record held strict, `ROW37_READ_OVER_S102`). Open for
+   the gate: σ_v is Heyer's line-of-sight dispersion and Tremblin's σ three-dimensional `[inferred]`; the cap keeps
+   the photons of a region capped only after expanding (the builder's reading); the HST comparison (Barnes et al.
+   2025) is disclosed in the reading with its units inferred, not tested — the size-L slope fell 0.44 → 0.19 against
+   their 0.47-0.52. Complexes and envelopes stay #181's.
 233. **The default census's own-law estimator is not flat beyond 380 pc since the longer bar** (S100, D270; the re-pin
    pass, `s100_P.md` and `s100_P2.md`). `tests/test_clustering_gate.py` judges the census against its own law flat
    beyond 380 pc within 0.05 (1 + ω within 0.05 of 1): on batch P's final model the default galaxy reads **0.0529
