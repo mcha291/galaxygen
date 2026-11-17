@@ -62,6 +62,19 @@ remnants that read them; the bar's amplitude and mass share on the Milky Way), t
 all 42 routes moved and the four single-mode digests (their scalars are read with the pins off, so the bar's numbers
 follow #80 and #146). ``tests/layer_reference_s93.json`` (``REFERENCE_S93``) is kept untouched as history; no test
 reads it.
+
+**At S102, batch Q's close (D272), the reference is re-based again**, onto batch Q's final layer-off run
+(``content_hash`` 5a862a70..., batch-q at 0433cd1), written single-threaded by ``... write`` to a new file,
+``tests/layer_reference_s102.json`` (``REFERENCE``; sha256 d978b068..., fields 403 / 402 / 403 / 402, 42 routes), and
+read green at one thread and with the threads unrestricted. The cause: lane H's regions (#232) - each HII region
+grown past its Stromgren sphere to its expanded radius (``hii_radius``, ``hii_radius_limit``, ``hii_natal_density``
+added) and its density, emissivity and line ratios read over that radius. Against S100's file: 12 fields moved on
+every label (``hii_electron_density``, ``hii_halpha_emissivity``, ``hii_ionization_parameter``, the four HII line
+ratios, the four HII line surface brightnesses and ``nii_halpha_gradient_hii``), three added on every label, none
+lost; 14 of the 42 routes moved (every clusters route and every render route: the HII columns and layers, and the
+render header's stars about #226's sentence), the four single-mode digests unmoved. Lane G's arms (the turn-back
+taper, the pitch averaging) move no layer-off field. ``tests/layer_reference_s100.json`` (``REFERENCE_S100``) is kept
+untouched as history; no test reads it.
 """
 
 from __future__ import annotations
@@ -75,7 +88,8 @@ from typing import Any
 
 import numpy as np
 
-REFERENCE = Path(__file__).resolve().parent / "layer_reference_s100.json"  # S100 (batch P, D270): was layer_reference_s93.json (S93, #218, D262: was layer_reference_s90.json; S90, #214, D258: was layer_reference_s55.json)
+REFERENCE = Path(__file__).resolve().parent / "layer_reference_s102.json"  # S102 (batch Q, D272): was layer_reference_s100.json (S100, batch P, D270: was layer_reference_s93.json; S93, #218, D262: was layer_reference_s90.json; S90, #214, D258: was layer_reference_s55.json)
+REFERENCE_S100 = Path(__file__).resolve().parent / "layer_reference_s100.json"  # batch P's final run (S100), kept as history
 REFERENCE_S93 = Path(__file__).resolve().parent / "layer_reference_s93.json"  # M3's final run (S93), kept as history
 REFERENCE_S90 = Path(__file__).resolve().parent / "layer_reference_s90.json"  # M2's final run (S90), kept as history
 REFERENCE_S55 = Path(__file__).resolve().parent / "layer_reference_s55.json"  # S55's run, kept: test_modes' oracle
