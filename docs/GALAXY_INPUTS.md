@@ -7273,6 +7273,20 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    **Carried.** What closes it: a viewer session names the cause and either the edge is gone at any white point the
    panel offers or it is declared where it is computed. Destination: the viewer session after the owner's display
    pass (BUILD_VI).
+   *S102 (batch Q, D272):* **The law named and declared where it is computed (lane G); no number moved.** S101's runner
+   placed the circle in the model's light (every render array falls 340-fold between 23.66 and 24.04 kpc). The probe
+   (scratchpad `s102_G_edge.py`, production grid): the first published field to go to zero is the halo stage's high-j
+   tail, `infall_tail_surface_density` - on `milky_way` 2.71 M☉/pc² at 23.66 kpc, 0.71 at 24.04, **0 from 24.19 kpc**
+   (`ngc_4414`: 3.45 at 18.11, 0 from 18.64) - where the angular-momentum distribution's j_max lands (`halo.py`,
+   `angular_momentum_tail`). Past it only the exponential's own infall arrives: the gas falls 2.59 -> 0.10 M☉/pc²
+   while Kennicutt's threshold stays near 3.2, and the switch (a tanh a quarter of the threshold wide, `sfh.py`) turns
+   that 26-fold fall of the gas into a 3500-fold fall of the stars (0.252 -> 7.3e-5 M☉/pc², 23.66 -> 24.19 kpc). Inside
+   the edge the outer disc already forms its stars below the threshold, through the switch's tail. The SF threshold
+   alone does not make the edge; the tail's end does, the threshold sharpens it. Declared in
+   `stellar_surface_density`'s and `infall_tail_surface_density`'s abouts and in the render header's stars component
+   ("It ends, as every light array here does, at the stellar disc's edge ..."); `tests/test_disc_edge.py` holds the
+   render's edge to the field's within one ring (and the tail's end to it). Not struck: whether a real disc truncates
+   this sharply (Pohlen & Trujillo 2006, NOT READ) stays owed, to BUILD_VII's reading row.
 227. **The published vertical dispersion no longer gives the stellar layer's height away from the solar radius**
    (restated at S99, D269, on the build; was "The vertical stage reads one stellar height at the Milky Way's R_SUN on
    every template") (S97, D266; the analyst's trace, lane R, `READING_PICTURES.md` section 13). `thin_disc_scale_height` is one scalar per galaxy: the

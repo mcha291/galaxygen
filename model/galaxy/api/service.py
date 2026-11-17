@@ -1914,7 +1914,9 @@ class Service:
                 "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *contrast_fields], "layer": "stars",
                 "about": "the population's own spectrum - the eight bands' lambda L_lambda at their reference "
                          "wavelengths, power laws between them, a blackbody at the colour temperature beyond U and K - "
-                         "through each curve, placed around each ring by the pattern's density contrast" + even,
+                         "through each curve, placed around each ring by the pattern's density contrast. It ends, as "
+                         "every light array here does, at the stellar disc's edge, where the halo's angular-momentum "
+                         "distribution runs out (stellar_surface_density's about; S102, #226)" + even,
                 "bands": list(_spectra.SED_BANDS),
                 "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
