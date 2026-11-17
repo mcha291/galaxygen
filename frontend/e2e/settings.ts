@@ -133,6 +133,10 @@ export const TRANSFER_SLACK = 1e-3;
  * G's arms #230, lane H's regions grown to hii_radius #232) and lane V's knots drawn as spheres of hii_radius: measured
  * 0.96993, 0.97367, 0.97993 on the regenerated frames with the S102 bundles (+1.6e-4, +1.3e-4, +3e-5, inside
  * DUSTY_RATIO_PIN before the re-pin; the physics-only frame taken twice the same to 0).
+ *
+ * S104 (batch R's close, D274; the hash 00a5c504...): [0.96993, 0.97367, 0.97993] (S102) read again on the regenerated
+ * frames with the S104 bundles - batch R's model (lane RH's regions inside the shell at the peak rate, #235): measured
+ * 0.96993, 0.97367, 0.97993, the pin to the fifth decimal; unchanged (the physics-only frame taken twice the same to 0).
  */
 export const DUSTY_LAYER_RATIO = [0.96993, 0.97367, 0.97993] as const;
 // S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
