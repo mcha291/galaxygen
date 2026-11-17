@@ -1,4 +1,4 @@
-# READING_DISC_EDGE — do real discs end as sharply as the model's? Truncations, breaks and the Milky Way's edge (S103, D273; register #226)
+# READING_DISC_EDGE — do real discs end as sharply as the model's? Truncations, breaks and the Milky Way's edge (S103, D273; S104's measurement, D274; register #226, #237)
 
 **What this file is (2026-11-17, S103, BUILD_VII row 105, the reading row).** S102 named and declared the model's
 edge where it is computed: the disc ends where the infall's high-angular-momentum tail ends (`milky_way` 0 from 24.19
@@ -157,3 +157,142 @@ MEASURES first** — the gas's outer profile carried to Wang et al.'s exponentia
 profile becomes steeper than it (the mass-conserving form and the join `[inferred]`, the builder's table before any
 build; R_HI by the model's own 1 M☉/pc² radius) — and the gate rules on the measurement. The tanh's unsourced width
 0.25 is named in the entry as its own clause. Krumholz 2013 eq. 21 recorded, not taken.
+
+---
+
+## Part S104 — the measurement (batch R, lane RG; register #226, #237)
+
+S104's builder RG (Opus; note `s104_RG.md` in the session's scratchpad) measured what D273 item 8 asked for, in the
+worktree `galaxygen-s95-t` on `r-edge` cut from fccecee (batch Q's close). **Nothing was built**: every candidate is
+a run-time monkeypatch, `r-edge` holds no commit and no tracked file moved. Production grid (n_R 400, dR 0.075 kpc,
+R_max 29.96 kpc), layer off (the physics fields only). The `default` galaxy is bit-identical to `milky_way` on every
+field read. The gate's ruling is item 2 of `DECISIONS.md` D274. Same tags as Part S103.
+
+### S104.1 The sources (D1)
+
+- **Wang et al. 2016**, arXiv:1605.01489 — READ (arxiv.org/html, an extracting fetch asked twice for verbatim).
+  Sect. 2: D_HI is the major axis "where the azimuthally averaged ΣHI reaches 1 M⊙ pc−2"; R_HI = 0.5 D_HI (sect. 3.1).
+  Sect. 3.1: the median profiles of the dwarfs and spirals have "a homogeneous shape in the outer regions around the
+  position of RHI", "well described by an exponential function with a scale length ∼0.2 R_HI". **No scatter is
+  printed for the 0.2** (only a 25-75 % band for the WHISP Sa sample), **no explicit radial range** (only "around the
+  position of R_HI"); the fit excludes the early-type samples (Atlas3D, WHISP Sa). Eq. 2: log D_HI = (0.506 ± 0.003)
+  log M_HI − (3.293 ± 0.009), rms ~0.06 dex. Whether Σ_HI includes helium: NOT STATED (the model's HI here is hydrogen
+  only, gas × (1 − f_H2) × (1 − Y), Y = 0.27; the total-gas radius beside it).
+- **Sharma & Steinmetz 2005**, astro-ph/0406533 — READ (ar5iv, the first 100k of 104k characters). Sect. V eq. 27
+  P(j) = j^(α−1) e^(−j/j_d) / (j_d^α Γ(α)); eq. 28 j_d = j_tot/α. Abstract: the gas's log α mean −0.04, sd 0.11; about
+  90-95 % of haloes α < 1.3; exponential discs in NFW haloes "would require 1.3<α<1.6"; particle profiles "do not
+  truncate abruptly"; no j_max in the α model.
+- Bullock et al. 2001 sect. VI (no smooth form; Part S103.5), Martín-Navarro et al. 2012 (1.5 ± 0.1 kpc), Pohlen &
+  Trujillo 2006 (2.5 ± 0.6 h; h_in/h_out 2.1, 1.3-3.6), Thilker et al. 2007 ("a few percent" outer SFR): as read at
+  S103, used as checks only.
+
+### S104.2 The model's profiles today (fccecee; `milky_way` / `ngc_4414`)
+
+| | milky_way | ngc_4414 |
+|---|---|---|
+| edge onset (last ring before the stars' local e-fold < 0.5 kpc) | 23.587 kpc | 18.112 kpc |
+| stars' fall over the gate's window (23.663 -> 24.188 / 18.112 -> 18.637) | 3 437x | 1.33e5x |
+| stars' fall, onset -> 29.96 kpc | 5.1e4 | 1.3e9 |
+| the tail: inner radius / last ring > 0 / share | 12.28 / 24.11 / 0.0756 | 8.80 / 18.56 / 0.0816 |
+| the gas's e-fold across the cliff (onset -> +0.525) | 0.28 kpc (0.16 on the window) | 0.13 kpc |
+| the gas beyond: e-fold, level | 2.605 kpc = R_d(spin), ~0.1 M☉/pc² | 1.755, 0.045 |
+| R_HI: HI hydrogen = 1 / total gas = 1 | 23.93 / 24.00 kpc | 18.47 / 18.51 |
+| 0.2 R_HI against the cliff's e-fold | 4.79 kpc against 0.16-0.28 (17-30x steeper) | 3.69 against 0.13 (28x) |
+| gas / Σ_crit | max 0.95 (7.3 kpc); < 0.9 from 11.2 kpc; 0.79 at the onset | never ≥ 0.9; 0.84 at the onset |
+| stellar R_d / inner fit (0.3-0.8 of the edge) | 2.440 / 2.97 kpc | 1.675 / 2.78 kpc |
+| the edge in scale lengths | 9.7 | 10.8 |
+| 2 R_HI / D_HI (Wang eq. 2 from the model's M_HI) | 1.02 (M_HI 6.48e9) | 1.05 (3.65e9) |
+
+H2 at the edge is ~1 % of the gas, so HI and the total gas cross 1 M☉/pc² within 0.07 kpc. **The gas is under the
+threshold everywhere**: no radius "where the gas drops under Σ_crit" exists; what drops at the edge is gas / Σ_crit,
+0.79 -> 0.03. Every star the model forms, it forms in the tanh's lower wing — **#237**, opened at S104.
+
+The trace (code): `halo.py` `angular_momentum_excess` (Bullock's dM/dj with the hard cut at j_max) is ONE
+construction read twice — the tail beyond the outer crossing (`infall_tail_surface_density`, the share, the inner
+radius) and the core (the bulge's mass, scale and dispersion); the tail's mesh mass also enters the halo's second
+contraction. `halo.py` interpolates the tail onto the grid and drops what lies beyond R_max (today nothing: the tail
+ends at 24.1 / 18.6 kpc). `sfh.py` sums the exponential infall (normalised on the grid, to 30 kpc) and the tail, the
+budget closing to every retained baryon by construction; everything after `sfh` moves with it.
+
+### S104.3 The candidates (monkeypatches) and what each moves
+
+- **C1, the graft:** beyond R_j — the first ring past the tail's peak whose infall log-slope is steeper than −1/h —
+  the infall continues as total(R_j) exp(−(R − R_j)/h), h = 0.2 R_HI with R_HI the model's own HI 1 M☉/pc² radius,
+  iterated to its fixed point (`milky_way` 4.786 -> 5.414 -> 5.504 -> 5.517 -> 5.520 kpc; `ngc_4414` 3.693 -> 4.447).
+  `[inferred]`: Wang's gas shape applied to the INFALL, the join at R_j, the fixed point. The halo not re-run.
+- **C1u:** C1 with the whole on-grid infall scaled by one factor to close the budget (0.9696 / 0.9552).
+- **C1m:** C1 closed by scaling the tail inside R_j alone (0.628 / 0.487).
+- **C2, the cause:** Sharma & Steinmetz's gamma (eqs. 27-28) for Bullock's μ in `angular_momentum_excess`, the mean j
+  matched; α = 0.912 (their gas mean), with 0.708 / 1.175 (± 1 sd) and 1.41 as sensitivity. Moves the tail AND the
+  bulge (one construction).
+
+| `milky_way` (`ngc_4414`) | before | C1 | C1u | C1m | C2 (α 0.912) |
+|---|---|---|---|---|---|
+| added mass (share of the on-grid infall) | — | 1.60e9 M☉, 3.1 % (1.84e9, 4.7 %) | 0 | −6.4e8 (−1.0e9) | conserved on the mesh; 18 % (6 %) of the tail off the grid |
+| the gas's e-fold beyond the old edge | 2.61 (1.76) kpc | 5.84 (4.64) | 5.80 (4.61) | 5.57 (4.46) | 5.92 (5.05) |
+| the stars' e-fold beyond | 2.19 (1.24)* | 1.32 (1.29) | 1.34 (1.32) | 1.69 (1.80) | 2.28 (2.09) |
+| the stars' fall over the window | 3 437 (1.33e5) | 1.50 (1.46) | 1.51 (1.50) | 1.47 (1.59) | 1.32 (1.46) |
+| the stars' fall, onset -> 29.96 kpc | 5.1e4 (1.3e9) | 105 (6 856) | 100 (6 385) | 45 (911) | 16 (344) |
+| stellar mass | 4.742e10 (3.900e10) | +0.09 % (+0.24 %) | −3.0 % (−4.2 %) | −2.0 % (−3.4 %) | −0.02 % (−1.2 %) |
+| gas within 30 kpc | 1.117e10 (6.63e9) | +13.9 % (+26.4 %) | +12.8 % (+24.7 %) | +2.6 % (+4.7 %) | −4.9 % (+4.6 %) |
+| SFR | 1.860 (0.686) M☉/yr | +1.5 % (+5.5 %) | −2.2 % (+0.3 %) | −14 % (−28 %) | −16 % (−24 %) |
+| SFR beyond the old edge + 0.2 (share) | 4.4e-4 (9.2e-4) | 0.028, 1.5 % (0.038, 5.3 %) | 0.024, 1.3 % (0.032, 4.7 %) | 0.003 (0.001) | 4.7e-4 (8.5e-4) |
+| R_HI | 23.93 (18.47) | 27.60 (22.24) | 27.43 (22.04) | 25.18 (19.14) | 22.67 (18.54) |
+| 2 R_HI / D_HI | 1.02 (1.05) | 1.08 (1.09) | 1.08 (1.09) | 1.05 (1.05) | 1.00 (1.02) |
+| the break, in R_d (PT06 2.5 ± 0.6) | 9.7 (10.8), a cliff | 9.7 (10.8) | same | no break | no break |
+| h_in / h_out: R_d / h_out; inner fit / h_out (PT06 2.1, 1.3-3.6) | — | 1.84, 2.19 (1.30, 2.05) | 1.81, 2.12 (1.27, 1.97) | 1.44, 1.20 | 1.07, 0.76 (0.80, 0.77): the outer disc SHALLOWER |
+| largest change in the stars inside 0.8 of the onset | — | 9e-6 (0) | −10.5 % (−11.3 %) | −81 % (−92 %) | −93 % (−88 %) |
+| Σ* at 8.15 kpc | 37.05 (10.55) | 37.05 (10.55) | 35.66 (9.80) | — | 38.88 (11.19) |
+| bulge mass / tail share | 7.71e9 / 0.0756 | same | same | same | 7.14e9 / 0.0534 (5.87e9 / 0.0632) |
+| v_c(R₀) | 238.78 (199.74) km/s | −0.03 (−0.08)** | −1.71 (−2.54) | +0.11 | +2.35 (+2.35) |
+| H2 fraction (row 21) | 0.205 (0.246) | 0.180 (0.195) | 0.179 (0.194) | 0.196 | 0.214 (0.230) |
+| gas / stars at the grid's end, 29.96 kpc | 0.011 / 4.9e-6 (7e-5 / 6e-10) | 0.90 / 2.3e-3 (0.24 / 1.1e-4) | 0.87 / 2.1e-3 | 0.58 / 5.6e-4 | 0.40 / 2.2e-4 |
+| the gas layer's height finite to (the dust layer's edge) | 23.59 (18.11) | 23.66 (19.46) | 23.59 (19.24) | — | 17.29 (14.74) |
+
+\* the thin exponential infall under the cliff, at 1e-4 of the disc. ** the halo not re-contracted in the probe.
+C2's sensitivity (`milky_way`): α 0.708 / 1.175 / 1.41 give the bulge 1.01e10 / 4.50e9 / 3.18e9 (row 12: +31 % /
+−42 % / −59 %), the tail's share 0.066 / 0.039 / 0.027, the SFR 1.46 / 1.65 / 1.68, the stars at 18.9 kpc −91 % /
+−96 % / −98 %; every α gives h_in / h_out 0.65-0.74 (no break, a Type III-like outer disc). `ngc_4414` the same.
+
+### S104.4 What is unphysical or unknown in C1 `[inferred, the builder's list]`
+
+- Wang's 0.2 R_HI is a **stacked median shape of today's HI**, used here as the shape of everything that ever
+  accretes: no source says the infall follows today's HI.
+- **No scatter** is printed for the 0.2, and **no radial range** beyond "around R_HI": the graft runs it to 30 kpc
+  (1.1-1.6 R_HI).
+- R_HI is the model's own output fed back (a five-step fixed point); the join R_j is a slope criterion `[inferred]`;
+  the early types are excluded from Wang's fit (the templates are Sbc and Sc: inside it).
+- **It is not mass-conserving**: +3.1 % / +4.7 % of the infall budget from nowhere, the gas within 30 kpc +14 % /
+  +26 % (row 20's hydrogen 8.15e9 -> 9.29e9 on `milky_way`, its miss −0.01 -> −0.16); closing the budget costs the
+  inner disc (C1u: 3-11 %; the tanh's wing amplifies a 3 % infall cut threefold in the outer stars) or guts the outer
+  disc (C1m).
+- **A new edge at the grid's end**: under C1 the gas is still 0.90 / 0.24 M☉/pc² at 29.96 kpc and the arrays stop
+  there; the exponential beyond 30 kpc would hold a further ~1.1e9 / ~2.3e8 M☉ `[inferred]`, dropped by the infall's
+  on-grid normalisation. Whether a viewer sees a ring there was not measured on the render.
+- **The break does not move**: it stays at R_j = 9.7 / 10.8 R_d, outside 2.5 ± 0.6 — C1 softens the edge, it does
+  not move it. The halo does not see the added mass in the probe; Bullock gives no form for the "smoother edges", so
+  no source says where in j the real fall begins.
+- In its favour (read after the candidate was chosen): the stars beyond e-fold at 1.32 / 1.29 kpc against
+  Martín-Navarro's 1.5 ± 0.1 (12-14 % steeper); h_in / h_out 2.19 / 2.05 inside Pohlen & Trujillo's 1.3-3.6; the
+  outer SFR share 1.5 % / 5.3 %, Thilker's "a few percent" order; Wang's size-mass relation holds before and after.
+
+C2 is the cleaner code (one line, a constant μ -> α) but a different model of the whole distribution: with any READ α
+the outer disc between the tail's start and the old edge loses 88-98 % of its stars, the bulge moves, there is no
+break at all, R_HI moves in, 18 % of the tail falls off the grid — and Sharma & Steinmetz say their gas αs do not make
+exponential discs, the model's premise for an exponential plus a tail.
+
+**The cost had it been built** (the builder's forecast, not run): C1 ~10-12 test nodes in ~7 files
+(`test_disc_edge` restated, `test_sfh`, `test_audit`'s rows 20-21, `test_dust_layer`'s edge, `test_templates`'
+hydrogen checks); C1u ~20+ nodes across ~10 files and the acceptance table; C2 larger still.
+
+**The gate's ruling (D274 item 2):** no candidate is a law the gate can take — C1 is a measured shape applied where its
+source does not apply it, with a join rule, a budget rule and a grid end that are choices; C2, the mend at the cause,
+is measured and fails. #226 stays carried, **the owner's**: (i) the edge stays as S102 declared it, outside the
+measured range and said so; or (ii) C1 as a DISCLOSED graft (the added mass declared, the grid's end settled first),
+built on the owner's word. **The gate recommends (ii)** and says what counts against it: the two agreements in its
+favour were read after the candidate was chosen, the break stays at the wrong radius, and 3-5 % of the budget appears
+from nowhere. Nothing built held. The fact found on the way opens **#237** (the threshold's width, a reading).
+
+**Not read / not measured:** Sharma & Steinmetz's last 4k characters and Fig. 24's values (an image); whether
+Wang's Σ_HI includes helium; a smooth M(<j) edge in any source; the render at 30 kpc under C1; the halo re-contracted
+with C1's mass.

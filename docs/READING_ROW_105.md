@@ -1,4 +1,4 @@
-# READING_ROW_105 — the reading row's register entries: #149, #83, #86, #88, #95, #96, #97 with #98, #103, #118 (c), #129, #131, #135, #162 (S103, D273)
+# READING_ROW_105 — the reading row's register entries: #149, #83, #86, #88, #95, #96, #97 with #98, #103, #118 (c), #129, #131, #135, #162 (S103, D273; batch R's measurements, Part S104, D274)
 
 **What this file is (2026-11-17, S103, BUILD_VII row 105, the reading row).** One section per register entry the row
 read, beside the three that have files of their own (`READING_LANES.md` for #229 and #234, `READING_HII_SIZES.md`
@@ -250,3 +250,134 @@ Nothing here moved a constant, a pin or a model byte.
 - #129: no sample-wide ridge width exists in what was read. #131: Querejeta 2024 Fig. 3's values (image); CANFAR's
   listing not retried. #135: arXiv:2311.17202, Martinsson 2013, Drimmel & Spergel 2001 (snippets).
 - #149: cdsarc (ECONNREFUSED); the ReadMe's notes (taken from the paper).
+
+---
+
+## Part S104 — batch R's measurements of the entries this row sourced (D274)
+
+**What this part is (2026-11-17, S104, batch R).** D273 sent five of this file's entries to batch R with a disclosed
+check or a build. Two builders measured them: RS (`s104_RS.md`: #86, #83 - measured, NOT built, `r-remnants` holds no
+commit) and RC (`s104_RC.md`: #135, #136, #162, #96, #103 - six records "DISCLOSED, as measured" in
+`tests/test_disclosed_s104.py`, integrated into `batch-r`). The gate's rulings are `DECISIONS.md` D274 items 3, 4 and 6.
+Same tags as above; this time **the sources were re-read from the PDF** where a coefficient was to enter code.
+
+### #86 — the remnant masses by Spera, Mapelli & Bressan 2015: read from the PDF, measured, not built
+
+- **D1 met for the reading.** arXiv:1505.05201 fetched as a PDF and its text extracted (App. C, "GENERAL FITTING
+  FORMULA FOR Mrem", PDF pp. 19-20). The arXiv PDF numbers the equations C1-C15; the journal (and ar5iv) 22-36. Every
+  coefficient agrees with the S103 reader's list; no digit differs. Preamble READ: "obtained by fitting the outputs of
+  SEVN with the delayed SN model and the PARSEC stellar evolution isochrones ... deviate from the outputs of SEVN by
+  <~ 10 %". Validity M_ZAMS 7-150 M☉, Z 1e-4 - 2e-2; Z☉ = 0.01524 (sect. 2.1); NS below 3.0 M☉, BH above (sect. 2.3);
+  App. B eq. B4 M_grav = 0.9 M_bar for BHs.
+- **Cross-checks against the paper's own tables** (SEVN, delayed): the NS / BH transition M_ZAMS 18.8 / 18.2 / 18.2 at
+  Z = 2e-2 / 2e-3 / 2e-4 -> the fit 18.67 / 15.46 / 16.35; the largest BH 25 / 58 / 130 -> the fit 25.6 / 61.5 / 125.0.
+  Eq. 6 × 0.9 against the fit at Z = 1e-4 within 2 % (30 M☉ 18.97 / 18.64 ... 150 M☉ 129.8 / 128.8). Monotonic in
+  M_ZAMS at each Z tested; continuous at M_CO = 5 and 10.
+- **The seam (the unphysical finding).** At Z = 5.0e-4 (C1 -> C4, [Fe/H] ~ −1.48) the remnant mass **jumps by up to
+  5.89 M☉** (at M_ZAMS 64), by more than 10 % over M_ZAMS 10.7-70; at 20 M☉ 5.69 -> 9.07 (+59 %). At Z = 1e-3 up to 0.28
+  M☉; at 2e-3 and 4e-3 continuous to rounding. On the model's isochrone nodes the seam falls between [M/H] −1.70 and
+  −1.45, so **M_rem is not monotonic in Z** for 12-30 and 60 M☉ (20 M☉: 5.69, 9.10 at −1.45, 7.41, 6.23, 4.07 ...); the
+  NS / BH cut in M_ZAMS by node 16.35 ... 12.93 (−1.45) ... 18.67 (+0.30). Two sides of a 59 % jump cannot both be
+  within the paper's "<~10 %" of a continuous SEVN curve `[inferred]`.
+- **What it would move** (a monkeypatch, the production grid; `default` = `milky_way`):
+
+| | before (`milky_way`; `ngc_4414`) | after, `milky_way` | after, `ngc_4414` |
+|---|---|---|---|
+| BH mean (integral, number-weighted) | 7.80 M☉ | 15.00 | 16.07 |
+| BH sample mean / median / p5 / p95 / max | 7.8 flat | 14.72 / 12.87 / 3.35 / 36.26 / 89.3 | 15.43 / 12.91 / 3.34 / 39.62 / 78.0 |
+| NS mean (integral); sample range | 1.331; 1.33 | 1.634; 1.27-2.99 | 1.620; 1.27-3.00 |
+| NS / BH boundary (solar) | 25 M☉, a 1.33 -> 7.8 jump | 18.6 M☉, continuous at 3.0 | same |
+| `remnant_mass_fraction` | 0.2127; 0.2382 | 0.2589 | 0.2894 |
+| effective return | 0.4137; 0.4253 | 0.3772 | 0.3838 |
+
+  The register's prediction ("the remnant fraction moves by under 1 %") is wrong: +22 %, because the fit's BHs are
+  about twice Özel's even at solar Z. The BH mean by [M/H] −2.19 .. +0.30 at 12.6 Gyr: 25.1 ... 11.8 (before 7.8 flat).
+  The model's top Z 0.030 lies outside the fit's 2e-2 (clamped in the measurement). Downstream only `star_remnant`,
+  `star_remnant_mass` and `remnant_mass_fraction` read the remnant masses.
+- **The disclosed check:** Özel et al. 2010 (arXiv:1006.2834, abstract READ) "a narrow mass distribution at 7.8 ± 1.2
+  Msolar" from sixteen transient low-mass X-ray-binary black holes (a selected sample). The fit's mean 15.0 (16.1),
+  median 12.9: about twice; Özel's 7.8 sits near the fit's 30th-40th percentile `[inferred]`.
+- **The gate (D274 item 3):** D273's "sourced, destination batch R" WITHDRAWN on the measurement; #86 stays carried,
+  its closer restated - a remnant-mass law continuous in metallicity (Fryer et al. 2012's delayed prescription on the
+  isochrones' own core masses if the tracks carry them, or Spera's fit with its seam's cause read - a reading first),
+  Özel's mean and the gravitational-wave black holes' masses the two disclosed checks.
+
+### #83 — Γ_e with σ_e 0.34: measured, not built
+
+- Vink, de Koter & Lamers 2001 READ from the arXiv PDF: eq. 11 "Gamma_e = L sigma_e / 4 pi c G M = 7.66 10^-5 sigma_e
+  (L/Lsun)(M/Msun)^-1" (σ_e's Teff and composition dependence "described in Lamers & Leitherer 1993"); eq. 23
+  "log<rho> = -14.94 (+-0.54) + 0.85 (+-0.10) log(Z/Zsun) + 3.2 (+-2.2) Gamma_e"; eq. 15 T_jump = 61.2 + 2.59 log<ρ>.
+  Eqs. 24-25 use fixed ratios 2.6 / 1.3, so the mass loss moves only through the jump; v_∞ through M_eff = M(1 − Γ_e).
+  σ_e = 0.34 `[inferred, S103's back-solve]`.
+- The grid: every isochrone node with M_now ≥ 8 M☉ inside 12.5-50 kK (157 668 nodes). min / p5 / median / p95 / max:
+  Γ_e 0.009 / 0.020 / 0.120 / 0.526 / 1.111 - **133 nodes at Γ_e ≥ 1** (v_esc imaginary; Vink's grid tops at 0.434);
+  the mass loss after / before 1 / 1 / 1 / 19.3 / 126.7 - **8 995 nodes (5.7 %) flip to the cool side** (the jump
+  hotter by 8.3 Γ_e kK); the v_∞ ratio 0.006 / 0.46 / 0.937 / 0.990 / 0.995; the wind power ratio 0.0012 / 0.50 /
+  0.889 / 2.54 / 29.4. Per mass formed (the clusters' and bubbles' wind) by log age at solar: 0.78, 0.76, 0.95, 1.06,
+  1.13 (6.6-7.0), then 0.97-1.0; integrated over age **0.80-0.86 at every metallicity** (−14 to −20 %). The catalogues
+  hold one / no star with a wind. Final masses and the returned mass do not move (PARSEC's).
+- The Γ_e ≥ 1 nodes would turn NaN and then zero in `population_wind` silently; a hydrogen-poor star's σ_e is under
+  0.34, and the Thomson form in X is RECALL.
+- **The gate (D274 item 4):** D273 item 9 amended - #83 stays carried, not built; what kills it: σ_e as a function of
+  the surface hydrogen READ (Lamers & Leitherer 1993 or the Thomson form in a fetched source) and the recipe's stated
+  range in Γ_e READ, then the build with the nodes outside the range declared.
+
+### The disclosed checks (lane RC; `tests/test_disclosed_s104.py`, six records "DISCLOSED, as measured", not judged)
+
+The default galaxy (= `milky_way`'s inputs), the production grid (n_R 400, n_t 2000), at 8fed299; `ngc_4414` read and
+not pinned.
+
+- **#135, M/L_K at the solar column.** Definition: the ring nearest R_SUN 8.2 (R = 8.2125 kpc); the K light = the sum
+  over formation steps of the mass formed (`stars_formed_history` / (1 − 0.30)) × the population's K flux (the light
+  stage's own sum), with M_K☉ 3.27 (READ at S103); the mass as counted = `stellar_surface_density`; the mass by kind
+  from `remnants`; K by phase from each isochrone segment's PARSEC label (MS 0-1, SGB + RGB 2-3, core He burning 4-6,
+  AGB 7-8; closes to 6e-16). Σ_K 66.89 L_K☉/pc²; the locked mass 36.04 M☉/pc²; **M/L_K 0.539** against Just et al.
+  2015's 0.34 (the solar cylinder; 0.31 ± 0.02 locally): **a miss of 1.6x**. The galaxy's own stellar mass / L_K 0.703
+  (M_K −23.802) - the entry's "0.73" / 2.1x was that, set against a local column. By kind: living 24.84, white dwarfs
+  4.49, neutron stars 0.53, black holes 0.92 = 30.78 physical (5.26 returned by the isochrones beyond 0.30 but counted
+  locked); the physical M/L_K 0.460 (1.35x). Just et al. (sects. 3.2-3.4, an extracting fetch): Σ_K 98.7 (giants 82.5,
+  dwarfs 16.2), 33.3 M☉/pc² with white and brown dwarfs. K by phase: MS 12.31, SGB + RGB 23.27, CHeB 10.30, AGB 21.01
+  (the giants 54.6 = 0.66x Just's; the MS 0.76x). K by age: < 0.1 Gyr 0.105, 0.1-1 0.157, 1-3 0.225, 3-6 0.259, 6-9
+  0.215, 9-11 0.037, 11-14 0.002. **The cause: too little K light, not too much mass**; a quarter of the miss is the
+  locked mass's bookkeeping. The gate (item 6): carried, the closer a reading of the giants' K light.
+- **#136, the face-on disc's attenuation.** Definition: the `/api/render` frame, layer off (as the colour check is
+  judged), B and V through `band_curve`, face-on through the layered transmission (the clouds' share in their layer);
+  A = mag(through the dust) − mag(the stars alone), the disc summed over the frame (the bulge excluded unless said).
+  `milky_way`: extinction alone A_B 0.377, A_V 0.383; with the scattered light **A_B 0.326**, A_V 0.329, **E(B−V)
+  −0.003**; with the undimmed bulge A_B 0.308; the check's B − V 0.5664; light-weighted τ_B 3.14; A_B by R 0.958 (0-2
+  kpc), 0.863, 0.675, 0.381, 0.114, 0.011 (13-30). `ngc_4414`: 0.404 / 0.436; **0.359** / 0.388, **E(B−V) −0.029**; the
+  check 0.6441 (S99's, the anchor); τ_B 8.95. Against Driver et al. 2007's 0.20 ± 0.04 a miss (1.6-1.8x over); against
+  Tuffs et al. 2004's 0.067-0.088 `[inferred from READ tables]` a miss **of the wrong sign**. Sources as S101's reader
+  R3 read them, not re-fetched. The gate (item 6): carried with #47; the record stays in the test file.
+- **#162, the young clusters' clustering.** The census 13 124 clusters, 0-20 Myr (6 580 ≤ 10, 6 544 above).
+  Instrument: `specs.clustering.against_uniform` (Landy-Szalay, randoms 10x, seed 61), the power law fitted over
+  100-2000 pc, A = 1 + ω at 300 pc from the fit. `milky_way`, the 6 kpc square at R_SUN: ≤ 10 Myr n 281, **A 1.3755**
+  (the gate's square anchor holds); 10-20 Myr n 259, **A 1.1970**; the 300 pc bin itself 1.066 / 1.093. The annulus
+  (the whole disc) 10.335 / 10.777, the radial profile's. `ngc_4414`: square 1.342 / 1.273, annulus 18.03 / 18.07.
+  Against Turner et al. 2022's medians 3.43 / 2.26 `[inferred]`: a miss, and not like for like (one face-on galaxy,
+  every cluster against detected ones, another footprint and fit range; the model's "above 10 Myr" ends at 20;
+  Turner's upper age NOT READ). The gate (item 6): carried, with the owner's clustering questions.
+- **#96, the clusters' mass function.** `cluster_mass` in [1e3, 1e5] M☉, every cluster 0-20 Myr: n 5 420, the
+  maximum-likelihood index (a truncated power law, Fisher error) **−1.870 ± 0.014**, least squares on ten logarithmic
+  bins −1.947; ≤ 10 Myr −1.889 ± 0.020 / −1.969; the masses 10 - 2.3e5, 21 above 1e5. `ngc_4414` −1.912 ± 0.022 /
+  −1.996 (n 2 310). Against Krumholz et al. 2019's −2 ± 0.2 (a review's summary across studies; its estimator per
+  study NOT READ): **a hit** on both estimators. The gate (item 6): **#96 permanent.**
+- **#103, the remnant count.** `remnant_count_total` **1 529.63** (the entry's 1 464 is S36's: corrected); drawn
+  1 549 (Sedov 652, radiative 897); `REMNANT_VISIBLE_LIFETIME` 60 000 yr; `ngc_4414` 626.7. Against Ball et al. 2023's
+  predicted 1 000-2 700: a hit against **a prediction**. The Sedov jump: `bubbles.py:349` `4.0 * n0`, every Sedov
+  shell exactly four times its ambient - Leahy & Williams 2017's ratio; the comment re-tagged by the integrator
+  (e7be575). The gate (item 6): the Sedov clause CLOSED; carried on the shell's ionization state, NOT READ.
+- **The clusters' offset declaration** (D272 (e); not a register entry): measured with `test_layer`'s own
+  construction, layer on: 13 124 clusters, **1 678 in another radial ring** (12.8 %; the mass share 35.5 %), 138 in
+  another cell ring, the largest radial move 140.38 pc, the largest offset 148.36 pc. `layer/cloud_texture.py`'s text
+  mended from S70's "1 591 of 12 710 (12.5 %, 34.3 %) ... 132" to these numbers (it moves the hash, no number in the
+  model).
+
+### Not read, S104
+
+- #86: Fryer et al. 2012 (not fetched); why the fit has a seam at Z = 5e-4 (the paper's text on its two branches not
+  searched); the gravitational-wave black holes' masses (named by the gate as a check, not read).
+- #83: Lamers & Leitherer 1993 still NOT READ; the recipe's stated range in Γ_e; the Thomson form RECALL.
+- #135: the isochrones' K photometry against an independent source; the AGB's share in Just et al.
+- #136: Driver et al. 2007 and Tuffs et al. 2004 not re-fetched (S101's R3 read used).
+- #162: Turner et al.'s upper age above 10 Myr; their fit ranges in pc. #96: Krumholz et al.'s estimator per study.
