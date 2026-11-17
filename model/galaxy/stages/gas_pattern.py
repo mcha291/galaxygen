@@ -818,7 +818,7 @@ class GasPattern:
         taper, _, _ = bar_terms(R, self.pitch_deg, self.bar_length)
         with np.errstate(divide="ignore"):
             untapered = np.where(taper < 1.0, 1.0 / np.where(taper < 1.0, 1.0 - taper, 1.0), 0.0)
-        for rows, sin_abs, ridges in stars.piece_profiles(R):
+        for rows, sin_abs, ridges in stars.piece_profiles(R, self.layer_height):
             spectrum = np.fft.rfft(ridges, axis=2)
             factor = forcing_factor(_HARMONIC[None, None, :], x[rows, None, None], sin_abs[:, :, None], (self.layer_height / R[rows])[:, None, None])
             total = np.zeros(spectrum.shape[::2], dtype=complex)

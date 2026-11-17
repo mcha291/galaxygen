@@ -7463,6 +7463,20 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    0.3 kpc - a reading of disc truncations (e.g. Pohlen & Trujillo 2006, NOT READ). Carried. Destination - batch Q,
    lane G (BUILD_VII rows 102-103) for the declaration; BUILD_VII row 105, the reading row, for the truncation. The S97
    "the viewer session after the owner's display pass" is superseded.
+   *S102 (batch Q, D272):* **The law named and declared where it is computed (lane G); no number moved.** S101's runner
+   placed the circle in the model's light (every render array falls 340-fold between 23.66 and 24.04 kpc). The probe
+   (scratchpad `s102_G_edge.py`, production grid): the first published field to go to zero is the halo stage's high-j
+   tail, `infall_tail_surface_density` - on `milky_way` 2.71 M☉/pc² at 23.66 kpc, 0.71 at 24.04, **0 from 24.19 kpc**
+   (`ngc_4414`: 3.45 at 18.11, 0 from 18.64) - where the angular-momentum distribution's j_max lands (`halo.py`,
+   `angular_momentum_tail`). Past it only the exponential's own infall arrives: the gas falls 2.59 -> 0.10 M☉/pc²
+   while Kennicutt's threshold stays near 3.2, and the switch (a tanh a quarter of the threshold wide, `sfh.py`) turns
+   that 26-fold fall of the gas into a 3500-fold fall of the stars (0.252 -> 7.3e-5 M☉/pc², 23.66 -> 24.19 kpc). Inside
+   the edge the outer disc already forms its stars below the threshold, through the switch's tail. The SF threshold
+   alone does not make the edge; the tail's end does, the threshold sharpens it. Declared in
+   `stellar_surface_density`'s and `infall_tail_surface_density`'s abouts and in the render header's stars component
+   ("It ends, as every light array here does, at the stellar disc's edge ..."); `tests/test_disc_edge.py` holds the
+   render's edge to the field's within one ring (and the tail's end to it). Not struck: whether a real disc truncates
+   this sharply (Pohlen & Trujillo 2006, NOT READ) stays owed, to BUILD_VII's reading row.
 227. **The published vertical dispersion no longer gives the stellar layer's height away from the solar radius**
    (restated at S99, D269, on the build; was "The vertical stage reads one stellar height at the Milky Way's R_SUN on
    every template") (S97, D266; the analyst's trace, lane R, `READING_PICTURES.md` section 13). `thin_disc_scale_height` is one scalar per galaxy: the
@@ -7641,6 +7655,32 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    averaged in R over the layer's height, the length the thickness factor already holds). Stays carried until built.
    Destination - batch Q, lane G (BUILD_VII rows 102-103). The S98 "Destination batch P" is overtaken: batch P closed at
    S100 with the cause untraced.
+   *S102 (batch Q, D272):* **Mended, built (lane G); the gate re-rules D219's third follow-up's clause.** The cause was
+   the tracer's (S101): the forcing read each chain's lead piece's |sin p| (`stages/pieces.py`, `piece_profiles`),
+   so `forcing_factor` stepped where the lead changed. Two continuous rules were measured by substitution first
+   (direct solve, 6.25 pc rows, 4-10 kpc; scratchpad `s102_G.md`): (A) |sin p| linear in ln R between the pieces'
+   mid-radii; (B) the pieces' |sin p| weighted by each piece's radial overlap with a Gaussian in R of standard
+   deviation h_z, the stellar layer's height the thickness factor reads (0.357 kpc). Row-to-row misplaced weight on
+   `milky_way`, at most: 0.161 (5.9125 kpc; twelve rows over 0.01) -> (A) 0.0087 / (B) 0.0048 away from 4.4625 kpc; on
+   the default galaxy 0.0126 -> 0.0028 / 0.0027. The forcing's rms across 5.7-6.3 kpc, largest row step 0.206 -> 0.016
+   / 0.0007; s at φ 89° across the old band 1.27 -> 1.03 -> 1.33 before, under (B) 1.20 rising smoothly to 1.32. The
+   ratio of means over 6-10 kpc 1.4311 -> 1.4455 (+1.0 %) / **1.4287 (-0.17 %)**; the default's 1.3606 -> 1.3577 /
+   1.3491 (-0.84 %). Largest |Δ gas_density_contrast| (B) 0.994 at 6.04 kpc on `milky_way` (the old band itself), 0.470
+   at 9.26 kpc on the default. **(B) met the gate's pre-ruling and is built**
+   (`Pieces.chain_sines`, `span_overlap`; `[inferred: gravity from a layer of height h does not resolve a kink shorter
+   than h]`); the built code reproduces the substitution to the bit. The mid-gap rings fall from 13 to 2 on
+   `milky_way` (4.425 and 4.4437 kpc remain, the other mechanism below); the default keeps its 2 (3.15, 3.225).
+   `ngc_4414`'s chains are one piece each: its forcing unchanged to the bit. **The step at 4.456 kpc is another
+   mechanism** (traced): chain 0 (Norma's start) folds back at 4.46 kpc - its 19.5° piece ends where its -1.0° piece
+   turns inward - so beyond 4.46 kpc it crosses no ring while its count weight there is still 0.83 (a kink, not a free
+   end, so no taper): the ring's count N falls 1.825 -> 1.000 between 4.4575 and 4.46 kpc and every chain's amplitude
+   rises 35 % (0.309 -> 0.418), the misplaced weight 0.0405 under (B). Proposed, not built: taper a chain's count weight
+   to zero over one width as the ring nears the chain's radial extreme, as at an end (the gate's ninth follow-up's
+   rule extended to a turning point). Tests: `tests/test_forcing_pitch.py`. On the gate's ruling it was then built
+   (`ring_state`, `Pieces.turn_before` / `turn_after`; `[inferred]`): N is continuous across every turn (4.4575 -> 4.46
+   kpc: 1.825 -> 1.000 before, 1.116 -> 1.000 after), the misplaced weight 0.0405 -> 0.0172 (now at 4.45 kpc: chain 0's
+   -1° piece spans 18 pc of R, so the free-end taper along it is a bump in N to 1.35 over those 18 pc, not a step),
+   the mid-gap rings 2 -> 0, the default galaxy and `ngc_4414` (no turn) unchanged to the bit. Not struck.
 231. **The clouds' mass function does not know the arm** (S99, D269; the reader, `READING_CLOUD_LAYER.md` Part S99).
    The model draws every cloud's mass from one mass function per radial zone, the same on an arm and between arms;
    the clouds are placed by the gas contrast to the first power (#229's discharge). The reader: drawn so, the model

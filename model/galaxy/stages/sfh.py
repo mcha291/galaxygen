@@ -129,7 +129,14 @@ STELLAR_SURFACE_DENSITY = FieldDecl(
     axes=("R",), ramp=Ramp("inferno", scale="log"), meaningful_zero=True,
     about=(
         "Built up by the star formation law rather than assumed. Its exponential scale length is "
-        "therefore a *result* — and it does not agree with the one lambda_d predicts (debt #13)."
+        "therefore a *result* — and it does not agree with the one lambda_d predicts (debt #13). "
+        "**The stellar disc ends where the halo's angular-momentum distribution runs out** (S102, #226): "
+        "the high-j tail (infall_tail_surface_density) falls to nothing where its j_max lands, the gas the "
+        "exponential alone brings beyond it lies far under Kennicutt's threshold, and the switch turns "
+        "that fall of the gas into a fall of the stars several hundred-fold within a few hundred parsecs "
+        "(near 24 kpc on the Milky Way template, 18.5 on NGC 4414's). Every light the render sends ends "
+        "there with it - the circle the field regime's light stops at. Whether a real disc truncates this "
+        "sharply is not read."
     ),
 )
 

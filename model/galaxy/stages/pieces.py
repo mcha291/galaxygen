@@ -112,7 +112,8 @@ rounding on any grid - with the body's exact cell means as before.
 
 **On the solver's cells** (the second follow-up, item 1): a ring's profile of the chains on the gas solver's
 cells' centres is what the gas's forcing is transformed from (``gas_pattern``) - each chain's ridge with the
-pitch of its piece nearest the ring, "the forcing's pitch for a ring's term is the nearest piece's" - and the
+chain's pitch averaged in R over the stellar layer's height (S102, #230, :meth:`ArmPattern.piece_profiles`; it
+replaces "the forcing's pitch for a ring's term is the nearest piece's", a square edge in R) - and the
 realised ring variance and its split by arm number - the **disclosed check** of D219 item 4, published for m =
 2 … 6 beside the law's A_m² by the ``arm_ring_power`` stage, read, never tuned - are that profile's, by the same
 quadrature.
@@ -186,6 +187,28 @@ def erf(x: np.ndarray) -> np.ndarray:
     any batch."""
     x = np.asarray(x, dtype=float)
     return _ERF(x).astype(float) if x.size else np.zeros(x.shape)
+
+
+_ERFC = np.frompyfunc(math.erfc, 1, 1)
+
+
+def erfc(x: np.ndarray) -> np.ndarray:
+    """The complementary error function, element by element: the C library's (``math.erfc``), as :func:`erf`."""
+    x = np.asarray(x, dtype=float)
+    return _ERFC(x).astype(float) if x.size else np.zeros(x.shape)
+
+
+def span_overlap(R: np.ndarray, lo: np.ndarray, hi: np.ndarray, height: float) -> np.ndarray:
+    """∫ from ``lo`` to ``hi`` of a unit Gaussian in r of standard deviation ``height`` centred on ``R``: the share of
+    it that falls inside the span [lo, hi] (kpc; arrays broadcast). Taken from whichever tail is the far one, so
+    that a span many deviations off on either side keeps its digits (S102, #230: the weight of a piece's radial span
+    in the forcing's pitch, :meth:`Pieces.chain_sines`). 0 for an empty span."""
+    scale = math.sqrt(2.0) * float(height)
+    a = (np.asarray(lo, dtype=float) - R) / scale
+    b = (np.asarray(hi, dtype=float) - R) / scale
+    with np.errstate(invalid="ignore"):
+        right = (a + b) >= 0.0  # the span's middle at or past R: both of its edges' upper tails are the small ones
+        return np.where(right, 0.5 * (erfc(a) - erfc(b)), 0.5 * (erfc(-b) - erfc(-a)))
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -651,6 +674,8 @@ class Pieces:
     after: np.ndarray = field(init=False, repr=False)     # ... and after its end
     before_end: np.ndarray = field(init=False, repr=False)  # the chain's length before the piece's start to its end of either kind
     after_end: np.ndarray = field(init=False, repr=False)   # ... after its end (a joined end counted: the count's taper)
+    turn_before: np.ndarray = field(init=False, repr=False)  # the chain's length inward from the start to its turn back in R (inf: none)
+    turn_after: np.ndarray = field(init=False, repr=False)   # ... outward from the end to its turn back in R (the count's taper, S102)
     link_start: np.ndarray = field(init=False, repr=False)        # the piece of the chain standing at this one's start (−1 none)
     link_end: np.ndarray = field(init=False, repr=False)          # ... at its end
     link_start_is_end: np.ndarray = field(init=False, repr=False)  # whether it is that piece's end that stands there
@@ -745,12 +770,28 @@ class Pieces:
             else:
                 total = reach[e] = math.inf  # a chain that closes on itself has no end
             beyond[e] = total
+        # S102 (#230's 4.456 kpc step): the chain's length on from each piece's inner end inward, and from its outer
+        # end outward, to where the chain turns back in R - a kink where two inner ends (or two outer ends) meet -
+        # infinite where it reaches an end first. Walked through the kinks where it runs on the same way.
+        turning = np.full(2 * n, math.inf)
+        for e in range(2 * n):
+            total, at = 0.0, e
+            for _ in range(n + 1):
+                other = int(partner[at])
+                if other < 0:
+                    break
+                if (other >= n) == (at >= n):  # outer end on outer end, or inner on inner: the chain turns back
+                    turning[e] = total
+                    break
+                total += float(length[other % n])
+                at = other + n if other < n else other - n  # on through that piece to its far end
         pad = lambda a, value: np.concatenate([a, [value]])  # noqa: E731
         for name, value in (("x_start", pad(x_start, 0.0)), ("x_end", pad(x_end, 1.0)), ("phi_start", pad(self.start_azimuth, 0.0)),
                             ("phi_end", pad(phi_end, 0.0)), ("sin_abs", pad(sin_abs, 1.0)), ("cos_abs", pad(cos_abs, 1.0)),
                             ("sense", pad(sense, 1.0)), ("length", pad(length, 1.0)), ("middle", pad(0.5 * self.extent, 0.0)),
                             ("before", pad(beyond[:n], math.inf)), ("after", pad(beyond[n:], math.inf)),
                             ("before_end", pad(reach[:n], math.inf)), ("after_end", pad(reach[n:], math.inf)),
+                            ("turn_before", pad(turning[:n], math.inf)), ("turn_after", pad(turning[n:], math.inf)),
                             ("link_start", np.concatenate([link[:n], [-1]])), ("link_end", np.concatenate([link[n:], [-1]])),
                             ("link_start_is_end", np.concatenate([link_is_end[:n], [False]])), ("link_end_is_end", np.concatenate([link_is_end[n:], [False]])),
                             ("met_start", np.concatenate([met[:n], [-1]])), ("met_end", np.concatenate([met[n:], [-1]])),
@@ -790,6 +831,33 @@ class Pieces:
         chain = np.sort(self.chain_of[slots], axis=-1)  # the pad's NaN sorts last
         fresh = np.concatenate([np.isfinite(chain[..., :1]), np.isfinite(chain[..., 1:]) & (chain[..., 1:] != chain[..., :-1])], axis=-1)
         return fresh.sum(axis=-1)
+
+    def chain_sines(self, R: np.ndarray, height: float) -> np.ndarray:
+        """**The forcing's pitch** of each piece's chain at each radius of ``R`` (n,), shaped (n, count + 1) - an
+        entry per padded piece, the pad's 1 - as |sin p| (S102, batch Q, #230): the mean of the chain's pieces'
+        |sin p|, each weighted by the share of a Gaussian in R of standard deviation ``height`` (kpc) centred on the
+        ring that falls inside the piece's radial span (:func:`span_overlap`) ``[inferred: gravity from a layer of
+        height h does not resolve a kink shorter than h]``. The pieces of a chain are joined, so the spans of the
+        chain's pieces cover one interval and the weighted mean is continuous in R; a lone piece's chain reads its
+        own |sin p| to the bit (the mean is taken as the first piece's sine plus the weighted differences). NaN
+        where no piece of the chain holds any weight (a ring beyond every span by more than the doubles hold)."""
+        R = np.asarray(R, dtype=float).reshape(-1)
+        n = self.count
+        out = np.ones((R.size, n + 1))
+        if not n:
+            return out
+        with np.errstate(over="ignore"):
+            weight = span_overlap(R[:, None], np.exp(self.x_start[:n])[None, :], np.exp(self.x_end[:n])[None, :], height)
+        for chain in np.unique(self.chain):
+            members = np.flatnonzero(self.chain == chain)
+            first = self.sin_abs[members[0]]
+            num, den = np.zeros(R.size), np.zeros(R.size)
+            for j in members:  # one after another in the table's order: the same bits in any batch
+                num = num + weight[:, j] * (self.sin_abs[j] - first)
+                den = den + weight[:, j]
+            held = den > 0.0
+            out[:, members] = np.where(held, first + num / np.where(held, den, 1.0), np.nan)[:, None]
+        return out
 
     def geometry(self, R: np.ndarray, slots: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """(live, azimuth, |sin p|) of each slot's piece at each radius: whether the slot holds a piece, where the
@@ -999,7 +1067,8 @@ class Laid:
     table's order - so the slots of one chain's pieces are contiguous, **a run**; ``x`` (n, S) is ln(R/R_s) per
     slot. ``first`` and ``last`` (n, S) mark a run's first and last slot; ``lead`` marks the slot of the run's
     piece nearest the ring (the one whose locus crosses it, else the one whose end is nearest in ln R), whose
-    pitch the chain's forcing takes on the ring; ``mean`` (n, S) holds **the chain's** exact mean round the ring
+    pitch the chain's forcing reads only where none of its pieces holds a weight (S102, #230:
+    :meth:`ArmPattern.piece_profiles`); ``mean`` (n, S) holds **the chain's** exact mean round the ring
     at the run's last slot and 0 elsewhere."""
 
     R: np.ndarray
@@ -1228,7 +1297,13 @@ class ArmPattern:
         crossing; the switch is at the reach boundary, where a ridge is under e^(-81/2). N and w are continuous in R
         wherever a chain is in reach: a chain starts and stops crossing at weight 0, and a chain born on a ring
         enters at weight 0. A chain that crosses a ring twice - a measured arm that kinks back - counts once, at its
-        greater weight (a turn back in radius steps N there: #156's class)."""
+        greater weight. **A turn back in radius is an end for the count** (S102, batch Q, #230's 4.456 kpc step;
+        until S102 it stepped N there, #156's class): s_c is also at most the length along the chain to the nearest
+        kink where it turns back in R (two outer ends, or two inner ends, meeting: :attr:`Pieces.turn_before`,
+        :attr:`Pieces.turn_after`), so the weight falls to zero over one width as the ring nears the chain's
+        furthest-out or furthest-in radius, by the same taper and width as at a free end ``[inferred: a chain that
+        turns back at a radius ends there for the rings beyond it, so its share of the ring's count ends as an
+        end's does]``. A chain with no turn is read as before, to the bit; the ridge's height is not tapered there."""
         R = np.asarray(R, dtype=float)
         p = self.pieces
         law = self.law_width_at(R)
@@ -1240,7 +1315,10 @@ class ArmPattern:
             x0, x1 = p.x_start[slots], p.x_end[slots]
             length = p.length[slots]
             t = np.where(live, (x - x0) / (x1 - x0) * length, 0.0)
-            along = np.where(live, np.minimum(t + p.before_end[slots], length - t + p.after_end[slots]) * R[:, None], 0.0)
+            along = np.minimum(t + p.before_end[slots], length - t + p.after_end[slots])
+            # S102 (#230): a turn back in R ends the chain for the rings beyond it - its count tapers there as at an end.
+            along = np.minimum(along, np.minimum(t + p.turn_before[slots], length - t + p.turn_after[slots]))
+            along = np.where(live, along * R[:, None], 0.0)
             # Which rings a chain reaches: a piece within REACH dispersions, at the law's width, of the ring (its
             # nearer end's distance in ln R past it, 0 where it crosses) - `_reach`'s arithmetic.
             from_start = x - p.x_start[None, :census]
@@ -1610,7 +1688,9 @@ class ArmPattern:
         now; the forcing's pitch for a ring's term is the nearest piece's." Where two chains meet "they add: a
         branch is two arms' material in one place ... the join's local excess is read and recorded, bounded by
         nothing but the ring's saturation. Nothing physical is discontinuous there, so no square edge may remain
-        anywhere: asserted by a continuity test across every kink and join on both templates."
+        anywhere: asserted by a continuity test across every kink and join on both templates." (Since S102, #230,
+        the clause on the forcing's pitch is replaced by :meth:`piece_profiles`'s: a chain's pitch averaged in R over
+        the stellar layer's height - the nearest piece's was a square edge in R.)
 
         The arc length the taper reads is the arc length to the point's foot on the polyline (the lead's note);
         on the inside of a kink within one width of a free end the foot's arc length differs by piece and so the
@@ -1775,14 +1855,25 @@ class ArmPattern:
         R = np.asarray(R, dtype=float)
         return self.arms_at(R[:, None], _cells.cell_centres(cells)[None, :])
 
-    def piece_profiles(self, R: np.ndarray) -> Iterator[tuple[slice, np.ndarray, np.ndarray]]:
+    def piece_profiles(self, R: np.ndarray, height: float | None = None) -> Iterator[tuple[slice, np.ndarray, np.ndarray]]:
         """Each chain's own ridge on the solver's cells' centres, ring by ring, for the gas's forcing: yields
         ``(rows, |sin p| (n, S), a E_c (n, S, CELLS))`` for stretches ``rows`` of ``R`` - the ridge at the stars'
         own amplitude on the ring, the cut in it, its mean not taken out (the forcing's transform drops it), held
-        in the last slot of the chain's run with **the pitch of the run's lead piece** - the one whose locus
-        crosses the ring, else the one whose end is nearest it - "the forcing's pitch for a ring's term is the
-        nearest piece's" (the gate's third follow-up); 0 in every other slot."""
+        in the last slot of the chain's run with **the chain's forcing pitch on the ring**; 0 in every other slot.
+
+        **The forcing's pitch** (S102, batch Q, #230; it replaces D219's third follow-up's "the forcing's pitch for
+        a ring's term is the nearest piece's"): the mean of the chain's pieces' |sin p| weighted by each piece's
+        radial overlap with a Gaussian in R of standard deviation ``height`` - the stellar layer's scale height h_z,
+        the one the thickness factor of :func:`forcing_factor` reads - centred on the ring
+        (:meth:`Pieces.chain_sines`) ``[inferred: gravity from a layer of height h does not resolve a kink shorter
+        than h]``. The nearest piece's pitch was a square edge in R: the forcing stepped wherever a chain's lead
+        piece changed - on the Milky Way at 5.91 and 6.04 kpc, where Reid et al. 2019's Sgr-Car arm holds a 1-degree
+        stretch 133 pc long, its m = 2 factor 3.4 times its neighbours', and at five more radii. The run's lead
+        piece - the one whose locus crosses the ring, else the one whose end is nearest it - is the rule's limit as
+        the height goes to 0 where a piece crosses the ring; it is what a call with no ``height`` reads, and what a
+        chain with no weight on the ring falls back to."""
         R = np.asarray(R, dtype=float)
+        smooth = height is not None and math.isfinite(float(height)) and float(height) > 0.0
         centres = _cells.cell_centres(CELLS)
         if self.flat or not self.pieces.count or not self.budget.any():
             return
@@ -1797,8 +1888,11 @@ class ArmPattern:
                 ridges[:, k, :] = value
             sines = np.zeros(laid.slots.shape)
             carried = np.zeros(laid.R.size)
+            chain_sine = np.take_along_axis(p.chain_sines(laid.R, float(height)), laid.slots, axis=1) if smooth else None
             for k in range(laid.slots.shape[1]):
                 carried = np.where(laid.lead[:, k], p.sin_abs[laid.slots[:, k]], carried)
+                if chain_sine is not None:
+                    carried = np.where(laid.last[:, k] & np.isfinite(chain_sine[:, k]), chain_sine[:, k], carried)
                 sines[:, k] = np.where(laid.last[:, k], carried, 0.0)
             yield rows, sines, laid.effective[:, None, None] * ridges
 
