@@ -19,7 +19,7 @@ drawn at its radius; #230 mended (the forcing's pitch averaged over the layer's 
 (b5d421c; hash 27561e8d...). **`batch-q`**: the re-pin pass (RA, RB, RC; the lead's spill 1826 -> 1821, the three
 legs' `EXPECTED_LEAST` as read), run 44072430053 on 0433cd1 **green** (1860 passed, 35 skipped, 10 xfailed, 2:33:21);
 D1: hash **5a862a70d3760c426ca51c2cffa2b0c2**, `tests/layer_reference_s102.json`, `bundles_q`, the frames = the live
-captures byte for byte. Closing head: the head after this commit, pushed by the lead; final run [[LEAD: final run id]].
+captures byte for byte. Final run 44108837489 on 7ecd0e4 GREEN (1860 passed, 35 skipped, 10 xfailed, 2:40:55); the closing head is its one-line docs successor (this line).
 **The held head**: re-pinned under (ii) by LA, LB; four judged clauses held strict (`GATE_MAX_G_OVER_STEADY_S102`,
 `SUBSAMPLE_READ_OVER_S102`, `MANY_WINDOWS_READ_OVER_S102`, `DUST_COLUMN_OVER_S102`); #233's flatness hold lifted under
 (ii) (0.0468 / 0.0387); its run to come. **115 open = 49 + 66, 104 discharged**; next #237, D273. #230, #232
