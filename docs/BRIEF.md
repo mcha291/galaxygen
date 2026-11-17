@@ -16,18 +16,22 @@ the yardstick `READING_PICTURES.md` Part S102.
 #232 built (each HII region grown past its clump: median 0.77 -> 11.0 pc on the Milky Way, its Halpha unchanged) and
 drawn at its radius; #230 mended (the forcing's pitch averaged over the layer's height); #226's edge declared. On
 `batch-q-lanes` (held): #234 (ii). On `q-231` (frames only, pushed, never merged): #231. Nothing merged into `main`
-(b5d421c; hash 27561e8d...). [[LEAD: both heads' shas, final runs and pytest lines; the new hash]].
-**115 open = 49 + 66, 104 discharged**; next #237, D273. #230, #232 discharged; #235, #236 opened.
+(b5d421c; hash 27561e8d...). **`batch-q`**: the re-pin pass (RA, RB, RC; the lead's spill 1826 -> 1821, the three
+legs' `EXPECTED_LEAST` as read), run 44072430053 on 0433cd1 **green** (1860 passed, 35 skipped, 10 xfailed, 2:33:21);
+D1: hash **5a862a70d3760c426ca51c2cffa2b0c2**, `tests/layer_reference_s102.json`, `bundles_q`, the frames = the live
+captures byte for byte. Closing head: the head after this commit, pushed by the lead; final run [[LEAD: final run id]].
+**The held head**: re-pinned under (ii) by LA, LB; four judged clauses held strict (`GATE_MAX_G_OVER_STEADY_S102`,
+`SUBSAMPLE_READ_OVER_S102`, `MANY_WINDOWS_READ_OVER_S102`, `DUST_COLUMN_OVER_S102`); #233's flatness hold lifted under
+(ii) (0.0468 / 0.0387); its run to come. **115 open = 49 + 66, 104 discharged**; next #237, D273. #230, #232
+discharged; #235, #236 opened.
 
 ## The owner's choices now (recommendations are the gate's, each re-rulable)
-1. **`batch-q` -> `main`**, on its green dispatched run, the owner's word (it moves the regions' physics and #230's
-   step; no frame moves visibly).
+1. **`batch-q` -> `main`** on its green dispatched run (the regions' physics, #230's step; no frame moves visibly).
 2. **The held head (#234):** (i) D216's response kept, or (ii) the measured relation on `batch-q-lanes`. The
    recommendation now stands on the measurement alone; **the gate recommends NOT taking (ii) for the picture's sake**
    and leaving `batch-q-lanes` held until the lanes' width, offset and covering fraction are read (#229's line,
    BUILD_VII row 105). A defect of (ii) as built: the stars' kink at 4.450 kpc steps the molecular field by 0.029.
-3. **#231: do not order it** (no lanes; invariant I2 broken by design; NGC 4414 redder; a cloud at the 150 pc cap; an
-   untraced defect). `q-231` stays a branch.
+3. **#231: do not order it** (no lanes; I2 broken by design; NGC 4414 redder; a cloud at the 150 pc cap; a defect).
 4. **#184:** (i) the young and middle light in the clouds' 34 pc layer (Robin et al. 2003's youngest bin, 33 pc) -
    **recommended** - or (ii) Robin's ratio per part for every galaxy.
 5. Adopt BUILD_VII (a draft) or re-order it; the display pass (sheets in `docs/goals/display_pass_s101/`).
@@ -38,23 +42,19 @@ drawn at its radius; #230 mended (the forcing's pitch averaged over the layer's 
 ## What the next session does
 1. The gate enters D272 from the scratchpad draft, tags `s102` on `batch-q`'s closing head (MANUAL_TODO row 102).
 2. On the owner's word: the merge of `batch-q`; the held head kept, merged or dropped.
-3. Then BUILD_VII row 104 (the viewer row, with #236) or row 105 (the reading row: #229's lanes, #235, #149's table,
-   #226's truncation), as the owner orders.
+3. Then BUILD_VII row 104 (the viewer, #236) or 105 (the reading: #229's lanes, #235, #149, #226), as the owner orders.
 
 ## Rulings taken on recommendation — the owner may re-rule any
-- At S97-S101's gates: as BRIEF said at S101 (no default moved; #80 kept over #233; #95 not merged; #101, #147
-  permanent; #183 pulled into batch Q).
-- At S102's gate: #232's sound speed c_0^2 = c_s^2 + sigma_v^2, the capped region keeping its photons, the bubbles on
-  the natal density, the log U floor recorded; D219's pitch clause re-ruled (the Gaussian of the layer's height) and
-  the count's taper at a turn back; #234's weak arms held, not failed, the relation on the tapered field; #231's
-  invariant break declared, not amended; #136 a disclosed check for batch R; #183 to batch R.
+- At S97-S101's gates: as BRIEF said at S101 (no default moved; #80 over #233; #95 not merged; #101, #147 permanent).
+- At S102's gate: #232's c_0^2 = c_s^2 + sigma_v^2, the capped region keeping its photons, the bubbles on the natal
+  density, the log U floor recorded; D219's pitch clause re-ruled (a Gaussian of the layer's height), the count's taper
+  at a turn back; #234's weak arms held, not failed; #231's I2 break declared, not amended; #136, #183 to batch R.
 
 ## The rules said again, and the traps (S72-S102's stand)
 - **Two-thirds**: a lead past two-thirds of its context hands back. **Commit each item when green** (`git commit -F`).
 - The runner's suite once per head (`gh run view`); the `machine_pinned` nodes a change touches read by name.
 - Never the full suite, `verify_clone` or the pins unprompted (D246); one single-threaded pytest at a time, `tasklist`
   first; no backtick in a shell string; any byte under `model/galaxy` moves the hash.
-- pytest's collect-only under the project's `-q` prints no ids; an empty argument file runs the whole suite (S94).
-- One change against the control per experiment; a display default is never moved by a session (D227).
+- `--collect-only -q` prints no ids, an empty id file runs all (S94); one change per experiment; defaults fixed (D227).
 - A lane re-pins nothing outside its own files (S99); a re-pin pass is briefed in thirds on disjoint files (S100).
 - A held head is never merged on a recommendation (BUILD_VII §1); a frames-only branch is never gated or merged.

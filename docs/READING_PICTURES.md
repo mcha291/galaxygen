@@ -562,9 +562,27 @@ ratio maps `s102_X_ratio_<box>.png` (`batch-q-lanes` over `batch-q`), and the ta
 | `main`, N6 (section 20) | −0.459 (−0.022 / −0.481) | 0.0631 | 0.0335 | 0.0352 | 1.456 | 0.0619 | −1.19 |
 | **`batch-q`, N6** | −0.458 (−0.022 / −0.480) | 0.0630 | 0.0335 | 0.0352 | 1.456 | 0.0617 | −1.14 |
 
-[[LEAD: the committed frames' table after D1 - `batch-q`'s nine frames regenerated from its bundles at the committed
-display defaults, `goal_metrics` at the old frame's geometry as section 19, one row per field and stars frame beside
-`main`'s, and whether the regenerated field frames' rows equal the live captures' above]]
+**The committed frames after D1.** `batch-q`'s nine frames regenerated from its bundles
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s102\bundles_q`, model 5a862a70...) at the committed display
+defaults (D1's commit 0d0b28d; the picture test's real run then 1 passed twice, all nine the committed picture byte for
+byte). **The regenerated field frames equal runner X's live `batch-q` captures byte for byte** (sha256 9de9b23b... the
+Milky Way, bca52b22... NGC 4414), so their rows are the live rows above. `goal_metrics` at section 19's geometry:
+
+| picture | D(B−R) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope |
+|---|---|---|---|---|---|---|---|
+| `main` `milky_way`-field | −0.304 | 0.0546 | 0.0778 | 0.0600 | 2.091 | 0.0319 | −1.27 |
+| **S102 `milky_way`-field** | −0.313 | 0.0535 | 0.0764 | 0.0598 | 2.113 | 0.0325 | −1.15 |
+| `main` `milky_way`-stars | −0.358 | 0.0605 | 0.0543 | 0.0490 | 1.964 | 0.0062 | −3.57 |
+| **S102 `milky_way`-stars** | −0.362 | 0.0583 | 0.0565 | 0.0477 | 1.864 | 0.0072 | −3.50 |
+| `main` `ngc_4414`-field | +0.166 | 0.0593 | 0.1281 | 0.0379 | 1.992 | 0.0278 | −1.59 |
+| **S102 `ngc_4414`-field** | +0.165 | 0.0599 | 0.1268 | 0.0390 | 1.984 | 0.0276 | −1.52 |
+| `main` `ngc_4414`-stars | −0.208 | 0.0341 | 0.0736 | 0.0341 | 1.707 | 0.0010 | −3.58 |
+| **S102 `ngc_4414`-stars** | −0.208 | 0.0341 | 0.0736 | 0.0341 | 1.707 | 0.0010 | −3.58 |
+
+The Milky Way's stars frame moves in the second or third figure (lane G's taper at chain 0's turn back moves the Milky Way's stars and no other galaxy's `[inferred]`);
+NGC 4414's not at all. `DUSTY_LAYER_RATIO` re-pinned as measured, [0.96977, 0.97354, 0.97990] -> [0.96993, 0.97367,
+0.97993]; every judged check of the picture test passed unmoved (the dust's column 0.999786; the surface-brightness
+gates A and B; the GPU light at most 5.73e-6).
 
 `batch-q`'s rows equal lane V's "after" rows (q-viewer on q-nebular) to the third figure; `main`'s equal S101's. The
 numbers move in the third figure but for the power slope (the Milky Way's defaults −1.27 → −1.15, NGC 4414's −1.59 →
@@ -591,7 +609,8 @@ The ratio maps (`batch-q-lanes` over `batch-q`): the median log2 ratio over lit 
 NGC 4414's defaults (−0.037); pixels under 0.8x 1.0-2.0 % in the field frames and about 4.7 % at the zoom stands,
 balanced by as many over 1.25x; the map a scatter of black and white ellipses - the dust clouds moved, and a few
 knots - with no smooth band along any arm. The held head's frames are live captures only; its committed frames are
-[[LEAD: the held head's frames regenerated on its own branch after its D1, or "not regenerated"]].
+not regenerated at this close: the held head keeps `batch-q`'s committed frames, and its own close is to regenerate its
+nine on a branch cut from it (`batch-q-lanes-frames`), recorded there.
 
 ## 25. What the sheets show, and the gate's verdict
 
