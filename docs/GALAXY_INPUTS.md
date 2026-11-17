@@ -4850,6 +4850,17 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    *S102's gate (D272):* **the reader's verdict ruled: a sourced DISCLOSED check, batch R** (BUILD_VII rows 106-107) -
    the frame's face-on A_B against Driver et al. 2007's 0.20 ± 0.04 and the dust term's E(B−V) against Tuffs et al.
    2004's 0.067-0.088; the miss is the dust's radial geometry (#47's), not the stars. Carried.
+   *S104 (batch R, lane RC): the disclosed check, measured - both miss.* The render's frame (`/api/render`, layer off
+   as the colour check is judged), face-on through its dust by the check's own computation (`specs.templates.face_on`),
+   integrated over the disc in B and V, A = through the dust less the stars alone: **disc A_B 0.326 (milky_way) and
+   0.359 (ngc_4414) against Driver et al. 2007's 0.20 ± 0.04 - over by 1.6-1.8x** (extinction alone 0.377 / 0.404, the
+   scattered light giving back 0.05); **disc E(B−V) −0.003 and −0.029 against Tuffs et al. 2004's 0.067-0.088 - the
+   wrong sign.** Where: the B light-weighted face-on τ_B 3.1 / 9.0, the disc dimmed by A_B 0.96 / 1.11 inside 2 kpc and
+   ~0.01 beyond 13 kpc, so the redder inner light loses most (A_V > A_B) - #47's inner reservoir, as D272 read it. With
+   the undimmed bulge (the frame as summed): A_B 0.308 / 0.324; the check's B − V 0.5664 / 0.6441 (the anchor). Only a
+   rendered frame gives the disc-integrated number (the model's own fields give the per-ring τ and light, which the
+   frame composes); no viewer involved. Recorded in `tests/test_disclosed_s104.py`, not in `specs/templates.py` beside
+   `RADIAL_CHECKS` as S101's reader proposed (that is a text under `model/`, outside this lane). Carried.
 137. ~~**The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first**~~
    **DISCHARGED at S70** (Audit V, F-5-1, D234; discharged in fact at S61). Its own closer — "L1's ring-first draw
    … after which the list is empty and the realised ring totals are identical with the layer on or off" — was met

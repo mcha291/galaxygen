@@ -192,3 +192,52 @@ def test_103_the_remnants_count_against_a_prediction_and_the_sedov_jump_disclose
     sedov = phase == 0
     shell, ambient = np.asarray(F["remnant_shell_density"], float)[sedov], np.asarray(F["remnant_ambient_density"], float)[sedov]
     assert np.allclose(shell, 4.0 * ambient, rtol=1e-12)  # Leahy & Williams 2017: compression ratio 4
+
+
+@pytest.mark.parametrize("name, want", [
+    # (disc A_B extinction only, A_B with the scattered light, A_V with it, the frame's disc + undimmed bulge A_B)
+    ("milky_way", (0.3774, 0.3255, 0.3285, 0.3084)),
+    ("ngc_4414", (0.4042, 0.3589, 0.3878, 0.3236)),
+])
+def test_136_the_frame_s_face_on_attenuation_disclosed(name, want):
+    """#136, DISCLOSED as measured at S104 (D272 item 7). The sources, READ by S101's reader R3 (``s101_R3.md``):
+    Driver et al. 2007 (arXiv:0704.2140): the face-on B attenuation "for discs of (0.20+-0.04) mag" (tau_B^f 3.8 +-
+    0.7); Tuffs et al. 2004 (astro-ph/0401630) Tables 4-6, the face-on term a0 at tau_B^f 4: E(B-V) 0.067 for the disc,
+    0.088 for the thin disc `[inferred from the READ tables]`. The model: the render's frame (``/api/render``, layer
+    off as the colour check is judged; no viewer), face-on through its dust by the colour check's own computation
+    (``specs.templates.face_on``: each ring's stars and dust in their own sech^2 layers, the clouds' share in theirs),
+    integrated over the disc in the table's B and V; A = the frame's magnitude through the dust less the stars' alone.
+    The disc (Driver's is a disc's): **A_B 0.326 (milky_way) and 0.359 (ngc_4414) against 0.20 +/- 0.04 - a miss, over
+    by 1.6-1.8x**; extinction alone 0.377 and 0.404, the scattered light giving back 0.05. **E(B-V) of the disc -0.003
+    and -0.029 against Tuffs' 0.067-0.088 - a miss, of the wrong sign**: the dust makes the frame bluer. The cause is
+    where the dust is (#47's inner reservoir, D272's reading): the B light-weighted face-on tau_B is 3.1 and 9.0, the
+    disc dimmed by A_B 0.96 / 1.11 inside 2 kpc and 0.011 / 0.007 beyond 13 kpc, so the redder inner light loses most -
+    A_V above A_B. The frame with its undimmed bulge (as the colour check sums it): A_B 0.308 and 0.324; the check's
+    B - V 0.5664 and 0.6441 (``ngc_4414``'s S99 number, the anchor). No mend (#47 is the dust geometry's)."""
+    import json
+
+    from galaxy.api.service import Service
+    from galaxy.specs import templates as checks
+    from galaxy.stages import spectra
+
+    curves = json.dumps([spectra.band_curve(b).json() for b in ("B", "V")])
+    got = Service().handle("/api/render", {"template": [name], "filters": [curves], "layer": ["off"]})
+    assert got.ok
+    header, arrays = got.frame()
+    area = checks.cell_areas(header)[..., None]
+    tau = -np.log(arrays["dust_extinction"])
+    share, cloud_ratio = checks.face_on_clouds(header, arrays)
+    own = checks.layered_face_on_transmission(tau, checks.face_on_ratio(header, arrays)[:, None], share[:, None], cloud_ratio)[:, None, :]
+    stars = np.asarray(arrays["stars"], float)
+    bare = (stars * area).sum(axis=(0, 1))
+    ext = (stars * own * area).sum(axis=(0, 1))
+    bulge = np.asarray(header["bulge"], float)
+    full = checks.frame_total(header, checks.face_on(header, arrays)) - bulge  # + scattered + thermal (none in B, V)
+
+    def att(dim: np.ndarray, base: np.ndarray, b: int) -> float:
+        return float(checks.band_magnitude(dim[b], ("B", "V")[b]) - checks.band_magnitude(base[b], ("B", "V")[b]))
+
+    got_ = (att(ext, bare, 0), att(full, bare, 0), att(full, bare, 1), att(full + bulge, bare + bulge, 0))
+    assert got_ == pytest.approx(want, abs=1e-3)  # Driver et al. 2007: discs 0.20 +/- 0.04 in B, face-on
+    assert got_[1] - got_[2] == pytest.approx(want[1] - want[2], abs=1e-3)  # E(B-V); Tuffs et al. 2004: 0.067-0.088
+    assert checks.face_on_colour(header, arrays) == pytest.approx({"milky_way": 0.5664, "ngc_4414": 0.6441}[name], abs=1e-4)
