@@ -3843,6 +3843,14 @@ never been judged in twenty-three sessions.
    - a prediction, said so. The Sedov jump clause CLOSES on Leahy & Williams 2017 (arXiv:1701.05942) sect. III.1.4,
    READ: "a strong shock with compression ratio of 4". What is left: the radiative shell's ionization state (one
    recombination per swept-up H atom), NOT READ - a reading. `READING_ROW_105.md` #103.
+   *S104 (batch R, lane RC): the disclosed check, measured, and the Sedov clause's code read.* `remnant_count_total`
+   on this model (production grid, the default galaxy) is **1 529.6** (the 1 464 above is S36's; 1 549 drawn, 652
+   Sedov, 897 radiative), inside Ball et al. 2023's 1 000-2 700 - a hit against **a prediction** (a rate times a
+   Sedov-Taylor lifetime, the model's own construction), not a survey (300-400 found). `ngc_4414`: 626.7. The Sedov
+   jump: the code's factor is Leahy & Williams 2017's compression ratio of 4 - `stages/bubbles.py:349` (`4.0 * n0`,
+   the Sedov remnant's shell density; its comment at :344 still tags it "[inferred: Rankine-Hugoniot]", a citation the
+   next hash move can update), and every Sedov remnant's shell reads exactly four times its ambient.
+   `tests/test_disclosed_s104.py`. The head is the gate's to rule.
 
 104. ~~**The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**~~
    **DISCHARGED at S38 (D187)**: the exponent is −0.2, the zone's pins swapped to the printed reading. (S37, Audit III A3-1, D186). `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock

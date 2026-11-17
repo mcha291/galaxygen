@@ -171,3 +171,24 @@ def test_96_the_young_clusters_mass_function_slope_disclosed(default):
     assert binned == pytest.approx(-1.947, abs=2e-3)
     n, mle, err, binned = _mass_function_slopes(m[age <= 10.0])
     assert n == 2774 and mle == pytest.approx(-1.889, abs=1.5e-3) and binned == pytest.approx(-1.969, abs=2e-3)
+
+
+def test_103_the_remnants_count_against_a_prediction_and_the_sedov_jump_disclosed(default):
+    """#103, DISCLOSED as measured at S104 (D273 item 5). The source: Ball et al. 2023 (arXiv:2307.01948) sect. 1, READ
+    at S103: "1000 to 2700 radio supernova remnants should be detectable in our Galaxy" - **a prediction** (a rate times
+    a Sedov-Taylor lifetime), not a survey; "somewhere in the range of 300 to 400" found. The model: remnant_count_total,
+    the supernova rate times REMNANT_VISIBLE_LIFETIME 60 000 yr over the disc - **1 529.6 (the entry's 1 464 is S36's),
+    inside 1000-2700, a hit against a prediction** made the model's own way; 1 549 drawn (652 Sedov, 897 radiative).
+    ``ngc_4414`` (not pinned; the prediction is the Galaxy's): 626.7. The Sedov jump: Leahy & Williams 2017
+    (arXiv:1701.05942) sect. III.1.4, READ at S103, "a strong shock with compression ratio of 4"; the code's factor is
+    that 4 (``stages/bubbles.py``, the shell density ``4.0 * n0`` for a Sedov remnant, its comment still citing
+    Rankine-Hugoniot `[inferred]`) and every Sedov remnant's shell reads four times its ambient density."""
+    res, C = default
+    F = res.fields
+    assert float(C["REMNANT_VISIBLE_LIFETIME"]) == 60000.0
+    assert float(F["remnant_count_total"]) == pytest.approx(1529.6, abs=0.1)  # Ball et al. 2023: 1000-2700, predicted
+    phase = np.asarray(F["remnant_phase"])
+    assert phase.size == 1549 and int((phase == 0).sum()) == 652
+    sedov = phase == 0
+    shell, ambient = np.asarray(F["remnant_shell_density"], float)[sedov], np.asarray(F["remnant_ambient_density"], float)[sedov]
+    assert np.allclose(shell, 4.0 * ambient, rtol=1e-12)  # Leahy & Williams 2017: compression ratio 4
