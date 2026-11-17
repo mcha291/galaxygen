@@ -5,8 +5,8 @@ Phase R is a behaviour-preserving restructure. What this file holds, in the orde
 - **The reference.** With the layer off, every field of both models at both templates' inputs on the production
   grid, and every array of every input route's body, is bit-identical to the reference with an empty named list -
   since S90 (#214, D258) the batch's final layer-off run, re-based at each batch's close by decision
-  (``tests/layer_reference.py``, ``tests/layer_reference_s100.json`` since S100's re-base, batch P, D270; M3's
-  ``tests/layer_reference_s93.json`` and M2's ``tests/layer_reference_s90.json`` kept as history); from S56 to S89 S55's layer-off run
+  (``tests/layer_reference.py``, ``tests/layer_reference_s102.json`` since S102's re-base, batch Q, D272; batch P's
+  ``tests/layer_reference_s100.json``, M3's ``tests/layer_reference_s93.json`` and M2's ``tests/layer_reference_s90.json`` kept as history); from S56 to S89 S55's layer-off run
   (``tests/layer_reference_s55.json``, kept as history) with a named list (``LAYER_OFF_EXCEPTIONS``). Until S56 the reference was S54's with the layer **on** (Phase R was
   behaviour-preserving); it is retired, because from P1 the layer-on galaxy changes by design (D215).
 - **I1.** With the layer off the model runs, and every field not declared composed - every scalar, every history,
@@ -430,6 +430,13 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # and two fields added on every label against S93's file. The reference is batch P's final layer-off run, written
 # single-threaded by `tests/layer_reference.py write` to tests/layer_reference_s100.json and read green at one thread
 # and unrestricted. tests/layer_reference_s93.json is kept untouched as history; no test reads it.
+#
+# S102 (batch Q's close, D272: re-based again, the two lists empty). Batch Q moved the model by design - lane H's
+# regions (#232), each HII region grown to its expanded radius (hii_radius, hii_radius_limit, hii_natal_density added)
+# and read over it - 12 fields per label, three added on every label, 14 of the 42 routes (the clusters and render
+# routes) against S100's file; lane G's arms move no layer-off field. The reference is batch Q's final layer-off run,
+# written single-threaded by `tests/layer_reference.py write` to tests/layer_reference_s102.json and read green at one
+# thread and unrestricted. tests/layer_reference_s100.json is kept untouched as history; no test reads it.
 NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route labels) named off the reference since its re-base
 # S91 (#160) named four render routes here off the S90 file (D260: the azimuthal renders' stars_old_placement); the
 # S93 re-base carries them, so the list is empty again. Was {"azimuthal/render/disc", "azimuthal/render/level1",
