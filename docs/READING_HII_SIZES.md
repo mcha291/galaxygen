@@ -184,3 +184,123 @@ draws `hii_halpha_emissivity` over `hii_stromgren_radius` (`frontend/src/galaxy/
 emissivity is uniform over `hii_radius`, so **a sphere drawn at R_St from it carries (R_St/R_HII)^3 of the region's
 light** (median 2e-4) until the viewer reads `hii_radius`. The knots (line_response, from `hii_halpha_luminosity`) are
 unaffected.
+
+---
+
+## Part S103 — the reading row (BUILD_VII row 105, D273; register #235)
+
+**What this part is (2026-11-17).** S103's reader RB (Opus, read-only; its note `s103_RB.md` in the session's
+scratchpad, section A) read what #235 asked for: Barnes et al. 2025's fits with their completeness and bias, a single
+population's ionizing rate against age, and the laws for a front under a falling rate. Every page was read through a
+summarising fetch, equations and rows asked for verbatim. The gate's ruling is item 2 of `DECISIONS.md` D273. No model
+byte moved.
+
+### S103.1 Barnes et al. 2025, arXiv:2510.11778v1 — READ (arxiv.org/html, characters 0-153k)
+
+- **Which L.** Sect. 5.1: the relation is calibrated "using MUSE-derived Hα luminosities and HST-based size
+  measurements" `[verified: Barnes et al. 2025 §5.1, S103]`; the luminosity is extinction-corrected per region (Sect.
+  3.3). So x = MUSE L_Hα, corrected; y = the HST radius.
+- **Units: still NOT READ** for r or L in Sect. 5.1 (asked again). pc and erg/s stay `[inferred]` (the abstract's and
+  Sect. 6's "median H ii region radius of ∼20 pc").
+- **The radii.** r_circ = sqrt(A/π) of the enclosed area (Sect. 2.2), "more sensitive to irregular shapes and diffuse
+  substructure" (Sect. 4.2.3); r_mom the geometric mean of the intensity-weighted second moments (Sect. 3.3);
+  r_mom,deconv = sqrt(r_mom² − σ_PSF²) for the 10 pc FWHM PSF (Sect. 4.2.3) `[verified: ibid.]`. Images at a fixed 10 pc
+  resolution; noise σ 6.25×10⁻¹⁶ erg/s/cm²/arcsec²; masks at 5σ and 2σ; structures under three PSF areas removed
+  (Sects. 3.1-3.2).
+- **The six fits** (Sect. 5.1; no table of parameters, no uncertainties, no scatter number printed):
+
+  | eq | fit | slope | intercept |
+  |---|---|---|---|
+  | 1 | points, log r_circ | 0.479 | −16.820 |
+  | 2 | points, log r_mom | 0.467 | −16.678 |
+  | 3 | points, log r_mom,deconv | 0.523 | −18.859 |
+  | 4 | median bins, r_circ | 0.451 | −15.742 |
+  | 5 | median bins, r_mom | 0.428 | −15.194 |
+  | 6 | median bins, r_mom,deconv | 0.470 | −16.824 |
+
+  Fitted "within a 1 to 99 percentile range" (no numeric L bounds printed). No theoretical slope is given: the method
+  "implicitly assumes a universal luminosity–size relation" (Sect. 5.1).
+- **Completeness** (Sect. 4.1, READ): at the MUSE function's peak, log L ~ 37, "the completeness in number is
+  approximately 5%, and in luminosity, approximately 10%"; 50 % in both at log L ~ 38; brighter, 90 % in number and
+  75 % in luminosity; "reduced sensitivity to diffuse, low-luminosity regions due to the limitations of our HST
+  narrow-band imaging" `[verified: ibid. §4.1, S103]`.
+- **The authors' own bias** (Sect. 5.1, READ): "if the regions undetected in the HST imaging are preferentially
+  diffuse and spatially extended, then their sizes would be systematically underestimated", "primarily biasing the
+  low-luminosity tail" `[verified: ibid. §5.1, S103]`.
+- Sizes: median r ~20 pc, down to (sub)-parsec deconvolved; r_mom and r_mom,deconv peak near 10 pc, r_circ at 20-25 pc
+  (Sect. 4.2.3). Appendix: median n_e 40.5 cm⁻³ ([S II], Table 7), median association age 3.0 Myr (Table 8). A Fig. 4
+  caption's "down to radii of approximately 55 pc" is inconsistent with the text; not resolved.
+
+**What it does to #235's clause** `[inferred: the reader's arithmetic]`. The 10³⁷-10³⁸ decade sits where the HST
+catalogue is 5-50 % complete, and the missing regions are, by the authors' word, the diffuse extended ones. So "the
+faint regions too large" is restated: against the circularised fit (Eq. 1) the model's 12.7 pc in that decade is
+**1.09x**; against the deconvolved fit (Eq. 3) **2.7x**. A fair comparison applies their detection to the model: I =
+Σ_L / 5.08×10⁴⁸ (Σ_L in erg/s/pc², I in erg/s/cm²/arcsec²), so the 5σ level 3.1×10⁻¹⁵ is Σ_L ~ 1.6×10³⁴ erg/s/pc²
+and the 2σ level ~6.3×10³³; a 10³⁷ erg/s region at mean surface brightness 2σ has R ~ 22 pc, at 5σ ~ 14 pc (the
+threshold is on observed, attenuated, per-10-pc-pixel brightness; a mean over the disc is a simplification).
+
+### S103.2 A single-age population's ionizing rate falls with age
+
+- **Starburst99** (Leitherer et al. 1999, astro-ph/9902334): the paper READ (ar5iv) only for where the numbers are
+  (Sect. 8, Figs. 77a-e and 78a-e; instantaneous models of 10⁶ M☉, Sect. 2; panel b Z = 0.020). The numbers: the
+  site's data file for Fig. 77, `https://massivestars.stsci.edu/starburst99/data/912_inst_b.dat` — READ, rows as
+  printed; the file has no header, and that column 2 is the Salpeter 1-100 M☉ IMF is **RECALL** (its log 52.79 at
+  1 Myr for 10⁶ M☉ is consistent with it `[inferred]`).
+
+  | age (yr) | log N(H⁰), col 2 | Q / Q(1.01 Myr) `[inferred]` |
+  |---|---|---|
+  | 1.01e6 | 52.786 | 1 |
+  | 3.01e6 | 52.617 | 0.678 |
+  | 4.01e6 | 52.169 | 0.242 |
+  | 6.01e6 | 51.435 | 0.0446 |
+  | 8.01e6 | 50.688 | 0.0080 |
+  | 1.001e7 | 50.173 | 0.0024 |
+  | 2.001e7 | 48.886 | 1.3e-4 |
+
+  Roughly flat to 3 Myr, then d log Q / d log t ≈ −5.0 over 4-10 Myr and −4.3 over 10-20 Myr `[inferred: the reader's
+  fit, not published]`. No published closed form was found; Lacki 2013 (arXiv:1206.7100, READ §2.3 eq. 12) uses a step
+  and calls it "simplistic". BPASS, Slug: NOT READ.
+- **The model already has its own Q(t).** `stages/clusters.py` `per_mass(age_myr, feh)` returns
+  `per_mass_at(population_light().ionizing_per_mass, age, feh)` and the cluster's `cluster_ionizing_photons` is mass x
+  q; `population_light()` (`photometry.py`) integrates a Kroupa population along each isochrone with
+  `massive_stars.ionizing_photons` (Sternberg, Hoffmann & Pauldrach 2003) — a table (n_age, n_mh) of photons/s per
+  M☉ formed, falling about a hundredfold by 8 Myr. The D-type law of section 2 takes the cluster's **today's** Q for
+  R_St and holds it over the whole age.
+
+**The defect, named at the gate (D273 item 2).** The region is grown to its cluster's age at TODAY's ionizing rate
+held fixed, while the model's own table has the rate falling a hundredfold by 8 Myr. "Constant Q" in #235 means the
+old regions are grown at their aged, small Q — not at the Q they had while the front ran. It was caught by setting
+the law's inputs beside the model's own table.
+
+### S103.3 A front under a falling rate, leakage, escape
+
+- Williams, Bisbas, Haworth & Mackey 2018, arXiv:1805.09273 — READ (ar5iv): eq. 48 is "general enough to allow for the
+  variation of the ionizing luminosity of the source with time", "by varying R_Stag to reflect the changing value of
+  Q_0"; tested on a RISE only (to 120 %, Fig. 5); a falling Q not analysed; which sound speed c_0 is was not confirmed.
+- Geen, Hennebelle, Tremblin & Rosdahl 2015, arXiv:1507.02981 — READ (ar5iv, 0-100k): eq. 5 for a constant source in a
+  power-law density; Sect. 3.3: "In every simulation in this paper we assume that the sources have a constant emission
+  rate"; eq. 11 the stall radius.
+- Kim, Kim & Ostriker 2019, arXiv:1908.07549 — READ (ar5iv, 0-100k): no closed form for the escape fraction; it
+  "increases as H ii regions evolve and reaches unity within a few dynamical times"; cumulative f_esc at 3 Myr 0.05-0.58
+  (Table 1).
+- Pellegrini et al. 2012, arXiv:1202.3334 — READ (ar5iv, 0-100k): optically thin nebulae more frequent with Hα
+  luminosity, dominant above log L = 37.0, both kinds "at almost all luminosities"; f_esc 0.6 / 0.3 / 0 assumed.
+- NOT READ: Rahner et al. 2017, Geen et al. 2016/2019/2020, Della Bruna et al. 2021, Chevance et al. 2022.
+
+### S103.4 Candidates (the reader's; the gate chose in D273 item 2)
+
+Arithmetic first `[inferred]`: a region in uniform gas obeys photon balance, so at fixed density slopes are at most
+1/3; the constant-Q D-type gives R ~ Q^(1/7) t^(4/7), the 0.2 read; a slope of 0.5 means constant mean surface
+brightness.
+
+| | candidate | what it does `[inferred]` | new constant |
+|---|---|---|---|
+| (a) | grow at the history Q(t), the model's own `ionizing_per_mass` table; front law Williams 2018 eq. 48 or Bisbas eq. 13 with R_St(t) | the shell grows faster early; today's ionized radius inside the cavity is R_shell (Q_now/Q_peak)^(1/3), so old faint regions shrink ~10x: the faint end falls hard; alone it does not reach 0.5 | none (a ruling that the Hα radius is the ionized radius inside the shell) |
+| (b) | the cloud cap with M_cluster ~ M_cloud | capped regions R = r_cloud ~ L^(1/2) at fixed age: the 0.5 appears; the age spread of Q smears it | none |
+| (c) | leakage rising with L (Pellegrini 2012; KKO 2019) | 0.20 -> ~0.25; small | an assumed f_esc |
+| (d) | stagnation's dependence (Bisbas eq. 17) | slope 1/3 for the stalled; 7 % of Hα | none |
+| (e) | the comparison itself | apply Barnes's 2-5σ detection to the model before comparing the faint decade | none |
+
+**The gate's ruling (D273 item 2):** destination **batch R** — grow the front at the rate's history (the model's own
+table; no new constant), keep the ionized radius inside the shell at today's rate `[inferred]`, and compare only above
+Barnes's detection limit; the gate rules on the builder's measurement. Leakage: no closed form read, not built.
