@@ -1931,7 +1931,9 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # layer's one height) and the gas pattern's composed atomic_gas_density_contrast (S100, #130).
     # S102 (batch Q, D272; #232 lane H): was 399 - three cluster columns added, hii_radius, hii_radius_limit and
     # hii_natal_density (the region grown past its natal clump; n_e by photon balance).
-    assert len(columns) > 100 and len(b.fields) == 402
+    # S104 (batch R, D274; #235 lane RH): was 402 - one cluster column added, hii_shell_radius (the shell driven at
+    # the cluster's peak ionizing rate).
+    assert len(columns) > 100 and len(b.fields) == 403
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
