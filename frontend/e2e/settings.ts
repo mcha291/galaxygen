@@ -128,8 +128,13 @@ export const TRANSFER_SLACK = 1e-3;
  * the spurs' feet, #130 the placed gas and the dust the blend of the molecular and the atomic responses): measured
  * 0.96977, 0.97354, 0.97990 on the regenerated frames with the S100 bundles (+1.42e-3, +1.21e-3, +8.1e-4: past
  * DUSTY_RATIO_PIN in R and G, inside it in B; the physics-only frame taken twice the same to 0).
+ *
+ * S102 (batch Q's close, D272; the hash 5a862a70...): was [0.96977, 0.97354, 0.97990] (S100) - batch Q's model (lane
+ * G's arms #230, lane H's regions grown to hii_radius #232) and lane V's knots drawn as spheres of hii_radius: measured
+ * 0.96993, 0.97367, 0.97993 on the regenerated frames with the S102 bundles (+1.6e-4, +1.3e-4, +3e-5, inside
+ * DUSTY_RATIO_PIN before the re-pin; the physics-only frame taken twice the same to 0).
  */
-export const DUSTY_LAYER_RATIO = [0.96977, 0.97354, 0.9799] as const;
+export const DUSTY_LAYER_RATIO = [0.96993, 0.97367, 0.97993] as const;
 // S88 (M1's close, the frames regenerated on the batch's final model): was [0.96641, 0.97054, 0.97765] - the clock
 // (#148), the floor (#209), the Milky Way's pinned 5.0 kpc bar (#80) and MERGER_HEATING 90.6 (#212) move the dust, the
 // clouds (16 940 where 16 577) and the young light; measured with the new bundles on the RTX 4070 (physics only over
