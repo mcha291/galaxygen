@@ -4726,7 +4726,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    five checks still failing). Still carried.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: the three dust terms against a
    sourced face-on attenuation for an Sc (the split V02 does not give). S95's "destination a model batch" is overtaken
-   by S99's build (the dust check, built and missed, D269).
+   by S99's build (the dust check, built and missed, D269). **The reader's verdict** (S101's reader R3, `s101_R3.md`):
+   (A), a sourced check - Driver et al. 2007's face-on disc A_B 0.20 ± 0.04 and Tuffs et al. 2004's face-on E(B−V)
+   0.067-0.088 `[inferred]` would put the stars' 0.6607 inside [0.72, 0.82]; the miss reads as the model's dust
+   geometry (the inner reservoir, #47), not the stars. The gate's ruling to come at S102's gate.
 137. ~~**The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first**~~
    **DISCHARGED at S70** (Audit V, F-5-1, D234; discharged in fact at S61). Its own closer — "L1's ring-first draw
    … after which the list is empty and the realised ring totals are identical with the layer on or off" — was met
@@ -5329,7 +5332,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    the centre, a peak at 1–2 h) and no sourced length (A4 / B9); its source, Chugunov, Marchuk & Savchenko 2025
    (Galaxies 13, 44, on the brightness profile and width along the arm), is found and unread.
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: the inner taper's sourced length
-   (Chugunov, Marchuk & Savchenko 2025, found and unread).
+   (Chugunov, Marchuk & Savchenko 2025, found and unread). **The reader's verdict** (S101's reader R3, `s101_R3.md`):
+   (C) - Chugunov et al. 2025 read: the taper's smooth form is sourced, no growth length or inner start is printed;
+   (i) pin NGC 4414's inner end to Herrera-Endoqui et al. 2015's Table 3 (VizieR, not reached) or (ii) permanent.
+   The gate's ruling to come at S102's gate.
 150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
    S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
@@ -6465,7 +6471,9 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    of the ages it holds. Listed for the gate; nothing built on it.
    *S93's gate (D262):* **carried past M3; it needs a source ruling** (Robin et al. 2003 proposed, with (b) and (c)).
    *S101 (BUILD_VI row 101, D271):* destination - BUILD_VII row 105, the reading row: the per-age height's source ruled
-   (Robin et al. 2003, proposed at S93 with (b) and (c)).
+   (Robin et al. 2003, proposed at S93 with (b) and (c)). **The reader's verdict** (S101's reader R3, `s101_R3.md`):
+   (C), two sourced rulesets - (i) the young and middle parts in the clouds' 34 pc layer (Robin's youngest bin; Seth
+   et al. 2005), (ii) Robin's ratios to the one height per part. The gate's ruling to come at S102's gate.
 185. **The field mode's sampled stars take no dust at galaxy scale** (S67, D230's measurement). GalaxyView's `<Stars>`
    layers (opacity `weights.sampled`, 0.185 at a 40 kpc view) are dimmed only by the region regime's transmission
    (`patchPointsForRegion`), never by the diffuse dust or the clouds' raster, so they draw undimmed over every lane and

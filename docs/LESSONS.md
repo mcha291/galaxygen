@@ -2360,3 +2360,14 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   tightness** — never re-pinned as a record and never loosened. The published gas, once the molecular cell means, is
   now the blend: its hand check holds the blend to the bit, and the cell's mean against its centre is read on the
   molecular term, holding NGC 4414's 1.931 × 10⁻³ as before. (S100, D270)
+
+## From S101 (the register's destinations: an Opus surveyor, scout, two readers, a tracer and a runner, a docs builder; the Fable gate)
+
+- [field] **A target named in a stage that nothing aims at is a number nobody checks.** `gas_arm_contrast` 2.73 stood
+  in the gas pattern since S57 (D216) as the arms' target while the steady response read 1.43; nothing in the model
+  aimed at it, and the frames' missing lanes were read for a shock's profile before anyone set the two side by side. A
+  named target gets a check beside it, disclosed or judged, or it goes. (S101, D271)
+- [audit] **Measure the chain from forcing to picture before choosing what to read.** S98 read the sources for a
+  shock's profile across an arm; S101's scout measured the model's own chain first - the stars' ratio, the forcing's
+  gain, the thickness factor, the response's linearity, the gas's ratio - and found the gap was the gain (about one),
+  which named the law to read (a measured gas-against-stars relation) in one pass. (S101, D271)

@@ -9,7 +9,11 @@ controls built, the experiments finished, sixteen combinations measured for the 
 (#226–#228 opened; no default, no frame, no model byte moved).** **S98 ran row 98 the same day (D267): the sources
 read — the layer's mend sourced and in the model already, the template's bar short of the Galaxy's own by two printed
 numbers, no profile in print for a co-rotating arm's gas, real lanes 20–81 pc wide and the clouds'; §6 gains rulings
-7–10; #229, #230 opened.** Everything here is `[inferred]` design unless tagged;
+7–10; #229, #230 opened.** **Row 101 ran at S101 (D271) on the owner's word of 2026-11-17: the yardstick read again
+on batch P's model (no tile shows the goal's lanes or pink regions; the display pass can take the white ball and the
+tan, nothing else), #101 and #147 ruled permanent and every other carried item given a destination in BUILD_VII
+(drafted, not adopted), #234 opened; 115 open = 49 + 66.** Its done is out of reach on the lanes, the regions and the
+owner's display pass; BUILD_VII carries them. Everything here is `[inferred]` design unless tagged;
 the gaps are named by `READING_PICTURES.md`'s rows, the register's items by their numbers in `GALAXY_INPUTS.md`.
 
 ---
