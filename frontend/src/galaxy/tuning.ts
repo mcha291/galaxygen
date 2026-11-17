@@ -427,7 +427,8 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
     key: "knots", label: "HII regions as knots", group: "Components", kind: "toggle", switch: true,
     about:
       "The field mode's HII regions as knots at galaxy scale: each cluster's region a point of its own lines through the " +
-      "filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills a pixel; in each level-0 " +
+      "filter set (/api/clusters' line_response), its sphere of hii_radius in projection once that reaches a quarter of a " +
+      "pixel (S102), its light the point's; in each level-0 " +
       "cell the field's HII layers are scaled by 1 - D_c / K_c, D_c the Halpha of the knots drawn there and K_c of every " +
       "knot the cell names; a cell that names no knot by 1 - d, d the drawn share of the whole census's Halpha. With " +
       "every knot drawn the screen carries the census exactly, with none the field; the knots' Halpha " +
@@ -438,7 +439,7 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
     key: "knotsIntensity", label: "HII knots intensity", group: "Components", kind: "range", min: 0.05, max: 4, step: 0.01, log: true, unit: "×",
     about:
       "Multiplies the HII knots' drawn light and nothing else (S97): the field mode's knots at galaxy scale, in every " +
-      "regime they are drawn in - a point, a disc of the Stromgren radius once that fills a pixel, the instrument's image " +
+      "regime they are drawn in - a point, the region's sphere in projection (S102), the instrument's image " +
       "and its wings' pass - through their one gain. Not the field's HII layers, which stay scaled per level-0 cell by " +
       "the knots' undrawn share; not the region regime's HII regions (a different drawing, not reached). At 1 the screen " +
       "carries the census's Halpha exactly where every knot is drawn (the knots switch's closure); at any other value " +
