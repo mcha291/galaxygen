@@ -18269,3 +18269,109 @@ discrepancy left unreconciled in the notes: a grid named SMALL reads the layer a
 probe and 332.53 pc in S100's (two helpers' grids of that name, by the lengths they print: 2.168 and 2.427 kpc).
 Cost: the re-pin builders 0.40, 0.27, 0.19, 0.21, 0.15 M tokens and the last; the close builder 0.28 M; the docs
 builder 0.30 M; the three lane builders' were not kept.
+
+### D271. S101, the register's destinations (BUILD_VI row 101): the yardstick read again on batch P's model - no tile shows the goal's lanes or pink regions, and the display pass can take the white ball and the tan, nothing else; the arms' gas answers its stars at a gain of one where the measured relation amplifies (#234 opened, the owner's, (ii) recommended and built held); the regions' expansion law read (#232 a build); the causes of #226, #230 and #233 named; #101 and #147 permanent; every carried item a destination; BUILD_VII drafted, not adopted; no model byte moved (2026-11-17)
+
+**The owner's word, 2026-11-17, verbatim.** "Read the documents and resume the project. Spawn opus and fable
+subagents for implementation depending on your assessment of whether fable capabilities are needed; since Fable
+tokens are more limited, try to conserve it for only where it is likely to make a real difference. Do your best to
+do as much as you can in the next 24 hours, which also means trying to be more efficient with running the full
+suite and offloading it to run on Github where possible."
+
+**The gate's reading of it** (the gate's, not the owner's words; the owner may re-rule each): (a) it starts row 101
+without the display pass, which the owner has not made and which stays the owner's (D227) - S101's runner
+re-measured the boxes on batch P's model and left sheets for it; (b) it lets the next model batch run on a batch
+branch with the runner's dispatched suite as its gate (D246), `batch-q` -> `main` waiting on the owner's word as
+every batch has; (c) a ruling that is the owner's is not taken: it is put as a two-ruleset question with the gate's
+recommendation, and where a build would answer it the build is made on a HELD branch beside the batch so the owner
+compares frames and chooses a head; (d) BUILD_VII is a DRAFT on this word, its rows 102-103 running on (b).
+
+**Why a session.** BUILD_VI row 101 (P-5): the yardstick read again; every carried register item ruled permanent
+with its reason or named to a destination that exists; the count pin moved once. On `session-101` cut from `main`
+at 8db2cee. Fable at the gate; Opus for the rest: a surveyor (the 67 carried entries, one table), a scout (the lanes'
+chain), three readers (Querejeta / Meidt; the regions' sizes; #136, #149 and #184), a tracer
+(#230, #233), a runner (the boxes and #226), and a docs builder. Three to five light agents ran at once on the
+owner's "as much as you can" (ruling 9 below).
+
+**The gate's rulings.**
+1. **#226 restated: the circle is the model's stellar disc edge, not the viewer's box** (the runner). Every light
+   array `/api/render` sends falls 340-fold between R 23.66 and 24.04 kpc on `milky_way`; `dust_height` is NaN from
+   23.66 kpc; the march's box is 2 × 30 kpc, outside the frame; on `ngc_4414` the same edge near 18 kpc, an ellipse
+   at 55°. The kind changes from the viewer's to the model's; the declaration is batch Q lane G's (the law that ends
+   the disc found, the declaration written where it is computed); whether a real disc ends within 0.3 kpc is a
+   reading (Pohlen & Trujillo 2006, NOT READ), BUILD_VII row 105. Carried.
+2. **The lanes: the chain measured and the arms' molecular gas law put to the owner** (the scout; the reader;
+   `READING_ARM_GAS_CONTRAST.md`, new). The stars' ratio of means 1.458 / 1.405, the gas's 1.431 / 1.429 (Milky Way
+   / `ngc_4414`, the 1.5 kpc mask, 6-10 kpc, the probe reproducing the pinned check); the response linear to four
+   digits; the net gain 1.035; the thickness factor 0.66 the largest single loss, and sourced. Querejeta et al. 2024
+   (Table 4, nominal, segments; Fig. 5's log axes): log10 C_mol = 1.83 log10 C_star + 0.16, 2.89 / 2.69 at the
+   model's stars; the scatter about the fit not printed; Meidt et al. 2021's physical form zero in a co-rotating
+   frame. (2.1) #228 restated to what is left (the clouds follow a gas field that follows its stars at a gain of one).
+   (2.2) **#234 opened**, the owner's (B12): (i) D216's steady response kept; (ii) the arms' molecular contrast by the
+   measured relation inside D216's frame, one exponent per galaxy - **(ii) recommended, built on the held head
+   `batch-q-lanes`**, no merge of it without the owner's word; what kills (ii): the ratio of means not met within the
+   slope's printed error on a template, or the frames no nearer a lane by the owner's eye. (2.3) D268 ruling 9's
+   condition is met (no lanes in §19, §20), so the question returns to the owner in #234's form; a shock (D216
+   re-opened) stays not recommended; #144 stays permanent. (2.4) #231 stays the owner's to order, built on the held
+   head after (ii) as its own commit. (2.5) #129: no sourced ridge-width law (under (ii) the width follows the power,
+   0.64-0.79 of the stars'); #131: Querejeta's scatter not printed; both carried, the reading row.
+3. **#232: the reading is in and a build is sourced** (the reader). Hunt & Hirashita 2009 is not a per-region law
+   (their words: a sequence of initial densities); the ground-based relations are blends. The law: the D-type
+   expansion to the cluster's age (Bisbas et al. 2015, eq. 13) stopped at the stagnation radius (eq. 17) with the
+   cloud's turbulent sound speed (Tremblin et al. 2014, eq. 8), the density by photon balance; the yardstick Barnes et
+   al. 2025 (§5.1: the model's median right, its bright end about 2 × too small). The census under the law (median
+   17.1 / p99 42.3 / max 71.4 pc; 7 -> 4 752 regions over half a pixel) **printed before any row: every check after
+   the build is disclosed, none judged**. A build, batch Q lane H (`READING_HII_SIZES.md` lane H's); the cloud-size cap
+   kept; the alternative ruleset (the region as the inner skin of the model's Weaver bubble) named; the complexes stay
+   #181's (permanent), a line added there.
+4. **#230: the cause named, a mend** (the tracer). The forcing's pitch for a whole chain is its lead piece's (D219's
+   third follow-up item 1), and `forcing_factor` steps where the lead changes: Sgr-Car's 1.0° piece over 5.907-6.040
+   kpc makes the m = 2 factor about 3.4 times, the forcing's rms 0.247 -> 0.454 -> 0.262; the predecessor's |sin p|
+   in the factor alone makes the field continuous (0.161 -> 0.0020, 0.155 -> 0.0067). A class, not a place (6.37,
+   7.26, 7.56, 8.16, 8.93 kpc; 4.456 kpc not traced). **A mend, batch Q lane G**: the pitch continuous in R along a
+   chain; the gate re-rules D219's clause on the lane's measurement of two candidates (|sin p| interpolated in ln R
+   between the pieces' mid-radii; or averaged over the layer's height).
+5. **#233: the cause named, no defect** (the tracer). The data carry one realisation of the clustering field, the
+   own-law control none (width 0); the dip at 440-570 pc is that realisation's imprint inside 3.5 kpc; with the
+   field's seed changed the worst bin reads 0.0078-0.0674 (three of seven over 0.05), pooled 1.0010 / 1.0013; the
+   bar back at 2.27 kpc reads session-99's 0.0169 / 0.0299 exactly. No model change; the clause held strict and
+   unmoved (B5); the ensemble question is #223's (Audit VI F-3B-4), so **#233 is the owner's with #223**, the
+   nine-seed reading recommended, the bound 0.05 kept. On #80: one draw's scatter, not a defect of the longer bar -
+   the recommendation to keep Table 4's bar is the stronger.
+6. **#101 and #147 permanent**, at the gate on their own records: #101 - S93's reading found no escape-fraction law
+   with usable constants and no Milky Way fraction with a width in print, the construction stands, disclosed; #147 -
+   the owner's ruling 10 (D268) kept the placeholder with its bracket, and S98 found no lane-width sample in print.
+7. **Every other carried entry one dated line naming its destination** (G5): batch Q (#232 lane H; #230, #226 lane
+   G; #183 and a region's published radius lane V; held: #234 (ii), #231); the owner's, each (i)/(ii) with the
+   recommendation in `BRIEF.md` (#80 beside #233; #85; #92; #94; #107, #179; #138; #153; #156, #202; #223 with #233;
+   #224; #225; #231; #234; #84 / #100 re-ruled from the surveyor's "batch Q" - their build needs a PARSEC download,
+   which is the owner's, D251); the reading row 105 (#83, #86, #88, #95, #96, #97 / #98, #103, #118 (c), #129, #131,
+   #135, #136, #149, #162, #184, #226's truncation); batch R rows 106-107 (#89, #91, #102, #117 / #124, #125 / #127,
+   #130's, #146's and #227's remainders); the viewer row 104 (#109, #110, #111, #115, #154, #169, #170, #176, #177,
+   #185, #186, #222); the cost pass 108 (#159, #163); the deploy (#203-#205).
+8. **Stale text corrected in place**, each as a dated S101 clause, nothing deleted (G6): #80's "recalled range";
+   #109's stellar height; #154's and #176's figures "not re-read since #80's bar"; #169's condition met; #202 one
+   state; #227, #228, #230 past batch P; #130, #136 past S95's "a model batch"; #95's head; BRIEF's looks lose #157;
+   #183's head checked against #181's S99 paragraph (it holds).
+9. **BUILD_VII drafted, not adopted** (rows 102-109; the owner's twelve questions with the recommendations); the
+   concurrency of S101 (three to five light readers) is recorded, and the rule stays two at once, one heavy, for
+   builders unless the owner says otherwise.
+
+**The yardstick** (`READING_PICTURES.md` Part S101, §20-22): the runner's capture at the committed defaults is the
+committed frames' bytes; M8 and N6 pasted through the panel gave the stored bytes. The Milky Way's boxes gain the bar
+(ring A₂ 0.09-0.12 -> 0.24-0.31); NGC 4414's A₂ falls to 0.03-0.04, under the goal's 0.074. **No tile on either
+template shows the goal's lanes or its pink regions: the display pass can take the white ball and the tan away, and
+nothing else of what stands between the frames and the goals is the display's.** C6 said again.
+
+**The numbers.** 115 open = 49 permanent + 66 carried; 102 discharged; next #235, D272. `tests/test_audit.py`'s
+`debt_counts` (115, 102), its permanent and carried rows and #234's head re-pinned; the board's line regenerated by
+`tools/progress.py`.
+
+**Not verified.** The fit's scatter (not printed); no frame rendered under #234's (ii) (built on the held head after
+this session); the truncation reading; the gate's rulings on the third reader's verdicts, written into the entries
+as the reader's (#136 a sourced disclosed check; #149 and #184 each a two-ruleset question), to come at S102's gate;
+Fig. 5's point count; the tracer's mend for #230 not built, and the 4.456 kpc step not traced. A rule breach
+recorded: the regions' reader ran two short runs beside another agent's python process (the rule says wait).
+
+**What did not move.** No byte under `model/galaxy`, no display default, no frame; the hash stays
+27561e8d381b992b4ead3bccc0615aa7.
