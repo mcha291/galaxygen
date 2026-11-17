@@ -674,6 +674,8 @@ class Pieces:
     after: np.ndarray = field(init=False, repr=False)     # ... and after its end
     before_end: np.ndarray = field(init=False, repr=False)  # the chain's length before the piece's start to its end of either kind
     after_end: np.ndarray = field(init=False, repr=False)   # ... after its end (a joined end counted: the count's taper)
+    turn_before: np.ndarray = field(init=False, repr=False)  # the chain's length inward from the start to its turn back in R (inf: none)
+    turn_after: np.ndarray = field(init=False, repr=False)   # ... outward from the end to its turn back in R (the count's taper, S102)
     link_start: np.ndarray = field(init=False, repr=False)        # the piece of the chain standing at this one's start (−1 none)
     link_end: np.ndarray = field(init=False, repr=False)          # ... at its end
     link_start_is_end: np.ndarray = field(init=False, repr=False)  # whether it is that piece's end that stands there
@@ -768,12 +770,28 @@ class Pieces:
             else:
                 total = reach[e] = math.inf  # a chain that closes on itself has no end
             beyond[e] = total
+        # S102 (#230's 4.456 kpc step): the chain's length on from each piece's inner end inward, and from its outer
+        # end outward, to where the chain turns back in R - a kink where two inner ends (or two outer ends) meet -
+        # infinite where it reaches an end first. Walked through the kinks where it runs on the same way.
+        turning = np.full(2 * n, math.inf)
+        for e in range(2 * n):
+            total, at = 0.0, e
+            for _ in range(n + 1):
+                other = int(partner[at])
+                if other < 0:
+                    break
+                if (other >= n) == (at >= n):  # outer end on outer end, or inner on inner: the chain turns back
+                    turning[e] = total
+                    break
+                total += float(length[other % n])
+                at = other + n if other < n else other - n  # on through that piece to its far end
         pad = lambda a, value: np.concatenate([a, [value]])  # noqa: E731
         for name, value in (("x_start", pad(x_start, 0.0)), ("x_end", pad(x_end, 1.0)), ("phi_start", pad(self.start_azimuth, 0.0)),
                             ("phi_end", pad(phi_end, 0.0)), ("sin_abs", pad(sin_abs, 1.0)), ("cos_abs", pad(cos_abs, 1.0)),
                             ("sense", pad(sense, 1.0)), ("length", pad(length, 1.0)), ("middle", pad(0.5 * self.extent, 0.0)),
                             ("before", pad(beyond[:n], math.inf)), ("after", pad(beyond[n:], math.inf)),
                             ("before_end", pad(reach[:n], math.inf)), ("after_end", pad(reach[n:], math.inf)),
+                            ("turn_before", pad(turning[:n], math.inf)), ("turn_after", pad(turning[n:], math.inf)),
                             ("link_start", np.concatenate([link[:n], [-1]])), ("link_end", np.concatenate([link[n:], [-1]])),
                             ("link_start_is_end", np.concatenate([link_is_end[:n], [False]])), ("link_end_is_end", np.concatenate([link_is_end[n:], [False]])),
                             ("met_start", np.concatenate([met[:n], [-1]])), ("met_end", np.concatenate([met[n:], [-1]])),
@@ -1279,7 +1297,13 @@ class ArmPattern:
         crossing; the switch is at the reach boundary, where a ridge is under e^(-81/2). N and w are continuous in R
         wherever a chain is in reach: a chain starts and stops crossing at weight 0, and a chain born on a ring
         enters at weight 0. A chain that crosses a ring twice - a measured arm that kinks back - counts once, at its
-        greater weight (a turn back in radius steps N there: #156's class)."""
+        greater weight. **A turn back in radius is an end for the count** (S102, batch Q, #230's 4.456 kpc step;
+        until S102 it stepped N there, #156's class): s_c is also at most the length along the chain to the nearest
+        kink where it turns back in R (two outer ends, or two inner ends, meeting: :attr:`Pieces.turn_before`,
+        :attr:`Pieces.turn_after`), so the weight falls to zero over one width as the ring nears the chain's
+        furthest-out or furthest-in radius, by the same taper and width as at a free end ``[inferred: a chain that
+        turns back at a radius ends there for the rings beyond it, so its share of the ring's count ends as an
+        end's does]``. A chain with no turn is read as before, to the bit; the ridge's height is not tapered there."""
         R = np.asarray(R, dtype=float)
         p = self.pieces
         law = self.law_width_at(R)
@@ -1291,7 +1315,10 @@ class ArmPattern:
             x0, x1 = p.x_start[slots], p.x_end[slots]
             length = p.length[slots]
             t = np.where(live, (x - x0) / (x1 - x0) * length, 0.0)
-            along = np.where(live, np.minimum(t + p.before_end[slots], length - t + p.after_end[slots]) * R[:, None], 0.0)
+            along = np.minimum(t + p.before_end[slots], length - t + p.after_end[slots])
+            # S102 (#230): a turn back in R ends the chain for the rings beyond it - its count tapers there as at an end.
+            along = np.minimum(along, np.minimum(t + p.turn_before[slots], length - t + p.turn_after[slots]))
+            along = np.where(live, along * R[:, None], 0.0)
             # Which rings a chain reaches: a piece within REACH dispersions, at the law's width, of the ring (its
             # nearer end's distance in ln R past it, 0 where it crosses) - `_reach`'s arithmetic.
             from_start = x - p.x_start[None, :census]

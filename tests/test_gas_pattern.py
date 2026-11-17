@@ -1559,11 +1559,12 @@ def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, templat
         # -15: 2, -14: 2, -13: 3, -12: 1, -10: 1, -7: 1, -6: 2, -5: 2, -4: 5, -3: 6, -2: 4, -1: 8, 1: 1, 2: 1, 3: 2, 5: 2,
         # 8: 1, 9: 1, 10: 1, 12: 1, 16: 1, 18: 1, 469: 1, 486: 1}, disc={-10: 1, -8: 2, -7: 2, -6: 6, -5: 5, -4: 8, -3: 11,
         # -2: 8, -1: 14, 0: 2, 1: 6, 2: 5, 3: 5, 4: 5, 5: 6, 6: 5, 7: 6, 8: 6, 9: 4, 10: 3}, other_arm=52, within_one=22,
-        # most=(486, 10); the last smaller-chi ring 12.1875 kpc, the band's least -35.
+        # most=(486, 10); the last smaller-chi ring 12.1875 kpc, the band's least -35. Then the disc's 4 / 5 / 7 / 8 were
+        # 5 / 7 / 9 / 6 - the count tapered at a chain's turn back.
         "milky_way": dict(band={-31: 1, -16: 1, -14: 1, -13: 2, -12: 4, -10: 4, -9: 4, -8: 1, -7: 2, -6: 1, -5: 3, -4: 2, -3: 5,
                                 -2: 6, -1: 4, 1: 1, 3: 2, 4: 1, 5: 2, 7: 1, 8: 1, 10: 1, 13: 1, 15: 1, 485: 1},
-                          disc={-10: 5, -9: 4, -8: 3, -7: 3, -6: 5, -5: 4, -4: 5, -3: 12, -2: 9, -1: 12, 0: 2, 1: 6, 2: 3, 3: 6, 4: 5,
-                                5: 7, 6: 3, 7: 9, 8: 6, 9: 3, 10: 3}, other_arm=47, within_one=20, most=(485, 10)),
+                          disc={-10: 5, -9: 4, -8: 3, -7: 3, -6: 5, -5: 4, -4: 5, -3: 12, -2: 9, -1: 12, 0: 2, 1: 6, 2: 3, 3: 6, 4: 6,
+                                5: 6, 6: 3, 7: 8, 8: 7, 9: 3, 10: 3}, other_arm=47, within_one=20, most=(485, 10)),
         "ngc_4414": dict(band={-2: 1, -1: 4, 0: 5, 1: 3, 2: 4, 3: 5, 4: 2, 5: 5, 218: 1, 220: 1, 222: 1, 225: 1, 227: 1, 230: 1,
                                233: 1, 236: 1, 239: 1, 243: 1, 246: 1, 247: 1, 249: 1, 250: 1, 253: 2, 256: 1, 257: 1, 259: 1,
                                260: 1, 262: 1, 263: 1, 264: 1, 525: 1},
@@ -1675,7 +1676,7 @@ def test_the_interpolation_errors_as_measured(prod, template):
     # cells stand on the measured error of the published cell means against the same forcing solved on 2880 and
     # 5760 cells (test_the_cell_averaged_field_s_errors_as_measured: 9.5e-5 and 2.0e-4 of the field, under 1e-3,
     # so 1440 stands), and this level is pinned as measured: 1.085e-7 at 4.01 kpc (4.140e-7 at 3.56 kpc).
-    assert float(spectrum[:, 480:].max()) == pytest.approx({"milky_way": 1.063e-7, "ngc_4414": 2.170e-7}[template], rel=0.02)  # S87 (#148, #209, #80): was 1.085e-7, 4.140e-7 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
+    assert float(spectrum[:, 480:].max()) == pytest.approx({"milky_way": 1.0916e-7, "ngc_4414": 2.170e-7}[template], rel=0.02)  # S102 (batch Q, lane G, #230: the count tapered at a turn back): the Milky Way's was 1.063e-7  # S87 (#148, #209, #80): was 1.085e-7, 4.140e-7 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     error = midpoint_error(s)
     worst = int(np.argmax(error))
     # S58 (D217): were (1.240e-3, 2.963e-4, 3.486e-4, 9.37e-6) and (1.210e-3, 2.886e-4, 9.232e-5, 1.45e-5). The
@@ -1826,8 +1827,9 @@ def test_the_gate_s_predictions_as_measured(prod):
     # blend with the atomic response; 12.0375 enters the table (was the law's composed (1.0964, 0.89920), which the
     # published field no longer is where no spur reaches).
     # S102 (batch Q, lane G, #230): were (6.20599, 0.69511), (2.00254, 0.46441), (1.50730, 0.66216), (1.44218, 0.78041),
-    # (1.16812, 0.81380), (1.08537, 0.90764) - the forcing's pitch averaged over the layer's height.
-    SPURRED = {4.0125: (6.20706, 0.69498), 5.9625: (1.38689, 0.65098), 7.9875: (1.47566, 0.67578), 10.0125: (1.60163, 0.78045),
+    # (1.16812, 0.81380), (1.08537, 0.90764) - the forcing's pitch averaged over the layer's height; then 5.9625's was
+    # (1.38689, 0.65098) - the count tapered at a chain's turn back (the spurs re-laid).
+    SPURRED = {4.0125: (6.20706, 0.69498), 5.9625: (1.44028, 0.65067), 7.9875: (1.47566, 0.67578), 10.0125: (1.60163, 0.78045),
                10.9875: (1.16539, 0.81055), 12.0375: (1.09756, 0.90402)}
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)

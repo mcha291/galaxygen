@@ -24,6 +24,7 @@ For the pitch's part of the factor, |d ln f / ds| = 1 / (s + m h/R) <= R / (m h)
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import math
 
@@ -170,3 +171,83 @@ def test_the_milky_way_s_old_band_is_no_longer_flagged(prod):
     assert np.all(miss < MISPLACED_LIMIT)
     radii, _ = gp.mid_gap
     assert not np.any((radii > 5.85) & (radii < 6.15)), radii
+
+
+# --- the count's taper at a turn back in R (S102, the gate's ruling on #230's 4.456 kpc step) --------------------
+
+
+def turning_chain() -> tuple[pc.ArmPattern, dict]:
+    """Chain 0 runs out from 4 to 5 kpc at 20 degrees and turns back in to 4.8 kpc at -20 degrees (two outer ends
+    meet at 5 kpc: a turn); chain 1 runs straight across, 2 -> 9 kpc at 20 degrees."""
+    a, b = 20.0, -20.0
+    e_a = math.log(5.0 / 4.0) / math.tan(math.radians(a))
+    e_b = math.log(5.0 / 4.8) / abs(math.tan(math.radians(b)))
+    e_c = math.log(9.0 / 2.0) / math.tan(math.radians(a))
+    pieces = pc.Pieces([0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [4.0, 4.8, 2.0], [0.0, e_a + e_b, 1.0], [a, b, a], [e_a, e_b, e_c],
+                       [0.0, 0.0, 0.0], 1.0)
+    R = np.array([4.5, 4.9, 4.95, 5.2])
+    stars = pc.ArmPattern(R, np.full(R.shape, 0.04), np.full(R.shape, 2.0), np.ones(R.shape), pieces,
+                          float("nan"), 13.5, float("nan"), float("nan"), float("nan"), float("nan"), float("nan"),
+                          50.0 * np.exp(-(R - 8.0) / 2.6))
+    return stars, dict(e_a=e_a, e_b=e_b, a=a, b=b)
+
+
+def test_the_count_tapers_at_a_turn_back_by_hand():
+    """At 4.95 kpc chain 0 crosses both its pieces; its weight is the larger of min(1, s/w) at the two crossings, s the
+    length along the chain to its nearer end - the free inner ends, or the turn at 5 kpc - in kpc at the ring."""
+    stars, g = turning_chain()
+    p = stars.pieces
+    assert p.turn_after[0] == 0.0 and p.turn_after[1] == 0.0 and math.isinf(p.turn_before[0]) and math.isinf(p.turn_before[1])
+    assert math.isinf(p.turn_after[2]) and math.isinf(p.turn_before[2])  # the straight chain has no turn
+    R = 4.95
+    law = float(stars.law_width_at(np.array([R]))[0])
+    length_a = g["e_a"] / math.cos(math.radians(g["a"]))
+    length_b = g["e_b"] / math.cos(math.radians(g["b"]))
+    t_a = math.log(R / 4.0) / math.log(5.0 / 4.0) * length_a
+    t_b = math.log(R / 4.8) / math.log(5.0 / 4.8) * length_b
+    s_a = min(t_a, length_a - t_a) * R  # the free start, or the turn
+    s_b = min(t_b, length_b - t_b) * R
+    weight = max(min(1.0, s_a / law), min(1.0, s_b / law))
+    _, count = stars.ring_state(np.array([R]))
+    assert float(count[0]) == pytest.approx(1.0 + weight, rel=1e-12)  # chain 1 holds its whole weight here
+    assert weight < 0.5  # 50 pc from the turn: most of chain 0's share is gone
+    _, beyond = stars.ring_state(np.array([5.0 * (1.0 + 1e-9)]))
+    assert float(beyond[0]) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_the_count_is_continuous_across_every_turn_of_the_milky_way_and_unchanged_without_one(prod):
+    """At every turn back in R of ``milky_way``'s chains, N just inside and just outside the turning radius agree;
+    a census with no turn (``ngc_4414``, one piece per chain) and the Milky Way's rings that no turning chain reaches
+    read N to the bit as with the turns taken out."""
+    gp = gas_of(prod, "milky_way")
+    st, p = gp.stars, gp.stars.pieces
+    n = p.count
+    radii = []
+    for j in range(n):
+        if p.turn_after[j] == 0.0:
+            radii.append(float(np.exp(p.x_end[j])))
+        if p.turn_before[j] == 0.0:
+            radii.append(float(np.exp(p.x_start[j])))
+    assert radii and any(abs(r - 4.46) < 0.01 for r in radii)
+    for r in sorted(set(radii)):
+        _, inside = st.ring_state(np.array([r * (1.0 - 1e-9)]))
+        _, outside = st.ring_state(np.array([r * (1.0 + 1e-9)]))
+        assert abs(float(inside[0]) - float(outside[0])) < 1e-6, r
+    R = np.round(np.arange(0.5, 20.0, 0.0125), 6)
+    _, now = st.ring_state(R)
+    turns = np.isfinite(p.turn_before[:n]) | np.isfinite(p.turn_after[:n])
+    turning_chains = np.unique(p.chain[turns])
+    off = copy.copy(st.pieces)
+    object.__setattr__(off, "turn_before", np.full(n + 1, np.inf))
+    object.__setattr__(off, "turn_after", np.full(n + 1, np.inf))
+    plain = copy.copy(st)
+    object.__setattr__(plain, "pieces", off)
+    _, before = plain.ring_state(R)
+    slots = p.slots(R)
+    near = np.isin(p.chain_of[slots], turning_chains).any(axis=1)
+    lo = np.exp(p.x_start[:n][np.isin(p.chain, turning_chains)]).min() - 2.0
+    hi = np.exp(p.x_end[:n][np.isin(p.chain, turning_chains)]).max() + 2.0
+    far = ~near & ((R < lo) | (R > hi))
+    assert far.any() and np.array_equal(now[far], before[far])
+    q = gas_of(prod, "ngc_4414").stars.pieces
+    assert np.all(np.isinf(q.turn_before)) and np.all(np.isinf(q.turn_after))
