@@ -373,3 +373,54 @@ share is not printed** in what was read, so no contrast.
   read the same before and after, `cloud_count_total` 17263.580633491907 both). What the reading leaves is **#231**
   (carried): the model's cloud mass function does not know the arm — a sourced build the adopted list (D268) does not
   hold, the owner's to order. **A lane cannot come from the clouds' weight**; the gas law's frame is ruling 9's.
+
+## Part S102 — #231 built on its own branch: the mass function's upper cut stepped by the arm (2026-11-17, batch Q, D272; builder P, branch `q-231`, FRAMES ONLY)
+
+**The sources, re-read this session** (rule D1). Rosolowsky et al. 2021 (arXiv:2101.04697, html, Sect. 6.2.2 "Arm
+versus Interarm Clouds"): "the truncation mass in the Spiral Arms is a factor of 2.5 higher than the truncation mass
+in the Interarm regions"; the arm regions "a minimum width of 1 kpc"; Table 5 Arm N 931, β_trun −1.0, M_c 5.8 (−1.1,
++1.7) × 10⁶ M☉; Interarm N 903, β_trun −0.7, M_c 2.3 (−0.5, +0.7) × 10⁶ M☉ `[verified: Rosolowsky et al. 2021, Sect.
+6.2.2, Table 5]`. Colombo et al. 2014 (arXiv:1401.1505v1, ar5iv) Table 2's SA / IA / CR rows as S99.1 has them
+`[verified: Colombo et al. 2014, Table 2]` — disclosed checks only.
+
+**What is built** (`stages/clouds.py`, the block above `cut_laws`). The zone's cut M0 (Rice et al. 2016, inner or
+outer Galaxy) is M0 √f in the arm mask and M0 / √f out of it on a ring the mask is laid on, f =
+`GMC_MASS_TRUNCATION_ARM_FACTOR` 2.5; the zone's cut is their geometric mean `[inferred]`; the slope and the smallest
+mass are the zone's (the source's own fitted slopes are not carried). **The mask is the gas pattern's own**:
+`GasPattern.arm_rings` (the rings the measured relation of #234 is met on: an arm piece, a counted arm number, the
+bar's taper at most 0.01, a stellar contrast) and on each the share `mask_share` at `ARM_GAS_RELATION_MASK_WIDTH`
+(1.5 kpc) laid on the solver's 1440 cells where `GasPattern.arms_field()` (the stellar pieces' sum, tapered) is
+highest — `ratio_of_means`' rule. A cell's molecular mass is split into in the mask, out of it on a mask ring, and on
+other rings (where the zone's cut stands) by the molecular contrast at the cells' centres weighted as the ring's mass
+integral weights the grid rings; each part expects its mass over its own law's mean; a cloud's part is drawn from
+its cell's three by its own mass uniform (its range split, then rescaled: no new stream). With the layer off no mask
+exists and every number is the arithmetic before S102, bit for bit (`tests/test_cloud_arm_masses.py`).
+
+**Measured** (production grid, the run's fields; a cloud counts in the arm where its placed point's nearest grid ring
+carries the mask and the mask covers at least half that solver cell), before → after:
+
+| | `milky_way` | `ngc_4414` |
+|---|---|---|
+| clouds (realised) / expected | 17 127 → 16 954 / 17 263.6 → 17 091.5 | 9 891 → 9 456 / 9 892.7 → 9 459.5 |
+| mass in clouds / molecular | 0.902 → 0.899 | 1.043 → 1.053 |
+| mask rings | 67, 7.39-12.34 kpc | 133, 0.04-9.94 kpc |
+| in / out of the mask per area: gas | 2.79 | 4.10 |
+| … clouds by number (exponent) | 3.02 → 2.86 (1.08 → 1.02) | 3.66 → 2.99 (0.92 → 0.78) |
+| … clouds by mass (exponent) | 2.68 → 2.84 (0.96 → 1.02) | 3.71 → 4.02 (0.93 → 0.99) |
+| mean cloud mass in / out | 0.89 → 0.99 | 1.01 → 1.35 |
+| clouds over 10⁶ M☉ in / out of the mask | 21 / 8 → 28 / 9 | 226 / 106 → 212 / 105 |
+| clusters | 13 124 → 12 996 | 7 632 → 7 292 |
+| largest cloud, M☉ | 9.82 × 10⁶ (same) | 9.97 × 10⁶ → 1.55 × 10⁷ |
+
+Against Colombo et al.'s M 51 (one galaxy, 1.3-5 kpc, a kinematic mask a third of the area): number exponent 0.67,
+mass 1.05, mean luminosity per cloud 1.66 — `ngc_4414` moves toward all three, `milky_way` hardly at all: its mask
+is laid only outside the bar's reach, 7.4-12.3 kpc, mostly past R_SUN, where the outer law (slope −2.2) has its mean
+near the smallest mass (the arm's mean over the inter-arm's 1.11 there, 1.47 under the inner law). Not a target
+(C6, B5); nothing is fitted.
+
+**What it breaks, for the gate**: the ring's expected count is no longer the same with the layer on and off on the
+rings the mask is laid on (D220 item 1; `tests/test_layer.py`'s invariant I2; `tests/test_clouds.py`'s ring-first
+draw test) — the number must fall where heavier clouds hold the same mass. The largest cloud (1.55 × 10⁷ M☉ on
+`ngc_4414`) is held at 150 pc, so its surface density is about 219 M☉ pc⁻². Not run: frames, the clustering gate's
+slopes, the API's timings (a full run 34.6 → 40.9 s on `milky_way`: the mask is laid three times, by the clouds, the
+texture and the clusters stages).

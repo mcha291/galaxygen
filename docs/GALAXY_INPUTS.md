@@ -7702,6 +7702,21 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    upper cut built; (ii) permanent, one galaxy's measurement. The gate has (i) built on the held head `batch-q-lanes`
    after #234's (ii), as its own commit with frames (BUILD_VII rows 102-103), so the owner sees (ii) alone and (ii) +
    #231; nothing merges from that head without the owner's word. No recommendation at S101.
+   *S102 (batch Q, D272), q-231:* option (i) built on its own branch `q-231` (cut from the held head
+   `batch-q-lanes`; FRAMES ONLY, never gated by CI, the owner's to order; `READING_CLOUD_LAYER.md` Part S102). The
+   zone's cut M0 (Rice et al. 2016) becomes M0 √2.5 inside the gas pattern's arm mask and M0 / √2.5 outside it on the
+   rings the mask is laid on (Rosolowsky et al. 2021, Sect. 6.2.2 and Table 5, re-read: M_c 5.8 against 2.3 × 10⁶ M☉;
+   the geometric mean kept `[inferred]`), `GMC_MASS_TRUNCATION_ARM_FACTOR` 2.5; each part of a cell's molecular mass
+   expects its mass over its own law's mean, so the mass in clouds stays the gas's and the number is sub-linear;
+   with the layer off nothing moves (bit-equal, tested). Measured at the production grid, before → after: clouds
+   17 127 → 16 954 (`milky_way`), 9 891 → 9 456 (`ngc_4414`); clusters 13 124 → 12 996, 7 632 → 7 292; in the mask
+   against out of it per area (gas 2.79 / 4.10) by number 3.02 → 2.86 and 3.66 → 2.99, by mass 2.68 → 2.84 and 3.71
+   → 4.02 — number exponents 1.08 → 1.02 and 0.92 → 0.78, mass 0.96 → 1.02 and 0.93 → 0.99 against Colombo et al.
+   2014's 0.67 / 1.05 (disclosed); the mean cloud mass arm / inter-arm 0.89 → 0.99 and 1.01 → 1.35 (Colombo's 1.66).
+   The Milky Way barely moves: its mask is laid only at 7.4-12.3 kpc (the bar's reach excluded), mostly past R_SUN,
+   where the outer law's mean is set near the smallest mass. The largest cloud on `ngc_4414` 9.97 × 10⁶ → 1.55 × 10⁷
+   M☉ (held at 150 pc). The ring's count is no longer the same with the layer on and off on the mask's rings (D220
+   item 1, invariant I2) — the gate's ruling. **Stays carried**; the owner's to order.
 232. **An HII region's size is set in its cloud's clumped gas, so no region is ever large** (S99, D269; the measurer,
    `READING_CLOUD_SIZES.md` Part S99). Each region is a Strömgren sphere formed in its host cloud's mean density with
    its clumping (`nebular.materialise_nebular`): the electron density **150-770 cm⁻³** (median 154 / 174, max 767), so

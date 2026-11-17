@@ -579,6 +579,18 @@ LEVEL0: dict[str, Constant] = {
         "The outer Galaxy's largest cloud mass, (1.5 +/- 0.5) x 10^6 [verified: Rice et al. 2016, abstract]; "
         "the source calls the law non-truncating and this is its upper end, used as the cut.",
     ),
+    "GMC_MASS_TRUNCATION_ARM_FACTOR": Constant(  # S102 (#231, q-231; FRAMES ONLY, the owner's to order)
+        2.5,
+        "dimensionless",
+        "The cut of the clouds' mass function in a spiral arm over the cut between arms: 'the truncation mass in "
+        "the Spiral Arms is a factor of 2.5 higher than the truncation mass in the Interarm regions' (Table 5: "
+        "M_c 5.8 against 2.3 x 10^6 Msun, 931 and 903 clouds) [verified: Rosolowsky et al. 2021, "
+        "arXiv:2101.04697, Sect. 6.2.2, Table 5]. Coverage: four PHANGS discs with arms (NGC 628, 1637, "
+        "3627, 5643) at 90 pc, arm masks at least 1 kpc wide; no flocculent disc; the source's own fitted "
+        "slopes, not the Rice et al. ones the model draws with. The zone's cut is kept as the geometric mean of "
+        "the arm's and the inter-arm's, each the square root of this factor from it [inferred]; the one "
+        "area-normalised galaxy (M 51, Colombo et al. 2014, Table 2) is a disclosed check, not a target.",
+    ),
     "GMC_MASS_MIN": Constant(
         1.0e4,
         "Msun",

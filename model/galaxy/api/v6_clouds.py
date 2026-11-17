@@ -160,10 +160,17 @@ def ring_cloud_dust(fields: Mapping[str, Any], R: np.ndarray, seed: int, constan
     ``clouds.ring_expected``), each cloud's mass (the ring's ``"mass"`` uniforms through the mass function that
     applies at the ring) and its birth radius (the ring's ``"radius"`` uniforms through the inverse of the ring's
     molecular surface density times R), exactly as ``clouds.materialise_clouds`` derives them. No placement, no
-    other column, no census: the same number with the layer on or off."""
+    other column, no census: the same number with the layer on or off - **except, since S102 (#231, q-231), on a
+    ring the arm mask is laid on with the layer on**: there the count is the cells' parts' and a cloud's mass its
+    cell's part's law's, so the ring's clouds are allocated to their sectors (``clouds.cloud_layout``'s rule) and
+    their masses read through ``clouds.ring_cloud_masses``."""
     edges, _ = cell_edges(R)
-    lam = _clouds.ring_expected(fields, R, constants)
+    placement = _clouds.sector_placement(fields, R, constants)
+    shares = _clouds.arm_cut(fields, R, constants, placement)
+    moved = _clouds.masked_rings(shares)
+    lam = _clouds.ring_expected(fields, R, constants, placement=placement, shares=shares)
     sizes = _clouds.ring_counts(lam, seed, range(CELL_RINGS))
+    weights = _clouds.count_weights(placement, shares, R, constants) if moved.any() else None
     sigma_h2 = np.asarray(fields["gas_molecular_surface_density"], dtype=float)
     dgr = np.asarray(fields["dust_to_gas_ratio"], dtype=float)
     out = np.zeros(CELL_RINGS)
@@ -172,9 +179,12 @@ def ring_cloud_dust(fields: Mapping[str, Any], R: np.ndarray, seed: int, constan
         if n == 0:
             continue
         lo, hi = edges[r], edges[r + 1]
-        mass = _clouds.mass_function_sample(
-            _seeds.rng(seed, "cloud", r, "mass").random(n), *_clouds.law_for(0.5 * (lo + hi), constants)
-        )
+        u_mass = _seeds.rng(seed, "cloud", r, "mass").random(n)
+        if moved[r]:  # S102 (#231): each cloud's sector by the census's allocation, its mass by its cell's parts
+            sector = _clouds.allocate(_seeds.rng(seed, "cloud", r, "sector").random(n), weights[r])
+            mass = _clouds.ring_cloud_masses(u_mass, sector, r, R, constants, shares)
+        else:
+            mass = _clouds.mass_function_sample(u_mass, *_clouds.law_for(0.5 * (lo + hi), constants))
         weight = np.where((R >= lo) & (R <= hi), sigma_h2 * R, 0.0)
         u = _seeds.rng(seed, "cloud", r, "radius").random(n)
         # S70 (D234; Audit V F-2-7): was invert_cdf(u, R, weight) - the clouds stage's draw on the ring's own interval.

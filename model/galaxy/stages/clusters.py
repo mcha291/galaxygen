@@ -431,6 +431,7 @@ CLUSTERS = IMPLEMENTATIONS.register(
         reads_constants=(
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
+            "GMC_MASS_TRUNCATION_ARM_FACTOR",  # S102 (#231, q-231): the census's layout by the arm's cut
             "GMC_PHASE_DISPERSING", "CLUSTER_BOUND_FRACTION", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_HALF_MASS_DENSITY",
             *GAS_PATTERN_CONSTANTS,  # S51 (D210): the cloud census's layout is the gas pattern's
             *CLUSTERING_CONSTANTS,  # S90 (#161): and its sector weights carry the clustering field's cell means

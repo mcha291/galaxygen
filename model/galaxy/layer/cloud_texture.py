@@ -223,6 +223,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
             # The census's layout: the mass function's mean and the gas pattern's two constants, as the census reads them.
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", *GAS_PATTERN_CONSTANTS,
+            "GMC_MASS_TRUNCATION_ARM_FACTOR",  # S102 (#231, q-231): the layout's count and allocation by the arm's cut
             *CLUSTERING_CONSTANTS,  # S90 (#161): the layout's sector weights carry the clustering field's cell means
             # The cloud-interior noise's parameters: constants this stage declares (gate G1, change 4).
             "CLOUD_INTERIOR_OCTAVES", "CLOUD_INTERIOR_LACUNARITY", "CLOUD_INTERIOR_GAIN",

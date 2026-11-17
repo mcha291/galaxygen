@@ -19,7 +19,11 @@ source in the about line; nothing here is recalled (rule B9).**
   law's mean cloud mass, so the mass in clouds integrates back to the ISM's molecular mass
   (RENDER_PHYSICS §7's redistribution rule for clouds) — the diffuse fraction is zero by
   construction, and Rice et al.'s finding that catalogued clouds hold 25% of the Milky Way's H₂ is
-  what that construction stands against (debt #94).
+  what that construction stands against (debt #94). **Since S102 (#231, branch q-231, the owner's to order)** the
+  cut is stepped by the arm with the layer on: 2.5 times higher in the gas pattern's arm mask than out of it
+  (Rosolowsky et al. 2021), the zone's cut their geometric mean; each part of a cell's molecular mass expects its
+  mass over its own law's mean, so the mass in clouds stays the gas's and the arm's excess is carried by heavier
+  clouds (the block above :func:`cut_laws`).
 - *Size* — R = √(M/πΣ) at Lada & Dame 2020's X_CO-corrected surface density in three regimes by the
   cloud's birth radius: 82 M☉ pc⁻² in the molecular ring and 35 inside it and beyond it (S70, D234, the
   owner's ruling D233 on #192; the ring's edges the Milky Way's 4-7 kpc, or a template's pinned
@@ -242,16 +246,181 @@ def law_for(radius_kpc: float, c: Mapping[str, float]) -> tuple[float, float, fl
     return float(c["GMC_MASS_SLOPE_OUTER"]), float(c["GMC_MASS_MIN"]), float(c["GMC_MASS_TRUNCATION_OUTER"])
 
 
-def ring_expected(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> np.ndarray:
+# --- the cut by the arm (S102, #231; branch q-231, FRAMES ONLY - the owner's to order) ---------------------------
+#
+# Rosolowsky et al. 2021 (arXiv:2101.04697, Sect. 6.2.2, Table 5; four PHANGS discs with arms at 90 pc): "the
+# truncation mass in the Spiral Arms is a factor of 2.5 higher than the truncation mass in the Interarm regions".
+# The zone's cut M0 (Rice et al. 2016's inner or outer Galaxy) is kept as the geometric mean: M0 sqrt(f) in the arm
+# mask, M0 / sqrt(f) out of it on a ring the mask is laid on [inferred], f = GMC_MASS_TRUNCATION_ARM_FACTOR; the slope
+# and the smallest mass are the zone's. **The mask is the gas pattern's own** (``GasPattern.arm_rings``, the rings
+# the measured relation is met on, and on each the share ``gas_pattern.mask_share`` of the ring at the relation's
+# mask width ``ARM_GAS_RELATION_MASK_WIDTH``, laid on the solver's cells where the stellar arm field
+# ``GasPattern.arms_field()`` - the stars' pieces' sum with the bar's taper - is highest, the cut cell counted by the
+# fraction inside: :func:`gas_pattern.ratio_of_means`' rule). On a ring the mask is not laid on (no arm piece, the
+# bar's reach, no stellar contrast) the zone's cut stands: the source classes no cloud there. A cell's molecular
+# mass is split into three parts - in the mask, out of it on a mask ring, on the other rings - by the molecular
+# contrast at the solver's cells' centres of each grid ring in the cell, weighted as the ring's mass integral
+# weights them; **each part's expected count is its mass over its own law's mean** (so the clouds' mass stays
+# linear in the gas and their number is sub-linear), and a cloud's part is drawn from the cell's three in
+# proportion to their counts on its own ``mass`` uniform (the uniform's range split, then rescaled - one draw, no
+# new stream). With the layer off, or on a galaxy whose pattern lays no mask, nothing here acts: every number is the
+# zone's law's, to the bit.
+
+ARM_PARTS = ("arm", "interarm", "unmasked")
+
+
+def cut_laws(radius_kpc: float, c: Mapping[str, float]) -> tuple[tuple[float, float, float], ...]:
+    """The three laws at a radius, in :data:`ARM_PARTS`' order: (slope, m_min, m_max) with the zone's cut times
+    sqrt(f) in the arm mask, over sqrt(f) out of it on a mask ring, and the zone's own on a ring without the mask."""
+    slope, m_min, m_max = law_for(radius_kpc, c)
+    root = math.sqrt(float(c["GMC_MASS_TRUNCATION_ARM_FACTOR"]))
+    return (slope, m_min, m_max * root), (slope, m_min, m_max / root), (slope, m_min, m_max)
+
+
+def arm_mass_shares(pattern: Any, R: np.ndarray, sigma_h2: np.ndarray) -> np.ndarray | None:
+    """Each cell's molecular mass shares, (rings, sectors, 3) in :data:`ARM_PARTS`' order, summing to 1 - or None
+    where no grid ring carries the arm mask (no pattern, the layer off, a flat pattern, a pattern without the
+    measured relation, or no arm ring). See the block above for the mask; a grid ring on a cell ring's edge is
+    counted in both, as :func:`ring_molecular_mass` counts it."""
+    if pattern is None or getattr(pattern, "flat", True) or getattr(pattern, "relation", None) is None:
+        return None
+    psi = pattern.arms_field()
+    on, share = pattern.arm_rings(psi)
+    if not on.any():
+        return None
+    n = psi.shape[1]
+    mask = np.zeros(psi.shape)
+    for i in np.flatnonzero(on):
+        order = np.argsort(-psi[i], kind="stable")  # ratio_of_means' order
+        cells = float(share[i]) * n
+        whole = min(int(math.floor(cells)), n)
+        mask[i, order[:whole]] = 1.0
+        if whole < n:
+            mask[i, order[whole]] = cells - whole
+    rings, _ = cell_edges(R)
+    phi = -math.pi + (np.arange(n) + 0.5) * (2.0 * math.pi / n)  # the solver's cells' centres
+    sector = np.minimum((np.mod(phi, 2.0 * math.pi) / (2.0 * math.pi / CELL_SECTORS)).astype(np.int64), CELL_SECTORS - 1)
+    gas = np.maximum(np.asarray(pattern.contrast(R, phi), dtype=float), 0.0)  # (R, n)
+    fold = np.zeros((n, CELL_SECTORS))
+    fold[np.arange(n), sector] = 1.0
+    in_mask = (gas * mask) @ fold  # (R, sectors)
+    whole_ring = gas @ fold
+    out_mask = np.where(on[:, None], whole_ring - in_mask, 0.0)
+    unmasked = np.where(on[:, None], 0.0, whole_ring)
+    sigma = np.asarray(sigma_h2, dtype=float) * R
+    shares = np.zeros((CELL_RINGS, CELL_SECTORS, 3))
+    shares[:, :, 2] = 1.0
+    for b in range(CELL_RINGS):
+        band = (R >= rings[b]) & (R <= rings[b + 1])
+        if not on[band].any():
+            continue
+        # The trapezoid's node weights of the band's mass integral (ring_molecular_mass's), the grid's spacing.
+        f = np.where(band, sigma, 0.0)
+        dr = np.zeros(R.size)
+        dr[1:] += 0.5 * np.diff(R)
+        dr[:-1] += 0.5 * np.diff(R)
+        t = f * dr
+        parts = np.stack([t @ in_mask, t @ out_mask, t @ unmasked], axis=-1)  # (sectors, 3)
+        total = parts.sum(axis=-1)
+        live = total > 0.0
+        shares[b, live] = parts[live] / total[live, None]
+    return shares
+
+
+def inverse_means(shares: np.ndarray | None, R: np.ndarray, c: Mapping[str, float]) -> np.ndarray | None:
+    """Each cell's expected clouds per unit molecular mass, (rings, sectors): its three parts' shares over their
+    laws' means (:func:`cut_laws` at the ring's middle), or None where ``shares`` is."""
+    if shares is None:
+        return None
+    rings, _ = cell_edges(R)
+    means = np.array([[mass_function_mean(*law) for law in cut_laws(0.5 * (rings[i] + rings[i + 1]), c)] for i in range(CELL_RINGS)])
+    return np.einsum("rsk,rk->rs", shares, 1.0 / means)
+
+
+def masked_rings(shares: np.ndarray | None) -> np.ndarray:
+    """(rings,) bool: the cell rings with any mass in a mask ring - the rings whose numbers the cut moves."""
+    if shares is None:
+        return np.zeros(CELL_RINGS, dtype=bool)
+    return (shares[:, :, 2] < 1.0).any(axis=1)
+
+
+def arm_cut(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float], placement: tuple[Any, np.ndarray | None]) -> np.ndarray | None:
+    """:func:`arm_mass_shares` of the placement's pattern on the run's molecular surface density."""
+    return arm_mass_shares(placement[0], R, fields["gas_molecular_surface_density"])
+
+
+def count_weights(placement: tuple[Any, np.ndarray | None], shares: np.ndarray | None, R: np.ndarray, constants: Mapping[str, float]) -> np.ndarray | None:
+    """The weights a ring's clouds are allocated among its sectors by, (rings, sectors) or None (uniform): the
+    placement's (the gas's contrast and the clustering field, mean 1 round each ring) and, on a ring the cut moves,
+    times each cell's :func:`inverse_means` - so a cell's share of the ring's clouds is its share of the ring's
+    expected count."""
+    weights = placement[1]
+    inverse = inverse_means(shares, R, constants)
+    if inverse is None:
+        return weights
+    moved = masked_rings(shares)
+    out = (np.ones((CELL_RINGS, CELL_SECTORS)) if weights is None else np.array(weights, dtype=float, copy=True))
+    out[moved] = out[moved] * inverse[moved]
+    return out
+
+
+def ring_expected(
+    fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float], *,
+    placement: tuple[Any, np.ndarray | None] | None = None, shares: Any = "compute",
+) -> np.ndarray:
     """The expected number of clouds in every level-0 ring, (rings,): the ring's molecular mass over the law's
-    mean cloud mass at the ring's radius. No placement enters it, so it is the same number with the layer on or
-    off - the ring's count is drawn at it (D220 item 1). It is the sum of the ring's cell expectations
+    mean cloud mass at the ring's radius. It is the sum of the ring's cell expectations
     (:func:`expected_counts`) to the bit with the layer off; with the layer on that sum is the same number to
-    rounding (invariant I2: at most 1 unit in the last place, 2.2e-16 of itself, measured at S90 on the default galaxy with each ring's weights divided by their mean; 22 units on 352bdec before, 32 - 5.8e-15 of itself - at S61)."""
+    rounding (invariant I2: at most 1 unit in the last place, 2.2e-16 of itself, measured at S90 on the default galaxy with each ring's weights divided by their mean; 22 units on 352bdec before, 32 - 5.8e-15 of itself - at S61).
+    **Since S102 (#231, q-231)** a ring the arm mask is laid on expects the sum of its cells' parts, each its mass
+    over its own law's mean (:func:`arm_mass_shares`), so its count is no longer the same with the layer on and off
+    (D220 item 1 holds on every other ring, and on every ring with the layer off). ``placement``: the census's
+    :func:`sector_placement`, computed when None; ``shares``: :func:`arm_cut`'s, computed when not given."""
     rings, _ = cell_edges(R)
     ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
     mean = np.array([mass_function_mean(*law_for(0.5 * (rings[i] + rings[i + 1]), constants)) for i in range(CELL_RINGS)])
-    return ring_mass / mean
+    lam = ring_mass / mean
+    if isinstance(shares, str):
+        placement = sector_placement(fields, R, constants) if placement is None else placement
+        shares = arm_cut(fields, R, constants, placement)
+    moved = masked_rings(shares)
+    if moved.any():
+        placement = sector_placement(fields, R, constants) if placement is None else placement
+        weights = np.ones((CELL_RINGS, CELL_SECTORS)) if placement[1] is None else placement[1]
+        inverse = inverse_means(shares, R, constants)
+        lam = lam.copy()
+        lam[moved] = ring_mass[moved] / CELL_SECTORS * np.sum(weights[moved] * inverse[moved], axis=1)
+    return lam
+
+
+def ring_cloud_masses(
+    u: np.ndarray, sector: np.ndarray, ring: int, R: np.ndarray, c: Mapping[str, float], shares: np.ndarray | None,
+) -> np.ndarray:
+    """The masses of one ring's clouds from their ``mass`` uniforms ``u`` and their sectors: the zone's law
+    (:func:`law_for` at the ring's middle) on a ring the cut does not move - the arithmetic before S102, bit for bit -
+    and on one it moves, each cloud's part drawn from its cell's three in proportion to their expected counts by
+    where ``u`` falls, ``u`` rescaled inside that part's range and inverted through that part's law (#231)."""
+    rings, _ = cell_edges(R)
+    middle = 0.5 * (rings[ring] + rings[ring + 1])
+    u = np.asarray(u, dtype=float)
+    if not masked_rings(shares)[ring]:
+        return mass_function_sample(u, *law_for(middle, c))
+    laws = cut_laws(middle, c)
+    counts = shares[ring] / np.array([mass_function_mean(*law) for law in laws])[None, :]  # (sectors, 3)
+    p = counts / counts.sum(axis=1, keepdims=True)
+    p_cell = p[np.asarray(sector, dtype=np.int64)]  # (clouds, 3)
+    lower = np.concatenate([np.zeros((p_cell.shape[0], 1)), np.cumsum(p_cell, axis=1)[:, :-1]], axis=1)
+    part = np.minimum((u[:, None] >= lower).sum(axis=1) - 1, 2)
+    for _ in range(2):  # a part of zero probability is never chosen: step back past empty parts at a shared edge
+        empty = p_cell[np.arange(part.size), part] <= 0.0
+        part[empty] = np.maximum(part[empty] - 1, 0)  # part 0 is chosen only below p0, so it is never empty
+    width = p_cell[np.arange(part.size), part]
+    v = np.clip((u - lower[np.arange(part.size), part]) / width, 0.0, 1.0)
+    mass = np.zeros(u.size)
+    for k, law in enumerate(laws):
+        here = part == k
+        mass[here] = mass_function_sample(v[here], *law)
+    return mass
 
 
 def sector_placement(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> tuple[Any, np.ndarray | None]:
@@ -296,11 +465,23 @@ def expected_counts(
     contrast averaged over each (S51, D210) and, with the layer on, the clustering field's mean over each (S90,
     #161), the ring's weights at mean 1 (:func:`sector_placement`). A population integral, whatever a request asked for.
     Since S61 no draw is made at a cell's expectation: a ring's count is drawn at its ring's
-    (:func:`ring_expected`) and its clouds allocated among the sectors in these proportions (D220 items 1-2)."""
-    _, weights = sector_placement(fields, R, constants) if placement is None else placement
-    return ring_expected(fields, R, constants)[:, None] / CELL_SECTORS * (
+    (:func:`ring_expected`) and its clouds allocated among the sectors in these proportions (D220 items 1-2).
+    Since S102 (#231, q-231) a cell of a ring the arm mask is laid on expects its parts' masses over their own laws'
+    means (:func:`arm_mass_shares`): the ring's molecular mass over the sectors times the placement's weight times
+    the cell's :func:`inverse_means`."""
+    placement = sector_placement(fields, R, constants) if placement is None else placement
+    weights = placement[1]
+    shares = arm_cut(fields, R, constants, placement)
+    out = ring_expected(fields, R, constants, placement=placement, shares=None)[:, None] / CELL_SECTORS * (
         np.ones((CELL_RINGS, CELL_SECTORS)) if weights is None else weights
     )
+    moved = masked_rings(shares)
+    if moved.any():
+        ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
+        inverse = inverse_means(shares, R, constants)
+        w = np.ones((CELL_RINGS, CELL_SECTORS)) if weights is None else weights
+        out[moved] = ring_mass[moved, None] / CELL_SECTORS * w[moved] * inverse[moved]
+    return out
 
 
 def allocate(u: np.ndarray, weights: np.ndarray | None) -> np.ndarray:
@@ -343,14 +524,18 @@ def ring_counts(lam: np.ndarray, seed: int, rings: Sequence[int]) -> dict[int, i
 
 def cloud_layout(
     fields: Mapping[str, Any], R: np.ndarray, seed: int, constants: Mapping[str, float], cells: Sequence[int] | None = None,
-    *, placement: tuple[Any, np.ndarray | None] | None = None,
+    *, placement: tuple[Any, np.ndarray | None] | None = None, shares: Any = "compute",
 ) -> RingLayout:
     """The census's layout for ``cells`` (every cell when None): each ring the cells lie in drawn whole - its count
     and its ``sector`` uniforms - and each cell's rows the ring's objects allocated to it, in ring order (D220
-    items 1-3). Only the uniforms of the ring's other cells' objects exist; nothing of them is derived."""
-    _, weights = sector_placement(fields, R, constants) if placement is None else placement
+    items 1-3). Only the uniforms of the ring's other cells' objects exist; nothing of them is derived. Since S102
+    (#231, q-231) a ring the arm mask is laid on allocates by :func:`count_weights` and draws its count at its cells'
+    parts (:func:`ring_expected`)."""
+    placement = sector_placement(fields, R, constants) if placement is None else placement
+    shares = arm_cut(fields, R, constants, placement) if isinstance(shares, str) else shares
+    weights = count_weights(placement, shares, R, constants)
     wanted = [int(c) for c in (range(CELL_COUNT) if cells is None else cells)]
-    lam = ring_expected(fields, R, constants)
+    lam = ring_expected(fields, R, constants, placement=placement, shares=shares)
     touched = list(dict.fromkeys(c // CELL_SECTORS for c in wanted))
     sizes = ring_counts(lam, seed, touched)
     sector = {
@@ -465,7 +650,8 @@ def materialise_clouds(
     placement = sector_placement(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
     pattern = placement[0]
     clustering = _compose.census_clustering(fields, c)  # S61 (D220 part II): the field within a cell; none, layer off
-    layout = cloud_layout(fields, R, seed, c, cells, placement=placement)
+    shares = arm_cut(fields, R, c, placement)  # S102 (#231, q-231): the cut by the arm; None, layer off
+    layout = cloud_layout(fields, R, seed, c, cells, placement=placement, shares=shares)
     counts = layout.counts
     u_all = ring_draws(seed, "cloud", layout, ("radius", "azimuth", "mass", "age", "height", "position"))
     sigma_h2 = np.asarray(fields["gas_molecular_surface_density"], dtype=float)
@@ -510,8 +696,8 @@ def materialise_clouds(
             radius, azimuth = clustering.place(
                 draw("azimuth"), draw("position"), (lo, hi, sector * width, (sector + 1) * width), R, sigma_h2, pattern
             )
-        slope, m_min, m_max = law_for(0.5 * (lo + hi), c)
-        mass = mass_function_sample(draw("mass"), slope, m_min, m_max)
+        # S102 (#231, q-231): the zone's law, or on a ring the arm mask is laid on the cell's three parts' laws.
+        mass = ring_cloud_masses(draw("mass"), np.full(count, sector), ring, R, c, shares)
         # S67 (D231): the size at the regime's Σ at the birth radius, capped; σ_v at each cloud's own Σ = M/πR²
         # (Heyer et al. 2009 eq. 10, √(GM/5R)), so a capped giant is faster and its Mach number higher.
         size, sigma = cloud_size_law(mass, birth, c, edges)
@@ -627,8 +813,11 @@ CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
 CLOUD_MASS = _column("cloud_mass", "Cloud mass", "Msun",
                      "Inverse of the truncated power-law mass function that applies at the cloud's radius: the "
                      "inner Galaxy's slope and truncation inside the solar radius, the outer's beyond it (Rice et "
-                     "al. 2016), from a smallest mass no source fixed. The census's total mass integrates back to "
-                     "the ISM's molecular mass, to within the Poisson noise of the count.",
+                     "al. 2016), from a smallest mass no source fixed. Since S102 (#231), with the randomness layer "
+                     "on, the truncation is 2.5 times higher in a spiral arm than between arms (Rosolowsky et al. "
+                     "2021, four PHANGS discs), the zone's own cut their geometric mean, the arm mask the gas "
+                     "pattern's; the cloud's part drawn from its cell's arm and inter-arm mass. The census's total "
+                     "mass integrates back to the ISM's molecular mass, to within the Poisson noise of the count.",
                      ramp=Ramp("magma", scale="log"))
 CLOUD_SIZE = _column("cloud_size", "Cloud radius", "pc",
                      "√(M/πΣ) at Lada & Dame 2020's X_CO-corrected surface density at the cloud's birth radius - "
@@ -745,6 +934,7 @@ CLOUDS = IMPLEMENTATIONS.register(
         reads_constants=(
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN",
+            "GMC_MASS_TRUNCATION_ARM_FACTOR",  # S102 (#231, q-231): the cut by the arm
             "GMC_SURFACE_DENSITY_RING", "GMC_SURFACE_DENSITY_DISC", "GMC_RADIUS_MAX",  # S67 (D231): was one Σ, 42
             "GMC_MOLECULAR_RING_INNER", "GMC_MOLECULAR_RING_OUTER",  # S70 (D234): was _INNER/_OUTER split at R_SUN
             "MOLECULAR_GAS_TEMPERATURE",
