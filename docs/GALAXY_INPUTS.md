@@ -7422,6 +7422,18 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    **Carried.** What closes it: a viewer session names the cause and either the edge is gone at any white point the
    panel offers or it is declared where it is computed. Destination: the viewer session after the owner's display
    pass (BUILD_VI).
+   *S101 (BUILD_VI row 101, D271):* **the cause named; the kind changes from the viewer's to the model's** (S101's
+   runner V, `s101_V.md` Job 2; `READING_PICTURES.md` section 20). The circle is the model's own stellar disc edge, not
+   the viewer's box: every light array `/api/render` sends falls 340-fold between R 23.66 and 24.04 kpc on `milky_way`
+   (the summed `stars` 151 / 64.9 / 6.98 / 0.44 at 23.66 / 23.74 / 23.89 / 24.04 kpc), `dust_height` is NaN from 23.66
+   kpc, and the box is 2 x 30 kpc, clipped at 30 kpc (768 px, outside the frame); 23.7 kpc is 606 px against the 604 px
+   above. On `ngc_4414` the same edge lies near 18 kpc, an ellipse at 55 degrees. **Restated at the gate:** a model's
+   edge, not a viewer's. The closer's second arm ("declared where it is computed") is batch Q's: lane G finds the law
+   that ends the disc (the star-formation threshold or the infall's angular-momentum edge) and writes the declaration
+   into that stage's about and the render header's words. What stays open after it is whether a real disc ends within
+   0.3 kpc - a reading of disc truncations (e.g. Pohlen & Trujillo 2006, NOT READ). Carried. Destination - batch Q,
+   lane G (BUILD_VII rows 102-103) for the declaration; BUILD_VII row 105, the reading row, for the truncation. The S97
+   "the viewer session after the owner's display pass" is superseded.
 227. **The published vertical dispersion no longer gives the stellar layer's height away from the solar radius**
    (restated at S99, D269, on the build; was "The vertical stage reads one stellar height at the Milky Way's R_SUN on
    every template") (S97, D266; the analyst's trace, lane R, `READING_PICTURES.md` section 13). `thin_disc_scale_height` is one scalar per galaxy: the
