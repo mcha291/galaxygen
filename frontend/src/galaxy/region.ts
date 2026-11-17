@@ -241,6 +241,16 @@ export function regionLineColour(clusters: Record<string, Col>, i: number, lines
 type Col = ArrayLike<number | bigint>;
 const num = (c: Col | undefined, i: number): number => (c ? Number(c[i]) : Number.NaN);
 
+/**
+ * The HII region's radius as drawn, pc (S102, #232): `hii_radius`, the region grown past its natal clump, over which
+ * the model's `hii_halpha_emissivity` is uniform - so the sphere's emissivity times its volume is the region's
+ * `hii_halpha_luminosity` (the closure, region.test.ts). An answer from before S102 carries no `hii_radius`: there the
+ * emissivity was the Strömgren sphere's, and `hii_stromgren_radius` is the radius it closes over.
+ */
+export function hiiRadiusPc(clusters: Record<string, Col>, i: number): number {
+  return clusters.hii_radius ? num(clusters.hii_radius, i) : num(clusters.hii_stromgren_radius, i);
+}
+
 export interface RegionObjects {
   /** OBJECT_FLOATS per object: centre (kpc, scene) and radius; kind, cell, index, σ_s; kind-specific; a cavity. */
   data: Float32Array;
@@ -270,9 +280,12 @@ export function kappaOfMeanColumn(meanAv: number, r: number): number {
  *   column (`/api/clouds`' `cloud_dust_extinction_v`, the face-on mean A_V over its disc π `cloud_size`², D224)
  *   through a uniform sphere of that mean column (`kappaOfMeanColumn`; S67, D228 - until then every cloud took the
  *   census's one central A_V, `cloud_extinction_v`, 2.97 mag, #167), and the cavity its cluster's Strömgren sphere
- *   carves; a cloud whose column is missing or negative is not drawn (B9);
- * - an HII region: the Strömgren sphere at its cluster, its Hα emissivity per volume in L☉ pc⁻³, and its colour per
- *   unit Hα from all its lines through the filters (`regionLineColour`, S42);
+ *   carves; a cloud whose column is missing or negative is not drawn (B9). The cavity stays the Strömgren sphere
+ *   (S102): the cloud's published column (`cloud_dust_extinction_v`) is its whole disc's, and carving the expanded
+ *   region (`hii_radius`, up to the cloud's own size) out of it would take away a column the model still publishes;
+ * - an HII region: the sphere of `hii_radius` at its cluster (S102, #232; `hiiRadiusPc` - the Strömgren sphere before
+ *   it), its Hα emissivity per volume in L☉ pc⁻³, uniform over that sphere, so emissivity x volume is the region's
+ *   `hii_halpha_luminosity`, and its colour per unit Hα from all its lines through the filters (`regionLineColour`, S42);
  * - a shell: the bubble's sphere, its shell emissivity in L☉ pc⁻³, its thickness.
  * Lengths from the routes are in pc except positions (kpc); a row with a non-finite size is skipped.
  */
@@ -322,7 +335,7 @@ export function packObjects(
   const shellList: Obj[] = [];
   for (let i = 0; i < nClusters; i += 1) {
     const [x, y, z] = scene(num(clusters.cluster_radius, i), num(clusters.cluster_azimuth, i), num(clusters.cluster_height, i));
-    const rs = num(clusters.hii_stromgren_radius, i) / 1000;
+    const rs = hiiRadiusPc(clusters, i) / 1000;
     const eps = num(clusters.hii_halpha_emissivity, i) * ERG_S_CM3_TO_LSUN_PC3;
     if (rs > 0 && Number.isFinite(eps) && eps > 0) {
       const colour = regionLineColour(clusters, i, lines);

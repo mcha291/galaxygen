@@ -20,6 +20,7 @@ import {
   cloudSeed,
   densityRatio,
   glslFloat,
+  hiiRadiusPc,
   hash3,
   interiorNoise,
   interiorOf,
@@ -385,6 +386,45 @@ describe("the region's object table", () => {
     expect(Array.from(t.data.slice(hii + 9, hii + 12)).map((v) => Number(v.toFixed(6)))).toEqual([0.05, 1, 0.5]);
     // Without line weights a region is its Halpha alone, in every channel (the default).
     expect(Array.from(packObjects(clouds, clusters).data.slice(hii + 9, hii + 12))).toEqual([1, 1, 1]);
+  });
+
+  it("draws an HII region at hii_radius, so emissivity x volume is its Halpha luminosity (S102, #232: the closure)", () => {
+    // Two rows of /api/clusters on q-nebular 238d3fc (milky_way, the window r 7.9-8.4 kpc, phi 4.9-5.1, live): the
+    // window's brightest region (cell 280, index 11; expansion-limited) and its median one (cell 281, index 0; capped
+    // at its cloud). The Stromgren sphere holds 0.066 and 1.8e-4 of their light at this emissivity.
+    const rows = {
+      cluster_radius: [8.049068233075053, 8.442789813311325], cluster_azimuth: [4.7390111606201835, 5.093547431828541],
+      cluster_height: [-0.020515992292145766, -0.05953803150378713], cell: [280, 281], index: [11, 0],
+      hii_radius: [53.1851492617942, 14.032907577415157], hii_stromgren_radius: [21.46195303531428, 0.7922393010632028],
+      hii_halpha_emissivity: [6.211246935159767e-23, 2.084154614678257e-24], hii_halpha_luminosity: [300412.6792122981, 185.15747295635785],
+    };
+    const t = packObjects({ cloud_radius: [] }, rows);
+    expect(t.count).toBe(2);
+    for (let k = 0; k < 2; k += 1) {
+      const o = k * OBJECT_FLOATS;
+      expect(t.data[o + 4]).toBe(KIND.hii);
+      // the brighter first (the budget's order), each row by its light
+      const i = Math.abs(t.data[o + 3] * 1000 - rows.hii_radius[0]) < 1e-3 ? 0 : 1;
+      expect(t.data[o + 3] * 1000).toBeCloseTo(rows.hii_radius[i], 3);
+      const light = t.data[o + 8] * (4 / 3) * Math.PI * (t.data[o + 3] * 1000) ** 3; // Lsun pc^-3 x pc^3
+      expect(Math.abs(light / rows.hii_halpha_luminosity[i] - 1)).toBeLessThan(1e-6); // float32 storage
+      // the Stromgren sphere at this emissivity would carry (R_St / R_HII)^3 of it: the pre-S102 drawing's loss
+      const old = t.data[o + 8] * (4 / 3) * Math.PI * rows.hii_stromgren_radius[i] ** 3;
+      expect(old / rows.hii_halpha_luminosity[i]).toBeCloseTo((rows.hii_stromgren_radius[i] / rows.hii_radius[i]) ** 3, 6);
+    }
+    expect(t.data[3] * 1000).toBeCloseTo(53.185, 3);
+    // an answer from before S102 (no hii_radius): the Stromgren sphere, as before
+    const { hii_radius: _dropped, ...older } = rows;
+    expect(hiiRadiusPc(older, 1)).toBe(rows.hii_stromgren_radius[1]);
+    expect(hiiRadiusPc(rows, 1)).toBe(rows.hii_radius[1]);
+    // the cloud's cavity stays the Strömgren sphere (region.ts packObjects: the cloud's published column is its whole disc's)
+    const host = {
+      cloud_radius: [8.049068233075053], cloud_azimuth: [4.7390111606201835], cloud_height: [-0.020515992292145766], cloud_size: [60],
+      cloud_mass: [1e6], cloud_density_pdf_width: [1.4], cloud_density_gradient: [0], cloud_gradient_angle: [0],
+      cloud_cluster_index: [11], cell: [280], index: [3], cloud_dust_extinction_v: [2],
+    };
+    const withCloud = packObjects(host, rows);
+    expect(withCloud.data[15] * 1000).toBeCloseTo(rows.hii_stromgren_radius[0], 3);
   });
 
   it("draws a remnant's shell and skips a Sedov-phase remnant's NaN emissivity", () => {
