@@ -488,8 +488,9 @@ HII_RADIUS = _column("hii_stromgren_radius", "HII region radius", "pc",
                      "The Strömgren radius of the cluster's region in its cloud's clumped gas — ionization balance "
                      "between the photons the region keeps and the recombinations the mean square density "
                      "supports — or the cloud's radius where the region would outgrow it and leaks instead. "
-                     "A renderer draws the ionized sphere at this radius around the cluster. Since S102 (#232) "
-                     "it is the region's start: the region now is `hii_radius`.", ramp=Ramp("viridis", scale="log"))
+                     "Since S102 (#232) it is the region's natal sphere, its start: the region now, and the "
+                     "sphere a renderer draws its light in, is `hii_radius`; the region regime carves this natal "
+                     "sphere out of the host cloud as its cavity.", ramp=Ramp("viridis", scale="log"))
 HII_NATAL_DENSITY = _column("hii_natal_density", "Natal ionized density (rms)", "1/cm3",
                             "The root mean square density of the region's gas at its start, the Strömgren sphere in its "
                             "cloud's clumped gas: the cloud's mean density times the square root of its clumping. The "

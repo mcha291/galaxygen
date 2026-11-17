@@ -805,8 +805,10 @@ class GasPattern:
         Composed piece by piece: each piece's ridge on the ring's cells - a Gaussian in the perpendicular distance
         to its locus times its window along it, at the stars' own amplitude on the ring, the cut in it and the
         bar's taper taken back out - is transformed, and its m-th term multiplied by m / (X (|sin p_j| + m h_z/R)),
-        the piece's own pitch and the stellar layer's thickness (``pieces.forcing_factor``). The pieces' terms are
-        added in the table's order. ``radii`` None: the grid rings."""
+        p_j the chain's forcing pitch on the ring - since S102 (batch Q, #230) its pieces' |sin p| averaged in R
+        over a Gaussian of the stellar layer's height (``Pieces.chain_sines``), no longer the lead piece's own -
+        and h_z the stellar layer's thickness (``pieces.forcing_factor``). The pieces' terms are added in the
+        table's order. ``radii`` None: the grid rings."""
         on_grid = radii is None
         R = self.R if on_grid else np.asarray(radii, dtype=float)
         out = np.zeros((R.size, HARMONICS + 1), dtype=complex)
