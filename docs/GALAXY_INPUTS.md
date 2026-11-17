@@ -6379,6 +6379,10 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    resolution, so no physical size-luminosity relation for complexes fixes a merge level**; the knots stay one
    Strömgren sphere each. What stands between the model and the goal pictures' pink regions is the
    density the photons see: **#232** (carried).
+   *S101 (BUILD_VI row 101, D271):* what #232's law does not give - complexes of many clusters and their envelopes, the
+   goal pictures' largest pink regions - stays here: S101's reader R232 read the expansion that takes a single region
+   past its clump (#232, a build in batch Q lane H), and found the ground-based giant sizes blends and about a third of
+   Barnes et al. 2025's 10 pc nebulae complexes. Still permanent.
 182. **The clouds' surface density is two regimes and a cap, not a law of radius or of mass** (S67, D231;
    `docs/READING_CLOUD_SIZES.md`; the owner's choice "Smaller giant clouds (model)"). A cloud's radius is √(M/πΣ) at
    Lada & Dame 2020's X_CO-corrected Σ_GMC — since S70 (#192, D234) `GMC_SURFACE_DENSITY_RING` 82 M☉ pc⁻² inside the
@@ -7667,6 +7671,26 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    physics, not of the knot's drawing (by the form alone the diameter is linear in the ionising rate, `[inferred: the
    measurer's arithmetic]`). **The goal pictures' pink regions wait on it.** **Carried.** What closes it: the reading —
    then a sourced build, or permanent with the reason written in.
+   *S101 (BUILD_VI row 101, D271):* **read; a build is sourced** (S101's reader R232, `s101_R232.md` in the session's
+   scratchpad; lane H's `READING_HII_SIZES.md` will hold it). Hunt & Hirashita 2009 (arXiv:0910.2804) READ, and **not a
+   per-region law**: in their own words it "reflects a sequence with different initial gas densities", and applied per
+   cluster it makes the diameter linear in Q (median 0.34 pc, max 840 pc at the Galactic normalisation). The
+   ground-based size-luminosity relations (Wisnioski et al. 2012, Cosens et al. 2018) are blends at 40-325 pc. **The
+   law read:** the D-type expansion to the cluster's age, R(t) = R_St (1 + (7/4) √(4/3) c_i t / R_St)^(4/7) (Bisbas et
+   al. 2015, arXiv:1507.05621, eq. 13, after Hosokawa & Inutsuka 2006), stopped at the stagnation radius R_St
+   (8/3)^(2/3) (c_i / c_0)^(4/3) (eq. 17) with the cloud's turbulent sound speed c_0,eff = √(c_0² + σ_cloud² / 3)
+   (Tremblin et al. 2014, arXiv:1406.1801, eq. 8; σ_cloud the census's `cloud_velocity_dispersion`); the ionised
+   density then by photon balance, n_0 (R_St / R)^(3/2); no fitted constant. **The measured yardstick:** Barnes et al.
+   2025 (arXiv:2510.11778, HST Hα at 10 pc, Sect. 5.1): at the model's own luminosities their deconvolved relation (eq.
+   3) gives a median radius of 0.79 pc against the model's 0.77 - the median already right - and above 10^37 erg/s the
+   model's radius is 0.5-0.6 of theirs, the bright end about 2 times too small. **Under the law, the reader's
+   whole-census numbers** (S99's census, `milky_way`): radius median / p99 / max **17.1 / 42.3 / 71.4 pc**, and the
+   regions over half a pixel (19.5 pc) **7 -> 4 752** - printed before any row, so every check after the build is
+   disclosed, none judged. **The gate's ruling: a build, batch Q lane H** (BUILD_VII rows 102-103); the cloud-size cap
+   kept; the alternative ruleset named - the region as the inner skin of the model's own Weaver bubble (Weaver 1977,
+   read at S36; median / p99 / max 9.6 / 105 / 256 pc). What the law does not give - complexes of many clusters and
+   their envelopes, the goal pictures' largest pink regions (Barnes et al. 2025: about a third of their 10 pc nebulae
+   are complexes) - stays #181's (permanent). Still carried until lane H's build is in. Destination - batch Q, lane H.
 233. **The default census's own-law estimator is not flat beyond 380 pc since the longer bar** (S100, D270; the re-pin
    pass, `s100_P.md` and `s100_P2.md`). `tests/test_clustering_gate.py` judges the census against its own law flat
    beyond 380 pc within 0.05 (1 + ω within 0.05 of 1): on batch P's final model the default galaxy reads **0.0529
