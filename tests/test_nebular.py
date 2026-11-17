@@ -169,9 +169,11 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S102 (batch Q, #232): the Stromgren radius above is the region's start, unchanged bit for bit; the density and
     # log U are the expanded region's (tests/test_hii_expansion.py). Were 153.7 cm^-3 and -2.835 (-2.831 measured);
     # the natal density (hii_natal_density) is the 153.7.
-    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(3.196, rel=0.01)
+    # S104 (batch R, #235 lane RH): were 3.196 cm^-3 and -3.426 - today's ionized sphere inside the shell driven at
+    # the peak rate is smaller and denser (n_rms (R_St,peak / R_shell)^1.5), so its U is higher.
+    assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(9.416, rel=0.01)
     assert float(np.median(np.asarray(F["hii_natal_density"]))) == pytest.approx(153.7, rel=0.01)
-    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-3.426, abs=0.01)
+    assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-3.244, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
     # S57 (D216): was 7775 (another draw); S56 (D215): was 7792 (another draw)
     # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
@@ -226,7 +228,8 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S70 (D234): was -0.097902 - the clouds' ring inversion on its own interval (F-2-7) to -0.098171, then the three
     # Sigma regimes (#192, the owner's ruling D233) to -0.098309; row 37 a recorded miss still, 0.0004 further out.
     # S102 (batch Q, #232): was -0.098643 - the expanded regions' density and U move each region's [N II]/Halpha.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.103318, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309  # S100 (batch P, D270; #227, the census +1 %): was -0.098650 (row 37's verdict unchanged)
+    # S104 (batch R, #235 lane RH): was -0.103318 - today's ionized sphere inside its shell, denser, U higher.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.103575, abs=1e-6)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was -0.098309  # S100 (batch P, D270; #227, the census +1 %): was -0.098650 (row 37's verdict unchanged)
     for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
         assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
 
@@ -336,7 +339,9 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     assert (age < g["log_age_yr"][0]).mean() == pytest.approx(0.0257, abs=1e-3) and not (age > g["log_age_yr"][-1]).any()
     # S102 (batch Q, #232): was "every log U is inside" - the expanded regions' U is lower, and 8.5 % of the regions
     # (0.01 % of the Halpha; down to log U = -4.56; 10.6 % at the first commit, sigma^2/3) read the grid's -4 floor, clamped as FSPS clamps. Reported, not mended.
-    assert (log_u < g["log_u"][0]).mean() == pytest.approx(0.0850, abs=2e-3) and not (log_u > g["log_u"][-1]).any()
+    # S104 (batch R, #235 lane RH): was 0.0850 - today's sphere inside the shell is denser, its U higher: 4.5 % on
+    # the floor.
+    assert (log_u < g["log_u"][0]).mean() == pytest.approx(0.0448, abs=2e-3) and not (log_u > g["log_u"][-1]).any()
     w = np.asarray(F["hii_halpha_luminosity"])
     weighted = {n: float(np.sum(np.asarray(F[f"hii_{n}_ratio"]) * w) / w.sum()) for n in nb.FORBIDDEN}
     # S44: was 0.477 / 0.131 / 0.053 / 0.041 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93

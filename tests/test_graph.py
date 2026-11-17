@@ -154,6 +154,8 @@ SEEDED_BASIC = {
     # S102 (#232, batch Q lane H): the region grown past its natal clump - its radius now, which limit set it, and
     # the Stromgren state's density the bubbles read.
     "hii_radius", "hii_radius_limit", "hii_natal_density",
+    # S104 (#235, batch R lane RH): the shell driven at the cluster's peak ionizing rate; hii_radius sits inside it.
+    "hii_shell_radius",
     "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
     # S42 (the owner's word on D184): the forbidden lines off Byler et al.'s grid, per region and per ring, and Hbeta.
     "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio",

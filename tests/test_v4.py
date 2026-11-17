@@ -129,7 +129,8 @@ NOT_DRAWN = {
                 "bubble_shell_velocity", "bubble_shell_density", "bubble_interior_pressure", "bubble_interior_temperature",
                 "bubble_mechanical_luminosity", "bubble_phase", "bubble_stalled",
                 "cluster_birth_radius",  # S61 (D220 item 6): the binners' radius; the viewer draws cluster_radius
-                "hii_radius_limit", "hii_natal_density"},  # S102 (#232, batch Q lane H): which limit set hii_radius; the bubbles' medium
+                "hii_radius_limit", "hii_natal_density",  # S102 (#232, batch Q lane H): which limit set hii_radius; the bubbles' medium
+                "hii_shell_radius"},  # S104 (#235, batch R lane RH): the shell at the peak rate; the viewer draws hii_radius
     "remnant": {"remnant_age", "remnant_shell_velocity", "remnant_ambient_density", "remnant_shell_density",
                 "remnant_phase", "remnant_kind"},
 }
@@ -152,7 +153,8 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
     # S61 (D220 part II as amended): NOT_DRAWN was 38 - the radius a cloud's ring drew, cloud_birth_radius, joins it.
     # S102 (#232, batch Q): DRAWN was 30 - hii_radius joins it (lane V); NOT_DRAWN was 39 - hii_radius_limit and
     # hii_natal_density join it (lane H).
-    assert sum(len(v) for v in DRAWN.values()) == 31 and sum(len(v) for v in NOT_DRAWN.values()) == 41
+    # S104 (#235, batch R lane RH): NOT_DRAWN was 41 - hii_shell_radius joins it.
+    assert sum(len(v) for v in DRAWN.values()) == 31 and sum(len(v) for v in NOT_DRAWN.values()) == 42
     # S59 (D218): the layer's table's columns are a table's, not an object class's - D191's rule does not bind
     # them, and they say in plain words that the viewer does not show them.
     # S59 (D218 follow-up): was ["arm_segment_extent", "arm_segment_pitch_residual"] - the second column is the

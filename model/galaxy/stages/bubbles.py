@@ -341,7 +341,8 @@ def blast_wave(age_yr: np.ndarray, n0: np.ndarray, zeta: np.ndarray, e51: float,
         pds_v = fb.pds_velocity(e51, n0, zeta, float(c["PDS_VELOCITY_COEFFICIENT"])) * clock**-0.7
     size = np.where(radiative, pds, sedov)
     velocity = np.where(radiative, pds_v, sedov_v)
-    # The adiabatic shock's jump for gamma = 5/3, (gamma + 1)/(gamma - 1) = 4 [inferred: Rankine-Hugoniot];
+    # The adiabatic shock's jump for gamma = 5/3, (gamma + 1)/(gamma - 1) = 4 [verified: Leahy & Williams 2017,
+    # arXiv:1701.05942 sect. III.1.4, "compression ratio of 4", read at S103; S104 (D274) re-tagged, was inferred];
     # a radiative shell, the isothermal jump into the ambient's own velocity dispersion.
     n_shell = np.where(
         radiative,
