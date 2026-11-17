@@ -724,3 +724,99 @@ column; the viewer; the clouds' weight. **The remainder, carried in #130** (D270
 Hα (`halpha_hii`) and lines (`lines_hii`) and the unresolved youngest starlight (`RENDER_YOUNG_PLACEMENT`) — and those
 sit in the clouds, which are molecular. Since S100 they ride the blend; keeping them molecular needs the service to
 read a second, molecular placement — not built.
+
+## Part S102 — the arms' molecular gas by the measured relation (register #234 ruleset (ii)) (2026-11-17, batch Q lane L; HELD)
+
+**The note.** Builder L (scratchpad `s102_L.md`, branch `q-lanes`, never merged without the owner's word). The
+question is the owner's (#234, D216); the gate's rulings are batch Q's R1-R8. The reading behind it is
+`docs/READING_ARM_GAS_CONTRAST.md` (Part S101).
+
+### S102.1 The source, re-read at the page (rule D1)
+
+Querejeta et al. 2024, A&A 687, A293, https://arxiv.org/html/2405.05364, READ this session: Sect. 2.7, the contrast is
+"the mean surface density within the footprint of each spiral segment at that radius (arm value)" over "the mean surface
+density within the ring outside the spiral mask (interarm value)"; Table 4, nominal, Sigma_star - Sigma_mol,
+individual spiral segments: rho 0.73, slope 1.83 ± 0.46, intercept 0.16 ± 0.03 (all radial bins 2.23 ± 0.15 /
+0.08 ± 0.02; narrow masks 1.83 / 0.19; 1.5 kpc resolution 1.91 / 0.05); Sigma_star - Sigma_SFR nominal segments
+2.89 ± 1.29 / 0.15 ± 0.04; Sect. 3.1, "27 spiral galaxies ... and 59 spiral segments"; Sect. 3.3, "In the case of CO,
+the slope from a bisector fit is m=1.8". The log axes of Fig. 5 were READ off the image by the S101 reader (RQ), not
+again here; the text's "negative contrasts in the logarithmic scale" (Sect. 3.1) agrees.
+
+### S102.2 What is built
+
+In `stages/gas_pattern.py`: on every solved ring (the grid's and the mid-gap ones) the molecular arm profile is
+s = c^γ / ⟨c^γ⟩_ring, c = 1 + ψ the stellar arm pieces' field (`stellar_sum`, the field the stars' ratio of means is
+taken on, `arms_field`; the bar's taper is in it as the stars carry it - the gate's ruling 1, the field untapered as
+the solver's forcing reads it, was built and measured and is NOT the law: 1 + ψ_u falls below zero on 2 of 60 default
+seed pairs, one ring each at 3.11 kpc where the taper is 0.38, so no power of it is a density; held for the gate),
+γ one exponent per galaxy (`relation_exponent`): the mean
+over the galaxy's arm rings of the molecular `ratio_of_means` meets log10 C_mol = 1.83 log10 C_star + 0.16 at the
+mean of the stars' own. **Arm rings** (`GasPattern.arm_rings`): a piece reaches the ring, the law's arm number is a
+count (the mask is laid for it), the bar's taper weight is at most 0.01 (the composed gas is the arms' term to 1 %),
+and the ring's stellar ratio is over 1 + 1e-6. The mask is the disclosed check's rule (share m W/(2π R sin p) at most a
+half, laid where ψ is highest) at W = `ARM_GAS_RELATION_MASK_WIDTH` 1.5 kpc, the check's own number, now a model
+constant beside `ARM_GAS_RELATION_SLOPE` 1.83 and `ARM_GAS_RELATION_INTERCEPT` 0.16 (`models/level0.py`). γ: bisection
+in [1, 12], exactly 40 halvings, the last bracket's middle (rule A1); since the gate's ruling 2 a root above the
+bracket's top (stars too weakly armed for any power to reach the fit's intercept) holds γ at 12 and the pattern says so
+(`arm_relation_met` False): the fit is not extrapolated to a disc without arms `[inferred]`, and only a non-finite
+ratio raises; no arm ring, or a mean stellar ratio within 1e-6 of 1, gives γ NaN and a molecular arm contrast of 1.
+The power's shape inside a ring is the model's choice `[inferred]`. The bar's lanes, the taper's blend, the spurs, the
+carried map between rings and the exact cell means are unchanged. **The atomic gas keeps D216's steady response**
+(#130, `atomic()` sets the relation off), so the solver still runs once per pattern; the molecular steady response is
+no longer computed in a run (`steady_response()` gives it for the checks). γ is not published as a field: the gas
+pattern stage's scalars are held the same bits with the layer on and off (D214; `test_layer`'s i4), and γ is the
+layer's.
+
+### S102.3 Before → after (layer on, production grid, default seeds; scratchpad `s102_L_probe1.json`)
+
+| | `milky_way` before → after | `ngc_4414` before → after |
+|---|---|---|
+| γ | — → **2.898** | — → **2.868** |
+| arm rings (R range, kpc) | — → 67 (7.39-12.34) | — → 133 (0.04-9.94) |
+| stars' mean ratio over the arm rings | 1.399 | 1.410 |
+| molecular mean ratio over the arm rings (relation asks) | 1.313 → **2.673** (2.673) | 1.510 → **2.709** (2.709) |
+| per-ring ratio / the relation's ask (median; range) | — → 0.992 (0.746-1.093) | — → 0.988 (0.714-1.215) |
+| disclosed check, ratio of means 6-10 kpc (median; range) | 1.431 → **2.878** (2.21-3.28) | 1.429 → **2.576** (1.22-3.29) |
+| crest FWHM across the arm, kpc (median) | 1.28 → **1.02** (stars 1.59) | 2.09 → **1.66** (stars 2.41) |
+| crest FWHM / the stars' (median) | 0.87 → **0.67** | 0.99 → **0.77** |
+| molecular field's row p90 / median, 5-9 kpc | 1.32 → **1.80** | 1.47 → **2.47** |
+| its row max / median | 1.67 → **2.98** | 1.72 → **3.00** |
+| its row min / median | 0.65 → **0.31** | 0.72 → **0.45** |
+| `star_formation_gas_contrast` range | 0.43-2.24 → **0.18-3.91** | 0.39-2.51 → **0.26-3.94** |
+| ring means of every published contrast | max \|mean − 1\| ≤ 1e-13 | ≤ 1e-13 |
+
+The relation is met to 3e-13 in log on both templates. Egusa et al. 2017's M51 width (0.5 of the stars') stays a
+check: the power narrows the crest to 0.67 / 0.77 with no width put in. The star-formation contrast's ratio of means
+over the arm rings is 0.70 of Table 4's Sigma_star - Sigma_SFR row at the same stellar ratios (median; a record: the
+field is the gas star formation reads, not the rate).
+
+### S102.4 The readers follow (full runs, default seeds; scratchpad `s102_L_full_{before,after2}.json`)
+
+Every reader reads the same published fields or the same pattern object as before; nothing downstream was edited.
+
+| | `milky_way` before → after | `ngc_4414` before → after | default galaxy before → after |
+|---|---|---|---|
+| γ | — → 2.898 | — → 2.868 | — → 2.705 |
+| clouds / clusters (counts are per ring: unmoved) | 17 127 / 13 124 → same | 9 891 / 7 632 → same | 17 127 / 13 124 → same |
+| clouds in a row's top quarter of the gas, 6-7 / 7-8 / 8-9 kpc (#229; a quarter at random) | 0.36 / 0.31 / 0.36 → **0.48 / 0.44 / 0.52** | 0.28 / 0.31 / 0.27 → **0.40 / 0.41 / 0.43** | 0.34 / 0.31 / 0.32 → **0.49 / 0.49 / 0.56** |
+| gas spurs (the walk reads the ridge) | 44 → **58** | 0 → 0 | 40 → **57** |
+| `star_formation_gas_contrast` range | 0.43-2.24 → 0.18-3.91 | 0.39-2.51 → 0.26-3.94 | 0.45-1.77 → 0.40-3.72 |
+| `sfr_modulation` range | 0.0039-6.13 → **0.00015-9.16** | 0.0016-10.6 → 0.00029-12.4 | 0.011-6.33 → 0.0021-7.61 |
+| dust placement (`gas_density_contrast`, the S100 blend) range | 0.385-6.76 → 0.385-6.70 | 0.40-2.49 → 0.32-3.52 | 0.385-6.65 → same to 1e-8 |
+| its row p90 / median, 5-9 kpc | 1.30 → 1.39 | 1.45 → 1.65 | 1.41 → 1.73 |
+| its row min / median, 5-9 kpc | 0.67 → 0.57 | 0.74 → 0.72 | 0.78 → 0.79 |
+| ring means (every published contrast) | ≤ 1e-13 | ≤ 1e-13 | ≤ 1e-13 |
+| `/api/render` cold / warm (s) | 8.0 / 1.19 → 7.7 / 1.19 | 4.5 / 0.93 → 4.4 / 0.87 | 7.9 / 1.29 → 8.1 / 1.42 |
+
+The dust follows the new molecular contrast only through the blend: at the mid disc's molecular fraction (about 0.2-0.35
+on the Milky Way) the atomic response, unchanged, carries most of the placed column, so the dust's crest rises far less
+than the molecular gas's (row p90 / median 1.30 → 1.39 against 1.32 → 1.80). The clouds, their texture, the clusters
+and the star formation law read the molecular pattern itself and follow it in full. The top of the Milky Way's range
+(6.7) is the bar's lanes, unchanged.
+
+For the record (the gate's ruling 4 on lane L):
+- Between the arms on `milky_way` star formation falls to 1.5e-4 of the ring's mean rate (from 3.9e-3), because the
+  threshold switches off on gas at 0.18 of the ring's mean; disclosed, not mended.
+- The dust's placement gains little (row p90 / median 1.30 → 1.39): the placed gas is the S100 blend, and at a molecular
+  fraction of 0.2-0.35 the unchanged atomic response carries most of it; so what the relation gathers is the clouds.
+- The star-formation contrast reads 0.70 of Table 4's Sigma_star - Sigma_SFR row at the same stellar ratios; disclosed.

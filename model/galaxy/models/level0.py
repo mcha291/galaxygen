@@ -205,6 +205,45 @@ LEVEL0: dict[str, Constant] = {
         "model's 6 it would be a ratio of 1.95, outside the measured 1.4 ± 0.2. Flat with radius, as the "
         "source's text says; the dispersions' own fall with radius (its Fig. 6) is unread.",
     ),
+    "ARM_GAS_RELATION_SLOPE": Constant(  # read by every builder of the gas pattern (S102, #234 ruleset ii; HELD)
+        1.83,
+        "dimensionless",
+        "The slope of the molecular gas's arm/interarm contrast against the stars', log10 C_mol = slope x "
+        "log10 C_star + intercept, a bisector fit over individual spiral segments, each contrast 'the mean "
+        "surface density within the footprint of each spiral segment at that radius (arm value)' over 'the "
+        "mean surface density within the ring outside the spiral mask (interarm value)': Table 4, nominal, "
+        "Sigma_star - Sigma_mol, individual spiral segments, rho 0.73, slope 1.83 +/- 0.46, intercept "
+        "0.16 +/- 0.03 [verified: Querejeta et al. 2024, A&A 687, A293, arXiv:2405.05364, Sect. 2.7, "
+        "Sect. 3.3 and Table 4; the log axes READ off Fig. 5 by the S101 reader]. Coverage: 59 spiral "
+        "segments in 27 galaxies with both tracers, mostly grand-design (17 grand-design, 9 multi-armed, "
+        "two flocculent); CO at ~100 pc resolution; the scatter about the fit is not printed. Named "
+        "alternatives: the 1.5 kpc resolution row, slope 1.91 and intercept 0.05; all radial bins, 2.23 and "
+        "0.08; the narrow masks, 1.83 and 0.19. The gas pattern sets one exponent per galaxy so that the "
+        "molecular gas's ratio of means over its arm rings meets this relation at the stars' own ratio "
+        "[inferred: the power of the stellar contrast inside a ring is the model's choice, not the source's].",
+    ),
+    "ARM_GAS_RELATION_INTERCEPT": Constant(  # read with ARM_GAS_RELATION_SLOPE (S102, #234 ruleset ii; HELD)
+        0.16,
+        "dex",
+        "The intercept of the same fit: 0.16 +/- 0.03 dex, so C_mol = 10^0.16 = 1.45 at C_star = 1 - the fit "
+        "is not anchored at (1, 1) [verified: Querejeta et al. 2024, A&A 687, A293, arXiv:2405.05364, Table 4, "
+        "nominal, individual spiral segments]. Coverage as ARM_GAS_RELATION_SLOPE's (59 segments in 27 "
+        "galaxies, mostly grand-design, two flocculent; ~100 pc; the scatter about the fit not printed); the "
+        "1.5 kpc resolution row reads 0.05. A galaxy with no stellar arm contrast takes no molecular arm "
+        "contrast: the intercept is not applied where the stars carry none [inferred].",
+    ),
+    "ARM_GAS_RELATION_MASK_WIDTH": Constant(  # the mask the relation's ratio of means is taken in (S102; HELD)
+        1.5,
+        "kpc",
+        "Full width, perpendicular to an arm, of the arm mask inside which the arm/interarm ratios of means "
+        "are taken to meet the relation: the median width of the PHANGS spiral masks, 'typically 1-2 kpc "
+        "wide' with 'the median (1.5 kpc) width across the whole PHANGS sample' as the default [verified: "
+        "Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491, Sect. 3.2; Querejeta et al. 2024, Sect. "
+        "2.6.1, 'a typical width of ~1-2 kpc']. The same number and the same mask rule as the disclosed "
+        "check's (tests/gas_check.py): the share m W/(2 pi R sin p) of a ring, at most a half, laid where the "
+        "stellar pieces' sum is highest. Named alternative: the narrow masks, 500-1000 pc (Querejeta et al. "
+        "2024, Appendix E).",
+    ),
     "GAS_DISC_SCALE_RATIO": Constant(
         1.0,
         "dimensionless",
