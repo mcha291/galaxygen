@@ -32,10 +32,17 @@ const S67_FRAGMENT_SHA256 = "e8f58add7f895054ffb63159f5754d6d6f4ea6fdac6071e1d86
 // diffuse term. With those taken back the vertex is S82's (10172, 0a58dd4c...), as below.
 const S82_VERTEX_LENGTH = 10172;
 const S82_VERTEX_SHA256 = "0a58dd4c3d2d1938690df0ed9ad0befcaa735815997eeb9cb4d04498c5fa0f1d";
-const VERTEX_LENGTH = 20449;
-const VERTEX_SHA256 = "6c29b1e9cc86fe3fe3992c59f6f8c518d6c2221305bf66c9dc7cd4a0d32b4a56";
-const FRAGMENT_LENGTH = 3182;
-const FRAGMENT_SHA256 = "969f1611336ad9398acab1c7b1eac1bba1deb0ab1dbca78a4c72b10eeedf7cdf";
+// S102's change (#232): the knot as its HII region's sphere (sphere.ts) - profile 3, modes 5 and 6, the chord's
+// functions in both texts, the closure's scale and the lattice's normaliser in the vertex. With those taken back the
+// texts are S93's (20449, 6c29b1e9...; 3182, 969f1611...), as below.
+const S93_VERTEX_LENGTH = 20449;
+const S93_VERTEX_SHA256 = "6c29b1e9cc86fe3fe3992c59f6f8c518d6c2221305bf66c9dc7cd4a0d32b4a56";
+const S93_FRAGMENT_LENGTH = 3182;
+const S93_FRAGMENT_SHA256 = "969f1611336ad9398acab1c7b1eac1bba1deb0ab1dbca78a4c72b10eeedf7cdf";
+const VERTEX_LENGTH = 24915;
+const VERTEX_SHA256 = "9336395668b6922bd2faeea870705c36c0f8b3f1e74b451893748421f5a0d5a5";
+const FRAGMENT_LENGTH = 5833;
+const FRAGMENT_SHA256 = "6f944f9ff5c2d6196ffb3601e73c0b9e529e38b111fc247896ff27d825487ac3";
 // The wings' composite (S82): its own two texts.
 const COMPOSITE_VERTEX_SHA256 = "bac5b818df7ed479728d052e501a5fc324b83cae4cc6c2528517dcf4ac334193";
 const COMPOSITE_FRAGMENT_SHA256 = "a095aed65800cf7aee7b6e056c554dcbdf49f02376765af6f692b002ac1c6c3f";
@@ -61,6 +68,21 @@ const withoutGas = (vertex: string) =>
     .replace(/ {4}\/\/ The gas map as the march's thin screen \(S93[\s\S]*?(?= {4}float ds = sMax)/, "")
     .replace("face * place * gasAt * share", "face * place * share");
 
+/** The texts with S102's additions taken back (#232, the knot as its region's sphere): what S93 left. */
+const withoutSphere = (vertex: string, fragment: string) => ({
+  vertex: vertex
+    .replace(/\r\n/g, "\n")
+    .replace(/ {2}\/\/ The knot as its HII region's sphere \(S102[\s\S]*?(?= {2}\/\/ The wings past a clamped box \(S82)/, "")
+    .replace("    if (profile > 0.5 && profile < 2.5 && extent > 0.0 && 2.0 * extent >= side) return false;\n    if (profile > 2.5 && extent >= 0.25 * side) return false;\n", "    if (profile > 0.5 && extent > 0.0 && 2.0 * extent >= side) return false;\n")
+    .replace("      if (profile > 0.5 && profile < 2.5 && extent > 0.0 && 2.0 * extent >= side) {", "      if (profile > 0.5 && extent > 0.0 && 2.0 * extent >= side) {")
+    .replace(/ {6}\/\/ As its HII region's sphere \(S102[\s\S]*?mode = mode > 2\.5 \? 6\.0 : 5\.0;\n/, "")
+    .replace(/ {4}if \(mode > 4\.5\) \{[\s\S]*?\} else if \(mode > 2\.5\) \{/, "    if (mode > 2.5) {"),
+  fragment: fragment
+    .replace(/\r\n/g, "\n")
+    .replace(/ {2}\/\/ The knot as its HII region's sphere \(S102[\s\S]*?(?= {2}void main\(\) \{)/, "")
+    .replace(/ {4}if \(vMode > 4\.5\) \{[\s\S]*?(?= {4}if \(vMode > 3\.5\))/, ""),
+});
+
 const sha256 = (text: string) => createHash("sha256").update(text.replace(/\r\n/g, "\n"), "utf-8").digest("hex");
 
 describe("the points' shader (FluxPoints, S64)", () => {
@@ -69,10 +91,15 @@ describe("the points' shader (FluxPoints, S64)", () => {
     expect(sha256(FLUX_POINTS_SHADER.vertex)).toBe(VERTEX_SHA256);
     expect(FLUX_POINTS_SHADER.fragment.length).toBe(FRAGMENT_LENGTH);
     expect(sha256(FLUX_POINTS_SHADER.fragment)).toBe(FRAGMENT_SHA256);
-    const s82 = withoutGas(FLUX_POINTS_SHADER.vertex);
+    const s93 = withoutSphere(FLUX_POINTS_SHADER.vertex, FLUX_POINTS_SHADER.fragment);
+    expect(s93.vertex.length).toBe(S93_VERTEX_LENGTH);
+    expect(sha256(s93.vertex)).toBe(S93_VERTEX_SHA256);
+    expect(s93.fragment.length).toBe(S93_FRAGMENT_LENGTH);
+    expect(sha256(s93.fragment)).toBe(S93_FRAGMENT_SHA256);
+    const s82 = withoutGas(s93.vertex);
     expect(s82.length).toBe(S82_VERTEX_LENGTH);
     expect(sha256(s82)).toBe(S82_VERTEX_SHA256);
-    const s67 = withoutWings(s82, FLUX_POINTS_SHADER.fragment);
+    const s67 = withoutWings(s82, s93.fragment);
     expect(s67.vertex.length).toBe(S67_SECOND_VERTEX_LENGTH);
     expect(sha256(s67.vertex)).toBe(S67_SECOND_VERTEX_SHA256);
     expect(s67.fragment.length).toBe(S67_FRAGMENT_LENGTH);
