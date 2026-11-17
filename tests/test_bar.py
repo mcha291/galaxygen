@@ -662,7 +662,7 @@ def test_the_published_gas_s_largest_cell_inside_the_bar_as_measured(prod):
     # S60 fourth pass: was (6.761, 2.8125); on the pieces' response 6.657 at 2.06 kpc, S59's ring again.
     # S100 (batch P, D270): was (7.303, 3.9375) - #220 (the spur's crest and trough read on the foot's own ring: 6.766)
     # and #130 (the published gas the blend of the molecular and atomic responses: 6.759).
-    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.759, 3.9375), abs=2e-3)  # S92 (#164 / #165): was (6.694, 1.9875) - a spur's foot on a lane's crest at 3.94 kpc (the height the crest over the trough). S87 (#80, #209): was 2.0625, 6.657 - the bar's law and pinned length, the pitch floor
+    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.7626, 3.9375), abs=2e-3)  # S102 (batch Q, D272; #230 lane G, the forcing's pitch averaged over the layer's height and the count tapered at a turn back): was (6.759, 3.9375)  # S92 (#164 / #165): was (6.694, 1.9875) - a spur's foot on a lane's crest at 3.94 kpc (the height the crest over the trough). S87 (#80, #209): was 2.0625, 6.657 - the bar's law and pinned length, the pitch floor
 
 
 def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
@@ -755,10 +755,10 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     # S92 (#164 / #165): the lowest cell was 5.1621415e-6 - the spurs' ring mean, which every cell of a ring gives in
     # proportion, is taken from heights now the crest over the trough.
     # S100 (batch P, D270; #130 the placed gas a blend with the atomic response, #227): was 5.0614312e-6.
-    assert float(g.min()) == pytest.approx(5.1328827e-5, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
+    assert float(g.min()) == pytest.approx(0.13713819, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)  # S102 (batch Q, D272; #230 lane G, the count tapered at chain 0's turn back near 4.46 kpc and the forcing's pitch averaged over the layer's height): was 5.1328827e-5  # S87 (#80, #209): was 8.564e-65 - the bar's law and pinned length, the pitch floor
     s = compose.gas_pattern(F, R, constants(the_model(prod))).profiles
     assert (int((s == 0.0).sum()), int(((s > 0.0) & (s < tiny)).sum())) == (0, 0)
-    assert float(s.min()) == pytest.approx(5.3832547e-6, rel=2e-3)  # S87 (#80, #209): was 3.3725e-64 - the bar's law and pinned length, the pitch floor
+    assert float(s.min()) == pytest.approx(0.14140811, rel=2e-3)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the troughs under a lead-pitch step filled): was 5.3832547e-6  # S87 (#80, #209): was 3.3725e-64 - the bar's law and pinned length, the pitch floor
     low = np.asarray(barred.fields["gas_density_contrast"])
     # S59 (D218): was 4.768e-11 - the lowest cell of the barred disc, where the lanes' base under the taper meets
     # a trough of the response the segments have turned.
@@ -1330,7 +1330,7 @@ def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     # S62 (D221 item 7 as amended): were [3.222, 2.974, 2.689] and 1.535 - the gas spurs: a ring's gas gives the spurs'
     # mean there in proportion, and a spur's foot stands on two of the three rings' crests.
     # S92 (#164 / #165): the middle ring was 2.919 and the ring past the half-length 2.126 - the spurs' heights (the crest over the trough).
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.208, 2.905, 2.484], abs=2e-3) and float(g[after].max()) == pytest.approx(1.939, abs=2e-3)  # S87 (#80, #209): was 1.679, 2.684, 2.966, 3.222 - the bar's law and pinned length, the pitch floor  # S87 (#148): was 1.664 - the clock  # S100 (batch P, D270; #130, the published gas the blend): were 3.212, 2.911, 2.488 and 1.955
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.2039, 2.9354, 2.5166], abs=2e-3) and float(g[after].max()) == pytest.approx(1.8995, abs=2e-3)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height and the count tapered at a turn back): were 3.208, 2.905, 2.484 and 1.939  # S87 (#80, #209): was 1.679, 2.684, 2.966, 3.222 - the bar's law and pinned length, the pitch floor  # S87 (#148): was 1.664 - the clock  # S100 (batch P, D270; #130, the published gas the blend): were 3.212, 2.911, 2.488 and 1.955
 
 
 def test_the_gas_the_star_formation_law_reads_by_hand(prod):
