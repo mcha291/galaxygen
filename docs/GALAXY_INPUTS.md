@@ -7424,6 +7424,28 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    pieces' loci and blended linearly in R, or the bar's taper near 6 kpc `[inferred by the lead: 1.2 bar half-lengths,
    where the bar's gas template may end]`; neither read through. **Carried.** What closes it: the cause named and either
    mended or declared where it is computed. Destination batch P.
+   *S102 (batch Q, D272):* **Mended, built (lane G); the gate re-rules D219's third follow-up's clause.** The cause was
+   the tracer's (S101): the forcing read each chain's lead piece's |sin p| (`stages/pieces.py`, `piece_profiles`),
+   so `forcing_factor` stepped where the lead changed. Two continuous rules were measured by substitution first
+   (direct solve, 6.25 pc rows, 4-10 kpc; scratchpad `s102_G.md`): (A) |sin p| linear in ln R between the pieces'
+   mid-radii; (B) the pieces' |sin p| weighted by each piece's radial overlap with a Gaussian in R of standard
+   deviation h_z, the stellar layer's height the thickness factor reads (0.357 kpc). Row-to-row misplaced weight on
+   `milky_way`, at most: 0.161 (5.9125 kpc; twelve rows over 0.01) -> (A) 0.0087 / (B) 0.0048 away from 4.4625 kpc; on
+   the default galaxy 0.0126 -> 0.0028 / 0.0027. The forcing's rms across 5.7-6.3 kpc, largest row step 0.206 -> 0.016
+   / 0.0007; s at φ 89° across the old band 1.27 -> 1.03 -> 1.33 before, under (B) 1.20 rising smoothly to 1.32. The
+   ratio of means over 6-10 kpc 1.4311 -> 1.4455 (+1.0 %) / **1.4287 (-0.17 %)**; the default's 1.3606 -> 1.3577 /
+   1.3491 (-0.84 %). Largest |Δ gas_density_contrast| (B) 0.994 at 6.04 kpc on `milky_way` (the old band itself), 0.470
+   at 9.26 kpc on the default. **(B) met the gate's pre-ruling and is built**
+   (`Pieces.chain_sines`, `span_overlap`; `[inferred: gravity from a layer of height h does not resolve a kink shorter
+   than h]`); the built code reproduces the substitution to the bit. The mid-gap rings fall from 13 to 2 on
+   `milky_way` (4.425 and 4.4437 kpc remain, the other mechanism below); the default keeps its 2 (3.15, 3.225).
+   `ngc_4414`'s chains are one piece each: its forcing unchanged to the bit. **The step at 4.456 kpc is another
+   mechanism** (traced): chain 0 (Norma's start) folds back at 4.46 kpc - its 19.5° piece ends where its -1.0° piece
+   turns inward - so beyond 4.46 kpc it crosses no ring while its count weight there is still 0.83 (a kink, not a free
+   end, so no taper): the ring's count N falls 1.825 -> 1.000 between 4.4575 and 4.46 kpc and every chain's amplitude
+   rises 35 % (0.309 -> 0.418), the misplaced weight 0.0405 under (B). Proposed, not built: taper a chain's count weight
+   to zero over one width as the ring nears the chain's radial extreme, as at an end (the gate's ninth follow-up's
+   rule extended to a turning point). Tests: `tests/test_forcing_pitch.py`. Not struck: the 4.456 kpc step stays.
 231. **The clouds' mass function does not know the arm** (S99, D269; the reader, `READING_CLOUD_LAYER.md` Part S99).
    The model draws every cloud's mass from one mass function per radial zone, the same on an arm and between arms;
    the clouds are placed by the gas contrast to the first power (#229's discharge). The reader: drawn so, the model
