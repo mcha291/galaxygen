@@ -7892,6 +7892,12 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    ruling with #223: (i) the default census judged; (ii) the nine-seed reading - **recommended**; the bound 0.05 stays
    either way. On #80's question: #233 is one draw's scatter, not a defect of the longer bar, so the recommendation to
    keep Table 4's bar is the stronger for it.
+   *S102 (BUILD_VII rows 102-103, D272):* on `batch-q` **the hold stands** - after lane G's pitch averaging re-placed
+   the default disc's clouds the flatness reads **0.0559 (clouds) / 0.0558 (clusters)** over 0.05 (re-pin builder RC,
+   `s102_RC.md`), `FLAT_READ_OVER_S100` kept strict and unmoved. On the held head `batch-q-lanes`, under #234's (ii),
+   it reads **0.0468 / 0.0387**, inside 0.05, and the strict hold is **lifted there** (builder LB, `s102_LB.md`: the
+   marker removed, the constant kept as the record; the runner's XPASS(strict) on the held head's first run) - not a
+   mend (another draw under another gas `[inferred]`). Carried; the owner's ruling with #223 unchanged.
 234. **The arms' molecular gas answers its stars at a gain of about one, where the measured relation amplifies** (S101,
    D271; scout L and reader RQ, `READING_ARM_GAS_CONTRAST.md` Part S101). On the pinned check's instrument (the
    production grid, layer on, 6-10 kpc, the 1.5 kpc mask) the stars' ratio of means reads **1.458** on `milky_way` and

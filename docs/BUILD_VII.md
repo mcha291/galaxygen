@@ -15,8 +15,14 @@ rendered - **no lanes in any frame**; the gate no longer recommends (ii) for the
 until the lanes' width is read (#229's line, row 105). #231 built frames-only on `q-231` (pushed, never merged, no CI;
 the gate recommends not ordering it). #236 opened (older than batch Q; row 104). The frames: batch Q moved nothing a
 viewer sees against the goals (`READING_PICTURES.md` Part S102). The re-pin pass, the hash, the bundles and the frames
-per head: [[LEAD: the close's state - both heads' final runs, D1 done or not]]. `batch-q` -> `main` and the choice of
-head: the owner's word.
+per head: on `batch-q` the re-pin pass in three builders (RA, RB, RC, in thirds on disjoint files; every move a lane's
+declared change, no judged clause red, nothing newly held) and the lead's two (the spill's declaration 1826 -> 1821,
+the three legs' `EXPECTED_LEAST` as read); run 44072430053 on 0433cd1 green (1860 passed, 35 skipped, 10 xfailed);
+D1 done (the hash 5a862a70d3760c426ca51c2cffa2b0c2, the layer reference `tests/layer_reference_s102.json`, the bundles
+`bundles_q`, the nine frames regenerated, equal to the live captures byte for byte); the closing head's own dispatched
+run to come. On the held head the re-pin pass in two builders (LA, LB), four judged clauses held strict and #233's
+flatness hold lifted under (ii); its own close (the spill 1821 -> 1822, its hash, reference and bundles; its frames on
+a branch cut from it) and its run to come. `batch-q` -> `main` and the choice of head: the owner's word.
 
 ---
 
