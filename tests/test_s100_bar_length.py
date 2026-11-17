@@ -178,9 +178,12 @@ def test_a_pinned_or_unbarred_template_is_table_3s_bit_for_bit(prod, name):
 # expanded region's n_e, on every template layer on or off - and on the Milky Way #230 lane G's gas pattern): were
 # 1fa7077707a4cbb1 / 6a88e6b94507cff0 / 07e2d0c9ef80d213 / 6893ce2cc8271eed (milky_way on / off, ngc_4414 on / off),
 # read on this machine at e455a20 (stage B) and again on the re-pin branch.
+# S104 (batch R, D274; #235 lane RH - the new column hii_shell_radius and today's ionized sphere's radius, n_e, U and
+# lines on every template layer on or off): were e2e2e56d8c57c317 / ea68ed7f688c630a / 37d939ef66fe8869 /
+# cad0337c70fba6d2, read on this machine at e7be575 (stage B, scratchpad s104_B_r.log).
 BEFORE_DIGESTS = {
-    ("milky_way", True): "e2e2e56d8c57c317", ("milky_way", False): "ea68ed7f688c630a",
-    ("ngc_4414", True): "37d939ef66fe8869", ("ngc_4414", False): "cad0337c70fba6d2",
+    ("milky_way", True): "14d9c4f365552cb2", ("milky_way", False): "2deb9fb1fcd84051",
+    ("ngc_4414", True): "ad0eb2ac6a192248", ("ngc_4414", False): "b65ca8588021c139",
 }
 
 

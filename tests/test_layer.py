@@ -1354,7 +1354,8 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities; still a miss (#117).
         # S70 (D234): was -0.097902 - the inversion (F-2-7) to -0.098171, then the three Sigma regimes (#192) to -0.098309.
         # S102 (batch Q, D272; #232 lane H, n_e by photon balance in the grown region moves each region's U): was -0.0986426; still a miss (#117).
-        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.1033183, abs=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309  # S100 (batch P, D270; #227, the stellar layer one height): was -0.0986497 (row 37's verdict unchanged)
+        # S104 (batch R, D274; #235 lane RH, today's ionized sphere inside the shell at the peak rate, denser, U higher): was -0.1033183; still a miss (#117).
+        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.1035749, abs=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309  # S100 (batch P, D270; #227, the stellar layer one height): was -0.0986497 (row 37's verdict unchanged)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
         # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
@@ -1397,7 +1398,8 @@ def test_rows_35_and_37_on_the_layer_on_census_as_measured(runs):
         assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.048910, abs=1e-5)  # S70 (D234): was -2.05555 (F-2-7)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -2.05571
         # S100 (batch P, D270; #227: every census +1 %): was -0.0986497 - the layer-off reading test_i3 pins, the same bits.
         # S102 (batch Q, D272; #232 lane H): was -0.0986426 - the layer-off reading test_i3 pins, the same bits on this machine.
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.1033183, abs=1e-6)  # S70 (D234): was -0.097902 (F-2-7, #192). S67 (D231): was -0.097717  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
+        # S104 (batch R, D274; #235 lane RH, today's ionized sphere inside the shell at the peak rate, denser, U higher): was -0.1033183; still a miss (#117).
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.1035749, abs=1e-6)  # S70 (D234): was -0.097902 (F-2-7, #192). S67 (D231): was -0.097717  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
         off = runs[name, False].fields
         for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii"):
             assert same(on[n], off[n]), n
