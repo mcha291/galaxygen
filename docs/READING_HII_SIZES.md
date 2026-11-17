@@ -172,7 +172,8 @@ size a by-product of the wind model, which #103's shell physics is inferred.
 - **Champagne breakout**: 45 % (milky_way) of the regions reach their cloud's radius and are capped there; past it the
   front meets the inter-cloud gas. Shu et al. 2002 (abstract) gives no size law; the cap stands.
 - **Q falling with age**: the law holds Q fixed. The model's old regions (10-20 Myr, 50 % of the regions, 3.9 % of the
-  Halpha) grow at their tiny Q to a median 10.7 pc; a falling Q would let them recombine and shrink.
+  Halpha) grow at their tiny Q to a median 10.7 pc; a falling Q would let them recombine and shrink. *Built at S104:
+  Part S104 below.*
 - **Dust inside the region**: Hunt & Hirashita 2009 call sizes "dust-extinction limited"; dust would shrink them.
 - The neutral shell's own emission, the front's overshoot of equilibrium (Williams et al. 2018, NOT READ), the
   turbulence of an already dispersing cloud.
@@ -184,3 +185,86 @@ draws `hii_halpha_emissivity` over `hii_stromgren_radius` (`frontend/src/galaxy/
 emissivity is uniform over `hii_radius`, so **a sphere drawn at R_St from it carries (R_St/R_HII)^3 of the region's
 light** (median 2e-4) until the viewer reads `hii_radius`. The knots (line_response, from `hii_halpha_luminosity`) are
 unaffected.
+
+---
+
+## Part S104 — the region grown at its ionizing rate's history (batch R, lane RH; register #235)
+
+**Why.** S103's reading (`s103_RB.md` A2, the gate's S103 item 2) named a defect of section 2's law: the region is
+grown to its cluster's age with R_St from TODAY's ionizing rate held fixed, while the model's own table
+(`population_light().ionizing_per_mass`, read by `per_mass_at` as the clusters stage reads it) has the rate falling
+20-140x by 4-20 Myr (Q_peak / Q_now over the default census: median 22.6, p99 134, max 144). Bisbas's law assumes a
+constant source; an old faint region was not faint when its front was driven.
+
+**Read.** Williams, Bisbas, Haworth & Mackey 2018, arXiv:1805.09273 — READ (ar5iv, S104, summarising fetch). §4.4
+eq. 48, as returned: beta r_i r_i'' + ½ beta (7 − beta) r_i'^2 + (3/2) r_i' c_0 / (1 + C r_i'^2/c_0^2) = [(c_0 + 3B r_i')
+/ (c_0 + B r_i')] c_0^2 [(R_Stag/r_i)^(3/2) − 1] + ½ c_0 r_i Q̇_0/Q_0, B = (1+beta)/2, C = 2.25, beta = 1 − c_0²/c_i²
+(eq. 33); "we have included the source term required if the luminosity of the source varies"; c_0 the neutral gas's
+sound speed; their R_Stag = (c_i/c_0)^(4/3) R_St, without Bisbas eq. 17's (8/3)^(2/3) `[verified: Williams et al. 2018
+§4.3-4.4, read S104]`. In the thin-shell limit it holds eq. 13 exactly (checked by hand `[inferred]`). **Not built (A2):**
+it is an ODE, no closed form, and the paper tests it only on a rise to 120 % (its Fig. 5); on a falling source it says
+only that the front "will become a recombination front", the same jump conditions "in the D-type limit". The model's
+rate falls 20-140x in a few Myr while recombination takes ~1e4 yr: a recombination front outside that limit.
+
+**The law as built (A1), the gate's ruling on the measured table.**
+- Q_ref is the **peak** of the cluster's rate over [0, age] off the model's table (no new constant): exact, since the
+  table is read linearly between isochrones, so the maximum is at an isochrone no older than the age or at the age
+  (`photometry.peak_per_mass_at`; a dense sampling agrees to 0). On this table the rate is flat for its first 4 Myr and
+  never rises after, so the peak **is** the birth rate for every region of both templates.
+- The shell (`hii_shell_radius`): R_St,peak (the Strömgren sphere of the peak rate's kept photons in the clump's gas),
+  then S102's law unchanged — min(R_D(age), R_STAG), capped at the cloud; `hii_radius_limit` says which limit the shell
+  stopped at.
+- Inside the shell, `[inferred]`: the gas sits at the density photon balance with the peak rate gives at the shell,
+  n_i = n_rms (R_St,peak / R_shell)^(3/2) (a capped shell's density by photon balance at the peak rate at the cloud's
+  edge, S102's ruling 2 carried); today's fewer photons ionize it to **R_ion = R_shell (Q_now / Q_peak)^(1/3)** =
+  `hii_radius`, where α_B n_i² (4/3)π R_ion³ is today's kept photons (closes to 2e-15 over the census). Recombination
+  is taken as instantaneous and the cavity's gas as held at n_i (no refilling, no collapse of the shell). A region
+  whose peak Strömgren sphere passed its cloud is its cloud at the clump's density, ionized to today's Strömgren
+  radius, at most the cloud.
+- **Why the peak** (the gate's reasons): regions under 3.98 Myr (20.3 % on milky_way, 19.3 % on ngc_4414) stay batch
+  Q's bit for bit; R_ion ≥ the natal Strömgren radius `hii_stromgren_radius` by construction (the gas inside the shell
+  is never denser than the clump), so no floor is needed (0 regions below it, measured); the shell differs under 1 %
+  between the three definitions measured (birth = peak, time-mean), so the choice only sets R_ion — the peak and
+  time-mean R_ion differ 17-18 % in the median — and the front was driven at the peak.
+- Unchanged, measured bit for bit against batch Q (fccecee) on both templates: every region's Hα (today's photons,
+  today's leaking rule), `hii_stromgren_radius`, `hii_natal_density`, `hii_density_bounded`, the temperature and
+  decrement, all 22 bubble and remnant columns; the cluster and cloud counts (13 124 / 17 127; 7 632 / 9 891).
+
+**Before (batch Q, fccecee) -> after (S104), the production grid.** The time-mean definition's figures in [brackets].
+
+| | milky_way | ngc_4414 |
+|---|---|---|
+| radius median / p99 / max, pc | 10.99 / 36.4 / 70.6 -> **5.47 / 26.3 / 52.9** [6.40 / 27.6 / 52.9] | 9.57 / 36.2 / 79.7 -> **4.25 / 25.5 / 47.6** [5.00 / 26.8 / 47.6] |
+| shell median / p99 / max, pc | (= the radius) -> 12.56 / 60.8 / 110 [12.46 / 54.3 / 100] | -> 10.58 / 60.8 / 112.9 [10.17 / 54.8 / 112.9] |
+| shell's limit by count: expansion / stagnation / cloud | 23.1 / 32.1 / 44.8 % -> **22.5 / 4.1 / 73.4 %** | 20.1 / 46.1 / 33.8 % -> **19.1 / 32.4 / 48.6 %** |
+| by Halpha | 70.4 / 7.3 / 22.3 % -> 70.4 / 4.2 / 25.4 % | 72.4 / 7.5 / 20.1 % -> 70.7 / 6.1 / 23.2 % |
+| n_e median, cm^-3 | 3.20 -> **9.42** [7.15] | 4.75 -> **7.57** [6.65] |
+| log U median; on the grid's -4 floor (regions, Halpha) | -3.426; 8.5 %, 0.011 % -> **-3.244; 4.5 %, 0.003 %** | -3.508; 8.6 % -> **-3.358; 6.6 %** |
+| regions with R > 19.5 pc (half the 39 pc pixel), Halpha share | 1 482, 49.0 % -> **431, 44.8 %** | 725, 51.9 % -> **222, 47.3 %** |
+| slope d log R / d log L: 1e37-1e39 (S102's) / all regions / log L ≥ 38 | 0.197 / 0.100 / 0.254 -> **0.239 / 0.199 / 0.268** | 0.210 / 0.249 / 0.243 -> **0.253 / 0.243 / 0.250** |
+| decade medians 1e37 / 1e38 / 1e39, pc | 12.73 / 21.99 / 32.23 -> **11.91 / 21.70 / 32.23** | 13.27 / 24.41 / 30.16 -> **12.63 / 24.41 / 30.16** |
+| Barnes Eq. 3 / Eq. 1 at the decade's median L, pc | 4.68 / 13.9 / 41.1 and 11.6 / 31.5 / 85.1 | 4.73 / 13.8 / 39.4 and 11.8 / 31.3 / 81.9 |
+| R_ion below the natal Strömgren radius | 0 | 0 |
+| Halpha-weighted [O III] / [N II] / [S II] pair; row 37's gradient (default model) | 0.689 / 0.0996 / 0.0799 / 0.0562; -0.103318 -> 0.690 / 0.0993 / 0.0782 / 0.0552; -0.103575 | not measured |
+
+By luminosity on milky_way (median radius, batch Q -> S104): under 1e35 erg/s 7.81 -> 3.07 pc; 1e35-36 11.26 -> 3.87;
+1e36-37 12.13 -> 7.44; 1e37-38 12.73 -> 11.91 (35 % of these past 4 Myr); 1e38-39 21.99 -> 21.70; above 1e39 unchanged.
+
+**What it does and does not do, plainly.**
+1. It removes the named inconsistency and shrinks the regions below 1e37 erg/s by 2-3x (mostly old regions whose
+   rate has fallen). It does **NOT** bring the slope above Barnes et al.'s completeness into range: over log L ≥ 38
+   (their 50 % point, Sect. 4.1 as read in S103 — a disclosed cut, not a fit) 0.254 -> **0.268** on milky_way (0.243 ->
+   0.250 on ngc_4414) against their 0.47-0.52. Those regions are young and the model's rate is flat to 4 Myr, so the
+   mend barely reaches them. Below log L 38 Barnes's catalogue is 5-50 % complete and by the authors' word misses the
+   diffuse extended regions: the faint decade's comparison (11.9 pc against Eq. 1's 11.6, Eq. 3's 4.7) is disclosed,
+   not a target. Units of r and L in their Sect. 5.1 are still `[inferred]` (pc, erg/s).
+2. The `[inferred]` steps: recombination instantaneous; the cavity's gas held at n_i; a capped shell's density by
+   photon balance at the peak rate at the cloud's edge. The shell is driven at the peak rate for the whole age, even
+   after the rate has fallen, so it overshoots what a falling source would drive.
+3. **The table's flat first 4 Myr is an isochrone floor** (`per_mass_at` reads the youngest isochrone for the first
+   4 Myr), where Starburst99's instantaneous burst (912_inst_b.dat, col. 2, S103's reader's READ row) falls 32 % by
+   3 Myr. It is the next cause to look at for the bright, young regions' sizes; **not mended here**.
+4. The shell's limits move: on milky_way stagnation now binds 4 % of the regions (was 32 %) and the cloud 73 % (was
+   45 %), because R_STAG scales with R_St, now the peak rate's (larger by (Q_peak/Q_now)^(1/3), median 2.8x): the
+   stagnation radius moves past the cloud's edge for most aged regions.
+5. A2, Williams et al. 2018 eq. 48: READ, not built (above).
