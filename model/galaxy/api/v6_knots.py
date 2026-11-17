@@ -29,6 +29,7 @@ from galaxy.stages import spectra as _spectra
 COLUMN = "line_response"
 LIGHT = "hii_halpha_luminosity"
 SIZE = "hii_stromgren_radius"
+EXPANDED_SIZE = "hii_radius"  # S102 (#232): the region grown past its Stromgren sphere; the knot is still drawn at SIZE
 CELL = "cell"
 DECREMENT = "hii_balmer_decrement"
 # The field's lines, as /api/render's HII layers carry them: halpha_hii, then lines_hii's (service.RENDER_LINES_HII).
@@ -143,6 +144,7 @@ def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str]) -> dic
     return {
         "light": LIGHT,
         "size": SIZE,
+        "expanded_size": EXPANDED_SIZE,  # S102 (#232): the region's radius now, for the viewer lane to read
         "cell": CELL,
         "column": COLUMN,
         "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "from": _source(n)} for n in lines},
@@ -153,8 +155,9 @@ def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str]) -> dic
         "about": (
             "the HII regions as knots (S64, V6): each cluster's region a point of its own lines (line_response, with "
             "filters=), its light hii_halpha_luminosity; a point until its diameter, 2 x hii_stromgren_radius, fills a "
-            "pixel, then a disc of that radius - the Stromgren sphere holds the line light (hii_halpha_emissivity is "
-            "uniform over it); the wind bubble (bubble_radius) is the shell's own object, drawn by the region regime, "
+            "pixel, then a disc of that radius - the Stromgren sphere holds the line light (since S102, #232, "
+            "hii_halpha_emissivity is uniform over the expanded region, expanded_size, hii_radius, not this sphere: "
+            "the viewer's reading of it is batch Q's viewer lane's); the wind bubble (bubble_radius) is the shell's own object, drawn by the region regime, "
             "not the knot. The cluster's starlight beside it (response, with filters=) is a point until 2 x "
             "cluster_half_mass_radius fills a pixel, then a Plummer sphere of scale a = r_h / 1.305 (r_h / a = 1 / "
             "sqrt(2^(2/3) - 1), the radius holding half the mass), its sprite integrating to the cluster's light (to "
