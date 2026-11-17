@@ -604,7 +604,7 @@ def test_debt_154_the_table_and_the_point_reader_differ_where_the_bars_footprint
         # footprint's edge, and the table against the reader's cell means reads 2.4e-3 (was 2.6e-4) - the reader's
         # quadrature normaliser on rings where a small footprint's edge crosses the pattern's cells.
         (None, (1.2809, 2.9625, 0.6752, 0.0303), 7.197e-4),  # S91 (#216's re-laid census, D260): was (1.7956, 2.2125, 1.1720, 0.0335), 2.439e-3  # S87 (#80): was (0.9069, 4.3875, 0.5019, 0.0381), 2.63e-4 - the bar's law  # S87 (#148): was (0.9230, ..., 0.5104, ...) - the clock  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130, #227): was (None, (1.9223, 2.2125, 1.1179, 0.0324), 2.914e-3)
-        ({"pattern_seed": 3}, (1.7469, 2.7375, 1.0893, 0.0432), 1.1807e-4),  # S91 (#216's re-laid census, D260): was (1.5197, 1.9875, 0.6370, 0.0246), 1.1286e-3  # S87 (#80): was (0.9808, 4.1625, 0.9125, 0.0556), 5.17e-5 - the bar's law  # S87 (#148): was (0.9979, ..., 0.9263, ...), 5.5e-5 - the clock  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)  # S100 (batch P, D270; #80, #130, #227): was ({"pattern_seed": 3}, (1.7078, 2.1375, 0.6526, 0.0262), 1.8137e-3)
+        ({"pattern_seed": 3}, (1.7444, 2.7375, 1.0896, 0.0434), 1.2595e-4),  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the default disc at pattern seed 3 moves): was (1.7469, 2.7375, 1.0893, 0.0432), 1.1807e-4  # S91 (#216's re-laid census, D260): was (1.5197, 1.9875, 0.6370, 0.0246), 1.1286e-3  # S87 (#80): was (0.9808, 4.1625, 0.9125, 0.0556), 5.17e-5 - the bar's law  # S87 (#148): was (0.9979, ..., 0.9263, ...), 5.5e-5 - the clock  # S86 (#154): was (1.2048, 2.9625, 1.1751, 0.0451)  # S100 (batch P, D270; #80, #130, #227): was ({"pattern_seed": 3}, (1.7078, 2.1375, 0.6526, 0.0262), 1.8137e-3)
     ):
         o = run(default_model, inputs, only=reads)
         R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
@@ -651,8 +651,8 @@ def test_debt_154_the_renders_fixed_phi_read_of_the_table_against_the_young_star
         return np.where(m > 0, a / np.where(m > 0, m, 1.0), 1.0)
 
     for inputs, (worst, at, weighted) in (
-        (None, (0.0702, 1.275, 0.00504)),  # S91 (#216, D260): was (0.1167, 11.175, 0.00677) - the default galaxy's census re-laid by the births made bit-independent (red at 3f16d0f, green on main); the templates' rows read the same  # S87 (#80): was (0.0562, 2.100, 0.00405) - the default disc's bar is the law's 2.27 kpc  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130, #227; the templates' rows unmoved): was (None, (0.1048, 2.25, 0.00542))
-        (templates.overrides(templates.TEMPLATES["milky_way"]), (0.2516, 5.925, 0.01271)),  # S87 (#80): was (0.2600, 5.925, 0.01306) - its pinned 5.0 kpc bar
+        (None, (0.0702, 1.275, 0.00493)),  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer): the weighted mean was 0.00504  # S91 (#216, D260): was (0.1167, 11.175, 0.00677) - the default galaxy's census re-laid by the births made bit-independent (red at 3f16d0f, green on main); the templates' rows read the same  # S87 (#80): was (0.0562, 2.100, 0.00405) - the default disc's bar is the law's 2.27 kpc  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130, #227; the templates' rows unmoved): was (None, (0.1048, 2.25, 0.00542))
+        (templates.overrides(templates.TEMPLATES["milky_way"]), (0.0612, 2.025, 0.00628)),  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height: the worst gap was a lead-pitch step at 5.925 kpc, the step lane G mends): was (0.2516, 5.925, 0.01271)  # S87 (#80): was (0.2600, 5.925, 0.01306) - its pinned 5.0 kpc bar
         (templates.overrides(templates.TEMPLATES["ngc_4414"]), (0.0706, 0.675, 0.00824)),  # S87 (#209): the weighted mean was 0.00693 - the owner's floor redrew its pieces
     ):
         o = run(default_model, inputs, only=reads)

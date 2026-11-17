@@ -145,7 +145,9 @@ def test_with_the_layer_off_both_are_one(model, template):
 # (molecular median, atomic median, median of atomic / molecular): the atomic response 2.6 % and 1.9 % under the
 # molecular one, ring by ring 1.5-3.6 % and 0.3-2.9 % - the sign of the source's, a quarter of its size.
 CHECK_AS_MEASURED = {
-    "milky_way": (1.431098351042905, 1.3994854586866592, 0.9744118269883251),
+    # S102 (batch Q, D272; #230 lane G, the forcing's pitch averaged over the layer's height): was
+    # (1.431098351042905, 1.3994854586866592, 0.9744118269883251).
+    "milky_way": (1.4287003032706023, 1.3936529079882265, 0.9754873362906723),
     "ngc_4414": (1.4294191678180297, 1.404955697896947, 0.9814358026650689),
 }
 

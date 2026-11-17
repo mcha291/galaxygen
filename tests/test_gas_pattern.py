@@ -2216,7 +2216,7 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     # without the spurs, reads 1.198e-2, held to the old pin.
     # S91 (#216): was 0.7229 - the default galaxy's census (48, 13, 4) -> (42, 11, 3) by the births made bit-independent.
     # S92 (#164 / #165): was 0.7028 - the spurs' heights the crest over the trough.
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.3565, rel=0.02)  # S100 (#130, D270): was 0.4447 - the published gas the blend with the atomic response  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.4675, rel=0.02)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer): was 0.3565  # S100 (#130, D270): was 0.4447 - the published gas the blend with the atomic response  # S87 (#148, #209, #80): was 0.5781 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar  # S87 (#148): was 0.6651 - the clock  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
     law = unspurred(gp)
     assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.186e-2, rel=0.02)  # S100 (#80, D270): was 1.252e-2 - the default bar 2.270 -> 3.140 kpc (Table 4), the molecular law's own  # S87 (#148, #209, #80): was 1.222e-2 - the clock, the floor and the Milky Way's pinned 5.0 kpc bar
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])

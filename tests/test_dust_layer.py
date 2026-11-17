@@ -506,10 +506,10 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # Were (0.0866, 0.0736, 0.9439), (0.0531, 0.0123, 0.2104) and (0.0125, -0.0182, 0.0361).
     # S92: was (0.0117, 0.0018, 0.1299); at bd0ed0c (S91's #216 re-lay, never run at S91) (0.0137, 0.0025, 0.1516), the runner's
     # numbers too (ci 42796166390); now (#164 / #165, the spurs re-laid move the gas the dust is placed by) as below.
-    assert read[4.0][:3] == pytest.approx((0.0104, 0.0020, 0.1150), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0563, 0.0525, 0.5908  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130 the placed gas a blend): was (0.0134, 0.0018, 0.1486)
+    assert read[4.0][:3] == pytest.approx((0.0111, 0.0024, 0.1228), abs=0.0005)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the gas the dust is placed by): was (0.0104, 0.0020, 0.1150)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0563, 0.0525, 0.5908  # S100 (batch P, D270; #80 the bar 2.270 -> 3.140 kpc, #130 the placed gas a blend): was (0.0134, 0.0018, 0.1486)
     # S92: 6 kpc's was (0.0103, -0.0078, 0.0404) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's value not read:
     # the test stops at 4 kpc there).
-    assert read[6.0][:3] == pytest.approx((0.0059, -0.0060, 0.0232), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0063, -0.0033, 0.025  # S100 (batch P, D270; #80, #130): was (0.0131, -0.0100, 0.0514)
+    assert read[6.0][:3] == pytest.approx((0.0057, -0.0059, 0.0224), abs=0.0005)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the gas the dust is placed by): was (0.0059, -0.0060, 0.0232)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.0063, -0.0033, 0.025  # S100 (batch P, D270; #80, #130): was (0.0131, -0.0100, 0.0514)
     # S92: R0's was (0.0025, -0.0098, 0.0073) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read).
     assert read[8.2][:3] == pytest.approx((0.0019, -0.0093, 0.0056), abs=0.0005)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.001, -0.0043, 0.0028  # S100 (batch P, D270; #80, #130): was (0.0014, -0.0060, 0.0041)
     # D210 (i), read and failed: the ring's light at R₀ still falls with the dust on the gas's pattern (S51 read
@@ -540,18 +540,18 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # now (1.62 of the ring's mean), so the crest lets through less; the gap and the flank are the cells they were.
     # S92: was (0.665, 0.864, 0.804) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the test stops at
     # 4 kpc there); the crest lets through more now that a spur's height is the crest over the trough.
-    assert read[8.2][3:] == pytest.approx((0.705, 0.855, 0.817), abs=0.002)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.718, 0.838, 0.807  # S100 (batch P, D270; #80, #130): was (0.736, 0.847, 0.823)
+    assert read[8.2][3:] == pytest.approx((0.709, 0.854, 0.816), abs=0.002)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the gas the dust is placed by): was (0.705, 0.855, 0.817)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.718, 0.838, 0.807  # S100 (batch P, D270; #80, #130): was (0.736, 0.847, 0.823)
     # S60 (D219, the gate's ruling): was `read[8.2][3] < 0.747 and read[8.2][4] > 0.874` - D210 (iii), the crest under
     # D207's arm (0.747) and a gap over its 0.874, as S51 read them. S60 (D219, #155): the arms carry 45-80 % of the
     # law's power on the median ring, so the lanes at R0 are fainter than at S51 - the crest lets through 0.750 and a
     # gap 0.838. A pinned record of the measured crest and gap now, not D210's bounds.
-    assert read[8.2][3] == pytest.approx(0.7055, abs=5e-4) and read[8.2][4] == pytest.approx(0.8547, abs=5e-4)  # S92: was 0.6646, 0.8639 (S91 and #164 / #165 together, as above). S62 (D221): was 0.750, a spur's foot  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7178, 0.8375  # S100 (batch P, D270; #80, #130): was 0.7360, 0.8475
+    assert read[8.2][3] == pytest.approx(0.7094, abs=5e-4) and read[8.2][4] == pytest.approx(0.8538, abs=5e-4)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the gas the dust is placed by): was 0.7055, 0.8547  # S92: was 0.6646, 0.8639 (S91 and #164 / #165 together, as above). S62 (D221): was 0.750, a spur's foot  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.7178, 0.8375  # S100 (batch P, D270; #80, #130): was 0.7360, 0.8475
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
     # S58 (D217): was (0.454, 0.935, 0.706)
     # S59 (D218): was (0.450, 0.911, 0.676) - the flank is another cell, the crest and the gap the ring's as they were
     # S60 (D219): was (0.450, 0.911, 0.626) - the arms a census of pieces
     # S62 (D221): was (0.590, 0.723, 0.656) - the crest at 6 kpc a spur's foot on the ridge (1.40 of the ring's mean)
-    assert read[6.0][3:] == pytest.approx((0.5854, 0.7354, 0.6592), abs=0.002)  # S92: was (0.5315, 0.737, 0.651) - S91 and #164 / #165 together (bd0ed0c's not read). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.5835, 0.723, 0.656  # S100 (batch P, D270; #80, #130): was (0.5136, 0.7548, 0.6467)
+    assert read[6.0][3:] == pytest.approx((0.5844, 0.7333, 0.6584), abs=0.002)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the gas the dust is placed by): was (0.5854, 0.7354, 0.6592)  # S92: was (0.5315, 0.737, 0.651) - S91 and #164 / #165 together (bd0ed0c's not read). S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 0.5835, 0.723, 0.656  # S100 (batch P, D270; #80, #130): was (0.5136, 0.7548, 0.6467)
     # S57 (D216): was (0.452, 0.577, 0.520); S56 (D215): was (0.451, 0.576, 0.531)
     # S58 (D217): was (0.441, 0.630, 0.519) - the crest at 4 kpc is a lane's
     # S59 (D218): was (0.404, 0.641, 0.503) - inside the bar's half-length the arms turn against the lanes
@@ -666,7 +666,7 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     # 6.34 kpc).
     # S92: were 7.140e-3 and 2.157e-3 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the test stops at
     # R0's ratio there).
-    assert read_sub[4] == pytest.approx(1.677e-3, rel=0.05) and read_sub[2] == pytest.approx(1.096e-3, rel=0.05)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 3.281e-3, 1.410e-3  # S100 (batch P, D270; #80, #130): was 3.708e-3, 1.289e-3
+    assert read_sub[4] == pytest.approx(2.865e-3, rel=0.05) and read_sub[2] == pytest.approx(1.192e-3, rel=0.05)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer: the gas the dust is placed by): was 1.677e-3, 1.096e-3  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was 3.281e-3, 1.410e-3  # S100 (batch P, D270; #80, #130): was 3.708e-3, 1.289e-3
     every = 1
     sub = (c[:, ::every] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::every])).mean(axis=1)
     assert np.allclose(sub, placed, rtol=1e-8, atol=0.0)
