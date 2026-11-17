@@ -53,7 +53,26 @@ Nothing here moved a constant, a pin or a model byte.
   384, 987 PDF HTTP 403; Puls's lecture PDF not extractable).
 - The closed form σ_e = σ_T n_e / ρ = 0.2 (1 + X) cm²/g for fully ionized H and He: **RECALL** — it cannot found the
   law under D1 until a page printing it is read.
-- **The gate (D273 item 6): NOT DONE.** Stays carried, a reading: LL93, or Kudritzki & Puls 2000 (ARA&A 38, 613).
+- The gate's first ruling (D273 item 6) was NOT DONE; **item 9 replaces it** on the second reading below.
+
+**The second reading (reader RT, `s104_RT.md` section B).**
+- The code: `stages/massive_stars.py` applies **no Γ_e at all** — the comment: σ_e "taken as determined in Lamers &
+  Leitherer 1993", a value S28 could not read, "So Gamma_e is not applied: v_esc here is the Newtonian sqrt(2GM/R)";
+  `VINK_JUMP = (61.2, 2.59, -14.94, 0.85)` is eq. 23 without its 3.2 Γ_e term. No σ_e constant anywhere under
+  `model/galaxy`.
+- Vink, de Koter & Lamers 2000, astro-ph/0008183 — READ (transcribed): Table 1, twelve series (log L, M, Γ_e, M_eff),
+  each over Teff 12.5-50 kK with one Γ_e: 4.5/15/0.055; 4.5/20/0.041; 5.0/20/0.130; 5.0/30/0.087; 5.0/40/0.068;
+  5.5/30/0.274; 5.5/40/0.206; 5.5/50/0.165; 5.75/45/0.325; 6.0/60/0.434; 6.0/80/0.326; 6.25/120/0.386.
+- σ_e = Γ_e M / (7.66e-5 L) from those rows `[inferred, arithmetic on a READ table]`: eleven of twelve give **0.340 ±
+  0.002 cm²/g** (the rounding of Γ_e); series 5 gives 0.355 (its M_eff matches its own 0.068: an outlier not
+  explained). Vink et al. 1999 (astro-ph/9908196) sect. 5 — READ: Γ_e = 0.130 for L = 1e5 L☉, 20 M☉ -> 0.339. So the
+  recipe's own grid used one σ_e, 0.34, independent of Teff over 12.5-50 kK `[inferred]`. That 0.34 = 0.2 (1 + X) at
+  X = 0.70 is the Thomson form — RECALL. Lamers & Leitherer 1993: still NOT READ; Kudritzki & Puls 2000: NOT FETCHED.
+- What it would move `[inferred, from massive_stars.py's own formula]`: Γ_e 0.041-0.434 over Vink's grid, v_inf
+  overstated by (1 − Γ_e)^−1/2 = 1.02-1.33x, the wind power by 1.04-1.77x, the jump 0.3-3.6 kK too cool.
+- **The gate (D273 item 9, replacing item 6's "NOT DONE"):** #83 stays carried, its closer restated: the recipe's
+  effective escape speed (1 − Γ_e) applied with σ_e 0.34, destination **batch R**, the builder's measurement of what it
+  moves first.
 
 ## #86 — the black hole's mass and the remnant boundaries do not depend on metallicity (reader R1)
 
@@ -221,7 +240,8 @@ Nothing here moved a constant, a pin or a model byte.
 
 ## Not read, by entry
 
-- #83: Lamers & Leitherer 1993 (ADS 405), Kudritzki & Puls 2000 (not fetched); the Thomson closed form RECALL only.
+- #83: Lamers & Leitherer 1993 (ADS 405, scan only), Kudritzki & Puls 2000 (not fetched); the Thomson closed form
+  RECALL only; σ_e 0.34 is back-solved from Vink et al. 2000's Table 1, not printed.
 - #86: Fryer et al. 2012 (not fetched); Spera's coefficients through an extracting fetch, unchecked against the PDF.
 - #96: Krumholz et al. 2019 sect. 4. #97/#98: VandenBerg et al. 2013 Table 2.
 - #95: He et al. 2026 (clouds against a CO-following control). The other #95 clauses (offset shape, density gradient,
