@@ -28,8 +28,8 @@ from galaxy.stages import spectra as _spectra
 
 COLUMN = "line_response"
 LIGHT = "hii_halpha_luminosity"
-SIZE = "hii_stromgren_radius"
-EXPANDED_SIZE = "hii_radius"  # S102 (#232): the region grown past its Stromgren sphere; the knot is still drawn at SIZE
+SIZE = "hii_stromgren_radius"  # the region's start, published beside EXPANDED_SIZE; a knot was drawn at it until S102
+EXPANDED_SIZE = "hii_radius"  # S102 (#232): the region grown past its Stromgren sphere - what a knot is drawn at
 CELL = "cell"
 DECREMENT = "hii_balmer_decrement"
 # The field's lines, as /api/render's HII layers carry them: halpha_hii, then lines_hii's (service.RENDER_LINES_HII).
@@ -144,7 +144,7 @@ def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str]) -> dic
     return {
         "light": LIGHT,
         "size": SIZE,
-        "expanded_size": EXPANDED_SIZE,  # S102 (#232): the region's radius now, for the viewer lane to read
+        "expanded_size": EXPANDED_SIZE,  # S102 (#232): the region's radius now, the knot's size (batch Q's viewer lane)
         "cell": CELL,
         "column": COLUMN,
         "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "from": _source(n)} for n in lines},
@@ -154,10 +154,11 @@ def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str]) -> dic
         "closure": CLOSURE,
         "about": (
             "the HII regions as knots (S64, V6): each cluster's region a point of its own lines (line_response, with "
-            "filters=), its light hii_halpha_luminosity; a point until its diameter, 2 x hii_stromgren_radius, fills a "
-            "pixel, then a disc of that radius - the Stromgren sphere holds the line light (since S102, #232, "
-            "hii_halpha_emissivity is uniform over the expanded region, expanded_size, hii_radius, not this sphere: "
-            "the viewer's reading of it is batch Q's viewer lane's); the wind bubble (bubble_radius) is the shell's own object, drawn by the region regime, "
+            "filters=), its light hii_halpha_luminosity; since S102 (#232) the projected sphere of the region's radius "
+            "now, expanded_size, hii_radius, over which hii_halpha_emissivity is uniform: a point while that radius is "
+            "under a quarter of a pixel, then the sphere's chord profile convolved with the point's own image, its light "
+            "exactly the point's (the Stromgren radius, size, hii_stromgren_radius, the region's start, is still "
+            "published beside it); the wind bubble (bubble_radius) is the shell's own object, drawn by the region regime, "
             "not the knot. The cluster's starlight beside it (response, with filters=) is a point until 2 x "
             "cluster_half_mass_radius fills a pixel, then a Plummer sphere of scale a = r_h / 1.305 (r_h / a = 1 / "
             "sqrt(2^(2/3) - 1), the radius holding half the mass), its sprite integrating to the cluster's light (to "

@@ -462,9 +462,9 @@ NOT_DRAWN_WHY: dict[str, str] = {
     "hii_sulphur_abundance": "not read by anything drawn: the [S II] lines the region carries (S42) come off the grid "
                              "at the gas's oxygen, with the grid's own S/O, not this column (debt #118).",
     "hii_density_bounded": "drawn through the radius: a leaking region's sphere is its whole cloud, which "
-                           "`hii_stromgren_radius` already says; the category itself is not a look.",
-    # S102 (#232): the region's radius now, and which limit set it.
-    "hii_radius": "the viewer draws a knot at its Stromgren radius until batch Q's viewer lane reads this.",
+                           "`hii_radius` already says; the category itself is not a look.",
+    # S102 (#232): which limit set the region's radius now. `hii_radius` itself is drawn since S102 (batch Q's
+    # viewer lane): the region regime's sphere and the field mode's knot are the sphere of that radius.
     "hii_radius_limit": "the category is not a look: it says which of three limits `hii_radius` stopped at.",
     "hii_natal_density": "the medium the wind bubble expands into (the bubbles stage reads it); the region drawn "
                          "is the expanded one, whose density is `hii_electron_density`.",

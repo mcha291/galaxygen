@@ -138,7 +138,9 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
     assert np.array_equal(phase == 0, young) and not np.any(phase == 2)  # no cluster outlives its last core collapse
-    n0 = np.asarray(F["hii_electron_density"], dtype=float)
+    # S102 (#232, batch Q, the gate's ruling 4): the bubble expands into the Stromgren state's density, published apart
+    # as hii_natal_density since hii_electron_density became the expanded region's
+    n0 = np.asarray(F["hii_natal_density"], dtype=float)
     rho = float(c["HII_MASS_PER_HYDROGEN"]) * PROTON_MASS * n0
     L = power * SOLAR_LUMINOSITY
     free = fb.weaver_radius(L, rho, age * MYR) / CM_PER_PC
@@ -193,7 +195,8 @@ def test_the_default_numbers(default):
     assert int(np.asarray(F["bubble_stalled"]).sum()) == 12786  # S100 (batch P, D270; #227, the census +1 %): was 12649. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 12391  # S70 (D234): was 12445 (#192, F-2-7). S67 (D231): was 12373, the clouds' size law
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
-    p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
+    # S102 (#232, batch Q, the gate's ruling 4): the region's pressure the bubble meets is its natal (Stromgren) state's
+    p_region = 2.0 * np.asarray(F["hii_natal_density"]) * np.asarray(F["hii_temperature"])
     stalled = np.asarray(F["bubble_stalled"]) == 1
     ratio = np.asarray(F["bubble_interior_pressure"])[stalled] / p_region[stalled]
     assert float(np.median(ratio)) == pytest.approx(1.0, abs=0.25)

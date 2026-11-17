@@ -320,6 +320,9 @@ export function packObjects(
     if (host >= 0) {
       const j = clusterAt.get(`${num(clouds.cell, i)}:${host}`);
       if (j !== undefined) {
+        // S102 (batch Q, the gate's ruling on lane V): the cavity stays the Stromgren sphere, not `hii_radius` - the
+        // cloud's published extinction column (`cloud_dust_extinction_v`) is not re-derived for a larger cavity
+        // [inferred]; named as left, not mended here.
         const rs = num(clusters.hii_stromgren_radius, j) / 1000;
         if (rs > 0) cavity = [...scene(num(clusters.cluster_radius, j), num(clusters.cluster_azimuth, j), num(clusters.cluster_height, j)), rs];
       }

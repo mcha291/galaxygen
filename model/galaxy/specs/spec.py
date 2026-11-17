@@ -884,7 +884,7 @@ _MISSES: tuple[Miss, ...] = (
         debt=117,
         since="S44",
         reason=(
-            "-0.0986 dex/kpc against [-0.045, -0.005], 6.0 sigma below the window's floor and in the direction the "
+            "-0.1033 dex/kpc against [-0.045, -0.005], 6.5 sigma below the window's floor and in the direction the "
             "blind reader named as the killing one ('a model whose [N II]/Halpha follows N/H (about -0.06 to -0.08 "
             "dex/kpc) fails'). The reading's history: as built on the 8.69 scale the model read -0.0815; on the "
             "grid's own scale (D195, #121) it steepened to -0.1035 - the offset moved it out, not in; -0.1055 from "
@@ -899,9 +899,11 @@ _MISSES: tuple[Miss, ...] = (
             "clouds' ring inversion on the ring's own interval (Audit V F-2-7; -0.098171 alone) and the source's three "
             "Sigma_GMC regimes (#192, the owner's ruling D233) - 0.0004 further out, the same on and off**; "
             "**-0.0986 (-0.098650) since S88: M1's final model (#148's clock, #209's floor, #80's bar, #212's "
-            "MERGER_HEATING 90.6) moves the census the row reads (16 940 clouds where 16 577) - 0.0003 further out**. "
-            "The three readings since S44 differ by how the census was placed and drawn, not by any change to the "
-            "nebular physics. **Diagnosed at S45 (D196, tests/test_s45_diagnosis.py, which reads the layer-off "
+            "MERGER_HEATING 90.6) moves the census the row reads (16 940 clouds where 16 577) - 0.0003 further out**; "
+            "**-0.1033 (-0.103318) since S102 (batch Q, D272; #232): each HII region grown past its natal clump, so "
+            "its density and log U, and with them its [N II]/Halpha, are the expanded sphere's - 0.0047 further out "
+            "(6.0 to 6.5 sigma)**. The readings from S44 to S100 differ by how the census was "
+            "placed and drawn, not by any change to the nebular physics; S102's is the first that is. **Diagnosed at S45 (D196, tests/test_s45_diagnosis.py, which reads the layer-off "
             "census since S55 and finds the same parts: the metallicity path's product -0.0957 layer-off, -0.0956 "
             "on the layer-on census; -0.1008 since S61's ring-first census, the same on and off):** the numbers that "
             "follow are S45's own. The gradient is the metallicity's "

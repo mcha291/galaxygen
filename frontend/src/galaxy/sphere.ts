@@ -19,7 +19,9 @@
 // extended region dimmed by its centre's column: a stated approximation, not the column over its face).
 
 /** Under this radius, pixels, a knot is drawn as the point, unchanged: the profile's rms radius, sqrt(2/5) R, is then
- * under 0.16 px - against the default sprite's core of 1.35 px, a broadening of 0.7 % in its variance. A bound. */
+ * under 0.16 px - against the default sprite's core of 1.35 px, a broadening of 0.7 % in its variance. A bound.
+ * S102 (batch Q, the gate's ruling on lane V): accepted as a sampling bound of the drawing, with
+ * SPHERE_KERNEL_MAX_HALF's 8 px image cut - neither is a display choice nor a model number. */
 export const SPHERE_MIN_PX = 0.25;
 /** From this radius, pixels, the profile is sampled on the pixel lattice rather than by taps: a sampling bound. */
 export const SPHERE_LATTICE_PX = 4;

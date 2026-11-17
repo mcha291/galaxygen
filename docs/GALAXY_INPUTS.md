@@ -7722,6 +7722,16 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    because R_D ~ R_St^(3/7) (c_i t)^(4/7) cuts R_St's power by 3/7; and the 10³⁷-10³⁸ decade's median, 12.7 pc, sits
    above even their circularised 11.6, because at its median 3 Myr c_i t is 31 pc whatever Q is (constant Q grows the
    old faint regions; the cloud's cap is what stops many). Complexes and envelopes stay #181's.
+   *S102 (batch Q, D272; the viewer's half):* the region regime draws each HII region at `hii_radius` (the closure
+   emissivity x volume = the region's Hα, vitest, to float32 rounding); the field mode's knots are the sphere of
+   `hii_radius` in projection - a point under a quarter pixel of radius, then the sphere's chord profile convolved
+   with the point's own image (or the instrument's, cut at 8 px), its light exactly the point's; the cloud's cavity
+   stays the Strömgren radius, its published extinction column not re-derived for a larger cavity `[inferred: the
+   gate's ruling]`, named as left. At the field frames' 39 pc/px the regions are 0.3-2 px and the frames barely move
+   (the power slope flattens, the Milky Way's -1.27 -> -1.04; a few bloomed knots drop below the bloom); at a 4.4 kpc
+   zoom the one bright dot becomes a small resolved pink disc and a few faint pinkish discs appear. **The regions
+   drawn at their size do not read as the goal pictures' pink regions:** they are few, faint and isolated, not strings
+   of pink knots along the arms. Nothing tuned (C6).
 233. **The default census's own-law estimator is not flat beyond 380 pc since the longer bar** (S100, D270; the re-pin
    pass, `s100_P.md` and `s100_P2.md`). `tests/test_clustering_gate.py` judges the census against its own law flat
    beyond 380 pc within 0.05 (1 + ω within 0.05 of 1): on batch P's final model the default galaxy reads **0.0529
