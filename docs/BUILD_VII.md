@@ -24,6 +24,21 @@ run to come. On the held head the re-pin pass in two builders (LA, LB), four jud
 flatness hold lifted under (ii); its own close (the spill 1821 -> 1822, its hash, reference and bundles; its frames on
 a branch cut from it) and its run to come. `batch-q` -> `main` and the choice of head: the owner's word.
 
+**Row 105 done at S103 (2026-11-17, D273), documents only** (run before row 104; on `session-103` from `batch-q`'s
+closing head). Readers RL, RB, R1, R2 and a second reader RT; files `READING_LANES.md`, `READING_DISC_EDGE.md`,
+`READING_ROW_105.md` (new), `READING_HII_SIZES.md` Part S103. What each entry ended as: **sourced, destination batch
+R** - #235 (grow the front at the rate's history; compare above Barnes's detection limit), #226 (the cliff the gas's
+own; a lane that measures first: the gas carried to Wang et al.'s outer exponential; the gate's first ruling corrected
+on the second reading), #86 (Spera et al. 2015 App. C, Özel's 7.8 the disclosed check), #83 (σ_e 0.34, the effective
+escape speed), #96 (a definition and a disclosed check), #135 (a disclosed check, M/L_K 2.1x), #162 (a disclosed
+check), #103 (its count's disclosed check; restated to the shell's ionization state, NOT READ); **permanent** - #131;
+**closed by the reading** - #118 (c); **the owner's** - #229 (the lanes: (i) no lane recommended; #234 points to it),
+#149 (1.66 kpc recommended), #88 ((i) recommended), #97 with #98 ((i) recommended), #129 ((i) recommended), #95 (with
+the clustering questions; the window the clusters'); **not done** - none (#83's first "not done" replaced on the
+second reading). #136 and #184 were ruled at S102 and not re-read. D272's item (b), the masers' trace, answered (no
+defect of lane G; a line on #230). Nothing opened or discharged: 115 open = 50 + 65, 104 discharged. Next: batch R
+(rows 106-107) = S104.
+
 ---
 
 ## 0. What this build is for
