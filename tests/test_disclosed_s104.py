@@ -131,3 +131,43 @@ def test_162_the_clusters_correlation_at_300_pc_by_age_disclosed(default):
     assert got["square", ">10"][1:] == pytest.approx((1.197, -0.141, 1.093), abs=3e-3)  # Turner median 2.26 (their > 10 Myr reaches far older)
     assert got["annulus", "<=10"][1:] == pytest.approx((10.335, -0.375, 9.247), rel=2e-3)
     assert got["annulus", ">10"][1:] == pytest.approx((10.777, -0.364, 9.425), rel=2e-3)
+
+
+def _mass_function_slopes(m: np.ndarray, lo: float = 1e3, hi: float = 1e5) -> tuple[int, float, float, float]:
+    """(n, the maximum-likelihood index alpha of dN/dM ~ M^alpha truncated to [lo, hi] on a 0.001 grid, its Fisher
+    error, the least-squares slope of log dN/dM on ten logarithmic bins)."""
+    m = m[(m >= lo) & (m <= hi)]
+    n, s = m.size, float(np.log(m).sum())
+
+    def ll(a: float) -> float:
+        p = a + 1.0
+        return n * float(np.log(p / (hi**p - lo**p))) + a * s
+
+    grid = np.round(np.arange(-4.0, -1.1, 0.001), 3)
+    best = float(grid[int(np.argmax([ll(a) for a in grid]))])
+    h = 1e-3
+    err = float(1.0 / np.sqrt(-(ll(best + h) - 2.0 * ll(best) + ll(best - h)) / h**2))
+    edges = np.geomspace(lo, hi, 11)
+    count = np.histogram(m, bins=edges)[0]
+    slope = float(np.polyfit(np.log10(np.sqrt(edges[1:] * edges[:-1])), np.log10(count / np.diff(edges)), 1)[0])
+    return n, best, err, slope
+
+
+def test_96_the_young_clusters_mass_function_slope_disclosed(default):
+    """#96, DISCLOSED as measured at S104 (D273 item 6). The source: Krumholz, McKee & Bland-Hawthorn 2019
+    (arXiv:1812.01615) sect. 2.2, READ at S103 through an extracting fetch: disc clusters "with values of alpha_M = -2
+    +- 0.2", measured over ~1e3 to 1e5 Msun - a review's summary across studies, not one estimator's number (which
+    fit each study used is not in the part read `[inferred]`). The model: the realised cluster census (every cluster
+    0-20 Myr old, bound or not) in 1e3-1e5 Msun: **the maximum-likelihood index -1.870 +/- 0.014 (5 420 clusters) and
+    -1.947 by a least-squares fit to ten logarithmic bins of dN/dM - both inside -2 +/- 0.2, a hit**; at <= 10 Myr
+    -1.889 +/- 0.020 and -1.969 (2 774). The census follows the clouds' function (-1.6 inner, -2.2 outer, the entry's
+    head), so this is the two slopes' blend over the range. ``ngc_4414`` (s104_RC_cl_n4414.log, not pinned): -1.912
+    +/- 0.022 and -1.996 (2 310)."""
+    res, _ = default
+    F = res.fields
+    m, age = np.asarray(F["cluster_mass"], float), np.asarray(F["cluster_age"], float)
+    n, mle, err, binned = _mass_function_slopes(m)
+    assert n == 5420 and mle == pytest.approx(-1.870, abs=1.5e-3) and err == pytest.approx(0.014, abs=1e-3)  # Krumholz et al. 2019: -2 +/- 0.2
+    assert binned == pytest.approx(-1.947, abs=2e-3)
+    n, mle, err, binned = _mass_function_slopes(m[age <= 10.0])
+    assert n == 2774 and mle == pytest.approx(-1.889, abs=1.5e-3) and binned == pytest.approx(-1.969, abs=2e-3)

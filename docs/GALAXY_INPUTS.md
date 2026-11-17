@@ -3674,6 +3674,12 @@ never been judged in twenty-three sessions.
    M☉ - a DISCLOSED CHECK (the census's slopes are printed: -1.6 inner outside by 0.2, -2.2 outer inside `[inferred]`).
    The cloud-to-cluster mass relation was not found (Krumholz sect. 4 NOT READ): that clause is declared permanent
    within the entry. Carried to batch R. `READING_ROW_105.md` #96.
+   *S104 (batch R, lane RC): the disclosed check, measured - a hit.* The realised census (every cluster 0-20 Myr,
+   production grid, the default galaxy) over 1e3-1e5 M☉: the maximum-likelihood index of dN/dM **-1.870 ± 0.014**
+   (5 420 clusters) and **-1.947** by least squares on ten logarithmic bins, both inside Krumholz et al. 2019's -2 ± 0.2
+   (a review's summary across studies, its estimator not one `[inferred]`); <= 10 Myr -1.889 ± 0.020 and -1.969; the
+   blend of the clouds' -1.6 and -2.2 over the range. `ngc_4414` (not pinned): -1.912 ± 0.022, -1.996.
+   `tests/test_disclosed_s104.py`. Carried (the cloud-to-cluster clause permanent within the entry, D273).
 97. **The bound cluster mass before survival is 72 times the globular clusters' share** (S33, D182).
    `bound_cluster_mass_total` — Lada & Lada 2003's 7% emerging bound, applied to every star formed over the
    history net of return, every star taken to form in a cluster (their 70–90% `[verified: arXiv:astro-ph/
