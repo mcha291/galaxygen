@@ -7959,7 +7959,8 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    [1, 12] γ is held at 12 and the shortfall declared (`arm_relation_met` False; 0 of 60 seed pairs held)
    `[inferred]`; the relation is taken on the tapered stellar field, so inside the bar's reach the arms' term carries
    the bar's taper twice - the untapered field falls below zero on 2 of 60 default seed pairs near 3.1 kpc - disclosed
-   `[inferred]`. Stays the owner's.
+   `[inferred]`. The held head's model hash 9712fa14fc8812e21bc5d9ae930967af (the spill's count 1821 -> 1822 of
+   17127 read on it). Stays the owner's.
 235. **The grown regions' size-luminosity relation is flatter than the measured one and the faint regions too large**
    (S102, D272; what #232's build leaves, lane H, `READING_HII_SIZES.md` section 3). Each HII region now grows by the
    D-type front to its cluster's age, stops at the stagnation radius and is capped at its cloud (#232's S102
