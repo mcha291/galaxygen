@@ -1361,9 +1361,10 @@ def test_the_carried_map_never_folds(prod, leg):
 # S102 (batch Q, D272; #230 lane G - the pitch averaged over the layer's height keeps fewer mid-gap rings, so fewer
 # pairs; the count tapered at Norma's turn back): milky_way was [(1750, 37), (1820, 44), (1850, 56)] (this machine),
 # default [(1640, 35), (1760, 38), (1860, 48)] (the runner's log of e455a20); no fold, as before.
-# S102 (held head, #234 ruleset ii, lane L - the relation's profiles carried): ngc_4414 was [(1495, 182), (1475, 171),
+# S102 (held head, #234 ruleset ii, lane L - the relation's profiles carried): milky_way was [(1620, 31), (1670, 38),
+# (1690, 50)] (machine_pinned, read here); ngc_4414 was [(1495, 182), (1475, 171),
 # (1425, 168)], the drawn leg [(1825, 295), (1785, 275), (1745, 248)], default [(1640, 35), (1670, 38), (1690, 47)]; no fold.
-EXPECTED_CONTINUED: dict = {"milky_way": [(1620, 31), (1670, 38), (1690, 50)], "ngc_4414": [(1805, 173), (1735, 173), (1585, 171)],
+EXPECTED_CONTINUED: dict = {"milky_way": [(1700, 31), (1690, 38), (1750, 50)], "ngc_4414": [(1805, 173), (1735, 173), (1585, 171)],
                             "ngc_4414 drawn": [(2055, 300), (2185, 293), (1985, 252)], "default": [(1640, 35), (1690, 38), (1740, 45)]}  # S100 (batch P, D270; #80, the default bar 2.270 -> 3.140 kpc): default was [(1660, 45), (1770, 47), (1890, 47)]; no fold
 EXPECTED_CARRIED_PHI_STEPS: dict = {
     # S62 (D221): was [(1, 0.0377, 4.46), (1, 0.0373, 4.46), (1, 0.037, 4.46)] - ``contrast_at`` carries the spurs,
@@ -1382,7 +1383,8 @@ EXPECTED_CARRIED_PHI_STEPS: dict = {
     # S102 (batch Q, D272; lane G's ruling (2), the count tapered at Norma's turn back, and #230's fewer mid-gap rings):
     # was [(1, 0.0424, 4.46), (1, 0.042, 4.46), (2, 0.0415, 4.46)] - the clipped anchor at Norma's turn back (4.46 kpc)
     # is gone on every seed; seed 2 keeps one clipped anchor, at 6.5 kpc, stepping 0.0036 (read on this machine).
-    "milky_way": [(0, 0.0, 0.0), (0, 0.0, 0.0), (1, 0.0036, 6.5)],
+    # S102 (held head, #234 ruleset ii, lane L): milky_way was [(0, 0.0, 0.0), (0, 0.0, 0.0), (1, 0.0036, 6.5)].
+    "milky_way": [(0, 0.0, 0.0), (0, 0.0, 0.0), (1, 0.0016, 6.5)],
     # S102 (held head, #234 ruleset ii, lane L): ngc_4414 was [(4, 0.001, 0.06), (7, 0.0053, 0.04), (7, 0.0096, 0.07)].
     "ngc_4414": [(2, 0.018, 0.05), (2, 0.0018, 0.05), (1, 0.0008, 0.05)],
     # S102 (held head, #234 ruleset ii, lane L): the drawn leg was [(8, 0.0003, 0.04), (13, 0.0914, 0.68), (13, 0.0044, 0.09)].

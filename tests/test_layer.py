@@ -649,7 +649,9 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # S102 (batch Q, D272; #232 lane H, the regions' photon balance, and #230 lane G, the default disc's census placed
     # on another gas): was with `dig_halpha_fraction` - on and off its sums now round alike (0.29999999999999993 both),
     # measured on this machine; still a census statistic, still listed.
-    assert rounded == {"hot_phase_porosity", "cloud_mass_total",
+    # S102 (held head, #234 ruleset ii, lane L - the clouds placed on the arms' molecular gas by the measured relation): was
+    # with `cloud_mass_total` - on and off its sums now round alike (2063803452.6471076 both), measured on this machine.
+    assert rounded == {"hot_phase_porosity",
                        *(f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731"))}, sorted(rounded)
     # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
     # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.

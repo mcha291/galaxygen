@@ -178,9 +178,11 @@ def test_a_pinned_or_unbarred_template_is_table_3s_bit_for_bit(prod, name):
 # expanded region's n_e, on every template layer on or off - and on the Milky Way #230 lane G's gas pattern): were
 # 1fa7077707a4cbb1 / 6a88e6b94507cff0 / 07e2d0c9ef80d213 / 6893ce2cc8271eed (milky_way on / off, ngc_4414 on / off),
 # read on this machine at e455a20 (stage B) and again on the re-pin branch.
+# S102 (held head, #234 ruleset ii, lane L - the arms' molecular gas by the measured relation, layer on only; the layer-off
+# digests unmoved): were e2e2e56d8c57c317 (milky_way on) and 37d939ef66fe8869 (ngc_4414 on), read on this machine.
 BEFORE_DIGESTS = {
-    ("milky_way", True): "e2e2e56d8c57c317", ("milky_way", False): "ea68ed7f688c630a",
-    ("ngc_4414", True): "37d939ef66fe8869", ("ngc_4414", False): "cad0337c70fba6d2",
+    ("milky_way", True): "f453bdbb08c8001b", ("milky_way", False): "ea68ed7f688c630a",
+    ("ngc_4414", True): "0b13d9a6e0f45db9", ("ngc_4414", False): "cad0337c70fba6d2",
 }
 
 
