@@ -174,9 +174,13 @@ def test_a_pinned_or_unbarred_template_is_table_3s_bit_for_bit(prod, name):
 # #130 not) bit for bit, so #80 moves no template (the proof stands on s100-barlen). Field by field (scratchpad
 # s100_P_digcmp.py) only fields downstream of the placed gas differ: the new atomic_gas_density_contrast (all four)
 # and gas_density_contrast (the blend, layer on); nothing upstream of the placed gas moved.
+# S102 (batch Q, D272; #232 lane H - three new region columns hii_radius, hii_radius_limit, hii_natal_density and the
+# expanded region's n_e, on every template layer on or off - and on the Milky Way #230 lane G's gas pattern): were
+# 1fa7077707a4cbb1 / 6a88e6b94507cff0 / 07e2d0c9ef80d213 / 6893ce2cc8271eed (milky_way on / off, ngc_4414 on / off),
+# read on this machine at e455a20 (stage B) and again on the re-pin branch.
 BEFORE_DIGESTS = {
-    ("milky_way", True): "1fa7077707a4cbb1", ("milky_way", False): "6a88e6b94507cff0",
-    ("ngc_4414", True): "07e2d0c9ef80d213", ("ngc_4414", False): "6893ce2cc8271eed",
+    ("milky_way", True): "e2e2e56d8c57c317", ("milky_way", False): "ea68ed7f688c630a",
+    ("ngc_4414", True): "37d939ef66fe8869", ("ngc_4414", False): "cad0337c70fba6d2",
 }
 
 
