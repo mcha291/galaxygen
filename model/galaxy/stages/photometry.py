@@ -595,6 +595,14 @@ def per_mass_at(table: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray) -> np.n
     return (1.0 - frac) * table[younger, mh] + frac * table[younger + 1, mh]
 
 
+def peak_per_mass_at(table: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray) -> np.ndarray:
+    """The largest value :func:`per_mass_at` takes over ages [0, ``age_gyr``] at this [Fe/H] (S104, #235): the reading is
+    linear between consecutive isochrones, so the maximum lies at an isochrone no older than the age or at the age
+    itself - exact, no sampling. Equal to :func:`per_mass_at` at the age, bit for bit, wherever that is the maximum."""
+    younger, _, mh = _blend(age_gyr, feh)
+    return np.maximum(per_mass_at(table, age_gyr, feh), np.maximum.accumulate(table, axis=0)[younger, mh])
+
+
 # --- a formation step's stars span its whole interval (S28) --------------------------------------
 #
 # A step of the history forms its stars across dt, not at one instant, so its light is the
