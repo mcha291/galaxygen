@@ -437,3 +437,90 @@ picture's brown lane network or blue outer disc. **Neither is near.** What stand
 NGC 4414 every column; on the Milky Way all but the arm contrast (2.08 there, 2.091 here) and the dark fraction
 (0.0317, 0.0320) — so batch P's later builds change neither frame visibly: #80's law moves the default galaxy only
 (the templates' bars are pinned), and #130's blend moves the dust's crest by a few per cent. The frames' bytes differ.
+
+---
+
+# Part S101 — the yardstick read again on batch P's model (D271)
+
+## 20. The boxes of section 11, re-measured
+
+**What this is (2026-11-17, S101, BUILD_VI row 101).** S101's runner V (an Opus agent; its note `s101_V.md` in the
+session's scratchpad) re-took the boxes of section 11 on batch P's model (hash 27561e8d381b992b4ead3bccc0615aa7, the
+exported bundles), at the committed display defaults plus each box's tuning; nothing tuned, committed or changed. The
+harness's capture at the committed defaults is the committed frame byte for byte (sha256 `e7843e66...` on
+`milky_way-field`, `621f2ce7...` on `ngc_4414-field`); M8 and N6 were also pasted through the panel's "A combination to
+load" box and gave the stored route's bytes. The statistics are `tools/goal_metrics.py`'s at the committed field
+frame's geometry (section 18); the goal rows are section 1's, quoted, not re-measured. **Rule C6: no number here is a
+target.** The sheets and tiles are local, in `docs/goals/display_pass_s101/` (never committed), one copy box per tile.
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope | ring A₂ at r/a 0.21 |
+|---|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` (section 1) | −0.354 (−0.46 / −0.81) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 | — |
+| the committed frame | −0.304 (+0.630 / +0.326) | 0.0546 | 0.0778 | 0.0600 | 2.091 | 0.0319 | −1.27 | 0.160 |
+| M1 | −0.445 (+0.676 / +0.231) | 0.0534 | 0.1036 | 0.0768 | 2.264 | 0.0522 | −0.71 | 0.300 |
+| M3 | −0.663 (−0.115 / −0.779) | 0.0504 | 0.0946 | 0.0723 | 2.043 | 0.0511 | −0.77 | 0.275 |
+| M4 | −0.660 (−0.108 / −0.768) | 0.0499 | 0.0908 | 0.0700 | 2.009 | 0.0478 | −0.79 | 0.253 |
+| M5 | −0.783 (−0.332 / −1.115) | 0.0463 | 0.0830 | 0.0661 | 1.798 | 0.0449 | −0.82 | 0.236 |
+| M8 | −0.694 (−0.132 / −0.826) | 0.0541 | 0.1057 | 0.0777 | 2.159 | 0.0541 | −0.86 | 0.308 |
+| M9 | −0.415 (−0.074 / −0.489) | 0.0339 | 0.0674 | 0.0487 | 1.635 | 0.0151 | −0.89 | 0.213 |
+| GOAL `ngc_4414` (section 1) | −0.329 (+0.51 / +0.18) | 0.101 | 0.074 | 0.056 | 2.67 | 0.154 | −2.10 | — |
+| the committed frame | +0.166 (+0.299 / +0.464) | 0.0593 | 0.1281 | 0.0379 | 1.992 | 0.0278 | −1.59 | 0.077 |
+| N1 | −0.400 (+0.188 / −0.212) | 0.0747 | 0.0409 | 0.0440 | 1.644 | 0.0769 | −1.07 | 0.023 |
+| N2 | −0.500 (−0.027 / −0.527) | 0.0712 | 0.0386 | 0.0415 | 1.566 | 0.0735 | −1.11 | 0.020 |
+| N6 | −0.459 (−0.022 / −0.481) | 0.0631 | 0.0335 | 0.0352 | 1.456 | 0.0619 | −1.19 | 0.015 |
+| N7 | −0.326 (−0.023 / −0.349) | 0.0455 | 0.0261 | 0.0277 | 1.349 | 0.0267 | −1.33 | 0.016 |
+
+The committed frames' rows equal section 19's (dark 0.0319 here, 0.0320 there: one byte stream, a rounding).
+
+**What a viewer sees, in the runner's words.** The Milky Way's defaults: a tan disc, a white core ball, a short tilted
+bar, a dozen haloed dots on a black sky. M1: still tan; the ball shrinks to a small core, the bar plain, the dots almost
+all gone. M3: a blue-white barred spiral, the bar plain, a faint blue sky disc behind it. M4: M3 with a soft core glow
+and two or three faint dots. M5: bluer than the goal outside; the sky's circle plain at the corners (#226). M8: M4 half
+a stop darker, no dots. M9: flatter and greyer, the outer arms brighter, no white core, the sky circle plainest.
+NGC 4414's defaults: a white bloom ball over a faint tan flat ellipse, ten haloed dots. N1: a grey-blue flat inclined
+disc with dark flecks, a small nucleus, the sky glow ending at an ellipse. N2: N1 bluer; N6: N2 half a stop brighter;
+N7: flatter, the outer disc brightest, the sky ellipse plainest.
+
+**Against section 11.** The Milky Way's boxes keep their colours and gain the bar: the ring A₂ at r/a 0.21 reads
+0.09-0.12 (0.079 under Reinhard) on S93's model and 0.24-0.31 (0.213) on batch P's. NGC 4414's boxes lose their A₂,
+0.07-0.13 to 0.03-0.04 (0.026 under Reinhard), now under the goal's 0.074, and keep their dark fraction (0.027-0.077
+against the goal's 0.154).
+
+**The gate's verdict (D271).** **No tile on either template shows the goal's lanes or its pink regions: the display
+pass can take the white ball and the tan away, and nothing else of what stands between the frames and the goals is the
+display's.** The display pass stays the owner's (D227); its tools and sheets are ready.
+
+## 21. The eight gaps of section 3 after batch P
+
+| # | gap (section 3) | where it stands at S101 |
+|---|---|---|
+| 1 | NGC 4414's colour step of the wrong sign | **the display's** (the owner's pass, tools and sheets ready): the committed frame +0.166; N1-N7 −0.33 to −0.50 against the goal's −0.329 |
+| 2 | dark lanes | **the model's**: #234 (the arms' molecular gas at a gain of one; (ii) built held in batch Q, BUILD_VII rows 102-103), #228, #231 on the held head; no box shows a lane (dark 0.015-0.054 / 0.027-0.077 against 0.0066 / 0.154, dashes) |
+| 3 | the Milky Way's bar / A₂ | **closed in part by the model** (#80's bar, pinned; the ring A₂ 0.24-0.31 in the boxes), **the display's** half (the bloom); the headline A₂ 0.067-0.106 against 0.194; what is left of the bar's shape is #146's axis ratio, batch R (BUILD_VII rows 106-107) |
+| 4 | no pink knots, the large dots | the dots **the display's** (gone in M3-M9); the regions **the model's**: #232 (batch Q lane H) and a region drawn at its published radius with #183 (batch Q lane V); the complexes #181 (permanent) |
+| 5 | NGC 4414's A₂ at one phase | **the metric's** (the inclination, E5); the boxes now read 0.03-0.04 under the goal's 0.074 - why not re-read at S101 |
+| 6 | the Milky Way's slope | not re-read at S101 (the committed frame −1.27, the boxes −0.71 to −0.89, against −1.99) |
+| 7 | the burnt-out core | **the display's** (the bloom: the ball shrinks to a small core or goes in M1-M9 and N1-N7) |
+| 8 | "a small tan disc" | **the display's** (the white point: M3-M5 read blue-white) |
+
+Beside the eight: the sky's circle at a cool white point is **the model's** stellar disc edge (#226, section 20's
+runner; a declaration in batch Q lane G).
+
+## 22. The two things the model lacks, and where they are read
+
+**The lanes** (`READING_ARM_GAS_CONTRAST.md` Part S101). S101's scout measured the chain from the stars' arm to the gas
+the clouds and the dust follow, on the pinned check's instrument: the stars' ratio of means 1.458 / 1.405 (Milky Way /
+NGC 4414), the gas's 1.431 / 1.429 - the steady co-rotating response linear to four digits, its net gain 1.035, the
+thickness factor (0.66, sourced) the largest single loss. Querejeta et al. 2024 measure the molecular contrast
+amplifying the stellar one, log10 C_mol = 1.83 log10 C_star + 0.16 per spiral segment, which reads 2.89 / 2.69 at the
+model's stellar contrasts. The gap is the gain, not the stars. A ridge set by that relation is still about 1 kpc wide;
+a lane is the clouds'. The owner's ruling is #234, with (ii) - the measured relation inside D216's frame - recommended
+and built on a held head beside batch Q, frames for both.
+
+**The regions** (lane H's `READING_HII_SIZES.md`, batch Q; register #232). A region is a Strömgren sphere in its
+cloud's clumped gas, so none is large. S101's reader read the law that takes a region past its clump: the D-type
+expansion to the cluster's age (Bisbas et al. 2015, eq. 13) stopped at the stagnation radius (eq. 17) with the cloud's
+turbulent sound speed (Tremblin et al. 2014, eq. 8). Barnes et al. 2025's HST sizes (10 pc) put the model's median right
+and its bright end about 2 times too small. Under the law the Milky Way's census reads 17.1 / 42.3 / 71.4 pc (median /
+p99 / max) and 4 752 regions over half a pixel against 7 - numbers printed before the build, so every check after it is
+disclosed. The goal pictures' largest pink regions are complexes and envelopes, #181's (permanent).
