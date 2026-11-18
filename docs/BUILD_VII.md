@@ -22,7 +22,7 @@ D1 done (the hash 5a862a70d3760c426ca51c2cffa2b0c2, the layer reference `tests/l
 `bundles_q`, the nine frames regenerated, equal to the live captures byte for byte); the closing head's own dispatched
 run to come. On the held head the re-pin pass in two builders (LA, LB), four judged clauses held strict and #233's
 flatness hold lifted under (ii); its own close (the spill 1821 -> 1822, its hash, reference and bundles; its frames on
-a branch cut from it) and its run to come. `batch-q` -> `main` and the choice of head: the owner's word.
+a branch cut from it) and its run to come. `batch-q` -> `main`: MERGED 2026-11-18 on the owner's word (d47c19b91768); the held head stays held.
 
 **Row 105 done at S103 (2026-11-17, D273), documents only** (run before row 104; on `session-103` from `batch-q`'s
 closing head). Readers RL, RB, R1, R2 and a second reader RT; files `READING_LANES.md`, `READING_DISC_EDGE.md`,

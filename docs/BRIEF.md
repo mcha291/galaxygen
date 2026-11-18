@@ -16,13 +16,13 @@ rate, a defect - grow it at the rate's history), #226 (the cliff is the gas's ow
 al.'s outer HI profile, a lane that measures first), #86 (Spera et al. 2015), #83 (σ_e 0.34), #96, #135 (M/L_K a 2.1x
 miss), #162, #103's check. #131 permanent; #118 (c) closed by the reading. **The masers' question (D272's item (b)) is
 answered**: the match improved (0.18 -> 0.13 σ gas, 0.19 -> 0.15 young stars); the null widened because the field has
-fewer crests - nothing is owed before `batch-q` -> `main` is asked for. Nothing merged into `main` (b5d421c; hash
-27561e8d...); `batch-q`'s run 44108837489 green (1860 passed). **115 open = 50 + 65, 104 discharged**; next #237, D274.
+fewer crests - nothing is owed before `batch-q` -> `main` is asked for. **`batch-q` MERGED into `main`** (d47c19b91768, 2026-11-18; hash
+5a862a70...; the owner's word; run 44108837489 green, 1860 passed). **115 open = 50 + 65, 104 discharged**; next #237, D274.
 
 ## The owner's choices now (recommendations are the gate's, each re-rulable)
 1. **#234, the lanes:** (i) no lane - the model keeps what is measured, the goals' lanes declared outside it -
    **recommended**; or (ii) a disclosed lane (width 20-150 pc, a share with no source, zero offset: picture-driven).
-2. **`batch-q` -> `main`** on its green run. **The held head (#234):** the gate recommends NOT taking (ii) for the
+2. **`batch-q` -> `main`: DONE** (2026-11-18). **The held head (#234):** the gate recommends NOT taking (ii) for the
    picture's sake; with (1)'s (i) it stays held or is dropped.
 3. **#149:** pin NGC 4414's arms' inner radius to Herrera-Endoqui et al.'s innermost segment, 1.66 kpc - **recommended**.
 4. **#88:** (i) WAF17's own pair (row 31 reads 0.594 against 0.6 until #89) - **recommended**; (ii) Maoz & Graur's.
@@ -35,8 +35,8 @@ fewer crests - nothing is owed before `batch-q` -> `main` is asked for. Nothing 
    #85; #225 ((i)); #92, #94, #138, #153; #107, #179; #203-#205; the looks #156, #202; #227's fallback; the cadences.
 
 ## What the next session does
-1. The gate enters D273 from the scratchpad draft, tags `s103` on `session-103`'s closing head (MANUAL_TODO row 103).
-2. On the owner's word: the merge of `batch-q`; the held head kept, merged or dropped; the rulings above.
+1. Done: D273 entered, `s103` tagged on `session-103`'s closing head a066330 (MANUAL_TODO row 103).
+2. `batch-q` is merged. On the owner's word: `batch-r` (S104, D274, green, stacked on it); the rulings above.
 3. Then batch R = S104 (BUILD_VII rows 106-107): #235, #226 (measure first), #86, #83, #96, #135, #162, #103's check -
    every coefficient re-checked against the PDF before it is built (every S103 number came through an extracting fetch).
 
