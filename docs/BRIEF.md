@@ -15,8 +15,8 @@ slope above the measured completeness 0.268 against 0.47-0.52, so #235 stays (he
 #162 a miss, #96 a hit (permanent), #103 a hit (1 529.6, the Sedov clause closed). Measured and NOT built: #226 (the
 edge - your question, below; `READING_DISC_EDGE.md` Part S104), #86 (Spera et al.'s fit jumps at its own seam in
 metallicity and doubles Özel's measured mean: D273's "sourced" withdrawn), #83 (133 nodes at Γ_e ≥ 1). Opened: #237
-(every star forms in the threshold switch's unsourced lower wing). The close: [[LEAD: run]]; hash 00a5c504aa55d2dd5c1e883a691aaa42;
-closing head [[LEAD: sha]]. **116 open = 51 + 65, 104 discharged**; next #238, D275. Nothing merged into `main`.
+(every star forms in the threshold switch's unsourced lower wing). The close: run 44187622346 green on e40534f; hash 00a5c504aa55d2dd5c1e883a691aaa42;
+closing head the docs commit after it. **116 open = 51 + 65, 104 discharged**; next #238, D275. Nothing merged into `main`.
 
 ## The owner's choices now (recommendations are the gate's, each re-rulable)
 1. **#226, the disc's edge (new):** (i) the edge stays as declared - the disc ends where its infall's tail ends,

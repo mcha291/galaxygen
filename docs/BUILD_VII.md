@@ -58,8 +58,8 @@ M☉ at Z = 5e-4) and doubles Özel's measured mean: D273's "sourced" withdrawn,
 isochrone nodes at Γ_e ≥ 1 and the wind energy −14 to −20 %: σ_e by the surface hydrogen and the recipe's range in
 Γ_e read first. Found on the way: the gas is under the star-formation threshold at every radius, every star forming
 in the switch's unsourced lower wing - **#237** opened. The frames: batch R is batch Q to the eye (runner X,
-`docs/goals/batch_r_s104/`). 116 open = 51 + 65, 104 discharged. The close: [[LEAD: run]]; the hash 00a5c504aa55d2dd5c1e883a691aaa42;
-the closing head [[LEAD: sha]]. Nothing merges into `main` or `batch-q` without the owner's word.
+`docs/goals/batch_r_s104/`). 116 open = 51 + 65, 104 discharged. The close: run 44187622346 green on e40534f; the hash 00a5c504aa55d2dd5c1e883a691aaa42;
+the closing head the docs commit after it. Nothing merges into `main` or `batch-q` without the owner's word.
 
 ---
 
