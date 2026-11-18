@@ -11,7 +11,9 @@
 //   exact: the profile's integral over a rectangle has a closed form (plummerCorner).
 // - **A knot (R6)** is its HII region's Stromgren sphere (`hii_stromgren_radius`, where the line light is): a disc of
 //   that radius, each pixel taking the disc's coverage of it (an anti-aliased edge), the box's sum computed over the
-//   box (discBoxSum), so the sum is the light to rounding.
+//   box (discBoxSum), so the sum is the light to rounding. Since S102 (#232) the knots are drawn as their region's
+//   sphere of `hii_radius` in projection instead (sphere.ts, FluxPoints profile 3); the disc (profile 2) is kept, drawn
+//   by nothing in the viewer now.
 //
 // The switch (both): drawn with its extent once its diameter fills a pixel, 2 x extent >= the pixel's side at the
 // object (flux.ts pixelArea's side); a point below.

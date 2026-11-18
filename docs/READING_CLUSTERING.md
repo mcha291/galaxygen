@@ -136,7 +136,9 @@ galaxy's own large-scale structure unless stated otherwise.
   | 4548 | -0.34(3) | -0.50(4) | -0.24(2) | -0.16(4) | 2.33 | 2.99 | 1.89 | 2.44 |
   | 4571 | -0.11(3) | -0.14(8) | -0.28(11) | -0.59(11) | 1.36 | 1.23 | 2.26 | 2.67 |
 - Medians [inferred: from Table 4]: slope all -0.38; <=10 Myr -0.51 (range -0.14 to -0.84); >10 Myr -0.28
-  (-0.20 to -0.38); GMCs -0.26 (-0.08 to -0.82). Amplitude at 300 pc: 3.4, 2.3, 2.2 respectively.
+  (-0.20 to -0.38); GMCs -0.26 (-0.08 to -0.82). Amplitude at 300 pc: all 2.86, <=10 Myr 3.43, >10 Myr 2.26,
+  GMCs 2.19 [inferred: medians of the eleven rows above]. (S103, D273: mended - the line read "3.4, 2.3, 2.2
+  respectively" under four labels; those were the <=10 / >10 / GMC medians, and the "all" median was missing.)
 - Correlation lengths (1+omega = 1) "equal for both populations", several kpc [V: sect. 4.4].
 
 #### 1.5 Lapeer et al. 2026, AAS journal, accepted 2026-01-15 (arXiv:2601.11434, FEAST) - JWST + HST

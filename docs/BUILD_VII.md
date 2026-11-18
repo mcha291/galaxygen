@@ -7,6 +7,38 @@ that is the owner's is built on a held head beside the batch, never merged on a 
 `main` from a model row without the owner's word.** The owner may adopt, re-order or refuse every row. Everything here
 is `[inferred]` design unless tagged; the register's items are named by their numbers in `GALAXY_INPUTS.md`.
 
+**Rows 102-103 run at S102 (2026-11-17, D272), still a DRAFT.** Batch Q built on `batch-q`: #232 (lane H, the region
+grown past its natal clump; discharged, what is left #235), the viewer's half (lane V, a region drawn at
+`hii_radius`; #183 not built - its closure is not published, batch R), #230's mend and #226's declaration (lane G;
+#230 discharged, #226 restated to the truncation reading). On the held head `batch-q-lanes`: #234 (ii) built and
+rendered - **no lanes in any frame**; the gate no longer recommends (ii) for the picture's sake and keeps the head held
+until the lanes' width is read (#229's line, row 105). #231 built frames-only on `q-231` (pushed, never merged, no CI;
+the gate recommends not ordering it). #236 opened (older than batch Q; row 104). The frames: batch Q moved nothing a
+viewer sees against the goals (`READING_PICTURES.md` Part S102). The re-pin pass, the hash, the bundles and the frames
+per head: on `batch-q` the re-pin pass in three builders (RA, RB, RC, in thirds on disjoint files; every move a lane's
+declared change, no judged clause red, nothing newly held) and the lead's two (the spill's declaration 1826 -> 1821,
+the three legs' `EXPECTED_LEAST` as read); run 44072430053 on 0433cd1 green (1860 passed, 35 skipped, 10 xfailed);
+D1 done (the hash 5a862a70d3760c426ca51c2cffa2b0c2, the layer reference `tests/layer_reference_s102.json`, the bundles
+`bundles_q`, the nine frames regenerated, equal to the live captures byte for byte); the closing head's own dispatched
+run to come. On the held head the re-pin pass in two builders (LA, LB), four judged clauses held strict and #233's
+flatness hold lifted under (ii); its own close (the spill 1821 -> 1822, its hash, reference and bundles; its frames on
+a branch cut from it) and its run to come. `batch-q` -> `main` and the choice of head: the owner's word.
+
+**Row 105 done at S103 (2026-11-17, D273), documents only** (run before row 104; on `session-103` from `batch-q`'s
+closing head). Readers RL, RB, R1, R2 and a second reader RT; files `READING_LANES.md`, `READING_DISC_EDGE.md`,
+`READING_ROW_105.md` (new), `READING_HII_SIZES.md` Part S103. What each entry ended as: **sourced, destination batch
+R** - #235 (grow the front at the rate's history; compare above Barnes's detection limit), #226 (the cliff the gas's
+own; a lane that measures first: the gas carried to Wang et al.'s outer exponential; the gate's first ruling corrected
+on the second reading), #86 (Spera et al. 2015 App. C, Özel's 7.8 the disclosed check), #83 (σ_e 0.34, the effective
+escape speed), #96 (a definition and a disclosed check), #135 (a disclosed check, M/L_K 2.1x), #162 (a disclosed
+check), #103 (its count's disclosed check; restated to the shell's ionization state, NOT READ); **permanent** - #131;
+**closed by the reading** - #118 (c); **the owner's** - #234 (the lanes, on #229's reading: (i) no lane recommended),
+#149 (1.66 kpc recommended), #88 ((i) recommended), #97 with #98 ((i) recommended), #129 ((i) recommended), #95 (with
+the clustering questions; the window the clusters'); **not done** - none (#83's first "not done" replaced on the
+second reading). #136 and #184 were ruled at S102 and not re-read. D272's item (b), the masers' trace, answered (no
+defect of lane G; a line on #230). Nothing opened or discharged: 115 open = 50 + 65, 104 discharged. Next: batch R
+(rows 106-107) = S104.
+
 ---
 
 ## 0. What this build is for
@@ -31,9 +63,9 @@ owner's is built on a held head, the frames beside the batch's, and never merged
 | Row | Session | Phase | What | Lead / builders | Gate |
 |---|---|---|---|---|---|
 | 102–103 | S102–S103 | Q | **batch Q**: #232 the regions' expansion (lane H, `READING_HII_SIZES.md` its file); #230's mend and #226's declaration (lane G); the viewer's half — a region drawn at its published radius, #183 the knot's starlight (lane V); on the held head `batch-q-lanes`: #234 (ii) the arms' molecular contrast by the measured relation, then #231; the one re-pin pass from the runner's failed log; the hash pinned once per head; bundles; frames for both heads beside the goals | Opus builders, Fable at the gates | lane subsets; the runner's suite once per head; the pinned nodes by name; the merge of `batch-q` and the choice of head on the owner's word |
-| 104 | S104 | V | **the viewer row**: #109, #110, #111, #115, #154 (render half), #169, #170, #176, #177, #185, #186, #222 (#183 pulled forward into row 102–103's lane V) | Opus | the fast gates; the picture test re-captured with the reason |
-| 105 | S105 | R | **the reading row**: #83, #86, #88, #95 (whether the clusters' slope window is the clusters'), #96, #97 with #98, #103, #118 (c), #129, #131, #135, #136, #149, #162, #184, #226's truncation reading; two Opus readers; each entry ends sourced, permanent or the owner's | Fable gate, Opus readers | docs and register tests |
-| 106–107 | S106–S107 | batch R | **the next model batch**: #89 (after #88's reading), #91, #102, #117 with #124, #125 with #127, #130's remainder, #146's remainder, #227's remainder, and what row 105 sourced; the owner's answers on #84 / #100, #85, #225 | Opus, Fable gates | as batch Q |
+| 104 | S104 | V | **the viewer row**: #109, #110, #111, #115, #154 (render half), #169, #170, #176, #177, #185, #186, #222, #236 (S102: the N6 2.2 kpc stand's stair-stepped dust and speckle) (#183 pulled forward into row 102–103's lane V; S102: not built, to batch R, the model's closure first) | Opus | the fast gates; the picture test re-captured with the reason |
+| 105 | S105 | R | **the reading row**: #83, #86, #88, #95 (whether the clusters' slope window is the clusters'), #96, #97 with #98, #103, #118 (c), #129, #131, #135, #136, #149, #162, #184, #226's truncation reading; S102 adds #235 (a region's ionizing rate with age, Barnes et al.'s units, the leak at the cloud's edge) and #229's line (the lanes' measured width, offset and covering fraction), and moves #136 to batch R as a sourced disclosed check; two Opus readers; each entry ends sourced, permanent or the owner's | Fable gate, Opus readers | docs and register tests |
+| 106–107 | S106–S107 | batch R | **the next model batch**: #89 (after #88's reading), #91, #102, #117 with #124, #125 with #127, #130's remainder, #146's remainder, #227's remainder, and what row 105 sourced; S102 adds #136's disclosed check and #183's model half (the young light's per-cell closure on `/api/clusters`); the owner's answers on #84 / #100, #85, #225 | Opus, Fable gates | as batch Q |
 | 108 | S108 | C | **the cost pass**: #159, #163 | Opus | timings |
 | 109 | S109 | A | **Audit VII** and the yardstick read again; the count pin | Fable gate, Opus readers | docs and register tests |
 | — | the owner | — | the display pass (sheets: `docs/goals/display_pass_s101/`); the deploy (#203–#205) | | |
@@ -56,8 +88,10 @@ batch's for the owner's choice.
 | # | Question | Recommendation |
 |---|---|---|
 | 1 | Adopt the plan and its order | adopt; rows 102–103 already run on the word of 2026-11-17 |
-| 2 | #234, the arms' molecular gas: (i) D216's steady response kept; (ii) the arms' molecular contrast set by Querejeta et al. 2024's relation inside D216's frame | (ii), built on the held head `batch-q-lanes` with frames beside `batch-q`'s |
-| 3 | #231, the clouds' mass function by arm, on the held head after #234 (ii) | the owner's to order; built held as its own commit so (ii) alone and (ii) + #231 can be compared |
+| 2 | #234, the arms' molecular gas: (i) D216's steady response kept; (ii) the arms' molecular contrast set by Querejeta et al. 2024's relation inside D216's frame | (ii), built on the held head `batch-q-lanes` with frames beside `batch-q`'s. **S102 (D272):** built and rendered, no lanes in any frame; the recommendation stands on the measurement alone, and the gate now recommends **not** taking (ii) for the picture's sake, `batch-q-lanes` held until the lanes' width is read (#229, row 105) |
+| 3 | #231, the clouds' mass function by arm, on the held head after #234 (ii) | the owner's to order; built held as its own commit so (ii) alone and (ii) + #231 can be compared. **S102 (D272):** built frames-only on `q-231`; **do not order it** (no lanes, invariant I2 broken by design, `ngc_4414` redder, a cloud at the cap, an untraced defect) |
+| 2b | #184 (S102's gate): (i) the young and middle light in the clouds' layer (Robin et al. 2003's youngest bin, 33 pc against 34); (ii) Robin's ratio per part carried to every galaxy | (i) |
+| 2c | #149 (S102's gate): NGC 4414's arms' inner radius, once Herrera-Endoqui et al. 2015's table is read (row 105): pin the template, or permanent | none until read |
 | 4 | The display pass | the owner's, with the sheets of `READING_PICTURES.md` §20 |
 | 5 | #80 with #233: (i) Table 4's bar kept with #233's hold; (ii) the law's 2.27 kpc restored | (i) — #233 is one draw's scatter, not a defect of the longer bar (S101's tracer) |
 | 6 | The PARSEC download (#84 / #100): (i) made, then batch R builds both; (ii) both carried | none written |

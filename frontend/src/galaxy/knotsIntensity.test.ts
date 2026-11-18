@@ -75,9 +75,10 @@ describe("the knots' gain as drawn (S97)", () => {
 
   it("is what GalaxyTab hands the knots' one FluxPoints, with the drawn tuning's intensity", () => {
     expect(source).toMatch(/const\s+knotsGain\s*=\s*knotsGainOf\(\s*LIGHT_PER_LSUN_PC2\s*,\s*look\.fieldGain\s*,\s*exposure\s*,\s*weights\.field\s*,\s*look\.knotsIntensity\s*\)/);
-    // One drawer of the knots: the FluxPoints with the disc profile; its gain uniform is shared with the wings' pass.
+    // One drawer of the knots: the FluxPoints with the sphere's profile (3 since S102, #232; the disc's 2 before); its
+    // gain uniform is shared with the wings' pass.
     expect(source.match(/gain=\{knotsGain\}/g)).toHaveLength(1);
-    expect(source).toMatch(/<FluxPoints[^>]*gain=\{knotsGain\}[^>]*profile=\{2\}/);
+    expect(source).toMatch(/<FluxPoints[^>]*gain=\{knotsGain\}[^>]*profile=\{3\}/);
     // The old inline product is gone.
     expect(source).not.toMatch(/knotsGain\s*=\s*LIGHT_PER_LSUN_PC2\s*\*/);
   });

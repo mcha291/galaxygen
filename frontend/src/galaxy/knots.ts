@@ -1,8 +1,9 @@
 // The HII regions as knots (S64, BUILD_III V6; RULING_S64 R5, R6). No three.js here: the pure parts, tested.
 //
 // Each cluster's HII region is a point of its own lines through the filter set - /api/clusters' `line_response` over
-// the white point, as every point's light is (flux.ts fluxOf) - sized by its Stromgren radius (plummer.ts: a disc once
-// its diameter fills a pixel). Where the viewer draws knots it takes the same light out of the field: in each level-0
+// the white point, as every point's light is (flux.ts fluxOf) - sized by its region's radius (S102, #232: the header's
+// `expanded_size`, `hii_radius`, the Stromgren radius `size` where an older answer names none; knotExtentColumn), drawn
+// as that sphere in projection once it reaches SPHERE_MIN_PX (sphere.ts). Where the viewer draws knots it takes the same light out of the field: in each level-0
 // cell c the field's HII layers (the render's halpha_hii and lines_hii) are scaled by 1 - D_c / K_c, D_c the Halpha of
 // the knots drawn in c and K_c the Halpha of every knot the cell names (the clusters' `cell` column); a cell that
 // names no knot (no HII region realised there) by 1 - d, d the drawn share of the whole census's Halpha - the clusters
@@ -17,6 +18,8 @@ import type { CellLayout } from "./brightTiles";
 export interface KnotsHeader {
   light: string;
   size: string;
+  /** The region's radius now (S102, #232: `hii_radius`, grown past its Stromgren sphere): what a knot is drawn at. */
+  expanded_size?: string;
   cell: string;
   column: string;
   lines: Record<string, { wavelength: number; from: string }>;
@@ -34,6 +37,12 @@ export interface KnotsHeader {
  */
 export function knotsGain(lightPerUnit: number, fieldGain: number, stops: number, fieldWeight: number, intensity: number): number {
   return lightPerUnit * fieldGain * 2 ** stops * fieldWeight * intensity;
+}
+
+/** The column a knot's radius is read from (S102): the region's radius now where the header names it and the census
+ * carries it, else the Stromgren radius (an answer from before S102). */
+export function knotExtentColumn(header: Pick<KnotsHeader, "size" | "expanded_size">, columns: Record<string, unknown>): string {
+  return header.expanded_size && columns[header.expanded_size] ? header.expanded_size : header.size;
 }
 
 /** The census's knots entry, or null where the route sends none (an API from before S64, or no region light). */

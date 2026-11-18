@@ -629,7 +629,10 @@ INFALL_TAIL_SURFACE_DENSITY = FieldDecl(
         "kpc. The surprise is what it is not: a timescale. At these radii the inside-out law "
         "already accretes over 10–20 Gyr, and three arrival laws read the same on every row but "
         "row 2, within 0.05 there (D119). Debt #18 wanted a component the threshold protects; this "
-        "is one, and it still forms 0.2 M☉/yr of stars where it overlaps the disc's own gas."
+        "is one, and it still forms 0.2 M☉/yr of stars where it overlaps the disc's own gas. "
+        "Where it ends the stellar disc ends (S102, #226): past it only the exponential's thin infall "
+        "arrives, under the star formation threshold, and the stars and every light the render sends "
+        "fall away within a few hundred parsecs."
     ),
 )
 

@@ -190,10 +190,10 @@ def test_the_milky_way_template_holds_the_galaxy_s_non_axisymmetric_mass(prod):
     assert float(out.fields["bar_contrast"]) == pinned
     m = bm.measure(out)
     assert abs(m["mass"] - bm.PORTAIL_NON_AXISYMMETRIC_MASS) <= bm.PORTAIL_NON_AXISYMMETRIC_ERROR  # JUDGED
-    assert m["mass"] == pytest.approx(0.46000e10, abs=0.00005e10)  # as measured: 0.460002
-    assert (m["mass_circle"], m["mass_no_cut"]) == pytest.approx((0.44854e10, 0.71707e10), abs=0.00005e10)
+    assert m["mass"] == pytest.approx(0.46229e10, abs=0.00005e10)  # as measured: 0.462290  # S102 (batch Q, D272; #230 lane G, the count tapered at chain 0's turn back - the arm pieces' two-fold part inside 5.3 kpc): was 0.46000e10 (0.460002); the JUDGED clause above holds
+    assert (m["mass_circle"], m["mass_no_cut"]) == pytest.approx((0.45082e10, 0.71936e10), abs=0.00005e10)  # S102 (batch Q, D272; #230 lane G, the count tapered at a turn back): was (0.44854e10, 0.71707e10)
     assert (m["axis_ratio_2kpc"], m["axis_ratio_2kpc_disc"], m["crossing"], m["disc_share"]) == pytest.approx(
-        (3.1661, 3.7376, 6.9538, 0.32758), abs=1e-4)
+        (3.1661, 3.7376, 6.9530, 0.32975), abs=1e-4)  # S102 (batch Q, D272; #230 lane G, the count tapered at a turn back): were crossing 6.9538 and disc_share 0.32758
     # with the layer off the face-on disc is round every ring (the contrast's neutral 1): nothing to measure
     off = bm.measure(run(model, templates.resolve(templates.MILKY_WAY), only=bm.READS, layer=False))
     assert abs(off["mass"]) < 1.0 and off["axis_ratio_2kpc"] == 1.0

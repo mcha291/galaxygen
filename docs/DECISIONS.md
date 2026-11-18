@@ -18375,3 +18375,452 @@ recorded: the regions' reader ran two short runs beside another agent's python p
 
 **What did not move.** No byte under `model/galaxy`, no display default, no frame; the hash stays
 27561e8d381b992b4ead3bccc0615aa7.
+
+### D272. S102, batch Q's close (BUILD_VII rows 102-103, a draft): the HII region grown past its natal clump and drawn at its radius (#232 discharged on its closer; what is left #235), the forcing's pitch averaged over the layer's height and a chain's count tapered at its turn back (#230 discharged, D219's clause re-ruled), the disc's edge declared (#226 restated to the truncation reading); on the held head the arms' molecular gas by the measured relation (#234 (ii)) built and rendered - no lanes in any frame, and the gate no longer recommends it for the picture's sake; #231 built frames-only and not to be ordered; #236 opened, older than batch Q; batch Q moved nothing a viewer sees against the goals (2026-11-17)
+
+**Why a session.** BUILD_VII rows 102-103 (a DRAFT, run on the owner's word of 2026-11-17 as D271 read it): batch Q
+on `batch-q` cut from `main` at b5d421c, with the owner's #234 built on a held head `batch-q-lanes` beside it and #231
+on a frames-only branch `q-231`. Fable at the gate; Opus for everything else: four lane builders in their own
+worktrees (H #232's physics, V the viewer's half, G #230 and #226, L #234 (ii)), an integrator (the lanes' declared
+moves, both heads pushed and dispatched), a close lead, builder P (#231, frames only), runner X (the comparison
+sheets, and `main` at the zoom stands on the gate's order), three re-pin builders on `batch-q` in thirds on disjoint
+files (RA the gas pattern, RB the pieces, the clouds' mesh and the bar-length digests, RC the census, the layer and the
+regions), two on the held head (LA `test_gas_pattern`, LB every other file and its `machine_pinned` nodes), a D1
+builder (the hash, the layer reference, the bundles, the frames), the held head's close builder (H2), a docs builder
+and a docs finisher; never more than two builders at once. Nothing merges into `main` without the owner's word.
+
+**The gate's rulings.**
+1. **#232 is built and discharged on its closer** (lane H; `READING_HII_SIZES.md`). The region grows from its
+   Strömgren sphere by the D-type front to its cluster's age (Bisbas et al. 2015 eq. 13), stops at the stagnation
+   radius (eq. 17), then at its cloud's cap; the density by photon balance; every region's Hα unchanged bit for bit.
+   On the builder's measurement: (a) the cloud's dispersion is Heyer's one-dimensional one and Tremblin et al. 2014's
+   σ₀ a three-dimensional rms (their sentence after eq. 8, read), so c₀² = c_s² + σ_v², c_s the clouds stage's own - no
+   new constant; (b) a region that reaches its cloud keeps its photons (ionization-bounded at the cloud's edge)
+   `[inferred]`, the leaking alternative 1 − (r_cloud / R_D)³ named; (c) **the pre-ruling that the bubbles follow the
+   grown region's density is withdrawn on the measurement** (a stalled radius goes as density^−1/2: the bubbles' median
+   9.6 -> 87 pc, p99 384 pc, larger than any cloud) - the bubbles keep the natal density (a new column), their numbers
+   main's bit for bit; the wind bubble and the D-type front two laws for one cavity, computed apart, no coupling law
+   read `[inferred]`; (d) the log U floor (8.5 % of regions, 0.01 % of the light) recorded, not mended; (e) row 37's
+   as-measured record −0.0977 -> −0.1033, still a miss. **The viewer's half** (lane V): a region drawn at `hii_radius`
+   in the region regime, a knot as the projected sphere in the field mode, light closed to 1e-12, under 0.5 ms of GPU;
+   the cloud's cavity left at the Strömgren radius; 0.25 px and the 8 px cut sampling bounds. What is left opens
+   **#235** (the grown regions' size-luminosity relation flatter than the measured one and the faint regions too
+   large; the reading row; what kills it: the slope read within the measured range on the unchanged model once
+   Barnes et al.'s units are read).
+2. **#230 is mended and discharged** (lane G). D219's third follow-up clause ("the forcing's pitch for a ring's term
+   is the nearest piece's") is re-ruled on the lane's table: a chain's |sin p| at R is its pieces' averaged in R over a
+   Gaussian of the layer's height, the length the thickness factor already holds `[inferred: gravity from a layer of
+   height h does not resolve a kink shorter than h]` - candidate B: every ring of 4-10 kpc under 0.01 misplaced weight
+   on both galaxies but 4.4625 kpc; the ratio of means −0.17 % / −0.84 %; mid-gap rings 13 -> 2; `ngc_4414` unchanged to
+   the bit; candidate A (ln R interpolation) measured and set aside. The 4.456 kpc step was another mechanism (a
+   chain's count weight not tapering where it turns back in R), mended by the end's own taper at a turn `[inferred]`:
+   0.0405 -> 0.0172, a bump within the 18 pc the turning piece spans, no mid-gap ring left; clearing it would need a
+   taper in R, a different rule, not taken. The residual bump declared in the entry.
+3. **#226 declared** (lane G). The disc ends where the infall's high-angular-momentum tail ends (`milky_way` 0 from
+   24.19 kpc; `ngc_4414` from 18.64 kpc); the star-formation threshold's switch turns the gas's 26-fold fall into the
+   stars' 3 500-fold; declared in the two fields' abouts and the render header; a test ties the render's edge to the
+   field's. The closer met in its second arm; **carried, restated** to what is left: whether real discs end within 0.3
+   kpc (truncations; BUILD_VII's reading row).
+4. **#234 (ii) built HELD** (lane L; `batch-q-lanes`). One exponent per galaxy by 40 fixed halvings so the mean of the
+   arm rings' ratios meets Querejeta et al. 2024's Table 4 row: γ 2.898 / 2.868 / 2.705 (`milky_way` / `ngc_4414` / the
+   default); the molecular ratio over the arm rings 1.313 -> 2.673 and 1.510 -> 2.709; the 6-10 kpc check 1.431 ->
+   2.878 and 1.429 -> 2.576; the crest's FWHM over the stars' 0.87 -> 0.67 and 0.99 -> 0.77; the clouds' share in a
+   row's top quarter 0.31-0.36 -> 0.44-0.52; counts unchanged; spurs 44 -> 58. In the lane: γ and the ratios pattern
+   properties, not fields (D214); the mask width a model constant asserted equal to the test's; the molecular steady
+   solve dropped from the run (`steady_response()` for checks); **weak arms do not fail** - above the bracket's top (a
+   stellar ratio under about 1.03) γ is held and the shortfall declared (`arm_relation_met`), 0 of 60 default seed pairs
+   held `[inferred]`; **the "taper once" mend withdrawn on the measurement** (the untapered stellar field falls below
+   zero on 2 of 60 default seed pairs near 3.1 kpc): the relation taken on the tapered field, the arms' term carrying
+   the bar's taper twice inside the bar's reach, disclosed. Disclosed, not mended: inter-arm star formation down to
+   1.5e-4 of the ring mean on `milky_way`; the dust's placement gaining little (row p90 / median 1.30 -> 1.39), the
+   placed gas a blend carrying the atomic response; the star-formation contrast 0.70 of Table 4's SFR row; the
+   relation's own carried rings (mid-gap rings at 5.175, 5.925, 6.0, 7.35-7.575, 12.375 kpc on `milky_way`, none
+   under the steady response). **A defect of (ii) as built** (the lead's measurement, the tracer's probe-2 form,
+   `milky_way` 4-10 kpc, 6.25 pc rows, γ 2.8977): the molecular field's row-to-row misplaced weight **0.0292 at 4.450
+   kpc** (0.0176 at 4.45625, 0.0212 at 4.4625; nowhere else over 0.01; median 0.00288) where the stars' own reads at
+   most 0.0082 and the steady solve 0.0172 - the power amplifies the stars' kink at chain 0's turn back (the ratio's
+   median 2.89 ≈ γ). The integrator's change to `test_forcing_pitch`'s mid-gap clause on the held head (it reads the
+   steady response) accepted. **#234 stays carried, the owner's**; see the yardstick for the gate's verdict on it.
+5. **#231 built frames-only on `q-231`** (builder P; 0e8f096, pushed, never merged, no CI): the zone's cut M0 √2.5 in
+   the arm mask and M0 / √2.5 out of it on the mask's rings (Rosolowsky et al. 2021, Sect. 6.2.2 and Table 5, re-read;
+   the geometric mean `[inferred]`). Builder P's three questions: (1) D220 item 1 / invariant I2 broken on the mask's
+   rings by the brief's own design - **a declared break on a frames-only branch; the invariant NOT amended** (if the
+   owner ever orders #231, amending I2 is part of that order's ruling); (2) "arm" as a molecular-mass share per cell
+   accepted as declared; (3) factor 1 the same distribution, not the same bits, accepted as declared. **The gate's
+   recommendation to the owner: do not order it.** #231 stays carried, the owner's.
+6. **#183 not built** (lane V): the field-mode closure it needs - how much of a cell's young light its drawn clusters
+   carry - is not published; its destination becomes batch R (the model's half first).
+7. **Reader R3's verdicts (S101), the gate's rulings**: **#136** - a sourced DISCLOSED check (the frame's face-on A_B
+   against Driver et al. 2007's 0.20 ± 0.04; the dust term's E(B−V) against Tuffs et al. 2004's 0.067-0.088), batch R;
+   the miss is the dust's radial geometry (#47's), not the stars. **#184** - the owner's: (i) the young and middle light
+   in the clouds' layer (Robin et al. 2003's 0-0.15 Gyr bin gives 33 pc against the model's 34; no new constant) -
+   **recommended** - or (ii) Robin's ratio per part carried to every galaxy. **#149** - NGC 4414's arms' inner radius
+   is in Herrera-Endoqui et al. 2015's table, unread (VizieR down): the reading row, then the owner's (pin the
+   template, or permanent).
+8. **#236 opened on the gate's order (V4).** At the N6 2.2 kpc stand the dust draws as blocky, stair-stepped patches
+   and the nucleus side carries pixel-level speckle on `batch-q` and `batch-q-lanes`; runner X captured `main`
+   (b5d421c, main's own frontend) at the three zoom stands and both are there, the same patches in the same places:
+   older than batch Q. Carried, the viewer row (BUILD_VII row 104); what kills it: the cause named. `q-231`'s
+   near-white patches there are its own, recorded in #231 as untraced.
+9. **The re-pin pass** (the gate rules on it at entry; the items for it under "The gates"). On `batch-q` the first
+   dispatched run's 37 failures and stage B's 16 `machine_pinned` ones re-pinned as measured, each with its cause, by
+   RA, RB, RC (`s102_RA.md`, `s102_RB.md`, `s102_RC.md`) and the lead: lane G's pitch averaging (the gas pattern's
+   point function, the corner's troughs, `gate_s_numbers` min s 3.8254e-3 -> 0.052782, `test_pieces`' gaps, carried
+   map, predictions and masers, the clouds' mesh, the default disc's census, the layer's offsets, the regions' windows,
+   `test_audit_v`'s pair slopes); lane G's taper at a turn back (`count_s_steps` (55,1,3,0.349) -> (55,0,3,0.0), the
+   crest, the bar's mass 0.460002 -> 0.462290 e10 with Portail's judged clause green, the three legs' ratio
+   percentiles (0.0,0.488,0.896) -> (0.0,0.489,0.909) and kept rings (1303,1157) -> (335,122)); lane H's regions (row
+   37 −0.0986426 -> −0.1033183, still a miss; the oracle 399 -> 402 fields; `test_s45_diagnosis`' responses; the
+   `rounded` set of `test_layer` i1 losing `dig_halpha_fraction`, its on / off sums now rounding alike - a rounding
+   record); `test_s100_bar_length`'s four digests (lane H's three columns); the layer reference (D1). The lead's two:
+   the spill's declaration `SPILL_FEH_BEYOND` 1826 -> 1821 of 17 127 in `model/galaxy/layer/census_clustering.py`
+   (re-read as measured, D270 ruling 5's precedent; the "11 %" still true at 10.63 %; it moves the hash), and the
+   three legs' `EXPECTED_LEAST` (`milky_way` (0.1208, 0.1401, 8.309) -> (0.1208, 0.3128, 8.311), never reached before
+   on S102's model) read on the node's own run. **No move outside a lane's declared change; no judged clause red;
+   nothing newly held on `batch-q`**; #233's flatness still over (0.0559 / 0.0558) and held as it was. On the held head
+   LA and LB (`s102_LA.md`, `s102_LB.md`) re-pinned the first run's 91 failures under (ii) - the solver's records
+   re-pointed to `steady_response()` and back at `batch-q`'s pins unmoved, the published field's re-pinned as measured,
+   every move lane L's - and hold four judged clauses strict (under "The gates"); #233's hold lifted there.
+
+**What the builds measure.**
+- **The regions** (`milky_way` / `ngc_4414`): radius median / p99 / max 0.77 / 7.67 / 25.7 -> 11.0 / 36.4 / 70.6 pc
+  (9.57 / 36.2 / 79.7); the limit by count expansion / stagnation / cloud 23.1 / 32.1 / 44.8 % (by Hα 70 / 7 / 22 %);
+  n_e median 153.7 -> 3.20 cm⁻³; regions wider than half the frame's pixel 7 (6.0 % of the Hα) -> 1 482 (49.0 %).
+  **Disclosed misses of the law as built** (Barnes et al. 2025's units inferred, so records in the reading file, not
+  tests): the size-luminosity slope 0.44 -> 0.20 against 0.47-0.52 (R_D goes as R_St^(3/7): the luminosity's power cut
+  by 3/7); the 10³⁷ decade's median 12.7 pc above both of their fits (4.7, 11.6) and the 10³⁹ decade's 32.2 under both
+  (41.1, 85.1) (constant Q grows old faint regions; the cap). The viewer's GPU time for the knots 0.005-0.124 -> 0.042-
+  0.166 ms in the field frames, up to 0.458 ms at the 2.2 kpc stands.
+- **The forcing's pitch** (`milky_way`, 6.25 pc rows, 4-10 kpc): the largest row-to-row misplaced weight 0.161 (5.9125
+  kpc, twelve rows over 0.01) -> 0.0048 away from 4.4625 kpc; with the turn's taper 0.0405 -> 0.0172 at 4.45 kpc; the
+  forcing's rms across 5.7-6.3 kpc, largest row step 0.206 -> 0.0007; the ratio of means 1.4311 -> 1.4287; the default
+  1.3606 -> 1.3491; mid-gap rings 13 -> 0 on `milky_way`; `ngc_4414` and the default (no turn) unchanged to the bit by
+  the taper.
+- **The edge**: `infall_tail_surface_density` 2.71 M☉/pc² at 23.66 kpc, 0.71 at 24.04, 0 from 24.19 kpc on
+  `milky_way` (`ngc_4414` 3.45 at 18.11, 0 from 18.64); no number moved.
+- **#231 on `q-231`** (production grid, before -> after): clouds 17 127 -> 16 954 / 9 891 -> 9 456; clusters 13 124 ->
+  12 996 / 7 632 -> 7 292; number exponents in / out of the mask 1.08 -> 1.02 / 0.92 -> 0.78, mass 0.96 -> 1.02 / 0.93 ->
+  0.99 (Colombo et al. 2014: 0.67 / 1.05, disclosed); `ngc_4414`'s largest cloud 1.55 × 10⁷ M☉ at the 150 pc cap.
+
+**The close.** `batch-q`: the re-pin pass merged (RA 5fbdc6b, RB 91d5c05, RC's merge, the lead's spill 0433cd1),
+run 44072430053 on 0433cd1 green; then D1 on it (1812b42, e8000f5, 0d0b28d), the three legs' `EXPECTED_LEAST`
+(d4970a7) and the close's documents; the closing head is the head after the documents' commit, pushed by the lead,
+its final dispatched run run 44108837489 on 7ecd0e4 - "1860 passed, 35 skipped, 10 xfailed, 15 warnings in 9655.30s (2:40:55)", green (the closing head 41d2534 adds one BRIEF line). The model hash pinned once:
+**5a862a70d3760c426ca51c2cffa2b0c2** (87 files, 5 722 326 B; `main` 27561e8d...; `RESUMING.md`'s two lists,
+`BRIEF.md`). The layer-off reference re-based onto `tests/layer_reference_s102.json` (S100's kept as history): 12
+HII fields moved and 3 added per label (`hii_natal_density`, `hii_radius`, `hii_radius_limit`), 0 lost, 14 of 42
+routes moved, 74 entries in all; its five nodes green single-threaded and with the threads unset. The bundles exported
+to `C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s102\bundles_q` (222 entries, 383.9 MB), `--check` 222 of 222
+byte-identical. The nine frames regenerated from them at the committed display defaults; the field frames equal
+runner X's live `batch-q` captures byte for byte (sha256 9de9b23b... / bca52b22...). `DUSTY_LAYER_RATIO` re-pinned as
+measured [0.96977, 0.97354, 0.97990] -> [0.96993, 0.97367, 0.97993] (inside its 1e-3 pin). Every judged check of the
+picture test passed, nothing moved: the dust's column 0.999786; the surface-brightness gates A and B at both
+settings; the GPU light at most 5.73e-6 at the zoom stand; physics only on the wire (20 requests, all layer off). The
+picture test's real run twice, 1 passed each (228.7 s), all nine the committed picture byte for byte. The request
+fixture not re-recorded: batch Q's viewer diff touches no request code; `test_bundle`'s plan nodes 3 passed. The held
+head (`batch-q-lanes`, held, not pushed after its first run): batch-q 0433cd1 merged (d0f85ee; #234's paragraph kept
+from both sides), LA 3b27dc0, LB 01a51a1 and 7dd0e4d; its own close (the spill 1821 -> 1822, its hash, its layer
+reference, `bundles_lanes`, its frames on a branch `batch-q-lanes-frames` cut from it, so the held head keeps
+`batch-q`'s frames) by H2, recorded on that head, and its dispatched run run 44108844540 on c736f8f - "1874 passed, 35 skipped, 12 xfailed, 15 warnings in 10457.38s (2:54:17)", green (the held head's closing head 212d7de adds two machine_pinned records the runner skips: the three legs' EXPECTED_GATE and EXPECTED_LEAST as read on this machine).
+
+**The yardstick** (`READING_PICTURES.md` Part S102, §23-25; runner X's sheets in `docs/goals/batch_q_s102/`). The
+gate's verdict: **against the two goal pictures, batch Q moved nothing a viewer sees.** `batch-q` beside `main`: the
+field frames cannot be told apart by eye, at the defaults and in the owner's boxes M4 and N6; the regions drawn at
+their grown size are a few faint pinkish discs at the 2.2 kpc stand and nothing at the field scale; the distance to
+the goals is S101's. `batch-q-lanes`: **no dark lanes, in any frame, continuous or dashed**; the measured relation
+moves the clouds' ellipses and nothing else (median brightness ratio against `batch-q` 1.000; about 2 % of lit pixels
+darker than 0.8x and as many brighter than 1.25x); on N6 the two picture measures move away from the goal's (dark
+0.0617 -> 0.0565 against 0.154; arm 1.46 -> 1.37). `q-231`: no lanes; `ngc_4414`'s outer disc redder at the defaults
+(D(B−R) +0.166 -> +0.255 against −0.329) and one untraced defect. **The gate's reading `[inferred]`:** the relation (ii)
+is a measurement at 1.5 kpc of mask width and the model meets it; it gathers the molecular gas into a crest
+0.67-0.77 of the stars' width, still of order a kiloparsec; the goals' lanes are of order a hundred parsecs and
+continuous - what is missing is the narrow ridge (the gas's compression at the arm's shock, or the clouds strung
+along one line with a covering fraction near one), and neither ruleset holds it. **The recommendation on #234 stands
+on the measurement alone and no longer on the picture: the gate recommends the owner NOT take (ii) for the picture's
+sake, and leave `batch-q-lanes` held until the reading is in** (#229's dated line: the lanes' measured width, offset
+from the stellar crest and covering fraction - the PHANGS-HST/JWST dust-filament papers, Roberts 1969, Kim & Ostriker,
+none read - then a sourced build or permanent). `batch-q`'s regenerated field frames equal the live captures byte for
+byte, so the table's `batch-q` rows are the committed frames' (`goal_metrics` at S101's committed geometry); of the
+stars frames the Milky Way's moves in the third figure (D(B−R) −0.358 -> −0.362, arm / inter-arm 1.964 -> 1.864) and
+NGC 4414's not at all.
+
+| field frame (committed = live) | A₂ | arm / inter-arm | dark fraction | slope | Δ(B−R) |
+|---|---|---|---|---|---|
+| Milky Way: `main` -> `batch-q` (goal) | 0.0778 -> 0.0764 (0.194) | 2.091 -> 2.113 (1.83) | 0.0319 -> 0.0325 (0.0066) | −1.27 -> −1.15 (−1.99) | −0.304 -> −0.313 (−0.354) |
+| NGC 4414: `main` -> `batch-q` (goal) | 0.1281 -> 0.1268 (0.074) | 1.992 -> 1.984 (2.67) | 0.0278 -> 0.0276 (0.154) | −1.59 -> −1.52 (−2.10) | +0.166 -> +0.165 (−0.329) |
+
+**The register.** #230 discharged (the cause named and mended, the residual bump declared); #232 discharged on its
+closer; **#235** opened (the grown regions' size-luminosity relation flatter than the measured one and the faint
+regions too large; the reading row); **#236** opened (stair-stepped dust and pixel speckle at the 2.2 kpc stand near
+`ngc_4414`'s nucleus, older than batch Q; the viewer row); amended: #226 (declared; restated to the truncation
+reading), #229 (the dated S102 line, the lanes a hundred-parsec matter), #231 (q-231's numbers, the three rulings, "do
+not order it", the white patches untraced), #234 (the held head's build, the lead's 0.0292 at 4.450 kpc, the verdict),
+#183, #136, #184, #149 (one line each). **115 open - 49 permanent, 66 carried - and 104 discharged**; next #237, D273.
+`tests/test_audit.py`'s `debt_counts` (115, 104), its carried row and four heads re-pinned once; the board's line
+regenerated by `tools/progress.py`.
+
+**The gates.** The runner's dispatched runs: `batch-q` 44026796115 on e455a20 "37 failed, 1823 passed, 35 skipped,
+10 xfailed" (3:30:51), then 44072430053 on 0433cd1 after the re-pin pass **green**, "1860 passed, 35 skipped, 10
+xfailed" (2:33:21), the closing head's run 44108837489 on 7ecd0e4 - "1860 passed, 35 skipped, 10 xfailed, 15 warnings in 9655.30s (2:40:55)", green (the closing head 41d2534 adds one BRIEF line); the held head 44027454369 on 6b8fe33
+"91 failed, 1787 passed, 35 skipped, 8 xfailed" (2:46:35; `batch-q`'s 37 and 54 more, lane L's), its re-pinned head's
+run 44108844540 on c736f8f - "1874 passed, 35 skipped, 12 xfailed, 15 warnings in 10457.38s (2:54:17)", green (the held head's closing head 212d7de adds two machine_pinned records the runner skips: the three legs' EXPECTED_GATE and EXPECTED_LEAST as read on this machine). This machine's `machine_pinned` nodes on `batch-q`: stage B, 28
+collected on e455a20, **16 failed / 12 passed** in 2:02:06 - the layer reference (4 fields and the routes), `test_layer`
+i1 x2 and rows 35 / 37, the three legs, `carried_map_never_folds[milky_way]`, `count_s_steps[milky_way]`,
+`gate_s_numbers_on_every_seed`, the four bar-length digests - **all re-pinned as measured** and each re-read green by
+its builder (the sweep alone 36:46; the reference's five nodes by D1); the three legs alone on 0433cd1 **1:42:34**,
+RB's `EXPECTED_GATE` (taken from stage B's printed record, not re-run by RB) held and `EXPECTED_LEAST` re-pinned as
+read. On the held head LB read its 21 `machine_pinned` nodes (5 re-pinned, then green); its three legs and its layer
+reference nodes **unread** by the re-pin pass (the reference is H2's). **Judged clauses held strict on the held head**
+(`xfail(strict=True, raises=AssertionError)`, not moved, B5; the gate's to rule): `GATE_MAX_G_OVER_STEADY_S102`
+(`test_gas_pattern`, `ngc_4414`: the published molecular field's largest cell 3.9372 over the steady response's 2.5078,
+no lanes; the relation's own profile reaches 3.9486; the Milky Way holds it, 6.7162 under 7.0556);
+`SUBSAMPLE_READ_OVER_S102` (`test_dust_layer`'s heating: beyond 7 kpc the placement's ring mean over every 4th cell
+6.81e-3 at 9.64 kpc against 5e-3, every 2nd 2.52e-3 at 8.59 kpc against 2e-3); `MANY_WINDOWS_READ_OVER_S102`
+(`test_region_synthesis`: the thinnest window 53 clusters against 70, z's sd 1.536 against 0.7-1.5, |z| < 3 in 91.7 %
+against 95 %; the mean z 0.073 holds); `DUST_COLUMN_OVER_S102` (`test_v7_layer`'s dust column on `ngc_4414`: ring 0
+3.663 one-draw scatters against 3; the whole frame 4.807e-4 under 3e-3). Lifted there: #233's `FLAT_READ_OVER_S100`
+(0.0468 / 0.0387 inside 0.05; the marker removed, the constant kept as the record). Verdict records that flip there
+True -> False: 'gas minimum 0.65-0.75', 'PHANGS ratio 1.4-1.6', the young stars' 1st-percentile power, 'PHANGS ratio
+moves under 0.1'.
+
+**The gate's rulings at entry** (on the lead's and the re-pin builders' flags). (a) `EXPECTED_HELD`'s "gas minimum
+0.65-0.75" turning True on `batch-q` is a record's rounding (lane G's trough 0.6499 read as 0.65), not a clause met:
+accepted as a record, said so here. (b) **The masers' nulls widening on `batch-q`** (within one sigma 100 -> 76 % for
+the gas, 97 -> 62 % for the young stars; medians 0.42 -> 0.77, 0.48 -> 0.87) is lane G's by elimination and **not
+traced at this close: the trace is ordered** (which of lane G's two changes, and whether it is the arms that moved
+off the masers or the nulls that spread) and its result is owed to the owner before `batch-q` -> `main` is asked for.
+(c) `test_audit_v`'s 380-760 pc ratio 0.0034 inside its bound: recorded; the bound not touched (B5). (d) The spill's
+declared count in `model/` re-read as measured (1826 -> 1821; the held head 1822): accepted on D270 ruling 5's
+precedent. (e) The clusters' offset declaration quoting S70's "1 591 of 12 710" against the measured 1 678 of 13 124:
+an older drift, a text in `model/` - mended at the next hash move (batch R), not now. (f) The "never divided" census
+counting the relation's normalisation by its ring mean: accepted **on the held head only**, as part of ruleset (ii);
+D216's clause is not amended by this - taking (ii) would amend it, and that is the owner's word. (g) The held head's
+`MW_PAIR_SLOPES` reading -0.5867 on the runner and -0.5837 here, 3e-3 apart against a 1e-3 pin: the lead's pin of the
+runner's value stands, the node fails on this machine by design and is NOT marked `machine_pinned` - a slope that
+differs in the third figure between two machines is a finding about (ii) as built (the exponent's forty halvings
+carry a machine's last bits into the field `[inferred]`, not traced), and it is counted against it. (h) vitest's
+`sphere.test.ts` near its 5 s limit under load: the viewer row's (BUILD_VII row 104), an explicit limit there.
+(i) The four judged clauses held strict on the held head stay held and are not restated (B5): the held head is not
+offered for merging. **Counted against (ii) as built, for the owner's ruling on #234:** no lanes in any frame; the
+molecular field's 0.0292 step at 4.450 kpc; four judged clauses over their bounds; four recorded verdicts turned
+False, the atomic gas reading about half the molecular (0.51 / 0.53) where the source D270 took says about 10 % lower;
+a pinned slope that differs between machines. For it: the measured arm contrast met, and #233's flatness inside its
+bound (0.0468 / 0.0387 against 0.05).
+
+On the docs builder's branch (`s102-docs`, from `batch-q` e455a20): the fast job's files - `test_docs`
+20 passed, `test_progress` 6, `test_hook` 7, `test_graph` 11, `test_api` 66, `test_bundle` 22 (all six green on the docs branch, before D1);
+`test_the_register_carries_the_s10_findings` 1 passed; `tools/progress.py --check` agrees. On D1's frames (0d0b28d, in
+`galaxygen-s95-w`): vitest 73 files, 673 passed, 1 skipped (the whole re-run); typecheck and typecheck:e2e EXIT=0; the
+picture test's real run 1 passed twice; `tests/test_picture.py`'s fast nodes 13 passed, 1 skipped. On the documents'
+commit: the fast job's files again (docs finisher F, `s102_F.md`). Tag `s102` on `batch-q`'s closing head (the gate's);
+`batch-q` -> `main` and the choice of head on the owner's word, on each head's green dispatched run.
+
+**Not verified.** Barnes et al. 2025's units (r and L not stated; the slope and decade comparisons inferred); the
+clustering gate's slopes under (ii) (not run by lane L; LB's re-pin read them, the judged window green); the held
+head's three legs and layer reference nodes (unread by the re-pin pass; the reference H2's); #236's cause; `q-231`'s
+near-white patches (not chased); `q-231`'s pytest beyond `tests/test_cloud_arm_masses.py` and `test_docs` (26 passed,
+EXIT=0, in `galaxygen-s94-m`; its six tests first run by hand through a script); the masers' widened nulls and the
+`test_layer` i1 rounding record (which lane's bit, not traced); the NGC 4414 WFC3 (physical PSF) knot path captured
+nowhere (TS tests only); run-to-run repeats of the captures not taken; no walk of the built viewer for the request
+fixture; Fig. 5's axes not re-read at S102. One rule breach: LB's first run passed no test ids (a relative path after
+a `cd`) and started the bare suite for about three minutes before LB killed it (its own processes; no file changed).
+
+**What did not move.** No display default (`TEMPLATE_TUNING`, D227); no judged bound (B5); no goal picture used as a
+target (C6); nothing merged into `main`, which stays at b5d421c with the hash 27561e8d381b992b4ead3bccc0615aa7 until the
+owner's word; the held head never merged into `batch-q`; `q-231` never merged and never gated.
+
+### D273. S103, the reading row (BUILD_VII row 105): the lanes read and found unbuildable by D1 - no source for a lane's share of the gas, its offset or its continuity - and put to the owner under #234 ((i) no lane recommended); #235's defect named (the region grown at today's ionizing rate, not its history) and #226's cliff traced to the gas's own end (the infall tail's hard j_max; the gate's first ruling corrected on a second reading), both to batch R; #86, #83, #96, #135, #162 sourced for batch R; #131 permanent; #118 (c) closed by the reading; #149, #88, #97 with #98, #129 the owner's; #95's window read as the clusters'; the masers' trace (D272's item (b)) answered - no defect of lane G; documents only (2026-11-17)
+
+**Why a session.** BUILD_VII row 105, the reading row (a DRAFT, run on the owner's word of 2026-11-17 as D271 read
+it), run before row 104 on `session-103`, cut from `batch-q`'s closing head fccecee (tag s102). Documents only: no byte
+under `model/galaxy`, no frontend file, no frame, no display default. Fable at the gate; Opus for everything else:
+reader RL (the lanes, `s103_RL.md`), reader RB (#235, #226, #149, `s103_RB.md`), reader R1 (#83, #86, #88, #95, #96,
+#97/#98, `s103_R1.md`), reader R2 (#103, #118 (c), #129, #131, #135, #162, `s103_R2.md`), a second reader RT (#226's
+code and star formation below the threshold; #83's σ_e, `s104_RT.md`), a tracer M (the masers' check, D272's item (b),
+`s103_M.md`), and a docs builder. All read-only but the docs builder; every web number came through an extracting
+(summarising) fetch.
+
+**The gate's rulings.**
+
+1. **The lanes (#229, and the owner's #234).** Read: a lane's width 20-81 pc in M51's inner arms (Schinnerer et al.
+   2010) and about 150 pc in five S4G grand designs (Elmegreen et al. 2014); the CO ridge about 100 pc to the concave
+   side of M51's 15 micron arm inside corotation (Patrikeev et al. 2006) - warm dust, not the old stars' crest; halving
+   the PHANGS arm mask moves the molecular contrast only 2.22 -> 2.53 (Querejeta et al. 2024 Table 1), so no thin ridge
+   holds the arm's gas `[inferred]`; no covering fraction printed anywhere read; no closed form for a shock's width
+   (Kim, Kim & Ostriker 2020's time-averaged arm is a broad ridge, hundreds of parsecs). **A lane cannot enter the
+   model by D1 - its share of the gas, its offset from the stellar crest and its continuity have no source.** #229 stays
+   discharged (S99) and gets a dated S103 line; the lanes become **the owner's question, carried under #234**: (i) **no lane** - the model keeps what
+   is measured (the kiloparsec contrast, the clouds), the frames keep dark flecks, and the goal pictures' lanes are
+   declared outside what the model holds; or (ii) **a disclosed lane** - a thin ridge on the gas crest (the reader's
+   R1), width a declared bracket 20-150 pc, share a declared number with no source, zero offset: a picture-driven term,
+   which C6 and D1 forbid a session to take and only the owner can order. **The gate recommends (i)**, and says plainly
+   what it costs: the lanes are the largest thing a viewer misses. R2 (a steady shock per ring) is recorded and not
+   recommended: it reopens D216, needs a pattern speed NGC 4414 does not have, and still gives hundreds of parsecs.
+2. **#235 (the grown regions' size-luminosity slope).** Read: Barnes et al. 2025 (arXiv:2510.11778) - the faint end of
+   the measured relation is incomplete (5 % at log L 37, 50 % at 38) and by the authors' own word misses the diffuse
+   extended regions, so the "faint regions too large" clause is restated: against the circularised fit the 10^37-10^38
+   decade is 1.09x, against the deconvolved fit 2.7x. **A defect of the law as built is named**: the region is grown to
+   the cluster's age at TODAY's ionizing rate held fixed, while the model's own table
+   (`population_light().ionizing_per_mass`) has the rate falling a hundredfold by 8 Myr. **Destination: batch R** -
+   grow the front at the rate's history (the model's own table; no new constant), keep the ionized radius inside the
+   shell at today's rate `[inferred]`, and compare only above Barnes's detection limit; the gate rules on the builder's
+   measurement. Leakage: no closed form read, not built.
+3. **#226 (the disc's edge), the first ruling - corrected by item 8.** Read: truncations at 2-5 scale lengths (van der
+   Kruit's review), Type II breaks at 2.5 ± 0.6 with h_in/h_out 2.1 (1.3-3.6) (Pohlen & Trujillo 2006), Type I discs
+   unbroken to 6-8; the fall-off length beyond a truncation 1.5 ± 0.1 kpc (Martín-Navarro et al. 2012); face-on "a very
+   soft bump" (Chamba et al. 2022). The model: an edge at 9.7 / 10.7 scale lengths falling with a 37 pc length -
+   **outside the measured range on both counts; no fall that steep is measured anywhere read.** The Milky Way's own edge
+   is disputed (13.9 kpc, Minniti et al. 2011; none to 26-31 kpc, López-Corredoira et al. 2018). The entry's reading is
+   done; it stays carried with a sourced destination, batch R. *Withdrawn by item 8:* "the cause is two hard switches
+   meeting ..., so the mend is at the cause - what the threshold law's source says about star formation below the
+   threshold (a soft cut-off is in Kennicutt's and Schaye 2004's own text: READ before build) - not an outer exponential
+   pasted on; the measured fall-off length (1.5 kpc) is then the disclosed check."
+4. **#149 (NGC 4414's arms' inner radius).** Read (VizieR, Herrera-Endoqui et al. 2015, arXiv:1509.05328 - the id
+   corrected: 1509.06743 is Díaz-García et al. 2016a; the register never carried the wrong id): flocculent, five
+   segments, innermost 19.4 arcsec = 1.66 kpc at the template's 17.7 Mpc, median 2.51 kpc. **The owner's**: (i) pin the
+   template's arms' inner radius to the catalogue's innermost segment (1.66 kpc) - **recommended**, a measured row
+   replacing an unsourced default - or (ii) permanent.
+5. **Reader R2's rows.**
+   - **#103** - the count's lifetime clause is PERMANENT within the entry (no survey prints an age distribution that is
+     complete: Green 2019 sect. 4.2, Ranasinghe & Leahy 2023 sect. III.3, both READ), with one disclosed check for batch
+     R (the model's 1 464 inside Ball et al. 2023's predicted 1000-2700 detectable remnants - a prediction, said so);
+     the Sedov jump clause CLOSES on Leahy & Williams 2017's stated compression ratio of 4; the shell's ionization-state
+     clause was NOT READ. The entry stays carried, restated to that one clause (a reading).
+   - **#118 (c)** - CLOSED by the reading, the gate's: Byler et al. 2017 sect. II.1.4 (READ) says the inner face against
+     the Strömgren radius "does not matter for a thin spherical shell"; the model keeps its read point and nothing moves.
+     The volume-mean alternative (Gutkin et al. 2016 eq. 8, U_S about <U>/3) is named in the entry. #118's other clauses
+     are untouched. (The reader had proposed the owner's, (i) recommended; the gate closed it as its own.)
+   - **#129** - no sample-wide gas ridge width over the arm spacing is published (Querejeta et al. 2024 prints none;
+     SEDIGISM is one galaxy). **The owner's**: (i) permanent - **recommended** - or (ii) measured from the PHANGS-ALMA
+     maps, a download, which is the owner's to order.
+   - **#131** - **PERMANENT, the gate's**: no scatter number and no per-galaxy table is printed for the relation
+     (Querejeta et al. 2024; Fig. 3 an image, and a digitised figure is not a READ number); the model's spread stays the
+     stellar draws', no residual drawn. (The reader had proposed the owner's.)
+   - **#135** - a SOURCED disclosed check for batch R: Just et al. 2015 (arXiv:1504.05808 sect. 3.3-3.4) M/L_K 0.31 ±
+     0.02 locally, 0.34 for the solar cylinder, against the model's about 0.73 - a miss of 2.1x, to be recorded as
+     measured, and its cause named by the builder (which populations carry the K light) before anything is mended. The
+     entry's recalled M_K,☉ 3.27 is now READ (sect. 3.2). Stays carried.
+   - **#162** - a SOURCED disclosed check for batch R (Turner et al. 2022, arXiv:2209.02872, Table 4: 1 + ω at 300 pc,
+     medians 3.43 at <= 10 Myr and 2.26 above `[inferred]`); the four-bin width law still rests on Grasha et al. 2019 and
+     stays `[inferred]`. Stays carried. The slip at `READING_CLUSTERING.md` line 139 (the medians' labels; the "all"
+     median 2.86) mended.
+6. **Reader R1's rows.** Every number came through an extracting fetch: a builder checks coefficients against the PDF
+   before any build.
+   - **#83** - NOT DONE (Vink et al. 2001 eq. 11 READ, but the electron-scattering opacity's number is in Lamers &
+     Leitherer 1993, NOT READ; the Thomson closed form is RECALL). *Replaced by item 9.*
+   - **#86** - SOURCED, destination batch R: Spera, Mapelli & Bressan 2015 App. C eqs. 22-36 (the remnant mass from the
+     CO core and Z; the CO core from M_ZAMS and Z), coefficients checked against the PDF first. Özel's measured 7.8 M☉
+     is not thrown away: it becomes the DISCLOSED CHECK on the fit's mean, and the gate rules on the builder's
+     measurement. The 8.5 M☉ white-dwarf / neutron-star boundary is not in the fit and stays as it is.
+   - **#88** - **the owner's**: (i) Weinberg, Andrews & Freudenburg 2017's own pair (0.0017 = 0.77 M☉ of iron per Ia x
+     2.2e-3 events per M☉) - **recommended**: it is the one pair printed together, it misses row 31's floor by 0.006
+     (0.594 against 0.6 per century) and #89 is the named mend - or (ii) Maoz & Graur's 1.3e-3 or 1.6e-3 (0.350, 0.430).
+     The model's present 2.43e-3 is stated by neither paper: said plainly in the entry.
+   - **#95** - the reading is in: the -0.64 is Grasha et al. 2017a Table 4, clusters only, <= 40 Myr, classes 1-3; the
+     window IS the clusters'. So S100's built-not-merged offset stays unmerged, and the borrowed target is the clouds'
+     (clouds measure about -0.2). The compact-cluster row (-0.461) is disclosed and NOT chosen: picking a target with the
+     answer known is B5's breach. Stays carried; it joins the owner's clustering questions (#80, #233, #223).
+   - **#96** - a definition (Lada & Lada 2003 sect. II.1) and a DISCLOSED CHECK for batch R (Krumholz et al. 2019 sect.
+     2.2: slope -2 ± 0.2 over 1e3-1e5 M☉); the cloud-to-cluster mass relation was not found and that clause is
+     declared permanent within the entry. Stays carried to batch R.
+   - **#97 with #98** - **the owner's**, with the disclosure the reader asked for: S34 already measured the old
+     survivors at both dissolution times, so any choice now is made after the measurement. (i) Baumgardt & Makino 2003
+     eqs. 7-8 for clusters older than about 9 Gyr (halo orbits, no molecular clouds), Lamers et al. 2005's
+     five-times-shorter time for the disc - **recommended**, on the physical ground only (the two papers name the cause
+     of the difference) - or (ii) the model as it is.
+7. **The masers' trace (D272's item (b), owed before `batch-q` -> `main` is asked for; tracer M), the gate's ruling.**
+   The probe's anchor holds (both of lane G's changes off reproduces `main`'s record exactly; both on reproduces
+   `batch-q`'s pin exactly). **The model's match to the masers did not get worse; it got better**: the as-built
+   statistic 0.18 -> 0.13 σ for the gas and 0.19 -> 0.15 for the young stars, its percentile among the rotated nulls
+   1 -> 0 and 2 -> 1; σ is Reid's measured width (336 + 36 (R - 8.15) pc) and cannot move. What widened is the NULL
+   (the Sun rotated to 360 azimuths: within one σ 100 -> 76 % and 97 -> 62 %; medians 0.42 -> 0.77, 0.48 -> 0.87): the
+   field has fewer crests per azimuth over 3-13 kpc (20.3 -> 15.9 gas, 21.6 -> 16.9 young stars), so a rotated locus
+   lands farther from any crest - on `main` every rotation matched, i.e. the check could not tell the model's Sun from
+   any other; on `batch-q` it can a little. Mostly the pitch averaging's doing (null median +0.31 / +0.25; about 4
+   crests per azimuth removed) against the turn's taper (+0.10 / +0.04; 0.6). By place: the taper removed the crest at
+   4.435-4.465 kpc along Norma and Sct-Cen (gas Sct-Cen at β 45 0.06 -> 1.11 kpc, Norma at β 7-10 0.01 -> 0.55 kpc; per
+   arm Norma-Outer 0.23 -> 0.30 σ, Sct-Cen 0.20 -> 0.27); the averaging moved Perseus off at single points (gas at β 55
+   0.31 -> 0.91 kpc) and brought Sgr-Car, Local and Outer closer; the median raw offset at the model's Sun 0.039 ->
+   0.043 kpc, the 90th percentile 0.185 -> 0.298 kpc. **Ruling: no defect of lane G; D272's item (b) is answered and
+   nothing is held for it.** `main`'s close match at 4.46 kpc was with the count step's own edge (N 1.825 -> 1.0 at
+   chain 0's turn back), the artefact #230 named `[inferred from lane G's trace; the radial profiles along those
+   azimuths not re-measured]`; every arm still reads inside one σ. Disclosed: the tail is worse (up to about 1 kpc,
+   3 σ, at single inner points), and the taper also takes the crest off Norma's measured near-circular stretch
+   (4.44-4.46 kpc) - whether a chain's turn back should keep a crest there has no source read; a dated S103 line on
+   #230's discharged entry records it. Only `milky_way` at the default seeds was read.
+8. **Item 3 CORRECTED on a second reading (reader RT); item 3's last sentence ("the mend is ... what the threshold
+   law's source says about star formation below the threshold") is WITHDRAWN.** The code read: the star-formation
+   switch is not a step but a tanh of width 0.25 Σ_crit (`sfh.py`; the width has no source, its comment calls it
+   numerical), Σ_crit = α κ σ_g / (3.36 G) with α 0.69 and σ_g 6 km/s - both now READ in Martin & Kennicutt 2001 sect.
+   5 (they were marked recall); 3.26 M☉/pc² at 23.66 kpc. The `milky_way` gas is under the threshold from about 14 kpc
+   out. **The cliff is the gas's own**: the infall's tail ends at a hard j_max (`halo.py`, Bullock et al. 2001), the gas
+   falls 25.6-fold between 23.66 and 24.19 kpc (e-fold 0.16 kpc), the Kennicutt-Schmidt power makes that 94-fold in star
+   formation and the tanh 370-fold more. Under any law of index one or more the stars cannot fall more gently than the
+   gas, so no law below the threshold mends the edge (Krumholz 2013 eq. 21 READ - no threshold at all, it replaces the
+   law everywhere - recorded, not taken; Bigiel et al. 2010 READ, its normalisation not printed). **The sourced
+   statements at the cause:** Bullock et al. 2001 call their own j_max edge "clearly unphysical" and expect "smoother
+   edges" (sect. VI, Fig. 21; no form given); Wang et al. 2016 (arXiv:1605.01489, READ): outer HI profiles are
+   exponential with a scale about 0.2 R_HI, about 4.8 kpc here - the model's gas edge is about thirty times steeper
+   `[inferred]`; with it the stars would e-fold at about 2.4-2.8 kpc, the measured order `[inferred]`. **Ruling: #226
+   stays carried, destination batch R, a lane that MEASURES first** - the gas's outer profile carried to Wang et al.'s
+   exponential beyond the radius where the tail's own profile becomes steeper than it (mass-conserving form and the
+   join `[inferred]`, the builder's table before any build; R_HI by the model's own 1 M☉/pc² radius) - and the gate
+   rules on the measurement. The tanh's unsourced width 0.25 is named in the entry as its own clause. **The gate's first
+   ruling on #226 (item 3) was corrected on the second reading**: it had put the mend in the threshold, where the code
+   shows none can work.
+9. **#83, second reading (reader RT):** σ_e = 0.340 ± 0.002 cm²/g back-solved from Vink et al. 2000 Table 1 (11 of 12
+   series; series 5 gives 0.355) `[inferred from a READ table]`, Vink et al. 1999 sect. 5 agreeing (0.339); Lamers &
+   Leitherer 1993 still NOT READ. The code read: the model applies no Γ_e at all - the escape speed is Newtonian
+   (`massive_stars.py`). **Ruling: #83 stays carried, its closer restated: the recipe's effective escape speed (1 - Γ_e)
+   applied with σ_e 0.34, destination batch R, the builder's measurement of what it moves first.** This replaces item
+   6's "#83 NOT DONE".
+
+**The readings' files.** `READING_LANES.md` (new; Part S103: width, offset, continuity and contrast tables, the theory,
+what a model could carry, R1 and R2, what was not read); `READING_HII_SIZES.md` Part S103 (Barnes et al.'s fits,
+completeness and bias; Starburst99's Q(t) as a check; the defect; the candidates (a)-(e)); `READING_DISC_EDGE.md`
+(new; RB's truncation reading, the gate's first ruling, RT's second reading and item 8); `READING_ROW_105.md` (new; one
+section per entry: #149, #83 with RT's σ_e, #86, #88, #95, #96, #97 with #98, #103, #118 (c), #129, #131, #135,
+#162). `READING_CLUSTERING.md` line 139 mended.
+
+**The register.** A dated S103 line on #83, #86, #88, #95, #96, #97, #98, #103, #118, #129, #131, #135, #149, #162,
+#226, #229, #230 (discharged; the masers' trace), #234, #235. #131 ruled permanent and moved to the permanent row;
+nothing opened, nothing discharged. **115 open = 50 permanent + 65 carried, 104 discharged; next #237, D274.** #229
+stays discharged as S99 left it (the gate's rulings file had called it carried - the gate's error, corrected at
+entry); no count moves; the lanes' question is carried under #234. `tests/test_audit.py`: the permanent and carried rows re-pinned,
+the debt_counts line's comment (counts unchanged, (115, 104)).
+
+**The gates** (`galaxygen-s94-m`, `session-103`, single-threaded, one at a time, each to a scratchpad log with its
+EXIT line): `tests/test_docs.py` 20 passed (EXIT=0); `tests/test_progress.py` 6 passed (EXIT=0);
+`tests/test_audit.py::test_the_register_carries_the_s10_findings` 1 passed (EXIT=0, run after the register, again after
+items 8-9's amendments and at the close); `tools/progress.py --check` "79/79 closed; board agrees" (EXIT=0). Nothing
+else run: no byte under `model/galaxy`, `tests/` (but the two pins' rows) or `frontend` moved, so no suite, no frame,
+no hash.
+
+**Not verified** (by entry; everything NOT READ):
+- The lanes (#229, #234): Roberts 1969, Shu, Milione & Roberts 1973, Elmegreen 1980, Lynds 1970 (secondary only);
+  Thornley & Mundy 1997 (ADS 405); Chandar et al. 2017; Williams et al. 2022; Kreckel et al. 2018; Querejeta et al.
+  2024's Table 4 fit form; Kim & Ostriker 2006, Wada 2008, Shetty & Ostriker 2006, Kim, Kim & Ostriker 2008/2010;
+  TIGRESS's Fig. 11 profile values. Querejeta 2024 Table 1 cell by cell not re-checked.
+- #235: Barnes et al.'s units (r and L, still not printed) and the 1-99 percentile's L range; Starburst99's column
+  identity (RECALL); a published closed form for Q(t) (none found); BPASS, Slug; Williams et al. 2018 for a falling Q
+  and its c_0; Rahner et al. 2017, Geen et al. 2016-2020, Della Bruna et al. 2021, Chevance et al. 2022.
+- #226: van der Kruit & Searle 1981/82, van der Kruit 2007, Trujillo et al. 2020, Carraro et al. 2010; Kennicutt 1989
+  (scan only); Elmegreen & Hunter 2015; Maloney 1993; Bluedisks; Bigiel et al. 2010's last 15 000 characters and its
+  Fig. 9 normalisation; MK01's resolution element in kpc. The join to Wang et al.'s exponential and its mass
+  conservation are `[inferred]`, not built or measured.
+- #149: cdsarc (ECONNREFUSED); the ReadMe's notes.
+- #83: Lamers & Leitherer 1993 (scan only); Kudritzki & Puls 2000; the Thomson form RECALL; σ_e 0.34 back-solved, not
+  printed; series 5's 0.355 unexplained.
+- #86: Fryer et al. 2012; Spera's coefficients unchecked against the PDF. #96: Krumholz et al. 2019 sect. 4.
+  #97/#98: VandenBerg et al. 2013 Table 2. #95: He et al. 2026; #95's other clauses not searched.
+- #103: the radiative shell's ionization state. #118: Byler's page past 100 000 characters. #129: none exists in what
+  was read. #131: Querejeta 2024 Fig. 3 (image), CANFAR not retried. #135: arXiv:2311.17202, Martinsson 2013, Drimmel
+  & Spergel 2001 (snippets only); whether the model's Υ_K at R0 was ever printed (the gate to confirm blind or
+  disclosed). #162: Turner's fit ranges in pc.
+- The masers (item 7): only `milky_way` at the default seeds; the radial profiles along the Norma / Sct-Cen azimuths
+  not re-measured.
+- All web numbers came through an extracting fetch (some quotes fragments); a builder re-checks before any build.
+
+**What did not move.** No byte under `model/galaxy` (the hash 5a862a70d3760c426ca51c2cffa2b0c2 on `batch-q`, `main`
+27561e8d381b992b4ead3bccc0615aa7); no frontend file, no frame, no display default (`TEMPLATE_TUNING`, D227); no judged
+bound (B5); no goal picture used as a target (C6); nothing merged into `main` (b5d421c) or into `batch-q`; no push.

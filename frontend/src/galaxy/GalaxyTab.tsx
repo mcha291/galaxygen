@@ -34,7 +34,7 @@ import { wholeDiscOf } from "./fieldLoads";
 import { type AgePart, FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
-import { knotsGain as knotsGainOf, knotsOf, undrawnShare } from "./knots";
+import { knotExtentColumn, knotsGain as knotsGainOf, knotsOf, undrawnShare } from "./knots";
 import { CLUSTER_SUMMARY, STAR_SUMMARY, type SummaryRow, summaryRows } from "./summary";
 import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
@@ -223,8 +223,9 @@ const CLOUDS_EXTINCTION_WHAT =
  */
 const KNOTS_WHAT =
   "The HII regions as knots at galaxy scale (the field mode above the region regime): each cluster's region a point of " +
-  "its own lines through the filter set (/api/clusters' line_response), a disc of its Stromgren radius once that fills " +
-  "a pixel, dimmed by the dust in front as the points are. The field's HII layers give way cell by cell: ";
+  "its own lines through the filter set (/api/clusters' line_response), drawn as its sphere of hii_radius in projection " +
+  "once that reaches a quarter of a pixel, dimmed by the dust in front of its centre as the points are. The field's HII " +
+  "layers give way cell by cell: ";
 const KNOTS_OFF = ". Off draws the field's HII layers whole and no knot";
 /** The clusters' radius switch (S64, V6, R7; T6): what it draws and where it shows. */
 const CLUSTER_RADIUS_WHAT =
@@ -596,8 +597,8 @@ export function GalaxyTab({
     return flux ? { positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height), flux, extent } : null;
   }, [clusterCensus]);
   // The HII regions as knots (S64, V6, R5-R6): in the field mode at galaxy scale - above the region regime, whose
-  // resolved spheres are the regions there - every cluster's region a point of its own lines through the set, sized by
-  // its Stromgren radius, on the field's scale and at its weight; and in each level-0 cell the field's HII layers scaled
+  // resolved spheres are the regions there - every cluster's region a point of its own lines through the set, drawn as
+  // its sphere of hii_radius in projection (S102, #232; sphere.ts), on the field's scale and at its weight; and in each level-0 cell the field's HII layers scaled
   // by the share of the cell's census not drawn (the clusters header's knots.rule), a cell naming none by the disc's:
   // all drawn, so 0 in every cell.
   const knotsCensus = knotsWanted && starClusters ? starClusters : null;
@@ -612,7 +613,8 @@ export function GalaxyTab({
     return {
       positions: toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height),
       flux,
-      extent: Float32Array.from(c[knotsHeader.size]),
+      // S102 (#232): the region's radius now, hii_radius (the Stromgren radius where an older answer names none).
+      extent: Float32Array.from(c[knotExtentColumn(knotsHeader, c)]),
       share: { share: undrawnShare(c[knotsHeader.cell], c[knotsHeader.light], true, knotsHeader.layout), layout: knotsHeader.layout },
     };
   }, [knotsCensus, knotsHeader]);
@@ -821,7 +823,7 @@ export function GalaxyTab({
         )}
         {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
         {knotsShown && (
-          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={2} physical={physical} />
+          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={3} physical={physical} />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
             its starlight the remainder under the points' threshold (the whole of it while the points are off). */}

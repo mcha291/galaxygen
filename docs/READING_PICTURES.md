@@ -524,3 +524,145 @@ turbulent sound speed (Tremblin et al. 2014, eq. 8). Barnes et al. 2025's HST si
 and its bright end about 2 times too small. Under the law the Milky Way's census reads 17.1 / 42.3 / 71.4 pc (median /
 p99 / max) and 4 752 regions over half a pixel against 7 - numbers printed before the build, so every check after it is
 disclosed. The goal pictures' largest pink regions are complexes and envelopes, #181's (permanent).
+
+---
+
+# Part S102 — batch Q's frames and the held heads beside them (D272)
+
+## 23. `batch-q`'s frames against `main`'s
+
+**What this is (2026-11-17, S102, BUILD_VII rows 102-103).** The close's runner X (an Opus agent; its note `s102_X.md`
+in the session's scratchpad) captured, with S101's harness, the field frames at the committed display defaults and at
+the owner's boxes M4 and N6, plus the two 2.2 kpc zoom stands lane V used (4.4 kpc across, about 4.3 pc per pixel),
+for three models served live from their worktrees without bundles - `batch-q` (e455a20, model hash 6becb77e...),
+`batch-q-lanes` (6b8fe33, 6e06b54c...) and `q-231` (0e8f096, fa647806...) - through one viewer build (the frontend is
+the same in all three; lane V's drawing is in it). `main` is the committed frames and S101's tiles (section 20), and,
+on the gate's order (V4), `main` (b5d421c, model hash 27561e8d..., main's own frontend build) captured at the three
+zoom stands. Nothing tuned, committed or changed; no display default touched. The statistics are
+`tools/goal_metrics.py`'s at S101's committed field geometry (the Milky Way centre 519.805, 515.349, q 1, PA 25.52, a
+300.3; NGC 4414 centre 519.388, 499.717, q 0.5736, PA 175.22, a 286.5); the zoom stands have no goal geometry and no
+row. The goal rows are section 1's, quoted. **Rule C6: no number here is a target.** The sheets, crops and ratio maps
+are local, in `docs/goals/batch_q_s102/` (never committed): `s102_X_sheet_milky_way.png`, `s102_X_sheet_ngc_4414.png`
+(rows the defaults, M4 or N6, the zoom; columns the goal, `main`, `batch-q`, `batch-q-lanes`, `q-231`),
+`s102_X_crops_milky_way.png`, `s102_X_crops_ngc_4414.png` (2x crops of one arm box on every model),
+`s102_X_pair_M4.png`, `s102_X_pair_N6.png`, `s102_X_pair_M4z.png`, `s102_X_pair_N6z.png`, `s102_X_pair_N6z_left.png`,
+`s102_X_main_MWz.png`, `s102_X_main_M4z.png`, `s102_X_main_N6z.png`, `s102_X_main_N6z_left.png`, the log2 luminance
+ratio maps `s102_X_ratio_<box>.png` (`batch-q-lanes` over `batch-q`), and the table `s102_X_metrics.md`.
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope |
+|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` (section 1) | −0.354 (−0.46 / −0.81) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 |
+| `main`, the committed frame | −0.304 (+0.630 / +0.326) | 0.0546 | 0.0778 | 0.0600 | 2.091 | 0.0319 | −1.27 |
+| **`batch-q`, defaults (live)** | −0.313 (+0.630 / +0.316) | 0.0535 | 0.0764 | 0.0598 | 2.113 | 0.0325 | −1.15 |
+| `main`, M4 (section 20) | −0.660 (−0.108 / −0.768) | 0.0499 | 0.0908 | 0.0700 | 2.009 | 0.0478 | −0.79 |
+| **`batch-q`, M4** | −0.657 (−0.108 / −0.765) | 0.0502 | 0.0914 | 0.0706 | 2.014 | 0.0480 | −0.81 |
+| GOAL `ngc_4414` (section 1) | −0.329 (+0.51 / +0.18) | 0.101 | 0.074 | 0.056 | 2.67 | 0.154 | −2.10 |
+| `main`, the committed frame | +0.166 (+0.299 / +0.464) | 0.0593 | 0.1281 | 0.0379 | 1.992 | 0.0278 | −1.59 |
+| **`batch-q`, defaults (live)** | +0.165 (+0.299 / +0.464) | 0.0599 | 0.1268 | 0.0390 | 1.984 | 0.0276 | −1.52 |
+| `main`, N6 (section 20) | −0.459 (−0.022 / −0.481) | 0.0631 | 0.0335 | 0.0352 | 1.456 | 0.0619 | −1.19 |
+| **`batch-q`, N6** | −0.458 (−0.022 / −0.480) | 0.0630 | 0.0335 | 0.0352 | 1.456 | 0.0617 | −1.14 |
+
+**The committed frames after D1.** `batch-q`'s nine frames regenerated from its bundles
+(`C:\Users\Semaphore\AppData\Local\Temp\galaxygen-s102\bundles_q`, model 5a862a70...) at the committed display
+defaults (D1's commit 0d0b28d; the picture test's real run then 1 passed twice, all nine the committed picture byte for
+byte). **The regenerated field frames equal runner X's live `batch-q` captures byte for byte** (sha256 9de9b23b... the
+Milky Way, bca52b22... NGC 4414), so their rows are the live rows above. `goal_metrics` at section 19's geometry:
+
+| picture | D(B−R) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope |
+|---|---|---|---|---|---|---|---|
+| `main` `milky_way`-field | −0.304 | 0.0546 | 0.0778 | 0.0600 | 2.091 | 0.0319 | −1.27 |
+| **S102 `milky_way`-field** | −0.313 | 0.0535 | 0.0764 | 0.0598 | 2.113 | 0.0325 | −1.15 |
+| `main` `milky_way`-stars | −0.358 | 0.0605 | 0.0543 | 0.0490 | 1.964 | 0.0062 | −3.57 |
+| **S102 `milky_way`-stars** | −0.362 | 0.0583 | 0.0565 | 0.0477 | 1.864 | 0.0072 | −3.50 |
+| `main` `ngc_4414`-field | +0.166 | 0.0593 | 0.1281 | 0.0379 | 1.992 | 0.0278 | −1.59 |
+| **S102 `ngc_4414`-field** | +0.165 | 0.0599 | 0.1268 | 0.0390 | 1.984 | 0.0276 | −1.52 |
+| `main` `ngc_4414`-stars | −0.208 | 0.0341 | 0.0736 | 0.0341 | 1.707 | 0.0010 | −3.58 |
+| **S102 `ngc_4414`-stars** | −0.208 | 0.0341 | 0.0736 | 0.0341 | 1.707 | 0.0010 | −3.58 |
+
+The Milky Way's stars frame moves in the second or third figure (lane G's taper at chain 0's turn back moves the Milky Way's stars and no other galaxy's `[inferred]`);
+NGC 4414's not at all. `DUSTY_LAYER_RATIO` re-pinned as measured, [0.96977, 0.97354, 0.97990] -> [0.96993, 0.97367,
+0.97993]; every judged check of the picture test passed unmoved (the dust's column 0.999786; the surface-brightness
+gates A and B; the GPU light at most 5.73e-6).
+
+`batch-q`'s rows equal lane V's "after" rows (q-viewer on q-nebular) to the third figure; `main`'s equal S101's. The
+numbers move in the third figure but for the power slope (the Milky Way's defaults −1.27 → −1.15, NGC 4414's −1.59 →
+−1.52), which is lane V's knots spreading their light over the sphere of `hii_radius` (section 25).
+
+## 24. The held head and `q-231` against `batch-q`
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope |
+|---|---|---|---|---|---|---|---|
+| `batch-q`, `milky_way` defaults | −0.313 (+0.630 / +0.316) | 0.0535 | 0.0764 | 0.0598 | 2.113 | 0.0325 | −1.15 |
+| `batch-q-lanes`, `milky_way` defaults | −0.318 (+0.629 / +0.311) | 0.0528 | 0.0793 | 0.0662 | 2.079 | 0.0309 | −1.21 |
+| `q-231`, `milky_way` defaults | −0.312 (+0.629 / +0.318) | 0.0574 | 0.0795 | 0.0674 | 2.106 | 0.0307 | −1.18 |
+| `batch-q`, M4 | −0.657 (−0.108 / −0.765) | 0.0502 | 0.0914 | 0.0706 | 2.014 | 0.0480 | −0.81 |
+| `batch-q-lanes`, M4 | −0.653 (−0.108 / −0.762) | 0.0539 | 0.0924 | 0.0727 | 2.005 | 0.0455 | −0.87 |
+| `q-231`, M4 | −0.654 (−0.108 / −0.763) | 0.0548 | 0.0920 | 0.0732 | 2.008 | 0.0455 | −0.83 |
+| `batch-q`, `ngc_4414` defaults | +0.165 (+0.299 / +0.464) | 0.0599 | 0.1268 | 0.0390 | 1.984 | 0.0276 | −1.52 |
+| `batch-q-lanes`, `ngc_4414` defaults | +0.166 (+0.332 / +0.499) | 0.0684 | 0.1234 | 0.0313 | 1.947 | 0.0264 | −1.52 |
+| `q-231`, `ngc_4414` defaults | +0.255 (+0.339 / +0.594) | 0.0865 | 0.1379 | 0.0369 | 2.095 | 0.0214 | −1.53 |
+| `batch-q`, N6 | −0.458 (−0.022 / −0.480) | 0.0630 | 0.0335 | 0.0352 | 1.456 | 0.0617 | −1.14 |
+| `batch-q-lanes`, N6 | −0.457 (−0.022 / −0.479) | 0.0610 | 0.0322 | 0.0275 | 1.367 | 0.0565 | −1.14 |
+| `q-231`, N6 | −0.452 (−0.028 / −0.481) | 0.0603 | 0.0339 | 0.0287 | 1.374 | 0.0577 | −1.17 |
+
+The ratio maps (`batch-q-lanes` over `batch-q`): the median log2 ratio over lit pixels 0.000 on every box but
+NGC 4414's defaults (−0.037); pixels under 0.8x 1.0-2.0 % in the field frames and about 4.7 % at the zoom stands,
+balanced by as many over 1.25x; the map a scatter of black and white ellipses - the dust clouds moved, and a few
+knots - with no smooth band along any arm. The held head's frames are live captures only; its committed frames are
+not regenerated at this close: the held head keeps `batch-q`'s committed frames, and its own close is to regenerate its
+nine on a branch cut from it (`batch-q-lanes-frames`), recorded there.
+
+## 25. What the sheets show, and the gate's verdict
+
+**In the runner's words** (X, having looked at the sheets, crops and ratio maps). *`batch-q` against `main`*: the
+field frames cannot be told apart by eye, at the defaults and in M4 / N6. At the 2.2 kpc stands `main`'s point-like
+knots become small reddish discs, few and isolated (lane V's sphere). *`batch-q-lanes`*: no dark lanes, in any frame,
+neither continuous nor dashed, neither on the arms' inner edge nor elsewhere; the ruleset shows only as the dust
+clouds' ellipses re-placed; in the 2x crops as many dark flecks as `batch-q` on the Milky Way, slightly fewer on
+NGC 4414; nothing black between the arms, no star formation switched off between arms, no new speckle. *`q-231`*: no
+lanes; its frames are the lanes head's (a few dark ellipses a little larger on the Milky Way); NGC 4414's outer disc
+redder at the defaults; at the N6 zoom fewer dark clouds and, on the nucleus side, hard-edged near-white saturated
+patches where `batch-q` and the lanes head show a faint blue-white young patch - new with `q-231`, not traced.
+*Against the goals*: unchanged from S101. *At the N6 zoom on every model, `main` included*: the dust clouds draw as
+blocky, stair-stepped patches and the nucleus side carries pixel-level white / blue speckle - the same patches in the
+same places on `main` (`s102_X_main_N6z_left.png`): older than batch Q (#236).
+
+**The gate's verdict (D272), as the gate wrote it.**
+
+*V1. Against the two goal pictures: batch Q moved nothing a viewer sees.* `batch-q` beside `main`: the field frames
+cannot be told apart by eye, at the defaults and in the owner's boxes M4 and N6. The regions drawn at their grown size
+are a few faint pinkish discs at the 2.2 kpc stand and nothing at the field scale. The distance to the goals is
+S101's, unchanged: `milky_way` at the defaults a tan disc with a white ball; M4 a blue-white barred spiral without the
+goal's strings of pink knots and without dark lanes; `ngc_4414` at the defaults a white ball over a faint tan ellipse;
+N6 a grey-blue inclined disc with dark flecks, no brown lane network, no yellow core. `batch-q-lanes` (the owner's
+#234, ruleset (ii)): **no dark lanes, in any frame, continuous or dashed.** The measured relation moves the clouds'
+ellipses and nothing else (median brightness ratio against `batch-q` 1.000; about 2 % of lit pixels darker than 0.8x
+and as many brighter than 1.25x). On N6 the two picture measures move AWAY from the goal's (dark 0.0617 → 0.0565
+against 0.154; arm 1.46 → 1.37). `q-231` (#231): no lanes; its frames are the lanes head's; `ngc_4414`'s outer disc
+redder at the defaults (D(B−R) +0.166 → +0.255 against the goal's −0.329) and one untraced defect.
+
+*V2. What this says about #234 and #229* (the gate's reading, `[inferred]`). The relation (ii) is a measurement at
+1.5 kpc of mask width and the model meets it; it gathers the molecular gas into a crest 0.67-0.77 of the stars' width,
+still of order a kiloparsec. The goal pictures' lanes are of order a hundred parsecs wide and continuous. So a
+kiloparsec-scale contrast, however right, cannot draw them: what is missing is the NARROW ridge (the gas's compression
+at the arm's shock, or the clouds strung along one line with a covering fraction near one along it), and neither
+ruleset holds it. **The gate's recommendation on #234 stands on the measurement alone ((ii) is what Querejeta et al.
+measured; (i) is the model's own solve) and no longer on the picture: the frames give no reason to prefer either. The
+gate now recommends the owner NOT take (ii) for the picture's sake, and leave `batch-q-lanes` held until the reading
+is in** (#229's S102 line: the lanes' measured width, offset from the stellar crest and covering fraction).
+
+*V3. #231.* D220 item 1 / invariant I2 is broken on the mask's rings by the brief's own design: a declared break on a
+frames-only branch, the invariant not amended; "arm" as a molecular-mass share per cell and factor 1 the same
+distribution (not the same bits) accepted as declared. **The gate's recommendation to the owner: do not order it** -
+the frames gain nothing, an invariant breaks, `ngc_4414` reddens away from the goal, the largest cloud sits at the
+150 pc cap at 219 M☉/pc², and there is a defect. `q-231` is pushed as a branch, never merged, no CI.
+
+*V4. The N6 2.2 kpc stand.* (a) the dust drawn as blocky, stair-stepped patches and (b) the pixel-level speckle on the
+nucleus side were told apart from batch Q before the close: `main` captured at the three zoom stands shows both -
+older, **#236** opened (carried, the viewer row, BUILD_VII row 104; what kills it: the cause named). `q-231`'s white
+patches are recorded in #231 as untraced, not chased.
+
+**Where the eight gaps of section 21 stand after batch Q:** unmoved. Gap 4's regions are grown (#232 discharged) and
+drawn at their size, and still not the goal's pink regions (#181's complexes, #235's flat relation, the display's
+`knotsIntensity`); gap 2's lanes are not drawn by either ruleset of #234 (#229's reading row). C6 said again: nothing
+here was tuned to a goal picture.

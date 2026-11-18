@@ -458,8 +458,8 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # high, and the largest cell is the arms' own past the half-length again, the one read beside it (was 3.1342).
     # S60 (D219): a piece's crest crosses the footprint just inside the half-length again, and the arms' own largest
     # past it is read beside it. S60 fourth pass: was (3.1341, 6.3375) both, and 6.7614 for the lanes'.
-    assert (float(footprint_gas.max()), float(R[int(np.argmax(footprint_gas.max(axis=1)))])) == pytest.approx((2.2352, 4.7625), abs=2e-4)  # S87 (#80): was 2.1928, 4.8375 - the template's pinned 5.0 kpc bar
-    assert (float(footprint_gas[past].max()), float(R[past][int(np.argmax(footprint_gas[past].max(axis=1)))])) == pytest.approx((2.1861, 7.4625), abs=2e-4)  # S87 (#80): was 2.0730 - the template's pinned 5.0 kpc bar
+    assert (float(footprint_gas.max()), float(R[int(np.argmax(footprint_gas.max(axis=1)))])) == pytest.approx((2.2377, 4.7625), abs=2e-4)  # S102 (batch Q, D272; #230 lane G, the forcing's pitch averaged over the layer's height and the count tapered at a turn back): was (2.2352, 4.7625)  # S87 (#80): was 2.1928, 4.8375 - the template's pinned 5.0 kpc bar
+    assert (float(footprint_gas[past].max()), float(R[past][int(np.argmax(footprint_gas[past].max(axis=1)))])) == pytest.approx((1.9043, 7.3875), abs=2e-4)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height: the arms past the bar lose the crest a lead-pitch step stood on): was (2.1861, 7.4625)  # S87 (#80): was 2.0730 - the template's pinned 5.0 kpc bar
     assert float(laned_gas.max()) == pytest.approx(6.6942, abs=2e-4)  # S87 (#80): was 6.6569 - the template's pinned 5.0 kpc bar  # S59 (D218 follow-up): was 6.6786; S59 (D218): was 6.6640
     built = np.asarray(F["sfr_modulation"])
     # S86 (BUILD_V M1, #154): the table is the cell means of the young stars' point reader (`modulation_cells`), to the
@@ -491,12 +491,12 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # S86 (#154): were (0.1000, 0.2448), (0.1000, 0.5215), (6.0626, 4.8375) and 3.1733 - the law at the cells' mean
     # contrast; the point reader's cell means read these (at R0 the top tenth the same to 1e-4).
     assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1188, 0.2583), abs=2e-4)  # S87 (#80): was 0.1000, 0.2434 - the template's pinned 5.0 kpc bar  # S87 (#148): was 0.2439 - the clock
-    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5193), abs=2e-4)  # S87 (#80): was 0.5118 - the template's pinned 5.0 kpc bar  # S87 (#148): was 0.5205 - the clock
-    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((6.1296, 4.7625), abs=2e-3)  # S87 (#80): was 4.8375, 5.9409 - the template's pinned 5.0 kpc bar  # S87 (#148): was 6.0567 - the clock
-    assert float(top[here]) == pytest.approx(float(_top_tenth(laned)[here]), abs=1e-4) and float(top[here]) == pytest.approx(0.2879, abs=2e-4)  # S87 (#80): was 0.2730 - the template's pinned 5.0 kpc bar  # S87 (#148): was 0.2778 - the clock
+    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5200), abs=2e-4)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer): was 0.5193  # S87 (#80): was 0.5118 - the template's pinned 5.0 kpc bar  # S87 (#148): was 0.5205 - the clock
+    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((6.1419, 4.7625), abs=2e-3)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): was 6.1296  # S87 (#80): was 4.8375, 5.9409 - the template's pinned 5.0 kpc bar  # S87 (#148): was 6.0567 - the clock
+    assert float(top[here]) == pytest.approx(float(_top_tenth(laned)[here]), abs=1e-4) and float(top[here]) == pytest.approx(0.2885, abs=2e-4)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): was 0.2879  # S87 (#80): was 0.2730 - the template's pinned 5.0 kpc bar  # S87 (#148): was 0.2778 - the clock
     # S86 (#154): was `built[past].tobytes() == laned[past].tobytes()` - the two cell laws on one field past the
     # half-length; the cell-law alternative on the laned field is still that field's bits there (the next line).
-    assert cell_law[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(3.4202, abs=2e-4)  # S87 (#80): was 3.1071 - the template's pinned 5.0 kpc bar  # S87 (#148): was 3.1731 - the clock
+    assert cell_law[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(3.3403, abs=2e-4)  # S102 (batch Q, D272; #230 lane G, the forcing pitch averaged over the layer height): was 3.4202  # S87 (#80): was 3.1071 - the template's pinned 5.0 kpc bar  # S87 (#148): was 3.1731 - the clock
     assert float(np.abs(built.mean(axis=1) - 1.0).max()) < 1e-12 and built.min() >= 0.0
     # An unbarred galaxy has no lanes and no footprint: one field, twice.
     n = run(azimuthal, templates.overrides(templates.TEMPLATES["ngc_4414"]), only=only)

@@ -5,8 +5,8 @@ Phase R is a behaviour-preserving restructure. What this file holds, in the orde
 - **The reference.** With the layer off, every field of both models at both templates' inputs on the production
   grid, and every array of every input route's body, is bit-identical to the reference with an empty named list -
   since S90 (#214, D258) the batch's final layer-off run, re-based at each batch's close by decision
-  (``tests/layer_reference.py``, ``tests/layer_reference_s100.json`` since S100's re-base, batch P, D270; M3's
-  ``tests/layer_reference_s93.json`` and M2's ``tests/layer_reference_s90.json`` kept as history); from S56 to S89 S55's layer-off run
+  (``tests/layer_reference.py``, ``tests/layer_reference_s102.json`` since S102's re-base, batch Q, D272; batch P's
+  ``tests/layer_reference_s100.json``, M3's ``tests/layer_reference_s93.json`` and M2's ``tests/layer_reference_s90.json`` kept as history); from S56 to S89 S55's layer-off run
   (``tests/layer_reference_s55.json``, kept as history) with a named list (``LAYER_OFF_EXCEPTIONS``). Until S56 the reference was S54's with the layer **on** (Phase R was
   behaviour-preserving); it is retired, because from P1 the layer-on galaxy changes by design (D215).
 - **I1.** With the layer off the model runs, and every field not declared composed - every scalar, every history,
@@ -430,6 +430,13 @@ COMPOSED_NEUTRALS = {"arm_piece_amplitude": 0.0, "arm_chain_count": 0.0, "arm_ri
 # and two fields added on every label against S93's file. The reference is batch P's final layer-off run, written
 # single-threaded by `tests/layer_reference.py write` to tests/layer_reference_s100.json and read green at one thread
 # and unrestricted. tests/layer_reference_s93.json is kept untouched as history; no test reads it.
+#
+# S102 (batch Q's close, D272: re-based again, the two lists empty). Batch Q moved the model by design - lane H's
+# regions (#232), each HII region grown to its expanded radius (hii_radius, hii_radius_limit, hii_natal_density added)
+# and read over it - 12 fields per label, three added on every label, 14 of the 42 routes (the clusters and render
+# routes) against S100's file; lane G's arms move no layer-off field. The reference is batch Q's final layer-off run,
+# written single-threaded by `tests/layer_reference.py write` to tests/layer_reference_s102.json and read green at one
+# thread and unrestricted. tests/layer_reference_s100.json is kept untouched as history; no test reads it.
 NAMED_SINCE_REBASE: dict[str, set[str]] = {}  # label -> the fields (or route labels) named off the reference since its re-base
 # S91 (#160) named four render routes here off the S90 file (D260: the azimuthal renders' stars_old_placement); the
 # S93 re-base carries them, so the list is empty again. Was {"azimuthal/render/disc", "azimuthal/render/level1",
@@ -646,7 +653,10 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # S100 (batch P, D270; #227, #80): was without `dig_halpha_fraction` - on the final head's census (13 124 clusters and regions,
     # measured) the same objects on and off, bit for bit as a multiset, summed in another cell order: the absorbed
     # photons' sum rounds one last bit apart (1.1337823500881082e+53 on, ...084e+53 off), so the entry is back in.
-    assert rounded == {"hot_phase_porosity", "cloud_mass_total", "dig_halpha_fraction",
+    # S102 (batch Q, D272; #232 lane H, the regions' photon balance, and #230 lane G, the default disc's census placed
+    # on another gas): was with `dig_halpha_fraction` - on and off its sums now round alike (0.29999999999999993 both),
+    # measured on this machine; still a census statistic, still listed.
+    assert rounded == {"hot_phase_porosity", "cloud_mass_total",
                        *(f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731"))}, sorted(rounded)
     # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
     # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.
@@ -655,7 +665,8 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # summed in another order: one rounding of three tenths each.
     # S70 (D234): was (0.29999999999999993, 0.30000000000000016) - F-2-7 and #192, another rounding of three tenths.
     # S100 (batch P, D270; #227, #80): was (0.30000000000000016, 0.30000000000000016) - the final head's census, its sums in another order.
-    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000004, 0.29999999999999993)  # S92 (#164 / #165): the layer-on sum was 0.30000000000000004  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the layer-off sum was 0.30000000000000004
+    # S102 (batch Q, D272; #232 lane H, #230 lane G): was (0.30000000000000004, 0.29999999999999993) - the layer-on sum rounds as the layer-off one now.
+    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.29999999999999993, 0.29999999999999993)  # S92 (#164 / #165): the layer-on sum was 0.30000000000000004  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): the layer-off sum was 0.30000000000000004
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
@@ -1342,7 +1353,8 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         # S61 (D220 item 10): was -0.102973 - the layer-off census redrawn ring-first
         # S67 (D231): was -0.097717 - the clouds' size law moves the regions' densities; still a miss (#117).
         # S70 (D234): was -0.097902 - the inversion (F-2-7) to -0.098171, then the three Sigma regimes (#192) to -0.098309.
-        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.0986426, abs=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309  # S100 (batch P, D270; #227, the stellar layer one height): was -0.0986497 (row 37's verdict unchanged)
+        # S102 (batch Q, D272; #232 lane H, n_e by photon balance in the grown region moves each region's U): was -0.0986426; still a miss (#117).
+        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.1033183, abs=1e-6)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309  # S100 (batch P, D270; #227, the stellar layer one height): was -0.0986497 (row 37's verdict unchanged)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
         # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
@@ -1384,7 +1396,8 @@ def test_rows_35_and_37_on_the_layer_on_census_as_measured(runs):
         # S100 (batch P, D270; #227: every census +1 %): was -2.044737.
         assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.048910, abs=1e-5)  # S70 (D234): was -2.05555 (F-2-7)  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -2.05571
         # S100 (batch P, D270; #227: every census +1 %): was -0.0986497 - the layer-off reading test_i3 pins, the same bits.
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.0986426, abs=1e-6)  # S70 (D234): was -0.097902 (F-2-7, #192). S67 (D231): was -0.097717  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
+        # S102 (batch Q, D272; #232 lane H): was -0.0986426 - the layer-off reading test_i3 pins, the same bits on this machine.
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.1033183, abs=1e-6)  # S70 (D234): was -0.097902 (F-2-7, #192). S67 (D231): was -0.097717  # S88 (M1's final model - #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6; unrun since S86): was -0.098309
         off = runs[name, False].fields
         for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii"):
             assert same(on[n], off[n]), n
@@ -1907,7 +1920,9 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S100 (batch P, D270; #227 and #130): was 397 - two added: the vertical stage's scalar
     # thin_disc_scale_height_dynamical (S99, #227: the isothermal sheet's height at R0, kept as a check beside the
     # layer's one height) and the gas pattern's composed atomic_gas_density_contrast (S100, #130).
-    assert len(columns) > 100 and len(b.fields) == 399
+    # S102 (batch Q, D272; #232 lane H): was 399 - three cluster columns added, hii_radius, hii_radius_limit and
+    # hii_natal_density (the region grown past its natal clump; n_e by photon balance).
+    assert len(columns) > 100 and len(b.fields) == 402
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -2152,17 +2167,20 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S92: was 1694 and 0.1304; at bd0ed0c (S91's #216 re-lay, never run at S91) 1722, the runner's number too (its mean and
     # the share below not read there - the count fails first); now (#164 / #165, the spurs re-laid move the clouds' sector
     # shares and the clusters' offsets with them) 1705 and 0.1313.
-    assert int(moved.sum()) == 1719 and moved.mean() == pytest.approx(0.1310, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252  # S100 (batch P, D270; #227, the stellar layer one height): was 1705 and 0.1313
+    # S102 (batch Q, D272; #230 lane G, the forcing's pitch averaged moves the default disc's gas, so the clouds' sector
+    # shares and the clusters' offsets with them): was 1719 and 0.1310.
+    assert int(moved.sum()) == 1678 and moved.mean() == pytest.approx(0.1279, abs=5e-4)  # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 1591, 0.1252  # S100 (batch P, D270; #227, the stellar layer one height): was 1705 and 0.1313
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
     # S92: was 0.3593 (0.3541 now) - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read there).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3564, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741  # S100 (batch P, D270; #227, the census +1 %): was 0.3541
+    # S102 (batch Q, D272; #230 lane G): was 0.3564.
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3545, abs=5e-4)  # S90 (#161): was 0.3680, the same cause. S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 0.3427  # S70 (D234): was 0.3182 (#192, F-2-7). S67 (D231): was 0.3614. S61 (D220 part II as amended): was 0.3741  # S100 (batch P, D270; #227, the census +1 %): was 0.3541
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
     # S92: was 137 - S91's #216 re-lay and #164 / #165 together (bd0ed0c's not read: the moved count fails first there).
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 139  # S100 (batch P, D270; #227, the census +1 %): was 125. # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 138  # S102 (batch Q, D272; #230 lane G): was 139.  # S100 (batch P, D270; #227, the census +1 %): was 125. # S88 (M1's final model: #148's clock, #209's floor, #80's bar, #212's MERGER_HEATING 90.6): was 132  # S70 (D234): was 119 (#192, F-2-7). S67 (D231): was 133. S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).

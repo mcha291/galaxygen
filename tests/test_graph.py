@@ -151,6 +151,9 @@ SEEDED_BASIC = {
     "hii_stromgren_radius", "hii_electron_density", "hii_temperature", "hii_ionization_parameter", "hii_clumping",
     "hii_halpha_luminosity", "hii_halpha_emissivity", "hii_balmer_decrement", "hii_oxygen_abundance",
     "hii_nitrogen_abundance", "hii_sulphur_abundance", "hii_density_bounded",
+    # S102 (#232, batch Q lane H): the region grown past its natal clump - its radius now, which limit set it, and
+    # the Stromgren state's density the bubbles read.
+    "hii_radius", "hii_radius_limit", "hii_natal_density",
     "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
     # S42 (the owner's word on D184): the forbidden lines off Byler et al.'s grid, per region and per ring, and Hbeta.
     "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio",

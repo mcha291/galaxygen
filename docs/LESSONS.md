@@ -2371,3 +2371,16 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   shock's profile across an arm; S101's scout measured the model's own chain first - the stars' ratio, the forcing's
   gain, the thickness factor, the response's linearity, the gas's ratio - and found the gap was the gain (about one),
   which named the law to read (a measured gas-against-stars relation) in one pass. (S101, D271)
+
+## From S103 (the reading row: four Opus readers and a second reader, a tracer, a docs builder; the Fable gate)
+
+- [field] **Set a law's inputs beside the model's own tables before ruling on what the law leaves.** S102 built the
+  HII region's D-type growth with its source's constant ionizing rate, and #235 read the flat slope as the law's; S103's
+  reader set the law's input beside `population_light().ionizing_per_mass` and found the model already holds a rate
+  that falls a hundredfold by 8 Myr - the region was grown at today's rate, not at the rate it had while the front ran.
+  A source's simplifying assumption ("constant Q") is checked against what the model already computes before the
+  assumption is built in. (S103, D273)
+- [audit] **A gate's ruling on a cause is read against the code before it is written down.** S103's first ruling on
+  #226 sent the mend to a softer star-formation threshold; a second reader read `sfh.py` and found the switch already a
+  tanh and the cliff in the gas itself (the infall tail's hard end), so the first mend could not work under any law of
+  index one or more. The ruling was corrected and the correction said in D273. (S103, D273)

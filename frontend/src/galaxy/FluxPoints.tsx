@@ -31,6 +31,17 @@ import { WING_BLOCK, WING_MAX_HALF, psfClamped } from "./hstPsf";
 import { DISC_LOOP_HALF, PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF } from "./plummer";
 import { type PhysicalPsf, type SpritePsf, psfMean, psfTexture } from "./psf";
 import { RING_ROWS } from "./regimes";
+import {
+  GOLDEN_ANGLE,
+  SPHERE_KERNEL_MAX_HALF,
+  SPHERE_LATTICE_PX,
+  SPHERE_MAX_PAIRS,
+  SPHERE_MIN_PX,
+  SPHERE_NORM_LOOP_HALF,
+} from "./sphere";
+
+/** The largest sprite's half-side the sphere's loops reach, pixels: the Tuning panel's largest sprite, 25 px. */
+const SPRITE_LOOP_HALF = 13;
 
 // The star-first mode's points (S50, D208): each a published flux on the field's own scale. A point's sprite
 // deposits, summed over its pixels, its light over the area of sky one pixel covers at the point (flux.ts
@@ -43,6 +54,10 @@ import { RING_ROWS } from "./regimes";
 // a disc of its Stromgren radius, in a box of whole pixels round it, each pixel taking the profile's light over its
 // own area over the box's - its light summed over the box, dimmed as the point is. Below the switch, or without a
 // profile, the point is drawn exactly as before (the same statements: the frame is the same bytes).
+//
+// Since S102 (#232; sphere.ts) a knot is its HII region's sphere of `hii_radius` in projection (profile 3): from
+// SPHERE_MIN_PX of radius its light is the point's, spread over the chord profile and drawn at each sample as the point
+// itself is drawn there (the sprite, or the instrument's image), so the knot's light is the point's; below it, the point.
 
 /** The march's dust, as the points read it: the ring texture, the scattered light's (whose spare channel is the
  * dust's placement), the radial extent they span, and the slab the segment is cut by, kpc. Since S64 (V6) the clouds'
@@ -105,6 +120,38 @@ const PSF_GLSL = /* glsl */ `
   }
 `;
 
+// sphere.ts chord, chordCell and tapOffset, line for line (S102, #232): the chord through a uniform sphere, its mean over
+// a pixel, and the taps at the profile's radial quantiles in antipodal pairs; and what a point deposits at offset o px
+// from it - the sprite over its square as gl_PointCoord reads it (mode 0), or the instrument's image over the pixel,
+// cut at the kernel's box of half-side reach + 0.5 px (the box's light is the normaliser, vNorm3).
+const SPHERE_GLSL = /* glsl */ `
+  float chord(float rho) {
+    return sqrt(max(0.0, 1.0 - rho * rho));
+  }
+  float chordCell(vec2 d, float r) {
+    return 0.25 * (chord(length(d + vec2(-0.25, -0.25)) / r) + chord(length(d + vec2(-0.25, 0.25)) / r) +
+      chord(length(d + vec2(0.25, -0.25)) / r) + chord(length(d + vec2(0.25, 0.25)) / r));
+  }
+  vec2 tapOffset(float t, float n) {
+    float p = floor(t / 2.0);
+    float f = (p + 0.5) / n;
+    float rho = sqrt(1.0 - pow(1.0 - f, 2.0 / 3.0));
+    float turn = p * ${GOLDEN_ANGLE.toFixed(9)} + mod(t, 2.0) * 3.14159265;
+    return rho * vec2(cos(turn), sin(turn));
+  }
+  vec3 spriteAt(vec2 o) {
+    if (abs(o.x) >= 0.5 * spritePx || abs(o.y) >= 0.5 * spritePx) return vec3(0.0);
+    vec4 t = textureLod(sprite, vec2(o.x / spritePx + 0.5, 0.5 - o.y / spritePx), 0.0);
+    return t.rgb * t.a;
+  }
+  vec3 imageAt(vec2 o, float reach, float scale) {
+    vec2 lo = max(o - 0.5, vec2(-reach - 0.5));
+    vec2 hi = min(o + 0.5, vec2(reach + 0.5));
+    if (lo.x >= hi.x || lo.y >= hi.y) return vec3(0.0);
+    return psfRect(lo * scale, hi * scale);
+  }
+`;
+
 const VERTEX = /* glsl */ `
   attribute vec3 flux;
   uniform float pxPerUnit;
@@ -145,6 +192,38 @@ const VERTEX = /* glsl */ `
   uniform float psfCellPc;
   varying vec3 vNorm3;
   ${PSF_GLSL}
+  // The knot as its HII region's sphere (S102, #232; sphere.ts): profile 3, its radius in pixels, its tap pairs, the
+  // kernel's reach and nothing; the sprite read here for the closure's scale (sphere.ts knotScale).
+  uniform sampler2D sprite;
+  varying vec4 vSphere;
+  ${SPHERE_GLSL}
+  // sphere.ts kernelSum through the sprite: what a point at p deposits over the pixels round it, per channel.
+  vec3 spriteSum(vec2 p) {
+    float reach = floor(0.5 * spritePx) + 1.0;
+    vec3 s = vec3(0.0);
+    for (int i = 0; i < ${2 * SPRITE_LOOP_HALF + 1}; i++) {
+      if (float(i) > 2.0 * reach) break;
+      for (int j = 0; j < ${2 * SPRITE_LOOP_HALF + 1}; j++) {
+        if (float(j) > 2.0 * reach) break;
+        s += spriteAt(floor(p) + vec2(float(i), float(j)) - reach + 0.5 - p);
+      }
+    }
+    return s;
+  }
+  // sphere.ts sphereNorm: the chord cells summed over the knot's box, or the profile's integral past the loop's bound.
+  float sphereNorm(vec2 c, float r) {
+    float h = ceil(r) + 1.0;
+    if (h > ${SPHERE_NORM_LOOP_HALF.toFixed(1)}) return 2.0 * 3.14159265 * r * r / 3.0;
+    float s = 0.0;
+    for (int i = 0; i < ${2 * SPHERE_NORM_LOOP_HALF + 1}; i++) {
+      if (float(i) > 2.0 * h) break;
+      for (int j = 0; j < ${2 * SPHERE_NORM_LOOP_HALF + 1}; j++) {
+        if (float(j) > 2.0 * h) break;
+        s += chordCell(floor(c) + vec2(float(i), float(j)) - h + 0.5 - c, r);
+      }
+    }
+    return s;
+  }
   // The wings past a clamped box (S82, #178; hstPsf.ts psfWingWeights): wingsOn while any point may be clamped, the wings'
   // pass drawing (wingPass) into the coarse target of wingPx blocks of wingBlock pixels; vWing the wings' box in blocks.
   uniform float wingsOn;
@@ -162,7 +241,8 @@ const VERTEX = /* glsl */ `
     float depth = -(modelViewMatrix * vec4(position, 1.0)).z;
     if (depth <= 0.0 || physOn < 0.5) return false;
     float side = 1000.0 * depth / pxPerUnit;
-    if (profile > 0.5 && extent > 0.0 && 2.0 * extent >= side) return false;
+    if (profile > 0.5 && profile < 2.5 && extent > 0.0 && 2.0 * extent >= side) return false;
+    if (profile > 2.5 && extent >= ${SPHERE_MIN_PX} * side) return false;
     return ceil(0.5 * psfCells * psfCellPc / side) > ${PROFILE_MAX_HALF.toFixed(1)};
   }
   // plummer.ts discNorm: the disc's coverage summed over its box, or its area past the loop's bound.
@@ -269,7 +349,7 @@ const VERTEX = /* glsl */ `
       light = flux * gain / (area * spritePx * spritePx * spriteMean);
       if (dustOn > 0.5) light *= exp(-dustTo(position));
       // With its extent (S64, plummer.ts resolvedAt): its whole light, dimmed alike, spread by its own profile.
-      if (profile > 0.5 && extent > 0.0 && 2.0 * extent >= side) {
+      if (profile > 0.5 && profile < 2.5 && extent > 0.0 && 2.0 * extent >= side) {
         mode = profile;
         light = flux * gain / area;
         if (dustOn > 0.5) light *= exp(-dustTo(position));
@@ -280,12 +360,49 @@ const VERTEX = /* glsl */ `
         light = flux * gain / area;
         if (dustOn > 0.5) light *= exp(-dustTo(position));
       }
+      // As its HII region's sphere (S102, #232; sphere.ts): from SPHERE_MIN_PX of radius, the light the point's own path
+      // gave it (the sprite's, or the instrument's image's), spread over the chord profile - mode 5 through the sprite,
+      // 6 through the image; dimmed by its centre's column, as the point is.
+      if (profile > 2.5 && extent >= ${SPHERE_MIN_PX} * side) mode = mode > 2.5 ? 6.0 : 5.0;
     }
     vLight = light;
     vMode = mode;
     gl_PointSize = spritePx;
     gl_Position = projectionMatrix * mv;
-    if (mode > 2.5) {
+    if (mode > 4.5) {
+      // The box of whole pixels round the knot: its radius, the kernel's reach and the edge's slack (sphere.ts). The
+      // taps' pairs, or the lattice's normaliser; through the image, its box's light per channel (vNorm3); through the
+      // sprite, the point's own sum at the centre over the samples' (knotScale), so the knot's light is the point's.
+      vec2 c = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * bufferPx;
+      float r = extent / side;
+      float scale = side / psfCellPc;
+      float reach = mode > 5.5 ? min(ceil(0.5 * psfCells * psfCellPc / side), ${SPHERE_KERNEL_MAX_HALF.toFixed(1)}) : ceil(0.5 * spritePx) - 1.0;
+      float pairs = min(${SPHERE_MAX_PAIRS.toFixed(1)}, max(1.0, ceil(2.0 * r * r)));
+      float h = min(ceil(r) + reach + 2.0, ${PROFILE_MAX_HALF.toFixed(1)});
+      vec2 k0 = floor(c) - h;
+      float n = 2.0 * h + 1.0;
+      vBox = vec4(k0, n, scale);
+      vCentre = c;
+      vSphere = vec4(r, pairs, reach, 0.0);
+      vNorm = r < ${SPHERE_LATTICE_PX.toFixed(1)} ? 1.0 : 1.0 / sphereNorm(c, r);
+      if (mode > 5.5) {
+        vNorm3 = 1.0 / psfRect(vec2(-reach - 0.5) * scale, vec2(reach + 0.5) * scale);
+      } else {
+        vec3 point = spriteSum(c);
+        vec3 samples = vec3(0.0);
+        if (r < ${SPHERE_LATTICE_PX.toFixed(1)}) {
+          for (int t = 0; t < ${2 * SPHERE_MAX_PAIRS}; t++) {
+            if (float(t) >= 2.0 * pairs) break;
+            samples += spriteSum(c + r * tapOffset(float(t), pairs));
+          }
+          samples /= 2.0 * pairs;
+        } else {
+          samples = spriteSum(vec2(0.5));
+        }
+        vLight *= vec3(samples.r > 0.0 ? point.r / samples.r : 1.0, samples.g > 0.0 ? point.g / samples.g : 1.0, samples.b > 0.0 ? point.b / samples.b : 1.0);
+      }
+      gl_PointSize = n + 4.0;
+    } else if (mode > 2.5) {
       // The box of whole pixels round the point (plummer.ts profileBox at hstPsf.ts psfHalf), the table's cells per
       // pixel, and each channel's light over the box, by which each pixel's share is divided (hstPsf.ts psfWeights).
       vec2 c = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * bufferPx;
@@ -335,7 +452,44 @@ const FRAGMENT = /* glsl */ `
   varying vec4 vWing;
   ${PROFILE_GLSL}
   ${PSF_GLSL}
+  // The knot as its HII region's sphere (S102, #232; sphere.ts knotDeposit): the sprite's size, and the sphere's numbers.
+  uniform float spritePx;
+  varying vec4 vSphere;
+  ${SPHERE_GLSL}
   void main() {
+    if (vMode > 4.5) {
+      // This pixel's light: the point's own deposit at each sample of the chord profile - taps under
+      // SPHERE_LATTICE_PX of radius, else the pixel lattice's chord cells over their sum (vNorm) - through the sprite
+      // (mode 5) or the instrument's image cut at its box, over the box's light (mode 6, vNorm3).
+      vec2 k = floor(gl_FragCoord.xy);
+      if (k.x < vBox.x || k.y < vBox.y || k.x >= vBox.x + vBox.z || k.y >= vBox.y + vBox.z) discard;
+      bool image = vMode > 5.5;
+      float r = vSphere.x;
+      float reach = vSphere.z;
+      vec3 s = vec3(0.0);
+      if (r < ${SPHERE_LATTICE_PX.toFixed(1)}) {
+        float m = 2.0 * vSphere.y;
+        for (int t = 0; t < ${2 * SPHERE_MAX_PAIRS}; t++) {
+          if (float(t) >= m) break;
+          vec2 o = k + 0.5 - vCentre - r * tapOffset(float(t), vSphere.y);
+          s += image ? imageAt(o, reach, vBox.w) : spriteAt(o);
+        }
+        s /= m;
+      } else {
+        for (int i = 0; i < ${2 * SPRITE_LOOP_HALF + 1}; i++) {
+          if (float(i) > 2.0 * reach) break;
+          for (int j = 0; j < ${2 * SPRITE_LOOP_HALF + 1}; j++) {
+            if (float(j) > 2.0 * reach) break;
+            vec2 u = vec2(float(i), float(j)) - reach;
+            float w = chordCell(k - u + 0.5 - vCentre, r);
+            if (w > 0.0) s += w * (image ? imageAt(u, reach, vBox.w) : spriteAt(u));
+          }
+        }
+        s *= vNorm;
+      }
+      gl_FragColor = vec4(vLight * s * (image ? vNorm3 : vec3(1.0)), 1.0);
+      return;
+    }
     if (vMode > 3.5) {
       // The wings (S82, #178; hstPsf.ts psfWingWeights): this block's light less its part inside the box, over the wings'
       // box's light; the composite spreads it over the block's pixels.
@@ -426,12 +580,17 @@ interface Props {
   /** The march's dust for the segment to each point; null draws the points undimmed. */
   dust: PointDust | null;
   /**
-   * Each point's extent, pc (S64): a cluster's half-mass radius or a knot's Stromgren radius; with `profile` the point
-   * is drawn with it once its diameter fills a pixel (plummer.ts). Without, every point is the sprite.
+   * Each point's extent, pc (S64): a cluster's half-mass radius or a knot's region's radius (`hii_radius` since S102;
+   * the Stromgren radius before); with `profile` the point is drawn with it once it reaches its share of a pixel
+   * (plummer.ts, sphere.ts). Without, every point is the sprite.
    */
   extent?: Float32Array | null;
-  /** 1 a Plummer sphere (the clusters), 2 a disc (the knots); 0 or absent, the sprite always. */
-  profile?: 0 | 1 | 2;
+  /**
+   * 1 a Plummer sphere (the clusters), 2 a disc; 3 an HII region's sphere in projection (the knots since S102, #232;
+   * sphere.ts: its chord profile convolved with the point's own sprite or image, from SPHERE_MIN_PX of radius, the
+   * extent its `hii_radius`); 0 or absent, the sprite always.
+   */
+  profile?: 0 | 1 | 2 | 3;
   /**
    * The instrument's image of a point at its physical size (S67, D227 R1; psf.ts physicalPsf): where a template's optics
    * apply, every point the profile does not draw is drawn with it, in place of the sprite. Null: the sprite (R2).
