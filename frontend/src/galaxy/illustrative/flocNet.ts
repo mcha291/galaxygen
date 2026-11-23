@@ -139,13 +139,18 @@ export function netSampler(g: FlocGeometry, shape: FlocShape): NetSampler {
     const cover = smoothstep(lo, hi, m);
     if (cover <= 0) return 0;
     const net = ridged(wx / (0.55 * s), wy / (0.55 * s), kn, 4, 2.2);
-    const feather = 1 - shape.netFeather + shape.netFeather * 2.2 * net;
+    // The feathers: the ridges, broken by a finer noise's holes, so a ridge is a run of ragged pieces, not a loop.
+    const holes = smoothstep(0.32, 0.62, fbm(wx / (0.3 * s) + 7.7, wy / (0.3 * s) + 2.2, kn + 99, 2));
+    const feather = 1 - shape.netFeather + shape.netFeather * (0.4 + 1.8 * net) * (0.25 + 0.95 * holes);
     return shape.netDepth * cover * feather * f * radial(r);
   };
   const light = (x: number, y: number): number => {
     const wx = x + 0.5 * ls * (2 * fbm(x / (2 * ls), y / (2 * ls), kw + 7, 2) - 1);
     const wy = y + 0.5 * ls * (2 * fbm(x / (2 * ls) + 23.1, y / (2 * ls) + 7.9, kw + 7, 2) - 1);
-    return clamp01(0.5 + 1.6 * (billow(wx / ls, wy / ls, kl, 4) - 0.62));
+    // Bright rounded puffs over a middling ground with a few darker gaps (a billowed fBm alone is mostly bright with
+    // dark cracks, which drew dark scales), so the clouds read as cream clumps, not as holes.
+    const n = 0.7 * fbm(wx / ls, wy / ls, kl, 4) + 0.3 * billow(wx / (0.5 * ls), wy / (0.5 * ls), kl + 3, 2);
+    return clamp01(0.42 + 0.58 * smoothstep(0.55, 0.8, n) - 0.3 * smoothstep(0.5, 0.3, n));
   };
   // The knots: the peaks of a fine noise (cells 70 pc) where the clouds are bright (`p`, the light's level there).
   const knot = (x: number, y: number, p: number): number => {

@@ -2,7 +2,8 @@
 // encoding flocMap.ts's, fast enough for a slider.
 import { describe, expect, it } from "vitest";
 
-import { floc, shapeOf } from "./floc";
+import { cloudShapeOf, floc, shapeOf } from "./floc";
+import { buildClouds } from "./flocClouds";
 import { FLOC_MAP, type FlocGeometry, flocDecode } from "./flocMap";
 import { buildNetChannel, netSampler } from "./flocNet";
 import { illDefaults, paramsOf } from "./index";
@@ -10,6 +11,22 @@ import { illDefaults, paramsOf } from "./index";
 const RHI = 30;
 const G: FlocGeometry = { rHi: RHI, pitchDeg: 20, gas: null, pattern: null, gasProfile: null };
 const SHAPE = shapeOf(paramsOf(floc, illDefaults("ngc_4414")));
+
+describe("the star clouds", () => {
+  it("places NGC 4414's points in groups, more of them outside than inside, fast", () => {
+    const p = paramsOf(floc, illDefaults("ngc_4414"));
+    const t0 = performance.now();
+    const c = buildClouds(G, SHAPE, cloudShapeOf(p));
+    const ms = performance.now() - t0;
+    console.log(`star clouds: ${c.weight.length} points, ${ms.toFixed(0)} ms`);
+    expect(c.weight.length).toBeGreaterThan(0.8 * p.cloudCount);
+    let outside = 0;
+    for (let i = 0; i < c.x.length; i += 1) if (Math.hypot(c.x[i], c.y[i]) > 0.7 * SHAPE.outerRadius) outside += 1;
+    expect(outside / c.x.length).toBeGreaterThan(0.5);
+    expect(ms).toBeLessThan(1500);
+    expect(cloudShapeOf(paramsOf(floc, illDefaults("milky_way"))).count).toBe(0);
+  });
+});
 
 describe("the network drawn in the plane", () => {
   it("is NGC 4414's style, and not the Milky Way's", () => {
@@ -59,7 +76,7 @@ describe("the network drawn in the plane", () => {
       }
     }
     expect(dust / all).toBeGreaterThan(0.1);
-    expect(dust / all).toBeLessThan(0.6);
+    expect(dust / all).toBeLessThan(0.9);
     expect(knots).toBeGreaterThan(0);
     // No byte of zero ("no map") is written.
     expect(map.indexOf(0)).toBe(-1);
