@@ -30,17 +30,17 @@ import { buildNetChannel } from "./flocNet";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2 },
+    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.8 },
     about: "The depth at the centre of one full filament of the dust network, magnitudes of A_V; 0 no network. Illustrative.",
   },
   {
-    key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75,
+    key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { ngc_4414: 0.6 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
-  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 2.2 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
+  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 2.6 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0 }, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
-    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.5 },
+    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
     about: "How far the disc's light swells and thins in soft patches about its mean (a multiplier on all the light at each place); 0 a smooth disc. Illustrative.",
   },
   {
@@ -75,7 +75,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "followGas", label: "follows the gas", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0.1 }, about: "How far the filaments' number follows the published gas contrast: 0 the same everywhere, 1 none where the gas is thin. Illustrative." },
   { key: "radial", label: "radial fall", min: 0, max: 2, step: 0.01, unit: "power", default: 1.1, about: "The filaments' number follows the published gas surface density's radial profile to this power: 0 the same at every radius. Illustrative." },
   { key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.5, about: "The network fades to nothing inside this radius, kpc. Illustrative." },
-  { key: "outerRadius", label: "outer radius", min: 2, max: 23, step: 0.5, unit: "kpc", default: 9, perTemplate: { ngc_4414: 10 }, about: "The network fades from 0.7 of this radius to nothing at it, kpc; the patches and clumps reach 1.3 of it. Illustrative." },
+  { key: "outerRadius", label: "outer radius", min: 2, max: 23, step: 0.5, unit: "kpc", default: 9, perTemplate: { ngc_4414: 11 }, about: "The network fades from 0.7 of this radius to nothing at it, kpc; the patches and clumps reach 1.3 of it. Illustrative." },
   { key: "patchSize", label: "patch size", min: 60, max: 900, step: 10, unit: "pc", default: 260, about: "A light patch's size, parsecs (each between 0.55 and 1.45 of it, in irregular threes along the spiral). Illustrative." },
   { key: "clumpDensity", label: "clump strings", min: 0, max: 4, step: 0.01, unit: "/kpc²", default: 0.8, perTemplate: { ngc_4414: 1.5 }, about: "Strings of young clumps per square kiloparsec on the flocculent pieces (each two to seven clumps along the spiral). Illustrative." },
   { key: "clumpSize", label: "clump size", min: 40, max: 600, step: 5, unit: "pc", default: 120, perTemplate: { ngc_4414: 50 }, about: "A young clump's size, parsecs (each between 0.45 and 1.25 of it). Illustrative." },
@@ -92,20 +92,20 @@ const CONTROLS: readonly IllControl[] = [
     key: "style", label: "network style", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "0: S105's strands and lace on spiral lattices; 1: S106's network drawn in the disc's plane - feathered dust clouds on short spiral arcs and cream clouds of light between them. Illustrative.",
   },
-  { key: "netScale", label: "dust cloud size", min: 60, max: 1500, step: 10, unit: "pc", default: 350, perTemplate: { ngc_4414: 350 }, about: "The plane style's dust clouds' size, parsecs (finer octaves ride on them). Illustrative." },
-  { key: "netWarp", label: "dust curl", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, perTemplate: { ngc_4414: 0.6 }, about: "How far the plane is pushed about before the dust is drawn, as a share of the cloud size: the pieces curl and feather. Illustrative." },
-  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.4 }, about: "The level of the plane style's noise under which there is no dust: higher, less dust and wider gaps. Illustrative." },
+  { key: "netScale", label: "dust cloud size", min: 60, max: 1500, step: 10, unit: "pc", default: 350, perTemplate: { ngc_4414: 250 }, about: "The plane style's dust clouds' size, parsecs (finer octaves ride on them). Illustrative." },
+  { key: "netWarp", label: "dust curl", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, perTemplate: { ngc_4414: 1 }, about: "How far the plane is pushed about before the dust is drawn, as a share of the cloud size: the pieces curl and feather. Illustrative." },
+  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.52 }, about: "The level of the plane style's noise under which there is no dust: higher, less dust and wider gaps. Illustrative." },
   { key: "netSoft", label: "dust softness", min: 0.01, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.12 }, about: "How softly a dust cloud's edge fades out. Illustrative." },
-  { key: "netFeather", label: "dust feathers", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.7 }, about: "How far the dust is broken into feathered ridges and holes (a ridged noise); 0 smooth clouds. Illustrative." },
+  { key: "netFeather", label: "dust feathers", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.9 }, about: "How far the dust is broken into feathered ridges and holes (a ridged noise); 0 smooth clouds. Illustrative." },
   { key: "netArc", label: "dust on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.9 }, about: "How far the dust keeps to short arcs on the drawn spiral (the flocculent pattern); 0 anywhere. Illustrative." },
-  { key: "arcWidth", label: "arc width", min: 100, max: 3000, step: 10, unit: "pc", default: 500, perTemplate: { ngc_4414: 450 }, about: "An arc's width across the spiral, parsecs. Illustrative." },
+  { key: "arcWidth", label: "arc width", min: 100, max: 3000, step: 10, unit: "pc", default: 500, perTemplate: { ngc_4414: 350 }, about: "An arc's width across the spiral, parsecs. Illustrative." },
   { key: "arcStretch", label: "arc length", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 5 }, about: "An arc's length along the spiral over its width. Illustrative." },
   { key: "netDepth", label: "dust drawn", min: 0, max: 4, step: 0.01, unit: "×", default: 1.6, perTemplate: { ngc_4414: 1.6 }, about: "The plane style's drawn depth, in full filaments (the network depth scales it again, without a rebuild). Illustrative." },
-  { key: "litScale", label: "light cloud size", min: 40, max: 1500, step: 10, unit: "pc", default: 220, perTemplate: { ngc_4414: 220 }, about: "The size of the cream clouds of light between the dust, parsecs. Illustrative." },
+  { key: "litScale", label: "light cloud size", min: 40, max: 1500, step: 10, unit: "pc", default: 220, perTemplate: { ngc_4414: 120 }, about: "The size of the cream clouds of light between the dust, parsecs. Illustrative." },
   { key: "litKnots", label: "bright knots", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "How many small bright knots the clouds of light hold (drawn with the clump glow). Illustrative." },
-  { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.7 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
+  { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.3 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
   {
-    key: "cap", label: "dust ceiling", min: 0.1, max: 20, step: 0.05, unit: "mag", default: 20, perTemplate: { ngc_4414: 1.2 },
+    key: "cap", label: "dust ceiling", min: 0.1, max: 20, step: 0.05, unit: "mag", default: 20, perTemplate: { ngc_4414: 0.9 },
     about: "The veil's depth saturates softly toward this many magnitudes: the thickest dust stays a deep red-brown, never black. Colour for appearance.",
   },
   {
@@ -117,14 +117,14 @@ const CONTROLS: readonly IllControl[] = [
     key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 30000 },
     about: "How many points the star clouds hold (in the plane style only): loose groups over the bright light between the dust, densest in the outer disc; 0 none. Illustrative.",
   },
-  { key: "cloudGain", label: "star cloud brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 3000, perTemplate: { ngc_4414: 3000 }, about: "The faintest star cloud point's light, L☉ over the white point (the field's scale, with the exposure). Illustrative." },
+  { key: "cloudGain", label: "star cloud brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 3000, perTemplate: { ngc_4414: 6000 }, about: "The faintest star cloud point's light, L☉ over the white point (the field's scale, with the exposure). Illustrative." },
   { key: "cloudRange", label: "star cloud range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 20, about: "The brightest star cloud point over the faintest. Illustrative." },
   { key: "cloudSlope", label: "star cloud slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.3, about: "The brightness law's index: smaller, more bright points. Illustrative." },
   { key: "cloudSize", label: "star cloud point size", min: 0.5, max: 4, step: 0.1, unit: "px", default: 1.5, about: "A star cloud point's sprite, pixels. Illustrative." },
   { key: "cloudGroup", label: "star cloud size", min: 10, max: 800, step: 5, unit: "pc", default: 120, about: "A star cloud's gaussian radius, parsecs (each between half and one and a half of it). Illustrative." },
   { key: "cloudMembers", label: "star cloud members", min: 1, max: 60, step: 1, unit: "", default: 8, about: "A star cloud's mean number of points. Illustrative." },
-  { key: "cloudStart", label: "star clouds from", min: 0, max: 2, step: 0.01, unit: "× outer", default: 0.7, about: "Where the star clouds come in to their full number, as a multiple of the network's outer radius (a quarter of it inside). Illustrative." },
-  { key: "cloudReach", label: "star cloud reach", min: 0.5, max: 3, step: 0.01, unit: "× outer", default: 1.5, about: "How far the star clouds reach, as a multiple of the network's outer radius, the edge pushed in and out by a noise: a ragged rim. Illustrative." },
+  { key: "cloudStart", label: "star clouds from", min: 0, max: 2, step: 0.01, unit: "× outer", default: 0.7, perTemplate: { ngc_4414: 0.35 }, about: "Where the star clouds come in to their full number, as a multiple of the network's outer radius (a quarter of it inside). Illustrative." },
+  { key: "cloudReach", label: "star cloud reach", min: 0.5, max: 3, step: 0.01, unit: "× outer", default: 1.5, perTemplate: { ngc_4414: 1 }, about: "How far the star clouds reach, as a multiple of the network's outer radius, the edge pushed in and out by a noise: a ragged rim. Illustrative." },
   { key: "cloudBlue", label: "star cloud blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 1, about: "How far the outer clouds' colour goes from cream to blue-white. Colour for appearance." },
   { key: "cloudWarmR", label: "star cloud cream radius", min: 0.5, max: 20, step: 0.1, unit: "kpc", default: 5, about: "The clouds are cream inside 0.6 of this radius and blue-white outside 1.6 of it, kpc. Colour for appearance." },
   { key: "nucleusRadius", label: "nucleus radius", min: 0.05, max: 5, step: 0.01, unit: "kpc", default: 0.8, about: "The radius at which the nucleus's tint has fallen to 1/e, kpc. Colour for appearance." },
@@ -207,15 +207,19 @@ export const floc: IllFeature = {
   uniform float illFlocCap;
   uniform float illFlocNuc;
   uniform float illFlocNucR;
+  uniform float illFlocStyle;
   // The feature's byte of the shared map read (flocMap.ts: signed about 128): x the dust, sqrt(shape / ${MAX}); y the
   // patches' level about their mean, in [-0.5, 0.5] (0, which changes nothing, where the light is not known: under a
   // filament, beyond the light's reach, where there is no map - a byte of 0 is never written); z a young clump's
   // level (0 its edge, 1 its centre).
+  // S106, the plane style (illFlocStyle 1; flocNet.ts): y the clouds' brightening in [0, 1], its neutral 0.5 and 0 at a
+  // dust margin (the byte next to 128, so the filter's passage into the dust draws no dark rim), z a knot's level.
   vec3 illFlocRead(vec2 rp) {
     float b = rp.x < rHi ? illMap(rp).g * 255.0 : 0.0;
-    if (b < 0.5) return vec3(0.0);
+    if (b < 0.5) return vec3(0.0, illFlocStyle > 0.5 ? 0.5 : 0.0, 0.0);
     float s = (b - 128.0) / 127.0;
     float l = max(-s, 0.0);
+    if (illFlocStyle > 0.5) return vec3(max(s, 0.0), min(l, 0.6) / 0.6, clamp((l - 0.6) / 0.4, 0.0, 1.0));
     float level = clamp((l - ${FLOOR}) / (0.5 - ${FLOOR}), 0.0, 1.0) - 0.5;
     return vec3(max(s, 0.0), level * smoothstep(0.0, ${FLOOR}, l), clamp((l - 0.5) * 2.0, 0.0, 1.0));
   }
@@ -248,7 +252,8 @@ export const floc: IllFeature = {
       veil *= exp(-av * law);
     }
     // The patches: the light swelled and thinned about the patches' mean level.
-    veil *= max(1.0 + illFlocPatch * map.y, 0.0);
+    if (illFlocStyle > 0.5) veil *= (1.0 + illFlocPatch * map.y) / (1.0 + 0.5 * illFlocPatch);
+    else veil *= max(1.0 + illFlocPatch * map.y, 0.0);
     // The clumps: brighter, toward a blue-white.
     veil *= vec3(1.0) + illFlocClump * map.z * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);
     // The warmth: a cream tint over the inner disc.
@@ -283,6 +288,7 @@ export const floc: IllFeature = {
       illFlocCap: p.cap ?? DEFAULTS.cap,
       illFlocNuc: p.nucleus ?? DEFAULTS.nucleus,
       illFlocNucR: p.nucleusRadius ?? DEFAULTS.nucleusRadius,
+      illFlocStyle: p.style ?? DEFAULTS.style,
     };
   },
 };

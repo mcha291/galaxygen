@@ -10,9 +10,9 @@
 // so the feathered pieces line up into arcs. What is the model's: the pitch (pitch_angle times the `pitch` slider) and
 // the gas's radial profile (the radial fall); the rest is a seeded drawing, fixed in the galaxy's frame.
 //
-// Written into the floc channel in flocMap.ts's encoding (dust above 128, the light's level below): the dust where the
+// Written into the floc channel: the dust above 128 in flocMap.ts's encoding, the light below 128 in the plane style's own (floc.ts illFlocRead, illFlocStyle 1): the dust where the
 // drawn depth passes the margin, the light (the clouds' level and their brightest knots) everywhere else inside the
-// light's reach, going to the patches' mean toward a dust margin and toward the reach.
+// light's reach, going to the clouds' neutral toward the reach and to 0 (a soft shade) toward a dust margin.
 
 import { FLOC_MAP, Ladder, type FlocGeometry, type FlocShape, flocKey, noise2 } from "./flocMap";
 
@@ -161,12 +161,11 @@ export function netSampler(g: FlocGeometry, shape: FlocShape): NetSampler {
   return { dust, light, knot, outer, reach };
 }
 
-/** The patches' mean level and the margin (flocMap.ts's encoding). */
+/** The dust margin (flocMap.ts). */
 const MARGIN = FLOC_MAP.margin;
-const MEAN = FLOC_MAP.lightFloor + 0.25 * (1 - 2 * FLOC_MAP.lightFloor);
 
 
-/** A field sampled on a coarse polar grid over 0-rMax (row = sector), read back bilinearly. */
+/** A field sampled on a coarse polar grid over 0-rMax (row = sector); buildNetChannel reads it back bilinearly. */
 class Coarse {
   readonly v: Float32Array;
   readonly dR: number;
@@ -175,27 +174,27 @@ class Coarse {
     this.v = new Float32Array(rings * sectors);
     this.dR = rMax / rings;
     this.dPhi = TAU / sectors;
+    const cos = new Float64Array(sectors);
+    const sin = new Float64Array(sectors);
     for (let j = 0; j < sectors; j += 1) {
-      const c = Math.cos((j + 0.5) * this.dPhi);
-      const s = Math.sin((j + 0.5) * this.dPhi);
-      for (let i = 0; i < rings; i += 1) {
-        const r = (i + 0.5) * this.dR;
-        this.v[j * rings + i] = fn(r * c, r * s, r);
+      cos[j] = Math.cos((j + 0.5) * this.dPhi);
+      sin[j] = Math.sin((j + 0.5) * this.dPhi);
+    }
+    const v = this.v;
+    for (let i = 0; i < rings; i += 1) {
+      const r = (i + 0.5) * this.dR;
+      // A ring whose azimuthal cell is under half its radial one is sampled every `stride` sectors (a power of two that
+      // divides the sectors, or 1) and filled linearly between: the inner disc costs no more than the outer.
+      let stride = 1;
+      while (stride < 64 && sectors % (2 * stride) === 0 && r * this.dPhi * 2 * stride <= 0.5 * this.dR) stride *= 2;
+      for (let j = 0; j < sectors; j += stride) v[j * rings + i] = fn(r * cos[j], r * sin[j], r);
+      if (stride === 1) continue;
+      for (let j = 0; j < sectors; j += stride) {
+        const a = v[j * rings + i];
+        const b = v[((j + stride) % sectors) * rings + i];
+        for (let k = 1; k < stride; k += 1) v[(j + k) * rings + i] = a + ((b - a) * k) / stride;
       }
     }
-  }
-
-  /** The value at radius r (kpc) and the sector coordinate `u` (phi / dPhi - 0.5, already wrapped to [0, sectors)). */
-  at(r: number, u: number): number {
-    const { rings, sectors, v } = this;
-    const a = Math.min(rings - 1.0001, Math.max(0, r / this.dR - 0.5));
-    const i = Math.floor(a);
-    const fa = a - i;
-    const j0 = Math.floor(u);
-    const fb = u - j0;
-    const r0 = ((j0 + sectors) % sectors) * rings;
-    const r1 = ((j0 + 1) % sectors) * rings;
-    return (1 - fb) * ((1 - fa) * v[r0 + i] + fa * v[r0 + i + 1]) + fb * ((1 - fa) * v[r1 + i] + fa * v[r1 + i + 1]);
   }
 }
 
@@ -210,7 +209,8 @@ export const NET_GRID = { dust: 2, light: 4 } as const;
  */
 export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number = FLOC_MAP.rings, sectors: number = FLOC_MAP.sectors): Uint8Array {
   const net = netSampler(g, shape);
-  const none = 128 - Math.round(127 * MEAN);
+  // Beyond the light's reach: the clouds' neutral (q = 0.3, which changes nothing).
+  const none = 128 - Math.round(127 * 0.3);
   const out = new Uint8Array(rings * sectors).fill(none);
   const dR = g.rHi / rings;
   const dPhi = TAU / sectors;
@@ -220,30 +220,63 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
   const lSect = Math.max(8, Math.floor(sectors / NET_GRID.light));
   const dust = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.dust)), dSect, Math.max(dusty, 1) * dR, (x, y) => net.dust(x, y));
   const light = new Coarse(Math.max(2, Math.ceil(lit / NET_GRID.light)), lSect, Math.max(lit, 1) * dR, (x, y) => net.light(x, y));
-  const floor = FLOC_MAP.lightFloor;
+  // Each ring's place on the two coarse grids (lower ring and weight) and the light's fade toward its reach.
+  const ringOf = (grid: Coarse, n: number) => {
+    const at = new Int32Array(n);
+    const w = new Float32Array(n);
+    for (let i = 0; i < n; i += 1) {
+      const a = Math.min(grid.rings - 1.0001, Math.max(0, ((i + 0.5) * dR) / grid.dR - 0.5));
+      at[i] = Math.floor(a);
+      w[i] = a - at[i];
+    }
+    return { at, w };
+  };
+  const dRing = ringOf(dust, dusty);
+  const lRing = ringOf(light, lit);
+  const fadeOut = new Float32Array(lit);
+  for (let i = 0; i < lit; i += 1) fadeOut[i] = 1 - smoothstep(0.85 * net.reach, net.reach, (i + 0.5) * dR);
+  const dv = dust.v;
+  const lv = light.v;
+  const dN = dust.rings;
+  const lN = light.rings;
   for (let j = 0; j < sectors; j += 1) {
     const phi = (j + 0.5) * dPhi;
     const c = Math.cos(phi);
     const s = Math.sin(phi);
     const ud = (phi / TAU) * dSect - 0.5;
     const ul = (phi / TAU) * lSect - 0.5;
-    const udw = ud < 0 ? ud + dSect : ud;
-    const ulw = ul < 0 ? ul + lSect : ul;
+    const dj = Math.floor(ud);
+    const lj = Math.floor(ul);
+    const db = ud - dj;
+    const lb = ul - lj;
+    const d0 = (((dj % dSect) + dSect) % dSect) * dN;
+    const d1 = ((((dj + 1) % dSect) + dSect) % dSect) * dN;
+    const l0 = (((lj % lSect) + lSect) % lSect) * lN;
+    const l1 = ((((lj + 1) % lSect) + lSect) % lSect) * lN;
     const row = j * rings;
     for (let i = 0; i < lit; i += 1) {
-      const r = (i + 0.5) * dR;
-      const v = i < dusty ? dust.at(r, udw) : 0;
-      if (v >= MARGIN) {
-        out[row + i] = 128 + Math.round(127 * Math.sqrt(Math.min(1, (v - MARGIN) / FLOC_MAP.shapeMax)));
-        continue;
+      let v = 0;
+      if (i < dusty) {
+        const a = dRing.at[i];
+        const w = dRing.w[i];
+        v = (1 - db) * ((1 - w) * dv[d0 + a] + w * dv[d0 + a + 1]) + db * ((1 - w) * dv[d1 + a] + w * dv[d1 + a + 1]);
+        if (v >= MARGIN) {
+          out[row + i] = 128 + Math.round(127 * Math.sqrt(Math.min(1, (v - MARGIN) / FLOC_MAP.shapeMax)));
+          continue;
+        }
       }
-      const p = light.at(r, ulw);
-      const k = net.knot(r * c, r * s, p);
-      let l = floor + (0.5 - floor) * p;
-      if (k > 0) l = 0.5 + 0.5 * k;
-      const edge = 1 - smoothstep(0.85 * net.reach, net.reach, r);
-      l = MEAN + (l - MEAN) * edge * (1 - Math.max(0, v) / MARGIN);
-      out[row + i] = 128 - Math.round(127 * l);
+      // The plane style's light (floc.ts illFlocRead): q = 0.6 p the clouds (0.3 neutral), over 0.6 a knot; toward the
+      // reach it goes to neutral, toward a dust margin to 0 (the base under the clouds: a soft shade, never a rim).
+      const r = (i + 0.5) * dR;
+      const edge = fadeOut[i];
+      const a = lRing.at[i];
+      const w = lRing.w[i];
+      const lit0 = (1 - lb) * ((1 - w) * lv[l0 + a] + w * lv[l0 + a + 1]) + lb * ((1 - w) * lv[l1 + a] + w * lv[l1 + a + 1]);
+      const p = 0.5 + (lit0 - 0.5) * edge;
+      const k = edge > 0.5 ? net.knot(r * c, r * s, p) : 0;
+      let q = k > 0 ? 0.6 + 0.4 * k : 0.6 * p;
+      q *= 1 - Math.max(0, v) / MARGIN;
+      out[row + i] = 128 - Math.max(1, Math.round(127 * q));
     }
   }
   return out;
