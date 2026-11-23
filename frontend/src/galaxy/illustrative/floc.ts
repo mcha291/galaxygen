@@ -205,7 +205,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "coreWhite", label: "nucleus point white", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "How far the nucleus point's lift goes toward a blue-white (it whitens a cream core). Colour for appearance." },
   { key: "glowDim", label: "nucleus glow dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.85 }, about: "The share of the light taken off the nucleus's broad glow at its centre (a gaussian), so the stretch does not flatten it into a blob. Colour for appearance." },
   { key: "glowRadius", label: "nucleus glow radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1, perTemplate: { ngc_4414: 0.7 }, about: "The radius at 1/e of the glow's dimming, kpc. Colour for appearance." },
-  { key: "arcPeak", label: "dust on arcs", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 1.3 }, about: "The drawn dust's depth on the arcs' crests, a multiplier. Illustrative." },
+  { key: "arcPeak", label: "dust on arc crests", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 1.3 }, about: "The drawn dust's depth on the arcs' crests, a multiplier. Illustrative." },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
