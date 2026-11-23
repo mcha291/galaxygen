@@ -18,7 +18,7 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.4, ngc_4414: 0.2 }, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.85, ngc_4414: 0.2 }, about: "The light's scale into the stretch, stops. Illustrative." },
   {
     key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 100, ngc_4414: 40 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",
@@ -28,7 +28,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "knee", label: "shoulder knee", min: 0.3, max: 0.98, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.8, ngc_4414: 0.6 },
     about: "The stretched brightness (0 to 1) above which the curve rolls off toward full scale and the light drifts to a pale warm white; below it the curve is the stretch as it is. Illustrative.",
   },
-  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.4, ngc_4414: 1 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
+  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.15, ngc_4414: 1 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
   {
     key: "faint", label: "faint fade", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.1, ngc_4414: 0.12 },
     about: "The stretched brightness below which colour fades (to `faint colour` at nothing): the faintest light goes grey into the sky instead of a saturated fringe. 0 no fade. Illustrative.",
@@ -48,15 +48,15 @@ const CONTROLS: readonly IllControl[] = [
     about: "Above 0 the bright light toward the warm tint and the faint toward the cool (a warm core against blue arms); below 0 the reverse. Colour for appearance.",
   },
   {
-    key: "pivot", label: "split pivot", min: 0.05, max: 0.95, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.9, ngc_4414: 0.65 },
+    key: "pivot", label: "split pivot", min: 0.05, max: 0.95, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.7, ngc_4414: 0.65 },
     about: "The stretched brightness (0 to 1) about which the split tone turns from cool to warm, over a quarter either side: high, only the brightest (a bar, a core) warm. Colour for appearance.",
   },
   {
-    key: "cool", label: "cool hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.1, ngc_4414: 0.2 },
+    key: "cool", label: "cool hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.0, ngc_4414: 0.2 },
     about: "The cool tint's colour: 0 sky blue, 1 lavender. Colour for appearance.",
   },
   {
-    key: "warm", label: "warm hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.8, ngc_4414: 0.8 },
+    key: "warm", label: "warm hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 1.0, ngc_4414: 0.8 },
     about: "The warm tint's colour: 0 orange, 1 cream. Colour for appearance.",
   },
   {

@@ -168,9 +168,12 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
       centres.push(f.x, f.y);
     }
   }
-  // S107: the large complexes along the major arms, each at a strength-weighted place no nearer another than 2 gaps.
+  // S107: the large complexes along the major arms, each at a strength-weighted place no nearer another (or a bar end)
+  // than 3 gaps and five of a complex's reaches (MW3: the satellites reach 2.5 of them either side - so two complexes
+  // never run together into one long pink stretch, ordinary regions between them; 2 gaps before).
   const complexes = Math.max(0, Math.round(p.complexes ?? 0));
   if (complexes > 0) {
+    const apart = 3 * gap + 5 * bunchLen * Math.max(1, complexSpread);
     const majors = sk.arms.map((a, k) => (a.kind === "major" ? k : -1)).filter((k) => k >= 0);
     let placed = 0;
     for (let t = 0; t < complexes * 60 && placed < complexes && majors.length; t++) {
@@ -180,7 +183,7 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
       const f = frameAt(sk, a, R);
       if (!f || f.strength < Math.max(minStrength, 0.3)) continue;
       if (next() > f.strength * patchAt(arm, R) * radialWeight(R, fadeR, fadeWidth, innerR)) continue;
-      const g2 = 4 * gap * gap;
+      const g2 = apart * apart;
       let near = false;
       for (let j = 0; j < centres.length && !near; j += 2) near = (centres[j] - f.x) ** 2 + (centres[j + 1] - f.y) ** 2 < g2;
       if (near) continue;

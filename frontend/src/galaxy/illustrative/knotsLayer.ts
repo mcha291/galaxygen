@@ -14,13 +14,17 @@
 import { createElement, useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
+  AddEquation,
   BufferAttribute,
   BufferGeometry,
   type Camera,
+  CustomBlending,
   DataTexture,
   type PerspectiveCamera,
   Points,
   RGBAFormat,
+  OneFactor,
+  OneMinusSrcAlphaFactor,
   ShaderMaterial,
   type Texture,
   UnsignedByteType,
@@ -253,6 +257,7 @@ const SKELETON_FRAGMENT = /* glsl */ `
   varying vec4 vTint;
   varying vec2 vSeed;
   uniform float knRag;
+  uniform float knVeil;
   float gauss(vec2 o, float s) { return exp(-dot(o, o) / (2.0 * s * s)) / (6.28318531 * s * s); }
   // A lobe already in px (centre xy, sigma z, weight w), y up.
   float lobe(vec2 p, vec4 b) { return b.w > 0.0 ? b.w * gauss(p - b.xy, b.z) : 0.0; }
@@ -283,7 +288,20 @@ const SKELETON_FRAGMENT = /* glsl */ `
     float all4 = s.x + s.y + s.z + s.w;
     float tinted = dot(s, vTint);
     vec3 light = vLight * (all4 - tinted) + vLight2 * tinted + vCore * gauss(p, vCoreSigma);
-    gl_FragColor = vec4(light, 1.0);
+    // S107 (MW3, knots.veil): the region's own cloud hides this share of the light behind it (premultiplied: the
+    // blending is ONE, ONE_MINUS_SRC_ALPHA), each lobe's unnormalised Gaussian at its weight's share of the largest,
+    // ragged as the light is - so the pink stands on a dimmed ground and keeps a deep red-magenta through the grade
+    // instead of a pastel pink over the arms' blue-white. 0: the plain additive light.
+    float cover = 0.0;
+    if (knVeil > 0.0) {
+      vec4 w = vec4(vB0.w, vB1.w, vB2.w, vB3.w);
+      float wMax = max(max(w.x, w.y), max(w.z, w.w));
+      vec4 bz = max(vec4(vB0.z, vB1.z, vB2.z, vB3.z), vec4(1e-3));
+      vec4 d2 = vec4(dot(pw - vB0.xy, pw - vB0.xy), dot(pw - vB1.xy, pw - vB1.xy), dot(pw - vB2.xy, pw - vB2.xy), dot(pw - vB3.xy, pw - vB3.xy));
+      vec4 e = exp(-d2 / (2.0 * bz * bz)) * w / max(wMax, 1e-6);
+      cover = clamp(knVeil * max(max(e.x, e.y), max(e.z, e.w)) * min(mottle, 1.0), 0.0, 1.0);
+    }
+    gl_FragColor = vec4(light, cover);
   }
 `;
 
@@ -348,12 +366,17 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
         cloudsOn: { value: 0 },
         viewPx: { value: new Vector2(1, 1) },
         knRag: { value: 0 },
+        knVeil: { value: 0 },
         ...runtime.uniforms,
       },
       vertexShader: onSkeleton ? skeletonVertexShader(runtime.glsl) : vertexShader(runtime.glsl),
       fragmentShader: onSkeleton ? SKELETON_FRAGMENT : FRAGMENT,
       transparent: true,
-      blending: AdditiveBlending,
+      // S107 (MW3): the skeleton's regions premultiplied (their alpha the veil's cover; 0 adds as AdditiveBlending
+      // does); the model's places (ngc_4414) additive as they were.
+      ...(onSkeleton
+        ? { blending: CustomBlending, blendEquation: AddEquation, blendSrc: OneFactor, blendDst: OneMinusSrcAlphaFactor, blendSrcAlpha: OneFactor, blendDstAlpha: OneMinusSrcAlphaFactor }
+        : { blending: AdditiveBlending }),
       depthTest: false,
       depthWrite: false,
     });
@@ -443,6 +466,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
       u.coreGain.value = p.coreGain ?? 0.5;
       u.coreSize.value = p.coreSize ?? 0.12;
       u.knRag.value = p.ragged ?? 0;
+      u.knVeil.value = Math.min(1, Math.max(0, p.veil ?? 0));
       u.dustStrength.value = p.dust ?? 1;
       u.dustOn.value = d && (p.dust ?? 1) > 0 ? 1 : 0;
       u.dustDepthScale.value = d?.depthScale ?? 1;
