@@ -6,14 +6,14 @@
 // brightest share (`sparklebig`) on a larger one (`sparklebigsize`) - so the arms' grain has sizes, not one dot.
 // A share of 0 draws every point on the small sprite, as S105 did.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { FluxPoints, type PointDust } from "../FluxPoints";
 import { shapeOf } from "./arms";
 import { sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
 import { ILL_MAP, type IllLayerProps } from "./feature";
-import { objectToken, requestSparkle, sparkleHeld } from "./illMapClient";
+import { objectToken, requestSparkle, setSparkleDrawnFor, sparkleHeld } from "./illMapClient";
 import { illChannelCurrent } from "./index";
-import { type SparklePoints, sparkleKey, sparkleReadsLanes } from "./sparkleJob";
+import { type SparklePoints, sparkleKey, sparkleReadsLanes, sparkleShown } from "./sparkleJob";
 
 /** The sparkle's blue-white at full share (over the white point). */
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
@@ -38,7 +38,9 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   const composed = !!img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height;
   const lanesPlane = composed ? (mapTex?.userData?.illPlanes?.[0] ?? null) : null;
   const key = sparkleKey(params, context.frame, objectToken(context.frame), context.template, composed ? (lanesPlane ? `plane:${objectToken(lanesPlane)}` : "zeros") : "none");
-  const [arrived, setArrived] = useState<{ key: string; points: SparklePoints | null } | null>(null);
+  // The galaxy the points are for (rule D1): the last points stay drawn only on the same galaxy (a slider's move).
+  const galaxy = `${objectToken(context.frame)}:${context.template}`;
+  const [arrived, setArrived] = useState<{ key: string; galaxy: string; points: SparklePoints | null } | null>(null);
   const held = sparkleHeld(key);
   // While the lanes' plane for the parameters drawn is still being built, nothing is asked: the points for the new
   // lanes are built once, when it is in the map (not first over the previous lanes, as the layer did before).
@@ -46,9 +48,16 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   useEffect(() => {
     if (held !== undefined || !lanesReady) return;
     const lanes = composed ? { plane: lanesPlane, rgba: img!.data! } : null;
-    return requestSparkle(key, params, context, lanes, (points) => setArrived({ key, points }));
+    return requestSparkle(key, params, context, lanes, (points) => setArrived({ key, galaxy, points }));
   }, [key, lanesReady]); // eslint-disable-line react-hooks/exhaustive-deps -- the key names every input
-  const points = held !== undefined ? held : (arrived?.points ?? null);
+  const points = sparkleShown(held, arrived, galaxy);
+  // The probe's check of rule D1: the template these points were built for.
+  const [owner] = useState(() => ({}));
+  const shownFor = points ? context.template : null;
+  useLayoutEffect(() => {
+    setSparkleDrawnFor(owner, shownFor);
+    return () => setSparkleDrawnFor(owner, null);
+  }, [owner, shownFor]);
   const blue = params.sparkleblue ?? 0.7;
   const base = params.sparklegain ?? 2e4;
   const start = shapeOf(params, context.frame).start;

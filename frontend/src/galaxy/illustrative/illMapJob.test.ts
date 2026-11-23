@@ -16,7 +16,7 @@ const SECTORS = 360;
 const RHI = 30;
 
 /** A galaxy for the tests: two arm pieces for the skeleton, stellar and gas spirals for the arms and the network. */
-function frame(): IllFrame {
+function frame(arms = 2, start = 0): IllFrame {
   const gas = new Float64Array(RINGS * SECTORS);
   const pattern = new Float64Array(RINGS * SECTORS);
   const profile = new Float64Array(RINGS);
@@ -28,7 +28,7 @@ function frame(): IllFrame {
       const phi = ((j + 0.5) * TAU) / SECTORS;
       const on = r < 14 ? 1 : 0;
       gas[i * SECTORS + j] = 1 + on * 0.3 * Math.cos(3 * (phi - k * Math.log(r)));
-      pattern[i * SECTORS + j] = 1 + on * 0.35 * Math.cos(2 * (phi - k * Math.log(r)));
+      pattern[i * SECTORS + j] = 1 + on * 0.35 * Math.cos(arms * (phi - start - k * Math.log(r)));
     }
   }
   const col = (v: number[]) => Float64Array.from(v);
@@ -41,7 +41,7 @@ function frame(): IllFrame {
       arm_piece_chain: col([0, 1]),
       arm_piece_order: col([0, 0]),
       arm_piece_start_radius: col([3, 3]),
-      arm_piece_start_azimuth: col([0, Math.PI]),
+      arm_piece_start_azimuth: col([start, start + Math.PI]),
       arm_piece_pitch: col([13, 13]),
       arm_piece_extent: col([5, 5]),
       arm_piece_join: col([0, 0]),
@@ -85,7 +85,9 @@ class FakeWorker {
   terminate() {}
 }
 
+/** Two galaxies: F, and F2 with three-armed stars and its pieces turned. */
 const F = frame();
+const F2 = frame(3, 1.1);
 const bytes = (a: Uint8Array | null) => (a ? Buffer.from(a) : null);
 const same = (a: Uint8Array | null, b: Uint8Array | null) => (a === null || b === null ? a === b : Buffer.from(a).equals(Buffer.from(b)));
 
@@ -256,6 +258,60 @@ describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", 
     expect(feature.wouldBuild(() => main.illMapPlanes(other, ctx))).toBe(true);
     expect(client.illJobsPending()).toBe(0);
   }, 120_000);
+
+  it("draws no plane of the previous galaxy after a template or frame change (rule D1); a slider keeps the map", async () => {
+    const { main, client, ref } = await graphs();
+    const mw = main.illDefaults("milky_way");
+    const ngc = main.illDefaults("ngc_4414");
+    const ctxA = { template: "milky_way", frame: F };
+    const rt = main.createRuntime(mw, { template: "milky_way", frame: null });
+    const w = () => FakeWorker.made[0];
+    const mapOf = () => rt.uniforms.illMapTex.value as { image: { width: number; data: Uint8Array }; userData: { illPlanes?: unknown[] } };
+    const empty = (template: string) => {
+      const want = ref.createRuntime(template === "milky_way" ? mw : ngc, { template, frame: null });
+      expect(mapOf().image.width).toBe(1);
+      expect([...mapOf().image.data]).toEqual([0, 0, 0, 0]);
+      for (const [k, u] of Object.entries(want.uniforms)) if (k !== "illMapTex") expect(rt.uniforms[k].value, k).toEqual(u.value);
+    };
+    expect(main.stepRuntime(rt, mw, ctxA)).toBe("asked");
+    w().deliverAll();
+    expect(main.stepRuntime(rt, mw, ctxA)).toBe("drawn");
+    expect(mapOf().image.width).toBe(2000);
+    // a slider on the same galaxy: the previous map stays drawn while the new planes are built
+    const drawn = mapOf();
+    expect(main.stepRuntime(rt, { ...mw, "lanes.width": 70 }, ctxA)).toBe("asked");
+    expect(mapOf()).toBe(drawn);
+    w().deliverAll();
+    // another template and its arrays: at once the empty map and the values without arrays, never the Milky Way's
+    const ctxB = { template: "ngc_4414", frame: F2 };
+    expect(main.stepRuntime(rt, ngc, ctxB)).toBe("asked");
+    empty("ngc_4414");
+    // the template switched before its arrays have come (the frame still loading): the empty map too
+    expect(main.stepRuntime(rt, ngc, { template: "ngc_4414", frame: null })).not.toBe("failed");
+    empty("ngc_4414");
+    w().deliverAll(); // NGC 4414's own planes arrive
+    expect(main.stepRuntime(rt, ngc, ctxB)).toBe("drawn");
+    const refB = (ref.illUniformValues(ngc, ctxB).illMapTex as { image: { data: Uint8Array } }).image.data;
+    expect(Buffer.from(mapOf().image.data).equals(Buffer.from(refB))).toBe(true);
+    // the same template, other arrays (a regenerated galaxy): the empty map until its own planes arrive
+    expect(main.stepRuntime(rt, ngc, { template: "ngc_4414", frame: F })).toBe("asked");
+    empty("ngc_4414");
+    w().deliverAll();
+    expect(main.stepRuntime(rt, ngc, { template: "ngc_4414", frame: F })).toBe("drawn");
+    const refC = (ref.illUniformValues(ngc, { template: "ngc_4414", frame: F }).illMapTex as { image: { data: Uint8Array } }).image.data;
+    expect(Buffer.from(mapOf().image.data).equals(Buffer.from(refC))).toBe(true);
+    expect(client.illJobCounts().here).toBe(0);
+  }, 120_000);
+
+  it("draws a sparkle's last points only on the galaxy they were built for (rule D1)", async () => {
+    const { sparkleShown } = await import("./sparkleJob");
+    const pts = { positions: new Float32Array(3), weight: new Float32Array(1), radius: new Float32Array(1) };
+    expect(sparkleShown(undefined, { galaxy: "1:milky_way", points: pts }, "1:milky_way")).toBe(pts);
+    expect(sparkleShown(undefined, { galaxy: "1:milky_way", points: pts }, "2:ngc_4414")).toBeNull();
+    expect(sparkleShown(undefined, { galaxy: "1:milky_way", points: pts }, "3:milky_way")).toBeNull();
+    expect(sparkleShown(null, { galaxy: "1:milky_way", points: pts }, "1:milky_way")).toBeNull();
+    expect(sparkleShown(undefined, null, "1:milky_way")).toBeNull();
+  });
 
   it("without a Worker builds everything on this thread, as before (vitest's own path, and SSR)", async () => {
     vi.resetModules();

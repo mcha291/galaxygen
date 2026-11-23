@@ -65,6 +65,19 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
 }
 
 /**
+ * The points a sparkle layer draws (S107, rule D1): those kept for its key, else the last that arrived - only if they
+ * were built for the same galaxy (`galaxy`: the frame's token and the template); another galaxy's are never drawn.
+ */
+export function sparkleShown(
+  held: SparklePoints | null | undefined,
+  arrived: { galaxy: string; points: SparklePoints | null } | null,
+  galaxy: string,
+): SparklePoints | null {
+  if (held !== undefined) return held;
+  return arrived && arrived.galaxy === galaxy ? arrived.points : null;
+}
+
+/**
  * A string that moves exactly when sparklePoints' answer can (the layer's cache key): the frame's and the lanes' own
  * tokens (illMapClient.ts objectId), the template, and every parameter the build reads.
  */
