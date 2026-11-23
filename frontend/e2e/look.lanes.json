@@ -1,0 +1,10 @@
+{
+  "about": "Row 107's own capture list (S107, the dust lanes; e2e/look.json's format, read through GALAXYGEN_LOOK_LIST): the two illustrative frames at the templates' stands and one closer stand on an arm of each, a quarter of the framed radius, to see that a lane survives a zoom.",
+  "captures": [
+    { "name": "milky_way-illustrative", "template": "milky_way", "look": "illustrative" },
+    { "name": "ngc_4414-illustrative", "template": "ngc_4414", "look": "illustrative" },
+    { "name": "milky_way-close", "template": "milky_way", "look": "illustrative", "stand": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 3.4, "fov_deg": 45, "target": { "radius_kpc": 5.9, "azimuth_deg": 165 } } },
+    { "name": "milky_way-bar", "template": "milky_way", "look": "illustrative", "stand": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 5.5, "fov_deg": 45 } },
+    { "name": "ngc_4414-close", "template": "ngc_4414", "look": "illustrative", "stand": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 2.1, "fov_deg": 5, "target": { "radius_kpc": 3.0, "azimuth_deg": 200 } } }
+  ]
+}

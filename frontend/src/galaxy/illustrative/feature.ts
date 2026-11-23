@@ -56,6 +56,12 @@ export interface IllHooks {
   youngGain?: string;
   /** `float f(float r)`: a multiplier on all emission and depth at radius r; multiplied over features. */
   edge?: string;
+  /**
+   * `vec3 f(vec2 rp)` (S107): a per-channel multiplier on a ray's whole light, read once where the ray crosses the
+   * midplane; multiplied over features. A drawing laid over the picture (a lane inked in front of all the starlight),
+   * not a depth in the dust's layer: the march only, the points are not veiled.
+   */
+  veil?: string;
 }
 
 /** What a feature's own drawing (`layer`) receives: drawn inside the Galaxy view's canvas under the illustrative look. */
