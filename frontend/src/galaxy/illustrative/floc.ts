@@ -40,7 +40,7 @@ import { buildNetChannel } from "./flocNet";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2 },
+    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3 },
     about: "The depth at the centre of one full filament of the dust network, magnitudes of A_V; 0 no network. Illustrative.",
   },
   {
@@ -63,7 +63,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.6 }, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
   {
-    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.12 },
+    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
     about: "A cream tint over the inner disc's light, fading outward: the old disc of the photograph. Colour for appearance.",
   },
   { key: "warmRadius", label: "warmth radius", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 4.5, perTemplate: { ngc_4414: 3 }, about: "The radius at which the warm tint has fallen to 1/e, kpc. Colour for appearance." },
@@ -123,7 +123,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "nearBias", label: "near-side dust", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.3 }, about: "How much more dust lies toward the near-side azimuth (and less opposite): 1 twice the mean there, none opposite. Illustrative." },
   { key: "nearAz", label: "near-side azimuth", min: 0, max: 360, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: 300 }, about: "The galactocentric azimuth of the most dust, degrees. Illustrative." },
   { key: "litScale", label: "light cloud size", min: 40, max: 1500, step: 10, unit: "pc", default: 220, perTemplate: { ngc_4414: 120 }, about: "The size of the cream clouds of light between the dust, parsecs. Illustrative." },
-  { key: "litKnots", label: "bright grains", min: 0, max: 3, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 2 }, about: "How bright the brightest of the light's grains are (the grain's peaks, in the clump tint). Illustrative." },
+  { key: "litKnots", label: "bright grains", min: 0, max: 3, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 1.4 }, about: "How bright the brightest of the light's grains are (the grain's peaks, in the clump tint). Illustrative." },
   { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.3 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
   // S106 second pass (C3): the light's grain and its radial colour, drawn in the march (no rebuild).
   { key: "litGrain", label: "light grain", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.6 }, about: "The plane style: how far the starlight between the dust is broken into small bright puffs (a multiplier about 1); 0 smooth. Illustrative." },
@@ -136,7 +136,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The veil's depth saturates softly toward this many magnitudes: the thickest dust stays a deep red-brown, never black. Colour for appearance.",
   },
   {
-    key: "nucleus", label: "nucleus cream", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+    key: "nucleus", label: "nucleus cream", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.25 },
     about: "A cream-yellow tint over the nucleus's light (its march draws a blue-cyan core under the stretch): 0 none, 1 full. Colour for appearance.",
   },
   // S106: the star clouds (flocClouds.ts, FlocClouds.tsx), a points layer of the feature's own, drawn in the plane style.
@@ -241,7 +241,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "dustArmPhase", label: "dust arm phase", min: 0, max: 360, step: 1, unit: "°", default: 0, about: "The dust arms turned about the centre, degrees; a network seed other than its default turns them further by golden-angle steps (a rerolled galaxy's arms lie elsewhere). (S109) Illustrative." },
   { key: "dustArmWander", label: "dust arm wander", min: 0, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.25 }, about: "How far a band wanders across the spiral, as a share of the spacing. (S109) Illustrative." },
   { key: "dustArmBreak", label: "dust arm breaks", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0.65 }, about: "How far a band is broken along its length into stronger and weaker stretches. (S109) Illustrative." },
-  { key: "dustArmLit", label: "light between dust arms", min: 0, max: 4, step: 0.05, unit: "×", default: 0, perTemplate: { ngc_4414: 1 }, about: "The light's puffs and bright grains made this much stronger between the bands (the star clouds' zones), weaker in them. (S109) Illustrative." },
+  { key: "dustArmLit", label: "light between dust arms", min: 0, max: 4, step: 0.05, unit: "×", default: 0, perTemplate: { ngc_4414: 1.5 }, about: "The light's puffs and bright grains made this much stronger between the bands (the star clouds' zones), weaker in them. (S109) Illustrative." },
   { key: "dustArmFrom", label: "dust arms from", min: 0, max: 10, step: 0.1, unit: "kpc", default: 0.8, about: "The bands come in over this radius, kpc (the dust inside as drawn). (S109) Illustrative." },
   // S109 (B2): the bands as swarms of the crisp narrow lanes (their number and depth), not a smooth veil.
   { key: "dustArmGaps", label: "dust arm lanes", min: 0, max: 0.6, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.2 }, about: "How far the bands set how many narrow lanes there are: the lanes' gap level raised by this between the bands (lanes broken away) and lowered on them (a swarm of lanes); 0 the lanes as drawn. (S109) Illustrative." },
