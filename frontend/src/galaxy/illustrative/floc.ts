@@ -24,7 +24,7 @@
 
 import { createElement, lazy, Suspense } from "react";
 import { ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllLayerProps, type IllParams, memoOn } from "./feature";
-import type { CloudShape } from "./flocClouds";
+import { type CloudShape, cloudsOf } from "./flocClouds";
 import { FLOC_ARRAYS, FLOC_MAP, type FlocShape, SHAPE_KEYS, buildFlocChannel, geometryOf } from "./flocMap";
 import { buildNetChannel } from "./flocNet";
 
@@ -37,7 +37,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { ngc_4414: 0.6 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
-  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 2.6 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
+  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 3 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0 }, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
     key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
@@ -92,20 +92,36 @@ const CONTROLS: readonly IllControl[] = [
     key: "style", label: "network style", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "0: S105's strands and lace on spiral lattices; 1: S106's network drawn in the disc's plane - feathered dust clouds on short spiral arcs and cream clouds of light between them. Illustrative.",
   },
-  { key: "netScale", label: "dust cloud size", min: 60, max: 1500, step: 10, unit: "pc", default: 350, perTemplate: { ngc_4414: 250 }, about: "The plane style's dust clouds' size, parsecs (finer octaves ride on them). Illustrative." },
-  { key: "netWarp", label: "dust curl", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, perTemplate: { ngc_4414: 1 }, about: "How far the plane is pushed about before the dust is drawn, as a share of the cloud size: the pieces curl and feather. Illustrative." },
-  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.56 }, about: "The level of the plane style's noise under which there is no dust: higher, less dust and wider gaps. Illustrative." },
-  { key: "netSoft", label: "dust softness", min: 0.01, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.12 }, about: "How softly a dust cloud's edge fades out. Illustrative." },
-  { key: "netFeather", label: "dust feathers", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.9 }, about: "How far the dust is broken into feathered ridges and holes (a ridged noise); 0 smooth clouds. Illustrative." },
-  { key: "netArc", label: "dust on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.9 }, about: "How far the dust keeps to short arcs on the drawn spiral (the flocculent pattern); 0 anywhere. Illustrative." },
-  { key: "arcWidth", label: "arc width", min: 100, max: 3000, step: 10, unit: "pc", default: 500, perTemplate: { ngc_4414: 350 }, about: "An arc's width across the spiral, parsecs. Illustrative." },
-  { key: "arcStretch", label: "arc length", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 5 }, about: "An arc's length along the spiral over its width. Illustrative." },
-  { key: "netDepth", label: "dust drawn", min: 0, max: 4, step: 0.01, unit: "×", default: 1.6, perTemplate: { ngc_4414: 1.6 }, about: "The plane style's drawn depth, in full filaments (the network depth scales it again, without a rebuild). Illustrative." },
+  { key: "netScale", label: "dust piece size", min: 60, max: 1500, step: 10, unit: "pc", default: 350, perTemplate: { ngc_4414: 350 }, about: "The plane style: the size of the noise that cuts the threads into pieces, parsecs (a piece is about this long). Illustrative." },
+  { key: "netWarp", label: "dust wiggle", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, perTemplate: { ngc_4414: 0.5 }, about: "How far the plane is pushed about before the threads are drawn, as a share of their spacing: a thread wanders (much above 1, it curls). Illustrative." },
+  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.42 }, about: "The level of the pieces' noise under which a thread is broken: higher, shorter pieces and wider gaps. Illustrative." },
+  { key: "netSoft", label: "dust softness", min: 0.01, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.1 }, about: "How softly a piece's ends fade out. Illustrative." },
+  { key: "netFeather", label: "dust feathers", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.6 }, about: "How far a thread's width swells into knots and thins to hairs along it; 0 an even width. Illustrative." },
+  { key: "netArc", label: "dust on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.85 }, about: "How far the threads gather into broad arcs on the drawn spiral (lighter disc between); 0 even. Illustrative." },
+  { key: "arcWidth", label: "arc width", min: 100, max: 3000, step: 10, unit: "pc", default: 500, perTemplate: { ngc_4414: 600 }, about: "A broad arc's width across the spiral, parsecs. Illustrative." },
+  { key: "arcStretch", label: "arc length", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 6 }, about: "A broad arc's length along the spiral over its width. Illustrative." },
+  { key: "netDepth", label: "dust drawn", min: 0, max: 4, step: 0.01, unit: "×", default: 1.6, perTemplate: { ngc_4414: 2.4 }, about: "The plane style's drawn depth, in full filaments (the network depth scales it again, without a rebuild). Illustrative." },
+  // S106 second pass (C3): the plane style's threads and the dust's amount by place.
+  { key: "filSpacing", label: "thread spacing", min: 40, max: 1500, step: 5, unit: "pc", default: 220, perTemplate: { ngc_4414: 200 }, about: "The plane style: the spacing of the dust threads across the spiral, parsecs (the finer wisps at half of it). Illustrative." },
+  { key: "filRun", label: "thread run", min: 1, max: 30, step: 0.1, unit: "×", default: 8, perTemplate: { ngc_4414: 11 }, about: "How many times longer along the spiral than their spacing the threads' noise cells are: longer, straighter arcs. Illustrative." },
+  { key: "wisps", label: "wisps", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.8 }, about: "The finer wisps between the threads, as a share of a thread's depth; 0 none. Illustrative." },
+  { key: "ringIn", label: "dust ring from", min: 0, max: 1, step: 0.01, unit: "× outer", default: 0.25, about: "The dust comes in to its full amount at this share of the network's outer radius (the nuclear region inside holds the nuclear dust's share of it). Illustrative." },
+  { key: "ringOut", label: "dust ring to", min: 0, max: 1, step: 0.01, unit: "× outer", default: 0.7, about: "The dust thins from this share of the outer radius to the outer dust's share of its amount near the edge. Illustrative." },
+  { key: "core", label: "nuclear dust", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, about: "The dust's amount in the nuclear region, as a share of the ring's. Illustrative." },
+  { key: "rim", label: "outer dust", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "The dust's amount in the outer disc, as a share of the ring's. Illustrative." },
+  { key: "nearBias", label: "near-side dust", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.4 }, about: "How much more dust lies toward the near-side azimuth (and less opposite): 1 twice the mean there, none opposite. Illustrative." },
+  { key: "nearAz", label: "near-side azimuth", min: 0, max: 360, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: 60 }, about: "The galactocentric azimuth of the most dust, degrees. Illustrative." },
   { key: "litScale", label: "light cloud size", min: 40, max: 1500, step: 10, unit: "pc", default: 220, perTemplate: { ngc_4414: 120 }, about: "The size of the cream clouds of light between the dust, parsecs. Illustrative." },
-  { key: "litKnots", label: "bright knots", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "How many small bright knots the clouds of light hold (drawn with the clump glow). Illustrative." },
+  { key: "litKnots", label: "bright grains", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "How bright the brightest of the light's grains are (the grain's peaks, in the clump tint). Illustrative." },
   { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.3 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
+  // S106 second pass (C3): the light's grain and its radial colour, drawn in the march (no rebuild).
+  { key: "litGrain", label: "light grain", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.6 }, about: "The plane style: how far the starlight between the dust is broken into small bright puffs (a multiplier about 1); 0 smooth. Illustrative." },
+  { key: "litGrainSize", label: "grain size", min: 10, max: 300, step: 1, unit: "pc", default: 40, about: "A puff of the light's grain, parsecs (a finer one at under half of it rides on it). Illustrative." },
+  { key: "litGrainNear", label: "grain by the dust", min: 0, max: 5, step: 0.05, unit: "×", default: 1.5, about: "How much stronger the grain is just outside a dust thread (the young light along the arcs). Illustrative." },
+  { key: "cool", label: "outer blue", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.5 }, about: "The plane style: a blue-white tint over the outer disc's light, from the outer blue's radius outward (warm cream inside). Colour for appearance." },
+  { key: "coolRadius", label: "outer blue from", min: 0.5, max: 20, step: 0.1, unit: "kpc", default: 5, about: "The tint is none at 0.7 of this radius and full at 1.5 of it, kpc. Colour for appearance." },
   {
-    key: "cap", label: "dust ceiling", min: 0.1, max: 20, step: 0.05, unit: "mag", default: 20, perTemplate: { ngc_4414: 0.9 },
+    key: "cap", label: "dust ceiling", min: 0.1, max: 20, step: 0.05, unit: "mag", default: 20, perTemplate: { ngc_4414: 1.1 },
     about: "The veil's depth saturates softly toward this many magnitudes: the thickest dust stays a deep red-brown, never black. Colour for appearance.",
   },
   {
@@ -114,19 +130,22 @@ const CONTROLS: readonly IllControl[] = [
   },
   // S106: the star clouds (flocClouds.ts, FlocClouds.tsx), a points layer of the feature's own, drawn in the plane style.
   {
-    key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 20000 },
+    key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 6000 },
     about: "How many points the star clouds hold (in the plane style only): loose groups over the bright light between the dust, densest in the outer disc; 0 none. Illustrative.",
   },
   { key: "cloudGain", label: "star cloud brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 3000, perTemplate: { ngc_4414: 6000 }, about: "The faintest star cloud point's light, L☉ over the white point (the field's scale, with the exposure). Illustrative." },
   { key: "cloudRange", label: "star cloud range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 20, about: "The brightest star cloud point over the faintest. Illustrative." },
   { key: "cloudSlope", label: "star cloud slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.3, about: "The brightness law's index: smaller, more bright points. Illustrative." },
   { key: "cloudSize", label: "star cloud point size", min: 0.5, max: 4, step: 0.1, unit: "px", default: 1.5, about: "A star cloud point's sprite, pixels. Illustrative." },
-  { key: "cloudGroup", label: "star cloud size", min: 10, max: 800, step: 5, unit: "pc", default: 120, about: "A star cloud's gaussian radius, parsecs (each between half and one and a half of it). Illustrative." },
-  { key: "cloudMembers", label: "star cloud members", min: 1, max: 60, step: 1, unit: "", default: 8, about: "A star cloud's mean number of points. Illustrative." },
-  { key: "cloudStart", label: "star clouds from", min: 0, max: 2, step: 0.01, unit: "× outer", default: 0.7, perTemplate: { ngc_4414: 0.35 }, about: "Where the star clouds come in to their full number, as a multiple of the network's outer radius (a quarter of it inside). Illustrative." },
-  { key: "cloudReach", label: "star cloud reach", min: 0.5, max: 3, step: 0.01, unit: "× outer", default: 1.5, perTemplate: { ngc_4414: 1 }, about: "How far the star clouds reach, as a multiple of the network's outer radius, the edge pushed in and out by a noise: a ragged rim. Illustrative." },
+  { key: "cloudGroup", label: "star cloud size", min: 10, max: 800, step: 5, unit: "pc", default: 120, perTemplate: { ngc_4414: 70 }, about: "A star cloud's gaussian radius, parsecs (each between half and one and a half of it). Illustrative." },
+  { key: "cloudMembers", label: "star cloud members", min: 1, max: 60, step: 1, unit: "", default: 8, perTemplate: { ngc_4414: 12 }, about: "A star cloud's mean number of points. Illustrative." },
+  { key: "cloudStart", label: "star clouds from", min: 0, max: 2, step: 0.01, unit: "× outer", default: 0.7, perTemplate: { ngc_4414: 0.5 }, about: "Where the star clouds come in to their full number, as a multiple of the network's outer radius (a quarter of it inside). Illustrative." },
+  { key: "cloudReach", label: "star cloud reach", min: 0.5, max: 3, step: 0.01, unit: "× outer", default: 1.5, perTemplate: { ngc_4414: 0.85 }, about: "How far the star clouds reach, as a multiple of the network's outer radius, the edge pushed in and out by a noise: a ragged rim. Illustrative." },
   { key: "cloudBlue", label: "star cloud blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 1, about: "How far the outer clouds' colour goes from cream to blue-white. Colour for appearance." },
   { key: "cloudWarmR", label: "star cloud cream radius", min: 0.5, max: 20, step: 0.1, unit: "kpc", default: 5, about: "The clouds are cream inside 0.6 of this radius and blue-white outside 1.6 of it, kpc. Colour for appearance." },
+  { key: "cloudRich", label: "star cloud sectors", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.6 }, about: "How far the star clouds keep to two or three rich stretches about the star cloud azimuth; 0 all round. Illustrative." },
+  { key: "cloudAz", label: "star cloud azimuth", min: 0, max: 360, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: 320 }, about: "The galactocentric azimuth of the richest star clouds, degrees. Illustrative." },
+  { key: "cloudGlow", label: "star cloud glow", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.6 }, about: "A soft glow under each star cloud's group (the map's clump level: the clump glow's gain and tint); 0 none. Illustrative." },
   { key: "nucleusRadius", label: "nucleus radius", min: 0.05, max: 5, step: 0.01, unit: "kpc", default: 0.8, about: "The radius at which the nucleus's tint has fallen to 1/e, kpc. Colour for appearance." },
 ];
 
@@ -139,16 +158,7 @@ export function shapeOf(p: IllParams): FlocShape {
 
 /** The star clouds' shaping values among the feature's own. */
 export function cloudShapeOf(p: IllParams): CloudShape {
-  const v = (k: string) => p[k] ?? DEFAULTS[k];
-  return {
-    count: v("cloudCount"),
-    groupPc: v("cloudGroup"),
-    members: v("cloudMembers"),
-    reach: v("cloudReach"),
-    start: v("cloudStart"),
-    slope: v("cloudSlope"),
-    range: v("cloudRange"),
-  };
+  return cloudsOf(shapeOf(p));
 }
 
 // The e2e tools type-check this registry without JSX (e2e/tsconfig.json): the drawing is a .tsx they never load.
@@ -208,6 +218,28 @@ export const floc: IllFeature = {
   uniform float illFlocNuc;
   uniform float illFlocNucR;
   uniform float illFlocStyle;
+  uniform float illFlocGrain;
+  uniform float illFlocGrainS;
+  uniform float illFlocGrainNear;
+  uniform float illFlocKnots;
+  uniform float illFlocCool;
+  uniform float illFlocCoolR;
+  // S106 (C3): value noise over the plane in [0, 1], its lattice at the integers (a hash of the cell, computed: no texture read).
+  float illFlocHash(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
+  float illFlocVN(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = illFlocHash(i);
+    float b = illFlocHash(i + vec2(1.0, 0.0));
+    float c = illFlocHash(i + vec2(0.0, 1.0));
+    float d = illFlocHash(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+  }
   // The feature's byte of the shared map read (flocMap.ts: signed about 128): x the dust, sqrt(shape / ${MAX}); y the
   // patches' level about their mean, in [-0.5, 0.5] (0, which changes nothing, where the light is not known: under a
   // filament, beyond the light's reach, where there is no map - a byte of 0 is never written); z a young clump's
@@ -252,7 +284,24 @@ export const floc: IllFeature = {
       veil *= exp(-av * law);
     }
     // The patches: the light swelled and thinned about the patches' mean level.
-    if (illFlocStyle > 0.5) veil *= (1.0 + illFlocPatch * map.y) / (1.0 + 0.5 * illFlocPatch);
+    if (illFlocStyle > 0.5) {
+      veil *= (1.0 + illFlocPatch * map.y) / (1.0 + 0.5 * illFlocPatch);
+      // S106 (C3): the light's grain - small bright puffs, stronger just outside a dust thread (the map read 60 pc in
+      // and out along the radius: the threads run mostly along the azimuth), none on the dust itself.
+      if (illFlocGrain > 0.0 && rp.x < rHi) {
+        vec2 xy = rp.x * vec2(cos(rp.y), sin(rp.y)) / max(illFlocGrainS, 1e-3);
+        float n = 0.6 * illFlocVN(xy) + 0.4 * illFlocVN(mat2(0.6, -0.8, 0.8, 0.6) * xy * 2.31 + vec2(7.3, 1.9));
+        float puff = smoothstep(0.42, 0.86, n);
+        float side = max(illFlocRead(rp + vec2(0.06, 0.0)).x, illFlocRead(rp - vec2(0.06, 0.0)).x);
+        float bare = 1.0 - smoothstep(0.0, 0.25, map.x);
+        float amt = illFlocGrain * (1.0 + illFlocGrainNear * smoothstep(0.05, 0.35, side)) * bare;
+        veil *= max(1.0 + amt * (puff - 0.3), 0.0);
+        float peak = illFlocKnots * amt * smoothstep(0.8, 0.95, n);
+        veil *= vec3(1.0) + peak * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);
+      }
+      // S106 (C3): the outer disc's light toward a blue-white, the inner left cream.
+      if (illFlocCool > 0.0) veil *= mix(vec3(1.0), vec3(0.84, 0.97, 1.24), illFlocCool * smoothstep(0.7 * illFlocCoolR, 1.5 * illFlocCoolR, rp.x));
+    }
     else veil *= max(1.0 + illFlocPatch * map.y, 0.0);
     // The clumps: brighter, toward a blue-white.
     veil *= vec3(1.0) + illFlocClump * map.z * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);
@@ -289,6 +338,12 @@ export const floc: IllFeature = {
       illFlocNuc: p.nucleus ?? DEFAULTS.nucleus,
       illFlocNucR: p.nucleusRadius ?? DEFAULTS.nucleusRadius,
       illFlocStyle: p.style ?? DEFAULTS.style,
+      illFlocGrain: p.litGrain ?? DEFAULTS.litGrain,
+      illFlocGrainS: (p.litGrainSize ?? DEFAULTS.litGrainSize) * 1e-3,
+      illFlocGrainNear: p.litGrainNear ?? DEFAULTS.litGrainNear,
+      illFlocKnots: p.litKnots ?? DEFAULTS.litKnots,
+      illFlocCool: p.cool ?? DEFAULTS.cool,
+      illFlocCoolR: p.coolRadius ?? DEFAULTS.coolRadius,
     };
   },
 };

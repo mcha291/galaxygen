@@ -13,16 +13,25 @@ const G: FlocGeometry = { rHi: RHI, pitchDeg: 20, gas: null, pattern: null, gasP
 const SHAPE = shapeOf(paramsOf(floc, illDefaults("ngc_4414")));
 
 describe("the star clouds", () => {
-  it("places NGC 4414's points in groups, more of them outside than inside, fast", () => {
+  it("places NGC 4414's points in groups in the outer disc, inside its edge, fast", () => {
     const p = paramsOf(floc, illDefaults("ngc_4414"));
     const t0 = performance.now();
     const c = buildClouds(G, SHAPE, cloudShapeOf(p));
     const ms = performance.now() - t0;
-    console.log(`star clouds: ${c.weight.length} points, ${ms.toFixed(0)} ms`);
+    console.log(`star clouds: ${c.weight.length} points in ${c.groups.length} groups, ${ms.toFixed(0)} ms`);
     expect(c.weight.length).toBeGreaterThan(0.8 * p.cloudCount);
+    expect(c.groups.length).toBeGreaterThan(20);
     let outside = 0;
-    for (let i = 0; i < c.x.length; i += 1) if (Math.hypot(c.x[i], c.y[i]) > 0.7 * SHAPE.outerRadius) outside += 1;
-    expect(outside / c.x.length).toBeGreaterThan(0.5);
+    let beyond = 0;
+    const edge = SHAPE.cloudReach * SHAPE.outerRadius;
+    for (let i = 0; i < c.x.length; i += 1) {
+      const r = Math.hypot(c.x[i], c.y[i]);
+      if (r > 0.45 * SHAPE.outerRadius) outside += 1;
+      if (r > 1.1 * edge) beyond += 1;
+    }
+    expect(outside / c.x.length).toBeGreaterThan(0.6);
+    // Hardly anything past the disc's edge: a few stragglers of a group's spread at most.
+    expect(beyond / c.x.length).toBeLessThan(0.02);
     expect(ms).toBeLessThan(1500);
     expect(cloudShapeOf(paramsOf(floc, illDefaults("milky_way"))).count).toBe(0);
   });
@@ -34,7 +43,7 @@ describe("the network drawn in the plane", () => {
     expect(shapeOf(paramsOf(floc, illDefaults("milky_way"))).style).toBe(0);
   });
 
-  it("is isotropic in the small: the dust's change over 60 pc along the azimuth and along the radius alike", () => {
+  it("draws threads along the spiral: the dust changes more over 30 pc along the radius than along the azimuth", () => {
     const net = netSampler(G, SHAPE);
     let along = 0;
     let across = 0;
@@ -45,15 +54,14 @@ describe("the network drawn in the plane", () => {
       const x = r * Math.cos(phi);
       const y = r * Math.sin(phi);
       const d0 = net.dust(x, y);
-      const h = 0.06;
+      const h = 0.03;
       along += Math.abs(net.dust(x - Math.sin(phi) * h, y + Math.cos(phi) * h) - d0);
       across += Math.abs(net.dust(x + Math.cos(phi) * h, y + Math.sin(phi) * h) - d0);
       n += 1;
     }
     expect(along / n).toBeGreaterThan(0);
-    // Within a factor 1.6 either way (S105's lace: five times smoother along than across).
-    expect(along / across).toBeGreaterThan(1 / 1.6);
-    expect(along / across).toBeLessThan(1.6);
+    // Thin threads at a low pitch: much sharper across the rings than along them.
+    expect(across / along).toBeGreaterThan(1.8);
   });
 
   it("covers a share of the disc with dust and leaves light between, both from the one channel, in under 0.4 s", () => {
