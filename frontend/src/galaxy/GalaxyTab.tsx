@@ -754,7 +754,11 @@ export function GalaxyTab({
   const framingLive = framingParams
     ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)},${standTilt(framingParams)}`
     : "1,0,0,0";
-  const framingOf = `${templateName}:${viewLook}`;
+  // S107 GL: keyed on the drawn galaxy's template (illTemplate, the held one during a landing's hold), as look.ill is.
+  // Keyed on the live template it changed at the click, so the framing settled during the hold was the held galaxy's,
+  // and at the swap the new galaxy's stand was drawn first with the old framing and 300 ms later with its own: two
+  // canvases per landing from the Milky Way to NGC 4414, the first lost within a second, its programs compiled for nothing.
+  const framingOf = `${illTemplate}:${viewLook}`;
   const [framingAt, setFramingAt] = useState({ of: framingOf, v: framingLive });
   useEffect(() => {
     if (framingAt.of === framingOf && framingAt.v === framingLive) return;
