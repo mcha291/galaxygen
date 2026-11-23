@@ -211,7 +211,7 @@ describe("the patched shaders (S105): anchors found once, the physical sources u
   it("composes the neutral stubs: no A_V, a young gain of 1, the edge's taper", () => {
     const g = illGlsl();
     expect(g).toContain("float illDustAv(vec2 rp) { return illLanesAv(rp) + illFlocAv(rp); }");
-    expect(g).toContain("float illYoungGain(vec2 rp) { return illEdgeYoung(rp) * illArmsYoung(rp); }");
+    expect(g).toContain("float illYoungGain(vec2 rp) { return illEdgeYoung(rp) * illArmsYoung(rp) * illFlocYoung(rp); }");
     expect(g).toContain("float illEdge(float r) { return illEdgeTaper(r); }");
   });
 });
