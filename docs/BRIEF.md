@@ -4,10 +4,11 @@
 close-ups, and no slider freezes the view any more.** Under the **illustrative look** (the default) the Milky Way is a
 balanced spiral opening outward from the bar's ends, patchy pale blue-white arms on a periwinkle disc, ragged red-pink
 regions in bunches and complexes on braided brown lanes, a pale cream bar. NGC 4414 is a flocculent disc of many narrow
-broken dust lanes round a bright nucleus in a golden inner disc, star clouds at the rim, no brushing. **Still far:** the Milky Way's inner arms do not hug the bar's ends (an empty lavender zone),
-its bar too orange, its lanes browner and broader than the goal's threads, soft round blue blobs between the arms close
-up (a second reader's); NGC 4414's lanes lighter and less prominent than the photograph's, fingerprint stripes near the
-nucleus, the disc an even grey-white to the rim where the photograph's dims and turns blue (a second reader's). Frames:
+broken dust lanes round a bright nucleus in a golden inner disc, star clouds at the rim, no brushing. **Still far:**
+the Milky Way's inner arms do not hug the bar's ends (an empty lavender zone), its bar too orange, its lanes browner
+and broader than the goal's threads, soft round blue blobs between the arms close up (the arm grain's soft sprite,
+traced, not mended); NGC 4414's lanes lighter and less prominent than the photograph's, fingerprint stripes near the
+nucleus, the outer disc grey-white to the rim where the photograph's dims and turns blue (a second reader's). Frames:
 `docs/pictures/s107/`; words and numbers: `READING_PICTURES.md` Part S107. The physical look is unchanged.
 
 ## TWO THINGS ONLY YOU CAN RULE, AND THE OK TO ENTER THEM (#238, #239; nothing waits on them)
@@ -41,10 +42,10 @@ dust the mesh on narrow lanes, the threads off (S106's pick reversed). 24. `arms
 lesser arms at 0.7 of the majors. 26. the regions' veil. 27. S107's frames plain pictures. 28. #238 / #239 still yours.
 
 ## Known defects and what the next session does (`BUILD_VIII.md` section 6)
-- **MENDED at S107:** the slider stalls (every move's longest frame gap now 17-33 ms; the map built in a worker) and
-  the `glGetProgramiv` warnings (a second canvas per landing; one canvas now). Left: 0.6-1.1 s from a settled map
-  slider to the picture. NGC 4414's brushing was the layer's own threads and grain (the lead had guessed the model).
-  Next: your tuning, your rulings; then the forms listed under "Still far" above.
+- **MENDED at S107:** the slider stalls (longest frame gap 17-50 ms against `main`'s 277-379; the map built in a
+  worker; memory as `main`'s after the reviewer's fix) and the `glGetProgramiv` warnings (a second canvas per landing;
+  0 lines against `main`'s 12). Left: the picture completes 0.35-3 s after a move. NGC 4414's brushing was the layer's
+  own threads and grain (the lead had guessed the model). Next: your tuning, your rulings; then "Still far" above.
 
 ## Parked, waiting on your word (nothing here touched them)
 `batch-r` 699629c (S104, D274: green, stacked on `batch-q`, one stage-B re-read of `test_s100_bar_length` owed; it

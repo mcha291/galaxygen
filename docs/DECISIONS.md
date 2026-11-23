@@ -19254,7 +19254,34 @@ regions' veil (premultiplied blending under `knots.place` 1): a drawing choice s
 0 is the plain additive light. (27) The illustrative frames remain unpinned; S107's two frames are committed as plain
 pictures in `docs/pictures/s107/`. (28) #238 and #239 still wait for the owner's word; nothing was entered.
 
-**The independent review:** (the lead adds this)
+**The independent review** (an Opus reviewer that built none of it, on 7c6c394 — before NGC 4414's third pass and the
+lead's last values, which the lead read itself): **no blocker.** (i) The physical look against `main`'s OWN build
+(`git archive main frontend interface`, built and served beside the branch's): eight states byte-identical (both
+templates at the default stand, a close stand, the stars mode, an exposure off the default) and seven swap steps
+frame-identical at rest (land, two template switches, physics only on and off, a reroll and Generate, the mode switched
+while generating); under the physical look no illustrative worker is ever created and no job posted; the same number
+of canvases on both builds. (ii) Rule D1 under the illustrative look: the sliders' probe ten times over, 8,253 frames
+sampled after 20 template switches, 0 showing another galaxy's map or sparkle; a harsher probe of the reviewer's own (a
+template switch, a double switch within 60 ms, a look switch off and on, a reroll and Generate, a slider moved during a
+landing, each started while a map job was in flight), 0 wrong in three passes, and after each the picture at rest
+byte-identical to a fresh page load at the same values; an independent check by the map's uploaded bytes on NGC 4414
+never showed the Milky Way's map. (iii) **One defect found and fixed by the reviewer** (1139310): the map client kept up
+to 64 superseded 7.2 MB planes alive (a strong map of seeded values); the ArrayBuffer memory after ten look round
+trips, five template round trips and forty lane moves was 661 MB before the fix, 215 MB after, 208 MB on `main`; a test
+added. (iv) Reported and then mended by builder F: a map worker that fails froze the layer (an answered error was never
+retried and left "rebuilding" on; an uncaught throw fell back to the main thread for the page's life with no message; a
+silent death left the map never updating), now a watchdog, a new worker, a fallback build so the picture always
+arrives, and a visible line in the panel; and NGC 4414's thread sliders (`floc.filSpacing`, `floc.netScale`) still
+rebuilt the plane and re-uploaded 28.8 MB while its threads are off, and now rebuild nothing. (v) Captures run to run:
+each of the six look frames and two custom stands 15 times, one distinct file each; the one black frame and the
+wandering stand two builders saw were not reproduced. (vi) Cost: the settled march's GPU time the same as `main`'s
+(the Milky Way illustrative 36 ms, NGC 4414 132 ms; physical 23 and 32 ms); the slider stalls' longest frame gap 17 to
+50 ms against `main`'s 277 to 379 ms; the picture complete 0.35 to 3 s after a move; the Milky Way's cold first load
+15.5 s against `main`'s 14.1 s (the server's share dominates), warm 2.1 s against 2.3 s. (vii) The `glGetProgramiv`
+burst: 0 lines on the branch, 12 on `main` in the same live probe. (viii) Read and found sound: the regions' veil
+blending (no sky pixel darker or brighter by more than 3 of 255), clamped divisions, bounded loops, every plane memo
+named, nothing under `model/`, the pinned fragment or `docs/pictures` touched before the close's own pictures. For
+information: the worker's bundle is 561 kB; the plane-memo test reaches only the paths of the two templates' defaults.
 
 **The frames beside the goals** (`READING_PICTURES.md` Part S107). **The Milky Way** is a balanced spiral: two major
 arms leave the bar's ends and open outward, with fainter lesser arms between; the arms a patchy pale blue-white grain on
@@ -19270,31 +19297,40 @@ inner disc, blue-white star clouds at the rim, field stars; close up, dark filam
 crisp grainy star field, no brushing. Still unlike it: the lanes lighter and less prominent than the photograph's at
 full frame; near the nucleus they read a little like parallel fingerprint stripes; no broad pale tan veils inside the
 lanes; the near-side rim still shows a faint dark smeared texture close up; the dark fraction 0.185 against 0.157. A
-second reader (the documents' writer, who built none of it) adds what the lead's words do not: the Milky Way's disc
-sits smaller in the frame than S106's (the tool's radius 386 px against 415), and its close view carries many soft
-round blue blobs between the arms, like out-of-focus lights, that the goal has not; NGC 4414's disc is an even
-grey-white from the golden centre to the rim, where the photograph's outer disc dims and turns blue, and its close view
-is a uniform sand-like grain with little colour between the lanes (`READING_PICTURES.md` section 36). **Plainly: S106
+second reader (the documents' writer, who built none of it) added what the lead's words do not, and the lead acted
+on it before the final capture: the Milky Way's disc sat smaller in the frame than S106's (the tool's radius 386 px
+against 415), now met with `framing.scale` 0.9 to 0.84 (about 88 % of the frame again, 411 px); NGC 4414 read greyer
+than the photograph, an even grey-white to the rim where the photograph's outer disc dims and turns blue, now met in
+part with `grade.saturation` 1 to 1.15 (warmer in the middle; the rim still grey-white; 1.25 measured a colour step
+further from the goal's); the many soft round blue blobs between the Milky Way's arms close up, like out-of-focus
+lights, were traced by the lead and **not mended**: they are the arm grain's own points (they vanish with
+`arms.sparkle` 0 and stay with every other sparkle, the regions and the clustered young light off), whose soft sprite
+reads as a disc at close range (`READING_PICTURES.md` section 36). **Plainly: S106
 made both frames their goal's composition; S107 makes both close-ups read as their goal's close-ups. What remains is
 strength and balance (the owner's sliders can reach most of it) and a few forms.**
 
 The yardstick (`tools/goal_metrics.py`, re-measured on the two committed frames; goal / S106 / S107): the Milky Way
 (`--axis-ratio 1`) Δ(B−R) −0.354 / −0.259 / −0.067 (inner and outer B−R −0.459 / −0.813 goal, −0.429 / −0.688 S106,
-−0.642 / −0.709 S107), A₂ 0.194 / 0.125 / 0.163, A₃ 0.059 / 0.133 / 0.040, arm over inter-arm 1.83 / 2.14 / 2.13, dark
-fraction 0.0066 / 0.0081 / 0.0060, slope −1.99 / −2.38 / −1.77; NGC 4414 (the tool's geometry) Δ(B−R) −0.274 / −0.491 /
-−0.371, A₂ 0.068 / 0.069 / 0.042, arm over inter-arm 2.72 / 1.95 / 1.63, dark fraction 0.157 / 0.229 / 0.185, slope
-−2.09 / −1.83 / −2.25. Nearer: the Milky Way's A₂ and A₃ (m = 2 again the strongest), its dark fraction and slope;
-NGC 4414's dark fraction and colour step. **Further:** the Milky Way's colour step (−0.067 against −0.354: the step
-between the tool's inner and outer annuli has shrunk although the sampled patches match the goal's hues; **not
-understood**); NGC 4414's A₂ and arm contrast fell (the broad bands carried them; the lanes are now the photograph's
-kind but lighter and less prominent).
+−0.637 / −0.704 S107), A₂ 0.194 / 0.125 / 0.164, A₃ 0.059 / 0.133 / 0.039, arm over inter-arm 1.83 / 2.14 / 2.11, dark
+fraction 0.0066 / 0.0081 / 0.0060, slope −1.99 / −2.38 / −1.75; NGC 4414 (the tool's geometry) Δ(B−R) −0.274 / −0.491 /
+−0.425 (inner and outer +0.508 / +0.234 goal, +0.629 / +0.138 S106, +0.722 / +0.297 S107), A₂ 0.068 / 0.069 / 0.042,
+arm over inter-arm 2.72 / 1.95 / 1.64, dark fraction 0.157 / 0.229 / 0.185, slope −2.09 / −1.83 / −2.25. Nearer: the
+Milky Way's A₂ and A₃ (m = 2 again the strongest), its dark fraction and slope; NGC 4414's dark fraction, colour step
+and outer colour. **Further:** the Milky Way's colour step (−0.067 against −0.354: the step between the tool's inner
+and outer annuli has shrunk although the sampled patches match the goal's hues; **not understood**: the first
+capture, with the disc smaller and the tool's radius 386 px, read −0.067 too, so the disc's size was not the reason);
+NGC 4414's inner colour (+0.722, further from the goal's +0.508 than S106's +0.629: the saturation's gain went mostly
+into the centre); NGC 4414's A₂ and arm contrast fell (the broad bands carried them; the lanes are now the
+photograph's kind but lighter and less prominent).
 
 **Not mended, carried in `BRIEF.md` and `BUILD_VIII.md` section 6.** (a) #238's physical fix and #239, the owner's,
 and the OK to enter both. (b) The Milky Way: the inner arms hugging the bar's ends, the lesser arms' strength against
 the two-armed measure, the bar's hue and its end clusters, finer redder lanes, the colour step's measure. (c) NGC 4414:
 lanes as prominent as the photograph's without the dark fraction rising, pale veils inside them, the fingerprint
-stripes near the nucleus, the rim's faint smear. (d) The latency: 0.6 to 1.1 s from a settled map slider to the
-picture (the debounce and the worker); the arms' planes about 0.3 s. (e) A third template would want its own preset.
+stripes near the nucleus, the rim's faint smear, the outer disc's grey-white. (d) The Milky Way's soft blue blobs close
+up (the arm grain's own soft sprite: a sharper sprite, or a size that does not grow at close range). (e) The latency:
+0.6 to 1.1 s from a settled map slider to the picture in the builder's measure (the debounce and the worker), 0.35 to
+3 s from a move in the reviewer's; the arms' planes about 0.3 s. (f) A third template would want its own preset.
 
 **What did not move.** No byte under `model/galaxy` (the hash 5a862a70d3760c426ca51c2cffa2b0c2); the pinned fragment
 unchanged; no committed frame, `frames.json` or thumbnail; the picture test's nine physical frames byte for byte at
@@ -19302,5 +19338,6 @@ every builder's hand-back and on the merged head; the register (115 open = 50 + 
 reserved, not entered; `tests/test_audit.py` untouched); `batch-r`, `batch-q-lanes`, `q-231` untouched and unmerged.
 Next: #240 (#238 and #239 reserved), D279. The two frames of this close, the merged head's capture:
 `docs/pictures/s107/milky_way-illustrative.png` (sha256
-c329822aab71b9f9f09f792c873073b625c5236587f98d39a691cb12f8711e3f) and `docs/pictures/s107/ngc_4414-illustrative.png`
-(sha256 10a8bb1ad5bd3e9041ae8de5f15d4c25f4c1851874c90a547ba5006109ba31ce).
+803204f71cfbabab43102652380a0cec10b87daf8c85181b88a18b0d497d2e4b) and `docs/pictures/s107/ngc_4414-illustrative.png`
+(sha256 9f8b2f3f1ccae6fd6c2aa50d4e2fb86e6a07e45a0c428381788530a99e7cb03c), re-captured after the lead's two last
+values (`framing.scale` 0.84 on the Milky Way, `grade.saturation` 1.15 on NGC 4414).

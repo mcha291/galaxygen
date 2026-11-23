@@ -123,12 +123,15 @@ strength and balance, most of it within the owner's sliders, and a few forms; th
    round the bar); the lesser arms' strength against the two-armed measure (ruling 25); the bar's hue (36 against the
    goal's 46) and its end clusters; finer, redder lanes (ours hue 30 against 11, broader, zigzagging close up); the
    colour step's measure (Δ(B−R) −0.067 against −0.354 although the sampled patches match: find what the tool's
-   annuli see). The second reader's: the disc sits smaller in the frame than S106's, and the close view carries soft
-   round blue blobs between the arms that the goal has not.
+   annuli see; not the disc's size in the frame, which was restored with the step unchanged). The soft round blue blobs
+   between the arms close up (a second reader's), traced by the lead to the arm grain's own soft sprite
+   (`arms.sparkle`): a sharper sprite, or a size that does not grow at close range.
 3. **NGC 4414**: lanes as prominent as the photograph's without the dark fraction rising (0.185 against 0.157; A₂
-   0.042 and arm contrast 1.63 against 0.068 and 2.72); pale tan veils inside them; the fingerprint stripes near the
-   nucleus; the rim's faint smear. The second reader's: the disc an even grey-white to the rim where the photograph's
-   outer disc dims and turns blue, and the close view a uniform grey grain with little colour.
-4. **Latency**: 0.6 to 1.1 s from a settled map slider to the picture (the 250 ms debounce and the worker); the arms'
-   planes about 0.3 s.
+   0.042 and arm contrast 1.64 against 0.068 and 2.72); pale tan veils inside them; the fingerprint stripes near the
+   nucleus; the rim's faint smear. The second reader's: the outer disc a bright grey-white to an abrupt edge where the
+   photograph's dims and turns blue (`grade.saturation` 1.15 warmed the middle, not the rim, and moved the inner
+   colour further from the goal's), and the close view a uniform grain.
+4. **Latency**: 0.35 to 3 s from a move to the complete picture (the reviewer's measure; 0.6 to 1.1 s from a settled
+   map slider in the builder's: the 250 ms debounce and the worker); the arms' planes about 0.3 s. The view itself no
+   longer stalls (longest frame gap 17 to 50 ms).
 5. **A third template** would want its own preset (a skeleton or a plane-style network).

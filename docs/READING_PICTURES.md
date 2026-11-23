@@ -817,7 +817,11 @@ Way's skeleton opens outward with its lesser arms spaced evenly between the majo
 regions are bunched into ragged complexes under a veil, its lanes split and rejoin, and its colour was matched to the
 goal patch by patch. NGC 4414's dust is a field of many narrow broken lanes drawn by the march's mesh, the map's threads
 off; the brushing S106's second reader saw (section 32) was traced to the layer's own threads and grain, not to the
-model's star contrast as the lead had guessed; the rim's fringe and a white patch right of the nucleus are gone.
+model's star contrast as the lead had guessed; the rim's fringe and a white patch right of the nucleus are gone. After
+a first reading of the frames by the documents' writer (section 36), the lead changed two values and re-captured:
+the Milky Way's `framing.scale` 0.9 to 0.84 (the disc across about 88 % of the frame again, the corners black) and
+NGC 4414's `grade.saturation` 1 to 1.15 (1.25 was tried and measured a colour step further from the goal's). The
+frames committed and measured below are the re-captured ones.
 
 ## 34. The yardstick on S107's frames
 
@@ -831,22 +835,25 @@ radius, in each picture's own pixels (the goals are larger pictures than the 102
 |---|---|---|---|---|---|---|---|---|---|
 | GOAL `milky_way` | −0.354 (−0.459 / −0.813) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 | 1 (set) | 2006 |
 | illustrative, S106 | −0.259 (−0.429 / −0.688) | 0.076 | 0.125 | 0.133 | 2.14 | 0.0081 | −2.38 | 1 (set) | 415 |
-| **illustrative, S107** | −0.067 (−0.642 / −0.709) | 0.053 | 0.163 | 0.040 | 2.13 | 0.0060 | −1.77 | 1 (set) | 386 |
+| **illustrative, S107** | −0.067 (−0.637 / −0.704) | 0.052 | 0.164 | 0.039 | 2.11 | 0.0060 | −1.75 | 1 (set) | 411 |
 | GOAL `ngc_4414` (the tool's geometry) | −0.274 (+0.508 / +0.234) | 0.099 | 0.068 | 0.055 | 2.72 | 0.157 | −2.09 | 0.512 | 664 |
 | illustrative, S106 | −0.491 (+0.629 / +0.138) | 0.083 | 0.069 | 0.043 | 1.95 | 0.229 | −1.83 | 0.506 | 427 |
-| **illustrative, S107** | −0.371 (+0.631 / +0.260) | 0.079 | 0.042 | 0.037 | 1.63 | 0.185 | −2.25 | 0.504 | 399 |
+| **illustrative, S107** | −0.425 (+0.722 / +0.297) | 0.079 | 0.042 | 0.037 | 1.64 | 0.185 | −2.25 | 0.504 | 399 |
 
-Nearer: the Milky Way's A₂ (0.125 to 0.163 against 0.194) and A₃ (0.133 to 0.040 against 0.059: m = 2 is again its
-strongest harmonic, as the goal's is), its A₁, its dark fraction (0.0060 against 0.0066) and its slope (−1.77 against
+Nearer: the Milky Way's A₂ (0.125 to 0.164 against 0.194) and A₃ (0.133 to 0.039 against 0.059: m = 2 is again its
+strongest harmonic, as the goal's is), its A₁, its dark fraction (0.0060 against 0.0066) and its slope (−1.75 against
 −1.99, now a little short of the goal's where S106's was past it); NGC 4414's dark fraction (0.229 to 0.185 against
-0.157), its colour step (−0.371 against −0.274) and its outer colour (+0.260 against +0.234). Further: **the Milky
-Way's colour step** (−0.067 against −0.354, from −0.259): its inner annulus is now bluer than the goal's (−0.642
-against −0.459) while its outer is redder (−0.709 against −0.813), although MW3's patch-by-patch table matched the
-goal's hues; **not understood** (BUILD_VIII section 6 item 2: find what the tool's annuli see). The tool's radius
-estimate for the Milky Way frame fell from 415 to 386 px, so the annuli lie at other places on the disc than at S106;
-whether that explains the step was not measured. NGC 4414's A₂ (0.069 to 0.042 against 0.068) and its arm contrast
-(1.95 to 1.63 against 2.72) fell: the broad bands carried them, and the narrow lanes are lighter and less prominent
-than the photograph's. The Milky Way's arm contrast did not move (2.13 against 1.83).
+0.157), its colour step (−0.491 to −0.425 against −0.274) and its outer colour (+0.297 against +0.234, from +0.138).
+Further: **the Milky Way's colour step** (−0.067 against −0.354, from −0.259): its inner annulus is now bluer than the
+goal's (−0.637 against −0.459) while its outer is redder (−0.704 against −0.813), although MW3's patch-by-patch table
+matched the goal's hues; **not understood** (BUILD_VIII section 6 item 2: find what the tool's annuli see). The first
+capture of the close, with the disc smaller in the frame, gave the tool a radius of 386 px and the same step, −0.067;
+the re-capture brings the radius back to 411 px (S106's 415) and the step is still −0.067, so the smaller disc was not
+the reason. NGC 4414's inner colour (+0.722 against +0.508) is further from the goal's than S106's (+0.629): the
+higher saturation warms the centre more than the rim (the first capture at saturation 1 read −0.371, +0.631 / +0.260).
+NGC 4414's A₂ (0.069 to 0.042 against 0.068) and its arm contrast (1.95 to 1.64 against 2.72) fell: the broad bands
+carried them, and the narrow lanes are lighter and less prominent than the photograph's. The Milky Way's arm contrast
+did not move (2.11 against 1.83).
 
 ## 35. What a viewer sees, in the lead's words (the lead looked at the final frames and close-ups beside both goals)
 
@@ -870,7 +877,7 @@ texture close up; the dark fraction 0.185 against 0.157.
 goal's close-ups. What remains is strength and balance (the owner's sliders can reach most of it) and a few forms
 (`BUILD_VIII.md` section 6).
 
-The frames: `docs/pictures/s107/` (committed; sha256 c329822a... and 10a8bb1a..., in D278). The close-ups and the
+The frames: `docs/pictures/s107/` (committed; sha256 803204f7... and 9f8b2f3f..., in D278). The close-ups and the
 builders' sheets are local, under `docs/goals/` in the session's worktrees (never committed).
 
 ## 36. A second reader (the documents' writer, who built none of it)
@@ -881,17 +888,29 @@ lead's words: the Milky Way's arms now leave the bar's ends and open outward ins
 are bunched clumps and ragged complexes, no longer beads on a string; its lanes braid; the bar is warmer and more
 orange than the goal's cream; the zone round the bar is an empty lavender; NGC 4414's brushing is gone, its lanes
 narrow, broken and lighter than the photograph's, and near the nucleus they run as concentric fingerprint stripes; its
-near-side rim close up is a dark smear. What the lead's words do not say:
+near-side rim close up is a dark smear. What the lead's words do not say, first read on the close's first capture and
+read again on the re-captured frames committed here:
 
-- **The Milky Way's disc sits smaller in the frame than S106's**: it spans roughly 80 % of the frame's width where
-  S106's spanned nearly 90 %, with more dark navy margin, and the tool's radius estimate fell from 415 to 386 px.
+- **The Milky Way's disc sat smaller in the frame than S106's** (about 80 % of the frame's width against nearly 90 %;
+  the tool's radius 386 px against 415). **Acted on and met:** the lead set `framing.scale` 0.84; in the committed
+  frame the disc spans about 88 % of the width again with black corners, and the tool reads 411 px.
 - **The Milky Way's close view carries many soft round blue blobs** between the arms, like out-of-focus lights; the
-  goal has nothing of the kind, and they read as the frame's most artificial mark at that range.
+  goal has nothing of the kind, and they read as the frame's most artificial mark at that range. **Traced by the lead
+  by capture and not mended:** they vanish with `arms.sparkle` 0 and stay with `arms.sparklebig` 0, `knots.sparkle` 0,
+  the regions off, the clustered young light off (`clumpsInMarch` false) and `arms.sparklerange` cut from 60 to 10:
+  they are the arm grain's own points, whose sprite is soft and reads as a disc at close range. The close-up beside
+  the re-captured frames still shows them unchanged; left for the next session (a sharper sprite, or a size that does
+  not grow at close range).
 - **The Milky Way's lanes close up zigzag** in sharp short kinks, darker and more opaque than the goal's soft threads.
-- **NGC 4414's disc is an even grey-white from the golden centre to the rim**: the photograph's outer disc dims and turns
-  blue-grey with darker dust between the clouds, so ours reads paler and flatter, with a more abrupt edge.
-- **NGC 4414's close view is a uniform sand-like grain** with little colour in it: the light between the lanes is grey,
-  neither the photograph's warm inner tan nor its blue-white clumps, and a few pale round blotches sit in it.
-- **Worse than S106**, besides the measures in section 34: NGC 4414's warm inner disc is paler and less saturated, and
-  its dust no longer carries the brown warmth across the middle of the disc that S106's (combed) threads gave, so the
-  whole disc reads greyer than both S106's and the photograph's.
+  Not acted on; unchanged.
+- **NGC 4414's disc reads greyer than the photograph**: an even grey-white from the golden centre to the rim, where the
+  photograph's outer disc dims and turns blue-grey with darker dust between the clouds, so ours reads paler and
+  flatter, with a more abrupt edge. **Acted on in part:** `grade.saturation` 1.15. In the re-captured frame the middle of
+  the disc is a warmer tan and the close view's grain carries some cream, so it reads less grey; **not met**: the outer
+  disc is still a bright grey-white to an abrupt edge rather than dimming and turning blue, and the extra saturation
+  went mostly into the centre (inner B−R +0.631 to +0.722, further from the goal's +0.508; the step −0.371 to −0.425,
+  further from −0.274).
+- **NGC 4414's close view is a uniform sand-like grain**, with a few pale round blotches in it: the light between the
+  lanes is evenly grained, neither the photograph's crisp clumps nor its broad smooth veils. Warmer now, still uniform.
+- **Worse than S106**, besides the measures in section 34: NGC 4414's dust no longer carries the strong brown warmth
+  across the middle of the disc that S106's (combed) threads gave.
