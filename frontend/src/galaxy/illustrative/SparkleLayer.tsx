@@ -49,8 +49,11 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
       floor: params.sparklefloor ?? 0,
       lift: params.sparklelift ?? 0,
       avoid: params.sparkleavoid ?? 0,
+      bunch: params.sparklebunch ?? 0,
+      bunchPc: params.sparklebunchsize ?? 400,
+      bunchBright: params.sparklebunchbright ?? 0,
     }),
-    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift, params.sparkleavoid],
+    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift, params.sparkleavoid, params.sparklebunch, params.sparklebunchsize, params.sparklebunchbright],
   );
   // S106: the shared map (its R the lanes), read only while the sparkle keeps off the lanes.
   const mapTex = (shape.avoid ?? 0) > 0 ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as { image?: { data?: ArrayLike<number>; width?: number; height?: number } } | undefined) : undefined;

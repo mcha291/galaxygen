@@ -1,6 +1,6 @@
 // S106: the sparkle's two sizes, its lift on weak ridges, its floor between the arms and its keeping off the lanes.
 import { describe, expect, it } from "vitest";
-import { buildSparkle, laneShapeAt, sparkleTiers, tierIndices, type SparkleShape } from "./armsSparkle";
+import { buildSparkle, bunchNoise, laneShapeAt, sparkleTiers, tierIndices, type SparkleShape } from "./armsSparkle";
 
 const g = { nR: 40, nPhi: 36, rHi: 20 };
 /** An arm map (RGBA, index (j nR + i) 4, G the share) with one weak ridge (0.3) along phi cells 0-5, nothing else. */
@@ -50,5 +50,20 @@ describe("the sparkle's S106 shaping (armsSparkle.ts)", () => {
     expect(laneShapeAt(lanes, 10, (30 / 360) * 2 * Math.PI)).toBe(4);
     const kept = buildSparkle(map, g, { ...shape, lift: 0.3, avoid: 1 }, 7, raw, lanes);
     expect([...kept.azimuth].some((p) => p >= (20 / 360) * 2 * Math.PI && p < (40 / 360) * 2 * Math.PI)).toBe(false);
+  });
+
+  it("bunching gathers the points where the noise is high, deterministically; 0 the even grain (S106 B5)", () => {
+    const { map, raw } = maps();
+    const plain = buildSparkle(map, g, { ...shape, lift: 0.3 }, 7, raw);
+    expect(buildSparkle(map, g, { ...shape, lift: 0.3, bunch: 0, bunchBright: 0 }, 7, raw)).toEqual(plain);
+    const s = { ...shape, lift: 0.3, bunch: 1, bunchPc: 500, bunchBright: 1 };
+    const lumpy = buildSparkle(map, g, s, 7, raw);
+    expect(buildSparkle(map, g, s, 7, raw)).toEqual(lumpy);
+    const meanNoise = (sp: typeof plain) => {
+      let t = 0;
+      for (let i = 0; i < sp.radius.length; i++) t += bunchNoise((sp.radius[i] * Math.cos(sp.azimuth[i])) / 0.5, (sp.radius[i] * Math.sin(sp.azimuth[i])) / 0.5);
+      return t / sp.radius.length;
+    };
+    expect(meanNoise(lumpy)).toBeGreaterThan(meanNoise(plain) + 0.05);
   });
 });

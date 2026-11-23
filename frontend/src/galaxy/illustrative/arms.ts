@@ -254,7 +254,7 @@ export const arms: IllFeature = {
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
-      key: "sparkle", label: "sparkle points", min: 0, max: 400000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 80000, ngc_4414: 70000 },
+      key: "sparkle", label: "sparkle points", min: 0, max: 400000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 110000, ngc_4414: 70000 },
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
@@ -310,11 +310,23 @@ export const arms: IllFeature = {
       about: "The bright sparkle points' sprite, pixels (S106). Illustrative.",
     },
     {
+      key: "sparklebunch", label: "sparkle bunching", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
+      about: "The sparkle's density modulated along the arms by a fixed smooth noise of the wavelength below (the viewer's own): bunches of points with thinner stretches between; 0 an even grain. Illustrative (S106).",
+    },
+    {
+      key: "sparklebunchsize", label: "bunch wavelength", min: 50, max: 3000, step: 10, unit: "pc", default: 400, perTemplate: { milky_way: 300 },
+      about: "The bunching noise's wavelength, pc. Illustrative (S106).",
+    },
+    {
+      key: "sparklebunchbright", label: "bunch brightness", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2 },
+      about: "The points in a bunch brighter (up to 1 + this at the noise's peak), those between dimmer; 0 none. Illustrative (S106).",
+    },
+    {
       key: "sparklefall", label: "sparkle falloff", min: 0, max: 10, step: 0.1, unit: "× h", default: 2, perTemplate: { milky_way: 2, ngc_4414: 3 },
       about: "The sparkle's brightness falls outward as exp(-R / (this times the published thin-disc scale length)) from the arms' start, as the disc's own light does; 0 no falloff. Illustrative.",
     },
     {
-      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 21, ngc_4414: 10 },
+      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 19, ngc_4414: 10 },
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
@@ -354,7 +366,7 @@ export const arms: IllFeature = {
       about: "Where the skeleton's major arms end, kpc (the lesser arms a little inside): the winding's extent. Illustrative (S106).",
     },
     {
-      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.12 },
+      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.25 },
       about: "The outer share of each arm's length (in ln R) over which it fades and breaks into flecks. Illustrative (S106).",
     },
     {
@@ -446,7 +458,7 @@ export const arms: IllFeature = {
       about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
     },
     {
-      key: "skelcoreblue", label: "inner slate", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8 },
+      key: "skelcoreblue", label: "inner slate", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.1 },
       about: "The same inner zone (round the bar, off its ellipse, over the same ramp) tinted toward a slate blue by this share; 0 none. Colour for appearance (S106).",
     },
     {

@@ -8,7 +8,7 @@
 // handful of members in a small gaussian; the rest single points against the same density. Brightness: a power law
 // (many faint, few bright), the group's brightest at its centre.
 
-import { smoothstep, type ArmGrid } from "./armsField";
+import { latticeHash, smoothstep, type ArmGrid } from "./armsField";
 
 /** mulberry32: a small seeded generator, the same sequence for the same seed on every machine. */
 export function rng(seed: number): () => number {
@@ -63,6 +63,33 @@ export interface SparkleShape {
    * shared map's lanes (buildSparkle's `lanes`) lie - since the lanes' veil darkens the march, not the points; 0 none.
    */
   avoid?: number;
+  /**
+   * S106 (B5, the lumpy grain): the density modulated along the disc by a fixed smooth noise of wavelength `bunchPc`
+   * (two octaves of value noise in the plane, hashed - never the rng's stream), by this share: bunches of points with
+   * thinner stretches between, as the goal's arms have; 0 (or absent) the even grain.
+   */
+  bunch?: number;
+  /** S106: the bunching noise's wavelength, pc. */
+  bunchPc?: number;
+  /** S106: the points in a bunch brighter by up to 1 + this (the noise's peak), the thin stretches dimmer; 0 none. */
+  bunchBright?: number;
+}
+
+/** A smooth value noise in [0, 1] at plane point (x, y) in lattice units (two octaves, the second half as strong). */
+export function bunchNoise(x: number, y: number): number {
+  const octave = (u: number, v: number, salt: number): number => {
+    const i = Math.floor(u);
+    const j = Math.floor(v);
+    const fu = u - i;
+    const fv = v - j;
+    const su = fu * fu * (3 - 2 * fu);
+    const sv = fv * fv * (3 - 2 * fv);
+    const h = (a: number, b: number) => latticeHash(a + salt, b - salt);
+    const top = h(i, j) * (1 - su) + h(i + 1, j) * su;
+    const bottom = h(i, j + 1) * (1 - su) + h(i + 1, j + 1) * su;
+    return top * (1 - sv) + bottom * sv;
+  };
+  return (2 * octave(x, y, 7919) + octave(2.03 * x + 0.5, 2.03 * y + 0.25, 104729)) / 3;
 }
 
 /** The shared map's lane plane as buildSparkle reads it: RGBA bytes (R the lanes, lanesMap.ts's sqrt(shape / 4)). */
@@ -147,8 +174,15 @@ export function buildSparkle(
       : (r: number, phi: number) => shareAt(map, g, r, phi);
   const avoid = lanes ? Math.min(1, Math.max(0, s.avoid ?? 0)) : 0;
   const clear = avoid > 0 && lanes ? (r: number, phi: number) => Math.max(0, 1 - avoid * Math.min(1, laneShapeAt(lanes, r, phi))) : () => 1;
+  const bunch = Math.min(1, Math.max(0, s.bunch ?? 0));
+  const bunchBright = Math.max(0, s.bunchBright ?? 0);
+  const lattice = Math.max(0.01, (s.bunchPc ?? 400) / 1000);
+  const noiseAt = (r: number, phi: number) => bunchNoise((r * Math.cos(phi)) / lattice, (r * Math.sin(phi)) / lattice);
+  // The bunching: 3 n^2 has a mean near 1 over the noise, so the count of points per arm is about kept.
+  const lumps = bunch > 0 ? (r: number, phi: number) => 1 - bunch + bunch * 3 * noiseAt(r, phi) ** 2 : () => 1;
+  const lift2 = bunchBright > 0 ? (r: number, phi: number) => Math.max(0.2, 1 + bunchBright * (2 * noiseAt(r, phi) - 1)) : () => 1;
   const density = (r: number, phi: number) =>
-    clear(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
+    clear(r, phi) * lumps(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
   const place = (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {
@@ -186,6 +220,7 @@ export function buildSparkle(
     weight[k] = brightness(next(), s.slope, s.range);
     k++;
   }
+  if (bunchBright > 0) for (let i = 0; i < k; i++) weight[i] *= lift2(radius[i], azimuth[i]);
   return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
 }
 
