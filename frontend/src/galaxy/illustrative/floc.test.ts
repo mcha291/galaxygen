@@ -507,8 +507,24 @@ describe("the fall-off and the dust arms (S109, builder B)", () => {
     expect(mw.illFlocFallB[2]).toBe(0);
     const ngc = fallBandUniforms(own("ngc_4414"));
     expect(ngc.illFlocFall[0]).toBeGreaterThan(0);
-    expect(ngc.illFlocBandA[0]).toBe(3);
+    expect(ngc.illFlocBandA[0]).toBe(4);
     expect(ngc.illFlocFall[2]).toBeGreaterThan(ngc.illFlocFall[1]);
+    // S109 (B2): the bands' lanes, near side and spread off on the Milky Way, on on NGC 4414.
+    expect([mw.illFlocBandC[2], mw.illFlocBandC[3], mw.illFlocBandD[0]]).toEqual([0, 0, 0]);
+    expect(ngc.illFlocBandC[2]).toBeGreaterThan(0);
+    expect(ngc.illFlocBandD[0]).toBeGreaterThan(0);
+  });
+  it("makes a band a swarm of the crisp lanes (S109 B2): the lanes' gap level set by the band, the crest's depth on the filaments only", () => {
+    const glsl = floc.glsl ?? "";
+    // The gap level is the lanes' own exactly where the bands or their lanes are off (a template without them bit for bit).
+    expect(glsl).toContain("float gl = illFlocLaneB.w;");
+    expect(glsl).toContain("illFlocLaneSet(rp, xy, illFlocLaneA.y, illFlocLaneA.z, 1.3, gl)");
+    // The crest's depth applied after the gate and before the lanes' smooth veil is added; the band's own multiplier at most 1.
+    const veil = glsl.slice(glsl.indexOf("vec3 illFlocVeil("));
+    const deep = veil.indexOf("av *= mix(1.0, illFlocBandB.y, band.y)");
+    expect(deep).toBeGreaterThan(veil.indexOf("av *= gate;"));
+    expect(deep).toBeLessThan(veil.indexOf("illFlocLaneC.z * ring"));
+    expect(glsl).toContain("mix(illFlocBandB.x, 1.0, e1)");
   });
   it("declares every uniform it hands over and is called by the veil, the dust and the points hook", () => {
     const glsl = floc.glsl ?? "";

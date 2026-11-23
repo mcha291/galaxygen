@@ -29,12 +29,12 @@ describe("the points' edge (S108)", () => {
     expect(points.uniforms?.({ edge: 0.25 }, { template: null, frame: null })).toEqual({ illPointsEdge: 0.25, illPointsCap: 0 });
   });
 
-  it("takes the edge's taper: whole inside radius - width, nothing from the radius on (NGC 4414: 6 and 16 kpc, S109)", () => {
+  it("takes the edge's taper: whole inside radius - width, nothing from the radius on (NGC 4414: 2 and 16 kpc, S109 B2)", () => {
     // The GLSL's twin (edge.ts edgeRamp) at NGC 4414's defaults.
     const d = illDefaults("ngc_4414");
     const at = (r: number) => edgeRamp(r, Math.min(d["edge.radius"], 30), d["edge.width"]);
-    expect(at(5.9)).toBe(1);
-    expect(at(11)).toBeCloseTo(0.5, 6);
+    expect(at(1.9)).toBe(1);
+    expect(at(9)).toBeCloseTo(0.5, 6);
     expect(at(16)).toBe(0);
     expect(at(20)).toBe(0);
   });

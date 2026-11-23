@@ -45,7 +45,7 @@ export const base: IllFeature = {
   about: "The disc under the arms: the gas fluctuation map's brushed threads smoothed or made cloudy, and the disc's light lifted toward its edge.",
   controls: [
     {
-      key: "grain", label: "gas grain", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 0.5 },
+      key: "grain", label: "gas grain", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 1 },
       about: "The gas fluctuation map on the dust taken toward its mean: 0 the dust smooth (no streaks), 1 the model's map. Illustrative.",
     },
     {
@@ -77,7 +77,7 @@ export const base: IllFeature = {
       about: "The diffuse dust thinned toward the centre by this many decades at the centre, smoothly to none at the core radius: the nucleus shines through. Illustrative.",
     },
     {
-      key: "coreRadius", label: "core radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1, perTemplate: { ngc_4414: 2.5 },
+      key: "coreRadius", label: "core radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1,
       about: "Where the core clearing ends, kpc (a smoothstep from the centre). Illustrative.",
     },
     {
