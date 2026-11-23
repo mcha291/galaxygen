@@ -27,6 +27,8 @@ interface LookCapture {
   combination?: Record<string, unknown>;
   exposure?: number;
   viewport?: number;
+  /** S107: another stand than the template's (GalaxyView's capture probe `place`), about a point of the disc if `target` is given. */
+  stand?: { inclination_deg: number; azimuth_deg: number; radius_kpc: number; fov_deg?: number; target?: { radius_kpc: number; azimuth_deg: number } };
 }
 
 const here = (name: string) => fileURLToPath(new URL(name, import.meta.url));
@@ -56,7 +58,7 @@ function captures(): LookCapture[] {
 }
 
 declare const window: Window & {
-  __galaxygenCapture?: { picture(): { png: string; width: number; height: number } };
+  __galaxygenCapture?: { picture(): { png: string; width: number; height: number }; place(view: object, target?: object): void };
   __galaxygenFrameSum?: () => { sum: number[] };
   __galaxygenPsfPending?: () => number;
 };
@@ -158,6 +160,10 @@ for (const capture of captures()) {
     await expect(page.getByRole("button", { name: "illustrative", exact: true })).toHaveAttribute("aria-pressed", capture.look === "illustrative" ? "true" : "false");
     if (capture.exposure !== undefined) await page.getByRole("slider", { name: "Exposure", exact: true }).fill(String(capture.exposure));
     await squareCanvas(page, capture.viewport ?? 1024);
+    if (capture.stand) {
+      const { target, ...view } = capture.stand;
+      await page.evaluate(([v, t]) => window.__galaxygenCapture!.place(v as object, t as object | undefined), [view, target] as const);
+    }
     const png = await settle(page, net, mode);
     mkdirSync(OUT, { recursive: true });
     const path = join(OUT, `${capture.name}.png`);

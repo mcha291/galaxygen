@@ -29,6 +29,11 @@
 //               no separate young light and the hook reads nothing.
 //     edge      float f(float r): a multiplier on all emission (stars, bulge, dust's own light, HII, diffuse gas) and on
 //               the depths, at cylindrical radius r. Multiplied over features into illEdge(r).
+//     veil      vec3 f(vec2 rp) (S107): a per-channel multiplier on a ray's WHOLE light, read once per ray where it
+//               crosses the midplane (the march's thin screen, screenRP). Multiplied over features into illVeil(rp).
+//               A drawing laid over the picture - a lane inked in front of all the starlight, which a depth in the
+//               dust's thin layer cannot do (half the stars stand in front of it) - and so the march's alone: the
+//               points are not veiled.
 //   uniforms   (params, context) => values for its uniforms. Called at every change of a parameter or of the context
 //              (the template; the arrays' frame); a texture (DataTexture, built from context.frame) must be cached by the
 //              feature (feature.ts memoOn) and is handed to the march and every point's material through the same
@@ -139,7 +144,7 @@ export function illArrays(): string[] {
   return [...new Set(FEATURES.flatMap((f) => f.arrays ?? []))].sort();
 }
 
-const hookCall = (kind: "dustAv" | "youngGain" | "edge", arg: string, op: string, unit: string) => {
+const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil", arg: string, op: string, unit: string) => {
   const calls = FEATURES.map((f) => f.hooks?.[kind]).filter((n): n is string => Boolean(n)).map((n) => `${n}(${arg})`);
   return calls.length ? calls.join(` ${op} `) : unit;
 };
@@ -155,6 +160,7 @@ export function illGlsl(): string {
     `  float illDustAv(vec2 rp) { return ${hookCall("dustAv", "rp", "+", "0.0")}; }`,
     `  float illYoungGain(vec2 rp) { return ${hookCall("youngGain", "rp", "*", "1.0")}; }`,
     `  float illEdge(float r) { return ${hookCall("edge", "r", "*", "1.0")}; }`,
+    `  vec3 illVeil(vec2 rp) { return ${hookCall("veil", "rp", "*", "vec3(1.0)")}; }`,
     "",
   ].join("\n");
 }
@@ -180,6 +186,8 @@ export const MARCH_PATCHES: readonly Patch[] = [
       "        bulgeSub *= illE; starsLight *= illE; dustLight *= illE; hiiLight *= illE; digLight *= illE; tau *= illE; tauC *= illE;\n" +
       a,
   },
+  // S107: the veil, over the ray's whole light at the thin screen's point.
+  { anchor: "    gl_FragColor = vec4(light * gain, 1.0);", apply: (a) => a.replace("light * gain", "light * illVeil(screenRP) * gain") },
 ];
 
 /** The points' patches (FluxPoints' vertex shader): the layer's GLSL before dustTo, and its A_V on each segment. */
