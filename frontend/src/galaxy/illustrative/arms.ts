@@ -106,6 +106,8 @@ export const barOf = memoOn((frame: unknown) => {
 
 /** The bar's cream (unit mean at full share). */
 export const BAR_CREAM: readonly [number, number, number] = [1.16, 1.0, 0.72];
+/** The ground about the bar: a slate blue, less green than the arms' blue-white (unit mean at full share). */
+export const BAR_GROUND: readonly [number, number, number] = [0.84, 0.9, 1.26];
 
 /** A tint of unit mean: white mixed toward `toward` by `share`. */
 export function tint(toward: readonly [number, number, number], share: number): [number, number, number] {
@@ -162,7 +164,7 @@ export const arms: IllFeature = {
       about: "The most a ridge's light is multiplied. Illustrative.",
     },
     {
-      key: "young", label: "young between arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { milky_way: 0.3, ngc_4414: 0.15 },
+      key: "young", label: "young between arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { milky_way: 0.2, ngc_4414: 0.15 },
       about: "The clustered young light between the arms as a share of a full ridge's (its ring mean kept): lower gathers it onto the ridges; 1 leaves it as the model places it. Illustrative.",
     },
     {
@@ -266,12 +268,12 @@ export const arms: IllFeature = {
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
-      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.55, ngc_4414: 0 },
+      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.7, ngc_4414: 0 },
       about: "The inner disc's starlight about the bar (inside 1.6 of its scaled half-length, outside its ellipse) dimmed by this share, so the bar stands on a darker ground; 0 none. Illustrative (S105).",
     },
     {
-      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2, ngc_4414: 0 },
-      about: "The same ground about the bar tinted toward the arms' blue-white by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
+      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.5, ngc_4414: 0 },
+      about: "The same ground about the bar tinted toward a slate blue by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
     },
   ],
   arrays: ARMS_ARRAYS,
@@ -381,7 +383,7 @@ export function barUniforms(p: IllParams, frame: IllFrame | null) {
     illArmsBarOn: on ? 1 : 0,
     illArmsBar: [(bar?.halfLength ?? 1) * size, bar?.axisRatio ?? 1, bar?.angle ?? 0, glow] as [number, number, number, number],
     illArmsBarTint: tint(BAR_CREAM, warm),
-    illArmsBarGround: tint(ARM_BLUE, cool).map((v) => v * (1 - dim)) as [number, number, number],
+    illArmsBarGround: tint(BAR_GROUND, cool).map((v) => v * (1 - dim)) as [number, number, number],
   };
 }
 

@@ -12,6 +12,7 @@
   "captures": [
     { "name": "milky_way-physical", "template": "milky_way", "look": "physical" },
     { "name": "milky_way-illustrative", "template": "milky_way", "look": "illustrative" },
+    { "name": "milky_way-illustrative-close", "template": "milky_way", "look": "illustrative", "stand": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 5.5, "fov_deg": 45, "target": { "radius_kpc": 8.15, "azimuth_deg": 286.5 } } },
     { "name": "ngc_4414-physical", "template": "ngc_4414", "look": "physical" },
     { "name": "ngc_4414-illustrative", "template": "ngc_4414", "look": "illustrative" }
   ]

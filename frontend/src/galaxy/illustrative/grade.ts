@@ -18,7 +18,7 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -0.5, ngc_4414: -0.2 }, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -0.8, ngc_4414: -0.2 }, about: "The light's scale into the stretch, stops. Illustrative." },
   {
     key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 35, ngc_4414: 20 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",
@@ -28,18 +28,18 @@ const CONTROLS: readonly IllControl[] = [
     key: "knee", label: "shoulder knee", min: 0.3, max: 0.98, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.8, ngc_4414: 0.6 },
     about: "The stretched brightness (0 to 1) above which the curve rolls off toward full scale and the light drifts to a pale warm white; below it the curve is the stretch as it is. Illustrative.",
   },
-  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.7, ngc_4414: 2 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
+  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.9, ngc_4414: 2 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
   {
-    key: "faint", label: "faint fade", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3, ngc_4414: 0.12 },
+    key: "faint", label: "faint fade", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.1, ngc_4414: 0.12 },
     about: "The stretched brightness below which colour fades (to `faint colour` at nothing): the faintest light goes grey into the sky instead of a saturated fringe. 0 no fade. Illustrative.",
   },
   {
-    key: "faintsat", label: "faint colour", min: 0, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.2, ngc_4414: 0.3 },
+    key: "faintsat", label: "faint colour", min: 0, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6, ngc_4414: 0.3 },
     about: "The share of the saturation left at the faintest light, under the faint fade. Illustrative.",
   },
-  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 0.8, ngc_4414: 1.1 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
+  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 0.85, ngc_4414: 1.1 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
   {
-    key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.1, ngc_4414: 0.1 },
+    key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.14, ngc_4414: 0.1 },
     about: "A soft toe on the stretched luminance (each pixel's colour kept): the faint light about this level and under it taken smoothly down to a dark sky. Illustrative.",
   },
   { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.55, ngc_4414: -0.15 }, about: "Toward the warm tint (above 0) or the cool tint (below) over the whole picture. Colour for appearance." },
@@ -52,7 +52,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The stretched brightness (0 to 1) about which the split tone turns from cool to warm, over a quarter either side: high, only the brightest (a bar, a core) warm. Colour for appearance.",
   },
   {
-    key: "cool", label: "cool hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.3, ngc_4414: 0.2 },
+    key: "cool", label: "cool hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.1, ngc_4414: 0.2 },
     about: "The cool tint's colour: 0 sky blue, 1 lavender. Colour for appearance.",
   },
   {
