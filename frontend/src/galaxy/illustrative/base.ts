@@ -90,11 +90,11 @@ export const base: IllFeature = {
       about: "Where the handover is complete (a smoothstep from the angle above): the thin-screen drawings gone, the model's dust and bulge given back. Illustrative (S108).",
     },
     {
-      key: "grazeDust", label: "edge-on dust", min: 0, max: 4, step: 0.05, unit: "×", default: 1,
-      about: "The diffuse dust's placement once the handover is complete (in place of 'dust under it'): 1 the model's own, above it a darker edge-on lane. Illustrative (S108).",
+      key: "grazeDust", label: "edge-on dust", min: 0, max: 8, step: 0.05, unit: "×", default: 4,
+      about: "The diffuse dust's placement once the handover is complete (in place of 'dust under it'): 1 the model's own diffuse dust (its clouds' share is not drawn while the clouds' extinction is off, as the illustrative preset has it), above it a darker edge-on lane standing in for them. Illustrative (S108).",
     },
     {
-      key: "pointHeight", label: "edge-on point layer", min: 0, max: 0.5, step: 0.005, unit: "kpc", default: 0.1,
+      key: "pointHeight", label: "edge-on point layer", min: 0, max: 0.5, step: 0.005, unit: "kpc", default: 0.15,
       about: "The scale height the layer's midplane points (the star clouds, the regions) take as the handover goes on, kpc: a thin lit layer edge-on, not a line; none face-on. Illustrative (S108).",
     },
   ],
@@ -187,7 +187,7 @@ export const base: IllFeature = {
   uniforms: (p) => ({
     // S108: the handover's angles (index.ts GRAZE_GLSL's illGrazeAt), radians off the disc's axis.
     illGrazeAt: grazeAt(p.grazeFrom ?? GRAZE_FROM, p.grazeTo ?? GRAZE_TO),
-    illBaseGrazeDust: p.grazeDust ?? 1,
+    illBaseGrazeDust: p.grazeDust ?? 4,
     illBaseMend: p.mend ?? 1,
     illBaseCore: p.core ?? 0,
     illBaseCoreRadius: p.coreRadius ?? 1,

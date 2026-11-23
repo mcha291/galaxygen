@@ -607,9 +607,13 @@ export const floc: IllFeature = {
     float inked = smoothstep(0.25, 0.6, shape) * (1.0 + 0.5 * max(shape - 1.0, 0.0));
     return min(mix(shape, inked, illFlocHard), 2.0);
   }
+  // S108 (the grazing handover, index.ts illGraze): the ink's share (a veil on the thin screen, faded toward edge-on
+  // by the registry) handed to the dust's own layer as the ray grazes, so the edge-on disc keeps the network's dust as
+  // a lane in its layer rather than losing it with the veil.
   float illFlocAv(vec2 rp) {
-    if (illFlocDepth <= 0.0 || illFlocInk >= 1.0) return 0.0;
-    return illFlocDepth * (1.0 - illFlocInk) * illFlocShape(illFlocRead(rp).x) * (illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0);
+    float ink = illGraze >= 1.0 ? illFlocInk : illFlocInk * illGraze;
+    if (illFlocDepth <= 0.0 || ink >= 1.0) return 0.0;
+    return illFlocDepth * (1.0 - ink) * illFlocShape(illFlocRead(rp).x) * (illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0);
   }
   float illFlocYoung(vec2 rp) {
     if (illFlocYoungGain <= 0.0) return 1.0;

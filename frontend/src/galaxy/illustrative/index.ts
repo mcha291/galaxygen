@@ -344,6 +344,12 @@ export const MARCH_PATCHES: readonly Patch[] = [
   },
   // S107: the veil, over the ray's whole light at the thin screen's point.
   { anchor: "    gl_FragColor = vec4(light * gain, 1.0);", apply: (a) => a.replace("light * gain", "light * illVeil(screenRP) * gain") },
+  // S108: the young light's clustering ratios, a face-on map read on the thin screen like the veil (smeared along a
+  // grazing ray: the streaks of the edge-on frames), taken to 1 (the young light unclustered) toward edge-on.
+  {
+    anchor: "    vec3 screenClumps = youngClump > 0.5 ? clusterRatios(screenXY) : vec3(1.0);",
+    apply: (a) => `${a}\n    screenClumps = illGrazeMul3(screenClumps);`,
+  },
   // S106: the gas hook, on the screen's gas fluctuation map.
   {
     anchor: "    float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;",
