@@ -9,7 +9,13 @@ import type { ComponentType } from "react";
  * the e2e tools can import the registry): the header's scalars and the named arrays.
  */
 export interface IllFrame {
-  header: { scalars: Record<string, number>; [key: string]: unknown };
+  /**
+   * `inputs` is the galaxy's published input vector (its pattern_seed, texture_seed...). `illReroll` (S108, index.ts
+   * withIllReroll, stamped by GalaxyTab when the frame arrives; read-only): 0 where the galaxy's pattern_seed and
+   * texture_seed are its template's own, else a non-zero 32-bit hash of the two - the layer's own seeds follow it
+   * (index.ts illSeeded, the sparkle's stream), so each generated galaxy has its own drawing and the template's is today's.
+   */
+  header: { scalars: Record<string, number>; illReroll?: number; [key: string]: unknown };
   arrays: Record<string, Float64Array | Float32Array | BigInt64Array>;
 }
 
@@ -72,6 +78,11 @@ export interface IllHooks {
   veil?: string;
   /** `vec3 f(vec2 rp)`: a per-channel multiplier on the disc's starlight at rp (S108); multiplied over features. */
   light?: string;
+  /**
+   * `float f(vec2 rp)` (S108, the points' edge): a multiplier on every point FluxPoints draws, at the point's midplane
+   * place rp; multiplied over features. The points' vertex shader only (the march's emission is the edge hook's).
+   */
+  points?: string;
   /**
    * `float f(vec2 xy, float g)` (S106): the gas fluctuation map's value g at the face-on point xy (kpc, noise.glsl.ts's
    * frame) made the value the dust's placement is multiplied by; chained over features. Read where the map is drawn

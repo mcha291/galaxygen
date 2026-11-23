@@ -48,7 +48,7 @@ import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFram
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { TUNING_CONTROLS, type Tuning, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, saveTuning } from "./tuning";
+import { LOOK_SUSPENDED_WHAT, TUNING_CONTROLS, type Tuning, drawnLook, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, lookSuspended, saveTuning } from "./tuning";
 import {
   type IllContext,
   type Look,
@@ -58,11 +58,13 @@ import {
   illContextFor,
   ILL_SETTLE_MS,
   illEffective,
+  illSeeded,
   illStale,
   knotsReplaced,
   paramsOf,
   releaseRuntime,
   stepRuntime,
+  withIllReroll,
 } from "./illustrative";
 import { illMeasure, illNow } from "./illustrative/feature";
 import { illArrivals, illJobsPending, illMapFailure, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
@@ -338,9 +340,13 @@ export function GalaxyTab({
   label,
   physicsOnly,
   onPhysicsOnly,
-  look: viewLook = "physical",
+  look: storedLook = "physical",
   onLook,
 }: Props) {
+  // S108 (the lead's ruling): "physics only" draws the physical look whatever look is stored (tuning.ts drawnLook) -
+  // nothing of the illustrative layer runs, its tuning the physical look's own - and the stored look is kept.
+  const viewLook = drawnLook(storedLook, physicsOnly);
+  const lookHeldBack = lookSuspended(storedLook, physicsOnly);
   // The camera drawn (#188): the previous landing's while a landing's swap is under way, else the live one.
   const drawn = camera ?? { selection, preset, template };
   // The zoom slider's ask belongs to the camera it was made of: a template chosen or a preset pressed is a fresh
@@ -377,7 +383,7 @@ export function GalaxyTab({
   const setTuning = (t: Tuning, forLook: Look = viewLook) => {
     setTuningState({ of: templateName, look: forLook, t });
     saveTuning(t, undefined, templateName, forLook);
-    if (forLook !== viewLook) onLook?.(forLook);
+    if (forLook !== storedLook) onLook?.(forLook);
   };
   const illustrative = viewLook === "illustrative";
   // During a landing's hold (S82, #188's follow-up) the previous picture is drawn as it was: every value that only changes
@@ -681,7 +687,9 @@ export function GalaxyTab({
   const illParams = look.ill;
   const illNames = useMemo(() => (illustrative ? illArrays() : []), [illustrative]);
   const illArraysKey = illustrative && illNames.length > 0 ? JSON.stringify(["illustrative", illNames, query]) : null;
-  const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal)).value ?? null;
+  // S108: the frame stamped with the galaxy's reroll against its template's own seeds (index.ts withIllReroll).
+  const illOwnSeeds = template?.inputs.seeds ?? null;
+  const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal).then((f) => withIllReroll(f, illOwnSeeds))).value ?? null;
   // S107 (rule D1): during a landing's hold the drawn galaxy's template, as its parameters (look.ill) and its arrays are,
   // so the map is built and drawn for the galaxy on screen; the new one's when the swap publishes it.
   const illTemplate = held ?? templateName;
@@ -700,7 +708,8 @@ export function GalaxyTab({
     },
     [illustrative, illParams, illSettled, illContext],
   );
-  const illDrawnParams = illDrawn.ill;
+  // S108: the layer's own seeds follow the generated galaxy (index.ts illSeeded; the same object for the template's own).
+  const illDrawnParams = useMemo(() => illSeeded(illDrawn.ill, illContext), [illDrawn.ill, illContext]);
   // S106 (B4): the layers' context carries every feature's drawn parameters (IllContext.paramsOf), as the map builders' does.
   const illLayerContext = useMemo(() => illContextFor(illContext, illDrawnParams), [illContext, illDrawnParams]);
   const [illBuilt, setIllBuilt] = useState(0);
@@ -1030,10 +1039,11 @@ export function GalaxyTab({
             profile={look.clusterRadius ? 1 : 0}
             physical={physical}
             ill={illRuntime}
+            illEdged
           />
         )}
         {brightPoints && (
-          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} ill={illRuntime} />
+          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} ill={illRuntime} illEdged />
         )}
         {mode === "stars" && look.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
         {mode === "stars" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
@@ -1124,8 +1134,14 @@ export function GalaxyTab({
             </button>
             {/* The look (S105, D275): physical by default; illustrative draws the layer the Tuning panel's group names. */}
             {onLook && (
-              <button type="button" aria-pressed={illustrative} title={ILLUSTRATIVE_WHAT} onClick={() => onLook(illustrative ? "physical" : "illustrative")}>
-                illustrative
+              <button
+                type="button"
+                aria-pressed={storedLook === "illustrative"}
+                aria-label="illustrative"
+                title={lookHeldBack ? `${LOOK_SUSPENDED_WHAT}. ${ILLUSTRATIVE_WHAT}` : ILLUSTRATIVE_WHAT}
+                onClick={() => onLook(storedLook === "illustrative" ? "physical" : "illustrative")}
+              >
+                {lookHeldBack ? "illustrative (suspended)" : "illustrative"}
               </button>
             )}
           </div>
@@ -1412,6 +1428,7 @@ export function GalaxyTab({
         {physicsOnly && (
           <p className={styles.muted}>physics only: the randomness layer is off - no arm or bar is placed, the censuses lie uniformly round each ring, and each ring's totals are unchanged</p>
         )}
+        {lookHeldBack && <p className={styles.muted}>{LOOK_SUSPENDED_WHAT}</p>}
         {mode === "field" && interiorNote && <p className={styles.muted}>{interiorNote}</p>}
         {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
         {mode === "stars" && marchOn && look.compDust && look.dustReading === "where" && (

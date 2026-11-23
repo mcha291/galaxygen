@@ -616,6 +616,24 @@ export function saveLook(look: Look, storage: Pick<Storage, "setItem" | "removeI
   }
 }
 
+/**
+ * The look drawn (S108, the lead's ruling on "physics only"): "physics only" is a study of the physical model, and the
+ * illustrative layer is a drawing over the model's structure (the arms, the bar, the regions the synthetic layer
+ * places), so while it is on the view draws the PHYSICAL look - nothing of the layer runs, the frames the physical look's
+ * own - whatever look is stored. The stored look is not changed: physics only released, the stored look is drawn again.
+ */
+export function drawnLook(stored: Look, physicsOnly: boolean): Look {
+  return physicsOnly ? "physical" : stored;
+}
+
+/** Whether the stored look is set aside by "physics only" (the look's switch says so, S108). */
+export const lookSuspended = (stored: Look, physicsOnly: boolean): boolean => drawnLook(stored, physicsOnly) !== stored;
+
+/** What the look's switch says while "physics only" sets the illustrative look aside (S108). */
+export const LOOK_SUSPENDED_WHAT =
+  "illustrative suspended: physics only draws the physical look - the illustrative layer is a drawing over the model's arms, bar and regions, " +
+  "which physics only takes away; the look is kept and returns when physics only is released";
+
 /** A template's default exposure, stops. */
 export function exposureFor(template: string | null | undefined, map: Readonly<Record<string, number>> = TEMPLATE_EXPOSURE): number {
   const v = template ? map[template] : undefined;

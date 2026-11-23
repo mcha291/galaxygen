@@ -1,6 +1,6 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ACESFilmicToneMapping,
   AdditiveBlending,
@@ -33,7 +33,7 @@ import { screenRings } from "./ringProfile";
 import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
 import { GRADE_FRAGMENT, GRADE_VERTEX } from "./illustrative/grade";
-import { rolledUp } from "./illustrative/framing";
+import { rollAfterLookAt } from "./illustrative/framing";
 import { galaxyRenderer } from "./renderer";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
@@ -99,8 +99,10 @@ interface Props {
    */
   grade?: Readonly<Record<string, number>> | null;
   /**
-   * The illustrative look's roll of the template's stand (S105; illustrative/framing.ts), degrees counter-clockwise: the
-   * camera's up turned about the line of sight. 0 or absent (the physical look): the camera's up the disc's axis, as it was.
+   * The illustrative look's roll of the template's stand (S105; illustrative/framing.ts), degrees counter-clockwise: since
+   * S108 the camera turned about its line of sight after every look-at (framing.ts rollAfterLookAt), its up the disc's
+   * axis, so the orbit is the physical look's and the roll is held at every azimuth. 0 or absent (the physical look):
+   * nothing changed, the camera as it was.
    */
   roll?: number;
 }
@@ -150,7 +152,7 @@ export function GalaxyView({
   // A roll only on a template's stand (the illustrative look's); none, the camera options exactly as they were.
   const rolled = placed && roll ? roll : 0;
   const standKey = placed ? `${placed.inclination_deg},${placed.azimuth_deg},${placed.radius_kpc}${rolled ? `,${rolled}` : ""}` : preset;
-  const cameraOptions = { position, fov, near: planes.near, far: planes.far, ...(rolled ? { up: rolledUp(position, rolled) } : {}) };
+  const cameraOptions = { position, fov, near: planes.near, far: planes.far };
   // T13 (S83): the context lost, and since restored but not yet drawn again - the frame loop paused while lost, and the
   // status line shown until the first frame after the restore (contextLoss.ts).
   const [context, setContext] = useState<{ lost: boolean; redrawing: boolean }>(NOT_LOST);
@@ -165,6 +167,7 @@ export function GalaxyView({
         frameloop={context.lost ? "never" : "always"} // no frame while the context is lost (T13): nothing marched is recorded as drawn
       >
         <ContextGuard onChange={setContext} />
+        {rolled ? <RollAfterOrbit roll={rolled} /> : null}
         {children}
         {layers.map((layer, i) => (
           <Stars key={i} layer={layer} additive={additive} psf={psf} spriteSize={tuning.spriteSize} />
@@ -189,6 +192,24 @@ export function GalaxyView({
 }
 
 const NOT_LOST = { lost: false, redrawing: false } as const;
+
+/**
+ * The illustrative roll (S108; framing.ts rollAfterLookAt): the camera's look-at followed by the turn about its line of
+ * sight, installed before the first frame and the view looked at its target again, so the controls' every update - an
+ * orbit, a zoom, a pan, the capture's place - ends rolled. Mounted only where there is a roll.
+ */
+function RollAfterOrbit({ roll }: { roll: number }) {
+  const camera = useThree((s) => s.camera);
+  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
+  useLayoutEffect(() => {
+    const undo = rollAfterLookAt(camera, roll);
+    if (controls) controls.update();
+    else camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    return undo;
+  }, [camera, controls, roll]);
+  return null;
+}
 
 /**
  * The context's status line (T13), drawn as the app's caution lines are (App.module.css `.stale`: the same tokens),
