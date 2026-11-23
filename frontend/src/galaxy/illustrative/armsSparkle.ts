@@ -117,8 +117,20 @@ export function brightness(u: number, slope: number, range: number): number {
   return Math.min(range, Math.pow(Math.max(1e-9, 1 - u), -1 / Math.max(0.1, slope)));
 }
 
-/** The points: deterministic in (map, grid, shape, seed). */
-export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number, raw: Float32Array | null = null, lanes: LanePlane | null = null): Sparkle {
+/**
+ * The points: deterministic in (map, grid, shape, seed). S106: `level` (the skeleton's grain density, skeleton.ts
+ * grainDensity) read in place of the map's share where given - the floor, the ridge power, the lanes' avoidance and
+ * the edge's taper apply to it as to the share.
+ */
+export function buildSparkle(
+  map: Float32Array,
+  g: ArmGrid,
+  s: SparkleShape,
+  seed: number,
+  raw: Float32Array | null = null,
+  lanes: LanePlane | null = null,
+  levelOf: ((r: number, phi: number) => number) | null = null,
+): Sparkle {
   const total = Math.max(0, Math.floor(s.count));
   const radius = new Float32Array(total);
   const azimuth = new Float32Array(total);
@@ -128,8 +140,9 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
   const rMax = Math.min(s.rMax, g.rHi);
   const floor = Math.min(1, Math.max(0, s.floor ?? 0));
   const lift = s.lift ?? 0;
-  const level =
-    raw && lift > 0
+  const level = levelOf
+    ? levelOf
+    : raw && lift > 0
       ? (r: number, phi: number) => Math.min(1, shareAt(raw, g, r, phi, 1, 0) / lift)
       : (r: number, phi: number) => shareAt(map, g, r, phi);
   const avoid = lanes ? Math.min(1, Math.max(0, s.avoid ?? 0)) : 0;

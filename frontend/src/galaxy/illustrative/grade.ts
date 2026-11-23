@@ -37,9 +37,9 @@ const CONTROLS: readonly IllControl[] = [
     key: "faintsat", label: "faint colour", min: 0, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6, ngc_4414: 0.3 },
     about: "The share of the saturation left at the faintest light, under the faint fade. Illustrative.",
   },
-  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 0.85, ngc_4414: 1.2 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
+  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 1.0, ngc_4414: 1.2 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
   {
-    key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.14, ngc_4414: 0.1 },
+    key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.2, ngc_4414: 0.1 },
     about: "A soft toe on the stretched luminance (each pixel's colour kept): the faint light about this level and under it taken smoothly down to a dark sky. Illustrative.",
   },
   { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.55, ngc_4414: -0.15 }, about: "Toward the warm tint (above 0) or the cool tint (below) over the whole picture. Colour for appearance." },

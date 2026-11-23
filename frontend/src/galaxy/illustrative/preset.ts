@@ -10,7 +10,7 @@ export const ILLUSTRATIVE_BASE: Readonly<Record<string, Readonly<Record<string, 
   // and the clouds' raster off - its 17 000 dark flecks are an even speckle the goal's lanes are not (row 107 draws lanes).
   // S105 tuner M (all features together): the bloom halved and its threshold raised, so the regions and the sparkle
   // catch no violet halo.
-  milky_way: Object.freeze({ bloomStrength: 0.3, bloomRadius: 0.4, bloomThreshold: 2.5, whiteKelvin: 6000, cloudsExtinction: false, knotsIntensity: 0.3 }),
+  milky_way: Object.freeze({ bloomStrength: 0.12, bloomRadius: 0.4, bloomThreshold: 2.5, whiteKelvin: 6000, cloudsExtinction: false, knotsIntensity: 0.3 }),
   // The clouds kept and darkened (the goal's brown network is the nearest thing the frame has), 96 steps (at 48 the core
   // drew a green-cyan cast under the stretch). S105 tuner N (all features together): the clouds' raster off after all -
   // its dark flecks fought the flocculent network (floc), which now draws the dust - and the bloom halved, so the
