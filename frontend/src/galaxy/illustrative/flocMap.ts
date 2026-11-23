@@ -144,6 +144,8 @@ export interface FlocShape {
   filRun: number;
   /** 0-1: the finer wisps between the filaments, as a share of a filament's depth. */
   wisps: number;
+  /** the smooth haze the threads lie in, as a share of a full thread's depth where the threads' amount is full. */
+  haze: number;
   /** x the outer radius: where the dust's ring comes in to full (it is `core` of it inside half of this). */
   ringIn: number;
   /** x the outer radius: where the dust's ring starts to thin (to `rim` of it by 0.95 of the outer radius). */
@@ -176,7 +178,7 @@ export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
   "density", "length", "width", "pitch", "pitchSpread", "wiggle", "branches", "branchAngle", "bands", "bandWidth", "swell", "mottle", "grain", "gather", "bundle",
   "followGas", "radial", "innerRadius", "outerRadius", "patchSize", "clumpDensity", "clumpSize", "clumpInner", "clumpFollow", "lace", "cell", "thread", "stretch", "blotch", "seed",
   "style", "netScale", "netWarp", "netGaps", "netSoft", "netFeather", "netArc", "arcWidth", "arcStretch", "netDepth", "litScale", "litReach",
-  "filSpacing", "filRun", "wisps", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz",
+  "filSpacing", "filRun", "wisps", "haze", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz",
   "cloudCount", "cloudGroup", "cloudMembers", "cloudReach", "cloudStart", "cloudSlope", "cloudRange", "cloudRich", "cloudAz", "cloudGlow",
 ];
 
@@ -478,14 +480,15 @@ export class Ladder {
       const ux = fx * fx * (3 - 2 * fx);
       const uy = fy * fy * (3 - 2 * fy);
       const key = this.key ^ Math.imul(k + 1, 0x61c88647);
-      const at = (cx: number, cy: number) => {
-        const q = Math.floor(cx / cells);
-        return lattice(cx - q * cells, cy + q * arms, key);
-      };
-      const a = at(ix, iy);
-      const b = at(ix + 1, iy);
-      const c = at(ix, iy + 1);
-      const d = at(ix + 1, iy + 1);
+      // The lattice's corners, the azimuth wrapped as spiralNoise's (inlined: this is the plane style's hot loop).
+      const q0 = Math.floor(ix / cells);
+      const q1 = Math.floor((ix + 1) / cells);
+      const x0 = ix - q0 * cells;
+      const x1 = ix + 1 - q1 * cells;
+      const a = lattice(x0, iy + q0 * arms, key);
+      const b = lattice(x1, iy + q1 * arms, key);
+      const c = lattice(x0, iy + 1 + q0 * arms, key);
+      const d = lattice(x1, iy + 1 + q1 * arms, key);
       const e = a - b - c + d;
       const n = a + (b - a) * ux + (c - a) * uy + e * ux * uy;
       const nX = 6 * fx * (1 - fx) * (b - a + e * uy);

@@ -89,4 +89,52 @@ describe("the network drawn in the plane", () => {
     // No byte of zero ("no map") is written.
     expect(map.indexOf(0)).toBe(-1);
   });
+
+  it("draws thin threads (tens of parsecs across), most dust in the ring, little in the nuclear region", () => {
+    const net = netSampler(G, SHAPE);
+    const widths: number[] = [];
+    const cover = (lo: number, hi: number) => {
+      let n = 0;
+      let hit = 0;
+      for (let k = 0; k < 60; k += 1) {
+        const phi = k * 0.1047;
+        let start = -1;
+        for (let r = lo; r < hi; r += 0.004) {
+          const v = net.dust(r * Math.cos(phi), r * Math.sin(phi));
+          n += 1;
+          if (v > 0.3) hit += 1;
+          if (v > 0.5 && start < 0) start = r;
+          if (v <= 0.5 && start >= 0) {
+            widths.push((r - start) * 1000);
+            start = -1;
+          }
+        }
+      }
+      return hit / n;
+    };
+    const outer = SHAPE.outerRadius;
+    const ring = cover(0.3 * outer, 0.6 * outer);
+    widths.sort((a, b) => a - b);
+    const median = widths[Math.floor(widths.length / 2)];
+    // Measured along the radius, a thread at the pitch reads a little wider than across it.
+    expect(median).toBeGreaterThan(15);
+    expect(median).toBeLessThan(90);
+    expect(widths.length).toBeGreaterThan(300);
+    const core = cover(0.02 * outer, 0.07 * outer);
+    expect(ring).toBeGreaterThan(2 * core);
+  });
+
+  it("lays the near-side bias toward its azimuth", () => {
+    const biased = netSampler(G, { ...SHAPE, nearBias: 0.8, nearAz: 90 });
+    const mean = (phi0: number) => {
+      let s = 0;
+      for (let k = 0; k < 4000; k += 1) {
+        const r = 2 + (k % 50) * 0.08;
+        const phi = phi0 + ((k * 0.618) % 1 - 0.5) * 1.2;
+        s += biased.dust(r * Math.cos(phi), r * Math.sin(phi));
+      }
+      return s;
+    };
+    expect(mean(Math.PI / 2)).toBeGreaterThan(1.5 * mean((3 * Math.PI) / 2));
+  });
 });

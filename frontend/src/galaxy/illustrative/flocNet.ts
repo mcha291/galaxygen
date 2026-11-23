@@ -182,7 +182,8 @@ export function netSampler(g: FlocGeometry, shape: FlocShape): NetSampler {
       v += a1 * t1;
     }
     if (a2 > 0) v += a2 * thread(fam2, lnR, phi, place, r, 0.75 * half * fe) * (1 + 0.8 * t1);
-    return v;
+    // The haze: a share of the amount drawn smooth, the smoky brown the threads lie in.
+    return v + shape.haze * a1;
   };
   const probeA: Amount = { a1: 0, a2: 0, fe: 1 };
   const dust = (x: number, y: number): number => {
@@ -256,9 +257,8 @@ class Coarse {
     }
   }
 
-  /** Field `k` read bilinearly at (r, phi), phi in [0, 2 pi). */
-  read(k: number, r: number, phi: number): number {
-    const v = this.f[k];
+  /** The first `n` fields read bilinearly at (r, phi), phi in [0, 2 pi), into `out`. */
+  read(r: number, phi: number, out: Float32Array, n = this.f.length): void {
     const a = Math.min(this.rings - 1.0001, Math.max(0, r / this.dR - 0.5));
     const i = Math.floor(a);
     const w = a - i;
@@ -269,7 +269,14 @@ class Coarse {
     const j1 = (j0 + 1) % this.sectors;
     const r0 = j0 * this.rings + i;
     const r1 = j1 * this.rings + i;
-    return (1 - b) * ((1 - w) * v[r0] + w * v[r0 + 1]) + b * ((1 - w) * v[r1] + w * v[r1 + 1]);
+    const w00 = (1 - b) * (1 - w);
+    const w01 = (1 - b) * w;
+    const w10 = b * (1 - w);
+    const w11 = b * w;
+    for (let k = 0; k < n; k += 1) {
+      const v = this.f[k];
+      out[k] = w00 * v[r0] + w01 * v[r0 + 1] + w10 * v[r1] + w11 * v[r1 + 1];
+    }
   }
 }
 
@@ -277,7 +284,7 @@ class Coarse {
  * The coarse grids' cells over the map's, (radial, azimuthal): the dust's (full radial resolution - a thread runs
  * mostly along the azimuth, so it is thin across the rings and long across the sectors) and the light's.
  */
-export const NET_GRID = { dustR: 1, dustPhi: 3, light: 4 } as const;
+export const NET_GRID = { dustR: 1, dustPhi: 4, amount: 6, light: 4 } as const;
 
 /** Where no light is drawn: the clouds' neutral (q = 0.3, which changes nothing). */
 const NONE = 128 - Math.round(127 * 0.3);
@@ -302,16 +309,16 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
   const dustCell = Math.max(dR, (0.6 * Math.max(shape.width, 10) * 1e-3) / Math.sin(pitch));
   // The dust's amounts and feathering (smooth) on the light's grid, then the threads at every ring.
   const am: Amount = { a1: 0, a2: 0, fe: 1 };
-  const amounts = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.light)), lSect, Math.max(dusty, 1) * dR, 3, (x, y, r, phi, o) => {
+  const amounts = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.amount)), Math.max(8, Math.floor(sectors / NET_GRID.amount)), Math.max(dusty, 1) * dR, 3, (x, y, r, phi, o) => {
     net.amount(x, y, r, phi, am);
     o[0] = am.a1;
     o[1] = am.a2;
     o[2] = am.fe;
   });
+  const amt = new Float32Array(3);
   const dust = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.dustR)), dSect, Math.max(dusty, 1) * dR, 1, (x, y, r, phi, o) => {
-    const a1 = amounts.read(0, r, phi);
-    const a2 = amounts.read(1, r, phi);
-    o[0] = a1 > 1e-4 || a2 > 1e-4 ? net.threads(x, y, r, phi, a1, a2, amounts.read(2, r, phi)) : 0;
+    amounts.read(r, phi, amt);
+    o[0] = amt[0] > 1e-4 || amt[1] > 1e-4 ? net.threads(x, y, r, phi, amt[0], amt[1], amt[2]) : 0;
   }, dustCell);
   const light = new Coarse(Math.max(2, Math.ceil(lit / NET_GRID.light)), lSect, Math.max(lit, 1) * dR, 1, (x, y, _r, _phi, o) => {
     o[0] = net.light(x, y);
@@ -359,7 +366,8 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
         const w = dRing.w[i];
         v = (1 - db) * ((1 - w) * dv[d0 + a] + w * dv[d0 + a + 1]) + db * ((1 - w) * dv[d1 + a] + w * dv[d1 + a + 1]);
         if (v >= MARGIN) {
-          out[row + i] = dustByte[Math.min(TABLE_N, Math.round((v - MARGIN) * dScale))];
+          const t = ((v - MARGIN) * dScale + 0.5) | 0;
+          out[row + i] = dustByte[t < TABLE_N ? t : TABLE_N];
           continue;
         }
       }
@@ -368,7 +376,8 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
       const w = lRing.w[i];
       const lit0 = (1 - lb) * ((1 - w) * lv[l0 + a] + w * lv[l0 + a + 1]) + lb * ((1 - w) * lv[l1 + a] + w * lv[l1 + a + 1]);
       const q = 0.6 * (0.5 + (lit0 - 0.5) * edge) * (1 - Math.max(0, v) / MARGIN);
-      out[row + i] = 128 - Math.max(1, Math.round(127 * q));
+      const qb = (127 * q + 0.5) | 0;
+      out[row + i] = 128 - (qb > 1 ? qb : 1);
     }
   }
   if (shape.cloudGlow > 0 && shape.cloudCount > 0) paintGlow(out, g, shape, rings, sectors);

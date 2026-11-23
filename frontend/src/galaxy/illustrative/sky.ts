@@ -121,7 +121,7 @@ export function buildSkyStars(s: SkyShape): SkyStars {
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "stars", label: "field stars per frame", min: 0, max: 600, step: 1, unit: "", default: 0, perTemplate: { ngc_4414: 260 },
+    key: "stars", label: "field stars per frame", min: 0, max: 600, step: 1, unit: "", default: 0, perTemplate: { ngc_4414: 200 },
     about: "Foreground stars of our own Galaxy, fixed on the sky: how many fall in the template's frame at its lens (most of them faint). 0 none. Illustrative: no model star.",
   },
   {
@@ -165,7 +165,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The floor's colour from grey (0) to deep blue (1). Colour for appearance.",
   },
   {
-    key: "halo", label: "sky halo", min: 0, max: 0.2, step: 0.0005, unit: "", default: 0, perTemplate: { ngc_4414: 0.002 },
+    key: "halo", label: "sky halo", min: 0, max: 0.2, step: 0.0005, unit: "", default: 0, perTemplate: { ngc_4414: 0.004 },
     about: "A wide smooth blue haze about the disc, in its plane (linear light at its centre, before the grade): the faint outer disc's glow on the sky. 0 none. Illustrative.",
   },
   {
