@@ -198,7 +198,7 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.55, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.4, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
@@ -250,7 +250,7 @@ export const arms: IllFeature = {
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 1, ngc_4414: -0.6 },
+      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.7, ngc_4414: -0.6 },
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
@@ -258,7 +258,7 @@ export const arms: IllFeature = {
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
-      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 200000, ngc_4414: 10000 },
+      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 350000, ngc_4414: 10000 },
       about: "The faintest sparkle point's light, L☉ over the white point (on the field's scale, with the exposure). Illustrative.",
     },
     {
@@ -398,27 +398,27 @@ export const arms: IllFeature = {
       about: "On the skeleton, the inter-arm tint carried inside the arms' start (round the bar) by this share, so the disc about the bar is lavender as between the arms, not the model's grey; 0 none. Colour for appearance (S106, B4).",
     },
     {
-      key: "skelseed", label: "skeleton seed", min: 0, max: 999, step: 1, unit: "", default: 11,
+      key: "skelseed", label: "skeleton seed", min: 0, max: 999, step: 1, unit: "", default: 11, perTemplate: { milky_way: 23 },
       about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 3.2, ngc_4414: 1 },
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 4, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
-      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.3, ngc_4414: 0 },
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.5, ngc_4414: 0 },
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.8, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.7, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
-      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.35, ngc_4414: 0 },
       about: "The inner disc's starlight about the bar (inside 1.6 of its scaled half-length, outside its ellipse) dimmed by this share, so the bar stands on a darker ground; 0 none. Illustrative (S105).",
     },
     {
-      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.4, ngc_4414: 0 },
       about: "The same ground about the bar tinted toward a slate blue by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
     },
   ],
@@ -456,6 +456,16 @@ export const arms: IllFeature = {
   uniform vec4 illArmsBar;
   uniform vec3 illArmsBarTint;
   uniform vec3 illArmsBarGround;
+  // The bar ellipse's weight at rp (1 on the bar's axis, 0 far off it); 0 without a bar.
+  float illArmsBarW(vec2 rp) {
+    if (illArmsBar.x <= 0.0) return 0.0;
+    float x = rp.x * cos(rp.y);
+    float y = rp.x * sin(rp.y);
+    float X = x * cos(illArmsBar.z) + y * sin(illArmsBar.z);
+    float Y = y * cos(illArmsBar.z) - x * sin(illArmsBar.z);
+    float e = length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
+    return exp(-1.6 * e * e);
+  }
   vec3 illArmsBarLight(vec2 rp) {
     if (illArmsBarOn < 0.5) return vec3(1.0);
     float x = rp.x * cos(rp.y);
@@ -495,7 +505,8 @@ export const arms: IllFeature = {
     float fa = min(1.0, f);
     float light = max(0.0, 1.0 + (illArmsRing(s, m, illArmsFloor, illArmsCap) - 1.0) * f) * illArmsFlatOf(w, fa);
     float g = fa * smoothstep(0.25, 0.9, s) * illArmsFlag(rp.x);
-    float lav = illArmsSkel > 0.5 ? max(fa, illArmsLavIn) : fa;
+    // Inside the arms' start the tint is carried off the bar itself (its cream is the bar light's).
+    float lav = illArmsSkel > 0.5 ? max(fa, illArmsLavIn * (1.0 - illArmsBarW(rp))) : fa;
     vec3 tone = mix(mix(vec3(1.0), illArmsLavender, lav), illArmsBlue, g);
     return light * tone;
   }
