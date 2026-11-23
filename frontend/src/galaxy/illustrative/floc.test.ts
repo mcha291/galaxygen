@@ -386,6 +386,7 @@ describe("the dust gathered on arcs (S107)", () => {
     expect((lattice.illFlocGate as number[])[0]).toBe(0);
     const glsl = floc.glsl!;
     expect(glsl).toMatch(/illFlocShape\(illFlocRead\(rp\)\.x\) \* \(illFlocStyle > 0\.5 \? illFlocGateAt\(rp\)/);
-    expect(glsl).toContain("if (illFlocStyle > 0.5 && av > 0.0) av *= illFlocGateAt(rp);");
+    expect(glsl).toContain("float gate = illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0;");
+    expect(glsl).toContain("if (illFlocStyle > 0.5 && av > 0.0) av *= gate;");
   });
 });
