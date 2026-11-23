@@ -69,7 +69,7 @@ export const base: IllFeature = {
       about: "Where the published dust's depth underflowed to nothing in a channel (NGC 4414's centre: blue-white, a ring at 0.11 kpc), rebuilt from the deepest channel through the reddening ratio: 1 mended, 0 as read. A no-op where no channel is lost. Illustrative.",
     },
     {
-      key: "core", label: "core clearing", min: 0, max: 4, step: 0.05, unit: "dex", default: 0,
+      key: "core", label: "core clearing", min: 0, max: 4, step: 0.05, unit: "dex", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2 },
       about: "The diffuse dust thinned toward the centre by this many decades at the centre, smoothly to none at the core radius: the nucleus shines through. Illustrative.",
     },
     {
