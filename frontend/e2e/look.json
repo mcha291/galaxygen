@@ -1,0 +1,18 @@
+{
+  "about": "The look capture's list (S105, BUILD_VIII row 105; e2e/look.spec.ts, npm --prefix frontend run look): frames of the Galaxy view to set beside the goal pictures (tools/goal_sheet.py), written as PNGs into GALAXYGEN_LOOK_DIR (default docs/goals/look/, gitignored). Never compared with anything: a working tool for the illustrative look's tuning, not a test. GALAXYGEN_LOOK_ONLY (comma-separated names) takes a subset; GALAXYGEN_LOOK_COMBINATION (a copy box's JSON, pasted) adds one capture named GALAXYGEN_LOOK_NAME (default 'combination') at that combination on its template and look.",
+  "fields": {
+    "name": "The PNG's name (without .png): lower-case letters, digits, underscores and hyphens.",
+    "template": "The template, by its name in /api/templates; chosen in the switcher. The camera is the template's own stand (times the framing under the illustrative look).",
+    "look": "physical or illustrative: stored as the browser's look before the page loads.",
+    "mode": "field (the default) or stars.",
+    "combination": "Optional: Tuning values over the look's defaults for the template, as a copy box lists them (an 'ill' object for the illustrative parameters). Absent: the look's defaults, whatever the browser held.",
+    "exposure": "Optional: the exposure slider's stops (else the template's default).",
+    "viewport": "Optional: the canvas side, px (1024 by default)."
+  },
+  "captures": [
+    { "name": "milky_way-physical", "template": "milky_way", "look": "physical" },
+    { "name": "milky_way-illustrative", "template": "milky_way", "look": "illustrative" },
+    { "name": "ngc_4414-physical", "template": "ngc_4414", "look": "physical" },
+    { "name": "ngc_4414-illustrative", "template": "ngc_4414", "look": "illustrative" }
+  ]
+}

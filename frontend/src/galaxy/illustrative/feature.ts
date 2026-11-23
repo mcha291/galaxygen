@@ -4,7 +4,14 @@
 
 import type { ComponentType } from "react";
 
-import type { Frame } from "../../api";
+/**
+ * An /api/arrays answer as a feature reads it (api.ts Frame, restated so this file imports nothing of the transport and
+ * the e2e tools can import the registry): the header's scalars and the named arrays.
+ */
+export interface IllFrame {
+  header: { scalars: Record<string, number>; [key: string]: unknown };
+  arrays: Record<string, Float64Array | Float32Array | BigInt64Array>;
+}
 
 /** One slider of a feature. Its value is stored in Tuning.ill under `${feature.id}.${key}`, clamped to [min, max]. */
 export interface IllControl {
@@ -38,7 +45,7 @@ export interface IllContext {
    * The /api/arrays answer for every array any registered feature names in `arrays` (one request through api.ts
    * loadArrays, the one transport), for the galaxy on screen; null until it has arrived or when no feature asks.
    */
-  frame: Frame | null;
+  frame: IllFrame | null;
 }
 
 /** The march hooks a feature may take part in: each names a GLSL function the feature's `glsl` defines. */

@@ -1,0 +1,163 @@
+// The look capture (S105, BUILD_VIII row 105): frames of the Galaxy view at a template's own stand, under either look,
+// at the look's defaults or at a pasted combination, written as 1024 px PNGs for tools/goal_sheet.py to set beside the
+// goal pictures. A working tool, not a test: nothing is compared, nothing committed is written.
+//
+//   npm --prefix frontend run look                               every capture in e2e/look.json
+//   GALAXYGEN_LOOK_ONLY=milky_way-illustrative npm --prefix frontend run look
+//   GALAXYGEN_LOOK_COMBINATION='<a copy box>' GALAXYGEN_LOOK_NAME=try1 npm --prefix frontend run look
+//
+// GALAXYGEN_E2E_PORT (default 8019) is the API's port, serving this worktree's frontend/dist (`npm run build` first);
+// GALAXYGEN_LOOK_DIR (default docs/goals/look/ under the repository) where the PNGs go.
+
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { type Page, expect, test } from "@playwright/test";
+
+import { LOOK_STORAGE_KEY, storageKeyFor } from "../src/galaxy/tuning";
+import { CHOOSING_VIEWPORT, MODE_BUTTON, READY, SELECTION_TEXT } from "./settings";
+
+interface LookCapture {
+  name: string;
+  template: string;
+  look: "physical" | "illustrative";
+  mode?: keyof typeof MODE_BUTTON;
+  combination?: Record<string, unknown>;
+  exposure?: number;
+  viewport?: number;
+}
+
+const here = (name: string) => fileURLToPath(new URL(name, import.meta.url));
+const ROOT = resolve(here(".."), "..");
+const OUT = resolve(ROOT, process.env.GALAXYGEN_LOOK_DIR ?? join("docs", "goals", "look"));
+const LIST = (JSON.parse(readFileSync(here("./look.json"), "utf-8")) as { captures: LookCapture[] }).captures;
+
+/** The captures this run takes: the list (or the names asked for), and a pasted combination's. */
+function captures(): LookCapture[] {
+  const only = process.env.GALAXYGEN_LOOK_ONLY?.split(",").map((s) => s.trim()).filter(Boolean);
+  const out = only ? LIST.filter((c) => only.includes(c.name)) : process.env.GALAXYGEN_LOOK_COMBINATION ? [] : [...LIST];
+  const pasted = process.env.GALAXYGEN_LOOK_COMBINATION;
+  if (pasted) {
+    const box = JSON.parse(pasted) as Record<string, unknown>;
+    const { template, filters: _filters, exposure, look, ...combination } = box;
+    void _filters;
+    out.push({
+      name: process.env.GALAXYGEN_LOOK_NAME ?? "combination",
+      template: typeof template === "string" ? template : "milky_way",
+      look: look === "illustrative" ? "illustrative" : "physical",
+      combination,
+      exposure: typeof exposure === "number" ? exposure : undefined,
+    });
+  }
+  return out;
+}
+
+declare const window: Window & {
+  __galaxygenCapture?: { picture(): { png: string; width: number; height: number } };
+  __galaxygenFrameSum?: () => { sum: number[] };
+  __galaxygenPsfPending?: () => number;
+};
+
+function watchApi(page: Page) {
+  const net = { inflight: 0, last: Date.now() };
+  const isApi = (url: string) => new URL(url).pathname.startsWith("/api/");
+  page.on("request", (r) => {
+    if (!isApi(r.url())) return;
+    net.inflight += 1;
+    net.last = Date.now();
+  });
+  const ended = (url: string) => {
+    if (!isApi(url)) return;
+    net.inflight -= 1;
+    net.last = Date.now();
+  };
+  page.on("requestfinished", (r) => ended(r.url()));
+  page.on("requestfailed", (r) => ended(r.url()));
+  return net;
+}
+
+async function press(page: Page, label: string, siblingOf?: string) {
+  const exact = (name: string) => page.getByRole("button", { name, exact: true });
+  const button = siblingOf ? exact(siblingOf).locator("xpath=..").getByRole("button", { name: label, exact: true }) : exact(label);
+  if ((await button.getAttribute("aria-pressed")) !== "true") await button.click();
+  await expect(button).toHaveAttribute("aria-pressed", "true");
+}
+
+async function squareCanvas(page: Page, side: number) {
+  for (let pass = 0; pass < 6; pass += 1) {
+    const box = await page.evaluate(() => {
+      const canvas = document.querySelector("canvas")!;
+      const rect = canvas.getBoundingClientRect();
+      return { width: rect.width, height: rect.height, bufferWidth: canvas.width, bufferHeight: canvas.height, viewWidth: window.innerWidth, viewHeight: window.innerHeight };
+    });
+    if (box.bufferWidth === side && box.bufferHeight === side) return;
+    await page.setViewportSize({ width: Math.ceil(side + box.viewWidth - box.width), height: Math.ceil(side + box.viewHeight - box.height) });
+    await page.waitForTimeout(READY.probeMs);
+  }
+  throw new Error(`the canvas would not come to ${side} x ${side} pixels`);
+}
+
+const picture = async (page: Page) => {
+  const got = await page.evaluate(() => window.__galaxygenCapture!.picture());
+  return Buffer.from(got.png.slice(got.png.indexOf(",") + 1), "base64");
+};
+
+/** Ready as the picture test's settle: the network quiet, the frame's light lit and still, two pictures the same bytes. */
+async function settle(page: Page, net: ReturnType<typeof watchApi>, mode: keyof typeof MODE_BUTTON) {
+  const deadline = Date.now() + READY.timeoutMs;
+  if (mode === "stars") await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
+  let last = "";
+  let still = 0;
+  while (still < READY.stillProbes) {
+    if (Date.now() > deadline) throw new Error(`the view was not ready in ${READY.timeoutMs} ms`);
+    await page.waitForTimeout(READY.probeMs);
+    const building = await page.evaluate(() => window.__galaxygenPsfPending?.() ?? 0);
+    const quiet = net.inflight === 0 && Date.now() - net.last >= READY.quietMs && building === 0;
+    const sum = (await page.evaluate(() => window.__galaxygenFrameSum!().sum)).join(",");
+    still = quiet && sum !== "" && sum !== "0,0,0" && sum === last ? still + 1 : 0;
+    last = sum;
+  }
+  let shot = await picture(page);
+  for (let tries = 0; tries < 8; tries += 1) {
+    await page.waitForTimeout(READY.probeMs);
+    const again = await picture(page);
+    if (again.equals(shot)) return again;
+    shot = again;
+  }
+  return shot;
+}
+
+for (const capture of captures()) {
+  test(`look: ${capture.name} (${capture.template}, ${capture.look})`, async ({ page }) => {
+    const net = watchApi(page);
+    await page.setViewportSize(CHOOSING_VIEWPORT);
+    // The browser's look and this template's tuning under it, before the page loads: the look's defaults ("{}"), or the
+    // combination over them (stored as the app stores a diff, read through its own sanitize).
+    const key = storageKeyFor(capture.template, capture.look);
+    await page.addInitScript(
+      ([lookKey, look, tuningKey, tuning]) => {
+        if (look === "illustrative") localStorage.setItem(lookKey, look);
+        else localStorage.removeItem(lookKey);
+        localStorage.setItem(tuningKey, tuning);
+      },
+      [LOOK_STORAGE_KEY, capture.look, key, JSON.stringify(capture.combination ?? {})] as const,
+    );
+    await page.goto("/");
+    await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenFrameSum, null, { timeout: READY.timeoutMs });
+    const served = (await (await page.request.get("/api/templates")).json()) as { templates: { name: string; label: string }[] };
+    const template = served.templates.find((t) => t.name === capture.template);
+    if (!template) throw new Error(`${capture.name}: no template ${capture.template}`);
+    await press(page, template.label);
+    const mode = capture.mode ?? "field";
+    await press(page, MODE_BUTTON[mode], mode === "field" ? MODE_BUTTON.stars : undefined);
+    await expect(page.getByRole("button", { name: "illustrative", exact: true })).toHaveAttribute("aria-pressed", capture.look === "illustrative" ? "true" : "false");
+    if (capture.exposure !== undefined) await page.getByRole("slider", { name: "Exposure", exact: true }).fill(String(capture.exposure));
+    await squareCanvas(page, capture.viewport ?? 1024);
+    const png = await settle(page, net, mode);
+    mkdirSync(OUT, { recursive: true });
+    const path = join(OUT, `${capture.name}.png`);
+    writeFileSync(path, png);
+    console.log(`look: ${capture.name} -> ${path} (${png.length} bytes)`);
+  });
+}

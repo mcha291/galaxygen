@@ -4,7 +4,8 @@
  * The port of the test's own server: the API serving the built viewer from one origin. 8017 and 5173 are the
  * owner's live servers and 8018 the `prod` launch configuration; the test never binds or stops any of them.
  */
-export const PORT = 8019;
+// S105: GALAXYGEN_E2E_PORT moves it (two builders capturing at once, each from its own worktree's frontend/dist).
+export const PORT = Number(process.env.GALAXYGEN_E2E_PORT ?? 8019);
 
 /**
  * The browser's flags. Headless Chromium draws WebGL on the CPU (SwiftShader) unless it is told which backend to
