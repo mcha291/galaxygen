@@ -11,7 +11,7 @@ import { illDefaults, paramsOf } from "./index";
 const RHI = 30;
 const G: FlocGeometry = { rHi: RHI, pitchDeg: 20, gas: null, pattern: null, gasProfile: null };
 // NGC 4414's network with its threads drawn (its default draws its dust as the march's mesh, netDepth 0; S106 C4).
-const SHAPE = { ...shapeOf(paramsOf(floc, illDefaults("ngc_4414"))), netDepth: 1.6 };
+const SHAPE = { ...shapeOf(paramsOf(floc, illDefaults("ngc_4414"))), netDepth: 1.6, cloudGlow: 1 }; // S109: the clouds' glow held on (NGC 4414's default is now 0) so the knots are drawn
 
 describe("the star clouds", () => {
   it("places NGC 4414's points in groups in the outer disc, inside its edge, fast", () => {
