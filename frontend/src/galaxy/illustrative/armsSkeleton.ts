@@ -71,6 +71,9 @@ export const SKEL_MEAN_SAMPLES = 64;
 /** The model's contrast is carried in A as byte round(255 min(1, n / SKEL_CONTRAST_MAX)). */
 export const SKEL_CONTRAST_MAX = 2.5;
 
+/** The dither's tile, texels (a fixed hash over a DITHER x DITHER tile, repeated). */
+const DITHER = 64;
+
 /** A fixed dither in [-0.5, 0.5) for the byte at column c, row r (an integer hash: the same on every machine). */
 export function ditherAt(c: number, r: number): number {
   let h = (Math.imul(c | 0, 0x27d4eb2d) ^ Math.imul(r | 0, 0x165667b1) ^ 0x2f1d) >>> 0;
@@ -122,20 +125,20 @@ export function skeletonPlanes(
     // every model ring, and a kink in a smooth gradient shows as a thin arc), and each byte dithered by a fixed hash
     // (a rounded smooth field steps by 1/255 along its contours - thin arcs again once the light is divided by it).
     const { n, nR, nPhi: P } = contrast;
-    const taps = new Int32Array(width * 4);
-    const wts = new Float64Array(width * 4);
+    // Each of the contrast's P azimuth rows resampled across rings once (width columns, the cubic), in units of bytes.
+    const cols = new Float32Array(P * width);
     for (let c = 0; c < width; c++) {
       const x = ((c + 0.5) / width) * nR - 0.5;
       const i0 = Math.floor(x);
       const t = x - i0;
       const t2 = t * t;
       const t3 = t2 * t;
-      wts[c * 4] = 0.5 * (-t3 + 2 * t2 - t);
-      wts[c * 4 + 1] = 0.5 * (3 * t3 - 5 * t2 + 2);
-      wts[c * 4 + 2] = 0.5 * (-3 * t3 + 4 * t2 + t);
-      wts[c * 4 + 3] = 0.5 * (t3 - t2);
-      for (let k = 0; k < 4; k++) taps[c * 4 + k] = Math.min(nR - 1, Math.max(0, i0 - 1 + k)) * P;
+      const w = [0.5 * (-t3 + 2 * t2 - t), 0.5 * (3 * t3 - 5 * t2 + 2), 0.5 * (-3 * t3 + 4 * t2 + t), 0.5 * (t3 - t2)];
+      const a = [0, 1, 2, 3].map((k) => Math.min(nR - 1, Math.max(0, i0 - 1 + k)) * P);
+      for (let j = 0; j < P; j++) cols[j * width + c] = (255 / SKEL_CONTRAST_MAX) * (w[0] * n[a[0] + j] + w[1] * n[a[1] + j] + w[2] * n[a[2] + j] + w[3] * n[a[3] + j]);
     }
+    const dither = new Float32Array(DITHER * DITHER);
+    for (let y = 0; y < DITHER; y++) for (let x = 0; x < DITHER; x++) dither[y * DITHER + x] = ditherAt(x, y);
     for (let r = 0; r < height; r++) {
       const y = ((r + 0.5) / height) * P - 0.5;
       const jf = Math.floor(y);
@@ -143,20 +146,16 @@ export function skeletonPlanes(
       const j0 = ((jf % P) + P) % P;
       const j1 = (j0 + 1) % P;
       const row = r * width;
+      const o0 = j0 * width;
+      const o1 = j1 * width;
+      const drow = (r % DITHER) * DITHER;
       for (let c = 0; c < width; c++) {
-        let v0 = 0;
-        let v1 = 0;
-        for (let k = 0; k < 4; k++) {
-          const w = wts[c * 4 + k];
-          const a = taps[c * 4 + k];
-          v0 += w * n[a + j0];
-          v1 += w * n[a + j1];
-        }
-        const d = ditherAt(c, r);
-        mean[row + c] = Math.min(255, Math.max(0, Math.round(255 * Math.min(1, Math.max(0, (v0 * (1 - fy) + v1 * fy) / SKEL_CONTRAST_MAX)) + d)));
+        const v = cols[o0 + c] * (1 - fy) + cols[o1 + c] * fy;
+        mean[row + c] = Math.round(Math.min(255, Math.max(0, v)) + dither[drow + (c % DITHER)]);
       }
     }
   } else mean.fill(Math.round(255 / SKEL_CONTRAST_MAX));
+
   skeletonBuild.ms = (typeof performance !== "undefined" ? performance.now() : 0) - t0;
   return { share, mean, meanMax, flags: new Array<number>(flagFloats).fill(65535), ringMean: samples };
 }
