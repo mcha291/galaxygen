@@ -75,6 +75,8 @@ interface Props {
   initiallyOpen?: boolean;
   /** S105 fix R1: a plane-shaping change is waiting for the sliders to settle or being built (the "rebuilding" mark). */
   illPending?: boolean;
+  /** S107 fix F1: while the last map job failed, its plain line ("the map's worker failed; rebuilt here"); else null. */
+  illFailure?: string | null;
   /** The Illustrative group's filter on first draw (the panel's test; the page starts it empty). */
   initialIllFilter?: string;
 }
@@ -120,7 +122,7 @@ export function combinationNotice(c: Combination, template: string | null | unde
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook, illPending = false, initialIllFilter = "" }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook, illPending = false, illFailure = null, initialIllFilter = "" }: Props) {
   const [open, setOpen] = useState(initiallyOpen);
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -239,6 +241,12 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
                   <span className={styles.muted} role="status" title="A slider that reshapes a feature's map is built once it has held still: the picture is behind the sliders until then.">
                     {" "}
                     · rebuilding…
+                  </span>
+                )}
+                {illFailure && (
+                  <span className={styles.muted} role="status" title="The map's planes are built in a worker; its last job failed (see the console), so it was asked again of a new worker or built on this thread. The next move tries a worker again.">
+                    {" "}
+                    · {illFailure}
                   </span>
                 )}
               </div>

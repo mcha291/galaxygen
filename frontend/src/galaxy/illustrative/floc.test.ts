@@ -7,12 +7,13 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllFrame } from "./feature";
-import { floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { channelShapeOf, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { buildNetChannel } from "./flocNet";
 import {
   FLOC_ARRAYS, FLOC_MAP, FLOC_REACH, type FlocGeometry, type FlocShape, Ladder, SHAPE_KEYS, buildFlocChannel, flocClumps, flocCover, flocDecode, flocGrains, flocKey, flocLight, flocPatches,
   flocStrands, geometryOf, lightReach, readField, spiralNoise, strandPitch,
 } from "./flocMap";
-import { features, illArrays, illDefaults, illGlsl, illustrativeFragment, paramsOf } from "./index";
+import { features, illArrays, illDefaults, illGlsl, illStale, illUniformValues, illustrativeFragment, paramsOf } from "./index";
 
 const DEG = Math.PI / 180;
 const TAU = 2 * Math.PI;
@@ -432,4 +433,65 @@ describe("the nucleus point and the light's shade (S107)", () => {
     const [plane] = floc.map!.build(P4414, { template: "ngc_4414", frame: FRAME });
     expect(floc.map!.build({ ...P4414, coreGain: 1, coreRadius: 0.3, glowDim: 0.1, grainDim: 0.5, puffDim: 0, clearFloor: 0.2 }, { template: "ngc_4414", frame: FRAME })[0]).toBe(plane);
   });
+});
+
+describe("the plane style with no threads drawn keys only on what it reads (S107 fix F2)", () => {
+  const ctrl = (k: string) => floc.controls.find((c) => c.key === k)!;
+  /** A value of the control's away from `v`, inside its range (a step of its own). */
+  const movedValue = (k: string, v: number) => {
+    const c = ctrl(k);
+    const w = c.min + 0.37 * (c.max - c.min);
+    return Math.abs(w - v) > 1e-9 ? w : c.min + 0.71 * (c.max - c.min);
+  };
+  const THREAD_CONTROLS = ["filSpacing", "netScale", "netGaps", "netSoft", "netWarp", "netFeather", "netArc", "arcWidth", "arcStretch", "filRun", "wisps", "haze", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz", "pitch", "width", "radial", "laneDepth", "tangle", "spurs", "taper"];
+
+  it("builds NGC 4414's plane at its defaults to the same bytes as the full shape's build", () => {
+    expect(P4414.style).toBe(1);
+    expect(P4414.netDepth).toBe(0);
+    const plane = flocChannel(P4414, FRAME)!;
+    const full = buildNetChannel(G, shapeOf(P4414));
+    expect(Buffer.from(plane).equals(Buffer.from(full))).toBe(true);
+  });
+
+  it("changes no byte of the plane when any value outside the light's is moved (every shaping key, at a smaller map)", () => {
+    const base = shapeOf(P4414);
+    const at = (s: FlocShape) => buildNetChannel(G, s, 300, 240);
+    const want = at(base);
+    const read = new Set<string>();
+    for (const k of SHAPE_KEYS) {
+      const s = { ...base, [k]: movedValue(k, base[k]) };
+      const same = Buffer.from(at(s)).equals(Buffer.from(want));
+      if (!same) read.add(k);
+      // a key the channel holds at its default must change nothing; one it keys on is the light's, the glow's or a gate
+      if (channelShapeOf({ ...P4414, [k]: s[k] })[k] !== s[k]) expect(same, k).toBe(true);
+    }
+    // the light's own keys do move it (the check above is not vacuous)
+    for (const k of ["litScale", "litReach", "seed", "cloudGlow"]) expect(read.has(k), k).toBe(true);
+  }, 120_000);
+
+  it("with netDepth 0 a thread control changes neither the plane's object nor illStale; with netDepth above 0 it does", () => {
+    const ill = illDefaults("ngc_4414");
+    const ctx = { template: "ngc_4414", frame: FRAME };
+    const plane = flocChannel(P4414, FRAME);
+    expect(plane).not.toBeNull();
+    illUniformValues(ill, ctx);
+    expect(illStale(ill, ctx)).toBe(false);
+    for (const k of THREAD_CONTROLS) {
+      const v = movedValue(k, P4414[k]);
+      expect(flocChannel({ ...P4414, [k]: v }, FRAME), k).toBe(plane);
+      expect(illStale({ ...ill, [`floc.${k}`]: v }, ctx), k).toBe(false);
+    }
+    // the light's own keys still rebuild
+    expect(flocChannel({ ...P4414, litScale: 300 }, FRAME)).not.toBe(plane);
+    // threads drawn: the same controls rebuild
+    const drawn = { ...ill, "floc.netDepth": 1.6 };
+    illUniformValues(drawn, ctx);
+    expect(illStale(drawn, ctx)).toBe(false);
+    const threaded = flocChannel({ ...P4414, netDepth: 1.6 }, FRAME);
+    for (const k of ["filSpacing", "netScale"]) {
+      const v = movedValue(k, P4414[k]);
+      expect(illStale({ ...drawn, [`floc.${k}`]: v }, ctx), k).toBe(true); // asked first: the build below fills the cache
+      expect(flocChannel({ ...P4414, netDepth: 1.6, [k]: v }, FRAME), k).not.toBe(threaded);
+    }
+  }, 120_000);
 });

@@ -65,7 +65,7 @@ import {
   stepRuntime,
 } from "./illustrative";
 import { illMeasure, illNow } from "./illustrative/feature";
-import { illArrivals, illJobsPending, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
+import { illArrivals, illJobsPending, illMapFailure, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
 import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
@@ -710,6 +710,8 @@ export function GalaxyTab({
   // S107 (the sliders' stall): the map worker's arrivals (illMapClient.ts) and how many of its jobs are pending.
   const illArrived = useSyncExternalStore(subscribeIll, illArrivals, illArrivals);
   const illJobs = useSyncExternalStore(subscribeIll, illJobsPending, illJobsPending);
+  // S107 fix F1: while the last map job failed (retried in a new worker, or rebuilt on this thread), the panel says so.
+  const illFailure = useSyncExternalStore(subscribeIll, illMapFailure, illMapFailure);
   // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
   // features' cached planes, so the physical look holds nothing of the layer; the next runtime builds them again.
   useLayoutEffect(() => {
@@ -1359,6 +1361,7 @@ export function GalaxyTab({
           onExposure={onExposure}
           look={viewLook}
           illPending={illPending}
+          illFailure={illFailure}
           defaultsOfLook={onLook ? (l) => lookDefaultsFor(templateName, l) : undefined}
         />
       </div>

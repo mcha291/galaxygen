@@ -55,9 +55,14 @@ type Job = typeof import("./illMapJob");
 class FakeWorker {
   static made: FakeWorker[] = [];
   static job: Job;
-  static failing = false;
+  /**
+   * How the next map messages fail, in order, one each (S107 fix F1): "error" answers an error, "throw" throws uncaught
+   * (the worker's onerror), "silent" never answers (a worker that died). Shared by every worker made.
+   */
+  static fail: ("error" | "throw" | "silent")[] = [];
   onmessage: ((event: { data: JobAnswer }) => void) | null = null;
-  onerror: ((event: { preventDefault(): void }) => void) | null = null;
+  onerror: ((event: { preventDefault(): void; message?: string }) => void) | null = null;
+  terminated = false;
   readonly inbox: JobMessage[] = [];
   readonly state = new FakeWorker.job.MapJobState();
   constructor(
@@ -67,12 +72,20 @@ class FakeWorker {
     FakeWorker.made.push(this);
   }
   postMessage(message: JobMessage, transfer: Transferable[]) {
+    if (this.terminated) throw new Error("posted to a terminated worker");
     this.inbox.push(structuredClone(message, { transfer }));
   }
   /** Runs the oldest message as the worker does (illMap.worker.ts) and answers it, if it is answered. */
   deliver() {
     const message = this.inbox.shift()!;
-    const out = FakeWorker.failing && message.kind === "map" ? { answer: { id: message.id, kind: "error" as const, message: "a builder threw" }, transfer: [] } : FakeWorker.job.handle(this.state, message);
+    if (this.terminated) return;
+    const failing = message.kind === "map" ? FakeWorker.fail.shift() : undefined;
+    if (failing === "silent") return;
+    if (failing === "throw") {
+      this.onerror?.({ preventDefault() {}, message: "Uncaught Error: injected throw" });
+      return;
+    }
+    const out = failing === "error" ? { answer: { id: message.id, kind: "error" as const, message: "a builder threw" }, transfer: [] } : FakeWorker.job.handle(this.state, message);
     if (!out) return;
     const transfer = out.transfer;
     const data = structuredClone(out.answer, { transfer });
@@ -82,7 +95,9 @@ class FakeWorker {
   deliverAll() {
     while (this.inbox.length) this.deliver();
   }
-  terminate() {}
+  terminate() {
+    this.terminated = true;
+  }
 }
 
 /** Two galaxies: F, and F2 with three-armed stars and its pieces turned. */
@@ -110,9 +125,13 @@ async function graphs() {
 describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", () => {
   beforeEach(() => {
     FakeWorker.made = [];
-    FakeWorker.failing = false;
+    FakeWorker.fail = [];
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   it("puts the planes the worker built in the main thread's caches, to the byte, transferred; the main thread builds no plane", async () => {
     const { main, client, feature, workerFeature, ref } = await graphs();
@@ -247,33 +266,137 @@ describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", 
     expect(client.illJobCounts().here).toBe(0);
   }, 120_000);
 
-  it("reports a failed job and keeps the previous map; a release drops the answers in flight", async () => {
+  // S107 fix F1: a failed map job - (a) it answers an error, (b) the worker throws uncaught, (c) the worker dies silently
+  // (the watchdog) - is warned once, asked once again of a NEW worker, and if that fails too built on this thread: the
+  // picture's planes always arrive, the pending count returns to 0, and a later move uses a worker again.
+  const failures = [
+    { mode: "error", reason: "it answered an error: a builder threw" },
+    { mode: "throw", reason: "the worker threw: Uncaught Error: injected throw" },
+    { mode: "silent", reason: "no answer within 15 s (the worker died or hung)" },
+  ] as const;
+  for (const { mode, reason } of failures) {
+    it(`recovers from a map job that fails (${mode}): retried in a new worker, then built here; never stuck pending`, async () => {
+      const { main, client, feature, ref } = await graphs();
+      if (mode === "silent") vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const base = main.illDefaults("milky_way");
+      const ctx = { template: "milky_way", frame: F };
+      const rt = main.createRuntime(base, { template: "milky_way", frame: null });
+      const w = (i: number) => FakeWorker.made[i];
+      /** The job's failure comes to light: delivered, and for a dead worker the watchdog's bound passed. */
+      const fails = (i: number) => {
+        w(i).deliverAll();
+        if (mode !== "silent") return;
+        expect(client.illJobsPending()).toBe(1); // nothing heard: still pending until the watchdog fires
+        vi.advanceTimersByTime(client.ILL_JOB_TIMEOUT_MS - 1);
+        expect(FakeWorker.made.length).toBe(i + 1);
+        vi.advanceTimersByTime(1);
+      };
+      const mapOf = () => (rt.uniforms.illMapTex.value as { image: { data: Uint8Array } }).image.data;
+      const refMap = (ill: Record<string, number>) => (ref.illUniformValues(ill, ctx).illMapTex as { image: { data: Uint8Array } }).image.data;
+      expect(client.ILL_JOB_TIMEOUT_MS).toBe(15_000);
+      expect(main.stepRuntime(rt, base, ctx)).toBe("asked");
+      w(0).deliverAll();
+      expect(main.stepRuntime(rt, base, ctx)).toBe("drawn");
+      const drawn = rt.uniforms.illMapTex.value;
+
+      // one failure: warned, the worker replaced, the same parameters asked once again of the new one, which answers
+      const A = { ...base, "lanes.width": 90 };
+      FakeWorker.fail = [mode];
+      expect(main.stepRuntime(rt, A, ctx)).toBe("asked");
+      fails(0);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0][0])).toBe(`illustrative map job failed: ${reason}; asked again of a new worker`);
+      expect(w(0).terminated).toBe(true);
+      expect(FakeWorker.made.length).toBe(2);
+      expect(w(1).inbox.map((m) => m.kind)).toEqual(["map"]);
+      expect(client.illJobsPending()).toBe(1);
+      expect(client.illMapFailure()).toBe("the map's worker failed; retrying");
+      expect(main.stepRuntime(rt, A, ctx)).toBe("asked"); // in flight: the previous map kept, nothing asked twice
+      expect(rt.uniforms.illMapTex.value).toBe(drawn);
+      w(1).deliverAll();
+      expect(client.illJobsPending()).toBe(0);
+      expect(client.illMapFailure()).toBeNull();
+      expect(feature.wouldBuild(() => main.illMapPlanes(A, ctx))).toBe(false); // the new worker's planes in the caches
+      expect(main.stepRuntime(rt, A, ctx)).toBe("drawn");
+      expect(Buffer.from(mapOf()).equals(Buffer.from(refMap(A)))).toBe(true);
+      expect(client.illJobCounts().here).toBe(0);
+
+      // two failures (the retry fails too): built on this thread for that request, the picture arrives all the same
+      const B = { ...base, "lanes.width": 75 };
+      FakeWorker.fail = [mode, mode];
+      expect(main.stepRuntime(rt, B, ctx)).toBe("asked");
+      fails(1);
+      fails(2);
+      expect(warn).toHaveBeenCalledTimes(3);
+      expect(String(warn.mock.calls[2][0])).toBe(`illustrative map job failed: ${reason}; built on the main thread`);
+      expect(client.illJobsPending()).toBe(0);
+      expect(client.illMapFailure()).toBe("the map's worker failed; rebuilt here");
+      expect(client.illJobCounts().here).toBe(1);
+      expect(main.stepRuntime(rt, B, ctx)).toBe("drawn"); // built here
+      expect(main.illStale(B, ctx)).toBe(false); // the "rebuilding" mark comes down
+      expect(Buffer.from(mapOf()).equals(Buffer.from(refMap(B)))).toBe(true);
+      expect(client.illWorkerAvailable()).toBe(true); // not broken for the page's life
+
+      // a later move uses a worker again (a new one), and its answer clears the panel's line
+      const C = { ...base, "lanes.width": 60 };
+      expect(main.stepRuntime(rt, C, ctx)).toBe("asked");
+      expect(FakeWorker.made.length).toBe(4);
+      w(3).deliverAll();
+      expect(client.illMapFailure()).toBeNull();
+      expect(main.stepRuntime(rt, C, ctx)).toBe("drawn");
+      expect(Buffer.from(mapOf()).equals(Buffer.from(refMap(C)))).toBe(true);
+      // back to the value that failed: asked of the worker again (not left un-asked), and drawn
+      expect(main.stepRuntime(rt, B, ctx)).toBe("asked");
+      expect(client.illJobsPending()).toBe(1);
+      w(3).deliverAll();
+      expect(client.illJobsPending()).toBe(0);
+      expect(main.stepRuntime(rt, B, ctx)).toBe("drawn");
+      expect(Buffer.from(mapOf()).equals(Buffer.from(refMap(B)))).toBe(true);
+      expect(client.illJobCounts().failed).toBe(3);
+      expect(client.illJobCounts().skipped).toBe(0);
+      expect(warn).toHaveBeenCalledTimes(3);
+    }, 120_000);
+  }
+
+  it("drops a failed map job for a newer one waiting; a failed sparkle is built here; a release drops the answers in flight", async () => {
     const { main, client, feature } = await graphs();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const base = main.illDefaults("milky_way");
     const ctx = { template: "milky_way", frame: F };
     const rt = main.createRuntime(base, { template: "milky_way", frame: null });
     main.stepRuntime(rt, base, ctx);
     FakeWorker.made[0].deliverAll();
     expect(main.stepRuntime(rt, base, ctx)).toBe("drawn");
-    const drawn = rt.uniforms.illMapTex.value;
-    const moved = { ...base, "lanes.width": 90 };
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    FakeWorker.failing = true;
-    expect(main.stepRuntime(rt, moved, ctx)).toBe("asked");
+    // a newer map job waits when the running one fails: the newer one goes to the new worker, the failed one is not retried
+    const A = { ...base, "lanes.width": 90 };
+    const B = { ...base, "lanes.width": 80 };
+    FakeWorker.fail = ["error"];
+    expect(main.stepRuntime(rt, A, ctx)).toBe("asked");
+    expect(main.stepRuntime(rt, B, ctx)).toBe("asked");
     FakeWorker.made[0].deliverAll();
-    expect(client.illJobCounts().failed).toBe(1);
-    expect(client.illJobCounts().lastError).toBe("a builder threw");
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(main.stepRuntime(rt, moved, ctx)).toBe("failed"); // not asked again, nothing built here, the map kept
-    expect(rt.uniforms.illMapTex.value).toBe(drawn);
-    expect(FakeWorker.made[0].inbox.length).toBe(0);
-    warn.mockRestore();
-    FakeWorker.failing = false;
+    expect(String(warn.mock.calls[0][0])).toContain("dropped for the newer one waiting");
+    expect(FakeWorker.made[1].inbox.length).toBe(1);
+    FakeWorker.made[1].deliverAll();
+    expect(client.illJobsPending()).toBe(0);
+    expect(main.stepRuntime(rt, B, ctx)).toBe("drawn");
+    expect(client.illMapFailure()).toBeNull();
+    // a sparkle whose job fails: built here at once (its points arrive), the worker replaced
+    const tex = rt.uniforms.illMapTex.value as { image: { data: Uint8Array }; userData: { illPlanes: (Uint8Array | null)[] } };
+    const params = main.paramsOf(main.features().find((f) => f.id === "arms")!, B);
+    let got: unknown = "none";
+    client.requestSparkle("s1", params, ctx, { plane: tex.userData.illPlanes[0], rgba: tex.image.data }, (p) => (got = p));
+    expect(got).toBe("none");
+    FakeWorker.made[1].onerror?.({ preventDefault() {} });
+    expect(got).not.toBe("none");
+    expect(String(warn.mock.calls[1][0])).toBe("illustrative sparkle job failed: the worker threw; built on the main thread");
+    expect(FakeWorker.made[1].terminated).toBe(true);
+    expect(client.illJobsPending()).toBe(0);
     // a release with a job in flight: its answer dropped, nothing put in the caches
     const other = { ...base, "lanes.width": 95 };
     expect(main.stepRuntime(rt, other, ctx)).toBe("asked");
     main.releaseRuntime(rt);
-    FakeWorker.made[0].deliverAll(); // the job's answer, then the release
+    FakeWorker.made[2].deliverAll(); // the job's answer, then the release
     expect(client.illJobCounts().dropped).toBe(1);
     expect(feature.wouldBuild(() => main.illMapPlanes(other, ctx))).toBe(true);
     expect(client.illJobsPending()).toBe(0);
