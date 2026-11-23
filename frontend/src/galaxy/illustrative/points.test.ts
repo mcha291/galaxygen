@@ -16,7 +16,7 @@ describe("the points' edge (S108)", () => {
 
   it("multiplies every point's light by the composed points hook in the illustrative vertex shader only", () => {
     const vert = illustrativePointsVertex(FLUX_POINTS_SHADER.vertex);
-    expect(vert).toContain("float illPoints(vec2 rp) { return illPointsAt(rp); }");
+    expect(vert).toContain("float illPoints(vec2 rp) { return illGrazeMul(illFlocPts(rp)) * illPointsAt(rp); }");
     expect(vert).toMatch(/light \*= illPoints\(vec2\(length\(position\.xz\), [^\n]+\)\);\n {4}light = illPointsCapped\(light\);\n {4}vLight = light;/);
     // The physical look's shader is FluxPoints' own: nothing of the layer.
     expect(FLUX_POINTS_SHADER.vertex).not.toContain("illPoints");
@@ -29,13 +29,13 @@ describe("the points' edge (S108)", () => {
     expect(points.uniforms?.({ edge: 0.25 }, { template: null, frame: null })).toEqual({ illPointsEdge: 0.25, illPointsCap: 0 });
   });
 
-  it("takes the edge's taper: whole inside radius - width, nothing from the radius on (NGC 4414: 7 and 11 kpc)", () => {
+  it("takes the edge's taper: whole inside radius - width, nothing from the radius on (NGC 4414: 6 and 16 kpc, S109)", () => {
     // The GLSL's twin (edge.ts edgeRamp) at NGC 4414's defaults.
     const d = illDefaults("ngc_4414");
     const at = (r: number) => edgeRamp(r, Math.min(d["edge.radius"], 30), d["edge.width"]);
-    expect(at(6.9)).toBe(1);
-    expect(at(9)).toBeCloseTo(0.5, 6);
-    expect(at(11)).toBe(0);
+    expect(at(5.9)).toBe(1);
+    expect(at(11)).toBeCloseTo(0.5, 6);
+    expect(at(16)).toBe(0);
     expect(at(20)).toBe(0);
   });
 });
