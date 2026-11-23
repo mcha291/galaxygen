@@ -5,19 +5,19 @@
 import { useMemo } from "react";
 import { FluxPoints, type PointDust } from "../FluxPoints";
 import { toScene } from "../positions";
-import { armMapFor } from "./arms";
-import { buildSparkle, hashString } from "./armsSparkle";
+import { armMapFor, shapeOf } from "./arms";
+import { buildSparkle, hashString, sparkleFlux } from "./armsSparkle";
 import type { IllLayerProps } from "./feature";
 
 /** The sparkle's blue-white at full share (over the white point). */
-const SPARKLE_BLUE: readonly [number, number, number] = [0.62, 0.84, 1.25];
+const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
 /** The seed of the viewer's own (and the template's name): fixed, never the time or the frame. */
 const SPARKLE_SEED = 0x5108a2b5;
 
 export default function ArmsSparkle({ params, runtime, context, knotsGain, dust }: IllLayerProps) {
   const built = armMapFor(params, context.frame);
   const count = params.sparkle ?? 0;
-  const rMax = (params.extend ?? 0) + 18;
+  const rMax = params.sparkleedge ?? 16;
   const shape = useMemo(
     () => ({
       count,
@@ -36,17 +36,18 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
     if (!built || shape.count <= 0) return null;
     const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0);
     if (s.radius.length === 0) return null;
-    return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight };
+    return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
   }, [built, shape, context.template]);
   const blue = params.sparkleblue ?? 0.7;
   const base = params.sparklegain ?? 2e4;
+  const start = shapeOf(params, context.frame).start;
+  const h = context.frame?.header.scalars.thin_disc_scale_length;
+  const scale = (typeof h === "number" && h > 0 ? h : 2.5) * (params.sparklefall ?? 1);
   const flux = useMemo(() => {
     if (!points) return null;
-    const c = SPARKLE_BLUE.map((v) => 1 + (v - 1) * blue);
-    const out = new Float32Array(points.weight.length * 3);
-    for (let i = 0; i < points.weight.length; i++) for (let k = 0; k < 3; k++) out[3 * i + k] = points.weight[i] * base * c[k];
-    return out;
-  }, [points, blue, base]);
+    const c = SPARKLE_BLUE.map((v) => 1 + (v - 1) * blue) as [number, number, number];
+    return sparkleFlux(points.weight, points.radius, base, c, start, scale);
+  }, [points, blue, base, start, scale]);
   if (!points || !flux) return null;
   return (
     <FluxPoints

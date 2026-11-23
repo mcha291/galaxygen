@@ -4,8 +4,8 @@
 // From the published (R, phi) contrast - the stars' pattern_density_contrast blended with gas_density_contrast - each
 // ring is normalised by its own mean (n = c / <c>), its deviation optionally evened across radii (so the outer arms,
 // whose model amplitude is a fifth of the inner ones', read as strongly), raised to a power and normalised again
-// (a = n^p / <n^p>: the ridge narrows and the ring's mean light is kept), and a floor laid under it between the arms
-// (L = floor + (1 - floor) a, the ring mean still 1). Inside the bar (bar_half_length) or an inner radius it fades to
+// (a = n^p / <n^p>: the ridge narrows), saturated into a ridge share (1 - e^-a) with a floor laid under it between the
+// arms, L = floor + (1 - floor)(1 - e^-a), and divided by its ring mean (the ring's mean light kept). Inside the bar (bar_half_length) or an inner radius it fades to
 // nothing, so the bar and the bulge are never brightened. Beyond the ring where the model's arms fade out the pattern
 // is carried outward along the arms' own measured winding, so the arms reach the disc's edge as the goals' do.
 
@@ -25,6 +25,8 @@ export interface ArmShape {
   equalise: number;
   /** The light's floor between the arms (share of the ring mean). */
   floor: number;
+  /** Where the ridge share saturates, in sharpened units (ring mean 1): higher keeps a strong arm brighter than a weak one. */
+  knee: number;
   /** The highest light multiplier on a ridge. */
   cap: number;
   /** Where the effect starts, kpc (bar_half_length times barFade, else `inner`). */
@@ -33,8 +35,12 @@ export interface ArmShape {
   width: number;
   /** How far past the model's arms' end the pattern is carried, kpc. */
   extend: number;
-  /** The young light's own power over the ridge. */
+  /** The clustered young light's floor between the arms, as a share of a full ridge's (1: as the model places it). */
   young: number;
+  /** The ridge lines' share in the ridge (0 the sharpened contrast alone, 1 the lines alone). */
+  lineMix: number;
+  /** The ridge lines' full width at half maximum across the arm, kpc. */
+  armWidth: number;
 }
 
 /** The deviation an evened ring is scaled to (the model's typical outer-disc sd is 0.1-0.25). */
@@ -96,8 +102,6 @@ export function sharpen(n: Float64Array, nR: number, nPhi: number, power: number
   return out;
 }
 
-/** The light under a floor: floor + (1 - floor) a, capped (the ring's mean stays 1 below the cap). */
-export const floored = (a: number, floor: number, cap: number): number => Math.min(cap, floor + (1 - floor) * a);
 
 /** The ring index of a radius (cell centres at (i + 0.5) dR). */
 const ringOf = (g: ArmGrid, r: number): number => Math.min(g.nR - 1, Math.max(0, Math.round(r / (g.rHi / g.nR) - 0.5)));
@@ -123,24 +127,30 @@ export function armWinding(n: Float64Array, g: ArmGrid, inner: number): { ref: n
     }
   }
   const dR = g.rHi / g.nR;
-  const a = ref - Math.round(2 / dR);
-  if (ref < 0 || a < i0 || a < 1) return null;
+  const span = Math.round(3 / dR);
+  const gap = Math.max(1, Math.round(0.3 / dR));
+  if (ref < 0 || ref - span - gap < Math.max(i0, 1)) return null;
+  // The winding ring by ring: the best small shift between rings `gap` apart over the last 3 kpc inside the end, each
+  // a dphi / dlnR; their median (a single wide correlation across kpc locks onto the wrong arm).
   const P = g.nPhi;
-  let best = 0;
-  let bestScore = -Infinity;
-  const half = Math.floor(P / 4);
-  for (let s = -half; s <= half; s++) {
-    let score = 0;
-    for (let j = 0; j < P; j++) score += (n[ref * P + j] - 1) * (n[a * P + ((((j - s) % P) + P) % P)] - 1);
-    if (score > bestScore) {
-      bestScore = score;
-      best = s;
+  const half = Math.max(2, Math.round(P / 30));
+  const ks: number[] = [];
+  for (let i = ref - span; i <= ref; i += 2) {
+    const a = i - gap;
+    let best = 0;
+    let bestScore = -Infinity;
+    for (let s = -half; s <= half; s++) {
+      let score = 0;
+      for (let j = 0; j < P; j++) score += (n[i * P + j] - 1) * (n[a * P + ((((j - s) % P) + P) % P)] - 1);
+      if (score > bestScore) {
+        bestScore = score;
+        best = s;
+      }
     }
+    ks.push(((best * 2 * Math.PI) / P) / Math.log((i + 0.5) / (a + 0.5)));
   }
-  const rRef = (ref + 0.5) * dR;
-  const rA = (a + 0.5) * dR;
-  const k = ((best * 2 * Math.PI) / P) / Math.log(rRef / rA);
-  return { ref, k };
+  ks.sort((x, y) => x - y);
+  return { ref, k: ks[Math.floor(ks.length / 2)] };
 }
 
 /** A ring's normalised values read at a fractional azimuth cell, periodic, linear between cells. */
@@ -194,20 +204,102 @@ export function armMap(n: Float64Array, g: ArmGrid, shape: ArmShape, strength: n
     for (let j = 0; j < nPhi; j++) even[i * nPhi + j] = Math.max(0, 1 + (n[i * nPhi + j] - 1) * gain);
   }
   const a = sharpen(even, nR, nPhi, shape.power);
-  const y = sharpen(even, nR, nPhi, shape.young);
+  // The ridge share: the sharpened contrast's (1 - e^(-a / knee)) mixed with the ridge lines' narrow profile.
+  const share = new Float64Array(nR * nPhi);
+  for (let k = 0; k < share.length; k++) share[k] = ridge(a[k], shape.knee);
+  if (shape.lineMix > 0) {
+    const wind = armWinding(n, g, Math.max(shape.start, 1));
+    const lines = ridgeLines(even, g, shape.armWidth, wind ? wind.k : DEFAULT_WINDING);
+    for (let k = 0; k < share.length; k++) share[k] = share[k] * (1 - shape.lineMix) + lines[k] * shape.lineMix;
+  }
+  const light = ringLight(share, nR, nPhi, shape.floor, shape.cap);
+  const young = ringLight(share, nR, nPhi, shape.young, YOUNG_CAP);
   const out = new Float32Array(nR * nPhi * 4);
   for (let i = 0; i < nR; i++) {
     const f = barFade((i + 0.5) * dR, shape.start, shape.width) * strength;
     const fa = Math.min(1, f);
     for (let j = 0; j < nPhi; j++) {
-      const v = a[i * nPhi + j];
-      const light = floored(v, shape.floor, shape.cap);
+      const k = i * nPhi + j;
       const o = (j * nR + i) * 4;
-      out[o] = Math.max(0, 1 + (light - 1) * f);
-      out[o + 1] = fa * smoothstep(1, 2.2, v);
-      out[o + 2] = Math.max(0, 1 + (Math.min(shape.cap, y[i * nPhi + j]) - 1) * f);
+      out[o] = Math.max(0, 1 + (light[k] - 1) * f);
+      out[o + 1] = fa * smoothstep(0.25, 0.9, share[k]) * (sd[i] > 0.02 ? 1 : 0);
+      out[o + 2] = Math.max(0, 1 + (young[k] - 1) * f);
       out[o + 3] = fa;
     }
+  }
+  return out;
+}
+
+/** The young light's cap on a ridge. */
+export const YOUNG_CAP = 4;
+/** dphi / dlnR where the field's winding cannot be measured (a pitch of about 18 degrees). */
+export const DEFAULT_WINDING = 3;
+
+/** The ridge's share from a sharpened value (ring mean 1): 0 between the arms, toward 1 on a ridge, saturating. */
+export const ridge = (a: number, knee = 1): number => 1 - Math.exp(-Math.max(0, a) / Math.max(1e-3, knee));
+
+/**
+ * The ridge lines: on each ring the local maxima of the (evened, lightly smoothed) contrast that stand above the ring by
+ * a third of its deviation, each drawn as a flat-topped profile across the arm of full width at half maximum `width` kpc - the
+ * distance across an arm at (R, dphi) being R dphi sin(pitch), the pitch from the winding k (tan pitch = 1 / |k|) -
+ * and of height its prominence over twice the ring's deviation (at most 1). A share in [0, 1], 0 between the arms:
+ * the arm's width the slider's whatever the model's ridge's.
+ */
+export function ridgeLines(even: Float64Array, g: ArmGrid, width: number, k: number): Float64Array {
+  const { nR, nPhi: P } = g;
+  const dR = g.rHi / nR;
+  const out = new Float64Array(nR * P);
+  const sinPitch = 1 / Math.sqrt(1 + k * k);
+  // A flat-topped profile with sharp edges, exp(-(d / s)^4 / 2): half its height at d = 1.0845 s.
+  const sigma = Math.max(0.01, width) / (2 * 1.0845);
+  const smooth = new Float64Array(P);
+  const sd = ringSd(even, nR, P);
+  for (let i = 0; i < nR; i++) {
+    if (sd[i] <= 0.02) continue;
+    const R = (i + 0.5) * dR;
+    for (let j = 0; j < P; j++) {
+      let s = 0;
+      for (let q = -2; q <= 2; q++) s += even[i * P + ((((j + q) % P) + P) % P)];
+      smooth[j] = s / 5;
+    }
+    // The profile's reach in cells: 2 s across the arm (where it is e^-8).
+    const cellAcross = (R * ((2 * Math.PI) / P)) * sinPitch;
+    const reach = Math.min(Math.floor(P / 2), Math.ceil((2 * sigma) / Math.max(1e-6, cellAcross)));
+    for (let j = 0; j < P; j++) {
+      const v = smooth[j];
+      const dev = v - 1;
+      if (dev < sd[i] / 3) continue;
+      let peak = true;
+      for (let q = 1; q <= 4 && peak; q++) if (smooth[(j + q) % P] > v || smooth[(j - q + P) % P] >= v) peak = false;
+      if (!peak) continue;
+      const height = Math.min(1, dev / (2 * sd[i]));
+      for (let q = -reach; q <= reach; q++) {
+        const d = q * cellAcross;
+        const x2 = (d * d) / (sigma * sigma);
+        const w = height * Math.exp(-0.5 * x2 * x2);
+        const o = i * P + ((((j + q) % P) + P) % P);
+        if (w > out[o]) out[o] = w;
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The light over a ring from its ridge share: floor + (1 - floor) share - the gaps at `floor` of a full ridge's light
+ * whatever the arm's own amplitude - divided by the ring's mean (the ring's mean light kept) and capped.
+ */
+export function ringLight(share: Float64Array, nR: number, nPhi: number, floor: number, cap: number): Float64Array {
+  const out = new Float64Array(nR * nPhi);
+  for (let i = 0; i < nR; i++) {
+    let s = 0;
+    for (let j = 0; j < nPhi; j++) {
+      const v = floor + (1 - floor) * share[i * nPhi + j];
+      out[i * nPhi + j] = v;
+      s += v;
+    }
+    const mean = s / nPhi;
+    for (let j = 0; j < nPhi; j++) out[i * nPhi + j] = mean > 0 ? Math.min(cap, out[i * nPhi + j] / mean) : 1;
   }
   return out;
 }

@@ -8,7 +8,7 @@
 // handful of members in a small gaussian; the rest single points against the same density. Brightness: a power law
 // (many faint, few bright), the group's brightest at its centre.
 
-import type { ArmGrid } from "./armsField";
+import { smoothstep, type ArmGrid } from "./armsField";
 
 /** mulberry32: a small seeded generator, the same sequence for the same seed on every machine. */
 export function rng(seed: number): () => number {
@@ -47,7 +47,7 @@ export interface SparkleShape {
   slope: number;
   /** The brightest point's flux over the faintest's. */
   range: number;
-  /** The outermost radius drawn, kpc. */
+  /** The outermost radius drawn, kpc: the density tapers smoothly to nothing over its outer 30 %. */
   rMax: number;
   /** The points' half-thickness, pc. */
   heightPc: number;
@@ -94,7 +94,7 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
   const weight = new Float32Array(total);
   const next = rng(seed);
   const rMax = Math.min(s.rMax, g.rHi);
-  const density = (r: number, phi: number) => Math.pow(Math.max(0, shareAt(map, g, r, phi)), s.ridge);
+  const density = (r: number, phi: number) => Math.pow(Math.max(0, shareAt(map, g, r, phi)), s.ridge) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
   const place = (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {
@@ -133,4 +133,25 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
     k++;
   }
   return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
+}
+
+/**
+ * Each point's light per channel: its weight times the base and the colour, times exp(-(R - start) / scale) outside
+ * `start` (1 inside), so the sparkle fades outward as the disc's own light does and no point outshines a faint outer
+ * disc. Scale 0 or less: no falloff.
+ */
+export function sparkleFlux(
+  weight: ArrayLike<number>,
+  radius: ArrayLike<number>,
+  base: number,
+  colour: readonly [number, number, number],
+  start: number,
+  scale: number,
+): Float32Array {
+  const out = new Float32Array(weight.length * 3);
+  for (let i = 0; i < weight.length; i++) {
+    const fall = scale > 0 ? Math.exp(-Math.max(0, radius[i] - start) / scale) : 1;
+    for (let k = 0; k < 3; k++) out[3 * i + k] = weight[i] * base * colour[k] * fall;
+  }
+  return out;
 }
