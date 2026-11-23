@@ -1,8 +1,8 @@
 // The framing (S105, BUILD_VIII row 105): the template's stand puts the camera at radius_kpc (half the picture's height
 // at the centre), which leaves the disc small in the frame beside the goal pictures. Under the illustrative look the
 // stand's radius is multiplied by `scale`, its azimuth turned by `turn`, and the picture rolled by `roll` about the line
-// of sight (the camera's up turned about it, so an inclined disc's long axis lies at that angle instead of level); the
-// lens and the inclination are the template's. Illustrative (D275): the physical look's stands are untouched.
+// of sight (the camera's up turned about it, so an inclined disc's long axis lies at that angle instead of level), and
+// (S106) its inclination tilted by `tilt` (the sum held to [0, 89] degrees); the lens is the template's. Illustrative (D275): the physical look's stands are untouched.
 
 import type { IllFeature, IllParams } from "./feature";
 
@@ -24,8 +24,17 @@ export const framing: IllFeature = {
       key: "turn", label: "azimuth turn", min: -180, max: 180, step: 1, unit: "°", default: 0,
       about: "Added to the template camera's azimuth, degrees: which side of an inclined disc is near. Remakes the view's camera. Illustrative.",
     },
+    {
+      key: "tilt", label: "tilt", min: -45, max: 45, step: 0.5, unit: "°", default: 0,
+      about: "Added to the template camera's inclination, degrees, the sum held to [0, 89]: above 0 the disc more edge-on (a narrower ellipse). Remakes the view's camera. Illustrative.",
+    },
   ],
 };
+
+/** The tilt, degrees added to the stand's inclination (S106). */
+export const standTilt = (p: IllParams): number => p.tilt ?? 0;
+/** The stand's inclination under the tilt, degrees, held to [0, 89]. */
+export const tiltedInclination = (inclinationDeg: number, tiltDeg: number): number => Math.min(89, Math.max(0, inclinationDeg + tiltDeg));
 
 /** The stand's radius multiplier. */
 export const standScale = (p: IllParams): number => p.scale ?? 1;
