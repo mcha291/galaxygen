@@ -9,11 +9,16 @@
 // contrast (gas_density_contrast: more filaments on the flocculent pieces) and the stars' contrast
 // (pattern_density_contrast: the young clumps gather on the pieces).
 //
-// A filament is a short walk in the plane whose heading, measured from the direction of growing azimuth toward the
-// direction of growing radius, is the pitch - so it is a piece of the log spiral ln R = tan(pitch) phi + c, the arm
-// pieces' own convention (arm_pieces.py; lanesMap.ts) - wandering by a few degrees as it goes. Trunks carry branches
-// that leave at an angle and turn back to the spiral, and those carry twigs; a few short wide "bands" are the thick
-// mottled strands. All are drawn as lines of round Gaussian spots, as the lanes are.
+// The dust is two drawings summed. The LACE (drawLace) carries most of it: a smooth noise whose cells are pieces of
+// the drawn spiral, ridged, so its threads close into cells, fork and join as the photograph's do, thick and run
+// together into blotches where the dust gathers (bundles of the viewer's own, the published gas) and gone elsewhere.
+// The FILAMENTS (flocStrands) are the few long ones: a filament is a short walk in the plane whose heading, measured
+// from the direction of growing azimuth toward the direction of growing radius, is the pitch - so it is a piece of the
+// log spiral ln R = tan(pitch) phi + c, the arm pieces' own convention (arm_pieces.py; lanesMap.ts) - wandering by a
+// few degrees as it goes. Trunks carry branches that leave at an angle and turn back to the spiral, and those carry
+// twigs; short wide "bands" (none at the defaults) are thick strands. They are drawn as lines of round Gaussian spots,
+// as the lanes are. The light is soft blobs: patches in threes along the spiral, each a cloud of grains, and strings
+// of young clumps.
 //
 // The map: ONE byte a texel on the lanes' grid (lanesMap.ts LANE_MAP: 2000 rings over 0-rHi by 3600 sectors) - the
 // feature's channel of the look's shared map, the march's fragment having no sampler to spare for a second one - so
