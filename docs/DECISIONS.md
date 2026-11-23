@@ -18824,3 +18824,50 @@ no hash.
 **What did not move.** No byte under `model/galaxy` (the hash 5a862a70d3760c426ca51c2cffa2b0c2 on `batch-q`, `main`
 27561e8d381b992b4ead3bccc0615aa7); no frontend file, no frame, no display default (`TEMPLATE_TUNING`, D227); no judged
 bound (B5); no goal picture used as a target (C6); nothing merged into `main` (b5d421c) or into `batch-q`; no push.
+
+### D275. The owner's word of 2026-11-23: the pictures first — images akin to the two goal pictures are the priority and the physics is improved later; BUILD_VIII adopted; rule D5 and `RENDER_PHYSICS.md` section 8 amended for a declared illustrative layer with a physical switch; seven rulings taken on the lead's recommendation, each the owner's to re-rule (2026-11-23)
+
+**The owner's words.** After a status review asked for that day (main c6d7b15 green on five nightlies; `batch-r`
+unmerged; the register's carried count at 65 since S93 with fifteen opened against seven discharged and eight ruled
+permanent; three model batches that moved nothing a viewer sees): "i want to prioritise being able to produce images
+akin to the goal. the physics is secondary and can be incrementally improved later. to get the display to what we want,
+what is missing?" The lead answered with five things the display lacks (a tone and colour pipeline; pink regions at a
+visible size; connected brown lanes; narrow bright arms with sparkle; NGC 4414's patchy texture), said that four of the
+five need the viewer to draw structure the model does not publish, tuned to a picture, which C6, rule D5 and
+`RENDER_PHYSICS.md` section 8 forbid, and recommended lifting them "only inside a declared illustrative layer with a
+physics-only switch", the model untouched. The owner: "i accept your recommendations, please begin working on it.
+You're the fable orchestrating agent, spawn opus and fable subagents for implementation depending on your assessment of
+whether fable capabilities are needed; do your best to do as much as you can in the next 48 hours, so be more efficient
+with running the full suite and offloading it to run on Github where possible instead of being blocked on it on the
+local machine. if i'm not around to make rulings, use your best judgement and recommend one, and document it for me to
+review later".
+
+**What is ruled by those words.**
+
+1. **BUILD_VIII is adopted** (`docs/BUILD_VIII.md`): rows 105 to 110, the illustrative look.
+2. **Rule D5 and `RENDER_PHYSICS.md` section 8 are amended** for the illustrative layer alone: under the look
+   `illustrative` the viewer may draw display-only structure, parameters and seeds of its own, colour for appearance,
+   and fields tuned to the goal pictures. Under the look `physical` it draws none of it, and the rules read as before.
+   "A goal picture is never a target" (BUILD_III's C6, kept by BUILD_VI and BUILD_VII) holds for the model and the
+   physical look and is lifted for the illustrative look.
+3. **The lead rules in the owner's absence** and writes each ruling where the owner reads it: this entry,
+   `BUILD_VIII.md` section 4, and `BRIEF.md` at each close.
+
+**The seven rulings taken on recommendation** (`BUILD_VIII.md` section 4 is the table). (1) The build is cut from
+`main` c6d7b15, not from `batch-r`: the owner's acceptance was of the display recommendations, and a merge of a model
+batch into `main` stays on the owner's word; **D274 is `batch-r`'s (S104) and is reserved** in
+`tests/test_docs.py`'s numbering test as S21's blocks were (D116's precedent), so this entry is D275 on a line that
+does not hold D274; when `batch-r` merges, D274 enters before this entry. Debts continue from #238 for the same
+reason (#237 is `batch-r`'s). (2) A viewer-only session merges into `main` at its close on the fast gates, as the
+protocol has it (rule C7; S97 and S98), so the owner's dev tab holds the work. (3) The templates' default look stays
+`physical` until the lead's gate finds the illustrative frames nearer their goals on both templates; the picture
+test's nine frames are captured under `physical` either way, which is also the proof that the switch is honest.
+(4) The layer may place display-only structure by published fields, tune a field to a picture and colour for
+appearance; it may not change a published number, a readout, a tracer or a Science-tab preview. (5) The register is
+frozen for this build: only a defect of the physical path gets a number. (6) BUILD_VII's rows and the owner's owed
+rulings (`BRIEF.md` after S104, on `batch-r`) are parked; none is taken here. (7) Two heavy builders at once on
+disjoint files, a light runner beside them; Fable at the gate and where a picture is designed or judged, Opus
+otherwise; the full suite only by dispatch on GitHub.
+
+**What did not move at this entry.** No byte under `model/galaxy` (the hash on `main` 5a862a70d3760c426ca51c2cffa2b0c2);
+no frame; no display default; `batch-r`, `batch-q-lanes` and `q-231` untouched.

@@ -607,6 +607,13 @@ and dust at 1, say) is not colour applied for appearance: it is an exposure chos
 as a slider, each component still its own filter integral times one number, and the extinction strength's 1.25 is the
 owner's recorded exception (D228) — ruled so at Audit V's gate G4 (finding F-4-4) `[verified: DECISIONS.md D233]`.
 
+**The illustrative layer (BUILD_VIII) is outside this section.** Under the look `illustrative` the viewer draws
+display-only structure of its own, colour for appearance and fields tuned to the two goal pictures; the four bans
+above do not bind it, except the first (nothing frame-seeded or time-seeded: it must not shimmer). Under the look
+`physical` nothing of the layer is drawn and this section binds as written; the picture test's committed frames are
+captured under `physical` and are the proof. *Amended 2026-11-23 on the owner's word* `[verified: DECISIONS.md D275]`.
+**Until D275 this section had no exception.**
+
 *Amended 2026-10-03 on the owner's word (BUILD_III §7, ruling 3; Appendix A)* `[verified: DECISIONS.md D212]`.
 **Until D212 this section read:** "Every visible feature traces to a published field or to a seeded draw from
 one, and the seed comes from the model, not from the frame", with a paragraph on noise textures as rule A4 read

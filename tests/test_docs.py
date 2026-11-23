@@ -69,14 +69,20 @@ def test_no_bare_verified_labels(name):
 # working rather than a lost decision. Outside it, a gap is still a defect.
 S21_RESERVED = range(130, 158)  # aim (a) D130-D143, aim (b) D144-D157
 
+# D274 is S104's, on `batch-r`, which waits unmerged on the owner's word while BUILD_VIII runs from `main` (D275):
+# the same reservation for the same reason. When `batch-r` merges, D274 enters before D275 and this set empties.
+BATCH_R_RESERVED = {274}
+
 
 def test_decisions_are_numbered_sequentially():
-    """No duplicate, no reordering, and no gap except S21's reserved blocks."""
+    """No duplicate, no reordering, and no gap except S21's reserved blocks and batch R's D274."""
     nums = [int(n) for n in re.findall(r"^### D(\d+)\.", text("DECISIONS.md"), flags=re.M)]
     assert nums, nums
     assert nums == sorted(set(nums)), f"a decision number is repeated or out of order: {nums}"
     missing = sorted(set(range(1, nums[-1] + 1)) - set(nums))
-    assert all(n in S21_RESERVED for n in missing), f"decision numbers missing outside S21's blocks: {missing}"
+    assert all(n in S21_RESERVED or n in BATCH_R_RESERVED for n in missing), (
+        f"decision numbers missing outside the reserved blocks: {missing}"
+    )
 
 
 def test_manual_todo_carries_a_row_for_every_closed_session():
