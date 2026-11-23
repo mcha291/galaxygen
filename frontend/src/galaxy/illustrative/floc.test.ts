@@ -7,12 +7,13 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllFrame } from "./feature";
-import { floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { channelShapeOf, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { buildNetChannel } from "./flocNet";
 import {
   FLOC_ARRAYS, FLOC_MAP, FLOC_REACH, type FlocGeometry, type FlocShape, Ladder, SHAPE_KEYS, buildFlocChannel, flocClumps, flocCover, flocDecode, flocGrains, flocKey, flocLight, flocPatches,
   flocStrands, geometryOf, lightReach, readField, spiralNoise, strandPitch,
 } from "./flocMap";
-import { features, illArrays, illDefaults, illGlsl, illustrativeFragment, paramsOf } from "./index";
+import { features, illArrays, illDefaults, illGlsl, illStale, illUniformValues, illustrativeFragment, paramsOf } from "./index";
 
 const DEG = Math.PI / 180;
 const TAU = 2 * Math.PI;
@@ -371,4 +372,126 @@ describe("the feature", () => {
     expect(g).toMatch(/vec3 illVeil\(vec2 rp\) \{ return .*illFlocVeil\(rp\).*; \}/);
     expect(illustrativeFragment(fieldFragment())).toContain("float illFlocAv(vec2 rp) {");
   });
+});
+
+describe("the dust gathered on arcs (S107)", () => {
+  it("is a uniform (no rebuild), off on the Milky Way and outside the plane style, and applied to the threads and the mesh alike", () => {
+    const context = { template: "ngc_4414", frame: FRAME };
+    const [plane] = floc.map!.build(P4414, context);
+    expect(floc.map!.build({ ...P4414, arcGate: 0.3, arcClear: 0.5, arcLevel: 0.2, arcPeak: 2 }, context)[0]).toBe(plane);
+    const mw = floc.uniforms!(paramsOf(floc, illDefaults("milky_way")), { template: "milky_way", frame: FRAME });
+    expect((mw.illFlocGate as number[])[0]).toBe(0);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), context);
+    expect((ngc.illFlocGate as number[])[0]).toBeGreaterThan(0);
+    const lattice = floc.uniforms!({ ...paramsOf(floc, illDefaults("ngc_4414")), style: 0 }, context);
+    expect((lattice.illFlocGate as number[])[0]).toBe(0);
+    const glsl = floc.glsl!;
+    expect(glsl).toMatch(/illFlocShape\(illFlocRead\(rp\)\.x\) \* \(illFlocStyle > 0\.5 \? illFlocGateAt\(rp\)/);
+    expect(glsl).toContain("(illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0);");
+    expect(glsl).toContain("if (illFlocStyle > 0.5 && av > 0.0) av *= gate;");
+  });
+});
+
+describe("the narrow dust lanes (S107 NGC3)", () => {
+  it("are uniforms (no rebuild), off on the Milky Way and outside the plane style, many lanes a turn for NGC 4414", () => {
+    const context = { template: "ngc_4414", frame: FRAME };
+    const [plane] = floc.map!.build(P4414, context);
+    const moved = { ...P4414, laneStep: 300, lanePitch: 2, laneCrest: 0.5, laneWander: 1.5, lanePiece: 800, laneGaps: 0.6, laneVary: 0.2, laneBranch: 1, laneVeil: 1, meshLight: 0.1, coreShare: 0.5, coreSize: 60, coreDepth: 4, laneWisps: 2, wispAngle: 60, grainReach: 0.6 };
+    expect(floc.map!.build(moved, context)[0]).toBe(plane);
+    const mw = floc.uniforms!(paramsOf(floc, illDefaults("milky_way")), { template: "milky_way", frame: FRAME });
+    expect((mw.illFlocLaneA as number[])[0]).toBe(0);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), context);
+    const a = ngc.illFlocLaneA as number[];
+    expect(a[0]).toBe(1);
+    expect(Number.isInteger(a[1])).toBe(true);
+    expect(a[1]).toBeGreaterThanOrEqual(8);
+    expect(Number.isInteger((ngc.illFlocLaneD as number[])[0])).toBe(true);
+    const lattice = floc.uniforms!({ ...paramsOf(floc, illDefaults("ngc_4414")), style: 0 }, context);
+    expect((lattice.illFlocLaneA as number[])[0]).toBe(0);
+    // Narrower spacing, more lanes a turn.
+    const dense = floc.uniforms!({ ...paramsOf(floc, illDefaults("ngc_4414")), laneStep: 300 }, context);
+    expect((dense.illFlocLaneA as number[])[1]).toBeGreaterThan(a[1]);
+    // The grain's reach: the outer radius times grainReach.
+    expect(ngc.illFlocGrainR as number).toBeCloseTo(11 * 0.8, 6);
+    const glsl = floc.glsl!;
+    expect(glsl).toContain("vec2 illFlocLanes(vec2 rp) {");
+    expect(glsl).toContain("float jm = mod(j, n);");
+  });
+});
+
+describe("the nucleus point and the light's shade (S107)", () => {
+  it("are uniforms off on the Milky Way, NGC 4414's glow dimmed about a compact lifted point", () => {
+    const mw = floc.uniforms!(paramsOf(floc, illDefaults("milky_way")), { template: "milky_way", frame: FRAME });
+    expect((mw.illFlocLitDim as number[])[3]).toBe(0);
+    expect((mw.illFlocNucPt as number[])[2]).toBe(0);
+    expect((mw.illFlocLitDim as number[]).slice(0, 2)).toEqual([1, 1]);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), { template: "ngc_4414", frame: FRAME });
+    const [radius, , dim, glowR] = ngc.illFlocNucPt as number[];
+    expect((ngc.illFlocLitDim as number[])[3]).toBeGreaterThan(0);
+    expect(dim).toBeGreaterThan(0);
+    expect(radius).toBeLessThan(glowR);
+    const [plane] = floc.map!.build(P4414, { template: "ngc_4414", frame: FRAME });
+    expect(floc.map!.build({ ...P4414, coreGain: 1, coreRadius: 0.3, glowDim: 0.1, grainDim: 0.5, puffDim: 0, clearFloor: 0.2 }, { template: "ngc_4414", frame: FRAME })[0]).toBe(plane);
+  });
+});
+
+describe("the plane style with no threads drawn keys only on what it reads (S107 fix F2)", () => {
+  const ctrl = (k: string) => floc.controls.find((c) => c.key === k)!;
+  /** A value of the control's away from `v`, inside its range (a step of its own). */
+  const movedValue = (k: string, v: number) => {
+    const c = ctrl(k);
+    const w = c.min + 0.37 * (c.max - c.min);
+    return Math.abs(w - v) > 1e-9 ? w : c.min + 0.71 * (c.max - c.min);
+  };
+  const THREAD_CONTROLS = ["filSpacing", "netScale", "netGaps", "netSoft", "netWarp", "netFeather", "netArc", "arcWidth", "arcStretch", "filRun", "wisps", "haze", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz", "pitch", "width", "radial", "laneDepth", "tangle", "spurs", "taper"];
+
+  it("builds NGC 4414's plane at its defaults to the same bytes as the full shape's build", () => {
+    expect(P4414.style).toBe(1);
+    expect(P4414.netDepth).toBe(0);
+    const plane = flocChannel(P4414, FRAME)!;
+    const full = buildNetChannel(G, shapeOf(P4414));
+    expect(Buffer.from(plane).equals(Buffer.from(full))).toBe(true);
+  });
+
+  it("changes no byte of the plane when any value outside the light's is moved (every shaping key, at a smaller map)", () => {
+    const base = shapeOf(P4414);
+    const at = (s: FlocShape) => buildNetChannel(G, s, 300, 240);
+    const want = at(base);
+    const read = new Set<string>();
+    for (const k of SHAPE_KEYS) {
+      const s = { ...base, [k]: movedValue(k, base[k]) };
+      const same = Buffer.from(at(s)).equals(Buffer.from(want));
+      if (!same) read.add(k);
+      // a key the channel holds at its default must change nothing; one it keys on is the light's, the glow's or a gate
+      if (channelShapeOf({ ...P4414, [k]: s[k] })[k] !== s[k]) expect(same, k).toBe(true);
+    }
+    // the light's own keys do move it (the check above is not vacuous)
+    for (const k of ["litScale", "litReach", "seed", "cloudGlow"]) expect(read.has(k), k).toBe(true);
+  }, 120_000);
+
+  it("with netDepth 0 a thread control changes neither the plane's object nor illStale; with netDepth above 0 it does", () => {
+    const ill = illDefaults("ngc_4414");
+    const ctx = { template: "ngc_4414", frame: FRAME };
+    const plane = flocChannel(P4414, FRAME);
+    expect(plane).not.toBeNull();
+    illUniformValues(ill, ctx);
+    expect(illStale(ill, ctx)).toBe(false);
+    for (const k of THREAD_CONTROLS) {
+      const v = movedValue(k, P4414[k]);
+      expect(flocChannel({ ...P4414, [k]: v }, FRAME), k).toBe(plane);
+      expect(illStale({ ...ill, [`floc.${k}`]: v }, ctx), k).toBe(false);
+    }
+    // the light's own keys still rebuild
+    expect(flocChannel({ ...P4414, litScale: 300 }, FRAME)).not.toBe(plane);
+    // threads drawn: the same controls rebuild
+    const drawn = { ...ill, "floc.netDepth": 1.6 };
+    illUniformValues(drawn, ctx);
+    expect(illStale(drawn, ctx)).toBe(false);
+    const threaded = flocChannel({ ...P4414, netDepth: 1.6 }, FRAME);
+    for (const k of ["filSpacing", "netScale"]) {
+      const v = movedValue(k, P4414[k]);
+      expect(illStale({ ...drawn, [`floc.${k}`]: v }, ctx), k).toBe(true); // asked first: the build below fills the cache
+      expect(flocChannel({ ...P4414, netDepth: 1.6, [k]: v }, FRAME), k).not.toBe(threaded);
+    }
+  }, 120_000);
 });

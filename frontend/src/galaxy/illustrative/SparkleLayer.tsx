@@ -6,19 +6,21 @@
 // brightest share (`sparklebig`) on a larger one (`sparklebigsize`) - so the arms' grain has sizes, not one dot.
 // A share of 0 draws every point on the small sprite, as S105 did.
 
-import { useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { Group } from "three";
 import { FluxPoints, type PointDust } from "../FluxPoints";
-import { toScene } from "../positions";
-import { armMapFor, armsSkeleton, shapeOf } from "./arms";
-import { skeletonOn } from "./armsSkeleton";
-import { grainDensity, ridgeAt } from "./skeleton";
-import { buildSparkle, hashString, sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
+import { shapeOf } from "./arms";
+import { sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
 import { ILL_MAP, type IllLayerProps } from "./feature";
+import { illFieldDrawn, objectToken, requestSparkle, setSparkleDrawnFor, sparkleHeld } from "./illMapClient";
+import { illChannelCurrent } from "./index";
+import { type SparklePoints, sparkleKey, sparkleReadsLanes, sparkleShown } from "./sparkleJob";
 
 /** The sparkle's blue-white at full share (over the white point). */
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
-/** The seed of the viewer's own (and the template's name): fixed, never the time or the frame. */
-const SPARKLE_SEED = 0x5108a2b5;
+/** S107: the sparkle's cyan-teal, mixed into the blue-white by the arms' `cyan` share. */
+const SPARKLE_CYAN: readonly [number, number, number] = [0.66, 1.1, 1.16];
 
 /** The members `idx` of a flat buffer of `width` values per point. */
 function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Array {
@@ -27,56 +29,61 @@ function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Arr
   return out;
 }
 
+/** The shared map's texture as the layer reads it: its RGBA bytes and the planes it was composed from (index.ts). */
+type MapTexture = { image?: { data?: ArrayLike<number>; width?: number; height?: number }; userData?: { illPlanes?: (Uint8Array | null)[] } };
+
 export default function ArmsSparkle({ params, runtime, context, knotsGain, dust }: IllLayerProps) {
-  const built = armMapFor(params, context.frame);
-  // S106: on the skeleton, the grain's density read across its ridges (skeleton.ts grainDensity) in place of the share.
-  const skeleton = skeletonOn(params) ? armsSkeleton(context.frame, params) : null;
-  const tail = params.skeltail ?? 0.05;
-  const grainFade = params.skelgrainfade ?? 1.5;
-  const count = params.sparkle ?? 0;
-  const rMax = params.sparkleedge ?? 16;
-  const shape = useMemo(
-    () => ({
-      count,
-      clump: params.clump ?? 0.6,
-      groupPc: params.groupsize ?? 120,
-      members: params.members ?? 10,
-      ridge: params.sparkleridge ?? 2,
-      slope: params.sparkleslope ?? 1.4,
-      range: params.sparklerange ?? 40,
-      rMax,
-      heightPc: 60,
-      floor: params.sparklefloor ?? 0,
-      lift: params.sparklelift ?? 0,
-      avoid: params.sparkleavoid ?? 0,
-      bunch: params.sparklebunch ?? 0,
-      bunchPc: params.sparklebunchsize ?? 400,
-      bunchBright: params.sparklebunchbright ?? 0,
-    }),
-    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift, params.sparkleavoid, params.sparklebunch, params.sparklebunchsize, params.sparklebunchbright],
-  );
-  // S106: the shared map (its R the lanes), read only while the sparkle keeps off the lanes.
-  const mapTex = (shape.avoid ?? 0) > 0 ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as { image?: { data?: ArrayLike<number>; width?: number; height?: number } } | undefined) : undefined;
-  const points = useMemo(() => {
-    if (!built || shape.count <= 0) return null;
-    const img = mapTex?.image;
-    const lanes =
-      img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height ? { data: img.data, width: img.width, height: img.height, rHi: built.grid.rHi } : null;
-    const levelOf = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
-    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw, lanes, levelOf);
-    if (s.radius.length === 0) return null;
-    return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
-  }, [built, shape, context.template, mapTex, skeleton, tail, grainFade]);
+  // S107: the points are built by the map worker (sparkleJob.ts, illMapClient.ts requestSparkle) - the same build the
+  // layer made here, moved off the main thread - keyed on exactly what it reads: the frame, the arms' parameters and,
+  // while the sparkle keeps off the lanes (S106), the lanes' own plane in the composed map (not the map's texture, which
+  // moves with any channel). The last points stay drawn until the new ones arrive.
+  const mapTex = sparkleReadsLanes(params) ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as MapTexture | undefined) : undefined;
+  const img = mapTex?.image;
+  const composed = !!img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height;
+  const lanesPlane = composed ? (mapTex?.userData?.illPlanes?.[0] ?? null) : null;
+  const key = sparkleKey(params, context.frame, objectToken(context.frame), context.template, composed ? (lanesPlane ? `plane:${objectToken(lanesPlane)}` : "zeros") : "none");
+  // The galaxy the points are for (rule D1): the last points stay drawn only on the same galaxy (a slider's move).
+  const galaxy = `${objectToken(context.frame)}:${context.template}`;
+  const [arrived, setArrived] = useState<{ key: string; galaxy: string; points: SparklePoints | null } | null>(null);
+  const held = sparkleHeld(key);
+  // While the lanes' plane for the parameters drawn is still being built, nothing is asked: the points for the new
+  // lanes are built once, when it is in the map (not first over the previous lanes, as the layer did before).
+  const lanesReady = !sparkleReadsLanes(params) || illChannelCurrent(mapTex ?? null, 0, context);
+  useEffect(() => {
+    if (held !== undefined || !lanesReady) return;
+    const lanes = composed ? { plane: lanesPlane, rgba: img!.data! } : null;
+    return requestSparkle(key, params, context, lanes, (points) => setArrived({ key, galaxy, points }));
+  }, [key, lanesReady]); // eslint-disable-line react-hooks/exhaustive-deps -- the key names every input
+  const points = sparkleShown(held, arrived, galaxy);
+  // The probe's check of rule D1: the template these points were built for.
+  const [owner] = useState(() => ({}));
+  const shownFor = points ? context.template : null;
+  // S107 (MW2, rule D1): drawn only while the field drawn is their galaxy, read at each frame before the render (the
+  // canvas's own tree commits after GalaxyTab's: for a frame after a template switch it still held the last galaxy's
+  // points while the field and the map were already the new one's). No view reporting a field (vitest): drawn.
+  const showNow = useCallback(() => {
+    const field = illFieldDrawn();
+    return shownFor !== null && (field === undefined || field === shownFor);
+  }, [shownFor]);
+  const group = useRef<Group>(null);
+  useFrame(() => {
+    if (group.current) group.current.visible = showNow();
+  });
+  useLayoutEffect(() => {
+    setSparkleDrawnFor(owner, shownFor === null ? null : () => (showNow() ? shownFor : null));
+    return () => setSparkleDrawnFor(owner, null);
+  }, [owner, shownFor, showNow]);
   const blue = params.sparkleblue ?? 0.7;
+  const cyan = Math.min(1, Math.max(0, params.cyan ?? 0));
   const base = params.sparklegain ?? 2e4;
   const start = shapeOf(params, context.frame).start;
   const h = context.frame?.header.scalars.thin_disc_scale_length;
   const scale = (typeof h === "number" && h > 0 ? h : 2.5) * (params.sparklefall ?? 1);
   const flux = useMemo(() => {
     if (!points) return null;
-    const c = SPARKLE_BLUE.map((v) => 1 + (v - 1) * blue) as [number, number, number];
+    const c = SPARKLE_BLUE.map((v, k) => 1 + (v + (SPARKLE_CYAN[k] - v) * cyan - 1) * blue) as [number, number, number];
     return sparkleFlux(points.weight, points.radius, base, c, start, scale);
-  }, [points, blue, base, start, scale]);
+  }, [points, blue, cyan, base, start, scale]);
   const bigShare = params.sparklebig ?? 0;
   const tiers = useMemo(() => {
     if (!points || !flux) return null;
@@ -89,7 +96,7 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   if (!tiers) return null;
   const sizes = [params.sparklesize ?? 1.5, params.sparklebigsize ?? 3];
   return (
-    <>
+    <group ref={group} visible={showNow()}>
       {tiers.map((t, i) =>
         t ? (
           <FluxPoints
@@ -104,6 +111,6 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
           />
         ) : null,
       )}
-    </>
+    </group>
   );
 }

@@ -27,11 +27,11 @@ import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.6, ngc_4414: 0.5 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.8, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
-    key: "ink", label: "lane ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.8, perTemplate: { milky_way: 0.8, ngc_4414: 0.75 },
+    key: "ink", label: "lane ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.8, perTemplate: { milky_way: 0.65, ngc_4414: 0.75 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (a lane inked over the picture); the rest is dust in the dust's own thin layer, which dims and reddens only the stars behind it. Illustrative.",
   },
   {
@@ -98,11 +98,11 @@ const CONTROLS: readonly IllControl[] = [
   { key: "featherDepth", label: "feather depth", min: 0, max: 2, step: 0.01, unit: "×", default: 0.8, about: "A feather's depth at its root, as a share of a strand's. Illustrative." },
   { key: "fray", label: "fray", min: 0, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.8 }, about: "Short thin wisps leaving the strands at a low angle, their depth as a share of a strand's: a ragged edge; 0 none. Illustrative." },
   {
-    key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.5 },
+    key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6 },
     about: "The depth of the two lanes along the bar's leading edges, as a share of the lane depth; 0 none. Drawn only where the galaxy has a bar. Illustrative.",
   },
-  { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.15 }, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
-  { key: "barWidth", label: "bar lane width", min: 20, max: 400, step: 5, unit: "pc", default: 60, perTemplate: { milky_way: 30 }, about: "A bar lane's full width at half depth, parsecs. Illustrative." },
+  { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.6 }, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
+  { key: "barWidth", label: "bar lane width", min: 20, max: 400, step: 5, unit: "pc", default: 60, perTemplate: { milky_way: 20 }, about: "A bar lane's full width at half depth, parsecs. Illustrative." },
   { key: "barCurve", label: "bar lane curve", min: 1, max: 8, step: 0.1, unit: "", default: 2.5, perTemplate: { milky_way: 2 }, about: "How late a bar lane turns in to the bar's end: 1 a straight line from the end to the centre's side, higher a lane along the axis that turns at the end. Illustrative." },
   { key: "barReach", label: "bar lane reach", min: 0.3, max: 1.3, step: 0.01, unit: "", default: 1, about: "Where a bar lane begins, as a share of the bar's half-length (1 the bar's end). Illustrative." },
   {
@@ -117,6 +117,11 @@ const CONTROLS: readonly IllControl[] = [
     key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "The bar lanes' curl round the nucleus, a share of its 220 degrees: 1 S107's curl, 0 two straight lanes along the bar's leading edges. Illustrative (S106).",
   },
+  // S107 (MW2): the lanes braided in places, the majors feathered more.
+  { key: "splitSpacing", label: "lane splits", min: 0, max: 10, step: 0.1, unit: "kpc", default: 0, perTemplate: { milky_way: 1.6 }, about: "A lane's first strand parts in two for a stretch and rejoins, about every this many kpc along the arm; 0 never. Illustrative (S107)." },
+  { key: "splitLength", label: "split length", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.8, about: "A split's length along the arm, kpc (each 0.6-1.4 of it). Illustrative (S107)." },
+  { key: "splitSeparation", label: "split width", min: 10, max: 600, step: 5, unit: "pc", default: 120, about: "How far the two threads of a split part at its middle, pc (each 0.7-1.3 of it, to either side). Illustrative (S107)." },
+  { key: "majorFeather", label: "majors' feathers", min: 0.2, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.6 }, about: "On the skeleton's two major arms, the feathers this many times as close together. Illustrative (S107)." },
   { key: "seed", label: "lane seed", min: 0, max: 999, step: 1, unit: "", default: 7, about: "The seed of the lanes' wander, breaks and feathers: another number, another drawing of the same lanes. Illustrative." },
 ];
 
@@ -148,7 +153,7 @@ const mapPlane = memoOn((frame: unknown, template: unknown, skelJson: unknown, .
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
   return map.drawn ? map.data : null;
-});
+}, "lanes.plane");
 
 /**
  * The arms' crests traced into ridges (S106; lanesMap.ts traceRidges) from the arms' published contrast shaped at the

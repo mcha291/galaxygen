@@ -26,6 +26,13 @@
 //              builder of one byte plane per channel (null: zero), cached by the feature (memoOn); the registry
 //              composes the planes and re-uploads only when a plane's object changes. The same texture is handed to the
 //              points' vertex shader. A feature's own layer material (`layer`) may still bind samplers of its own.
+//              S107 (the sliders' stall): the planes are built OFF the main thread, by the map worker (illMapClient.ts,
+//              illMapJob.ts; stepRuntime below): it runs the builders themselves and hands back each NAMED memo's build
+//              (memoOn(build, "<feature>.<what>")), which the main thread puts in the same cache - so a plane's memo
+//              must be named, and a builder must be a pure function of its params and context (no DOM, no WebGL, no
+//              module state but its memos: it runs in a worker too). An unnamed plane memo still works, built on the
+//              main thread when drawn (a stall over ~0.1 s on its slider is a defect). Until the planes arrive the view
+//              draws the previous map; the look capture waits for them (window.__galaxygenIllPending).
 //   hooks      which of its GLSL functions take part in the march (rp = vec2(R kpc, phi rad), phi = atan(-z, x) in
 //              [0, 2 pi), the model's galactocentric azimuth; R cylindrical):
 //     dustAv    float f(vec2 rp): extra face-on A_V, magnitudes, at the midplane point rp. All features' are summed into
@@ -85,8 +92,9 @@ import { ClampToEdgeWrapping, DataTexture, LinearFilter, RGBAFormat, RepeatWrapp
 import { arms } from "./arms";
 import { base } from "./base";
 import { edge } from "./edge";
-import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, releaseMemos, wouldBuild } from "./feature";
+import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, illMeasure, illNow, releaseMemos, wouldBuild } from "./feature";
 import { floc } from "./floc";
+import { illMapAnswered, illMapFailed, illMapKey, releaseIllJobs, startIllMap } from "./illMapClient";
 import { framing } from "./framing";
 import { grade } from "./grade";
 import { knots } from "./knots";
@@ -329,6 +337,11 @@ export interface IllRuntime {
   glsl: string;
   uniforms: Record<string, { value: unknown }>;
   version: number;
+  /**
+   * (S107, rule D1) The galaxy the values were last written for: its template and its arrays' frame. Another galaxy's
+   * map is never drawn: when either moves, stepRuntime draws the empty map until the new galaxy's own planes arrive.
+   */
+  drawnFor?: { template: string | null; frame: IllContext["frame"] };
 }
 
 const sameValue = (a: unknown, b: unknown): boolean => {
@@ -366,7 +379,9 @@ export function illMapPlanes(ill: Readonly<Record<string, number>>, unbound: Ill
   const size = ILL_MAP.width * ILL_MAP.height;
   for (const f of FEATURES) {
     if (!f.map) continue;
+    const started = illNow();
     const built = f.map.build(paramsOf(f, ill), context);
+    illMeasure(`map ${f.id}`, started);
     if (built.length !== f.map.channels.length) throw new Error(`illustrative map: ${f.id} built ${built.length} planes for ${f.map.channels.length} channels`);
     f.map.channels.forEach((c, i) => {
       if (!(c >= 0 && c < 4 && Number.isInteger(c))) throw new Error(`illustrative map: ${f.id} names channel ${c}`);
@@ -388,6 +403,13 @@ export function illMapPlanes(ill: Readonly<Record<string, number>>, unbound: Ill
 export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTexture {
   const changed = [0, 1, 2, 3].filter((c) => planes[c] !== shared.planes[c]);
   if (changed.length === 0) return shared.texture;
+  // S107: no plane at all is the empty map (the first frame's, and another galaxy's until its planes arrive): the
+  // buffer let go, so the next planes are composed over zeros.
+  if (planes.every((p) => !p) && shared.buffer) {
+    if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
+    shared.texture = EMPTY_MAP;
+    shared.buffer = null;
+  }
   if (!shared.buffer) {
     if (planes.every((p) => !p)) {
       shared.planes = [...planes];
@@ -395,6 +417,7 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
     }
     shared.buffer = new Uint8Array(ILL_MAP.width * ILL_MAP.height * 4);
   }
+  const started = illNow();
   const buf = shared.buffer;
   const n = ILL_MAP.width * ILL_MAP.height;
   for (const c of changed) {
@@ -405,14 +428,37 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
   shared.planes = [...planes];
   if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
   shared.texture = mapTexture(buf, ILL_MAP.width, ILL_MAP.height);
+  // S107: the planes it was composed from, by channel (the sparkle names the lanes' plane it reads to the map worker).
+  shared.texture.userData.illPlanes = [...planes];
+  illMeasure("compose", started);
   return shared.texture;
+}
+
+/**
+ * (S107) Whether channel `c` of the map `texture` holds the plane its feature builds at the parameters `context` binds
+ * (illContextFor) - false while that plane is still being built (a layer that reads the channel waits for it rather
+ * than read the previous one). Nothing is built.
+ */
+export function illChannelCurrent(texture: unknown, c: number, context: IllContext): boolean {
+  const f = FEATURES.find((g) => g.map?.channels.includes(c));
+  if (!f?.map) return true;
+  const at = f.map.channels.indexOf(c);
+  let plane: Uint8Array | null = null;
+  if (wouldBuild(() => (plane = f.map!.build(context.paramsOf?.(f.id) ?? {}, context)[at] ?? null))) return false;
+  const composed = (texture as { userData?: { illPlanes?: (Uint8Array | null)[] } } | null)?.userData?.illPlanes?.[c] ?? null;
+  return composed === plane;
 }
 
 /** Each feature's uniform values for these parameters and this context, and the shared map (illMapTex). */
 export function illUniformValues(ill: Readonly<Record<string, number>>, unbound: IllContext): Record<string, unknown> {
   const context = illContextFor(unbound, ill);
   const out: Record<string, unknown> = {};
-  for (const f of FEATURES) if (f.uniforms) Object.assign(out, f.uniforms(paramsOf(f, ill), context));
+  for (const f of FEATURES) {
+    if (!f.uniforms) continue;
+    const started = illNow();
+    Object.assign(out, f.uniforms(paramsOf(f, ill), context));
+    illMeasure(`uniforms ${f.id}`, started);
+  }
   out.illMapTex = illMapTexture(illMapPlanes(ill, context));
   return out;
 }
@@ -420,7 +466,12 @@ export function illUniformValues(ill: Readonly<Record<string, number>>, unbound:
 /** A runtime with every feature's uniforms at these parameters (the template's illustrative defaults without them). */
 export function createRuntime(ill: Readonly<Record<string, number>> = illDefaults(null), context: IllContext = { template: null, frame: null }): IllRuntime {
   const values = illUniformValues(ill, context);
-  return { glsl: illGlsl(), uniforms: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, { value: v }])), version: 0 };
+  return {
+    glsl: illGlsl(),
+    uniforms: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, { value: v }])),
+    version: 0,
+    drawnFor: { template: context.template, frame: context.frame },
+  };
 }
 
 /** Writes the uniforms' values for these parameters and context into the runtime; the version moves if any changed. */
@@ -434,6 +485,32 @@ export function updateRuntime(runtime: IllRuntime, ill: Readonly<Record<string, 
     }
   }
   if (moved) runtime.version += 1;
+  runtime.drawnFor = { template: context.template, frame: context.frame };
+}
+
+/**
+ * One step of the map contract (S107, the sliders' stall; illMapClient.ts): the runtime brought to these parameters
+ * WITHOUT building a plane on this thread where the map worker can build it. Where the runtime would build (illStale)
+ * and the worker has not answered for exactly these parameters, the planes are asked of it ("asked": the runtime keeps
+ * its previous map and uniforms; call again when illArrivals moves) - or, if it failed for them, nothing changes
+ * ("failed"). Otherwise the runtime is updated from the features' caches ("drawn"): every channel at these parameters.
+ * Without a worker (vitest, SSR, a failed worker) every step is "drawn", built here as before.
+ */
+export function stepRuntime(runtime: IllRuntime, ill: Readonly<Record<string, number>>, context: IllContext): "asked" | "failed" | "drawn" {
+  const key = illMapKey(ill, context);
+  if (!illMapAnswered(key) && illStale(ill, context)) {
+    // Rule D1: the previous map is kept only on the same galaxy (a slider's move). For another galaxy - another
+    // template or another frame of arrays - the empty map (the values without the arrays) is drawn while its own
+    // planes are built.
+    const moved = runtime.drawnFor?.template !== context.template || runtime.drawnFor?.frame !== context.frame;
+    const failed = illMapFailed(key);
+    if (failed || startIllMap(key, ill, context)) {
+      if (moved) updateRuntime(runtime, ill, { ...context, frame: null });
+      return failed ? "failed" : "asked";
+    }
+  }
+  updateRuntime(runtime, ill, context);
+  return "drawn";
 }
 
 /** How long the sliders must hold still before a plane-shaping change is built (S105 fix R1), ms. */
@@ -500,8 +577,11 @@ export function illEffective(
 
 /** Whether the runtime still has to build for these parameters (a plane not yet made for them): the "rebuilding" mark. */
 export const illStale = (ill: Readonly<Record<string, number>>, context: IllContext): boolean => {
+  const started = illNow();
   const bound = illContextFor(context, ill);
-  return FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), bound));
+  const stale = FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), bound));
+  illMeasure("stale", started);
+  return stale;
 };
 
 /**
@@ -514,6 +594,8 @@ export function releaseShared(): void {
   shared.buffer = null;
   shared.planes = [null, null, null, null];
   releaseMemos();
+  // S107: the map worker's caches and every answer not yet in.
+  releaseIllJobs();
 }
 
 /** What the layer holds outside a runtime now (the release's test): the shared map's buffer bytes. */

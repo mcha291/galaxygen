@@ -376,7 +376,9 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
   const dR = g.rHi / rings;
   const dPhi = TAU / sectors;
   const lit = Math.min(rings, Math.ceil(net.reach / dR));
-  // No threads drawn (netDepth 0): no dust grid at all (the mesh is drawn in the march).
+  // No threads drawn (netDepth 0): no dust grid at all (the mesh is drawn in the march). Then only the light, its reach
+  // and the clouds' glow are read: floc.ts channelShapeOf keys the plane on those alone (S107 fix F2) - a new read of
+  // the shape below, outside the dust grid, must be added to its LIGHT_ONLY_KEYS.
   const dusty = shape.netDepth > 0 ? Math.min(lit, Math.ceil(net.outer / dR)) : 0;
   const dSect = Math.max(8, Math.floor(sectors / NET_GRID.dustPhi));
   const lSect = Math.max(8, Math.floor(sectors / NET_GRID.light));

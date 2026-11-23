@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import {
   type BlackbodyTable,
@@ -62,8 +62,10 @@ import {
   knotsReplaced,
   paramsOf,
   releaseRuntime,
-  updateRuntime,
+  stepRuntime,
 } from "./illustrative";
+import { illMeasure, illNow } from "./illustrative/feature";
+import { illArrivals, illJobsPending, illMapFailure, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
 import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
@@ -680,36 +682,72 @@ export function GalaxyTab({
   const illNames = useMemo(() => (illustrative ? illArrays() : []), [illustrative]);
   const illArraysKey = illustrative && illNames.length > 0 ? JSON.stringify(["illustrative", illNames, query]) : null;
   const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal)).value ?? null;
-  const illContext = useMemo<IllContext>(() => ({ template: templateName, frame: illFrame }), [templateName, illFrame]);
+  // S107 (rule D1): during a landing's hold the drawn galaxy's template, as its parameters (look.ill) and its arrays are,
+  // so the map is built and drawn for the galaxy on screen; the new one's when the swap publishes it.
+  const illTemplate = held ?? templateName;
+  const illContext = useMemo<IllContext>(() => ({ template: illTemplate, frame: illFrame }), [illTemplate, illFrame]);
   // S105 fix R1, the debounce: a slider that only sets uniforms is drawn at once; one that reshapes a feature's map plane
   // (a rebuild of 0.1-2 s on the main thread) is drawn from the settled copy, so a drag costs one rebuild after it stops.
   // `illBuilt` moves after a runtime update, so the "rebuilding" mark (illPending) is read again once the build is done.
   const illSettled = useDebounced(illParams, ILL_SETTLE_MS, `${templateName}:${viewLook}:${held ?? ""}`);
   const illDrawn = useMemo(
-    () => (illustrative ? illEffective(illParams, illSettled, illContext) : { ill: illParams, held: [] as string[] }),
+    () => {
+      if (!illustrative) return { ill: illParams, held: [] as string[] };
+      const started = illNow();
+      const e = illEffective(illParams, illSettled, illContext);
+      illMeasure("effective", started);
+      return e;
+    },
     [illustrative, illParams, illSettled, illContext],
   );
   const illDrawnParams = illDrawn.ill;
   // S106 (B4): the layers' context carries every feature's drawn parameters (IllContext.paramsOf), as the map builders' does.
   const illLayerContext = useMemo(() => illContextFor(illContext, illDrawnParams), [illContext, illDrawnParams]);
   const [illBuilt, setIllBuilt] = useState(0);
-  const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S107: made without the arrays (nothing is built here on this thread); the effect below asks the map worker for the
+  // planes, and nothing of the map is drawn until they have arrived.
+  const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, { ...illContext, frame: null }) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S107 (the sliders' stall): the map worker's arrivals (illMapClient.ts) and how many of its jobs are pending.
+  const illArrived = useSyncExternalStore(subscribeIll, illArrivals, illArrivals);
+  const illJobs = useSyncExternalStore(subscribeIll, illJobsPending, illJobsPending);
+  // S107 fix F1: while the last map job failed (retried in a new worker, or rebuilt on this thread), the panel says so.
+  const illFailure = useSyncExternalStore(subscribeIll, illMapFailure, illMapFailure);
   // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
   // features' cached planes, so the physical look holds nothing of the layer; the next runtime builds them again.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!illRuntime) return;
     return () => releaseRuntime(illRuntime);
   }, [illRuntime]);
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // S107 (rule D1): in the commit itself (a layout effect, as the release above), so no frame is drawn with another
+    // galaxy's map over the field that commit draws.
     if (!illRuntime) return;
+    // S107, the map contract (illMapClient.ts): where the runtime would build a plane for the parameters drawn now, the
+    // map worker builds it and puts it in the features' caches; until it arrives (illArrived moves) the runtime keeps the
+    // previous map and uniforms. A failed job keeps them too. Without a worker the runtime builds here, as before.
     const before = illRuntime.version;
-    updateRuntime(illRuntime, illDrawnParams, illContext);
+    const started = illNow();
+    stepRuntime(illRuntime, illDrawnParams, illContext);
+    illMeasure("runtime", started);
     if (illRuntime.version !== before) setIllBuilt((n) => n + 1);
-  }, [illRuntime, illDrawnParams, illContext]);
+  }, [illRuntime, illDrawnParams, illContext, illArrived]);
   const illPending = useMemo(
-    () => illustrative && (illDrawn.held.length > 0 || illStale(illDrawnParams, illContext)),
-    [illustrative, illDrawn, illDrawnParams, illContext, illBuilt], // eslint-disable-line react-hooks/exhaustive-deps -- illBuilt: read again after a build
+    () => illustrative && (illDrawn.held.length > 0 || illJobs > 0 || illStale(illDrawnParams, illContext)),
+    [illustrative, illDrawn, illDrawnParams, illContext, illBuilt, illJobs, illArrived], // eslint-disable-line react-hooks/exhaustive-deps -- illBuilt, illArrived: read again after a build
   );
+  // The look capture's wait (e2e/look.spec.ts settle): the picture is not the parameters' until nothing is pending.
+  useEffect(() => setIllViewPending(illPending), [illPending]);
+  // The slider probe's check of rule D1 (e2e/ill/sliders.probe.ts): which galaxy the map drawn was built for, against
+  // the galaxy whose field is drawn (in the commit itself, so no frame reads a stale pair). Nothing drawn reads it.
+  const drawnTemplateName = drawn.template?.name ?? null;
+  useLayoutEffect(() => {
+    if (!illRuntime) return;
+    setIllDrawnFor(() => {
+      const tex = illRuntime.uniforms.illMapTex?.value as { userData?: { illPlanes?: (Uint8Array | null)[] } } | undefined;
+      return { map: illRuntime.drawnFor?.template ?? null, mapDrawn: !!tex?.userData?.illPlanes?.some((p) => p), field: drawnTemplateName };
+    });
+    return () => setIllDrawnFor(null);
+  }, [illRuntime, drawnTemplateName]);
   const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
   // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
@@ -718,7 +756,11 @@ export function GalaxyTab({
   const framingLive = framingParams
     ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)},${standTilt(framingParams)}`
     : "1,0,0,0";
-  const framingOf = `${templateName}:${viewLook}`;
+  // S107 GL: keyed on the drawn galaxy's template (illTemplate, the held one during a landing's hold), as look.ill is.
+  // Keyed on the live template it changed at the click, so the framing settled during the hold was the held galaxy's,
+  // and at the swap the new galaxy's stand was drawn first with the old framing and 300 ms later with its own: two
+  // canvases per landing from the Milky Way to NGC 4414, the first lost within a second, its programs compiled for nothing.
+  const framingOf = `${illTemplate}:${viewLook}`;
   const [framingAt, setFramingAt] = useState({ of: framingOf, v: framingLive });
   useEffect(() => {
     if (framingAt.of === framingOf && framingAt.v === framingLive) return;
@@ -737,6 +779,9 @@ export function GalaxyTab({
         }
       : templateStand;
   const viewRoll = illustrative ? framingRoll : 0;
+  // The knots as the layers receive them: one object while the knots are the same (S107: the regions' layer rebuilt its
+  // buffers - 6-10 ms - at every render of this tab while a new object was made for it each time).
+  const illKnots = useMemo(() => (knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null), [knotsShown]);
   // A feature that draws the HII regions its own way in place of the default knots (knots.ts, row 106).
   const knotsDefault = illustrative && knotsReplaced(illParams) ? null : knotsShown;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
@@ -943,7 +988,7 @@ export function GalaxyTab({
                 params={paramsOf(f, illDrawnParams)}
                 runtime={illRuntime}
                 context={illLayerContext}
-                knots={knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null}
+                knots={illKnots}
                 knotsGain={knotsGain}
                 dust={knotDust}
               />
@@ -1316,6 +1361,7 @@ export function GalaxyTab({
           onExposure={onExposure}
           look={viewLook}
           illPending={illPending}
+          illFailure={illFailure}
           defaultsOfLook={onLook ? (l) => lookDefaultsFor(templateName, l) : undefined}
         />
       </div>

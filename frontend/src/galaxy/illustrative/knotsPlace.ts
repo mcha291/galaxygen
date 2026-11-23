@@ -12,7 +12,7 @@
 import { currentSkeleton, skeletonKey } from "./armsSkeleton";
 import type { IllContext, IllParams } from "./feature";
 import { CORE_COLOUR, MAX_BLOBS, hash01, quantile, radialWeight, regionColour } from "./knotsMath";
-import { type Skeleton, armAt, sampleRidges } from "./skeleton";
+import { type Skeleton, armAt, patchAt, sampleRidges } from "./skeleton";
 
 const TAU = 2 * Math.PI;
 
@@ -49,8 +49,8 @@ export interface PlacedRegion {
   radius: number;
   /** Light relative to the model's reference (1: the 90th percentile of the model's regions). */
   light: number;
-  /** 0 a nebula, 1 a blue-white point beside one. */
-  kind: 0 | 1;
+  /** 0 a nebula, 1 a blue-white point beside one, 2 (S107, MW2) a complex's soft pink halo (one wide lobe, no core). */
+  kind: 0 | 1 | 2;
   /** A stable index for the lobes' hash. */
   id: number;
 }
@@ -93,6 +93,11 @@ export function paretoRadius(u: number, floor: number, ceiling: number, slope: n
  * side, scattered `across` widths; sizes from paretoRadius over [sizeMin, sizeMax] at `slope`, light (r / sizeMin)^lightSize;
  * a complex at each major arm's start (the bar's ends) `barEnds` times as bright; `sparkle` blue-white points beside
  * each large region. Deterministic in (skeleton, parameters).
+ *
+ * S107 (the Milky Way's regions): no bunch where the ridge's strength is under `minStrength` (a faded arm end); a
+ * bunch kept with the arm's clumps (skeleton.ts patchAt) to the power `patchPow`, so the regions gather in the arm's
+ * bright stretches with long empty ones between; `complexes` large ragged complexes (as the bar ends' are, `complexGain`
+ * times a region's light) at strength-weighted places along the two major arms. Each 0 leaves the S106 placement.
  */
 export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
   const next = stream(Math.round(p.seed ?? 7));
@@ -111,19 +116,45 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
   const fadeR = p.fadeR ?? 14;
   const fadeWidth = p.fadeWidth ?? 4;
   const innerR = p.innerR ?? 0;
+  const minStrength = Math.max(0, p.minStrength ?? 0);
+  const patchPow = Math.max(0, p.patchPow ?? 0);
   const out: PlacedRegion[] = [];
   const centres: number[] = [];
   let id = 0;
   const add = (f: NonNullable<ReturnType<typeof frameAt>>, along: number, off: number, radius: number, light: number) => {
     out.push({ x: f.x + along * f.tx + off * f.nx, y: f.y + along * f.ty + off * f.ny, tx: f.tx, ty: f.ty, radius, light, kind: 0, id: id++ });
   };
-  const members = (f: NonNullable<ReturnType<typeof frameAt>>, count: number, scale: number, big: boolean) => {
+  // S107 (MW2): on a spur, the regions drawn toward its crest by `spurCrest` (0: the inner-edge bias and the scatter as
+  // on an arm); a large complex's members `complexMembers` times as many and spread `complexSpread` times as far along
+  // the arm, `satellites` tiny regions about it, and a soft pink halo (`halo` its light against the complex's largest
+  // member, `haloSize` times the ceiling its radius). Each at its default leaves the placement as it was.
+  const spurCrest = Math.min(1, Math.max(0, p.spurCrest ?? 0));
+  const complexMembers = Math.max(0.1, p.complexMembers ?? 1);
+  const complexSpread = Math.max(0, p.complexSpread ?? 1);
+  const satellites = Math.max(0, Math.round(p.satellites ?? 0));
+  const halo = Math.max(0, p.halo ?? 0);
+  const haloSize = Math.max(0.5, p.haloSize ?? 3);
+  const members = (f: NonNullable<ReturnType<typeof frameAt>>, count: number, scale: number, big: boolean, onCrest = 0) => {
+    const spread = big ? complexSpread : 1;
     for (let m = 0; m < count; m++) {
-      const along = (m === 0 && big ? 0 : gaussOf(next)) * bunchLen;
-      const off = (inner + across * gaussOf(next)) * f.width;
+      const along = (m === 0 && big ? 0 : gaussOf(next)) * bunchLen * spread;
+      const off = (inner + across * gaussOf(next)) * f.width * (1 - onCrest);
       const u = next();
       const radius = big && m === 0 ? ceiling : paretoRadius(big ? 0.15 + 0.6 * u : u, floor, ceiling, slope);
       add(f, along, off, radius, scale * Math.pow(radius / floor, lightSize));
+    }
+  };
+  /** A large complex: its members, then (MW2) its satellites and its halo. */
+  const complex = (f: NonNullable<ReturnType<typeof frameAt>>, scale: number) => {
+    members(f, Math.max(3, Math.round(bunch * 1.5 * complexMembers)), scale, true);
+    const reach = bunchLen * Math.max(1, complexSpread);
+    for (let s = 0; s < satellites; s++) {
+      const along = (1.2 + 1.3 * next()) * reach * (next() < 0.5 ? -1 : 1);
+      const off = (inner + (0.6 + 0.8 * next()) * (next() < 0.5 ? -1 : 1) * Math.max(0.3, across)) * f.width;
+      add(f, along, off, floor * (1 + next()), 0.6 * scale);
+    }
+    if (halo > 0) {
+      out.push({ x: f.x + inner * f.width * f.nx, y: f.y + inner * f.width * f.ny, tx: f.tx, ty: f.ty, radius: haloSize * ceiling, light: halo * scale * Math.pow(ceiling / floor, lightSize), kind: 2, id: id++ });
     }
   };
   // The bar's ends: the two major arms' starts.
@@ -133,8 +164,32 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
       if (sk.arms[a].kind !== "major") continue;
       const f = frameAt(sk, a, sk.arms[a].r0 * 1.06);
       if (!f) continue;
-      members(f, Math.max(3, Math.round(bunch * 1.5)), barEnds, true);
+      complex(f, barEnds);
       centres.push(f.x, f.y);
+    }
+  }
+  // S107: the large complexes along the major arms, each at a strength-weighted place no nearer another (or a bar end)
+  // than 3 gaps and five of a complex's reaches (MW3: the satellites reach 2.5 of them either side - so two complexes
+  // never run together into one long pink stretch, ordinary regions between them; 2 gaps before).
+  const complexes = Math.max(0, Math.round(p.complexes ?? 0));
+  if (complexes > 0) {
+    const apart = 3 * gap + 5 * bunchLen * Math.max(1, complexSpread);
+    const majors = sk.arms.map((a, k) => (a.kind === "major" ? k : -1)).filter((k) => k >= 0);
+    let placed = 0;
+    for (let t = 0; t < complexes * 60 && placed < complexes && majors.length; t++) {
+      const a = majors[Math.floor(next() * majors.length) % majors.length];
+      const arm = sk.arms[a];
+      const R = Math.exp(arm.lnR0 + next() * (arm.n - 1) * arm.dlnR);
+      const f = frameAt(sk, a, R);
+      if (!f || f.strength < Math.max(minStrength, 0.3)) continue;
+      if (next() > f.strength * patchAt(arm, R) * radialWeight(R, fadeR, fadeWidth, innerR)) continue;
+      const g2 = apart * apart;
+      let near = false;
+      for (let j = 0; j < centres.length && !near; j += 2) near = (centres[j] - f.x) ** 2 + (centres[j + 1] - f.y) ** 2 < g2;
+      if (near) continue;
+      complex(f, Math.max(0, p.complexGain ?? 3));
+      centres.push(f.x, f.y);
+      placed++;
     }
   }
   // The bunches along the ridges.
@@ -144,7 +199,9 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     const R = cand.radius[k];
     const f = frameAt(sk, cand.arm[k], R);
     if (!f) continue;
-    const w = Math.pow(Math.max(0, f.strength), ridgePow) * radialWeight(R, fadeR, fadeWidth, innerR);
+    if (f.strength < minStrength) continue;
+    const clumps = patchPow > 0 ? Math.pow(patchAt(sk.arms[cand.arm[k]], R), patchPow) : 1;
+    const w = clumps * Math.pow(Math.max(0, f.strength), ridgePow) * radialWeight(R, fadeR, fadeWidth, innerR);
     if (next() > w) continue;
     // Each candidate's own reach (0.4-1.6 gap): the gaps uneven, not a necklace.
     const reach = gap * (0.4 + 1.2 * next());
@@ -159,7 +216,7 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     centres.push(f.x, f.y);
     // The bunch's size: 1 + an exponential of mean bunch - 1 (many small bunches and singles, a few large).
     const count = Math.min(Math.round(4 * bunch), 1 + Math.floor(-Math.log(Math.max(1e-9, next())) * (bunch - 1)));
-    members(f, count, 1, false);
+    members(f, count, 1, false, sk.arms[cand.arm[k]].kind === "spur" ? spurCrest : 0);
   }
   // The blue-white points beside the larger regions.
   const sparkle = Math.max(0, Math.round(p.sparkle ?? 0));
@@ -168,6 +225,7 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     const n = out.length;
     for (let i = 0; i < n; i++) {
       const r = out[i];
+      if (r.kind === 2) continue;
       const k = Math.round(sparkle * Math.min(1, r.radius / (3 * floor)));
       for (let j = 0; j < k; j++) {
         const reach = (0.6 + 1.2 * next()) * (r.radius / 1000);
@@ -193,8 +251,14 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
  * summing to 1), the along offsets stretched by `elong` against the across ones; and each lobe's hue share in [0, 1]
  * (0 the redder colour, 1 the more magenta). A blue-white point: one round lobe.
  */
-export function skeletonLobes(id: number, kind: 0 | 1, count: number, irregular: number, soft: number, elong: number): { blobs: number[][]; tint: number[] } {
+export function skeletonLobes(id: number, kind: 0 | 1 | 2, count: number, irregular: number, soft: number, elong: number): { blobs: number[][]; tint: number[] } {
   if (kind === 1) return { blobs: [[0, 0, 0.5, 1], [0, 0, 0.5, 0], [0, 0, 0.5, 0], [0, 0, 0.5, 0]], tint: [0, 0, 0, 0] };
+  // MW2: a complex's halo, an envelope along the arm - four soft lobes in a row, the middle two the stronger.
+  if (kind === 2) {
+    const e = Math.sqrt(Math.max(1, elong));
+    const j = (k: number) => 0.08 * (hash01(id, 70 + k) - 0.5);
+    return { blobs: [[-0.55 * e, j(0), 0.32, 0.18], [-0.18 * e, j(1), 0.36, 0.32], [0.18 * e, j(2), 0.36, 0.32], [0.55 * e, j(3), 0.32, 0.18]], tint: [0.5, 0.5, 0.5, 0.5] };
+  }
   const n = Math.max(1, Math.min(MAX_BLOBS, Math.round(count)));
   const e = Math.max(1, elong);
   const blobs: number[][] = [];
@@ -258,7 +322,7 @@ export function skeletonAttributes(regions: readonly PlacedRegion[], p: IllParam
       } else {
         out.light[3 * k + ch] = l * c1[ch];
         out.light2[3 * k + ch] = l * c2[ch];
-        out.core[3 * k + ch] = hash01(r.id, 97) < share ? l * coreC[ch] : 0;
+        out.core[3 * k + ch] = r.kind === 0 && hash01(r.id, 97) < share ? l * coreC[ch] : 0;
       }
     }
     out.radius[k] = r.radius;

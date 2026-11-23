@@ -61,7 +61,7 @@ export const base: IllFeature = {
       about: "The disc's starlight lifted by this many stops toward the lift radius (smoothly from none at the centre): a flatter, airbrushed disc. Illustrative.",
     },
     {
-      key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 15},
+      key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 14},
       about: "Where the disc's lift is full, kpc; beyond it the lift holds. Illustrative.",
     },
     {

@@ -114,7 +114,8 @@ describe("the debounce (S105 fix R1): uniforms at once, a plane rebuilt once aft
     const tab = readFileSync(new URL("../GalaxyTab.tsx", import.meta.url), "utf-8");
     expect(tab).toContain("useDebounced(illParams, ILL_SETTLE_MS");
     expect(tab).toContain("illEffective(illParams, illSettled, illContext)");
-    expect(tab).toContain("updateRuntime(illRuntime, illDrawnParams, illContext)");
+    // S107: through the map contract (index.ts stepRuntime: the map worker builds, the runtime updates from the caches)
+    expect(tab).toContain("stepRuntime(illRuntime, illDrawnParams, illContext)");
     expect(tab).toContain("illPending={illPending}");
     expect(tab).toContain("return () => releaseRuntime(illRuntime);");
   });

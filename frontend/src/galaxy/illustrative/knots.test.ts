@@ -236,11 +236,13 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
         continue;
       }
       // None floats in the inter-arm disc: within two ridge widths of a crest.
-      expect(hit.distance).toBeLessThan(2 * hit.width);
+      // (S107: scattered 0.4 widths across, with the complexes: within two and a half.)
+      expect(hit.distance).toBeLessThan(2.5 * hit.width);
       if (hit.side > 0) inner += 1;
     }
     expect(inside).toBeLessThan(0.02 * nebulae.length);
-    expect(inner / nebulae.length).toBeGreaterThan(0.75);
+    // (S107: the Milky Way's regions scattered 0.4 widths across, not 0.15: still mostly on the inner side.)
+    expect(inner / nebulae.length).toBeGreaterThan(0.65);
     // The blue-white points beside them.
     expect(a.some((r) => r.kind === 1)).toBe(true);
   });
@@ -272,8 +274,39 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
     // A region's light at most (sizeMax / sizeMin)^lightSize; a bar end's member barEnds times that.
     const top = Math.pow(local.sizeMax / local.sizeMin, local.lightSize);
     expect(a.filter((r) => r.light > 2 * top).length).toBeGreaterThanOrEqual(2);
-    const none = placeOnSkeleton(sk, { ...local, barEnds: 0 });
+    const none = placeOnSkeleton(sk, { ...local, barEnds: 0, complexes: 0 });
     expect(none.some((r) => r.light > top * 1.0001)).toBe(false);
+  });
+
+  it("S107: keeps the S106 placement at the new controls' zeros; no bunch on a weak ridge; complexes on the majors", () => {
+    const s106 = { ...local, minStrength: 0, patchPow: 0, complexes: 0 };
+    const { minStrength: _m, patchPow: _p, complexes: _c, ...bare } = s106;
+    void _m;
+    void _p;
+    void _c;
+    expect(placeOnSkeleton(sk, s106)).toEqual(placeOnSkeleton(sk, bare));
+    const strong = placeOnSkeleton(sk, { ...s106, minStrength: 0.5, barEnds: 0, sparkle: 0 });
+    // (A bunch's members spread along the arm and across it, so a few stand where the ridge is a little weaker.)
+    const weak = strong.filter((r) => ridgeAt(sk, Math.hypot(r.x, r.y), Math.atan2(r.y, r.x)).strength < 0.4).length;
+    expect(strong.length).toBeGreaterThan(0);
+    expect(weak).toBeLessThan(0.05 * strong.length);
+    const top = Math.pow(local.sizeMax / local.sizeMin, local.lightSize);
+    const withC = placeOnSkeleton(sk, { ...s106, barEnds: 0, sparkle: 0, complexes: 6, complexGain: 4 });
+    const bright = withC.filter((r) => r.light > top * 1.0001);
+    expect(bright.length).toBeGreaterThanOrEqual(6);
+    // Each within reach of a major arm's crest (the members spread along and across it).
+    for (const r of bright) {
+      const R = Math.hypot(r.x, r.y);
+      const phi = Math.atan2(r.y, r.x);
+      const near = sk.arms.some((a) => {
+        if (a.kind !== "major") return false;
+        const h = armAt(a, R);
+        if (!h) return R < a.r0 + 3 * a.width;
+        const d = Math.abs(Math.atan2(Math.sin(phi - h.phi), Math.cos(phi - h.phi)));
+        return R * d * (h.tanp / Math.sqrt(1 + h.tanp * h.tanp)) < 3 * a.width;
+      });
+      expect(near).toBe(true);
+    }
   });
 
   it("gives each region lobes along the arm, hues between the two pinks, and the attributes' lengths", () => {
@@ -298,5 +331,57 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
     expect(at.positions[3 * k + 2]).toBeCloseTo(-regions[k].y, 5);
     expect(at.positions[3 * k + 1]).toBe(0);
     expect(modelLightRef(new Float32Array([3, 3, 3, 1, 1, 1]))).toBe(3);
+  });
+});
+
+describe("the complexes and ragged regions (S107, MW2)", () => {
+  const tanp = Math.tan((12 * Math.PI) / 180);
+  const pieces: Piece[] = [0, 1].flatMap((c) =>
+    [0, 1, 2].map((o) => ({ chain: c, order: o, r0: 5 * Math.exp(o * 0.8 * tanp), phi0: c * Math.PI + 1 + o * 0.8, pitchDeg: 12, extent: 0.8, join: 0 })),
+  );
+  const sk = buildSkeleton({ pieces, bar: { halfLength: 4, angle: 0.6 } }, { lesser: 2, spurs: 4 });
+  const base = { total: 300, complexes: 6, complexGain: 5, barEnds: 8, sparkle: 3, minStrength: 0.25 };
+
+  it("places as before at the new controls' defaults", () => {
+    const a = placeOnSkeleton(sk, base);
+    expect(placeOnSkeleton(sk, { ...base, complexMembers: 1, complexSpread: 1, satellites: 0, halo: 0, haloSize: 3, spurCrest: 0 })).toEqual(a);
+    expect(a.some((r) => r.kind === 2)).toBe(false);
+    for (const key of ["complexMembers", "complexSpread", "satellites", "halo", "ragged", "spurCrest"]) {
+      const c = knots.controls.find((x) => x.key === key)!;
+      expect(c.perTemplate?.ngc_4414).toBeUndefined();
+      expect(c.default).toBe(key === "complexMembers" || key === "complexSpread" ? 1 : 0);
+    }
+  });
+
+  it("gives each complex more members, satellites and a soft halo without a core", () => {
+    const plain = placeOnSkeleton(sk, base).filter((r) => r.kind === 0).length;
+    const rich = placeOnSkeleton(sk, { ...base, complexMembers: 2, satellites: 5, halo: 0.5, haloSize: 2 });
+    expect(rich.filter((r) => r.kind === 0).length).toBeGreaterThan(plain);
+    const halos = rich.filter((r) => r.kind === 2);
+    // One per complex and per bar end.
+    expect(halos.length).toBeGreaterThanOrEqual(2);
+    expect(halos.length).toBeLessThanOrEqual(8);
+    for (const h of halos) expect(h.radius).toBeCloseTo(2 * 200, 6);
+    const attrs = skeletonAttributes(rich, { ...base, coreShare: 1 }, 1);
+    rich.forEach((r, k) => {
+      if (r.kind === 2) expect(attrs.core[3 * k] + attrs.core[3 * k + 1] + attrs.core[3 * k + 2]).toBe(0);
+    });
+    const { blobs } = skeletonLobes(7, 2, 4, 1, 1, 4);
+    expect(blobs.reduce((s, b) => s + b[3], 0)).toBeCloseTo(1, 9);
+    // Laid along the arm: the outer lobes further along than across.
+    expect(Math.abs(blobs[0][0])).toBeGreaterThan(5 * Math.abs(blobs[0][1]));
+  });
+
+  it("draws a spur's regions onto its crest", () => {
+    const spurs = sk.arms.map((a, k) => (a.kind === "spur" ? k : -1)).filter((k) => k >= 0);
+    const offCrest = (crest: number) => {
+      const d: number[] = [];
+      for (const r of placeOnSkeleton(sk, { ...base, total: 900, complexes: 0, barEnds: 0, sparkle: 0, spurCrest: crest, across: 0.4, bunchLen: 0 })) {
+        const hit = ridgeAt(sk, Math.hypot(r.x, r.y), Math.atan2(r.y, r.x));
+        if (spurs.includes(hit.arm)) d.push(hit.distance / hit.width);
+      }
+      return d.reduce((s, v) => s + v, 0) / Math.max(1, d.length);
+    };
+    expect(offCrest(1)).toBeLessThan(0.8 * offCrest(0));
   });
 });
