@@ -19,7 +19,7 @@ import { LANE_ARRAYS, LANE_MAP, type LaneShape, SHAPE_KEYS, buildLaneMap, geomet
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.85, ngc_4414: 0.95 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.85, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
