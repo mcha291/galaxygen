@@ -194,6 +194,26 @@ describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", 
     expect(client.illJobCounts().here).toBe(0);
   }, 120_000);
 
+  it("keeps no superseded map plane alive by ref across many moves; a skeleton named by a later seed still decodes (S107 review)", async () => {
+    const { main, client, feature } = await graphs();
+    const base = main.illDefaults("milky_way");
+    const ctx = { template: "milky_way", frame: F };
+    const rt = main.createRuntime(base, { template: "milky_way", frame: null });
+    const w = () => FakeWorker.made[0];
+    // a lane width moved 12 times (a new R plane each), then the glow's wing (arms.skelPlanes over the skeleton built at the first job)
+    const moves = [...Array.from({ length: 12 }, (_, i) => ({ ...base, "lanes.width": 40 + 5 * i })), { ...base, "lanes.width": 95, "arms.skelwing": 0.3 }];
+    for (const ill of moves) {
+      expect(main.stepRuntime(rt, ill, ctx)).toBe("asked");
+      w().deliverAll();
+      expect(main.stepRuntime(rt, ill, ctx)).toBe("drawn");
+      expect(feature.wouldBuild(() => main.illMapPlanes(ill, ctx))).toBe(false);
+    }
+    expect(client.illHeldByRef().planeBytes).toBe(0);
+    expect(client.illHeldByRef().count).toBeGreaterThan(0); // the skeleton, kept for the seeds that name it
+    expect(client.illJobCounts().skipped).toBe(0);
+    expect(client.illJobCounts().here).toBe(0);
+  }, 120_000);
+
   it("builds the sparkle's points in the worker, the same bits as the layer's own build, reading the lanes it kept", async () => {
     const { main, client, ref, refSparkle } = await graphs();
     const ill = main.illDefaults("milky_way");
