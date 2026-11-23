@@ -13,9 +13,19 @@
 //   glsl       global-scope GLSL put into BOTH the march's fragment (FieldVolume) and the points' vertex shader
 //              (FluxPoints, every point and knot): uniforms and functions. Available there: `rHi` (float, kpc: the grid's
 //              outer radius; every published texture reads zero beyond it), `cloudExt` (vec3: each channel's optical depth
-//              per magnitude of A_V, the dust grains' reddening through the filter set) and
-//              `vec4 illPolar(sampler2D t, vec2 rp)` (a texture over the disc read at rp: u = R / rHi, v = phi / 2 pi).
-//              Name everything with the feature's prefix (illLanes..., uniform illLanesWidth). textureLod only.
+//              per magnitude of A_V, the dust grains' reddening through the filter set) and `vec4 illMap(vec2 rp)` (the
+//              shared map below, read at rp: u = R / rHi, v = phi / 2 pi). Name everything with the feature's prefix
+//              (illLanes..., uniform illLanesWidth). NO SAMPLER: the pinned march declares 15 of WebGL's 16 fragment
+//              texture units, and the shared map takes the last; a feature's GLSL that declares a sampler fails the
+//              march's program and the whole field goes undrawn (S105: 17 units, a black disc). illustrative.test.ts
+//              counts them.
+//   map        the shared illustrative map (feature.ts IllMapBuilder, ILL_MAP): ONE RGBA8 texture over the disc on the
+//              lanes' grid (2000 x 3600, row = phi, clamped in R, wrapped in phi, linear), owned by this registry and
+//              declared once as `uniform sampler2D illMapTex`, read through illMap(rp). Channels: R the lanes, G the
+//              flocculent network, B and A the arms (feature.ts ILL_MAP_CHANNELS). A feature names its channels and a
+//              builder of one byte plane per channel (null: zero), cached by the feature (memoOn); the registry
+//              composes the planes and re-uploads only when a plane's object changes. The same texture is handed to the
+//              points' vertex shader. A feature's own layer material (`layer`) may still bind samplers of its own.
 //   hooks      which of its GLSL functions take part in the march (rp = vec2(R kpc, phi rad), phi = atan(-z, x) in
 //              [0, 2 pi), the model's galactocentric azimuth; R cylindrical):
 //     dustAv    float f(vec2 rp): extra face-on A_V, magnitudes, at the midplane point rp. All features' are summed into
@@ -37,10 +47,10 @@
 //     light     vec3 f(vec2 rp): a per-channel multiplier on all the disc's starlight at the midplane point rp (the
 //               plane's light and the clustered young light; not the bulge, the dust's, the HII's or the gas's).
 //               Multiplied over features into illLight(rp) (S108, the arms).
-//   uniforms   (params, context) => values for its uniforms. Called at every change of a parameter or of the context
-//              (the template; the arrays' frame); a texture (DataTexture, built from context.frame) must be cached by the
-//              feature (feature.ts memoOn) and is handed to the march and every point's material through the same
-//              uniform object, so neither FieldVolume nor FluxPoints is edited for it. A change re-marches the field.
+//   uniforms   (params, context) => values for its uniforms (numbers and vectors; never a texture for the march - see
+//              `map`). Called at every change of a parameter or of the context (the template; the arrays' frame); handed
+//              to the march and every point's material through the same uniform object, so neither FieldVolume nor
+//              FluxPoints is edited for it. A change re-marches the field.
 //   arrays     /api/arrays names (e.g. the arm pieces' columns); all features' are asked in one request.
 //   layer      a React component drawn in the Galaxy view's canvas (IllLayerProps: the knots, their gain, the dust).
 //   replacesKnots  true where its layer draws in place of the field mode's default knots.
@@ -48,9 +58,11 @@
 // The grade (grade.ts) is not a march hook: GalaxyView's composer runs it as a pass after the bloom. The speckle and the
 // framing are read by GalaxyTab (speckle.ts sampleOpacity, framing.ts standScale).
 
+import { ClampToEdgeWrapping, DataTexture, LinearFilter, RGBAFormat, RepeatWrapping, UnsignedByteType } from "three";
+
 import { arms } from "./arms";
 import { edge } from "./edge";
-import type { IllContext, IllControl, IllFeature, IllParams } from "./feature";
+import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams } from "./feature";
 import { floc } from "./floc";
 import { framing } from "./framing";
 import { grade } from "./grade";
@@ -58,7 +70,8 @@ import { knots } from "./knots";
 import { lanes } from "./lanes";
 import { speckle } from "./speckle";
 
-export type { IllContext, IllControl, IllFeature, IllLayerProps, IllParams } from "./feature";
+export type { IllContext, IllControl, IllFeature, IllLayerProps, IllMapBuilder, IllParams } from "./feature";
+export { ILL_MAP, ILL_MAP_CHANNELS } from "./feature";
 
 /** The two looks (D275). Physical: the viewer as it stood at S104. Illustrative: this directory's layer over it. */
 export type Look = "physical" | "illustrative";
@@ -156,8 +169,10 @@ const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light", arg:
 export function illGlsl(): string {
   return [
     "  // The illustrative look's GLSL (S105; illustrative/index.ts): display-only, absent under the physical look.",
-    "  vec4 illPolar(sampler2D t, vec2 rp) {",
-    "    return textureLod(t, vec2(rp.x / rHi, rp.y / 6.28318531), 0.0);",
+    "  // The shared map, the layer's one sampler (R lanes, G floc, B and A arms): no feature declares another.",
+    "  uniform sampler2D illMapTex;",
+    "  vec4 illMap(vec2 rp) {",
+    "    return textureLod(illMapTex, vec2(rp.x / rHi, rp.y / 6.28318531), 0.0);",
     "  }",
     ...FEATURES.map((f) => f.glsl ?? "").filter((g) => g.trim() !== ""),
     `  float illDustAv(vec2 rp) { return ${hookCall("dustAv", "rp", "+", "0.0")}; }`,
@@ -240,10 +255,81 @@ const sameValue = (a: unknown, b: unknown): boolean => {
   return false;
 };
 
-/** Each feature's uniform values for these parameters and this context. */
+const mapTexture = (data: Uint8Array, width: number, height: number): DataTexture => {
+  const t = new DataTexture(data, width, height, RGBAFormat, UnsignedByteType);
+  t.minFilter = LinearFilter;
+  t.magFilter = LinearFilter;
+  t.wrapS = ClampToEdgeWrapping;
+  t.wrapT = RepeatWrapping;
+  t.generateMipmaps = false;
+  t.needsUpdate = true;
+  return t;
+};
+
+/** The shared map before any channel has bytes: one texel of zeros. */
+const EMPTY_MAP = mapTexture(new Uint8Array(4), 1, 1);
+
+/** The shared map's composed state: the RGBA buffer, its texture, and the plane each channel was last written from. */
+const shared: { buffer: Uint8Array | null; texture: DataTexture; planes: (Uint8Array | null)[] } = {
+  buffer: null,
+  texture: EMPTY_MAP,
+  planes: [null, null, null, null],
+};
+
+/** The planes every feature's map builder hands over for these parameters and context, by channel (null: zero). */
+export function illMapPlanes(ill: Readonly<Record<string, number>>, context: IllContext): (Uint8Array | null)[] {
+  const planes: (Uint8Array | null)[] = [null, null, null, null];
+  const owner: (string | null)[] = [null, null, null, null];
+  const size = ILL_MAP.width * ILL_MAP.height;
+  for (const f of FEATURES) {
+    if (!f.map) continue;
+    const built = f.map.build(paramsOf(f, ill), context);
+    if (built.length !== f.map.channels.length) throw new Error(`illustrative map: ${f.id} built ${built.length} planes for ${f.map.channels.length} channels`);
+    f.map.channels.forEach((c, i) => {
+      if (!(c >= 0 && c < 4 && Number.isInteger(c))) throw new Error(`illustrative map: ${f.id} names channel ${c}`);
+      if (owner[c] !== null) throw new Error(`illustrative map: channel ${c} owned by ${owner[c]} and ${f.id}`);
+      owner[c] = f.id;
+      const plane = built[i];
+      if (plane && plane.length !== size) throw new Error(`illustrative map: ${f.id}'s plane ${i} has ${plane.length} bytes, not ${size}`);
+      planes[c] = plane ?? null;
+    });
+  }
+  return planes;
+}
+
+/**
+ * The shared map for these planes: the same texture while no plane's object changed; else the changed channels
+ * written into the one RGBA buffer and a new texture over it (the old one released), so the uniform's value moves and
+ * the march re-marches.
+ */
+export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTexture {
+  const changed = [0, 1, 2, 3].filter((c) => planes[c] !== shared.planes[c]);
+  if (changed.length === 0) return shared.texture;
+  if (!shared.buffer) {
+    if (planes.every((p) => !p)) {
+      shared.planes = [...planes];
+      return shared.texture;
+    }
+    shared.buffer = new Uint8Array(ILL_MAP.width * ILL_MAP.height * 4);
+  }
+  const buf = shared.buffer;
+  const n = ILL_MAP.width * ILL_MAP.height;
+  for (const c of changed) {
+    const plane = planes[c];
+    if (plane) for (let i = 0; i < n; i++) buf[i * 4 + c] = plane[i];
+    else for (let i = 0; i < n; i++) buf[i * 4 + c] = 0;
+  }
+  shared.planes = [...planes];
+  if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
+  shared.texture = mapTexture(buf, ILL_MAP.width, ILL_MAP.height);
+  return shared.texture;
+}
+
+/** Each feature's uniform values for these parameters and this context, and the shared map (illMapTex). */
 export function illUniformValues(ill: Readonly<Record<string, number>>, context: IllContext): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of FEATURES) if (f.uniforms) Object.assign(out, f.uniforms(paramsOf(f, ill), context));
+  out.illMapTex = illMapTexture(illMapPlanes(ill, context));
   return out;
 }
 

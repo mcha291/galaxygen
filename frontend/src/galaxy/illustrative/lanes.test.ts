@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
-import type { IllFrame } from "./feature";
+import { ILL_MAP, type IllFrame } from "./feature";
 import { features, illArrays, illDefaults, illGlsl, illustrativeFragment, paramsOf } from "./index";
 import { lanes, shapeOf } from "./lanes";
 import { LANE_ARRAYS, LANE_MAP, type LaneGeometry, type LaneShape, type Piece, barAngle, barRidges, buildLaneMap, chainRidge, geometryOf, pieceLength, piecePoint, shapeAt } from "./lanesMap";
@@ -177,8 +177,11 @@ describe("the lanes feature", () => {
     expect(illustrativeFragment(fieldFragment())).toContain("gl_FragColor = vec4(light * illVeil(screenRP) * gain, 1.0);");
     expect(fieldFragment()).not.toContain("illVeil"); // the physical look's fragment is untouched
     const values = lanes.uniforms!(paramsOf(lanes, illDefaults("milky_way")), { template: "milky_way", frame: null });
-    const map = values.illLanesMap as { image: { width: number; height: number } };
-    expect([map.image.width, map.image.height]).toEqual([1, 1]);
+    // S105 fix: the map is the shared map's R channel (index.ts), null (zero) until the arrays arrive
+    expect(lanes.map!.channels).toEqual([0]);
+    expect(lanes.map!.build(paramsOf(lanes, illDefaults("milky_way")), { template: "milky_way", frame: null })).toEqual([null]);
+    expect(lanes.glsl).not.toMatch(/sampler/);
+    expect([ILL_MAP.width, ILL_MAP.height]).toEqual([LANE_MAP.rings, LANE_MAP.sectors]);
     expect(values.illLanesDepth).toBe(illDefaults("milky_way")["lanes.depth"]);
     expect(LANE_MAP.rings * LANE_MAP.sectors).toBeLessThanOrEqual(8 * 1024 * 1024); // a byte a texel: under 8 MiB
   });

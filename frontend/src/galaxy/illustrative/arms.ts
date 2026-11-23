@@ -3,8 +3,10 @@
 //
 // The weight (armsField.ts): the model's published arm contrast (pattern_density_contrast blended with
 // gas_density_contrast), each ring over its mean, evened across radii, raised to a power and floored between the arms,
-// faded in outside the bar and carried past the model's arms' end along their own winding - a polar map built once per
-// (arrays frame, shaping values) and handed to the march as a texture. Its light hook (illArmsLight, the contract's
+// faded in outside the bar and carried past the model's arms' end along their own winding - built once per (arrays
+// frame, shaping values) and handed to the march as two channels of the shared map (index.ts; B the ridge share, A its
+// ring mean: armsField.ts armPlanes), the light, the young light, the tone and the fade made from them in GLSL with
+// the floor, the caps, the start and the strength as uniforms. Its light hook (illArmsLight, the contract's
 // `light`) multiplies all the starlight at the midplane point - the arms brighter, the disc between them dimmer, the
 // ring's mean light kept - and tints it: the arms toward blue-white, the disc between them toward lavender. Its young
 // hook (illArmsYoung) gathers the clustered young light onto the ridges with a power of its own.
@@ -14,10 +16,9 @@
 // the knots).
 
 import { createElement, lazy, Suspense } from "react";
-import { DataTexture, FloatType, LinearFilter, ClampToEdgeWrapping, RepeatWrapping, RGBAFormat } from "three";
-import { armContrast, armMap, gridOf, type ArmGrid, type ArmShape } from "./armsField";
+import { FLAG_RINGS, YOUNG_CAP, armContrast, armMap, armPlanes, armShare, gridOf, type ArmGrid, type ArmShape } from "./armsField";
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
-import { memoOn } from "./feature";
+import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
 
 /** The /api/arrays names the arms read. */
 export const ARMS_ARRAYS = ["bar_half_length", "gas_density_contrast", "pattern_density_contrast", "thin_disc_scale_length"] as const;
@@ -63,18 +64,28 @@ export function armMapFor(p: IllParams, frame: IllFrame | null): { grid: ArmGrid
   return mapOf(frame, JSON.stringify(shapeOf(p, frame)), p.strength ?? 1);
 }
 
-const textureOf = memoOn((built: unknown) => {
-  const b = built as { grid: ArmGrid; map: Float32Array } | null;
-  if (!b) return null;
-  const t = new DataTexture(b.map, b.grid.nR, b.grid.nPhi, RGBAFormat, FloatType);
-  t.minFilter = LinearFilter;
-  t.magFilter = LinearFilter;
-  t.wrapS = ClampToEdgeWrapping;
-  t.wrapT = RepeatWrapping;
-  t.generateMipmaps = false;
-  t.needsUpdate = true;
-  return t;
+/**
+ * The arms' planes of the shared map (B the ridge share, A its ring mean; armsField.ts armPlanes) and the per-ring
+ * tint flags, for a frame and the shaping values that make the share: null without the contrast. The floor, the cap,
+ * the young floor, the start, the fade's width and the strength are uniforms (no rebuild).
+ */
+const planesOf = memoOn((frame: unknown, shapeJson: unknown) => {
+  const f = frame as IllFrame | null;
+  const pattern = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const gas = (f?.arrays.gas_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const any = pattern ?? gas;
+  if (!f || !any) return null;
+  const grid = gridOf(f.header, any.length);
+  const shape = JSON.parse(shapeJson as string) as ArmShape;
+  const { share, sd } = armShare(armContrast(pattern, gas, grid, shape), grid, shape);
+  return { grid, ...armPlanes(share, sd, grid, ILL_MAP.width, ILL_MAP.height) };
 });
+
+/** What the share depends on (the rest of the shape is uniforms): the planes' memo key. */
+const shareKey = (s: ArmShape): string =>
+  JSON.stringify({ ...s, floor: 0, cap: 0, young: 0, width: 0 });
+
+const planesFor = (p: IllParams, frame: IllFrame | null) => planesOf(frame, shareKey(shapeOf(p, frame)));
 
 /** A tint of unit mean: white mixed toward `toward` by `share`. */
 export function tint(toward: readonly [number, number, number], share: number): [number, number, number] {
@@ -224,30 +235,77 @@ export const arms: IllFeature = {
     },
   ],
   arrays: ARMS_ARRAYS,
+  // The shared map's B is sqrt(share), its A the share's ring mean over illArmsMeanMax (armsField.ts armPlanes); the
+  // rest is armMap's arithmetic, line for line: the fade outside the bar from the radius, each ring's light kept by
+  // dividing by its mean, the tone share only on rings of contrast (illArmsFlags, 16 rings to a float).
   glsl: /* glsl */ `
-  uniform sampler2D illArmsTex;
   uniform float illArmsOn;
   uniform vec3 illArmsBlue;
   uniform vec3 illArmsLavender;
+  uniform float illArmsStrength;
+  uniform float illArmsStart;
+  uniform float illArmsWidth;
+  uniform float illArmsFloor;
+  uniform float illArmsYoungFloor;
+  uniform float illArmsCap;
+  uniform float illArmsMeanMax;
+  uniform float illArmsRings;
+  uniform float illArmsFlags[${FLAG_RINGS / 16}];
+  float illArmsFade(float r) {
+    float t = illArmsWidth > 0.0 ? clamp((r - illArmsStart) / illArmsWidth, 0.0, 1.0) : step(illArmsStart, r);
+    return t * t * (3.0 - 2.0 * t) * illArmsStrength;
+  }
+  float illArmsFlag(float r) {
+    int i = int(clamp(floor(r / rHi * illArmsRings), 0.0, illArmsRings - 1.0));
+    if (i >= ${FLAG_RINGS}) return 1.0;
+    return mod(floor(illArmsFlags[i / 16] / exp2(float(i - (i / 16) * 16))), 2.0);
+  }
+  float illArmsRing(float s, float m, float lo, float cap) {
+    float mean = lo + (1.0 - lo) * m;
+    return mean > 0.0 ? min(cap, (lo + (1.0 - lo) * s) / mean) : 1.0;
+  }
   vec3 illArmsLight(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return vec3(1.0);
-    vec4 w = illPolar(illArmsTex, rp);
-    vec3 tone = mix(mix(vec3(1.0), illArmsLavender, w.a), illArmsBlue, w.g);
-    return w.r * tone;
+    vec4 w = illMap(rp);
+    float s = w.b * w.b;
+    float m = w.a * illArmsMeanMax;
+    float f = illArmsFade(rp.x);
+    float fa = min(1.0, f);
+    float light = max(0.0, 1.0 + (illArmsRing(s, m, illArmsFloor, illArmsCap) - 1.0) * f);
+    float g = fa * smoothstep(0.25, 0.9, s) * illArmsFlag(rp.x);
+    vec3 tone = mix(mix(vec3(1.0), illArmsLavender, fa), illArmsBlue, g);
+    return light * tone;
   }
   float illArmsYoung(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return 1.0;
-    return illPolar(illArmsTex, rp).b;
+    vec4 w = illMap(rp);
+    return max(0.0, 1.0 + (illArmsRing(w.b * w.b, w.a * illArmsMeanMax, illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * illArmsFade(rp.x));
   }
 `,
   hooks: { youngGain: "illArmsYoung", light: "illArmsLight" },
+  map: {
+    channels: ILL_MAP_CHANNELS.arms,
+    build: (p: IllParams, context: IllContext) => {
+      const planes = planesFor(p, context.frame);
+      return planes ? [planes.share, planes.mean] : [null, null];
+    },
+  },
   uniforms: (p: IllParams, context: IllContext) => {
-    const tex = textureOf(armMapFor(p, context.frame));
+    const planes = planesFor(p, context.frame);
+    const shape = shapeOf(p, context.frame);
     return {
-      illArmsTex: tex,
-      illArmsOn: tex ? 1 : 0,
+      illArmsOn: planes ? 1 : 0,
       illArmsBlue: tint(ARM_BLUE, p.blue ?? 0),
       illArmsLavender: interTint(p.lavender ?? 0),
+      illArmsStrength: p.strength ?? 1,
+      illArmsStart: shape.start,
+      illArmsWidth: shape.width,
+      illArmsFloor: shape.floor,
+      illArmsYoungFloor: shape.young,
+      illArmsCap: shape.cap,
+      illArmsMeanMax: planes?.meanMax ?? 0,
+      illArmsRings: planes?.grid.nR ?? 1,
+      illArmsFlags: planes?.flags ?? new Array<number>(FLAG_RINGS / 16).fill(0),
     };
   },
   layer: ArmsLayer,

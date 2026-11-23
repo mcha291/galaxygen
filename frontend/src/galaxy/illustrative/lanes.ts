@@ -14,9 +14,7 @@
 //           arms; the veil's law is the grains' own reddening, steepened by the redness slider.
 // The depth, the ink, the redness, the edge and the mottle are uniforms: no rebuild.
 
-import { ClampToEdgeWrapping, DataTexture, LinearFilter, RedFormat, RepeatWrapping, UnsignedByteType } from "three";
-
-import { type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
+import { ILL_MAP, ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
 import { LANE_ARRAYS, LANE_MAP, type LaneShape, SHAPE_KEYS, buildLaneMap, geometryOf } from "./lanesMap";
 
 const CONTROLS: readonly IllControl[] = [
@@ -109,37 +107,24 @@ export function shapeOf(p: IllParams): LaneShape {
   return Object.fromEntries(SHAPE_KEYS.map((k) => [k, p[k] ?? DEFAULTS[k]])) as unknown as LaneShape;
 }
 
-const polar = (t: DataTexture): DataTexture => {
-  t.minFilter = LinearFilter;
-  t.magFilter = LinearFilter;
-  t.wrapS = ClampToEdgeWrapping;
-  t.wrapT = RepeatWrapping;
-  t.needsUpdate = true;
-  return t;
-};
-
-/** One texel of no lane: what the shaders read until the arrays have arrived, and for a galaxy with nothing to draw. */
-const NONE = polar(new DataTexture(new Uint8Array(1), 1, 1, RedFormat, UnsignedByteType));
-
 /** The last build's time, ms, and how many maps were built (a diagnostic: nothing is drawn from it). */
 export const lanesBuild = { ms: 0, count: 0 };
 
-let held: DataTexture | null = null;
 const now = () => (typeof performance !== "undefined" ? performance.now() : 0);
 
-/** The map's texture for a frame and a shape: built once per (frame, shaping values), the one before it released. */
-const mapTexture = memoOn((frame: unknown, ...values: unknown[]): DataTexture => {
-  if (held) held.dispose();
-  held = null;
-  if (!frame) return NONE;
+/**
+ * The map's bytes for a frame and a shape - the shared map's R plane (index.ts; feature.ts ILL_MAP, the same grid as
+ * LANE_MAP) - built once per (frame, shaping values); null (no lane: the channel reads zero) until the arrays have
+ * arrived and for a galaxy with nothing to draw.
+ */
+const mapPlane = memoOn((frame: unknown, ...values: unknown[]): Uint8Array | null => {
+  if (!frame) return null;
   const shape = Object.fromEntries(SHAPE_KEYS.map((k, i) => [k, values[i] as number])) as unknown as LaneShape;
   const started = now();
-  const map = buildLaneMap(geometryOf(frame as IllFrame), shape);
+  const map = buildLaneMap(geometryOf(frame as IllFrame), shape, ILL_MAP.width, ILL_MAP.height);
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
-  if (!map.drawn) return NONE;
-  held = polar(new DataTexture(map.data, map.rings, map.sectors, RedFormat, UnsignedByteType));
-  return held;
+  return map.drawn ? map.data : null;
 });
 
 const MAX = LANE_MAP.shapeMax.toFixed(1);
@@ -150,7 +135,6 @@ export const lanes: IllFeature = {
   about: "Dust lanes along the arms' ridges and the bar's leading edges, with feathers: placed by the published arm pieces and bar, their wander, breaks and branches the viewer's own drawing.",
   controls: CONTROLS,
   glsl: /* glsl */ `
-  uniform sampler2D illLanesMap;
   uniform float illLanesDepth;
   uniform float illLanesInk;
   uniform float illLanesRed;
@@ -176,7 +160,7 @@ export const lanes: IllFeature = {
   // an inked one - nothing under a quarter of a strand's depth, the whole of it from 0.6.
   float illLanesShape(vec2 rp) {
     if (illLanesDepth <= 0.0 || rp.x >= rHi) return 0.0;
-    float s = illPolar(illLanesMap, rp).r;
+    float s = illMap(rp).r;
     float shape = ${MAX} * s * s;
     if (shape <= 0.0) return 0.0;
     // The mottle: the stroke's depth swelled and thinned over the plane at the grain's length and a third of it, so an
@@ -203,10 +187,15 @@ export const lanes: IllFeature = {
 `,
   hooks: { dustAv: "illLanesAv", veil: "illLanesVeil" },
   arrays: LANE_ARRAYS,
-  uniforms: (p, context) => {
-    const shape = shapeOf(p);
+  map: {
+    channels: ILL_MAP_CHANNELS.lanes,
+    build: (p, context) => {
+      const shape = shapeOf(p);
+      return [mapPlane(context.frame, ...SHAPE_KEYS.map((k) => shape[k]))];
+    },
+  },
+  uniforms: (p) => {
     return {
-      illLanesMap: mapTexture(context.frame, ...SHAPE_KEYS.map((k) => shape[k])),
       illLanesDepth: p.depth ?? DEFAULTS.depth,
       illLanesInk: p.ink ?? DEFAULTS.ink,
       illLanesRed: p.redness ?? DEFAULTS.redness,

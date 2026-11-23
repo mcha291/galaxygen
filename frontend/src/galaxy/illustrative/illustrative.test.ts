@@ -21,6 +21,7 @@ import {
   storageKeyFor,
 } from "../tuning";
 import {
+  ILL_MAP,
   MARCH_PATCHES,
   POINTS_PATCHES,
   createRuntime,
@@ -29,6 +30,8 @@ import {
   illControls,
   illDefaults,
   illGlsl,
+  illMapPlanes,
+  illUniformValues,
   illustrativeFragment,
   illustrativePointsVertex,
   occurrences,
@@ -206,6 +209,86 @@ describe("the patched shaders (S105): anchors found once, the physical sources u
     const patched = illustrativePointsVertex(vertex);
     expect(patched).toContain("tau += illDustAv(vec2(r, phi)) * cloudExt * column(p.y + u.y * s0, p.y + u.y * s1, h, ds);");
     expect(FLUX_POINTS_SHADER.vertex).toBe(vertex);
+  });
+
+  // S105 fix: the pinned march declares 15 samplers and WebGL (ANGLE / D3D11) gives a fragment shader 16 texture units;
+  // a 17th fails the march's program and the field goes undrawn under the illustrative look, with no other sign.
+  const samplers = (source: string): number => {
+    let n = 0;
+    for (const m of source.matchAll(/\buniform\s+(?:(?:lowp|mediump|highp)\s+)?[iu]?sampler\w*\s+\w+\s*(?:\[\s*(\d+)\s*\])?\s*;/g)) n += m[1] ? Number(m[1]) : 1;
+    return n;
+  };
+
+  it("keeps the march's fragment and the points' vertex shader within 16 texture units, the layer taking one", () => {
+    expect(samplers(fieldFragment())).toBe(15);
+    expect(samplers(illustrativeFragment(fieldFragment()))).toBeLessThanOrEqual(16);
+    expect(samplers(illustrativeFragment(fieldFragment()))).toBe(samplers(fieldFragment()) + 1);
+    expect(samplers(illustrativePointsVertex(FLUX_POINTS_SHADER.vertex))).toBeLessThanOrEqual(16);
+    expect(samplers(illustrativePointsVertex(FLUX_POINTS_SHADER.vertex))).toBe(samplers(FLUX_POINTS_SHADER.vertex) + 1);
+    expect(samplers(illGlsl())).toBe(1);
+    expect(illGlsl()).toContain("uniform sampler2D illMapTex;");
+  });
+
+  it("counts a feature's own sampler in the march (the guard is real)", () => {
+    const before = samplers(illustrativeFragment(fieldFragment()));
+    const drop = registerFeature({
+      id: "fakesampler",
+      label: "fake",
+      about: "a test's",
+      controls: [],
+      glsl: "  uniform sampler2D illFakesamplerTex;\n  float illFakesamplerAv(vec2 rp) { return textureLod(illFakesamplerTex, rp, 0.0).r; }\n",
+      hooks: { dustAv: "illFakesamplerAv" },
+    });
+    try {
+      expect(samplers(illustrativeFragment(fieldFragment()))).toBe(before + 1);
+      expect(samplers(illustrativeFragment(fieldFragment()))).toBeGreaterThan(16);
+      expect(samplers(illustrativePointsVertex(FLUX_POINTS_SHADER.vertex))).toBe(samplers(FLUX_POINTS_SHADER.vertex) + 2);
+    } finally {
+      drop();
+    }
+    expect(samplers(illustrativeFragment(fieldFragment()))).toBe(before);
+  });
+
+  it("composes the shared map from each feature's planes, channel by channel, re-made only when a plane changes", () => {
+    const size = ILL_MAP.width * ILL_MAP.height;
+    let plane: Uint8Array | null = null;
+    const drop = registerFeature({
+      id: "fakemap",
+      label: "fake",
+      about: "a test's",
+      controls: [],
+      map: { channels: [1], build: () => [plane] },
+    });
+    try {
+      const ctx = { template: null, frame: null };
+      const t0 = illUniformValues(illDefaults(null), ctx).illMapTex as { image: { width: number; height: number; data: Uint8Array } };
+      expect(illUniformValues(illDefaults(null), ctx).illMapTex === t0).toBe(true);
+      plane = new Uint8Array(size);
+      plane[5] = 200;
+      plane[size - 1] = 7;
+      const t1 = illUniformValues(illDefaults(null), ctx).illMapTex as { image: { width: number; height: number; data: Uint8Array } };
+      expect(t1 === t0).toBe(false);
+      expect([t1.image.width, t1.image.height]).toEqual([ILL_MAP.width, ILL_MAP.height]);
+      expect(t1.image.data[5 * 4 + 1]).toBe(200);
+      expect(t1.image.data[(size - 1) * 4 + 1]).toBe(7);
+      expect(t1.image.data[5 * 4 + 0]).toBe(0);
+      expect(illUniformValues(illDefaults(null), ctx).illMapTex === t1).toBe(true);
+      plane = null;
+      const t2 = illUniformValues(illDefaults(null), ctx).illMapTex as { image: { data: Uint8Array } };
+      expect(t2 === t1).toBe(false);
+      expect(t2.image.data[5 * 4 + 1]).toBe(0);
+      // a channel owned twice, or a plane of the wrong size, is refused
+      const dup = registerFeature({ id: "fakedup", label: "fake", about: "a test's", controls: [], map: { channels: [1], build: () => [null] } });
+      try {
+        expect(() => illMapPlanes(illDefaults(null), ctx)).toThrow(/owned by/);
+      } finally {
+        dup();
+      }
+      plane = new Uint8Array(3);
+      expect(() => illMapPlanes(illDefaults(null), ctx)).toThrow(/bytes/);
+    } finally {
+      drop();
+    }
   });
 
   it("composes the neutral stubs: no A_V, a young gain of 1, the edge's taper", () => {

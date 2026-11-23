@@ -6,8 +6,12 @@ import { fieldFragment } from "../FieldVolume";
 import pinned from "../fieldFragment.s78.glsl?raw";
 import { arms, interTint, shapeOf, tint } from "./arms";
 import {
+  YOUNG_CAP,
   armMap,
+  armPlanes,
+  armShare,
   armWinding,
+  smoothstep,
   barFade,
   breakLines,
   ridgeLines,
@@ -182,6 +186,57 @@ describe("the sparkle (armsSparkle.ts)", () => {
     expect(Array.from(f.subarray(0, 3))).toEqual([10, 20, 30]);
     expect(f[3]).toBe(10);
     expect(f[6]).toBeCloseTo(10 * Math.exp(-1), 5);
+  });
+});
+
+describe("the arms' hand-over: two channels of the shared map (S105 fix)", () => {
+  it("decodes, as the GLSL does, to armMap's four values at the arm grid's texels", () => {
+    const g: ArmGrid = { nR: 120, nPhi: 180, rHi: 30 };
+    const shape = { ...SHAPE, equalise: 0.6, cap: 2.2 };
+    const n = ringNormalise(spiral(g, 3, 0.3), g.nR, g.nPhi);
+    const strength = 1.2;
+    const map = armMap(n, g, shape, strength);
+    // a grid of odd multiples, so every arm texel's centre is a shared texel's centre (the 8-bit encoding alone measured)
+    const W = g.nR * 5;
+    const H = g.nPhi * 3;
+    const planes = armPlanes(...Object.values(armShare(n, g, shape)) as [Float64Array, Float64Array], g, W, H);
+    const flag = (i: number) => Math.floor(planes.flags[i >> 4] / 2 ** (i & 15)) % 2;
+    const ring = (s: number, m: number, lo: number, cap: number) => {
+      const mean = lo + (1 - lo) * m;
+      return mean > 0 ? Math.min(cap, (lo + (1 - lo) * s) / mean) : 1;
+    };
+    let worst = [0, 0, 0, 0];
+    for (const i of [30, 50, 80, 110]) {
+      for (let j = 0; j < g.nPhi; j += 7) {
+        // the arm texel's centre: shared column 5 i + 2, shared row 3 j + 1
+        const at = (p: Uint8Array) => p[(j * 3 + 1) * W + i * 5 + 2] / 255;
+        const sb = at(planes.share);
+        const s = sb * sb;
+        const m = at(planes.mean) * planes.meanMax;
+        const r = (i + 0.5) * (g.rHi / g.nR);
+        const f = barFade(r, shape.start, shape.width) * strength;
+        const fa = Math.min(1, f);
+        const got = [
+          Math.max(0, 1 + (ring(s, m, shape.floor, shape.cap) - 1) * f),
+          fa * smoothstep(0.25, 0.9, s) * flag(i),
+          Math.max(0, 1 + (ring(s, m, shape.young, YOUNG_CAP) - 1) * f),
+          fa,
+        ];
+        const o = (j * g.nR + i) * 4;
+        worst = worst.map((w, q) => Math.max(w, Math.abs(got[q] - map[o + q]) / Math.max(1, Math.abs(map[o + q]))));
+      }
+    }
+    // 8-bit planes: the light and the young light within 2 %, the tone share within 0.03, the fade exact
+    expect(worst[0]).toBeLessThan(0.02);
+    expect(worst[1]).toBeLessThan(0.03);
+    expect(worst[2]).toBeLessThan(0.02);
+    expect(worst[3]).toBeLessThan(1e-12);
+  });
+
+  it("names B and A of the shared map and declares no sampler", () => {
+    expect(arms.map!.channels).toEqual([2, 3]);
+    expect(arms.glsl).not.toMatch(/sampler/);
+    expect(arms.map!.build({}, { template: null, frame: null })).toEqual([null, null]);
   });
 });
 

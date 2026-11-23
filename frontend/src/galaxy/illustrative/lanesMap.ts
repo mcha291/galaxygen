@@ -13,7 +13,8 @@
 //
 // The map: LANE_MAP.rings x LANE_MAP.sectors texels over 0-rHi and one turn (15 pc by 0.1 degree at rHi = 30 kpc),
 // each a byte holding sqrt(shape / LANE_MAP.shapeMax), shape 1 at the centre of one full-depth strand. The feature's
-// GLSL (lanes.ts) reads it with illPolar and multiplies by the depth slider, so depth is a uniform and no rebuild.
+// GLSL (lanes.ts) reads it as the shared map's R channel (index.ts illMap) and multiplies by the depth slider, so depth
+// is a uniform and no rebuild.
 
 import type { IllFrame } from "./feature";
 

@@ -201,22 +201,7 @@ export function armContrast(pattern: ArrayLike<number> | null, gas: ArrayLike<nu
 export function armMap(n: Float64Array, g: ArmGrid, shape: ArmShape, strength: number): Float32Array {
   const { nR, nPhi } = g;
   const dR = g.rHi / nR;
-  const sd = ringSd(n, nR, nPhi);
-  const even = new Float64Array(nR * nPhi);
-  for (let i = 0; i < nR; i++) {
-    const gain = sd[i] > 1e-6 ? 1 + shape.equalise * (Math.min(EQUAL_MAX, EQUAL_LEVEL / sd[i]) - 1) : 1;
-    for (let j = 0; j < nPhi; j++) even[i * nPhi + j] = Math.max(0, 1 + (n[i * nPhi + j] - 1) * gain);
-  }
-  const a = sharpen(even, nR, nPhi, shape.power);
-  // The ridge share: the sharpened contrast's (1 - e^(-a / knee)) mixed with the ridge lines' narrow profile.
-  const share = new Float64Array(nR * nPhi);
-  for (let k = 0; k < share.length; k++) share[k] = ridge(a[k], shape.knee);
-  if (shape.lineMix > 0) {
-    const wind = armWinding(n, g, Math.max(shape.start, 1));
-    const lines = ridgeLines(even, g, shape.armWidth, wind ? wind.k : DEFAULT_WINDING);
-    if (shape.fragment > 0) breakLines(lines, g, shape.fragment, shape.fragScale);
-    for (let k = 0; k < share.length; k++) share[k] = share[k] * (1 - shape.lineMix) + lines[k] * shape.lineMix;
-  }
+  const { share, sd } = armShare(n, g, shape);
   const light = ringLight(share, nR, nPhi, shape.floor, shape.cap);
   const young = ringLight(share, nR, nPhi, shape.young, YOUNG_CAP);
   const out = new Float32Array(nR * nPhi * 4);
@@ -233,6 +218,97 @@ export function armMap(n: Float64Array, g: ArmGrid, shape: ArmShape, strength: n
     }
   }
   return out;
+}
+
+/**
+ * The ridge share (index i * nPhi + j: 0 between the arms, toward 1 on a ridge) from which armMap's light, young light
+ * and tone are made, and each ring's deviation of the contrast `n` (a ring at or under 0.02 is not tinted).
+ */
+export function armShare(n: Float64Array, g: ArmGrid, shape: ArmShape): { share: Float64Array; sd: Float64Array } {
+  const { nR, nPhi } = g;
+  const sd = ringSd(n, nR, nPhi);
+  const even = new Float64Array(nR * nPhi);
+  for (let i = 0; i < nR; i++) {
+    const gain = sd[i] > 1e-6 ? 1 + shape.equalise * (Math.min(EQUAL_MAX, EQUAL_LEVEL / sd[i]) - 1) : 1;
+    for (let j = 0; j < nPhi; j++) even[i * nPhi + j] = Math.max(0, 1 + (n[i * nPhi + j] - 1) * gain);
+  }
+  const a = sharpen(even, nR, nPhi, shape.power);
+  // The ridge share: the sharpened contrast's (1 - e^(-a / knee)) mixed with the ridge lines' narrow profile.
+  const share = new Float64Array(nR * nPhi);
+  for (let k = 0; k < share.length; k++) share[k] = ridge(a[k], shape.knee);
+  if (shape.lineMix > 0) {
+    const wind = armWinding(n, g, Math.max(shape.start, 1));
+    const lines = ridgeLines(even, g, shape.armWidth, wind ? wind.k : DEFAULT_WINDING);
+    if (shape.fragment > 0) breakLines(lines, g, shape.fragment, shape.fragScale);
+    for (let k = 0; k < share.length; k++) share[k] = share[k] * (1 - shape.lineMix) + lines[k] * shape.lineMix;
+  }
+  return { share, sd };
+}
+
+/** The rings the tint flags reach (32 floats of 16 bits: illArmsFlags); a ring beyond is tinted as one above 0.02. */
+export const FLAG_RINGS = 512;
+
+/**
+ * The arms' two planes of the shared map (index.ts; S105 fix: the march has one sampler for every feature), on a
+ * width x height grid laid out as feature.ts ILL_MAP says, resampled from the arm grid bilinearly (clamped in R,
+ * wrapped in phi, cell centres) as the GPU read the arms' own texture:
+ *   share  byte round(255 sqrt(s)), s the ridge share in [0, 1] (a square root: an 8-bit step is under 0.8 % of the
+ *          light anywhere, the young light's floor between the arms included)
+ *   mean   byte round(255 m / meanMax), m the share's ring mean (each ring's, linear in R between ring centres; the
+ *          same down every row)
+ * and the per-ring tint flags (deviation of the contrast above 0.02) packed 16 to a float, ring i at bit i % 16 of
+ * float i / 16. From these the GLSL makes armMap's four values: light min(cap, (floor + (1 - floor) s) / (floor +
+ * (1 - floor) m)) faded and strengthened, the young light the same with its own floor and YOUNG_CAP, the tone share
+ * fade * smoothstep(0.25, 0.9, s) * flag, and the fade a function of radius.
+ */
+export function armPlanes(share: Float64Array, sd: Float64Array, g: ArmGrid, width: number, height: number): { share: Uint8Array; mean: Uint8Array; meanMax: number; flags: number[] } {
+  const { nR, nPhi: P } = g;
+  const ringMean = new Float64Array(nR);
+  for (let i = 0; i < nR; i++) {
+    let s = 0;
+    for (let j = 0; j < P; j++) s += share[i * P + j];
+    ringMean[i] = s / P;
+  }
+  let meanMax = 0;
+  for (let i = 0; i < nR; i++) meanMax = Math.max(meanMax, ringMean[i]);
+  const i0s = new Int32Array(width);
+  const i1s = new Int32Array(width);
+  const fxs = new Float64Array(width);
+  for (let c = 0; c < width; c++) {
+    const x = ((c + 0.5) / width) * nR - 0.5;
+    const i0 = Math.floor(x);
+    fxs[c] = x - i0;
+    i0s[c] = Math.min(nR - 1, Math.max(0, i0));
+    i1s[c] = Math.min(nR - 1, Math.max(0, i0 + 1));
+  }
+  const shareOut = new Uint8Array(width * height);
+  const meanOut = new Uint8Array(width * height);
+  const meanRow = new Uint8Array(width);
+  for (let c = 0; c < width; c++) {
+    const m = ringMean[i0s[c]] * (1 - fxs[c]) + ringMean[i1s[c]] * fxs[c];
+    meanRow[c] = meanMax > 0 ? Math.round((255 * m) / meanMax) : 0;
+  }
+  for (let r = 0; r < height; r++) {
+    const y = ((r + 0.5) / height) * P - 0.5;
+    const jf = Math.floor(y);
+    const fy = y - jf;
+    const j0 = ((jf % P) + P) % P;
+    const j1 = (j0 + 1) % P;
+    const row = r * width;
+    for (let c = 0; c < width; c++) {
+      const a = i0s[c] * P;
+      const b = i1s[c] * P;
+      const fx = fxs[c];
+      const s0 = share[a + j0] * (1 - fx) + share[b + j0] * fx;
+      const s1 = share[a + j1] * (1 - fx) + share[b + j1] * fx;
+      const s = Math.min(1, Math.max(0, s0 * (1 - fy) + s1 * fy));
+      shareOut[row + c] = Math.round(255 * Math.sqrt(s));
+    }
+    meanOut.set(meanRow, row);
+  }
+  const flags = new Array<number>(FLAG_RINGS / 16).fill(0);
+  for (let i = 0; i < Math.min(nR, FLAG_RINGS); i++) if (sd[i] > 0.02) flags[i >> 4] += 2 ** (i & 15);
+  return { share: shareOut, mean: meanOut, meanMax, flags };
 }
 
 /** The young light's cap on a ridge. */
