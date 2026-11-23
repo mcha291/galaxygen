@@ -914,3 +914,132 @@ read again on the re-captured frames committed here:
   lanes is evenly grained, neither the photograph's crisp clumps nor its broad smooth veils. Warmer now, still uniform.
 - **Worse than S106**, besides the measures in section 34: NGC 4414's dust no longer carries the strong brown warmth
   across the middle of the disc that S106's (combed) threads gave.
+
+---
+
+# Part S108 — the look away from its two stands: edge-on, orbited, suspended, rerolled (D279)
+
+## 37. What S108 changed in the frames
+
+BUILD_VIII rows 119 to 122 (D279), viewer-only (model hash 5a862a70..., no model byte moved; the physical look byte for
+byte, checked by the reviewer against `main`'s own build at many stands, inclinations, orbits and swaps). S108's subject
+was not the two tuned frames but everything else a viewer can do: a tour of 222 captures found the look broke edge-on,
+under physics only, in star-first mode, through an orbit and on a reroll, and the builders mended those. At the tuned
+stands: **NGC 4414's full frame is S107's byte for byte** (sha256 9f8b2f3f..., the same file); its close stand is S107's
+picture turned 1.6 degrees (the roll now about the true line of sight; ruling 39). **The Milky Way's two frames moved
+twice, by small amounts**: once because its stand now settles and marches at 8 of 8 sub-samples where it had always
+been drawn at the "moving" quality of 2 (full frame mean 0.17 of 255, grain only; rulings 31 and 40), and once by the
+arm grain's cap before the bloom (`arms.sparklecap` 30: the full frame 337,492 pixels differ, at most by 46; the close
+stand 1,006,915, at most 87): the brightest soft blue discs between the arms close up are gone, fainter ones remain.
+New: two edge-on captures at 88 degrees, drawn through the handover (the layer's thin-screen marks fading per ray from
+72 to 88 degrees off the axis, its ink put into the model's own dust layer). The four frames are committed as plain
+pictures in `docs/pictures/s108/` (ruling 37).
+
+## 38. The yardstick on S108's frames
+
+`tools/goal_metrics.py` re-measured by the documents' writer on the two committed full frames of the close
+(`docs/pictures/s108/`, 1024 px), measured as section 34 measured: the Milky Way with `--axis-ratio 1`, NGC 4414 at the
+tool's own geometry. **The goal and S107 rows are taken from section 34**; S107's Milky Way frame was re-measured with
+the same command and reproduces its row (−0.067, A₂ 0.1635, A₃ 0.0388, 2.109, 0.0060, −1.75). There is no goal for the
+edge-on frames and the tool does not measure them.
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope | q | a (px) |
+|---|---|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` | −0.354 (−0.459 / −0.813) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 | 1 (set) | 2006 |
+| illustrative, S107 | −0.067 (−0.637 / −0.704) | 0.052 | 0.164 | 0.039 | 2.11 | 0.0060 | −1.75 | 1 (set) | 411 |
+| **illustrative, S108** | −0.068 (−0.634 / −0.702) | 0.051 | 0.164 | 0.038 | 2.11 | 0.0060 | −1.74 | 1 (set) | 411 |
+| GOAL `ngc_4414` (the tool's geometry) | −0.274 (+0.508 / +0.234) | 0.099 | 0.068 | 0.055 | 2.72 | 0.157 | −2.09 | 0.512 | 664 |
+| illustrative, S107 | −0.425 (+0.722 / +0.297) | 0.079 | 0.042 | 0.037 | 1.64 | 0.185 | −2.25 | 0.504 | 399 |
+| **illustrative, S108** | −0.425 (+0.722 / +0.297) | 0.079 | 0.042 | 0.037 | 1.64 | 0.185 | −2.25 | 0.504 | 399 |
+
+NGC 4414's numbers are S107's to the last digit the tool prints, as they must be: the frame is S107's byte for byte.
+The Milky Way moved by the grain only (A₁ 0.0517 to 0.0509, A₃ 0.0388 to 0.0384, the slope −1.75 to −1.74, the colour
+step −0.067 to −0.068, the tool's point counts 869 / 487 to 876 / 483); nothing moved nearer or further from the goal
+by more than that. Every distance of section 34 stands: the Milky Way's colour step (−0.068 against −0.354), NGC 4414's
+inner colour, A₂, arm contrast and dark fraction.
+
+## 39. What a viewer sees, in the lead's words (the lead looked at the merged head's frames beside both goals)
+
+**The Milky Way, full frame:** S107's picture (two major arms opening from the bar's ends, patchy blue-white grain,
+pink regions on brown lanes, a cream-orange bar). Beside the goal, whole and inner zone side by side, the lead's list:
+(1) the goal's arms spring from the bar's ends and hug the bar as an oval ring at 1.2 to 1.4 bar half-lengths, with the
+picture's brightest pink-white complexes at the bar's ends and a short inner arc along each long side of the bar; ours
+has its first arm at about twice the bar's half-length and an empty dark lavender moat between; (2) the goal's bar is
+pale cream, grainy, fading softly, with fine curling lanes inside; ours saturated yellow-orange, smooth, with a white
+halo rim; (3) the goal has four near-equal arms at about 12 degrees wrapping more than a turn and filling the disc;
+ours two dominant wide-open arms whose outer turns sweep past where the goal's disc has faded; (4) the goal's arms are
+a dense mottled cloud texture; ours a smooth glow with sparse points all of one white; (5) the goal is more muted, its
+inter-arm disc a medium blue-grey with grain. **Close stand:** the brightest soft discs are gone (the cap), but fainter
+soft round blue dots 8 to 12 px across are still scattered between and beside the arms: reduced, not mended.
+**Edge-on (88 degrees):** a thin disc with a warm bulge above and below and a dark lane, but the pink regions and
+blue-white sparkle make a busy dotted band all along the lane and in front of it; the disc is bluish-white. It reads as
+a galaxy seen edge-on, not yet as a good picture of one.
+
+**NGC 4414, full frame:** S107's, unchanged. Beside the photograph, the lead's list: (1) the photograph's disc
+overfills the frame and dims strongly outward into a blue-grey haze with star clouds; ours is a sharp-edged oval of
+even brightness with a bright grainy rim, about three quarters of the frame's width; (2) the photograph has a large
+soft cream bulge glow in a gold-tan inner disc; ours a small nucleus in peach-orange; (3) the photograph's dust is warm
+brown in two or three broad spiral bands of fine filaments with clean bright zones between; ours grey-black short
+dashes scattered evenly (fingerprint strokes); (4) the photograph has lumpy white and blue-white star clouds all
+through the middle disc; ours an even speckle with clouds near the rim only. **Close stand:** S107's picture turned
+1.6 degrees: dark filaments and knots across a crisp grain, star clouds at the rim. Good. **Edge-on:** a classic
+edge-on spiral: a thin disc, a dark dust lane with the star clouds speckling it, a large soft cream bulge. Good; the
+bulge's glow is boxy at its top edge. Between 78 and 82 degrees a faint brushed texture remains (the half-faded veil and
+mottle).
+
+**Away from the stands:** orbiting, the picture keeps its roll; physics only shows the physical look; rerolled
+galaxies differ from one another, and a rerolled Milky Way can still show crescents round the bar (the inner zone's
+work, ruling 36).
+
+**The distance, plainly.** S108 moved neither tuned frame nearer its goal; it made the look survive the camera, the
+controls and a reroll. Both full frames are still plainly unlike their goals in the ways listed above, and those lists
+are what S109 works on (`BUILD_VIII.md` section 6, items 2 and 4).
+
+The frames: `docs/pictures/s108/` (committed; sha256 in D279). The close-ups, the physical frames, the sheets and the
+lead's goal-beside-ours pair sheets are local (never committed).
+
+## 40. A second reader (the documents' writer, who built none of it)
+
+The writer of S108's close documents looked at both goal pictures, the four committed frames, the two close-ups, the
+close's two sheets (which carry the physical frames beside them), the lead's four pair sheets (goal left, ours right:
+whole and inner zone of each) and the reviewer's inclination sheet of the Milky Way (0 to 180 degrees), and cropped
+three regions at twice their size to check what is said here. Where this agrees with the lead: the empty dark lavender
+moat round the Milky Way's bar and its first arm far out; the saturated yellow-orange bar with a pale rim; two
+dominant open arms against the goal's four; the remaining soft blue dots close up; NGC 4414's even, sharp-edged oval,
+small peach nucleus, evenly scattered dashes and fingerprint stripes; NGC 4414 edge-on the best frame of the four. What
+the lead's words do not say, or where this reader disagrees:
+
+- **The soft blobs are not only close up.** In the Milky Way's full frame at least one soft round blue disc sits on the
+  inter-arm disc right of and below the bar (about x 795, y 755 of 1024), the same mark the cap was meant to remove. And
+  **NGC 4414 has its own soft blobs**: pale round-to-oval patches 15 to 40 px across, cream in the middle of the disc
+  and blue-white near the rim (in the full frame about x 590 y 620, x 780 y 450, x 240 y 390; in the inner pair sheet
+  three peach ovals round the nucleus). They read as out-of-focus discs, not as the photograph's lumpy star clouds, and
+  they sit in the middle disc as well as at the rim, so "clouds near the rim only" understates them: there are clouds
+  in the middle, but as soft blurs.
+- **The Milky Way's bar has two hairline dark lanes along its long sides that run straight past the bar's ends** into
+  the lavender moat, and a pale streak leaves the bar's upper-right end; the goal's bar lanes are fine curling threads
+  inside the bar. The lead's list says the goal's bar has curling lanes; it does not say ours now has straight ones
+  that overshoot.
+- **The Milky Way's pink regions are large pale pink flower-like clumps** on the outer side of the arms, far more
+  conspicuous than the goal's small red-magenta knots strung along the lanes, and the lanes close up still zigzag in
+  sharp opaque brown kinks with forks (S107's second reader's point, unchanged). The close stand's inter-arm disc is a
+  flat slate grey, darker and greyer than the goal's blue-grey.
+- **The Milky Way edge-on: this reader sees less of a bulge than the lead does.** There is a warm brightening where the lane
+  crosses the centre, but no round bulge standing above and below the disc; the disc is a long thin blade inside a
+  broad soft bluish halo, the lane is a grey band filled with regions and sparkle rather than a dark one, the pink
+  regions crowd most at the two tips, and the lower-left tip ends in a bright point with a small flare. A real edge-on
+  spiral (the kind the eye knows from NGC 891 or NGC 4565) shows a dark, continuous lane splitting the disc lengthwise,
+  the bulge rising above and below it, the disc fading toward the tips, and its star-forming regions mostly hidden
+  behind the lane; this frame has the blade and the halo, and little of the rest. The reviewer's inclination sheet
+  shows the busy band already from 84 degrees.
+- **NGC 4414 edge-on is good, but its lane reads as a translucent grey strip, not dust.** Cropped at twice the size the
+  lane has hard straight edges with a thin orange rim on each side, a nearly constant width to both tips, and an even
+  speckle of gold-white points across its whole width; real lanes are darkest and widest at the centre and thin toward
+  the tips, with few stars in front. The bulge's glow above the lane ends in a sharp straight edge along it and flares
+  outward in a bow-tie with straight sides, which is what "boxy at its top edge" describes; at a glance it reads a little
+  like a lens flare more than a round bulge.
+- **NGC 4414's close stand still shows the dark smeared texture along the far rim** (the top of the frame) that S107's
+  second reader saw at the near-side rim, and its grain is still the uniform sand of section 36 with a pale peach blob
+  in the lower left. The lead calls the close stand good; it is S107's picture, with S107's faults.
+- **NGC 4414's full frame has a ragged sparkly fringe on its left end**, with a bright knot at the tip (about x 65, y
+  410), and a dark fibrous mesh along its upper-left rim: the photograph's edge is a soft haze with no such fringe.
