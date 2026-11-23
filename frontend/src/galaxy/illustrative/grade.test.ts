@@ -252,9 +252,9 @@ describe("the framing's roll (S105)", () => {
     expect(axisOff(longAxis(cameraAt(55, 0, roll)), 155)).toBeLessThan(2);
   });
 
-  it("leaves every template's stand unrolled but NGC 4414's", () => {
+  it("leaves a stand unrolled where no template names a roll (S106: the Milky Way's bar at its goal's angle)", () => {
     expect(paramsOf(framing, illDefaults(null)).roll).toBe(0);
-    expect(paramsOf(framing, illDefaults("milky_way")).roll).toBe(0);
+    expect(paramsOf(framing, illDefaults("milky_way")).roll).toBe(25);
     expect(paramsOf(framing, illDefaults("milky_way")).turn).toBe(0);
   });
 });

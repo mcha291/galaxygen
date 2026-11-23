@@ -2408,3 +2408,23 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] **Run the full-load review against `main`'s own build.** The reviewer extracted `main`'s frontend with
   `git archive`, built it beside the branch's and compared seven states' PNGs and request lists: stronger than any
   reading of the diff, and it took twenty minutes. (S105, D276)
+
+## From S106 (BUILD_VIII rows 111-114: eleven Opus builders and investigators, an Opus reviewer; two Fable builders cut by HTTP 529; the Fable lead and gate)
+
+- [viewer] **Trace a look's defect by capture, one term off at a time, before designing its cure.** The streaks were
+  the gas fluctuation map's shear (S105 had guessed "the model's light"), the dashes floc's own clump strings, the blue
+  nucleus a float32 underflow two layers down (#238): three guesses in the briefs were wrong, three captures were
+  right. (S106, D277)
+- [viewer] **Marks that must coincide need ONE locus.** Glow, grain, lanes and regions each placed from a different
+  published field never lined up; one drawn arm skeleton that all of them read did it in a pass. (S106, D277)
+- [viewer] **A gate by eye with a written defect list per pass is what moves a picture.** Each builder reported
+  "better" and listed honestly what was still wrong, and the next brief was that list plus the lead's: five passes on
+  the Milky Way, three on NGC 4414. (S106, D277)
+- [infra] **A builder cut by an API error (HTTP 529) leaves nothing if it has not committed.** Say "commit early" in
+  the brief, and restart on another model rather than resuming twice into the same overload. (S106, D277)
+- [infra] **A lead's default changed in one lane's file breaks that lane's pinned test in another branch.** Run the
+  whole vitest before committing a default, and tell the running builder. (S106, D277)
+- [infra] **Three builders building and capturing at once make 5-second unit tests time out.** Use `--maxWorkers=4`,
+  and run the final gates with no builder running. (S106, D277)
+- [close] **Per-template defaults in files another builder owns go through a combination and come back as a list.**
+  The lead applies them at the merge: no conflict in four merges per template. (S106, D277)

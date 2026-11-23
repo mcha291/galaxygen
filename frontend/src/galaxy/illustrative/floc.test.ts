@@ -112,7 +112,7 @@ describe("the map's bytes", () => {
     let differing = 0;
     for (let i = 0; i < a.length; i += 1) if (a[i] !== c[i]) differing += 1;
     expect(differing).toBeGreaterThan(0.05 * a.length);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 
   it("hold dust above 128 and light below, never 0; beyond the light's reach every byte is the patches' mean level", () => {
     const map = fullMap();
@@ -166,7 +166,7 @@ describe("the map's bytes", () => {
     expect(cover).toBeGreaterThan(0.35);
     expect(cover).toBeLessThan(0.8);
     expect(flocCover(map, G, 0.7 * tuned.outerRadius, tuned.outerRadius)).toBeLessThan(0.8 * cover);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 });
 
 describe("the filaments' pitch against the published pitch", () => {
@@ -297,7 +297,7 @@ describe("where the light's patches and clumps lie", () => {
     // Patchy: a good share of the disc well under the mean and a good share well over it.
     expect(low / weight).toBeGreaterThan(0.1);
     expect(high / weight).toBeGreaterThan(0.1);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 });
 
 describe("the feature", () => {
@@ -338,10 +338,10 @@ describe("the feature", () => {
     const [plane] = floc.map!.build(P4414, context);
     expect(plane).toBeInstanceOf(Uint8Array);
     expect(plane!.length).toBe(ILL_MAP.width * ILL_MAP.height);
-    // The depths, gains and colours are uniforms: the same plane.
-    expect(floc.map!.build({ ...P4414, depth: 0.3, ink: 0.2, redness: 3, hardness: 1, patch: 0.2, clump: 4, young: 9, blue: 1, warmth: 1, warmRadius: 2 }, context)[0]).toBe(plane);
+    // The depths, gains and colours are uniforms, and so is the mesh drawn in the march (S106 C4): the same plane.
+    expect(floc.map!.build({ ...P4414, depth: 0.3, ink: 0.2, redness: 3, hardness: 1, patch: 0.2, clump: 4, young: 9, blue: 1, warmth: 1, warmRadius: 2, meshDepth: 0.5, meshCell: 400, meshArc: 0.2, meshHaze: 1, puffs: 1, puffSize: 500 }, context)[0]).toBe(plane);
     // A shaping value: another plane.
-    const [moved] = floc.map!.build({ ...P4414, cell: P4414.cell + 40 }, context);
+    const [moved] = floc.map!.build({ ...P4414, litScale: P4414.litScale + 40 }, context);
     expect(moved).not.toBe(plane);
     expect(moved).not.toEqual(plane);
   });
@@ -355,11 +355,15 @@ describe("the feature", () => {
     // `patch` is a reserved word of the GLSL the march is compiled as (a variable of that name blacked the field out).
     expect(glsl.replace(/\/\/.*$/gm, "")).not.toMatch(/\b(patch|sample|filter|input|output|common|partition|active)\b/);
     expect(glsl).toContain("illMap(rp).g");
-    const declared = [...glsl.matchAll(/uniform float (\w+);/g)].map((m) => m[1]).sort();
+    const declared = [...glsl.matchAll(/uniform (float|vec4) (\w+);/g)].map((m) => m[2]).sort();
+    const vec4s = new Set([...glsl.matchAll(/uniform vec4 (\w+);/g)].map((m) => m[1]));
     for (const template of ["milky_way", "ngc_4414"]) {
       const values = floc.uniforms!(paramsOf(floc, illDefaults(template)), { template, frame: FRAME });
       expect(Object.keys(values).sort()).toEqual(declared);
-      for (const v of Object.values(values)) expect(typeof v).toBe("number");
+      for (const [k, v] of Object.entries(values)) {
+        if (vec4s.has(k)) expect((v as number[]).length).toBe(4);
+        else expect(typeof v).toBe("number");
+      }
     }
     const g = illGlsl();
     expect(g).toMatch(/float illDustAv\(vec2 rp\) \{ return .*illFlocAv\(rp\).*; \}/);

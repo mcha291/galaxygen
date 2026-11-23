@@ -33,6 +33,7 @@ import { DUST_SEGMENT_STEPS } from "../flux";
 import { RING_ROWS } from "../regimes";
 import type { IllLayerProps } from "./feature";
 import { type Placement, regionAttributes } from "./knotsMath";
+import { modelLightRef, placeOnSkeleton, regionsSkeleton, skeletonAttributes } from "./knotsPlace";
 
 const vertexShader = (illGlsl: string) => /* glsl */ `
   attribute vec3 aLight;
@@ -178,6 +179,90 @@ const FRAGMENT = /* glsl */ `
   }
 `;
 
+/**
+ * The skeleton regions' vertex shader (knots.ts `place` = 1; knotsPlace.ts): the knots' own preamble (attributes,
+ * uniforms, dustTo) and a main of its own. The lobes are laid in the arm's frame - along the arm's tangent (aDir, scene)
+ * and across it, both projected to the screen at the region (so they lie in the disc's plane, foreshortened as it is)
+ * - and each lobe carries a hue share (aTint) between the redder colour (aLight) and the more magenta (aLight2).
+ * The legacy shader above is left as it is, byte for byte (the model's places, ngc_4414).
+ */
+const skeletonVertexShader = (illGlsl: string) => {
+  const legacy = vertexShader(illGlsl);
+  const preamble = legacy.slice(0, legacy.indexOf("  float blobReach("));
+  return `${preamble}
+  attribute vec3 aLight2;
+  attribute vec3 aDir;
+  attribute vec4 aTint;
+  uniform vec2 viewPx;
+  varying vec3 vLight2;
+  varying vec4 vTint;
+  vec2 toPx(vec4 clip) { return clip.xy / clip.w * 0.5 * viewPx; }
+  vec4 lobe(vec4 b, vec2 pT, vec2 pN, float rpx) { return vec4(b.x * pT + b.y * pN, max(b.z * rpx, 0.6), b.w); }
+  float lobeReach(vec4 c) { return c.w > 0.0 ? length(c.xy) + 3.0 * c.z : 0.0; }
+  void main() {
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    float depth = -mv.z;
+    float dist = length(mv.xyz);
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    gl_PointSize = 1.0;
+    vLight = vec3(0.0);
+    vLight2 = vec3(0.0);
+    vCore = vec3(0.0);
+    if (depth <= 0.0) return;
+    float side = 1000.0 * depth / pxPerUnit;
+    float area = side * side * depth / dist;
+    vec3 ext = (dustOn > 0.5 ? exp(-dustTo(position) * dustStrength) : vec3(1.0)) * illEdge(length(position.xz));
+    vLight = aLight * gain / area * ext;
+    vLight2 = aLight2 * gain / area * ext;
+    vCore = aCore * gain * coreGain / area * ext;
+    float rpx = aRadius / side;
+    vRpx = rpx;
+    vCoreSigma = max(coreSize * rpx, 0.6);
+    // The arm's frame on the screen: one region radius along the tangent and across it, in px.
+    vec4 clip = projectionMatrix * mv;
+    vec2 c0 = toPx(clip);
+    vec3 nrm = vec3(-aDir.z, 0.0, aDir.x);
+    float kpc = aRadius / 1000.0;
+    vec2 pT = toPx(projectionMatrix * (modelViewMatrix * vec4(position + aDir * kpc, 1.0))) - c0;
+    vec2 pN = toPx(projectionMatrix * (modelViewMatrix * vec4(position + nrm * kpc, 1.0))) - c0;
+    vB0 = lobe(aB0, pT, pN, rpx); vB1 = lobe(aB1, pT, pN, rpx); vB2 = lobe(aB2, pT, pN, rpx); vB3 = lobe(aB3, pT, pN, rpx);
+    vTint = aTint;
+    float reach = max(max(lobeReach(vB0), lobeReach(vB1)), max(lobeReach(vB2), lobeReach(vB3)));
+    reach = max(reach, 3.0 * vCoreSigma);
+    float size = min(2.0 * reach + 1.0, maxPoint);
+    vHalf = 0.5 * size;
+    gl_Position = clip;
+    gl_PointSize = size;
+  }
+`;
+};
+
+const SKELETON_FRAGMENT = /* glsl */ `
+  varying vec3 vLight;
+  varying vec3 vLight2;
+  varying vec3 vCore;
+  varying float vRpx;
+  varying float vHalf;
+  varying float vCoreSigma;
+  varying vec4 vB0;
+  varying vec4 vB1;
+  varying vec4 vB2;
+  varying vec4 vB3;
+  varying vec4 vTint;
+  float gauss(vec2 o, float s) { return exp(-dot(o, o) / (2.0 * s * s)) / (6.28318531 * s * s); }
+  // A lobe already in px (centre xy, sigma z, weight w), y up.
+  float lobe(vec2 p, vec4 b) { return b.w > 0.0 ? b.w * gauss(p - b.xy, b.z) : 0.0; }
+  void main() {
+    vec2 p = (gl_PointCoord - 0.5) * (2.0 * vHalf);
+    p.y = -p.y;
+    vec4 s = vec4(lobe(p, vB0), lobe(p, vB1), lobe(p, vB2), lobe(p, vB3));
+    float all4 = s.x + s.y + s.z + s.w;
+    float tinted = dot(s, vTint);
+    vec3 light = vLight * (all4 - tinted) + vLight2 * tinted + vCore * gauss(p, vCoreSigma);
+    gl_FragColor = vec4(light, 1.0);
+  }
+`;
+
 /** FluxPoints' PointDust as this layer reads it (restated: FluxPoints is a .tsx the e2e tools cannot compile). */
 interface PointDust {
   rings: Texture;
@@ -208,9 +293,11 @@ export function disposeKnotsMaterial(material: ShaderMaterial): void {
 }
 
 /** The pink HII regions, drawn in the Galaxy view's canvas under the illustrative look (knots.ts's `layer`). */
-export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayerProps) {
+export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }: IllLayerProps) {
   const drawn = (params.draw ?? 1) >= 0.5 && knots !== null;
-  // The material: one per runtime (its GLSL and shared uniforms).
+  // S106 (K): the regions laid on the arm skeleton (knotsPlace.ts) in place of the model's places; its own shaders.
+  const onSkeleton = (params.place ?? 0) >= 0.5;
+  // The material: one per runtime (its GLSL and shared uniforms) and placement.
   const material = useMemo(() => {
     // S105 fix R2: one texel of zeros as bytes - a DataTexture's default type is UnsignedByteType, which a Float32Array
     // is not (WebGL refused the upload) - released with the material.
@@ -235,16 +322,17 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayer
         cloudSlab: { value: blank as Texture },
         cloudExt: { value: new Vector3(0, 0, 0) },
         cloudsOn: { value: 0 },
+        viewPx: { value: new Vector2(1, 1) },
         ...runtime.uniforms,
       },
-      vertexShader: vertexShader(runtime.glsl),
-      fragmentShader: FRAGMENT,
+      vertexShader: onSkeleton ? skeletonVertexShader(runtime.glsl) : vertexShader(runtime.glsl),
+      fragmentShader: onSkeleton ? SKELETON_FRAGMENT : FRAGMENT,
       transparent: true,
       blending: AdditiveBlending,
       depthTest: false,
       depthWrite: false,
     });
-  }, [runtime]);
+  }, [runtime, onSkeleton]);
   useEffect(() => () => disposeKnotsMaterial(material), [material]);
 
   // The arm weight's grid: the march's placement texture as the CPU holds it (a DataTexture's data), once per texture.
@@ -262,8 +350,28 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayer
     params.count, params.lumPower, params.pink, params.magenta, params.coreShare, params.size, params.sizeMin, params.sizeMax, params.blobs,
     params.irregular, params.soft, params.armPower, params.armLevel, params.armFlat, params.fadeR, params.fadeWidth, params.innerR,
   ];
+  // The skeleton's placement: the regions laid afresh when the skeleton (its key) or a placing parameter moves.
+  const { skeleton, key: skelKey } = onSkeleton ? regionsSkeleton(context) : { skeleton: null, key: "" };
+  const placing = [
+    params.total, params.bunch, params.gap, params.bunchLen, params.inner, params.across, params.slope, params.lightSize, params.ridgePow,
+    params.barEnds, params.sparkle, params.sparkleGain, params.seed, params.elong, params.hue, params.coreBlue,
+  ];
   const geometry = useMemo(() => {
     if (!knots) return null;
+    if (onSkeleton) {
+      if (!skeleton) return null;
+      const a = skeletonAttributes(placeOnSkeleton(skeleton, params), params, modelLightRef(knots.flux));
+      const g = new BufferGeometry();
+      g.setAttribute("position", new BufferAttribute(a.positions, 3));
+      g.setAttribute("aLight", new BufferAttribute(a.light, 3));
+      g.setAttribute("aLight2", new BufferAttribute(a.light2, 3));
+      g.setAttribute("aCore", new BufferAttribute(a.core, 3));
+      g.setAttribute("aRadius", new BufferAttribute(a.radius, 1));
+      g.setAttribute("aDir", new BufferAttribute(a.dir, 3));
+      g.setAttribute("aTint", new BufferAttribute(a.tint, 4));
+      a.blobs.forEach((b, j) => g.setAttribute(`aB${j}`, new BufferAttribute(b, 4)));
+      return g;
+    }
     const a = regionAttributes(knots, params, placement);
     const g = new BufferGeometry();
     g.setAttribute("position", new BufferAttribute(a.positions, 3));
@@ -272,7 +380,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayer
     g.setAttribute("aRadius", new BufferAttribute(a.radius, 1));
     a.blobs.forEach((b, j) => g.setAttribute(`aB${j}`, new BufferAttribute(b, 4)));
     return g;
-  }, [knots, placement, ...shaping]); // eslint-disable-line react-hooks/exhaustive-deps -- the shaping parameters, listed
+  }, [knots, placement, onSkeleton, skeleton, skelKey, ...shaping, ...(onSkeleton ? placing : [])]); // eslint-disable-line react-hooks/exhaustive-deps -- the shaping parameters, listed
   useEffect(() => () => geometry?.dispose(), [geometry]);
 
   const points = useMemo(() => {
@@ -293,6 +401,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayer
       const buffer = renderer.getDrawingBufferSize(BUFFER);
       const fov = (camera as PerspectiveCamera).fov ?? 45;
       u.pxPerUnit.value = buffer.y / (2 * Math.tan((fov * Math.PI) / 360));
+      (u.viewPx.value as Vector2).set(buffer.x, buffer.y);
       if (maxPointSize === 0) {
         const gl = renderer.getContext();
         const range = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) as Float32Array | null;

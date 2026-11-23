@@ -57,6 +57,14 @@ const held = new Map<Token, Publish>();
 const roaming = new Map<Token, () => void>();
 /** What a landing's swap published to loaders then unmounted with the old canvas, by key (#188): taken once. */
 const handovers = new Map<string, unknown>();
+/**
+ * What each mounted loader shows during the swap under way, by its key (S106, the look switched while a generation is
+ * pending): a canvas made afresh inside a swap (a stand that moved - the illustrative look's framing) starts its loaders
+ * from the previous galaxy's values of the same key, as the unmounted ones showed them, rather than from nothing until
+ * the swap publishes. They still ask and hold as any loader (rule D1: the new galaxy is published whole, at the swap's
+ * end). Emptied when a swap begins or ends.
+ */
+const carried = new Map<string, unknown>();
 const listeners = new Set<() => void>();
 
 /** What a view reads of the swap: whether one is under way, and what failed in the last. */
@@ -93,6 +101,7 @@ function flush(failure: string | null = swap.failure) {
   const takeDown = [...roaming.values()];
   held.clear();
   roaming.clear();
+  carried.clear();
   swap = { swapping: false, failure, landing: false };
   if (landing) landed(performance.now()); // #188: the new canvas's loaders may start from what this publishes
   publish.forEach((p) => p(landing));
@@ -120,6 +129,7 @@ export function beginSwap(landing = false): void {
   generation += 1;
   roaming.clear();
   handovers.clear();
+  carried.clear();
   swap = { swapping: true, failure: null, landing: landing || (swap.swapping && swap.landing) };
   told();
 }
@@ -218,6 +228,16 @@ export function handed<T>(key: string, now: number): T | undefined {
 /** Take what was handed over for `key`: no other loader starts from it. */
 export function takeHanded(key: string): void {
   handovers.delete(key);
+}
+
+/** S106: a loader shows `value` for `key` during the swap under way (kept only while one is). */
+export function carry(key: string, value: unknown): void {
+  if (swap.swapping) carried.set(key, value);
+}
+
+/** S106: what a loader of `key` showed during the swap under way; undefined outside a swap or where none did. */
+export function carriedFor<T>(key: string): T | undefined {
+  return swap.swapping ? (carried.get(key) as T | undefined) : undefined;
 }
 
 /** The swap's current state (what useSwap renders from). */
@@ -382,7 +402,13 @@ export function useLoad<T>(
     return value === undefined ? null : { key: key as string, value };
   });
   const handedKey = useRef<string | null>(start?.key ?? null);
-  const [result, setResult] = useState<Loaded<T>>(() => (start ? { state: "ready", value: start.value } : { state: "idle" }));
+  // S106: else, made afresh inside a swap, it shows what a loader of the same key showed in it (the previous galaxy's
+  // value) while it asks for its key as any loader does - never nothing until the swap publishes.
+  const [result, setResult] = useState<Loaded<T>>(() => {
+    if (start) return { state: "ready", value: start.value };
+    const shown = key === null ? undefined : carriedFor<T>(key);
+    return shown === undefined ? { state: "idle" } : { state: "ready", value: shown };
+  });
   // The newest answer and its key, held or published (#187): what `next` and `answered` read. A failure's value is null.
   const [latest, setLatest] = useState<{ key: string; value: T | null } | null>(start);
   // What the last landing's swap published here, if that was the last publish (#188): handed over at the unmount.
@@ -478,6 +504,11 @@ export function useLoad<T>(
   }, [key, settleMs, token, clock, firstAtOnce, after]);
 
   const value = result.state === "ready" ? result.value : result.state === "error" ? result.last : null;
+  // S106: what this loader shows during a swap, for a loader of its key made afresh inside it (carriedFor above).
+  const generationSeen = swapGeneration();
+  useEffect(() => {
+    if (swapping && key !== null && value !== null) carry(key, value);
+  }, [swapping, key, value, generationSeen]);
   const next = latest !== null && latest.key === key && latest.value !== null ? latest.value : value;
   return { value, busy, error: result.state === "error" ? result.message : null, next, answered, settling };
 }

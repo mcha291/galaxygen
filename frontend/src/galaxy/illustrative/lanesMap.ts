@@ -107,6 +107,8 @@ export interface Ridge {
   length: number;
   fadeIn: boolean;
   fadeOut: boolean;
+  /** S106: a depth multiplier per point (the skeleton's strength), multiplied into the gas's weight; absent 1. */
+  weight?: Float32Array;
 }
 
 /** A path's points given, its tangents (smoothed over `smooth` kpc), inward normals and lengths filled in. */
@@ -318,11 +320,17 @@ export interface LaneShape {
   /** where the lane begins, as a share of the bar's half-length. */
   barReach: number;
   seed: number;
+  /** S106: 1 the lanes drawn along the arms' traced crests (LaneGeometry.traced), 0 along the model's arm pieces. */
+  trace: number;
+  /** S106 (B3): 1 the arms' lanes drawn along the arm skeleton's ridges (LaneGeometry.skeleton); absent or 0 not. */
+  skeleton?: number;
+  /** S106 (B3): the bar lanes' curl round the nucleus, a share of its 220 degrees; absent 1 (S107's curl), 0 straight. */
+  barCurl?: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof LaneShape)[] = [
   "offset", "width", "strands", "spread", "wiggle", "wiggleLength", "braidLength", "gaps", "gapLength", "clump", "envelope", "followGas", "taper",
-  "innerRadius", "outerRadius", "featherSpacing", "featherLength", "featherPitch", "featherDepth", "fray", "barDepth", "barOffset", "barWidth", "barCurve", "barReach", "seed",
+  "innerRadius", "outerRadius", "featherSpacing", "featherLength", "featherPitch", "featherDepth", "fray", "barDepth", "barOffset", "barWidth", "barCurve", "barReach", "seed", "trace", "skeleton", "barCurl",
 ];
 
 /** What the map is drawn from: the ridges, the gas contrast to weigh them by, and the bar. */
@@ -331,6 +339,138 @@ export interface LaneGeometry {
   pieces: Piece[];
   gas: { values: ArrayLike<number>; rings: number; sectors: number } | null;
   bar: { halfLength: number; axisRatio: number; angle: number } | null;
+  /** S106: the arms' own crests traced into ridges (traceRidges), drawn in place of the pieces where the shape's `trace` is on. */
+  traced?: Ridge[] | null;
+  /** S106 (B3): the arm skeleton's ridges (lanes.ts skeletonRidges), drawn in place of the pieces where the shape's `skeleton` is on. */
+  skeleton?: Ridge[] | null;
+}
+
+/** A peak of the arms' ridge lines (armsField.ts ArmPeak): ring i, azimuth cell j, height in [0, 1]. */
+export interface TracePeak {
+  i: number;
+  j: number;
+  height: number;
+}
+
+/**
+ * The arms' crests traced into ridges (S106, the Milky Way's picture; display-only, the lead's ruling 12): the ridge
+ * lines' peaks (armsField.ts armPeaks) linked ring to ring outward - a peak joins the track whose last crest, carried
+ * along the measured winding k (dphi / dlnR), lies within `reach` cells of it and no more than `skip` rings back -
+ * and each track of at least `minLength` kpc resampled every `step` kpc into a Ridge. So a lane lies on the arm the
+ * picture draws (its sparkle, its glow), not on the model's arm pieces where the two part.
+ */
+export function traceRidges(
+  peaks: readonly TracePeak[],
+  grid: { nR: number; nPhi: number; rHi: number },
+  k: number,
+  step: number,
+  opts: { reach?: number; skip?: number; minLength?: number; minHeight?: number } = {},
+): Ridge[] {
+  const reach = opts.reach ?? 4;
+  const skip = opts.skip ?? 4;
+  const minLength = opts.minLength ?? 1.5;
+  const minHeight = opts.minHeight ?? 0.15;
+  const dR = grid.rHi / grid.nR;
+  const P = grid.nPhi;
+  const cell = TAU / P;
+  type Track = { i: number[]; phi: number[]; last: number; lastPhi: number };
+  // dphi / dlnR over a track's last ten crests (least squares).
+  const slopeOf = (tr: Track): number => {
+    const n = Math.min(10, tr.i.length);
+    let sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (let a = tr.i.length - n; a < tr.i.length; a++) {
+      const x = Math.log((tr.i[a] + 0.5) * dR);
+      sx += x; sy += tr.phi[a]; sxx += x * x; sxy += x * tr.phi[a];
+    }
+    const den = n * sxx - sx * sx;
+    return den > 1e-12 ? (n * sxy - sx * sy) / den : k;
+  };
+  const live: Track[] = [];
+  const done: Track[] = [];
+  const byRing = new Map<number, TracePeak[]>();
+  for (const q of peaks) if (q.height >= minHeight) byRing.set(q.i, [...(byRing.get(q.i) ?? []), q]);
+  const rings = [...byRing.keys()].sort((a, b) => a - b);
+  for (const i of rings) {
+    for (let t = live.length - 1; t >= 0; t--) if (i - live[t].last > skip) done.push(...live.splice(t, 1));
+    const used = new Set<Track>();
+    const R = (i + 0.5) * dR;
+    for (const q of byRing.get(i)!) {
+      let best: Track | null = null;
+      let bestD = Infinity;
+      for (const tr of live) {
+        if (used.has(tr)) continue;
+        const dl = Math.log(R / ((tr.last + 0.5) * dR));
+        // A young track (under three crests) looks either way by the winding's whole step; an older one follows its
+        // own measured drift (the field's sign and the measured winding's need not agree).
+        const young = tr.i.length < 3;
+        const predicted = tr.lastPhi + (young ? 0 : slopeOf(tr) * dl);
+        let d = ((q.j + 0.5) * cell - predicted) / cell;
+        d = ((((d + P / 2) % P) + P) % P) - P / 2;
+        const window = reach + (young ? (Math.abs(k) * dl) / cell : 0);
+        if (Math.abs(d) <= window && Math.abs(d) < bestD) {
+          bestD = Math.abs(d);
+          best = tr;
+        }
+      }
+      // Unwrapped azimuth: continue the track's own phase.
+      if (best) {
+        const predicted = best.lastPhi;
+        const raw = (q.j + 0.5) * cell;
+        const phi = raw + TAU * Math.round((predicted - raw) / TAU);
+        best.i.push(i);
+        best.phi.push(phi);
+        best.last = i;
+        best.lastPhi = phi;
+        used.add(best);
+      } else {
+        const phi = (q.j + 0.5) * cell;
+        const tr = { i: [i], phi: [phi], last: i, lastPhi: phi };
+        live.push(tr);
+        used.add(tr);
+      }
+    }
+  }
+  done.push(...live);
+  const out: Ridge[] = [];
+  let chain = 1000;
+  for (const tr of done) {
+    if (tr.i.length < 4) continue;
+    // Smooth the azimuth over five crests (the peak finder steps a whole cell), then lay the points.
+    const n = tr.i.length;
+    const xs0: number[] = [];
+    const ys0: number[] = [];
+    for (let a = 0; a < n; a++) {
+      let s = 0;
+      let w = 0;
+      for (let b = Math.max(0, a - 2); b <= Math.min(n - 1, a + 2); b++) {
+        s += tr.phi[b];
+        w += 1;
+      }
+      const R = (tr.i[a] + 0.5) * dR;
+      xs0.push(R * Math.cos(s / w));
+      ys0.push(R * Math.sin(s / w));
+    }
+    let length = 0;
+    for (let a = 1; a < n; a++) length += Math.hypot(xs0[a] - xs0[a - 1], ys0[a] - ys0[a - 1]);
+    if (length < minLength) continue;
+    // Resampled every `step` kpc along the path (drawChain reads an even spacing).
+    const xs: number[] = [xs0[0]];
+    const ys: number[] = [ys0[0]];
+    let carry = 0;
+    for (let a = 1; a < n; a++) {
+      const seg = Math.hypot(xs0[a] - xs0[a - 1], ys0[a] - ys0[a - 1]);
+      let at = step - carry;
+      while (at <= seg) {
+        const f = at / seg;
+        xs.push(xs0[a - 1] + (xs0[a] - xs0[a - 1]) * f);
+        ys.push(ys0[a - 1] + (ys0[a] - ys0[a - 1]) * f);
+        at += step;
+      }
+      carry = seg - (at - step);
+    }
+    if (xs.length >= 3) out.push(ridgeOfPoints(chain++, xs, ys, 0.3));
+  }
+  return out;
 }
 
 const finite = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : NaN);
@@ -666,8 +806,8 @@ export function barRidges(bar: NonNullable<LaneGeometry["bar"]>, shape: LaneShap
     Y.push(-c * (1 - (x / a) ** shape.barCurve));
   }
   // The curl: from (0, -c), heading toward -X, round the centre by 220 degrees, the radius falling to a third.
-  const sweep = (220 * Math.PI) / 180;
-  const m = Math.max(8, Math.ceil((c * sweep) / step));
+  const sweep = ((220 * Math.PI) / 180) * Math.max(0, shape.barCurl ?? 1);
+  const m = sweep > 0 ? Math.max(8, Math.ceil((c * sweep) / step)) : 0;
   for (let i = 1; i <= m; i += 1) {
     const t = i / m;
     const theta = -Math.PI / 2 - sweep * t;
@@ -719,8 +859,11 @@ export interface LaneMap {
 export function buildLaneMap(g: LaneGeometry, shape: LaneShape, rings: number = LANE_MAP.rings, sectors: number = LANE_MAP.sectors): LaneMap {
   const raster = new Raster(rings, sectors, g.rHi);
   const step = ridgeStep(shape);
-  const ridges = ridgesOf(g.pieces, step);
-  const weights = gasWeights(ridges, g, shape.followGas);
+  const ridges = (shape.skeleton ?? 0) >= 0.5 && g.skeleton ? g.skeleton : shape.trace >= 0.5 && g.traced ? g.traced : ridgesOf(g.pieces, step);
+  const weights = gasWeights(ridges, g, shape.followGas).map((w, k) => {
+    const own = ridges[k].weight;
+    return own ? w.map((v, i) => v * own[i]) : w;
+  });
   ridges.forEach((ridge, k) => drawChain(raster, ridge, weights[k], shape));
   if (g.bar) drawBar(raster, g.bar, shape, stepFor(sigmaOf(shape.barWidth * 1e-3) * 0.75));
   const data = new Uint8Array(rings * sectors);

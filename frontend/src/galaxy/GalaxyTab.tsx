@@ -55,6 +55,7 @@ import {
   createRuntime,
   features as illFeatures,
   illArrays,
+  illContextFor,
   ILL_SETTLE_MS,
   illEffective,
   illStale,
@@ -64,7 +65,7 @@ import {
   updateRuntime,
 } from "./illustrative";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
-import { framing as framingFeature, standRoll, standScale, standTurn } from "./illustrative/framing";
+import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
@@ -689,6 +690,8 @@ export function GalaxyTab({
     [illustrative, illParams, illSettled, illContext],
   );
   const illDrawnParams = illDrawn.ill;
+  // S106 (B4): the layers' context carries every feature's drawn parameters (IllContext.paramsOf), as the map builders' does.
+  const illLayerContext = useMemo(() => illContextFor(illContext, illDrawnParams), [illContext, illDrawnParams]);
   const [illBuilt, setIllBuilt] = useState(0);
   const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
   // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
@@ -712,7 +715,9 @@ export function GalaxyTab({
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
   // The roll and the azimuth's turn ride with the scale, settled the same way ("scale,roll,turn").
   const framingParams = illustrative ? paramsOf(framingFeature, illParams) : null;
-  const framingLive = framingParams ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)}` : "1,0,0";
+  const framingLive = framingParams
+    ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)},${standTilt(framingParams)}`
+    : "1,0,0,0";
   const framingOf = `${templateName}:${viewLook}`;
   const [framingAt, setFramingAt] = useState({ of: framingOf, v: framingLive });
   useEffect(() => {
@@ -720,11 +725,16 @@ export function GalaxyTab({
     const timer = setTimeout(() => setFramingAt({ of: framingOf, v: framingLive }), 300);
     return () => clearTimeout(timer);
   }, [framingAt, framingOf, framingLive]);
-  const [framingScale, framingRoll, framingTurn] = (framingAt.of === framingOf ? framingAt.v : framingLive).split(",").map(Number);
+  const [framingScale, framingRoll, framingTurn, framingTilt] = (framingAt.of === framingOf ? framingAt.v : framingLive).split(",").map(Number);
   const templateStand = drawn.template?.camera ?? null;
   const viewStand =
     illustrative && templateStand
-      ? { ...templateStand, radius_kpc: templateStand.radius_kpc * framingScale, azimuth_deg: (((templateStand.azimuth_deg + framingTurn) % 360) + 360) % 360 }
+      ? {
+          ...templateStand,
+          radius_kpc: templateStand.radius_kpc * framingScale,
+          azimuth_deg: (((templateStand.azimuth_deg + framingTurn) % 360) + 360) % 360,
+          inclination_deg: tiltedInclination(templateStand.inclination_deg, framingTilt),
+        }
       : templateStand;
   const viewRoll = illustrative ? framingRoll : 0;
   // A feature that draws the HII regions its own way in place of the default knots (knots.ts, row 106).
@@ -932,7 +942,7 @@ export function GalaxyTab({
                 key={f.id}
                 params={paramsOf(f, illDrawnParams)}
                 runtime={illRuntime}
-                context={illContext}
+                context={illLayerContext}
                 knots={knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null}
                 knotsGain={knotsGain}
                 dust={knotDust}

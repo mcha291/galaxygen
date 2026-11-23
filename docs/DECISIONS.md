@@ -18949,3 +18949,205 @@ per shaping change on the main thread. (d) The streaky texture under both pictur
 **What did not move.** No byte under `model/galaxy` (the hash 5a862a70d3760c426ca51c2cffa2b0c2); no committed frame,
 thumbnail or `frames.json`; no published number, readout, tracer or preview; the register (115 open = 50 + 65, 104
 discharged on `main`; nothing opened: ruling 5 of D275); `batch-r`, `batch-q-lanes`, `q-231` untouched and unmerged.
+
+### D277. S106, BUILD_VIII rows 111 to 114: the base under both pictures traced and smoothed, the look switch mended in the shared loader, the Milky Way drawn on one arm skeleton, NGC 4414's dust as threads and a mesh with star clouds and a sky; the blue nucleus traced to a float32 underflow in the physical path (#238, not fixed: the owner's) and a model's central column (#239, the owner's); both pictures now read as their goal at a glance; the physical look byte for byte; no model byte moved; #238 and #239 reserved, not entered in the register; nine more rulings taken on the lead's recommendation (2026-11-23)
+
+**Why a session.** BUILD_VIII section 6's list after S105 (D276), the same day, on D275's word. Cut from `main`
+d40c43a (tag `s105`) as `session-106`; builders in their own worktrees on their own branches (`s106-base`, `s106-mw`,
+`s106-mw2`, `s106-mw3`, `s106-mw4`, `s106-knots`, `s106-ngc`, `s106-ngc2`, `s106-ngc3`, `s106-sky`, `s106-core`), merged
+by the lead. A Fable lead; eleven Opus builders and investigators and an Opus reviewer. **The two Fable builders** (the
+Milky Way's and NGC 4414's first passes) **were cut twice by HTTP 529** (the API overloaded) within fifteen minutes with
+nothing committed, and were replaced by Opus builders: every picture row of S106 was built by Opus on the lead's own
+defect lists. At S106's open the GitHub full suite on S105's head (run 45130693940, `session-105`
+9ca3cdb) was read: green, 1860 passed, 35 skipped, 10 xfailed, in 3 h 22 min. No full suite here (D246).
+
+**What was built** (all under `frontend/src/galaxy/illustrative/` but the shared loader; `BUILD_VIII.md` section 2).
+
+1. **Row 111, the base, the tilt, the switch** (builder A). The streaky brushed texture under both discs, which S105's
+   close called "the model's own light ... the synthetic layer's maps", was **traced by capture**: it is the randomness
+   layer's gas fluctuation map (the march's `screenGas` = `layerGasMap`, read through a log-spiral shear in
+   `layerGasRead`), multiplying the dust's placement - not the clustered young light, not the spurs, not any
+   illustrative feature. S105 had the right family; S106 names it. New feature `base.ts`: a hook kind `gas` (a chained
+   `float f(vec2 xy, float g)`, patched into the march's `screenGas` and `FluxPoints`' `gasAt`) and a contract field
+   `noiseGlsl`; controls grain (the map toward its mean; Milky Way 0, NGC 4414 1), unshear (both 1: an isotropic
+   mottle), size (NGC 4414 1.6), depth (the dust placement's multiplier; Milky Way 0.1 since the third pass, NGC 4414 1),
+   lift and radius (the disc's starlight lifted outward through the `light` hook, the Milky Way), all uniforms.
+   `framing.tilt` (degrees added to the stand's inclination, held to [0, 89]): NGC 4414 6 (the goal's axis ratio
+   0.51-0.56; ours 0.60 at the template's inclination, 0.53 at +6). The Milky Way framed at `framing.scale` 0.9 and
+   `framing.roll` 25 (the bar at the goal's 45 degrees, the disc across about 88 % of the frame's width). All three are
+   per-template defaults in `frontend/src/galaxy/illustrative/framing.ts` (`perTemplate`, lines 15-16, 20 and 28).
+2. **S105's known defect 1 mended: a look switched while a generation is pending no longer blanks the field.** Cause:
+   the switch moves the stand, the stand is in the Canvas's key, the new canvas's loaders start empty and their answers
+   are held by the swap. The fix is in the SHARED loader `frontend/src/useLoad.ts`, outside the layer (ruling 13):
+   during a swap every loader leaves what it shows under its key, a loader made afresh inside the swap starts from it,
+   and the store empties when a swap begins or ends; rule D1 is kept (the new galaxy still published whole). Probe
+   `frontend/e2e/switch/lookswitch.probe.ts` (`playwright.switch.config.ts`): 65 of 65 probes dark before, 0 of 78
+   after; unit test `useLoad.carry.test.ts`. **S105's known defect 2** (a burst of `glGetProgramiv` warnings on a canvas
+   remount) was **not reproduced** in about 35 remounts; its cause is unknown and it stays open.
+3. **Row 112, the Milky Way, in five passes** (builders B, B3, B4, K, B5). B's first pass (grain controls for the
+   sparkle, thin lanes, fewer regions, the lavender zone) failed the lead's gate by eye: the frame washed out, the arms
+   still fragmented bands, the lanes wandering off them - the marks had no shared locus. **B3 drew the arm skeleton**
+   (`skeleton.ts`, `armsSkeleton.ts`): a small set of continuous log-spiral ridges seeded from published geometry (the
+   arm pieces' length-weighted median pitch, 12.6 degrees on `milky_way`, and its sign; the bar's half length and
+   angle - the two major arms leave the bar's ends), continued to the disc's edge, with three lesser arms and seven
+   spurs of the layer's own on a fixed seed. Display-only drawing (ruling 12); nothing is placed from an arm
+   multiplicity (the repository's scan test passes). Under `arms.skeleton` (Milky Way 1, NGC 4414 0) the glow is the
+   ridge band (the B channel of the shared map), the model's own patchy arm contrast is divided out (`arms.skelflat`:
+   the published star contrast over its ring mean in the A channel, 64 ring means as uniforms, read by a Catmull-Rom
+   cubic since B5), the grain is sampled along the ridges, the lanes run on each ridge's inner edge (`lanes.skeleton`),
+   the bar's lanes straight (`lanes.barCurl` 0). **B4 let a feature read another's live parameters**
+   (`IllContext.paramsOf(featureId)`, bound by `illContextFor` in `index.ts` round every map build, uniforms call,
+   debounce probe and layer; `currentSkeleton` and `skeletonKey` in `armsSkeleton.ts`): an `arms.skel*` slider now
+   moves glow, grain, lanes and regions together. **K laid the pink regions on the skeleton** (`knotsPlace.ts`,
+   `knotsLayer.ts`, under `knots.place`: Milky Way 1, NGC 4414 0): bunches along the crests biased to the inner edge, a
+   steep size spread, up to four lobes per region with a white core, a complex at each bar end - wholly the viewer's
+   placement, only the light's scale the model's. **B4 and B5 finished it**: the inter-arm haze lavender and luminous;
+   the arms to the edge; the zone round the bar the darkest part of the disc (`arms.skelcore*`, `edge.bulge*`); a visible
+   circle at the arms' start radius traced (the band's strength read per ring) and removed; ring banding traced (ring
+   means and the contrast read linearly) and removed; the bar slimmer with a core (`barsharp`, `barthin`, `barcore`);
+   lumpy grain (`sparklebunch*`, a two-octave value noise); regions smaller, redder and more numerous; lanes thinner and
+   longer; a soft outer fade.
+4. **Row 113, NGC 4414, in three passes** (builders C, C3, C4; D for the sky; N and E for the nucleus). **C** drew
+   floc's "plane style" (`flocNet.ts`: dust from noise in the disc's Cartesian plane, isotropic in the small), the star
+   clouds as a points layer (`flocClouds.ts`, `CloudsLayer.tsx`) and a cream tint over the nucleus; the lead's gate: big
+   marbled blobs with fingerprint curls. **C3** drew the dust as thin threads (the middle crossings of two families of
+   spiral noise, an analytic slope `Ladder.atSlope`, one width, no blobs), ring and near-side weighting, a grain in the
+   veil's GLSL, star clouds in groups inside the disc with glows; the lead's gate: at full frame much like the
+   photograph, close up combed. **C4** drew a branching mesh per ray in the veil's GLSL (the edges of anisotropic Worley
+   cells along the drawn spiral, junction clumps, a finer and a broader mesh; no map, no sampler, uniforms only), light
+   puffs at two scales and star-cloud complexes; it traced a honeycomb artefact (the light byte's darkening at dust
+   margins on a coarse grid) and removed it; the map's rebuild in the browser 636-736 ms before, 145-192 ms after, with
+   the threads off. **The lead's pick** among five captures of the merged head is threads and mesh together
+   (`floc.netDepth` 1.6, `floc.meshDepth` 0.9; NGC 4414's `perTemplate` values in
+   `frontend/src/galaxy/illustrative/floc.ts`, lines 113 and 174): the threads carry the dark brown spiral arcs, the mesh the tangle
+   between; the mesh alone read orange and veined, the threads alone combed. The rebuild's cost with the threads back
+   on was **not re-measured by a builder** (the reviewer was asked to). **D drew the sky** (`sky.ts`, `SkyLayer.tsx`):
+   field stars as unit directions at infinity (no parallax, one draw call, up to 400,000 points on the whole sphere
+   because NGC 4414's lens is 5 degrees - about 200 in the frame), a floor and a halo sprite in the disc's plane; off on
+   the Milky Way. **E mended the nucleus in the layer** (`base.mend`, a hook kind `depth`; item 5's trace): lost
+   channels rebuilt from the deepest surviving one in the published ratio (the depths are exactly in `cloudExt`'s ratio
+   on both templates: G/R 1.25791, B/R 1.64093), the all-lost ring from its neighbours, a no-op on healthy texels (the
+   Milky Way byte-identical); and `base.core`, 2 dex inside `base.coreRadius` 1 kpc on NGC 4414, the diffuse dust
+   thinned smoothly toward the centre because the true column (A_V about 130 mag face-on) hides the nucleus and the
+   goal's nucleus is bright cream. `floc.nucleus` (the cream cover) is now 0. The inner 0.5 kpc at the close stand,
+   exposure -3: before (122, 132, 148), blue; after (166, 141, 111), warm.
+5. **Row 114, the gate and the close.** The lead read every builder's frames beside the goals and sent each lane back
+   with its own defect list (the Milky Way five passes, NGC 4414 three), captured the merged head four times, and had
+   an independent review run against `main`'s own build.
+
+**The three traces.** Three causes named in the briefs were wrong and three captures named the right ones. (a) **The
+streaks** were the gas fluctuation map's log-spiral shear multiplying the dust's placement (item 1), not "the model's
+light". (b) **The white dashes** of S105's NGC 4414 were floc's own young-clump strings on a coarse polar raster
+(builder C), not the model's. (c) **The blue nucleus** (investigator N) is a defect of the physical path, two layers
+down: the model publishes the diffuse dust as a face-on transmission per filter (`model/galaxy/api/service.py`
+1986-1989); the viewer asks for the render at float32 (`frontend/src/api.ts` 618, 662; the cast at `service.py`
+2203-2204); at NGC 4414's centre the optical depths are about 97 / 122 / 159 (R, V, B), so the G and B transmissions
+underflow to exactly 0; `regimes.ts`'s `depthOf` (54-57, pinned by `regimes.test.ts` 122) reads 0 as no dust and line
+196 writes it into the ring texture's depth row. Inside 0.30 kpc G and B have no dust while R keeps e^-97 (a
+cyan-green core); one ring near 0.11 kpc loses all three (a white ring); 0.30-0.53 kpc loses B (a blue annulus). The
+Milky Way's largest depth is 62 and never underflows. It is in the physical look too (every close or low-exposure NGC
+4414 frame; at the default stand the core clips to white and hides it).
+
+**The register: two findings, not entered** (D275's ruling 5 gives a defect of the physical path a number; ruling 20
+below holds the entry). **#238** - the transmission's float32 underflow read as no dust. The physical fix moves committed NGC 4414 frames (an
+experiment: 185k of 1.05M pixels, up to 21 levels), so it was **not made**: the owner's ruling (ruling 14). Recommended:
+`regimes.ts` treats an exact 0 transmission as opaque, taking the depth from a surviving channel times the header's
+extinction ratio (or -ln(2^-149) = 103.28 scaled where none survives), then the four NGC 4414 committed frames
+re-captured; the alternatives are fetching `dust_extinction` at f8, or publishing the depth. **#239** - NGC 4414's
+published central extinction is about 130 mag in V face-on (the Milky Way's about 50): a correct march hides its nucleus
+behind a 14-pc layer. A model matter, nothing under `model/` touched. Both are the owner's. The register is as it
+was: **115 open = 50 permanent + 65 carried, 104 discharged; next #240 (#238 and #239 reserved), D278.**
+
+**The rulings taken on recommendation** (`BUILD_VIII.md` section 4, rulings 12 to 20; D276's own items call S105's
+eleventh "ruling 12", the table's numbering is the one that holds). (12) The layer may continue or add drawn structure
+of its own where a goal picture has it and the model does not (the Milky Way's arms continued to the edge, lesser arms
+and spurs, the regions placed on the skeleton; NGC 4414's threads, mesh, star clouds, sky stars), display-only and said
+so in each file's header. (13) A fix in the shared loader (`useLoad.ts`), outside the layer, for the look-switch
+defect: taken because the defect was the layer's and the nine physical frames stayed byte for byte; reviewed
+independently. (14) #238 is not fixed in the physical path: its fix re-captures committed NGC 4414 frames, the owner's
+ruling; it is mended under the illustrative look only (`base.mend`). (15) NGC 4414's central dust thinned by 2 dex
+inside 1 kpc and the Milky Way's diffuse dust placement at 0.1, under the illustrative look: display choices, each a
+slider. (16) NGC 4414 tilted 6 degrees past the template's inclination and the Milky Way rolled 25 degrees, under the
+illustrative look only: view choices, each a slider. (17) Concurrency: three builders at once most of the session
+(ruling 7 says two), on a fresh window; none died of the quota; the two Fable builders died of HTTP 529 and were
+replaced by Opus. (18) S106's two illustrative frames are committed as plain pictures in `docs/pictures/s106/`; still
+not pinned. (19) `floc.nearAz` and `floc.cloudAz` (NGC 4414's near-side dust bias and rich star-cloud sectors) are
+galactocentric azimuths tuned to the template's stand: they do not follow another camera. (20) #238 and #239 are two
+findings of S106, NOT YET ENTERED in the register: the numbers #238 and #239 are reserved for them; entering them needs
+a two-line change to tests/test_audit.py (the pinned counts 115 -> 117 and the carried row), which waits for the
+owner's word.
+
+**The independent review** (an Opus reviewer that built none of it, on c92ac41 — before the Milky Way's finishing pass
+and the lead's last defaults, which the lead read itself): **no blocker.** (i) The physical look against `main`'s OWN
+build (`git archive main frontend interface`, built and served beside the branch's): eight states byte-identical by
+sha256 (both templates at the default stand, a close stand, the stars mode, an exposure off the default) and seven swap
+steps frame-identical (landing, two template switches, physics only on and off, a reroll and Generate, a reroll with
+the mode switched while pending). (ii) **One behaviour of the physical look changed, and is accepted (ruling 13):**
+with the mode switched while a generation is pending, `main` drops the field to about 1.6 % of its light for the whole
+pending window (the same remount blanking as the look switch), and the branch keeps the previous galaxy drawn until the
+swap publishes — `useLoad.ts`'s carry; only the previous galaxy's values are carried, held answers are not published
+before the flush, the map is cleared at the swap's begin and end (rule D1 kept); no frame at rest differs. (iii) Live,
+under the illustrative look: no shader, program or React error; **the `glGetProgramiv` warnings ARE still there** (24
+lines through a mixed run of look and template switches: S105's defect 2, builder A had not reproduced it); the settled
+march's GPU time on NGC 4414 about 116 ms illustrative against about 35 physical, of which `main`'s illustrative look
+already cost about 97 to 108 — S106 adds 10 to 15 %, mostly `base`'s two texel reads per sample, the mesh and the puffs
+nothing measurable; orbiting NGC 4414 21.7 ms a frame against 16.7 physical. (iv) **Two sliders stall over the 0.3 s a
+rebuild is allowed:** `arms.skelpitch` 0.74 to 0.80 s (the skeleton, the arms' planes, the lanes' plane, the regions,
+the sparkle and the 28.8 MB map's upload in one chain) and NGC 4414's `floc.filSpacing` / `floc.netScale` 0.54 to 0.55
+s with the threads on; the lanes' width 0.27 s; a uniform-only slider 0.02 to 0.1 s. Not mended: a worker's work.
+(v) `arms.skelpitch` moves glow, grain, lanes and regions together (frames at two values). (vi) A circle round the
+Milky Way's bar on the reviewer's head: the finishing pass's `skeletonBand` and cubic ring means removed it (the lead's
+last frames show none). (vii) Fixed by the reviewer (8e51859): a 30 s timeout on the seven unit tests that take 1 to 2
+s alone and timed out at 5 s under three builders' load (`hstPsf`, `sphere`, `floc`); CI does not run vitest. (viii)
+Read and found sound: no reachable division by zero, fixed loop bounds, every hook anchor asserted to occur once, memo
+keys complete, layers disposed, every default inside its range, the `ill` values out of the physical look's storage and
+copy box, nothing under `model/`, the pinned fragment or `docs/pictures` touched before the close's own two pictures.
+
+**The frames beside the goals** (`READING_PICTURES.md` Part S106). **The Milky Way** is now the goal's picture in kind
+and in composition: a luminous lavender disc filling the frame to a soft fade on black; several continuous pale
+cyan-white arms of fine grain winding from the bar's ends to the edge; thin red-brown lanes on the arms' inner edges;
+small pink-red regions with white cores in uneven bunches on the arms; a crisp cream-yellow bar at the goal's angle
+with a fine lane, in a darker slate-lavender zone. Still unlike the goal: the arms are smooth glowing bands with points
+on them where the goal's are patchy cyan-teal light; the first arm runs nearly round the bar instead of leaving its
+ends clearly; the regions read salmon-pink rather than crimson and none is a large ragged complex; the lanes are single
+fine threads without the goal's branching; a stray pale-blue blob sits right of the bar and one lone region at a faded
+outer arm end; spurs hardly read as separate branches. **NGC 4414** at full frame is much like the photograph: an
+inclined disc at the goal's tilt, a cream nucleus in a golden inner disc, dark brown dust in many thin flocculent
+spiral arcs with a tangle between, a blue-grey outer disc with blue-white star-cloud patches at the rim (richest left
+and bottom), field stars on a navy-black sky. Still unlike the goal: close up the threads are more parallel and even
+than the photograph's tangled lanes of many widths; the light between the dust is soft heaps rather than crisp grainy
+star fields; the outer rim's dust reads grey-black rather than brown; the nucleus is a soft peach-cream blob rather
+than a sharp near-white point; the star clouds' points scatter a little past the rim. **Plainly: S105 made both frames
+the right kind of picture; S106 makes both read as their goal at a glance. What remains is texture and finish at close
+range, not composition.**
+
+The yardstick (`tools/goal_metrics.py`, re-measured on the two committed frames; goal / S105 / S106): the Milky Way's
+Δ(B−R) −0.354 / −0.477 / −0.259, A₂ 0.194 / 0.143 / 0.125, arm over inter-arm 1.83 / 2.11 / 2.14, dark fraction 0.0066
+/ 0.0423 / 0.0081, slope −1.99 / −1.58 / −2.38; NGC 4414 (the goal at the tool's geometry) Δ(B−R) −0.274 / −0.496 /
+−0.491, A₂ 0.068 / 0.045 / 0.069, arm over inter-arm 2.72 / 2.10 / 1.95, dark fraction 0.157 / 0.190 / 0.229, slope
+−2.09 / −1.89 / −1.83, the axis ratio 0.512 / 0.611 / 0.506. Nearer: the Milky Way's dark fraction (now near the goal's)
+and the step's size; NGC 4414's A₂ and axis ratio. **Worse than S105's:** the Milky Way's A₂ 0.125 against S105's
+0.143 (B5's frame read 0.145 before the lead's last framing change), with its A₃ 0.133 now above its A₂ where the goal
+is m = 2; NGC 4414's dark fraction 0.229, further from the goal's 0.157 than S105's 0.190 was (threads and mesh
+together; C4's mesh alone read 0.162). Not nearer either: both arm contrasts, and the Milky Way's slope (now as far
+past the goal's as S105's was short of it). A second reader (the documents' writer, who built none of it) adds what
+the lead's words do not: the Milky Way's outer arms read almost as concentric rings, more tightly wound than the
+goal's; its bar is a saturated yellow brighter than the goal's pale cream, its lane one straight line; its regions sit
+at near-regular intervals like beads on a string; NGC 4414's dust reads as short curled brush-strokes, more uniform
+than the photograph, with a grainy fringe outside the rim at the upper left (`READING_PICTURES.md` section 32).
+
+**Not mended, carried in `BRIEF.md` and `BUILD_VIII.md` section 6.** (a) #238's physical fix and #239, the owner's.
+(b) The `glGetProgramiv` warnings on a canvas remount: seen again by the reviewer, cause unknown. (c) Two rebuilds over
+0.3 s (`arms.skelpitch` 0.74 to 0.80 s, NGC 4414's network 0.55 s); a worker needs an asynchronous map contract. (d) The
+illustrative march on NGC 4414 costs about three times the physical one's GPU time, most of it S105's. (e) The
+cloud discs (tauC), which the core's thinning does not reach, read as dark blots at close face-on stands of NGC 4414.
+(f) The close-range texture of both pictures listed above.
+
+**What did not move.** No byte under `model/galaxy` (the hash 5a862a70d3760c426ca51c2cffa2b0c2); the pinned fragment
+`frontend/src/galaxy/fieldFragment.s78.glsl` unchanged; no committed frame, `frames.json` or thumbnail; the picture
+test's nine physical frames byte for byte at every builder's hand-back and on the merged head; `batch-r`,
+`batch-q-lanes`, `q-231` untouched and unmerged. The GitHub full suite on S106's head is dispatched at the close
+(`gh workflow run ci.yml --ref session-106`) and **not read yet**. The two frames of this close:
+`docs/pictures/s106/milky_way-illustrative.png` (sha256
+94e84028b3befd480ca085d685a93876384e520eeaa79443ea697b477f6b7bfb) and `docs/pictures/s106/ngc_4414-illustrative.png`
+(sha256 936c39779a4f75998f8ded983c41b457251b514325c279b146c1fd0b6e8baf65), the merged head's capture.

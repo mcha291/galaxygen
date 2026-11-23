@@ -117,7 +117,7 @@ describe("the knot's light is the point's (the closure)", () => {
     for (const [cx, cy] of centres) {
       for (const r of radii) expect(Math.abs(total(kernel, reach, cx, cy, r) - 1), `R ${r} at ${cx}, ${cy}`).toBeLessThan(1e-12);
     }
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 
   it("through the default sprite: exactly the point's own light at the same centre, R from 0.1 to 20 px", () => {
     // The sprite's deposit wobbles with where a point falls in its pixel (bilinear sampling at the pixel centres in its
@@ -139,7 +139,7 @@ describe("the knot's light is the point's (the closure)", () => {
       }
     }
     console.log(`S102 sphere closure through the default sprite, R 0.1-20 px: worst |knot / point - 1| ${worst.toExponential(2)}`);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 
 
   it("the two samplings agree where they hand over, and the profile's width follows R", () => {
@@ -168,7 +168,7 @@ describe("the knot's light is the point's (the closure)", () => {
     };
     const k0 = moment(0);
     for (const r of [10, 20]) expect(Math.abs((moment(r) - k0) / (0.4 * r * r) - 1)).toBeLessThan(0.02);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 
   it("chordCell is the 2 x 2 mean of the chord over the pixel", () => {
     expect(chordCell(0, 0, 1e6)).toBeCloseTo(1, 9);

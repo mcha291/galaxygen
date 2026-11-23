@@ -14,15 +14,36 @@
 // The sparkle (armsSparkle.ts, SparkleLayer.tsx): a layer of small bright blue-white points along the ridges, grouped
 // as OB associations, from a seed of the viewer's own, drawn through FluxPoints (so the dust dims them as it dims
 // the knots).
+//
+// S106 (the Milky Way's grain): the sparkle may be read off the ridge share itself, lifted so a weak ridge carries as
+// much grain as a strong one (sparklelift), kept off the dust lanes (sparkleavoid: the lanes' veil darkens the march,
+// not the points), given a sparse floor between the arms (sparklefloor) and drawn in two sprite sizes (sparklebig,
+// sparklebigsize). Every new control's ngc_4414 default leaves that template's drawing as S105 left it.
 
 import { createElement, lazy, Suspense } from "react";
-import { FLAG_RINGS, YOUNG_CAP, armContrast, armMap, armPlanes, armShare, gridOf, type ArmGrid, type ArmShape } from "./armsField";
+import { FLAG_RINGS, YOUNG_CAP, barFade, armContrast, armMap, armPlanes, armShare, gridOf, ringNormalise, type ArmGrid, type ArmShape } from "./armsField";
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
 import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
 import { barAngle } from "./lanesMap";
+import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonMemo, skeletonOn, skeletonPlanes } from "./armsSkeleton";
+import type { Skeleton } from "./skeleton";
 
 /** The /api/arrays names the arms read. */
-export const ARMS_ARRAYS = ["bar_axis_ratio", "bar_half_length", "gas_density_contrast", "pattern_density_contrast", "thin_disc_scale_length"] as const;
+export const ARMS_ARRAYS = [
+  "bar_axis_ratio",
+  "bar_half_length",
+  "gas_density_contrast",
+  "pattern_density_contrast",
+  "thin_disc_scale_length",
+  // S106 (the skeleton): the arm pieces, as the lanes ask them (one request for all features).
+  "arm_piece_chain",
+  "arm_piece_order",
+  "arm_piece_start_radius",
+  "arm_piece_start_azimuth",
+  "arm_piece_pitch",
+  "arm_piece_extent",
+  "arm_piece_join",
+] as const;
 
 /** The shaping values a map is built from (any change rebuilds it; the tints and the sparkle's gain do not). */
 export function shapeOf(p: IllParams, frame: IllFrame | null): ArmShape {
@@ -57,11 +78,21 @@ const mapOf = memoOn((frame: unknown, ...values: unknown[]) => {
   const [shapeJson, strength] = values as [string, number];
   const shape = JSON.parse(shapeJson) as ArmShape;
   const n = armContrast(pattern, gas, grid, shape);
-  return { grid, map: armMap(n, grid, shape, strength) };
+  const map = armMap(n, grid, shape, strength);
+  // S106: the ridge share itself, faded as the map's G is but without its smoothstep (index j * nR + i), so the
+  // sparkle can light a weak ridge as fully as a strong one (sparklelift).
+  const { share, sd } = armShare(n, grid, shape);
+  const raw = new Float32Array(grid.nR * grid.nPhi);
+  for (let i = 0; i < grid.nR; i++) {
+    const fa = Math.min(1, barFade((i + 0.5) * (grid.rHi / grid.nR), shape.start, shape.width) * strength);
+    if (sd[i] <= 0.02 || fa <= 0) continue;
+    for (let j = 0; j < grid.nPhi; j++) raw[j * grid.nR + i] = fa * share[i * grid.nPhi + j];
+  }
+  return { grid, map, raw };
 });
 
 /** The arm map for these parameters on this frame (the same object while neither changes). */
-export function armMapFor(p: IllParams, frame: IllFrame | null): { grid: ArmGrid; map: Float32Array } | null {
+export function armMapFor(p: IllParams, frame: IllFrame | null): { grid: ArmGrid; map: Float32Array; raw: Float32Array } | null {
   return mapOf(frame, JSON.stringify(shapeOf(p, frame)), p.strength ?? 1);
 }
 
@@ -86,7 +117,22 @@ const planesOf = memoOn((frame: unknown, shapeJson: unknown) => {
 const shareKey = (s: ArmShape): string =>
   JSON.stringify({ ...s, floor: 0, cap: 0, young: 0, width: 0 });
 
-const planesFor = (p: IllParams, frame: IllFrame | null) => planesOf(frame, shareKey(shapeOf(p, frame)));
+/** The arms' skeleton at the live parameters (S106): its planes in place of the contrast's under `skeleton`. */
+export const armsSkeleton = skeletonMemo();
+
+const skeletonPlanesOf = memoOn((sk: unknown, frame: unknown, wing: unknown) => {
+  const f = frame as IllFrame | null;
+  const s = sk as Skeleton | null;
+  const pattern = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? (f?.arrays.gas_density_contrast as ArrayLike<number> | undefined);
+  if (!f || !s || !pattern) return null;
+  const grid = gridOf(f.header, pattern.length);
+  const star = (f.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const contrast = star ? { n: ringNormalise(star, grid.nR, grid.nPhi), nR: grid.nR, nPhi: grid.nPhi } : null;
+  return { grid, ...skeletonPlanes(s, ILL_MAP.width, ILL_MAP.height, grid.rHi, wing as number, FLAG_RINGS / 16, contrast) };
+});
+
+const planesFor = (p: IllParams, frame: IllFrame | null) =>
+  skeletonOn(p) ? skeletonPlanesOf(armsSkeleton(frame, p), frame, p.skelwing ?? 0.15) : planesOf(frame, shareKey(shapeOf(p, frame)));
 
 /**
  * The bar's ellipse in the disc (S105, tuner M): its half-length and axis ratio as published, its angle read off
@@ -136,7 +182,7 @@ export const arms: IllFeature = {
   about: "The arms made to stand out of the disc: the model's published arm contrast sharpened into narrow bright ridges over a dimmer disc, tinted blue-white on the arms and lavender between them, with a sparkle of young stars along the ridges. Illustrative.",
   controls: [
     {
-      key: "strength", label: "arm strength", min: 0, max: 1.5, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1, ngc_4414: 0.5 },
+      key: "strength", label: "arm strength", min: 0, max: 1.5, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.4, ngc_4414: 0.5 },
       about: "How much of the arms' shaping is applied to the starlight: 0 the disc as the model lights it, 1 the full shaping below. Illustrative.",
     },
     {
@@ -152,7 +198,7 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.55, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.3, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
@@ -160,11 +206,11 @@ export const arms: IllFeature = {
       about: "Where a ridge's brightening saturates, in units of its ring's mean sharpened contrast: higher keeps a strong arm brighter than a weak one, lower lights every arm alike. Illustrative.",
     },
     {
-      key: "cap", label: "ridge cap", min: 1, max: 8, step: 0.1, unit: "×", default: 2.2, perTemplate: { milky_way: 1.5, ngc_4414: 2.5 },
+      key: "cap", label: "ridge cap", min: 1, max: 8, step: 0.1, unit: "×", default: 2.2, perTemplate: { milky_way: 2, ngc_4414: 2.5 },
       about: "The most a ridge's light is multiplied. Illustrative.",
     },
     {
-      key: "young", label: "young between arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { milky_way: 0.2, ngc_4414: 0.15 },
+      key: "young", label: "young between arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { milky_way: 0, ngc_4414: 0.15 },
       about: "The clustered young light between the arms as a share of a full ridge's (its ring mean kept): lower gathers it onto the ridges; 1 leaves it as the model places it. Illustrative.",
     },
     {
@@ -184,7 +230,7 @@ export const arms: IllFeature = {
       about: "The size of the breaks and fragments along the arms, kpc. Illustrative.",
     },
     {
-      key: "barfade", label: "bar fade", min: 0, max: 3, step: 0.05, unit: "× bar", default: 1, perTemplate: { milky_way: 0.7, ngc_4414: 1 },
+      key: "barfade", label: "bar fade", min: 0, max: 3, step: 0.05, unit: "× bar", default: 1, perTemplate: { milky_way: 0.3, ngc_4414: 1 },
       about: "The arms' shaping starts at this multiple of the bar's half-length (the published bar_half_length), so the bar and the bulge are never brightened. Illustrative.",
     },
     {
@@ -192,7 +238,7 @@ export const arms: IllFeature = {
       about: "The arms' shaping starts no nearer the centre than this, kpc (an unbarred disc's start). Illustrative.",
     },
     {
-      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 0.5, ngc_4414: 2 },
+      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 2.5, ngc_4414: 2 },
       about: "Over how many kpc the arms' shaping fades in from its start. Illustrative.",
     },
     {
@@ -200,80 +246,228 @@ export const arms: IllFeature = {
       about: "How far past the ring where the model's arms fade out their pattern is carried outward along the arms' own measured winding, kpc, so the arms reach the disc's edge; 0 the model's end. Illustrative.",
     },
     {
-      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.4, ngc_4414: 0.05 },
+      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.1, ngc_4414: 0.05 },
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.3, ngc_4414: -0.6 },
+      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.8, ngc_4414: -0.6 },
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
-      key: "sparkle", label: "sparkle points", min: 0, max: 80000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 25000, ngc_4414: 70000 },
+      key: "sparkle", label: "sparkle points", min: 0, max: 400000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 110000, ngc_4414: 70000 },
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
-      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 100000, ngc_4414: 10000 },
+      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 500000, ngc_4414: 10000 },
       about: "The faintest sparkle point's light, L☉ over the white point (on the field's scale, with the exposure). Illustrative.",
     },
     {
-      key: "sparklerange", label: "sparkle range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 15, perTemplate: { milky_way: 6, ngc_4414: 15 },
+      key: "sparklerange", label: "sparkle range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 15, perTemplate: { milky_way: 60, ngc_4414: 15 },
       about: "The brightest sparkle point over the faintest. Illustrative.",
     },
     {
-      key: "sparkleslope", label: "sparkle slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.4, perTemplate: { milky_way: 1.8, ngc_4414: 1.4 },
+      key: "sparkleslope", label: "sparkle slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.4, perTemplate: { milky_way: 1.6, ngc_4414: 1.4 },
       about: "The brightness law's index: lower has more bright points, higher more faint. Illustrative.",
     },
     {
-      key: "sparkleridge", label: "sparkle on ridge", min: 0.2, max: 6, step: 0.05, unit: "", default: 2, perTemplate: { milky_way: 2, ngc_4414: 1.2 },
+      key: "sparkleridge", label: "sparkle on ridge", min: 0.2, max: 6, step: 0.05, unit: "", default: 2, perTemplate: { milky_way: 1, ngc_4414: 1.2 },
       about: "The sparkle's density as this power of the arm share: higher keeps the points on the ridge and thins them faster toward the arm's edges. Illustrative.",
     },
     {
-      key: "clump", label: "sparkle grouped", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.6, ngc_4414: 0.5 },
+      key: "clump", label: "sparkle grouped", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.75, ngc_4414: 0.5 },
       about: "The share of sparkle points gathered into groups (OB associations), the rest single. Illustrative.",
     },
     {
-      key: "groupsize", label: "group size", min: 10, max: 600, step: 5, unit: "pc", default: 120, perTemplate: { milky_way: 120, ngc_4414: 80 },
+      key: "groupsize", label: "group size", min: 10, max: 600, step: 5, unit: "pc", default: 120, perTemplate: { milky_way: 200, ngc_4414: 80 },
       about: "A sparkle group's gaussian radius, pc. Illustrative.",
     },
     {
-      key: "members", label: "group members", min: 1, max: 60, step: 1, unit: "", default: 10, perTemplate: { milky_way: 6, ngc_4414: 6 },
+      key: "members", label: "group members", min: 1, max: 60, step: 1, unit: "", default: 10, perTemplate: { milky_way: 14, ngc_4414: 6 },
       about: "A sparkle group's mean number of points. Illustrative.",
     },
     {
-      key: "sparklesize", label: "sparkle size", min: 0.5, max: 4, step: 0.1, unit: "px", default: 1.5, perTemplate: { milky_way: 1.5, ngc_4414: 1.5 },
+      key: "sparklesize", label: "sparkle size", min: 0.5, max: 4, step: 0.1, unit: "px", default: 1.5, perTemplate: { milky_way: 1, ngc_4414: 1.5 },
       about: "A sparkle point's sprite, pixels. Illustrative.",
+    },
+    {
+      key: "sparklefloor", label: "sparkle between arms", min: 0, max: 1, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+      about: "The sparkle's density between the arms as a share of a full ridge's, so a sparse grain of stars lies over the whole disc; 0 every point on the arms (S106). Illustrative.",
+    },
+    {
+      key: "sparklelift", label: "sparkle on weak arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3, ngc_4414: 0 },
+      about: "Above 0, the sparkle's density read from the arms' ridge share over this level (saturating at 1), so a weak ridge carries as much grain as a strong one; 0 the S105 reading (the tone share). Illustrative (S106).",
+    },
+    {
+      key: "sparkleavoid", label: "sparkle off the lanes", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
+      about: "The share of the sparkle kept off the dust lanes (the points are not under the lanes' veil, so a lane on an arm's crest is lost in its grain otherwise); 0 none. Illustrative (S106).",
+    },
+    {
+      key: "sparklebig", label: "bright sparkle share", min: 0, max: 0.5, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.03, ngc_4414: 0 },
+      about: "The brightest share of the sparkle points drawn on the larger sprite below, so the grain has sizes; 0 every point on the small sprite (S106). Illustrative.",
+    },
+    {
+      key: "sparklebigsize", label: "bright sparkle size", min: 0.5, max: 8, step: 0.1, unit: "px", default: 3, perTemplate: { milky_way: 1.6, ngc_4414: 3 },
+      about: "The bright sparkle points' sprite, pixels (S106). Illustrative.",
+    },
+    {
+      key: "sparklebunch", label: "sparkle bunching", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
+      about: "The sparkle's density modulated along the arms by a fixed smooth noise of the wavelength below (the viewer's own): bunches of points with thinner stretches between; 0 an even grain. Illustrative (S106).",
+    },
+    {
+      key: "sparklebunchsize", label: "bunch wavelength", min: 50, max: 3000, step: 10, unit: "pc", default: 400, perTemplate: { milky_way: 300 },
+      about: "The bunching noise's wavelength, pc. Illustrative (S106).",
+    },
+    {
+      key: "sparklebunchbright", label: "bunch brightness", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2 },
+      about: "The points in a bunch brighter (up to 1 + this at the noise's peak), those between dimmer; 0 none. Illustrative (S106).",
     },
     {
       key: "sparklefall", label: "sparkle falloff", min: 0, max: 10, step: 0.1, unit: "× h", default: 2, perTemplate: { milky_way: 2, ngc_4414: 3 },
       about: "The sparkle's brightness falls outward as exp(-R / (this times the published thin-disc scale length)) from the arms' start, as the disc's own light does; 0 no falloff. Illustrative.",
     },
     {
-      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 12.5, ngc_4414: 10 },
+      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 19, ngc_4414: 10 },
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
-      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.7, ngc_4414: 0.15 },
+      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.05, ngc_4414: 0.15 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.2, ngc_4414: 1 },
+      key: "skeleton", label: "arms on the skeleton", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
+      about: "1: the arms' glow, grain and lanes drawn on one skeleton of continuous ridges (log spirals from the bar's ends at the arm pieces' pitch, carried to the disc's edge, with lesser arms and spurs of the viewer's own); 0: the model's contrast ridges as S105 drew them. Illustrative (S106).",
+    },
+    {
+      key: "skellesser", label: "lesser arms", min: 0, max: 4, step: 1, unit: "", default: 2, perTemplate: { milky_way: 3 },
+      about: "How many lesser arms the skeleton draws between the two major arms (each nudged to the arm pieces' strongest phase near midway). Illustrative (S106).",
+    },
+    {
+      key: "skelspurs", label: "spurs", min: 0, max: 12, step: 1, unit: "", default: 4, perTemplate: { milky_way: 7 },
+      about: "How many short spurs leave the skeleton's arms on their outer sides, more open than the arm. Illustrative (S106).",
+    },
+    {
+      key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.0},
+      about: "A multiplier on the arm pieces' pitch (their length-weighted median) for the skeleton's winding: below 1 more turns before the edge. Illustrative (S106).",
+    },
+    {
+      key: "skeldrift", label: "pitch drift", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15,
+      about: "The skeleton's pitch drifts slowly along each arm by about this share (a seeded noise of the viewer's own). Illustrative (S106).",
+    },
+    {
+      key: "skelkink", label: "kinks", min: 0, max: 1, step: 0.01, unit: "", default: 0.25,
+      about: "Two or three short changes of pitch along each arm, this share of the pitch: slight kinks. Illustrative (S106).",
+    },
+    {
+      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.6},
+      about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
+    },
+    {
+      key: "skelouter", label: "arms' reach", min: 4, max: 30, step: 0.5, unit: "kpc", default: 18, perTemplate: { milky_way: 19},
+      about: "Where the skeleton's major arms end, kpc (the lesser arms a little inside): the winding's extent. Illustrative (S106).",
+    },
+    {
+      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.25 },
+      about: "The outer share of each arm's length (in ln R) over which it fades and breaks into flecks. Illustrative (S106).",
+    },
+    {
+      key: "skelstart", label: "arms' start", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1,
+      about: "Where the major arms leave the bar, times its published half-length (kpc without a bar). Illustrative (S106).",
+    },
+    {
+      key: "skellesserstart", label: "lesser start", min: 1, max: 3, step: 0.01, unit: "×", default: 1.25,
+      about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
+    },
+    {
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75,
+      about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
+    },
+    {
+      key: "skelwing", label: "glow wing", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.35 },
+      about: "A faint wing three ridge widths wide under each ridge's glow, this share of it. Illustrative (S106).",
+    },
+    {
+      key: "skeltail", label: "grain tail", min: 0, max: 0.5, step: 0.005, unit: "", default: 0.05,
+      about: "The skeleton's grain: a sparse tail of points two ridge widths to either side, this share of the crest's density. Illustrative (S106).",
+    },
+    {
+      key: "skelgrainfade", label: "grain fade", min: 0, max: 4, step: 0.05, unit: "", default: 1.5,
+      about: "The skeleton's grain thins with the ridge's strength to this power (so it breaks up at the arms' outer ends). Illustrative (S106).",
+    },
+    {
+      key: "skelflat", label: "model arms out", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "On the skeleton, the model's own arm light (the published star contrast over its ring mean) divided out by this power, so the skeleton's arms are the only arms drawn; 0 the model's arms kept under them. Illustrative (S106).",
+    },
+    {
+      key: "skelyoungin", label: "young inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0 },
+      about: "On the skeleton, the model's clustered young light inside the arms' start (where the arms' shaping has not yet faded in: round the bar) kept by this share; 0 none - no blue smudges inside the first arm. Illustrative (S106, B4).",
+    },
+    {
+      key: "skelyoungcut", label: "young on the crest", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.2 },
+      about: "On the skeleton, the model's clustered young light kept only where the arm band is above this level (smoothly over the next 0.4): the blue clumps on the crests, none in the haze between; 0 as the arms' shaping alone gives it. Illustrative (S106, B4).",
+    },
+    {
+      key: "skellavin", label: "lavender inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "On the skeleton, the inter-arm tint carried inside the arms' start (round the bar) by this share, so the disc about the bar is lavender as between the arms, not the model's grey; 0 none. Colour for appearance (S106, B4).",
+    },
+    {
+      key: "skelseed", label: "skeleton seed", min: 0, max: 999, step: 1, unit: "", default: 11, perTemplate: { milky_way: 23 },
+      about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
+    },
+    {
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 3.5, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
-      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.6, ngc_4414: 0 },
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.5, ngc_4414: 0 },
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.8, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.05, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
-      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.7, ngc_4414: 0 },
+      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
       about: "The inner disc's starlight about the bar (inside 1.6 of its scaled half-length, outside its ellipse) dimmed by this share, so the bar stands on a darker ground; 0 none. Illustrative (S105).",
     },
     {
-      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.5, ngc_4414: 0 },
+      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.4, ngc_4414: 0 },
       about: "The same ground about the bar tinted toward a slate blue by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
+    },
+    {
+      key: "barsharp", label: "bar edge", min: 1, max: 8, step: 0.1, unit: "", default: 2, perTemplate: { milky_way: 4 },
+      about: "The bar light's profile across its ellipse as exp(-1.6 e^this): 2 the soft gaussian; higher a flatter body with a sharper edge. Illustrative (S106).",
+    },
+    {
+      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.65 },
+      about: "The bar light's ellipse's axis ratio as a multiple of the published bar_axis_ratio: below 1 a slimmer drawn bar. Illustrative (S106).",
+    },
+    {
+      key: "barcore", label: "bar core", min: 0, max: 6, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 3 },
+      about: "A brighter core at the bar's centre: the light there multiplied by 1 + this, falling as a gaussian of the radius below; 0 none. Illustrative (S106).",
+    },
+    {
+      key: "barcoresize", label: "bar core size", min: 0.03, max: 0.6, step: 0.01, unit: "× bar", default: 0.15, perTemplate: { milky_way: 0.1 },
+      about: "The bar core's gaussian radius, times the drawn bar's half-length. Illustrative (S106).",
+    },
+    {
+      key: "skelhold", label: "haze inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "On the skeleton, the disc inside the first arm dimmed as the disc between the arms is (the ring mean the light is kept by held inward from where the arms begin) by this share; 0 undimmed there - a pale disc round the bar ending in a circle where the arms start. Illustrative (S106).",
+    },
+    {
+      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.35 },
+      about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
+    },
+    {
+      key: "skelcoreblue", label: "inner slate", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.1 },
+      about: "The same inner zone (round the bar, off its ellipse, over the same ramp) tinted toward a slate blue by this share; 0 none. Colour for appearance (S106).",
+    },
+    {
+      key: "skelcorein", label: "inner dark to", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, perTemplate: { milky_way: 3 },
+      about: "The inner disc's darkening (above) is full inside this radius, kpc. Illustrative (S106).",
+    },
+    {
+      key: "skelcoreout", label: "inner dark ends", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 6, perTemplate: { milky_way: 7.5 },
+      about: "The inner disc's darkening has faded to nothing at this radius, kpc (a smooth ramp from the radius above). Illustrative (S106).",
     },
   ],
   arrays: ARMS_ARRAYS,
@@ -310,34 +504,102 @@ export const arms: IllFeature = {
   uniform vec4 illArmsBar;
   uniform vec3 illArmsBarTint;
   uniform vec3 illArmsBarGround;
-  vec3 illArmsBarLight(vec2 rp) {
-    if (illArmsBarOn < 0.5) return vec3(1.0);
+  // S106 (B5): the profile's power (2 the S105 gaussian; higher a flatter top and a sharper edge) and a core at the
+  // centre (x its gain, y its radius in the ellipse's units).
+  uniform float illArmsBarSharp;
+  uniform vec2 illArmsBarCore;
+  // The ellipse radius e at rp, in the bar's (scaled) units.
+  float illArmsBarE(vec2 rp) {
     float x = rp.x * cos(rp.y);
     float y = rp.x * sin(rp.y);
     float X = x * cos(illArmsBar.z) + y * sin(illArmsBar.z);
     float Y = y * cos(illArmsBar.z) - x * sin(illArmsBar.z);
-    float e = length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
-    float w = exp(-1.6 * e * e);
+    return length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
+  }
+  float illArmsBarProfile(float e) { return illArmsBarSharp == 2.0 ? exp(-1.6 * e * e) : exp(-1.6 * pow(e, illArmsBarSharp)); }
+  // The bar ellipse's weight at rp (1 on the bar's axis, 0 far off it); 0 without a bar.
+  float illArmsBarW(vec2 rp) {
+    if (illArmsBar.x <= 0.0) return 0.0;
+    return illArmsBarProfile(illArmsBarE(rp));
+  }
+  vec3 illArmsBarLight(vec2 rp) {
+    if (illArmsBarOn < 0.5) return vec3(1.0);
+    float e = illArmsBarE(rp);
+    float w = illArmsBarProfile(e);
     float d = (1.0 - w) * (1.0 - smoothstep(illArmsBar.x, 1.6 * illArmsBar.x, rp.x));
-    return mix(vec3(1.0), illArmsBar.w * illArmsBarTint, w) * mix(vec3(1.0), illArmsBarGround, d);
+    vec3 lit = mix(vec3(1.0), illArmsBar.w * illArmsBarTint, w) * mix(vec3(1.0), illArmsBarGround, d);
+    if (illArmsBarCore.x > 0.0) {
+      float c = rp.x / (illArmsBar.x * illArmsBarCore.y);
+      lit *= 1.0 + illArmsBarCore.x * exp(-c * c);
+    }
+    return lit;
+  }
+  // S106 (B3): on the skeleton (illArmsSkel), A carries the model's own star contrast and the ring means come from
+  // illArmsSkelMean; the model's arm light is divided out by its power illArmsFlat, faded in as the shaping is.
+  uniform float illArmsSkel;
+  uniform float illArmsFlat;
+  uniform float illArmsYoungIn;
+  uniform float illArmsYoungCut;
+  uniform float illArmsLavIn;
+  uniform vec3 illArmsCore;
+  uniform float illArmsCoreOn;
+  uniform vec3 illArmsCoreTint;
+  uniform float illArmsSkelMean[${SKEL_MEAN_SAMPLES}];
+  // (S106 B5: a Catmull-Rom cubic through the samples - a linear read kinks at each, a thin arc in the haze.)
+  float illArmsSkelMeanAt(float r) {
+    float x = clamp(r / rHi * ${SKEL_MEAN_SAMPLES.toFixed(1)} - 0.5, 0.0, ${(SKEL_MEAN_SAMPLES - 1).toFixed(1)});
+    int i = int(floor(x));
+    float t = x - float(i);
+    float p0 = illArmsSkelMean[max(i - 1, 0)];
+    float p1 = illArmsSkelMean[i];
+    float p2 = illArmsSkelMean[min(i + 1, ${SKEL_MEAN_SAMPLES - 1})];
+    float p3 = illArmsSkelMean[min(i + 2, ${SKEL_MEAN_SAMPLES - 1})];
+    float v = 0.5 * (2.0 * p1 + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t + (3.0 * p1 - p0 - 3.0 * p2 + p3) * t * t * t);
+    return max(v, 0.0);
+  }
+  float illArmsMeanOf(vec4 w, float r) { return illArmsSkel > 0.5 ? illArmsSkelMeanAt(r) : w.a * illArmsMeanMax; }
+  float illArmsFlatOf(vec4 w, float fa) {
+    if (illArmsSkel < 0.5 || illArmsFlat <= 0.0) return 1.0;
+    return mix(1.0, pow(max(w.a * ${SKEL_CONTRAST_MAX.toFixed(2)}, 0.25), -illArmsFlat), fa);
   }
   vec3 illArmsShaped(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return vec3(1.0);
     vec4 w = illMap(rp);
     float s = w.b * w.b;
-    float m = w.a * illArmsMeanMax;
+    float m = illArmsMeanOf(w, rp.x);
     float f = illArmsFade(rp.x);
     float fa = min(1.0, f);
-    float light = max(0.0, 1.0 + (illArmsRing(s, m, illArmsFloor, illArmsCap) - 1.0) * f);
+    float light = max(0.0, 1.0 + (illArmsRing(s, m, illArmsFloor, illArmsCap) - 1.0) * f) * illArmsFlatOf(w, fa);
+    // S106 (B5): on the skeleton, the inner disc's light taken to illArmsCore.x of itself, the full share inside
+    // illArmsCore.y kpc and none from illArmsCore.z out (a smooth ramp: no circle), the bar's ellipse kept - so the
+    // ground about the bar is the disc's darkest, not a pale disc.
+    // illArmsCoreTint: the same zone tinted toward a slate blue.
+    float coreW = 0.0;
+    if (illArmsSkel > 0.5 && (illArmsCore.x != 1.0 || illArmsCoreOn > 0.5)) {
+      coreW = (1.0 - illArmsBarW(rp)) * (1.0 - smoothstep(illArmsCore.y, illArmsCore.z, rp.x));
+      light *= mix(1.0, illArmsCore.x, coreW);
+    }
     float g = fa * smoothstep(0.25, 0.9, s) * illArmsFlag(rp.x);
-    vec3 tone = mix(mix(vec3(1.0), illArmsLavender, fa), illArmsBlue, g);
+    // Inside the arms' start the tint is carried off the bar itself (its cream is the bar light's).
+    float lav = illArmsSkel > 0.5 ? max(fa, illArmsLavIn * (1.0 - illArmsBarW(rp))) : fa;
+    vec3 tone = mix(mix(vec3(1.0), illArmsLavender, lav), illArmsBlue, g);
+    if (illArmsCoreOn > 0.5) tone *= mix(vec3(1.0), illArmsCoreTint, coreW);
     return light * tone;
   }
   vec3 illArmsLight(vec2 rp) { return illArmsShaped(rp) * illArmsBarLight(rp); }
   float illArmsYoung(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return 1.0;
     vec4 w = illMap(rp);
-    return max(0.0, 1.0 + (illArmsRing(w.b * w.b, w.a * illArmsMeanMax, illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * illArmsFade(rp.x));
+    float f = illArmsFade(rp.x);
+    if (illArmsSkel > 0.5 && illArmsYoungCut > 0.0) {
+      float s = w.b * w.b;
+      if (s < illArmsYoungCut) return 0.0;
+      float ramp = smoothstep(illArmsYoungCut, min(1.0, illArmsYoungCut + 0.4), s);
+      float inside = mix(illArmsYoungIn, 1.0, illArmsStrength > 0.0 ? min(1.0, f / illArmsStrength) : 1.0);
+      return ramp * inside * max(0.0, 1.0 + (illArmsRing(s, illArmsMeanOf(w, rp.x), illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * f) * illArmsFlatOf(w, min(1.0, f));
+    }
+    float inside = illArmsSkel > 0.5 ? mix(illArmsYoungIn, 1.0, illArmsStrength > 0.0 ? min(1.0, f / illArmsStrength) : 1.0) : 1.0;
+    return inside * max(0.0, 1.0 + (illArmsRing(w.b * w.b, illArmsMeanOf(w, rp.x), illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * f) * illArmsFlatOf(w, min(1.0, f));
   }
 `,
   hooks: { youngGain: "illArmsYoung", light: "illArmsLight" },
@@ -364,11 +626,36 @@ export const arms: IllFeature = {
       illArmsMeanMax: planes?.meanMax ?? 0,
       illArmsRings: planes?.grid.nR ?? 1,
       illArmsFlags: planes?.flags ?? new Array<number>(FLAG_RINGS / 16).fill(0),
+      illArmsSkel: planes && "ringMean" in planes ? 1 : 0,
+      illArmsFlat: p.skelflat ?? 0,
+      illArmsYoungIn: p.skelyoungin ?? 1,
+      illArmsYoungCut: p.skelyoungcut ?? 0,
+      illArmsLavIn: p.skellavin ?? 0,
+      illArmsCoreOn: (p.skelcoreblue ?? 0) !== 0 ? 1 : 0,
+      illArmsCoreTint: tint(BAR_GROUND, p.skelcoreblue ?? 0),
+      illArmsCore: [p.skelcore ?? 1, p.skelcorein ?? 2, Math.max((p.skelcorein ?? 2) + 0.1, p.skelcoreout ?? 6)] as [number, number, number],
+      illArmsSkelMean: planes && "ringMean" in planes ? heldMean(planes.ringMean as number[], p.skelhold ?? 0) : SKEL_MEAN_ZERO,
       ...barUniforms(p, context.frame),
     };
   },
   layer: ArmsLayer,
 };
+
+const SKEL_MEAN_ZERO: number[] = new Array<number>(SKEL_MEAN_SAMPLES).fill(0);
+
+/**
+ * The skeleton's ring means with the inner disc held (S106, B5): inside the first sample to reach half the largest
+ * mean, each sample raised toward that sample's value by `hold` (0 the means as built). Inside the skeleton's start
+ * the band is empty and its ring mean nothing, so the disc between the arms was dimmed only where arms are - a pale
+ * disc round the bar ending in a circle where the arms begin; held, the haze inside the first arm is dimmed as the
+ * haze between the arms is.
+ */
+export function heldMean(samples: readonly number[], hold: number): number[] {
+  if (!(hold > 0) || samples.length === 0) return [...samples];
+  const top = Math.max(...samples);
+  const k = samples.findIndex((v) => v >= 0.5 * top);
+  return samples.map((v, i) => (i < k && top > 0 ? v + (Math.max(v, samples[k]) - v) * Math.min(1, hold) : v));
+}
 
 /** The bar light's uniforms: off (the light untouched) at a light of 1, no cream and no dimming, or without a bar. */
 export function barUniforms(p: IllParams, frame: IllFrame | null) {
@@ -381,7 +668,9 @@ export function barUniforms(p: IllParams, frame: IllFrame | null) {
   const size = p.barsize ?? 1;
   return {
     illArmsBarOn: on ? 1 : 0,
-    illArmsBar: [(bar?.halfLength ?? 1) * size, bar?.axisRatio ?? 1, bar?.angle ?? 0, glow] as [number, number, number, number],
+    illArmsBar: [(bar?.halfLength ?? 1) * size, (bar?.axisRatio ?? 1) * (p.barthin ?? 1), bar?.angle ?? 0, glow] as [number, number, number, number],
+    illArmsBarSharp: p.barsharp ?? 2,
+    illArmsBarCore: [p.barcore ?? 0, p.barcoresize ?? 0.15] as [number, number],
     illArmsBarTint: tint(BAR_CREAM, warm),
     illArmsBarGround: tint(BAR_GROUND, cool).map((v) => v * (1 - dim)) as [number, number, number],
   };

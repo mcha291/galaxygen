@@ -13,13 +13,21 @@
 //           faint grey-blue mark however deep - and the goal pictures' lanes are dark red-brown lines drawn over the
 //           arms; the veil's law is the grains' own reddening, steepened by the redness slider.
 // The depth, the ink, the redness, the edge and the mottle are uniforms: no rebuild.
+//
+// S106 (the lead's ruling 12, display-only drawing of the viewer's own): with `trace` on, the arms' lanes are drawn
+// along the crests of the arms as this look draws them (armsField.ts armPeaks, traced ring to ring by lanesMap.ts
+// traceRidges at the arms' template defaults) in place of the model's arm pieces. Off on both templates by default.
 
-import { ILL_MAP, ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
-import { LANE_ARRAYS, LANE_MAP, type LaneShape, SHAPE_KEYS, buildLaneMap, geometryOf } from "./lanesMap";
+import { ILL_MAP, ILL_MAP_CHANNELS, type IllControl, type IllContext, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
+import { LANE_ARRAYS, LANE_MAP, type LaneShape, type Ridge, SHAPE_KEYS, buildLaneMap, geometryOf, ridgeOfPoints, ridgeStep, traceRidges } from "./lanesMap";
+import { skeletonParamsOf } from "./armsSkeleton";
+import { type SkeletonParams, buildSkeleton, ridgeLine } from "./skeleton";
+import { arms, shapeOf as armShapeOf } from "./arms";
+import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.85, ngc_4414: 0.5 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.6, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
@@ -27,7 +35,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The share of the depth drawn as a veil over all the light on its line of sight (a lane inked over the picture); the rest is dust in the dust's own thin layer, which dims and reddens only the stars behind it. Illustrative.",
   },
   {
-    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 1.6, ngc_4414: 1.0 },
+    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 3.5, ngc_4414: 1.0 },
     about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance.",
   },
   {
@@ -35,35 +43,35 @@ const CONTROLS: readonly IllControl[] = [
     about: "How crisp a lane's edge is: 0 a soft Gaussian stroke that fades out, 1 an inked stroke with a flat dark core and a sharp edge (its faint margins gone). Illustrative.",
   },
   {
-    key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.6, ngc_4414: 0.6 },
+    key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.9, ngc_4414: 0.6 },
     about: "How much a lane's depth swells and thins from place to place across it: knots, holes and a ragged edge; 0 a smooth stroke. Illustrative.",
   },
   { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 150, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
   {
-    key: "offset", label: "lane offset", min: -400, max: 800, step: 5, unit: "pc", default: 80, perTemplate: { milky_way: 80, ngc_4414: 60 },
+    key: "offset", label: "lane offset", min: -400, max: 800, step: 5, unit: "pc", default: 80, perTemplate: { milky_way: 160, ngc_4414: 60 },
     about: "How far to the inner (concave) side of an arm's ridge the lane's centre line lies, parsecs; below 0 the outer side. Illustrative.",
   },
   {
-    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 110, ngc_4414: 100 },
+    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 45, ngc_4414: 100 },
     about: "One strand's full width at half depth, parsecs (it swells and thins along its length by the clumping). Illustrative.",
   },
   { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },
   {
-    key: "spread", label: "braid spread", min: 0, max: 1200, step: 10, unit: "pc", default: 260, perTemplate: { milky_way: 260, ngc_4414: 700 },
+    key: "spread", label: "braid spread", min: 0, max: 1200, step: 10, unit: "pc", default: 260, perTemplate: { milky_way: 250, ngc_4414: 700 },
     about: "The width of the band the strands wander and cross in, parsecs. Illustrative.",
   },
   { key: "braidLength", label: "braid length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 2.2, about: "The length along the arm over which the strands cross one another, kpc. Illustrative." },
   {
-    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 130, ngc_4414: 160 },
+    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 160, ngc_4414: 160 },
     about: "How far the whole lane meanders about its line, parsecs (each strand a third as far again on its own). Illustrative.",
   },
   { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.6, about: "The meander's length along the arm, kpc. Illustrative." },
   {
-    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.35, ngc_4414: 0.25 },
+    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.25, ngc_4414: 0.25 },
     about: "The share of a lane's length that is broken away, so it reads as pieces: 0 unbroken. Illustrative.",
   },
-  { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 0.9, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
-  { key: "clump", label: "clumping", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, about: "How much a strand swells into dark knots and thins to threads along its length. Illustrative." },
+  { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 0.9, perTemplate: { milky_way: 1.8 }, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
+  { key: "clump", label: "clumping", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.4 }, about: "How much a strand swells into dark knots and thins to threads along its length. Illustrative." },
   {
     key: "envelope", label: "envelope", min: 0, max: 1, step: 0.01, unit: "×", default: 0.05, perTemplate: { milky_way: 0.05, ngc_4414: 0.12 },
     about: "A faint band as wide as the braid under the strands, this share of a strand's depth: the lane's translucent margin. Illustrative.",
@@ -74,29 +82,41 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "taper", label: "end taper", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1.5, about: "A lane fades over this length at an arm's free ends, kpc (an end that joins another arm does not fade). Illustrative." },
   {
-    key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.6, ngc_4414: 0.5 },
+    key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 2.5, ngc_4414: 0.5 },
     about: "The arms' lanes fade to nothing inside this radius, kpc. Illustrative.",
   },
   {
-    key: "outerRadius", label: "outer radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 14, perTemplate: { milky_way: 12, ngc_4414: 9 },
+    key: "outerRadius", label: "outer radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 14, perTemplate: { milky_way: 19, ngc_4414: 9 },
     about: "The lanes fade from 0.55 of this radius to nothing at it, kpc: no dark line where the disc's own light has faded. Illustrative.",
   },
   {
-    key: "featherSpacing", label: "feather spacing", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 0.7, ngc_4414: 0.45 },
+    key: "featherSpacing", label: "feather spacing", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 0.35, ngc_4414: 0.45 },
     about: "The distance along a lane between its feathers - short branches leaving it, most toward the arm's outer side - kpc; 0 none. Illustrative.",
   },
-  { key: "featherLength", label: "feather length", min: 0, max: 4, step: 0.05, unit: "kpc", default: 0.8, perTemplate: { milky_way: 0.8, ngc_4414: 1.6 }, about: "A feather's length, kpc (each between half and one and a half of it). Illustrative." },
+  { key: "featherLength", label: "feather length", min: 0, max: 4, step: 0.05, unit: "kpc", default: 0.8, perTemplate: { milky_way: 0.4, ngc_4414: 1.6 }, about: "A feather's length, kpc (each between half and one and a half of it). Illustrative." },
   { key: "featherPitch", label: "feather pitch", min: 0, max: 85, step: 1, unit: "°", default: 40, about: "How much more open than the arm a feather leaves its lane, degrees (each between half and one and a half of it); it closes back along its length. Illustrative." },
   { key: "featherDepth", label: "feather depth", min: 0, max: 2, step: 0.01, unit: "×", default: 0.8, about: "A feather's depth at its root, as a share of a strand's. Illustrative." },
-  { key: "fray", label: "fray", min: 0, max: 2, step: 0.01, unit: "×", default: 1, about: "Short thin wisps leaving the strands at a low angle, their depth as a share of a strand's: a ragged edge; 0 none. Illustrative." },
+  { key: "fray", label: "fray", min: 0, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.8 }, about: "Short thin wisps leaving the strands at a low angle, their depth as a share of a strand's: a ragged edge; 0 none. Illustrative." },
   {
-    key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1,
+    key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.5 },
     about: "The depth of the two lanes along the bar's leading edges, as a share of the lane depth; 0 none. Drawn only where the galaxy has a bar. Illustrative.",
   },
-  { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
-  { key: "barWidth", label: "bar lane width", min: 20, max: 400, step: 5, unit: "pc", default: 60, about: "A bar lane's full width at half depth, parsecs. Illustrative." },
-  { key: "barCurve", label: "bar lane curve", min: 1, max: 8, step: 0.1, unit: "", default: 2.5, about: "How late a bar lane turns in to the bar's end: 1 a straight line from the end to the centre's side, higher a lane along the axis that turns at the end. Illustrative." },
+  { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.15 }, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
+  { key: "barWidth", label: "bar lane width", min: 20, max: 400, step: 5, unit: "pc", default: 60, perTemplate: { milky_way: 30 }, about: "A bar lane's full width at half depth, parsecs. Illustrative." },
+  { key: "barCurve", label: "bar lane curve", min: 1, max: 8, step: 0.1, unit: "", default: 2.5, perTemplate: { milky_way: 2 }, about: "How late a bar lane turns in to the bar's end: 1 a straight line from the end to the centre's side, higher a lane along the axis that turns at the end. Illustrative." },
   { key: "barReach", label: "bar lane reach", min: 0.3, max: 1.3, step: 0.01, unit: "", default: 1, about: "Where a bar lane begins, as a share of the bar's half-length (1 the bar's end). Illustrative." },
+  {
+    key: "trace", label: "lanes on the drawn arms", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+    about: "1: the arms' lanes drawn along the crests of the arms as this look draws them (their ridge lines, traced ring to ring at the arms' template defaults), so a lane lies on its arm's inner edge; 0: along the model's arm pieces. Illustrative (S106).",
+  },
+  {
+    key: "skeleton", label: "lanes on the skeleton", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
+    about: "1: the arms' lanes drawn along the arm skeleton's ridges (arms.ts, at the arms' template defaults), on each ridge's inner edge by the offset, fading with the ridge's strength; 0: as the switch above says. Illustrative (S106).",
+  },
+  {
+    key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 1 },
+    about: "The bar lanes' curl round the nucleus, a share of its 220 degrees: 1 S107's curl, 0 two straight lanes along the bar's leading edges. Illustrative (S106).",
+  },
   { key: "seed", label: "lane seed", min: 0, max: 999, step: 1, unit: "", default: 7, about: "The seed of the lanes' wander, breaks and feathers: another number, another drawing of the same lanes. Illustrative." },
 ];
 
@@ -117,15 +137,69 @@ const now = () => (typeof performance !== "undefined" ? performance.now() : 0);
  * LANE_MAP) - built once per (frame, shaping values); null (no lane: the channel reads zero) until the arrays have
  * arrived and for a galaxy with nothing to draw.
  */
-const mapPlane = memoOn((frame: unknown, ...values: unknown[]): Uint8Array | null => {
+const mapPlane = memoOn((frame: unknown, template: unknown, skelJson: unknown, ...values: unknown[]): Uint8Array | null => {
   if (!frame) return null;
   const shape = Object.fromEntries(SHAPE_KEYS.map((k, i) => [k, values[i] as number])) as unknown as LaneShape;
   const started = now();
-  const map = buildLaneMap(geometryOf(frame as IllFrame), shape, ILL_MAP.width, ILL_MAP.height);
+  const g = geometryOf(frame as IllFrame);
+  if (shape.trace >= 0.5) g.traced = tracedFor(frame as IllFrame, (template as string | null) ?? null, ridgeStep(shape));
+  if ((shape.skeleton ?? 0) >= 0.5 && typeof skelJson === "string") g.skeleton = skeletonRidges(frame as IllFrame, JSON.parse(skelJson) as SkeletonParams, ridgeStep(shape));
+  const map = buildLaneMap(g, shape, ILL_MAP.width, ILL_MAP.height);
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
   return map.drawn ? map.data : null;
 });
+
+/**
+ * The arms' crests traced into ridges (S106; lanesMap.ts traceRidges) from the arms' published contrast shaped at the
+ * arms' own defaults on this template (their live sliders are not read: a lane's line moves only with the template).
+ */
+function tracedFor(frame: IllFrame, template: string | null, step: number) {
+  const pattern = (frame.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const gas = (frame.arrays.gas_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const any = pattern ?? gas;
+  if (!any) return null;
+  const p = Object.fromEntries(arms.controls.map((c) => [c.key, (template ? c.perTemplate?.[template] : undefined) ?? c.default]));
+  const grid = gridOf(frame.header, any.length);
+  const shape = armShapeOf(p, frame);
+  const { peaks, k } = armPeaks(armContrast(pattern, gas, grid, shape), grid, shape);
+  return traceRidges(peaks, grid, k, step);
+}
+
+/** The arms' skeleton as the lanes read it (S106, B3; B4: at the arms' live parameters). */
+const lanesSkeleton = memoOn((frame: unknown, json: unknown) => {
+  const g = geometryOf(frame as IllFrame);
+  if (g.pieces.length === 0 && !g.bar) return null;
+  return buildSkeleton({ pieces: g.pieces, bar: g.bar }, JSON.parse(json as string) as SkeletonParams);
+});
+
+/** The arms' parameters at their defaults on a template (where a context carries no paramsOf: a hand-built one). */
+export const armsDefaultsOn = (template: string | null): IllParams =>
+  Object.fromEntries(arms.controls.map((c) => [c.key, (template ? c.perTemplate?.[template] : undefined) ?? c.default]));
+
+/**
+ * The arms' skeleton parameters the lanes follow (S106, B4): the arms' CURRENT sliders (context.paramsOf), so a skel*
+ * slider moves the lanes with the glow and the grain; as one JSON string, a key of the lanes' plane.
+ */
+export const lanesSkeletonKey = (context: IllContext): string => {
+  const p = context.paramsOf?.("arms") ?? armsDefaultsOn(context.template);
+  return JSON.stringify(skeletonParamsOf(p));
+};
+
+/**
+ * The arm skeleton's ridges as lanes' ridges (S106, B3): each arm's crest sampled every `step` kpc (skeleton.ts
+ * ridgeLine), its strength the depth's weight; `params` the skeleton's (armsSkeleton.ts skeletonParamsOf).
+ */
+export function skeletonRidges(frame: IllFrame, params: SkeletonParams, step: number): Ridge[] | null {
+  const sk = lanesSkeleton(frame, JSON.stringify(params));
+  if (!sk) return null;
+  return sk.arms.map((a, k) => {
+    const l = ridgeLine(a, step);
+    const r = ridgeOfPoints(2000 + k, l.x, l.y, 0.3, false, false);
+    r.weight = Float32Array.from(l.strength);
+    return r;
+  });
+}
 
 const MAX = LANE_MAP.shapeMax.toFixed(1);
 
@@ -191,7 +265,8 @@ export const lanes: IllFeature = {
     channels: ILL_MAP_CHANNELS.lanes,
     build: (p, context) => {
       const shape = shapeOf(p);
-      return [mapPlane(context.frame, ...SHAPE_KEYS.map((k) => shape[k]))];
+      const skel = (shape.skeleton ?? 0) >= 0.5 ? lanesSkeletonKey(context) : null;
+      return [mapPlane(context.frame, shape.trace >= 0.5 || skel !== null ? context.template : null, skel, ...SHAPE_KEYS.map((k) => shape[k]))];
     },
   },
   uniforms: (p) => {

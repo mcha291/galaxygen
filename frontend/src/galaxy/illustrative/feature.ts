@@ -46,6 +46,14 @@ export interface IllContext {
    * loadArrays, the one transport), for the galaxy on screen; null until it has arrived or when no feature asks.
    */
   frame: IllFrame | null;
+  /**
+   * (S106, B4) Every registered feature's CURRENT parameters (the values being drawn, clamped), by feature id: a
+   * read-only accessor so one feature may read another's live sliders (the lanes read the arms' skeleton). Bound by
+   * index.ts (illContextFor) around every call of a feature's map builder, its uniforms and the debounce's probes, and
+   * handed to the layers the same way; an unknown id reads {}. Absent only on a context built by hand (a test): a reader
+   * then falls back to its own defaults. A value read through it that shapes a plane must be in that plane's memo keys.
+   */
+  paramsOf?: (featureId: string) => IllParams;
 }
 
 /** The march hooks a feature may take part in: each names a GLSL function the feature's `glsl` defines. */
@@ -64,6 +72,19 @@ export interface IllHooks {
   veil?: string;
   /** `vec3 f(vec2 rp)`: a per-channel multiplier on the disc's starlight at rp (S108); multiplied over features. */
   light?: string;
+  /**
+   * `float f(vec2 xy, float g)` (S106): the gas fluctuation map's value g at the face-on point xy (kpc, noise.glsl.ts's
+   * frame) made the value the dust's placement is multiplied by; chained over features. Read where the map is drawn
+   * (the march's screenGas, FluxPoints' gasAt) and only while it is; it must be defined in `noiseGlsl`.
+   */
+  gas?: string;
+  /**
+   * `vec3 f(vec3 d, vec2 rp)` (S106, the base's mend): the ring texture's face-on diffuse depth per channel d, as read
+   * at the midplane point rp (before the placement, the clouds' share and the extinction strength multiply it), made the
+   * depth the dust's layer carries; chained over features. The march's tau and FluxPoints' face; it must be defined in
+   * `noiseGlsl` (it may read the `rings` texture, which only those two shaders bind).
+   */
+  depth?: string;
 }
 
 /** What a feature's own drawing (`layer`) receives: drawn inside the Galaxy view's canvas under the illustrative look. */
@@ -125,6 +146,12 @@ export interface IllFeature {
    * shared map through `map`. No texture derivative functions (the points read it in a vertex shader).
    */
   glsl?: string;
+  /**
+   * GLSL at global scope put only where the randomness layer's include is (noise.glsl.ts: the march's fragment and
+   * FluxPoints' vertex shader), after `glsl`: it may call the include's functions (layerGasMap, layerGasSum...) and read
+   * its uniforms. Not in other layers' shaders (runtime.glsl). The same rules as `glsl` (no sampler, no derivative).
+   */
+  noiseGlsl?: string;
   hooks?: IllHooks;
   /** Its channels of the shared map and their builder (see IllMapBuilder). */
   map?: IllMapBuilder;
