@@ -250,15 +250,15 @@ export const arms: IllFeature = {
       about: "How far past the ring where the model's arms fade out their pattern is carried outward along the arms' own measured winding, kpc, so the arms reach the disc's edge; 0 the model's end. Illustrative.",
     },
     {
-      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.5, ngc_4414: 0.05 },
+      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 1.1, ngc_4414: 0.05 },
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8 },
+      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9 },
       about: "The arms' tint and the sparkle's colour turned from blue-white toward cyan-teal by this share; 0 the blue-white. Colour for appearance (S107).",
     },
     {
-      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.8, ngc_4414: -0.6 },
+      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.6, ngc_4414: -0.6 },
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
@@ -328,6 +328,10 @@ export const arms: IllFeature = {
     {
       key: "sparklebunchbright", label: "bunch brightness", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2 },
       about: "The points in a bunch brighter (up to 1 + this at the noise's peak), those between dimmer; 0 none. Illustrative (S106).",
+    },
+    {
+      key: "sparkledirect", label: "sparkle drawn directly", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "1: the sparkle's places drawn through an envelope of their density (the same law, other points, several times faster where the points keep to the arms); 0: by rejection over the whole disc. Illustrative (S107).",
     },
     {
       key: "sparklefall", label: "sparkle falloff", min: 0, max: 10, step: 0.1, unit: "× h", default: 2, perTemplate: { milky_way: 2, ngc_4414: 3 },

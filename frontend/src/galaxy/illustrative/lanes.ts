@@ -117,6 +117,11 @@ const CONTROLS: readonly IllControl[] = [
     key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "The bar lanes' curl round the nucleus, a share of its 220 degrees: 1 S107's curl, 0 two straight lanes along the bar's leading edges. Illustrative (S106).",
   },
+  // S107 (MW2): the lanes braided in places, the majors feathered more.
+  { key: "splitSpacing", label: "lane splits", min: 0, max: 10, step: 0.1, unit: "kpc", default: 0, perTemplate: { milky_way: 1.6 }, about: "A lane's first strand parts in two for a stretch and rejoins, about every this many kpc along the arm; 0 never. Illustrative (S107)." },
+  { key: "splitLength", label: "split length", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.8, about: "A split's length along the arm, kpc (each 0.6-1.4 of it). Illustrative (S107)." },
+  { key: "splitSeparation", label: "split width", min: 10, max: 600, step: 5, unit: "pc", default: 120, about: "How far the two threads of a split part at its middle, pc (each 0.7-1.3 of it, to either side). Illustrative (S107)." },
+  { key: "majorFeather", label: "majors' feathers", min: 0.2, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.6 }, about: "On the skeleton's two major arms, the feathers this many times as close together. Illustrative (S107)." },
   { key: "seed", label: "lane seed", min: 0, max: 999, step: 1, unit: "", default: 7, about: "The seed of the lanes' wander, breaks and feathers: another number, another drawing of the same lanes. Illustrative." },
 ];
 

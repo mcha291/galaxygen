@@ -326,11 +326,20 @@ export interface LaneShape {
   skeleton?: number;
   /** S106 (B3): the bar lanes' curl round the nucleus, a share of its 220 degrees; absent 1 (S107's curl), 0 straight. */
   barCurl?: number;
+  /** S107 (MW2): a lane's first strand splits in two for a stretch and rejoins about every this many kpc along it; absent or 0 never. */
+  splitSpacing?: number;
+  /** S107 (MW2): a split's length along the arm, kpc (each 0.6-1.4 of it). */
+  splitLength?: number;
+  /** S107 (MW2): how far the split thread parts from its strand at the split's middle, pc (each 0.7-1.3 of it). */
+  splitSeparation?: number;
+  /** S107 (MW2): on the skeleton's two major arms, the feathers this many times as close together; absent or 1 as on any lane. */
+  majorFeather?: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof LaneShape)[] = [
   "offset", "width", "strands", "spread", "wiggle", "wiggleLength", "braidLength", "gaps", "gapLength", "clump", "envelope", "followGas", "taper",
   "innerRadius", "outerRadius", "featherSpacing", "featherLength", "featherPitch", "featherDepth", "fray", "barDepth", "barOffset", "barWidth", "barCurve", "barReach", "seed", "trace", "skeleton", "barCurl",
+  "splitSpacing", "splitLength", "splitSeparation", "majorFeather",
 ];
 
 /** What the map is drawn from: the ridges, the gas contrast to weigh them by, and the bar. */
@@ -700,12 +709,44 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
     });
   }
 
-  if (shape.featherSpacing > 0 && shape.featherLength > 0 && shape.featherDepth > 0) {
-    const count = Math.floor(ridge.length / shape.featherSpacing);
+  // S107 (MW2): the split threads - a lane's first strand parting in two for a stretch and rejoining (the goal's
+  // braided lanes): a thread leaving the strand's line, out to `splitSeparation` at the stretch's middle and back.
+  const splitSpacing = shape.splitSpacing ?? 0;
+  if (splitSpacing > 0 && (shape.splitLength ?? 0) > 0) {
+    const key = laneKey(shape.seed, ridge.chain, 0, 11);
+    const count = Math.floor(ridge.length / splitSpacing);
+    for (let f = 0; f < count; f += 1) {
+      const s0 = (f + laneRandom(key, 4 * f)) * splitSpacing;
+      const len = (shape.splitLength ?? 0.8) * (0.6 + 0.8 * laneRandom(key, 4 * f + 1));
+      const sep = (shape.splitSeparation ?? 120) * kpc * (0.7 + 0.6 * laneRandom(key, 4 * f + 2)) * (laneRandom(key, 4 * f + 3) < 0.5 ? -1 : 1);
+      let i0 = Math.min(ridge.n - 1, Math.round((s0 / ridge.length) * (ridge.n - 1)));
+      while (i0 < ridge.n - 1 && ridge.s[i0] < s0) i0 += 1;
+      let i1 = i0;
+      while (i1 < ridge.n - 1 && ridge.s[i1] < s0 + len) i1 += 1;
+      if (i1 - i0 < 3) continue;
+      line(raster, i1 - i0 + 1, (c, out) => {
+        const i = i0 + c;
+        const s = ridge.s[i];
+        const bump = Math.sin(Math.PI * clamp01((s - s0) / len));
+        const q = near(i);
+        const l = (lateral(0, s) + sep * bump) * q;
+        const w = swell(0, s);
+        out[0] = ridge.x[i] + ridge.nx[i] * l;
+        out[1] = ridge.y[i] + ridge.ny[i] * l;
+        out[2] = sigma0 * Math.exp(0.7 * shape.clump * w) * 0.75 * Math.max(0.4, q);
+        out[3] = Math.min(1, 2.5 * bump) * ends(i) * broken(0, s) * Math.max(0, 1 + shape.clump * (0.8 * w - 0.2));
+      });
+    }
+  }
+
+  // S107 (MW2): the skeleton's two major arms (its ridges 2000 and 2001, lanes.ts skeletonRidges) feathered closer.
+  const featherSpacing = shape.featherSpacing / (ridge.chain === 2000 || ridge.chain === 2001 ? Math.max(0.1, shape.majorFeather ?? 1) : 1);
+  if (featherSpacing > 0 && shape.featherLength > 0 && shape.featherDepth > 0) {
+    const count = Math.floor(ridge.length / featherSpacing);
     const key = laneKey(shape.seed, ridge.chain, 0, 5);
     const step = stepFor(0.35 * sigma0);
     for (let f = 0; f < count; f += 1) {
-      const s0 = (f + laneRandom(key, 4 * f)) * shape.featherSpacing;
+      const s0 = (f + laneRandom(key, 4 * f)) * featherSpacing;
       let i0 = Math.min(ridge.n - 1, Math.round((s0 / ridge.length) * (ridge.n - 1)));
       while (i0 < ridge.n - 1 && ridge.s[i0] < s0) i0 += 1;
       const strand = Math.floor(laneRandom(key, 4 * f + 1) * strands);

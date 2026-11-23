@@ -31,6 +31,8 @@ export function sparkleShape(params: IllParams) {
     bunch: params.sparklebunch ?? 0,
     bunchPc: params.sparklebunchsize ?? 400,
     bunchBright: params.sparklebunchbright ?? 0,
+    // S107 (MW2): the places drawn through the density's envelope (armsSparkle.ts envelopePlace).
+    direct: (params.sparkledirect ?? 0) >= 0.5,
   };
 }
 
