@@ -85,7 +85,7 @@ import { ClampToEdgeWrapping, DataTexture, LinearFilter, RGBAFormat, RepeatWrapp
 import { arms } from "./arms";
 import { base } from "./base";
 import { edge } from "./edge";
-import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, releaseMemos, wouldBuild } from "./feature";
+import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, illMeasure, illNow, releaseMemos, wouldBuild } from "./feature";
 import { floc } from "./floc";
 import { framing } from "./framing";
 import { grade } from "./grade";
@@ -366,7 +366,9 @@ export function illMapPlanes(ill: Readonly<Record<string, number>>, unbound: Ill
   const size = ILL_MAP.width * ILL_MAP.height;
   for (const f of FEATURES) {
     if (!f.map) continue;
+    const started = illNow();
     const built = f.map.build(paramsOf(f, ill), context);
+    illMeasure(`map ${f.id}`, started);
     if (built.length !== f.map.channels.length) throw new Error(`illustrative map: ${f.id} built ${built.length} planes for ${f.map.channels.length} channels`);
     f.map.channels.forEach((c, i) => {
       if (!(c >= 0 && c < 4 && Number.isInteger(c))) throw new Error(`illustrative map: ${f.id} names channel ${c}`);
@@ -395,6 +397,7 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
     }
     shared.buffer = new Uint8Array(ILL_MAP.width * ILL_MAP.height * 4);
   }
+  const started = illNow();
   const buf = shared.buffer;
   const n = ILL_MAP.width * ILL_MAP.height;
   for (const c of changed) {
@@ -405,6 +408,7 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
   shared.planes = [...planes];
   if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
   shared.texture = mapTexture(buf, ILL_MAP.width, ILL_MAP.height);
+  illMeasure("compose", started);
   return shared.texture;
 }
 
@@ -412,7 +416,12 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
 export function illUniformValues(ill: Readonly<Record<string, number>>, unbound: IllContext): Record<string, unknown> {
   const context = illContextFor(unbound, ill);
   const out: Record<string, unknown> = {};
-  for (const f of FEATURES) if (f.uniforms) Object.assign(out, f.uniforms(paramsOf(f, ill), context));
+  for (const f of FEATURES) {
+    if (!f.uniforms) continue;
+    const started = illNow();
+    Object.assign(out, f.uniforms(paramsOf(f, ill), context));
+    illMeasure(`uniforms ${f.id}`, started);
+  }
   out.illMapTex = illMapTexture(illMapPlanes(ill, context));
   return out;
 }
@@ -500,8 +509,11 @@ export function illEffective(
 
 /** Whether the runtime still has to build for these parameters (a plane not yet made for them): the "rebuilding" mark. */
 export const illStale = (ill: Readonly<Record<string, number>>, context: IllContext): boolean => {
+  const started = illNow();
   const bound = illContextFor(context, ill);
-  return FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), bound));
+  const stale = FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), bound));
+  illMeasure("stale", started);
+  return stale;
 };
 
 /**

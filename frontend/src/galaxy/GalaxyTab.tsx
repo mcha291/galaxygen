@@ -64,6 +64,7 @@ import {
   releaseRuntime,
   updateRuntime,
 } from "./illustrative";
+import { illMeasure, illNow } from "./illustrative/feature";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
 import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
@@ -686,7 +687,13 @@ export function GalaxyTab({
   // `illBuilt` moves after a runtime update, so the "rebuilding" mark (illPending) is read again once the build is done.
   const illSettled = useDebounced(illParams, ILL_SETTLE_MS, `${templateName}:${viewLook}:${held ?? ""}`);
   const illDrawn = useMemo(
-    () => (illustrative ? illEffective(illParams, illSettled, illContext) : { ill: illParams, held: [] as string[] }),
+    () => {
+      if (!illustrative) return { ill: illParams, held: [] as string[] };
+      const started = illNow();
+      const e = illEffective(illParams, illSettled, illContext);
+      illMeasure("effective", started);
+      return e;
+    },
     [illustrative, illParams, illSettled, illContext],
   );
   const illDrawnParams = illDrawn.ill;
@@ -703,7 +710,9 @@ export function GalaxyTab({
   useEffect(() => {
     if (!illRuntime) return;
     const before = illRuntime.version;
+    const started = illNow();
     updateRuntime(illRuntime, illDrawnParams, illContext);
+    illMeasure("runtime", started);
     if (illRuntime.version !== before) setIllBuilt((n) => n + 1);
   }, [illRuntime, illDrawnParams, illContext]);
   const illPending = useMemo(

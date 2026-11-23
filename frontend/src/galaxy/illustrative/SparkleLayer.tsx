@@ -13,7 +13,7 @@ import { armMapFor, armsSkeleton, shapeOf } from "./arms";
 import { skeletonOn } from "./armsSkeleton";
 import { grainDensity, ridgeAt } from "./skeleton";
 import { buildSparkle, hashString, sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
-import { ILL_MAP, type IllLayerProps } from "./feature";
+import { ILL_MAP, type IllLayerProps, illMeasure, illNow } from "./feature";
 
 /** The sparkle's blue-white at full share (over the white point). */
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
@@ -59,11 +59,13 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   const mapTex = (shape.avoid ?? 0) > 0 ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as { image?: { data?: ArrayLike<number>; width?: number; height?: number } } | undefined) : undefined;
   const points = useMemo(() => {
     if (!built || shape.count <= 0) return null;
+    const started = illNow();
     const img = mapTex?.image;
     const lanes =
       img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height ? { data: img.data, width: img.width, height: img.height, rHi: built.grid.rHi } : null;
     const levelOf = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
     const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw, lanes, levelOf);
+    illMeasure("sparkle", started);
     if (s.radius.length === 0) return null;
     return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
   }, [built, shape, context.template, mapTex, skeleton, tail, grainFade]);

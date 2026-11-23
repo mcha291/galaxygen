@@ -186,6 +186,26 @@ export function memoOn<T>(build: (...inputs: unknown[]) => T): (...inputs: unkno
   };
 }
 
+/** A clock in ms (performance.now where there is one; 0 elsewhere). */
+export const illNow = (): number => (typeof performance !== "undefined" ? performance.now() : 0);
+
+/**
+ * (S107) A stage's time since `started` as a browser performance measure named `ill <name>` (the slider probe,
+ * e2e/ill/sliders.probe.ts, reads them with performance.getEntriesByType("measure")); only in a page, and only a stage of
+ * a millisecond or more. Returns the ms. Nothing drawn reads it.
+ */
+export function illMeasure(name: string, started: number): number {
+  const ms = illNow() - started;
+  if (ms >= 1 && typeof window !== "undefined" && typeof performance !== "undefined" && typeof performance.measure === "function") {
+    try {
+      performance.measure(`ill ${name}`, { start: started, duration: ms });
+    } catch {
+      // a measure is a diagnostic only
+    }
+  }
+  return ms;
+}
+
 /** Every memoOn's cache (S105 fix R5): released together when the look leaves illustrative. */
 const MEMOS = new Set<{ release(): void }>();
 let probing = 0;
