@@ -9,25 +9,19 @@
 // percentile of its regions' own light, so the gain and the exposure move them as they move the knots); no published
 // number, readout, tracer or preview changes. No three.js here: pure arithmetic, tested (knots.test.ts).
 
-import { arms } from "./arms";
-import { skeletonMemo } from "./armsSkeleton";
-import type { IllFrame, IllParams } from "./feature";
+import { currentSkeleton, skeletonKey } from "./armsSkeleton";
+import type { IllContext, IllParams } from "./feature";
 import { CORE_COLOUR, MAX_BLOBS, hash01, quantile, radialWeight, regionColour } from "./knotsMath";
 import { type Skeleton, armAt, sampleRidges } from "./skeleton";
 
 const TAU = 2 * Math.PI;
 
-/** The regions' skeleton cache (its own, so another reader at other parameters does not evict it). */
-const regionsSkeletonMemo = skeletonMemo();
-
 /**
- * THE ONE READ OF THE SKELETON for the regions: the arms' skeleton at the arms' TEMPLATE DEFAULTS, as lanes.ts
- * skeletonRidges reads it (until the arms' live parameters can be read; then this function alone changes).
+ * THE ONE READ OF THE SKELETON for the regions: the arm skeleton at the arms' LIVE parameters (armsSkeleton.ts
+ * currentSkeleton, cached there) and the key that moves exactly when it does (the layer's memo key).
  */
-export function regionsSkeleton(frame: IllFrame | null, template: string | null): Skeleton | null {
-  if (!frame) return null;
-  const p: IllParams = Object.fromEntries(arms.controls.map((c) => [c.key, (template ? c.perTemplate?.[template] : undefined) ?? c.default]));
-  return regionsSkeletonMemo(frame, p);
+export function regionsSkeleton(context: IllContext): { skeleton: Skeleton | null; key: string } {
+  return { skeleton: currentSkeleton(context), key: skeletonKey(context) };
 }
 
 /** mulberry32: the placement's own fixed-seed stream. */
@@ -144,15 +138,17 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     }
   }
   // The bunches along the ridges.
-  const cand = sampleRidges(sk, nBunch * 6, Math.round(p.seed ?? 7) * 7919 + 13, 0);
-  const g2 = gap * gap;
-  let placed = 0;
-  for (let k = 0; k < cand.radius.length && placed < nBunch; k++) {
+  const cand = sampleRidges(sk, nBunch * 8, Math.round(p.seed ?? 7) * 7919 + 13, 0);
+  const start = out.length;
+  for (let k = 0; k < cand.radius.length && out.length - start < total; k++) {
     const R = cand.radius[k];
     const f = frameAt(sk, cand.arm[k], R);
     if (!f) continue;
     const w = Math.pow(Math.max(0, f.strength), ridgePow) * radialWeight(R, fadeR, fadeWidth, innerR);
     if (next() > w) continue;
+    // Each candidate's own reach (0.4-1.6 gap): the gaps uneven, not a necklace.
+    const reach = gap * (0.4 + 1.2 * next());
+    const g2 = reach * reach;
     let near = false;
     for (let j = 0; j < centres.length && !near; j += 2) {
       const dx = centres[j] - f.x;
@@ -161,8 +157,8 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     }
     if (near) continue;
     centres.push(f.x, f.y);
-    placed += 1;
-    const count = Math.max(1, Math.round(bunch * (0.3 + 1.4 * next())));
+    // The bunch's size: 1 + an exponential of mean bunch - 1 (many small bunches and singles, a few large).
+    const count = Math.min(Math.round(4 * bunch), 1 + Math.floor(-Math.log(Math.max(1e-9, next())) * (bunch - 1)));
     members(f, count, 1, false);
   }
   // The blue-white points beside the larger regions.
