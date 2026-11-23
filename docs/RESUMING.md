@@ -11,10 +11,10 @@ git clone https://github.com/mcha291/galaxygen.git && cd galaxygen
 uv run python tools/bootstrap.py       # installs the pre-commit hook path, checks imports
 uv run pytest && uv run python -m galaxy.specs    # the suite (~3 h; the pieces' gate test alone ~88 min), then the specs
 ```
-Then RULES.md in full, BRIEF.md, **BUILD_VII.md (lanes, regions, the register's end: drafted at S101, NOT adopted (D271); rows 102-103 run at S102 (D272), row 105 at S103 (D273)) and BUILD_VI.md (the pictures: drafted at S97, adopted (D268), row 101 run at S101) beside BUILD_V.md (done), BUILD_III.md (the phase's text is its ruling)**; GALAXY_INPUTS.md by section (§11's head is the debt map).
+Then RULES.md in full, BRIEF.md, **BUILD_VIII.md (the pictures first, the illustrative look: ADOPTED on the owner's word of 2026-11-23, D275; rows 105-110 run at S105, D276 - the viewer's second look under `frontend/src/galaxy/illustrative/`, captured with `npm --prefix frontend run look` and `tools/goal_sheet.py`; the plan in force)**, **BUILD_VII.md (parked where it stands: lanes, regions, the register's end: drafted at S101, NOT adopted (D271); rows 102-103 run at S102 (D272), row 105 at S103 (D273)) and BUILD_VI.md (the pictures: drafted at S97, adopted (D268), row 101 run at S101) beside BUILD_V.md (done), BUILD_III.md (the phase's text is its ruling)**; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
 tools/hooks` and **reset it to the session branch if it started at `main`**; LF newlines. **Numbers are sequential**: debts
-from #237, decisions from D274, board row 79 (none planned: the owner's choice), acceptance rows from 38, taken when the entry is written.
+from #238, decisions from D277 (#237 and D274 are `batch-r`'s, unmerged; D274 is reserved in `tests/test_docs.py`), board row 79 (none planned: the owner's choice), acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
 docs/           RULES, this file, BRIEF, GALAXY_PLAN (board, §5e), GALAXY_INPUTS (§11 register), DECISIONS, LESSONS,
