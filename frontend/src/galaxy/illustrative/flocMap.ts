@@ -114,11 +114,38 @@ export interface FlocShape {
   /** 0-1: how far the lace's threads run together into blotches where the dust gathers. */
   blotch: number;
   seed: number;
+  /** S106: 0 the strands and the lace (this file), 1 the network drawn in the disc's plane (flocNet.ts). */
+  style: number;
+  /** S106 plane style: pc, the clouds of dust's size. */
+  netScale: number;
+  /** how far the plane is pushed about, as a share of netScale. */
+  netWarp: number;
+  /** 0-1: the level under which the network has gaps (more is less dust). */
+  netGaps: number;
+  /** the softness of the gaps' edges. */
+  netSoft: number;
+  /** 0-1: how far the dust is broken into feathered ridges. */
+  netFeather: number;
+  /** 0-1: how far the dust keeps to short arcs on the spiral. */
+  netArc: number;
+  /** pc: an arc's width. */
+  arcWidth: number;
+  /** an arc's length over its width. */
+  arcStretch: number;
+  /** the drawn depth's scale (1 a full filament). */
+  netDepth: number;
+  /** pc: the light's clouds' size. */
+  litScale: number;
+  /** 0-1: how many bright knots the clouds hold. */
+  litKnots: number;
+  /** x the outer radius: the light's reach. */
+  litReach: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
   "density", "length", "width", "pitch", "pitchSpread", "wiggle", "branches", "branchAngle", "bands", "bandWidth", "swell", "mottle", "grain", "gather", "bundle",
   "followGas", "radial", "innerRadius", "outerRadius", "patchSize", "clumpDensity", "clumpSize", "clumpInner", "clumpFollow", "lace", "cell", "thread", "stretch", "blotch", "seed",
+  "style", "netScale", "netWarp", "netGaps", "netSoft", "netFeather", "netArc", "arcWidth", "arcStretch", "netDepth", "litScale", "litKnots", "litReach",
 ];
 
 /** A field over the disc on the model's polar grid. */
