@@ -61,6 +61,12 @@
 //              `map`). Called at every change of a parameter or of the context (the template; the arrays' frame); handed
 //              to the march and every point's material through the same uniform object, so neither FieldVolume nor
 //              FluxPoints is edited for it. A change re-marches the field.
+//   context    (S106, B4) what map builders, uniforms and layers receive besides their own params: the template, the
+//              arrays' frame, and `paramsOf(featureId)` - every feature's CURRENT (drawn) parameters, read-only, bound
+//              here (illContextFor) around every call and by GalaxyTab for the layers. A feature may read another's live
+//              sliders through it (the lanes read the arms' skel* sliders: armsSkeleton.ts currentSkeleton); a value read
+//              so that shapes a plane goes into that plane's memoOn keys, so the plane rebuilds - debounced like the
+//              owner's own map-shaping sliders (illEffective holds a cross-read change until the sliders settle).
 //   arrays     /api/arrays names (e.g. the arm pieces' columns); all features' are asked in one request.
 //   layer      a React component drawn in the Galaxy view's canvas (IllLayerProps: the knots, their gain, the dust).
 //   replacesKnots  true where its layer draws in place of the field mode's default knots.
@@ -165,6 +171,27 @@ export function paramsOf(f: IllFeature, ill: Readonly<Record<string, number>>): 
   const out: Record<string, number> = {};
   for (const c of f.controls) out[c.key] = ill[illKey(f, c)] ?? c.default;
   return out;
+}
+
+/**
+ * The context with `paramsOf` bound to these parameters (S106, B4; feature.ts IllContext.paramsOf): every feature's
+ * current values by id, so a feature reads another's live sliders. Every call below binds it; GalaxyTab binds the
+ * layers' context to the drawn parameters the same way.
+ */
+export function illContextFor(context: IllContext, ill: Readonly<Record<string, number>>): IllContext {
+  const cache = new Map<string, IllParams>();
+  return {
+    ...context,
+    paramsOf: (id: string) => {
+      let p = cache.get(id);
+      if (!p) {
+        const f = FEATURES.find((g) => g.id === id);
+        p = f ? paramsOf(f, ill) : {};
+        cache.set(id, p);
+      }
+      return p;
+    },
+  };
 }
 
 /** The /api/arrays names any feature asks for, sorted, once each. */
@@ -315,7 +342,8 @@ const shared: { buffer: Uint8Array | null; texture: DataTexture; planes: (Uint8A
 };
 
 /** The planes every feature's map builder hands over for these parameters and context, by channel (null: zero). */
-export function illMapPlanes(ill: Readonly<Record<string, number>>, context: IllContext): (Uint8Array | null)[] {
+export function illMapPlanes(ill: Readonly<Record<string, number>>, unbound: IllContext): (Uint8Array | null)[] {
+  const context = illContextFor(unbound, ill);
   const planes: (Uint8Array | null)[] = [null, null, null, null];
   const owner: (string | null)[] = [null, null, null, null];
   const size = ILL_MAP.width * ILL_MAP.height;
@@ -364,7 +392,8 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
 }
 
 /** Each feature's uniform values for these parameters and this context, and the shared map (illMapTex). */
-export function illUniformValues(ill: Readonly<Record<string, number>>, context: IllContext): Record<string, unknown> {
+export function illUniformValues(ill: Readonly<Record<string, number>>, unbound: IllContext): Record<string, unknown> {
+  const context = illContextFor(unbound, ill);
   const out: Record<string, unknown> = {};
   for (const f of FEATURES) if (f.uniforms) Object.assign(out, f.uniforms(paramsOf(f, ill), context));
   out.illMapTex = illMapTexture(illMapPlanes(ill, context));
@@ -396,6 +425,7 @@ export const ILL_SETTLE_MS = 250;
 /**
  * Whether a feature's map planes or uniforms at these parameters would build anything its memoOn caches do not hold
  * (S105 fix R1): a plane-shaping change. Nothing is built; the uniforms' own values are computed and thrown away.
+ * `context` should be bound (illContextFor) to the whole parameter set `params` belongs to.
  */
 export function illFeatureWouldBuild(f: IllFeature, params: IllParams, context: IllContext): boolean {
   return wouldBuild(() => {
@@ -418,21 +448,44 @@ export function illEffective(
   if (live === settled) return { ill: live, held: [] };
   let out: Record<string, number> | null = null;
   const held: string[] = [];
-  for (const f of FEATURES) {
+  const moved = (f: IllFeature) => {
     const lp = paramsOf(f, live);
     const sp = paramsOf(f, settled);
-    if (f.controls.every((c) => Object.is(lp[c.key], sp[c.key]))) continue;
-    if (!illFeatureWouldBuild(f, lp, context)) continue;
+    return !f.controls.every((c) => Object.is(lp[c.key], sp[c.key]));
+  };
+  const liveContext = illContextFor(context, live);
+  for (const f of FEATURES) {
+    if (!moved(f)) continue;
+    if (!illFeatureWouldBuild(f, paramsOf(f, live), liveContext)) continue;
     held.push(f.id);
     out ??= { ...live };
-    for (const c of f.controls) out[illKey(f, c)] = sp[c.key];
+    for (const c of f.controls) out[illKey(f, c)] = paramsOf(f, settled)[c.key];
+  }
+  // S106 (B4): a feature reads another's live values (IllContext.paramsOf), so one whose own values did not move may
+  // still rebuild from another's move that rebuilds nothing of its owner's (the lanes on the arms' skeleton while the
+  // arms' own switch is off). Then every moved feature is held: one build once the sliders settle.
+  const now = out ?? live;
+  const nowContext = illContextFor(context, now);
+  const settledContext = illContextFor(context, settled);
+  const crossBuilds = FEATURES.some(
+    (f) => !held.includes(f.id) && illFeatureWouldBuild(f, paramsOf(f, now), nowContext) && !illFeatureWouldBuild(f, paramsOf(f, now), settledContext),
+  );
+  if (crossBuilds) {
+    out ??= { ...live };
+    for (const f of FEATURES) {
+      if (held.includes(f.id) || !moved(f)) continue;
+      held.push(f.id);
+      for (const c of f.controls) out[illKey(f, c)] = paramsOf(f, settled)[c.key];
+    }
   }
   return { ill: out ?? live, held };
 }
 
 /** Whether the runtime still has to build for these parameters (a plane not yet made for them): the "rebuilding" mark. */
-export const illStale = (ill: Readonly<Record<string, number>>, context: IllContext): boolean =>
-  FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), context));
+export const illStale = (ill: Readonly<Record<string, number>>, context: IllContext): boolean => {
+  const bound = illContextFor(context, ill);
+  return FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), bound));
+};
 
 /**
  * Frees what the layer holds outside a runtime (S105 fix R5): the shared map's 28.8 MB buffer and its texture, and every
