@@ -629,6 +629,17 @@ export function drawnLook(stored: Look, physicsOnly: boolean): Look {
 /** Whether the stored look is set aside by "physics only" (the look's switch says so, S108). */
 export const lookSuspended = (stored: Look, physicsOnly: boolean): boolean => drawnLook(stored, physicsOnly) !== stored;
 
+/**
+ * The look a tuning change switches the stored look to (S108 review), or null: a change kept under `forLook` (a slider
+ * moved: the drawn look; a pasted box: the box's) switches the look only where it names a look other than the one drawn
+ * and the one stored. Without "physics only" the drawn look is the stored one, so a box of the other look switches to it
+ * as since S105; under it a slider moved on the drawn physical look (or a physical box) does not take the stored
+ * illustrative look away - it is still "kept and returns when physics only is released".
+ */
+export function lookSwitchedByTuning(forLook: Look, drawn: Look, stored: Look): Look | null {
+  return forLook !== drawn && forLook !== stored ? forLook : null;
+}
+
 /** What the look's switch says while "physics only" sets the illustrative look aside (S108). */
 export const LOOK_SUSPENDED_WHAT =
   "illustrative suspended: physics only draws the physical look - the illustrative layer is a drawing over the model's arms, bar and regions, " +
