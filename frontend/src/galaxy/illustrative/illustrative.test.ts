@@ -290,9 +290,11 @@ describe("the patched shaders (S105): anchors found once, the physical sources u
       expect(t1.image.data[5 * 4 + 0]).toBe(0);
       expect(illUniformValues(illDefaults(null), ctx).illMapTex === t1).toBe(true);
       plane = null;
-      const t2 = illUniformValues(illDefaults(null), ctx).illMapTex as { image: { data: Uint8Array } };
+      const t2 = illUniformValues(illDefaults(null), ctx).illMapTex as { image: { width: number; data: Uint8Array } };
       expect(t2 === t1).toBe(false);
-      expect(t2.image.data[5 * 4 + 1]).toBe(0);
+      // S107: no plane at all is the empty map (one texel of zeros), the buffer let go
+      expect(t2.image.width).toBe(1);
+      expect([...t2.image.data]).toEqual([0, 0, 0, 0]);
       // a channel owned twice, or a plane of the wrong size, is refused
       const dup = registerFeature({ id: "fakedup", label: "fake", about: "a test's", controls: [], map: { channels: [1], build: () => [null] } });
       try {

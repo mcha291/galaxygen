@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import {
   type BlackbodyTable,
@@ -65,7 +65,7 @@ import {
   stepRuntime,
 } from "./illustrative";
 import { illMeasure, illNow } from "./illustrative/feature";
-import { illArrivals, illJobsPending, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
+import { illArrivals, illJobsPending, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
 import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
@@ -682,7 +682,10 @@ export function GalaxyTab({
   const illNames = useMemo(() => (illustrative ? illArrays() : []), [illustrative]);
   const illArraysKey = illustrative && illNames.length > 0 ? JSON.stringify(["illustrative", illNames, query]) : null;
   const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal)).value ?? null;
-  const illContext = useMemo<IllContext>(() => ({ template: templateName, frame: illFrame }), [templateName, illFrame]);
+  // S107 (rule D1): during a landing's hold the drawn galaxy's template, as its parameters (look.ill) and its arrays are,
+  // so the map is built and drawn for the galaxy on screen; the new one's when the swap publishes it.
+  const illTemplate = held ?? templateName;
+  const illContext = useMemo<IllContext>(() => ({ template: illTemplate, frame: illFrame }), [illTemplate, illFrame]);
   // S105 fix R1, the debounce: a slider that only sets uniforms is drawn at once; one that reshapes a feature's map plane
   // (a rebuild of 0.1-2 s on the main thread) is drawn from the settled copy, so a drag costs one rebuild after it stops.
   // `illBuilt` moves after a runtime update, so the "rebuilding" mark (illPending) is read again once the build is done.
@@ -709,11 +712,13 @@ export function GalaxyTab({
   const illJobs = useSyncExternalStore(subscribeIll, illJobsPending, illJobsPending);
   // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
   // features' cached planes, so the physical look holds nothing of the layer; the next runtime builds them again.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!illRuntime) return;
     return () => releaseRuntime(illRuntime);
   }, [illRuntime]);
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // S107 (rule D1): in the commit itself (a layout effect, as the release above), so no frame is drawn with another
+    // galaxy's map over the field that commit draws.
     if (!illRuntime) return;
     // S107, the map contract (illMapClient.ts): where the runtime would build a plane for the parameters drawn now, the
     // map worker builds it and puts it in the features' caches; until it arrives (illArrived moves) the runtime keeps the
@@ -730,6 +735,17 @@ export function GalaxyTab({
   );
   // The look capture's wait (e2e/look.spec.ts settle): the picture is not the parameters' until nothing is pending.
   useEffect(() => setIllViewPending(illPending), [illPending]);
+  // The slider probe's check of rule D1 (e2e/ill/sliders.probe.ts): which galaxy the map drawn was built for, against
+  // the galaxy whose field is drawn (in the commit itself, so no frame reads a stale pair). Nothing drawn reads it.
+  const drawnTemplateName = drawn.template?.name ?? null;
+  useLayoutEffect(() => {
+    if (!illRuntime) return;
+    setIllDrawnFor(() => {
+      const tex = illRuntime.uniforms.illMapTex?.value as { userData?: { illPlanes?: (Uint8Array | null)[] } } | undefined;
+      return { map: illRuntime.drawnFor?.template ?? null, mapDrawn: !!tex?.userData?.illPlanes?.some((p) => p), field: drawnTemplateName };
+    });
+    return () => setIllDrawnFor(null);
+  }, [illRuntime, drawnTemplateName]);
   const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
   // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.

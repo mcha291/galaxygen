@@ -337,6 +337,11 @@ export interface IllRuntime {
   glsl: string;
   uniforms: Record<string, { value: unknown }>;
   version: number;
+  /**
+   * (S107, rule D1) The galaxy the values were last written for: its template and its arrays' frame. Another galaxy's
+   * map is never drawn: when either moves, stepRuntime draws the empty map until the new galaxy's own planes arrive.
+   */
+  drawnFor?: { template: string | null; frame: IllContext["frame"] };
 }
 
 const sameValue = (a: unknown, b: unknown): boolean => {
@@ -398,6 +403,13 @@ export function illMapPlanes(ill: Readonly<Record<string, number>>, unbound: Ill
 export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTexture {
   const changed = [0, 1, 2, 3].filter((c) => planes[c] !== shared.planes[c]);
   if (changed.length === 0) return shared.texture;
+  // S107: no plane at all is the empty map (the first frame's, and another galaxy's until its planes arrive): the
+  // buffer let go, so the next planes are composed over zeros.
+  if (planes.every((p) => !p) && shared.buffer) {
+    if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
+    shared.texture = EMPTY_MAP;
+    shared.buffer = null;
+  }
   if (!shared.buffer) {
     if (planes.every((p) => !p)) {
       shared.planes = [...planes];
@@ -454,7 +466,12 @@ export function illUniformValues(ill: Readonly<Record<string, number>>, unbound:
 /** A runtime with every feature's uniforms at these parameters (the template's illustrative defaults without them). */
 export function createRuntime(ill: Readonly<Record<string, number>> = illDefaults(null), context: IllContext = { template: null, frame: null }): IllRuntime {
   const values = illUniformValues(ill, context);
-  return { glsl: illGlsl(), uniforms: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, { value: v }])), version: 0 };
+  return {
+    glsl: illGlsl(),
+    uniforms: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, { value: v }])),
+    version: 0,
+    drawnFor: { template: context.template, frame: context.frame },
+  };
 }
 
 /** Writes the uniforms' values for these parameters and context into the runtime; the version moves if any changed. */
@@ -468,6 +485,7 @@ export function updateRuntime(runtime: IllRuntime, ill: Readonly<Record<string, 
     }
   }
   if (moved) runtime.version += 1;
+  runtime.drawnFor = { template: context.template, frame: context.frame };
 }
 
 /**
@@ -481,8 +499,15 @@ export function updateRuntime(runtime: IllRuntime, ill: Readonly<Record<string, 
 export function stepRuntime(runtime: IllRuntime, ill: Readonly<Record<string, number>>, context: IllContext): "asked" | "failed" | "drawn" {
   const key = illMapKey(ill, context);
   if (!illMapAnswered(key) && illStale(ill, context)) {
-    if (illMapFailed(key)) return "failed";
-    if (startIllMap(key, ill, context)) return "asked";
+    // Rule D1: the previous map is kept only on the same galaxy (a slider's move). For another galaxy - another
+    // template or another frame of arrays - the empty map (the values without the arrays) is drawn while its own
+    // planes are built.
+    const moved = runtime.drawnFor?.template !== context.template || runtime.drawnFor?.frame !== context.frame;
+    const failed = illMapFailed(key);
+    if (failed || startIllMap(key, ill, context)) {
+      if (moved) updateRuntime(runtime, ill, { ...context, frame: null });
+      return failed ? "failed" : "asked";
+    }
   }
   updateRuntime(runtime, ill, context);
   return "drawn";

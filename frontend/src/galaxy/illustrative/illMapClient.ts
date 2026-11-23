@@ -371,9 +371,22 @@ export function setIllViewPending(pending: boolean): void {
   viewPending = pending;
 }
 
+/** The galaxy each illustrative drawing on screen was built for, against the field's (the probe's check of rule D1). */
+let drawnFor: (() => { map: string | null; mapDrawn: boolean; field: string | null }) | null = null;
+const sparkleFor = new Map<object, string | null>();
+export function setIllDrawnFor(read: typeof drawnFor): void {
+  drawnFor = read;
+}
+/** A sparkle layer's points on screen and the template they were built for (null: none drawn); `owner` its own token. */
+export function setSparkleDrawnFor(owner: object, template: string | null): void {
+  if (template === null) sparkleFor.delete(owner);
+  else sparkleFor.set(owner, template);
+}
+
 // The probe (the look capture and the slider probe): how many illustrative builds the picture still waits for.
 if (typeof window !== "undefined") {
   const holder = window as unknown as Record<string, unknown>;
   holder.__galaxygenIllPending = () => illJobsPending() + (viewPending ? 1 : 0);
   holder.__galaxygenIllJobs = illJobCounts;
+  holder.__galaxygenIllDrawnFor = () => (drawnFor ? { ...drawnFor(), sparkle: [...sparkleFor.values()] } : null);
 }

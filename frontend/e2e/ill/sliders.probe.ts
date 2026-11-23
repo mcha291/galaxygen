@@ -39,7 +39,7 @@ const BOUND = Number(process.env.GALAXYGEN_ILL_STALL_MS ?? "Infinity");
 
 declare const window: Window & {
   __galaxygenFrameSum?: () => { sum: number[] };
-  __illProbe?: { frames: number[]; tasks: { start: number; ms: number }[]; on: boolean; busyUntil: number };
+  __illProbe?: { frames: number[]; tasks: { start: number; ms: number }[]; on: boolean; busyUntil: number; d1: boolean; samples: number; wrong: string[] };
   __galaxygenIllPending?: () => number;
   __galaxygenIllJobs?: () => { posted: number; seeded: number; skipped: number; here: number; failed: number; times: Record<string, { ms: number; roundTripMs: number }> };
 };
@@ -75,9 +75,19 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
         localStorage.setItem(tuningKey, "{}");
         // Every animation frame's time and every long task while `on`; every WebGL texture upload timed as `ill upload`
         // (one of a megabyte or more) - the main thread's share of it, which is what stalls a frame.
-        const probe = { frames: [] as number[], tasks: [] as { start: number; ms: number }[], on: false, busyUntil: 0 };
+        const probe = { frames: [] as number[], tasks: [] as { start: number; ms: number }[], on: false, busyUntil: 0, d1: false, samples: 0, wrong: [] as string[] };
         (window as unknown as { __illProbe: typeof probe }).__illProbe = probe;
         const tick = (t: number) => {
+          // Rule D1 (S107): at every frame, the galaxy the map and the sparkle drawn were built for against the field's.
+          if (probe.d1) {
+            type DrawnFor = { map: string | null; mapDrawn: boolean; field: string | null; sparkle: (string | null)[] };
+            const d = (window as unknown as { __galaxygenIllDrawnFor?: () => DrawnFor | null }).__galaxygenIllDrawnFor?.();
+            if (d) {
+              probe.samples += 1;
+              if (d.mapDrawn && d.map !== d.field) probe.wrong.push(`map of ${d.map} on ${d.field}`);
+              for (const sp of d.sparkle) if (sp !== d.field) probe.wrong.push(`sparkle of ${sp} on ${d.field}`);
+            }
+          }
           if (probe.on) {
             probe.frames.push(t);
             // the last frame at which an illustrative build was still owed (the picture not yet the move's)
@@ -179,6 +189,21 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
           );
       }
     }
+    // Rule D1: the template switched away and back; at no frame is the other galaxy's map or sparkle drawn on a field.
+    await page.evaluate(() => {
+      window.__illProbe!.d1 = true;
+    });
+    const other = served.templates.find((t) => t.name !== template && (t.name === "milky_way" || t.name === "ngc_4414"))!;
+    for (const to of [other.label, served.templates.find((t) => t.name === template)!.label]) {
+      await press(page, to);
+      await page.waitForTimeout(500);
+      await page.waitForFunction(() => (window.__galaxygenIllPending?.() ?? 0) === 0, null, { timeout: READY.timeoutMs });
+      await still(page);
+    }
+    const d1 = await page.evaluate(() => ({ samples: window.__illProbe!.samples, wrong: window.__illProbe!.wrong }));
+    console.log(`ill-probe ${template}: switched to ${other.name} and back, ${d1.samples} frames checked, ${d1.wrong.length} showing another galaxy's map or sparkle${d1.wrong.length ? `: ${[...new Set(d1.wrong)].join("; ")}` : ""}`);
+    expect(d1.samples).toBeGreaterThan(0);
+    expect(d1.wrong).toEqual([]);
     if (process.env.GALAXYGEN_ILL_OUT) {
       const out = process.env.GALAXYGEN_ILL_OUT.replace(".json", `.${template}.json`);
       writeFileSync(out, JSON.stringify(rows, null, 2));
