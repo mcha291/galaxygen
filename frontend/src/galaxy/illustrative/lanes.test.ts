@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, type IllFrame } from "./feature";
-import { features, illArrays, illDefaults, illGlsl, illustrativeFragment, paramsOf } from "./index";
+import { features, illArrays, illContextFor, illDefaults, illEffective, illGlsl, illMapPlanes, illStale, illUniformValues, illustrativeFragment, paramsOf } from "./index";
+import { currentSkeleton, skeletonKey } from "./armsSkeleton";
 import { lanes, shapeOf } from "./lanes";
 import { LANE_ARRAYS, LANE_MAP, type LaneGeometry, type LaneShape, type Piece, barAngle, barRidges, buildLaneMap, chainRidge, geometryOf, pieceLength, piecePoint, shapeAt } from "./lanesMap";
 
@@ -185,4 +186,53 @@ describe("the lanes feature", () => {
     expect(values.illLanesDepth).toBe(illDefaults("milky_way")["lanes.depth"]);
     expect(LANE_MAP.rings * LANE_MAP.sectors).toBeLessThanOrEqual(8 * 1024 * 1024); // a byte a texel: under 8 MiB
   });
+});
+
+describe("the lanes read the arms' live skeleton (S106, B4: IllContext.paramsOf)", () => {
+  // Two chains of arm pieces, no bar: enough for the skeleton's arms.
+  const col = (v: number[]) => Float64Array.from(v);
+  const frame: IllFrame = {
+    header: { scalars: {} },
+    arrays: {
+      arm_piece_chain: col([0, 1]),
+      arm_piece_order: col([0, 0]),
+      arm_piece_start_radius: col([4, 4]),
+      arm_piece_start_azimuth: col([0, Math.PI]),
+      arm_piece_pitch: col([13, 13]),
+      arm_piece_extent: col([4, 4]),
+      arm_piece_join: col([0, 0]),
+    },
+  };
+  const ctx = { template: "milky_way", frame };
+  const base = illDefaults("milky_way");
+
+  it("rebuilds the lanes' plane when an arms.skel* slider moves, and binds every feature's params into the context", () => {
+    expect(base["lanes.skeleton"]).toBe(1);
+    const bound = illContextFor(ctx, base);
+    expect(bound.paramsOf!("arms").skelpitch).toBe(base["arms.skelpitch"]);
+    expect(bound.paramsOf!("nothing")).toEqual({});
+    const a = illMapPlanes(base, ctx)[0];
+    expect(a).not.toBeNull();
+    expect(illMapPlanes(base, ctx)[0]).toBe(a);
+    const moved: Record<string, number> = { ...base, "arms.skelpitch": base["arms.skelpitch"] * 1.3 };
+    const b = illMapPlanes(moved, ctx)[0];
+    expect(b).not.toBe(a);
+    expect(Buffer.from(a!).equals(Buffer.from(b!))).toBe(false);
+    // currentSkeleton: the arms' skeleton at the context's live values.
+    const s0 = currentSkeleton(illContextFor(ctx, base));
+    const s1 = currentSkeleton(illContextFor(ctx, moved));
+    expect(s0).not.toBeNull();
+    expect(s1).not.toBe(s0);
+    expect(skeletonKey(illContextFor(ctx, moved))).not.toBe(skeletonKey(illContextFor(ctx, base)));
+  }, 30000);
+
+  it("holds a cross-read change until the sliders settle, also with the arms' own skeleton switch off", () => {
+    const off: Record<string, number> = { ...base, "arms.skeleton": 0 };
+    illUniformValues(off, ctx);
+    const live = { ...off, "arms.skelpitch": off["arms.skelpitch"] * 0.8 };
+    const e = illEffective(live, off, ctx);
+    expect(e.held).toContain("arms");
+    expect(e.ill["arms.skelpitch"]).toBe(off["arms.skelpitch"]);
+    expect(illStale(e.ill, ctx)).toBe(false);
+  }, 30000);
 });

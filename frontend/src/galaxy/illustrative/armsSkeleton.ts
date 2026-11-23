@@ -7,7 +7,7 @@
 // parameters (live, or the template's defaults as lanes.ts does) and read the result with skeleton.ts ridgeAt
 // (distance to the nearest ridge and its strength at (R, phi)) and sampleRidges (points along the ridges).
 
-import type { IllFrame, IllParams } from "./feature";
+import type { IllContext, IllFrame, IllParams } from "./feature";
 import { memoOn } from "./feature";
 import { geometryOf } from "./lanesMap";
 import { SKELETON_DEFAULTS, type Skeleton, type SkeletonParams, buildSkeleton, skeletonBand } from "./skeleton";
@@ -45,6 +45,23 @@ export function skeletonMemo(): (frame: IllFrame | null, p: IllParams) => Skelet
   });
   return (frame, p) => build(frame, JSON.stringify(skeletonParamsOf(p)));
 }
+
+const currentMemo = skeletonMemo();
+
+/**
+ * The arm skeleton as the arms draw it NOW (S106, B4): built from the frame and the arms' CURRENT parameters
+ * (context.paramsOf("arms"), their live skel* sliders; skeleton.ts SKELETON_DEFAULTS where the context carries no
+ * accessor), cached; null until the arrays have arrived or for a galaxy with no arm pieces and no bar. Built whatever
+ * the arms' own `skeleton` switch says (read skeletonOn(context.paramsOf("arms")) for that). For any feature that places
+ * things on the arms (the lanes, the pink regions): a value it shapes a plane from belongs in that plane's memo keys -
+ * skeletonKey(context) gives one string that moves exactly when this skeleton does.
+ */
+export function currentSkeleton(context: IllContext): Skeleton | null {
+  return currentMemo(context.frame, context.paramsOf?.("arms") ?? {});
+}
+
+/** A string that changes exactly when currentSkeleton(context)'s parameters do (a memo key; the frame is the other). */
+export const skeletonKey = (context: IllContext): string => JSON.stringify(skeletonParamsOf(context.paramsOf?.("arms") ?? {}));
 
 /** The last band build's time, ms (a diagnostic). */
 export const skeletonBuild = { ms: 0 };
