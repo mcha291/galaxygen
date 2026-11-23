@@ -29,6 +29,11 @@ interface LookCapture {
   viewport?: number;
   /** S107: another stand than the template's (GalaxyView's capture probe `place`), about a point of the disc if `target` is given. */
   stand?: { inclination_deg: number; azimuth_deg: number; radius_kpc: number; fov_deg?: number; target?: { radius_kpc: number; azimuth_deg: number } };
+  /**
+   * S108: the least share of the central square lit, in place of LEAST_LIT, for a frame that is mostly sky (an edge-on
+   * stand: the disc a band across the middle). Never under LEAST_LIT_FLOOR: a wholly black frame still fails.
+   */
+  leastLit?: number;
 }
 
 const here = (name: string) => fileURLToPath(new URL(name, import.meta.url));
@@ -172,6 +177,8 @@ const BLACK = 48;
  * regions and the sparkle over black) 37 % (Milky Way) and 12 % (NGC 4414).
  */
 const LEAST_LIT = 0.45;
+/** S108: the least a capture's own `leastLit` may relax the check to (a black frame lights none of it). */
+const LEAST_LIT_FLOOR = 0.02;
 
 for (const capture of captures()) {
   test(`look: ${capture.name} (${capture.template}, ${capture.look})`, async ({ page }) => {
@@ -238,6 +245,7 @@ for (const capture of captures()) {
     for (const e of errors) console.log(`look: ${capture.name} console error: ${e.slice(0, 2000)}`);
     const shaderErrors = errors.filter((e) => SHADER_ERROR.test(e));
     expect(shaderErrors, `${capture.name}: a shader or program failed`).toEqual([]);
-    expect(lit, `${capture.name}: the central square is nearly all black`).toBeGreaterThan(LEAST_LIT);
+    const least = capture.leastLit === undefined ? LEAST_LIT : Math.max(LEAST_LIT_FLOOR, Math.min(LEAST_LIT, capture.leastLit));
+    expect(lit, `${capture.name}: the central square is nearly all black`).toBeGreaterThan(least);
   });
 }

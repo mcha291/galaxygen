@@ -35,6 +35,10 @@
 
 import type { IllFeature } from "./feature";
 
+/** The handover's default angles (S108), degrees off the disc's axis. */
+export const GRAZE_FROM = 72;
+export const GRAZE_TO = 88;
+
 export const base: IllFeature = {
   id: "base",
   label: "base",
@@ -76,6 +80,23 @@ export const base: IllFeature = {
       key: "coreRadius", label: "core radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1,
       about: "Where the core clearing ends, kpc (a smoothstep from the centre). Illustrative.",
     },
+    // S108: the grazing handover (index.ts GRAZE_DEFAULT): one place for every feature.
+    {
+      key: "grazeFrom", label: "edge-on handover from", min: 30, max: 90, step: 0.5, unit: "°", default: GRAZE_FROM,
+      about: "Where the face-on drawing starts to hand over to the model's own edge-on look, degrees between a sight line and the disc's axis: below it the layer is drawn whole. Illustrative (S108).",
+    },
+    {
+      key: "grazeTo", label: "edge-on handover to", min: 30, max: 90, step: 0.5, unit: "°", default: GRAZE_TO,
+      about: "Where the handover is complete (a smoothstep from the angle above): the thin-screen drawings gone, the model's dust and bulge given back. Illustrative (S108).",
+    },
+    {
+      key: "grazeDust", label: "edge-on dust", min: 0, max: 4, step: 0.05, unit: "×", default: 1,
+      about: "The diffuse dust's placement once the handover is complete (in place of 'dust under it'): 1 the model's own, above it a darker edge-on lane. Illustrative (S108).",
+    },
+    {
+      key: "pointHeight", label: "edge-on point layer", min: 0, max: 0.5, step: 0.005, unit: "kpc", default: 0.1,
+      about: "The scale height the layer's midplane points (the star clouds, the regions) take as the handover goes on, kpc: a thin lit layer edge-on, not a line; none face-on. Illustrative (S108).",
+    },
   ],
   glsl: /* glsl */ `
   uniform float illBaseLift;
@@ -103,9 +124,15 @@ export const base: IllFeature = {
     float normaliser = texelFetch(uGasCells, ivec2(layerGasSector(xy), ring), 0).x;
     return layerLognormal(g, row.y, normaliser);
   }
+  // S108 (the handover, index.ts illGraze): toward edge-on the grain fades to a smooth dust (the map read through the
+  // thin screen is smeared along a grazing ray) and the placement's multiplier goes from depth to grazeDust (1: the
+  // model's own dust, its edge-on lane); exactly as before while illGraze is 1.
+  uniform float illBaseGrazeDust;
   float illBaseGas(vec2 xy, float g) {
-    float m = (illBaseGrain > 0.0 && (illBaseUnshear > 0.0 || illBaseSize != 1.0)) ? illBaseGasMap(xy) : g;
-    return mix(1.0, m, illBaseGrain) * illBaseDepth;
+    float grain = illGraze >= 1.0 ? illBaseGrain : illBaseGrain * illGraze;
+    float depth = illGrazeTo(illBaseGrazeDust, illBaseDepth);
+    float m = (grain > 0.0 && (illBaseUnshear > 0.0 || illBaseSize != 1.0)) ? illBaseGasMap(xy) : g;
+    return mix(1.0, m, grain) * depth;
   }
   // The mend (base.ts twin baseMended): the ring texture's depth row read texel by texel (row 0 of rings), each texel's
   // column as an A_V (each channel's depth over its depth per magnitude, the deepest channel's), and a texel "lost" where
@@ -150,12 +177,17 @@ export const base: IllFeature = {
   }
   vec3 illBaseDepthOf(vec3 d, vec2 rp) {
     if (illBaseMend > 0.0 && rp.x < rHi) d = illBaseMended(d, rp.x);
-    if (illBaseCore > 0.0 && rp.x < illBaseCoreRadius) d *= exp2(-3.32192809 * illBaseCore * (1.0 - smoothstep(0.0, illBaseCoreRadius, rp.x)));
+    // S108: the core's clearing handed back to the model's dust toward edge-on (illGraze).
+    float core = illGraze >= 1.0 ? illBaseCore : illBaseCore * illGraze;
+    if (core > 0.0 && rp.x < illBaseCoreRadius) d *= exp2(-3.32192809 * core * (1.0 - smoothstep(0.0, illBaseCoreRadius, rp.x)));
     return d;
   }
 `,
   hooks: { gas: "illBaseGas", light: "illBaseLight", depth: "illBaseDepthOf" },
   uniforms: (p) => ({
+    // S108: the handover's angles (index.ts GRAZE_GLSL's illGrazeAt), radians off the disc's axis.
+    illGrazeAt: grazeAt(p.grazeFrom ?? GRAZE_FROM, p.grazeTo ?? GRAZE_TO),
+    illBaseGrazeDust: p.grazeDust ?? 1,
     illBaseMend: p.mend ?? 1,
     illBaseCore: p.core ?? 0,
     illBaseCoreRadius: p.coreRadius ?? 1,
@@ -167,6 +199,23 @@ export const base: IllFeature = {
     illBaseRadius: p.radius ?? 12,
   }),
 };
+
+/** The handover's uniform: (from, to) in radians; to at or under from is a hard switch at from. */
+export function grazeAt(fromDeg: number, toDeg: number): [number, number] {
+  const r = Math.PI / 180;
+  return [fromDeg * r, Math.max(toDeg, 1e-3) * r];
+}
+
+/**
+ * The grazing weight (the GLSL's illGrazeOf twin) for a sight line whose angle off the disc's axis is `angleDeg`: 1 up
+ * to `fromDeg`, a smoothstep down to 0 at `toDeg`.
+ */
+export function grazeWeight(angleDeg: number, fromDeg: number, toDeg: number): number {
+  if (angleDeg <= fromDeg) return 1;
+  if (toDeg <= fromDeg) return 0;
+  const t = Math.min(1, Math.max(0, (angleDeg - fromDeg) / (toDeg - fromDeg)));
+  return 1 - t * t * (3 - 2 * t);
+}
 
 /** The lift's multiplier at radius r, kpc (the GLSL's twin). */
 export function baseLift(r: number, lift: number, radius: number): number {
