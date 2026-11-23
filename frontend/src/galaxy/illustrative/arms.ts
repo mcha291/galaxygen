@@ -350,6 +350,14 @@ export const arms: IllFeature = {
       about: "How many lesser arms the skeleton draws between the two major arms (each nudged to the arm pieces' strongest phase near midway). Illustrative (S106).",
     },
     {
+      key: "skeleven", label: "even winding", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "The lesser arms laid evenly through the gaps between the two major arms on every ring (one gap takes half of them rounded up, the other the rest, each at an even share of its gap, read off the majors' own crests), by this share; 0 each lesser on its own winding (they may bunch on one side). Illustrative (S107).",
+    },
+    {
+      key: "skelnudge", label: "lesser nudge", min: 0, max: 60, step: 1, unit: "°", default: 35, perTemplate: { milky_way: 10 },
+      about: "How far a lesser arm may be moved from its place between the majors toward the arm pieces' strongest phase, degrees of the spiral's phase. Illustrative (S107).",
+    },
+    {
       key: "skelspurs", label: "spurs", min: 0, max: 12, step: 1, unit: "", default: 4, perTemplate: { milky_way: 7 },
       about: "How many short spurs leave the skeleton's arms on their outer sides, more open than the arm. Illustrative (S106).",
     },
@@ -366,7 +374,7 @@ export const arms: IllFeature = {
       about: "Two or three short changes of pitch along each arm, this share of the pitch: slight kinks. Illustrative (S106).",
     },
     {
-      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.75},
+      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.85 },
       about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
     },
     {
@@ -386,11 +394,11 @@ export const arms: IllFeature = {
       about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
     },
     {
-      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.8 },
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.55 },
       about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
     },
     {
-      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.7 },
+      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.6 },
       about: "The lesser arms' ridge width as a share of the majors' (glow, grain and lanes alike). Illustrative (S107).",
     },
     {

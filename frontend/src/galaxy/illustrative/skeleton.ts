@@ -65,6 +65,15 @@ export interface SkeletonParams {
   patchScale?: number;
   /** S107: each side of an arm's band widened or narrowed by a fixed noise by up to this share (ragged edges); 0 even edges. */
   ragged?: number;
+  /** S107 (MW2): how far (degrees) a lesser arm's phase may be nudged toward the pieces' strongest phase (NUDGE until MW2). */
+  nudge?: number;
+  /**
+   * S107 (MW2): the lesser arms laid evenly through the gaps between the majors AT EACH RADIUS (the gap from the first
+   * major to the second takes ceil(lesser / 2) of them, the other the rest, each at an even fraction of its gap, read
+   * off the two majors' own crests ring by ring - so their drift, kinks and the opening at the bar do not bunch them), by
+   * this share; 0 each lesser on its own winding from its nominal phase (until MW2).
+   */
+  even?: number;
 }
 
 /** The lesser arms' outer end as a share of the majors' (the default of SkeletonParams.lesserReach). */
@@ -90,6 +99,8 @@ export const SKELETON_DEFAULTS: SkeletonParams = {
   patch: 0,
   patchScale: 0.7,
   ragged: 0,
+  nudge: 35,
+  even: 0,
 };
 
 /** How far (rad) a lesser arm's phase may be nudged toward the pieces' strongest phase. */
@@ -308,17 +319,23 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
   const hist = piecePhases(g.pieces, sense, tanp);
   const bins = hist.length;
   const rL = r0 * p.lesserStart;
+  const nudge = (Math.max(0, p.nudge ?? 35) * Math.PI) / 180;
+  const even = Math.min(1, Math.max(0, p.even ?? 0));
+  // MW2: with `even`, the gap from the first major to the second takes ceil(lesser / 2) lessers, the other the rest.
+  const inGap0 = Math.ceil(lesser / 2);
+  const slot = (k: number): { gap: number; f: number } => (k < inGap0 ? { gap: 0, f: (k + 1) / (inGap0 + 1) } : { gap: 1, f: (k - inGap0 + 1) / (lesser - inGap0 + 1) });
   for (let k = 0; k < lesser; k++) {
-    // The first two midway between the majors; a third and fourth a quarter turn on from them.
-    const nominal = psiA + Math.PI / 2 + (k % 2) * Math.PI + (k >= 2 ? Math.PI / 4 : 0);
+    // The first two midway between the majors; a third and fourth a quarter turn on from them (MW2, `even`: each at
+    // its even fraction of its gap).
+    const nominal = even > 0 ? psiA + slot(k).gap * Math.PI + slot(k).f * Math.PI : psiA + Math.PI / 2 + (k % 2) * Math.PI + (k >= 2 ? Math.PI / 4 : 0);
     let best = nominal;
     let bestH = -1;
     for (let b = 0; b < bins; b++) {
       const psi = ((b + 0.5) * TAU) / bins;
       const d = wrap(psi - nominal);
-      if (Math.abs(d) > NUDGE) continue;
+      if (Math.abs(d) > nudge) continue;
       // Preferring the midway phase a little: a flat histogram leaves it there.
-      const h = hist[b] * (1 - 0.3 * (Math.abs(d) / NUDGE));
+      const h = hist[b] * (1 - 0.3 * (Math.abs(d) / Math.max(1e-9, nudge)));
       if (h > bestH) {
         bestH = h;
         best = nominal + d;
@@ -326,7 +343,9 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
     }
     // (With a growing pitch the phase is carried from the majors' start to the lesser start along the same winding.)
     const phiL = grow > 0 ? best + (sense * lnRef) / tanp + sense * windingTo(lnRef, Math.log(rL), tanp, pitchAt) : best + (sense * Math.log(rL)) / tanp;
-    arms.push(tabulate("lesser", rL, Math.max(rL * 1.2, r1 * (p.lesserReach ?? LESSER_REACH)), phiL, pitchDeg, sense, p.lesserLevel, p.width * (p.lesserWidth ?? 0.85), p, laneKey(p.seed, 2, k, 0), 0.12, pitchAt));
+    const arm = tabulate("lesser", rL, Math.max(rL * 1.2, r1 * (p.lesserReach ?? LESSER_REACH)), phiL, pitchDeg, sense, p.lesserLevel, p.width * (p.lesserWidth ?? 0.85), p, laneKey(p.seed, 2, k, 0), 0.12, pitchAt);
+    if (even > 0) evenOut(arm, arms[0], arms[1], slot(k), best - nominal, even, sense);
+    arms.push(arm);
   }
   // The spurs: off the arms' outer sides at seeded places, more open than the arm, short.
   const parents = arms.slice();
@@ -342,6 +361,41 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
     arms.push(tabulate("spur", rs, rs * Math.exp(length), parent.phi[i], spurPitch, sense, 0.5 * parent.strength[i] + 0.1, p.width * 0.7, { ...p, fade: 0.6, drift: p.drift * 0.5, kink: 0 }, key, 0.15, pitchAt));
   }
   return { arms, sense, pitchDeg, width: p.width };
+}
+
+/** A major's crest azimuth (unwrapped) at ln R, carried on at its end pitch outside its table. */
+function crestAt(a: SkelArm, lnR: number, sense: number): number {
+  const x = (lnR - a.lnR0) / a.dlnR;
+  if (x <= 0) return a.phi[0] + (sense * (lnR - a.lnR0)) / a.tanp[0];
+  if (x >= a.n - 1) return a.phi[a.n - 1] + (sense * (lnR - a.lnR0 - (a.n - 1) * a.dlnR)) / a.tanp[a.n - 1];
+  return lerp(a.phi, x);
+}
+
+/**
+ * MW2 (the even winding): a lesser arm's crest moved, by the share `even`, onto its even fraction `f` of its gap between
+ * the two majors' crests on each ring (gap 0 from the first major round to the second in the sense of growing azimuth,
+ * gap 1 from the second back to the first), plus its nudge `off`; its pitch read back off the moved crest.
+ */
+function evenOut(arm: SkelArm, m0: SkelArm, m1: SkelArm, at: { gap: number; f: number }, off: number, even: number, sense: number): void {
+  let shift = 0;
+  for (let i = 0; i < arm.n; i++) {
+    const lnR = arm.lnR0 + i * arm.dlnR;
+    const p0 = crestAt(m0, lnR, sense);
+    const p1 = crestAt(m1, lnR, sense);
+    const gap0 = wrap(p1 - p0 - Math.PI) + Math.PI;
+    let target = (at.gap === 0 ? p0 + at.f * gap0 : p0 + gap0 + at.f * (TAU - gap0)) + off;
+    if (i === 0) shift = TAU * Math.round((arm.phi[0] - target) / TAU);
+    target += shift;
+    arm.phi[i] += even * (target - arm.phi[i]);
+  }
+  const lo = Math.tan(Math.PI / 180);
+  const hi = Math.tan(Math.PI / 3);
+  for (let i = 0; i < arm.n; i++) {
+    const a = Math.max(0, i - 1);
+    const b = Math.min(arm.n - 1, i + 1);
+    const dphi = (arm.phi[b] - arm.phi[a]) * sense;
+    arm.tanp[i] = dphi > 0 ? Math.min(hi, Math.max(lo, ((b - a) * arm.dlnR) / dphi)) : hi;
+  }
 }
 
 /** The winding (rad) from ln R a to b at base tan(pitch) `tanp` times pitchAt (a constant pitch: (b - a) / tanp). */

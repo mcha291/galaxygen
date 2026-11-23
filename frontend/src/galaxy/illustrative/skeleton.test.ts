@@ -190,3 +190,29 @@ describe("the arm skeleton's S107 controls (the Milky Way's spiral and patchy ar
     expect(band).toEqual(noWing);
   });
 });
+
+describe("the even winding (S107, MW2)", () => {
+  it("leaves the lessers as they were at its defaults", () => {
+    const before = buildSkeleton({ pieces, bar }, { lesser: 3, spurs: 2, open: 0.8, pitchGrow: 0.35 });
+    const at = buildSkeleton({ pieces, bar }, { lesser: 3, spurs: 2, open: 0.8, pitchGrow: 0.35, nudge: 35, even: 0 });
+    expect(at.arms.map((a) => [a.phi, a.tanp])).toEqual(before.arms.map((a) => [a.phi, a.tanp]));
+  });
+
+  it("lays the lessers at even shares of the gaps between the majors on every ring", () => {
+    const sk = buildSkeleton({ pieces, bar }, { lesser: 3, spurs: 0, open: 0.8, pitchGrow: 0.35, drift: 0.3, nudge: 0, even: 1 });
+    const [m0, m1] = sk.arms;
+    const lessers = sk.arms.filter((a) => a.kind === "lesser");
+    const want = [1 / 3, 2 / 3, 1.5];
+    for (const R of [8, 11, 15]) {
+      const p0 = armAt(m0, R)!.phi;
+      const gap0 = ((((armAt(m1, R)!.phi - p0) % TAU) + TAU) % TAU);
+      lessers.forEach((a, k) => {
+        const off = ((((armAt(a, R)!.phi - p0) % TAU) + TAU) % TAU);
+        const share = off < gap0 ? off / gap0 : 1 + (off - gap0) / (TAU - gap0);
+        expect(share).toBeCloseTo(want[k], 3);
+      });
+    }
+    // The pitch read back off the moved crest stays a winding in the pieces' sense.
+    for (const a of lessers) for (let i = 1; i < a.n; i++) expect(a.phi[i]).toBeGreaterThan(a.phi[i - 1]);
+  });
+});
