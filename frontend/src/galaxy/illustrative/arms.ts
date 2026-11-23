@@ -202,7 +202,7 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.3, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.4, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
@@ -250,15 +250,15 @@ export const arms: IllFeature = {
       about: "How far past the ring where the model's arms fade out their pattern is carried outward along the arms' own measured winding, kpc, so the arms reach the disc's edge; 0 the model's end. Illustrative.",
     },
     {
-      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 1.1, ngc_4414: 0.05 },
+      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.3, ngc_4414: 0.05 },
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9 },
+      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.1 },
       about: "The arms' tint and the sparkle's colour turned from blue-white toward cyan-teal by this share; 0 the blue-white. Colour for appearance (S107).",
     },
     {
-      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.6, ngc_4414: -0.6 },
+      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.5, ngc_4414: -0.6 },
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
@@ -342,7 +342,7 @@ export const arms: IllFeature = {
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
-      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.5, ngc_4414: 0.15 },
+      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.2, ngc_4414: 0.15 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
     },
     {
@@ -450,7 +450,7 @@ export const arms: IllFeature = {
       about: "On the skeleton, the model's clustered young light inside the arms' start (where the arms' shaping has not yet faded in: round the bar) kept by this share; 0 none - no blue smudges inside the first arm. Illustrative (S106, B4).",
     },
     {
-      key: "skelyoungcut", label: "young on the crest", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.2 },
+      key: "skelyoungcut", label: "young on the crest", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.85 },
       about: "On the skeleton, the model's clustered young light kept only where the arm band is above this level (smoothly over the next 0.4): the blue clumps on the crests, none in the haze between; 0 as the arms' shaping alone gives it. Illustrative (S106, B4).",
     },
     {
