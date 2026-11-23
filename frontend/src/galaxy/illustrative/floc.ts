@@ -24,6 +24,7 @@
 
 import { ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
 import { FLOC_ARRAYS, FLOC_MAP, type FlocShape, SHAPE_KEYS, buildFlocChannel, geometryOf } from "./flocMap";
+import { buildNetChannel } from "./flocNet";
 
 const CONTROLS: readonly IllControl[] = [
   {
@@ -35,7 +36,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
   { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.8 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
-  { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
+  { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0 }, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
     key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.5 },
     about: "How far the disc's light swells and thins in soft patches about its mean (a multiplier on all the light at each place); 0 a smooth disc. Illustrative.",
@@ -84,6 +85,27 @@ const CONTROLS: readonly IllControl[] = [
   { key: "stretch", label: "lace stretch", min: 0.5, max: 6, step: 0.1, unit: "×", default: 3.2, perTemplate: { ngc_4414: 5 }, about: "How many times longer along the spiral than across it a cell of the lace is. Illustrative." },
   { key: "blotch", label: "lace blotches", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How far the lace's threads thicken and run together into mottled blotches where the dust gathers; 0 threads only. Illustrative." },
   { key: "seed", label: "network seed", min: 0, max: 999, step: 1, unit: "", default: 11, about: "The seed of the drawing: another number, another network of the same kind. Illustrative." },
+  // S106 (builder C): the network drawn in the disc's plane (flocNet.ts) - isotropic feathered dust on short arcs, cream clouds between.
+  {
+    key: "style", label: "network style", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 },
+    about: "0: S105's strands and lace on spiral lattices; 1: S106's network drawn in the disc's plane - feathered dust clouds on short spiral arcs and cream clouds of light between them. Illustrative.",
+  },
+  { key: "netScale", label: "dust cloud size", min: 60, max: 1500, step: 10, unit: "pc", default: 350, perTemplate: { ngc_4414: 350 }, about: "The plane style's dust clouds' size, parsecs (finer octaves ride on them). Illustrative." },
+  { key: "netWarp", label: "dust curl", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, perTemplate: { ngc_4414: 0.8 }, about: "How far the plane is pushed about before the dust is drawn, as a share of the cloud size: the pieces curl and feather. Illustrative." },
+  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "The level of the plane style's noise under which there is no dust: higher, less dust and wider gaps. Illustrative." },
+  { key: "netSoft", label: "dust softness", min: 0.01, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.12 }, about: "How softly a dust cloud's edge fades out. Illustrative." },
+  { key: "netFeather", label: "dust feathers", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.7 }, about: "How far the dust is broken into feathered ridges and holes (a ridged noise); 0 smooth clouds. Illustrative." },
+  { key: "netArc", label: "dust on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.6 }, about: "How far the dust keeps to short arcs on the drawn spiral (the flocculent pattern); 0 anywhere. Illustrative." },
+  { key: "arcWidth", label: "arc width", min: 100, max: 3000, step: 10, unit: "pc", default: 500, perTemplate: { ngc_4414: 500 }, about: "An arc's width across the spiral, parsecs. Illustrative." },
+  { key: "arcStretch", label: "arc length", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 3 }, about: "An arc's length along the spiral over its width. Illustrative." },
+  { key: "netDepth", label: "dust drawn", min: 0, max: 4, step: 0.01, unit: "×", default: 1.6, perTemplate: { ngc_4414: 1.6 }, about: "The plane style's drawn depth, in full filaments (the network depth scales it again, without a rebuild). Illustrative." },
+  { key: "litScale", label: "light cloud size", min: 40, max: 1500, step: 10, unit: "pc", default: 220, perTemplate: { ngc_4414: 220 }, about: "The size of the cream clouds of light between the dust, parsecs. Illustrative." },
+  { key: "litKnots", label: "bright knots", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "How many small bright knots the clouds of light hold (drawn with the clump glow). Illustrative." },
+  { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.7 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
+  {
+    key: "cap", label: "dust ceiling", min: 0.1, max: 20, step: 0.05, unit: "mag", default: 20, perTemplate: { ngc_4414: 1.4 },
+    about: "The veil's depth saturates softly toward this many magnitudes: the thickest dust stays a deep red-brown, never black. Colour for appearance.",
+  },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
@@ -106,7 +128,8 @@ const channel = memoOn((frame: unknown, drawn: unknown, ...values: unknown[]): U
   if (!frame || !drawn) return null;
   const shape = Object.fromEntries(SHAPE_KEYS.map((k, i) => [k, values[i] as number])) as unknown as FlocShape;
   const started = now();
-  const map = buildFlocChannel(geometryOf(frame as IllFrame), shape);
+  const g = geometryOf(frame as IllFrame);
+  const map = shape.style >= 0.5 ? buildNetChannel(g, shape) : buildFlocChannel(g, shape);
   flocBuild.ms = now() - started;
   flocBuild.count += 1;
   return map;
@@ -137,6 +160,7 @@ export const floc: IllFeature = {
   uniform float illFlocBlue;
   uniform float illFlocWarm;
   uniform float illFlocWarmR;
+  uniform float illFlocCap;
   // The feature's byte of the shared map read (flocMap.ts: signed about 128): x the dust, sqrt(shape / ${MAX}); y the
   // patches' level about their mean, in [-0.5, 0.5] (0, which changes nothing, where the light is not known: under a
   // filament, beyond the light's reach, where there is no map - a byte of 0 is never written); z a young clump's
@@ -172,6 +196,8 @@ export const floc: IllFeature = {
     // redness (0 grey, 1 the grains' own).
     float av = illFlocDepth * illFlocInk * illFlocShape(map.x);
     if (av > 0.0) {
+      // S106: the ceiling - the depth saturates softly toward illFlocCap magnitudes (a brown, never black).
+      av = illFlocCap * (1.0 - exp(-av / illFlocCap));
       vec3 law = max(vec3(cloudExt.g) + illFlocRed * (cloudExt - vec3(cloudExt.g)), vec3(0.02 * cloudExt.g));
       veil *= exp(-av * law);
     }
@@ -202,6 +228,7 @@ export const floc: IllFeature = {
       illFlocBlue: p.blue ?? DEFAULTS.blue,
       illFlocWarm: p.warmth ?? DEFAULTS.warmth,
       illFlocWarmR: p.warmRadius ?? DEFAULTS.warmRadius,
+      illFlocCap: p.cap ?? DEFAULTS.cap,
     };
   },
 };
