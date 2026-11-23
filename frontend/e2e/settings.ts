@@ -341,3 +341,19 @@ export const RING_GATE = {
   /** The point gain's control (tuning.ts TUNING_CONTROLS pointGain): a log slider of 1000 positions from min to max. */
   pointGainControl: { min: 0.25, max: 4 },
 } as const;
+
+/**
+ * S105 fix R6 (BUILD_VIII ruling 3, D276): the viewer's default look is "illustrative" (tuning.ts DEFAULT_LOOK). Every
+ * spec and probe that draws the physical look pins it: the browser's look stored as "physical" before each page loads
+ * (galaxygen.look, tuning.ts LOOK_STORAGE_KEY), never left to the default. A page without storage (about:blank) is passed.
+ */
+export const LOOK_KEY = "galaxygen.look";
+export async function pinPhysicalLook(target: { addInitScript(script: (key: string) => void, arg: string): Promise<unknown> }): Promise<void> {
+  await target.addInitScript((key: string) => {
+    try {
+      window.localStorage.setItem(key, "physical");
+    } catch {
+      /* no storage on this page */
+    }
+  }, LOOK_KEY);
+}

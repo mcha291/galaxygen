@@ -202,8 +202,8 @@ for (const capture of captures()) {
     const key = storageKeyFor(capture.template, capture.look);
     await page.addInitScript(
       ([lookKey, look, tuningKey, tuning]) => {
-        if (look === "illustrative") localStorage.setItem(lookKey, look);
-        else localStorage.removeItem(lookKey);
+        // S105 fix R6: each capture's look stored as it is, physical too (the default is the illustrative one since D276).
+        localStorage.setItem(lookKey, look);
         localStorage.setItem(tuningKey, tuning);
       },
       [LOOK_STORAGE_KEY, capture.look, key, JSON.stringify(capture.combination ?? {})] as const,

@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 
 import { type Locator, type Page, expect, test } from "@playwright/test";
 
-import { MODE_BUTTON, PHYSICS_ONLY_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL } from "../settings";
+import { MODE_BUTTON, PHYSICS_ONLY_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL, pinPhysicalLook } from "../settings";
 
 type Labels = { sets: Record<string, { label: string }> };
 const read = <T>(rel: string) => JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf-8")) as T;
@@ -195,6 +195,9 @@ async function walkClouds(page: Page, net: Net, t: string) {
     await mode(page, "field");
   });
 }
+
+// S105 fix R6: the default look is the illustrative one since D276; this file draws the physical look, pinned.
+test.beforeEach(async ({ page }) => pinPhysicalLook(page));
 
 test("the walk: every situation the bundles plan for, marked", async ({ page }) => {
   const started = Date.now();

@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { FLUX_POINTS_SHADER } from "../FluxPoints";
 import pinned from "../fieldFragment.s78.glsl?raw";
 import {
+  DEFAULT_LOOK,
   LOOK_STORAGE_KEY,
   TUNING_DEFAULTS,
   TUNING_STORAGE_KEY,
@@ -53,17 +56,26 @@ function memory() {
 }
 
 describe("the look's storage (S105, D275)", () => {
-  it("keeps the look per browser, physical by default and as the absence of the key", () => {
+  it("keeps the look per browser, illustrative by default (D276) and either look stored as itself", () => {
+    expect(DEFAULT_LOOK).toBe("illustrative");
     const m = memory();
+    expect(loadLook(m)).toBe("illustrative");
+    saveLook("physical", m);
+    expect(m.store.get(LOOK_STORAGE_KEY)).toBe("physical");
     expect(loadLook(m)).toBe("physical");
     saveLook("illustrative", m);
     expect(m.store.get(LOOK_STORAGE_KEY)).toBe("illustrative");
     expect(loadLook(m)).toBe("illustrative");
-    saveLook("physical", m);
-    expect(m.store.has(LOOK_STORAGE_KEY)).toBe(false);
     m.store.set(LOOK_STORAGE_KEY, "nonsense");
-    expect(loadLook(m)).toBe("physical");
-    expect(loadLook(null)).toBe("physical");
+    expect(loadLook(m)).toBe("illustrative");
+    expect(loadLook(null)).toBe("illustrative");
+  });
+
+  it("is pinned to the physical look in every e2e spec and probe that loads the viewer (S105 fix R6)", () => {
+    const read = (p: string) => readFileSync(new URL(`../../../e2e/${p}`, import.meta.url), "utf-8");
+    for (const p of ["picture.spec.ts", "context.spec.ts", "noise.spec.ts", "walk/walk.probe.ts"]) expect(read(p)).toContain("test.beforeEach(async ({ page }) => pinPhysicalLook(page));");
+    for (const p of ["smooth/smooth.probe.ts", "compile/march.probe.ts"]) expect(read(p)).toContain("await pinPhysicalLook(context);");
+    expect(read("look.spec.ts")).toContain("localStorage.setItem(lookKey, look);");
   });
 
   it("keeps the physical look's tuning under the key of before, the illustrative look's under its own", () => {

@@ -33,7 +33,7 @@ import { fileURLToPath } from "node:url";
 
 import { type APIRequestContext, type Page, type Request, expect, request, test } from "@playwright/test";
 
-import { CHOOSING_VIEWPORT, DEFAULT_TEMPLATE, MODE_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL } from "../settings";
+import { CHOOSING_VIEWPORT, DEFAULT_TEMPLATE, MODE_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL, pinPhysicalLook } from "../settings";
 
 const SITE = (process.env.GALAXYGEN_URL ?? "http://127.0.0.1:8060").replace(/\/+$/, "");
 const RUNS = Number(process.env.GALAXYGEN_RUNS ?? 5);
@@ -474,6 +474,7 @@ test(`smoothness: ${STATE}, ${RUNS} run(s) on ${SITE}`, async ({ browser }) => {
     const tag = `smooth-${STATE}-${n}`;
     // A fresh context per run: no cookies, no storage, an empty HTTP cache (the page's files are asked again).
     const context = await browser.newContext({ viewport: CHOOSING_VIEWPORT, deviceScaleFactor: 1 });
+    await pinPhysicalLook(context); // S105 fix R6: the physical look pinned (the default is the illustrative one since D276)
     // The main thread's long tasks, kept for the split (a browser instrument; the viewer is not touched).
     await context.addInitScript(() => {
       const kept: number[][] = [];

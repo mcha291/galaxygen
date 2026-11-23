@@ -10,7 +10,7 @@ import { type Page, expect, test } from "@playwright/test";
 
 import type { LensCamera } from "../src/galaxy/capture";
 import { CONTEXT_LOST_WORDS } from "../src/galaxy/contextLoss";
-import { CHOOSING_VIEWPORT, MODE_BUTTON, READY, SELECTION_TEXT, STAND_TOLERANCE, TEMPLATE_LABEL } from "./settings";
+import { CHOOSING_VIEWPORT, MODE_BUTTON, READY, SELECTION_TEXT, STAND_TOLERANCE, TEMPLATE_LABEL, pinPhysicalLook } from "./settings";
 
 declare global {
   interface Window {
@@ -115,6 +115,9 @@ async function framesRun(page: Page, ms: number): Promise<boolean> {
     return w.__contextSpecSeen !== w.__galaxygenMarchSub;
   });
 }
+
+// S105 fix R6: the default look is the illustrative one since D276; this file draws the physical look, pinned.
+test.beforeEach(async ({ page }) => pinPhysicalLook(page));
 
 test("a lost WebGL context: the loss prevented, the frame loop paused under a status line, and the restored context draws the field stand's frame again, in both modes", async ({ page }) => {
   test.setTimeout(READY.timeoutMs + 120_000);

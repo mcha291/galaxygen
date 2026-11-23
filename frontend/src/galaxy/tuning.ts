@@ -595,20 +595,22 @@ export const LOOK_STORAGE_KEY = "galaxygen.look";
 /** A value read as a look; null if it is none. */
 export const lookOf = (v: unknown): Look | null => (typeof v === "string" && (LOOKS as readonly string[]).includes(v) ? (v as Look) : null);
 
-/** The stored look, "physical" where none is stored or storage is unavailable. */
+/** The look of a browser that has never chosen one. BUILD_VIII ruling 3, D276 - the owner's to re-rule; one line. */
+export const DEFAULT_LOOK: Look = "illustrative";
+
+/** The stored look, DEFAULT_LOOK where none (or none valid) is stored or storage is unavailable. */
 export function loadLook(storage: Pick<Storage, "getItem"> | null = safeStorage()): Look {
   try {
-    return lookOf(storage?.getItem(LOOK_STORAGE_KEY)) ?? "physical";
+    return lookOf(storage?.getItem(LOOK_STORAGE_KEY)) ?? DEFAULT_LOOK;
   } catch {
-    return "physical";
+    return DEFAULT_LOOK;
   }
 }
 
-/** Keeps the look; the physical look (the default) is stored as the absence of the key. */
+/** Keeps the look, either look stored as itself (S105 fix R6: a chosen look is kept whatever the default becomes). */
 export function saveLook(look: Look, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage()): void {
   try {
-    if (look === "physical") storage?.removeItem(LOOK_STORAGE_KEY);
-    else storage?.setItem(LOOK_STORAGE_KEY, look);
+    storage?.setItem(LOOK_STORAGE_KEY, look);
   } catch {
     // Private windows and blocked site data: the look holds for this visit.
   }
