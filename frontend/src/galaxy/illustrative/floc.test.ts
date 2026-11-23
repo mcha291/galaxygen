@@ -372,3 +372,37 @@ describe("the feature", () => {
     expect(illustrativeFragment(fieldFragment())).toContain("float illFlocAv(vec2 rp) {");
   });
 });
+
+describe("the dust gathered on arcs (S107)", () => {
+  it("is a uniform (no rebuild), off on the Milky Way and outside the plane style, and applied to the threads and the mesh alike", () => {
+    const context = { template: "ngc_4414", frame: FRAME };
+    const [plane] = floc.map!.build(P4414, context);
+    expect(floc.map!.build({ ...P4414, arcGate: 0.3, arcClear: 0.5, arcLevel: 0.2, arcPeak: 2 }, context)[0]).toBe(plane);
+    const mw = floc.uniforms!(paramsOf(floc, illDefaults("milky_way")), { template: "milky_way", frame: FRAME });
+    expect((mw.illFlocGate as number[])[0]).toBe(0);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), context);
+    expect((ngc.illFlocGate as number[])[0]).toBeGreaterThan(0);
+    const lattice = floc.uniforms!({ ...paramsOf(floc, illDefaults("ngc_4414")), style: 0 }, context);
+    expect((lattice.illFlocGate as number[])[0]).toBe(0);
+    const glsl = floc.glsl!;
+    expect(glsl).toMatch(/illFlocShape\(illFlocRead\(rp\)\.x\) \* \(illFlocStyle > 0\.5 \? illFlocGateAt\(rp\)/);
+    expect(glsl).toContain("float gate = illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0;");
+    expect(glsl).toContain("if (illFlocStyle > 0.5 && av > 0.0) av *= gate;");
+  });
+});
+
+describe("the nucleus point and the light's shade (S107)", () => {
+  it("are uniforms off on the Milky Way, NGC 4414's glow dimmed about a compact lifted point", () => {
+    const mw = floc.uniforms!(paramsOf(floc, illDefaults("milky_way")), { template: "milky_way", frame: FRAME });
+    expect((mw.illFlocLitDim as number[])[3]).toBe(0);
+    expect((mw.illFlocNucPt as number[])[2]).toBe(0);
+    expect((mw.illFlocLitDim as number[]).slice(0, 2)).toEqual([1, 1]);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), { template: "ngc_4414", frame: FRAME });
+    const [radius, , dim, glowR] = ngc.illFlocNucPt as number[];
+    expect((ngc.illFlocLitDim as number[])[3]).toBeGreaterThan(0);
+    expect(dim).toBeGreaterThan(0);
+    expect(radius).toBeLessThan(glowR);
+    const [plane] = floc.map!.build(P4414, { template: "ngc_4414", frame: FRAME });
+    expect(floc.map!.build({ ...P4414, coreGain: 1, coreRadius: 0.3, glowDim: 0.1, grainDim: 0.5, puffDim: 0, clearFloor: 0.2 }, { template: "ngc_4414", frame: FRAME })[0]).toBe(plane);
+  });
+});
