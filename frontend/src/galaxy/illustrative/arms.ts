@@ -405,6 +405,10 @@ export const arms: IllFeature = {
       about: "A multiplier on the arm pieces' pitch (their length-weighted median) for the skeleton's winding: below 1 more turns before the edge. Illustrative (S106).",
     },
     {
+      key: "skelpitchmin", label: "pitch floor", min: 2, max: 30, step: 0.1, unit: "deg", default: 10,
+      about: "The least pitch the skeleton winds at before the multiplier above (the pieces' median raised to it): a rerolled galaxy whose pieces are nearly circular is drawn as a spiral, not rings; above a galaxy's own median it opens that spiral (the Milky Way's own is 12.6). Illustrative (S108).",
+    },
+    {
       key: "skeldrift", label: "pitch drift", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15,
       about: "The skeleton's pitch drifts slowly along each arm by about this share (a seeded noise of the viewer's own). Illustrative (S106).",
     },
