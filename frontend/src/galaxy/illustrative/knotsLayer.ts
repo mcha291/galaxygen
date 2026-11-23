@@ -138,7 +138,8 @@ ${illGlsl}
     // The arm weight and the radial fade are in aLight and aCore already (regionAttributes, on the CPU).
     float side = 1000.0 * depth / pxPerUnit;
     float area = side * side * depth / dist;
-    vec3 ext = dustOn > 0.5 ? exp(-dustTo(position) * dustStrength) : vec3(1.0);
+    // The field's edge taper (edge.ts, the march's illEdge), so the regions end where the field's light does.
+    vec3 ext = (dustOn > 0.5 ? exp(-dustTo(position) * dustStrength) : vec3(1.0)) * illEdge(length(position.xz));
     vLight = aLight * gain / area * ext;
     vCore = aCore * gain * coreGain / area * ext;
     float rpx = aRadius / side;

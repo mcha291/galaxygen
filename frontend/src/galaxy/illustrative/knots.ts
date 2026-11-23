@@ -14,66 +14,66 @@ import { KnotsLayer } from "./knotsLayer";
 const CONTROLS: readonly IllControl[] = [
   { key: "draw", label: "regions drawn", min: 0, max: 1, step: 1, default: 1, about: "1: the HII regions drawn as illustrative nebulae in place of the knots; 0: the default knots. Illustrative." },
   {
-    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 30, perTemplate: { milky_way: 200, ngc_4414: 30 },
+    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 400, ngc_4414: 40 },
     about: "A multiplier on the regions' light over the knots' gain (the field's scale and the exposure). Illustrative.",
   },
   {
-    key: "lumPower", label: "light compression", min: 0.05, max: 1, step: 0.01, unit: "power", default: 0.35, perTemplate: { milky_way: 0.3, ngc_4414: 0.4 },
+    key: "lumPower", label: "light compression", min: 0.05, max: 1, step: 0.01, unit: "power", default: 0.3, perTemplate: { milky_way: 0.3, ngc_4414: 0.35 },
     about: "Each region's light drawn as ref (L / ref)^power, ref the 90th percentile: below 1 the string reads evenly, not as a few bright dots. Illustrative.",
   },
   {
-    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 20000,
-    about: "Only the brightest this many regions by their own light are drawn. Illustrative.",
+    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 1200, ngc_4414: 3000 },
+    about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
-    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 8, ngc_4414: 4 },
+    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 8, ngc_4414: 6 },
     about: "A multiplier on each region's own radius (hii_radius) for its drawn radius. Illustrative.",
   },
   {
-    key: "sizeMin", label: "region radius floor", min: 0, max: 400, step: 5, unit: "pc", default: 60, perTemplate: { milky_way: 70, ngc_4414: 30 },
+    key: "sizeMin", label: "region radius floor", min: 0, max: 400, step: 5, unit: "pc", default: 40, perTemplate: { milky_way: 40, ngc_4414: 50 },
     about: "The smallest drawn radius, pc: regions read as blobs at galaxy scale. Illustrative.",
   },
   {
-    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 300, perTemplate: { milky_way: 260, ngc_4414: 120 },
+    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 150, ngc_4414: 180 },
     about: "The largest drawn radius, pc. Illustrative.",
   },
   {
-    key: "armPower", label: "arm weight power", min: 0, max: 8, step: 0.1, unit: "power", default: 2, perTemplate: { milky_way: 2, ngc_4414: 1 },
+    key: "armPower", label: "arm weight power", min: 0, max: 8, step: 0.1, unit: "power", default: 3, perTemplate: { milky_way: 3, ngc_4414: 1 },
     about: "Each region weighted by min(1, (t / level)^power), t the gas's own contrast at its place (the dust's placement) between its ring's 10th (0) and 95th (1) percentiles: regions between the arms fade. 0: none. Illustrative.",
   },
   {
-    key: "armLevel", label: "arm weight level", min: 0.05, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.6, ngc_4414: 0.5 },
+    key: "armLevel", label: "arm weight level", min: 0.05, max: 1, step: 0.01, unit: "", default: 0.8, perTemplate: { milky_way: 0.8, ngc_4414: 0.5 },
     about: "The ring-relative contrast t at and above which a region is drawn whole. Illustrative.",
   },
   {
-    key: "armFlat", label: "arm weight off the arms' reach", min: 0, max: 1, step: 0.01, unit: "", default: 0.2, perTemplate: { milky_way: 0.2, ngc_4414: 0.3 },
+    key: "armFlat", label: "arm weight off the arms' reach", min: 0, max: 1, step: 0.01, unit: "", default: 0.05,
     about: "The t taken where a ring has no contrast (no arm placed there, the far disc). Illustrative.",
   },
   {
-    key: "fadeR", label: "regions fade radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 14, perTemplate: { milky_way: 14, ngc_4414: 11 },
+    key: "fadeR", label: "regions fade radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 11, perTemplate: { milky_way: 11, ngc_4414: 5.5 },
     about: "Past this radius the regions fade out, over the fade width. Illustrative.",
   },
-  { key: "fadeWidth", label: "regions fade width", min: 0.5, max: 15, step: 0.5, unit: "kpc", default: 4, about: "The width of the outer fade, kpc. Illustrative." },
+  { key: "fadeWidth", label: "regions fade width", min: 0.5, max: 15, step: 0.5, unit: "kpc", default: 3, about: "The width of the outer fade, kpc. Illustrative." },
   {
     key: "innerR", label: "regions inner radius", min: 0, max: 8, step: 0.1, unit: "kpc", default: 0, perTemplate: { milky_way: 1.5, ngc_4414: 1 },
     about: "Inside this radius the regions fade in over the kpc below it (0: none). Illustrative.",
   },
   {
-    key: "pink", label: "pink", min: 0, max: 1, step: 0.01, unit: "", default: 0.8, perTemplate: { milky_way: 0.9, ngc_4414: 0.4 },
+    key: "pink", label: "pink", min: 0, max: 1, step: 0.01, unit: "", default: 0.9, perTemplate: { milky_way: 0.9, ngc_4414: 0.2 },
     about: "The regions' colour mixed from their own lines' colour (0) toward H-alpha pink (1). Colour for appearance.",
   },
   {
     key: "magenta", label: "pink to magenta", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.1, ngc_4414: 0.1 },
     about: "The pink's hue, from a red pink (0) to magenta (1). Colour for appearance.",
   },
-  { key: "blobs", label: "sub-blobs", min: 1, max: 4, step: 1, default: 3, about: "Each region drawn as this many soft sub-blobs, placed by a hash of its index (stable). Illustrative." },
+  { key: "blobs", label: "sub-blobs", min: 1, max: 4, step: 1, default: 4, about: "Each region drawn as this many soft sub-blobs, placed by a hash of its index (stable). Illustrative." },
   {
-    key: "irregular", label: "irregularity", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7,
+    key: "irregular", label: "irregularity", min: 0, max: 1.5, step: 0.01, unit: "", default: 1,
     about: "How far the sub-blobs lie from the centre, in region radii: 0 one round blob. Illustrative.",
   },
   { key: "soft", label: "softness", min: 0.2, max: 2, step: 0.01, unit: "×", default: 1, about: "A multiplier on every sub-blob's Gaussian width. Illustrative." },
   {
-    key: "coreGain", label: "core gain", min: 0, max: 5, step: 0.01, unit: "×", default: 0.5, perTemplate: { milky_way: 0.5, ngc_4414: 1.2 },
+    key: "coreGain", label: "core gain", min: 0, max: 5, step: 0.01, unit: "×", default: 0.8, perTemplate: { milky_way: 0.8, ngc_4414: 2 },
     about: "The white-blue core's light (the young cluster) over the region's own. Illustrative.",
   },
   { key: "coreSize", label: "core size", min: 0.02, max: 0.6, step: 0.01, unit: "×", default: 0.1, about: "The core's Gaussian width in region radii (at least 0.6 px). Illustrative." },

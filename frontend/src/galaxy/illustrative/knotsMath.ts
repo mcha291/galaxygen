@@ -7,7 +7,7 @@
 export const MAX_BLOBS = 4;
 
 /** H-alpha pink and magenta as linear RGB, each of mean 1 (colour for appearance; the grade runs after). */
-export const PINK: readonly [number, number, number] = norm3([1.0, 0.3, 0.45]);
+export const PINK: readonly [number, number, number] = norm3([1.0, 0.26, 0.34]);
 export const MAGENTA: readonly [number, number, number] = norm3([1.0, 0.25, 0.85]);
 /** The young cluster's white-blue (mean 1). */
 export const CORE_COLOUR: readonly [number, number, number] = norm3([0.75, 0.9, 1.3]);
