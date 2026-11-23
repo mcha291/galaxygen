@@ -139,15 +139,22 @@ export function ovalIn(sk: Skeleton, R: number, phi: number): number {
 /** ovalIn with the ray's 1 - e(phi) given (the band's resample: one per row). */
 function ovalInE(o: SkelOval, R: number, oneMinusE: number): number {
   if (R >= o.r2 || oneMinusE <= 0) return R;
+  // h(R') = R' (1 - k w(R')) - R is increasing: Newton from R / (1 - k), kept in [R, r2], then a few bisections' worth.
+  const k = oneMinusE;
   let lo = R;
-  let hi = Math.min(o.r2, R / Math.max(1e-3, 1 - oneMinusE));
-  if (hi <= lo) return R;
-  for (let k = 0; k < 22; k++) {
-    const mid = 0.5 * (lo + hi);
-    if (mid * (1 - oneMinusE * ovalWeight(o, mid)) < R) lo = mid;
-    else hi = mid;
+  let hi = Math.min(o.r2, R / Math.max(1e-3, 1 - k));
+  let x = hi;
+  for (let it = 0; it < 8; it++) {
+    const h = x * (1 - k * ovalWeight(o, x)) - R;
+    if (Math.abs(h) < 1e-7 * (1 + R)) return x;
+    if (h > 0) hi = x;
+    else lo = x;
+    const dx = 1e-4 * (o.r2 - o.r1);
+    const d = ((x + dx) * (1 - k * ovalWeight(o, x + dx)) - R - h) / dx;
+    const next = d > 0 ? x - h / d : 0.5 * (lo + hi);
+    x = next > lo && next < hi ? next : 0.5 * (lo + hi);
   }
-  return 0.5 * (lo + hi);
+  return x;
 }
 
 /** The lesser arms' outer end as a share of the majors' (the default of SkeletonParams.lesserReach). */
@@ -628,30 +635,39 @@ export function bandProfile(d: number, width: number, wing: number): number {
  */
 export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null = null): Float32Array {
   const o = sk.oval;
-  if (!o) return skeletonBandOn(sk, width, height, rHi, wingAll, plainMean, null);
-  const plainAll = plainMean ? new Float32Array(width * height) : null;
-  const raw = skeletonBandOn(sk, width, height, rHi, wingAll, null, plainAll);
-  const out = raw.slice();
+  if (!o) return skeletonBandOn(sk, width, height, rHi, wingAll, plainMean, null, 0);
+  // Only the columns inside the oval's fade move (and read from no further out than its fade): the unclumped band kept
+  // for those alone, each row resampled in place from a copy of its first columns.
   const cLast = Math.min(width - 1, Math.ceil((o.r2 / rHi) * width));
-  const plainOut = plainAll ? plainAll.slice() : null;
+  const cols = Math.min(width, cLast + 2);
+  const plainAll = plainMean ? new Float32Array(cols * height) : null;
+  const out = skeletonBandOn(sk, width, height, rHi, wingAll, plainMean, plainAll, cols);
+  const rowCopy = new Float32Array(cols);
+  const plainCopy = new Float32Array(cols);
+  const plainSum = plainMean ? new Float64Array(cols) : null;
+  // The skeleton radius of each column centre's plane radius, by a forward sweep: ovalOut is increasing in R'.
+  const fwd = new Float64Array(cols);
   for (let j = 0; j < height; j++) {
-    const oneMinusE = 1 - ovalEllipse(o, ((j + 0.5) / height) * TAU);
+    const phi = ((j + 0.5) / height) * TAU;
     const row = j * width;
+    for (let c = 0; c < cols; c++) {
+      rowCopy[c] = out[row + c];
+      if (plainAll) plainCopy[c] = plainAll[j * cols + c];
+      fwd[c] = ovalOut(sk, ((c + 0.5) / width) * rHi, phi);
+    }
+    let i = 0;
     for (let c = 0; c <= cLast; c++) {
-      const Rs = ovalInE(o, ((c + 0.5) / width) * rHi, oneMinusE);
-      const x = Math.min(width - 1, Math.max(0, (Rs / rHi) * width - 0.5));
-      const i0 = Math.floor(x);
-      const i1 = Math.min(width - 1, i0 + 1);
-      const f = x - i0;
-      out[row + c] = raw[row + i0] * (1 - f) + raw[row + i1] * f;
-      if (plainOut && plainAll) plainOut[row + c] = plainAll[row + i0] * (1 - f) + plainAll[row + i1] * f;
+      const R = ((c + 0.5) / width) * rHi;
+      while (i < cols - 2 && fwd[i + 1] < R) i++;
+      // Between the column centres i and i + 1 of the skeleton's grid (before the first: column 0).
+      const f = R <= fwd[0] ? 0 : Math.min(1, Math.max(0, (R - fwd[i]) / Math.max(1e-12, fwd[i + 1] - fwd[i])));
+      const i0 = R <= fwd[0] ? 0 : i;
+      const i1 = Math.min(cols - 1, i0 + 1);
+      out[row + c] = rowCopy[i0] * (1 - f) + rowCopy[i1] * f;
+      if (plainSum) plainSum[c] += plainCopy[i0] * (1 - f) + plainCopy[i1] * f;
     }
   }
-  if (plainMean && plainOut) {
-    plainMean.fill(0);
-    for (let j = 0; j < height; j++) for (let c = 0; c < width; c++) plainMean[c] += plainOut[j * width + c];
-    for (let c = 0; c < width; c++) plainMean[c] /= height;
-  }
+  if (plainMean && plainSum) for (let c = 0; c <= cLast; c++) plainMean[c] = plainSum[c] / height;
   return out;
 }
 
@@ -662,7 +678,7 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
  * if given (`width` values), takes each ring's mean of the band without the arms' clumps (the light kept per ring is
  * the unclumped arm's, so a ring crossing a bright clump is not dimmed between the arms - concentric bands otherwise).
  */
-function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null, plainAll: Float32Array | null): Float32Array {
+function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null, plainAll: Float32Array | null, plainCols: number): Float32Array {
   const out = new Float32Array(width * height);
   // The unclumped band of the ring in hand (one column: every arm crossing it is drawn before the next ring).
   const plain = plainMean ? new Float32Array(height) : null;
@@ -691,7 +707,7 @@ function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number
       const reachKpc = wing > 0 ? Math.max(3 * 3.2 * s, core) : core;
       const ray = rays[ai];
       if (ray) {
-        rayColumn(a, ray, R, c, width, height, reachKpc, wing, out, plain, plainAll);
+        rayColumn(a, ray, R, c, width, height, reachKpc, wing, out, plain, c < plainCols ? plainAll : null, plainCols);
         // (the ring reading from the hug's end on)
         if (!(lnR >= a.lnR0 + (a.rayRing ?? Infinity) * a.dlnR)) continue;
       }
@@ -744,7 +760,7 @@ function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number
         const o = row * width + c;
         if (v > out[o]) out[o] = v;
         if (plain && u > plain[row]) plain[row] = u;
-        if (plainAll && u > plainAll[o]) plainAll[o] = u;
+        if (plainAll && c < plainCols && u > plainAll[row * plainCols + c]) plainAll[row * plainCols + c] = u;
       }
     }
     if (plain && plainMean) {
@@ -834,7 +850,7 @@ function rayTable(a: SkelArm, sense: number, height: number): RayTable {
  * point's distance across the crest (R_k - R) cos(pitch), its strength, clumps and sides there; as the ring reading's
  * arithmetic otherwise (the wing even and unclumped, the plain band for the ring means).
  */
-function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: number, height: number, reachKpc: number, wing: number, out: Float32Array, plain: Float32Array | null, plainAll: Float32Array | null = null): void {
+function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: number, height: number, reachKpc: number, wing: number, out: Float32Array, plain: Float32Array | null, plainAll: Float32Array | null = null, plainCols = 0): void {
   const { K, x, r, cos } = ray;
   const clumped = !!(a.patch || a.wIn);
   for (let j = 0; j < height; j++) {
@@ -872,7 +888,7 @@ function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: numbe
     const o = j * width + c;
     if (v > out[o]) out[o] = v;
     if (plain && u > plain[j]) plain[j] = u;
-    if (plainAll && u > plainAll[o]) plainAll[o] = u;
+    if (plainAll && u > plainAll[j * plainCols + c]) plainAll[j * plainCols + c] = u;
   }
 }
 
