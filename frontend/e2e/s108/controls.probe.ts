@@ -163,3 +163,52 @@ if (ASKED.includes("physonly")) {
     });
   }
 }
+
+/** The disc's axis (scene y) projected on the screen: its angle counter-clockwise from the screen's up, degrees. */
+async function axisAngle(page: Page): Promise<number> {
+  const cam = await page.evaluate(() => {
+    const probe = (window as unknown as { __galaxygenRingProfile?: (e: number[]) => { camera: { up: number[]; right: number[] } } }).__galaxygenRingProfile;
+    return probe ? probe([0, 1]).camera : null;
+  });
+  if (!cam) throw new Error("no ring probe");
+  return (Math.atan2(-cam.right[1], cam.up[1]) * 180) / Math.PI;
+}
+
+if (ASKED.includes("orbit")) {
+  for (const template of TEMPLATES) {
+    test(`the roll is held through an orbit on ${template}`, async ({ page }) => {
+      const net = await open(page, "illustrative", template);
+      save(`${template}-orbit-stand`, await settle(page, net));
+      const home = await page.evaluate(() => window.__galaxygenCapture!.where());
+      // Whether the camera holds still at the stand (the march's sub-sample cut, T14): read twice, a second apart.
+      const held = [];
+      for (let k = 0; k < 2; k += 1) {
+        held.push(await page.evaluate(() => ({ where: window.__galaxygenCapture!.where(), sub: (window as unknown as { __galaxygenMarchSub?: unknown }).__galaxygenMarchSub })));
+        await page.waitForTimeout(1000);
+      }
+      console.log(`${template}: at the stand, twice: ${JSON.stringify(held)}`);
+      const rows: string[] = [`stand ${JSON.stringify(home)}: axis at ${(await axisAngle(page)).toFixed(3)} deg`];
+      const inclinations = template === "milky_way" ? [60] : [home.inclination_deg];
+      for (const inc of inclinations) {
+        for (const az of [0, 90, 180, 270]) {
+          await page.evaluate((v) => window.__galaxygenCapture!.place(v), { ...home, inclination_deg: inc, azimuth_deg: az });
+          const png = await settle(page, net);
+          save(`${template}-orbit-i${Math.round(inc)}-az${az}`, png);
+          rows.push(`inclination ${inc.toFixed(1)}, azimuth ${az}: axis at ${(await axisAngle(page)).toFixed(3)} deg`);
+        }
+      }
+      // A drag, as the owner orbits: a third of the canvas to the right, from the stand.
+      await page.evaluate((v) => window.__galaxygenCapture!.place(v), home);
+      await settle(page, net);
+      const box = (await page.locator("canvas").first().boundingBox())!;
+      await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.5);
+      await page.mouse.down();
+      for (let k = 1; k <= 20; k += 1) await page.mouse.move(box.x + box.width * (0.4 + (0.33 * k) / 20), box.y + box.height * 0.5);
+      await page.mouse.up();
+      save(`${template}-orbit-drag`, await settle(page, net));
+      const dragged = await page.evaluate(() => window.__galaxygenCapture!.where());
+      rows.push(`dragged to ${JSON.stringify(dragged)}: axis at ${(await axisAngle(page)).toFixed(3)} deg`);
+      for (const r of rows) console.log(`${template}: ${r}`);
+    });
+  }
+}
