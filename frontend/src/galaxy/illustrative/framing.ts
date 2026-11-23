@@ -13,7 +13,7 @@ export const framing: IllFeature = {
   controls: [
     {
       key: "scale", label: "framing", min: 0.3, max: 1.5, step: 0.01, unit: "×", default: 1,
-      perTemplate: { milky_way: 0.96, ngc_4414: 0.62 },
+      perTemplate: { milky_way: 0.9, ngc_4414: 0.62 },
       about: "A multiplier on the template camera's framing radius (half the picture's height at the centre): below 1 closer. Remakes the view's camera. Illustrative.",
     },
     {
