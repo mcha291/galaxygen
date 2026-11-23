@@ -27,7 +27,7 @@ import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.8, ngc_4414: 0.5 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.4, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
@@ -52,7 +52,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "How far to the inner (concave) side of an arm's ridge the lane's centre line lies, parsecs; below 0 the outer side. Illustrative.",
   },
   {
-    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 60, ngc_4414: 100 },
+    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 90, ngc_4414: 100 },
     about: "One strand's full width at half depth, parsecs (it swells and thins along its length by the clumping). Illustrative.",
   },
   { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 1, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },

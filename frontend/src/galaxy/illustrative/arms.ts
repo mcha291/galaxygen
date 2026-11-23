@@ -390,7 +390,7 @@ export const arms: IllFeature = {
       about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.6, ngc_4414: 1 },
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 3.2, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
@@ -402,7 +402,7 @@ export const arms: IllFeature = {
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
-      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3, ngc_4414: 0 },
+      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.1, ngc_4414: 0 },
       about: "The inner disc's starlight about the bar (inside 1.6 of its scaled half-length, outside its ellipse) dimmed by this share, so the bar stands on a darker ground; 0 none. Illustrative (S105).",
     },
     {

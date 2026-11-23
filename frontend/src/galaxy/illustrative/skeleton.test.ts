@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonPlanes } from "./armsSkeleton";
 import type { Piece } from "./lanesMap";
 import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
 
@@ -88,6 +89,21 @@ describe("the arm skeleton", () => {
     const h0 = armAt(none.arms[0], 9)!;
     const r0 = Math.round(((((h0.phi + Math.PI / 2) % TAU) + TAU) % TAU) / TAU * 360 - 0.5);
     expect(b0[r0 * 400 + Math.round((9 / 30) * 400 - 0.5)]).toBeLessThan(1e-3);
+  });
+
+  it("builds the arms' planes of the shared map within a slider's budget", () => {
+    const sk = buildSkeleton({ pieces, bar }, { width: 0.45 });
+    const n = new Float64Array(400 * 360).fill(1);
+    skeletonPlanes(sk, 2000, 3600, 30, 0.15, 32, { n, nR: 400, nPhi: 360 });
+    const t0 = performance.now();
+    const planes = skeletonPlanes(sk, 2000, 3600, 30, 0.15, 32, { n, nR: 400, nPhi: 360 });
+    const ms = performance.now() - t0;
+    console.log(`skeleton planes: ${ms.toFixed(0)} ms`);
+    expect(ms).toBeLessThan(600);
+    expect(planes.ringMean).toHaveLength(SKEL_MEAN_SAMPLES);
+    expect(planes.flags.every((f) => f === 65535)).toBe(true);
+    // A carries the contrast: 1 over SKEL_CONTRAST_MAX everywhere for a flat field.
+    expect(planes.mean[12345]).toBe(Math.round(255 / SKEL_CONTRAST_MAX));
   });
 
   it("samples points along the ridges, deterministically", () => {
