@@ -19,7 +19,19 @@
 //     transmission falls - the mean of exp(-tau g) is above exp(-tau) - and this gives it back).
 //   - lift and radius: the disc's starlight lifted by lift stops toward radius (smoothstep from the centre), so the
 //     Milky Way's disc stays nearly as bright to its soft edge as the goal's airbrushed haze (the hook `light`).
-// Display-only (D275, ruling 4): nothing published moves; the points' dust takes the same map (FluxPoints' gasAt).
+//   - mend (S106, builder E; the hook `depth`): the published diffuse dust arrives as a face-on transmission per channel
+//     in float32; at NGC 4414's centre the depths are about 97 / 122 / 159 nepers (R, V, B), past float32's smallest
+//     number, so G and B read a transmission of 0 inside ~0.3 kpc, B alone out to ~0.53 kpc, and all three in the ring
+//     at 0.11 kpc, and regimes.ts depthOf reads 0 as no dust: a blue-white nucleus and a bright ring. The model's depths
+//     are exactly in the reddening ratio (cloudExt; checked to 1e-5 on both templates), so a lost channel is rebuilt
+//     from the deepest one, and an all-lost texel from its two deep neighbours. Only reads touching a lost texel change:
+//     the Milky Way (never underflows) and every healthy ring come back bit for bit. The physical look keeps the leak
+//     (the physical fix is the owner's to rule).
+//   - core and coreRadius: once mended, the true column (A_V ~ 130 mag face-on at NGC 4414's centre) hides the nucleus
+//     the goal photograph shows bright; the diffuse dust is thinned by core decades at the centre, a smoothstep in
+//     radius to none at coreRadius, all channels alike (the reddening kept).
+// Display-only (D275, ruling 4): nothing published moves; the points' dust takes the same map (FluxPoints' gasAt) and
+// the same depth (FluxPoints' face).
 
 import type { IllFeature } from "./feature";
 
@@ -52,6 +64,18 @@ export const base: IllFeature = {
       key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 15},
       about: "Where the disc's lift is full, kpc; beyond it the lift holds. Illustrative.",
     },
+    {
+      key: "mend", label: "mend lost depth", min: 0, max: 1, step: 0.01, unit: "", default: 1,
+      about: "Where the published dust's depth underflowed to nothing in a channel (NGC 4414's centre: blue-white, a ring at 0.11 kpc), rebuilt from the deepest channel through the reddening ratio: 1 mended, 0 as read. A no-op where no channel is lost. Illustrative.",
+    },
+    {
+      key: "core", label: "core clearing", min: 0, max: 4, step: 0.05, unit: "dex", default: 0,
+      about: "The diffuse dust thinned toward the centre by this many decades at the centre, smoothly to none at the core radius: the nucleus shines through. Illustrative.",
+    },
+    {
+      key: "coreRadius", label: "core radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1,
+      about: "Where the core clearing ends, kpc (a smoothstep from the centre). Illustrative.",
+    },
   ],
   glsl: /* glsl */ `
   uniform float illBaseLift;
@@ -83,9 +107,58 @@ export const base: IllFeature = {
     float m = (illBaseGrain > 0.0 && (illBaseUnshear > 0.0 || illBaseSize != 1.0)) ? illBaseGasMap(xy) : g;
     return mix(1.0, m, illBaseGrain) * illBaseDepth;
   }
+  // The mend (base.ts twin baseMended): the ring texture's depth row read texel by texel (row 0 of rings), each texel's
+  // column as an A_V (each channel's depth over its depth per magnitude, the deepest channel's), and a texel "lost" where
+  // that column is deep (over 10 mag: float32 underflows only past ~87 nepers) and a channel reads under 0.99 of it, or
+  // where all three read nothing between deep neighbours. Only where one of the two texels a read interpolates is lost
+  // is the depth rebuilt (the columns interpolated, times cloudExt); elsewhere d comes back untouched, bit for bit.
+  uniform float illBaseMend;
+  uniform float illBaseCore;
+  uniform float illBaseCoreRadius;
+  float illBaseAvOf(vec3 d) {
+    return max(cloudExt.r > 0.0 ? d.r / cloudExt.r : 0.0, max(cloudExt.g > 0.0 ? d.g / cloudExt.g : 0.0, cloudExt.b > 0.0 ? d.b / cloudExt.b : 0.0));
+  }
+  float illBaseLeastOf(vec3 d) {
+    return min(cloudExt.r > 0.0 ? d.r / cloudExt.r : 1e30, min(cloudExt.g > 0.0 ? d.g / cloudExt.g : 1e30, cloudExt.b > 0.0 ? d.b / cloudExt.b : 1e30));
+  }
+  vec3 illBaseRingDepth(int i) {
+    return texelFetch(rings, ivec2(i, 0), 0).rgb;
+  }
+  // x: the texel's column (mag), y: 1 where it was lost.
+  vec2 illBaseTexelAv(int i, int n) {
+    vec3 d = illBaseRingDepth(i);
+    float a = illBaseAvOf(d);
+    if (a > 0.0) return vec2(a, (a > 10.0 && illBaseLeastOf(d) < 0.99 * a) ? 1.0 : 0.0);
+    float lo = i > 0 ? illBaseAvOf(illBaseRingDepth(i - 1)) : 0.0;
+    float hi = i < n - 1 ? illBaseAvOf(illBaseRingDepth(i + 1)) : 0.0;
+    if (hi > 10.0 && i == 0) return vec2(hi, 1.0);
+    if (hi > 10.0 && lo > 10.0) return vec2(0.5 * (lo + hi), 1.0);
+    return vec2(0.0);
+  }
+  vec3 illBaseMended(vec3 d, float r) {
+    int n = textureSize(rings, 0).x;
+    float u = clamp((r - rLo) / (rHi - rLo), 0.0, 1.0) * float(n) - 0.5;
+    float fl = floor(u);
+    float f = u - fl;
+    int i0 = int(fl);
+    if (i0 < 0) { i0 = 0; f = 0.0; }
+    if (i0 > n - 2) { i0 = n - 2; f = 1.0; }
+    vec2 t0 = illBaseTexelAv(i0, n);
+    vec2 t1 = illBaseTexelAv(i0 + 1, n);
+    if (t0.y + t1.y <= 0.0) return d;
+    return mix(d, max(d, mix(t0.x, t1.x, f) * cloudExt), illBaseMend);
+  }
+  vec3 illBaseDepthOf(vec3 d, vec2 rp) {
+    if (illBaseMend > 0.0 && rp.x < rHi) d = illBaseMended(d, rp.x);
+    if (illBaseCore > 0.0 && rp.x < illBaseCoreRadius) d *= exp2(-3.32192809 * illBaseCore * (1.0 - smoothstep(0.0, illBaseCoreRadius, rp.x)));
+    return d;
+  }
 `,
-  hooks: { gas: "illBaseGas", light: "illBaseLight" },
+  hooks: { gas: "illBaseGas", light: "illBaseLight", depth: "illBaseDepthOf" },
   uniforms: (p) => ({
+    illBaseMend: p.mend ?? 1,
+    illBaseCore: p.core ?? 0,
+    illBaseCoreRadius: p.coreRadius ?? 1,
     illBaseGrain: p.grain ?? 1,
     illBaseUnshear: p.unshear ?? 0,
     illBaseSize: p.size ?? 1,
@@ -100,6 +173,47 @@ export function baseLift(r: number, lift: number, radius: number): number {
   if (lift <= 0) return 1;
   const t = Math.min(1, Math.max(0, r / radius));
   return 2 ** (lift * t * t * (3 - 2 * t));
+}
+
+type Rgb = readonly [number, number, number];
+
+const avOf = (d: Rgb, ext: Rgb): number => Math.max(...[0, 1, 2].map((k) => (ext[k] > 0 ? d[k] / ext[k] : 0)));
+const leastOf = (d: Rgb, ext: Rgb): number => Math.min(...[0, 1, 2].map((k) => (ext[k] > 0 ? d[k] / ext[k] : 1e30)));
+
+/** A depth texel's column (mag) and whether it was lost (the GLSL's illBaseTexelAv). */
+export function baseTexelAv(texels: readonly Rgb[], i: number, ext: Rgb): { av: number; lost: boolean } {
+  const a = avOf(texels[i], ext);
+  if (a > 0) return { av: a, lost: a > 10 && leastOf(texels[i], ext) < 0.99 * a };
+  const lo = i > 0 ? avOf(texels[i - 1], ext) : 0;
+  const hi = i < texels.length - 1 ? avOf(texels[i + 1], ext) : 0;
+  if (hi > 10 && i === 0) return { av: hi, lost: true };
+  if (hi > 10 && lo > 10) return { av: 0.5 * (lo + hi), lost: true };
+  return { av: 0, lost: false };
+}
+
+/**
+ * The mend (the GLSL's illBaseMended): d the depth read at radius r (kpc) from the depth row `texels` over [rLo, rHi],
+ * rebuilt in the reddening ratio `ext` where a texel the read interpolates is lost; d itself (the same object) elsewhere.
+ */
+export function baseMended(d: Rgb, r: number, texels: readonly Rgb[], ext: Rgb, rLo: number, rHi: number, mend = 1): Rgb {
+  const n = texels.length;
+  const u = Math.min(1, Math.max(0, (r - rLo) / (rHi - rLo))) * n - 0.5;
+  let i0 = Math.floor(u);
+  let f = u - i0;
+  if (i0 < 0) [i0, f] = [0, 0];
+  if (i0 > n - 2) [i0, f] = [n - 2, 1];
+  const t0 = baseTexelAv(texels, i0, ext);
+  const t1 = baseTexelAv(texels, i0 + 1, ext);
+  if (!t0.lost && !t1.lost) return d;
+  const a = t0.av + (t1.av - t0.av) * f;
+  return [0, 1, 2].map((k) => d[k] + (Math.max(d[k], a * ext[k]) - d[k]) * mend) as unknown as Rgb;
+}
+
+/** The core clearing's multiplier on the depth at radius r (the GLSL's twin): 10^-core at the centre, 1 from radius out. */
+export function baseCore(r: number, core: number, radius: number): number {
+  if (core <= 0 || r >= radius) return 1;
+  const t = Math.min(1, Math.max(0, r / radius));
+  return 10 ** (-core * (1 - t * t * (3 - 2 * t)));
 }
 
 /** The gas map's value after the base, for a map value g already read the model's way (grain and depth only). */

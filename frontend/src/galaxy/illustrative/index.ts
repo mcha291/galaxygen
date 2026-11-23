@@ -53,6 +53,12 @@
 //               last one's value). The march's screenGas and FluxPoints' gasAt, so the points' dust follows the field's;
 //               read only while the map is drawn ("gas fluctuation in the march" on, the layer on). Its function is
 //               defined in the feature's `noiseGlsl`.
+//     depth     vec3 f(vec3 d, vec2 rp) (S106, the base's mend and core): the ring texture's published face-on diffuse
+//               depth per channel d (row 0 of `rings`, as read at rp, before the placement, the clouds' share and the
+//               extinction strength multiply it) made the depth the dust's layer carries. Chained over features into
+//               illDepth(d, rp). The march's tau (its own patch, on the tau line; the layer's dustAv is added after it)
+//               and FluxPoints' face (on the dustAv patch's anchor), so the points' dust takes the same. Defined in the
+//               feature's `noiseGlsl`: it may read `rings`, `rLo` and `cloudExt`, which only those two shaders declare.
 //   noiseGlsl  (S106) global-scope GLSL put only where the randomness layer's include (noise.glsl.ts) is - the march's
 //              fragment and FluxPoints' vertex shader, after every feature's `glsl` - so it may call layerGasMap,
 //              layerGasSum and the rest and read their uniforms. Other layers' shaders (runtime.glsl: the knots' layer)
@@ -210,9 +216,11 @@ const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light", arg:
  */
 function noiseSide(): string[] {
   const fns = FEATURES.map((f) => f.hooks?.gas).filter((n): n is string => Boolean(n));
+  const depths = FEATURES.map((f) => f.hooks?.depth).filter((n): n is string => Boolean(n));
   return [
     ...FEATURES.map((f) => f.noiseGlsl ?? "").filter((g) => g.trim() !== ""),
     `  float illGas(vec2 xy, float g) {${fns.map((n) => ` g = ${n}(xy, g);`).join("")} return g; }`,
+    `  vec3 illDepth(vec3 d, vec2 rp) {${depths.map((n) => ` d = ${n}(d, rp);`).join("")} return d; }`,
   ];
 }
 
@@ -268,6 +276,12 @@ export const MARCH_PATCHES: readonly Patch[] = [
     anchor: "    float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;",
     apply: (a) => a.replace("layerGasMap(screenXY)", "illGas(screenXY, layerGasMap(screenXY))"),
   },
+  // S106: the depth hook, on the ring's published diffuse depth before anything multiplies it (and so before the layer's
+  // own dustAv, added two lines below).
+  {
+    anchor: "          tau = readRing(rp.x, 0.0) * place * readRing(rp.x, 3.0).r * dustDepth;",
+    apply: (a) => a.replace("tau = readRing(rp.x, 0.0) *", "tau = illDepth(readRing(rp.x, 0.0), rp) *"),
+  },
 ];
 
 /** The points' patches (FluxPoints' vertex shader): the layer's GLSL before dustTo, and its A_V on each segment. */
@@ -275,7 +289,10 @@ export const POINTS_PATCHES: readonly Patch[] = [
   { anchor: "  // The dust's optical depth per channel from the point to the camera (flux.ts dustToPoint, line for line).", apply: (a, glsl) => `${glsl}\n${a}` },
   {
     anchor: "      tau += face * place * gasAt * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;",
-    apply: (a) => `${a}\n      tau += illDustAv(vec2(r, phi)) * cloudExt * column(p.y + u.y * s0, p.y + u.y * s1, h, ds);`,
+    // S106: the depth hook on the ring's depth (face), as the march's tau; then the layer's A_V on the segment.
+    apply: (a) =>
+      `${a.replace("tau += face * place", "tau += illDepth(face, vec2(r, phi)) * place")}\n` +
+      "      tau += illDustAv(vec2(r, phi)) * cloudExt * column(p.y + u.y * s0, p.y + u.y * s1, h, ds);",
   },
   // S106: the gas hook, on the segment's gas fluctuation map (the march's screenGas, read the same way).
   {
