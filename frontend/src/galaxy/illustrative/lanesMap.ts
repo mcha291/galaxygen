@@ -491,7 +491,9 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
   const strands = Math.max(1, Math.round(shape.strands));
   const chainKey = laneKey(shape.seed, ridge.chain, 0, 1);
   // A chain's own breaks, which its strands share in part.
-  const cut = (2 * shape.gaps - 1) * 0.72;
+  // The level of the breaking noise (in [-1, 1]) under which a strand is broken away: below every value at gaps 0
+  // (unbroken), rising with the gaps.
+  const cut = -1.1 + 2.526 * shape.gaps;
   const ends = (i: number) => {
     const s = ridge.s[i];
     const a = ridge.fadeIn && taper > 0 ? smoothstep(0, taper, s) : 1;

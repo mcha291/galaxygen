@@ -21,7 +21,7 @@ import { LANE_ARRAYS, LANE_MAP, type LaneShape, SHAPE_KEYS, buildLaneMap, geomet
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.9, perTemplate: { milky_way: 0.9, ngc_4414: 1.2 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.85, ngc_4414: 0.95 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
@@ -33,39 +33,39 @@ const CONTROLS: readonly IllControl[] = [
     about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance.",
   },
   {
-    key: "hardness", label: "lane edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.5, ngc_4414: 0.45 },
+    key: "hardness", label: "lane edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.4, ngc_4414: 0.45 },
     about: "How crisp a lane's edge is: 0 a soft Gaussian stroke that fades out, 1 an inked stroke with a flat dark core and a sharp edge (its faint margins gone). Illustrative.",
   },
   {
-    key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.5, ngc_4414: 0.6 },
+    key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.6, ngc_4414: 0.6 },
     about: "How much a lane's depth swells and thins from place to place across it: knots, holes and a ragged edge; 0 a smooth stroke. Illustrative.",
   },
-  { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 130, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
+  { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 150, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
   {
     key: "offset", label: "lane offset", min: -400, max: 800, step: 5, unit: "pc", default: 80, perTemplate: { milky_way: 80, ngc_4414: 60 },
     about: "How far to the inner (concave) side of an arm's ridge the lane's centre line lies, parsecs; below 0 the outer side. Illustrative.",
   },
   {
-    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 80, perTemplate: { milky_way: 80, ngc_4414: 90 },
+    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 110, ngc_4414: 100 },
     about: "One strand's full width at half depth, parsecs (it swells and thins along its length by the clumping). Illustrative.",
   },
   { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },
   {
-    key: "spread", label: "braid spread", min: 0, max: 1200, step: 10, unit: "pc", default: 240, perTemplate: { milky_way: 240, ngc_4414: 700 },
+    key: "spread", label: "braid spread", min: 0, max: 1200, step: 10, unit: "pc", default: 260, perTemplate: { milky_way: 260, ngc_4414: 700 },
     about: "The width of the band the strands wander and cross in, parsecs. Illustrative.",
   },
   { key: "braidLength", label: "braid length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 2.2, about: "The length along the arm over which the strands cross one another, kpc. Illustrative." },
   {
-    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 110, ngc_4414: 160 },
+    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 130, ngc_4414: 160 },
     about: "How far the whole lane meanders about its line, parsecs (each strand a third as far again on its own). Illustrative.",
   },
-  { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.7, about: "The meander's length along the arm, kpc. Illustrative." },
+  { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.6, about: "The meander's length along the arm, kpc. Illustrative." },
   {
-    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.3, ngc_4414: 0.25 },
+    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.35, ngc_4414: 0.25 },
     about: "The share of a lane's length that is broken away, so it reads as pieces: 0 unbroken. Illustrative.",
   },
-  { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 1.2, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
-  { key: "clump", label: "clumping", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, about: "How much a strand swells into dark knots and thins to threads along its length. Illustrative." },
+  { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 0.9, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
+  { key: "clump", label: "clumping", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, about: "How much a strand swells into dark knots and thins to threads along its length. Illustrative." },
   {
     key: "envelope", label: "envelope", min: 0, max: 1, step: 0.01, unit: "×", default: 0.05, perTemplate: { milky_way: 0.05, ngc_4414: 0.12 },
     about: "A faint band as wide as the braid under the strands, this share of a strand's depth: the lane's translucent margin. Illustrative.",
@@ -84,13 +84,13 @@ const CONTROLS: readonly IllControl[] = [
     about: "The lanes fade from 0.55 of this radius to nothing at it, kpc: no dark line where the disc's own light has faded. Illustrative.",
   },
   {
-    key: "featherSpacing", label: "feather spacing", min: 0, max: 8, step: 0.05, unit: "kpc", default: 1.0, perTemplate: { milky_way: 1.0, ngc_4414: 0.45 },
+    key: "featherSpacing", label: "feather spacing", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 0.7, ngc_4414: 0.45 },
     about: "The distance along a lane between its feathers - short branches leaving it, most toward the arm's outer side - kpc; 0 none. Illustrative.",
   },
   { key: "featherLength", label: "feather length", min: 0, max: 4, step: 0.05, unit: "kpc", default: 0.8, perTemplate: { milky_way: 0.8, ngc_4414: 1.6 }, about: "A feather's length, kpc (each between half and one and a half of it). Illustrative." },
   { key: "featherPitch", label: "feather pitch", min: 0, max: 85, step: 1, unit: "°", default: 40, about: "How much more open than the arm a feather leaves its lane, degrees (each between half and one and a half of it); it closes back along its length. Illustrative." },
   { key: "featherDepth", label: "feather depth", min: 0, max: 2, step: 0.01, unit: "×", default: 0.8, about: "A feather's depth at its root, as a share of a strand's. Illustrative." },
-  { key: "fray", label: "fray", min: 0, max: 2, step: 0.01, unit: "×", default: 0.7, about: "Short thin wisps leaving the strands at a low angle, their depth as a share of a strand's: a ragged edge; 0 none. Illustrative." },
+  { key: "fray", label: "fray", min: 0, max: 2, step: 0.01, unit: "×", default: 1, about: "Short thin wisps leaving the strands at a low angle, their depth as a share of a strand's: a ragged edge; 0 none. Illustrative." },
   {
     key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1,
     about: "The depth of the two lanes along the bar's leading edges, as a share of the lane depth; 0 none. Drawn only where the galaxy has a bar. Illustrative.",
