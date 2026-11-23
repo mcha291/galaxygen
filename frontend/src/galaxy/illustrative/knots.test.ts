@@ -236,7 +236,8 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
         continue;
       }
       // None floats in the inter-arm disc: within two ridge widths of a crest.
-      expect(hit.distance).toBeLessThan(2 * hit.width);
+      // (S107: scattered 0.4 widths across, with the complexes: within two and a half.)
+      expect(hit.distance).toBeLessThan(2.5 * hit.width);
       if (hit.side > 0) inner += 1;
     }
     expect(inside).toBeLessThan(0.02 * nebulae.length);

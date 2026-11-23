@@ -121,6 +121,8 @@ export interface SkelArm {
   patch: Float64Array | null;
   wIn: Float64Array | null;
   wOut: Float64Array | null;
+  /** S107: the largest of the two sides' width multipliers (1 without raggedness). */
+  wMax?: number;
 }
 
 export interface Skeleton {
@@ -229,7 +231,9 @@ function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg:
     strength[i] = level * inner * out * kept * grain;
   }
   const { patch, wIn, wOut } = patchTables(n, lnR0, dlnR, tanp, p, key);
-  return { kind, r0, r1, lnR0, dlnR, n, phi, tanp, strength, width, patch, wIn, wOut };
+  let wMax = 1;
+  if (wIn && wOut) for (let i = 0; i < n; i++) wMax = Math.max(wMax, wIn[i], wOut[i]);
+  return { kind, r0, r1, lnR0, dlnR, n, phi, tanp, strength, width, patch, wIn, wOut, wMax };
 }
 
 /** Two octaves of laneNoise, about [-1, 1]. */
@@ -436,12 +440,14 @@ export function bandProfile(d: number, width: number, wing: number): number {
 /**
  * The skeleton's band over the shared map's grid (width columns along R over [0, rHi], height rows round the turn,
  * cell-centred, row-major): at each texel the largest strength * bandProfile over the arms crossing its ring.
- * Ring by ring and arm by arm, only the rows within 3.5 sigma of the wing of each crest are touched. S107: `plain`, if
- * given (the same size), takes the band without the arms' clumps (their ring means: the light kept per ring is the
- * unclumped arm's, so a ring crossing a bright clump is not dimmed between the arms - concentric bands otherwise).
+ * Ring by ring and arm by arm, only the rows within 3.5 sigma of the wing of each crest are touched. S107: `plainMean`,
+ * if given (`width` values), takes each ring's mean of the band without the arms' clumps (the light kept per ring is
+ * the unclumped arm's, so a ring crossing a bright clump is not dimmed between the arms - concentric bands otherwise).
  */
-export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plain: Float32Array | null = null): Float32Array {
+export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null = null): Float32Array {
   const out = new Float32Array(width * height);
+  // The unclumped band of the ring in hand (one column: every arm crossing it is drawn before the next ring).
+  const plain = plainMean ? new Float32Array(height) : null;
   const dPhi = TAU / height;
   // S106 (B5): near an arm's START each texel's strength is read at the FOOT of its perpendicular on the arm (the
   // crest's point nearest it: ln R moved by sense * dphi * sin(p) cos(p)), none where that foot lies before the start;
@@ -453,12 +459,15 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
   for (let c = 0; c < width; c++) {
     const R = ((c + 0.5) / width) * rHi;
     const lnR = Math.log(R);
+    if (plain) plain.fill(0);
     for (const a of sk.arms) {
       // S107: a spur's glow has no wing (its wing, three widths across a short branch, began square across it where
       // the spur leaves its arm: a straight edge in the haze).
       const wing = a.kind === "spur" ? 0 : wingAll;
-      const s = (a.width * (a.wIn ? 1.9 : 1)) / 2.3548;
-      const reachKpc = (wing > 0 ? 3 * 3.2 : 3.5) * s;
+      const s = a.width / 2.3548;
+      // (S107: the core's reach at its widest ragged side; the wing's at the even width.)
+      const core = 3.5 * s * (a.wMax ?? 1);
+      const reachKpc = wing > 0 ? Math.max(3 * 3.2 * s, core) : core;
       // Inside the arm's start (within a reach of it) its crest carried inward at the start's pitch: texels there
       // whose foot lies on the arm are its band's rounded start.
       const h = armAt(a, R) ?? armBefore(a, R, reachKpc, sense);
@@ -504,10 +513,16 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
           u = strength * bandProfile(across, a.width, wing);
           v = u;
         }
-        const o = (((j % height) + height) % height) * width + c;
+        const row = ((j % height) + height) % height;
+        const o = row * width + c;
         if (v > out[o]) out[o] = v;
-        if (plain && u > plain[o]) plain[o] = u;
+        if (plain && u > plain[row]) plain[row] = u;
       }
+    }
+    if (plain && plainMean) {
+      let sum = 0;
+      for (let r = 0; r < height; r++) sum += plain[r];
+      plainMean[c] = sum / height;
     }
   }
   return out;

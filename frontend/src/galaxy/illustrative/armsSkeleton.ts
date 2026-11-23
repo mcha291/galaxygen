@@ -112,20 +112,21 @@ export function skeletonPlanes(
   contrast: { n: Float64Array; nR: number; nPhi: number } | null = null,
 ): { share: Uint8Array; mean: Uint8Array; meanMax: number; flags: number[]; ringMean: number[] } {
   const t0 = typeof performance !== "undefined" ? performance.now() : 0;
-  // S107: with clumped arms the ring means are the unclumped band's (skeletonBand's `plain`).
-  const plain = sk.arms.some((a) => a.patch) ? new Float32Array(width * height) : null;
+  // S107: with clumped arms the ring means are the unclumped band's (skeletonBand's `plainMean`).
+  const plain = sk.arms.some((a) => a.patch) ? new Float64Array(width) : null;
   const band = skeletonBand(sk, width, height, rHi, wing, plain);
-  const meanOf = plain ?? band;
-  const ringMean = new Float64Array(width);
-  for (let r = 0; r < height; r++) {
-    const row = r * width;
-    for (let c = 0; c < width; c++) ringMean[c] += meanOf[row + c];
+  let ringMean: Float64Array;
+  if (plain) ringMean = plain;
+  else {
+    ringMean = new Float64Array(width);
+    for (let r = 0; r < height; r++) {
+      const row = r * width;
+      for (let c = 0; c < width; c++) ringMean[c] += band[row + c];
+    }
+    for (let c = 0; c < width; c++) ringMean[c] /= height;
   }
   let meanMax = 0;
-  for (let c = 0; c < width; c++) {
-    ringMean[c] /= height;
-    meanMax = Math.max(meanMax, ringMean[c]);
-  }
+  for (let c = 0; c < width; c++) meanMax = Math.max(meanMax, ringMean[c]);
   const share = new Uint8Array(width * height);
   for (let i = 0; i < band.length; i++) share[i] = Math.round(255 * Math.sqrt(Math.min(1, band[i])));
   const samples: number[] = [];

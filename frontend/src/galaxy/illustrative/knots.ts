@@ -22,7 +22,7 @@ import { KnotsLayer } from "./knotsLayer";
 const CONTROLS: readonly IllControl[] = [
   { key: "draw", label: "regions drawn", min: 0, max: 1, step: 1, default: 1, about: "1: the HII regions drawn as illustrative nebulae in place of the knots; 0: the default knots. Illustrative." },
   {
-    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 150, ngc_4414: 8 },
+    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 220, ngc_4414: 8 },
     about: "A multiplier on the regions' light over the knots' gain (the field's scale and the exposure). Illustrative.",
   },
   {
@@ -38,7 +38,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "A multiplier on each region's own radius (hii_radius) for its drawn radius. Illustrative.",
   },
   {
-    key: "sizeMin", label: "region radius floor", min: 0, max: 400, step: 5, unit: "pc", default: 40, perTemplate: { milky_way: 15, ngc_4414: 50 },
+    key: "sizeMin", label: "region radius floor", min: 0, max: 400, step: 5, unit: "pc", default: 40, perTemplate: { milky_way: 25, ngc_4414: 50 },
     about: "The smallest drawn radius, pc: regions read as blobs at galaxy scale. Illustrative.",
   },
   {
@@ -71,7 +71,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The regions' colour mixed from their own lines' colour (0) toward H-alpha pink (1). Colour for appearance.",
   },
   {
-    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.1, ngc_4414: 0.1 },
+    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.0, ngc_4414: 0.1 },
     about: "The pink's hue, from a red pink (0) to magenta (1); below 0 past the pink toward a deep red (S105: the grade's cool tint turns a pink violet). Colour for appearance.",
   },
   { key: "blobs", label: "sub-blobs", min: 1, max: 4, step: 1, default: 4, about: "Each region drawn as this many soft sub-blobs, placed by a hash of its index (stable). Illustrative." },
@@ -109,8 +109,8 @@ const CONTROLS: readonly IllControl[] = [
   { key: "coreBlue", label: "core: white to blue", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0 }, about: "The skeleton regions' cores from white (0) to the knots' white-blue (1). Colour for appearance (S106)." },
   { key: "sparkle", label: "skeleton: blue-white points", min: 0, max: 8, step: 1, default: 3, about: "Up to this many blue-white points beside each larger region (fewer for small ones). Illustrative (S106)." },
   { key: "sparkleGain", label: "skeleton: points' light", min: 0, max: 2, step: 0.01, unit: "×", default: 0.15, about: "Each blue-white point's light against its region's. Illustrative (S106)." },
-  { key: "minStrength", label: "skeleton: least ridge", min: 0, max: 1, step: 0.01, default: 0, perTemplate: { milky_way: 0.15 }, about: "No bunch of regions where the ridge's strength is under this (a faded arm end); 0 anywhere on a ridge. Illustrative (S107)." },
-  { key: "patchPow", label: "skeleton: on the bright stretches", min: 0, max: 6, step: 0.1, unit: "power", default: 0, perTemplate: { milky_way: 2 }, about: "A bunch kept with the arm's clumps (the arms' patchy arms) to this power: the regions gather in the arms' bright stretches, with long empty ones between; 0 as the ridge's strength alone. Illustrative (S107)." },
+  { key: "minStrength", label: "skeleton: least ridge", min: 0, max: 1, step: 0.01, default: 0, perTemplate: { milky_way: 0.25 }, about: "No bunch of regions where the ridge's strength is under this (a faded arm end); 0 anywhere on a ridge. Illustrative (S107)." },
+  { key: "patchPow", label: "skeleton: on the bright stretches", min: 0, max: 6, step: 0.1, unit: "power", default: 0, perTemplate: { milky_way: 1 }, about: "A bunch kept with the arm's clumps (the arms' patchy arms) to this power: the regions gather in the arms' bright stretches, with long empty ones between; 0 as the ridge's strength alone. Illustrative (S107)." },
   { key: "complexes", label: "skeleton: large complexes", min: 0, max: 40, step: 1, default: 0, perTemplate: { milky_way: 12 }, about: "This many large ragged complexes (several lobes, a white core, bright points about them) along the two major arms; 0 none. Illustrative (S107)." },
   { key: "complexGain", label: "skeleton: complexes' light", min: 0, max: 20, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 5 }, about: "A large complex's members' light, times a region's. Illustrative (S107)." },
   { key: "seed", label: "skeleton: seed", min: 1, max: 99, step: 1, default: 7, about: "The placement's fixed seed (the viewer's own). Illustrative (S106)." },

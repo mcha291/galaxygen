@@ -366,7 +366,7 @@ export const arms: IllFeature = {
       about: "Two or three short changes of pitch along each arm, this share of the pitch: slight kinks. Illustrative (S106).",
     },
     {
-      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.6},
+      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.75},
       about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
     },
     {
@@ -386,7 +386,7 @@ export const arms: IllFeature = {
       about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
     },
     {
-      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75,
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.6 },
       about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
     },
     {
