@@ -48,7 +48,7 @@ import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFram
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { LOOK_SUSPENDED_WHAT, TUNING_CONTROLS, type Tuning, drawnLook, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, lookSuspended, saveTuning } from "./tuning";
+import { LOOK_SUSPENDED_WHAT, TUNING_CONTROLS, type Tuning, drawnLook, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, lookSuspended, lookSwitchedByTuning, saveTuning } from "./tuning";
 import {
   type IllContext,
   type Look,
@@ -384,7 +384,9 @@ export function GalaxyTab({
   const setTuning = (t: Tuning, forLook: Look = viewLook) => {
     setTuningState({ of: templateName, look: forLook, t });
     saveTuning(t, undefined, templateName, forLook);
-    if (forLook !== storedLook) onLook?.(forLook);
+    // S108 review: under physics only a slider moved on the drawn physical look no longer switches the stored look.
+    const switched = lookSwitchedByTuning(forLook, viewLook, storedLook);
+    if (switched) onLook?.(switched);
   };
   const illustrative = viewLook === "illustrative";
   // During a landing's hold (S82, #188's follow-up) the previous picture is drawn as it was: every value that only changes
