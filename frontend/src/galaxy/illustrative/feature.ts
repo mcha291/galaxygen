@@ -78,6 +78,13 @@ export interface IllHooks {
    * (the march's screenGas, FluxPoints' gasAt) and only while it is; it must be defined in `noiseGlsl`.
    */
   gas?: string;
+  /**
+   * `vec3 f(vec3 d, vec2 rp)` (S106, the base's mend): the ring texture's face-on diffuse depth per channel d, as read
+   * at the midplane point rp (before the placement, the clouds' share and the extinction strength multiply it), made the
+   * depth the dust's layer carries; chained over features. The march's tau and FluxPoints' face; it must be defined in
+   * `noiseGlsl` (it may read the `rings` texture, which only those two shaders bind).
+   */
+  depth?: string;
 }
 
 /** What a feature's own drawing (`layer`) receives: drawn inside the Galaxy view's canvas under the illustrative look. */
