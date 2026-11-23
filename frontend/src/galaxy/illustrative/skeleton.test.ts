@@ -236,3 +236,40 @@ describe("the pitch floor's slider (S108 J2, arms.skelpitchmin)", () => {
     expect(buildSkeleton(g, skeletonParamsOf({ skelpitchmin: 4 })).pitchDeg).toBeCloseTo(4, 9);
   });
 });
+
+describe("the hug (S109, arms.skelopen below 0)", () => {
+  const hugParams = { lesser: 3, spurs: 0, drift: 0, kink: 0, open: -0.8, openTurns: 0.3, pitchGrow: 0.35, start: 0.85 };
+  it("runs each major round the bar close to its end before it opens, and reads its band along the ray", () => {
+    const sk = buildSkeleton({ pieces, bar }, hugParams);
+    const [a] = sk.arms;
+    expect(a.ray).toBe(true);
+    // A quarter turn on, the crest is within 1.15 of its start (the S108 skeleton's open arm: past 1.4).
+    let i = 0;
+    while (i < a.n - 1 && (a.phi[i] - a.phi[0]) * sk.sense < Math.PI / 2) i++;
+    expect(Math.exp(a.lnR0 + i * a.dlnR) / a.r0).toBeLessThan(1.15);
+    const open = buildSkeleton({ pieces, bar }, { ...hugParams, open: 0.8, openTurns: 0.175 });
+    expect(open.arms[0].ray).toBeUndefined();
+    // Read along the ray: just inside the crest a quarter turn on, the band is the crest's (a ring reading had nothing
+    // inside the start's radius: a hard dark disc), and half a ridge width inside it, about half.
+    const W = 2000;
+    const H = 3600;
+    const band = skeletonBand(sk, W, H, 30, 0);
+    const R = Math.exp(a.lnR0 + i * a.dlnR);
+    const row = Math.round(((((a.phi[i] % TAU) + TAU) % TAU) / TAU) * H - 0.5);
+    const col = (r: number) => Math.round((r / 30) * W - 0.5);
+    expect(band[row * W + col(R)]).toBeGreaterThan(0.8 * a.strength[i]);
+    const half = band[row * W + col(R - a.width / 2)] / band[row * W + col(R)];
+    expect(half).toBeGreaterThan(0.3);
+    expect(half).toBeLessThan(0.7);
+    // ridgeAt agrees: on the crest, nearly no distance.
+    expect(ridgeAt(sk, R, a.phi[i]).distance).toBeLessThan(0.05);
+  });
+  it("builds its planes within a slider's budget", () => {
+    const sk = buildSkeleton({ pieces, bar }, { ...hugParams, patch: 0.9, ragged: 0.5 });
+    const t0 = performance.now();
+    skeletonPlanes(sk, 2000, 3600, 30, 0.35, 32, null);
+    const ms = performance.now() - t0;
+    console.log(`hug skeleton planes: ${ms.toFixed(0)} ms`);
+    expect(ms).toBeLessThan(600);
+  });
+});

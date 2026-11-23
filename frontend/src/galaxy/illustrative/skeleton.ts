@@ -62,6 +62,8 @@ export interface SkeletonParams {
   pitchMin?: number;
   /** S107: the majors' pitch at their start raised by 1 + this, falling back over about a third of a turn: the arm leaves the bar's end at a clear angle; 0 none. */
   open?: number;
+  /** S109: the length of the open's easing, turns at the base pitch (0.175 until S109); with a negative open the hug's. */
+  openTurns?: number;
   /** S107: the lesser arms' width as a share of the majors' (0.85 until S107). */
   lesserWidth?: number;
   /** S107: the lesser arms' outer end as a share of the majors' (LESSER_REACH until S107). */
@@ -102,6 +104,7 @@ export const SKELETON_DEFAULTS: SkeletonParams = {
   pitchGrow: 0,
   pitchMin: 10,
   open: 0,
+  openTurns: 0.175,
   lesserWidth: 0.85,
   lesserReach: LESSER_REACH,
   patch: 0,
@@ -142,6 +145,18 @@ export interface SkelArm {
   wOut: Float64Array | null;
   /** S107: the largest of the two sides' width multipliers (1 without raggedness). */
   wMax?: number;
+  /**
+   * S109 (the hug): the band read along each RAY from the centre (the arm's crossings of the point's azimuth, the
+   * nearest in R) in place of along the point's ring. A hugging arm runs nearly round its ring: read on the ring, every
+   * point of the rings it hugs lay within a little of "its" crest (R dphi sin(pitch), sin(pitch) tiny) - a hard bright
+   * circle - and inside its start the crest carried inward at that pitch never reached them - a hard dark disc.
+   * Over its samples [0, rayEnd] only (the hug and a quarter turn past it); the ring reading takes over from sample
+   * rayRing (the hug's end) on, the two overlapping between (the band takes the larger): past the hug, read along the
+   * ray, the arm's broken outer end stopped square along a ray - a dark wedge in the haze.
+   */
+  ray?: boolean;
+  rayEnd?: number;
+  rayRing?: number;
 }
 
 export interface Skeleton {
@@ -212,7 +227,7 @@ const smooth01 = (e0: number, e1: number, x: number): number => {
 };
 
 /** One arm tabulated: from (r0, phi0) out to r1 at a pitch drifting about `pitchDeg`, its strength profile laid. */
-function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg: number, sense: number, level: number, width: number, p: SkeletonParams, key: number, fadeIn: number, pitchAt: (lnR: number) => number = () => 1): SkelArm {
+function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg: number, sense: number, level: number, width: number, p: SkeletonParams, key: number, fadeIn: number, pitchAt: (lnR: number, turned?: number) => number = () => 1): SkelArm {
   const lnR0 = Math.log(r0);
   const span = Math.max(1e-3, Math.log(r1) - lnR0);
   const n = Math.max(8, Math.ceil(span * PER_LN) + 1);
@@ -233,7 +248,7 @@ function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg:
       const x = (f - k.at) * (span / 0.04);
       scale += p.kink * k.sign * Math.exp(-x * x);
     }
-    const t = Math.tan((Math.max(1, Math.min(60, pitchDeg * Math.max(0.2, scale) * pitchAt(lnR))) * Math.PI) / 180);
+    const t = Math.tan((Math.max(1, Math.min(60, pitchDeg * Math.max(0.2, scale) * pitchAt(lnR, Math.abs(ph - phi0)))) * Math.PI) / 180);
     tanp[i] = t;
     if (i > 0) ph += (sense * dlnR) / (0.5 * (t + tanp[i - 1]));
     phi[i] = ph;
@@ -317,10 +332,31 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
   const lnRef = Math.log(r0);
   const grow = p.pitchGrow ?? 0;
   const pitchAt = (lnR: number): number => Math.exp(grow * Math.max(0, lnR - lnRef));
-  const open = Math.max(0, p.open ?? 0);
-  const openLen = 0.35 * Math.PI * tanp;
-  const majorPitchAt = open > 0 ? (lnR: number): number => pitchAt(lnR) * (1 + open * Math.exp(-Math.max(0, lnR - lnRef) / Math.max(0.02, openLen))) : pitchAt;
-  for (let k = 0; k < 2; k++) arms.push(tabulate("major", r0, r1, phiA + k * Math.PI, pitchDeg, sense, 1, p.width, p, laneKey(p.seed, 1, k, 0), 0.04, majorPitchAt));
+  // S109: a negative open (down to -0.95) is the hug - the majors leave the bar's ends at a LOWER pitch and run round
+  // the bar close to its ends for about openTurns of a turn (at the base pitch) before they open; openTurns (S109) the
+  // easing's length, 0.175 of a turn until S109.
+  const open = Math.max(-0.95, p.open ?? 0);
+  const openLen = TAU * Math.max(0.02, p.openTurns ?? 0.175) * tanp;
+  // (The hug eases by the winding turned from the start, not by ln R: a hugging arm gains little ln R per turn, and
+  // eased in ln R it stayed low-pitched out to the edge - rings.)
+  const hugTurn = TAU * Math.max(0.02, p.openTurns ?? 0.175);
+  const majorPitchAt =
+    open > 0
+      ? (lnR: number): number => pitchAt(lnR) * (1 + open * Math.exp(-Math.max(0, lnR - lnRef) / Math.max(0.02, openLen)))
+      : open < 0
+        ? (lnR: number, turned = 0): number => pitchAt(lnR) * (1 + open * Math.exp(-((turned / hugTurn) ** 2)))
+        : pitchAt;
+  for (let k = 0; k < 2; k++) {
+    const major = tabulate("major", r0, r1, phiA + k * Math.PI, pitchDeg, sense, 1, p.width, p, laneKey(p.seed, 1, k, 0), open < 0 ? 0.01 : 0.04, majorPitchAt);
+    if (open < 0) {
+      const turned = turnedOf(major, sense);
+      const last = turned[major.n - 1];
+      major.ray = true;
+      major.rayRing = sampleAtTurn(turned, Math.min(last, 2 * hugTurn));
+      major.rayEnd = sampleAtTurn(turned, Math.min(last, 2 * hugTurn + Math.PI / 2));
+    }
+    arms.push(major);
+  }
   // The lesser arms: between the majors in the log-spiral phase, nudged to the pieces' strongest phase near there.
   const lesser = Math.max(0, Math.min(4, Math.round(p.lesser)));
   const psiA = phiA - (sense * Math.log(r0)) / tanp;
@@ -477,6 +513,16 @@ export function ridgeAt(sk: Skeleton, R: number, phi: number): RidgeHit {
   let best: RidgeHit = { distance: Infinity, strength: 0, arm: -1, side: 0, width: sk.width };
   for (let k = 0; k < sk.arms.length; k++) {
     const a = sk.arms[k];
+    if (a.ray) {
+      // S109: a ray arm read along the ray (skeletonBand's rayColumn).
+      const hit = rayHit(a, sk.sense >= 0 ? 1 : -1, R, phi);
+      if (hit && hit.distance < best.distance) {
+        const strength = lerp(a.strength, hit.x);
+        const width = a.wIn && a.wOut ? a.width * lerp(hit.side >= 0 ? a.wIn : a.wOut, hit.x) : a.width;
+        best = a.patch || a.wIn ? { distance: hit.distance, strength, arm: k, side: hit.side, width, patch: a.patch ? lerp(a.patch, hit.x) : 1 } : { distance: hit.distance, strength, arm: k, side: hit.side, width };
+      }
+      if (!(Math.log(R) >= a.lnR0 + (a.rayRing ?? Infinity) * a.dlnR)) continue;
+    }
     const h = armAt(a, R);
     if (!h) continue;
     const d = wrap(phi - h.phi);
@@ -518,11 +564,14 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
   // circle round the bar. (Read at the foot everywhere, the faded outer ends and the breaks stop square across the
   // wing; on the ring they trail off along it, as the goal's arms do.)
   const sense = sk.sense >= 0 ? 1 : -1;
+  // S109: the ray arms' crossings of each row's azimuth (rayTable), once per build.
+  const rays = sk.arms.map((a) => (a.ray ? rayTable(a, sense, height) : null));
   for (let c = 0; c < width; c++) {
     const R = ((c + 0.5) / width) * rHi;
     const lnR = Math.log(R);
     if (plain) plain.fill(0);
-    for (const a of sk.arms) {
+    for (let ai = 0; ai < sk.arms.length; ai++) {
+      const a = sk.arms[ai];
       // S107: a spur's glow has no wing (its wing, three widths across a short branch, began square across it where
       // the spur leaves its arm: a straight edge in the haze).
       const wing = a.kind === "spur" ? 0 : wingAll;
@@ -530,6 +579,12 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
       // (S107: the core's reach at its widest ragged side; the wing's at the even width.)
       const core = 3.5 * s * (a.wMax ?? 1);
       const reachKpc = wing > 0 ? Math.max(3 * 3.2 * s, core) : core;
+      const ray = rays[ai];
+      if (ray) {
+        rayColumn(a, ray, R, c, width, height, reachKpc, wing, out, plain);
+        // (the ring reading from the hug's end on)
+        if (!(lnR >= a.lnR0 + (a.rayRing ?? Infinity) * a.dlnR)) continue;
+      }
       // Inside the arm's start (within a reach of it) its crest carried inward at the start's pitch: texels there
       // whose foot lies on the arm are its band's rounded start.
       const h = armAt(a, R) ?? armBefore(a, R, reachKpc, sense);
@@ -594,6 +649,127 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
 function armBefore(a: SkelArm, R: number, reach: number, sense: number): { phi: number; tanp: number } | null {
   if (!(R < a.r0 && R > a.r0 - reach)) return null;
   return { phi: a.phi[0] + (sense * (Math.log(R) - a.lnR0)) / a.tanp[0], tanp: a.tanp[0] };
+}
+
+/** S109: an arm's winding turned from its start at each sample, rad (increasing). Cached per arm. */
+const turnedCache = new WeakMap<SkelArm, Float64Array>();
+function turnedOf(a: SkelArm, sense: number): Float64Array {
+  let t = turnedCache.get(a);
+  if (!t) {
+    t = new Float64Array(a.n);
+    for (let i = 0; i < a.n; i++) t[i] = sense * (a.phi[i] - a.phi[0]);
+    turnedCache.set(a, t);
+  }
+  return t;
+}
+
+/** S109: the fractional sample where an arm has turned `t` rad (t within [0, its last]), by bisection. */
+function sampleAtTurn(turned: Float64Array, t: number): number {
+  let lo = 0;
+  let hi = turned.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (turned[mid] <= t) lo = mid;
+    else hi = mid;
+  }
+  const d = turned[hi] - turned[lo];
+  return lo + (d > 0 ? Math.min(1, Math.max(0, (t - turned[lo]) / d)) : 0);
+}
+
+/** S109: a ray arm's crossings of the ray at azimuth phi (rad): fractional samples, inner first. */
+function crossings(a: SkelArm, sense: number, phi: number): number[] {
+  const turned = turnedOf(a, sense);
+  const last = turned[a.n - 1];
+  const out: number[] = [];
+  for (let t = (((sense * (phi - a.phi[0])) % TAU) + TAU) % TAU; t <= last; t += TAU) out.push(sampleAtTurn(turned, t));
+  return out;
+}
+
+/** S109: a ray arm's crossings for each of `height` rows (row centres), K to a row: sample (-1 none), R, cos(pitch). */
+interface RayTable {
+  K: number;
+  x: Float32Array;
+  r: Float32Array;
+  cos: Float32Array;
+}
+function rayTable(a: SkelArm, sense: number, height: number): RayTable {
+  const last = turnedOf(a, sense)[a.n - 1];
+  const K = Math.max(1, Math.ceil(last / TAU) + 1);
+  const x = new Float32Array(height * K).fill(-1);
+  const r = new Float32Array(height * K);
+  const cos = new Float32Array(height * K);
+  const end = a.rayEnd ?? a.n - 1;
+  for (let j = 0; j < height; j++) {
+    const list = crossings(a, sense, ((j + 0.5) / height) * TAU).filter((xi) => xi <= end);
+    for (let k = 0; k < Math.min(K, list.length); k++) {
+      const xi = list[k];
+      const t = lerp(a.tanp, Math.min(a.n - 1, xi));
+      x[j * K + k] = xi;
+      r[j * K + k] = Math.exp(a.lnR0 + xi * a.dlnR);
+      cos[j * K + k] = 1 / Math.sqrt(1 + t * t);
+    }
+  }
+  return { K, x, r, cos };
+}
+
+/**
+ * S109: one column (radius R) of a ray arm's band: on each row the arm's crossing of that row's ray nearest R, the
+ * point's distance across the crest (R_k - R) cos(pitch), its strength, clumps and sides there; as the ring reading's
+ * arithmetic otherwise (the wing even and unclumped, the plain band for the ring means).
+ */
+function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: number, height: number, reachKpc: number, wing: number, out: Float32Array, plain: Float32Array | null): void {
+  const { K, x, r, cos } = ray;
+  const clumped = !!(a.patch || a.wIn);
+  for (let j = 0; j < height; j++) {
+    let best = -1;
+    let bestD = Infinity;
+    for (let k = 0; k < K; k++) {
+      const o = j * K + k;
+      if (x[o] < 0) break;
+      const d = Math.abs(r[o] - R) * cos[o];
+      if (d < bestD) {
+        bestD = d;
+        best = o;
+      }
+    }
+    if (best < 0 || bestD > reachKpc) continue;
+    const xi = Math.min(a.n - 1, x[best]);
+    const strength = lerp(a.strength, xi);
+    if (strength <= 1e-3) continue;
+    let u: number;
+    let v: number;
+    if (clumped) {
+      const inner = R <= r[best];
+      const side = inner ? a.wIn : a.wOut;
+      const ws = (a.width * (side ? lerp(side, xi) : 1)) / 2.3548;
+      const q = bestD / ws;
+      const coreV = Math.exp(-0.5 * q * q) * (1 - wing);
+      const wingPart = wing * Math.exp(-0.5 * (bestD / ((3 * a.width) / 2.3548)) ** 2);
+      const clump = a.patch ? lerp(a.patch, xi) : 1;
+      u = strength * (coreV + wingPart);
+      v = strength * (clump * coreV + wingPart);
+    } else {
+      u = strength * bandProfile(bestD, a.width, wing);
+      v = u;
+    }
+    const o = j * width + c;
+    if (v > out[o]) out[o] = v;
+    if (plain && u > plain[j]) plain[j] = u;
+  }
+}
+
+/** S109: a ray arm's nearest crossing of the ray through (R, phi): distance across, sample, side; null if none. */
+function rayHit(a: SkelArm, sense: number, R: number, phi: number): { distance: number; x: number; side: number } | null {
+  let best: { distance: number; x: number; side: number } | null = null;
+  const end = a.rayEnd ?? a.n - 1;
+  for (const xi of crossings(a, sense, phi)) {
+    if (xi > end) break;
+    const Rk = Math.exp(a.lnR0 + xi * a.dlnR);
+    const t = lerp(a.tanp, Math.min(a.n - 1, xi));
+    const d = Math.abs(Rk - R) / Math.sqrt(1 + t * t);
+    if (!best || d < best.distance) best = { distance: d, x: Math.min(a.n - 1, xi), side: R <= Rk ? 1 : -1 };
+  }
+  return best;
 }
 
 /** An arm sampled every `step` kpc along its crest: plane positions (x = R cos phi, y = R sin phi) and strength. */

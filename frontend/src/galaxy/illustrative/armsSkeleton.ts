@@ -31,6 +31,7 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
     // S107 (the Milky Way's spiral and its patchy arms)
     pitchGrow: p.skelpitchgrow ?? d.pitchGrow,
     open: p.skelopen ?? d.open,
+    openTurns: p.skelopenturns ?? d.openTurns,
     lesserWidth: p.skellesserwidth ?? d.lesserWidth,
     lesserReach: p.skellesserreach ?? d.lesserReach,
     patch: p.skelpatch ?? d.patch,
