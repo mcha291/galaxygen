@@ -34,15 +34,18 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
 /** Whether the arms' marks read the skeleton (the `skeleton` switch). */
 export const skeletonOn = (p: IllParams): boolean => (p.skeleton ?? 0) >= 0.5;
 
-/** A cached skeleton builder (one per reader, so two readers at different parameters do not evict each other). */
-export function skeletonMemo(): (frame: IllFrame | null, p: IllParams) => Skeleton | null {
+/**
+ * A cached skeleton builder (one per reader, so two readers at different parameters do not evict each other); `name`
+ * (S107) lets the map worker build it (feature.ts memoOn).
+ */
+export function skeletonMemo(name?: string): (frame: IllFrame | null, p: IllParams) => Skeleton | null {
   const build = memoOn((frame: unknown, json: unknown) => {
     const f = frame as IllFrame | null;
     if (!f) return null;
     const g = geometryOf(f);
     if (g.pieces.length === 0 && !g.bar) return null;
     return buildSkeleton({ pieces: g.pieces, bar: g.bar }, JSON.parse(json as string) as SkeletonParams);
-  });
+  }, name);
   return (frame, p) => build(frame, JSON.stringify(skeletonParamsOf(p)));
 }
 

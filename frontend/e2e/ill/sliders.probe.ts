@@ -36,7 +36,9 @@ const BOUND = Number(process.env.GALAXYGEN_ILL_STALL_MS ?? "Infinity");
 
 declare const window: Window & {
   __galaxygenFrameSum?: () => { sum: number[] };
-  __illProbe?: { frames: number[]; tasks: { start: number; ms: number }[]; on: boolean };
+  __illProbe?: { frames: number[]; tasks: { start: number; ms: number }[]; on: boolean; busyUntil: number };
+  __galaxygenIllPending?: () => number;
+  __galaxygenIllJobs?: () => { posted: number; seeded: number; skipped: number; here: number; failed: number; times: Record<string, { ms: number; roundTripMs: number }> };
 };
 
 async function press(page: Page, label: string, siblingOf?: string) {
@@ -70,10 +72,15 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
         localStorage.setItem(tuningKey, "{}");
         // Every animation frame's time and every long task while `on`; every WebGL texture upload timed as `ill upload`
         // (one of a megabyte or more) - the main thread's share of it, which is what stalls a frame.
-        const probe = { frames: [] as number[], tasks: [] as { start: number; ms: number }[], on: false };
+        const probe = { frames: [] as number[], tasks: [] as { start: number; ms: number }[], on: false, busyUntil: 0 };
         (window as unknown as { __illProbe: typeof probe }).__illProbe = probe;
         const tick = (t: number) => {
-          if (probe.on) probe.frames.push(t);
+          if (probe.on) {
+            probe.frames.push(t);
+            // the last frame at which an illustrative build was still owed (the picture not yet the move's)
+            const pending = (window as unknown as { __galaxygenIllPending?: () => number }).__galaxygenIllPending?.() ?? 0;
+            if (pending > 0) probe.busyUntil = t;
+          }
           requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
@@ -122,6 +129,7 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
           performance.clearMeasures();
           window.__illProbe!.frames.length = 0;
           window.__illProbe!.tasks.length = 0;
+          window.__illProbe!.busyUntil = 0;
           window.__illProbe!.on = true;
         });
         const t0 = await page.evaluate(() => performance.now());
@@ -129,6 +137,7 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
         // The move's effect: the mark comes (a map-shaping slider) and goes; then a second more of frames.
         await page.waitForTimeout(400);
         await expect(rebuilding(page)).toHaveCount(0, { timeout: 30_000 });
+        await page.waitForFunction(() => (window.__galaxygenIllPending?.() ?? 0) === 0, null, { timeout: 30_000 });
         await page.waitForTimeout(1000);
         const got = await page.evaluate((from) => {
           const p = window.__illProbe!;
@@ -145,15 +154,22 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
             s.max = Math.max(s.max, e.duration);
           }
           const tasks = p.tasks.filter((t) => t.start >= from).map((t) => Math.round(t.ms));
-          return { gap, frames: frames.length, stages, tasks };
+          return { gap, frames: frames.length, stages, tasks, drawnMs: p.busyUntil > from ? p.busyUntil - from : 0 };
         }, t0);
-        const row = { template, slider: move.label, value, gapMs: Math.round(got.gap), frames: got.frames, longTasksMs: got.tasks, stages: got.stages };
+        const jobs = await page.evaluate(() => window.__galaxygenIllJobs?.() ?? null);
+        const row = { template, slider: move.label, value, gapMs: Math.round(got.gap), drawnMs: Math.round(got.drawnMs), frames: got.frames, longTasksMs: got.tasks, stages: got.stages, jobs };
         rows.push(row);
         const stageWords = Object.entries(got.stages)
           .sort((a, b) => b[1].max - a[1].max)
           .map(([k, s]) => `${k.slice(4)} ${s.max.toFixed(0)}${s.n > 1 ? `x${s.n}` : ""}`)
           .join(", ");
         console.log(`ill-probe ${template} "${move.label}" -> ${value}: longest frame gap ${got.gap.toFixed(0)} ms; long tasks [${got.tasks.join(", ")}] ms; stages: ${stageWords}`);
+        if (jobs)
+          console.log(
+            `ill-probe   worker: ${jobs.posted} posted, ${jobs.seeded} seeded, ${jobs.skipped} skipped, ${jobs.here} on the main thread, ${jobs.failed} failed; ` +
+              `last map ${jobs.times.map.ms.toFixed(0)} ms in the worker (${jobs.times.map.roundTripMs.toFixed(0)} round trip), ` +
+              `last sparkle ${jobs.times.sparkle.ms.toFixed(0)} ms (${jobs.times.sparkle.roundTripMs.toFixed(0)}); the picture the move's ${got.drawnMs.toFixed(0)} ms after it`,
+          );
       }
     }
     if (process.env.GALAXYGEN_ILL_OUT) {

@@ -172,19 +172,49 @@ export interface IllFeature {
 /**
  * The last value computed from the same inputs, compared by identity: for a feature's texture, built once per frame of
  * arrays (and per parameter that shapes it) and not on every slider move.
+ *
+ * (S107) A `name` (unique, "<feature>.<what>") lets the map worker build it off the main thread: the worker runs the
+ * same builders (illMapJob.ts), hears each named memo's build (observeMemoBuilds) and sends it back, and the main
+ * thread puts the value in this cache under the same inputs (seedMemo) - so the main thread's own synchronous call then
+ * finds it and builds nothing. A name changes nothing else: on a miss the main thread still builds, as before.
  */
-export function memoOn<T>(build: (...inputs: unknown[]) => T): (...inputs: unknown[]) => T {
+export function memoOn<T>(build: (...inputs: unknown[]) => T, name?: string): (...inputs: unknown[]) => T {
   let last: { inputs: unknown[]; value: T } | null = null;
   MEMOS.add({ release: () => (last = null) });
+  if (name) NAMED.set(name, { seed: (inputs, value) => (last = { inputs, value: value as T }), held: () => last });
   return (...inputs: unknown[]) => {
     if (last && last.inputs.length === inputs.length && last.inputs.every((v, i) => Object.is(v, inputs[i]))) return last.value;
     // A probe (wouldBuild) asks whether anything would be built, and builds nothing.
     if (probing > 0) throw MISS;
     const value = build(...inputs);
     last = { inputs, value };
+    if (name && observer) observer(name, inputs, value);
     return value;
   };
 }
+
+/** The named memos (S107): each one's seeding and its last inputs and value. The last definition of a name holds it. */
+const NAMED = new Map<string, { seed(inputs: unknown[], value: unknown): void; held(): { inputs: unknown[]; value: unknown } | null }>();
+let observer: ((name: string, inputs: unknown[], value: unknown) => void) | null = null;
+
+/** (S107) Hears every named memo's build (the map worker's job) until the returned function is called. */
+export function observeMemoBuilds(listener: (name: string, inputs: unknown[], value: unknown) => void): () => void {
+  observer = listener;
+  return () => {
+    if (observer === listener) observer = null;
+  };
+}
+
+/** (S107) Puts `value` in the named memo's cache under `inputs` (built elsewhere, the same way); false for no such memo. */
+export function seedMemo(name: string, inputs: unknown[], value: unknown): boolean {
+  const m = NAMED.get(name);
+  if (!m) return false;
+  m.seed(inputs, value);
+  return true;
+}
+
+/** (S107) The named memo's last inputs and value, or null (a test's and the map client's read). */
+export const memoHeld = (name: string): { inputs: unknown[]; value: unknown } | null => NAMED.get(name)?.held() ?? null;
 
 /** A clock in ms (performance.now where there is one; 0 elsewhere). */
 export const illNow = (): number => (typeof performance !== "undefined" ? performance.now() : 0);

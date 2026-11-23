@@ -87,6 +87,7 @@ import { base } from "./base";
 import { edge } from "./edge";
 import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, illMeasure, illNow, releaseMemos, wouldBuild } from "./feature";
 import { floc } from "./floc";
+import { illMapAnswered, illMapFailed, illMapKey, releaseIllJobs, startIllMap } from "./illMapClient";
 import { framing } from "./framing";
 import { grade } from "./grade";
 import { knots } from "./knots";
@@ -408,6 +409,8 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
   shared.planes = [...planes];
   if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
   shared.texture = mapTexture(buf, ILL_MAP.width, ILL_MAP.height);
+  // S107: the planes it was composed from, by channel (the sparkle names the lanes' plane it reads to the map worker).
+  shared.texture.userData.illPlanes = [...planes];
   illMeasure("compose", started);
   return shared.texture;
 }
@@ -443,6 +446,24 @@ export function updateRuntime(runtime: IllRuntime, ill: Readonly<Record<string, 
     }
   }
   if (moved) runtime.version += 1;
+}
+
+/**
+ * One step of the map contract (S107, the sliders' stall; illMapClient.ts): the runtime brought to these parameters
+ * WITHOUT building a plane on this thread where the map worker can build it. Where the runtime would build (illStale)
+ * and the worker has not answered for exactly these parameters, the planes are asked of it ("asked": the runtime keeps
+ * its previous map and uniforms; call again when illArrivals moves) - or, if it failed for them, nothing changes
+ * ("failed"). Otherwise the runtime is updated from the features' caches ("drawn"): every channel at these parameters.
+ * Without a worker (vitest, SSR, a failed worker) every step is "drawn", built here as before.
+ */
+export function stepRuntime(runtime: IllRuntime, ill: Readonly<Record<string, number>>, context: IllContext): "asked" | "failed" | "drawn" {
+  const key = illMapKey(ill, context);
+  if (!illMapAnswered(key) && illStale(ill, context)) {
+    if (illMapFailed(key)) return "failed";
+    if (startIllMap(key, ill, context)) return "asked";
+  }
+  updateRuntime(runtime, ill, context);
+  return "drawn";
 }
 
 /** How long the sliders must hold still before a plane-shaping change is built (S105 fix R1), ms. */
@@ -526,6 +547,8 @@ export function releaseShared(): void {
   shared.buffer = null;
   shared.planes = [null, null, null, null];
   releaseMemos();
+  // S107: the map worker's caches and every answer not yet in.
+  releaseIllJobs();
 }
 
 /** What the layer holds outside a runtime now (the release's test): the shared map's buffer bytes. */

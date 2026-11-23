@@ -107,6 +107,8 @@ declare global {
     __galaxygenFrameSum?: () => { sum: number[]; width: number; height: number };
     /** The PSF tables building now (S82, #178 ii; psfTableClient.ts): a still view is one with none building. */
     __galaxygenPsfPending?: () => number;
+    /** The illustrative look's builds pending (S107; illMapClient.ts): none under the physical look. */
+    __galaxygenIllPending?: () => number;
     /** The march's GPU time (S67, D227 R6; FieldVolume's timer query). */
     __galaxygenMarchGpu?: { available: boolean; ms: number | null };
     /** The surface-brightness gate's two sides (S67, D227 R5; ringProfile.ts). */
@@ -264,7 +266,9 @@ async function settle(page: Page, net: Net, mode: Capture["mode"]) {
     await page.waitForTimeout(READY.probeMs);
     // Since S82 (#178 ii) the instrument's PSF table is built in a worker, asked by no request: the view is not still
     // while one builds (the spikes' switch, a filter set's), the last table drawn until it arrives.
-    const building = await page.evaluate(() => window.__galaxygenPsfPending?.() ?? 0);
+    // S107: and none of the illustrative look's builds pending (illMapClient.ts: the map worker's jobs, a plane not yet
+    // drawn, a held slider) - a frame taken before the map arrives is the parameters' only in part.
+    const building = await page.evaluate(() => (window.__galaxygenPsfPending?.() ?? 0) + (window.__galaxygenIllPending?.() ?? 0));
     const quiet = net.inflight === 0 && Date.now() - net.last >= READY.quietMs && building === 0;
     const sum = await page.evaluate(() => window.__galaxygenFrameSum!().sum);
     const key = sum.join(",");

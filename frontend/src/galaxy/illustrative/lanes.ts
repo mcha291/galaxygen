@@ -148,7 +148,7 @@ const mapPlane = memoOn((frame: unknown, template: unknown, skelJson: unknown, .
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
   return map.drawn ? map.data : null;
-});
+}, "lanes.plane");
 
 /**
  * The arms' crests traced into ridges (S106; lanesMap.ts traceRidges) from the arms' published contrast shaped at the

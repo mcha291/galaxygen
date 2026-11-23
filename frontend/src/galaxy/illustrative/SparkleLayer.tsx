@@ -6,19 +6,16 @@
 // brightest share (`sparklebig`) on a larger one (`sparklebigsize`) - so the arms' grain has sizes, not one dot.
 // A share of 0 draws every point on the small sprite, as S105 did.
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FluxPoints, type PointDust } from "../FluxPoints";
-import { toScene } from "../positions";
-import { armMapFor, armsSkeleton, shapeOf } from "./arms";
-import { skeletonOn } from "./armsSkeleton";
-import { grainDensity, ridgeAt } from "./skeleton";
-import { buildSparkle, hashString, sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
-import { ILL_MAP, type IllLayerProps, illMeasure, illNow } from "./feature";
+import { shapeOf } from "./arms";
+import { sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
+import { ILL_MAP, type IllLayerProps } from "./feature";
+import { objectToken, requestSparkle, sparkleHeld } from "./illMapClient";
+import { type SparklePoints, sparkleKey, sparkleReadsLanes } from "./sparkleJob";
 
 /** The sparkle's blue-white at full share (over the white point). */
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
-/** The seed of the viewer's own (and the template's name): fixed, never the time or the frame. */
-const SPARKLE_SEED = 0x5108a2b5;
 
 /** The members `idx` of a flat buffer of `width` values per point. */
 function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Array {
@@ -27,48 +24,27 @@ function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Arr
   return out;
 }
 
+/** The shared map's texture as the layer reads it: its RGBA bytes and the planes it was composed from (index.ts). */
+type MapTexture = { image?: { data?: ArrayLike<number>; width?: number; height?: number }; userData?: { illPlanes?: (Uint8Array | null)[] } };
+
 export default function ArmsSparkle({ params, runtime, context, knotsGain, dust }: IllLayerProps) {
-  const built = armMapFor(params, context.frame);
-  // S106: on the skeleton, the grain's density read across its ridges (skeleton.ts grainDensity) in place of the share.
-  const skeleton = skeletonOn(params) ? armsSkeleton(context.frame, params) : null;
-  const tail = params.skeltail ?? 0.05;
-  const grainFade = params.skelgrainfade ?? 1.5;
-  const count = params.sparkle ?? 0;
-  const rMax = params.sparkleedge ?? 16;
-  const shape = useMemo(
-    () => ({
-      count,
-      clump: params.clump ?? 0.6,
-      groupPc: params.groupsize ?? 120,
-      members: params.members ?? 10,
-      ridge: params.sparkleridge ?? 2,
-      slope: params.sparkleslope ?? 1.4,
-      range: params.sparklerange ?? 40,
-      rMax,
-      heightPc: 60,
-      floor: params.sparklefloor ?? 0,
-      lift: params.sparklelift ?? 0,
-      avoid: params.sparkleavoid ?? 0,
-      bunch: params.sparklebunch ?? 0,
-      bunchPc: params.sparklebunchsize ?? 400,
-      bunchBright: params.sparklebunchbright ?? 0,
-    }),
-    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift, params.sparkleavoid, params.sparklebunch, params.sparklebunchsize, params.sparklebunchbright],
-  );
-  // S106: the shared map (its R the lanes), read only while the sparkle keeps off the lanes.
-  const mapTex = (shape.avoid ?? 0) > 0 ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as { image?: { data?: ArrayLike<number>; width?: number; height?: number } } | undefined) : undefined;
-  const points = useMemo(() => {
-    if (!built || shape.count <= 0) return null;
-    const started = illNow();
-    const img = mapTex?.image;
-    const lanes =
-      img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height ? { data: img.data, width: img.width, height: img.height, rHi: built.grid.rHi } : null;
-    const levelOf = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
-    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw, lanes, levelOf);
-    illMeasure("sparkle", started);
-    if (s.radius.length === 0) return null;
-    return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
-  }, [built, shape, context.template, mapTex, skeleton, tail, grainFade]);
+  // S107: the points are built by the map worker (sparkleJob.ts, illMapClient.ts requestSparkle) - the same build the
+  // layer made here, moved off the main thread - keyed on exactly what it reads: the frame, the arms' parameters and,
+  // while the sparkle keeps off the lanes (S106), the lanes' own plane in the composed map (not the map's texture, which
+  // moves with any channel). The last points stay drawn until the new ones arrive.
+  const mapTex = sparkleReadsLanes(params) ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as MapTexture | undefined) : undefined;
+  const img = mapTex?.image;
+  const composed = !!img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height;
+  const lanesPlane = composed ? (mapTex?.userData?.illPlanes?.[0] ?? null) : null;
+  const key = sparkleKey(params, context.frame, objectToken(context.frame), context.template, composed ? (lanesPlane ? `plane:${objectToken(lanesPlane)}` : "zeros") : "none");
+  const [arrived, setArrived] = useState<{ key: string; points: SparklePoints | null } | null>(null);
+  const held = sparkleHeld(key);
+  useEffect(() => {
+    if (held !== undefined) return;
+    const lanes = composed ? { plane: lanesPlane, rgba: img!.data! } : null;
+    return requestSparkle(key, params, context, lanes, (points) => setArrived({ key, points }));
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- the key names every input
+  const points = held !== undefined ? held : (arrived?.points ?? null);
   const blue = params.sparkleblue ?? 0.7;
   const base = params.sparklegain ?? 2e4;
   const start = shapeOf(params, context.frame).start;
