@@ -148,6 +148,39 @@ const CONTROLS: readonly IllControl[] = [
   { key: "cloudAz", label: "star cloud azimuth", min: 0, max: 360, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: 320 }, about: "The galactocentric azimuth of the richest star clouds, degrees. Illustrative." },
   { key: "cloudGlow", label: "star cloud glow", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "A soft glow under each star cloud's group (the map's clump level: the clump glow's gain and tint); 0 none. Illustrative." },
   { key: "nucleusRadius", label: "nucleus radius", min: 0.05, max: 5, step: 0.01, unit: "kpc", default: 0.8, about: "The radius at which the nucleus's tint has fallen to 1/e, kpc. Colour for appearance." },
+  // S106 third pass (C4): the plane style's dust as a tangled mesh of many widths - broad soft lanes carrying feathers and
+  // spurs, threads that diverge and merge, wisps, tapered ends.
+  { key: "laneDepth", label: "broad lanes", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "The plane style: the depth of the broad soft dust lanes in short flocculent arcs, in full threads; 0 none. Illustrative." },
+  { key: "laneWidth", label: "lane width", min: 60, max: 800, step: 5, unit: "pc", default: 250, about: "A broad lane's full width at half depth, parsecs. Illustrative." },
+  { key: "laneSpacing", label: "lane spacing", min: 300, max: 4000, step: 10, unit: "pc", default: 1200, about: "The broad lanes' spacing across the spiral, parsecs. Illustrative." },
+  { key: "laneRun", label: "lane run", min: 1, max: 12, step: 0.1, unit: "×", default: 3, about: "How many times longer along the spiral than their spacing the broad lanes' noise cells are. Illustrative." },
+  { key: "feathers", label: "feathers on lanes", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far the threads and wisps gather along the broad lanes' sides (the feathers a lane carries); 0 everywhere alike. Illustrative." },
+  { key: "spurs", label: "spurs", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "Short threads leaving the lanes and threads at an angle to the spiral, as a share of a thread's depth; 0 none. Illustrative." },
+  { key: "spurAngle", label: "spur angle", min: 10, max: 80, step: 1, unit: "°", default: 40, about: "The spurs' angle to the spiral, degrees. Illustrative." },
+  { key: "tangle", label: "tangle", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far the threads' plane is pushed about (exactly, over a few spacings), as a share of their spacing: the threads diverge, cross and merge; 0 none. Illustrative." },
+  { key: "wispWidth", label: "wisp width", min: 0.1, max: 2, step: 0.01, unit: "×", default: 0.75, about: "The wisps' width as a share of a thread's. Illustrative." },
+  { key: "wispRun", label: "wisp run", min: 0.1, max: 2, step: 0.01, unit: "×", default: 0.7, about: "The wisps' run as a share of the threads'. Illustrative." },
+  { key: "meshDepth", label: "dust mesh", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "The plane style: the depth of a tangled mesh of dust filaments on the edges of cells stretched along the spiral (they fork and join at angles), in full threads; 0 none. Illustrative." },
+  { key: "meshCell", label: "mesh cell", min: 60, max: 2000, step: 10, unit: "pc", default: 300, about: "A mesh cell's size across the spiral, parsecs: the cream light between the filaments. Illustrative." },
+  { key: "meshWidth", label: "mesh filament", min: 10, max: 300, step: 1, unit: "pc", default: 40, about: "A mesh filament's typical full width at half depth, parsecs (each edge between half and 1.7 of it). Illustrative." },
+  { key: "meshStretch", label: "mesh stretch", min: 1, max: 2.5, step: 0.05, unit: "×", default: 1.8, about: "How many times longer along the spiral than across a mesh cell is. Illustrative." },
+  { key: "meshOpen", label: "mesh open", min: 0, max: 0.95, step: 0.01, unit: "", default: 0.35, about: "The share of the mesh's edges left out: an open, branching mesh with loose ends. Illustrative." },
+  { key: "meshFine", label: "fine mesh", min: 0, max: 2, step: 0.01, unit: "", default: 0.6, about: "A finer mesh (cells and filaments at half the size) as a share of the mesh's depth. Illustrative." },
+  { key: "meshKnot", label: "mesh knots", min: 0, max: 3, step: 0.01, unit: "", default: 0.8, about: "The dark clumps where three of the mesh's edges meet, as a share of a filament's depth. Illustrative." },
+  { key: "meshBroad", label: "broad mesh", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "A coarser mesh (cells twice the size, soft filaments two and a half times as wide) as a share of the mesh's depth: the broad lanes. Illustrative." },
+  { key: "meshFollow", label: "mesh on the dust", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far the mesh gathers where the drawn dust is (the map's threads and lanes within 150 pc); 0 alike everywhere. Illustrative." },
+  { key: "puffs", label: "light puffs", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { ngc_4414: 0 }, about: "The plane style: how far the light between the dust gathers into puffs a few hundred parsecs across (a multiplier about 1, brightest at a puff's heart); 0 none. Illustrative." },
+  { key: "puffSize", label: "puff size", min: 40, max: 1000, step: 5, unit: "pc", default: 220, about: "A light puff's size, parsecs (a finer set at under half of it rides on them). Illustrative." },
+  { key: "puffNear", label: "puffs by the dust", min: 0, max: 4, step: 0.05, unit: "×", default: 1, about: "How much stronger the puffs are where dust lies within 150 parsecs. Illustrative." },
+  { key: "puffBlue", label: "outer puffs blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.8, about: "How far the puffs turn blue-white in the outer disc (from the outer blue's radius). Colour for appearance." },
+  { key: "meshArc", label: "mesh on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far the mesh gathers into short flocculent arcs on the spiral (cream disc between); 0 even. Illustrative." },
+  { key: "meshArcWidth", label: "mesh arc width", min: 200, max: 4000, step: 10, unit: "pc", default: 900, about: "A mesh arc's width across the spiral at half the network's outer radius, parsecs (in proportion to the radius). Illustrative." },
+  { key: "meshArcRun", label: "mesh arc length", min: 1, max: 12, step: 0.1, unit: "×", default: 3, about: "A mesh arc's length along the spiral over its width. Illustrative." },
+  { key: "meshHaze", label: "lane smoke", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "A soft mottled brown smoke over the mesh's arcs (the broad lanes the filaments lie in), in full threads; 0 none. Illustrative." },
+  { key: "meshPiece", label: "mesh patches", min: 100, max: 5000, step: 10, unit: "pc", default: 1200, about: "The size of the noise that breaks the mesh into patches with clear disc between, parsecs. Illustrative." },
+  { key: "meshGaps", label: "mesh gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, about: "The level of the patches' noise under which the mesh is left out: higher, more clear disc. Illustrative." },
+  { key: "meshWarp", label: "mesh wiggle", min: 0, max: 1.5, step: 0.01, unit: "×", default: 0.4, about: "How far the mesh's plane is pushed about, as a share of a cell: its filaments bend. Illustrative." },
+  { key: "taper", label: "taper", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far a thread thins toward the ends of its piece; 0 an even width to the end. Illustrative." },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
@@ -196,6 +229,33 @@ export function flocChannel(p: IllParams, frame: IllFrame | null): Uint8Array | 
   return channel(frame, flocDrawn(p), ...SHAPE_KEYS.map((k) => shape[k]));
 }
 
+/** The mesh's arcs: arms and cells of the spiral lattice for an arc's width at half the outer radius, tan(pitch), the share. */
+function arcUniform(widthPc: number, run: number, outer: number, pitch: number, share: number): number[] {
+  const r = 0.5 * outer;
+  const across = Math.max(widthPc, 50) * 1e-3;
+  const m = Math.max(2, Math.round((2 * Math.PI * r * Math.sin(pitch)) / across));
+  const cells = Math.max(3, Math.round((2 * Math.PI * r) / (Math.cos(pitch) * across * Math.max(run, 0.5))));
+  return [m, cells, Math.tan(pitch), share];
+}
+
+/** The mesh's uniforms (floc.ts GLSL illFlocMeshShape): its own values and the plane style's ring. */
+function meshUniforms(p: IllParams, frame: IllFrame | null): Record<string, unknown> {
+  const v = (k: string) => p[k] ?? DEFAULTS[k];
+  const outer = Math.max(v("innerRadius") + 0.1, v("outerRadius"));
+  const pitch = Math.min(80, Math.max(1, geometryOf(frame).pitchDeg * v("pitch"))) * (Math.PI / 180);
+  return {
+    illFlocMesh: v("style") >= 0.5 ? v("meshDepth") : 0,
+    illFlocMeshA: [Math.max(v("meshCell"), 20) * 1e-3, (Math.max(v("meshWidth"), 4) * 1e-3) / 2, Math.min(2.5, Math.max(1, v("meshStretch"))), Math.min(0.95, Math.max(0, v("meshOpen")))],
+    illFlocMeshB: [v("meshFine"), v("meshKnot"), pitch, v("meshBroad")],
+    illFlocMeshC: [Math.max(v("meshPiece"), 50) * 1e-3, v("meshGaps"), v("meshWarp"), v("meshFollow")],
+    illFlocArc: arcUniform(v("meshArcWidth"), v("meshArcRun"), outer, pitch, v("meshArc")),
+    illFlocHaze: v("meshHaze"),
+    illFlocPuff: [v("style") >= 0.5 ? v("puffs") : 0, Math.max(v("puffSize"), 10) * 1e-3, v("puffNear"), v("puffBlue")],
+    illFlocRingA: [Math.max(0, v("innerRadius")), Math.max(0.01, v("ringIn")) * outer, Math.max(0.02, v("ringOut")) * outer, outer],
+    illFlocRingB: [v("core"), v("rim"), v("nearBias"), (v("nearAz") * Math.PI) / 180],
+  };
+}
+
 const MAX = FLOC_MAP.shapeMax.toFixed(1);
 const FLOOR = FLOC_MAP.lightFloor.toFixed(2);
 
@@ -242,6 +302,114 @@ export const floc: IllFeature = {
     float d = illFlocHash(i + vec2(1.0, 1.0));
     return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
   }
+  // S106 third pass (C4): the dust mesh, drawn here per ray (no map, no rebuild): filaments on the edges of the cells
+  // of a cellular (Worley) network in kpc, one jittered point a cell, the cells drawn out along the spiral, so they fork
+  // and join at angles; a share of the edges left out (open ends, branches), each edge its own width, dark clumps where
+  // three meet, a finer mesh on it. Its amount: the plane style's ring, near-side bias and a patch noise.
+  uniform float illFlocMesh;
+  uniform vec4 illFlocPuff;
+  uniform vec4 illFlocMeshA;
+  uniform vec4 illFlocMeshB;
+  uniform vec4 illFlocMeshC;
+  uniform vec4 illFlocRingA;
+  uniform vec4 illFlocRingB;
+  uniform vec4 illFlocArc;
+  uniform float illFlocHaze;
+  // Value noise on the log spiral (X along, Y across; m arms, cells along a turn), the azimuth's wrap joined:
+  // the lattice point (X + cells, Y - m) is (X, Y).
+  float illFlocSpiralCorner(vec2 i, float m, float cells, float k) {
+    float q = floor(i.x / cells);
+    return illFlocHash(vec2(i.x - q * cells, i.y + q * m) + vec2(k, 0.61 * k));
+  }
+  float illFlocSpiralVN(vec2 rp, float m, float cells, float k) {
+    vec2 p = vec2(rp.y * cells, m * (log(max(rp.x, 0.05)) / illFlocArc.z - rp.y)) / 6.2831853;
+    vec2 i = floor(p);
+    vec2 f = p - i;
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = illFlocSpiralCorner(i, m, cells, k);
+    float b = illFlocSpiralCorner(i + vec2(1.0, 0.0), m, cells, k);
+    float c = illFlocSpiralCorner(i + vec2(0.0, 1.0), m, cells, k);
+    float d = illFlocSpiralCorner(i + vec2(1.0, 1.0), m, cells, k);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+  }
+  vec2 illFlocMeshPt(vec2 c, float k) {
+    return vec2(illFlocHash(c + vec2(k, 0.37 * k)), illFlocHash(c + vec2(17.31 + k, 41.7)));
+  }
+  // The distance (kpc) from the origin to the bisector of a and b given in the drawn-out metric (along / S, across).
+  float illFlocEdgeD(vec2 a, vec2 b, float S) {
+    vec2 n = normalize(b - a + vec2(1e-7));
+    return abs(0.5 * dot(a + b, n)) / max(length(vec2(n.x / S, n.y)), 1e-6);
+  }
+  // An edge's weight in [0, 1): the same from either side (the pair's sum and spread).
+  float illFlocEdgeW(vec2 a, vec2 b, float k) {
+    return illFlocHash(a + b + vec2(0.5 * k, 3.7) + abs(a - b) * vec2(5.13, 2.71));
+  }
+  // The mesh's filaments at xy (kpc) for cells cell kpc across, along t drawn out S times: the edge's profile (each edge
+  // between half and 1.7 of the width h), the junctions' clumps (knot), none on an edge left out (w under open).
+  float illFlocCells(vec2 xy, vec2 t, float cell, float h, float S, float open, float knot, float k) {
+    vec2 c0 = floor(xy / cell);
+    float b1 = 1e9; float b2 = 1e9; float b3 = 1e9;
+    vec2 q1 = vec2(0.0); vec2 q2 = vec2(0.0); vec2 q3 = vec2(0.0);
+    vec2 c1 = vec2(0.0); vec2 c2 = vec2(0.0); vec2 c3 = vec2(0.0);
+    for (int i = -2; i <= 2; i++) {
+      for (int j = -2; j <= 2; j++) {
+        vec2 c = c0 + vec2(float(i), float(j));
+        vec2 d = (c + illFlocMeshPt(c, k)) * cell - xy;
+        vec2 q = vec2(dot(d, t) / S, d.y * t.x - d.x * t.y);
+        float d2 = dot(q, q);
+        if (d2 < b3) {
+          if (d2 < b2) {
+            b3 = b2; q3 = q2; c3 = c2;
+            if (d2 < b1) { b2 = b1; q2 = q1; c2 = c1; b1 = d2; q1 = q; c1 = c; }
+            else { b2 = d2; q2 = q; c2 = c; }
+          } else { b3 = d2; q3 = q; c3 = c; }
+        }
+      }
+    }
+    float w = illFlocEdgeW(c1, c2, k);
+    if (w < open) return 0.0;
+    float hw = h * (0.5 + 1.2 * (w - open) / max(1.0 - open, 1e-3)) * (0.55 + 0.9 * illFlocVN(xy / (0.8 * cell) + vec2(k)));
+    float e = illFlocEdgeD(q1, q2, S) / hw;
+    float prof = exp(-0.693 * e * e);
+    if (knot > 0.0 && illFlocEdgeW(c1, c3, k) >= open) {
+      float e3 = illFlocEdgeD(q1, q3, S) / (2.5 * hw);
+      prof += knot * prof * exp(-0.693 * e3 * e3);
+    }
+    return prof;
+  }
+  float illFlocMeshShape(vec2 rp, float near) {
+    float r = rp.x;
+    if (illFlocMesh <= 0.0 || r >= illFlocRingA.w) return 0.0;
+    float inner = illFlocRingA.x;
+    float ring = (inner > 0.0 ? smoothstep(0.5 * inner, 1.5 * inner, r) : 1.0)
+      * (illFlocRingB.x + (1.0 - illFlocRingB.x) * smoothstep(0.4 * illFlocRingA.y, illFlocRingA.y, r))
+      * (1.0 - (1.0 - illFlocRingB.y) * smoothstep(illFlocRingA.z, max(illFlocRingA.z + 0.01, 0.95 * illFlocRingA.w), r))
+      * (1.0 - smoothstep(0.88 * illFlocRingA.w, illFlocRingA.w, r))
+      * max(1.0 + illFlocRingB.z * cos(rp.y - illFlocRingB.w), 0.0);
+    vec2 xy = r * vec2(cos(rp.y), sin(rp.y));
+    float pc = illFlocMeshC.x;
+    float n = 0.65 * illFlocVN(xy / pc + vec2(5.9, 13.3)) + 0.35 * illFlocVN(xy / (0.45 * pc) + vec2(3.7, 9.1));
+    float a = illFlocMesh * ring * smoothstep(illFlocMeshC.y - 0.12, illFlocMeshC.y + 0.12, n) * (1.0 - illFlocMeshC.w + illFlocMeshC.w * 2.0 * near);
+    // The arcs: short flocculent pieces of the spiral (two octaves), the mesh gathered on them, the smoke over them.
+    float arc = 1.0;
+    if (illFlocArc.w > 0.0 || illFlocHaze > 0.0) {
+      float sn = 0.7 * illFlocSpiralVN(rp, illFlocArc.x, illFlocArc.y, 1.7) + 0.3 * illFlocSpiralVN(rp, 2.0 * illFlocArc.x, 2.0 * illFlocArc.y, 8.3);
+      arc = smoothstep(0.4, 0.72, sn);
+    }
+    float smoke = illFlocHaze * illFlocMesh * ring * arc * max(0.0, 1.8 * (0.6 * illFlocVN(xy / 0.25 + vec2(2.9, 6.1)) + 0.4 * illFlocVN(xy / 0.1 + vec2(9.3, 1.7))) - 0.5);
+    a *= 1.0 - illFlocArc.w + illFlocArc.w * 2.2 * arc;
+    if (a <= 0.0) return smoke;
+    float cell = illFlocMeshA.x;
+    // The plane pushed about by a share of a cell over three cells: the filaments bend.
+    vec2 wq = xy / (3.0 * cell);
+    xy += illFlocMeshC.z * cell * (vec2(illFlocVN(wq + vec2(41.2, 13.7)), illFlocVN(wq + vec2(7.1, 29.3))) - 0.5) * 2.0;
+    float p = illFlocMeshB.z;
+    vec2 t = vec2(sin(p) * cos(rp.y) - cos(p) * sin(rp.y), sin(p) * sin(rp.y) + cos(p) * cos(rp.y));
+    float v = illFlocCells(xy, t, cell, illFlocMeshA.y, illFlocMeshA.z, illFlocMeshA.w, illFlocMeshB.y, 3.1);
+    if (illFlocMeshB.x > 0.0) v += illFlocMeshB.x * illFlocCells(xy, t, 0.5 * cell, 0.6 * illFlocMeshA.y, illFlocMeshA.z, illFlocMeshA.w, illFlocMeshB.y, 11.7);
+    if (illFlocMeshB.w > 0.0) v += illFlocMeshB.w * illFlocCells(xy, t, 2.0 * cell, 2.5 * illFlocMeshA.y, illFlocMeshA.z, 0.5 * illFlocMeshA.w, illFlocMeshB.y, 23.9);
+    return a * v + smoke;
+  }
   // The feature's byte of the shared map read (flocMap.ts: signed about 128): x the dust, sqrt(shape / ${MAX}); y the
   // patches' level about their mean, in [-0.5, 0.5] (0, which changes nothing, where the light is not known: under a
   // filament, beyond the light's reach, where there is no map - a byte of 0 is never written); z a young clump's
@@ -256,6 +424,27 @@ export const floc: IllFeature = {
     if (illFlocStyle > 0.5) return vec3(max(s, 0.0), min(l, 0.6) / 0.6, clamp((l - 0.6) / 0.4, 0.0, 1.0));
     float level = clamp((l - ${FLOOR}) / (0.5 - ${FLOOR}), 0.0, 1.0) - 0.5;
     return vec3(max(s, 0.0), level * smoothstep(0.0, ${FLOOR}, l), clamp((l - 0.5) * 2.0, 0.0, 1.0));
+  }
+  // S106 (C4): the light's puffs - the nearest of one jittered point a cell, over the cell (0 at a puff's heart).
+  // Each puff its own brightness (y, in [0, 1)): heaps of light of many strengths, not a foam of equal bubbles.
+  vec2 illFlocPuffD(vec2 xy, float k) {
+    vec2 c0 = floor(xy);
+    vec2 b = vec2(9.0, 0.0);
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        vec2 c = c0 + vec2(float(i), float(j));
+        vec2 h = illFlocMeshPt(c, k);
+        float d = length(c + 0.15 + 0.7 * h - xy);
+        if (d < b.x) b = vec2(d, fract(h.x * 7.13 + h.y * 3.71));
+      }
+    }
+    return b;
+  }
+  // How much drawn dust lies within 150 pc of rp, in [0, 1]: four reads of the map about it.
+  float illFlocNear(vec2 rp) {
+    float da = 0.15 / max(rp.x, 0.3);
+    float s = illFlocRead(rp + vec2(0.15, 0.0)).x + illFlocRead(rp - vec2(0.15, 0.0)).x + illFlocRead(rp + vec2(0.0, da)).x + illFlocRead(rp - vec2(0.0, da)).x;
+    return smoothstep(0.05, 1.2, s);
   }
   // The dust's shape from its byte: 1 at the centre of one full filament, more where filaments cross. The edge:
   // between the soft stroke as drawn and an inked one, as the lanes'.
@@ -279,11 +468,13 @@ export const floc: IllFeature = {
     // The ink: the grains' own depth per magnitude in each channel, its spread about the middle channel's times the
     // redness (0 grey, 1 the grains' own).
     float av = illFlocDepth * illFlocInk * illFlocShape(map.x);
+    if (illFlocStyle > 0.5 && illFlocMesh > 0.0) av += illFlocDepth * illFlocInk * illFlocMeshShape(rp, illFlocMeshC.w > 0.0 ? illFlocNear(rp) : 0.5);
     if (av > 0.0) {
       // S106: the ceiling - the depth saturates softly toward illFlocCap magnitudes (a brown, never black).
       av = illFlocCap * (1.0 - exp(-av / illFlocCap));
       vec3 law = max(vec3(cloudExt.g) + illFlocRed * (cloudExt - vec3(cloudExt.g)), vec3(0.02 * cloudExt.g));
-      veil *= exp(-av * law);
+      vec3 dv = exp(-av * law);
+      veil *= dv;
     }
     // The patches: the light swelled and thinned about the patches' mean level.
     if (illFlocStyle > 0.5) {
@@ -301,6 +492,19 @@ export const floc: IllFeature = {
         veil *= max(1.0 + amt * (puff - 0.3), 0.0);
         float peak = illFlocKnots * amt * smoothstep(0.8, 0.95, n);
         veil *= vec3(1.0) + peak * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);
+      }
+      // S106 (C4): the puffs - cream-white heaps of light a few hundred parsecs across with gaps between, stronger
+      // beside the dust, blue-white outside; none on the dust itself.
+      if (illFlocPuff.x > 0.0 && rp.x < rHi) {
+        vec2 xy = rp.x * vec2(cos(rp.y), sin(rp.y)) / illFlocPuff.y;
+        vec2 pa = illFlocPuffD(xy, 5.3);
+        vec2 pb = illFlocPuffD(xy * 2.3 + vec2(3.1, 7.7), 9.1);
+        float heap = (1.0 - smoothstep(0.0, 0.7, pa.x)) * pa.y * pa.y * 1.6 + 0.5 * (1.0 - smoothstep(0.0, 0.6, pb.x)) * pb.y;
+        float bare = 1.0 - smoothstep(0.0, 0.3, map.x);
+        float edge = 1.0 - smoothstep(0.8 * illFlocGrainR, 1.15 * illFlocGrainR, rp.x);
+        float amt = illFlocPuff.x * bare * edge * (1.0 + illFlocPuff.z * (illFlocPuff.z > 0.0 ? illFlocNear(rp) : 0.0));
+        float cool = illFlocPuff.w * smoothstep(0.7 * illFlocCoolR, 1.5 * illFlocCoolR, rp.x);
+        veil *= max(vec3(1.0) + amt * (heap - 0.25) * mix(vec3(1.0), vec3(0.8, 0.97, 1.3), min(cool, 1.0)), vec3(0.0));
       }
       // S106 (C3): the outer disc's light toward a blue-white, the inner left cream.
       if (illFlocCool > 0.0) veil *= mix(vec3(1.0), vec3(0.84, 0.97, 1.24), illFlocCool * smoothstep(0.7 * illFlocCoolR, 1.5 * illFlocCoolR, rp.x));
@@ -325,7 +529,7 @@ export const floc: IllFeature = {
   arrays: FLOC_ARRAYS,
   layer: FlocLayer,
   map: { channels: ILL_MAP_CHANNELS.floc, build: (p, context) => [flocChannel(p, context.frame)] },
-  uniforms: (p) => {
+  uniforms: (p, context) => {
     return {
       illFlocDepth: p.depth ?? DEFAULTS.depth,
       illFlocInk: p.ink ?? DEFAULTS.ink,
@@ -348,6 +552,7 @@ export const floc: IllFeature = {
       illFlocKnots: p.litKnots ?? DEFAULTS.litKnots,
       illFlocCool: p.cool ?? DEFAULTS.cool,
       illFlocCoolR: p.coolRadius ?? DEFAULTS.coolRadius,
+      ...meshUniforms(p, context.frame),
     };
   },
 };

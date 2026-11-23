@@ -355,11 +355,15 @@ describe("the feature", () => {
     // `patch` is a reserved word of the GLSL the march is compiled as (a variable of that name blacked the field out).
     expect(glsl.replace(/\/\/.*$/gm, "")).not.toMatch(/\b(patch|sample|filter|input|output|common|partition|active)\b/);
     expect(glsl).toContain("illMap(rp).g");
-    const declared = [...glsl.matchAll(/uniform float (\w+);/g)].map((m) => m[1]).sort();
+    const declared = [...glsl.matchAll(/uniform (float|vec4) (\w+);/g)].map((m) => m[2]).sort();
+    const vec4s = new Set([...glsl.matchAll(/uniform vec4 (\w+);/g)].map((m) => m[1]));
     for (const template of ["milky_way", "ngc_4414"]) {
       const values = floc.uniforms!(paramsOf(floc, illDefaults(template)), { template, frame: FRAME });
       expect(Object.keys(values).sort()).toEqual(declared);
-      for (const v of Object.values(values)) expect(typeof v).toBe("number");
+      for (const [k, v] of Object.entries(values)) {
+        if (vec4s.has(k)) expect((v as number[]).length).toBe(4);
+        else expect(typeof v).toBe("number");
+      }
     }
     const g = illGlsl();
     expect(g).toMatch(/float illDustAv\(vec2 rp\) \{ return .*illFlocAv\(rp\).*; \}/);

@@ -75,7 +75,15 @@ export interface Amount {
   a1: number;
   a2: number;
   fe: number;
+  /** S106 third pass: the broad lanes' amount, the spurs', and the threads' and wisps' piece levels (their taper). */
+  aL: number;
+  aS: number;
+  p1: number;
+  p2: number;
 }
+
+/** An Amount's fields in the order the coarse grid keeps them. */
+const AMOUNT_KEYS = ["a1", "a2", "fe", "aL", "aS", "p1", "p2"] as const;
 
 /** The network's fields at one place: everything the map and the clouds' points read. */
 export interface NetSampler {
@@ -86,7 +94,7 @@ export interface NetSampler {
   /** The dust's amounts (each family's) and feathering at a place (r its radius, phi its azimuth in [0, 2 pi)). */
   amount(x: number, y: number, r: number, phi: number, out: Amount): void;
   /** The dust's threads at a place given the amounts there: dust(x, y) is threads at amount's values. */
-  threads(x: number, y: number, r: number, phi: number, a1: number, a2: number, fe: number): number;
+  threads(x: number, y: number, r: number, phi: number, am: Amount): number;
   /** The radius the dust reaches, kpc. */
   outer: number;
   /** The radius the light reaches, kpc. */
@@ -119,7 +127,7 @@ export function netSampler(g: FlocGeometry, shape: FlocShape): NetSampler {
   const A = Math.max(shape.filSpacing * 1e-3, 0.02);
   const run = Math.max(shape.filRun, 0.5);
   const fam1 = new Ladder(pitch, A, run, flocKey(shape.seed, 9, 1, 1));
-  const fam2 = new Ladder(Math.min(80 * DEG, pitch * 1.35), 0.5 * A, 0.7 * run, flocKey(shape.seed, 9, 1, 2));
+  const fam2 = new Ladder(Math.min(80 * DEG, pitch * 1.35), 0.5 * A, Math.max(0.1, shape.wispRun) * run, flocKey(shape.seed, 9, 1, 2));
   const arcs = new Ladder(pitch, Math.max(shape.arcWidth * 1e-3, 0.05), Math.max(shape.arcStretch, 0.5), flocKey(shape.seed, 9, 0, 1));
   const kw = flocKey(shape.seed, 9, 0, 2);
   const kp = flocKey(shape.seed, 9, 0, 3);
@@ -135,63 +143,123 @@ export function netSampler(g: FlocGeometry, shape: FlocShape): NetSampler {
   const nearAz = shape.nearAz * DEG;
   const LN2 = Math.LN2;
   const probe = { v: 0, g: 0 };
-  const thread = (fam: Ladder, lnR: number, phi: number, place: number, r: number, h: number) => {
+  // A family's distance from its nearest thread, kpc (the noise's middle crossing over its slope).
+  const dist = (fam: Ladder, lnR: number, phi: number, place: number, r: number) => {
     fam.atSlope(lnR, phi, place, r, probe);
-    const d = Math.abs(probe.v - 0.5) / (Math.max(probe.g, 1e-6) * h);
-    const e = LN2 * d * d;
+    return Math.abs(probe.v - 0.5) / Math.max(probe.g, 1e-6);
+  };
+  const profile1 = (d: number, h: number) => {
+    const e = (LN2 * d * d) / (h * h);
     return e > 6 ? 0 : Math.exp(-e);
   };
-  // The dust's amount at a place, for each family, and the feathering of the threads' width there: smooth fields (the
-  // finest is the feathers' at about the spacing), which buildNetChannel samples on the light's coarser grid.
+  const thread = (fam: Ladder, lnR: number, phi: number, place: number, r: number, h: number) => profile1(dist(fam, lnR, phi, place, r), h);
+  // S106 third pass (C4): the mesh. The broad soft lanes (a coarse family, short flocculent arcs), the feathers they
+  // carry (the threads and wisps gathered along their sides), the spurs (a family at an angle to the spiral, drawn
+  // near the lanes and the threads), the tangle (the threads' plane pushed about exactly over a few spacings, so they
+  // diverge, cross and merge), the taper (a thread thins toward its piece's ends).
+  const famL = new Ladder(pitch, Math.max(shape.laneSpacing * 1e-3, 0.1), Math.max(shape.laneRun, 0.5), flocKey(shape.seed, 9, 1, 3));
+  const halfL = Math.max(shape.laneWidth * 1e-3, 0.01) / 2;
+  const famS = new Ladder(Math.min(85 * DEG, pitch + Math.max(0, shape.spurAngle) * DEG), 0.8 * A, 1.5, flocKey(shape.seed, 9, 1, 4));
+  const kt = flocKey(shape.seed, 9, 0, 6);
+  const tw = Math.max(0, shape.tangle) * A;
+  const ts = 4 * A;
+  const needLane = shape.laneDepth > 0 || shape.feathers > 0;
   const amount = (x: number, y: number, r: number, phi: number, out: Amount): void => {
     out.a1 = 0;
     out.a2 = 0;
     out.fe = 1;
+    out.aL = 0;
+    out.aS = 0;
+    out.p1 = 1;
+    out.p2 = 1;
     const f = ring(r);
     if (f <= 0 || shape.netDepth <= 0) return;
-    // The pieces: an isotropic noise cuts each family's threads into runs of a few hundred parsecs.
+    // The pieces: an isotropic noise cuts each family's threads into runs of a few hundred parsecs (the lanes' into
+    // runs two and a half times as long, the spurs' into short barbs).
     const p1 = smoothstep(lo, hi, fbm(x / s, y / s, kp, 2));
     const p2 = shape.wisps > 0 ? smoothstep(lo, hi, fbm(x / (0.6 * s) + 11.3, y / (0.6 * s) + 4.1, kp + 17, 2)) : 0;
-    if (p1 <= 0 && p2 <= 0) return;
+    const pL = shape.laneDepth > 0 ? smoothstep(lo, hi, fbm(x / (2.5 * s) + 3.7, y / (2.5 * s) + 19.1, kp + 31, 2)) : 0;
+    const pS = shape.spurs > 0 ? smoothstep(lo + 0.08, hi + 0.08, fbm(x / (0.45 * s) + 27.1, y / (0.45 * s) + 1.3, kp + 43, 2)) : 0;
+    if (p1 <= 0 && p2 <= 0 && pL <= 0 && pS <= 0) return;
     let a = shape.netDepth * f * radial(r);
     if (shape.netArc > 0) a *= 1 - shape.netArc + shape.netArc * 2.2 * smoothstep(0.38, 0.72, arcs.at(Math.log(Math.max(r, 1e-3)), phi, Ladder.place(r)));
     if (shape.nearBias > 0) a *= 1 + shape.nearBias * Math.cos(phi - nearAz);
     if (a <= 0) return;
     out.a1 = a * p1;
     out.a2 = a * shape.wisps * p2;
+    out.aL = a * shape.laneDepth * pL;
+    out.aS = a * shape.spurs * pS;
+    out.p1 = p1;
+    out.p2 = p2;
     // The feathers: each thread's width swells and thins along it (thin threads, knots where it swells).
     if (shape.netFeather > 0) out.fe = Math.max(0.2, 1 - shape.netFeather + shape.netFeather * 1.7 * fbm(x / (0.9 * A) + 7.7, y / (0.9 * A) + 2.2, kf, 2));
   };
-  // The threads at a place, given the amounts and the feathering there.
-  const threads = (x: number, y: number, r: number, phi: number, a1: number, a2: number, fe: number): number => {
-    if (a1 <= 0 && a2 <= 0) return 0;
-    // The wiggle: the place pushed about by a fraction of a spacing, so a thread wanders without curling.
+  // The threads at a place, given the amounts there.
+  const threads = (x: number, y: number, r: number, phi: number, am: Amount): number => {
+    const { a1, a2, fe, aL, aS } = am;
+    if (a1 <= 0 && a2 <= 0 && aL <= 0 && aS <= 0) return 0;
     let lnR = Math.log(Math.max(r, 1e-3));
+    const place = Ladder.place(r);
+    let v = 0;
+    // The broad lanes, in the unpushed plane, and how near one is (the feathers keep to their sides).
+    let prox = 1;
+    if (needLane) {
+      const dL = dist(famL, lnR, phi, place, r);
+      // Mottled: a lane is smoke broken into blotches and holes, not a painted band.
+      if (aL > 0) v += aL * profile1(dL, halfL * (0.6 + 0.4 * fe)) * Math.max(0, 1.9 * fbm(x / (1.2 * halfL) + 2.9, y / (1.2 * halfL) + 6.1, kt + 11, 2) - 0.45);
+      if (shape.feathers > 0) {
+        const q = dL / (3 * halfL);
+        prox = 1 - shape.feathers + shape.feathers * 2 * Math.exp(-q * q);
+      }
+    }
+    // The tangle: the threads' plane pushed about exactly by up to `tangle` spacings over four.
+    let tr = r;
+    let tPlace = place;
+    if (tw > 0) {
+      const X = x + tw * (2 * fbm(x / ts, y / ts, kt, 2) - 1);
+      const Y = y + tw * (2 * fbm(x / ts + 31.7, y / ts + 8.3, kt + 5, 2) - 1);
+      tr = Math.max(Math.hypot(X, Y), 1e-3);
+      lnR = Math.log(tr);
+      phi = Math.atan2(Y, X);
+      if (phi < 0) phi += TAU;
+      x = X;
+      y = Y;
+      tPlace = Ladder.place(tr);
+    }
+    // The wiggle: the place pushed about by a fraction of a spacing, so a thread wanders without curling.
     if (warp > 0) {
       const wx = warp * (2 * noise2(x / (3 * A), y / (3 * A), kw) - 1);
       const wy = warp * (2 * noise2(x / (3 * A) + 41.2, y / (3 * A) + 13.7, kw) - 1);
       // To first order in the push (it is a fraction of a spacing, far under the radius).
-      lnR += (x * wx + y * wy) / (r * r);
-      phi += (x * wy - y * wx) / (r * r);
+      lnR += (x * wx + y * wy) / (tr * tr);
+      phi += (x * wy - y * wx) / (tr * tr);
     }
-    const place = Ladder.place(r);
-    let v = 0;
+    const taper = Math.max(0, Math.min(1, shape.taper));
     let t1 = 0;
-    if (a1 > 0) {
-      t1 = thread(fam1, lnR, phi, place, r, half * fe);
-      v += a1 * t1;
+    let d1 = 1e9;
+    if (a1 > 0 || aS > 0) {
+      d1 = dist(fam1, lnR, phi, tPlace, tr);
+      if (a1 > 0) {
+        t1 = profile1(d1, half * fe * (1 - taper * (1 - am.p1)));
+        v += prox * a1 * t1;
+      }
     }
-    if (a2 > 0) v += a2 * thread(fam2, lnR, phi, place, r, 0.75 * half * fe) * (1 + 0.8 * t1);
+    if (a2 > 0) v += prox * a2 * thread(fam2, lnR, phi, tPlace, tr, shape.wispWidth * half * fe * (1 - taper * (1 - am.p2))) * (1 + 0.8 * t1);
+    // The spurs: barbs at an angle, drawn only within a few widths of a thread or a lane's side.
+    if (aS > 0) {
+      const near = Math.max(Math.exp(-((d1 / (6 * half)) ** 2)), needLane ? (prox - (1 - shape.feathers)) / Math.max(2 * shape.feathers, 1e-6) : 0);
+      if (near > 0.02) v += aS * near * thread(famS, lnR, phi, tPlace, tr, 0.8 * half * fe) * (1 + 0.8 * t1);
+    }
     // The haze: a share of the amount drawn smooth, the smoky brown the threads lie in.
     return v + shape.haze * a1;
   };
-  const probeA: Amount = { a1: 0, a2: 0, fe: 1 };
+  const probeA: Amount = { a1: 0, a2: 0, fe: 1, aL: 0, aS: 0, p1: 1, p2: 1 };
   const dust = (x: number, y: number): number => {
     const r = Math.hypot(x, y);
     let phi = Math.atan2(y, x);
     if (phi < 0) phi += TAU;
     amount(x, y, r, phi, probeA);
-    return threads(x, y, r, phi, probeA.a1, probeA.a2, probeA.fe);
+    return threads(x, y, r, phi, probeA);
   };
   const ls = Math.max(shape.litScale * 1e-3, 0.01);
   const light = (x: number, y: number): number => {
@@ -308,17 +376,22 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
   const pitch = Math.min(80, Math.max(1, g.pitchDeg * shape.pitch)) * DEG;
   const dustCell = Math.max(dR, (0.6 * Math.max(shape.width, 10) * 1e-3) / Math.sin(pitch));
   // The dust's amounts and feathering (smooth) on the light's grid, then the threads at every ring.
-  const am: Amount = { a1: 0, a2: 0, fe: 1 };
-  const amounts = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.amount)), Math.max(8, Math.floor(sectors / NET_GRID.amount)), Math.max(dusty, 1) * dR, 3, (x, y, r, phi, o) => {
+  const am: Amount = { a1: 0, a2: 0, fe: 1, aL: 0, aS: 0, p1: 1, p2: 1 };
+  const nA = AMOUNT_KEYS.length;
+  const amounts = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.amount)), Math.max(8, Math.floor(sectors / NET_GRID.amount)), Math.max(dusty, 1) * dR, nA, (x, y, r, phi, o) => {
     net.amount(x, y, r, phi, am);
-    o[0] = am.a1;
-    o[1] = am.a2;
-    o[2] = am.fe;
+    for (let k = 0; k < nA; k += 1) o[k] = am[AMOUNT_KEYS[k]];
   });
-  const amt = new Float32Array(3);
+  const amt = new Float32Array(nA);
+  const read: Amount = { a1: 0, a2: 0, fe: 1, aL: 0, aS: 0, p1: 1, p2: 1 };
   const dust = new Coarse(Math.max(2, Math.ceil(dusty / NET_GRID.dustR)), dSect, Math.max(dusty, 1) * dR, 1, (x, y, r, phi, o) => {
     amounts.read(r, phi, amt);
-    o[0] = amt[0] > 1e-4 || amt[1] > 1e-4 ? net.threads(x, y, r, phi, amt[0], amt[1], amt[2]) : 0;
+    if (amt[0] <= 1e-4 && amt[1] <= 1e-4 && amt[3] <= 1e-4 && amt[4] <= 1e-4) {
+      o[0] = 0;
+      return;
+    }
+    for (let k = 0; k < nA; k += 1) read[AMOUNT_KEYS[k]] = amt[k];
+    o[0] = net.threads(x, y, r, phi, read);
   }, dustCell);
   const light = new Coarse(Math.max(2, Math.ceil(lit / NET_GRID.light)), lSect, Math.max(lit, 1) * dR, 1, (x, y, _r, _phi, o) => {
     o[0] = net.light(x, y);
