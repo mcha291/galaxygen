@@ -23,14 +23,17 @@ import {
 import styles from "./GalaxyTab.module.css";
 
 /** A value that follows `value` once it has held still for `ms`: a recompile or a request waits for the slider to settle. */
-export function useDebounced<T>(value: T, ms: number): T {
-  const [settled, setSettled] = useState(value);
+// Since S105 (fix R1) a `key`: while it changes (another template or look) the value is taken at once, not waited for.
+export function useDebounced<T>(value: T, ms: number, key?: unknown): T {
+  const [settled, setSettled] = useState<{ value: T; key: unknown }>({ value, key });
+  const rekeyed = !Object.is(settled.key, key);
+  if (rekeyed) setSettled({ value, key });
   useEffect(() => {
-    if (Object.is(value, settled)) return;
-    const timer = setTimeout(() => setSettled(value), ms);
+    if (rekeyed || Object.is(value, settled.value)) return;
+    const timer = setTimeout(() => setSettled({ value, key }), ms);
     return () => clearTimeout(timer);
-  }, [value, settled, ms]);
-  return settled;
+  }, [value, settled, ms, key, rekeyed]);
+  return rekeyed ? value : settled.value;
 }
 
 // "Components" holds the brightest mode's layer intensities (D205); its switches are in the mode's own section.
@@ -69,6 +72,8 @@ interface Props {
   onExposure?(stops: number): void;
   /** Open on first draw (the panel's test; the page opens it closed). */
   initiallyOpen?: boolean;
+  /** S105 fix R1: a plane-shaping change is waiting for the sliders to settle or being built (the "rebuilding" mark). */
+  illPending?: boolean;
 }
 
 /** The one-line notice after a paste is applied (S97): what was applied, and anything not. */
@@ -90,7 +95,7 @@ export function combinationNotice(c: Combination, template: string | null | unde
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook, illPending = false }: Props) {
   const [open, setOpen] = useState(initiallyOpen);
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -201,7 +206,15 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
           {/* The illustrative look's parameters (S105, D275): every registered feature's controls, generically. */}
           {look === "illustrative" && (
             <div className={styles.tuningGroup}>
-              <div className={styles.label}>Illustrative</div>
+              <div className={styles.label}>
+                Illustrative
+                {illPending && (
+                  <span className={styles.muted} role="status" title="A slider that reshapes a feature's map is built once it has held still: the picture is behind the sliders until then.">
+                    {" "}
+                    · rebuilding…
+                  </span>
+                )}
+              </div>
               <p className={styles.muted}>Display-only structure and colour of the viewer's own, tuned to the goal pictures: not the model.</p>
               {illControls().map(({ key, feature, control }) => {
                 const value = tuning.ill[key] ?? control.default;

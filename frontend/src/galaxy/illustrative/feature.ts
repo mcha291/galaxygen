@@ -148,10 +148,40 @@ export interface IllFeature {
  */
 export function memoOn<T>(build: (...inputs: unknown[]) => T): (...inputs: unknown[]) => T {
   let last: { inputs: unknown[]; value: T } | null = null;
+  MEMOS.add({ release: () => (last = null) });
   return (...inputs: unknown[]) => {
     if (last && last.inputs.length === inputs.length && last.inputs.every((v, i) => Object.is(v, inputs[i]))) return last.value;
+    // A probe (wouldBuild) asks whether anything would be built, and builds nothing.
+    if (probing > 0) throw MISS;
     const value = build(...inputs);
     last = { inputs, value };
     return value;
   };
+}
+
+/** Every memoOn's cache (S105 fix R5): released together when the look leaves illustrative. */
+const MEMOS = new Set<{ release(): void }>();
+let probing = 0;
+const MISS: unique symbol = Symbol("memoOn: would build");
+
+/** Drops every memoOn's last value (the features' cached planes and maps): the next call builds afresh. */
+export function releaseMemos(): void {
+  for (const m of MEMOS) m.release();
+}
+
+/**
+ * Whether `run` would build anything through a memoOn whose last inputs differ (S105 fix R1): it runs with every memoOn
+ * answering from its cache, and the first one that would have to build stops it. Nothing is built or cached.
+ */
+export function wouldBuild(run: () => void): boolean {
+  probing += 1;
+  try {
+    run();
+    return false;
+  } catch (e) {
+    if (e === MISS) return true;
+    throw e;
+  } finally {
+    probing -= 1;
+  }
 }

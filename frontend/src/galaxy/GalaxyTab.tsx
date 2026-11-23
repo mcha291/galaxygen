@@ -49,7 +49,20 @@ import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./Galax
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
 import { TUNING_CONTROLS, type Tuning, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, saveTuning } from "./tuning";
-import { type IllContext, type Look, createRuntime, features as illFeatures, illArrays, knotsReplaced, paramsOf, updateRuntime } from "./illustrative";
+import {
+  type IllContext,
+  type Look,
+  createRuntime,
+  features as illFeatures,
+  illArrays,
+  ILL_SETTLE_MS,
+  illEffective,
+  illStale,
+  knotsReplaced,
+  paramsOf,
+  releaseRuntime,
+  updateRuntime,
+} from "./illustrative";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
 import { framing as framingFeature, standRoll, standScale, standTurn } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
@@ -667,10 +680,33 @@ export function GalaxyTab({
   const illArraysKey = illustrative && illNames.length > 0 ? JSON.stringify(["illustrative", illNames, query]) : null;
   const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal)).value ?? null;
   const illContext = useMemo<IllContext>(() => ({ template: templateName, frame: illFrame }), [templateName, illFrame]);
-  const illRuntime = useMemo(() => (illustrative ? createRuntime(illParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S105 fix R1, the debounce: a slider that only sets uniforms is drawn at once; one that reshapes a feature's map plane
+  // (a rebuild of 0.1-2 s on the main thread) is drawn from the settled copy, so a drag costs one rebuild after it stops.
+  // `illBuilt` moves after a runtime update, so the "rebuilding" mark (illPending) is read again once the build is done.
+  const illSettled = useDebounced(illParams, ILL_SETTLE_MS, `${templateName}:${viewLook}:${held ?? ""}`);
+  const illDrawn = useMemo(
+    () => (illustrative ? illEffective(illParams, illSettled, illContext) : { ill: illParams, held: [] as string[] }),
+    [illustrative, illParams, illSettled, illContext],
+  );
+  const illDrawnParams = illDrawn.ill;
+  const [illBuilt, setIllBuilt] = useState(0);
+  const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
+  // features' cached planes, so the physical look holds nothing of the layer; the next runtime builds them again.
   useEffect(() => {
-    if (illRuntime) updateRuntime(illRuntime, illParams, illContext);
-  }, [illRuntime, illParams, illContext]);
+    if (!illRuntime) return;
+    return () => releaseRuntime(illRuntime);
+  }, [illRuntime]);
+  useEffect(() => {
+    if (!illRuntime) return;
+    const before = illRuntime.version;
+    updateRuntime(illRuntime, illDrawnParams, illContext);
+    if (illRuntime.version !== before) setIllBuilt((n) => n + 1);
+  }, [illRuntime, illDrawnParams, illContext]);
+  const illPending = useMemo(
+    () => illustrative && (illDrawn.held.length > 0 || illStale(illDrawnParams, illContext)),
+    [illustrative, illDrawn, illDrawnParams, illContext, illBuilt], // eslint-disable-line react-hooks/exhaustive-deps -- illBuilt: read again after a build
+  );
   const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
   // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
@@ -894,7 +930,7 @@ export function GalaxyTab({
             f.layer ? (
               <f.layer
                 key={f.id}
-                params={paramsOf(f, illParams)}
+                params={paramsOf(f, illDrawnParams)}
                 runtime={illRuntime}
                 context={illContext}
                 knots={knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null}
@@ -1269,6 +1305,7 @@ export function GalaxyTab({
           defaults={tuningDefaults}
           onExposure={onExposure}
           look={viewLook}
+          illPending={illPending}
           defaultsOfLook={onLook ? (l) => lookDefaultsFor(templateName, l) : undefined}
         />
       </div>

@@ -20,8 +20,10 @@ import {
   DataTexture,
   type PerspectiveCamera,
   Points,
+  RGBAFormat,
   ShaderMaterial,
   type Texture,
+  UnsignedByteType,
   Vector2,
   Vector3,
   type WebGLRenderer,
@@ -192,14 +194,29 @@ interface PointDust {
 const BUFFER = new Vector2();
 let maxPointSize = 0;
 
+/** The material's stand-in texture before the march's own arrive: one RGBA texel of zero bytes (S105 fix R2). */
+export function knotsBlank(): DataTexture {
+  const blank = new DataTexture(new Uint8Array(4), 1, 1, RGBAFormat, UnsignedByteType);
+  blank.needsUpdate = true;
+  return blank;
+}
+
+/** The material and its stand-in texture released together (S105 fix R2). */
+export function disposeKnotsMaterial(material: ShaderMaterial): void {
+  (material.userData.blank as DataTexture | undefined)?.dispose();
+  material.dispose();
+}
+
 /** The pink HII regions, drawn in the Galaxy view's canvas under the illustrative look (knots.ts's `layer`). */
 export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayerProps) {
   const drawn = (params.draw ?? 1) >= 0.5 && knots !== null;
   // The material: one per runtime (its GLSL and shared uniforms).
   const material = useMemo(() => {
-    const blank = new DataTexture(new Float32Array(4), 1, 1);
-    blank.needsUpdate = true;
+    // S105 fix R2: one texel of zeros as bytes - a DataTexture's default type is UnsignedByteType, which a Float32Array
+    // is not (WebGL refused the upload) - released with the material.
+    const blank = knotsBlank();
     return new ShaderMaterial({
+      userData: { blank },
       uniforms: {
         pxPerUnit: { value: 1 },
         gain: { value: 0 },
@@ -228,7 +245,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust }: IllLayer
       depthWrite: false,
     });
   }, [runtime]);
-  useEffect(() => () => material.dispose(), [material]);
+  useEffect(() => () => disposeKnotsMaterial(material), [material]);
 
   // The arm weight's grid: the march's placement texture as the CPU holds it (a DataTexture's data), once per texture.
   const scatter = (dust as PointDust | null)?.scatter ?? null;

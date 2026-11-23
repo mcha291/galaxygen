@@ -62,7 +62,7 @@ import { ClampToEdgeWrapping, DataTexture, LinearFilter, RGBAFormat, RepeatWrapp
 
 import { arms } from "./arms";
 import { edge } from "./edge";
-import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams } from "./feature";
+import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, releaseMemos, wouldBuild } from "./feature";
 import { floc } from "./floc";
 import { framing } from "./framing";
 import { grade } from "./grade";
@@ -350,6 +350,71 @@ export function updateRuntime(runtime: IllRuntime, ill: Readonly<Record<string, 
     }
   }
   if (moved) runtime.version += 1;
+}
+
+/** How long the sliders must hold still before a plane-shaping change is built (S105 fix R1), ms. */
+export const ILL_SETTLE_MS = 250;
+
+/**
+ * Whether a feature's map planes or uniforms at these parameters would build anything its memoOn caches do not hold
+ * (S105 fix R1): a plane-shaping change. Nothing is built; the uniforms' own values are computed and thrown away.
+ */
+export function illFeatureWouldBuild(f: IllFeature, params: IllParams, context: IllContext): boolean {
+  return wouldBuild(() => {
+    f.map?.build(params, context);
+    f.uniforms?.(params, context);
+  });
+}
+
+/**
+ * The parameters to draw with now (S105 fix R1, the debounce): `live` (the sliders as they stand) for every feature
+ * whose change from `settled` (the same values once they have held still) rebuilds nothing - a change that only sets
+ * uniforms is drawn at once - and `settled` for a feature whose change would rebuild a plane: that one is built once,
+ * when `settled` catches up. `held` names the features kept back. `live` itself while nothing is held.
+ */
+export function illEffective(
+  live: Readonly<Record<string, number>>,
+  settled: Readonly<Record<string, number>>,
+  context: IllContext,
+): { ill: Readonly<Record<string, number>>; held: string[] } {
+  if (live === settled) return { ill: live, held: [] };
+  let out: Record<string, number> | null = null;
+  const held: string[] = [];
+  for (const f of FEATURES) {
+    const lp = paramsOf(f, live);
+    const sp = paramsOf(f, settled);
+    if (f.controls.every((c) => Object.is(lp[c.key], sp[c.key]))) continue;
+    if (!illFeatureWouldBuild(f, lp, context)) continue;
+    held.push(f.id);
+    out ??= { ...live };
+    for (const c of f.controls) out[illKey(f, c)] = sp[c.key];
+  }
+  return { ill: out ?? live, held };
+}
+
+/** Whether the runtime still has to build for these parameters (a plane not yet made for them): the "rebuilding" mark. */
+export const illStale = (ill: Readonly<Record<string, number>>, context: IllContext): boolean =>
+  FEATURES.some((f) => (f.map || f.uniforms) && illFeatureWouldBuild(f, paramsOf(f, ill), context));
+
+/**
+ * Frees what the layer holds outside a runtime (S105 fix R5): the shared map's 28.8 MB buffer and its texture, and every
+ * feature's cached planes and maps (memoOn). Called when the look leaves illustrative; the next runtime builds them again.
+ */
+export function releaseShared(): void {
+  if (shared.texture !== EMPTY_MAP) shared.texture.dispose();
+  shared.texture = EMPTY_MAP;
+  shared.buffer = null;
+  shared.planes = [null, null, null, null];
+  releaseMemos();
+}
+
+/** What the layer holds outside a runtime now (the release's test): the shared map's buffer bytes. */
+export const sharedBytes = (): number => shared.buffer?.byteLength ?? 0;
+
+/** A runtime's release (S105 fix R5): its map uniform back to the empty map, then everything shared freed. */
+export function releaseRuntime(runtime: IllRuntime): void {
+  if (runtime.uniforms.illMapTex) runtime.uniforms.illMapTex.value = EMPTY_MAP;
+  releaseShared();
 }
 
 /** Whether a feature's drawing replaces the default knots at these parameters. */
