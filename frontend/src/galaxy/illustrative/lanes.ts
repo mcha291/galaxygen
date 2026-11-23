@@ -199,7 +199,7 @@ export function skeletonRidges(frame: IllFrame, params: SkeletonParams, step: nu
   const sk = lanesSkeleton(frame, JSON.stringify(params));
   if (!sk) return null;
   return sk.arms.map((a, k) => {
-    const l = ridgeLine(a, step);
+    const l = ridgeLine(a, step, sk);
     const r = ridgeOfPoints(2000 + k, l.x, l.y, 0.3, false, false);
     r.weight = Float32Array.from(l.strength);
     return r;

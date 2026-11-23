@@ -83,6 +83,71 @@ export interface SkeletonParams {
    * this share; 0 each lesser on its own winding from its nominal phase (until MW2).
    */
   even?: number;
+  /**
+   * S109 (A2, the oval round the bar): near the bar the whole skeleton is squashed across the bar's axis to this share
+   * (1 none) - a circle of the skeleton's becomes an oval along the bar, through the bar's ends, closer to its long sides
+   * (the goal's bright oval of arm round the bar). See ovalOut. Needs a bar.
+   */
+  oval?: number;
+  /** S109 (A2): the squash is full out to this many bar half-lengths (skeleton radius)... */
+  ovalReach?: number;
+  /** ...and gone from this many on (smoothly between). */
+  ovalFade?: number;
+}
+
+/** S109 (A2): the skeleton's oval round the bar (SkeletonParams.oval): the bar's angle, the squash q, its two radii, kpc. */
+export interface SkelOval {
+  angle: number;
+  q: number;
+  r1: number;
+  r2: number;
+}
+
+/** The squash's share at skeleton radius R' (1 inside r1, 0 from r2 on, smooth between). */
+function ovalWeight(o: SkelOval, Rs: number): number {
+  if (Rs <= o.r1) return 1;
+  if (Rs >= o.r2) return 0;
+  const t = (Rs - o.r1) / (o.r2 - o.r1);
+  return 1 - t * t * (3 - 2 * t);
+}
+
+/** The ellipse's share along the ray at azimuth phi: a circle of radius a drawn as semi-axes a (along the bar), q a (across). */
+function ovalEllipse(o: SkelOval, phi: number): number {
+  const c = Math.cos(phi - o.angle);
+  const s = Math.sin(phi - o.angle);
+  return o.q / Math.sqrt(o.q * o.q * c * c + s * s);
+}
+
+/**
+ * S109 (A2): the plane's radius of the skeleton's point (R' kpc, phi): R' (1 - (1 - e(phi)) w(R')), from R' (along the
+ * bar, or beyond ovalFade bar half-lengths) down to q R' (across the bar, inside ovalReach). R' itself without an oval.
+ * It grows with R' at every azimuth (w falls outward), so ovalIn inverts it.
+ */
+export function ovalOut(sk: Skeleton, Rs: number, phi: number): number {
+  const o = sk.oval;
+  if (!o || Rs >= o.r2) return Rs;
+  return Rs * (1 - (1 - ovalEllipse(o, phi)) * ovalWeight(o, Rs));
+}
+
+/** S109 (A2): ovalOut's inverse at the plane's point (R kpc, phi): the skeleton radius R' (bisected: R' in [R, R / q]). */
+export function ovalIn(sk: Skeleton, R: number, phi: number): number {
+  const o = sk.oval;
+  if (!o || R >= o.r2) return R;
+  return ovalInE(o, R, 1 - ovalEllipse(o, phi));
+}
+
+/** ovalIn with the ray's 1 - e(phi) given (the band's resample: one per row). */
+function ovalInE(o: SkelOval, R: number, oneMinusE: number): number {
+  if (R >= o.r2 || oneMinusE <= 0) return R;
+  let lo = R;
+  let hi = Math.min(o.r2, R / Math.max(1e-3, 1 - oneMinusE));
+  if (hi <= lo) return R;
+  for (let k = 0; k < 22; k++) {
+    const mid = 0.5 * (lo + hi);
+    if (mid * (1 - oneMinusE * ovalWeight(o, mid)) < R) lo = mid;
+    else hi = mid;
+  }
+  return 0.5 * (lo + hi);
 }
 
 /** The lesser arms' outer end as a share of the majors' (the default of SkeletonParams.lesserReach). */
@@ -167,6 +232,8 @@ export interface Skeleton {
   pitchDeg: number;
   /** The majors' width, kpc (the params'). */
   width: number;
+  /** S109 (A2): the oval round the bar (SkeletonParams.oval); absent none. */
+  oval?: SkelOval;
 }
 
 /** The pieces' winding: the length-weighted median |pitch| (degrees) and the sign of the length-weighted pitch. */
@@ -404,6 +471,12 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
     const spurPitch = pitchDeg * (2 + laneRandom(key, 3));
     arms.push(tabulate("spur", rs, rs * Math.exp(length), parent.phi[i], spurPitch, sense, 0.5 * parent.strength[i] + 0.1, p.width * 0.7, { ...p, fade: 0.6, drift: p.drift * 0.5, kink: 0 }, key, 0.15, pitchAt));
   }
+  const q = p.oval ?? 1;
+  if (g.bar && q < 1 && g.bar.halfLength > 0) {
+    const r1 = Math.max(0, p.ovalReach ?? 1.2) * g.bar.halfLength;
+    const r2 = Math.max(r1 + 0.05 * g.bar.halfLength, (p.ovalFade ?? 2.5) * g.bar.halfLength);
+    return { arms, sense, pitchDeg, width: p.width, oval: { angle: g.bar.angle, q: Math.max(0.2, q), r1, r2 } };
+  }
   return { arms, sense, pitchDeg, width: p.width };
 }
 
@@ -509,7 +582,9 @@ export interface RidgeHit {
  * THE REGIONS' READ (exported for the pink regions' builder): for a point (R kpc, phi rad) of the disc's plane, the
  * nearest ridge crossing its ring - the distance to its crest, the ridge's strength there, which arm and which side.
  */
-export function ridgeAt(sk: Skeleton, R: number, phi: number): RidgeHit {
+export function ridgeAt(sk: Skeleton, Rplane: number, phi: number): RidgeHit {
+  // S109 (A2): read at the skeleton's radius under the oval round the bar (ovalIn; the plane's own without one).
+  const R = sk.oval ? ovalIn(sk, Rplane, phi) : Rplane;
   let best: RidgeHit = { distance: Infinity, strength: 0, arm: -1, side: 0, width: sk.width };
   for (let k = 0; k < sk.arms.length; k++) {
     const a = sk.arms[k];
@@ -546,13 +621,47 @@ export function bandProfile(d: number, width: number, wing: number): number {
 }
 
 /**
+ * The skeleton's band (skeletonBandOn below). S109 (A2): under the oval round the bar the band is drawn in the
+ * skeleton's radius and each row resampled along R at ovalIn (linear between columns), the plain band's ring means
+ * taken after the resample; byte for byte the old build without an oval.
+ */
+export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null = null): Float32Array {
+  const o = sk.oval;
+  if (!o) return skeletonBandOn(sk, width, height, rHi, wingAll, plainMean, null);
+  const plainAll = plainMean ? new Float32Array(width * height) : null;
+  const raw = skeletonBandOn(sk, width, height, rHi, wingAll, null, plainAll);
+  const out = raw.slice();
+  const cLast = Math.min(width - 1, Math.ceil((o.r2 / rHi) * width));
+  const plainOut = plainAll ? plainAll.slice() : null;
+  for (let j = 0; j < height; j++) {
+    const oneMinusE = 1 - ovalEllipse(o, ((j + 0.5) / height) * TAU);
+    const row = j * width;
+    for (let c = 0; c <= cLast; c++) {
+      const Rs = ovalInE(o, ((c + 0.5) / width) * rHi, oneMinusE);
+      const x = Math.min(width - 1, Math.max(0, (Rs / rHi) * width - 0.5));
+      const i0 = Math.floor(x);
+      const i1 = Math.min(width - 1, i0 + 1);
+      const f = x - i0;
+      out[row + c] = raw[row + i0] * (1 - f) + raw[row + i1] * f;
+      if (plainOut && plainAll) plainOut[row + c] = plainAll[row + i0] * (1 - f) + plainAll[row + i1] * f;
+    }
+  }
+  if (plainMean && plainOut) {
+    plainMean.fill(0);
+    for (let j = 0; j < height; j++) for (let c = 0; c < width; c++) plainMean[c] += plainOut[j * width + c];
+    for (let c = 0; c < width; c++) plainMean[c] /= height;
+  }
+  return out;
+}
+
+/**
  * The skeleton's band over the shared map's grid (width columns along R over [0, rHi], height rows round the turn,
  * cell-centred, row-major): at each texel the largest strength * bandProfile over the arms crossing its ring.
  * Ring by ring and arm by arm, only the rows within 3.5 sigma of the wing of each crest are touched. S107: `plainMean`,
  * if given (`width` values), takes each ring's mean of the band without the arms' clumps (the light kept per ring is
  * the unclumped arm's, so a ring crossing a bright clump is not dimmed between the arms - concentric bands otherwise).
  */
-export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null = null): Float32Array {
+function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null, plainAll: Float32Array | null): Float32Array {
   const out = new Float32Array(width * height);
   // The unclumped band of the ring in hand (one column: every arm crossing it is drawn before the next ring).
   const plain = plainMean ? new Float32Array(height) : null;
@@ -581,7 +690,7 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
       const reachKpc = wing > 0 ? Math.max(3 * 3.2 * s, core) : core;
       const ray = rays[ai];
       if (ray) {
-        rayColumn(a, ray, R, c, width, height, reachKpc, wing, out, plain);
+        rayColumn(a, ray, R, c, width, height, reachKpc, wing, out, plain, plainAll);
         // (the ring reading from the hug's end on)
         if (!(lnR >= a.lnR0 + (a.rayRing ?? Infinity) * a.dlnR)) continue;
       }
@@ -634,6 +743,7 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
         const o = row * width + c;
         if (v > out[o]) out[o] = v;
         if (plain && u > plain[row]) plain[row] = u;
+        if (plainAll && u > plainAll[o]) plainAll[o] = u;
       }
     }
     if (plain && plainMean) {
@@ -723,7 +833,7 @@ function rayTable(a: SkelArm, sense: number, height: number): RayTable {
  * point's distance across the crest (R_k - R) cos(pitch), its strength, clumps and sides there; as the ring reading's
  * arithmetic otherwise (the wing even and unclumped, the plain band for the ring means).
  */
-function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: number, height: number, reachKpc: number, wing: number, out: Float32Array, plain: Float32Array | null): void {
+function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: number, height: number, reachKpc: number, wing: number, out: Float32Array, plain: Float32Array | null, plainAll: Float32Array | null = null): void {
   const { K, x, r, cos } = ray;
   const clumped = !!(a.patch || a.wIn);
   for (let j = 0; j < height; j++) {
@@ -761,6 +871,7 @@ function rayColumn(a: SkelArm, ray: RayTable, R: number, c: number, width: numbe
     const o = j * width + c;
     if (v > out[o]) out[o] = v;
     if (plain && u > plain[j]) plain[j] = u;
+    if (plainAll && u > plainAll[o]) plainAll[o] = u;
   }
 }
 
@@ -779,7 +890,10 @@ function rayHit(a: SkelArm, sense: number, R: number, phi: number): { distance: 
 }
 
 /** An arm sampled every `step` kpc along its crest: plane positions (x = R cos phi, y = R sin phi) and strength. */
-export function ridgeLine(a: SkelArm, step: number): { x: number[]; y: number[]; strength: number[]; r: number[]; phi: number[] } {
+export function ridgeLine(a: SkelArm, step: number, plane: Skeleton | null = null): { x: number[]; y: number[]; strength: number[]; r: number[]; phi: number[] } {
+  // S109 (A2): with `plane` (the arm's skeleton) x and y are the plane's under its oval round the bar (ovalOut); r and
+  // phi stay the skeleton's.
+  const sq = plane && plane.oval ? plane : null;
   const x: number[] = [];
   const y: number[] = [];
   const strength: number[] = [];
@@ -790,8 +904,9 @@ export function ridgeLine(a: SkelArm, step: number): { x: number[]; y: number[];
   while (lnR <= lnEnd + 1e-12) {
     const R = Math.exp(lnR);
     const h = armAt(a, Math.min(R, Math.exp(lnEnd)))!;
-    x.push(R * Math.cos(h.phi));
-    y.push(R * Math.sin(h.phi));
+    const Rp = sq ? ovalOut(sq, R, h.phi) : R;
+    x.push(Rp * Math.cos(h.phi));
+    y.push(Rp * Math.sin(h.phi));
     strength.push(h.strength);
     r.push(R);
     phi.push(((h.phi % TAU) + TAU) % TAU);

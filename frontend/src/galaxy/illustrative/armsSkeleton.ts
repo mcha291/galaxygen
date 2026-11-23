@@ -42,6 +42,10 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
     even: p.skeleven ?? d.even,
     // S108 (J2): the pitch floor for a rerolled galaxy's near-circular pieces, as a slider.
     pitchMin: p.skelpitchmin ?? d.pitchMin,
+    // S109 (A2): the oval round the bar.
+    oval: p.skeloval ?? 1,
+    ovalReach: p.skelovalin ?? 1.2,
+    ovalFade: p.skelovalout ?? 2.5,
   };
 }
 

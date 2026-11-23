@@ -12,7 +12,7 @@
 import { currentSkeleton, skeletonKey } from "./armsSkeleton";
 import type { IllContext, IllParams } from "./feature";
 import { CORE_COLOUR, MAX_BLOBS, hash01, quantile, radialWeight, regionColour } from "./knotsMath";
-import { type Skeleton, armAt, patchAt, radiusAtTurn, sampleRidges } from "./skeleton";
+import { type Skeleton, armAt, ovalOut, patchAt, radiusAtTurn, sampleRidges } from "./skeleton";
 
 const TAU = 2 * Math.PI;
 
@@ -68,9 +68,12 @@ function frameAt(sk: Skeleton, a: number, R: number): { x: number; y: number; tx
   const tP = sk.sense / norm;
   const nR = -1 / norm;
   const nP = (sk.sense * h.tanp) / norm;
+  // S109 (A2): the crest point where the plane draws it under the skeleton's oval round the bar (the frame's directions
+  // the skeleton's: near the bar's long sides the oval turns them a little).
+  const Rp = ovalOut(sk, R, h.phi);
   return {
-    x: R * c,
-    y: R * s,
+    x: Rp * c,
+    y: Rp * s,
     tx: tR * c - tP * s,
     ty: tR * s + tP * c,
     nx: nR * c - nP * s,
