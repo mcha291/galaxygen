@@ -208,7 +208,7 @@ export const arms: IllFeature = {
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
-      key: "sparkle", label: "sparkle points", min: 0, max: 80000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 25000, ngc_4414: 70000 },
+      key: "sparkle", label: "sparkle points", min: 0, max: 400000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 25000, ngc_4414: 70000 },
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
@@ -242,6 +242,18 @@ export const arms: IllFeature = {
     {
       key: "sparklesize", label: "sparkle size", min: 0.5, max: 4, step: 0.1, unit: "px", default: 1.5, perTemplate: { milky_way: 1.5, ngc_4414: 1.5 },
       about: "A sparkle point's sprite, pixels. Illustrative.",
+    },
+    {
+      key: "sparklefloor", label: "sparkle between arms", min: 0, max: 1, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+      about: "The sparkle's density between the arms as a share of a full ridge's, so a sparse grain of stars lies over the whole disc; 0 every point on the arms (S106). Illustrative.",
+    },
+    {
+      key: "sparklebig", label: "bright sparkle share", min: 0, max: 0.5, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+      about: "The brightest share of the sparkle points drawn on the larger sprite below, so the grain has sizes; 0 every point on the small sprite (S106). Illustrative.",
+    },
+    {
+      key: "sparklebigsize", label: "bright sparkle size", min: 0.5, max: 8, step: 0.1, unit: "px", default: 3, perTemplate: { milky_way: 3, ngc_4414: 3 },
+      about: "The bright sparkle points' sprite, pixels (S106). Illustrative.",
     },
     {
       key: "sparklefall", label: "sparkle falloff", min: 0, max: 10, step: 0.1, unit: "× h", default: 2, perTemplate: { milky_way: 2, ngc_4414: 3 },

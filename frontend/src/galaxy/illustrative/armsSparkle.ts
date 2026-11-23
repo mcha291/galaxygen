@@ -51,6 +51,8 @@ export interface SparkleShape {
   rMax: number;
   /** The points' half-thickness, pc. */
   heightPc: number;
+  /** S106: the density's floor between the arms, as a share of a full ridge's (0 none: every point on the arms). */
+  floor?: number;
 }
 
 export interface Sparkle {
@@ -94,7 +96,9 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
   const weight = new Float32Array(total);
   const next = rng(seed);
   const rMax = Math.min(s.rMax, g.rHi);
-  const density = (r: number, phi: number) => Math.pow(Math.max(0, shareAt(map, g, r, phi)), s.ridge) * (1 - smoothstep(0.7 * rMax, rMax, r));
+  const floor = Math.min(1, Math.max(0, s.floor ?? 0));
+  const density = (r: number, phi: number) =>
+    (floor + (1 - floor) * Math.pow(Math.max(0, shareAt(map, g, r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
   const place = (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {
@@ -133,6 +137,32 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
     k++;
   }
   return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
+}
+
+/**
+ * The sparkle's two sprite sizes (S106, the Milky Way's grain): the brightest `share` of the points (by weight; ties
+ * at the threshold all bright) drawn on the larger sprite, the rest on the fine one. Returns each point's tier, 1 the
+ * bright. A share of 0 or less: every point fine (the S105 drawing).
+ */
+export function sparkleTiers(weight: ArrayLike<number>, share: number): Uint8Array {
+  const n = weight.length;
+  const out = new Uint8Array(n);
+  const big = Math.floor(n * Math.min(1, Math.max(0, share)));
+  if (big <= 0) return out;
+  const sorted = Float32Array.from(weight).sort();
+  const threshold = sorted[n - big];
+  for (let i = 0; i < n; i++) if (weight[i] >= threshold) out[i] = 1;
+  return out;
+}
+
+/** The members of one tier: the indices whose tier is `tier`. */
+export function tierIndices(tiers: Uint8Array, tier: number): Uint32Array {
+  let n = 0;
+  for (let i = 0; i < tiers.length; i++) if (tiers[i] === tier) n++;
+  const out = new Uint32Array(n);
+  let k = 0;
+  for (let i = 0; i < tiers.length; i++) if (tiers[i] === tier) out[k++] = i;
+  return out;
 }
 
 /**
