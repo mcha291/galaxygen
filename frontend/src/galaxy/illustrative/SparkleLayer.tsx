@@ -11,7 +11,7 @@ import { FluxPoints, type PointDust } from "../FluxPoints";
 import { toScene } from "../positions";
 import { armMapFor, shapeOf } from "./arms";
 import { buildSparkle, hashString, sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
-import type { IllLayerProps } from "./feature";
+import { ILL_MAP, type IllLayerProps } from "./feature";
 
 /** The sparkle's blue-white at full share (over the white point). */
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
@@ -42,15 +42,21 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
       heightPc: 60,
       floor: params.sparklefloor ?? 0,
       lift: params.sparklelift ?? 0,
+      avoid: params.sparkleavoid ?? 0,
     }),
-    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift],
+    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift, params.sparkleavoid],
   );
+  // S106: the shared map (its R the lanes), read only while the sparkle keeps off the lanes.
+  const mapTex = (shape.avoid ?? 0) > 0 ? ((runtime as { uniforms?: Record<string, { value: unknown }> }).uniforms?.illMapTex?.value as { image?: { data?: ArrayLike<number>; width?: number; height?: number } } | undefined) : undefined;
   const points = useMemo(() => {
     if (!built || shape.count <= 0) return null;
-    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw);
+    const img = mapTex?.image;
+    const lanes =
+      img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height ? { data: img.data, width: img.width, height: img.height, rHi: built.grid.rHi } : null;
+    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw, lanes);
     if (s.radius.length === 0) return null;
     return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
-  }, [built, shape, context.template]);
+  }, [built, shape, context.template, mapTex]);
   const blue = params.sparkleblue ?? 0.7;
   const base = params.sparklegain ?? 2e4;
   const start = shapeOf(params, context.frame).start;

@@ -58,6 +58,28 @@ export interface SparkleShape {
    * weak ridge lit as fully as a strong one - in place of the map's G; 0 (or no raw share) the G as S105 read it.
    */
   lift?: number;
+  /**
+   * S106: the share of the sparkle kept off the dust lanes - its density times 1 - avoid * min(1, lane shape) where the
+   * shared map's lanes (buildSparkle's `lanes`) lie - since the lanes' veil darkens the march, not the points; 0 none.
+   */
+  avoid?: number;
+}
+
+/** The shared map's lane plane as buildSparkle reads it: RGBA bytes (R the lanes, lanesMap.ts's sqrt(shape / 4)). */
+export interface LanePlane {
+  data: ArrayLike<number>;
+  width: number;
+  height: number;
+  rHi: number;
+}
+
+/** The lanes' shape (lanesMap.ts: 1 at a full strand's centre) at (R, phi), nearest texel, 0 outside the map. */
+export function laneShapeAt(l: LanePlane, r: number, phi: number): number {
+  const c = Math.floor((r / l.rHi) * l.width);
+  if (c < 0 || c >= l.width) return 0;
+  const row = Math.floor(((((phi / (2 * Math.PI)) % 1) + 1) % 1) * l.height) % l.height;
+  const b = l.data[(row * l.width + c) * 4] / 255;
+  return 4 * b * b;
 }
 
 export interface Sparkle {
@@ -96,7 +118,7 @@ export function brightness(u: number, slope: number, range: number): number {
 }
 
 /** The points: deterministic in (map, grid, shape, seed). */
-export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number, raw: Float32Array | null = null): Sparkle {
+export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number, raw: Float32Array | null = null, lanes: LanePlane | null = null): Sparkle {
   const total = Math.max(0, Math.floor(s.count));
   const radius = new Float32Array(total);
   const azimuth = new Float32Array(total);
@@ -110,8 +132,10 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
     raw && lift > 0
       ? (r: number, phi: number) => Math.min(1, shareAt(raw, g, r, phi, 1, 0) / lift)
       : (r: number, phi: number) => shareAt(map, g, r, phi);
+  const avoid = lanes ? Math.min(1, Math.max(0, s.avoid ?? 0)) : 0;
+  const clear = avoid > 0 && lanes ? (r: number, phi: number) => Math.max(0, 1 - avoid * Math.min(1, laneShapeAt(lanes, r, phi))) : () => 1;
   const density = (r: number, phi: number) =>
-    (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
+    clear(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
   const place = (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {
