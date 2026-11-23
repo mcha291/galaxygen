@@ -4,6 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import { features, illDefaults, illKey } from "./index";
 import { knots } from "./knots";
+import { modelLightRef, paretoRadius, placeOnSkeleton, skeletonAttributes, skeletonLobes } from "./knotsPlace";
+import type { Piece } from "./lanesMap";
+import { armAt, buildSkeleton, ridgeAt } from "./skeleton";
 import {
   CORE_COLOUR,
   MAX_BLOBS,
@@ -196,5 +199,104 @@ describe("the feature", () => {
     expect(knots.replacesKnots?.({ draw: 1 })).toBe(true);
     expect(knots.replacesKnots?.({ draw: 0 })).toBe(false);
     expect(new Set(knots.controls.map((c) => c.key)).size).toBe(knots.controls.length);
+  });
+});
+
+describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.ts)", () => {
+  const tanp = Math.tan((12 * Math.PI) / 180);
+  const pieces: Piece[] = [0, 1].flatMap((c) =>
+    [0, 1, 2].map((o) => ({ chain: c, order: o, r0: 5 * Math.exp(o * 0.8 * tanp), phi0: c * Math.PI + 1 + o * 0.8, pitchDeg: 12, extent: 0.8, join: 0 })),
+  );
+  const sk = buildSkeleton({ pieces, bar: { halfLength: 4, angle: 0.6 } }, { lesser: 2, spurs: 2 });
+  const p = { ...illDefaults("milky_way") } as Record<string, number>;
+  const local = Object.fromEntries(knots.controls.map((c) => [c.key, p[illKey(knots, c)]]));
+
+  it("is the Milky Way's default and not NGC 4414's", () => {
+    expect(illDefaults("milky_way")["knots.place"]).toBe(1);
+    expect(illDefaults("ngc_4414")["knots.place"]).toBe(0);
+  });
+
+  it("lays about `total` regions, deterministically, all on a ridge and biased to its inner edge", () => {
+    const t0 = performance.now();
+    const a = placeOnSkeleton(sk, local);
+    const ms = performance.now() - t0;
+    expect(ms).toBeLessThan(300);
+    expect(placeOnSkeleton(sk, local)).toEqual(a);
+    const nebulae = a.filter((r) => r.kind === 0);
+    // About `total`: fewer where the gaps leave no room on the ridges.
+    expect(nebulae.length).toBeGreaterThan(0.75 * local.total);
+    expect(nebulae.length).toBeLessThan(1.2 * local.total + 40);
+    let inner = 0;
+    let inside = 0;
+    for (const r of nebulae) {
+      const hit = ridgeAt(sk, Math.hypot(r.x, r.y), Math.atan2(r.y, r.x));
+      // Inside the arms' start (a bar-end complex's inner members): no arm crosses the ring.
+      if (hit.distance === Infinity) {
+        inside += 1;
+        continue;
+      }
+      // None floats in the inter-arm disc: within two ridge widths of a crest.
+      expect(hit.distance).toBeLessThan(2 * hit.width);
+      if (hit.side > 0) inner += 1;
+    }
+    expect(inside).toBeLessThan(0.02 * nebulae.length);
+    expect(inner / nebulae.length).toBeGreaterThan(0.75);
+    // The blue-white points beside them.
+    expect(a.some((r) => r.kind === 1)).toBe(true);
+  });
+
+  it("draws sizes from a steep spread: many small, few large, within the floor and the ceiling", () => {
+    const radii = placeOnSkeleton(sk, local).filter((r) => r.kind === 0).map((r) => r.radius);
+    const small = radii.filter((r) => r < 2 * local.sizeMin).length;
+    const large = radii.filter((r) => r > 0.5 * local.sizeMax).length;
+    expect(small / radii.length).toBeGreaterThan(0.4);
+    expect(large).toBeGreaterThan(0);
+    expect(large / radii.length).toBeLessThan(0.15);
+    for (const r of radii) expect(r).toBeGreaterThanOrEqual(local.sizeMin);
+    for (const r of radii) expect(r).toBeLessThanOrEqual(local.sizeMax);
+    expect(paretoRadius(1, 10, 100, 1)).toBe(10);
+    expect(paretoRadius(0.2, 10, 100, 1)).toBeCloseTo(50, 9);
+    expect(paretoRadius(1e-6, 10, 100, 1)).toBe(100);
+  });
+
+  it("puts a bright complex at each bar end (the major arms' starts), none with barEnds 0", () => {
+    const a = placeOnSkeleton(sk, local);
+    for (const k of [0, 1]) {
+      const arm = sk.arms[k];
+      const crest = armAt(arm, arm.r0 * 1.06)!;
+      const x = arm.r0 * 1.06 * Math.cos(crest.phi);
+      const y = arm.r0 * 1.06 * Math.sin(crest.phi);
+      const near = a.filter((r) => r.kind === 0 && Math.hypot(r.x - x, r.y - y) < 0.8);
+      expect(near.some((r) => r.radius === local.sizeMax && r.light > local.barEnds)).toBe(true);
+    }
+    // A region's light at most (sizeMax / sizeMin)^lightSize; a bar end's member barEnds times that.
+    const top = Math.pow(local.sizeMax / local.sizeMin, local.lightSize);
+    expect(a.filter((r) => r.light > 2 * top).length).toBeGreaterThanOrEqual(2);
+    const none = placeOnSkeleton(sk, { ...local, barEnds: 0 });
+    expect(none.some((r) => r.light > top * 1.0001)).toBe(false);
+  });
+
+  it("gives each region lobes along the arm, hues between the two pinks, and the attributes' lengths", () => {
+    const { blobs, tint } = skeletonLobes(5, 0, 4, 1, 1, 3);
+    expect(blobs.reduce((s, b) => s + b[3], 0)).toBeCloseTo(1, 9);
+    const along = blobs.reduce((s, b) => s + Math.abs(b[0]), 0);
+    const across = blobs.reduce((s, b) => s + Math.abs(b[1]), 0);
+    expect(along).toBeGreaterThan(0);
+    expect(across).toBeGreaterThanOrEqual(0);
+    for (const t of tint) expect(t >= 0 && t < 1).toBe(true);
+    const regions = placeOnSkeleton(sk, local);
+    const at = skeletonAttributes(regions, local, 2);
+    expect(at.positions.length).toBe(3 * regions.length);
+    expect(at.tint.length).toBe(4 * regions.length);
+    // Red-pink: red the strongest channel, green the weakest.
+    const k = regions.findIndex((r) => r.kind === 0);
+    expect(at.light[3 * k]).toBeGreaterThan(2 * Math.max(at.light[3 * k + 1], at.light[3 * k + 2]));
+    expect(at.light2[3 * k]).toBeGreaterThan(2 * Math.max(at.light2[3 * k + 1], at.light2[3 * k + 2]));
+    // The more magenta colour the bluer.
+    expect(at.light2[3 * k + 2] / at.light2[3 * k]).toBeGreaterThan(at.light[3 * k + 2] / at.light[3 * k]);
+    // The scene's frame: z = -y, the disc's plane y = 0.
+    expect(at.positions[3 * k + 2]).toBeCloseTo(-regions[k].y, 5);
+    expect(at.positions[3 * k + 1]).toBe(0);
+    expect(modelLightRef(new Float32Array([3, 3, 3, 1, 1, 1]))).toBe(3);
   });
 });

@@ -138,7 +138,7 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     }
   }
   // The bunches along the ridges.
-  const cand = sampleRidges(sk, nBunch * 8, Math.round(p.seed ?? 7) * 7919 + 13, 0);
+  const cand = sampleRidges(sk, nBunch * 20, Math.round(p.seed ?? 7) * 7919 + 13, 0);
   const start = out.length;
   for (let k = 0; k < cand.radius.length && out.length - start < total; k++) {
     const R = cand.radius[k];
