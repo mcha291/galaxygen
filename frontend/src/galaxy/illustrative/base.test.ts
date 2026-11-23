@@ -132,7 +132,7 @@ describe("the base's mend and core (S106, builder E): NGC 4414's underflowed dep
     expect(illDefaults("milky_way")["base.mend"]).toBe(1);
     expect(illDefaults("ngc_4414")["base.mend"]).toBe(1);
     expect(illDefaults("milky_way")["base.core"]).toBe(0);
-    expect(illDefaults("ngc_4414")["base.core"]).toBe(2);
+    expect(illDefaults("ngc_4414")["base.core"]).toBe(0.6);
     expect(illDefaults("ngc_4414")["base.coreRadius"]).toBe(1);
   });
 });
