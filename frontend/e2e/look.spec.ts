@@ -5,6 +5,7 @@
 //   npm --prefix frontend run look                               every capture in e2e/look.json
 //   GALAXYGEN_LOOK_ONLY=milky_way-illustrative npm --prefix frontend run look
 //   GALAXYGEN_LOOK_COMBINATION='<a copy box>' GALAXYGEN_LOOK_NAME=try1 npm --prefix frontend run look
+//   GALAXYGEN_LOOK_LIST=<a list in look.json's format> npm --prefix frontend run look
 //
 // GALAXYGEN_E2E_PORT (default 8019) is the API's port, serving this worktree's frontend/dist (`npm run build` first);
 // GALAXYGEN_LOOK_DIR (default docs/goals/look/ under the repository) where the PNGs go.
@@ -31,7 +32,8 @@ interface LookCapture {
 const here = (name: string) => fileURLToPath(new URL(name, import.meta.url));
 const ROOT = resolve(here(".."), "..");
 const OUT = resolve(ROOT, process.env.GALAXYGEN_LOOK_DIR ?? join("docs", "goals", "look"));
-const LIST = (JSON.parse(readFileSync(here("./look.json"), "utf-8")) as { captures: LookCapture[] }).captures;
+// GALAXYGEN_LOOK_LIST names another list in look.json's format (a tuning pass's own batch), in place of look.json.
+const LIST = (JSON.parse(readFileSync(process.env.GALAXYGEN_LOOK_LIST ?? here("./look.json"), "utf-8")) as { captures: LookCapture[] }).captures;
 
 /** The captures this run takes: the list (or the names asked for), and a pasted combination's. */
 function captures(): LookCapture[] {
@@ -99,6 +101,7 @@ async function squareCanvas(page: Page, side: number) {
 }
 
 const picture = async (page: Page) => {
+  await page.waitForFunction(() => !!window.__galaxygenCapture, null, { timeout: READY.timeoutMs });
   const got = await page.evaluate(() => window.__galaxygenCapture!.picture());
   return Buffer.from(got.png.slice(got.png.indexOf(",") + 1), "base64");
 };
@@ -114,7 +117,8 @@ async function settle(page: Page, net: ReturnType<typeof watchApi>, mode: keyof 
     await page.waitForTimeout(READY.probeMs);
     const building = await page.evaluate(() => window.__galaxygenPsfPending?.() ?? 0);
     const quiet = net.inflight === 0 && Date.now() - net.last >= READY.quietMs && building === 0;
-    const sum = (await page.evaluate(() => window.__galaxygenFrameSum!().sum)).join(",");
+    // A canvas made again (a stand moved) has no probe for a moment: not still.
+    const sum = ((await page.evaluate(() => window.__galaxygenFrameSum?.().sum)) ?? []).join(",");
     still = quiet && sum !== "" && sum !== "0,0,0" && sum === last ? still + 1 : 0;
     last = sum;
   }

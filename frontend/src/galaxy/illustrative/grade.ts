@@ -10,23 +10,27 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1, ngc_4414: -0.7 }, about: "The light's scale into the stretch, stops. Illustrative." },
   {
-    key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30,
+    key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 20, ngc_4414: 15 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",
   },
   { key: "white", label: "grade white", min: 0.02, max: 50, step: 0.01, log: true, unit: "", default: 1, about: "The linear luminance drawn at full scale. Illustrative." },
-  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
-  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
-  { key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, about: "Subtracted after the stretch, the rest rescaled: a darker sky. Illustrative." },
-  { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, about: "Warm (above 0) or cool (below) over the whole picture. Colour for appearance." },
+  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.6, ngc_4414: 1.4 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
+  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 1.2, ngc_4414: 1.3 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
+  { key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.07, ngc_4414: 0.07 }, about: "Subtracted after the stretch, the rest rescaled: a darker sky. Illustrative." },
+  { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.4, ngc_4414: -0.3 }, about: "Warm (above 0) or cool (below) over the whole picture. Colour for appearance." },
   {
-    key: "split", label: "split tone", min: -1, max: 1, step: 0.01, unit: "", default: 0,
+    key: "split", label: "split tone", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.0, ngc_4414: 1.0 },
     about: "Above 0 the bright light warmer and the faint cooler (a warm core against blue arms); below 0 the reverse. Colour for appearance.",
   },
   {
-    key: "highlight", label: "highlight whiten", min: 0, max: 1, step: 0.01, unit: "", default: 0.2,
-    about: "Light past full scale keeps its hue (divided by its largest channel); this much of the excess goes to white. Illustrative.",
+    key: "pivot", label: "split pivot", min: 0.05, max: 0.95, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.6, ngc_4414: 0.6 },
+    about: "The stretched brightness (0 to 1) about which the split tone turns from cool to warm, over a quarter either side: high, only the brightest (a bar, a core) warm. Colour for appearance.",
+  },
+  {
+    key: "highlight", label: "highlight whiten", min: 0, max: 1, step: 0.01, unit: "", default: 0.2, perTemplate: { milky_way: 0.3, ngc_4414: 0.7 },
+    about: "The brightest light's colour held near as drawn: this much of the saturation's boost is taken off above half scale, and of light past full scale (its hue kept, divided by its largest channel) this much of the excess goes to white. Illustrative.",
   },
 ];
 
@@ -48,9 +52,13 @@ export function gradeUniforms(p: IllParams): Record<string, number> {
     uBlack: p.black ?? 0,
     uBalance: p.balance ?? 0,
     uSplit: p.split ?? 0,
+    uPivot: p.pivot ?? 0.6,
     uHighlight: p.highlight ?? 0.2,
   };
 }
+
+/** The largest finite half float, near enough: the grade's input is clamped to it. */
+export const HALF_MAX = 60000;
 
 /** The grade's luminance weights (Rec. 709, linear light). */
 export const LUMA = [0.2126, 0.7152, 0.0722] as const;
@@ -66,18 +74,22 @@ export const GRADE_FRAGMENT = /* glsl */ `
   uniform float uBlack;
   uniform float uBalance;
   uniform float uSplit;
+  uniform float uPivot;
   uniform float uHighlight;
   varying vec2 vUv;
   float gradeLum(vec3 c) { return dot(c, vec3(${LUMA.join(", ")})); }
   float gradeAsinh(float x) { return log(x + sqrt(x * x + 1.0)); }
   void main() {
-    vec3 c = max(texture2D(tDiffuse, vUv).rgb, vec3(0.0));
+    // Clamped to the half-float target's range: a bulge's cusp overflows a channel to infinity, which the stretch would
+    // turn into a hue of its own (a green-cyan dot at NGC 4414's centre before this clamp).
+    vec3 c = clamp(texture2D(tDiffuse, vUv).rgb, vec3(0.0), vec3(${HALF_MAX.toFixed(1)}));
     float L = gradeLum(c);
     float y = gradeAsinh(uStretch * uGain * L) / gradeAsinh(uStretch * uWhite);
     y = pow(max(y, 0.0), uContrast);
     vec3 c2 = c * (y / max(L, 1e-8));
-    vec3 c3 = max(mix(vec3(gradeLum(c2)), c2, uSat), vec3(0.0));
-    float k = clamp(y, 0.0, 1.0);
+    float sat = mix(uSat, 1.0, uHighlight * smoothstep(0.5, 1.0, y));
+    vec3 c3 = max(mix(vec3(gradeLum(c2)), c2, sat), vec3(0.0));
+    float k = smoothstep(uPivot - 0.25, uPivot + 0.25, y);
     vec3 cool = vec3(1.0 - 0.25 * uSplit, 1.0, 1.0 + 0.25 * uSplit);
     vec3 warm = vec3(1.0 + 0.25 * uSplit, 1.0, 1.0 - 0.25 * uSplit);
     c3 *= vec3(1.0 + 0.25 * uBalance, 1.0, 1.0 - 0.25 * uBalance) * mix(cool, warm, k);
@@ -96,19 +108,25 @@ export const GRADE_VERTEX = /* glsl */ `
   }
 `;
 
+/** GLSL's smoothstep. */
+const smoothstep = (e0: number, e1: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
+  return t * t * (3 - 2 * t);
+};
 const lum = (c: readonly number[]) => LUMA[0] * c[0] + LUMA[1] * c[1] + LUMA[2] * c[2];
 
 /** GRADE_FRAGMENT's arithmetic on one linear colour, line for line (the tests' twin). */
 export function gradeColor(input: readonly [number, number, number], p: IllParams): [number, number, number] {
   const u = gradeUniforms(p);
-  const c = input.map((v) => Math.max(v, 0));
+  const c = input.map((v) => Math.min(HALF_MAX, Math.max(v, 0)));
   const L = lum(c);
   let y = Math.asinh(u.uStretch * u.uGain * L) / Math.asinh(u.uStretch * u.uWhite);
   y = Math.max(y, 0) ** u.uContrast;
   const c2 = c.map((v) => v * (y / Math.max(L, 1e-8)));
   const l2 = lum(c2);
-  let c3 = c2.map((v) => Math.max(l2 + (v - l2) * u.uSat, 0));
-  const k = Math.min(1, Math.max(0, y));
+  const sat = u.uSat + (1 - u.uSat) * u.uHighlight * smoothstep(0.5, 1, y);
+  let c3 = c2.map((v) => Math.max(l2 + (v - l2) * sat, 0));
+  const k = smoothstep(u.uPivot - 0.25, u.uPivot + 0.25, y);
   const s = 0.25 * u.uSplit;
   const tint = [(1 + 0.25 * u.uBalance) * ((1 - s) + 2 * s * k), 1, (1 - 0.25 * u.uBalance) * ((1 + s) - 2 * s * k)];
   c3 = c3.map((v, i) => v * tint[i]);

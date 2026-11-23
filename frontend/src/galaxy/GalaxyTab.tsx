@@ -672,8 +672,17 @@ export function GalaxyTab({
     if (illRuntime) updateRuntime(illRuntime, illParams, illContext);
   }, [illRuntime, illParams, illContext]);
   const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
-  // The framing (framing.ts): the template stand's radius times the scale, settled first (a new stand remakes the canvas).
-  const framingScale = useDebounced(illustrative ? standScale(paramsOf(framingFeature, illParams)) : 1, 300);
+  // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
+  // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
+  const framingLive = illustrative ? standScale(paramsOf(framingFeature, illParams)) : 1;
+  const framingOf = `${templateName}:${viewLook}`;
+  const [framingAt, setFramingAt] = useState({ of: framingOf, v: framingLive });
+  useEffect(() => {
+    if (framingAt.of === framingOf && framingAt.v === framingLive) return;
+    const timer = setTimeout(() => setFramingAt({ of: framingOf, v: framingLive }), 300);
+    return () => clearTimeout(timer);
+  }, [framingAt, framingOf, framingLive]);
+  const framingScale = framingAt.of === framingOf ? framingAt.v : framingLive;
   const templateStand = drawn.template?.camera ?? null;
   const viewStand = illustrative && templateStand ? { ...templateStand, radius_kpc: templateStand.radius_kpc * framingScale } : templateStand;
   // A feature that draws the HII regions its own way in place of the default knots (knots.ts, row 106).
