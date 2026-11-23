@@ -107,6 +107,8 @@ export interface Ridge {
   length: number;
   fadeIn: boolean;
   fadeOut: boolean;
+  /** S106: a depth multiplier per point (the skeleton's strength), multiplied into the gas's weight; absent 1. */
+  weight?: Float32Array;
 }
 
 /** A path's points given, its tangents (smoothed over `smooth` kpc), inward normals and lengths filled in. */
@@ -320,11 +322,15 @@ export interface LaneShape {
   seed: number;
   /** S106: 1 the lanes drawn along the arms' traced crests (LaneGeometry.traced), 0 along the model's arm pieces. */
   trace: number;
+  /** S106 (B3): 1 the arms' lanes drawn along the arm skeleton's ridges (LaneGeometry.skeleton); absent or 0 not. */
+  skeleton?: number;
+  /** S106 (B3): the bar lanes' curl round the nucleus, a share of its 220 degrees; absent 1 (S107's curl), 0 straight. */
+  barCurl?: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof LaneShape)[] = [
   "offset", "width", "strands", "spread", "wiggle", "wiggleLength", "braidLength", "gaps", "gapLength", "clump", "envelope", "followGas", "taper",
-  "innerRadius", "outerRadius", "featherSpacing", "featherLength", "featherPitch", "featherDepth", "fray", "barDepth", "barOffset", "barWidth", "barCurve", "barReach", "seed", "trace",
+  "innerRadius", "outerRadius", "featherSpacing", "featherLength", "featherPitch", "featherDepth", "fray", "barDepth", "barOffset", "barWidth", "barCurve", "barReach", "seed", "trace", "skeleton", "barCurl",
 ];
 
 /** What the map is drawn from: the ridges, the gas contrast to weigh them by, and the bar. */
@@ -335,6 +341,8 @@ export interface LaneGeometry {
   bar: { halfLength: number; axisRatio: number; angle: number } | null;
   /** S106: the arms' own crests traced into ridges (traceRidges), drawn in place of the pieces where the shape's `trace` is on. */
   traced?: Ridge[] | null;
+  /** S106 (B3): the arm skeleton's ridges (lanes.ts skeletonRidges), drawn in place of the pieces where the shape's `skeleton` is on. */
+  skeleton?: Ridge[] | null;
 }
 
 /** A peak of the arms' ridge lines (armsField.ts ArmPeak): ring i, azimuth cell j, height in [0, 1]. */
@@ -798,8 +806,8 @@ export function barRidges(bar: NonNullable<LaneGeometry["bar"]>, shape: LaneShap
     Y.push(-c * (1 - (x / a) ** shape.barCurve));
   }
   // The curl: from (0, -c), heading toward -X, round the centre by 220 degrees, the radius falling to a third.
-  const sweep = (220 * Math.PI) / 180;
-  const m = Math.max(8, Math.ceil((c * sweep) / step));
+  const sweep = ((220 * Math.PI) / 180) * Math.max(0, shape.barCurl ?? 1);
+  const m = sweep > 0 ? Math.max(8, Math.ceil((c * sweep) / step)) : 0;
   for (let i = 1; i <= m; i += 1) {
     const t = i / m;
     const theta = -Math.PI / 2 - sweep * t;
@@ -851,8 +859,11 @@ export interface LaneMap {
 export function buildLaneMap(g: LaneGeometry, shape: LaneShape, rings: number = LANE_MAP.rings, sectors: number = LANE_MAP.sectors): LaneMap {
   const raster = new Raster(rings, sectors, g.rHi);
   const step = ridgeStep(shape);
-  const ridges = shape.trace >= 0.5 && g.traced ? g.traced : ridgesOf(g.pieces, step);
-  const weights = gasWeights(ridges, g, shape.followGas);
+  const ridges = (shape.skeleton ?? 0) >= 0.5 && g.skeleton ? g.skeleton : shape.trace >= 0.5 && g.traced ? g.traced : ridgesOf(g.pieces, step);
+  const weights = gasWeights(ridges, g, shape.followGas).map((w, k) => {
+    const own = ridges[k].weight;
+    return own ? w.map((v, i) => v * own[i]) : w;
+  });
   ridges.forEach((ridge, k) => drawChain(raster, ridge, weights[k], shape));
   if (g.bar) drawBar(raster, g.bar, shape, stepFor(sigmaOf(shape.barWidth * 1e-3) * 0.75));
   const data = new Uint8Array(rings * sectors);

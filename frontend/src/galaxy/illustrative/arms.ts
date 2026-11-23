@@ -25,9 +25,25 @@ import { FLAG_RINGS, YOUNG_CAP, barFade, armContrast, armMap, armPlanes, armShar
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
 import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
 import { barAngle } from "./lanesMap";
+import { skeletonMemo, skeletonOn, skeletonPlanes } from "./armsSkeleton";
+import type { Skeleton } from "./skeleton";
 
 /** The /api/arrays names the arms read. */
-export const ARMS_ARRAYS = ["bar_axis_ratio", "bar_half_length", "gas_density_contrast", "pattern_density_contrast", "thin_disc_scale_length"] as const;
+export const ARMS_ARRAYS = [
+  "bar_axis_ratio",
+  "bar_half_length",
+  "gas_density_contrast",
+  "pattern_density_contrast",
+  "thin_disc_scale_length",
+  // S106 (the skeleton): the arm pieces, as the lanes ask them (one request for all features).
+  "arm_piece_chain",
+  "arm_piece_order",
+  "arm_piece_start_radius",
+  "arm_piece_start_azimuth",
+  "arm_piece_pitch",
+  "arm_piece_extent",
+  "arm_piece_join",
+] as const;
 
 /** The shaping values a map is built from (any change rebuilds it; the tints and the sparkle's gain do not). */
 export function shapeOf(p: IllParams, frame: IllFrame | null): ArmShape {
@@ -101,7 +117,20 @@ const planesOf = memoOn((frame: unknown, shapeJson: unknown) => {
 const shareKey = (s: ArmShape): string =>
   JSON.stringify({ ...s, floor: 0, cap: 0, young: 0, width: 0 });
 
-const planesFor = (p: IllParams, frame: IllFrame | null) => planesOf(frame, shareKey(shapeOf(p, frame)));
+/** The arms' skeleton at the live parameters (S106): its planes in place of the contrast's under `skeleton`. */
+export const armsSkeleton = skeletonMemo();
+
+const skeletonPlanesOf = memoOn((sk: unknown, frame: unknown, wing: unknown) => {
+  const f = frame as IllFrame | null;
+  const s = sk as Skeleton | null;
+  const pattern = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? (f?.arrays.gas_density_contrast as ArrayLike<number> | undefined);
+  if (!f || !s || !pattern) return null;
+  const grid = gridOf(f.header, pattern.length);
+  return { grid, ...skeletonPlanes(s, ILL_MAP.width, ILL_MAP.height, grid.rHi, wing as number, FLAG_RINGS / 16) };
+});
+
+const planesFor = (p: IllParams, frame: IllFrame | null) =>
+  skeletonOn(p) ? skeletonPlanesOf(armsSkeleton(frame, p), frame, p.skelwing ?? 0.15) : planesOf(frame, shareKey(shapeOf(p, frame)));
 
 /**
  * The bar's ellipse in the disc (S105, tuner M): its half-length and axis ratio as published, its angle read off
@@ -289,6 +318,70 @@ export const arms: IllFeature = {
     {
       key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.3, ngc_4414: 0.15 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
+    },
+    {
+      key: "skeleton", label: "arms on the skeleton", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
+      about: "1: the arms' glow, grain and lanes drawn on one skeleton of continuous ridges (log spirals from the bar's ends at the arm pieces' pitch, carried to the disc's edge, with lesser arms and spurs of the viewer's own); 0: the model's contrast ridges as S105 drew them. Illustrative (S106).",
+    },
+    {
+      key: "skellesser", label: "lesser arms", min: 0, max: 4, step: 1, unit: "", default: 2,
+      about: "How many lesser arms the skeleton draws between the two major arms (each nudged to the arm pieces' strongest phase near midway). Illustrative (S106).",
+    },
+    {
+      key: "skelspurs", label: "spurs", min: 0, max: 12, step: 1, unit: "", default: 4,
+      about: "How many short spurs leave the skeleton's arms on their outer sides, more open than the arm. Illustrative (S106).",
+    },
+    {
+      key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.75 },
+      about: "A multiplier on the arm pieces' pitch (their length-weighted median) for the skeleton's winding: below 1 more turns before the edge. Illustrative (S106).",
+    },
+    {
+      key: "skeldrift", label: "pitch drift", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15,
+      about: "The skeleton's pitch drifts slowly along each arm by about this share (a seeded noise of the viewer's own). Illustrative (S106).",
+    },
+    {
+      key: "skelkink", label: "kinks", min: 0, max: 1, step: 0.01, unit: "", default: 0.25,
+      about: "Two or three short changes of pitch along each arm, this share of the pitch: slight kinks. Illustrative (S106).",
+    },
+    {
+      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.6 },
+      about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
+    },
+    {
+      key: "skelouter", label: "arms' reach", min: 4, max: 30, step: 0.5, unit: "kpc", default: 18, perTemplate: { milky_way: 18 },
+      about: "Where the skeleton's major arms end, kpc (the lesser arms a little inside): the winding's extent. Illustrative (S106).",
+    },
+    {
+      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3,
+      about: "The outer share of each arm's length (in ln R) over which it fades and breaks into flecks. Illustrative (S106).",
+    },
+    {
+      key: "skelstart", label: "arms' start", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1,
+      about: "Where the major arms leave the bar, times its published half-length (kpc without a bar). Illustrative (S106).",
+    },
+    {
+      key: "skellesserstart", label: "lesser start", min: 1, max: 3, step: 0.01, unit: "×", default: 1.25,
+      about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
+    },
+    {
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75,
+      about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
+    },
+    {
+      key: "skelwing", label: "glow wing", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15,
+      about: "A faint wing three ridge widths wide under each ridge's glow, this share of it. Illustrative (S106).",
+    },
+    {
+      key: "skeltail", label: "grain tail", min: 0, max: 0.5, step: 0.005, unit: "", default: 0.05,
+      about: "The skeleton's grain: a sparse tail of points two ridge widths to either side, this share of the crest's density. Illustrative (S106).",
+    },
+    {
+      key: "skelgrainfade", label: "grain fade", min: 0, max: 4, step: 0.05, unit: "", default: 1.5,
+      about: "The skeleton's grain thins with the ridge's strength to this power (so it breaks up at the arms' outer ends). Illustrative (S106).",
+    },
+    {
+      key: "skelseed", label: "skeleton seed", min: 0, max: 999, step: 1, unit: "", default: 11,
+      about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
       key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.6, ngc_4414: 1 },

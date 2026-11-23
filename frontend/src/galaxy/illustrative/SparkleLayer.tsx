@@ -9,7 +9,9 @@
 import { useMemo } from "react";
 import { FluxPoints, type PointDust } from "../FluxPoints";
 import { toScene } from "../positions";
-import { armMapFor, shapeOf } from "./arms";
+import { armMapFor, armsSkeleton, shapeOf } from "./arms";
+import { skeletonOn } from "./armsSkeleton";
+import { grainDensity, ridgeAt } from "./skeleton";
 import { buildSparkle, hashString, sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
 import { ILL_MAP, type IllLayerProps } from "./feature";
 
@@ -27,6 +29,10 @@ function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Arr
 
 export default function ArmsSparkle({ params, runtime, context, knotsGain, dust }: IllLayerProps) {
   const built = armMapFor(params, context.frame);
+  // S106: on the skeleton, the grain's density read across its ridges (skeleton.ts grainDensity) in place of the share.
+  const skeleton = skeletonOn(params) ? armsSkeleton(context.frame, params) : null;
+  const tail = params.skeltail ?? 0.05;
+  const grainFade = params.skelgrainfade ?? 1.5;
   const count = params.sparkle ?? 0;
   const rMax = params.sparkleedge ?? 16;
   const shape = useMemo(
@@ -53,10 +59,11 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
     const img = mapTex?.image;
     const lanes =
       img?.data && img.width === ILL_MAP.width && img.height === ILL_MAP.height ? { data: img.data, width: img.width, height: img.height, rHi: built.grid.rHi } : null;
-    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw, lanes);
+    const levelOf = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw, lanes, levelOf);
     if (s.radius.length === 0) return null;
     return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
-  }, [built, shape, context.template, mapTex]);
+  }, [built, shape, context.template, mapTex, skeleton, tail, grainFade]);
   const blue = params.sparkleblue ?? 0.7;
   const base = params.sparklegain ?? 2e4;
   const start = shapeOf(params, context.frame).start;
