@@ -31,25 +31,49 @@ export const edge: IllFeature = {
       key: "youngwidth", label: "young taper", min: 0, max: 25, step: 0.5, unit: "kpc", default: 0, perTemplate: { milky_way: 8, ngc_4414: 4 },
       about: "The clustered young light taken smoothly to nothing over this many kpc inside the young edge; 0 a hard cut there. Illustrative.",
     },
+    {
+      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9, ngc_4414: 0 },
+      about: "The bulge's light (and the dust's, the HII's and the gas's) dimmed by this share round the bar - from none at the centre, full from the radius below, none again from the next - the disc's starlight kept: the pale haze round the bar thinned so the bar stands on a darker ground; 0 none. Illustrative (S106).",
+    },
+    {
+      key: "bulgein", label: "bulge dim from", min: 0.1, max: 6, step: 0.05, unit: "kpc", default: 1, perTemplate: { milky_way: 1.5 },
+      about: "The bulge's dimming (above) is full from this radius, kpc (rising smoothly from the centre). Illustrative (S106).",
+    },
+    {
+      key: "bulgeout", label: "bulge dim to", min: 1, max: 20, step: 0.1, unit: "kpc", default: 8, perTemplate: { milky_way: 10 },
+      about: "The bulge's dimming has faded to nothing at this radius, kpc (from half of it). Illustrative (S106).",
+    },
   ],
   glsl: /* glsl */ `
   uniform float illEdgeRadius;
   uniform float illEdgeWidth;
   uniform float illEdgeYoungRadius;
   uniform float illEdgeYoungWidth;
+  uniform vec3 illEdgeBulge;
   float illEdgeRamp(float r, float end, float width) {
     if (width <= 0.0) return r < end ? 1.0 : 0.0;
     return 1.0 - smoothstep(end - width, end, r);
   }
-  float illEdgeTaper(float r) { return illEdgeRamp(r, min(illEdgeRadius, rHi), illEdgeWidth); }
+  // S106 (B5): the bulge's dimming at cylindrical radius r (1 none). The edge hook multiplies every emission by it and
+  // the light hook gives the disc's starlight it back, so in sum only the bulge (with the dust's, HII's and gas's own
+  // light and the depths) is dimmed.
+  float illEdgeBulgeAt(float r) {
+    return 1.0 - illEdgeBulge.x * smoothstep(0.0, illEdgeBulge.y, r) * (1.0 - smoothstep(0.5 * illEdgeBulge.z, illEdgeBulge.z, r));
+  }
+  float illEdgeTaper(float r) {
+    float t = illEdgeRamp(r, min(illEdgeRadius, rHi), illEdgeWidth);
+    return illEdgeBulge.x > 0.0 ? t * illEdgeBulgeAt(r) : t;
+  }
+  vec3 illEdgeDisc(vec2 rp) { return illEdgeBulge.x > 0.0 ? vec3(1.0 / illEdgeBulgeAt(rp.x)) : vec3(1.0); }
   float illEdgeYoung(vec2 rp) { return illEdgeYoungRadius >= rHi && illEdgeYoungWidth <= 0.0 ? 1.0 : illEdgeRamp(rp.x, illEdgeYoungRadius, illEdgeYoungWidth); }
 `,
-  hooks: { edge: "illEdgeTaper", youngGain: "illEdgeYoung" },
+  hooks: { edge: "illEdgeTaper", youngGain: "illEdgeYoung", light: "illEdgeDisc" },
   uniforms: (p) => ({
     illEdgeRadius: p.radius ?? 30,
     illEdgeWidth: p.width ?? 0,
     illEdgeYoungRadius: p.young ?? 30,
     illEdgeYoungWidth: p.youngwidth ?? 0,
+    illEdgeBulge: [p.bulge ?? 0, p.bulgein ?? 1, Math.max(p.bulgeout ?? 8, 0.2)] as [number, number, number],
   }),
 };
 

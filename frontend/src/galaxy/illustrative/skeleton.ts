@@ -340,27 +340,55 @@ export function bandProfile(d: number, width: number, wing: number): number {
 export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wing: number): Float32Array {
   const out = new Float32Array(width * height);
   const dPhi = TAU / height;
+  // S106 (B5): near an arm's START each texel's strength is read at the FOOT of its perpendicular on the arm (the
+  // crest's point nearest it: ln R moved by sense * dphi * sin(p) cos(p)), none where that foot lies before the start;
+  // from a few widths along the arm on, on its own ring as before. Read on the ring there too, a low-pitched arm's wing
+  // (three widths across: most of the turn on the first ring) began everywhere at once at the start's radius - a
+  // circle round the bar. (Read at the foot everywhere, the faded outer ends and the breaks stop square across the
+  // wing; on the ring they trail off along it, as the goal's arms do.)
+  const sense = sk.sense >= 0 ? 1 : -1;
   for (let c = 0; c < width; c++) {
     const R = ((c + 0.5) / width) * rHi;
+    const lnR = Math.log(R);
     for (const a of sk.arms) {
-      const h = armAt(a, R);
-      if (!h || h.strength <= 1e-3) continue;
-      const sin = h.tanp / Math.sqrt(1 + h.tanp * h.tanp);
       const s = a.width / 2.3548;
       const reachKpc = (wing > 0 ? 3 * 3.2 : 3.5) * s;
+      // Inside the arm's start (within a reach of it) its crest carried inward at the start's pitch: texels there
+      // whose foot lies on the arm are its band's rounded start.
+      const h = armAt(a, R) ?? armBefore(a, R, reachKpc, sense);
+      if (!h) continue;
+      const sin = h.tanp / Math.sqrt(1 + h.tanp * h.tanp);
+      const cos = 1 / Math.sqrt(1 + h.tanp * h.tanp);
       const half = Math.min(Math.PI, reachKpc / Math.max(1e-6, R * sin));
       const centre = (((h.phi % TAU) + TAU) % TAU) / dPhi - 0.5;
       const jLo = Math.ceil(centre - half / dPhi);
       const jHi = Math.min(jLo + height - 1, Math.floor(centre + half / dPhi));
+      const lnEnd = a.lnR0 + (a.n - 1) * a.dlnR;
+      // The start's reach along the arm, in ln R: the foot's reading blends into the ring's over the next as much.
+      const startLen = Math.max(4 * a.dlnR, (3 * a.width) / a.r0);
+      const ringStrength = "strength" in h ? (h.strength as number) : 0;
       for (let j = jLo; j <= jHi; j++) {
-        const d = R * (j - centre) * dPhi * sin;
-        const v = h.strength * bandProfile(d, a.width, wing);
+        const dphi = (j - centre) * dPhi;
+        const foot = lnR + sense * dphi * sin * cos;
+        if (foot < a.lnR0) continue;
+        const t = Math.min(1, Math.max(0, (foot - a.lnR0 - startLen) / startLen));
+        const blend = t * t * (3 - 2 * t);
+        const atFoot = blend < 1 ? lerp(a.strength, Math.min(a.n - 1, (foot - a.lnR0) / a.dlnR)) : 0;
+        const strength = atFoot + (ringStrength - atFoot) * blend;
+        if (strength <= 1e-3) continue;
+        const v = strength * bandProfile(R * dphi * sin, a.width, wing);
         const o = (((j % height) + height) % height) * width + c;
         if (v > out[o]) out[o] = v;
       }
     }
   }
   return out;
+}
+
+/** An arm's crest carried inside its start (within `reach` kpc of it) at the start's pitch; null elsewhere. */
+function armBefore(a: SkelArm, R: number, reach: number, sense: number): { phi: number; tanp: number } | null {
+  if (!(R < a.r0 && R > a.r0 - reach)) return null;
+  return { phi: a.phi[0] + (sense * (Math.log(R) - a.lnR0)) / a.tanp[0], tanp: a.tanp[0] };
 }
 
 /** An arm sampled every `step` kpc along its crest: plane positions (x = R cos phi, y = R sin phi) and strength. */

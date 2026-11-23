@@ -230,7 +230,7 @@ export const arms: IllFeature = {
       about: "The size of the breaks and fragments along the arms, kpc. Illustrative.",
     },
     {
-      key: "barfade", label: "bar fade", min: 0, max: 3, step: 0.05, unit: "× bar", default: 1, perTemplate: { milky_way: 0.7, ngc_4414: 1 },
+      key: "barfade", label: "bar fade", min: 0, max: 3, step: 0.05, unit: "× bar", default: 1, perTemplate: { milky_way: 0.3, ngc_4414: 1 },
       about: "The arms' shaping starts at this multiple of the bar's half-length (the published bar_half_length), so the bar and the bulge are never brightened. Illustrative.",
     },
     {
@@ -238,7 +238,7 @@ export const arms: IllFeature = {
       about: "The arms' shaping starts no nearer the centre than this, kpc (an unbarred disc's start). Illustrative.",
     },
     {
-      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 0.5, ngc_4414: 2 },
+      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 2.5, ngc_4414: 2 },
       about: "Over how many kpc the arms' shaping fades in from its start. Illustrative.",
     },
     {
@@ -410,16 +410,52 @@ export const arms: IllFeature = {
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.7, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.05, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
-      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.35, ngc_4414: 0 },
+      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
       about: "The inner disc's starlight about the bar (inside 1.6 of its scaled half-length, outside its ellipse) dimmed by this share, so the bar stands on a darker ground; 0 none. Illustrative (S105).",
     },
     {
       key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.4, ngc_4414: 0 },
       about: "The same ground about the bar tinted toward a slate blue by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
+    },
+    {
+      key: "barsharp", label: "bar edge", min: 1, max: 8, step: 0.1, unit: "", default: 2, perTemplate: { milky_way: 4 },
+      about: "The bar light's profile across its ellipse as exp(-1.6 e^this): 2 the soft gaussian; higher a flatter body with a sharper edge. Illustrative (S106).",
+    },
+    {
+      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.65 },
+      about: "The bar light's ellipse's axis ratio as a multiple of the published bar_axis_ratio: below 1 a slimmer drawn bar. Illustrative (S106).",
+    },
+    {
+      key: "barcore", label: "bar core", min: 0, max: 6, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 2 },
+      about: "A brighter core at the bar's centre: the light there multiplied by 1 + this, falling as a gaussian of the radius below; 0 none. Illustrative (S106).",
+    },
+    {
+      key: "barcoresize", label: "bar core size", min: 0.03, max: 0.6, step: 0.01, unit: "× bar", default: 0.15, perTemplate: { milky_way: 0.12 },
+      about: "The bar core's gaussian radius, times the drawn bar's half-length. Illustrative (S106).",
+    },
+    {
+      key: "skelhold", label: "haze inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "On the skeleton, the disc inside the first arm dimmed as the disc between the arms is (the ring mean the light is kept by held inward from where the arms begin) by this share; 0 undimmed there - a pale disc round the bar ending in a circle where the arms start. Illustrative (S106).",
+    },
+    {
+      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.35 },
+      about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
+    },
+    {
+      key: "skelcoreblue", label: "inner slate", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8 },
+      about: "The same inner zone (round the bar, off its ellipse, over the same ramp) tinted toward a slate blue by this share; 0 none. Colour for appearance (S106).",
+    },
+    {
+      key: "skelcorein", label: "inner dark to", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, perTemplate: { milky_way: 3 },
+      about: "The inner disc's darkening (above) is full inside this radius, kpc. Illustrative (S106).",
+    },
+    {
+      key: "skelcoreout", label: "inner dark ends", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 6, perTemplate: { milky_way: 7.5 },
+      about: "The inner disc's darkening has faded to nothing at this radius, kpc (a smooth ramp from the radius above). Illustrative (S106).",
     },
   ],
   arrays: ARMS_ARRAYS,
@@ -456,26 +492,35 @@ export const arms: IllFeature = {
   uniform vec4 illArmsBar;
   uniform vec3 illArmsBarTint;
   uniform vec3 illArmsBarGround;
+  // S106 (B5): the profile's power (2 the S105 gaussian; higher a flatter top and a sharper edge) and a core at the
+  // centre (x its gain, y its radius in the ellipse's units).
+  uniform float illArmsBarSharp;
+  uniform vec2 illArmsBarCore;
+  // The ellipse radius e at rp, in the bar's (scaled) units.
+  float illArmsBarE(vec2 rp) {
+    float x = rp.x * cos(rp.y);
+    float y = rp.x * sin(rp.y);
+    float X = x * cos(illArmsBar.z) + y * sin(illArmsBar.z);
+    float Y = y * cos(illArmsBar.z) - x * sin(illArmsBar.z);
+    return length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
+  }
+  float illArmsBarProfile(float e) { return illArmsBarSharp == 2.0 ? exp(-1.6 * e * e) : exp(-1.6 * pow(e, illArmsBarSharp)); }
   // The bar ellipse's weight at rp (1 on the bar's axis, 0 far off it); 0 without a bar.
   float illArmsBarW(vec2 rp) {
     if (illArmsBar.x <= 0.0) return 0.0;
-    float x = rp.x * cos(rp.y);
-    float y = rp.x * sin(rp.y);
-    float X = x * cos(illArmsBar.z) + y * sin(illArmsBar.z);
-    float Y = y * cos(illArmsBar.z) - x * sin(illArmsBar.z);
-    float e = length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
-    return exp(-1.6 * e * e);
+    return illArmsBarProfile(illArmsBarE(rp));
   }
   vec3 illArmsBarLight(vec2 rp) {
     if (illArmsBarOn < 0.5) return vec3(1.0);
-    float x = rp.x * cos(rp.y);
-    float y = rp.x * sin(rp.y);
-    float X = x * cos(illArmsBar.z) + y * sin(illArmsBar.z);
-    float Y = y * cos(illArmsBar.z) - x * sin(illArmsBar.z);
-    float e = length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
-    float w = exp(-1.6 * e * e);
+    float e = illArmsBarE(rp);
+    float w = illArmsBarProfile(e);
     float d = (1.0 - w) * (1.0 - smoothstep(illArmsBar.x, 1.6 * illArmsBar.x, rp.x));
-    return mix(vec3(1.0), illArmsBar.w * illArmsBarTint, w) * mix(vec3(1.0), illArmsBarGround, d);
+    vec3 lit = mix(vec3(1.0), illArmsBar.w * illArmsBarTint, w) * mix(vec3(1.0), illArmsBarGround, d);
+    if (illArmsBarCore.x > 0.0) {
+      float c = rp.x / (illArmsBar.x * illArmsBarCore.y);
+      lit *= 1.0 + illArmsBarCore.x * exp(-c * c);
+    }
+    return lit;
   }
   // S106 (B3): on the skeleton (illArmsSkel), A carries the model's own star contrast and the ring means come from
   // illArmsSkelMean; the model's arm light is divided out by its power illArmsFlat, faded in as the shaping is.
@@ -484,12 +529,21 @@ export const arms: IllFeature = {
   uniform float illArmsYoungIn;
   uniform float illArmsYoungCut;
   uniform float illArmsLavIn;
+  uniform vec3 illArmsCore;
+  uniform float illArmsCoreOn;
+  uniform vec3 illArmsCoreTint;
   uniform float illArmsSkelMean[${SKEL_MEAN_SAMPLES}];
+  // (S106 B5: a Catmull-Rom cubic through the samples - a linear read kinks at each, a thin arc in the haze.)
   float illArmsSkelMeanAt(float r) {
     float x = clamp(r / rHi * ${SKEL_MEAN_SAMPLES.toFixed(1)} - 0.5, 0.0, ${(SKEL_MEAN_SAMPLES - 1).toFixed(1)});
     int i = int(floor(x));
-    int j = min(i + 1, ${SKEL_MEAN_SAMPLES - 1});
-    return mix(illArmsSkelMean[i], illArmsSkelMean[j], x - float(i));
+    float t = x - float(i);
+    float p0 = illArmsSkelMean[max(i - 1, 0)];
+    float p1 = illArmsSkelMean[i];
+    float p2 = illArmsSkelMean[min(i + 1, ${SKEL_MEAN_SAMPLES - 1})];
+    float p3 = illArmsSkelMean[min(i + 2, ${SKEL_MEAN_SAMPLES - 1})];
+    float v = 0.5 * (2.0 * p1 + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t + (3.0 * p1 - p0 - 3.0 * p2 + p3) * t * t * t);
+    return max(v, 0.0);
   }
   float illArmsMeanOf(vec4 w, float r) { return illArmsSkel > 0.5 ? illArmsSkelMeanAt(r) : w.a * illArmsMeanMax; }
   float illArmsFlatOf(vec4 w, float fa) {
@@ -504,10 +558,20 @@ export const arms: IllFeature = {
     float f = illArmsFade(rp.x);
     float fa = min(1.0, f);
     float light = max(0.0, 1.0 + (illArmsRing(s, m, illArmsFloor, illArmsCap) - 1.0) * f) * illArmsFlatOf(w, fa);
+    // S106 (B5): on the skeleton, the inner disc's light taken to illArmsCore.x of itself, the full share inside
+    // illArmsCore.y kpc and none from illArmsCore.z out (a smooth ramp: no circle), the bar's ellipse kept - so the
+    // ground about the bar is the disc's darkest, not a pale disc.
+    // illArmsCoreTint: the same zone tinted toward a slate blue.
+    float coreW = 0.0;
+    if (illArmsSkel > 0.5 && (illArmsCore.x != 1.0 || illArmsCoreOn > 0.5)) {
+      coreW = (1.0 - illArmsBarW(rp)) * (1.0 - smoothstep(illArmsCore.y, illArmsCore.z, rp.x));
+      light *= mix(1.0, illArmsCore.x, coreW);
+    }
     float g = fa * smoothstep(0.25, 0.9, s) * illArmsFlag(rp.x);
     // Inside the arms' start the tint is carried off the bar itself (its cream is the bar light's).
     float lav = illArmsSkel > 0.5 ? max(fa, illArmsLavIn * (1.0 - illArmsBarW(rp))) : fa;
     vec3 tone = mix(mix(vec3(1.0), illArmsLavender, lav), illArmsBlue, g);
+    if (illArmsCoreOn > 0.5) tone *= mix(vec3(1.0), illArmsCoreTint, coreW);
     return light * tone;
   }
   vec3 illArmsLight(vec2 rp) { return illArmsShaped(rp) * illArmsBarLight(rp); }
@@ -555,7 +619,10 @@ export const arms: IllFeature = {
       illArmsYoungIn: p.skelyoungin ?? 1,
       illArmsYoungCut: p.skelyoungcut ?? 0,
       illArmsLavIn: p.skellavin ?? 0,
-      illArmsSkelMean: planes && "ringMean" in planes ? planes.ringMean : SKEL_MEAN_ZERO,
+      illArmsCoreOn: (p.skelcoreblue ?? 0) !== 0 ? 1 : 0,
+      illArmsCoreTint: tint(BAR_GROUND, p.skelcoreblue ?? 0),
+      illArmsCore: [p.skelcore ?? 1, p.skelcorein ?? 2, Math.max((p.skelcorein ?? 2) + 0.1, p.skelcoreout ?? 6)] as [number, number, number],
+      illArmsSkelMean: planes && "ringMean" in planes ? heldMean(planes.ringMean as number[], p.skelhold ?? 0) : SKEL_MEAN_ZERO,
       ...barUniforms(p, context.frame),
     };
   },
@@ -563,6 +630,20 @@ export const arms: IllFeature = {
 };
 
 const SKEL_MEAN_ZERO: number[] = new Array<number>(SKEL_MEAN_SAMPLES).fill(0);
+
+/**
+ * The skeleton's ring means with the inner disc held (S106, B5): inside the first sample to reach half the largest
+ * mean, each sample raised toward that sample's value by `hold` (0 the means as built). Inside the skeleton's start
+ * the band is empty and its ring mean nothing, so the disc between the arms was dimmed only where arms are - a pale
+ * disc round the bar ending in a circle where the arms begin; held, the haze inside the first arm is dimmed as the
+ * haze between the arms is.
+ */
+export function heldMean(samples: readonly number[], hold: number): number[] {
+  if (!(hold > 0) || samples.length === 0) return [...samples];
+  const top = Math.max(...samples);
+  const k = samples.findIndex((v) => v >= 0.5 * top);
+  return samples.map((v, i) => (i < k && top > 0 ? v + (Math.max(v, samples[k]) - v) * Math.min(1, hold) : v));
+}
 
 /** The bar light's uniforms: off (the light untouched) at a light of 1, no cream and no dimming, or without a bar. */
 export function barUniforms(p: IllParams, frame: IllFrame | null) {
@@ -575,7 +656,9 @@ export function barUniforms(p: IllParams, frame: IllFrame | null) {
   const size = p.barsize ?? 1;
   return {
     illArmsBarOn: on ? 1 : 0,
-    illArmsBar: [(bar?.halfLength ?? 1) * size, bar?.axisRatio ?? 1, bar?.angle ?? 0, glow] as [number, number, number, number],
+    illArmsBar: [(bar?.halfLength ?? 1) * size, (bar?.axisRatio ?? 1) * (p.barthin ?? 1), bar?.angle ?? 0, glow] as [number, number, number, number],
+    illArmsBarSharp: p.barsharp ?? 2,
+    illArmsBarCore: [p.barcore ?? 0, p.barcoresize ?? 0.15] as [number, number],
     illArmsBarTint: tint(BAR_CREAM, warm),
     illArmsBarGround: tint(BAR_GROUND, cool).map((v) => v * (1 - dim)) as [number, number, number],
   };
