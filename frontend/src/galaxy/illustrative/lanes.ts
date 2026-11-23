@@ -18,10 +18,10 @@
 // along the crests of the arms as this look draws them (armsField.ts armPeaks, traced ring to ring by lanesMap.ts
 // traceRidges at the arms' template defaults) in place of the model's arm pieces. Off on both templates by default.
 
-import { ILL_MAP, ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
+import { ILL_MAP, ILL_MAP_CHANNELS, type IllControl, type IllContext, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
 import { LANE_ARRAYS, LANE_MAP, type LaneShape, type Ridge, SHAPE_KEYS, buildLaneMap, geometryOf, ridgeOfPoints, ridgeStep, traceRidges } from "./lanesMap";
-import { skeletonMemo } from "./armsSkeleton";
-import { ridgeLine } from "./skeleton";
+import { skeletonParamsOf } from "./armsSkeleton";
+import { type SkeletonParams, buildSkeleton, ridgeLine } from "./skeleton";
 import { arms, shapeOf as armShapeOf } from "./arms";
 import { armContrast, armPeaks, gridOf } from "./armsField";
 
@@ -137,13 +137,13 @@ const now = () => (typeof performance !== "undefined" ? performance.now() : 0);
  * LANE_MAP) - built once per (frame, shaping values); null (no lane: the channel reads zero) until the arrays have
  * arrived and for a galaxy with nothing to draw.
  */
-const mapPlane = memoOn((frame: unknown, template: unknown, ...values: unknown[]): Uint8Array | null => {
+const mapPlane = memoOn((frame: unknown, template: unknown, skelJson: unknown, ...values: unknown[]): Uint8Array | null => {
   if (!frame) return null;
   const shape = Object.fromEntries(SHAPE_KEYS.map((k, i) => [k, values[i] as number])) as unknown as LaneShape;
   const started = now();
   const g = geometryOf(frame as IllFrame);
   if (shape.trace >= 0.5) g.traced = tracedFor(frame as IllFrame, (template as string | null) ?? null, ridgeStep(shape));
-  if ((shape.skeleton ?? 0) >= 0.5) g.skeleton = skeletonRidges(frame as IllFrame, (template as string | null) ?? null, ridgeStep(shape));
+  if ((shape.skeleton ?? 0) >= 0.5 && typeof skelJson === "string") g.skeleton = skeletonRidges(frame as IllFrame, JSON.parse(skelJson) as SkeletonParams, ridgeStep(shape));
   const map = buildLaneMap(g, shape, ILL_MAP.width, ILL_MAP.height);
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
@@ -166,16 +166,32 @@ function tracedFor(frame: IllFrame, template: string | null, step: number) {
   return traceRidges(peaks, grid, k, step);
 }
 
-/** The arms' skeleton at the arms' template defaults (S106, B3): the lanes' line moves only with the template. */
-const lanesSkeleton = skeletonMemo();
+/** The arms' skeleton as the lanes read it (S106, B3; B4: at the arms' live parameters). */
+const lanesSkeleton = memoOn((frame: unknown, json: unknown) => {
+  const g = geometryOf(frame as IllFrame);
+  if (g.pieces.length === 0 && !g.bar) return null;
+  return buildSkeleton({ pieces: g.pieces, bar: g.bar }, JSON.parse(json as string) as SkeletonParams);
+});
+
+/** The arms' parameters at their defaults on a template (where a context carries no paramsOf: a hand-built one). */
+export const armsDefaultsOn = (template: string | null): IllParams =>
+  Object.fromEntries(arms.controls.map((c) => [c.key, (template ? c.perTemplate?.[template] : undefined) ?? c.default]));
+
+/**
+ * The arms' skeleton parameters the lanes follow (S106, B4): the arms' CURRENT sliders (context.paramsOf), so a skel*
+ * slider moves the lanes with the glow and the grain; as one JSON string, a key of the lanes' plane.
+ */
+export const lanesSkeletonKey = (context: IllContext): string => {
+  const p = context.paramsOf?.("arms") ?? armsDefaultsOn(context.template);
+  return JSON.stringify(skeletonParamsOf(p));
+};
 
 /**
  * The arm skeleton's ridges as lanes' ridges (S106, B3): each arm's crest sampled every `step` kpc (skeleton.ts
- * ridgeLine), its strength the depth's weight; the arms' parameters their template defaults.
+ * ridgeLine), its strength the depth's weight; `params` the skeleton's (armsSkeleton.ts skeletonParamsOf).
  */
-export function skeletonRidges(frame: IllFrame, template: string | null, step: number): Ridge[] | null {
-  const p = Object.fromEntries(arms.controls.map((c) => [c.key, (template ? c.perTemplate?.[template] : undefined) ?? c.default]));
-  const sk = lanesSkeleton(frame, p);
+export function skeletonRidges(frame: IllFrame, params: SkeletonParams, step: number): Ridge[] | null {
+  const sk = lanesSkeleton(frame, JSON.stringify(params));
   if (!sk) return null;
   return sk.arms.map((a, k) => {
     const l = ridgeLine(a, step);
@@ -249,7 +265,8 @@ export const lanes: IllFeature = {
     channels: ILL_MAP_CHANNELS.lanes,
     build: (p, context) => {
       const shape = shapeOf(p);
-      return [mapPlane(context.frame, shape.trace >= 0.5 || (shape.skeleton ?? 0) >= 0.5 ? context.template : null, ...SHAPE_KEYS.map((k) => shape[k]))];
+      const skel = (shape.skeleton ?? 0) >= 0.5 ? lanesSkeletonKey(context) : null;
+      return [mapPlane(context.frame, shape.trace >= 0.5 || skel !== null ? context.template : null, skel, ...SHAPE_KEYS.map((k) => shape[k]))];
     },
   },
   uniforms: (p) => {

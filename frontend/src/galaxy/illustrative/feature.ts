@@ -46,6 +46,14 @@ export interface IllContext {
    * loadArrays, the one transport), for the galaxy on screen; null until it has arrived or when no feature asks.
    */
   frame: IllFrame | null;
+  /**
+   * (S106, B4) Every registered feature's CURRENT parameters (the values being drawn, clamped), by feature id: a
+   * read-only accessor so one feature may read another's live sliders (the lanes read the arms' skeleton). Bound by
+   * index.ts (illContextFor) around every call of a feature's map builder, its uniforms and the debounce's probes, and
+   * handed to the layers the same way; an unknown id reads {}. Absent only on a context built by hand (a test): a reader
+   * then falls back to its own defaults. A value read through it that shapes a plane must be in that plane's memo keys.
+   */
+  paramsOf?: (featureId: string) => IllParams;
 }
 
 /** The march hooks a feature may take part in: each names a GLSL function the feature's `glsl` defines. */

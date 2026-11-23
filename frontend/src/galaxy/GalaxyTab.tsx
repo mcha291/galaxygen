@@ -55,6 +55,7 @@ import {
   createRuntime,
   features as illFeatures,
   illArrays,
+  illContextFor,
   ILL_SETTLE_MS,
   illEffective,
   illStale,
@@ -689,6 +690,8 @@ export function GalaxyTab({
     [illustrative, illParams, illSettled, illContext],
   );
   const illDrawnParams = illDrawn.ill;
+  // S106 (B4): the layers' context carries every feature's drawn parameters (IllContext.paramsOf), as the map builders' does.
+  const illLayerContext = useMemo(() => illContextFor(illContext, illDrawnParams), [illContext, illDrawnParams]);
   const [illBuilt, setIllBuilt] = useState(0);
   const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
   // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
@@ -939,7 +942,7 @@ export function GalaxyTab({
                 key={f.id}
                 params={paramsOf(f, illDrawnParams)}
                 runtime={illRuntime}
-                context={illContext}
+                context={illLayerContext}
                 knots={knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null}
                 knotsGain={knotsGain}
                 dust={knotDust}
