@@ -434,6 +434,8 @@ class Raster {
 }
 
 const SQRT_TAU = Math.sqrt(TAU);
+/** The radius, kpc, inside which an arm lane's offsets, widths and branches shrink in proportion to the radius. */
+const NEAR = 3;
 /** A Gaussian's standard deviation from its full width at half height. */
 const sigmaOf = (fwhmKpc: number) => fwhmKpc / 2.3548;
 
@@ -499,7 +501,10 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
     const outer = 1 - smoothstep(0.55 * shape.outerRadius, shape.outerRadius, r);
     return a * b * inner * outer * gasWeight[i];
   };
-  // Where a strand's centre line lies, to the inner side of the ridge, kpc.
+  // Near the centre everything a lane is made of shrinks with the radius (full size from NEAR kpc out): a short arc
+  // half a kiloparsec from the nucleus is a fine thread with short twigs, not a blot.
+  const near = (i: number) => Math.min(1, Math.hypot(ridge.x[i], ridge.y[i]) / NEAR);
+  // Where a strand's centre line lies, to the inner side of the ridge, kpc (at full size).
   const lateral = (k: number, s: number) => {
     const key = laneKey(shape.seed, ridge.chain, k, 2);
     const base = strands > 1 ? 0.35 * ((2 * k + 1) / strands - 1) : 0;
@@ -523,13 +528,14 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
 
   if (shape.envelope > 0 && shape.spread > 0) {
     // The band under the strands: wide, faint and unbroken but for the chain's own fading.
-    const sigma = Math.max(sigma0, sigmaOf(Math.max(shape.spread, shape.width) * kpc));
+    // As wide as the braid, at most three strands' widths (a wider band is nothing a viewer sees, and its spots cost).
+    const sigma = Math.max(sigma0, sigmaOf(Math.min(Math.max(shape.spread, shape.width), 3 * shape.width) * kpc));
     const every = Math.max(1, Math.round((0.8 * sigma) / (ridge.length / (ridge.n - 1))));
     const count = Math.floor((ridge.n - 1) / every) + 1;
     line(raster, count, (c, out) => {
       const i = Math.min(ridge.n - 1, c * every);
       const s = ridge.s[i];
-      const l = (shape.offset + 0.3 * shape.spread * laneNoise(s / (1.5 * shape.braidLength), chainKey ^ 0x77)) * kpc;
+      const l = (shape.offset + 0.3 * shape.spread * laneNoise(s / (1.5 * shape.braidLength), chainKey ^ 0x77)) * kpc * near(i);
       out[0] = ridge.x[i] + ridge.nx[i] * l;
       out[1] = ridge.y[i] + ridge.ny[i] * l;
       out[2] = sigma;
@@ -541,11 +547,12 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
     const share = 1 / (1 + 0.45 * k);
     line(raster, ridge.n, (i, out) => {
       const s = ridge.s[i];
-      const l = lateral(k, s);
+      const q = near(i);
+      const l = lateral(k, s) * q;
       const w = swell(k, s);
       out[0] = ridge.x[i] + ridge.nx[i] * l;
       out[1] = ridge.y[i] + ridge.ny[i] * l;
-      out[2] = sigma0 * Math.exp(0.7 * shape.clump * w) * (k === 0 ? 1 : 0.8);
+      out[2] = sigma0 * Math.exp(0.7 * shape.clump * w) * (k === 0 ? 1 : 0.8) * Math.max(0.4, q);
       out[3] = share * ends(i) * broken(k, s) * Math.max(0, 1 + shape.clump * (0.8 * w - 0.2));
     });
   }
@@ -563,9 +570,10 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
       if (root < 0.15) continue;
       // One in four leaves to the inner side instead, shorter.
       const inward = laneRandom(key, 4 * f + 3) < 0.25;
-      const length = shape.featherLength * (0.5 + laneRandom(key, 4 * f + 2)) * (inward ? 0.6 : 1);
+      const q = near(i0);
+      const length = shape.featherLength * (0.5 + laneRandom(key, 4 * f + 2)) * (inward ? 0.6 : 1) * q;
       const open = ((shape.featherPitch * Math.PI) / 180) * (0.5 + laneRandom(laneKey(shape.seed, ridge.chain, f, 8), 0)) * (inward ? -0.7 : 1);
-      const l0 = lateral(strand, ridge.s[i0]);
+      const l0 = lateral(strand, ridge.s[i0]) * q;
       // From its root in the strand it runs on along the arm and outward: the tangent turned away from the centre by
       // `open`, closing back toward the arm's own direction along its length (a sheared branch).
       const fKey = laneKey(shape.seed, ridge.chain, f, 6);
@@ -574,7 +582,7 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
       branch(
         raster, ridge.x[i0] + ridge.nx[i0] * l0, ridge.y[i0] + ridge.ny[i0] * l0, ridge.tx[i0], ridge.ty[i0], length, step,
         (t) => hand * (open * (1 - 0.6 * t) + 0.45 * wander(t * 2.5, fKey)),
-        (t) => sigma0 * (0.9 - 0.55 * t),
+        (t) => sigma0 * (0.9 - 0.55 * t) * Math.max(0.4, q),
         (t) => shape.featherDepth * root * (1 - t) ** 1.2 * (0.7 + 0.3 * wander(t * 4 + 9, fKey)),
       );
     }
@@ -593,15 +601,16 @@ function drawChain(raster: Raster, ridge: Ridge, gasWeight: Float32Array, shape:
       const strand = Math.floor(laneRandom(key, 5 * f + 1) * strands);
       const root = ends(i0) * broken(strand, ridge.s[i0]);
       if (root < 0.2) continue;
-      const length = 0.12 + 0.4 * laneRandom(key, 5 * f + 2) ** 2;
+      const q = near(i0);
+      const length = (0.12 + 0.4 * laneRandom(key, 5 * f + 2) ** 2) * q;
       const side = laneRandom(key, 5 * f + 3) < 0.5 ? -1 : 1;
       const angle = side * (0.15 + 0.5 * laneRandom(key, 5 * f + 4));
-      const l0 = lateral(strand, ridge.s[i0]);
+      const l0 = lateral(strand, ridge.s[i0]) * q;
       const fKey = laneKey(shape.seed, ridge.chain, f, 10);
       branch(
         raster, ridge.x[i0] + ridge.nx[i0] * l0, ridge.y[i0] + ridge.ny[i0] * l0, ridge.tx[i0], ridge.ty[i0], length, step,
         (t) => angle * (1 - 0.5 * t) + 0.35 * wander(t * 2 + 1, fKey),
-        (t) => thin * (1.1 - 0.6 * t),
+        (t) => thin * (1.1 - 0.6 * t) * Math.max(0.5, q),
         (t) => shape.fray * root * (1 - t) ** 0.8,
       );
     }
@@ -689,7 +698,7 @@ function drawBar(raster: Raster, bar: NonNullable<LaneGeometry["bar"]>, shape: L
       out[0] = ridge.x[i] + ridge.nx[i] * l;
       out[1] = ridge.y[i] + ridge.ny[i] * l;
       out[2] = sigma * (1 + 0.3 * wander(s / 0.9 + 3, key));
-      out[3] = shape.barDepth * smoothstep(0, 0.2 * straight, s) * (1 - smoothstep(straight, ridge.length, s) ** 2) * (0.65 + 0.35 * wander(s / 0.5 + 7, key));
+      out[3] = shape.barDepth * smoothstep(0, 0.2 * straight, s) * (1 - smoothstep(straight, ridge.length, s) ** 2) * (0.85 + 0.15 * wander(s / 0.5 + 7, key));
     });
   }
 }

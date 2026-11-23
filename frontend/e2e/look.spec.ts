@@ -160,11 +160,14 @@ for (const capture of captures()) {
     await expect(page.getByRole("button", { name: "illustrative", exact: true })).toHaveAttribute("aria-pressed", capture.look === "illustrative" ? "true" : "false");
     if (capture.exposure !== undefined) await page.getByRole("slider", { name: "Exposure", exact: true }).fill(String(capture.exposure));
     await squareCanvas(page, capture.viewport ?? 1024);
+    let png = await settle(page, net, mode);
     if (capture.stand) {
+      // Placed once the view is ready at the template's own stand (a stand placed earlier is taken back when the
+      // template's lands), then settled again.
       const { target, ...view } = capture.stand;
       await page.evaluate(([v, t]) => window.__galaxygenCapture!.place(v as object, t as object | undefined), [view, target] as const);
+      png = await settle(page, net, mode);
     }
-    const png = await settle(page, net, mode);
     mkdirSync(OUT, { recursive: true });
     const path = join(OUT, `${capture.name}.png`);
     writeFileSync(path, png);
