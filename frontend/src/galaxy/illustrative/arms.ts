@@ -357,8 +357,12 @@ export const arms: IllFeature = {
       about: "The brightest a sparkle point may be drawn (its largest channel, in the frame's linear light before the bloom): up close the grain's points grow bright as 1 / distance^2 and the bloom spreads the brightest into soft round discs; capped they stay crisp points. 0 no cap (S108). Illustrative.",
     },
     {
-      key: "sparklebar", label: "sparkle on the bar", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.25 },
+      key: "sparklebar", label: "sparkle on the bar", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.4},
       about: "On the skeleton, the sparkle's density over the drawn bar (the bar light's ellipse and profile) as a share of a ridge crest's, so the bar is grainy with stars; 0 none. Illustrative (S109).",
+    },
+    {
+      key: "sparklebarcream", label: "bar grain cream", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "The sparkle's points on the drawn bar (where the bar's grain above outweighs the arms') turned from the arms' blue-white toward the bar's cream by this share; 0 all blue-white. Colour for appearance (S109).",
     },
     {
       key: "sparklebunch", label: "sparkle bunching", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
@@ -433,15 +437,15 @@ export const arms: IllFeature = {
       about: "Where the skeleton's major arms end, kpc (the lesser arms a little inside): the winding's extent. Illustrative (S106).",
     },
     {
-      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.35},
+      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.1},
       about: "The outer share of each arm's length (in ln R) over which it fades and breaks into flecks. Illustrative (S106).",
     },
     {
-      key: "skelstart", label: "arms' start", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.6},
+      key: "skelstart", label: "arms' start", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.7},
       about: "Where the major arms leave the bar, times its published half-length (kpc without a bar). Illustrative (S106).",
     },
     {
-      key: "skellesserstart", label: "lesser start", min: 1, max: 3, step: 0.01, unit: "×", default: 1.25, perTemplate: { milky_way: 2.2 },
+      key: "skellesserstart", label: "lesser start", min: 1, max: 3, step: 0.01, unit: "×", default: 1.25, perTemplate: { milky_way: 1.9},
       about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
     },
     {
@@ -465,19 +469,19 @@ export const arms: IllFeature = {
       about: "The major arms' pitch at the bar's ends multiplied by 1 + this, easing back over the length below, so each major leaves its bar end at a clear angle; below 0 (S109) the majors hug the bar instead - they leave its ends at a lower pitch and run round it close to its ends before opening; 0 none. Illustrative (S107).",
     },
     {
-      key: "skelopenturns", label: "leave-the-bar length", min: 0.05, max: 1.5, step: 0.005, unit: "turn", default: 0.175, perTemplate: { milky_way: 0.25},
+      key: "skelopenturns", label: "leave-the-bar length", min: 0.05, max: 1.5, step: 0.005, unit: "turn", default: 0.175, perTemplate: { milky_way: 0.2},
       about: "Over how much of a turn (at the skeleton's base pitch) the majors' changed pitch at the bar's ends eases back (the slider above): longer keeps a hugging arm round the bar for longer. Illustrative (S109).",
     },
     {
-      key: "skeloval", label: "oval round the bar", min: 0.3, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0.6 },
+      key: "skeloval", label: "oval round the bar", min: 0.3, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0.62},
       about: "Near the bar the whole skeleton (glow, grain, lanes, regions) squashed across the bar's axis to this share: the arms round the bar become an oval along it, through its ends and closer to its long sides; 1 none. The viewer's own drawing. Illustrative (S109).",
     },
     {
-      key: "skelovalin", label: "oval out to", min: 0, max: 4, step: 0.05, unit: "× bar", default: 1.2,
+      key: "skelovalin", label: "oval out to", min: 0, max: 4, step: 0.05, unit: "× bar", default: 1.2, perTemplate: { milky_way: 0.9 },
       about: "The squash above is full out to this many bar half-lengths (of the skeleton's radius)... Illustrative (S109).",
     },
     {
-      key: "skelovalout", label: "oval gone at", min: 0.5, max: 6, step: 0.05, unit: "× bar", default: 2.5,
+      key: "skelovalout", label: "oval gone at", min: 0.5, max: 6, step: 0.05, unit: "× bar", default: 2.5, perTemplate: { milky_way: 1.8 },
       about: "...and gone from this many bar half-lengths on, smoothly between. Illustrative (S109).",
     },
     {
@@ -529,7 +533,7 @@ export const arms: IllFeature = {
       about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.0, ngc_4414: 1 },
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.8, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
@@ -541,7 +545,7 @@ export const arms: IllFeature = {
       about: "The bar's cream held out toward its ellipse's edge by this share, so its fading light keeps the bar's hue (mixed with the light alone the glow outlives the tint: a pale rim round the bar); 0 as S105 drew it. Colour for appearance (S109).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.1, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.9, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
@@ -553,11 +557,11 @@ export const arms: IllFeature = {
       about: "The same ground about the bar tinted toward a slate blue by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsharp", label: "bar edge", min: 1, max: 8, step: 0.1, unit: "", default: 2, perTemplate: { milky_way: 2.2},
+      key: "barsharp", label: "bar edge", min: 1, max: 8, step: 0.1, unit: "", default: 2, perTemplate: { milky_way: 5},
       about: "The bar light's profile across its ellipse as exp(-1.6 e^this): 2 the soft gaussian; higher a flatter body with a sharper edge. Illustrative (S106).",
     },
     {
-      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.8},
+      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.6},
       about: "The bar light's ellipse's axis ratio as a multiple of the published bar_axis_ratio: below 1 a slimmer drawn bar. Illustrative (S106).",
     },
     {
@@ -573,7 +577,7 @@ export const arms: IllFeature = {
       about: "On the skeleton, the disc inside the first arm dimmed as the disc between the arms is (the ring mean the light is kept by held inward from where the arms begin) by this share; 0 undimmed there - a pale disc round the bar ending in a circle where the arms start. Illustrative (S106).",
     },
     {
-      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.3},
+      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.15},
       about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
     },
     {

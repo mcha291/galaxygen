@@ -471,13 +471,14 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
     const spurPitch = pitchDeg * (2 + laneRandom(key, 3));
     arms.push(tabulate("spur", rs, rs * Math.exp(length), parent.phi[i], spurPitch, sense, 0.5 * parent.strength[i] + 0.1, p.width * 0.7, { ...p, fade: 0.6, drift: p.drift * 0.5, kink: 0 }, key, 0.15, pitchAt));
   }
+  const sk: Skeleton = { arms, sense, pitchDeg, width: p.width };
   const q = p.oval ?? 1;
   if (g.bar && q < 1 && g.bar.halfLength > 0) {
     const r1 = Math.max(0, p.ovalReach ?? 1.2) * g.bar.halfLength;
     const r2 = Math.max(r1 + 0.05 * g.bar.halfLength, (p.ovalFade ?? 2.5) * g.bar.halfLength);
-    return { arms, sense, pitchDeg, width: p.width, oval: { angle: g.bar.angle, q: Math.max(0.2, q), r1, r2 } };
+    sk.oval = { angle: g.bar.angle, q: Math.max(0.2, q), r1, r2 };
   }
-  return { arms, sense, pitchDeg, width: p.width };
+  return sk;
 }
 
 /** A major's crest azimuth (unwrapped) at ln R, carried on at its end pitch outside its table. */

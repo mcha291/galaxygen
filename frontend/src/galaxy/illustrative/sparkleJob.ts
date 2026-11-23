@@ -44,6 +44,8 @@ export interface SparklePoints {
   positions: Float32Array;
   weight: Float32Array;
   radius: Float32Array;
+  /** S109 (A2, arms.sparklebarcream): each point's share of the bar's cream (absent: none). */
+  cream?: Float32Array;
 }
 
 /**
@@ -67,7 +69,19 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   // S108: the stream follows the generated galaxy (the frame's reroll, index.ts illSeeded; 0 for the template's own).
   const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(template ?? "galaxy") ^ (frame?.header.illReroll ?? 0)) >>> 0, built.raw, plane, levelOf);
   if (s.radius.length === 0) return null;
-  return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
+  const out: SparklePoints = { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
+  // S109 (A2): the bar's grain cream - a point's share is how far the bar's density outweighs the arms' there.
+  const creamShare = Math.min(1, Math.max(0, params.sparklebarcream ?? 0));
+  if (onBar && ridgeLevel && creamShare > 0) {
+    const cream = new Float32Array(s.radius.length);
+    for (let i = 0; i < cream.length; i++) {
+      const b = onBar(s.radius[i], s.azimuth[i]);
+      const r = ridgeLevel(s.radius[i], s.azimuth[i]);
+      cream[i] = b + r > 1e-6 ? creamShare * Math.min(1, Math.max(0, (2 * b) / (b + r) - 0.5)) : 0;
+    }
+    out.cream = cream;
+  }
+  return out;
 }
 
 /**
@@ -100,6 +114,8 @@ export function sparkleKey(params: IllParams, frame: IllFrame | null, frameToken
     skeletonOn(params) ? [JSON.stringify(skeletonParamsOf(params)), params.skeltail ?? 0.05, params.skelgrainfade ?? 1.5] : null,
     // S109: the bar's grain (barGrain's inputs; the bar's own geometry is the frame's)
     (params.sparklebar ?? 0) > 0 ? [params.sparklebar, params.barsize ?? 1, params.barthin ?? 1, params.barsharp ?? 2] : null,
+    // S109 (A2): the bar grain's cream
+    (params.sparklebar ?? 0) > 0 && (params.sparklebarcream ?? 0) > 0 ? params.sparklebarcream : null,
   ]);
 }
 

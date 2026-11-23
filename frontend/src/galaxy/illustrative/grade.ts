@@ -18,7 +18,7 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.85, ngc_4414: 0.4 }, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -2.1, ngc_4414: 0.4 }, about: "The light's scale into the stretch, stops. Illustrative." },
   {
     key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 100, ngc_4414: 15 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",
@@ -28,7 +28,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "knee", label: "shoulder knee", min: 0.3, max: 0.98, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.8, ngc_4414: 0.6 },
     about: "The stretched brightness (0 to 1) above which the curve rolls off toward full scale and the light drifts to a pale warm white; below it the curve is the stretch as it is. Illustrative.",
   },
-  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.3, ngc_4414: 1.15 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
+  { key: "saturation", label: "saturation", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.05, ngc_4414: 1.15 }, about: "Colour about each pixel's luminance: 0 grey, 1 as drawn. Illustrative." },
   {
     key: "faint", label: "faint fade", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.1, ngc_4414: 0.12 },
     about: "The stretched brightness below which colour fades (to `faint colour` at nothing): the faintest light goes grey into the sky instead of a saturated fringe. 0 no fade. Illustrative.",
@@ -37,7 +37,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "faintsat", label: "faint colour", min: 0, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6, ngc_4414: 1 },
     about: "The share of the saturation left at the faintest light, under the faint fade. Illustrative.",
   },
-  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 1.0, ngc_4414: 1.2 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
+  { key: "contrast", label: "grade contrast", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { milky_way: 0.85, ngc_4414: 1.2 }, about: "A power on the stretched luminance: above 1 darker faint light. Illustrative." },
   {
     key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.2, ngc_4414: 0.1 },
     about: "A soft toe on the stretched luminance (each pixel's colour kept): the faint light about this level and under it taken smoothly down to a dark sky. Illustrative.",
@@ -64,7 +64,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The green channel held to the mean of red and blue where it is above it, this much (the astronomer's SCNR, luminance kept): no galaxy's light is green, and a green-cyan cast at a core is the render's. Colour for appearance.",
   },
   {
-    key: "highlight", label: "highlight whiten", min: 0, max: 1, step: 0.01, unit: "", default: 0.2, perTemplate: { milky_way: 0.5, ngc_4414: 0.5 },
+    key: "highlight", label: "highlight whiten", min: 0, max: 1, step: 0.01, unit: "", default: 0.2, perTemplate: { milky_way: 0.25, ngc_4414: 0.5 },
     about: "How far the light in the shoulder drifts to a pale warm white (all the way at full scale at 1), and how much of the saturation's boost is taken off above half scale. Illustrative.",
   },
 ];
