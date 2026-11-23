@@ -38,7 +38,7 @@ import { fileURLToPath } from "node:url";
 
 import { type Page, chromium, expect, test } from "@playwright/test";
 
-import { CHOOSING_VIEWPORT, DUST_ONLY, GPU_ARGS, MODE_BUTTON, PHYSICS_ONLY_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL } from "../settings";
+import { CHOOSING_VIEWPORT, DUST_ONLY, GPU_ARGS, MODE_BUTTON, PHYSICS_ONLY_BUTTON, READY, SELECTION_TEXT, TEMPLATE_LABEL, pinPhysicalLook } from "../settings";
 
 const SITE = (process.env.GALAXYGEN_URL ?? "http://127.0.0.1:8019").replace(/\/+$/, "");
 const ROUNDS = Number(process.env.GALAXYGEN_MARCH_ROUNDS ?? 3);
@@ -214,6 +214,7 @@ test("the march's GPU time per re-march, per capture, on one site", async () => 
     try {
       for (const capture of CAPTURES) {
         const context = await browser.newContext({ viewport: CHOOSING_VIEWPORT, deviceScaleFactor: 1 });
+        await pinPhysicalLook(context); // S105 fix R6: the physical look pinned (the default is the illustrative one since D276)
         if (TUNING) {
           const templates = [...new Set(CAPTURES.map((c) => c.template))];
           await context.addInitScript(

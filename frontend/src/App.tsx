@@ -9,7 +9,7 @@ import { Exposure } from "./galaxy/Exposure";
 import { askFieldAhead } from "./galaxy/fieldLoads";
 import type { FilterSetName } from "./galaxy/filters";
 import { GalaxyTab, type Mode } from "./galaxy/GalaxyTab";
-import { exposureFor, loadTuning } from "./galaxy/tuning";
+import { type Look, exposureFor, loadLook, loadTuning, saveLook } from "./galaxy/tuning";
 import { type Preset, type ViewState } from "./galaxy/GalaxyView";
 import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
@@ -101,6 +101,13 @@ export function App() {
     setLayerFault(null);
     setPhysicsOnlyState(on);
   };
+  // The look (S105, D275): physical (the viewer as it stood at S104) or illustrative (the display-only layer tuned to
+  // the goal pictures). Display state like the switch above, held here so it outlives the tab, and kept per browser.
+  const [look, setLookState] = useState<Look>(() => loadLook());
+  const setLook = (l: Look) => {
+    setLookState(l);
+    saveLook(l);
+  };
 
   // The model of the galaxy on screen: its fields are what every view draws. A model chosen in the panel is the
   // draft's until "Generate" (rule D1 as amended).
@@ -169,7 +176,7 @@ export function App() {
   const tabWaits = sampleKey !== null && !sample && meta !== null && meta.model === shownModel && (!landed || viewOf === wf.selection);
   useEffect(() => {
     if (!tabWaits || !meta || !galaxyQuery) return;
-    const timer = setTimeout(() => askFieldAhead(meta, galaxyQuery, filterSet, loadTuning(undefined, landed?.name ?? null)), 0);
+    const timer = setTimeout(() => askFieldAhead(meta, galaxyQuery, filterSet, loadTuning(undefined, landed?.name ?? null, look)), 0);
     return () => clearTimeout(timer);
   }, [tabWaits, sampleKey]); // eslint-disable-line react-hooks/exhaustive-deps -- asked once per query the tab waits on
   // A landing whose query no loader is asking with (the same template chosen again) has nothing to wait for (#188).
@@ -401,6 +408,8 @@ export function App() {
                   query={galaxyQuery}
                   physicsOnly={physicsOnly}
                   onPhysicsOnly={setPhysicsOnly}
+                  look={look}
+                  onLook={setLook}
                   preset={preset}
                   onPreset={setPreset}
                   camera={drawnCamera.current}

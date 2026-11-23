@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Switch } from "../ui/Switch";
 import type { MarchStats } from "./FieldVolume";
 import { gpuWords } from "./gpuTimer";
+import { type IllControl, type IllFeature, illControls } from "./illustrative";
 import {
   type Combination,
+  type Look,
   type RangeControl,
   type Tuning,
   type TuningControl,
   TUNING_CONTROLS,
   TUNING_DEFAULTS,
   changed,
-  copyBoxText,
+  copyBoxText as copyBoxTextOfLook,
   parseCombination,
   positionOf,
   valueAt,
@@ -21,14 +24,17 @@ import {
 import styles from "./GalaxyTab.module.css";
 
 /** A value that follows `value` once it has held still for `ms`: a recompile or a request waits for the slider to settle. */
-export function useDebounced<T>(value: T, ms: number): T {
-  const [settled, setSettled] = useState(value);
+// Since S105 (fix R1) a `key`: while it changes (another template or look) the value is taken at once, not waited for.
+export function useDebounced<T>(value: T, ms: number, key?: unknown): T {
+  const [settled, setSettled] = useState<{ value: T; key: unknown }>({ value, key });
+  const rekeyed = !Object.is(settled.key, key);
+  if (rekeyed) setSettled({ value, key });
   useEffect(() => {
-    if (Object.is(value, settled)) return;
-    const timer = setTimeout(() => setSettled(value), ms);
+    if (rekeyed || Object.is(value, settled.value)) return;
+    const timer = setTimeout(() => setSettled({ value, key }), ms);
     return () => clearTimeout(timer);
-  }, [value, settled, ms]);
-  return settled;
+  }, [value, settled, ms, key, rekeyed]);
+  return rekeyed ? value : settled.value;
 }
 
 // "Components" holds the brightest mode's layer intensities (D205); its switches are in the mode's own section.
@@ -48,7 +54,12 @@ function describe(control: TuningControl, value: Tuning[keyof Tuning]): string {
 
 interface Props {
   tuning: Tuning;
-  onChange(t: Tuning): void;
+  /** A new tuning, and (a pasted combination naming another, S105) the look it is for; absent, the look shown. */
+  onChange(t: Tuning, look?: Look): void;
+  /** The look shown (S105, D275): under "illustrative" the panel shows the Illustrative group and the box says so. */
+  look?: Look;
+  /** The template's defaults under each look, for a pasted combination that names a look (S105). */
+  defaultsOfLook?(look: Look): Tuning;
   /** The field's last re-march, filled in by FieldVolume; read while the section is open. */
   stats: MarchStats;
   /** What the copy box names beside the changed choices (S67, D227): the template tuned on, its filter set and the
@@ -62,6 +73,32 @@ interface Props {
   onExposure?(stops: number): void;
   /** Open on first draw (the panel's test; the page opens it closed). */
   initiallyOpen?: boolean;
+  /** S105 fix R1: a plane-shaping change is waiting for the sliders to settle or being built (the "rebuilding" mark). */
+  illPending?: boolean;
+  /** The Illustrative group's filter on first draw (the panel's test; the page starts it empty). */
+  initialIllFilter?: string;
+}
+
+/** The feature whose block is open on first draw (S105 fix R3): the grade; every other feature's starts collapsed. */
+export const ILL_OPEN_FEATURE = "grade";
+
+/** An illustrative slider's accessible name (S105 fix R3): its feature's label before its own, unique in the panel. */
+export const illName = (feature: IllFeature, control: IllControl): string => `${feature.label}: ${control.label}`;
+
+/**
+ * The Illustrative group's blocks (S105 fix R3): each feature with its controls, in the registry's order; with a filter,
+ * only the controls whose label or about holds it (any case), and only the features with one.
+ */
+export function illGroups(filter: string): { feature: IllFeature; controls: { key: string; control: IllControl }[] }[] {
+  const term = filter.trim().toLowerCase();
+  const out: { feature: IllFeature; controls: { key: string; control: IllControl }[] }[] = [];
+  for (const { key, feature, control } of illControls()) {
+    if (term && !control.label.toLowerCase().includes(term) && !control.about.toLowerCase().includes(term)) continue;
+    let group = out.find((g) => g.feature === feature);
+    if (!group) out.push((group = { feature, controls: [] }));
+    group.controls.push({ key, control });
+  }
+  return out;
 }
 
 /** The one-line notice after a paste is applied (S97): what was applied, and anything not. */
@@ -83,13 +120,17 @@ export function combinationNotice(c: Combination, template: string | null | unde
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook, illPending = false, initialIllFilter = "" }: Props) {
   const [open, setOpen] = useState(initiallyOpen);
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [illFilter, setIllFilter] = useState(initialIllFilter);
+  const [illOpen, setIllOpen] = useState<Record<string, boolean>>({});
   const apply = () => {
-    const c = parseCombination(paste, defaults);
-    if (c.tuning) onChange(c.tuning);
+    const c = parseCombination(paste, defaults, defaultsOfLook, look);
+    // A box names its look (S105): without one it is the physical look's. Without defaultsOfLook the look stays.
+    const target: Look = defaultsOfLook ? (c.look ?? "physical") : look;
+    if (c.tuning) onChange(c.tuning, target);
     const exposureApplied = c.tuning !== null && c.exposure !== null && onExposure !== undefined;
     if (exposureApplied) onExposure!(c.exposure!);
     setNotice(combinationNotice(c, template, filterSet, exposureApplied));
@@ -104,7 +145,10 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
   }, [open, stats]);
 
   const set = (key: keyof Tuning, value: Tuning[keyof Tuning] | string) => onChange({ ...tuning, [key]: value } as Tuning);
+  const setIll = (key: string, value: number) => onChange({ ...tuning, ill: { ...tuning.ill, [key]: value } });
   const diff = changed(tuning, defaults);
+  // The box of the look shown (S105): the physical look's text is the one of before.
+  const copyBoxText = (t: Tuning, d: Readonly<Tuning>, tp?: string | null, f?: string, e?: number) => copyBoxTextOfLook(t, d, tp, f, e, look);
 
   return (
     <div className={styles.section}>
@@ -186,6 +230,79 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
               })}
             </div>
           ))}
+          {/* The illustrative look's parameters (S105, D275): every registered feature's controls, generically. */}
+          {look === "illustrative" && (
+            <div className={styles.tuningGroup}>
+              <div className={styles.label}>
+                Illustrative
+                {illPending && (
+                  <span className={styles.muted} role="status" title="A slider that reshapes a feature's map is built once it has held still: the picture is behind the sliders until then.">
+                    {" "}
+                    · rebuilding…
+                  </span>
+                )}
+              </div>
+              <p className={styles.muted}>Display-only structure and colour of the viewer's own, tuned to the goal pictures: not the model.</p>
+              {/* S105 fix R3: a filter over the controls' labels and abouts, then one collapsible block per feature. */}
+              <Input
+                size="sm"
+                type="search"
+                aria-label="Filter the illustrative controls"
+                placeholder="filter: a word of a control's name or about"
+                value={illFilter}
+                onChange={(e) => setIllFilter(e.target.value)}
+              />
+              {illGroups(illFilter).map(({ feature, controls }) => {
+                const filtering = illFilter.trim() !== "";
+                const expanded = filtering || (illOpen[feature.id] ?? feature.id === ILL_OPEN_FEATURE);
+                return (
+                  <div key={feature.id} className={styles.tuningRow}>
+                    <button
+                      type="button"
+                      className={styles.tuningToggle}
+                      aria-expanded={expanded}
+                      data-ill-feature={feature.id}
+                      disabled={filtering}
+                      onClick={() => setIllOpen((o) => ({ ...o, [feature.id]: !expanded }))}
+                    >
+                      <span className={styles.label}>
+                        {feature.label}
+                        {filtering ? ` (${controls.length})` : ""}
+                      </span>
+                      <span className={styles.muted}>{expanded ? "−" : "+"}</span>
+                    </button>
+                    <p className={styles.muted}>{feature.about}</p>
+                    {expanded &&
+                      controls.map(({ key, control }) => {
+                        const value = tuning.ill[key] ?? control.default;
+                        const fallback = defaults.ill?.[key] ?? control.default;
+                        const range: RangeControl = { key: "fieldGain", label: control.label, group: "Light", kind: "range", min: control.min, max: control.max, step: control.step, log: control.log, unit: control.unit ?? "", about: control.about };
+                        const name = illName(feature, control);
+                        return (
+                          <div key={key} className={styles.tuningRow} title={`${feature.label}: ${control.about}`}>
+                            <div className={styles.zoomHead}>
+                              <span className={styles.tuningName}>{control.label}</span>
+                              <span className={styles.value}>{shown(range, value)}</span>
+                              {value !== fallback && (
+                                <button type="button" className={styles.tuningDefault} aria-label={`${name}: back to the default`} title={`Back to the default, ${shown(range, fallback)}`} onClick={() => setIll(key, fallback)}>
+                                  default
+                                </button>
+                              )}
+                            </div>
+                            {control.log ? (
+                              <input type="range" className={styles.slider} min={0} max={1000} value={positionOf(range, value)} aria-label={name} onChange={(e) => setIll(key, valueAt(range, Number(e.target.value)))} />
+                            ) : (
+                              <input type="range" className={styles.slider} min={control.min} max={control.max} step={control.step} value={value} aria-label={name} onChange={(e) => setIll(key, Number(e.target.value))} />
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                );
+              })}
+              {illFilter.trim() !== "" && illGroups(illFilter).length === 0 && <p className={styles.muted}>No illustrative control matches "{illFilter.trim()}".</p>}
+            </div>
+          )}
           <div className={styles.tuningGroup}>
             <div className={styles.muted} title="The march target's size, the last re-march's CPU-side time (the render call) and, since S67, the GPU's time for it from a timer query (EXT_disjoint_timer_query_webgl2), where the browser gives one">
               march: {march.width}×{march.height} px, {march.ms.toFixed(1)} ms CPU, {gpuWords(march.gpuMs, march.gpuAvailable ?? false)}

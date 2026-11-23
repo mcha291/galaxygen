@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, test } from "@playwright/test";
 
-import { READY } from "./settings";
+import { READY, pinPhysicalLook } from "./settings";
 
 type Row = { u?: number[]; f?: number[] };
 type Tables = Record<string, unknown>;
@@ -43,6 +43,9 @@ function vectorGasEntry(): Tables {
 }
 
 const worst = (values: number[]) => values.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+
+// S105 fix R6: the default look is the illustrative one since D276; this file draws the physical look, pinned.
+test.beforeEach(async ({ page }) => pinPhysicalLook(page));
 
 test("the noise's GLSL against the model's vectors on this GPU", async ({ page }) => {
   test.setTimeout(READY.timeoutMs + 60_000);

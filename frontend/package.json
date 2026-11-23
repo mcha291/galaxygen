@@ -15,7 +15,8 @@
     "smooth": "playwright test -c playwright.smooth.config.ts",
     "compile": "playwright test -c playwright.compile.config.ts compile.probe.ts",
     "march": "playwright test -c playwright.compile.config.ts march.probe.ts",
-    "walk": "playwright test -c playwright.walk.config.ts"
+    "walk": "playwright test -c playwright.walk.config.ts",
+    "look": "playwright test -c playwright.look.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

@@ -15,6 +15,8 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 export default defineConfig({
   testDir: "e2e",
   testMatch: "**/*.spec.ts",
+  // The look capture (S105; e2e/look.spec.ts) is its own run: playwright.look.config.ts, npm run look.
+  testIgnore: ["**/look.spec.ts"],
   // One page at a time, in the list's order: the captures share one GPU and one server, and the first load
   // computes the default galaxy, which the later ones find cached.
   workers: 1,

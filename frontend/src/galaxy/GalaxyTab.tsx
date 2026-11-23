@@ -5,6 +5,7 @@ import {
   type BlackbodyTable,
   type Census,
   type FieldsPayload,
+  type Frame,
   type Query,
   type Sample,
   STAR_SAMPLE,
@@ -14,6 +15,7 @@ import {
   loadBrightCounts,
   loadBrightTiles,
   loadClouds,
+  loadArrays,
   loadClusters,
   loadRegion,
 } from "../api";
@@ -46,7 +48,24 @@ import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFram
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { TUNING_CONTROLS, type Tuning, defaultsFor, drawnTuning, heldTemplate, loadTuning, saveTuning } from "./tuning";
+import { TUNING_CONTROLS, type Tuning, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, saveTuning } from "./tuning";
+import {
+  type IllContext,
+  type Look,
+  createRuntime,
+  features as illFeatures,
+  illArrays,
+  ILL_SETTLE_MS,
+  illEffective,
+  illStale,
+  knotsReplaced,
+  paramsOf,
+  releaseRuntime,
+  updateRuntime,
+} from "./illustrative";
+import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
+import { framing as framingFeature, standRoll, standScale, standTurn } from "./illustrative/framing";
+import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
 import { regimePlace } from "./drawerLayout";
@@ -133,7 +152,19 @@ interface Props {
    */
   physicsOnly: boolean;
   onPhysicsOnly(on: boolean): void;
+  /**
+   * The look (S105, D275): "physical", the viewer as it stood at S104, or "illustrative", the display-only layer tuned to
+   * the goal pictures (illustrative/). The app's, per browser; absent, physical (the comparison's right pane).
+   */
+  look?: Look;
+  onLook?(look: Look): void;
 }
+
+/** What the look's switch says of itself (S105, D275). */
+const ILLUSTRATIVE_WHAT =
+  "The illustrative look: display-only structure, colour and parameters of the viewer's own, tuned to the goal pictures - a grade, " +
+  "the field's edge softened, the framing, the sample's speckle hidden, and the layer's features (the Tuning panel's Illustrative group). " +
+  "Not the model: released, the physical look, every feature a published field or the model's synthetic layer.";
 
 /** What the "physics only" switch says of itself. */
 const PHYSICS_ONLY_WHAT =
@@ -304,6 +335,8 @@ export function GalaxyTab({
   label,
   physicsOnly,
   onPhysicsOnly,
+  look: viewLook = "physical",
+  onLook,
 }: Props) {
   // The camera drawn (#188): the previous landing's while a landing's swap is under way, else the live one.
   const drawn = camera ?? { selection, preset, template };
@@ -332,20 +365,24 @@ export function GalaxyTab({
   // S67 (D227 R4) per template: each has its own defaults (tuning.ts defaultsFor) and its own stored choices, read
   // again when another template is landed on.
   const templateName = template?.name ?? null;
-  const [tuningState, setTuningState] = useState<{ of: string | null; t: Tuning }>(() => ({ of: templateName, t: loadTuning(undefined, templateName) }));
-  if (tuningState.of !== templateName) setTuningState({ of: templateName, t: loadTuning(undefined, templateName) });
+  // Since S105 (D275) per look as well: the physical look's key is the one of before, the illustrative look's its own.
+  const [tuningState, setTuningState] = useState<{ of: string | null; look: Look; t: Tuning }>(() => ({ of: templateName, look: viewLook, t: loadTuning(undefined, templateName, viewLook) }));
+  if (tuningState.of !== templateName || tuningState.look !== viewLook) setTuningState({ of: templateName, look: viewLook, t: loadTuning(undefined, templateName, viewLook) });
   const tuning = tuningState.t;
-  const tuningDefaults = useMemo(() => defaultsFor(templateName), [templateName]);
-  const setTuning = (t: Tuning) => {
-    setTuningState({ of: templateName, t });
-    saveTuning(t, undefined, templateName);
+  const tuningDefaults = useMemo(() => lookDefaultsFor(templateName, viewLook), [templateName, viewLook]);
+  // A pasted combination may name the other look (S105): kept under that look's key, and the look switched to it.
+  const setTuning = (t: Tuning, forLook: Look = viewLook) => {
+    setTuningState({ of: templateName, look: forLook, t });
+    saveTuning(t, undefined, templateName, forLook);
+    if (forLook !== viewLook) onLook?.(forLook);
   };
+  const illustrative = viewLook === "illustrative";
   // During a landing's hold (S82, #188's follow-up) the previous picture is drawn as it was: every value that only changes
   // how it is drawn is the drawn template's tuning (as stored for it), every value that keys a load the live template's
   // (tuning.ts drawnTuning, LOAD_TUNING_KEYS), so the landing's loads go out as they would without the hold. Outside a
   // hold `look` is `tuning` itself. The panel and the switches edit the live template's, as before.
   const held = heldTemplate({ selection: drawn.selection, name: drawn.template?.name ?? null }, { selection, name: templateName });
-  const heldTuning = useMemo(() => (held !== null ? loadTuning(undefined, held) : null), [held]);
+  const heldTuning = useMemo(() => (held !== null ? loadTuning(undefined, held, viewLook) : null), [held, viewLook]);
   const look = drawnTuning(tuning, heldTuning);
   // A new step count re-marches the view (two uniforms since S78, T29) and a new white point asks the model again: both wait for the slider to settle.
   // During a hold the drawn template's steps, at once: it is the step count the picture on screen was marched with.
@@ -635,6 +672,63 @@ export function GalaxyTab({
   // knots' intensity (S97, a display balance; 1 by default, the closure; FluxPoints' one gain reaches every pass).
   const knotDust = mode === "field" ? scaledDust : null;
   const knotsGain = knotsGainOf(LIGHT_PER_LSUN_PC2, look.fieldGain, exposure, weights.field, look.knotsIntensity);
+  // The illustrative look (S105, D275; illustrative/index.ts): its parameters, the arrays its features name (one request,
+  // asked only under the look and only if a feature names any), and its runtime - the GLSL and the uniform objects the
+  // march and every point share, written when a parameter or the context moves. Under the physical look none exists.
+  const illParams = look.ill;
+  const illNames = useMemo(() => (illustrative ? illArrays() : []), [illustrative]);
+  const illArraysKey = illustrative && illNames.length > 0 ? JSON.stringify(["illustrative", illNames, query]) : null;
+  const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal)).value ?? null;
+  const illContext = useMemo<IllContext>(() => ({ template: templateName, frame: illFrame }), [templateName, illFrame]);
+  // S105 fix R1, the debounce: a slider that only sets uniforms is drawn at once; one that reshapes a feature's map plane
+  // (a rebuild of 0.1-2 s on the main thread) is drawn from the settled copy, so a drag costs one rebuild after it stops.
+  // `illBuilt` moves after a runtime update, so the "rebuilding" mark (illPending) is read again once the build is done.
+  const illSettled = useDebounced(illParams, ILL_SETTLE_MS, `${templateName}:${viewLook}:${held ?? ""}`);
+  const illDrawn = useMemo(
+    () => (illustrative ? illEffective(illParams, illSettled, illContext) : { ill: illParams, held: [] as string[] }),
+    [illustrative, illParams, illSettled, illContext],
+  );
+  const illDrawnParams = illDrawn.ill;
+  const [illBuilt, setIllBuilt] = useState(0);
+  const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
+  // features' cached planes, so the physical look holds nothing of the layer; the next runtime builds them again.
+  useEffect(() => {
+    if (!illRuntime) return;
+    return () => releaseRuntime(illRuntime);
+  }, [illRuntime]);
+  useEffect(() => {
+    if (!illRuntime) return;
+    const before = illRuntime.version;
+    updateRuntime(illRuntime, illDrawnParams, illContext);
+    if (illRuntime.version !== before) setIllBuilt((n) => n + 1);
+  }, [illRuntime, illDrawnParams, illContext]);
+  const illPending = useMemo(
+    () => illustrative && (illDrawn.held.length > 0 || illStale(illDrawnParams, illContext)),
+    [illustrative, illDrawn, illDrawnParams, illContext, illBuilt], // eslint-disable-line react-hooks/exhaustive-deps -- illBuilt: read again after a build
+  );
+  const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
+  // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
+  // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
+  // The roll and the azimuth's turn ride with the scale, settled the same way ("scale,roll,turn").
+  const framingParams = illustrative ? paramsOf(framingFeature, illParams) : null;
+  const framingLive = framingParams ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)}` : "1,0,0";
+  const framingOf = `${templateName}:${viewLook}`;
+  const [framingAt, setFramingAt] = useState({ of: framingOf, v: framingLive });
+  useEffect(() => {
+    if (framingAt.of === framingOf && framingAt.v === framingLive) return;
+    const timer = setTimeout(() => setFramingAt({ of: framingOf, v: framingLive }), 300);
+    return () => clearTimeout(timer);
+  }, [framingAt, framingOf, framingLive]);
+  const [framingScale, framingRoll, framingTurn] = (framingAt.of === framingOf ? framingAt.v : framingLive).split(",").map(Number);
+  const templateStand = drawn.template?.camera ?? null;
+  const viewStand =
+    illustrative && templateStand
+      ? { ...templateStand, radius_kpc: templateStand.radius_kpc * framingScale, azimuth_deg: (((templateStand.azimuth_deg + framingTurn) % 360) + 360) % 360 }
+      : templateStand;
+  const viewRoll = illustrative ? framingRoll : 0;
+  // A feature that draws the HII regions its own way in place of the default knots (knots.ts, row 106).
+  const knotsDefault = illustrative && knotsReplaced(illParams) ? null : knotsShown;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
   // channel, the bright catalogue's and the clusters', and the threshold and the tile rule's skipped expectation - for
   // the surface-brightness gate's per-ring reading of the points' draw. Since the fix pass (F3) also what FluxPoints
@@ -749,7 +843,9 @@ export function GalaxyTab({
   if (mode === "field") {
     // Drawn, not picked: clicking a star to open its planetary system was removed (D209); the system's
     // information will be shown another way.
-    if (sampleColors) layers.push({ positions: samplePositions, colors: sampleColors, opacity: weights.sampled });
+    // The illustrative look's speckle (speckle.ts) multiplies the sample's opacity; the physical look's is the regime's weight.
+    const sampledOpacity = illustrative ? weights.sampled * sampleOpacity(paramsOf(speckleFeature, illParams)) : weights.sampled;
+    if (sampleColors) layers.push({ positions: samplePositions, colors: sampleColors, opacity: sampledOpacity });
     if (detail && detailPositions && detailColors && weights.stars > 0) {
       layers.push({ positions: detailPositions, colors: detailColors, opacity: weights.stars });
     }
@@ -787,7 +883,7 @@ export function GalaxyTab({
         pickable={pickable}
         reach={reach}
         preset={drawn.preset}
-        stand={drawn.template?.camera ?? null}
+        stand={viewStand}
         fov={fov}
         epoch={drawn.selection}
         zoom={zoom}
@@ -796,6 +892,8 @@ export function GalaxyTab({
         additive={field === PHOTOMETRIC}
         psf={spritePsf}
         tuning={look}
+        grade={gradeValues}
+        roll={viewRoll}
       >
         {/* The comparison's one camera (T16, S83): this pane's moves are the other's. */}
         {link && <CameraLinkProbe link={link} leads={solo} />}
@@ -819,12 +917,28 @@ export function GalaxyTab({
             onDust={setFieldDust}
             onStarsLayer={setStarsLayer}
             onRingEdges={onRingEdges}
+            ill={illRuntime}
           />
         )}
         {/* The HII regions as knots (S64, V6): on the field's scale at its weight, where the field gives their light way. */}
-        {knotsShown && (
-          <FluxPoints positions={knotsShown.positions} flux={knotsShown.flux} gain={knotsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={knotDust} extent={knotsShown.extent} profile={3} physical={physical} />
+        {knotsDefault && (
+          <FluxPoints positions={knotsDefault.positions} flux={knotsDefault.flux} gain={knotsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={knotDust} extent={knotsDefault.extent} profile={3} physical={physical} ill={illRuntime} />
         )}
+        {/* The illustrative features' own drawings (S105's contract; none of S105's features draws one). */}
+        {illRuntime &&
+          illFeatures().map((f) =>
+            f.layer ? (
+              <f.layer
+                key={f.id}
+                params={paramsOf(f, illDrawnParams)}
+                runtime={illRuntime}
+                context={illContext}
+                knots={knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null}
+                knotsGain={knotsGain}
+                dust={knotDust}
+              />
+            ) : null,
+          )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
             its starlight the remainder under the points' threshold (the whole of it while the points are off). */}
         {marchOn && (
@@ -845,6 +959,7 @@ export function GalaxyTab({
             onRingEdges={onRingEdges}
             clouds={extinctionClouds}
             cloudsOn={tuning.cloudsExtinction}
+            ill={illRuntime}
           />
         )}
         {/* The points, on the field's scale (D208): the clusters first, the bright stars over them. */}
@@ -859,10 +974,11 @@ export function GalaxyTab({
             extent={clusterPoints.extent}
             profile={look.clusterRadius ? 1 : 0}
             physical={physical}
+            ill={illRuntime}
           />
         )}
         {brightPoints && (
-          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} />
+          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} ill={illRuntime} />
         )}
         {mode === "stars" && look.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
         {mode === "stars" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
@@ -951,6 +1067,12 @@ export function GalaxyTab({
             <button type="button" aria-pressed={physicsOnly} title={PHYSICS_ONLY_WHAT} onClick={() => onPhysicsOnly(!physicsOnly)}>
               {PHYSICS_ONLY}
             </button>
+            {/* The look (S105, D275): physical by default; illustrative draws the layer the Tuning panel's group names. */}
+            {onLook && (
+              <button type="button" aria-pressed={illustrative} title={ILLUSTRATIVE_WHAT} onClick={() => onLook(illustrative ? "physical" : "illustrative")}>
+                illustrative
+              </button>
+            )}
           </div>
           {/* The filter set is chosen in either mode (T22): the star-first mode's points and its component
               volumes are seen through it as the field is, and a line set (SHO, HOO) is what shows the ionized gas. */}
@@ -1173,7 +1295,19 @@ export function GalaxyTab({
           )}
         </div>
 
-        <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} template={template?.name ?? null} filterSet={filterSet} exposure={exposure} defaults={tuningDefaults} onExposure={onExposure} />
+        <TuningPanel
+          tuning={tuning}
+          onChange={setTuning}
+          stats={marchStats}
+          template={template?.name ?? null}
+          filterSet={filterSet}
+          exposure={exposure}
+          defaults={tuningDefaults}
+          onExposure={onExposure}
+          look={viewLook}
+          illPending={illPending}
+          defaultsOfLook={onLook ? (l) => lookDefaultsFor(templateName, l) : undefined}
+        />
       </div>
       )}
 

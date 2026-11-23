@@ -2384,3 +2384,27 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   #226 sent the mend to a softer star-formation threshold; a second reader read `sfh.py` and found the switch already a
   tanh and the cliff in the gas itself (the infall tail's hard end), so the first mend could not work under any law of
   index one or more. The ruling was corrected and the correction said in D273. (S103, D273)
+
+## From S105 (BUILD_VIII, the illustrative look: an Opus mapper, six Opus builders and tuners, two Fable builders, an Opus reviewer; the Fable lead and gate)
+
+- [viewer] **Every lane's own gate can pass while the merge is broken: capture the merged head.** The lanes and the arms
+  each added one sampler to the march; alone each was the sixteenth and drew, together they were seventeen and the
+  field's program failed to link without a word - a black disc under the sprites, every builder's gates green (the
+  picture test holds the physical look only). The lead's capture of the merged head found it. What was moved where it
+  cannot be forgotten (B13): one shared map for the whole layer, a test that counts the march's samplers, and a
+  capture tool that fails on a program error or a black frame. A resource shared by parallel lanes (texture units,
+  uniform slots, a storage key) is counted in a test before the lanes are cut. (S105, D276)
+- [viewer] **A second look is proved honest by bytes, not by neutral values.** The illustrative layer is absent under
+  the physical look - the pinned fragment unpatched, no grade pass, no storage key shared - and the proof is the nine
+  committed frames byte for byte at every builder's hand-back plus the reviewer's seven states captured on `main`'s
+  build and on the branch's. "Every new control defaults to neutral" would have been neither. (S105, D276)
+- [viewer] **Each feature tuned alone on an older grade is untuned together.** The pink regions were set on the first
+  grade and tripled in weight on the second; the lanes read blue-black until the saturation fell. One pass over all the
+  sliders per template, after the last feature merges, by an agent given the lead's list of what is wrong in the
+  combined frame, moved each picture further than any feature's own tuning. (S105, D276)
+- [infra] **A scratch directory shared by parallel agents needs a subdirectory each.** Two builders' first commits took
+  another agent's `msg1.txt` as their message and one overwrote a log; both amended before pushing. Every brief now
+  names a directory of the agent's own and unique file names. (S105, D276)
+- [close] **Run the full-load review against `main`'s own build.** The reviewer extracted `main`'s frontend with
+  `git archive`, built it beside the branch's and compared seven states' PNGs and request lists: stronger than any
+  reading of the diff, and it took twenty minutes. (S105, D276)

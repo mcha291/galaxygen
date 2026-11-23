@@ -4,6 +4,7 @@ import { fieldFragment } from "./FieldVolume";
 import { NOISE_GLSL } from "./noise.glsl";
 import pinned from "./fieldFragment.s78.glsl?raw";
 import { beginLanding, endSwap, loads, swapState } from "../useLoad";
+import { illDefaults } from "./illustrative";
 import { WHITE_KELVIN } from "./filters";
 import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SLAB_PIECES, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
@@ -103,12 +104,15 @@ describe("tuning defaults (D199)", () => {
       gasInMarch: true,
       spursInMarch: true,
       clumpsInMarch: true,
+      // S105 (D275): the illustrative look's parameters under one key, their defaults the registry's (illustrative/).
+      ill: illDefaults(null),
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
 
   it("has one control per value, each default inside its range", () => {
-    expect(TUNING_CONTROLS.map((c) => c.key).sort()).toEqual(Object.keys(TUNING_DEFAULTS).sort());
+    // The illustrative parameters (S105) are one nested key with controls of their own (illustrative/index.ts).
+    expect(TUNING_CONTROLS.map((c) => c.key).sort()).toEqual(Object.keys(TUNING_DEFAULTS).filter((k) => k !== "ill").sort());
     for (const c of TUNING_CONTROLS) {
       expect(c.about).toMatch(/display/);
       if (c.kind === "range") {

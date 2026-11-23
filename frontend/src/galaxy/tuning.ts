@@ -13,6 +13,10 @@ import { WHITE_KELVIN } from "./filters";
 import type { RegionStars } from "./regionStars";
 import { CLOUD_RASTER } from "./cloudOpacity";
 import { CLOSE_FIELD_FLOOR, SUB_SAMPLES_MAX } from "./regimes";
+import { type Look, LOOKS, illChanged, illDefaults, illProblems, sanitizeIll } from "./illustrative";
+import { ILLUSTRATIVE_BASE } from "./illustrative/preset";
+
+export type { Look } from "./illustrative";
 
 /** Ray-march steps through the galaxy's bounding box. */
 export const STEPS = 96;
@@ -155,6 +159,12 @@ export interface Tuning {
   spursInMarch: boolean;
   /** The young and middle starlight modulated by the clustering field's maps over their cell means. */
   clumpsInMarch: boolean;
+  /**
+   * The illustrative look's parameters (S105, D275; illustrative/index.ts): every registered feature's controls, by
+   * `${feature}.${key}`, each clamped to its range. Read only under the look "illustrative"; under "physical" nothing of
+   * the layer runs, whatever they hold. One key, so a feature's new control moves nothing in this file.
+   */
+  ill: Readonly<Record<string, number>>;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -201,6 +211,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   gasInMarch: true,
   spursInMarch: true,
   clumpsInMarch: true,
+  ill: Object.freeze(illDefaults(null)),
 });
 
 export type TuningKey = keyof Tuning;
@@ -561,6 +572,50 @@ export function defaultsFor(template: string | null | undefined, map: Readonly<R
   return own ? sanitize(own, TUNING_DEFAULTS) : { ...TUNING_DEFAULTS };
 }
 
+/**
+ * A template's defaults under the illustrative look (S105, D275): its physical defaults (TEMPLATE_TUNING over
+ * TUNING_DEFAULTS) with the illustrative base overlay laid over them (illustrative/preset.ts: whiteKelvin, the bloom and
+ * the like may differ per look), and the illustrative parameters at the template's preset (illustrative/index.ts).
+ */
+export function illustrativeDefaultsFor(template: string | null | undefined): Tuning {
+  const own = template ? TEMPLATE_TUNING[template] : undefined;
+  const overlay = template ? ILLUSTRATIVE_BASE[template] : undefined;
+  const t = sanitize({ ...(own ?? {}), ...(overlay ?? {}) }, TUNING_DEFAULTS);
+  return { ...t, ill: illDefaults(template) };
+}
+
+/** A template's defaults under a look: the physical look's are defaultsFor's, untouched. */
+export function lookDefaultsFor(template: string | null | undefined, look: Look = "physical"): Tuning {
+  return look === "illustrative" ? illustrativeDefaultsFor(template) : defaultsFor(template);
+}
+
+/** Where the look is kept (S105): one per browser, a UI preference like the tuning. */
+export const LOOK_STORAGE_KEY = "galaxygen.look";
+
+/** A value read as a look; null if it is none. */
+export const lookOf = (v: unknown): Look | null => (typeof v === "string" && (LOOKS as readonly string[]).includes(v) ? (v as Look) : null);
+
+/** The look of a browser that has never chosen one. BUILD_VIII ruling 3, D276 - the owner's to re-rule; one line. */
+export const DEFAULT_LOOK: Look = "illustrative";
+
+/** The stored look, DEFAULT_LOOK where none (or none valid) is stored or storage is unavailable. */
+export function loadLook(storage: Pick<Storage, "getItem"> | null = safeStorage()): Look {
+  try {
+    return lookOf(storage?.getItem(LOOK_STORAGE_KEY)) ?? DEFAULT_LOOK;
+  } catch {
+    return DEFAULT_LOOK;
+  }
+}
+
+/** Keeps the look, either look stored as itself (S105 fix R6: a chosen look is kept whatever the default becomes). */
+export function saveLook(look: Look, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage()): void {
+  try {
+    storage?.setItem(LOOK_STORAGE_KEY, look);
+  } catch {
+    // Private windows and blocked site data: the look holds for this visit.
+  }
+}
+
 /** A template's default exposure, stops. */
 export function exposureFor(template: string | null | undefined, map: Readonly<Record<string, number>> = TEMPLATE_EXPOSURE): number {
   const v = template ? map[template] : undefined;
@@ -568,8 +623,11 @@ export function exposureFor(template: string | null | undefined, map: Readonly<R
 }
 
 /** Where a template's tuning is kept: its own key, or the one key of before S67 with no template (an API without templates). */
-export function storageKeyFor(template: string | null | undefined): string {
-  return template ? `${TUNING_STORAGE_KEY}.${template}` : TUNING_STORAGE_KEY;
+// Since S105 per look: the physical look's key is the one of before (so every stored combination and the picture test's
+// seeded tuning keep working), the illustrative look's that key with ".illustrative" after it.
+export function storageKeyFor(template: string | null | undefined, look: Look = "physical"): string {
+  const key = template ? `${TUNING_STORAGE_KEY}.${template}` : TUNING_STORAGE_KEY;
+  return look === "illustrative" ? `${key}.illustrative` : key;
 }
 
 const controlOf = (key: string) => TUNING_CONTROLS.find((c) => c.key === key);
@@ -588,6 +646,8 @@ export function clampValue(control: TuningControl, value: unknown): number | boo
 export function sanitize(raw: unknown, base: Readonly<Tuning> = TUNING_DEFAULTS): Tuning {
   const out: Tuning = { ...base };
   if (!raw || typeof raw !== "object") return out;
+  // The illustrative parameters (S105): one nested object, each value clamped to its control, over base's.
+  out.ill = sanitizeIll((raw as Record<string, unknown>).ill, base.ill ?? illDefaults(null));
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     const control = controlOf(key);
     if (!control) continue;
@@ -597,28 +657,45 @@ export function sanitize(raw: unknown, base: Readonly<Tuning> = TUNING_DEFAULTS)
   return out;
 }
 
-/** The stored tuning of a template (S67: its own key, over its own defaults), or its defaults when there is none or storage is unavailable. */
-export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage(), template: string | null = null): Tuning {
-  const base = defaultsFor(template);
+/**
+ * The stored tuning of a template (S67: its own key, over its own defaults), or its defaults when there is none or
+ * storage is unavailable. Since S105 per look (storageKeyFor): the physical look's as before.
+ */
+export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorage(), template: string | null = null, look: Look = "physical"): Tuning {
+  const base = lookDefaultsFor(template, look);
   try {
     // A template with no key of its own falls back to the one key of before S67 (the lead's second pass, D227): the
     // choices made under it carry over, read and never written back - the first save writes the template's own key.
-    const own = storage?.getItem(storageKeyFor(template));
-    const text = own ?? (template ? storage?.getItem(TUNING_STORAGE_KEY) : null);
-    return text ? sanitize(JSON.parse(text), base) : base;
+    // The illustrative look has no such past: its own key or its defaults.
+    const own = storage?.getItem(storageKeyFor(template, look));
+    const text = own ?? (template && look === "physical" ? storage?.getItem(TUNING_STORAGE_KEY) : null);
+    if (!text) return base;
+    const raw: unknown = JSON.parse(text);
+    // S105 fix R4: the physical look holds no illustrative parameters - a stored physical entry's "ill" is not read.
+    return sanitize(look === "physical" ? withoutIll(raw) : raw, base);
   } catch {
     return base;
   }
+}
+
+/** An object without its "ill" key (S105 fix R4: the physical look's storage, box and paste never carry one). */
+function withoutIll(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw) || !("ill" in raw)) return raw;
+  const { ill: _ill, ...rest } = raw as Record<string, unknown>;
+  void _ill;
+  return rest;
 }
 
 /**
  * Keeps only what differs from the template's defaults, under its own key. With no template nothing is stored at the
  * defaults; a template's key is kept as "{}" there, so the old key (loadTuning's fallback) is not read again for it.
  */
-export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage(), template: string | null = null): void {
+export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage(), template: string | null = null, look: Look = "physical"): void {
   try {
-    const diff = changed(t, defaultsFor(template));
-    const key = storageKeyFor(template);
+    const diff = changed(t, lookDefaultsFor(template, look));
+    // S105 fix R4: never an "ill" under the physical look's key.
+    if (look === "physical") delete diff.ill;
+    const key = storageKeyFor(template, look);
     if (Object.keys(diff).length === 0 && !template) storage?.removeItem(key);
     else storage?.setItem(key, JSON.stringify(diff));
   } catch {
@@ -632,6 +709,9 @@ export function changed(t: Tuning, defaults: Readonly<Tuning> = TUNING_DEFAULTS)
   for (const control of TUNING_CONTROLS) {
     if (t[control.key] !== defaults[control.key]) out[control.key] = t[control.key];
   }
+  // The illustrative parameters (S105): those that differ, under one key, and the key only where one does.
+  const ill = illChanged(t.ill ?? {}, defaults.ill ?? illDefaults(null));
+  if (Object.keys(ill).length > 0) out.ill = ill;
   return out as Partial<Tuning>;
 }
 
@@ -650,8 +730,22 @@ export function clampExposure(value: unknown): number | null {
  * The Tuning panel's copy box (S67, D227; lifted here at S97 so the panel and the paste box share it): the template
  * tuned on, its filter set and the exposure's stops, then every choice that differs from the template's defaults.
  */
-export function copyBoxText(t: Tuning, defaults: Readonly<Tuning>, template: string | null | undefined, filterSet: string | null | undefined, exposure: number | null | undefined): string {
-  return JSON.stringify({ template: template ?? null, filters: filterSet ?? null, exposure: exposure ?? 0, ...changed(t, defaults) });
+// Since S105 the illustrative look's box also says "look": "illustrative" (after the exposure) and carries its changed
+// parameters under "ill"; the physical look's box is the text it was.
+export function copyBoxText(
+  t: Tuning,
+  defaults: Readonly<Tuning>,
+  template: string | null | undefined,
+  filterSet: string | null | undefined,
+  exposure: number | null | undefined,
+  look: Look = "physical",
+): string {
+  const head = { template: template ?? null, filters: filterSet ?? null, exposure: exposure ?? 0 };
+  if (look === "illustrative") return JSON.stringify({ ...head, look, ...changed(t, defaults) });
+  // S105 fix R4: the physical look's box is main's text - never an "ill".
+  const diff = changed(t, defaults);
+  delete diff.ill;
+  return JSON.stringify({ ...head, ...diff });
 }
 
 /** What a pasted combination gives (S97): see parseCombination. */
@@ -663,6 +757,8 @@ export interface Combination {
   /** The template and filter set the box names (null where absent): reported, never switched to. */
   template: string | null;
   filters: string | null;
+  /** The look the box names (S105); null where absent, which is the physical look's box. */
+  look: Look | null;
   /** Keys that are no tuning value and not the box's own three: shown, not an error. */
   ignored: string[];
   /** Values of known keys that could not be used (wrong type, an unknown option): the default kept, shown. */
@@ -671,7 +767,7 @@ export interface Combination {
   error: string | null;
 }
 
-const BOX_KEYS = new Set(["template", "filters", "exposure"]);
+const BOX_KEYS = new Set(["template", "filters", "exposure", "look", "ill"]);
 
 /**
  * A pasted copy box read back (S97, "load a combination"): the tuning is `defaults` (the template on screen's) with the
@@ -679,8 +775,18 @@ const BOX_KEYS = new Set(["template", "filters", "exposure"]);
  * its template's defaults, so applying a box on the template it was copied from reproduces the combination. Unknown
  * keys are returned in `ignored`; bad JSON or a non-object is an `error` and nothing is applied.
  */
-export function parseCombination(text: string, defaults: Readonly<Tuning> = TUNING_DEFAULTS): Combination {
-  const fail = (error: string): Combination => ({ tuning: null, exposure: null, template: null, filters: null, ignored: [], rejected: [], error });
+// Since S105 a box naming a look ("look": "illustrative") is laid over that look's defaults where `defaultsOfLook` is
+// given (the panel's: the template's under each look), and `look` says to switch to it; "ill" is read per control.
+// S105 fix R4: a box applied under the physical look - one naming no look where `defaultsOfLook` is given, or any box
+// without it where `shown` (the look on screen) is "physical" - has its "ill" ignored (listed in `ignored` as "ill"):
+// the physical look holds no illustrative parameters.
+export function parseCombination(
+  text: string,
+  defaults: Readonly<Tuning> = TUNING_DEFAULTS,
+  defaultsOfLook?: (look: Look) => Readonly<Tuning>,
+  shown?: Look,
+): Combination {
+  const fail = (error: string): Combination => ({ tuning: null, exposure: null, template: null, filters: null, look: null, ignored: [], rejected: [], error });
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -697,12 +803,25 @@ export function parseCombination(text: string, defaults: Readonly<Tuning> = TUNI
     if (!control) ignored.push(key);
     else if (clampValue(control, value) === null) rejected.push(key);
   }
+  const look = lookOf(entries.look);
+  if (entries.look !== undefined && look === null) rejected.push("look");
+  const target = defaultsOfLook ? (look ?? "physical") : (shown ?? null);
+  const physical = target === "physical";
+  if (physical && entries.ill !== undefined) ignored.push("ill");
+  else {
+    const problems = illProblems(entries.ill);
+    ignored.push(...problems.ignored);
+    rejected.push(...problems.rejected);
+  }
   const text_ = (v: unknown) => (typeof v === "string" ? v : null);
+  // A box without a look is the physical look's (its copy box names none).
+  const base = defaultsOfLook ? defaultsOfLook(look ?? "physical") : defaults;
   return {
-    tuning: sanitize(entries, defaults),
+    tuning: sanitize(physical ? withoutIll(entries) : entries, base),
     exposure: clampExposure(entries.exposure),
     template: text_(entries.template),
     filters: text_(entries.filters),
+    look,
     ignored,
     rejected,
     error: null,

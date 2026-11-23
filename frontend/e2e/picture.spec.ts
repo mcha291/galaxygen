@@ -24,6 +24,7 @@ import { PLUMMER_HALF_MASS, PLUMMER_REACH, PROFILE_MAX_HALF, plummerRect } from 
 import { type RingCamera, spriteRings } from "../src/galaxy/ringProfile";
 import { psfMean, spriteTexels } from "../src/galaxy/sprite";
 import { TUNING_DEFAULTS, TUNING_STORAGE_KEY } from "../src/galaxy/tuning";
+import { pinPhysicalLook } from "./settings";
 import {
   CHOOSING_VIEWPORT,
   DEFAULT_TEMPLATE,
@@ -360,6 +361,9 @@ function record(name: string, frame: FrameRecord) {
   const file: FramesFile = { about: FRAMES_ABOUT, playwright: PLAYWRIGHT, args: GPU_ARGS, tolerance: TOLERANCE, frames };
   writeFileSync(FRAMES_JSON, `${JSON.stringify(file, null, 2)}\n`, "utf-8");
 }
+
+// S105 fix R6: the default look is the illustrative one since D276; this file draws the physical look, pinned.
+test.beforeEach(async ({ page }) => pinPhysicalLook(page));
 
 for (const capture of CAPTURES) {
   test(`${capture.name}: ${capture.template}, ${capture.mode} mode, ${capture.filters}, ${capture.viewport} px`, async ({ page, browser }, testInfo) => {

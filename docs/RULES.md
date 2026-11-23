@@ -266,4 +266,8 @@ reimplementing against the same endpoints and the same vectors. *Amended 2026-10
 viewer means reimplementing against the same endpoints.** *A gateway in front of the API is held to the same: it
 serves what the model published, keyed by the model's content hash, and computes nothing.* *BUILD_IV Appendix A's
 sentence, entered at S74, the gateway's review, on the merge of the review's fixes* `[verified: DECISIONS.md D238]`.
-**Until S74 the rule ended at the sentence before.**
+**Until S74 the rule ended at the sentence before.** **The illustrative layer is the one exception:** under the look
+`illustrative` the viewer may draw display-only structure, parameters and seeds of its own, tuned to the goal
+pictures and named as illustrative in the panel; under the look `physical` it draws none of it and this rule reads as
+above, the committed frames byte for byte. It changes no published number, readout, tracer or preview.
+*Amended 2026-11-23 on the owner's word* `[verified: DECISIONS.md D275]`. **Until D275 the rule had no exception.**
