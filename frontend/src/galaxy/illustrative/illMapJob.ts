@@ -51,7 +51,7 @@ export type JobMessage =
   | { id: number; kind: "release" };
 
 export type JobAnswer =
-  | { id: number; kind: "map"; seeds: Seed[]; ms: number }
+  | { id: number; kind: "map"; seeds: Seed[]; ms: number; stages: Record<string, number> }
   | { id: number; kind: "sparkle"; points: SparklePoints | null; missing: boolean; ms: number }
   | { id: number; kind: "error"; message: string };
 
@@ -129,6 +129,7 @@ export class MapJobState {
 
   release() {
     releaseMemos();
+    this.frame = null;
     this.refs = new WeakMap();
     this.lanes.clear();
     this.rgba = null;
@@ -140,7 +141,7 @@ export class MapJobState {
  * returned as seeds (a value's map planes to be transferred: seedTransfer). The R plane's bytes, where built here, are
  * kept (copied) for the sparkle.
  */
-export function mapJob(state: MapJobState, request: MapRequest): Seed[] {
+export function mapJob(state: MapJobState, request: MapRequest, stages: Record<string, number> = {}): Seed[] {
   const frame = state.frameOf(request.frameId, request.frame);
   const context = illContextFor({ template: request.template, frame }, request.ill);
   const seeds: Seed[] = [];
@@ -159,7 +160,9 @@ export function mapJob(state: MapJobState, request: MapRequest): Seed[] {
   try {
     for (const f of features()) {
       if (!f.map) continue;
+      const started = performance.now();
       const built = f.map.build(paramsOf(f, request.ill), context);
+      stages[f.id] = performance.now() - started;
       const at = f.map.channels.indexOf(0);
       const lanes = at >= 0 ? built[at] : null;
       if (lanes && lanes.length === PLANE_BYTES) {
@@ -192,8 +195,9 @@ export function handle(state: MapJobState, message: JobMessage): { answer: JobAn
       return null;
     }
     if (message.kind === "map") {
-      const seeds = mapJob(state, message.request);
-      return { answer: { id: message.id, kind: "map", seeds, ms: performance.now() - started }, transfer: seedTransfer(seeds) };
+      const stages: Record<string, number> = {};
+      const seeds = mapJob(state, message.request, stages);
+      return { answer: { id: message.id, kind: "map", seeds, ms: performance.now() - started, stages }, transfer: seedTransfer(seeds) };
     }
     const { points, missing } = sparkleJob(state, message.request);
     return { answer: { id: message.id, kind: "sparkle", points, missing, ms: performance.now() - started }, transfer: sparkleTransfer(points) };

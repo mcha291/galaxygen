@@ -121,7 +121,7 @@ export const ILL_MAP_CHANNELS = { lanes: [0], floc: [1], arms: [2, 3] } as const
 
 /**
  * A feature's share of the shared map: the channels it owns (0 R, 1 G, 2 B, 3 A; each owned by one feature) and a
- * builder of their bytes, one plane per channel in `channels`' order, each ILL_MAP.width * ILL_MAP.height bytes laid
+ * builder of their bytes (S107: run in the map worker as well - pure, its plane memos named; index.ts's header), one plane per channel in `channels`' order, each ILL_MAP.width * ILL_MAP.height bytes laid
  * out as ILL_MAP says, or null for a channel that reads zero. Called at every change of a parameter or the context:
  * the feature caches its planes (memoOn) and returns the same Uint8Array while nothing that shapes them changed - the
  * registry re-composes and re-uploads the map only when some plane's object changes. The march's GLSL reads the

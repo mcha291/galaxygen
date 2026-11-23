@@ -14,7 +14,7 @@
 // The sparkle's points (sparkleJob.ts) go the same way: SparkleLayer asks (requestSparkle) and draws the last points it
 // had until the new ones arrive; built here where there is no worker.
 
-import { type IllFrame, seedMemo } from "./feature";
+import { type IllFrame, illMeasure, illNow, seedMemo } from "./feature";
 import type { Encoded, JobAnswer, JobMessage, LanesSpec, MapRequest, Seed, SparkleRequest } from "./illMapJob";
 import { type SparklePoints, sparklePoints } from "./sparkleJob";
 
@@ -204,7 +204,12 @@ function answeredJob(answer: JobAnswer) {
   const job = running;
   running = null;
   counts.answered += 1;
-  if (answer.kind !== "error") times[answer.kind] = { ms: answer.ms, roundTripMs: performance.now() - job.posted };
+  if (answer.kind !== "error") {
+    times[answer.kind] = { ms: answer.ms, roundTripMs: performance.now() - job.posted };
+    // the worker's stages as measures here (the slider probe's breakdown): each ending now, its own length
+    if (answer.kind === "map") for (const [id, ms] of Object.entries(answer.stages)) illMeasure(`worker map ${id}`, illNow() - ms);
+    else illMeasure("worker sparkle", illNow() - answer.ms);
+  }
   if (job.generation !== generation) counts.dropped += 1;
   else if (answer.kind === "error") {
     counts.failed += 1;
@@ -214,7 +219,9 @@ function answeredJob(answer: JobAnswer) {
     else job.fallback?.();
     arrivals += 1;
   } else if (answer.kind === "map") {
+    const started = illNow();
     applySeeds(answer.seeds);
+    illMeasure("seed", started);
     markAnswered(job.key);
     arrivals += 1;
   } else if (answer.kind === "sparkle") {

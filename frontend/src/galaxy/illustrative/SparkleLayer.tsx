@@ -12,6 +12,7 @@ import { shapeOf } from "./arms";
 import { sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
 import { ILL_MAP, type IllLayerProps } from "./feature";
 import { objectToken, requestSparkle, sparkleHeld } from "./illMapClient";
+import { illChannelCurrent } from "./index";
 import { type SparklePoints, sparkleKey, sparkleReadsLanes } from "./sparkleJob";
 
 /** The sparkle's blue-white at full share (over the white point). */
@@ -39,11 +40,14 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   const key = sparkleKey(params, context.frame, objectToken(context.frame), context.template, composed ? (lanesPlane ? `plane:${objectToken(lanesPlane)}` : "zeros") : "none");
   const [arrived, setArrived] = useState<{ key: string; points: SparklePoints | null } | null>(null);
   const held = sparkleHeld(key);
+  // While the lanes' plane for the parameters drawn is still being built, nothing is asked: the points for the new
+  // lanes are built once, when it is in the map (not first over the previous lanes, as the layer did before).
+  const lanesReady = !sparkleReadsLanes(params) || illChannelCurrent(mapTex ?? null, 0, context);
   useEffect(() => {
-    if (held !== undefined) return;
+    if (held !== undefined || !lanesReady) return;
     const lanes = composed ? { plane: lanesPlane, rgba: img!.data! } : null;
     return requestSparkle(key, params, context, lanes, (points) => setArrived({ key, points }));
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- the key names every input
+  }, [key, lanesReady]); // eslint-disable-line react-hooks/exhaustive-deps -- the key names every input
   const points = held !== undefined ? held : (arrived?.points ?? null);
   const blue = params.sparkleblue ?? 0.7;
   const base = params.sparklegain ?? 2e4;

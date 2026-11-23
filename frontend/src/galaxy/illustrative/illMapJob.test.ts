@@ -206,6 +206,9 @@ describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", 
     const tex = rt.uniforms.illMapTex.value as { image: { data: Uint8Array }; userData: { illPlanes: (Uint8Array | null)[] } };
     const lanesPlane = tex.userData.illPlanes[0];
     expect(lanesPlane).not.toBeNull();
+    // the lanes in the map are the drawn parameters' own; at moved lanes they are not (the layer then waits)
+    expect(main.illChannelCurrent(tex, 0, main.illContextFor(ctx, ill))).toBe(true);
+    expect(main.illChannelCurrent(tex, 0, main.illContextFor(ctx, { ...ill, "lanes.width": 99 }))).toBe(false);
     let got: unknown = "none";
     client.requestSparkle("k1", params, ctx, { plane: lanesPlane, rgba: tex.image.data }, (p) => (got = p));
     expect(got).toBe("none"); // asked, not built here

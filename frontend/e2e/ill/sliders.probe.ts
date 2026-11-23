@@ -20,15 +20,18 @@ interface Move {
   template: "milky_way" | "ngc_4414";
   label: string;
   filter: string;
-  values: number[];
+  /** Each a move to that value, or a slow drag through the values (a step every DRAG_MS: each settles and is asked of the worker while the last one builds). */
+  values: (number | number[])[];
 }
+
+const DRAG_MS = 300;
 
 /** The sliders moved, by their panel name (TuningPanel illName: "<feature label>: <control label>"), each a few times. */
 const MOVES: Move[] = [
-  { template: "milky_way", label: "arms: skeleton pitch", filter: "skeleton pitch", values: [1.05, 0.95, 1] },
+  { template: "milky_way", label: "arms: skeleton pitch", filter: "skeleton pitch", values: [1.05, 0.95, 1, [1.04, 1.08, 1.12, 1.16, 1.1, 1.04, 1]] },
   { template: "milky_way", label: "dust lanes: strand width", filter: "strand width", values: [50, 40, 45] },
   { template: "milky_way", label: "dust lanes: lane depth", filter: "lane depth", values: [1.8, 1.4, 1.6] },
-  { template: "ngc_4414", label: "flocculent network: thread spacing", filter: "thread spacing", values: [210, 190, 200] },
+  { template: "ngc_4414", label: "flocculent network: thread spacing", filter: "thread spacing", values: [210, 190, 200, [215, 230, 245, 225, 200]] },
   { template: "ngc_4414", label: "flocculent network: dust piece size", filter: "dust piece size", values: [360, 340, 350] },
 ];
 
@@ -133,7 +136,11 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
           window.__illProbe!.on = true;
         });
         const t0 = await page.evaluate(() => performance.now());
-        await slider.fill(String(value));
+        const steps = Array.isArray(value) ? value : [value];
+        for (const [i, v] of steps.entries()) {
+          if (i > 0) await page.waitForTimeout(DRAG_MS);
+          await slider.fill(String(v));
+        }
         // The move's effect: the mark comes (a map-shaping slider) and goes; then a second more of frames.
         await page.waitForTimeout(400);
         await expect(rebuilding(page)).toHaveCount(0, { timeout: 30_000 });
@@ -163,7 +170,7 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
           .sort((a, b) => b[1].max - a[1].max)
           .map(([k, s]) => `${k.slice(4)} ${s.max.toFixed(0)}${s.n > 1 ? `x${s.n}` : ""}`)
           .join(", ");
-        console.log(`ill-probe ${template} "${move.label}" -> ${value}: longest frame gap ${got.gap.toFixed(0)} ms; long tasks [${got.tasks.join(", ")}] ms; stages: ${stageWords}`);
+        console.log(`ill-probe ${template} "${move.label}" -> ${Array.isArray(value) ? `a drag ${value.join(" > ")}` : value}: longest frame gap ${got.gap.toFixed(0)} ms; long tasks [${got.tasks.join(", ")}] ms; stages: ${stageWords}`);
         if (jobs)
           console.log(
             `ill-probe   worker: ${jobs.posted} posted, ${jobs.seeded} seeded, ${jobs.skipped} skipped, ${jobs.here} on the main thread, ${jobs.failed} failed; ` +

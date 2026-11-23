@@ -26,6 +26,13 @@
 //              builder of one byte plane per channel (null: zero), cached by the feature (memoOn); the registry
 //              composes the planes and re-uploads only when a plane's object changes. The same texture is handed to the
 //              points' vertex shader. A feature's own layer material (`layer`) may still bind samplers of its own.
+//              S107 (the sliders' stall): the planes are built OFF the main thread, by the map worker (illMapClient.ts,
+//              illMapJob.ts; stepRuntime below): it runs the builders themselves and hands back each NAMED memo's build
+//              (memoOn(build, "<feature>.<what>")), which the main thread puts in the same cache - so a plane's memo
+//              must be named, and a builder must be a pure function of its params and context (no DOM, no WebGL, no
+//              module state but its memos: it runs in a worker too). An unnamed plane memo still works, built on the
+//              main thread when drawn (a stall over ~0.1 s on its slider is a defect). Until the planes arrive the view
+//              draws the previous map; the look capture waits for them (window.__galaxygenIllPending).
 //   hooks      which of its GLSL functions take part in the march (rp = vec2(R kpc, phi rad), phi = atan(-z, x) in
 //              [0, 2 pi), the model's galactocentric azimuth; R cylindrical):
 //     dustAv    float f(vec2 rp): extra face-on A_V, magnitudes, at the midplane point rp. All features' are summed into
@@ -413,6 +420,21 @@ export function illMapTexture(planes: readonly (Uint8Array | null)[]): DataTextu
   shared.texture.userData.illPlanes = [...planes];
   illMeasure("compose", started);
   return shared.texture;
+}
+
+/**
+ * (S107) Whether channel `c` of the map `texture` holds the plane its feature builds at the parameters `context` binds
+ * (illContextFor) - false while that plane is still being built (a layer that reads the channel waits for it rather
+ * than read the previous one). Nothing is built.
+ */
+export function illChannelCurrent(texture: unknown, c: number, context: IllContext): boolean {
+  const f = FEATURES.find((g) => g.map?.channels.includes(c));
+  if (!f?.map) return true;
+  const at = f.map.channels.indexOf(c);
+  let plane: Uint8Array | null = null;
+  if (wouldBuild(() => (plane = f.map!.build(context.paramsOf?.(f.id) ?? {}, context)[at] ?? null))) return false;
+  const composed = (texture as { userData?: { illPlanes?: (Uint8Array | null)[] } } | null)?.userData?.illPlanes?.[c] ?? null;
+  return composed === plane;
 }
 
 /** Each feature's uniform values for these parameters and this context, and the shared map (illMapTex). */
