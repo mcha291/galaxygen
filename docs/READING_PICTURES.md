@@ -666,3 +666,60 @@ patches are recorded in #231 as untraced, not chased.
 drawn at their size, and still not the goal's pink regions (#181's complexes, #235's flat relation, the display's
 `knotsIntensity`); gap 2's lanes are not drawn by either ruleset of #234 (#229's reading row). C6 said again: nothing
 here was tuned to a goal picture.
+
+---
+
+# Part S105 — the illustrative look beside the goals (D275, D276)
+
+## 26. What changed in what this file is for
+
+Until S104 this file measured how far the frames were from the goal pictures without ever aiming at them (C6). On the
+owner's word of 2026-11-23 (D275) the goals are the target of the viewer's **illustrative look** (BUILD_VIII); the
+**physical look** is the viewer of sections 1 to 25, unchanged byte for byte, and everything above still describes it.
+This part reads the illustrative frames of S105's close (model hash 5a862a70..., `main`'s; no model byte moved).
+
+## 27. The yardstick on the illustrative frames
+
+`tools/goal_metrics.py` on S105's two illustrative captures (1024 px, the look's default stands) and, for like with
+like, on the two goal pictures **at the tool's own estimate of each picture's geometry** (the Milky Way pair with
+`--axis-ratio 1`). The physical rows are section 23's committed frames at the committed field geometry, quoted. The
+goal's Milky Way row reproduces section 1's; NGC 4414's goal differs a little from section 1's row because the
+geometry here is the tool's estimate (q 0.512, not 0.5736). A number here is a target only for the illustrative look.
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope |
+|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` | −0.354 (−0.459 / −0.813) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 |
+| physical (section 23) | −0.313 (+0.630 / +0.316) | 0.054 | 0.076 | 0.060 | 2.11 | 0.0325 | −1.15 |
+| **illustrative, S105** | −0.477 (−0.504 / −0.981) | 0.087 | 0.143 | 0.091 | 2.11 | 0.0423 | −1.58 |
+| GOAL `ngc_4414` (the tool's geometry) | −0.274 (+0.508 / +0.234) | 0.099 | 0.068 | 0.055 | 2.72 | 0.157 | −2.09 |
+| physical (section 23) | +0.165 (+0.299 / +0.464) | 0.060 | 0.127 | 0.039 | 1.98 | 0.0276 | −1.52 |
+| **illustrative, S105** | −0.496 (+0.751 / +0.255) | 0.063 | 0.045 | 0.051 | 2.10 | 0.190 | −1.89 |
+
+Nearer on both: the colours' levels and the sign of the step (the Milky Way's bands are now blue as the goal's are;
+NGC 4414 is redder inside than outside, as the photograph is), the power slope, and NGC 4414's dark fraction (0.028 to
+0.190 against 0.157). The Milky Way's A₂ doubled (0.076 to 0.143 against 0.194). Not nearer: the Milky Way's dark
+fraction (0.042 against 0.0066: our lanes are darker and crisper than the goal's translucent ones), its A₁ and A₃
+(up, past the goal's), the arm to inter-arm ratio on both.
+
+## 28. What a viewer sees, in the lead's words (the lead looked at every sheet)
+
+**The Milky Way.** Physical: a small tan disc under a white ball with haloed dots. Illustrative: a blue barred spiral
+on black - a cream bar ellipse with two thin lanes curling into the nucleus, pale blue arm bands springing from the
+bar's ends, thin broken red-brown lanes along every arm, small pink regions strung on the arms as accents, a soft
+fade at the edge. It is the goal's kind of picture. Still far: the disc fills about 70 % of the frame where the goal's
+fills 90 %; our arms are fewer and broader (they are the model's arms, where the model puts them); the goal's arms
+carry a fine pale grain ours lack; the inter-arm disc shows a streaky brushed texture; the pink regions read a little
+like confetti on the lower right arm; a dark slate ring round the bar is a little strong.
+
+**NGC 4414.** Physical: a white ball over a faint tan ellipse. Illustrative: an inclined warm disc lying as the
+photograph's does - a small pale nucleus, cream and tan inside, a brown dust network in short spiral pieces over the
+inner two thirds, a grey-white outer disc with white flecks, a soft edge. It is the photograph's kind of picture.
+Still far: the network is coarser and more brushed where the photograph's is fine and feathered; the white clumps read
+as dashes, and the photograph's outer left is full of white-blue star clouds ours lacks; the disc is rounder than the
+photograph's (the template's inclination); the nucleus is a little cold.
+
+**The streaky texture** under both is the model's own light in the march (the synthetic layer's maps); it stays with
+every illustrative feature switched off (tuner N's test) and is BUILD_VIII section 6's second item.
+
+The frames: `docs/pictures/s105/` (committed). The sheets beside the goals, the tuners' rounds and the reviewer's
+captures are local, under `docs/goals/` in the session's worktrees (never committed: the goal pictures are not ours).

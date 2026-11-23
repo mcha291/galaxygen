@@ -1,57 +1,63 @@
-# BRIEF — after S103: the reading row (D273); `batch-q` and the held head `batch-q-lanes` await the owner
+# BRIEF — after S105: the illustrative look (D275, D276; BUILD_VIII rows 105-110); in `main`; the owner's eye is next
 
-**First, plainly: the reading found no source for a lane's share of the gas, its offset from the stars' crest or its
-continuity, so the largest thing a viewer misses - the dark lanes - cannot be built by the project's own rule (D1).**
-A lane's width is measured (20-150 pc, a handful of grand designs) and its darkness (V transmission about 0.5); the
-rest is not, and no closed form gives a thin lane (`READING_LANES.md`). Whether to draw one anyway is the owner's (1).
+**First, plainly: the viewer can now draw both goal pictures' kind of picture.** Under the new **illustrative look**
+(the default since this close) the Milky Way is a blue barred spiral on black - a cream bar with two thin lanes, pale
+blue arm bands from the bar's ends, broken red-brown lanes along the arms, pink regions strung on them, a soft edge -
+and NGC 4414 is an inclined warm disc lying as the photograph's does: a pale nucleus, cream and tan inside, a brown
+dust network in short spiral pieces, a grey-white outer disc with white flecks. **Still far:** the Milky Way's disc
+fills about 70 % of the frame against the goal's 90 %, its arms are the model's (fewer, broader), the goal's fine pale
+grain is not reached; NGC 4414's network is coarser and more brushed than the photograph's, its white clumps read as
+dashes and its outer left lacks star clouds; a streaky brushed texture lies under both (the model's own light). The
+two frames: `docs/pictures/s105/`. Words and numbers: `READING_PICTURES.md` Part S105. The **physical look** is the
+viewer as it was, byte for byte (the nine committed frames; seven more states compared against `main`'s own build).
 
-**What the frames show (S102's verdict, unchanged; S103 moved no frame).** Batch Q moved nothing a viewer sees against
-the goal pictures: the Milky Way a tan disc with a white ball, no pink knot strings, no lanes; NGC 4414 a white ball
-over a faint tan ellipse, dark flecks, no brown lane network. The held head (#234's (ii)): no dark lanes in any frame.
+## How to see it and tune it
+- Pull `main`, run the API and `npm --prefix frontend run dev`, hard-reload (Ctrl+Shift+R). The **illustrative** button
+  sits beside **physics only**; a browser that never chose lands on illustrative.
+- Tuning panel, group **Illustrative**: the sliders by feature (grade, edge, speckle, framing, regions, lanes, arms,
+  flocculent network), each block collapsible, a filter box above ("bar", "pink", "lane"). A slider that rebuilds a map
+  shows "rebuilding" and settles 250 ms after the last move (the network's takes about a second). The copy box and
+  "load a combination" carry the look and every value; settings are kept per template per look.
+- Frames beside the goals: start `uv run python -m galaxy.api --port 8031 --client frontend/dist --bundles <dir>`, then
+  `npm --prefix frontend run build`, `GALAXYGEN_E2E_PORT=8031 npm --prefix frontend run look`,
+  `uv run python tools/goal_sheet.py --frames docs/goals/look --out docs/goals/look` (list: `frontend/e2e/look.json`).
 
-**The state (2026-11-17).** S103 = BUILD_VII row 105, the reading row, documents only, on `session-103` from
-`batch-q`'s closing head fccecee (tag s102). Three files new (`READING_LANES.md`, `READING_DISC_EDGE.md`,
-`READING_ROW_105.md`), `READING_HII_SIZES.md` Part S103. Sourced for batch R: #235 (the region grown at today's ionizing
-rate, a defect - grow it at the rate's history), #226 (the cliff is the gas's own: the infall tail's hard end; Wang et
-al.'s outer HI profile, a lane that measures first), #86 (Spera et al. 2015), #83 (σ_e 0.34), #96, #135 (M/L_K a 2.1x
-miss), #162, #103's check. #131 permanent; #118 (c) closed by the reading. **The masers' question (D272's item (b)) is
-answered**: the match improved (0.18 -> 0.13 σ gas, 0.19 -> 0.15 young stars); the null widened because the field has
-fewer crests - nothing is owed before `batch-q` -> `main` is asked for. **`batch-q` MERGED into `main`** (d47c19b91768, 2026-11-18; hash
-5a862a70...; the owner's word; run 44108837489 green, 1860 passed). **115 open = 50 + 65, 104 discharged**; next #237, D274.
+## The state (2026-11-23)
+S105 on `session-105` from `main` c6d7b15, merged into `main` at its close (tag `s105`; MANUAL_TODO row 105). Twelve
+agents (ten Opus, two Fable for the lanes and NGC 4414), a Fable lead. Gates on the closing head: vitest 775 passed,
+both typechecks, the build, the picture test (the nine frames byte for byte), the docs tests; the full suite
+dispatched on GitHub, not run here. **No byte under `model/galaxy` moved** (hash 5a862a70...). The register is as it
+was on `main` (115 open = 50 + 65, 104 discharged). Next numbers: #238, D277 (#237 and D274 are `batch-r`'s).
 
-## The owner's choices now (recommendations are the gate's, each re-rulable)
-1. **#234, the lanes:** (i) no lane - the model keeps what is measured, the goals' lanes declared outside it -
-   **recommended**; or (ii) a disclosed lane (width 20-150 pc, a share with no source, zero offset: picture-driven).
-2. **`batch-q` -> `main`: DONE** (2026-11-18). **The held head (#234):** the gate recommends NOT taking (ii) for the
-   picture's sake; with (1)'s (i) it stays held or is dropped.
-3. **#149:** pin NGC 4414's arms' inner radius to Herrera-Endoqui et al.'s innermost segment, 1.66 kpc - **recommended**.
-4. **#88:** (i) WAF17's own pair (row 31 reads 0.594 against 0.6 until #89) - **recommended**; (ii) Maoz & Graur's.
-5. **#97 with #98:** (i) Baumgardt & Makino for clusters older than ~9 Gyr, Lamers et al.'s time for the disc -
-   **recommended** (chosen after S34's measurement, disclosed); (ii) the model as it is.
-6. **#129:** (i) permanent - **recommended**; (ii) measure it from the PHANGS-ALMA maps (a download).
-7. **#95** joins the clustering questions (#80, #233, #223): the window is the clusters', the clouds' target borrowed.
-8. **#231: do not order it.** **#184:** (i) the clouds' 34 pc layer - recommended. Adopt BUILD_VII or re-order it.
-9. Still owed from S101: #80 with #233 ((i) Table 4's bar); #223 / #233 / #224 (nine seeds); #84 / #100 (PARSEC);
-   #85; #225 ((i)); #92, #94, #138, #153; #107, #179; #203-#205; the looks #156, #202; #227's fallback; the cadences.
+## Rulings taken on recommendation — yours to re-rule (`BUILD_VIII.md` section 4 is the table)
+1. Rule D5 and `RENDER_PHYSICS.md` section 8 are amended for the illustrative layer alone (your word, D275).
+2. Cut from `main`; `batch-r` (S104) left unmerged and untouched. 3. Viewer-only sessions merge into `main` at close.
+4. **The default look is illustrative** (`DEFAULT_LOOK` in `frontend/src/galaxy/tuning.ts`, one line).
+5. The model's cloud flecks are off under the illustrative look; lanes and the network are drawn in their place.
+6. Brown lanes are a drawing over the picture (the `veil`), not dust in the model's layer. 7. The register frozen.
+8. The illustrative frames are not pinned by the picture test. 9. One session for six rows. 10. BUILD_VII parked.
 
-## What the next session does
-1. Done: D273 entered, `s103` tagged on `session-103`'s closing head a066330 (MANUAL_TODO row 103).
-2. `batch-q` is merged. On the owner's word: `batch-r` (S104, D274, green, stacked on it); the rulings above.
-3. Then batch R = S104 (BUILD_VII rows 106-107): #235, #226 (measure first), #86, #83, #96, #135, #162, #103's check -
-   every coefficient re-checked against the PDF before it is built (every S103 number came through an extracting fetch).
+## Known defects of the new layer (none in the physical look)
+- A look switch while a generation is pending blanks the field until it ends (the canvas remounts on the stand).
+- An intermittent burst of `glGetProgramiv` warnings round a canvas remount; warnings only, frames unchanged; untraced.
+- The network's map rebuilds on the main thread in 0.7-1.0 s per shaping change (once per drag since the debounce).
 
-## Rulings taken on recommendation — the owner may re-rule any
-- At S97-S102's gates: as BRIEF said at S102 (no default moved; #80 over #233; #95 not merged; #101, #147 permanent;
-  #232's c_0, the cap, the natal density; D219's pitch clause; #234's weak arms held; #136, #183 to batch R).
-- At S103's gate: #131 permanent; #118 (c) closed on Byler's thin-shell sentence; #103's lifetime clause permanent,
-  its Sedov clause closed; #95's compact-cluster row not chosen (B5); #226's first ruling corrected on a second reading.
+## What the next session does (`BUILD_VIII.md` section 6, in order of what a viewer gains)
+1. Your own tuning pass, or your list of what looks wrong: every value is a slider and a per-template default.
+2. The streaky texture under both pictures: a smoothing or a switch for the model's synthetic maps under this look.
+3. The Milky Way: fill the frame; the arms' fine grain; the regions' confetti. NGC 4414: a finer, feathered network;
+   star clouds in place of dashes; the inclination. Then the two defects above and the map in a worker.
 
-## The rules said again, and the traps (S72-S103's stand)
-- **Two-thirds**: a lead past two-thirds of its context hands back. **Commit each item when green** (`git commit -F`).
-- The runner's suite once per head (`gh run view`); the `machine_pinned` nodes a change touches read by name.
-- Never the full suite, `verify_clone` or the pins unprompted (D246); one single-threaded pytest at a time, `tasklist`
-  first; no backtick in a shell string; any byte under `model/galaxy` moves the hash.
-- `--collect-only -q` prints no ids, an empty id file runs all (S94); one change per experiment; defaults fixed (D227).
-- A lane re-pins nothing outside its own files (S99); a re-pin pass is briefed in thirds on disjoint files (S100).
-- A held head is never merged on a recommendation (BUILD_VII §1); a frames-only branch is never gated or merged.
-- A number from an extracting fetch is checked against the PDF before a build (S103).
+## Parked, waiting on your word (nothing here touched them)
+`batch-r` 699629c (S104, D274: green, stacked on `batch-q`, one stage-B re-read of `test_s100_bar_length` owed before
+its merge; it now also needs `main` merged into it, and D274 enters before D275); the held heads `batch-q-lanes` and
+`q-231`; BUILD_VII's remaining rows; your owed rulings (#226, #234, #149, #88, #97/#98, #129, #184, the clustering
+questions, S101's list): `git show batch-r:docs/BRIEF.md` is the list. Nine worktrees are on disk
+(`galaxygen-s105`, `-s105-b`, `-s105-c` and the older ones): the app denies their removal; yours to remove or allow.
+
+## The rules said again, and the traps
+- Under `physical` nothing of the layer runs; a change that moves a committed frame is a defect, never a re-capture.
+- The march has NO spare sampler: a feature's map is a channel of the one shared map (`index.ts`'s header).
+- Capture the MERGED head before trusting it; every lane's gates were green while the field was black.
+- Never the full suite here (D246): `gh workflow run ci.yml --ref <branch>`. No backtick in a shell string.
+- Each agent a scratch directory of its own; commit messages through a file; commit at each working step.
