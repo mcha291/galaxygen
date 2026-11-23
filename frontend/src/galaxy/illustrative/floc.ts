@@ -110,7 +110,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "netArc", label: "dust on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.75 }, about: "How far the threads gather into broad arcs on the drawn spiral (lighter disc between); 0 even. Illustrative." },
   { key: "arcWidth", label: "arc width", min: 100, max: 3000, step: 10, unit: "pc", default: 500, perTemplate: { ngc_4414: 400 }, about: "A broad arc's width across the spiral, parsecs. Illustrative." },
   { key: "arcStretch", label: "arc length", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 5 }, about: "A broad arc's length along the spiral over its width. Illustrative." },
-  { key: "netDepth", label: "dust drawn", min: 0, max: 4, step: 0.01, unit: "×", default: 1.6, perTemplate: { ngc_4414: 0 }, about: "The plane style's drawn depth, in full filaments (the network depth scales it again, without a rebuild). Illustrative." },
+  { key: "netDepth", label: "dust drawn", min: 0, max: 4, step: 0.01, unit: "×", default: 1.6, perTemplate: { ngc_4414: 1.6 }, about: "The plane style's drawn depth, in full filaments (the network depth scales it again, without a rebuild). Illustrative." },
   // S106 second pass (C3): the plane style's threads and the dust's amount by place.
   { key: "filSpacing", label: "thread spacing", min: 40, max: 1500, step: 5, unit: "pc", default: 220, perTemplate: { ngc_4414: 200 }, about: "The plane style: the spacing of the dust threads across the spiral, parsecs (the finer wisps at half of it). Illustrative." },
   { key: "filRun", label: "thread run", min: 1, max: 30, step: 0.1, unit: "×", default: 8, perTemplate: { ngc_4414: 6 }, about: "How many times longer along the spiral than their spacing the threads' noise cells are: longer, straighter arcs. Illustrative." },
@@ -136,7 +136,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The veil's depth saturates softly toward this many magnitudes: the thickest dust stays a deep red-brown, never black. Colour for appearance.",
   },
   {
-    key: "nucleus", label: "nucleus cream", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.3 },
+    key: "nucleus", label: "nucleus cream", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
     about: "A cream-yellow tint over the nucleus's light (its march draws a blue-cyan core under the stretch): 0 none, 1 full. Colour for appearance.",
   },
   // S106: the star clouds (flocClouds.ts, FlocClouds.tsx), a points layer of the feature's own, drawn in the plane style.
@@ -171,7 +171,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "tangle", label: "tangle", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far the threads' plane is pushed about (exactly, over a few spacings), as a share of their spacing: the threads diverge, cross and merge; 0 none. Illustrative." },
   { key: "wispWidth", label: "wisp width", min: 0.1, max: 2, step: 0.01, unit: "×", default: 0.75, about: "The wisps' width as a share of a thread's. Illustrative." },
   { key: "wispRun", label: "wisp run", min: 0.1, max: 2, step: 0.01, unit: "×", default: 0.7, about: "The wisps' run as a share of the threads'. Illustrative." },
-  { key: "meshDepth", label: "dust mesh", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1.7 }, about: "The plane style: the depth of a tangled mesh of dust filaments on the edges of cells stretched along the spiral (they fork and join at angles), in full threads; 0 none. Illustrative." },
+  { key: "meshDepth", label: "dust mesh", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.9 }, about: "The plane style: the depth of a tangled mesh of dust filaments on the edges of cells stretched along the spiral (they fork and join at angles), in full threads; 0 none. Illustrative." },
   { key: "meshCell", label: "mesh cell", min: 60, max: 2000, step: 10, unit: "pc", default: 300, perTemplate: { ngc_4414: 220 }, about: "A mesh cell's size across the spiral, parsecs: the cream light between the filaments. Illustrative." },
   { key: "meshWidth", label: "mesh filament", min: 10, max: 300, step: 1, unit: "pc", default: 40, perTemplate: { ngc_4414: 32 }, about: "A mesh filament's typical full width at half depth, parsecs (each edge between half and 1.7 of it). Illustrative." },
   { key: "meshStretch", label: "mesh stretch", min: 1, max: 2.5, step: 0.05, unit: "×", default: 1.8, about: "How many times longer along the spiral than across a mesh cell is. Illustrative." },
