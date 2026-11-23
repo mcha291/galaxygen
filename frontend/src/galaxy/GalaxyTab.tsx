@@ -69,6 +69,7 @@ import {
 import { illMeasure, illNow } from "./illustrative/feature";
 import { illArrivals, illJobsPending, illMapFailure, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
+import { base as baseFeature, regionExtinction } from "./illustrative/base";
 import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
 import { TuningPanel, useDebounced } from "./TuningPanel";
@@ -762,6 +763,9 @@ export function GalaxyTab({
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
   // The roll and the azimuth's turn ride with the scale, settled the same way ("scale,roll,turn").
   const framingParams = illustrative ? paramsOf(framingFeature, illParams) : null;
+  // S108 (J3): the region regime's clouds under the illustrative look, their extinction taken to base.nearClouds (the
+  // grade lifts their dark spheres into fog balls at the nucleus); the physical look's strength as it is.
+  const regionClouds = regionExtinction(look.extinctionStrength, illustrative ? paramsOf(baseFeature, illParams) : null);
   const framingLive = framingParams
     ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)},${standTilt(framingParams)}`
     : "1,0,0,0";
@@ -1051,7 +1055,7 @@ export function GalaxyTab({
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={look.extinctionStrength} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} extinction={regionClouds} />
         )}
       </GalaxyView>
       </div>

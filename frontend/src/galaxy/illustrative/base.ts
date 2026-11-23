@@ -80,6 +80,10 @@ export const base: IllFeature = {
       key: "coreRadius", label: "core radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1,
       about: "Where the core clearing ends, kpc (a smoothstep from the centre). Illustrative.",
     },
+    {
+      key: "nearClouds", label: "near clouds", min: 0, max: 1, step: 0.01, unit: "×", default: 0,
+      about: "Up close (the region regime, RegionVolume), the region's clouds' extinction taken to this share under the look (their kappa times it: a transmission T becomes T^share, for the field and the points alike) - the grade lifts the clouds' dark spheres into beige-grey fog balls at the nucleus; 1 the clouds as the physical look draws them, 0 none (the default: even at a quarter the deep clouds stay round dark balls, nothing of them reads as dust in this look; the field march keeps its own dust). Display-only (S108).",
+    },
     // S108: the grazing handover (index.ts GRAZE_DEFAULT): one place for every feature.
     {
       key: "grazeFrom", label: "edge-on handover from", min: 30, max: 90, step: 0.5, unit: "°", default: GRAZE_FROM,
@@ -267,3 +271,11 @@ export function baseCore(r: number, core: number, radius: number): number {
 
 /** The gas map's value after the base, for a map value g already read the model's way (grain and depth only). */
 export const baseGas = (g: number, grain: number, depth: number): number => (1 + (g - 1) * grain) * depth;
+
+/**
+ * The region regime's cloud extinction (S108, J3; GalaxyTab's RegionVolume `extinction`): the Tuning panel's strength,
+ * times base.nearClouds under the illustrative look only (null params: the physical look, the strength as it is).
+ */
+export function regionExtinction(strength: number, baseParams: Readonly<Record<string, number>> | null): number {
+  return baseParams ? strength * (baseParams.nearClouds ?? 1) : strength;
+}
