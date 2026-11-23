@@ -119,9 +119,9 @@ export default function SkyLayer({ params }: IllLayerProps) {
 
   const perFrame = params.stars ?? 0;
   const seed = Math.round(params.seed ?? 1);
-  const slope = params.slope ?? 1.1;
-  const range = params.range ?? 80;
-  const warm = params.warm ?? 0.12;
+  const slope = params.slope ?? 0.8;
+  const range = params.range ?? 200;
+  const warm = params.warm ?? 0.15;
   const blue = params.blue ?? 0.7;
   const count = sphereCount(perFrame, fov, aspect);
 
@@ -204,7 +204,7 @@ export default function SkyLayer({ params }: IllLayerProps) {
       const u = (stars.material as ShaderMaterial).uniforms;
       const buffer = gl.getDrawingBufferSize(BUFFER);
       u.skyPx.value = buffer.y / SIZE_AT;
-      u.skyBright.value = p.bright ?? 0.07;
+      u.skyBright.value = p.bright ?? 0.018;
       u.skySize.value = p.size ?? 0.55;
       u.skyGlow.value = p.glow ?? 0.25;
     }

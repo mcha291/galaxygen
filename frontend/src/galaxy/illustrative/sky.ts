@@ -121,19 +121,19 @@ export function buildSkyStars(s: SkyShape): SkyStars {
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "stars", label: "field stars per frame", min: 0, max: 600, step: 1, unit: "", default: 0, perTemplate: { ngc_4414: 160 },
+    key: "stars", label: "field stars per frame", min: 0, max: 600, step: 1, unit: "", default: 0, perTemplate: { ngc_4414: 260 },
     about: "Foreground stars of our own Galaxy, fixed on the sky: how many fall in the template's frame at its lens (most of them faint). 0 none. Illustrative: no model star.",
   },
   {
-    key: "bright", label: "field star brightness", min: 0.001, max: 2, step: 0.001, log: true, unit: "", default: 0.07, perTemplate: { ngc_4414: 0.07 },
+    key: "bright", label: "field star brightness", min: 0.001, max: 2, step: 0.001, log: true, unit: "", default: 0.018, perTemplate: { ngc_4414: 0.018 },
     about: "The faintest field star's light (linear, summed over its pixels, before the grade). Illustrative.",
   },
   {
-    key: "range", label: "field star spread", min: 1, max: 1000, step: 1, log: true, unit: "×", default: 80, perTemplate: { ngc_4414: 80 },
+    key: "range", label: "field star spread", min: 1, max: 1000, step: 1, log: true, unit: "×", default: 200, perTemplate: { ngc_4414: 200 },
     about: "The brightest field star over the faintest. Illustrative.",
   },
   {
-    key: "slope", label: "field star law", min: 0.2, max: 3, step: 0.01, unit: "", default: 1.1, perTemplate: { ngc_4414: 1.1 },
+    key: "slope", label: "field star law", min: 0.2, max: 3, step: 0.01, unit: "", default: 0.8, perTemplate: { ngc_4414: 0.8 },
     about: "The brightness law's index: smaller has more bright stars, larger many faint and a handful bright. Illustrative.",
   },
   {
@@ -145,7 +145,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The share of the brightest stars' light spread in a soft glow four times their size (none for the faint). Illustrative.",
   },
   {
-    key: "warm", label: "warm field stars", min: 0, max: 1, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.12 },
+    key: "warm", label: "warm field stars", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { ngc_4414: 0.15 },
     about: "The share of orange-red field stars; the rest between white and blue-white. Colour for appearance.",
   },
   {
