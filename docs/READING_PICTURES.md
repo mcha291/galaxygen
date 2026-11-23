@@ -787,3 +787,18 @@ glance. What remains is texture and finish at close range, not composition (`BUI
 
 The frames: `docs/pictures/s106/` (committed; sha256 94e84028... and 936c3977..., in D277). The builders' sheets and
 captures are local, under `docs/goals/` in the session's worktrees (never committed).
+
+## 32. A second reader (the documents' writer, who built none of it)
+
+The writer of S106's close documents looked at the two committed frames beside the two goal pictures and measured them
+(section 30). What the lead's words in section 31 do not say:
+
+- **The Milky Way's outer arms read almost as concentric rings**, more tightly wound than the goal's. The yardstick
+  agrees: A₂ 0.125, below S105's 0.143, with A₃ 0.133 above it, where the goal is m = 2 (A₂ 0.194, A₃ 0.059).
+- **The bar is a saturated yellow**, brighter than the goal's pale cream, and its lane is one straight line along its
+  axis.
+- **The pink regions sit at near-regular intervals along the arms**, like beads on a string.
+- **NGC 4414's dust reads as short curled brush-strokes**, more uniform across the disc than the photograph's lanes.
+  Its dark fraction is 0.229, further from the goal's 0.157 than S105's 0.190 was.
+- **A grainy fringe of noise sits outside NGC 4414's rim at the upper left**; it is more visible than "the star
+  clouds' points scatter a little past the rim" suggests.

@@ -86,6 +86,7 @@ restarted on another model rather than resumed into the same overload (D277).
 | 17 | The concurrency at S106 | three builders at once most of the session (ruling 7 says two), on a fresh window; none died of the quota; the two Fable builders died of HTTP 529 and were replaced by Opus (D277) |
 | 18 | S106's frames | committed as plain pictures in `docs/pictures/s106/`; still not pinned (D277) |
 | 19 | `floc.nearAz`, `floc.cloudAz` | NGC 4414's near-side dust bias and rich star-cloud sectors are galactocentric azimuths tuned to the template's stand: they do not follow another camera (D277) |
+| 20 | Whether #238 and #239 enter the register | #238 and #239 are two findings of S106, NOT YET ENTERED in the register: the numbers #238 and #239 are reserved for them; entering them needs a two-line change to tests/test_audit.py (the pinned counts 115 -> 117 and the carried row), which waits for the owner's word (D277) |
 
 ## 5. What done means
 
@@ -102,13 +103,18 @@ has still not ruled** (Part S106).
 1. **The owner's own tuning pass** on the live sliders (now about 300; the Tuning panel's Illustrative group, by
    feature, with a filter).
 2. **The owner's ruling on #238** (the dust transmission's float32 underflow: the physical fix and the re-capture of
-   the four NGC 4414 committed frames) **and on #239** (the model's central extinction on NGC 4414).
-3. **The Milky Way at close range**: the arms' patchy cyan light (ours are smooth bands with points on them); large
-   ragged region complexes; branching lanes; the first arm leaving the bar's ends clearly; the stray blue blob right of
-   the bar (the model's young clumps on the inner rings) and the lone region at a faded outer arm end.
-4. **NGC 4414 at close range**: lanes of many widths; crisp star fields between the dust; the rim's dust brown; a
-   sharper nucleus; the cloud discs (tauC) that the core's thinning does not reach read as dark blots at close face-on
-   stands.
+   the four NGC 4414 committed frames) **and on #239** (the model's central extinction on NGC 4414), and the owner's OK
+   to enter both in the register (ruling 20).
+3. **The Milky Way at close range**: the arms' patchy cyan light (ours are smooth bands with points on them); the outer
+   arms read almost as concentric rings, more tightly wound than the goal's (A₂ 0.125, below S105's 0.143, with A₃
+   0.133 above it, where the goal is m = 2); the bar a saturated yellow brighter than the goal's pale cream, its lane
+   one straight line; large ragged region complexes (ours sit at near-regular intervals, like beads on a string);
+   branching lanes; the first arm leaving the bar's ends clearly; the stray blue blob right of the bar (the model's
+   young clumps on the inner rings) and the lone region at a faded outer arm end.
+4. **NGC 4414 at close range**: lanes of many widths (ours read as short curled brush-strokes, more uniform than the
+   photograph's, and the dark fraction 0.229 is further from the goal's 0.157 than S105's 0.190 was); crisp star
+   fields between the dust; the rim's dust brown, and no grainy fringe outside the rim (upper left); a sharper
+   nucleus; the cloud discs (tauC) that the core's thinning does not reach read as dark blots at close face-on stands.
 5. **The cost**: the map's rebuild with NGC 4414's threads on (measure it; a worker needs an asynchronous map
    contract); three 5-second vitest tests (`hstPsf`, `sphere`, `floc`) time out when the machine is loaded (they pass
    alone and with `--maxWorkers=4`).
