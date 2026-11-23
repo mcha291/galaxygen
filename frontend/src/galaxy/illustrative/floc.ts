@@ -47,7 +47,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { ngc_4414: 1 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
-  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.0 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
+  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.25 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0 }, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
     key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
@@ -63,7 +63,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.6 }, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
   {
-    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.25 },
+    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.2 },
     about: "A cream tint over the inner disc's light, fading outward: the old disc of the photograph. Colour for appearance.",
   },
   { key: "warmRadius", label: "warmth radius", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 4.5, perTemplate: { ngc_4414: 3 }, about: "The radius at which the warm tint has fallen to 1/e, kpc. Colour for appearance." },
@@ -210,7 +210,7 @@ const CONTROLS: readonly IllControl[] = [
   // broken into pieces of varied strength - in place of the noise's broad bands; inside them a pale veil with sparse dark
   // cores, and wisps feathering off their edges at an angle. Drawn in the march (no rebuild).
   { key: "laneForm", label: "narrow dust lanes", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "The plane style's arcs: 0 the broad arcs of a spiral noise; 1 many narrow lanes along an open spiral, broken into pieces. Illustrative." },
-  { key: "laneSpacing", label: "dust lane spacing", min: 100, max: 2000, step: 10, unit: "pc", default: 450, perTemplate: { ngc_4414: 1000 }, about: "The narrow lanes' spacing across the spiral at half the network's outer radius, parsecs (in proportion to the radius). Illustrative." },
+  { key: "laneStep", label: "dust lane spacing", min: 100, max: 2000, step: 10, unit: "pc", default: 450, perTemplate: { ngc_4414: 1000 }, about: "The narrow lanes' spacing across the spiral at half the network's outer radius, parsecs (in proportion to the radius). Illustrative." },
   { key: "lanePitch", label: "dust lane pitch", min: 0.3, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 1.3 }, about: "The narrow lanes' pitch as a multiple of the drawn pitch (the network's): higher, a more open spiral. Illustrative." },
   { key: "laneCrest", label: "dust lane width", min: 0.05, max: 0.8, step: 0.01, unit: "×", default: 0.3, perTemplate: { ngc_4414: 0.3 }, about: "A narrow lane's full width at half depth as a share of the spacing (a soft gaussian edge). Illustrative." },
   { key: "laneWander", label: "dust lane wander", min: 0, max: 2, step: 0.01, unit: "×", default: 0.6, perTemplate: { ngc_4414: 0.8 }, about: "How far a lane wanders across the spiral, as a share of the spacing (lanes come near, part and join). Illustrative." },
@@ -310,7 +310,7 @@ function meshUniforms(p: IllParams, frame: IllFrame | null): Record<string, unkn
 function laneUniforms(v: (k: string) => number, outer: number, pitch: number): Record<string, unknown> {
   const lp = Math.min(70, Math.max(2, (pitch * 180) / Math.PI * v("lanePitch"))) * (Math.PI / 180);
   const r = 0.5 * outer;
-  const lanes = Math.max(2, Math.round((2 * Math.PI * r * Math.tan(lp)) / (Math.max(v("laneSpacing"), 20) * 1e-3)));
+  const lanes = Math.max(2, Math.round((2 * Math.PI * r * Math.tan(lp)) / (Math.max(v("laneStep"), 20) * 1e-3)));
   const branch = Math.max(2, Math.round(lanes * 0.6));
   return {
     illFlocLaneA: [v("style") >= 0.5 && v("laneForm") >= 0.5 ? 1 : 0, lanes, Math.tan(lp), Math.max(0.02, v("laneCrest"))],

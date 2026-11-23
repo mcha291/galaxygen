@@ -386,8 +386,35 @@ describe("the dust gathered on arcs (S107)", () => {
     expect((lattice.illFlocGate as number[])[0]).toBe(0);
     const glsl = floc.glsl!;
     expect(glsl).toMatch(/illFlocShape\(illFlocRead\(rp\)\.x\) \* \(illFlocStyle > 0\.5 \? illFlocGateAt\(rp\)/);
-    expect(glsl).toContain("float gate = illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0;");
+    expect(glsl).toContain("(illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0);");
     expect(glsl).toContain("if (illFlocStyle > 0.5 && av > 0.0) av *= gate;");
+  });
+});
+
+describe("the narrow dust lanes (S107 NGC3)", () => {
+  it("are uniforms (no rebuild), off on the Milky Way and outside the plane style, many lanes a turn for NGC 4414", () => {
+    const context = { template: "ngc_4414", frame: FRAME };
+    const [plane] = floc.map!.build(P4414, context);
+    const moved = { ...P4414, laneStep: 300, lanePitch: 2, laneCrest: 0.5, laneWander: 1.5, lanePiece: 800, laneGaps: 0.6, laneVary: 0.2, laneBranch: 1, laneVeil: 1, meshLight: 0.1, coreShare: 0.5, coreSize: 60, coreDepth: 4, laneWisps: 2, wispAngle: 60, grainReach: 0.6 };
+    expect(floc.map!.build(moved, context)[0]).toBe(plane);
+    const mw = floc.uniforms!(paramsOf(floc, illDefaults("milky_way")), { template: "milky_way", frame: FRAME });
+    expect((mw.illFlocLaneA as number[])[0]).toBe(0);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), context);
+    const a = ngc.illFlocLaneA as number[];
+    expect(a[0]).toBe(1);
+    expect(Number.isInteger(a[1])).toBe(true);
+    expect(a[1]).toBeGreaterThanOrEqual(8);
+    expect(Number.isInteger((ngc.illFlocLaneD as number[])[0])).toBe(true);
+    const lattice = floc.uniforms!({ ...paramsOf(floc, illDefaults("ngc_4414")), style: 0 }, context);
+    expect((lattice.illFlocLaneA as number[])[0]).toBe(0);
+    // Narrower spacing, more lanes a turn.
+    const dense = floc.uniforms!({ ...paramsOf(floc, illDefaults("ngc_4414")), laneStep: 300 }, context);
+    expect((dense.illFlocLaneA as number[])[1]).toBeGreaterThan(a[1]);
+    // The grain's reach: the outer radius times grainReach.
+    expect(ngc.illFlocGrainR as number).toBeCloseTo(11 * 0.8, 6);
+    const glsl = floc.glsl!;
+    expect(glsl).toContain("vec2 illFlocLanes(vec2 rp) {");
+    expect(glsl).toContain("float jm = mod(j, n);");
   });
 });
 
