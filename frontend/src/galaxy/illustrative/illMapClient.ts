@@ -14,7 +14,7 @@
 // The sparkle's points (sparkleJob.ts) go the same way: SparkleLayer asks (requestSparkle) and draws the last points it
 // had until the new ones arrive; built here where there is no worker.
 
-import { type IllFrame, illMeasure, illNow, seedMemo } from "./feature";
+import { ILL_MAP, type IllFrame, illMeasure, illNow, seedMemo } from "./feature";
 import type { Encoded, JobAnswer, JobMessage, LanesSpec, MapRequest, Seed, SparkleRequest } from "./illMapJob";
 import { type SparklePoints, sparklePoints } from "./sparkleJob";
 
@@ -171,6 +171,21 @@ const decode = (e: Encoded): unknown => {
 };
 const SKIP: unique symbol = Symbol("not held");
 
+const PLANE_BYTES = ILL_MAP.width * ILL_MAP.height;
+const isPlane = (v: unknown): boolean => ArrayBuffer.isView(v) && v.byteLength >= PLANE_BYTES;
+/** A map plane, or an object one of whose own values is one (arms' planes: share, mean). */
+const carriesPlane = (v: object): boolean => isPlane(v) || (!ArrayBuffer.isView(v) && Object.values(v as Record<string, unknown>).some(isPlane));
+
+/** How many values are held by ref for later seeds' inputs, and their map planes' bytes (the review's test). */
+export function illHeldByRef(): { count: number; planeBytes: number } {
+  let planeBytes = 0;
+  for (const v of byRef.values()) {
+    if (isPlane(v)) planeBytes += (v as ArrayBufferView).byteLength;
+    else for (const p of Object.values(v as Record<string, unknown>)) if (isPlane(p)) planeBytes += (p as ArrayBufferView).byteLength;
+  }
+  return { count: byRef.size, planeBytes };
+}
+
 /** A map answer's seeds put in the features' caches, in the order they were built (an input may name an earlier one's value). */
 export function applySeeds(seeds: readonly Seed[]): void {
   for (const seed of seeds) {
@@ -181,9 +196,14 @@ export function applySeeds(seeds: readonly Seed[]): void {
     }
     counts.seeded += 1;
     if (seed.value && typeof seed.value === "object" && seed.ref > 0) {
-      byRef.set(seed.ref, seed.value);
       refOf.set(seed.value, seed.ref);
-      while (byRef.size > 64) byRef.delete(byRef.keys().next().value as number);
+      // S107 review: a value that is or carries a map plane (7.2 MB each) is not kept by ref - no memo takes a plane as
+      // an input (a seed naming one is skipped and built here, as any not held), and the last 64 kept strongly held up
+      // to 64 superseded planes (460 MB and more) alive after their memos had moved on.
+      if (!carriesPlane(seed.value)) {
+        byRef.set(seed.ref, seed.value);
+        while (byRef.size > 64) byRef.delete(byRef.keys().next().value as number);
+      }
     }
   }
 }
