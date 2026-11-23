@@ -60,12 +60,23 @@
 //               last one's value). The march's screenGas and FluxPoints' gasAt, so the points' dust follows the field's;
 //               read only while the map is drawn ("gas fluctuation in the march" on, the layer on). Its function is
 //               defined in the feature's `noiseGlsl`.
+//     points    float f(vec2 rp) (S108, the points' edge): a multiplier on every point's light FluxPoints draws (the
+//               star-first mode's stars and clusters, the region's stars, the knots) at the point's own midplane place
+//               rp. Multiplied over features into illPoints(rp); read in FluxPoints' vertex shader only (the march's
+//               light is the edge hook's), so the points fade with the field's taper.
 //     depth     vec3 f(vec3 d, vec2 rp) (S106, the base's mend and core): the ring texture's published face-on diffuse
 //               depth per channel d (row 0 of `rings`, as read at rp, before the placement, the clouds' share and the
 //               extinction strength multiply it) made the depth the dust's layer carries. Chained over features into
 //               illDepth(d, rp). The march's tau (its own patch, on the tau line; the layer's dustAv is added after it)
 //               and FluxPoints' face (on the dustAv patch's anchor), so the points' dust takes the same. Defined in the
 //               feature's `noiseGlsl`: it may read `rings`, `rLo` and `cloudExt`, which only those two shaders declare.
+//     graze     (S108, the grazing handover; GRAZE_DEFAULT below) not a hook: every shader the layer's GLSL is in
+//               carries `float illGraze`, 1 from face-on to base.grazeFrom off the disc's axis, 0 from base.grazeTo
+//               (per ray in the march, per point's sight line in FluxPoints and the regions). The composition fades a
+//               hook's value to its identity by it where the feature's `graze` (or the kind's default) says "fade"
+//               (the veil and the light by default); a feature's GLSL may read illGraze for its own removals of the
+//               model's physics (base: the dust's placement, the grain, the core; edge: the bulge's dimming; lanes and
+//               floc: the ink handed to the dust's own layer). Exactly the S107 values while illGraze is 1.
 //   noiseGlsl  (S106) global-scope GLSL put only where the randomness layer's include (noise.glsl.ts) is - the march's
 //              fragment and FluxPoints' vertex shader, after every feature's `glsl` - so it may call layerGasMap,
 //              layerGasSum and the rest and read their uniforms. Other layers' shaders (runtime.glsl: the knots' layer)
@@ -92,13 +103,15 @@ import { ClampToEdgeWrapping, DataTexture, LinearFilter, RGBAFormat, RepeatWrapp
 import { arms } from "./arms";
 import { base } from "./base";
 import { edge } from "./edge";
-import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllParams, illMeasure, illNow, releaseMemos, wouldBuild } from "./feature";
+import { ILL_MAP, type IllContext, type IllControl, type IllFeature, type IllFrame, type IllParams, illMeasure, illNow, releaseMemos, wouldBuild } from "./feature";
 import { floc } from "./floc";
 import { illMapAnswered, illMapFailed, illMapKey, releaseIllJobs, startIllMap } from "./illMapClient";
 import { framing } from "./framing";
+import { POINTS_PLACE_GLSL } from "./pointsPlace";
 import { grade } from "./grade";
 import { knots } from "./knots";
 import { lanes } from "./lanes";
+import { points } from "./points";
 import { sky } from "./sky";
 import { speckle } from "./speckle";
 
@@ -110,7 +123,7 @@ export type Look = "physical" | "illustrative";
 export const LOOKS: readonly Look[] = ["physical", "illustrative"];
 
 /** The registered features, in order. Edited only to add a new file. */
-const FEATURES: IllFeature[] = [grade, edge, speckle, framing, knots, lanes, arms, floc, base, sky];
+const FEATURES: IllFeature[] = [grade, edge, speckle, framing, knots, lanes, arms, floc, base, sky, points];
 
 /** The features registered now. */
 export const features = (): readonly IllFeature[] => FEATURES;
@@ -208,27 +221,162 @@ export function illContextFor(context: IllContext, ill: Readonly<Record<string, 
   };
 }
 
+// --- S108: the layer's seeds follow the generated galaxy ---------------------------------------------------------------
+// The layer's drawings (floc's network, dust and clouds; the arms' skeleton; the regions' placement; the lanes' wander;
+// the sparkle's stream) were drawn from fixed seeds of the layer's own, so a galaxy generated with other pattern and
+// texture seeds kept the template's drawing. Now each such seed's effective value is its slider's value shifted by the
+// galaxy's reroll (the frame's illReroll): the identity for the template's own seeds - the default galaxy's frames are
+// today's byte for byte - and another drawing for each generated galaxy. The sliders still pick among drawings.
+
+/** The seed sliders that follow the galaxy (S108). The sky's field stars do not: the sky is the viewer's. */
+export const GALAXY_SEEDED: readonly string[] = ["floc.seed", "arms.skelseed", "knots.seed", "lanes.seed"];
+
+/** A 32-bit integer mix (lowbias32). */
+const mix32 = (x: number): number => {
+  let h = x >>> 0;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x7feb352d);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x846ca68b);
+  h ^= h >>> 16;
+  return h >>> 0;
+};
+const stringHash = (s: string): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+  return h >>> 0;
+};
+
+/**
+ * The galaxy's reroll (S108): 0 where its published pattern_seed and texture_seed (`inputs`, the frame header's) are the
+ * template's own (`own`, the template's inputs.seeds; null: no template, 0), else a non-zero hash of the two.
+ */
+export function illReroll(inputs: unknown, own: Readonly<Record<string, number>> | null | undefined): number {
+  if (!own || !inputs || typeof inputs !== "object") return 0;
+  const got = inputs as Record<string, unknown>;
+  const seed = (name: string): number | null => (typeof got[name] === "number" && Number.isFinite(got[name]) ? Math.round(got[name] as number) : null);
+  const pattern = seed("pattern_seed");
+  const texture = seed("texture_seed");
+  if (pattern === null || texture === null) return 0;
+  if (pattern === Math.round(own.pattern_seed ?? Number.NaN) && texture === Math.round(own.texture_seed ?? Number.NaN)) return 0;
+  return mix32(mix32(pattern ^ 0x2545f491) ^ texture) || 1;
+}
+
+/** The frame with its reroll stamped on its header (a new object; the arrays shared). */
+export function withIllReroll<F extends IllFrame>(frame: F, own: Readonly<Record<string, number>> | null | undefined): F {
+  return { ...frame, header: { ...frame.header, illReroll: illReroll(frame.header.inputs, own) } };
+}
+
+/** A seed slider's value shifted by a non-zero reroll: another integer in the control's range, never its own value. */
+export function rerolledSeed(control: IllControl, key: string, value: number, reroll: number): number {
+  if (!reroll) return value;
+  const lo = Math.ceil(control.min);
+  const span = Math.floor(control.max) - lo + 1;
+  if (span < 2) return value;
+  const offset = 1 + (mix32(reroll ^ stringHash(key)) % (span - 1));
+  return lo + ((((Math.round(value) - lo + offset) % span) + span) % span);
+}
+
+/**
+ * The parameters the layer draws with for this galaxy (S108): `ill` itself (the same object) for the template's own
+ * seeds or where no frame has come; else a copy with each GALAXY_SEEDED slider rerolled. GalaxyTab draws with it -
+ * the map builders (main thread and worker), the uniforms, the layers and the cross-reads alike - while the panel
+ * shows the sliders' own values.
+ */
+export function illSeeded(ill: Readonly<Record<string, number>>, context: IllContext): Readonly<Record<string, number>> {
+  const reroll = context.frame?.header.illReroll ?? 0;
+  if (!reroll) return ill;
+  const out: Record<string, number> = { ...ill };
+  for (const { key, control } of illControls()) {
+    if (GALAXY_SEEDED.includes(key) && out[key] !== undefined) out[key] = rerolledSeed(control, key, out[key], reroll);
+  }
+  return out;
+}
+
 /** The /api/arrays names any feature asks for, sorted, once each. */
 export function illArrays(): string[] {
   return [...new Set(FEATURES.flatMap((f) => f.arrays ?? []))].sort();
 }
 
-const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light", arg: string, op: string, unit: string) => {
-  const calls = FEATURES.map((f) => f.hooks?.[kind]).filter((n): n is string => Boolean(n)).map((n) => `${n}(${arg})`);
+/**
+ * THE GRAZING HANDOVER (S108). The layer is a face-on drawing: its thin-screen drawings (the veil, read once per ray at
+ * the midplane) are smeared along the sight line as the ray turns into the plane, and its removals of the model's own
+ * physics (the Milky Way's diffuse dust at a tenth, the bulge dimmed round the bar, NGC 4414's core cleared) take the
+ * edge-on galaxy's dust lane and bulge away. So every shader the layer's GLSL is in carries `illGraze`, a weight per
+ * ray (the march: its direction) or per point (the points: the sight line from the camera), 1 from face-on to the
+ * handover's start angle off the disc's axis (`base.grazeFrom`), falling smoothly (a smoothstep in the angle) to 0 at
+ * its end (`base.grazeTo`); exactly 1 up to the start, where every composed value below is the S107 value bit for bit.
+ * The composition takes each feature's hook value toward the hook's identity by it where the feature's `graze` (or the
+ * kind's default here) says "fade"; a feature's own removals of the model's physics read illGraze themselves (base,
+ * edge). A shader that never sets illGraze (one the layer's GLSL reaches without a ray or a point) keeps 1.
+ */
+export const GRAZE_DEFAULT: Readonly<Record<keyof NonNullable<IllFeature["hooks"]>, "fade" | "keep">> = Object.freeze({
+  // The thin screen's drawing and the disc's light tints (a face-on pattern: an edge-on slab in the layer's tints).
+  veil: "fade",
+  light: "fade",
+  // Read at each sub-step's own point, in the layers' heights: real 3-D structure, kept.
+  dustAv: "keep",
+  youngGain: "keep",
+  edge: "keep",
+  // Chained values whose features handle the handover inside (base: the dust's placement and the grain).
+  gas: "keep",
+  depth: "keep",
+  // The star-first points' own taper (S108, points.ts): a point's light by its radius, kept.
+  points: "keep",
+});
+
+const grazeOf = (f: IllFeature, kind: keyof typeof GRAZE_DEFAULT): "fade" | "keep" => f.graze?.[kind] ?? GRAZE_DEFAULT[kind];
+
+const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light" | "points", arg: string, op: string, unit: string) => {
+  const wrap = kind === "dustAv" ? "illGrazeAdd" : kind === "veil" || kind === "light" ? "illGrazeMul3" : "illGrazeMul";
+  const calls = FEATURES.filter((f) => f.hooks?.[kind]).map((f) => {
+    const call = `${f.hooks![kind]}(${arg})`;
+    return grazeOf(f, kind) === "fade" ? `${wrap}(${call})` : call;
+  });
   return calls.length ? calls.join(` ${op} `) : unit;
 };
+
+/** The registry's own GLSL of the handover: the weight, its uniform (base.ts's controls) and the fades. */
+const GRAZE_GLSL = /* glsl */ `
+  // The grazing handover (S108; index.ts GRAZE_DEFAULT): (from, to) radians off the disc's axis; to <= 0 off.
+  uniform vec2 illGrazeAt;
+  float illGraze = 1.0;
+  float illGrazeOf(vec3 d) {
+    float c = clamp(abs(d.y) / max(length(d), 1e-20), 0.0, 1.0);
+    float a = acos(c);
+    if (illGrazeAt.y <= 0.0 || a <= illGrazeAt.x) return 1.0;
+    if (illGrazeAt.y <= illGrazeAt.x) return 0.0;
+    return 1.0 - smoothstep(illGrazeAt.x, illGrazeAt.y, a);
+  }
+  float illGrazeAdd(float v) { return illGraze >= 1.0 ? v : v * illGraze; }
+  float illGrazeMul(float v) { return illGraze >= 1.0 ? v : mix(1.0, v, illGraze); }
+  vec3 illGrazeMul3(vec3 v) { return illGraze >= 1.0 ? v : mix(vec3(1.0), v, illGraze); }
+  float illGrazeTo(float a, float b) { return illGraze >= 1.0 ? b : mix(a, b, illGraze); }
+  vec3 illGrazeTo3(vec3 a, vec3 b) { return illGraze >= 1.0 ? b : mix(a, b, illGraze); }
+  // A point layer's lift (S108): a point of the layer drawn in the midplane (the star clouds, the regions) raised by a
+  // fixed normal deviate of its own (hashed from its face-on place) times h kpc times (1 - illGraze): a thin lit layer
+  // seen edge-on, not a line; exactly the point itself while illGraze is 1 (every stand the look was tuned at).
+  vec3 illLiftOf(vec3 p, float h) {
+    if (h <= 0.0 || illGraze >= 1.0) return p;
+    vec2 u = fract(sin(vec2(dot(p.xz, vec2(12.9898, 78.233)), dot(p.xz, vec2(39.3468, 11.1351)))) * 43758.5453);
+    float n = sqrt(-2.0 * log(max(u.x, 1e-4))) * cos(6.28318531 * u.y);
+    return vec3(p.x, p.y + h * (1.0 - illGraze) * n, p.z);
+  }`;
+
 
 /**
  * The noise-side GLSL (S106): every feature's noiseGlsl and the gas hook chained, for a shader that carries the
  * randomness layer's include (the march, FluxPoints).
  */
 function noiseSide(): string[] {
-  const fns = FEATURES.map((f) => f.hooks?.gas).filter((n): n is string => Boolean(n));
-  const depths = FEATURES.map((f) => f.hooks?.depth).filter((n): n is string => Boolean(n));
+  const step = (kind: "gas" | "depth", v: string, call: (n: string) => string) =>
+    FEATURES.filter((f) => f.hooks?.[kind])
+      .map((f) => (grazeOf(f, kind) === "fade" ? ` ${v} = ${kind === "gas" ? "illGrazeTo" : "illGrazeTo3"}(${v}, ${call(f.hooks![kind]!)});` : ` ${v} = ${call(f.hooks![kind]!)};`))
+      .join("");
   return [
     ...FEATURES.map((f) => f.noiseGlsl ?? "").filter((g) => g.trim() !== ""),
-    `  float illGas(vec2 xy, float g) {${fns.map((n) => ` g = ${n}(xy, g);`).join("")} return g; }`,
-    `  vec3 illDepth(vec3 d, vec2 rp) {${depths.map((n) => ` d = ${n}(d, rp);`).join("")} return d; }`,
+    `  float illGas(vec2 xy, float g) {${step("gas", "g", (n) => `${n}(xy, g)`)} return g; }`,
+    `  vec3 illDepth(vec3 d, vec2 rp) {${step("depth", "d", (n) => `${n}(d, rp)`)} return d; }`,
   ];
 }
 
@@ -244,12 +392,14 @@ export function illGlsl(noise = false): string {
     "  vec4 illMap(vec2 rp) {",
     "    return textureLod(illMapTex, vec2(rp.x / rHi, rp.y / 6.28318531), 0.0);",
     "  }",
+    GRAZE_GLSL,
     ...FEATURES.map((f) => f.glsl ?? "").filter((g) => g.trim() !== ""),
     `  float illDustAv(vec2 rp) { return ${hookCall("dustAv", "rp", "+", "0.0")}; }`,
     `  float illYoungGain(vec2 rp) { return ${hookCall("youngGain", "rp", "*", "1.0")}; }`,
     `  float illEdge(float r) { return ${hookCall("edge", "r", "*", "1.0")}; }`,
     `  vec3 illVeil(vec2 rp) { return ${hookCall("veil", "rp", "*", "vec3(1.0)")}; }`,
     `  vec3 illLight(vec2 rp) { return ${hookCall("light", "rp", "*", "vec3(1.0)")}; }`,
+    `  float illPoints(vec2 rp) { return ${hookCall("points", "rp", "*", "1.0")}; }`,
     ...(noise ? noiseSide() : []),
     "",
   ].join("\n");
@@ -264,6 +414,8 @@ export interface Patch {
 /** The march's patches (FieldVolume's fieldFragment, frag lines ~495-590): each anchor must occur exactly once. */
 export const MARCH_PATCHES: readonly Patch[] = [
   { anchor: "  void main() {", apply: (a, glsl) => `${glsl}\n${a}` },
+  // S108: the ray's grazing weight, once per ray, before anything of the layer is read.
+  { anchor: "    vec3 dir = normalize(vWorld - cameraPosition);", apply: (a) => `${a}\n    illGraze = illGrazeOf(dir);` },
   {
     anchor: "          if (youngClump > 0.5) starsLight += clumpedLight(screenClumps, rp) * starsGain;",
     apply: (a) => a.replace("* starsGain;", "* starsGain * illYoungGain(rp);"),
@@ -279,6 +431,12 @@ export const MARCH_PATCHES: readonly Patch[] = [
   },
   // S107: the veil, over the ray's whole light at the thin screen's point.
   { anchor: "    gl_FragColor = vec4(light * gain, 1.0);", apply: (a) => a.replace("light * gain", "light * illVeil(screenRP) * gain") },
+  // S108: the young light's clustering ratios, a face-on map read on the thin screen like the veil (smeared along a
+  // grazing ray: the streaks of the edge-on frames), taken to 1 (the young light unclustered) toward edge-on.
+  {
+    anchor: "    vec3 screenClumps = youngClump > 0.5 ? clusterRatios(screenXY) : vec3(1.0);",
+    apply: (a) => `${a}\n    screenClumps = illGrazeMul3(screenClumps);`,
+  },
   // S106: the gas hook, on the screen's gas fluctuation map.
   {
     anchor: "    float screenGas = gasFluct > 0.5 ? layerGasMap(screenXY) : 1.0;",
@@ -294,13 +452,25 @@ export const MARCH_PATCHES: readonly Patch[] = [
 
 /** The points' patches (FluxPoints' vertex shader): the layer's GLSL before dustTo, and its A_V on each segment. */
 export const POINTS_PATCHES: readonly Patch[] = [
-  { anchor: "  // The dust's optical depth per channel from the point to the camera (flux.ts dustToPoint, line for line).", apply: (a, glsl) => `${glsl}\n${a}` },
+  { anchor: "  // The dust's optical depth per channel from the point to the camera (flux.ts dustToPoint, line for line).", apply: (a, glsl) => `${glsl}\n${POINTS_PLACE_GLSL}\n${a}` },
+  // S108: the point placed (its grazing weight, and its lift) before anything reads it.
+  { anchor: "  void main() {\n    if (wingPass > 0.5 && !wingDrawn()) {", apply: (a) => a.replace("  void main() {", "  void main() {\n    illPointsPlace();") },
   {
     anchor: "      tau += face * place * gasAt * share * column(p.y + u.y * s0, p.y + u.y * s1, h, ds) + clouds * cloudColumn;",
     // S106: the depth hook on the ring's depth (face), as the march's tau; then the layer's A_V on the segment.
     apply: (a) =>
       `${a.replace("tau += face * place", "tau += illDepth(face, vec2(r, phi)) * place")}\n` +
       "      tau += illDustAv(vec2(r, phi)) * cloudExt * column(p.y + u.y * s0, p.y + u.y * s1, h, ds);",
+  },
+  // S108: the points hook, on the point's light (every mode of it) at the point's own midplane place.
+  {
+    anchor: "    vLight = light;",
+    apply: (a) =>
+      "    float illPhi = atan(-position.z, position.x);\n" +
+      "    light *= illPoints(vec2(length(position.xz), illPhi < 0.0 ? illPhi + 6.28318531 : illPhi));\n" +
+      // S108 (J4): the sparkle's brightness cap (points.ts illPointsCapped; 0, none, on every other material).
+      "    light = illPointsCapped(light);\n" +
+      a,
   },
   // S106: the gas hook, on the segment's gas fluctuation map (the march's screenGas, read the same way).
   {

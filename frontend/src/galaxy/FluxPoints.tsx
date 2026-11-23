@@ -603,11 +603,23 @@ interface Props {
    * look): VERTEX as it is, nothing of the layer.
    */
   ill?: IllRuntime | null;
+  /**
+   * (S108, illustrative/points.ts) Whether these points take the field's edge taper (the layer's points hook): the
+   * star-first mode's stars and clusters. Elsewhere (the knots) the hook's share is held at 0 for this material, so they
+   * are drawn as before. Read only under the illustrative look.
+   */
+  illEdged?: boolean;
+  /**
+   * (S108 J4, illustrative/points.ts illPointsCapped) The brightest this material's points may be (their largest channel,
+   * the frame's linear units): the arm grain's (SparkleLayer). Absent or 0, none - every other material's. Read only under
+   * the illustrative look.
+   */
+  illCap?: number;
 }
 
 const BUFFER = new Vector2();
 
-export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null, ill = null }: Props) {
+export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null, ill = null, illEdged = false, illCap = 0 }: Props) {
   const gl = useThree((s) => s.gl);
   const points = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -654,6 +666,10 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         wingPx: { value: new Vector2(1, 1) },
         // The illustrative look's (S105): its uniform objects themselves, shared with the march; none under the physical look.
         ...(ill ? ill.uniforms : {}),
+        // S108: the points' edge only where these points take it (illEdged); this material's own 0 elsewhere.
+        ...(ill && !illEdged ? { illPointsEdge: { value: 0 } } : {}),
+        // S108 (J4): the cap this material's own (0 unless the sparkle's), set each frame below.
+        ...(ill ? { illPointsCap: { value: 0 } } : {}),
       },
       vertexShader: ill ? illustrativePointsVertex(VERTEX) : VERTEX,
       fragmentShader: FRAGMENT,
@@ -666,7 +682,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     object.frustumCulled = false;
     geometry.computeBoundingSphere();
     return object;
-  }, [positions, flux, extent, ill]);
+  }, [positions, flux, extent, ill, illEdged]);
   useEffect(
     () => () => {
       points.geometry.dispose();
@@ -744,6 +760,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     }
     uniforms.spritePx.value = (psf?.size ?? spriteSize) * gl.getPixelRatio();
     uniforms.gain.value = gain;
+    if (uniforms.illPointsCap) uniforms.illPointsCap.value = illCap;
     const mean = psf?.mean ?? DEFAULT_MEAN;
     (uniforms.spriteMean.value as Vector3).set(mean[0], mean[1], mean[2]);
     uniforms.sprite.value = psf?.texture ?? psfTexture();

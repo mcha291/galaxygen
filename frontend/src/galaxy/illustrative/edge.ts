@@ -57,8 +57,11 @@ export const edge: IllFeature = {
   // S106 (B5): the bulge's dimming at cylindrical radius r (1 none). The edge hook multiplies every emission by it and
   // the light hook gives the disc's starlight it back, so in sum only the bulge (with the dust's, HII's and gas's own
   // light and the depths) is dimmed.
+  // S108 (the handover, index.ts illGraze): the dimming's share handed back toward edge-on, where the model's round
+  // bulge is the galaxy's shape; the same share in both hooks, so the disc's starlight stays undimmed throughout.
   float illEdgeBulgeAt(float r) {
-    return 1.0 - illEdgeBulge.x * smoothstep(0.0, illEdgeBulge.y, r) * (1.0 - smoothstep(0.5 * illEdgeBulge.z, illEdgeBulge.z, r));
+    float share = illGraze >= 1.0 ? illEdgeBulge.x : illEdgeBulge.x * illGraze;
+    return 1.0 - share * smoothstep(0.0, illEdgeBulge.y, r) * (1.0 - smoothstep(0.5 * illEdgeBulge.z, illEdgeBulge.z, r));
   }
   float illEdgeTaper(float r) {
     float t = illEdgeRamp(r, min(illEdgeRadius, rHi), illEdgeWidth);
@@ -68,6 +71,8 @@ export const edge: IllFeature = {
   float illEdgeYoung(vec2 rp) { return illEdgeYoungRadius >= rHi && illEdgeYoungWidth <= 0.0 ? 1.0 : illEdgeRamp(rp.x, illEdgeYoungRadius, illEdgeYoungWidth); }
 `,
   hooks: { edge: "illEdgeTaper", youngGain: "illEdgeYoung", light: "illEdgeDisc" },
+  // S108: the disc's light here is the bulge dimming's give-back, paired with the edge hook (handed over inside).
+  graze: { light: "keep" },
   uniforms: (p) => ({
     illEdgeRadius: p.radius ?? 30,
     illEdgeWidth: p.width ?? 0,

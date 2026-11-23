@@ -353,6 +353,10 @@ export const arms: IllFeature = {
       about: "The bright sparkle points' sprite, pixels (S106). Illustrative.",
     },
     {
+      key: "sparklecap", label: "sparkle brightness cap", min: 0, max: 5000, step: 1, unit: "", default: 0, perTemplate: { milky_way: 30, ngc_4414: 0 },
+      about: "The brightest a sparkle point may be drawn (its largest channel, in the frame's linear light before the bloom): up close the grain's points grow bright as 1 / distance^2 and the bloom spreads the brightest into soft round discs; capped they stay crisp points. 0 no cap (S108). Illustrative.",
+    },
+    {
       key: "sparklebunch", label: "sparkle bunching", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
       about: "The sparkle's density modulated along the arms by a fixed smooth noise of the wavelength below (the viewer's own): bunches of points with thinner stretches between; 0 an even grain. Illustrative (S106).",
     },
@@ -403,6 +407,10 @@ export const arms: IllFeature = {
     {
       key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.0},
       about: "A multiplier on the arm pieces' pitch (their length-weighted median) for the skeleton's winding: below 1 more turns before the edge. Illustrative (S106).",
+    },
+    {
+      key: "skelpitchmin", label: "pitch floor", min: 2, max: 30, step: 0.1, unit: "deg", default: 10,
+      about: "The least pitch the skeleton winds at before the multiplier above (the pieces' median raised to it): a rerolled galaxy whose pieces are nearly circular is drawn as a spiral, not rings; above a galaxy's own median it opens that spiral (the Milky Way's own is 12.6). Illustrative (S108).",
     },
     {
       key: "skeldrift", label: "pitch drift", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15,

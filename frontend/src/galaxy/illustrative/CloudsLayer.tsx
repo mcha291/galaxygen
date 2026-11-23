@@ -38,6 +38,14 @@ export default function CloudsLayer({ params, runtime, context, knotsGain, dust 
   const blue = params.cloudBlue ?? 1;
   const warmR = params.cloudWarmR ?? 5;
   const flux = useMemo(() => (points ? cloudFlux(points.clouds, base, blue, warmR) : null), [points, base, blue, warmR]);
+  // S108 (the grazing handover; pointsPlace.ts): the clouds lie in the midplane; toward edge-on FluxPoints lifts them
+  // by the base's point-layer height through a uniform of this material's own (illPointsLift) beside the shared ones,
+  // so they are a thin lit layer, not a line. The runtime handed on is made once per runtime (its uniforms shared).
+  const lifted = useMemo(() => {
+    const r = runtime as unknown as { glsl: string; uniforms: Record<string, { value: unknown }>; version: number };
+    return { ...r, uniforms: { ...r.uniforms, illPointsLift: { value: 0 } } };
+  }, [runtime]);
+  lifted.uniforms.illPointsLift.value = context.paramsOf?.("base").pointHeight ?? 0;
   if (!points || !flux) return null;
   return (
     <FluxPoints
@@ -47,7 +55,7 @@ export default function CloudsLayer({ params, runtime, context, knotsGain, dust 
       psf={null}
       spriteSize={params.cloudSize ?? 1.5}
       dust={(dust as PointDust | null) ?? null}
-      ill={runtime as never}
+      ill={lifted as never}
     />
   );
 }

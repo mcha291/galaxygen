@@ -106,6 +106,7 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
             gain={knotsGain}
             psf={null}
             spriteSize={sizes[i]}
+            illCap={params.sparklecap ?? 0}
             dust={(dust as PointDust | null) ?? null}
             ill={runtime as never}
           />

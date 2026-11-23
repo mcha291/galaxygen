@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonPlanes } from "./armsSkeleton";
+import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonParamsOf, skeletonPlanes } from "./armsSkeleton";
 import type { Piece } from "./lanesMap";
 import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, patchAt, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
 
@@ -214,5 +214,25 @@ describe("the even winding (S107, MW2)", () => {
     }
     // The pitch read back off the moved crest stays a winding in the pieces' sense.
     for (const a of lessers) for (let i = 1; i < a.n; i++) expect(a.phi[i]).toBeGreaterThan(a.phi[i - 1]);
+  });
+});
+
+describe("the skeleton's least pitch (S108, a rerolled galaxy)", () => {
+  it("opens the arms of near-circular pieces to the floor and leaves a template's pitch as it was", () => {
+    const piece = (pitchDeg: number, r0: number): Piece => ({ chain: 0, order: 0, r0, phi0: 0, pitchDeg, extent: 1, join: 0 }) as unknown as Piece;
+    const tight = buildSkeleton({ pieces: [piece(1.4, 4), piece(1.3, 6), piece(1.5, 8)], bar: null });
+    expect(tight.pitchDeg).toBeCloseTo(SKELETON_DEFAULTS.pitchMin ?? 0, 9);
+    const open = buildSkeleton({ pieces: [piece(12.6, 4), piece(12.6, 6)], bar: null });
+    expect(open.pitchDeg).toBeCloseTo(12.6, 9);
+  });
+});
+
+describe("the pitch floor's slider (S108 J2, arms.skelpitchmin)", () => {
+  it("reaches the skeleton: absent the default floor, set the floor it names", () => {
+    expect(skeletonParamsOf({}).pitchMin).toBe(SKELETON_DEFAULTS.pitchMin);
+    const piece = (pitchDeg: number, r0: number): Piece => ({ chain: 0, order: 0, r0, phi0: 0, pitchDeg, extent: 1, join: 0 }) as unknown as Piece;
+    const g = { pieces: [piece(1.4, 4), piece(1.3, 6), piece(1.5, 8)], bar: null };
+    expect(buildSkeleton(g, skeletonParamsOf({ skelpitchmin: 16 })).pitchDeg).toBeCloseTo(16, 9);
+    expect(buildSkeleton(g, skeletonParamsOf({ skelpitchmin: 4 })).pitchDeg).toBeCloseTo(4, 9);
   });
 });

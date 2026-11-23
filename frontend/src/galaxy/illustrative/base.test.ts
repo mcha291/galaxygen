@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { fieldFragment } from "../FieldVolume";
 import { FLUX_POINTS_SHADER } from "../FluxPoints";
 import pinned from "../fieldFragment.s78.glsl?raw";
-import { base, baseCore, baseGas, baseLift, baseMended, baseTexelAv } from "./base";
+import { base, baseCore, baseGas, baseLift, baseMended, baseTexelAv, regionExtinction } from "./base";
 import { MARCH_PATCHES, POINTS_PATCHES, createRuntime, illDefaults, illGlsl, illustrativeFragment, illustrativePointsVertex, occurrences } from "./index";
 
 describe("the base (S106): the gas map's streaks smoothed, the disc lifted", () => {
@@ -44,7 +44,8 @@ describe("the base (S106): the gas map's streaks smoothed, the disc lifted", () 
     const u = base.uniforms!({ grain: 0.5, unshear: 1, size: 2, depth: 0.8, lift: 1, radius: 10 }, { template: null, frame: null });
     expect(u).toEqual({
       illBaseGrain: 0.5, illBaseUnshear: 1, illBaseSize: 2, illBaseDepth: 0.8, illBaseLift: 1, illBaseRadius: 10,
-      illBaseMend: 1, illBaseCore: 0, illBaseCoreRadius: 1,
+      illBaseMend: 1, illBaseCore: 0, illBaseCoreRadius: 1, illBaseGrazeDust: 4,
+      illGrazeAt: [(72 * Math.PI) / 180, (88 * Math.PI) / 180],
     });
   });
 
@@ -133,5 +134,14 @@ describe("the base's mend and core (S106, builder E): NGC 4414's underflowed dep
     expect(illDefaults("milky_way")["base.core"]).toBe(0);
     expect(illDefaults("ngc_4414")["base.core"]).toBe(2);
     expect(illDefaults("ngc_4414")["base.coreRadius"]).toBe(1);
+  });
+});
+
+describe("the near regime's clouds under the look (S108 J3, base.nearClouds)", () => {
+  it("leaves the physical look's strength as it is and takes the clouds out by default on both templates", () => {
+    expect(regionExtinction(1.6, null)).toBe(1.6);
+    for (const t of ["milky_way", "ngc_4414"]) expect(illDefaults(t)["base.nearClouds"]).toBe(0);
+    expect(regionExtinction(1.6, { nearClouds: 1 })).toBe(1.6);
+    expect(regionExtinction(2, { nearClouds: 0.25 })).toBe(0.5);
   });
 });

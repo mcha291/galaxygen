@@ -53,6 +53,13 @@ export interface SkeletonParams {
   seed: number;
   /** S107: the pitch grows outward as (R / the majors' start)^this, so successive windings separate; 0 a constant pitch. */
   pitchGrow?: number;
+  /**
+   * S108 (a rerolled galaxy): the least base pitch the skeleton takes from the arm pieces, degrees (before pitchScale).
+   * A rerolled Milky Way's pieces can wind at a median of 1.4 degrees (pattern_seed 87658474: 195 near-circular pieces),
+   * which drew the arms as concentric rings; the goals' arms open at 10-15 degrees. Above every template's own (the
+   * Milky Way's 12.6), so the template's skeleton is today's.
+   */
+  pitchMin?: number;
   /** S107: the majors' pitch at their start raised by 1 + this, falling back over about a third of a turn: the arm leaves the bar's end at a clear angle; 0 none. */
   open?: number;
   /** S107: the lesser arms' width as a share of the majors' (0.85 until S107). */
@@ -93,6 +100,7 @@ export const SKELETON_DEFAULTS: SkeletonParams = {
   lesserLevel: 0.75,
   seed: 11,
   pitchGrow: 0,
+  pitchMin: 10,
   open: 0,
   lesserWidth: 0.85,
   lesserReach: LESSER_REACH,
@@ -289,7 +297,7 @@ export interface SkeletonGeometry {
 export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParams> = {}): Skeleton {
   const p: SkeletonParams = { ...SKELETON_DEFAULTS, ...params };
   const { pitchDeg: base, sense } = piecesPitch(g.pieces);
-  const pitchDeg = Math.min(45, Math.max(2, base * p.pitchScale));
+  const pitchDeg = Math.min(45, Math.max(2, Math.max(base, p.pitchMin ?? 0) * p.pitchScale));
   const tanp = Math.tan((pitchDeg * Math.PI) / 180);
   const arms: SkelArm[] = [];
   // The majors: from the bar's two ends; without a bar, from the start of the longest chain of pieces and opposite it.

@@ -2445,3 +2445,23 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   script over conflict markers; abort, merge again, resolve, then edit. (S107, D278)
 - [close] **Two passes that each fix one range (full frame, close range) can undo each other.** The brief for the third
   named both earlier states as references and asked for both ranges at once. (S107, D278)
+
+## From S108 (BUILD_VIII rows 119-122: six Opus agents - an investigator, three builders, a reviewer and a documents' writer; the Fable lead and gate)
+
+- [viewer] **A look tuned at two stands has been judged at two stands.** Three sessions of gates never tilted the
+  camera past the goals' views, and a tour of 222 captures found a blocker in the first control it tried. Tour the
+  controls before calling a look the default. (S108, D279)
+- [viewer] **Thin-screen drawing (a 2-D map read where a ray crosses the midplane) is a face-on device.** Near edge-on
+  the crossing is degenerate. Hand over by ray angle to what has real depth, and make the handover bit-exact below its
+  start so the tuned frames cannot move. (S108, D279)
+- [viewer] **A camera that drifts by round-off never settles.** The Milky Way's stand had been rendering at the
+  march's "moving" quality since the roll went in, and no gate looked at the sub-sample count. (S108, D279)
+- [viewer] **A cause read from the code is a guess until a capture moves.** The 0.25 floor "explained" the rerolled
+  arcs, and lowering it moved no pixel: S107's lesson met again one session later, this time a builder's reading that
+  the lead passed on in the next brief. (S108, D279)
+- [viewer] **`world_seed` does not make a new galaxy on screen; `pattern_seed` and `texture_seed` do.** A probe and a
+  brief had assumed otherwise. (S108, D279)
+- [viewer] **A probe that never touches a slider cannot see what a slider does under a suspended mode.** The reviewer
+  found the stored look thrown away by the first slider moved under physics only. (S108, D279)
+- [close] **A defect behind a rarely used control (physics only, star-first, reroll) costs the owner's trust at the
+  first click.** The cheap cure may be to suspend the look there and say so. (S108, D279)

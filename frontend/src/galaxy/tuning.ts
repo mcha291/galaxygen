@@ -616,6 +616,44 @@ export function saveLook(look: Look, storage: Pick<Storage, "setItem" | "removeI
   }
 }
 
+/**
+ * The look drawn (S108, the lead's ruling on "physics only"): "physics only" is a study of the physical model, and the
+ * illustrative layer is a drawing over the model's structure (the arms, the bar, the regions the synthetic layer
+ * places), so while it is on the view draws the PHYSICAL look - nothing of the layer runs, the frames the physical look's
+ * own - whatever look is stored. The stored look is not changed: physics only released, the stored look is drawn again.
+ */
+export function drawnLook(stored: Look, physicsOnly: boolean): Look {
+  return physicsOnly ? "physical" : stored;
+}
+
+/**
+ * The tuning the view will draw a template with (S108 J5): the stored tuning of the look drawn (drawnLook), not the
+ * stored look's - App's head start on the field's loads (fieldLoads.ts askFieldAhead) asks with it, so under "physics
+ * only" it asks the physical look's requests, the ones GalaxyTab's loaders then make.
+ */
+export function drawnTuningFor(storage: Pick<Storage, "getItem"> | null | undefined, template: string | null, stored: Look, physicsOnly: boolean): Tuning {
+  return loadTuning(storage, template, drawnLook(stored, physicsOnly));
+}
+
+/** Whether the stored look is set aside by "physics only" (the look's switch says so, S108). */
+export const lookSuspended = (stored: Look, physicsOnly: boolean): boolean => drawnLook(stored, physicsOnly) !== stored;
+
+/**
+ * The look a tuning change switches the stored look to (S108 review), or null: a change kept under `forLook` (a slider
+ * moved: the drawn look; a pasted box: the box's) switches the look only where it names a look other than the one drawn
+ * and the one stored. Without "physics only" the drawn look is the stored one, so a box of the other look switches to it
+ * as since S105; under it a slider moved on the drawn physical look (or a physical box) does not take the stored
+ * illustrative look away - it is still "kept and returns when physics only is released".
+ */
+export function lookSwitchedByTuning(forLook: Look, drawn: Look, stored: Look): Look | null {
+  return forLook !== drawn && forLook !== stored ? forLook : null;
+}
+
+/** What the look's switch says while "physics only" sets the illustrative look aside (S108). */
+export const LOOK_SUSPENDED_WHAT =
+  "illustrative suspended: physics only draws the physical look - the illustrative layer is a drawing over the model's arms, bar and regions, " +
+  "which physics only takes away; the look is kept and returns when physics only is released";
+
 /** A template's default exposure, stops. */
 export function exposureFor(template: string | null | undefined, map: Readonly<Record<string, number>> = TEMPLATE_EXPOSURE): number {
   const v = template ? map[template] : undefined;

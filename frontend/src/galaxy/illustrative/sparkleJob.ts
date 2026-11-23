@@ -61,7 +61,8 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   if (!built || shape.count <= 0) return null;
   const plane = lanes ? { data: lanes, width: ILL_MAP.width, height: ILL_MAP.height, rHi: built.grid.rHi } : null;
   const levelOf = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
-  const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(template ?? "galaxy")) >>> 0, built.raw, plane, levelOf);
+  // S108: the stream follows the generated galaxy (the frame's reroll, index.ts illSeeded; 0 for the template's own).
+  const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(template ?? "galaxy") ^ (frame?.header.illReroll ?? 0)) >>> 0, built.raw, plane, levelOf);
   if (s.radius.length === 0) return null;
   return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
 }

@@ -39,6 +39,8 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
     // S107, MW2 (the even winding)
     nudge: p.skelnudge ?? d.nudge,
     even: p.skeleven ?? d.even,
+    // S108 (J2): the pitch floor for a rerolled galaxy's near-circular pieces, as a slider.
+    pitchMin: p.skelpitchmin ?? d.pitchMin,
   };
 }
 
