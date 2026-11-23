@@ -8,7 +8,7 @@ import { toScene } from "../positions";
 import { cloudShapeOf, shapeOf } from "./floc";
 import { buildClouds, cloudFlux } from "./flocClouds";
 import { geometryOf } from "./flocMap";
-import type { IllLayerProps } from "./feature";
+import { type IllLayerProps, illMeasure, illNow } from "./feature";
 
 export default function CloudsLayer({ params, runtime, context, knotsGain, dust }: IllLayerProps) {
   const shape = shapeOf(params);
@@ -17,7 +17,9 @@ export default function CloudsLayer({ params, runtime, context, knotsGain, dust 
   const frame = context.frame;
   const points = useMemo(() => {
     if (!frame || cloud.count <= 0 || shape.style < 0.5) return null;
+    const started = illNow();
     const c = buildClouds(geometryOf(frame), shape, cloud);
+    illMeasure("clouds", started);
     if (c.weight.length === 0) return null;
     const n = c.weight.length;
     const radius = new Float32Array(n);

@@ -61,6 +61,7 @@ declare const window: Window & {
   __galaxygenCapture?: { picture(): { png: string; width: number; height: number }; place(view: object, target?: object): void };
   __galaxygenFrameSum?: () => { sum: number[] };
   __galaxygenPsfPending?: () => number;
+  __galaxygenIllPending?: () => number;
 };
 
 function watchApi(page: Page) {
@@ -117,7 +118,9 @@ async function settle(page: Page, net: ReturnType<typeof watchApi>, mode: keyof 
   while (still < READY.stillProbes) {
     if (Date.now() > deadline) throw new Error(`the view was not ready in ${READY.timeoutMs} ms`);
     await page.waitForTimeout(READY.probeMs);
-    const building = await page.evaluate(() => window.__galaxygenPsfPending?.() ?? 0);
+    // S107: and none of the illustrative look's builds pending (illMapClient.ts: the map worker's jobs, a plane not yet
+    // drawn, a held slider) - a frame taken before the map arrives is the parameters' only in part.
+    const building = await page.evaluate(() => (window.__galaxygenPsfPending?.() ?? 0) + (window.__galaxygenIllPending?.() ?? 0));
     const quiet = net.inflight === 0 && Date.now() - net.last >= READY.quietMs && building === 0;
     // A canvas made again (a stand moved) has no probe for a moment: not still.
     const sum = ((await page.evaluate(() => window.__galaxygenFrameSum?.().sum)) ?? []).join(",");

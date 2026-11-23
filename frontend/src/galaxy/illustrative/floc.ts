@@ -234,7 +234,7 @@ const channel = memoOn((frame: unknown, drawn: unknown, ...values: unknown[]): U
   if (typeof performance !== "undefined" && typeof performance.measure === "function") performance.measure("illustrative floc map", { start: started, duration: flocBuild.ms });
   flocBuild.count += 1;
   return map;
-});
+}, "floc.channel");
 
 /** The feature's channel of the shared map at these parameters, for this frame; null where it draws nothing. */
 export function flocChannel(p: IllParams, frame: IllFrame | null): Uint8Array | null {

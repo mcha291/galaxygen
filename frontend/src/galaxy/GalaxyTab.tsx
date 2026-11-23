@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import {
   type BlackbodyTable,
@@ -62,8 +62,10 @@ import {
   knotsReplaced,
   paramsOf,
   releaseRuntime,
-  updateRuntime,
+  stepRuntime,
 } from "./illustrative";
+import { illMeasure, illNow } from "./illustrative/feature";
+import { illArrivals, illJobsPending, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
 import { framing as framingFeature, standRoll, standScale, standTilt, standTurn, tiltedInclination } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
@@ -686,14 +688,25 @@ export function GalaxyTab({
   // `illBuilt` moves after a runtime update, so the "rebuilding" mark (illPending) is read again once the build is done.
   const illSettled = useDebounced(illParams, ILL_SETTLE_MS, `${templateName}:${viewLook}:${held ?? ""}`);
   const illDrawn = useMemo(
-    () => (illustrative ? illEffective(illParams, illSettled, illContext) : { ill: illParams, held: [] as string[] }),
+    () => {
+      if (!illustrative) return { ill: illParams, held: [] as string[] };
+      const started = illNow();
+      const e = illEffective(illParams, illSettled, illContext);
+      illMeasure("effective", started);
+      return e;
+    },
     [illustrative, illParams, illSettled, illContext],
   );
   const illDrawnParams = illDrawn.ill;
   // S106 (B4): the layers' context carries every feature's drawn parameters (IllContext.paramsOf), as the map builders' does.
   const illLayerContext = useMemo(() => illContextFor(illContext, illDrawnParams), [illContext, illDrawnParams]);
   const [illBuilt, setIllBuilt] = useState(0);
-  const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, illContext) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S107: made without the arrays (nothing is built here on this thread); the effect below asks the map worker for the
+  // planes, and nothing of the map is drawn until they have arrived.
+  const illRuntime = useMemo(() => (illustrative ? createRuntime(illDrawnParams, { ...illContext, frame: null }) : null), [illustrative]); // eslint-disable-line react-hooks/exhaustive-deps -- one per look; updated below
+  // S107 (the sliders' stall): the map worker's arrivals (illMapClient.ts) and how many of its jobs are pending.
+  const illArrived = useSyncExternalStore(subscribeIll, illArrivals, illArrivals);
+  const illJobs = useSyncExternalStore(subscribeIll, illJobsPending, illJobsPending);
   // S105 fix R5: the runtime torn down (the look left illustrative, or the view closed) frees the shared map and the
   // features' cached planes, so the physical look holds nothing of the layer; the next runtime builds them again.
   useEffect(() => {
@@ -702,14 +715,21 @@ export function GalaxyTab({
   }, [illRuntime]);
   useEffect(() => {
     if (!illRuntime) return;
+    // S107, the map contract (illMapClient.ts): where the runtime would build a plane for the parameters drawn now, the
+    // map worker builds it and puts it in the features' caches; until it arrives (illArrived moves) the runtime keeps the
+    // previous map and uniforms. A failed job keeps them too. Without a worker the runtime builds here, as before.
     const before = illRuntime.version;
-    updateRuntime(illRuntime, illDrawnParams, illContext);
+    const started = illNow();
+    stepRuntime(illRuntime, illDrawnParams, illContext);
+    illMeasure("runtime", started);
     if (illRuntime.version !== before) setIllBuilt((n) => n + 1);
-  }, [illRuntime, illDrawnParams, illContext]);
+  }, [illRuntime, illDrawnParams, illContext, illArrived]);
   const illPending = useMemo(
-    () => illustrative && (illDrawn.held.length > 0 || illStale(illDrawnParams, illContext)),
-    [illustrative, illDrawn, illDrawnParams, illContext, illBuilt], // eslint-disable-line react-hooks/exhaustive-deps -- illBuilt: read again after a build
+    () => illustrative && (illDrawn.held.length > 0 || illJobs > 0 || illStale(illDrawnParams, illContext)),
+    [illustrative, illDrawn, illDrawnParams, illContext, illBuilt, illJobs, illArrived], // eslint-disable-line react-hooks/exhaustive-deps -- illBuilt, illArrived: read again after a build
   );
+  // The look capture's wait (e2e/look.spec.ts settle): the picture is not the parameters' until nothing is pending.
+  useEffect(() => setIllViewPending(illPending), [illPending]);
   const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
   // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
@@ -737,6 +757,9 @@ export function GalaxyTab({
         }
       : templateStand;
   const viewRoll = illustrative ? framingRoll : 0;
+  // The knots as the layers receive them: one object while the knots are the same (S107: the regions' layer rebuilt its
+  // buffers - 6-10 ms - at every render of this tab while a new object was made for it each time).
+  const illKnots = useMemo(() => (knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null), [knotsShown]);
   // A feature that draws the HII regions its own way in place of the default knots (knots.ts, row 106).
   const knotsDefault = illustrative && knotsReplaced(illParams) ? null : knotsShown;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
@@ -943,7 +966,7 @@ export function GalaxyTab({
                 params={paramsOf(f, illDrawnParams)}
                 runtime={illRuntime}
                 context={illLayerContext}
-                knots={knotsShown ? { positions: knotsShown.positions, flux: knotsShown.flux, extent: knotsShown.extent } : null}
+                knots={illKnots}
                 knotsGain={knotsGain}
                 dust={knotDust}
               />

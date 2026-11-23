@@ -31,7 +31,7 @@ import {
 
 import { DUST_SEGMENT_STEPS } from "../flux";
 import { RING_ROWS } from "../regimes";
-import type { IllLayerProps } from "./feature";
+import { type IllLayerProps, illMeasure, illNow } from "./feature";
 import { type Placement, regionAttributes } from "./knotsMath";
 import { modelLightRef, placeOnSkeleton, regionsSkeleton, skeletonAttributes } from "./knotsPlace";
 
@@ -351,7 +351,9 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
     params.irregular, params.soft, params.armPower, params.armLevel, params.armFlat, params.fadeR, params.fadeWidth, params.innerR,
   ];
   // The skeleton's placement: the regions laid afresh when the skeleton (its key) or a placing parameter moves.
+  const skelStarted = illNow();
   const { skeleton, key: skelKey } = onSkeleton ? regionsSkeleton(context) : { skeleton: null, key: "" };
+  illMeasure("knots skeleton", skelStarted);
   const placing = [
     params.total, params.bunch, params.gap, params.bunchLen, params.inner, params.across, params.slope, params.lightSize, params.ridgePow,
     params.barEnds, params.sparkle, params.sparkleGain, params.seed, params.elong, params.hue, params.coreBlue,
@@ -360,7 +362,9 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
     if (!knots) return null;
     if (onSkeleton) {
       if (!skeleton) return null;
+      const started = illNow();
       const a = skeletonAttributes(placeOnSkeleton(skeleton, params), params, modelLightRef(knots.flux));
+      illMeasure("knots", started);
       const g = new BufferGeometry();
       g.setAttribute("position", new BufferAttribute(a.positions, 3));
       g.setAttribute("aLight", new BufferAttribute(a.light, 3));

@@ -111,14 +111,14 @@ const planesOf = memoOn((frame: unknown, shapeJson: unknown) => {
   const shape = JSON.parse(shapeJson as string) as ArmShape;
   const { share, sd } = armShare(armContrast(pattern, gas, grid, shape), grid, shape);
   return { grid, ...armPlanes(share, sd, grid, ILL_MAP.width, ILL_MAP.height) };
-});
+}, "arms.planes");
 
 /** What the share depends on (the rest of the shape is uniforms): the planes' memo key. */
 const shareKey = (s: ArmShape): string =>
   JSON.stringify({ ...s, floor: 0, cap: 0, young: 0, width: 0 });
 
 /** The arms' skeleton at the live parameters (S106): its planes in place of the contrast's under `skeleton`. */
-export const armsSkeleton = skeletonMemo();
+export const armsSkeleton = skeletonMemo("arms.skeleton");
 
 const skeletonPlanesOf = memoOn((sk: unknown, frame: unknown, wing: unknown) => {
   const f = frame as IllFrame | null;
@@ -129,7 +129,7 @@ const skeletonPlanesOf = memoOn((sk: unknown, frame: unknown, wing: unknown) => 
   const star = (f.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
   const contrast = star ? { n: ringNormalise(star, grid.nR, grid.nPhi), nR: grid.nR, nPhi: grid.nPhi } : null;
   return { grid, ...skeletonPlanes(s, ILL_MAP.width, ILL_MAP.height, grid.rHi, wing as number, FLAG_RINGS / 16, contrast) };
-});
+}, "arms.skelPlanes");
 
 const planesFor = (p: IllParams, frame: IllFrame | null) =>
   skeletonOn(p) ? skeletonPlanesOf(armsSkeleton(frame, p), frame, p.skelwing ?? 0.15) : planesOf(frame, shareKey(shapeOf(p, frame)));
