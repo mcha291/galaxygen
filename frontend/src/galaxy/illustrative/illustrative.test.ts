@@ -144,8 +144,8 @@ describe("the look's storage (S105, D275)", () => {
 });
 
 describe("the registry (S105): a feature file needs no edit elsewhere", () => {
-  it("lists the nine features, each control's default inside its range", () => {
-    expect(features().map((f) => f.id)).toEqual(["grade", "edge", "speckle", "framing", "knots", "lanes", "arms", "floc", "base"]);
+  it("lists the registered features, each control's default inside its range", () => {
+    expect(features().map((f) => f.id)).toEqual(["grade", "edge", "speckle", "framing", "knots", "lanes", "arms", "floc", "base", "sky"]);
     for (const { control } of illControls()) {
       expect(control.default).toBeGreaterThanOrEqual(control.min);
       expect(control.default).toBeLessThanOrEqual(control.max);
