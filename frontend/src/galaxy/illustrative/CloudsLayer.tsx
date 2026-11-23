@@ -5,7 +5,7 @@
 import { useMemo } from "react";
 import { FluxPoints, type PointDust } from "../FluxPoints";
 import { toScene } from "../positions";
-import { cloudShapeOf, shapeOf } from "./floc";
+import { cloudShapeOf, cloudThin, shapeOf } from "./floc";
 import { buildClouds, cloudFlux } from "./flocClouds";
 import { geometryOf } from "./flocMap";
 import { type IllLayerProps, illMeasure, illNow } from "./feature";
@@ -13,12 +13,14 @@ import { type IllLayerProps, illMeasure, illNow } from "./feature";
 export default function CloudsLayer({ params, runtime, context, knotsGain, dust }: IllLayerProps) {
   const shape = shapeOf(params);
   const cloud = cloudShapeOf(params);
-  const shapeKey = JSON.stringify([shape, cloud]);
+  // S109 (B2): the clouds thinned by the disc's fall-off (floc.ts cloudThin), its values in the key.
+  const thinned = cloudThin(params);
+  const shapeKey = JSON.stringify([shape, cloud, thinned.key]);
   const frame = context.frame;
   const points = useMemo(() => {
     if (!frame || cloud.count <= 0 || shape.style < 0.5) return null;
     const started = illNow();
-    const c = buildClouds(geometryOf(frame), shape, cloud);
+    const c = buildClouds(geometryOf(frame), shape, cloud, thinned.thin);
     illMeasure("clouds", started);
     if (c.weight.length === 0) return null;
     const n = c.weight.length;

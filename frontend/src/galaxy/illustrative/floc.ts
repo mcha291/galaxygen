@@ -246,6 +246,7 @@ const CONTROLS: readonly IllControl[] = [
   // S109 (B2): the bands as swarms of the crisp narrow lanes (their number and depth), not a smooth veil.
   { key: "dustArmGaps", label: "dust arm lanes", min: 0, max: 0.6, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.2 }, about: "How far the bands set how many narrow lanes there are: the lanes' gap level raised by this between the bands (lanes broken away) and lowered on them (a swarm of lanes); 0 the lanes as drawn. (S109) Illustrative." },
   { key: "dustArmNear", label: "dust arm near side", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.4 }, about: "How much stronger the bands are toward the near-side azimuth (and weaker opposite); 0 alike all round. (S109) Illustrative." },
+  { key: "cloudFall", label: "star clouds by the fall-off", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "The star clouds' number thinned by the disc's fall-off, this share of its stops (the dim outskirts carry few clouds: none left floating alone in the dark); 0 the clouds as drawn. (S109) Illustrative." },
   { key: "dustArmVary", label: "dust arm spread", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.6 }, about: "How far the bands differ from one another in width and strength; 0 all alike. (S109) Illustrative." },
   { key: "inkTint", label: "ink brown", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.7 }, about: "How far the drawn dust's shade over the starlight goes to a warm sienna brown (its depth kept), in place of the grains' grey-red. (S109) Colour for appearance." },
   { key: "outerBlue", label: "outer disc blue", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.6 }, about: "A blue-grey tint over the disc's light growing with the fall-off (none at its start, full at its end). (S109) Colour for appearance." },
@@ -368,6 +369,25 @@ function laneUniforms(v: (k: string) => number, outer: number, pitch: number): R
     illFlocLaneD: [branch, Math.tan(Math.min(75, ((lp * 180) / Math.PI) * 1.6) * (Math.PI / 180)), (v("wispAngle") * Math.PI) / 180, lp],
     illFlocCore: [v("meshLight"), v("coreShare"), Math.max(v("coreSize"), 10) * 1e-3, v("coreDepth")],
   };
+}
+
+/**
+ * S109 (B2): the star clouds thinned by the disc's fall-off (the GLSL's illFlocFallAt, its share `cloudFall`): their
+ * density times the light's multiplier there, so the dim outskirts carry few clouds. Undefined where it changes
+ * nothing (the clouds as drawn, bit for bit); the values it is built from, for the layer's memo key.
+ */
+export function cloudThin(p: IllParams): { key: number[]; thin: ((r: number) => number) | undefined } {
+  const v = (k: string) => p[k] ?? DEFAULTS[k];
+  const stops = v("fall") * v("cloudFall");
+  const from = v("fallIn");
+  const to = Math.max(v("fallOut"), from + 0.01);
+  const curve = v("fallCurve");
+  if (!(stops > 0)) return { key: [0], thin: undefined };
+  const thin = (r: number) => {
+    const t = Math.min(1, Math.max(0, (r - from) / (to - from)));
+    return 2 ** (-stops * (t * t * (3 - 2 * t)) ** curve);
+  };
+  return { key: [stops, from, to, curve], thin };
 }
 
 /** S109 (B): the fall-off's and the bands' uniforms (floc.ts GLSL illFlocFallAt, illFlocBand). */
