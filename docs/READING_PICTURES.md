@@ -723,3 +723,67 @@ every illustrative feature switched off (tuner N's test) and is BUILD_VIII secti
 
 The frames: `docs/pictures/s105/` (committed). The sheets beside the goals, the tuners' rounds and the reviewer's
 captures are local, under `docs/goals/` in the session's worktrees (never committed: the goal pictures are not ours).
+
+---
+
+# Part S106 — the close-range pass: one arm skeleton, NGC 4414's threads and mesh (D277)
+
+## 29. What S106 changed in the frames
+
+BUILD_VIII rows 111 to 114 (D277), viewer-only (model hash 5a862a70..., no model byte moved; the physical look byte for
+byte). The streaky texture under both discs (section 28's last paragraph) was traced by capture to the gas fluctuation
+map's log-spiral shear multiplying the dust's placement, and is smoothed under the illustrative look (`base.ts`). The
+Milky Way is drawn on one arm skeleton that its glow, grain, lanes and pink regions all read; NGC 4414's dust is drawn
+in the disc's plane as thin threads and a branching mesh, with star clouds, a sky of field stars and a 6-degree tilt;
+its blue nucleus was traced to a float32 underflow in the physical path (#238) and mended in the layer only.
+
+## 30. The yardstick on S106's frames
+
+`tools/goal_metrics.py` on the two committed frames of the close (`docs/pictures/s106/`, 1024 px, the merged head's
+capture at the look's default stands), measured as section 27 measured: the Milky Way's pictures with
+`--axis-ratio 1`, NGC 4414's at the tool's own estimate of each picture's geometry. The goal and S105 rows are
+re-measured the same way and reproduce section 27's.
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | arm / inter-arm | dark | slope | q |
+|---|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` | −0.354 (−0.459 / −0.813) | 0.052 | 0.194 | 0.059 | 1.83 | 0.0066 | −1.99 | 1 (set) |
+| illustrative, S105 | −0.477 (−0.504 / −0.981) | 0.087 | 0.143 | 0.091 | 2.11 | 0.0423 | −1.58 | 1 (set) |
+| **illustrative, S106** | −0.259 (−0.429 / −0.688) | 0.076 | 0.125 | 0.133 | 2.14 | 0.0081 | −2.38 | 1 (set) |
+| GOAL `ngc_4414` (the tool's geometry) | −0.274 (+0.508 / +0.234) | 0.099 | 0.068 | 0.055 | 2.72 | 0.157 | −2.09 | 0.512 |
+| illustrative, S105 | −0.496 (+0.751 / +0.255) | 0.063 | 0.045 | 0.051 | 2.10 | 0.190 | −1.89 | 0.611 |
+| **illustrative, S106** | −0.491 (+0.629 / +0.138) | 0.083 | 0.069 | 0.043 | 1.95 | 0.229 | −1.83 | 0.506 |
+
+Nearer: the Milky Way's dark fraction (0.042 to 0.0081 against 0.0066: the lanes now thin threads, not dark bands)
+and the size of its colour step (−0.26 against −0.35, from −0.48); NGC 4414's A₂ (0.069 against 0.068), its A₁, its
+axis ratio (0.506 against 0.512: the tilt) and its inner colour (+0.63 against +0.51, from +0.75). Not nearer: the
+Milky Way's A₂ (0.125, below S105's 0.143; B5's frame read 0.145 before the lead's last framing change) and its A₃
+(0.133, the strongest of its first three harmonics where the goal's is m = 2); its arm contrast (2.14 against 1.83); its
+slope (now as far past the goal's as S105's was short of it); NGC 4414's dark fraction (0.229 against 0.157: more dust
+than the photograph, threads and mesh together; C4's mesh alone read 0.162), its arm contrast (1.95 against 2.72) and
+its outer colour (+0.14 against +0.23). The table is the committed frames'; the builders' own readings were taken
+before the lead's last framing change and pick, and are not repeated here.
+
+## 31. What a viewer sees, in the lead's words (the lead looked at the final frames beside both goals)
+
+**The Milky Way.** Now the goal's picture in kind and in composition: a luminous lavender disc filling the frame to a
+soft fade on black; several continuous pale cyan-white arms of fine grain winding from the bar's ends to the edge; thin
+red-brown lanes on the arms' inner edges; small pink-red regions with white cores in uneven bunches on the arms; a
+crisp cream-yellow bar at the goal's angle with a fine lane, in a darker slate-lavender zone. Still unlike the goal:
+the arms are smooth glowing bands with points on them where the goal's are patchy cyan-teal light; the first arm runs
+nearly round the bar instead of leaving its ends clearly; the regions read salmon-pink rather than crimson and none is
+a large ragged complex; the lanes are single fine threads without the goal's branching; a stray pale-blue blob sits
+right of the bar and one lone region at a faded outer arm end; spurs hardly read as separate branches.
+
+**NGC 4414.** At full frame much like the photograph: an inclined disc at the goal's tilt, a cream nucleus in a golden
+inner disc, dark brown dust in many thin flocculent spiral arcs with a tangle between, a blue-grey outer disc with
+blue-white star-cloud patches at the rim (richest left and bottom), field stars on a navy-black sky. Still unlike the
+goal: close up the threads are more parallel and even than the photograph's tangled lanes of many widths; the light
+between the dust is soft heaps rather than crisp grainy star fields; the outer rim's dust reads grey-black rather than
+brown; the nucleus is a soft peach-cream blob rather than a sharp near-white point; the star clouds' points scatter a
+little past the rim.
+
+**The distance, plainly.** S105 made both frames the right kind of picture; S106 makes both read as their goal at a
+glance. What remains is texture and finish at close range, not composition (`BUILD_VIII.md` section 6).
+
+The frames: `docs/pictures/s106/` (committed; sha256 94e84028... and 936c3977..., in D277). The builders' sheets and
+captures are local, under `docs/goals/` in the session's worktrees (never committed).
