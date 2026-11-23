@@ -429,7 +429,7 @@ export const arms: IllFeature = {
       about: "Two or three short changes of pitch along each arm, this share of the pitch: slight kinks. Illustrative (S106).",
     },
     {
-      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.85 },
+      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 1.4},
       about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
     },
     {
@@ -437,7 +437,7 @@ export const arms: IllFeature = {
       about: "Where the skeleton's major arms end, kpc (the lesser arms a little inside): the winding's extent. Illustrative (S106).",
     },
     {
-      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.1},
+      key: "skelfade", label: "outer fade", min: 0.02, max: 0.9, step: 0.01, unit: "", default: 0.3, perTemplate: { milky_way: 0.2},
       about: "The outer share of each arm's length (in ln R) over which it fades and breaks into flecks. Illustrative (S106).",
     },
     {
@@ -445,15 +445,15 @@ export const arms: IllFeature = {
       about: "Where the major arms leave the bar, times its published half-length (kpc without a bar). Illustrative (S106).",
     },
     {
-      key: "skellesserstart", label: "lesser start", min: 1, max: 3, step: 0.01, unit: "×", default: 1.25, perTemplate: { milky_way: 1.9},
+      key: "skellesserstart", label: "lesser start", min: 1, max: 3, step: 0.01, unit: "×", default: 1.25, perTemplate: { milky_way: 1.25},
       about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
     },
     {
-      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.9},
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 1},
       about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
     },
     {
-      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.7 },
+      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.9},
       about: "The lesser arms' ridge width as a share of the majors' (glow, grain and lanes alike). Illustrative (S107).",
     },
     {
@@ -485,16 +485,36 @@ export const arms: IllFeature = {
       about: "...and gone from this many bar half-lengths on, smoothly between. Illustrative (S109).",
     },
     {
-      key: "skelpatch", label: "patchy arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9},
+      key: "skelpatch", label: "patchy arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5},
       about: "Each arm's glow and grain modulated along it by a fixed noise of the viewer's own (the wavelength below): bright clumps and thin stretches; 0 an even arm. Illustrative (S107).",
     },
     {
-      key: "skelpatchsize", label: "patch size", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 0.6},
+      key: "skelpatchsize", label: "patch size", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 0.5},
       about: "The arms' clumps' wavelength along the arm, kpc. Illustrative (S107).",
     },
     {
-      key: "skelragged", label: "ragged edges", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5 },
+      key: "skelragged", label: "ragged edges", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3},
       about: "Each side of an arm's band widened or narrowed along it by a fixed noise by up to this share: uneven edges; 0 even. Illustrative (S107).",
+    },
+    {
+      key: "skelraggedsize", label: "ragged wavelength", min: 0.05, max: 6, step: 0.05, unit: "kpc", default: 0.35, perTemplate: { milky_way: 2.5},
+      about: "The ragged edges' wavelength along the arm, kpc: well above the band's width the edges swell and narrow; below it each swelling is a short lash off the arm. Illustrative (S109).",
+    },
+    {
+      key: "skelmottle", label: "mottled arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1},
+      about: "The arms' clumps (patchy arms above) read off a noise in both directions along and across the band, by this share: mottling inside a continuous band; 0 clumps along the arm only (each one spans the band). Illustrative (S109).",
+    },
+    {
+      key: "skelfoot", label: "strength across the arm", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1},
+      about: "The arm band's strength read at each point's nearest place on the crest by this share, the rest on the point's ring: read on the ring, a change of strength along the arm (its outer end, a break) is cut along the ring right across a broad band, a straight edge; 0 the ring's reading (the foot near the start only). Illustrative (S109).",
+    },
+    {
+      key: "skelbreaks", label: "breaks at the ends", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0},
+      about: "The breaks and flecks at the arms' outer ends by this share; 0 each arm fades out whole. Illustrative (S109).",
+    },
+    {
+      key: "skelwidthgrow", label: "width growth", min: -0.5, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8},
+      about: "The skeleton's ridge width grows outward as (R / 8 kpc) to this power (held within 0.4-2.5 of the ridge width), so the arms keep one share of their spacing, which grows outward; 0 one width throughout. Illustrative (S109).",
     },
     {
       key: "skelwing", label: "glow wing", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.05},

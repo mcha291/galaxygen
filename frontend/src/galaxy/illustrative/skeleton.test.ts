@@ -312,3 +312,31 @@ describe("the oval round the bar (S109 A2, arms.skeloval)", () => {
     expect(ridgeAt(sk, Rp, l.phi[i]).distance).toBeLessThan(0.05);
   });
 });
+
+describe("the band without straight edges (S109 A3)", () => {
+  // The Milky Way's kind of skeleton: four arms, the hug, patchy, ragged, mottled arms.
+  const mw = { lesser: 2, spurs: 0, open: -0.7, openTurns: 0.2, start: 0.7, patch: 0.5, patchScale: 1.5, ragged: 0.3, raggedScale: 2.5, width: 1.4, widthGrow: 0.8, mottle: 1, foot: 1, breaks: 0, fade: 0.3 };
+  const W = 1000;
+  const H = 1800;
+  /** The largest step between neighbouring texels (along R and round the turn) over R in [2, 16] kpc. */
+  const largestStep = (band: Float32Array): number => {
+    let worst = 0;
+    const c0 = Math.round((2 / 30) * W);
+    const c1 = Math.round((16 / 30) * W);
+    for (let j = 0; j < H; j++) {
+      const row = j * W;
+      const next = ((j + 1) % H) * W;
+      for (let c = c0; c < c1; c++) worst = Math.max(worst, Math.abs(band[row + c + 1] - band[row + c]), Math.abs(band[next + c] - band[row + c]));
+    }
+    return worst;
+  };
+  it("steps nowhere: the hug's hand-over, the clumps and the outer ends are smooth", () => {
+    const steps = [mw, { ...mw, start: 1 }, { ...mw, fade: 0.05 }, { ...mw, fade: 0.4, start: 0.9 }].map((p) => largestStep(skeletonBand(buildSkeleton({ pieces, bar }, p), W, H, 30, 0.05)));
+    // (Measured 0.066-0.079: a soft band's own slope over one texel.)
+    for (const s of steps) expect(s).toBeLessThan(0.12);
+    // The test's power: S108's reading (strength, clumps and sides on the ring, sides at half a 0.5 kpc wavelength)
+    // steps by 0.28.
+    const old = largestStep(skeletonBand(buildSkeleton({ pieces, bar }, { ...mw, foot: 0, mottle: 0, patchScale: 0.5, ragged: 0.5, raggedScale: 0.25 }), W, H, 30, 0.05));
+    expect(old).toBeGreaterThan(0.2);
+  });
+});

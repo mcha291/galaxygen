@@ -46,6 +46,12 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
     oval: p.skeloval ?? 1,
     ovalReach: p.skelovalin ?? 1.2,
     ovalFade: p.skelovalout ?? 2.5,
+    // S109 (A3): the band's width growing outward, the ragged sides' wavelength, the 2-D mottle inside the band.
+    widthGrow: p.skelwidthgrow ?? 0,
+    raggedScale: p.skelraggedsize ?? (p.skelpatchsize ?? d.patchScale ?? 0.7) / 2,
+    mottle: p.skelmottle ?? 0,
+    foot: p.skelfoot ?? 0,
+    breaks: p.skelbreaks ?? 1,
   };
 }
 
