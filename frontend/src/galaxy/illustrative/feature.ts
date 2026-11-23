@@ -132,6 +132,9 @@ export interface IllMapBuilder {
   build(params: IllParams, context: IllContext): (Uint8Array | null)[];
 }
 
+/** (S108) What the grazing handover does with a hook's value: fade it to the hook's identity, or keep it. */
+export type IllGrazeMode = "fade" | "keep";
+
 export interface IllFeature {
   /** Lower-case letters: the prefix of its stored keys and, by convention, of its GLSL names (illLanes..., uniform illLanesWidth). */
   id: string;
@@ -153,6 +156,13 @@ export interface IllFeature {
    */
   noiseGlsl?: string;
   hooks?: IllHooks;
+  /**
+   * (S108, the grazing handover; index.ts GRAZE_DEFAULT) per hook, what the registry's composition does with this
+   * feature's value as a ray (or a point's sight line) turns from the disc's axis toward the plane: "fade" takes it
+   * smoothly to the hook's identity (1, or no added depth, or the depth / gas value unchanged) as the grazing weight
+   * illGraze goes from 1 to 0, "keep" leaves it whole. Absent: the hook kind's default.
+   */
+  graze?: Partial<Record<keyof IllHooks, IllGrazeMode>>;
   /** Its channels of the shared map and their builder (see IllMapBuilder). */
   map?: IllMapBuilder;
   /**

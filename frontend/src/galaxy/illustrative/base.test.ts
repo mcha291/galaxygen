@@ -44,7 +44,8 @@ describe("the base (S106): the gas map's streaks smoothed, the disc lifted", () 
     const u = base.uniforms!({ grain: 0.5, unshear: 1, size: 2, depth: 0.8, lift: 1, radius: 10 }, { template: null, frame: null });
     expect(u).toEqual({
       illBaseGrain: 0.5, illBaseUnshear: 1, illBaseSize: 2, illBaseDepth: 0.8, illBaseLift: 1, illBaseRadius: 10,
-      illBaseMend: 1, illBaseCore: 0, illBaseCoreRadius: 1,
+      illBaseMend: 1, illBaseCore: 0, illBaseCoreRadius: 1, illBaseGrazeDust: 4,
+      illGrazeAt: [(72 * Math.PI) / 180, (88 * Math.PI) / 180],
     });
   });
 

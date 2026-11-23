@@ -253,7 +253,10 @@ export const lanes: IllFeature = {
     return min(mix(shape, inked, illLanesHard), 1.6);
   }
   float illLanesAv(vec2 rp) {
-    return illLanesDepth * (1.0 - illLanesInk) * illLanesShape(rp);
+    // S108 (the grazing handover, index.ts illGraze): the ink's share handed to the dust's own layer as the ray grazes
+    // (the veil, on the thin screen, is faded by the registry), so an edge-on disc keeps the lanes as dust in its layer.
+    float ink = illGraze >= 1.0 ? illLanesInk : illLanesInk * illGraze;
+    return illLanesDepth * (1.0 - ink) * illLanesShape(rp);
   }
   // The ink: the grains' own depth per magnitude in each channel, its spread about the middle channel's times the
   // redness (0 grey, 1 the grains' own).

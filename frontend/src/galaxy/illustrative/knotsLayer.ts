@@ -36,6 +36,7 @@ import {
 import { DUST_SEGMENT_STEPS } from "../flux";
 import { RING_ROWS } from "../regimes";
 import { type IllLayerProps, illMeasure, illNow } from "./feature";
+import { POINTS_PLACE_GLSL } from "./pointsPlace";
 import { type Placement, regionAttributes } from "./knotsMath";
 import { modelLightRef, placeOnSkeleton, regionsSkeleton, skeletonAttributes } from "./knotsPlace";
 
@@ -132,8 +133,10 @@ ${illGlsl}
     }
     return tau * dustDepthScale;
   }
+${POINTS_PLACE_GLSL}
   float blobReach(vec4 b, float rpx) { return b.w > 0.0 ? length(b.xy) * rpx + 3.0 * max(b.z * rpx, 0.6) : 0.0; }
   void main() {
+    illPointsPlace();
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     float depth = -mv.z;
     float dist = length(mv.xyz);
@@ -205,6 +208,7 @@ const skeletonVertexShader = (illGlsl: string) => {
   vec4 lobe(vec4 b, vec2 pT, vec2 pN, float rpx) { return vec4(b.x * pT + b.y * pN, max(b.z * rpx, 0.6), b.w); }
   float lobeReach(vec4 c) { return c.w > 0.0 ? length(c.xy) + 3.0 * c.z : 0.0; }
   void main() {
+    illPointsPlace();
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     float depth = -mv.z;
     float dist = length(mv.xyz);
@@ -367,6 +371,8 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
         viewPx: { value: new Vector2(1, 1) },
         knRag: { value: 0 },
         knVeil: { value: 0 },
+        // S108: the regions' lift toward edge-on (index.ts POINTS_PLACE_GLSL), this material's own.
+        illPointsLift: { value: 0 },
         ...runtime.uniforms,
       },
       vertexShader: onSkeleton ? skeletonVertexShader(runtime.glsl) : vertexShader(runtime.glsl),
@@ -445,13 +451,15 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
   }, [geometry, material]);
 
   // The per-frame values, read by the points' onBeforeRender from the latest props.
-  const live = useRef({ params, knotsGain, dust: dust as PointDust | null });
-  live.current = { params, knotsGain, dust: dust as PointDust | null };
+  const lift = context.paramsOf?.("base").pointHeight ?? 0;
+  const live = useRef({ params, knotsGain, dust: dust as PointDust | null, lift });
+  live.current = { params, knotsGain, dust: dust as PointDust | null, lift };
   useEffect(() => {
     if (!points) return;
     points.onBeforeRender = (renderer: WebGLRenderer, _scene, camera: Camera) => {
       const u = material.uniforms;
-      const { params: p, knotsGain: g, dust: d } = live.current;
+      const { params: p, knotsGain: g, dust: d, lift: h } = live.current;
+      u.illPointsLift.value = h;
       const buffer = renderer.getDrawingBufferSize(BUFFER);
       const fov = (camera as PerspectiveCamera).fov ?? 45;
       u.pxPerUnit.value = buffer.y / (2 * Math.tan((fov * Math.PI) / 360));
