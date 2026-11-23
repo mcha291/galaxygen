@@ -56,6 +56,8 @@ export interface IllHooks {
   youngGain?: string;
   /** `float f(float r)`: a multiplier on all emission and depth at radius r; multiplied over features. */
   edge?: string;
+  /** `vec3 f(vec2 rp)`: a per-channel multiplier on the disc's starlight at rp (S108); multiplied over features. */
+  light?: string;
 }
 
 /** What a feature's own drawing (`layer`) receives: drawn inside the Galaxy view's canvas under the illustrative look. */
