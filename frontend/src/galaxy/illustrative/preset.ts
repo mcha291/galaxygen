@@ -8,7 +8,9 @@ export const ILLUSTRATIVE_BASE: Readonly<Record<string, Readonly<Record<string, 
   // S105, by eye against the goal: the bloom restrained (the grade compresses the core instead), the white point cooler so
   // the old light reads cream and the young blue, the knots dimmer (their sprites are dots, row 106 draws the regions),
   // and the clouds' raster off - its 17 000 dark flecks are an even speckle the goal's lanes are not (row 107 draws lanes).
-  milky_way: Object.freeze({ bloomStrength: 0.6, bloomRadius: 0.4, bloomThreshold: 1.0, whiteKelvin: 6000, cloudsExtinction: false, knotsIntensity: 0.3 }),
+  // S105 tuner M (all features together): the bloom halved and its threshold raised, so the regions and the sparkle
+  // catch no violet halo.
+  milky_way: Object.freeze({ bloomStrength: 0.3, bloomRadius: 0.4, bloomThreshold: 1.5, whiteKelvin: 6000, cloudsExtinction: false, knotsIntensity: 0.3 }),
   // The clouds kept and darkened (the goal's brown network is the nearest thing the frame has), 96 steps (at 48 the core
   // drew a green-cyan cast under the stretch).
   ngc_4414: Object.freeze({ bloomStrength: 0.6, bloomRadius: 0.4, bloomThreshold: 1.0, whiteKelvin: 6000, steps: 96, extinctionStrength: 1.6 }),

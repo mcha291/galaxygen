@@ -19,9 +19,10 @@ import { createElement, lazy, Suspense } from "react";
 import { FLAG_RINGS, YOUNG_CAP, armContrast, armMap, armPlanes, armShare, gridOf, type ArmGrid, type ArmShape } from "./armsField";
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
 import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
+import { barAngle } from "./lanesMap";
 
 /** The /api/arrays names the arms read. */
-export const ARMS_ARRAYS = ["bar_half_length", "gas_density_contrast", "pattern_density_contrast", "thin_disc_scale_length"] as const;
+export const ARMS_ARRAYS = ["bar_axis_ratio", "bar_half_length", "gas_density_contrast", "pattern_density_contrast", "thin_disc_scale_length"] as const;
 
 /** The shaping values a map is built from (any change rebuilds it; the tints and the sparkle's gain do not). */
 export function shapeOf(p: IllParams, frame: IllFrame | null): ArmShape {
@@ -87,6 +88,25 @@ const shareKey = (s: ArmShape): string =>
 
 const planesFor = (p: IllParams, frame: IllFrame | null) => planesOf(frame, shareKey(shapeOf(p, frame)));
 
+/**
+ * The bar's ellipse in the disc (S105, tuner M): its half-length and axis ratio as published, its angle read off
+ * pattern_density_contrast as the lanes read it (lanesMap.ts barAngle); null without a bar.
+ */
+export const barOf = memoOn((frame: unknown) => {
+  const f = frame as IllFrame | null;
+  const a = f?.header.scalars.bar_half_length;
+  const q = f?.header.scalars.bar_axis_ratio;
+  const pattern = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  if (!f || !pattern || typeof a !== "number" || !(a > 0)) return null;
+  const grid = gridOf(f.header, pattern.length);
+  const angle = barAngle(pattern, grid.nR, grid.nPhi, grid.rHi, a);
+  if (!Number.isFinite(angle)) return null;
+  return { halfLength: a, axisRatio: typeof q === "number" && q > 0 ? q : 0.4, angle };
+});
+
+/** The bar's cream (unit mean at full share). */
+export const BAR_CREAM: readonly [number, number, number] = [1.16, 1.0, 0.72];
+
 /** A tint of unit mean: white mixed toward `toward` by `share`. */
 export function tint(toward: readonly [number, number, number], share: number): [number, number, number] {
   const c = toward.map((v) => 1 + (v - 1) * share) as [number, number, number];
@@ -130,19 +150,19 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.4, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.55, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
-      key: "knee", label: "ridge knee", min: 0.2, max: 10, step: 0.1, unit: "", default: 3, perTemplate: { milky_way: 3, ngc_4414: 3 },
+      key: "knee", label: "ridge knee", min: 0.2, max: 10, step: 0.1, unit: "", default: 3, perTemplate: { milky_way: 2, ngc_4414: 3 },
       about: "Where a ridge's brightening saturates, in units of its ring's mean sharpened contrast: higher keeps a strong arm brighter than a weak one, lower lights every arm alike. Illustrative.",
     },
     {
-      key: "cap", label: "ridge cap", min: 1, max: 8, step: 0.1, unit: "×", default: 2.2, perTemplate: { milky_way: 2.2, ngc_4414: 2.5 },
+      key: "cap", label: "ridge cap", min: 1, max: 8, step: 0.1, unit: "×", default: 2.2, perTemplate: { milky_way: 1.5, ngc_4414: 2.5 },
       about: "The most a ridge's light is multiplied. Illustrative.",
     },
     {
-      key: "young", label: "young between arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { milky_way: 0.1, ngc_4414: 0.15 },
+      key: "young", label: "young between arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { milky_way: 0.3, ngc_4414: 0.15 },
       about: "The clustered young light between the arms as a share of a full ridge's (its ring mean kept): lower gathers it onto the ridges; 1 leaves it as the model places it. Illustrative.",
     },
     {
@@ -162,19 +182,19 @@ export const arms: IllFeature = {
       about: "The size of the breaks and fragments along the arms, kpc. Illustrative.",
     },
     {
-      key: "barfade", label: "bar fade", min: 0, max: 3, step: 0.05, unit: "× bar", default: 1, perTemplate: { milky_way: 1, ngc_4414: 1 },
+      key: "barfade", label: "bar fade", min: 0, max: 3, step: 0.05, unit: "× bar", default: 1, perTemplate: { milky_way: 0.7, ngc_4414: 1 },
       about: "The arms' shaping starts at this multiple of the bar's half-length (the published bar_half_length), so the bar and the bulge are never brightened. Illustrative.",
     },
     {
-      key: "inner", label: "inner start", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, perTemplate: { milky_way: 2, ngc_4414: 3 },
+      key: "inner", label: "inner start", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, perTemplate: { milky_way: 1, ngc_4414: 3 },
       about: "The arms' shaping starts no nearer the centre than this, kpc (an unbarred disc's start). Illustrative.",
     },
     {
-      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 1, ngc_4414: 2 },
+      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 0.5, ngc_4414: 2 },
       about: "Over how many kpc the arms' shaping fades in from its start. Illustrative.",
     },
     {
-      key: "extend", label: "arms carried out", min: 0, max: 15, step: 0.5, unit: "kpc", default: 4, perTemplate: { milky_way: 4, ngc_4414: 1 },
+      key: "extend", label: "arms carried out", min: 0, max: 15, step: 0.5, unit: "kpc", default: 4, perTemplate: { milky_way: 1, ngc_4414: 1 },
       about: "How far past the ring where the model's arms fade out their pattern is carried outward along the arms' own measured winding, kpc, so the arms reach the disc's edge; 0 the model's end. Illustrative.",
     },
     {
@@ -182,7 +202,7 @@ export const arms: IllFeature = {
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.7, ngc_4414: -0.6 },
+      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.3, ngc_4414: -0.6 },
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
@@ -190,15 +210,15 @@ export const arms: IllFeature = {
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
-      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 300000, ngc_4414: 40000 },
+      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 100000, ngc_4414: 40000 },
       about: "The faintest sparkle point's light, L☉ over the white point (on the field's scale, with the exposure). Illustrative.",
     },
     {
-      key: "sparklerange", label: "sparkle range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 15, perTemplate: { milky_way: 15, ngc_4414: 15 },
+      key: "sparklerange", label: "sparkle range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 15, perTemplate: { milky_way: 6, ngc_4414: 15 },
       about: "The brightest sparkle point over the faintest. Illustrative.",
     },
     {
-      key: "sparkleslope", label: "sparkle slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.4, perTemplate: { milky_way: 1.4, ngc_4414: 1.4 },
+      key: "sparkleslope", label: "sparkle slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.4, perTemplate: { milky_way: 1.8, ngc_4414: 1.4 },
       about: "The brightness law's index: lower has more bright points, higher more faint. Illustrative.",
     },
     {
@@ -214,7 +234,7 @@ export const arms: IllFeature = {
       about: "A sparkle group's gaussian radius, pc. Illustrative.",
     },
     {
-      key: "members", label: "group members", min: 1, max: 60, step: 1, unit: "", default: 10, perTemplate: { milky_way: 10, ngc_4414: 25 },
+      key: "members", label: "group members", min: 1, max: 60, step: 1, unit: "", default: 10, perTemplate: { milky_way: 6, ngc_4414: 25 },
       about: "A sparkle group's mean number of points. Illustrative.",
     },
     {
@@ -226,12 +246,32 @@ export const arms: IllFeature = {
       about: "The sparkle's brightness falls outward as exp(-R / (this times the published thin-disc scale length)) from the arms' start, as the disc's own light does; 0 no falloff. Illustrative.",
     },
     {
-      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 16, ngc_4414: 10 },
+      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 12.5, ngc_4414: 10 },
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
       key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.7, ngc_4414: 0.4 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
+    },
+    {
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.2, ngc_4414: 1 },
+      about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
+    },
+    {
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.6, ngc_4414: 0 },
+      about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
+    },
+    {
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.8, ngc_4414: 1 },
+      about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
+    },
+    {
+      key: "bardim", label: "around the bar", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.55, ngc_4414: 0 },
+      about: "The inner disc's starlight about the bar (inside 1.6 of its scaled half-length, outside its ellipse) dimmed by this share, so the bar stands on a darker ground; 0 none. Illustrative (S105).",
+    },
+    {
+      key: "barcool", label: "ground blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2, ngc_4414: 0 },
+      about: "The same ground about the bar tinted toward the arms' blue-white by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
     },
   ],
   arrays: ARMS_ARRAYS,
@@ -264,7 +304,22 @@ export const arms: IllFeature = {
     float mean = lo + (1.0 - lo) * m;
     return mean > 0.0 ? min(cap, (lo + (1.0 - lo) * s) / mean) : 1.0;
   }
-  vec3 illArmsLight(vec2 rp) {
+  uniform float illArmsBarOn;
+  uniform vec4 illArmsBar;
+  uniform vec3 illArmsBarTint;
+  uniform vec3 illArmsBarGround;
+  vec3 illArmsBarLight(vec2 rp) {
+    if (illArmsBarOn < 0.5) return vec3(1.0);
+    float x = rp.x * cos(rp.y);
+    float y = rp.x * sin(rp.y);
+    float X = x * cos(illArmsBar.z) + y * sin(illArmsBar.z);
+    float Y = y * cos(illArmsBar.z) - x * sin(illArmsBar.z);
+    float e = length(vec2(X / illArmsBar.x, Y / (illArmsBar.x * illArmsBar.y)));
+    float w = exp(-1.6 * e * e);
+    float d = (1.0 - w) * (1.0 - smoothstep(illArmsBar.x, 1.6 * illArmsBar.x, rp.x));
+    return mix(vec3(1.0), illArmsBar.w * illArmsBarTint, w) * mix(vec3(1.0), illArmsBarGround, d);
+  }
+  vec3 illArmsShaped(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return vec3(1.0);
     vec4 w = illMap(rp);
     float s = w.b * w.b;
@@ -276,6 +331,7 @@ export const arms: IllFeature = {
     vec3 tone = mix(mix(vec3(1.0), illArmsLavender, fa), illArmsBlue, g);
     return light * tone;
   }
+  vec3 illArmsLight(vec2 rp) { return illArmsShaped(rp) * illArmsBarLight(rp); }
   float illArmsYoung(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return 1.0;
     vec4 w = illMap(rp);
@@ -306,10 +362,28 @@ export const arms: IllFeature = {
       illArmsMeanMax: planes?.meanMax ?? 0,
       illArmsRings: planes?.grid.nR ?? 1,
       illArmsFlags: planes?.flags ?? new Array<number>(FLAG_RINGS / 16).fill(0),
+      ...barUniforms(p, context.frame),
     };
   },
   layer: ArmsLayer,
 };
+
+/** The bar light's uniforms: off (the light untouched) at a light of 1, no cream and no dimming, or without a bar. */
+export function barUniforms(p: IllParams, frame: IllFrame | null) {
+  const bar = barOf(frame);
+  const glow = p.barglow ?? 1;
+  const warm = p.barwarm ?? 0;
+  const dim = p.bardim ?? 0;
+  const cool = p.barcool ?? 0;
+  const on = !!bar && (glow !== 1 || warm !== 0 || dim !== 0 || cool !== 0);
+  const size = p.barsize ?? 1;
+  return {
+    illArmsBarOn: on ? 1 : 0,
+    illArmsBar: [(bar?.halfLength ?? 1) * size, bar?.axisRatio ?? 1, bar?.angle ?? 0, glow] as [number, number, number, number],
+    illArmsBarTint: tint(BAR_CREAM, warm),
+    illArmsBarGround: tint(ARM_BLUE, cool).map((v) => v * (1 - dim)) as [number, number, number],
+  };
+}
 
 /** The inter-arm tint: toward lavender for a positive share, toward warm for a negative one (unit mean). */
 export const interTint = (share: number): [number, number, number] => (share >= 0 ? tint(INTER_LAVENDER, share) : tint(INTER_WARM, -share));

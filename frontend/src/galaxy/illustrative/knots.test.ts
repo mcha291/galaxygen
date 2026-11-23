@@ -136,6 +136,13 @@ describe("the colour", () => {
     expect(half[0]).toBeGreaterThan(1);
     expect(CORE_COLOUR[2]).toBeGreaterThan(CORE_COLOUR[0]);
   });
+
+  it("goes past the pink toward a deep red below 0 on the magenta slider, every channel positive to its end", () => {
+    const red = regionColour([1, 1, 1], 1, -1);
+    expect((red[0] + red[1] + red[2]) / 3).toBeCloseTo(1, 12);
+    red.forEach((v) => expect(v).toBeGreaterThan(0));
+    expect(red[2] / red[0]).toBeLessThan(PINK[2] / PINK[0]);
+  });
 });
 
 describe("the hash and the shape", () => {

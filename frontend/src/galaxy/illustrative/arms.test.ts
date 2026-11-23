@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { fieldFragment } from "../FieldVolume";
 import pinned from "../fieldFragment.s78.glsl?raw";
-import { arms, interTint, shapeOf, tint } from "./arms";
+import { arms, barOf, barUniforms, interTint, shapeOf, tint } from "./arms";
 import {
   YOUNG_CAP,
   armMap,
@@ -22,7 +22,7 @@ import {
   type ArmShape,
 } from "./armsField";
 import { buildSparkle, brightness, shareAt, sparkleFlux, type SparkleShape } from "./armsSparkle";
-import { MARCH_PATCHES, illGlsl, illustrativeFragment, occurrences } from "./index";
+import { MARCH_PATCHES, illDefaults, illGlsl, illustrativeFragment, occurrences } from "./index";
 
 const G: ArmGrid = { nR: 120, nPhi: 180, rHi: 30 };
 const ringMean = (a: ArrayLike<number>, i: number, P: number) => {
@@ -283,5 +283,43 @@ describe("the arms' controls", () => {
     expect(interTint(-1)[0]).toBeGreaterThan(interTint(-1)[2]);
     expect(interTint(1)[2]).toBeGreaterThan(interTint(1)[1]);
     expect(interTint(0)).toEqual([1, 1, 1]);
+  });
+});
+
+describe("the bar's light (S105, tuner M)", () => {
+  // A barred frame on the arm grid: an m = 2 pattern laid at 0.6 rad inside the bar.
+  const angle = 0.6;
+  const pattern = new Float32Array(G.nR * G.nPhi);
+  for (let i = 0; i < G.nR; i++)
+    for (let j = 0; j < G.nPhi; j++) pattern[i * G.nPhi + j] = 1 + 0.5 * Math.cos(2 * (((j + 0.5) * 2 * Math.PI) / G.nPhi - angle));
+  const frame = {
+    header: { scalars: { bar_half_length: 4, bar_axis_ratio: 0.35 }, grid: { axes: { R: { n: G.nR, hi: G.rHi }, phi: { n: G.nPhi } } } },
+    arrays: { pattern_density_contrast: pattern },
+  };
+  const own = (template: string | null) =>
+    Object.fromEntries(Object.entries(illDefaults(template)).filter(([k]) => k.startsWith("arms.")).map(([k, v]) => [k.slice(5), v]));
+
+  it("reads the bar's ellipse: the published half-length and axis ratio, the angle off the pattern", () => {
+    const bar = barOf(frame)!;
+    expect(bar.halfLength).toBe(4);
+    expect(bar.axisRatio).toBeCloseTo(0.35, 6);
+    expect(bar.angle).toBeCloseTo(angle, 6);
+    expect(barOf({ header: { scalars: {} }, arrays: { pattern_density_contrast: pattern } })).toBeNull();
+  });
+
+  it("is off - the light untouched - at the template-less defaults and at NGC 4414's", () => {
+    for (const t of [null, "ngc_4414"]) expect(barUniforms(own(t), frame).illArmsBarOn).toBe(0);
+    expect(barUniforms(own("milky_way"), frame).illArmsBarOn).toBe(1);
+    expect(barUniforms({ barglow: 2 }, { header: { scalars: {} }, arrays: {} }).illArmsBarOn).toBe(0);
+  });
+
+  it("scales the ellipse, carries the light, a cream of unit mean and a dimmed blue ground", () => {
+    const u = barUniforms({ barglow: 2, barwarm: 1, bardim: 0.5, barcool: 1, barsize: 0.5 }, frame);
+    expect(u.illArmsBar[0]).toBeCloseTo(2, 12);
+    expect(u.illArmsBar[3]).toBe(2);
+    expect((u.illArmsBarTint[0] + u.illArmsBarTint[1] + u.illArmsBarTint[2]) / 3).toBeCloseTo(1, 12);
+    expect(u.illArmsBarTint[0]).toBeGreaterThan(u.illArmsBarTint[2]);
+    expect((u.illArmsBarGround[0] + u.illArmsBarGround[1] + u.illArmsBarGround[2]) / 3).toBeCloseTo(0.5, 12);
+    expect(u.illArmsBarGround[2]).toBeGreaterThan(u.illArmsBarGround[0]);
   });
 });
