@@ -79,7 +79,7 @@ restarted on another model rather than resumed into the same overload (D277).
 | 10 | A lane inked over the picture (the `veil` hook) | allowed in this layer: dust in the model's thin layer reads blue-black with half the stars in front of it, so brown lanes are drawn over the ray's whole light. It is a drawing, and said so (D276) |
 | 11 | Whether the illustrative frames join the picture test's committed set | no: a pinned frame would fail at the owner's first re-tuning. The two frames of S105's close are committed as plain pictures in `docs/pictures/s105/` (D276) |
 | 12 | Whether the layer may draw structure the model does not have | yes, where a goal picture has it: the Milky Way's arms continued to the edge, lesser arms and spurs, the regions placed on the skeleton; NGC 4414's threads, mesh, star clouds, sky stars - display-only, said so in each file's header (D277) |
-| 13 | A fix outside the layer for the look-switch defect | taken, in the shared loader `useLoad.ts`: the defect was the layer's and the nine physical frames stayed byte for byte; reviewed independently (D277) |
+| 13 | A fix outside the layer for the look-switch defect | taken, in the shared loader `useLoad.ts`: the defect was the layer's and the nine physical frames stayed byte for byte; reviewed independently. **It changes one behaviour of the physical look too:** a mode switched while a generation is pending no longer blanks the field (`main` dropped it to 1.6 % of its light for the whole wait); no frame at rest differs (D277) |
 | 14 | #238, the dust transmission's float32 underflow | **not fixed in the physical path**: its fix re-captures committed NGC 4414 frames, the owner's ruling; mended under the illustrative look only (`base.mend`) (D277) |
 | 15 | NGC 4414's central dust and the Milky Way's dust placement | thinned by 2 dex inside 1 kpc on NGC 4414; the Milky Way's diffuse dust placement at 0.1; under the illustrative look, display choices, each a slider (D277) |
 | 16 | The view | NGC 4414 tilted 6 degrees past the template's inclination, the Milky Way rolled 25 degrees, under the illustrative look only: view choices, each a slider (D277) |
@@ -115,8 +115,9 @@ has still not ruled** (Part S106).
    photograph's, and the dark fraction 0.229 is further from the goal's 0.157 than S105's 0.190 was); crisp star
    fields between the dust; the rim's dust brown, and no grainy fringe outside the rim (upper left); a sharper
    nucleus; the cloud discs (tauC) that the core's thinning does not reach read as dark blots at close face-on stands.
-5. **The cost**: the map's rebuild with NGC 4414's threads on (measure it; a worker needs an asynchronous map
-   contract); three 5-second vitest tests (`hstPsf`, `sphere`, `floc`) time out when the machine is loaded (they pass
-   alone and with `--maxWorkers=4`).
-6. **The `glGetProgramiv` warnings** on a canvas remount: not reproduced at S106, cause unknown.
+5. **The cost** (the reviewer's measurements): `arms.skelpitch` stalls 0.74 to 0.80 s and NGC 4414's network 0.55 s
+   with its threads on, over the 0.3 s a rebuild is allowed (a worker needs an asynchronous map contract); the
+   illustrative march on NGC 4414 takes about 116 ms of GPU time settled against about 35 physical, most of it S105's.
+6. **The `glGetProgramiv` warnings** on a canvas remount: seen again by S106's reviewer (24 lines in a mixed run of look
+   and template switches), not reproduced by builder A in 35 remounts, cause unknown.
 7. **A third template** would want its own preset (a skeleton or a plane-style network).

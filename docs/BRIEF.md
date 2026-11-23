@@ -45,8 +45,8 @@ core dust thinned 2 dex, the Milky Way's dust placement 0.1. 16. NGC 4414 tilted
 17. three builders at once. 18. S106's frames plain pictures. 19. NGC 4414's azimuths follow no other camera. 20. above.
 
 ## Known defects and what the next session does (`BUILD_VIII.md` section 6)
-- S105's blanking look switch is MENDED. The `glGetProgramiv` warnings: not reproduced, cause unknown. NGC 4414's map
-  rebuild with the threads on: not re-measured. Next: your tuning pass or list, your rulings, each picture up close.
+- The blanking look switch is MENDED (in the shared loader, so in both looks). `glGetProgramiv` warnings: still seen,
+  cause unknown. Two sliders stall (arm pitch 0.8 s, NGC 4414's network 0.55 s). Next: your tuning, your rulings.
 
 ## Parked, waiting on your word (nothing here touched them)
 `batch-r` 699629c (S104, D274: green, stacked on `batch-q`, one stage-B re-read of `test_s100_bar_length` owed; it

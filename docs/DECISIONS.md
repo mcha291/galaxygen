@@ -19077,7 +19077,31 @@ findings of S106, NOT YET ENTERED in the register: the numbers #238 and #239 are
 a two-line change to tests/test_audit.py (the pinned counts 115 -> 117 and the carried row), which waits for the
 owner's word.
 
-**The independent review:** (the lead adds this)
+**The independent review** (an Opus reviewer that built none of it, on c92ac41 — before the Milky Way's finishing pass
+and the lead's last defaults, which the lead read itself): **no blocker.** (i) The physical look against `main`'s OWN
+build (`git archive main frontend interface`, built and served beside the branch's): eight states byte-identical by
+sha256 (both templates at the default stand, a close stand, the stars mode, an exposure off the default) and seven swap
+steps frame-identical (landing, two template switches, physics only on and off, a reroll and Generate, a reroll with
+the mode switched while pending). (ii) **One behaviour of the physical look changed, and is accepted (ruling 13):**
+with the mode switched while a generation is pending, `main` drops the field to about 1.6 % of its light for the whole
+pending window (the same remount blanking as the look switch), and the branch keeps the previous galaxy drawn until the
+swap publishes — `useLoad.ts`'s carry; only the previous galaxy's values are carried, held answers are not published
+before the flush, the map is cleared at the swap's begin and end (rule D1 kept); no frame at rest differs. (iii) Live,
+under the illustrative look: no shader, program or React error; **the `glGetProgramiv` warnings ARE still there** (24
+lines through a mixed run of look and template switches: S105's defect 2, builder A had not reproduced it); the settled
+march's GPU time on NGC 4414 about 116 ms illustrative against about 35 physical, of which `main`'s illustrative look
+already cost about 97 to 108 — S106 adds 10 to 15 %, mostly `base`'s two texel reads per sample, the mesh and the puffs
+nothing measurable; orbiting NGC 4414 21.7 ms a frame against 16.7 physical. (iv) **Two sliders stall over the 0.3 s a
+rebuild is allowed:** `arms.skelpitch` 0.74 to 0.80 s (the skeleton, the arms' planes, the lanes' plane, the regions,
+the sparkle and the 28.8 MB map's upload in one chain) and NGC 4414's `floc.filSpacing` / `floc.netScale` 0.54 to 0.55
+s with the threads on; the lanes' width 0.27 s; a uniform-only slider 0.02 to 0.1 s. Not mended: a worker's work.
+(v) `arms.skelpitch` moves glow, grain, lanes and regions together (frames at two values). (vi) A circle round the
+Milky Way's bar on the reviewer's head: the finishing pass's `skeletonBand` and cubic ring means removed it (the lead's
+last frames show none). (vii) Fixed by the reviewer (8e51859): a 30 s timeout on the seven unit tests that take 1 to 2
+s alone and timed out at 5 s under three builders' load (`hstPsf`, `sphere`, `floc`); CI does not run vitest. (viii)
+Read and found sound: no reachable division by zero, fixed loop bounds, every hook anchor asserted to occur once, memo
+keys complete, layers disposed, every default inside its range, the `ill` values out of the physical look's storage and
+copy box, nothing under `model/`, the pinned fragment or `docs/pictures` touched before the close's own two pictures.
 
 **The frames beside the goals** (`READING_PICTURES.md` Part S106). **The Milky Way** is now the goal's picture in kind
 and in composition: a luminous lavender disc filling the frame to a soft fade on black; several continuous pale
@@ -19113,9 +19137,9 @@ at near-regular intervals like beads on a string; NGC 4414's dust reads as short
 than the photograph, with a grainy fringe outside the rim at the upper left (`READING_PICTURES.md` section 32).
 
 **Not mended, carried in `BRIEF.md` and `BUILD_VIII.md` section 6.** (a) #238's physical fix and #239, the owner's.
-(b) The `glGetProgramiv` warnings on a canvas remount: not reproduced, cause unknown. (c) The map's rebuild with NGC
-4414's threads on: not re-measured; a worker needs an asynchronous map contract. (d) Three 5-second vitest tests
-(`hstPsf`, `sphere`, `floc`) time out when the machine is loaded; they pass alone and with `--maxWorkers=4`. (e) The
+(b) The `glGetProgramiv` warnings on a canvas remount: seen again by the reviewer, cause unknown. (c) Two rebuilds over
+0.3 s (`arms.skelpitch` 0.74 to 0.80 s, NGC 4414's network 0.55 s); a worker needs an asynchronous map contract. (d) The
+illustrative march on NGC 4414 costs about three times the physical one's GPU time, most of it S105's. (e) The
 cloud discs (tauC), which the core's thinning does not reach, read as dark blots at close face-on stands of NGC 4414.
 (f) The close-range texture of both pictures listed above.
 
