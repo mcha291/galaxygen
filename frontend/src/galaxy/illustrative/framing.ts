@@ -25,7 +25,7 @@ export const framing: IllFeature = {
       about: "Added to the template camera's azimuth, degrees: which side of an inclined disc is near. Remakes the view's camera. Illustrative.",
     },
     {
-      key: "tilt", label: "tilt", min: -45, max: 45, step: 0.5, unit: "°", default: 0,
+      key: "tilt", label: "tilt", min: -45, max: 45, step: 0.5, unit: "°", default: 0, perTemplate: { ngc_4414: 6 },
       about: "Added to the template camera's inclination, degrees, the sum held to [0, 89]: above 0 the disc more edge-on (a narrower ellipse). Remakes the view's camera. Illustrative.",
     },
   ],
