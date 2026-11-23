@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Switch } from "../ui/Switch";
 import type { MarchStats } from "./FieldVolume";
 import { gpuWords } from "./gpuTimer";
-import { illControls } from "./illustrative";
+import { type IllControl, type IllFeature, illControls } from "./illustrative";
 import {
   type Combination,
   type Look,
@@ -74,6 +75,30 @@ interface Props {
   initiallyOpen?: boolean;
   /** S105 fix R1: a plane-shaping change is waiting for the sliders to settle or being built (the "rebuilding" mark). */
   illPending?: boolean;
+  /** The Illustrative group's filter on first draw (the panel's test; the page starts it empty). */
+  initialIllFilter?: string;
+}
+
+/** The feature whose block is open on first draw (S105 fix R3): the grade; every other feature's starts collapsed. */
+export const ILL_OPEN_FEATURE = "grade";
+
+/** An illustrative slider's accessible name (S105 fix R3): its feature's label before its own, unique in the panel. */
+export const illName = (feature: IllFeature, control: IllControl): string => `${feature.label}: ${control.label}`;
+
+/**
+ * The Illustrative group's blocks (S105 fix R3): each feature with its controls, in the registry's order; with a filter,
+ * only the controls whose label or about holds it (any case), and only the features with one.
+ */
+export function illGroups(filter: string): { feature: IllFeature; controls: { key: string; control: IllControl }[] }[] {
+  const term = filter.trim().toLowerCase();
+  const out: { feature: IllFeature; controls: { key: string; control: IllControl }[] }[] = [];
+  for (const { key, feature, control } of illControls()) {
+    if (term && !control.label.toLowerCase().includes(term) && !control.about.toLowerCase().includes(term)) continue;
+    let group = out.find((g) => g.feature === feature);
+    if (!group) out.push((group = { feature, controls: [] }));
+    group.controls.push({ key, control });
+  }
+  return out;
 }
 
 /** The one-line notice after a paste is applied (S97): what was applied, and anything not. */
@@ -95,10 +120,12 @@ export function combinationNotice(c: Combination, template: string | null | unde
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook, illPending = false }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook, illPending = false, initialIllFilter = "" }: Props) {
   const [open, setOpen] = useState(initiallyOpen);
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [illFilter, setIllFilter] = useState(initialIllFilter);
+  const [illOpen, setIllOpen] = useState<Record<string, boolean>>({});
   const apply = () => {
     const c = parseCombination(paste, defaults, defaultsOfLook, look);
     // A box names its look (S105): without one it is the physical look's. Without defaultsOfLook the look stays.
@@ -216,29 +243,64 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
                 )}
               </div>
               <p className={styles.muted}>Display-only structure and colour of the viewer's own, tuned to the goal pictures: not the model.</p>
-              {illControls().map(({ key, feature, control }) => {
-                const value = tuning.ill[key] ?? control.default;
-                const fallback = defaults.ill?.[key] ?? control.default;
-                const range: RangeControl = { key: "fieldGain", label: control.label, group: "Light", kind: "range", min: control.min, max: control.max, step: control.step, log: control.log, unit: control.unit ?? "", about: control.about };
+              {/* S105 fix R3: a filter over the controls' labels and abouts, then one collapsible block per feature. */}
+              <Input
+                size="sm"
+                type="search"
+                aria-label="Filter the illustrative controls"
+                placeholder="filter: a word of a control's name or about"
+                value={illFilter}
+                onChange={(e) => setIllFilter(e.target.value)}
+              />
+              {illGroups(illFilter).map(({ feature, controls }) => {
+                const filtering = illFilter.trim() !== "";
+                const expanded = filtering || (illOpen[feature.id] ?? feature.id === ILL_OPEN_FEATURE);
                 return (
-                  <div key={key} className={styles.tuningRow} title={`${feature.label}: ${control.about}`}>
-                    <div className={styles.zoomHead}>
-                      <span className={styles.tuningName}>{control.label}</span>
-                      <span className={styles.value}>{shown(range, value)}</span>
-                      {value !== fallback && (
-                        <button type="button" className={styles.tuningDefault} title={`Back to the default, ${shown(range, fallback)}`} onClick={() => setIll(key, fallback)}>
-                          default
-                        </button>
-                      )}
-                    </div>
-                    {control.log ? (
-                      <input type="range" className={styles.slider} min={0} max={1000} value={positionOf(range, value)} aria-label={control.label} onChange={(e) => setIll(key, valueAt(range, Number(e.target.value)))} />
-                    ) : (
-                      <input type="range" className={styles.slider} min={control.min} max={control.max} step={control.step} value={value} aria-label={control.label} onChange={(e) => setIll(key, Number(e.target.value))} />
-                    )}
+                  <div key={feature.id} className={styles.tuningRow}>
+                    <button
+                      type="button"
+                      className={styles.tuningToggle}
+                      aria-expanded={expanded}
+                      data-ill-feature={feature.id}
+                      disabled={filtering}
+                      onClick={() => setIllOpen((o) => ({ ...o, [feature.id]: !expanded }))}
+                    >
+                      <span className={styles.label}>
+                        {feature.label}
+                        {filtering ? ` (${controls.length})` : ""}
+                      </span>
+                      <span className={styles.muted}>{expanded ? "−" : "+"}</span>
+                    </button>
+                    <p className={styles.muted}>{feature.about}</p>
+                    {expanded &&
+                      controls.map(({ key, control }) => {
+                        const value = tuning.ill[key] ?? control.default;
+                        const fallback = defaults.ill?.[key] ?? control.default;
+                        const range: RangeControl = { key: "fieldGain", label: control.label, group: "Light", kind: "range", min: control.min, max: control.max, step: control.step, log: control.log, unit: control.unit ?? "", about: control.about };
+                        const name = illName(feature, control);
+                        return (
+                          <div key={key} className={styles.tuningRow} title={`${feature.label}: ${control.about}`}>
+                            <div className={styles.zoomHead}>
+                              <span className={styles.tuningName}>{control.label}</span>
+                              <span className={styles.value}>{shown(range, value)}</span>
+                              {value !== fallback && (
+                                <button type="button" className={styles.tuningDefault} aria-label={`${name}: back to the default`} title={`Back to the default, ${shown(range, fallback)}`} onClick={() => setIll(key, fallback)}>
+                                  default
+                                </button>
+                              )}
+                            </div>
+                            {control.log ? (
+                              <input type="range" className={styles.slider} min={0} max={1000} value={positionOf(range, value)} aria-label={name} onChange={(e) => setIll(key, valueAt(range, Number(e.target.value)))} />
+                            ) : (
+                              <input type="range" className={styles.slider} min={control.min} max={control.max} step={control.step} value={value} aria-label={name} onChange={(e) => setIll(key, Number(e.target.value))} />
+                            )}
+                          </div>
+                        );
+                      })}
                   </div>
                 );
               })}
+              {illFilter.trim() !== "" && illGroups(illFilter).length === 0 && <p className={styles.muted}>No illustrative control matches "{illFilter.trim()}".</p>}
             </div>
           )}
           <div className={styles.tuningGroup}>
