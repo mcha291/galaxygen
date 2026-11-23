@@ -13,11 +13,11 @@ export const framing: IllFeature = {
   controls: [
     {
       key: "scale", label: "framing", min: 0.3, max: 1.5, step: 0.01, unit: "×", default: 1,
-      perTemplate: { milky_way: 0.8, ngc_4414: 0.62 },
+      perTemplate: { milky_way: 0.68, ngc_4414: 0.62 },
       about: "A multiplier on the template camera's framing radius (half the picture's height at the centre): below 1 closer. Remakes the view's camera. Illustrative.",
     },
     {
-      key: "roll", label: "roll", min: -180, max: 180, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: -25 },
+      key: "roll", label: "roll", min: -180, max: 180, step: 1, unit: "°", default: 0, perTemplate: { milky_way: 25, ngc_4414: -25 },
       about: "The picture turned about the line of sight, degrees, counter-clockwise above 0: an inclined disc's long axis lies at this angle to the horizontal. Remakes the view's camera; orbiting from there turns about the rolled axis. Illustrative.",
     },
     {
