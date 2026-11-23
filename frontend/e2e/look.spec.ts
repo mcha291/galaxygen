@@ -134,9 +134,68 @@ async function settle(page: Page, net: ReturnType<typeof watchApi>, mode: keyof 
   return shot;
 }
 
+/** A console line that says a shader or a program failed: the march then draws nothing (S105's 17 samplers). */
+const SHADER_ERROR = /THREE\.WebGLProgram|WebGL shader error|WebGL program not valid|could not compile|link(ing)? (error|fail)/i;
+
+/**
+ * How lit the frame's central square (the middle half of each side) is: the share of its pixels whose brightest channel
+ * is above `BLACK` of 255. Decoded in the page (the browser reads its own PNG), so the tool needs no decoder of its own.
+ */
+async function centralLit(page: Page, png: Buffer): Promise<number> {
+  return page.evaluate(async ([url, black]) => {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const w = image.naturalWidth;
+    const h = image.naturalHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(image, 0, 0);
+    const x0 = Math.floor(w / 4);
+    const y0 = Math.floor(h / 4);
+    const data = ctx.getImageData(x0, y0, Math.floor(w / 2), Math.floor(h / 2)).data;
+    let lit = 0;
+    for (let i = 0; i < data.length; i += 4) if (Math.max(data[i], data[i + 1], data[i + 2]) > black) lit += 1;
+    return lit / (data.length / 4);
+  }, [`data:image/png;base64,${png.toString("base64")}`, BLACK] as const);
+}
+/** A pixel at or under this (of 255) in every channel counts as dark (the sprites' bloom over a black disc lies above 24). */
+const BLACK = 48;
+/**
+ * The least share of the central square lit, a backstop to the shader check: measured at S105, the two looks' frames
+ * whole 53-100 % (the physical Milky Way 74 %, NGC 4414 53 %; the illustrative 97-100 %), the field failed (only the
+ * regions and the sparkle over black) 37 % (Milky Way) and 12 % (NGC 4414).
+ */
+const LEAST_LIT = 0.45;
+
 for (const capture of captures()) {
   test(`look: ${capture.name} (${capture.template}, ${capture.look})`, async ({ page }) => {
+    // Every console error and page error while the capture runs: a shader or a program that fails to compile or link
+    // leaves the march undrawn without failing anything else, so the capture fails on it (S105).
+    const errors: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+    page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
     const net = watchApi(page);
+    // The production build reads no shader's or program's log (renderer.ts SHADER_CHECKS): the capture asks WebGL itself
+    // after every compile and link and says a failure on the console, where the listener above hears it.
+    await page.addInitScript(() => {
+      for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
+        const compile = proto.compileShader;
+        proto.compileShader = function (this: WebGLRenderingContext, shader: WebGLShader) {
+          compile.call(this, shader);
+          if (!this.getShaderParameter(shader, this.COMPILE_STATUS)) console.error(`WebGL shader error: ${this.getShaderInfoLog(shader)}`);
+        };
+        const link = proto.linkProgram;
+        proto.linkProgram = function (this: WebGLRenderingContext, program: WebGLProgram) {
+          link.call(this, program);
+          if (!this.getProgramParameter(program, this.LINK_STATUS)) console.error(`WebGL program not valid: ${this.getProgramInfoLog(program)}`);
+        };
+      }
+    });
     await page.setViewportSize(CHOOSING_VIEWPORT);
     // The browser's look and this template's tuning under it, before the page loads: the look's defaults ("{}"), or the
     // combination over them (stored as the app stores a diff, read through its own sanitize).
@@ -171,6 +230,11 @@ for (const capture of captures()) {
     mkdirSync(OUT, { recursive: true });
     const path = join(OUT, `${capture.name}.png`);
     writeFileSync(path, png);
-    console.log(`look: ${capture.name} -> ${path} (${png.length} bytes)`);
+    const lit = await centralLit(page, png);
+    console.log(`look: ${capture.name} -> ${path} (${png.length} bytes; central square ${(100 * lit).toFixed(1)} % lit)`);
+    for (const e of errors) console.log(`look: ${capture.name} console error: ${e.slice(0, 2000)}`);
+    const shaderErrors = errors.filter((e) => SHADER_ERROR.test(e));
+    expect(shaderErrors, `${capture.name}: a shader or program failed`).toEqual([]);
+    expect(lit, `${capture.name}: the central square is nearly all black`).toBeGreaterThan(LEAST_LIT);
   });
 }

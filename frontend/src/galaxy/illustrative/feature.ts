@@ -62,6 +62,8 @@ export interface IllHooks {
    * not a depth in the dust's layer: the march only, the points are not veiled.
    */
   veil?: string;
+  /** `vec3 f(vec2 rp)`: a per-channel multiplier on the disc's starlight at rp (S108); multiplied over features. */
+  light?: string;
 }
 
 /** What a feature's own drawing (`layer`) receives: drawn inside the Galaxy view's canvas under the illustrative look. */
@@ -85,6 +87,30 @@ export interface IllRuntimeLike {
   version: number;
 }
 
+/**
+ * The shared illustrative map's grid (index.ts owns the map; S105 fix): `width` texels along R over [0, rHi], `height`
+ * rows round one turn of phi, cell-centred (u = (col + 0.5) / width = R / rHi, v = (row + 0.5) / height = phi / 2 pi),
+ * row-major: the byte of texel (col, row) at index row * width + col. Clamped in R, wrapped in phi, linear filtering.
+ * The lanes' grid (lanesMap.ts LANE_MAP: 15 pc by 0.1 degree at rHi = 30 kpc).
+ */
+export const ILL_MAP = { width: 2000, height: 3600 } as const;
+
+/** The map's channels, by index: R the lanes, G the flocculent network (floc.ts), B and A the arms. */
+export const ILL_MAP_CHANNELS = { lanes: [0], floc: [1], arms: [2, 3] } as const;
+
+/**
+ * A feature's share of the shared map: the channels it owns (0 R, 1 G, 2 B, 3 A; each owned by one feature) and a
+ * builder of their bytes, one plane per channel in `channels`' order, each ILL_MAP.width * ILL_MAP.height bytes laid
+ * out as ILL_MAP says, or null for a channel that reads zero. Called at every change of a parameter or the context:
+ * the feature caches its planes (memoOn) and returns the same Uint8Array while nothing that shapes them changed - the
+ * registry re-composes and re-uploads the map only when some plane's object changes. The march's GLSL reads the
+ * channels through `vec4 illMap(vec2 rp)`.
+ */
+export interface IllMapBuilder {
+  channels: readonly number[];
+  build(params: IllParams, context: IllContext): (Uint8Array | null)[];
+}
+
 export interface IllFeature {
   /** Lower-case letters: the prefix of its stored keys and, by convention, of its GLSL names (illLanes..., uniform illLanesWidth). */
   id: string;
@@ -94,11 +120,14 @@ export interface IllFeature {
   /**
    * GLSL at global scope, put into BOTH the march's fragment shader and the points' vertex shader (FluxPoints): uniform
    * declarations and functions. It may use only its own uniforms, `rHi` (the grid's outer radius, kpc), `cloudExt` (each
-   * channel's optical depth per magnitude of A_V) and index.ts's `illPolar`. No texture derivative functions (the points
-   * read it in a vertex shader): textureLod or texelFetch only.
+   * channel's optical depth per magnitude of A_V) and index.ts's `illMap` (the shared map). It declares NO sampler: the
+   * march has no texture unit to spare (16 at most, 15 the pinned march's own) - a texture over the disc goes into the
+   * shared map through `map`. No texture derivative functions (the points read it in a vertex shader).
    */
   glsl?: string;
   hooks?: IllHooks;
+  /** Its channels of the shared map and their builder (see IllMapBuilder). */
+  map?: IllMapBuilder;
   /**
    * The values of the uniforms its `glsl` declares, from its parameters and the context. Called at every change of
    * either; a texture it builds it must cache itself (memoOn below), the same object returned while nothing changed.
