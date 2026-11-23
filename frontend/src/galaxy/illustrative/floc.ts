@@ -31,13 +31,13 @@ const CONTROLS: readonly IllControl[] = [
     about: "The depth at the centre of one full filament of the dust network, magnitudes of A_V; 0 no network. Illustrative.",
   },
   {
-    key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.65,
+    key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75,
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
   { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
-    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
+    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "How far the disc's light swells and thins in soft patches about its mean (a multiplier on all the light at each place); 0 a smooth disc. Illustrative.",
   },
   {
@@ -50,7 +50,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
   {
-    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.25 },
+    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.2 },
     about: "A cream tint over the inner disc's light, fading outward: the old disc of the photograph. Colour for appearance.",
   },
   { key: "warmRadius", label: "warmth radius", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 4.5, about: "The radius at which the warm tint has fallen to 1/e, kpc. Colour for appearance." },
@@ -80,8 +80,8 @@ const CONTROLS: readonly IllControl[] = [
   { key: "clumpFollow", label: "clumps on the pieces", min: 0, max: 1, step: 0.01, unit: "", default: 0.85, about: "How far the clumps keep to the published stars' contrast (the flocculent pieces): 0 anywhere. Illustrative." },
   { key: "lace", label: "lace depth", min: 0, max: 3, step: 0.01, unit: "×", default: 1.5, about: "The lace - the fine network of threads that close into cells between the filaments - its depth as a share of a filament's; 0 none. Illustrative." },
   { key: "cell", label: "lace cell", min: 80, max: 1500, step: 10, unit: "pc", default: 160, about: "The size of the lace's cells across the spiral, parsecs (within a fifth, by radius). Illustrative." },
-  { key: "thread", label: "lace thread", min: 0.02, max: 1, step: 0.01, unit: "", default: 0.15, about: "How thick the lace's threads are, as a share of a cell (thicker where the filaments gather, running together into blotches). Illustrative." },
-  { key: "stretch", label: "lace stretch", min: 0.5, max: 6, step: 0.1, unit: "×", default: 2.6, about: "How many times longer along the spiral than across it a cell of the lace is. Illustrative." },
+  { key: "thread", label: "lace thread", min: 0.02, max: 1, step: 0.01, unit: "", default: 0.16, about: "How thick the lace's threads are, as a share of a cell (thicker where the filaments gather, running together into blotches). Illustrative." },
+  { key: "stretch", label: "lace stretch", min: 0.5, max: 6, step: 0.1, unit: "×", default: 3.2, about: "How many times longer along the spiral than across it a cell of the lace is. Illustrative." },
   { key: "blotch", label: "lace blotches", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How far the lace's threads thicken and run together into mottled blotches where the dust gathers; 0 threads only. Illustrative." },
   { key: "seed", label: "network seed", min: 0, max: 999, step: 1, unit: "", default: 11, about: "The seed of the drawing: another number, another network of the same kind. Illustrative." },
 ];

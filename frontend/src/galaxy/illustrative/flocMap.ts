@@ -759,7 +759,7 @@ function drawLace(raster: Raster, g: FlocGeometry, shape: FlocShape): void {
       // A thread's thickness swells and thins along it (a third noise, cells a little finer than the lace's): it breaks
       // into pieces, and a closed ring is rare. A thread thinner than about a twentieth of a cell is a hairline no eye
       // reads as dust: it fades out.
-      const t = shape.thread * (0.3 + 0.9 * m + 3.2 * shape.blotch * blotch) * (0.3 + 1.4 * blotches.at(ln, phi, at, 3));
+      const t = shape.thread * (0.3 + 0.9 * m + 3.2 * shape.blotch * blotch) * (0.5 + 1.0 * blotches.at(ln, phi, at, 3));
       if (t <= 0.03) continue;
       // The threads: the noise and two finer ones riding on it (the wiggle, the roughness), ridged about the middle.
       const n1 = 0.62 * threads.at(ln, phi, at) + 0.26 * wiggle.at(ln, phi, at, 2) + 0.12 * wiggle.at(ln, phi, at, 4);
