@@ -398,11 +398,11 @@ export const arms: IllFeature = {
       about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
     },
     {
-      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.55 },
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.7 },
       about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
     },
     {
-      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.6 },
+      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.7 },
       about: "The lesser arms' ridge width as a share of the majors' (glow, grain and lanes alike). Illustrative (S107).",
     },
     {
