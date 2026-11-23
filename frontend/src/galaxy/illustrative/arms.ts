@@ -346,7 +346,7 @@ export const arms: IllFeature = {
       about: "1: the arms' glow, grain and lanes drawn on one skeleton of continuous ridges (log spirals from the bar's ends at the arm pieces' pitch, carried to the disc's edge, with lesser arms and spurs of the viewer's own); 0: the model's contrast ridges as S105 drew them. Illustrative (S106).",
     },
     {
-      key: "skellesser", label: "lesser arms", min: 0, max: 4, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2 },
+      key: "skellesser", label: "lesser arms", min: 0, max: 4, step: 1, unit: "", default: 2, perTemplate: { milky_way: 3 },
       about: "How many lesser arms the skeleton draws between the two major arms (each nudged to the arm pieces' strongest phase near midway). Illustrative (S106).",
     },
     {
@@ -386,7 +386,7 @@ export const arms: IllFeature = {
       about: "Where the lesser arms start, times the majors' start. Illustrative (S106).",
     },
     {
-      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.6 },
+      key: "skellevel", label: "lesser strength", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { milky_way: 0.8 },
       about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
     },
     {

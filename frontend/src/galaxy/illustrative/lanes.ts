@@ -114,7 +114,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "1: the arms' lanes drawn along the arm skeleton's ridges (arms.ts, at the arms' template defaults), on each ridge's inner edge by the offset, fading with the ridge's strength; 0: as the switch above says. Illustrative (S106).",
   },
   {
-    key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0.3, ngc_4414: 1 },
+    key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "The bar lanes' curl round the nucleus, a share of its 220 degrees: 1 S107's curl, 0 two straight lanes along the bar's leading edges. Illustrative (S106).",
   },
   { key: "seed", label: "lane seed", min: 0, max: 999, step: 1, unit: "", default: 7, about: "The seed of the lanes' wander, breaks and feathers: another number, another drawing of the same lanes. Illustrative." },
