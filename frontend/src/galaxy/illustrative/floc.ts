@@ -271,9 +271,36 @@ const channel = memoOn((frame: unknown, drawn: unknown, ...values: unknown[]): U
   return map;
 }, "floc.channel");
 
+/**
+ * S107 fix F2: what the plane style's channel reads with no threads drawn (`netDepth` 0, NGC 4414's default: its dust
+ * is the march's mesh) - flocNet.ts buildNetChannel then builds no dust grid and paints only the light between (its
+ * clouds: `litScale`, its reach: `litReach` x `outerRadius`, its seed) and the star clouds' glow (flocClouds.ts
+ * buildClouds: the cloud controls, the network's outer radius - `innerRadius`, `outerRadius` - and the seed; the dust it
+ * reads there is none). Every other shaping value (the threads' controls - spacing, piece size, gaps, wiggle, feathers,
+ * arcs, the ring, the mesh of lanes and spurs - and the S105 style's) changes no byte of it.
+ */
+const LIGHT_ONLY_KEYS: ReadonlySet<string> = new Set([
+  "style", "netDepth", "seed", "litScale", "litReach", "innerRadius", "outerRadius",
+  "cloudCount", "cloudGroup", "cloudMembers", "cloudReach", "cloudStart", "cloudSlope", "cloudRange", "cloudRich", "cloudAz", "cloudGlow", "cloudComplex",
+]);
+
+/**
+ * The shaping values the channel is keyed on (and built from): all of them, but in the plane style with no threads
+ * drawn the values it does not read are held at the feature's defaults, so moving one rebuilds nothing (S107 fix F2:
+ * NGC 4414's "thread spacing" and "dust piece size" rebuilt the plane, 0.1-0.2 s in the worker and a 28.8 MB upload,
+ * for the same bytes).
+ */
+export function channelShapeOf(p: IllParams): FlocShape {
+  const shape = shapeOf(p);
+  if (shape.style < 0.5 || shape.netDepth > 0) return shape;
+  const out = { ...shape } as unknown as Record<string, number>;
+  for (const k of SHAPE_KEYS) if (!LIGHT_ONLY_KEYS.has(k)) out[k] = DEFAULTS[k];
+  return out as unknown as FlocShape;
+}
+
 /** The feature's channel of the shared map at these parameters, for this frame; null where it draws nothing. */
 export function flocChannel(p: IllParams, frame: IllFrame | null): Uint8Array | null {
-  const shape = shapeOf(p);
+  const shape = channelShapeOf(p);
   return channel(frame, flocDrawn(p), ...SHAPE_KEYS.map((k) => shape[k]));
 }
 
