@@ -152,6 +152,7 @@ describe("the registry (S105): a feature file needs no edit elsewhere", () => {
       uniforms: (p) => ({ illFakeDepth: p.depth }),
       arrays: ["arm_piece_pitch"],
     };
+    const asked = illArrays();
     const drop = registerFeature(fake);
     try {
       expect(illControls().some((c) => c.key === "fake.depth")).toBe(true);
@@ -166,7 +167,7 @@ describe("the registry (S105): a feature file needs no edit elsewhere", () => {
       expect(illGlsl()).toContain("float illDustAv(vec2 rp) { return illLanesAv(rp) + illFlocAv(rp) + illFakeAv(rp); }");
       expect(illustrativeFragment(fieldFragment())).toContain("uniform float illFakeDepth;");
       expect(illustrativePointsVertex(FLUX_POINTS_SHADER.vertex)).toContain("uniform float illFakeDepth;");
-      expect(illArrays()).toEqual(["arm_piece_pitch"]);
+      expect(new Set(illArrays())).toEqual(new Set([...asked, "arm_piece_pitch"]));
       const rt = createRuntime(illDefaults("milky_way"));
       expect(rt.uniforms.illFakeDepth.value).toBe(2);
       const shared = rt.uniforms.illFakeDepth;
@@ -180,7 +181,7 @@ describe("the registry (S105): a feature file needs no edit elsewhere", () => {
       drop();
     }
     expect(illControls().some((c) => c.key === "fake.depth")).toBe(false);
-    expect(illArrays()).toEqual([]);
+    expect(illArrays()).toEqual(asked);
   });
 });
 
