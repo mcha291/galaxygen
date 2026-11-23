@@ -1,21 +1,23 @@
-// The star clouds (S106, builder C): loose groups of small bright points over the flocculent disc, blue-white outside
-// and cream inside, gathered where the network's light is bright and the dust is thin (flocNet.ts's fields), densest in
-// the outer disc and ragged at its edge - HST's NGC 4414 shows its outer disc as such clouds, its inner disc's light
-// clumped the same way. ILLUSTRATIVE, display-only, of the viewer's own (the lead's ruling 12): no published field
-// places a star cloud. Pure and deterministic: the same geometry, shape and seed give the same points.
+// The star clouds (S106, builder C; second pass C3): tight groups of bright points over the flocculent disc's outer part,
+// blue-white outside and cream inside, each a few to a few dozen points of mixed brightness about a brilliant centre,
+// with a soft glow under the group (the map's clump level, flocNet.ts buildNetChannel paints it). Gathered where the
+// network's light is bright and the dust thin (flocNet.ts's fields), richest in the sectors about `cloudAz`, confined
+// inside the disc's edge (the reach, a little ragged). HST's NGC 4414 shows its outer disc as such patches.
+// ILLUSTRATIVE, display-only, of the viewer's own (the lead's ruling 12): no published field places a star cloud. Pure
+// and deterministic: the same geometry, shape and seed give the same points.
 
 import { type FlocGeometry, type FlocShape, flocKey, flocRandom, noise2 } from "./flocMap";
 import { netSampler } from "./flocNet";
 
-/** The clouds' own shaping values (floc.ts's cloud* controls). */
+/** The clouds' own shaping values (floc.ts's cloud* controls, read from the shape). */
 export interface CloudShape {
   /** points in all. */
   count: number;
-  /** pc: a group's gaussian radius. */
+  /** pc: a group's typical gaussian radius (each between a third and three times it). */
   groupPc: number;
   /** members per group, mean. */
   members: number;
-  /** x the network's outer radius: the clouds' reach (ragged). */
+  /** x the network's outer radius: the clouds' reach (a little ragged); none beyond it. */
   reach: number;
   /** x the outer radius: where the clouds come in (half-way). */
   start: number;
@@ -23,6 +25,31 @@ export interface CloudShape {
   slope: number;
   /** the brightest over the faintest. */
   range: number;
+  /** 0-1: how far the clouds keep to the rich sectors. */
+  rich: number;
+  /** degrees: the galactocentric azimuth of the richest sector. */
+  az: number;
+}
+
+/** The clouds' shaping values in a network's shape. */
+export const cloudsOf = (s: FlocShape): CloudShape => ({
+  count: s.cloudCount,
+  groupPc: s.cloudGroup,
+  members: s.cloudMembers,
+  reach: s.cloudReach,
+  start: s.cloudStart,
+  slope: s.cloudSlope,
+  range: s.cloudRange,
+  rich: s.cloudRich,
+  az: s.cloudAz,
+});
+
+/** A group: its centre (kpc), its gaussian radius (kpc) and its brightest member's weight. */
+export interface CloudGroup {
+  x: number;
+  y: number;
+  size: number;
+  lead: number;
 }
 
 export interface Clouds {
@@ -30,6 +57,7 @@ export interface Clouds {
   y: Float32Array;
   /** Each point's brightness in units of the faintest. */
   weight: Float32Array;
+  groups: CloudGroup[];
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -37,24 +65,32 @@ const smoothstep = (e0: number, e1: number, v: number) => {
   const t = clamp01((v - e0) / (e1 - e0));
   return t * t * (3 - 2 * t);
 };
+const DEG = Math.PI / 180;
 
-/** The clouds' density at (x, y), in [0, 1]: bright light, thin dust, the outer disc, a ragged edge. */
+/** The clouds' density at (x, y), in [0, 1]: bright light, thin dust, the outer disc, the rich sectors, inside the edge. */
 export function cloudDensity(g: FlocGeometry, shape: FlocShape, c: CloudShape): (x: number, y: number) => number {
   const net = netSampler(g, shape);
   const outer = net.outer;
   const reach = Math.min(g.rHi, Math.max(0.1, c.reach) * outer);
   const start = Math.max(0, c.start) * outer;
   const kEdge = flocKey(shape.seed, 13, 0, 1);
+  const kSect = flocKey(shape.seed, 13, 0, 2);
+  const az = c.az * DEG;
   return (x: number, y: number) => {
     const r = Math.hypot(x, y);
-    // The edge: the reach pushed in and out by a noise at a kiloparsec and a half, so the disc's rim is ragged.
-    const rim = reach * (1 + 0.28 * (2 * noise2(x / 1.5 + 5.1, y / 1.5 + 2.7, kEdge) - 1));
-    const radial = (0.25 + 0.75 * smoothstep(0.4 * start, start, r)) * (1 - smoothstep(0.75 * rim, rim, r));
+    // The edge: the reach pushed in and out a little by a noise at a kiloparsec and a half; nothing past it.
+    const rim = reach * (1 + 0.08 * (2 * noise2(x / 1.5 + 5.1, y / 1.5 + 2.7, kEdge) - 1));
+    const radial = (0.15 + 0.85 * smoothstep(0.4 * start, start, r)) * (1 - smoothstep(0.82 * rim, rim, r));
     if (radial <= 0) return 0;
-    const light = smoothstep(0.42, 0.8, net.light(x, y));
+    // The rich sectors: a broad lobe about `az`, broken by a noise in azimuth (two or three rich stretches).
+    const phi = Math.atan2(y, x);
+    const lobe = 0.5 + 0.5 * Math.cos(phi - az);
+    const broken = noise2(2.2 * Math.cos(phi) + 9.1, 2.2 * Math.sin(phi) + 4.3, kSect);
+    const sector = 1 - c.rich + c.rich * clamp01(1.6 * lobe * lobe * (0.4 + 1.2 * broken));
+    const light = smoothstep(0.4, 0.75, net.light(x, y));
     if (light <= 0) return 0;
     const dust = r < outer ? clamp01(net.dust(x, y) / 0.8) : 0;
-    return radial * light * (1 - dust);
+    return radial * sector * light * (1 - 0.8 * dust);
   };
 }
 
@@ -62,14 +98,15 @@ export function cloudDensity(g: FlocGeometry, shape: FlocShape, c: CloudShape): 
 const brightness = (u: number, slope: number, range: number) => Math.min(range, (1 - u) ** (-1 / Math.max(0.1, slope)));
 
 /** The points: groups placed against the density, members in a gaussian about each, brightest at the centre. */
-export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape): Clouds {
+export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape = cloudsOf(shape)): Clouds {
   const total = Math.max(0, Math.floor(c.count));
   const x = new Float32Array(total);
   const y = new Float32Array(total);
   const weight = new Float32Array(total);
-  if (total === 0) return { x, y, weight };
+  const groups: CloudGroup[] = [];
+  if (total === 0) return { x, y, weight, groups };
   const density = cloudDensity(g, shape, c);
-  const reach = Math.min(g.rHi, 1.3 * Math.max(0.1, c.reach) * Math.max(0.1, Math.min(shape.outerRadius, g.rHi)));
+  const reach = Math.min(g.rHi, 1.1 * Math.max(0.1, c.reach) * Math.max(0.1, Math.min(shape.outerRadius, g.rHi)));
   const key = flocKey(shape.seed, 14, 0, 1);
   const sigma = c.groupPc * 1e-3;
   let k = 0;
@@ -81,9 +118,11 @@ export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape): C
     const cx = r * Math.cos(phi);
     const cy = r * Math.sin(phi);
     if (u() >= density(cx, cy)) continue;
-    const m = Math.max(1, Math.round(-Math.log(Math.max(1e-9, u())) * c.members));
+    // Members: a few to a few dozen (a log-uniform spread about the mean); the group's size spread several-fold.
+    const m = Math.max(2, Math.round(c.members * Math.exp(1.6 * (2 * u() - 1))));
     const lead = brightness(u(), c.slope, c.range);
-    const size = sigma * (0.5 + u());
+    const size = sigma * Math.exp(1.1 * (2 * u() - 1)) * Math.sqrt(m / Math.max(1, c.members));
+    groups.push({ x: cx, y: cy, size, lead });
     for (let q = 0; q < m && k < total; q += 1, k += 1) {
       const a = Math.sqrt(-2 * Math.log(Math.max(1e-12, u())));
       const b = 2 * Math.PI * u();
@@ -92,7 +131,7 @@ export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape): C
       weight[k] = q === 0 ? lead : Math.min(lead, brightness(u(), c.slope, c.range));
     }
   }
-  return { x: x.subarray(0, k), y: y.subarray(0, k), weight: weight.subarray(0, k) };
+  return { x: x.subarray(0, k), y: y.subarray(0, k), weight: weight.subarray(0, k), groups };
 }
 
 /**

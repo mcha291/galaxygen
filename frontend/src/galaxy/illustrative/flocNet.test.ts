@@ -13,16 +13,25 @@ const G: FlocGeometry = { rHi: RHI, pitchDeg: 20, gas: null, pattern: null, gasP
 const SHAPE = shapeOf(paramsOf(floc, illDefaults("ngc_4414")));
 
 describe("the star clouds", () => {
-  it("places NGC 4414's points in groups, more of them outside than inside, fast", () => {
+  it("places NGC 4414's points in groups in the outer disc, inside its edge, fast", () => {
     const p = paramsOf(floc, illDefaults("ngc_4414"));
     const t0 = performance.now();
     const c = buildClouds(G, SHAPE, cloudShapeOf(p));
     const ms = performance.now() - t0;
-    console.log(`star clouds: ${c.weight.length} points, ${ms.toFixed(0)} ms`);
+    console.log(`star clouds: ${c.weight.length} points in ${c.groups.length} groups, ${ms.toFixed(0)} ms`);
     expect(c.weight.length).toBeGreaterThan(0.8 * p.cloudCount);
+    expect(c.groups.length).toBeGreaterThan(20);
     let outside = 0;
-    for (let i = 0; i < c.x.length; i += 1) if (Math.hypot(c.x[i], c.y[i]) > 0.7 * SHAPE.outerRadius) outside += 1;
-    expect(outside / c.x.length).toBeGreaterThan(0.5);
+    let beyond = 0;
+    const edge = SHAPE.cloudReach * SHAPE.outerRadius;
+    for (let i = 0; i < c.x.length; i += 1) {
+      const r = Math.hypot(c.x[i], c.y[i]);
+      if (r > 0.45 * SHAPE.outerRadius) outside += 1;
+      if (r > 1.1 * edge) beyond += 1;
+    }
+    expect(outside / c.x.length).toBeGreaterThan(0.6);
+    // Hardly anything past the disc's edge: a few stragglers of a group's spread at most.
+    expect(beyond / c.x.length).toBeLessThan(0.02);
     expect(ms).toBeLessThan(1500);
     expect(cloudShapeOf(paramsOf(floc, illDefaults("milky_way"))).count).toBe(0);
   });
@@ -34,7 +43,7 @@ describe("the network drawn in the plane", () => {
     expect(shapeOf(paramsOf(floc, illDefaults("milky_way"))).style).toBe(0);
   });
 
-  it("is isotropic in the small: the dust's change over 60 pc along the azimuth and along the radius alike", () => {
+  it("draws threads along the spiral: the dust changes more over 30 pc along the radius than along the azimuth", () => {
     const net = netSampler(G, SHAPE);
     let along = 0;
     let across = 0;
@@ -45,15 +54,14 @@ describe("the network drawn in the plane", () => {
       const x = r * Math.cos(phi);
       const y = r * Math.sin(phi);
       const d0 = net.dust(x, y);
-      const h = 0.06;
+      const h = 0.03;
       along += Math.abs(net.dust(x - Math.sin(phi) * h, y + Math.cos(phi) * h) - d0);
       across += Math.abs(net.dust(x + Math.cos(phi) * h, y + Math.sin(phi) * h) - d0);
       n += 1;
     }
     expect(along / n).toBeGreaterThan(0);
-    // Within a factor 1.6 either way (S105's lace: five times smoother along than across).
-    expect(along / across).toBeGreaterThan(1 / 1.6);
-    expect(along / across).toBeLessThan(1.6);
+    // Thin threads at a low pitch: much sharper across the rings than along them.
+    expect(across / along).toBeGreaterThan(1.8);
   });
 
   it("covers a share of the disc with dust and leaves light between, both from the one channel, in under 0.4 s", () => {
@@ -80,5 +88,53 @@ describe("the network drawn in the plane", () => {
     expect(knots).toBeGreaterThan(0);
     // No byte of zero ("no map") is written.
     expect(map.indexOf(0)).toBe(-1);
+  });
+
+  it("draws thin threads (tens of parsecs across), most dust in the ring, little in the nuclear region", () => {
+    const net = netSampler(G, SHAPE);
+    const widths: number[] = [];
+    const cover = (lo: number, hi: number) => {
+      let n = 0;
+      let hit = 0;
+      for (let k = 0; k < 60; k += 1) {
+        const phi = k * 0.1047;
+        let start = -1;
+        for (let r = lo; r < hi; r += 0.004) {
+          const v = net.dust(r * Math.cos(phi), r * Math.sin(phi));
+          n += 1;
+          if (v > 0.3) hit += 1;
+          if (v > 0.5 && start < 0) start = r;
+          if (v <= 0.5 && start >= 0) {
+            widths.push((r - start) * 1000);
+            start = -1;
+          }
+        }
+      }
+      return hit / n;
+    };
+    const outer = SHAPE.outerRadius;
+    const ring = cover(0.3 * outer, 0.6 * outer);
+    widths.sort((a, b) => a - b);
+    const median = widths[Math.floor(widths.length / 2)];
+    // Measured along the radius, a thread at the pitch reads a little wider than across it.
+    expect(median).toBeGreaterThan(15);
+    expect(median).toBeLessThan(90);
+    expect(widths.length).toBeGreaterThan(300);
+    const core = cover(0.02 * outer, 0.07 * outer);
+    expect(ring).toBeGreaterThan(2 * core);
+  });
+
+  it("lays the near-side bias toward its azimuth", () => {
+    const biased = netSampler(G, { ...SHAPE, nearBias: 0.8, nearAz: 90 });
+    const mean = (phi0: number) => {
+      let s = 0;
+      for (let k = 0; k < 4000; k += 1) {
+        const r = 2 + (k % 50) * 0.08;
+        const phi = phi0 + ((k * 0.618) % 1 - 0.5) * 1.2;
+        s += biased.dust(r * Math.cos(phi), r * Math.sin(phi));
+      }
+      return s;
+    };
+    expect(mean(Math.PI / 2)).toBeGreaterThan(1.5 * mean((3 * Math.PI) / 2));
   });
 });

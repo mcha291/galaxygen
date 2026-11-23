@@ -136,16 +136,50 @@ export interface FlocShape {
   netDepth: number;
   /** pc: the light's clouds' size. */
   litScale: number;
-  /** 0-1: how many bright knots the clouds hold. */
-  litKnots: number;
   /** x the outer radius: the light's reach. */
   litReach: number;
+  /** S106 second pass, the plane style's filaments: pc, the spacing of the filaments across the spiral. */
+  filSpacing: number;
+  /** how many times longer along the spiral than its spacing a filament's run is. */
+  filRun: number;
+  /** 0-1: the finer wisps between the filaments, as a share of a filament's depth. */
+  wisps: number;
+  /** the smooth haze the threads lie in, as a share of a full thread's depth where the threads' amount is full. */
+  haze: number;
+  /** x the outer radius: where the dust's ring comes in to full (it is `core` of it inside half of this). */
+  ringIn: number;
+  /** x the outer radius: where the dust's ring starts to thin (to `rim` of it by 0.95 of the outer radius). */
+  ringOut: number;
+  /** 0-1: the dust's amount in the nuclear region, as a share of the ring's. */
+  core: number;
+  /** 0-1: the dust's amount in the outer disc, as a share of the ring's. */
+  rim: number;
+  /** 0-1: how much more dust lies toward `nearAz` (the near side as the template's stand sees it). */
+  nearBias: number;
+  /** degrees: the galactocentric azimuth of the most dust. */
+  nearAz: number;
+  /** the star clouds, as floc.ts's cloud* controls (the map paints a soft glow under each group). */
+  cloudCount: number;
+  cloudGroup: number;
+  cloudMembers: number;
+  cloudReach: number;
+  cloudStart: number;
+  cloudSlope: number;
+  cloudRange: number;
+  /** 0-1: how far the clouds keep to the rich sectors about `cloudAz`. */
+  cloudRich: number;
+  /** degrees: the galactocentric azimuth of the richest clouds. */
+  cloudAz: number;
+  /** 0-1: the glow drawn under a group (in the clump glow's tint and gain). */
+  cloudGlow: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
   "density", "length", "width", "pitch", "pitchSpread", "wiggle", "branches", "branchAngle", "bands", "bandWidth", "swell", "mottle", "grain", "gather", "bundle",
   "followGas", "radial", "innerRadius", "outerRadius", "patchSize", "clumpDensity", "clumpSize", "clumpInner", "clumpFollow", "lace", "cell", "thread", "stretch", "blotch", "seed",
-  "style", "netScale", "netWarp", "netGaps", "netSoft", "netFeather", "netArc", "arcWidth", "arcStretch", "netDepth", "litScale", "litKnots", "litReach",
+  "style", "netScale", "netWarp", "netGaps", "netSoft", "netFeather", "netArc", "arcWidth", "arcStretch", "netDepth", "litScale", "litReach",
+  "filSpacing", "filRun", "wisps", "haze", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz",
+  "cloudCount", "cloudGroup", "cloudMembers", "cloudReach", "cloudStart", "cloudSlope", "cloudRange", "cloudRich", "cloudAz", "cloudGlow",
 ];
 
 /** A field over the disc on the model's polar grid. */
@@ -403,9 +437,11 @@ export class Ladder {
   private readonly arms = new Int32Array(LADDER_LEVELS + 4);
   private readonly cells = new Int32Array(LADDER_LEVELS + 4);
   private readonly invTan: number;
+  private readonly invSin: number;
   /** `pitch` rad; `across` kpc, a cell's size across the spiral; `stretch`, its length along over that. */
   constructor(pitch: number, across: number, stretch: number, private readonly key: number) {
     this.invTan = 1 / Math.tan(pitch);
+    this.invSin = 1 / Math.sin(pitch);
     for (let k = 0; k < this.arms.length; k += 1) {
       const rk = LADDER_R0 * 2 ** (k / 2);
       this.arms[k] = Math.max(2, Math.round((TAU * rk * Math.sin(pitch)) / across));
@@ -418,6 +454,53 @@ export class Ladder {
     const l = Math.min(LADDER_LEVELS - 1.001, Math.max(0, 2 * Math.log2(Math.max(r, 1e-6) / LADDER_R0)));
     const k = Math.floor(l);
     return k + smoothstep(0.25, 0.75, l - k);
+  }
+
+  /**
+   * S106 (C3): the noise at (ln R, phi) for a place, and its slope's size, per kpc, at radius r (each level's own, blended
+   * as the values are): what a thread drawn on the noise's middle crossing needs to keep one width in parsecs.
+   */
+  atSlope(lnR: number, phi: number, place: number, r: number, out: { v: number; g: number }): void {
+    const k0 = Math.floor(place);
+    const w = place - k0;
+    let v = 0;
+    let g = 0;
+    for (let side = 0; side < 2; side += 1) {
+      const wt = side === 0 ? 1 - w : w;
+      if (wt <= 0) continue;
+      const k = k0 + side;
+      const arms = this.arms[k];
+      const cells = this.cells[k];
+      const X = (phi / TAU) * cells;
+      const Y = (arms * (lnR * this.invTan - phi)) / TAU;
+      const ix = Math.floor(X);
+      const iy = Math.floor(Y);
+      const fx = X - ix;
+      const fy = Y - iy;
+      const ux = fx * fx * (3 - 2 * fx);
+      const uy = fy * fy * (3 - 2 * fy);
+      const key = this.key ^ Math.imul(k + 1, 0x61c88647);
+      // The lattice's corners, the azimuth wrapped as spiralNoise's (inlined: this is the plane style's hot loop).
+      const q0 = Math.floor(ix / cells);
+      const q1 = Math.floor((ix + 1) / cells);
+      const x0 = ix - q0 * cells;
+      const x1 = ix + 1 - q1 * cells;
+      const a = lattice(x0, iy + q0 * arms, key);
+      const b = lattice(x1, iy + q1 * arms, key);
+      const c = lattice(x0, iy + 1 + q0 * arms, key);
+      const d = lattice(x1, iy + 1 + q1 * arms, key);
+      const e = a - b - c + d;
+      const n = a + (b - a) * ux + (c - a) * uy + e * ux * uy;
+      const nX = 6 * fx * (1 - fx) * (b - a + e * uy);
+      const nY = 6 * fy * (1 - fy) * (c - a + e * ux);
+      // |grad X| = cells / (2 pi r); |grad Y| = arms / (2 pi r sin(pitch)) (Y is constant along the spiral).
+      const gX = (nX * cells) / (TAU * r);
+      const gY = (nY * arms * this.invSin) / (TAU * r);
+      v += wt * n;
+      g += wt * Math.sqrt(gX * gX + gY * gY);
+    }
+    out.v = v;
+    out.g = g;
   }
 
   /** The noise in [0, 1] at (ln R, phi) for a place (Ladder.place of the radius), `shift` levels finer (or coarser, below 0). */
