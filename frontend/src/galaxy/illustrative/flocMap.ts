@@ -172,6 +172,30 @@ export interface FlocShape {
   cloudAz: number;
   /** 0-1: the glow drawn under a group (in the clump glow's tint and gain). */
   cloudGlow: number;
+  /** S106 third pass (C4), the plane style's mesh: the broad soft lanes' depth, in full threads (0 none). */
+  laneDepth: number;
+  /** pc: a broad lane's full width at half depth. */
+  laneWidth: number;
+  /** pc: the broad lanes' spacing across the spiral. */
+  laneSpacing: number;
+  /** how many times longer along the spiral than their spacing the lanes' noise cells are. */
+  laneRun: number;
+  /** 0-1: how far the threads and wisps keep to the broad lanes' sides (the feathers a lane carries). */
+  feathers: number;
+  /** the spurs' depth, as a share of a thread's (0 none): short threads leaving the lanes and threads at an angle. */
+  spurs: number;
+  /** degrees: the spurs' angle to the spiral. */
+  spurAngle: number;
+  /** x the thread spacing: how far the plane is pushed about before the threads are drawn, exactly (they diverge and merge). */
+  tangle: number;
+  /** x the thread width: the wisps' width. */
+  wispWidth: number;
+  /** x the thread run: the wisps' run. */
+  wispRun: number;
+  /** 0-1: how far a thread thins toward its piece's ends. */
+  taper: number;
+  /** 0-1: the share of the star clouds' groups that are large complexes. */
+  cloudComplex: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
@@ -180,6 +204,7 @@ export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
   "style", "netScale", "netWarp", "netGaps", "netSoft", "netFeather", "netArc", "arcWidth", "arcStretch", "netDepth", "litScale", "litReach",
   "filSpacing", "filRun", "wisps", "haze", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz",
   "cloudCount", "cloudGroup", "cloudMembers", "cloudReach", "cloudStart", "cloudSlope", "cloudRange", "cloudRich", "cloudAz", "cloudGlow",
+  "laneDepth", "laneWidth", "laneSpacing", "laneRun", "feathers", "spurs", "spurAngle", "tangle", "wispWidth", "wispRun", "taper", "cloudComplex",
 ];
 
 /** A field over the disc on the model's polar grid. */
