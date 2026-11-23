@@ -212,3 +212,22 @@ if (ASKED.includes("orbit")) {
     });
   }
 }
+
+if (ASKED.includes("stars")) {
+  for (const template of TEMPLATES) {
+    test(`the star-first points under each look on ${template}`, async ({ browser }) => {
+      for (const look of ["physical", "illustrative"] as const) {
+        const page = await browser.newPage();
+        const net = await open(page, look, template, "stars");
+        save(`${template}-stars-${look}`, await settle(page, net, true));
+        const got = await page.evaluate(() => {
+          const probe = (window as unknown as { __galaxygenRingProfile?: (e: number[]) => { sprite: unknown; camera: { tanHalfY: number } } }).__galaxygenRingProfile;
+          const r = probe?.([0, 1]);
+          return { sprite: r?.sprite, fovDeg: r ? (2 * Math.atan(r.camera.tanHalfY) * 180) / Math.PI : null, ratio: window.devicePixelRatio, where: window.__galaxygenCapture?.where() };
+        });
+        console.log(`${template} ${look} star-first: sprite ${JSON.stringify(got.sprite)} (device pixel ratio ${got.ratio}), lens ${got.fovDeg?.toFixed(2)} deg, stand ${JSON.stringify(got.where)}`);
+        await page.close();
+      }
+    });
+  }
+}

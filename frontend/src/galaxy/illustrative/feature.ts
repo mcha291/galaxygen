@@ -73,6 +73,11 @@ export interface IllHooks {
   /** `vec3 f(vec2 rp)`: a per-channel multiplier on the disc's starlight at rp (S108); multiplied over features. */
   light?: string;
   /**
+   * `float f(vec2 rp)` (S108, the points' edge): a multiplier on every point FluxPoints draws, at the point's midplane
+   * place rp; multiplied over features. The points' vertex shader only (the march's emission is the edge hook's).
+   */
+  points?: string;
+  /**
    * `float f(vec2 xy, float g)` (S106): the gas fluctuation map's value g at the face-on point xy (kpc, noise.glsl.ts's
    * frame) made the value the dust's placement is multiplied by; chained over features. Read where the map is drawn
    * (the march's screenGas, FluxPoints' gasAt) and only while it is; it must be defined in `noiseGlsl`.

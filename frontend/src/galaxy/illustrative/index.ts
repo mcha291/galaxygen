@@ -60,6 +60,10 @@
 //               last one's value). The march's screenGas and FluxPoints' gasAt, so the points' dust follows the field's;
 //               read only while the map is drawn ("gas fluctuation in the march" on, the layer on). Its function is
 //               defined in the feature's `noiseGlsl`.
+//     points    float f(vec2 rp) (S108, the points' edge): a multiplier on every point's light FluxPoints draws (the
+//               star-first mode's stars and clusters, the region's stars, the knots) at the point's own midplane place
+//               rp. Multiplied over features into illPoints(rp); read in FluxPoints' vertex shader only (the march's
+//               light is the edge hook's), so the points fade with the field's taper.
 //     depth     vec3 f(vec3 d, vec2 rp) (S106, the base's mend and core): the ring texture's published face-on diffuse
 //               depth per channel d (row 0 of `rings`, as read at rp, before the placement, the clouds' share and the
 //               extinction strength multiply it) made the depth the dust's layer carries. Chained over features into
@@ -99,6 +103,7 @@ import { framing } from "./framing";
 import { grade } from "./grade";
 import { knots } from "./knots";
 import { lanes } from "./lanes";
+import { points } from "./points";
 import { sky } from "./sky";
 import { speckle } from "./speckle";
 
@@ -110,7 +115,7 @@ export type Look = "physical" | "illustrative";
 export const LOOKS: readonly Look[] = ["physical", "illustrative"];
 
 /** The registered features, in order. Edited only to add a new file. */
-const FEATURES: IllFeature[] = [grade, edge, speckle, framing, knots, lanes, arms, floc, base, sky];
+const FEATURES: IllFeature[] = [grade, edge, speckle, framing, knots, lanes, arms, floc, base, sky, points];
 
 /** The features registered now. */
 export const features = (): readonly IllFeature[] => FEATURES;
@@ -213,7 +218,7 @@ export function illArrays(): string[] {
   return [...new Set(FEATURES.flatMap((f) => f.arrays ?? []))].sort();
 }
 
-const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light", arg: string, op: string, unit: string) => {
+const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light" | "points", arg: string, op: string, unit: string) => {
   const calls = FEATURES.map((f) => f.hooks?.[kind]).filter((n): n is string => Boolean(n)).map((n) => `${n}(${arg})`);
   return calls.length ? calls.join(` ${op} `) : unit;
 };
@@ -250,6 +255,7 @@ export function illGlsl(noise = false): string {
     `  float illEdge(float r) { return ${hookCall("edge", "r", "*", "1.0")}; }`,
     `  vec3 illVeil(vec2 rp) { return ${hookCall("veil", "rp", "*", "vec3(1.0)")}; }`,
     `  vec3 illLight(vec2 rp) { return ${hookCall("light", "rp", "*", "vec3(1.0)")}; }`,
+    `  float illPoints(vec2 rp) { return ${hookCall("points", "rp", "*", "1.0")}; }`,
     ...(noise ? noiseSide() : []),
     "",
   ].join("\n");
@@ -301,6 +307,14 @@ export const POINTS_PATCHES: readonly Patch[] = [
     apply: (a) =>
       `${a.replace("tau += face * place", "tau += illDepth(face, vec2(r, phi)) * place")}\n` +
       "      tau += illDustAv(vec2(r, phi)) * cloudExt * column(p.y + u.y * s0, p.y + u.y * s1, h, ds);",
+  },
+  // S108: the points hook, on the point's light (every mode of it) at the point's own midplane place.
+  {
+    anchor: "    vLight = light;",
+    apply: (a) =>
+      "    float illPhi = atan(-position.z, position.x);\n" +
+      "    light *= illPoints(vec2(length(position.xz), illPhi < 0.0 ? illPhi + 6.28318531 : illPhi));\n" +
+      a,
   },
   // S106: the gas hook, on the segment's gas fluctuation map (the march's screenGas, read the same way).
   {

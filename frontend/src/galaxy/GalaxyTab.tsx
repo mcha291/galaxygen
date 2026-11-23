@@ -1034,10 +1034,11 @@ export function GalaxyTab({
             profile={look.clusterRadius ? 1 : 0}
             physical={physical}
             ill={illRuntime}
+            illEdged
           />
         )}
         {brightPoints && (
-          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} ill={illRuntime} />
+          <FluxPoints positions={brightPoints.positions} flux={brightPoints.flux} gain={pointsGain} psf={spritePsf} spriteSize={look.spriteSize} dust={pointDust} physical={physical} ill={illRuntime} illEdged />
         )}
         {mode === "stars" && look.compCells && ringEdges && <CellOutlines ringEdges={ringEdges} />}
         {mode === "stars" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
