@@ -252,7 +252,7 @@ test("look and template switches: no program call on a dead program, no glGetPro
     await still(page);
     perRun.push(lines.filter((l) => /glGetProgramiv/.test(l.text)).length - before);
     // the contexts lost in this run, with the programs still undeleted at the loss
-    const lost = await page.evaluate((since) => window.__glTrace!.contexts.filter((c) => c.lostAt >= since).map((c) => `${c.id}:${c.live}`), reload ? 0 : -1);
+    const lost = await page.evaluate(() => window.__glTrace!.contexts.filter((c) => c.lostAt >= 0).map((c) => `${c.id}:${c.live}`));
     console.log(`run ${run}: glGetProgramiv lines ${perRun[run]}; contexts lost (id:programs live) ${lost.join(" ")}`);
     if (perRun[run] > 0) {
       // the page's clock against the probe's, then each warning, context and polled error on the page's clock
