@@ -22,7 +22,7 @@ import { KnotsLayer } from "./knotsLayer";
 const CONTROLS: readonly IllControl[] = [
   { key: "draw", label: "regions drawn", min: 0, max: 1, step: 1, default: 1, about: "1: the HII regions drawn as illustrative nebulae in place of the knots; 0: the default knots. Illustrative." },
   {
-    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 160, ngc_4414: 8 },
+    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 80, ngc_4414: 8 },
     about: "A multiplier on the regions' light over the knots' gain (the field's scale and the exposure). Illustrative.",
   },
   {
@@ -34,7 +34,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
-    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 2.5, ngc_4414: 6 },
+    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 2.0, ngc_4414: 6 },
     about: "A multiplier on each region's own radius (hii_radius) for its drawn radius. Illustrative.",
   },
   {
@@ -71,7 +71,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The regions' colour mixed from their own lines' colour (0) toward H-alpha pink (1). Colour for appearance.",
   },
   {
-    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: -0.1, ngc_4414: 0.1 },
+    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: -0.2, ngc_4414: 0.1 },
     about: "The pink's hue, from a red pink (0) to magenta (1); below 0 past the pink toward a deep red (S105: the grade's cool tint turns a pink violet). Colour for appearance.",
   },
   { key: "blobs", label: "sub-blobs", min: 1, max: 4, step: 1, default: 4, about: "Each region drawn as this many soft sub-blobs, placed by a hash of its index (stable). Illustrative." },
@@ -81,7 +81,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "soft", label: "softness", min: 0.2, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.8 }, about: "A multiplier on every sub-blob's Gaussian width. Illustrative." },
   {
-    key: "coreGain", label: "core gain", min: 0, max: 5, step: 0.01, unit: "×", default: 0.8, perTemplate: { milky_way: 0.6, ngc_4414: 2 },
+    key: "coreGain", label: "core gain", min: 0, max: 5, step: 0.01, unit: "×", default: 0.8, perTemplate: { milky_way: 0.4, ngc_4414: 2 },
     about: "The white-blue core's light (the young cluster) over the region's own. Illustrative.",
   },
   { key: "coreSize", label: "core size", min: 0.02, max: 0.6, step: 0.01, unit: "×", default: 0.1, perTemplate: { milky_way: 0.05 }, about: "The core's Gaussian width in region radii (at least 0.6 px). Illustrative." },
@@ -114,10 +114,10 @@ const CONTROLS: readonly IllControl[] = [
   { key: "complexes", label: "skeleton: large complexes", min: 0, max: 40, step: 1, default: 0, perTemplate: { milky_way: 12 }, about: "This many large ragged complexes (several lobes, a white core, bright points about them) along the two major arms; 0 none. Illustrative (S107)." },
   { key: "complexGain", label: "skeleton: complexes' light", min: 0, max: 20, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 5 }, about: "A large complex's members' light, times a region's. Illustrative (S107)." },
   // S107 (MW2): the large complexes made to read at full frame, ragged lobes, the spurs' regions on their crests.
-  { key: "complexMembers", label: "skeleton: complexes' members", min: 0.5, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.8 }, about: "A large complex's (and a bar end's) members, times as many as before. Illustrative (S107)." },
-  { key: "complexSpread", label: "skeleton: complexes' length", min: 0.5, max: 6, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.8 }, about: "A large complex's members spread this many times the bunch length along the arm: an elongated complex. Illustrative (S107)." },
-  { key: "satellites", label: "skeleton: complexes' satellites", min: 0, max: 20, step: 1, default: 0, perTemplate: { milky_way: 8 }, about: "This many tiny regions scattered about each large complex (and bar end), just beyond its members; 0 none. Illustrative (S107)." },
-  { key: "halo", label: "skeleton: complexes' halo", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0.25 }, about: "A soft pink envelope along the arm round each large complex (and bar end), its light this share of the complex's largest member; 0 none. Illustrative (S107)." },
+  { key: "complexMembers", label: "skeleton: complexes' members", min: 0.5, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.2 }, about: "A large complex's (and a bar end's) members, times as many as before. Illustrative (S107)." },
+  { key: "complexSpread", label: "skeleton: complexes' length", min: 0.5, max: 6, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.0 }, about: "A large complex's members spread this many times the bunch length along the arm: an elongated complex. Illustrative (S107)." },
+  { key: "satellites", label: "skeleton: complexes' satellites", min: 0, max: 20, step: 1, default: 0, perTemplate: { milky_way: 4 }, about: "This many tiny regions scattered about each large complex (and bar end), just beyond its members; 0 none. Illustrative (S107)." },
+  { key: "halo", label: "skeleton: complexes' halo", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0 }, about: "A soft pink envelope along the arm round each large complex (and bar end), its light this share of the complex's largest member; 0 none. Illustrative (S107)." },
   { key: "haloSize", label: "skeleton: halo size", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 2 }, about: "The halo's radius, times the regions' radius ceiling. Illustrative (S107)." },
   { key: "ragged", label: "ragged lobes", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.6 }, about: "On the skeleton's regions, each lobe's light broken by a fixed noise at a few cells per region radius by this share: ragged outlines, wisps and holes; 0 smooth lobes. Illustrative (S107)." },
   { key: "spurCrest", label: "skeleton: spurs' regions on the crest", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "The regions on a spur drawn onto its crest by this share (0: set to the inner side and scattered as on an arm, so they sit off the short spur). Illustrative (S107)." },

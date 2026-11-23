@@ -254,7 +254,7 @@ export const arms: IllFeature = {
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.1 },
+      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.6 },
       about: "The arms' tint and the sparkle's colour turned from blue-white toward cyan-teal by this share; 0 the blue-white. Colour for appearance (S107).",
     },
     {
@@ -342,7 +342,7 @@ export const arms: IllFeature = {
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
-      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.2, ngc_4414: 0.15 },
+      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.6, ngc_4414: 0.15 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
     },
     {
@@ -462,15 +462,15 @@ export const arms: IllFeature = {
       about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 3.0, ngc_4414: 1 },
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2.5, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
-      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.1, ngc_4414: 0 },
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.6, ngc_4414: 0 },
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.1, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.0, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
@@ -482,11 +482,11 @@ export const arms: IllFeature = {
       about: "The same ground about the bar tinted toward a slate blue by this share, so the bar stands on blue, not on the old light's khaki; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsharp", label: "bar edge", min: 1, max: 8, step: 0.1, unit: "", default: 2, perTemplate: { milky_way: 4 },
+      key: "barsharp", label: "bar edge", min: 1, max: 8, step: 0.1, unit: "", default: 2, perTemplate: { milky_way: 3 },
       about: "The bar light's profile across its ellipse as exp(-1.6 e^this): 2 the soft gaussian; higher a flatter body with a sharper edge. Illustrative (S106).",
     },
     {
-      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.8 },
+      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.6 },
       about: "The bar light's ellipse's axis ratio as a multiple of the published bar_axis_ratio: below 1 a slimmer drawn bar. Illustrative (S106).",
     },
     {

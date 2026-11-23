@@ -56,7 +56,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The cool tint's colour: 0 sky blue, 1 lavender. Colour for appearance.",
   },
   {
-    key: "warm", label: "warm hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0.8, ngc_4414: 0.8 },
+    key: "warm", label: "warm hue", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 1.0, ngc_4414: 0.8 },
     about: "The warm tint's colour: 0 orange, 1 cream. Colour for appearance.",
   },
   {
