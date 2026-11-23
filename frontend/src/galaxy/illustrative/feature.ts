@@ -64,6 +64,12 @@ export interface IllHooks {
   veil?: string;
   /** `vec3 f(vec2 rp)`: a per-channel multiplier on the disc's starlight at rp (S108); multiplied over features. */
   light?: string;
+  /**
+   * `float f(vec2 xy, float g)` (S106): the gas fluctuation map's value g at the face-on point xy (kpc, noise.glsl.ts's
+   * frame) made the value the dust's placement is multiplied by; chained over features. Read where the map is drawn
+   * (the march's screenGas, FluxPoints' gasAt) and only while it is; it must be defined in `noiseGlsl`.
+   */
+  gas?: string;
 }
 
 /** What a feature's own drawing (`layer`) receives: drawn inside the Galaxy view's canvas under the illustrative look. */
@@ -125,6 +131,12 @@ export interface IllFeature {
    * shared map through `map`. No texture derivative functions (the points read it in a vertex shader).
    */
   glsl?: string;
+  /**
+   * GLSL at global scope put only where the randomness layer's include is (noise.glsl.ts: the march's fragment and
+   * FluxPoints' vertex shader), after `glsl`: it may call the include's functions (layerGasMap, layerGasSum...) and read
+   * its uniforms. Not in other layers' shaders (runtime.glsl). The same rules as `glsl` (no sampler, no derivative).
+   */
+  noiseGlsl?: string;
   hooks?: IllHooks;
   /** Its channels of the shared map and their builder (see IllMapBuilder). */
   map?: IllMapBuilder;
