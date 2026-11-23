@@ -54,7 +54,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "How far the disc's light swells and thins in soft patches about its mean (a multiplier on all the light at each place); 0 a smooth disc. Illustrative.",
   },
   {
-    key: "clump", label: "clump glow", min: 0, max: 8, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 5 },
+    key: "clump", label: "clump glow", min: 0, max: 8, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3 },
     about: "How much brighter all the light is at the centre of a young clump (a multiplier of 1 plus this, in the clump tint); 0 none. Illustrative.",
   },
   {
@@ -63,10 +63,10 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.6 }, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
   {
-    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.35 },
     about: "A cream tint over the inner disc's light, fading outward: the old disc of the photograph. Colour for appearance.",
   },
-  { key: "warmRadius", label: "warmth radius", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 4.5, perTemplate: { ngc_4414: 9 }, about: "The radius at which the warm tint has fallen to 1/e, kpc. Colour for appearance." },
+  { key: "warmRadius", label: "warmth radius", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 4.5, perTemplate: { ngc_4414: 3 }, about: "The radius at which the warm tint has fallen to 1/e, kpc. Colour for appearance." },
   { key: "density", label: "filaments", min: 0, max: 12, step: 0.05, unit: "/kpc²", default: 0.5, perTemplate: { ngc_4414: 4 }, about: "Trunk filaments per square kiloparsec where the gas is at its mean (branches and bands come with them). Illustrative." },
   { key: "length", label: "filament length", min: 0.2, max: 5, step: 0.05, unit: "kpc", default: 1.4, about: "A trunk's typical length, kpc (each between 0.45 and 1.75 of it): a short piece of a turn. Illustrative." },
   { key: "width", label: "filament width", min: 30, max: 400, step: 5, unit: "pc", default: 55, perTemplate: { ngc_4414: 40 }, about: "A filament's typical full width at half depth, parsecs (each between 0.6 and 2.2 of it, most thin). Illustrative." },
@@ -123,10 +123,10 @@ const CONTROLS: readonly IllControl[] = [
   { key: "nearBias", label: "near-side dust", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.3 }, about: "How much more dust lies toward the near-side azimuth (and less opposite): 1 twice the mean there, none opposite. Illustrative." },
   { key: "nearAz", label: "near-side azimuth", min: 0, max: 360, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: 300 }, about: "The galactocentric azimuth of the most dust, degrees. Illustrative." },
   { key: "litScale", label: "light cloud size", min: 40, max: 1500, step: 10, unit: "pc", default: 220, perTemplate: { ngc_4414: 120 }, about: "The size of the cream clouds of light between the dust, parsecs. Illustrative." },
-  { key: "litKnots", label: "bright grains", min: 0, max: 3, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 1.2 }, about: "How bright the brightest of the light's grains are (the grain's peaks, in the clump tint). Illustrative." },
+  { key: "litKnots", label: "bright grains", min: 0, max: 3, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 2 }, about: "How bright the brightest of the light's grains are (the grain's peaks, in the clump tint). Illustrative." },
   { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.3 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
   // S106 second pass (C3): the light's grain and its radial colour, drawn in the march (no rebuild).
-  { key: "litGrain", label: "light grain", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "The plane style: how far the starlight between the dust is broken into small bright puffs (a multiplier about 1); 0 smooth. Illustrative." },
+  { key: "litGrain", label: "light grain", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.6 }, about: "The plane style: how far the starlight between the dust is broken into small bright puffs (a multiplier about 1); 0 smooth. Illustrative." },
   { key: "litGrainSize", label: "grain size", min: 10, max: 300, step: 1, unit: "pc", default: 40, perTemplate: { ngc_4414: 12 }, about: "A puff of the light's grain, parsecs (a finer one at under half of it rides on it). Illustrative." },
   { key: "litGrainNear", label: "grain by the dust", min: 0, max: 5, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 0 }, about: "How much stronger the grain is just outside a dust thread (the young light along the arcs). Illustrative." },
   { key: "cool", label: "outer blue", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 }, about: "The plane style: a blue-white tint over the outer disc's light, from the outer blue's radius outward (warm cream inside). Colour for appearance." },
@@ -195,17 +195,17 @@ const CONTROLS: readonly IllControl[] = [
   // S107 (builder NGC): ALL the plane style's dust - the map's threads and the march's mesh alike - gathered on the mesh's
   // arcs (one field), with clear zones of starlight between them; drawn in the march (no rebuild).
   { key: "arcGate", label: "dust gathered on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "The plane style: how far all the drawn dust (threads and mesh alike) keeps to the mesh's arcs, clear starlight between; 0 as drawn. Illustrative." },
-  { key: "arcClear", label: "dust between arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { ngc_4414: 0.05 }, about: "The share of the drawn dust left in the clear zones between the arcs (faint wisps). Illustrative." },
+  { key: "arcClear", label: "dust between arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.1, perTemplate: { ngc_4414: 0.02 }, about: "The share of the drawn dust left in the clear zones between the arcs (faint wisps). Illustrative." },
   { key: "arcLevel", label: "arc share", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.6 }, about: "The level of the arcs' noise above which the dust is kept: higher, narrower arcs and broader clear zones. Illustrative." },
   { key: "grainDim", label: "grain shade", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0 }, about: "How far the light's grain dims the light between its puffs: 1 as drawn (bright and dark), 0 bright points only. Illustrative." },
   { key: "puffDim", label: "puff shade", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0.3 }, about: "How far the light's puffs dim the light between them: 1 as drawn, 0 brightening only. Illustrative." },
   { key: "clearFloor", label: "clear zone floor", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, about: "Where the arcs' gate takes the dust away, the light's patches are held at least at this level (0.5 their mean): the clear zones' starlight unshaded. Illustrative." },
-  { key: "coreGain", label: "nucleus point", min: 0, max: 20, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 6 }, about: "A compact bright point at the nucleus: the light there lifted by 1 plus this, falling off over the point's radius (the broad glow kept). Illustrative." },
-  { key: "coreRadius", label: "nucleus point radius", min: 0.01, max: 1, step: 0.005, log: true, unit: "kpc", default: 0.12, perTemplate: { ngc_4414: 0.08 }, about: "The nucleus point's radius at 1/e, kpc. Illustrative." },
-  { key: "coreWhite", label: "nucleus point white", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "How far the nucleus point's lift goes toward a blue-white (it whitens a cream core). Colour for appearance." },
-  { key: "glowDim", label: "nucleus glow dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.85 }, about: "The share of the light taken off the nucleus's broad glow at its centre (a gaussian), so the stretch does not flatten it into a blob. Colour for appearance." },
-  { key: "glowRadius", label: "nucleus glow radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1, perTemplate: { ngc_4414: 0.7 }, about: "The radius at 1/e of the glow's dimming, kpc. Colour for appearance." },
-  { key: "arcPeak", label: "dust on arc crests", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 1.3 }, about: "The drawn dust's depth on the arcs' crests, a multiplier. Illustrative." },
+  { key: "coreGain", label: "nucleus point", min: 0, max: 20, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 20 }, about: "A compact bright point at the nucleus: the light there lifted by 1 plus this, falling off over the point's radius (the broad glow kept). Illustrative." },
+  { key: "coreRadius", label: "nucleus point radius", min: 0.01, max: 1, step: 0.005, log: true, unit: "kpc", default: 0.12, perTemplate: { ngc_4414: 0.12 }, about: "The nucleus point's radius at 1/e, kpc. Illustrative." },
+  { key: "coreWhite", label: "nucleus point white", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.9 }, about: "How far the nucleus point's lift goes toward a blue-white (it whitens a cream core). Colour for appearance." },
+  { key: "glowDim", label: "nucleus glow dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.95 }, about: "The share of the light taken off the nucleus's broad glow at its centre (a gaussian), so the stretch does not flatten it into a blob. Colour for appearance." },
+  { key: "glowRadius", label: "nucleus glow radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1, perTemplate: { ngc_4414: 1.5 }, about: "The radius at 1/e of the glow's dimming, kpc. Colour for appearance." },
+  { key: "arcPeak", label: "dust on arc crests", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 1.6 }, about: "The drawn dust's depth on the arcs' crests, a multiplier. Illustrative." },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
