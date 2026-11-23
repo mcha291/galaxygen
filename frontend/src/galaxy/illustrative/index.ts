@@ -66,6 +66,13 @@
 //               illDepth(d, rp). The march's tau (its own patch, on the tau line; the layer's dustAv is added after it)
 //               and FluxPoints' face (on the dustAv patch's anchor), so the points' dust takes the same. Defined in the
 //               feature's `noiseGlsl`: it may read `rings`, `rLo` and `cloudExt`, which only those two shaders declare.
+//     graze     (S108, the grazing handover; GRAZE_DEFAULT below) not a hook: every shader the layer's GLSL is in
+//               carries `float illGraze`, 1 from face-on to base.grazeFrom off the disc's axis, 0 from base.grazeTo
+//               (per ray in the march, per point's sight line in FluxPoints and the regions). The composition fades a
+//               hook's value to its identity by it where the feature's `graze` (or the kind's default) says "fade"
+//               (the veil and the light by default); a feature's GLSL may read illGraze for its own removals of the
+//               model's physics (base: the dust's placement, the grain, the core; edge: the bulge's dimming; lanes and
+//               floc: the ink handed to the dust's own layer). Exactly the S107 values while illGraze is 1.
 //   noiseGlsl  (S106) global-scope GLSL put only where the randomness layer's include (noise.glsl.ts) is - the march's
 //              fragment and FluxPoints' vertex shader, after every feature's `glsl` - so it may call layerGasMap,
 //              layerGasSum and the rest and read their uniforms. Other layers' shaders (runtime.glsl: the knots' layer)
