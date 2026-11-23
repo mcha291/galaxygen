@@ -89,6 +89,8 @@ export const INTER_LAVENDER: readonly [number, number, number] = [1.06, 0.9, 1.0
 /** The disc's warm tint between the arms (a negative lavender share), for a flocculent disc's warm inner light. */
 export const INTER_WARM: readonly [number, number, number] = [1.12, 1.0, 0.82];
 
+// The e2e tools type-check this registry without JSX (e2e/tsconfig.json): the drawing is a .tsx they never load.
+// @ts-ignore TS6142 under the e2e tools' compiler options only
 const Sparkle = lazy(() => import("./SparkleLayer"));
 /** The sparkle's drawing, loaded apart from the registry (it draws through FluxPoints, which imports the registry). */
 function ArmsLayer(props: IllLayerProps) {
