@@ -79,6 +79,7 @@ import { framing } from "./framing";
 import { grade } from "./grade";
 import { knots } from "./knots";
 import { lanes } from "./lanes";
+import { sky } from "./sky";
 import { speckle } from "./speckle";
 
 export type { IllContext, IllControl, IllFeature, IllLayerProps, IllMapBuilder, IllParams } from "./feature";
@@ -89,7 +90,7 @@ export type Look = "physical" | "illustrative";
 export const LOOKS: readonly Look[] = ["physical", "illustrative"];
 
 /** The registered features, in order. Edited only to add a new file. */
-const FEATURES: IllFeature[] = [grade, edge, speckle, framing, knots, lanes, arms, floc, base];
+const FEATURES: IllFeature[] = [grade, edge, speckle, framing, knots, lanes, arms, floc, base, sky];
 
 /** The features registered now. */
 export const features = (): readonly IllFeature[] => FEATURES;
