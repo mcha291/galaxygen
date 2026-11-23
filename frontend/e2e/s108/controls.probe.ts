@@ -231,3 +231,42 @@ if (ASKED.includes("stars")) {
     });
   }
 }
+
+if (ASKED.includes("reroll")) {
+  const rolls = Number(process.env.S108_ROLLS ?? 2);
+  for (const template of TEMPLATES) {
+    test(`a rerolled galaxy under the illustrative look on ${template}`, async ({ page }) => {
+      const asked: string[] = [];
+      page.on("request", (r) => {
+        const u = new URL(r.url());
+        if (u.pathname === "/api/arrays") asked.push(`pattern_seed ${u.searchParams.get("pattern_seed")}, texture_seed ${u.searchParams.get("texture_seed")}`);
+      });
+      // S108_FIX_SEEDS="<pattern>:<texture>": every rerolled request asked with these seeds instead (a galaxy seen again).
+      const fixed = process.env.S108_FIX_SEEDS?.split(":");
+      if (fixed) {
+        await page.route("**/api/**", (route) => {
+          const u = new URL(route.request().url());
+          const own = template === "ngc_4414" ? "4414" : "0";
+          const ps = u.searchParams.get("pattern_seed");
+          if (ps !== null && ps !== own && ps !== `${own}.0`) {
+            u.searchParams.set("pattern_seed", fixed[0]);
+            u.searchParams.set("texture_seed", fixed[1]);
+            return route.continue({ url: u.toString() });
+          }
+          return route.continue();
+        });
+      }
+      const net = await open(page, "illustrative", template);
+      save(`${template}-reroll0`, await settle(page, net));
+      await page.getByRole("button", { name: "Edit galaxy" }).click();
+      for (let k = 1; k <= rolls; k += 1) {
+        await page.getByRole("button", { name: "Reroll pattern_seed" }).click();
+        await page.getByRole("button", { name: "Reroll texture_seed" }).click();
+        await page.getByRole("button", { name: "Generate", exact: true }).click();
+        await page.waitForTimeout(1000);
+        save(`${template}-reroll${k}`, await settle(page, net));
+        console.log(`${template}: reroll ${k}: the layer's arrays asked with ${asked[asked.length - 1] ?? "(none)"}`);
+      }
+    });
+  }
+}

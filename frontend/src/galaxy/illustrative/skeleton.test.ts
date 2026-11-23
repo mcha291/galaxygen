@@ -216,3 +216,13 @@ describe("the even winding (S107, MW2)", () => {
     for (const a of lessers) for (let i = 1; i < a.n; i++) expect(a.phi[i]).toBeGreaterThan(a.phi[i - 1]);
   });
 });
+
+describe("the skeleton's least pitch (S108, a rerolled galaxy)", () => {
+  it("opens the arms of near-circular pieces to the floor and leaves a template's pitch as it was", () => {
+    const piece = (pitchDeg: number, r0: number): Piece => ({ chain: 0, order: 0, r0, phi0: 0, pitchDeg, extent: 1, join: 0 }) as unknown as Piece;
+    const tight = buildSkeleton({ pieces: [piece(1.4, 4), piece(1.3, 6), piece(1.5, 8)], bar: null });
+    expect(tight.pitchDeg).toBeCloseTo(SKELETON_DEFAULTS.pitchMin ?? 0, 9);
+    const open = buildSkeleton({ pieces: [piece(12.6, 4), piece(12.6, 6)], bar: null });
+    expect(open.pitchDeg).toBeCloseTo(12.6, 9);
+  });
+});

@@ -58,11 +58,13 @@ import {
   illContextFor,
   ILL_SETTLE_MS,
   illEffective,
+  illSeeded,
   illStale,
   knotsReplaced,
   paramsOf,
   releaseRuntime,
   stepRuntime,
+  withIllReroll,
 } from "./illustrative";
 import { illMeasure, illNow } from "./illustrative/feature";
 import { illArrivals, illJobsPending, illMapFailure, setIllDrawnFor, setIllViewPending, subscribeIll } from "./illustrative/illMapClient";
@@ -685,7 +687,9 @@ export function GalaxyTab({
   const illParams = look.ill;
   const illNames = useMemo(() => (illustrative ? illArrays() : []), [illustrative]);
   const illArraysKey = illustrative && illNames.length > 0 ? JSON.stringify(["illustrative", illNames, query]) : null;
-  const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal)).value ?? null;
+  // S108: the frame stamped with the galaxy's reroll against its template's own seeds (index.ts withIllReroll).
+  const illOwnSeeds = template?.inputs.seeds ?? null;
+  const illFrame = useLoad<Frame>(illArraysKey, (signal) => loadArrays(illNames, query, signal).then((f) => withIllReroll(f, illOwnSeeds))).value ?? null;
   // S107 (rule D1): during a landing's hold the drawn galaxy's template, as its parameters (look.ill) and its arrays are,
   // so the map is built and drawn for the galaxy on screen; the new one's when the swap publishes it.
   const illTemplate = held ?? templateName;
@@ -704,7 +708,8 @@ export function GalaxyTab({
     },
     [illustrative, illParams, illSettled, illContext],
   );
-  const illDrawnParams = illDrawn.ill;
+  // S108: the layer's own seeds follow the generated galaxy (index.ts illSeeded; the same object for the template's own).
+  const illDrawnParams = useMemo(() => illSeeded(illDrawn.ill, illContext), [illDrawn.ill, illContext]);
   // S106 (B4): the layers' context carries every feature's drawn parameters (IllContext.paramsOf), as the map builders' does.
   const illLayerContext = useMemo(() => illContextFor(illContext, illDrawnParams), [illContext, illDrawnParams]);
   const [illBuilt, setIllBuilt] = useState(0);

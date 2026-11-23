@@ -9,7 +9,13 @@ import type { ComponentType } from "react";
  * the e2e tools can import the registry): the header's scalars and the named arrays.
  */
 export interface IllFrame {
-  header: { scalars: Record<string, number>; [key: string]: unknown };
+  /**
+   * `inputs` is the galaxy's published input vector (its pattern_seed, texture_seed...). `illReroll` (S108, index.ts
+   * withIllReroll, stamped by GalaxyTab when the frame arrives; read-only): 0 where the galaxy's pattern_seed and
+   * texture_seed are its template's own, else a non-zero 32-bit hash of the two - the layer's own seeds follow it
+   * (index.ts illSeeded, the sparkle's stream), so each generated galaxy has its own drawing and the template's is today's.
+   */
+  header: { scalars: Record<string, number>; illReroll?: number; [key: string]: unknown };
   arrays: Record<string, Float64Array | Float32Array | BigInt64Array>;
 }
 
