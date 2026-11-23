@@ -2428,3 +2428,20 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   and run the final gates with no builder running. (S106, D277)
 - [close] **Per-template defaults in files another builder owns go through a combination and come back as a list.**
   The lead applies them at the merge: no conflict in four merges per template. (S106, D277)
+
+## From S107 (BUILD_VIII rows 115-118: ten Opus builders, investigators, a reviewer and a documents' writer; the Fable lead and gate)
+
+- [viewer] **A trace that switches a term off must check the term is not merely the ground others act on.** "The
+  fringe vanishes with the old light off" blamed the starlight for strokes that floc drew ON the starlight. The lead
+  built a brief on it; the next builder tested the cure before using it and found it did nothing. (S107, D278)
+- [viewer] **An intermittent warning with no bad call in JS is a clue about lifetimes, not calls.** Polling every
+  context's error flag showed WHICH canvas, and that canvas should not have existed. (S107, D278)
+- [viewer] **Asynchronous drawing needs an identity on what is drawn.** "Keep the previous map until the new one
+  arrives" is right for a slider and wrong for a switch of galaxy; a per-frame probe that names what each drawn thing
+  was built for caught a one-frame slip no capture would. (S107, D278)
+- [viewer] **Measure colour by patches against the goal, not by an overall step.** The arms' cyan came from a term no
+  colour slider named; and an overall measure can move the wrong way while every patch moves the right way. (S107, D278)
+- [infra] **Do not chain a script after `git merge` with a semicolon.** A conflicted merge ran the lead's value-setting
+  script over conflict markers; abort, merge again, resolve, then edit. (S107, D278)
+- [close] **Two passes that each fix one range (full frame, close range) can undo each other.** The brief for the third
+  named both earlier states as references and asked for both ranges at once. (S107, D278)

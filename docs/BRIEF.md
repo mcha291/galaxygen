@@ -1,16 +1,14 @@
-# BRIEF — after S106: both pictures read as their goal at a glance (D277, BUILD_VIII rows 111-114)
+# BRIEF — after S107: the sliders are free and both close-ups read as their goal's (D278, BUILD_VIII rows 115-118)
 
-**First, plainly: S105 made both frames the right kind of picture; S106 makes both read as their goal at a glance.**
-Under the **illustrative look** (the default) the Milky Way is a luminous lavender disc filling the frame to a soft
-fade, pale cyan-white arms of fine grain winding from the bar's ends to the edge, thin red-brown lanes on their inner
-edges, small pink-red regions with white cores in bunches, a crisp cream bar at the goal's angle in a darker zone.
-NGC 4414 lies at the photograph's tilt: a cream nucleus in a golden inner disc, dark brown dust in many thin spiral
-arcs with a tangle between, blue-white star clouds at the rim, field stars on a navy sky. **Still far, at close range
-only:** the Milky Way's arms are smooth bands with points where the goal's are patchy light, its outer arms almost
-concentric rings (a second reader's), its bar a saturated yellow, its regions salmon and never a large complex, its
-lanes unbranched; NGC 4414's dust reads as short curled brush-strokes, more even than the photograph's lanes and
-darker overall than S105's (dark fraction 0.229 against the goal's 0.157), the rim's dust grey, the nucleus a soft
-blob. Frames: `docs/pictures/s106/`; words and numbers: `READING_PICTURES.md` Part S106. The physical look is unchanged.
+**First, plainly: S106 made both frames their goal's composition; S107 makes both close-ups read as their goal's
+close-ups, and no slider freezes the view any more.** Under the **illustrative look** (the default) the Milky Way is a
+balanced spiral opening outward from the bar's ends, patchy pale blue-white arms on a periwinkle disc, ragged red-pink
+regions in bunches and complexes on braided brown lanes, a pale cream bar. NGC 4414 is a flocculent disc of many narrow
+broken dust lanes round a bright nucleus in a golden inner disc, star clouds at the rim, no brushing. **Still far:** the Milky Way's inner arms do not hug the bar's ends (an empty lavender zone),
+its bar too orange, its lanes browner and broader than the goal's threads, soft round blue blobs between the arms close
+up (a second reader's); NGC 4414's lanes lighter and less prominent than the photograph's, fingerprint stripes near the
+nucleus, the disc an even grey-white to the rim where the photograph's dims and turns blue (a second reader's). Frames:
+`docs/pictures/s107/`; words and numbers: `READING_PICTURES.md` Part S107. The physical look is unchanged.
 
 ## TWO THINGS ONLY YOU CAN RULE, AND THE OK TO ENTER THEM (#238, #239; nothing waits on them)
 - **#238 - a defect in the PHYSICAL look.** At NGC 4414's centre the dust is so thick (optical depth about 97 / 122 /
@@ -20,41 +18,42 @@ blob. Frames: `docs/pictures/s106/`; words and numbers: `READING_PICTURES.md` Pa
   (the depth from a surviving channel in the published ratio), then re-capture those four frames. Say yes or no.
 - **#239 - a model question.** NGC 4414's published central extinction is about 130 mag in V face-on (the Milky Way's
   about 50): a correct march hides the nucleus. The illustrative look thins it 2 dex inside 1 kpc. Re-read it or not?
-- **The OK to enter them.** #238 and #239 are two findings of S106, NOT YET ENTERED in the register: the numbers #238
-  and #239 are reserved for them; entering them needs a two-line change to tests/test_audit.py (the pinned counts 115
-  -> 117 and the carried row), which waits for the owner's word.
+- **The OK to enter them.** #238 and #239 are two findings of S106, STILL NOT ENTERED in the register: the numbers are
+  reserved for them; entering them needs a two-line change to tests/test_audit.py (the pinned counts 115 -> 117 and
+  the carried row), which waits for your word.
 
 ## How to see it and tune it
 - Pull `main`, run the API and `npm --prefix frontend run dev`, hard-reload (Ctrl+Shift+R); **illustrative** sits
-  beside **physics only**. Tuning panel, group **Illustrative**: about 300 sliders by feature with a filter box; an
+  beside **physics only**. Tuning panel, group **Illustrative**: the sliders by feature with a filter box; an
   `arms.skel*` slider moves the Milky Way's glow, grain, lanes and regions together; the copy box carries every value.
   Frames: `npm --prefix frontend run look` against an API on :8031 with the bundles, then `tools/goal_sheet.py`.
 
 ## The state (2026-11-23)
-S106 on `session-106` from `main` d40c43a (tag `s105`). A Fable lead, eleven Opus builders and investigators, an Opus
-reviewer; the two Fable builders were cut by HTTP 529 and replaced by Opus. The picture test's nine physical frames
-byte for byte at every hand-back and on the merged head; the full suite dispatched on GitHub, **not read yet** (S105's
-run 45130693940: green, 1860 passed). **No byte under `model/galaxy` moved** (hash 5a862a70...). Register as it was:
-115 open = 50 + 65, 104 discharged. Next: #240 (#238, #239 reserved), D278 (#237 and D274 are `batch-r`'s).
+S107 on `session-107` from `main` 510ee63 (tag `s106`); a Fable lead, ten Opus agents. The nine physical frames byte
+for byte on the merged head. S106's GitHub suite (run 45182703859): green, 1860 passed; S107's dispatched, **not read
+yet**. **No byte under `model/galaxy` moved** (hash 5a862a70...). Register as it was: 115 open = 50 + 65, 104
+discharged. Next: #240 (#238, #239 reserved), D279 (#237 and D274 are `batch-r`'s).
 
 ## Rulings taken on recommendation — yours to re-rule (`BUILD_VIII.md` section 4 is the table)
-S105's 1-11 stand (D5 amended for the layer alone; the default look illustrative; the frames unpinned). S106's: 12. the
-layer may draw structure the model lacks where a goal has it (the arm skeleton; NGC 4414's threads, mesh, star clouds,
-sky). 13. the look-switch fix in the shared loader `useLoad.ts`. 14. #238 mended in the layer only. 15. NGC 4414's
-core dust thinned 2 dex, the Milky Way's dust placement 0.1. 16. NGC 4414 tilted 6, the Milky Way rolled 25 degrees.
-17. three builders at once. 18. S106's frames plain pictures. 19. NGC 4414's azimuths follow no other camera. 20. above.
+S105's 1-11 and S106's 12-20 stand (20: #238 and #239 not entered). S107's: 21. nothing of another galaxy drawn for a
+frame after a switch. 22. the framing keyed on the drawn template, a one-line fix in `GalaxyTab.tsx`. 23. NGC 4414's
+dust the mesh on narrow lanes, the threads off (S106's pick reversed). 24. `arms.flat` kept at 0. 25. the Milky Way's
+lesser arms at 0.7 of the majors. 26. the regions' veil. 27. S107's frames plain pictures. 28. #238 / #239 still yours.
 
 ## Known defects and what the next session does (`BUILD_VIII.md` section 6)
-- The blanking look switch is MENDED (in the shared loader, so in both looks). `glGetProgramiv` warnings: still seen,
-  cause unknown. Two sliders stall (arm pitch 0.8 s, NGC 4414's network 0.55 s). Next: your tuning, your rulings.
+- **MENDED at S107:** the slider stalls (every move's longest frame gap now 17-33 ms; the map built in a worker) and
+  the `glGetProgramiv` warnings (a second canvas per landing; one canvas now). Left: 0.6-1.1 s from a settled map
+  slider to the picture. NGC 4414's brushing was the layer's own threads and grain (the lead had guessed the model).
+  Next: your tuning, your rulings; then the forms listed under "Still far" above.
 
 ## Parked, waiting on your word (nothing here touched them)
 `batch-r` 699629c (S104, D274: green, stacked on `batch-q`, one stage-B re-read of `test_s100_bar_length` owed; it
 also needs `main` merged into it, and D274 enters before D275); the held heads `batch-q-lanes` and `q-231`; BUILD_VII's
-remaining rows; your owed rulings (#226, #234, #149, #88, #97/#98, #129, #184, the clustering questions, S101's list):
-`git show batch-r:docs/BRIEF.md`. Worktrees on disk: yours to remove or allow.
+remaining rows; your owed rulings (#226, #234, #149, #88, #97/#98, #129, #184, the clustering questions, S101's list,
+in `git show batch-r:docs/BRIEF.md`); the worktrees on disk, yours to remove or allow.
 
 ## The rules said again, and the traps
 - Under `physical` nothing of the layer runs; a change that moves a committed frame is a defect, never a re-capture. The
   march has NO spare sampler: a feature's map is a channel of the one shared map (`index.ts`'s header).
-- Capture the MERGED head before trusting it; a builder commits early. Never the full suite here (D246): dispatch it.
+- A new map plane must be a NAMED pure memo (`memoOn(build, name)`): the worker builds it by name. Nothing of another
+  galaxy may be drawn for a frame. Capture the MERGED head before trusting it. Never the full suite here (D246).

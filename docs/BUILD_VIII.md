@@ -1,7 +1,8 @@
 # BUILD_VIII — the pictures first: the illustrative look
 
 **Status: ADOPTED on the owner's word of 2026-11-23 (D275); rows 105 to 110 run at S105 the same day (D276); rows 111
-to 114 run at S106 the same day (D277): both pictures now read as their goal at a glance.** The
+to 114 run at S106 the same day (D277): both pictures now read as their goal at a glance; rows 115 to 118 run at S107
+the same day (D278): the sliders no longer freeze the view and both close-ups read as their goal's close-ups.** The
 owner, after the status review of that day: "i want to prioritise being able to produce images akin to the goal. the
 physics is secondary and can be incrementally improved later", and then, on the lead's list of what the display lacks
 and its recommendation: "i accept your recommendations, please begin working on it ... do your best to do as much as
@@ -50,6 +51,10 @@ goals is drawn here by the viewer, as a declared layer of its own, and the model
 | 112 | S106 | **the Milky Way**: one drawn arm skeleton that glow, grain, lanes and regions all read (`skeleton.ts`, `armsSkeleton.ts`; ruling 12); a feature reads another's live parameters (`IllContext.paramsOf`); the pink regions placed on it (`knotsPlace.ts`, `knotsLayer.ts`); the lavender haze, the dark zone round the bar, the slim bar, lumpy grain, a soft fade; five passes | Opus (B, B3, B4, K, B5) | S106 |
 | 113 | S106 | **NGC 4414**: the dust in the disc's plane as threads and a branching mesh (`flocNet.ts`, the veil's GLSL), star clouds (`flocClouds.ts`, `CloudsLayer.tsx`), the sky (`sky.ts`, `SkyLayer.tsx`); the blue nucleus traced to #238 and mended in the layer (`base.mend`), the core thinned (`base.core`; #239) | Opus (C, C3, C4, D, N, E) | S106 |
 | 114 | S106 | **the gate and the close**: every builder's frames read beside the goals, each lane sent back with its defect list; the merged head captured four times; an independent review against `main`'s own build | Opus (the reviewer); the Fable lead | S106 |
+| 115 | S107 | **the sliders freed**: the layer's map planes and the sparkle built in one module worker through the registry's named memos (`illMap.worker.ts`, `illMapJob.ts`, `illMapClient.ts`, `sparkleJob.ts`), the answers seeded into the main thread's cache; nothing of another galaxy drawn for a frame (`illFieldDrawn`; ruling 21); probe `frontend/e2e/ill/sliders.probe.ts` | Opus (W, MW2's one-frame fix) | S107 |
+| 116 | S107 | **the `glGetProgramiv` warnings**: traced to a second canvas per landing (the framing keyed on the live template) and removed by keying it on the drawn one in `GalaxyTab.tsx` (ruling 22); probe `frontend/e2e/switch/glprogram.probe.ts` | Opus (GL) | S107 |
+| 117 | S107 | **the Milky Way at close range**: the pitch opening outward, the lesser arms spaced evenly, patchy arm light, bunched ragged regions with a dozen complexes and a veil (ruling 26), split lanes, the sparkle placed directly, the colour matched patch by patch | Opus (MW, MW2, MW3); the lead's picks | S107 |
+| 118 | S107 | **NGC 4414 at close range**: the brushing traced to the layer's own threads and grain (the map's threads off, ruling 23; `arms.flat` kept at 0, ruling 24), the dust a field of many narrow broken lanes with a pale mesh, dark cores, a veil and wisps (`floc.laneForm`), the rim and a white patch cleared | Opus (NGC, NGC2, NGC3); the lead's picks | S107 |
 
 ## 3. Parallelism and pacing
 
@@ -87,6 +92,14 @@ restarted on another model rather than resumed into the same overload (D277).
 | 18 | S106's frames | committed as plain pictures in `docs/pictures/s106/`; still not pinned (D277) |
 | 19 | `floc.nearAz`, `floc.cloudAz` | NGC 4414's near-side dust bias and rich star-cloud sectors are galactocentric azimuths tuned to the template's stand: they do not follow another camera (D277) |
 | 20 | Whether #238 and #239 enter the register | #238 and #239 are two findings of S106, NOT YET ENTERED in the register: the numbers #238 and #239 are reserved for them; entering them needs a two-line change to tests/test_audit.py (the pinned counts 115 -> 117 and the carried row), which waits for the owner's word (D277) |
+| 21 | What the layer draws after a switch of galaxy | nothing of the previous galaxy, not for one frame: the empty map until the new galaxy's own planes arrive; the first frame after a landing or a look switch may lack the map's features (D278) |
+| 22 | A fix outside the layer for the `glGetProgramiv` warnings | taken, in `GalaxyTab.tsx`: the framing keyed on the drawn template, one canvas per landing; the wasted canvas was the layer's doing (the framing is the layer's) and the physical frames stayed byte for byte; reviewed independently (D278) |
+| 23 | NGC 4414's dust | the march's GLSL mesh on a field of narrow lanes, the map's threads off (`floc.netDepth` 0): the threads combed. S106's pick of threads and mesh together is reversed (D278) |
+| 24 | `arms.flat` (the model's star contrast divided out without the skeleton) | kept as a slider at 0 on both templates: built on the lead's wrong guess about the brushing, harmless, possibly useful to the owner (D278) |
+| 25 | The Milky Way's lesser arms | at 0.7 of the majors (A₂ 0.163): plainer lessers cost the two-armed measure; the owner's `arms.skellevel` (D278) |
+| 26 | The regions' veil | premultiplied blending under `knots.place` 1, so the pink stays red over bright arms: a drawing choice; 0 is the plain additive light (D278) |
+| 27 | S107's frames | the illustrative frames remain unpinned; S107's two are committed as plain pictures in `docs/pictures/s107/` (D278) |
+| 28 | #238 and #239 | still wait for the owner's word; nothing entered in the register (D278) |
 
 ## 5. What done means
 
@@ -96,28 +109,26 @@ Milky Way a blue-white barred spiral with a warm bar, narrow arms carrying brown
 unchanged byte for byte. The distance still left is stated at the close, per picture. **S105's gate: both read as the
 same kind of picture; the owner's eye has not yet ruled** (`READING_PICTURES.md` Part S105). **S106's gate: both
 read as their goal at a glance; what remains is texture and finish at close range, not composition; the owner's eye
-has still not ruled** (Part S106).
+has still not ruled** (Part S106). **S107's gate: both close-ups read as their goal's close-ups; what remains is
+strength and balance, most of it within the owner's sliders, and a few forms; the owner's eye has still not ruled**
+(Part S107).
 
 ## 6. What is left, in the order of what a viewer would gain
 
-1. **The owner's own tuning pass** on the live sliders (now about 300; the Tuning panel's Illustrative group, by
-   feature, with a filter).
-2. **The owner's ruling on #238** (the dust transmission's float32 underflow: the physical fix and the re-capture of
-   the four NGC 4414 committed frames) **and on #239** (the model's central extinction on NGC 4414), and the owner's OK
-   to enter both in the register (ruling 20).
-3. **The Milky Way at close range**: the arms' patchy cyan light (ours are smooth bands with points on them); the outer
-   arms read almost as concentric rings, more tightly wound than the goal's (A₂ 0.125, below S105's 0.143, with A₃
-   0.133 above it, where the goal is m = 2); the bar a saturated yellow brighter than the goal's pale cream, its lane
-   one straight line; large ragged region complexes (ours sit at near-regular intervals, like beads on a string);
-   branching lanes; the first arm leaving the bar's ends clearly; the stray blue blob right of the bar (the model's
-   young clumps on the inner rings) and the lone region at a faded outer arm end.
-4. **NGC 4414 at close range**: lanes of many widths (ours read as short curled brush-strokes, more uniform than the
-   photograph's, and the dark fraction 0.229 is further from the goal's 0.157 than S105's 0.190 was); crisp star
-   fields between the dust; the rim's dust brown, and no grainy fringe outside the rim (upper left); a sharper
-   nucleus; the cloud discs (tauC) that the core's thinning does not reach read as dark blots at close face-on stands.
-5. **The cost** (the reviewer's measurements): `arms.skelpitch` stalls 0.74 to 0.80 s and NGC 4414's network 0.55 s
-   with its threads on, over the 0.3 s a rebuild is allowed (a worker needs an asynchronous map contract); the
-   illustrative march on NGC 4414 takes about 116 ms of GPU time settled against about 35 physical, most of it S105's.
-6. **The `glGetProgramiv` warnings** on a canvas remount: seen again by S106's reviewer (24 lines in a mixed run of look
-   and template switches), not reproduced by builder A in 35 remounts, cause unknown.
-7. **A third template** would want its own preset (a skeleton or a plane-style network).
+1. **The owner's own tuning pass** on the live sliders (the Tuning panel's Illustrative group, by feature, with a
+   filter; since S107 no slider freezes the view) **and the owner's rulings**: #238 (the dust transmission's float32
+   underflow: the physical fix and the re-capture of the four NGC 4414 committed frames), #239 (the model's central
+   extinction on NGC 4414), and the OK to enter both in the register (rulings 20 and 28).
+2. **The Milky Way**: the inner arms hugging the bar's ends (the skeleton's start: ours leave an empty lavender zone
+   round the bar); the lesser arms' strength against the two-armed measure (ruling 25); the bar's hue (36 against the
+   goal's 46) and its end clusters; finer, redder lanes (ours hue 30 against 11, broader, zigzagging close up); the
+   colour step's measure (Δ(B−R) −0.067 against −0.354 although the sampled patches match: find what the tool's
+   annuli see). The second reader's: the disc sits smaller in the frame than S106's, and the close view carries soft
+   round blue blobs between the arms that the goal has not.
+3. **NGC 4414**: lanes as prominent as the photograph's without the dark fraction rising (0.185 against 0.157; A₂
+   0.042 and arm contrast 1.63 against 0.068 and 2.72); pale tan veils inside them; the fingerprint stripes near the
+   nucleus; the rim's faint smear. The second reader's: the disc an even grey-white to the rim where the photograph's
+   outer disc dims and turns blue, and the close view a uniform grey grain with little colour.
+4. **Latency**: 0.6 to 1.1 s from a settled map slider to the picture (the 250 ms debounce and the worker); the arms'
+   planes about 0.3 s.
+5. **A third template** would want its own preset (a skeleton or a plane-style network).
