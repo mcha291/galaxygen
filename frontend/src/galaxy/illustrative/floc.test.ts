@@ -112,7 +112,7 @@ describe("the map's bytes", () => {
     let differing = 0;
     for (let i = 0; i < a.length; i += 1) if (a[i] !== c[i]) differing += 1;
     expect(differing).toBeGreaterThan(0.05 * a.length);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 
   it("hold dust above 128 and light below, never 0; beyond the light's reach every byte is the patches' mean level", () => {
     const map = fullMap();
@@ -166,7 +166,7 @@ describe("the map's bytes", () => {
     expect(cover).toBeGreaterThan(0.35);
     expect(cover).toBeLessThan(0.8);
     expect(flocCover(map, G, 0.7 * tuned.outerRadius, tuned.outerRadius)).toBeLessThan(0.8 * cover);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 });
 
 describe("the filaments' pitch against the published pitch", () => {
@@ -297,7 +297,7 @@ describe("where the light's patches and clumps lie", () => {
     // Patchy: a good share of the disc well under the mean and a good share well over it.
     expect(low / weight).toBeGreaterThan(0.1);
     expect(high / weight).toBeGreaterThan(0.1);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 });
 
 describe("the feature", () => {

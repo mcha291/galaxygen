@@ -157,7 +157,7 @@ describe("the spikes' switch (S67, D227 R3)", () => {
     let d = 0;
     for (let p = 0; p < analytic.corners.length; p += 1) d = Math.max(d, Math.abs(analytic.corners[p] - annulus.corners[p]));
     expect(d).toBeLessThan(3e-4);
-  });
+  }, 30_000); // a heavy build: 1.5-1.7 s alone, past the 5 s default under a loaded machine (the S106 review)
 
   it("draws the pupil: the annulus, four vanes of 0.022 pupil radii at 45 degrees to the frame, three pads", () => {
     expect(pupilOpen(0, 0, NGC)).toBe(false); // the secondary
