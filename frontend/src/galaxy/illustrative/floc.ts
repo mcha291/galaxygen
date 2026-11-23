@@ -27,7 +27,7 @@ import { FLOC_ARRAYS, FLOC_MAP, type FlocShape, SHAPE_KEYS, buildFlocChannel, ge
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.5 },
+    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.2 },
     about: "The depth at the centre of one full filament of the dust network, magnitudes of A_V; 0 no network. Illustrative.",
   },
   {
@@ -37,15 +37,15 @@ const CONTROLS: readonly IllControl[] = [
   { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.8 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
-    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.25 },
+    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.5 },
     about: "How far the disc's light swells and thins in soft patches about its mean (a multiplier on all the light at each place); 0 a smooth disc. Illustrative.",
   },
   {
-    key: "clump", label: "clump glow", min: 0, max: 8, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3 },
+    key: "clump", label: "clump glow", min: 0, max: 8, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 4 },
     about: "How much brighter all the light is at the centre of a young clump (a multiplier of 1 plus this, in the clump tint); 0 none. Illustrative.",
   },
   {
-    key: "young", label: "clump young light", min: 0, max: 30, step: 0.1, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 4 },
+    key: "young", label: "clump young light", min: 0, max: 30, step: 0.1, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2 },
     about: "How much more of the model's own clustered young light a clump holds (1 plus this at its centre): its blue flecks gathered into the clumps. Read only while the young light is clustered in the march. Illustrative.",
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.1 }, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
@@ -72,10 +72,10 @@ const CONTROLS: readonly IllControl[] = [
   { key: "followGas", label: "follows the gas", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0.1 }, about: "How far the filaments' number follows the published gas contrast: 0 the same everywhere, 1 none where the gas is thin. Illustrative." },
   { key: "radial", label: "radial fall", min: 0, max: 2, step: 0.01, unit: "power", default: 1.1, about: "The filaments' number follows the published gas surface density's radial profile to this power: 0 the same at every radius. Illustrative." },
   { key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.5, about: "The network fades to nothing inside this radius, kpc. Illustrative." },
-  { key: "outerRadius", label: "outer radius", min: 2, max: 23, step: 0.5, unit: "kpc", default: 9, about: "The network fades from 0.7 of this radius to nothing at it, kpc; the patches and clumps reach 1.3 of it. Illustrative." },
+  { key: "outerRadius", label: "outer radius", min: 2, max: 23, step: 0.5, unit: "kpc", default: 9, perTemplate: { ngc_4414: 8 }, about: "The network fades from 0.7 of this radius to nothing at it, kpc; the patches and clumps reach 1.3 of it. Illustrative." },
   { key: "patchSize", label: "patch size", min: 60, max: 900, step: 10, unit: "pc", default: 260, about: "A light patch's size, parsecs (each between 0.55 and 1.45 of it, in irregular threes along the spiral). Illustrative." },
-  { key: "clumpDensity", label: "clump strings", min: 0, max: 4, step: 0.01, unit: "/kpc²", default: 0.8, perTemplate: { ngc_4414: 2.5 }, about: "Strings of young clumps per square kiloparsec on the flocculent pieces (each two to seven clumps along the spiral). Illustrative." },
-  { key: "clumpSize", label: "clump size", min: 40, max: 600, step: 5, unit: "pc", default: 120, perTemplate: { ngc_4414: 70 }, about: "A young clump's size, parsecs (each between 0.45 and 1.25 of it). Illustrative." },
+  { key: "clumpDensity", label: "clump strings", min: 0, max: 4, step: 0.01, unit: "/kpc²", default: 0.8, perTemplate: { ngc_4414: 1.5 }, about: "Strings of young clumps per square kiloparsec on the flocculent pieces (each two to seven clumps along the spiral). Illustrative." },
+  { key: "clumpSize", label: "clump size", min: 40, max: 600, step: 5, unit: "pc", default: 120, perTemplate: { ngc_4414: 50 }, about: "A young clump's size, parsecs (each between 0.45 and 1.25 of it). Illustrative." },
   { key: "clumpInner", label: "clumps from", min: 0, max: 15, step: 0.1, unit: "kpc", default: 3, about: "The clumps come in over this radius, kpc: the inner disc is old light. Illustrative." },
   { key: "clumpFollow", label: "clumps on the pieces", min: 0, max: 1, step: 0.01, unit: "", default: 0.85, perTemplate: { ngc_4414: 0 }, about: "How far the clumps keep to the published stars' contrast (the flocculent pieces): 0 anywhere. Illustrative." },
   { key: "lace", label: "lace depth", min: 0, max: 3, step: 0.01, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.3 }, about: "The lace - the fine network of threads that close into cells between the filaments - its depth as a share of a filament's; 0 none. Illustrative." },
