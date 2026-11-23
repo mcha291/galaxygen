@@ -260,7 +260,9 @@ const CONTROLS: readonly IllControl[] = [
   { key: "scFrom", label: "star cloud field from", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, about: "The field's heaps come in over this radius, kpc (from half of it). (S109) Illustrative." },
   { key: "scBands", label: "star clouds between bands", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, about: "How far the heaps keep to the clear zones between the dust bands; 0 alike everywhere. (S109) Illustrative." },
   { key: "inkOpaque", label: "ink opaque brown", min: 0, max: 1, step: 0.01, unit: "", default: 0, about: "How far the drawn dust's shade is an opaque dark brown over the light (a grey dimming with the lost light replaced by brown) in place of a coloured extinction: a thin skirt keeps the disc's own colour, no orange fringe; 0 the extinction as drawn. (S109) Colour for appearance." },
-  { key: "dustArmInner", label:"dust arm breaks inside", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, about: "The size of the noises that break and bend the bands, at the centre, as a share of theirs at half the network's outer radius (1 the same everywhere; lower, the inner bands broken into shorter pieces). (S109) Illustrative." },
+  { key: "inkBrown", label: "ink brown light", min: 0, max: 2, step: 0.01, unit: "×", default: 1, about: "Under the opaque ink: how much of the lost light comes back as brown (1 a mid brown; lower a darker, deeper core). (S109) Colour for appearance." },
+  { key: "scCrisp", label: "star cloud field grain", min: 0, max: 1, step: 0.01, unit: "", default: 0, about: "How far a heap's light is broken into the light grain's puffs (a cluster of bright grains and knots); 0 a smooth glow. (S109) Illustrative." },
+  { key: "dustArmInner", label: "dust arm breaks inside", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, about: "The size of the noises that break and bend the bands, at the centre, as a share of theirs at half the network's outer radius (1 the same everywhere; lower, the inner bands broken into shorter pieces). (S109) Illustrative." },
   { key: "dustArmFork", label: "dust arm forks", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, about: "A second set of bands at a steeper pitch, as a share of the first's strength: forks, spurs and restarts; 0 none. (S109) Illustrative." },
   { key: "glowShape", label:"nucleus glow dim shape", min: 0.3, max: 2, step: 0.01, unit: "power", default: 2, about: "The power in the glow's dimming, exp(-(r / radius)^power): 2 a gaussian (as before), lower a cusp that takes most off the very centre and leaves the glow round it graded. (S109) Colour for appearance." },
   { key: "glowLift", label: "nucleus glow lift", min: 0, max: 3, step: 0.01, unit: "×", default: 0, about: "A broad soft glow lifted over the nucleus (1 plus this at the centre, falling as exp(-r / radius) over the glow-lift radius), toward a pale yellow-cream; 0 none. (S109) Colour for appearance." },
@@ -420,6 +422,7 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocBandD: [v("dustArmVary"), v("nearAz") * rad, v("dustArmInner"), v("dustArmFork")],
     illFlocScA: [v("style") >= 0.5 ? v("scAmt") : 0, Math.max(v("scSize"), 0.05), v("scSparse"), v("scGrain")],
     illFlocScB: [v("scBlue"), v("scFrom"), v("scBands"), v("scSpots")],
+    illFlocScC: [v("scCrisp"), v("inkBrown"), 0, 0],
     illFlocGlow: [v("glowShape"), v("glowLift"), Math.max(v("glowLiftRadius"), 0.05), v("glowCream")],
   };
 }
@@ -476,6 +479,8 @@ export const floc: IllFeature = {
   // fine grain gathers into it; B: x the blue outward, y from (kpc), z how far it keeps between the bands, w the spots.
   uniform vec4 illFlocScA;
   uniform vec4 illFlocScB;
+  // x how far a heap's light is broken into the grain's puffs; y the ink's brown's darkness (a share of its colour).
+  uniform vec4 illFlocScC;
   // S109 (B3): the nucleus's glow - x the power of its dimming (2 a gaussian), y a broad lift's gain, z its radius
   // (kpc), w how far the lift goes to a pale yellow-cream.
   uniform vec4 illFlocGlow;
@@ -547,16 +552,17 @@ export const floc: IllFeature = {
   // octaves multiplied (a cascade): the complexes' mask, the clumps in them at a third, a sixth, a twelfth of their size.
   vec3 illFlocSc(vec2 xy) {
     float s = illFlocScA.y;
-    float lv = 0.3 + 0.45 * illFlocScA.z;
+    float lv = 0.36 + 0.3 * illFlocScA.z;
     float mn = 0.65 * illFlocVN(xy / s + vec2(19.3, 7.1)) + 0.35 * illFlocVN(xy / (0.5 * s) + vec2(3.3, 41.9));
-    float m = smoothstep(lv, lv + 0.22, mn);
+    float m = smoothstep(lv, lv + 0.2, mn);
     float c = 0.5 * illFlocVN(xy / (0.33 * s) + vec2(11.7, 2.9)) + 0.3 * illFlocVN(xy / (0.16 * s) + vec2(5.1, 23.3)) + 0.2 * illFlocVN(xy / (0.08 * s) + vec2(29.9, 13.7));
-    // A clump's edge crisp and ragged (the fine octaves in the threshold: a cauliflower outline), its inside knotted.
-    float k = smoothstep(0.5, 0.6, c + 0.12 * (m - 0.5));
-    float knot = 0.55 + 0.45 * smoothstep(0.35, 0.75, illFlocVN(xy / (0.035 * s) + vec2(7.7, 51.3)));
+    // A clump's edge crisp and ragged (the fine octaves in the threshold: a cauliflower outline), its inside knotted;
+    // the clumps sparse outside the complexes, many and bright in them (the threshold lowered there).
+    float k = smoothstep(0.58, 0.64, c + 0.14 * m);
+    float knot = 0.5 + 0.5 * smoothstep(0.35, 0.75, illFlocVN(xy / (0.035 * s) + vec2(7.7, 51.3)));
     float spot = 0.0;
-    if (illFlocScB.w > 0.0) spot = illFlocScB.w * smoothstep(0.84, 0.97, illFlocVN(xy / (0.06 * s) + vec2(37.1, 3.9))) * smoothstep(lv - 0.25, lv, mn);
-    return vec3(m * k * knot * (0.4 + 0.6 * smoothstep(0.55, 0.8, c)), m, spot);
+    if (illFlocScB.w > 0.0) spot = illFlocScB.w * smoothstep(0.86, 0.97, illFlocVN(xy / (0.05 * s) + vec2(37.1, 3.9))) * (0.3 + 0.7 * m);
+    return vec3((0.3 + 0.7 * m) * k * knot * (0.5 + 0.5 * smoothstep(0.62, 0.8, c + 0.14 * m)), m, spot);
   }
   // S106 third pass (C4): the dust mesh, drawn here per ray (no map, no rebuild): filaments on the edges of the cells
   // of a cellular (Worley) network in kpc, one jittered point a cell, the cells drawn out along the spiral, so they fork
@@ -845,7 +851,7 @@ export const floc: IllFeature = {
       // goes to the brown.
       if (illFlocFallB.w > 0.0) {
         float tg = exp(-av * cloudExt.g);
-        dv = mix(dv, vec3(tg) + (1.0 - tg) * vec3(0.30, 0.17, 0.09), illFlocFallB.w);
+        dv = mix(dv, vec3(tg) + (1.0 - tg) * illFlocScC.y * vec3(0.30, 0.17, 0.09), illFlocFallB.w);
       }
       veil *= dv;
     }
@@ -865,7 +871,15 @@ export const floc: IllFeature = {
         sc.y *= from;
         float g = (1.0 - smoothstep(0.0, 0.3, map.x)) * from * mix(1.0, band.z, illFlocScB.z);
         float t = clamp(illFlocScB.x * (illFlocFall.x > 0.0 ? illFlocFallT(rp.x) : 0.0), 0.0, 1.0);
-        veil *= vec3(1.0) + illFlocScA.x * g * (sc.x + sc.z) * mix(vec3(0.86, 1.0, 1.22), vec3(0.74, 0.98, 1.45), t);
+        // A heap's light broken into the grain's own puffs (illFlocScC.x of it): a heap is a cluster of bright grains
+        // and knots, not a smooth glow, at every range.
+        float tex = 1.0;
+        if (illFlocScC.x > 0.0) {
+          vec2 gq = rp.x * vec2(cos(rp.y), sin(rp.y)) / max(illFlocGrainS, 1e-3);
+          float pn = 0.6 * illFlocVN(gq + vec2(3.7, 8.1)) + 0.4 * illFlocVN(mat2(0.6, -0.8, 0.8, 0.6) * gq * 2.31 + vec2(1.3, 9.9));
+          tex = mix(1.0, 0.2 + 1.8 * smoothstep(0.4, 0.8, pn), illFlocScC.x);
+        }
+        veil *= vec3(1.0) + illFlocScA.x * g * (sc.x * tex + sc.z) * mix(vec3(0.86, 1.0, 1.22), vec3(0.74, 0.98, 1.45), t);
       }
       // S106 (C3): the light's grain - small bright puffs, stronger just outside a dust thread (the map read 60 pc in
       // and out along the radius: the threads run mostly along the azimuth), none on the dust itself.
