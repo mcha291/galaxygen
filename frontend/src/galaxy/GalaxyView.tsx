@@ -9,6 +9,7 @@ import {
   FloatType,
   LinearToneMapping,
   Matrix4,
+  NoToneMapping,
   NormalBlending,
   type PerspectiveCamera,
   type Points,
@@ -20,6 +21,7 @@ import {
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
@@ -30,6 +32,7 @@ import { extent } from "./positions";
 import { screenRings } from "./ringProfile";
 import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
+import { GRADE_FRAGMENT, GRADE_VERTEX } from "./illustrative/grade";
 import { galaxyRenderer } from "./renderer";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
@@ -89,6 +92,11 @@ interface Props {
   psf?: SpritePsf | null;
   /** The Tuning panel's bloom, tone curve and sprite size (D199); the defaults are the view's before it. */
   tuning?: ViewTuning;
+  /**
+   * The illustrative look's grade (S105, D275; illustrative/grade.ts): its uniforms' values, a pass after the bloom with
+   * the renderer's tone mapping off. Null or absent (the physical look): no such pass, the composer as it was.
+   */
+  grade?: Readonly<Record<string, number>> | null;
 }
 
 export type ViewTuning = Pick<Tuning, "bloomStrength" | "bloomRadius" | "bloomThreshold" | "toneMapping" | "spriteSize">;
@@ -120,6 +128,7 @@ export function GalaxyView({
   additive = false,
   psf = null,
   tuning = TUNING_DEFAULTS,
+  grade = null,
 }: Props) {
   const first = layers[0]?.positions;
   const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
@@ -150,7 +159,7 @@ export function GalaxyView({
         {layers.map((layer, i) => (
           <Stars key={i} layer={layer} additive={additive} psf={psf} spriteSize={tuning.spriteSize} />
         ))}
-        {hdr && <HdrOutput tuning={tuning} />}
+        {hdr && <HdrOutput tuning={tuning} grade={grade} />}
         <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
         <FrameProbe />
         <RingProbe spriteSize={psf?.size ?? tuning.spriteSize} defaultSprite={psf === null} />
@@ -307,13 +316,17 @@ function ZoomBridge({ reach, standRadius, zoom, onView }: { reach: number; stand
  * of a disc is dim. AgX holds the source's hue to within a few percent below unit intensity and
  * only whitens the brightest light, as film does.
  */
-function HdrOutput({ tuning }: { tuning: ViewTuning }) {
+function HdrOutput({ tuning, grade = null }: { tuning: ViewTuning; grade?: Readonly<Record<string, number>> | null }) {
   const latest = useRef(tuning);
   latest.current = tuning;
+  // The illustrative look's grade (S105): whether its pass is in the composer; absent under the physical look.
+  const graded = grade !== null;
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
+  const gradeNow = useRef(grade);
+  gradeNow.current = grade;
   const composer = useMemo(() => {
     const c = new EffectComposer(gl); // half-float render targets by default
     c.addPass(new RenderPass(scene, camera));
@@ -322,12 +335,18 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
     // a screensaver (RENDER_PLAN R5).
     const t = latest.current;
     c.addPass(new UnrealBloomPass(new Vector2(size.width, size.height), t.bloomStrength, t.bloomRadius, t.bloomThreshold));
+    // The illustrative grade (S105): on the bloomed linear light, before the output pass, which then only encodes sRGB.
+    if (graded) {
+      const uniforms: Record<string, { value: unknown }> = { tDiffuse: { value: null } };
+      for (const [k, v] of Object.entries(gradeNow.current ?? {})) uniforms[k] = { value: v };
+      c.addPass(new ShaderPass({ uniforms, vertexShader: GRADE_VERTEX, fragmentShader: GRADE_FRAGMENT }));
+    }
     c.addPass(new OutputPass()); // tone mapping and the sRGB encode, once
     return c;
-  }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
+  }, [gl, scene, camera, graded]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
   useEffect(() => {
     const before = { toneMapping: gl.toneMapping, clear: gl.getClearColor(new Color()), alpha: gl.getClearAlpha() };
-    gl.toneMapping = TONE_MAPPINGS[latest.current.toneMapping];
+    gl.toneMapping = graded ? NoToneMapping : TONE_MAPPINGS[latest.current.toneMapping];
     // An opaque black ground: additive light over a transparent canvas leaves the alpha of the
     // brightest star, and light added to the design system's navy tints every faint pixel.
     gl.setClearColor(new Color(0, 0, 0), 1);
@@ -352,8 +371,15 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
     pass.threshold = bloomThreshold;
   }, [composer, bloomStrength, bloomRadius, bloomThreshold]);
   useEffect(() => {
-    gl.toneMapping = TONE_MAPPINGS[toneMapping];
-  }, [gl, composer, toneMapping]);
+    gl.toneMapping = graded ? NoToneMapping : TONE_MAPPINGS[toneMapping];
+  }, [gl, composer, toneMapping, graded]);
+  // The grade's values, set in place on the pass the composer renders (as the bloom's above).
+  useEffect(() => {
+    if (!grade) return;
+    const pass = composer.passes.find((p): p is ShaderPass => p instanceof ShaderPass);
+    if (!pass) return;
+    for (const [k, v] of Object.entries(grade)) if (pass.uniforms[k]) pass.uniforms[k].value = v;
+  }, [composer, grade]);
   // A positive priority takes the render over from react-three-fiber.
   useFrame(() => composer.render(), 1);
   return null;

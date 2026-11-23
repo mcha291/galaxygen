@@ -65,6 +65,7 @@ import { gpuTimer } from "./gpuTimer";
 import { partRings, renderRings } from "./ringProfile";
 import { MOVING_SETTLE_MS, STEPS, SUB_SAMPLES_MOVING, type Tuning, TUNING_DEFAULTS, marchSubSamples } from "./tuning";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
+import { type IllRuntime, illustrativeFragment } from "./illustrative";
 import {
   type ClusteringTables,
   type GasTables,
@@ -711,6 +712,12 @@ interface Props {
    * leaves them whole.
    */
   hiiShare?: { share: Float32Array; layout: CellLayout } | null;
+  /**
+   * The illustrative look (S105, D275; illustrative/index.ts): its runtime - the march marched with fieldFragment()'s text
+   * patched at its anchors and the layer's uniforms shared in, re-marched when its version moves. Null or absent (the
+   * physical look): the pinned fragment, nothing of the layer.
+   */
+  ill?: IllRuntime | null;
 }
 
 /** What the clouds' raster measured when last built (S64): its texels, bytes, the time to build it and the conservation. */
@@ -853,6 +860,7 @@ export function FieldVolume({
   clouds = null,
   cloudsOn = true,
   hiiShare = null,
+  ill = null,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   // T14 (S81): the cut while the camera moves; a caller with no such choice gets the defaults.
@@ -983,6 +991,9 @@ export function FieldVolume({
   // Read when the material is built.
   const filteringNow = useRef(filtering);
   filteringNow.current = filtering;
+  // The illustrative runtime as the mesh is built with it (S105): a new one (a look switched) builds the mesh again.
+  const illNow = useRef(ill);
+  illNow.current = ill;
   const metaNow = useRef(meta);
   metaNow.current = meta;
   const agesNow = useRef(ages);
@@ -1203,9 +1214,11 @@ export function FieldVolume({
         uGasCells: { value: gas ? tableTexture(gas.cells, 32, 32, true) : noTable(true) },
         uSpurs: { value: spurs && spurs.count > 0 ? tableTexture(spurTexels(spurs), 3 * spurs.count, 1) : noTable() },
         ...Object.fromEntries(Object.entries(scalars).map(([k, v]) => [k, { value: v }])),
+        // The illustrative look's (S105): its uniform objects themselves, shared with the points; none under the physical look.
+        ...(illNow.current ? illNow.current.uniforms : {}),
       },
       vertexShader: VERTEX,
-      fragmentShader: fieldFragment(),
+      fragmentShader: illNow.current ? illustrativeFragment(fieldFragment()) : fieldFragment(),
       side: BackSide, // the far faces, so it draws with the camera outside the box or inside it
       depthTest: false,
       depthWrite: false,
@@ -1228,7 +1241,7 @@ export function FieldVolume({
     box.userData.tables = tables;
     box.frustumCulled = false;
     return box;
-  }, [shownBuild]);
+  }, [shownBuild, ill]); // eslint-disable-line react-hooks/exhaustive-deps -- the runtime through illNow
 
   // The raster's textures (its build: rasterWant, above the mesh): made once the raster is here - at once when it was
   // kept or built on this thread, when the worker answers otherwise. Until then no clouds' layer is drawn.
@@ -1448,7 +1461,7 @@ export function FieldVolume({
     const tables = mesh.userData.tables as LayerTables;
     const spursDrawn = Boolean(tables.spurs && tables.spurs.count > 0 && tables.unspurred && spursInMarch);
     const layerOn = [tables.gas && gasInMarch ? 1 : 0, spursDrawn ? 1 : 0, clumped ? 1 : 0];
-    const settings = `${steps},${sub},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}`;
+    const settings = `${steps},${sub},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges},${cloudsKey},${shareKey},${layerOn.join(",")}${ill ? `,ill ${ill.version}` : ""}`;
     // A restored context (T13) holds none of the target's pixels: the march is drawn again, the camera still or not.
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||

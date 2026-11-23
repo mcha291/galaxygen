@@ -25,6 +25,7 @@ import {
 } from "three";
 
 import { useContextGeneration } from "./contextLoss";
+import { type IllRuntime, illustrativePointsVertex } from "./illustrative";
 import { DUST_SEGMENT_STEPS } from "./flux";
 import { NOISE_GLSL, NOISE_UNIFORMS } from "./noise.glsl";
 import { WING_BLOCK, WING_MAX_HALF, psfClamped } from "./hstPsf";
@@ -596,11 +597,17 @@ interface Props {
    * apply, every point the profile does not draw is drawn with it, in place of the sprite. Null: the sprite (R2).
    */
   physical?: PhysicalPsf | null;
+  /**
+   * The illustrative look (S105, D275; illustrative/index.ts): the vertex shader patched so each point's dust to the camera
+   * takes the layer's A_V (illDustAv) as the march does, the layer's uniforms shared in. Null or absent (the physical
+   * look): VERTEX as it is, nothing of the layer.
+   */
+  ill?: IllRuntime | null;
 }
 
 const BUFFER = new Vector2();
 
-export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null }: Props) {
+export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null, ill = null }: Props) {
   const gl = useThree((s) => s.gl);
   const points = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -645,8 +652,10 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         wingPass: { value: 0 },
         wingBlock: { value: WING_BLOCK },
         wingPx: { value: new Vector2(1, 1) },
+        // The illustrative look's (S105): its uniform objects themselves, shared with the march; none under the physical look.
+        ...(ill ? ill.uniforms : {}),
       },
-      vertexShader: VERTEX,
+      vertexShader: ill ? illustrativePointsVertex(VERTEX) : VERTEX,
       fragmentShader: FRAGMENT,
       transparent: true,
       blending: AdditiveBlending,
@@ -657,7 +666,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     object.frustumCulled = false;
     geometry.computeBoundingSphere();
     return object;
-  }, [positions, flux, extent]);
+  }, [positions, flux, extent, ill]);
   useEffect(
     () => () => {
       points.geometry.dispose();
@@ -676,7 +685,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     const main = points.material as ShaderMaterial;
     const material = new ShaderMaterial({
       uniforms: { ...main.uniforms, wingPass: { value: 1 } },
-      vertexShader: VERTEX,
+      vertexShader: ill ? illustrativePointsVertex(VERTEX) : VERTEX,
       fragmentShader: FRAGMENT,
       transparent: true,
       blending: AdditiveBlending,
@@ -710,7 +719,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     composite.frustumCulled = false;
     composite.visible = false;
     return { material, object, scene, target, composite };
-  }, [points, floatBlend]);
+  }, [points, floatBlend]); // eslint-disable-line react-hooks/exhaustive-deps -- the runtime is the points' (a new one makes new points)
   useEffect(
     () => () => {
       wings.material.dispose();
@@ -759,6 +768,9 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
       uniforms.cloudTex.value = clouds;
       uniforms.cloudSlab.value = slab;
       (uniforms.cloudExt.value as Vector3).set(...(dust!.cloudExt ?? [0, 0, 0]));
+    } else if (ill && dust) {
+      // The illustrative look's A_V reddens through the same depths per magnitude with no clouds' raster in hand (S105).
+      (uniforms.cloudExt.value as Vector3).set(...(dust.cloudExt ?? [0, 0, 0]));
     }
     // The wings (S82, #178): only while a point may be clamped; else the frame is drawn as before, nothing added.
     const drawWings = physical !== null && mayClamp(points, camera, uniforms.pxPerUnit.value as number, physical);

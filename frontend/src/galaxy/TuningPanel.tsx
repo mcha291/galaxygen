@@ -5,15 +5,17 @@ import { Select } from "../ui/Select";
 import { Switch } from "../ui/Switch";
 import type { MarchStats } from "./FieldVolume";
 import { gpuWords } from "./gpuTimer";
+import { illControls } from "./illustrative";
 import {
   type Combination,
+  type Look,
   type RangeControl,
   type Tuning,
   type TuningControl,
   TUNING_CONTROLS,
   TUNING_DEFAULTS,
   changed,
-  copyBoxText,
+  copyBoxText as copyBoxTextOfLook,
   parseCombination,
   positionOf,
   valueAt,
@@ -48,7 +50,12 @@ function describe(control: TuningControl, value: Tuning[keyof Tuning]): string {
 
 interface Props {
   tuning: Tuning;
-  onChange(t: Tuning): void;
+  /** A new tuning, and (a pasted combination naming another, S105) the look it is for; absent, the look shown. */
+  onChange(t: Tuning, look?: Look): void;
+  /** The look shown (S105, D275): under "illustrative" the panel shows the Illustrative group and the box says so. */
+  look?: Look;
+  /** The template's defaults under each look, for a pasted combination that names a look (S105). */
+  defaultsOfLook?(look: Look): Tuning;
   /** The field's last re-march, filled in by FieldVolume; read while the section is open. */
   stats: MarchStats;
   /** What the copy box names beside the changed choices (S67, D227): the template tuned on, its filter set and the
@@ -83,13 +90,15 @@ export function combinationNotice(c: Combination, template: string | null | unde
  * find the combination to rule on. Nothing here is physics (rule D5). Untouched, every value is the
  * view's own from before the panel; the changed ones are shown as JSON to copy into a report.
  */
-export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false }: Props) {
+export function TuningPanel({ tuning, onChange, stats, template, filterSet, exposure, defaults = TUNING_DEFAULTS, onExposure, initiallyOpen = false, look = "physical", defaultsOfLook }: Props) {
   const [open, setOpen] = useState(initiallyOpen);
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const apply = () => {
-    const c = parseCombination(paste, defaults);
-    if (c.tuning) onChange(c.tuning);
+    const c = parseCombination(paste, defaults, defaultsOfLook);
+    // A box names its look (S105): without one it is the physical look's. Without defaultsOfLook the look stays.
+    const target: Look = defaultsOfLook ? (c.look ?? "physical") : look;
+    if (c.tuning) onChange(c.tuning, target);
     const exposureApplied = c.tuning !== null && c.exposure !== null && onExposure !== undefined;
     if (exposureApplied) onExposure!(c.exposure!);
     setNotice(combinationNotice(c, template, filterSet, exposureApplied));
@@ -104,7 +113,10 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
   }, [open, stats]);
 
   const set = (key: keyof Tuning, value: Tuning[keyof Tuning] | string) => onChange({ ...tuning, [key]: value } as Tuning);
+  const setIll = (key: string, value: number) => onChange({ ...tuning, ill: { ...tuning.ill, [key]: value } });
   const diff = changed(tuning, defaults);
+  // The box of the look shown (S105): the physical look's text is the one of before.
+  const copyBoxText = (t: Tuning, d: Readonly<Tuning>, tp?: string | null, f?: string, e?: number) => copyBoxTextOfLook(t, d, tp, f, e, look);
 
   return (
     <div className={styles.section}>
@@ -186,6 +198,36 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
               })}
             </div>
           ))}
+          {/* The illustrative look's parameters (S105, D275): every registered feature's controls, generically. */}
+          {look === "illustrative" && (
+            <div className={styles.tuningGroup}>
+              <div className={styles.label}>Illustrative</div>
+              <p className={styles.muted}>Display-only structure and colour of the viewer's own, tuned to the goal pictures: not the model.</p>
+              {illControls().map(({ key, feature, control }) => {
+                const value = tuning.ill[key] ?? control.default;
+                const fallback = defaults.ill?.[key] ?? control.default;
+                const range: RangeControl = { key: "fieldGain", label: control.label, group: "Light", kind: "range", min: control.min, max: control.max, step: control.step, log: control.log, unit: control.unit ?? "", about: control.about };
+                return (
+                  <div key={key} className={styles.tuningRow} title={`${feature.label}: ${control.about}`}>
+                    <div className={styles.zoomHead}>
+                      <span className={styles.tuningName}>{control.label}</span>
+                      <span className={styles.value}>{shown(range, value)}</span>
+                      {value !== fallback && (
+                        <button type="button" className={styles.tuningDefault} title={`Back to the default, ${shown(range, fallback)}`} onClick={() => setIll(key, fallback)}>
+                          default
+                        </button>
+                      )}
+                    </div>
+                    {control.log ? (
+                      <input type="range" className={styles.slider} min={0} max={1000} value={positionOf(range, value)} aria-label={control.label} onChange={(e) => setIll(key, valueAt(range, Number(e.target.value)))} />
+                    ) : (
+                      <input type="range" className={styles.slider} min={control.min} max={control.max} step={control.step} value={value} aria-label={control.label} onChange={(e) => setIll(key, Number(e.target.value))} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <div className={styles.tuningGroup}>
             <div className={styles.muted} title="The march target's size, the last re-march's CPU-side time (the render call) and, since S67, the GPU's time for it from a timer query (EXT_disjoint_timer_query_webgl2), where the browser gives one">
               march: {march.width}×{march.height} px, {march.ms.toFixed(1)} ms CPU, {gpuWords(march.gpuMs, march.gpuAvailable ?? false)}
