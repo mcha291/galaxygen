@@ -29,6 +29,8 @@ export interface CloudShape {
   rich: number;
   /** degrees: the galactocentric azimuth of the richest sector. */
   az: number;
+  /** S106 third pass (C4): the share of groups that are large complexes (four times the members, two and a half times the size). */
+  complex: number;
 }
 
 /** The clouds' shaping values in a network's shape. */
@@ -42,6 +44,7 @@ export const cloudsOf = (s: FlocShape): CloudShape => ({
   range: s.cloudRange,
   rich: s.cloudRich,
   az: s.cloudAz,
+  complex: s.cloudComplex,
 });
 
 /** A group: its centre (kpc), its gaussian radius (kpc) and its brightest member's weight. */
@@ -119,9 +122,11 @@ export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape = c
     const cy = r * Math.sin(phi);
     if (u() >= density(cx, cy)) continue;
     // Members: a few to a few dozen (a log-uniform spread about the mean); the group's size spread several-fold.
-    const m = Math.max(2, Math.round(c.members * Math.exp(1.6 * (2 * u() - 1))));
+    // S106 (C4): a share of the groups are large complexes - many more members over a wider glow.
+    const big = c.complex > 0 && u() < c.complex ? 1 : 0;
+    const m = Math.max(2, Math.round(c.members * Math.exp(1.6 * (2 * u() - 1)) * (big ? 4 : 1)));
     const lead = brightness(u(), c.slope, c.range);
-    const size = sigma * Math.exp(1.1 * (2 * u() - 1)) * Math.sqrt(m / Math.max(1, c.members));
+    const size = sigma * Math.exp(1.1 * (2 * u() - 1)) * Math.sqrt(m / Math.max(1, c.members)) * (big ? 1.25 : 1);
     groups.push({ x: cx, y: cy, size, lead });
     for (let q = 0; q < m && k < total; q += 1, k += 1) {
       const a = Math.sqrt(-2 * Math.log(Math.max(1e-12, u())));

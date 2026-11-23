@@ -23,6 +23,11 @@
 // own (floc.ts illFlocRead, illFlocStyle 1): q = 0.6 p for the clouds' level p (0.3 neutral), over 0.6 a group's glow
 // (the clump level); toward the light's reach it goes to neutral, toward a dust margin to 0 (a soft shade, never a rim).
 
+// S106 third pass (C4): the threads' mesh controls (broad mottled lanes, feathers along them, spurs at an angle, an
+// exact tangle of the threads' plane, tapered ends, the wisps' width and run); with netDepth 0 (NGC 4414's default:
+// its dust is floc.ts's mesh, drawn in the march) no dust grid is built. The groups' glow is summed on a grid four
+// times coarser and laid on bilinearly (paintGlow): a slider's rebuild in the browser 0.15-0.19 s.
+
 import { buildClouds } from "./flocClouds";
 import { FLOC_MAP, Ladder, type FlocGeometry, type FlocShape, flocKey, noise2 } from "./flocMap";
 
@@ -272,6 +277,9 @@ export function netSampler(g: FlocGeometry, shape: FlocShape): NetSampler {
   return { dust, amount, threads, light, outer, reach };
 }
 
+/** The star clouds' glow is summed on a grid this many times coarser each way than the map's (paintGlow). */
+const GLOW_K = 4;
+
 /** The dust margin (flocMap.ts). */
 const MARGIN = FLOC_MAP.margin;
 
@@ -368,13 +376,14 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
   const dR = g.rHi / rings;
   const dPhi = TAU / sectors;
   const lit = Math.min(rings, Math.ceil(net.reach / dR));
-  const dusty = Math.min(lit, Math.ceil(net.outer / dR));
+  // No threads drawn (netDepth 0): no dust grid at all (the mesh is drawn in the march).
+  const dusty = shape.netDepth > 0 ? Math.min(lit, Math.ceil(net.outer / dR)) : 0;
   const dSect = Math.max(8, Math.floor(sectors / NET_GRID.dustPhi));
   const lSect = Math.max(8, Math.floor(sectors / NET_GRID.light));
   // Along a ring the dust needs samples about a third of a thread's run across the sectors: a thread at the pitch
   // crosses the sectors over its width / sin(pitch).
   const pitch = Math.min(80, Math.max(1, g.pitchDeg * shape.pitch)) * DEG;
-  const dustCell = Math.max(dR, (0.6 * Math.max(shape.width, 10) * 1e-3) / Math.sin(pitch));
+  const dustCell = Math.max(dR, (0.3 * Math.max(shape.width, 10) * 1e-3) / Math.sin(pitch));
   // The dust's amounts and feathering (smooth) on the light's grid, then the threads at every ring.
   const am: Amount = { a1: 0, a2: 0, fe: 1, aL: 0, aS: 0, p1: 1, p2: 1 };
   const nA = AMOUNT_KEYS.length;
@@ -465,8 +474,25 @@ export function buildNetChannel(g: FlocGeometry, shape: FlocShape, rings: number
 function paintGlow(out: Uint8Array, g: FlocGeometry, shape: FlocShape, rings: number, sectors: number): void {
   const { groups } = buildClouds(g, shape);
   const dR = g.rHi / rings;
-  const dPhi = TAU / sectors;
   const range = Math.log(Math.max(1.0001, shape.cloudRange));
+  // S106 (C4): the glows summed (their largest) on a grid GLOW_K times coarser each way, then laid on every light
+  // texel read bilinearly - the glow is smooth over a group's size, and painting it texel by texel cost a slider most
+  // of its time.
+  const K = GLOW_K;
+  const cr = Math.ceil(rings / K);
+  const cs = Math.max(8, Math.floor(sectors / K));
+  const cR = (rings * dR) / cr;
+  const cP = TAU / cs;
+  const acc = new Float32Array(cr * cs);
+  const EXP = new Float32Array(6001);
+  for (let k = 0; k <= 6000; k += 1) EXP[k] = Math.exp(-k / 1000);
+  const cosR = new Float64Array(cs);
+  const sinR = new Float64Array(cs);
+  for (let j = 0; j < cs; j += 1) {
+    cosR[j] = Math.cos((j + 0.5) * cP);
+    sinR[j] = Math.sin((j + 0.5) * cP);
+  }
+  let top = 0;
   for (const grp of groups) {
     const sig = 1.2 * grp.size + 0.02;
     const peak = shape.cloudGlow * (0.35 + 0.65 * Math.log(Math.max(1, grp.lead)) / range);
@@ -474,34 +500,57 @@ function paintGlow(out: Uint8Array, g: FlocGeometry, shape: FlocShape, rings: nu
     const r0 = Math.hypot(grp.x, grp.y);
     let p0 = Math.atan2(grp.y, grp.x);
     if (p0 < 0) p0 += TAU;
-    const ext = 2.2 * sig;
-    const iLo = Math.max(0, Math.floor((r0 - ext) / dR));
-    const iHi = Math.min(rings - 1, Math.ceil((r0 + ext) / dR));
-    const half = Math.min(sectors / 2, Math.ceil(ext / Math.max(r0 - ext, 0.05) / dPhi));
-    const jc = Math.floor(p0 / dPhi);
+    const ext = 2.4 * sig + cR;
+    const iLo = Math.max(0, Math.floor((r0 - ext) / cR));
+    const iHi = Math.min(cr - 1, Math.ceil((r0 + ext) / cR));
+    top = Math.max(top, iHi + 1);
+    const half = Math.min(cs / 2, Math.ceil(ext / Math.max(r0 - ext, 0.05) / cP));
+    const jc = Math.floor(p0 / cP);
     const inv = 1 / (2 * sig * sig);
     for (let dj = -half; dj <= half; dj += 1) {
-      const j = (((jc + dj) % sectors) + sectors) % sectors;
-      const phi = (j + 0.5) * dPhi;
-      const c = Math.cos(phi);
-      const s = Math.sin(phi);
-      const row = j * rings;
+      const j = (((jc + dj) % cs) + cs) % cs;
+      const c = cosR[j];
+      const sn = sinR[j];
+      const row = j * cr;
       for (let i = iLo; i <= iHi; i += 1) {
-        const b = out[row + i];
-        if (b >= 128) continue;
-        const r = (i + 0.5) * dR;
+        const r = (i + 0.5) * cR;
         const ex = r * c - grp.x;
-        const ey = r * s - grp.y;
+        const ey = r * sn - grp.y;
         const e = (ex * ex + ey * ey) * inv;
-        if (e > 6) continue;
-        const gl = peak * Math.exp(-e);
-        const q = (128 - b) / 127;
-        let q2: number;
-        if (q > 0.6) q2 = Math.max(q, 0.6 + 0.4 * Math.min(1, 2 * gl - 1));
-        else if (gl < 0.5) q2 = q + (0.6 - q) * 2 * gl;
-        else q2 = 0.6 + 0.4 * Math.min(1, 2 * gl - 1);
-        out[row + i] = 128 - Math.max(1, Math.min(127, Math.round(127 * q2)));
+        if (e >= 6) continue;
+        const gl = peak * EXP[(e * 1000) | 0];
+        if (gl > acc[row + i]) acc[row + i] = gl;
       }
+    }
+  }
+  const last = Math.min(rings, Math.ceil((top * cR) / dR));
+  const at = new Int32Array(last);
+  const w = new Float32Array(last);
+  for (let i = 0; i < last; i += 1) {
+    const a = Math.min(cr - 1.0001, Math.max(0, ((i + 0.5) * dR) / cR - 0.5));
+    at[i] = Math.floor(a);
+    w[i] = a - at[i];
+  }
+  for (let j = 0; j < sectors; j += 1) {
+    const u = ((j + 0.5) / sectors) * cs - 0.5;
+    const jj = Math.floor(u);
+    const b = u - jj;
+    const r0 = (((jj % cs) + cs) % cs) * cr;
+    const r1 = ((((jj + 1) % cs) + cs) % cs) * cr;
+    const row = j * rings;
+    for (let i = 0; i < last; i += 1) {
+      const a = at[i];
+      const wi = w[i];
+      const gl = (1 - b) * ((1 - wi) * acc[r0 + a] + wi * acc[r0 + a + 1]) + b * ((1 - wi) * acc[r1 + a] + wi * acc[r1 + a + 1]);
+      if (gl < 0.004) continue;
+      const by = out[row + i];
+      if (by >= 128) continue;
+      const q = (128 - by) / 127;
+      let q2: number;
+      if (q > 0.6) q2 = Math.max(q, 0.6 + 0.4 * Math.min(1, 2 * gl - 1));
+      else if (gl < 0.5) q2 = q + (0.6 - q) * 2 * gl;
+      else q2 = 0.6 + 0.4 * Math.min(1, 2 * gl - 1);
+      out[row + i] = 128 - Math.max(1, Math.min(127, Math.round(127 * q2)));
     }
   }
 }

@@ -338,10 +338,10 @@ describe("the feature", () => {
     const [plane] = floc.map!.build(P4414, context);
     expect(plane).toBeInstanceOf(Uint8Array);
     expect(plane!.length).toBe(ILL_MAP.width * ILL_MAP.height);
-    // The depths, gains and colours are uniforms: the same plane.
-    expect(floc.map!.build({ ...P4414, depth: 0.3, ink: 0.2, redness: 3, hardness: 1, patch: 0.2, clump: 4, young: 9, blue: 1, warmth: 1, warmRadius: 2 }, context)[0]).toBe(plane);
+    // The depths, gains and colours are uniforms, and so is the mesh drawn in the march (S106 C4): the same plane.
+    expect(floc.map!.build({ ...P4414, depth: 0.3, ink: 0.2, redness: 3, hardness: 1, patch: 0.2, clump: 4, young: 9, blue: 1, warmth: 1, warmRadius: 2, meshDepth: 0.5, meshCell: 400, meshArc: 0.2, meshHaze: 1, puffs: 1, puffSize: 500 }, context)[0]).toBe(plane);
     // A shaping value: another plane.
-    const [moved] = floc.map!.build({ ...P4414, netScale: P4414.netScale + 40 }, context);
+    const [moved] = floc.map!.build({ ...P4414, litScale: P4414.litScale + 40 }, context);
     expect(moved).not.toBe(plane);
     expect(moved).not.toEqual(plane);
   });

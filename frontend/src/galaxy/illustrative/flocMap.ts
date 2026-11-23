@@ -194,6 +194,8 @@ export interface FlocShape {
   wispRun: number;
   /** 0-1: how far a thread thins toward its piece's ends. */
   taper: number;
+  /** 0-1: the share of the star clouds' groups that are large complexes. */
+  cloudComplex: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
@@ -202,7 +204,7 @@ export const SHAPE_KEYS: readonly (keyof FlocShape)[] = [
   "style", "netScale", "netWarp", "netGaps", "netSoft", "netFeather", "netArc", "arcWidth", "arcStretch", "netDepth", "litScale", "litReach",
   "filSpacing", "filRun", "wisps", "haze", "ringIn", "ringOut", "core", "rim", "nearBias", "nearAz",
   "cloudCount", "cloudGroup", "cloudMembers", "cloudReach", "cloudStart", "cloudSlope", "cloudRange", "cloudRich", "cloudAz", "cloudGlow",
-  "laneDepth", "laneWidth", "laneSpacing", "laneRun", "feathers", "spurs", "spurAngle", "tangle", "wispWidth", "wispRun", "taper",
+  "laneDepth", "laneWidth", "laneSpacing", "laneRun", "feathers", "spurs", "spurAngle", "tangle", "wispWidth", "wispRun", "taper", "cloudComplex",
 ];
 
 /** A field over the disc on the model's polar grid. */
