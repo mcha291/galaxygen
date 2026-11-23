@@ -94,7 +94,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "netScale", label: "dust cloud size", min: 60, max: 1500, step: 10, unit: "pc", default: 350, perTemplate: { ngc_4414: 250 }, about: "The plane style's dust clouds' size, parsecs (finer octaves ride on them). Illustrative." },
   { key: "netWarp", label: "dust curl", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, perTemplate: { ngc_4414: 1 }, about: "How far the plane is pushed about before the dust is drawn, as a share of the cloud size: the pieces curl and feather. Illustrative." },
-  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.52 }, about: "The level of the plane style's noise under which there is no dust: higher, less dust and wider gaps. Illustrative." },
+  { key: "netGaps", label: "dust gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.56 }, about: "The level of the plane style's noise under which there is no dust: higher, less dust and wider gaps. Illustrative." },
   { key: "netSoft", label: "dust softness", min: 0.01, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.12 }, about: "How softly a dust cloud's edge fades out. Illustrative." },
   { key: "netFeather", label: "dust feathers", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.9 }, about: "How far the dust is broken into feathered ridges and holes (a ridged noise); 0 smooth clouds. Illustrative." },
   { key: "netArc", label: "dust on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.9 }, about: "How far the dust keeps to short arcs on the drawn spiral (the flocculent pattern); 0 anywhere. Illustrative." },
@@ -114,7 +114,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   // S106: the star clouds (flocClouds.ts, FlocClouds.tsx), a points layer of the feature's own, drawn in the plane style.
   {
-    key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 30000 },
+    key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 20000 },
     about: "How many points the star clouds hold (in the plane style only): loose groups over the bright light between the dust, densest in the outer disc; 0 none. Illustrative.",
   },
   { key: "cloudGain", label: "star cloud brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 3000, perTemplate: { ngc_4414: 6000 }, about: "The faintest star cloud point's light, L☉ over the white point (the field's scale, with the exposure). Illustrative." },
