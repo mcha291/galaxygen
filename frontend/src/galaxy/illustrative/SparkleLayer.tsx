@@ -6,12 +6,14 @@
 // brightest share (`sparklebig`) on a larger one (`sparklebigsize`) - so the arms' grain has sizes, not one dot.
 // A share of 0 draws every point on the small sprite, as S105 did.
 
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { Group } from "three";
 import { FluxPoints, type PointDust } from "../FluxPoints";
 import { shapeOf } from "./arms";
 import { sparkleFlux, sparkleTiers, tierIndices } from "./armsSparkle";
 import { ILL_MAP, type IllLayerProps } from "./feature";
-import { objectToken, requestSparkle, setSparkleDrawnFor, sparkleHeld } from "./illMapClient";
+import { illFieldDrawn, objectToken, requestSparkle, setSparkleDrawnFor, sparkleHeld } from "./illMapClient";
 import { illChannelCurrent } from "./index";
 import { type SparklePoints, sparkleKey, sparkleReadsLanes, sparkleShown } from "./sparkleJob";
 
@@ -56,10 +58,21 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   // The probe's check of rule D1: the template these points were built for.
   const [owner] = useState(() => ({}));
   const shownFor = points ? context.template : null;
+  // S107 (MW2, rule D1): drawn only while the field drawn is their galaxy, read at each frame before the render (the
+  // canvas's own tree commits after GalaxyTab's: for a frame after a template switch it still held the last galaxy's
+  // points while the field and the map were already the new one's). No view reporting a field (vitest): drawn.
+  const showNow = useCallback(() => {
+    const field = illFieldDrawn();
+    return shownFor !== null && (field === undefined || field === shownFor);
+  }, [shownFor]);
+  const group = useRef<Group>(null);
+  useFrame(() => {
+    if (group.current) group.current.visible = showNow();
+  });
   useLayoutEffect(() => {
-    setSparkleDrawnFor(owner, shownFor);
+    setSparkleDrawnFor(owner, shownFor === null ? null : () => (showNow() ? shownFor : null));
     return () => setSparkleDrawnFor(owner, null);
-  }, [owner, shownFor]);
+  }, [owner, shownFor, showNow]);
   const blue = params.sparkleblue ?? 0.7;
   const cyan = Math.min(1, Math.max(0, params.cyan ?? 0));
   const base = params.sparklegain ?? 2e4;
@@ -83,7 +96,7 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   if (!tiers) return null;
   const sizes = [params.sparklesize ?? 1.5, params.sparklebigsize ?? 3];
   return (
-    <>
+    <group ref={group} visible={showNow()}>
       {tiers.map((t, i) =>
         t ? (
           <FluxPoints
@@ -98,6 +111,6 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
           />
         ) : null,
       )}
-    </>
+    </group>
   );
 }
