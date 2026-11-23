@@ -48,7 +48,7 @@ import { type BrightTable, type CellCounts, CountRows, TileCache, type TilesFram
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
-import { TUNING_CONTROLS, type Tuning, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, saveTuning } from "./tuning";
+import { LOOK_SUSPENDED_WHAT, TUNING_CONTROLS, type Tuning, drawnLook, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, lookSuspended, saveTuning } from "./tuning";
 import {
   type IllContext,
   type Look,
@@ -338,9 +338,13 @@ export function GalaxyTab({
   label,
   physicsOnly,
   onPhysicsOnly,
-  look: viewLook = "physical",
+  look: storedLook = "physical",
   onLook,
 }: Props) {
+  // S108 (the lead's ruling): "physics only" draws the physical look whatever look is stored (tuning.ts drawnLook) -
+  // nothing of the illustrative layer runs, its tuning the physical look's own - and the stored look is kept.
+  const viewLook = drawnLook(storedLook, physicsOnly);
+  const lookHeldBack = lookSuspended(storedLook, physicsOnly);
   // The camera drawn (#188): the previous landing's while a landing's swap is under way, else the live one.
   const drawn = camera ?? { selection, preset, template };
   // The zoom slider's ask belongs to the camera it was made of: a template chosen or a preset pressed is a fresh
@@ -377,7 +381,7 @@ export function GalaxyTab({
   const setTuning = (t: Tuning, forLook: Look = viewLook) => {
     setTuningState({ of: templateName, look: forLook, t });
     saveTuning(t, undefined, templateName, forLook);
-    if (forLook !== viewLook) onLook?.(forLook);
+    if (forLook !== storedLook) onLook?.(forLook);
   };
   const illustrative = viewLook === "illustrative";
   // During a landing's hold (S82, #188's follow-up) the previous picture is drawn as it was: every value that only changes
@@ -1124,8 +1128,14 @@ export function GalaxyTab({
             </button>
             {/* The look (S105, D275): physical by default; illustrative draws the layer the Tuning panel's group names. */}
             {onLook && (
-              <button type="button" aria-pressed={illustrative} title={ILLUSTRATIVE_WHAT} onClick={() => onLook(illustrative ? "physical" : "illustrative")}>
-                illustrative
+              <button
+                type="button"
+                aria-pressed={storedLook === "illustrative"}
+                aria-label="illustrative"
+                title={lookHeldBack ? `${LOOK_SUSPENDED_WHAT}. ${ILLUSTRATIVE_WHAT}` : ILLUSTRATIVE_WHAT}
+                onClick={() => onLook(storedLook === "illustrative" ? "physical" : "illustrative")}
+              >
+                {lookHeldBack ? "illustrative (suspended)" : "illustrative"}
               </button>
             )}
           </div>
@@ -1412,6 +1422,7 @@ export function GalaxyTab({
         {physicsOnly && (
           <p className={styles.muted}>physics only: the randomness layer is off - no arm or bar is placed, the censuses lie uniformly round each ring, and each ring's totals are unchanged</p>
         )}
+        {lookHeldBack && <p className={styles.muted}>{LOOK_SUSPENDED_WHAT}</p>}
         {mode === "field" && interiorNote && <p className={styles.muted}>{interiorNote}</p>}
         {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
         {mode === "stars" && marchOn && look.compDust && look.dustReading === "where" && (
