@@ -164,6 +164,10 @@ export function tint(toward: readonly [number, number, number], share: number): 
 
 /** The arms' blue-white and the disc's lavender, before the share (unit mean at full share). */
 export const ARM_BLUE: readonly [number, number, number] = [0.8, 1.04, 1.16];
+/** S107: the arms' cyan-teal (the goal's arm light: greener than ARM_BLUE), mixed into it by the `cyan` share. */
+export const ARM_CYAN: readonly [number, number, number] = [0.68, 1.12, 1.2];
+/** The arms' tint target at a cyan share (ARM_BLUE at 0). */
+export const armTarget = (cyan: number): [number, number, number] => ARM_BLUE.map((v, k) => v + (ARM_CYAN[k] - v) * Math.min(1, Math.max(0, cyan))) as [number, number, number];
 export const INTER_LAVENDER: readonly [number, number, number] = [1.06, 0.9, 1.04];
 /** The disc's warm tint between the arms (a negative lavender share), for a flocculent disc's warm inner light. */
 export const INTER_WARM: readonly [number, number, number] = [1.12, 1.0, 0.82];
@@ -246,8 +250,12 @@ export const arms: IllFeature = {
       about: "How far past the ring where the model's arms fade out their pattern is carried outward along the arms' own measured winding, kpc, so the arms reach the disc's edge; 0 the model's end. Illustrative.",
     },
     {
-      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.1, ngc_4414: 0.05 },
+      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.5, ngc_4414: 0.05 },
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
+    },
+    {
+      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8 },
+      about: "The arms' tint and the sparkle's colour turned from blue-white toward cyan-teal by this share; 0 the blue-white. Colour for appearance (S107).",
     },
     {
       key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.8, ngc_4414: -0.6 },
@@ -330,7 +338,7 @@ export const arms: IllFeature = {
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
-      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.05, ngc_4414: 0.15 },
+      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.5, ngc_4414: 0.15 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
     },
     {
@@ -338,7 +346,7 @@ export const arms: IllFeature = {
       about: "1: the arms' glow, grain and lanes drawn on one skeleton of continuous ridges (log spirals from the bar's ends at the arm pieces' pitch, carried to the disc's edge, with lesser arms and spurs of the viewer's own); 0: the model's contrast ridges as S105 drew them. Illustrative (S106).",
     },
     {
-      key: "skellesser", label: "lesser arms", min: 0, max: 4, step: 1, unit: "", default: 2, perTemplate: { milky_way: 3 },
+      key: "skellesser", label: "lesser arms", min: 0, max: 4, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2 },
       about: "How many lesser arms the skeleton draws between the two major arms (each nudged to the arm pieces' strongest phase near midway). Illustrative (S106).",
     },
     {
@@ -382,6 +390,34 @@ export const arms: IllFeature = {
       about: "The lesser arms' strength against the majors' (glow, grain and lanes alike). Illustrative (S106).",
     },
     {
+      key: "skellesserwidth", label: "lesser width", min: 0.2, max: 1.5, step: 0.01, unit: "×", default: 0.85, perTemplate: { milky_way: 0.7 },
+      about: "The lesser arms' ridge width as a share of the majors' (glow, grain and lanes alike). Illustrative (S107).",
+    },
+    {
+      key: "skellesserreach", label: "lesser reach", min: 0.3, max: 1.2, step: 0.01, unit: "×", default: 0.92,
+      about: "Where the lesser arms end, as a share of the majors' reach: shorter lessers leave the outer disc to the two major arms. Illustrative (S107).",
+    },
+    {
+      key: "skelpitchgrow", label: "pitch opening", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.35 },
+      about: "The skeleton's pitch grows outward as (R / the arms' start) to this power, so successive windings separate instead of running round as rings; 0 a constant pitch. Illustrative (S107).",
+    },
+    {
+      key: "skelopen", label: "leave the bar", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8 },
+      about: "The major arms' pitch at the bar's ends raised by 1 + this, easing back over about a third of a turn, so each major leaves its bar end at a clear angle; 0 none. Illustrative (S107).",
+    },
+    {
+      key: "skelpatch", label: "patchy arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9 },
+      about: "Each arm's glow and grain modulated along it by a fixed noise of the viewer's own (the wavelength below): bright clumps and thin stretches; 0 an even arm. Illustrative (S107).",
+    },
+    {
+      key: "skelpatchsize", label: "patch size", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 1.0 },
+      about: "The arms' clumps' wavelength along the arm, kpc. Illustrative (S107).",
+    },
+    {
+      key: "skelragged", label: "ragged edges", min: 0, max: 0.9, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5 },
+      about: "Each side of an arm's band widened or narrowed along it by a fixed noise by up to this share: uneven edges; 0 even. Illustrative (S107).",
+    },
+    {
       key: "skelwing", label: "glow wing", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.35 },
       about: "A faint wing three ridge widths wide under each ridge's glow, this share of it. Illustrative (S106).",
     },
@@ -414,15 +450,15 @@ export const arms: IllFeature = {
       about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 3.5, ngc_4414: 1 },
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 3.0, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
-      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.5, ngc_4414: 0 },
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.1, ngc_4414: 0 },
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.05, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 1.1, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
@@ -438,7 +474,7 @@ export const arms: IllFeature = {
       about: "The bar light's profile across its ellipse as exp(-1.6 e^this): 2 the soft gaussian; higher a flatter body with a sharper edge. Illustrative (S106).",
     },
     {
-      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.65 },
+      key: "barthin", label: "bar slimness", min: 0.3, max: 1.5, step: 0.01, unit: "× q", default: 1, perTemplate: { milky_way: 0.8 },
       about: "The bar light's ellipse's axis ratio as a multiple of the published bar_axis_ratio: below 1 a slimmer drawn bar. Illustrative (S106).",
     },
     {
@@ -615,7 +651,7 @@ export const arms: IllFeature = {
     const shape = shapeOf(p, context.frame);
     return {
       illArmsOn: planes ? 1 : 0,
-      illArmsBlue: tint(ARM_BLUE, p.blue ?? 0),
+      illArmsBlue: tint(armTarget(p.cyan ?? 0), p.blue ?? 0),
       illArmsLavender: interTint(p.lavender ?? 0),
       illArmsStrength: p.strength ?? 1,
       illArmsStart: shape.start,

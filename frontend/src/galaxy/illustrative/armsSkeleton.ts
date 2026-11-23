@@ -28,6 +28,14 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
     lesserStart: p.skellesserstart ?? d.lesserStart,
     lesserLevel: p.skellevel ?? d.lesserLevel,
     seed: p.skelseed ?? d.seed,
+    // S107 (the Milky Way's spiral and its patchy arms)
+    pitchGrow: p.skelpitchgrow ?? d.pitchGrow,
+    open: p.skelopen ?? d.open,
+    lesserWidth: p.skellesserwidth ?? d.lesserWidth,
+    lesserReach: p.skellesserreach ?? d.lesserReach,
+    patch: p.skelpatch ?? d.patch,
+    patchScale: p.skelpatchsize ?? d.patchScale,
+    ragged: p.skelragged ?? d.ragged,
   };
 }
 
@@ -104,11 +112,14 @@ export function skeletonPlanes(
   contrast: { n: Float64Array; nR: number; nPhi: number } | null = null,
 ): { share: Uint8Array; mean: Uint8Array; meanMax: number; flags: number[]; ringMean: number[] } {
   const t0 = typeof performance !== "undefined" ? performance.now() : 0;
-  const band = skeletonBand(sk, width, height, rHi, wing);
+  // S107: with clumped arms the ring means are the unclumped band's (skeletonBand's `plain`).
+  const plain = sk.arms.some((a) => a.patch) ? new Float32Array(width * height) : null;
+  const band = skeletonBand(sk, width, height, rHi, wing, plain);
+  const meanOf = plain ?? band;
   const ringMean = new Float64Array(width);
   for (let r = 0; r < height; r++) {
     const row = r * width;
-    for (let c = 0; c < width; c++) ringMean[c] += band[row + c];
+    for (let c = 0; c < width; c++) ringMean[c] += meanOf[row + c];
   }
   let meanMax = 0;
   for (let c = 0; c < width; c++) {

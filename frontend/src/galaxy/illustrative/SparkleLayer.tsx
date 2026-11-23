@@ -17,6 +17,8 @@ import { type SparklePoints, sparkleKey, sparkleReadsLanes, sparkleShown } from 
 
 /** The sparkle's blue-white at full share (over the white point). */
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
+/** S107: the sparkle's cyan-teal, mixed into the blue-white by the arms' `cyan` share. */
+const SPARKLE_CYAN: readonly [number, number, number] = [0.66, 1.1, 1.16];
 
 /** The members `idx` of a flat buffer of `width` values per point. */
 function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Array {
@@ -59,15 +61,16 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
     return () => setSparkleDrawnFor(owner, null);
   }, [owner, shownFor]);
   const blue = params.sparkleblue ?? 0.7;
+  const cyan = Math.min(1, Math.max(0, params.cyan ?? 0));
   const base = params.sparklegain ?? 2e4;
   const start = shapeOf(params, context.frame).start;
   const h = context.frame?.header.scalars.thin_disc_scale_length;
   const scale = (typeof h === "number" && h > 0 ? h : 2.5) * (params.sparklefall ?? 1);
   const flux = useMemo(() => {
     if (!points) return null;
-    const c = SPARKLE_BLUE.map((v) => 1 + (v - 1) * blue) as [number, number, number];
+    const c = SPARKLE_BLUE.map((v, k) => 1 + (v + (SPARKLE_CYAN[k] - v) * cyan - 1) * blue) as [number, number, number];
     return sparkleFlux(points.weight, points.radius, base, c, start, scale);
-  }, [points, blue, base, start, scale]);
+  }, [points, blue, cyan, base, start, scale]);
   const bigShare = params.sparklebig ?? 0;
   const tiers = useMemo(() => {
     if (!points || !flux) return null;

@@ -357,6 +357,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
   const placing = [
     params.total, params.bunch, params.gap, params.bunchLen, params.inner, params.across, params.slope, params.lightSize, params.ridgePow,
     params.barEnds, params.sparkle, params.sparkleGain, params.seed, params.elong, params.hue, params.coreBlue,
+    params.minStrength, params.patchPow, params.complexes, params.complexGain,
   ];
   const geometry = useMemo(() => {
     if (!knots) return null;

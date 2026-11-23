@@ -42,7 +42,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The smallest drawn radius, pc: regions read as blobs at galaxy scale. Illustrative.",
   },
   {
-    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 120, ngc_4414: 180 },
+    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 180, ngc_4414: 180 },
     about: "The largest drawn radius, pc. Illustrative.",
   },
   {
@@ -71,7 +71,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The regions' colour mixed from their own lines' colour (0) toward H-alpha pink (1). Colour for appearance.",
   },
   {
-    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: -0.15, ngc_4414: 0.1 },
+    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.1, ngc_4414: 0.1 },
     about: "The pink's hue, from a red pink (0) to magenta (1); below 0 past the pink toward a deep red (S105: the grade's cool tint turns a pink violet). Colour for appearance.",
   },
   { key: "blobs", label: "sub-blobs", min: 1, max: 4, step: 1, default: 4, about: "Each region drawn as this many soft sub-blobs, placed by a hash of its index (stable). Illustrative." },
@@ -99,7 +99,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "gap", label: "skeleton: gap", min: 0, max: 4, step: 0.05, unit: "kpc", default: 1.2, perTemplate: { milky_way: 0.6 }, about: "No two bunches' centres closer than this, kpc: the gaps along a ridge. Illustrative (S106)." },
   { key: "bunchLen", label: "skeleton: bunch length", min: 0, max: 1.5, step: 0.01, unit: "kpc", default: 0.18, about: "A bunch's members spread along the arm by a Gaussian of this sigma, kpc. Illustrative (S106)." },
   { key: "inner", label: "skeleton: inner-edge bias", min: -1, max: 2, step: 0.01, unit: "widths", default: 0.35, about: "The regions set this many ridge widths (FWHM) to the ridge's inner side, the dust lane's (negative: outer). Illustrative (S106)." },
-  { key: "across", label: "skeleton: scatter across", min: 0, max: 1.5, step: 0.01, unit: "widths", default: 0.15, about: "The regions scattered across the arm by a Gaussian of this many ridge widths. Illustrative (S106)." },
+  { key: "across", label: "skeleton: scatter across", min: 0, max: 1.5, step: 0.01, unit: "widths", default: 0.15, perTemplate: { milky_way: 0.4 }, about: "The regions scattered across the arm by a Gaussian of this many ridge widths. Illustrative (S106)." },
   { key: "ridgePow", label: "skeleton: ridge-strength power", min: 0, max: 6, step: 0.1, unit: "power", default: 1.5, perTemplate: { milky_way: 2.5 }, about: "A bunch is kept with the ridge's strength to this power: denser where the ridge is strong. Illustrative (S106)." },
   { key: "slope", label: "skeleton: size spread", min: 0.3, max: 4, step: 0.05, unit: "slope", default: 1, perTemplate: { milky_way: 1.8 }, about: "Radii drawn as floor u^(-1/slope) up to the ceiling: lower, more large regions; higher, nearly all at the floor. Illustrative (S106)." },
   { key: "lightSize", label: "skeleton: light with size", min: 0, max: 3, step: 0.05, unit: "power", default: 1, about: "A region's light as (radius / floor)^power: the large complexes the bright ones. Illustrative (S106)." },
@@ -109,6 +109,10 @@ const CONTROLS: readonly IllControl[] = [
   { key: "coreBlue", label: "core: white to blue", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0 }, about: "The skeleton regions' cores from white (0) to the knots' white-blue (1). Colour for appearance (S106)." },
   { key: "sparkle", label: "skeleton: blue-white points", min: 0, max: 8, step: 1, default: 3, about: "Up to this many blue-white points beside each larger region (fewer for small ones). Illustrative (S106)." },
   { key: "sparkleGain", label: "skeleton: points' light", min: 0, max: 2, step: 0.01, unit: "×", default: 0.15, about: "Each blue-white point's light against its region's. Illustrative (S106)." },
+  { key: "minStrength", label: "skeleton: least ridge", min: 0, max: 1, step: 0.01, default: 0, perTemplate: { milky_way: 0.15 }, about: "No bunch of regions where the ridge's strength is under this (a faded arm end); 0 anywhere on a ridge. Illustrative (S107)." },
+  { key: "patchPow", label: "skeleton: on the bright stretches", min: 0, max: 6, step: 0.1, unit: "power", default: 0, perTemplate: { milky_way: 2 }, about: "A bunch kept with the arm's clumps (the arms' patchy arms) to this power: the regions gather in the arms' bright stretches, with long empty ones between; 0 as the ridge's strength alone. Illustrative (S107)." },
+  { key: "complexes", label: "skeleton: large complexes", min: 0, max: 40, step: 1, default: 0, perTemplate: { milky_way: 12 }, about: "This many large ragged complexes (several lobes, a white core, bright points about them) along the two major arms; 0 none. Illustrative (S107)." },
+  { key: "complexGain", label: "skeleton: complexes' light", min: 0, max: 20, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 5 }, about: "A large complex's members' light, times a region's. Illustrative (S107)." },
   { key: "seed", label: "skeleton: seed", min: 1, max: 99, step: 1, default: 7, about: "The placement's fixed seed (the viewer's own). Illustrative (S106)." },
   {
     key: "dust", label: "regions' dust", min: 0, max: 1.5, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.4 },

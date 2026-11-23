@@ -12,7 +12,7 @@
 import { currentSkeleton, skeletonKey } from "./armsSkeleton";
 import type { IllContext, IllParams } from "./feature";
 import { CORE_COLOUR, MAX_BLOBS, hash01, quantile, radialWeight, regionColour } from "./knotsMath";
-import { type Skeleton, armAt, sampleRidges } from "./skeleton";
+import { type Skeleton, armAt, patchAt, sampleRidges } from "./skeleton";
 
 const TAU = 2 * Math.PI;
 
@@ -93,6 +93,11 @@ export function paretoRadius(u: number, floor: number, ceiling: number, slope: n
  * side, scattered `across` widths; sizes from paretoRadius over [sizeMin, sizeMax] at `slope`, light (r / sizeMin)^lightSize;
  * a complex at each major arm's start (the bar's ends) `barEnds` times as bright; `sparkle` blue-white points beside
  * each large region. Deterministic in (skeleton, parameters).
+ *
+ * S107 (the Milky Way's regions): no bunch where the ridge's strength is under `minStrength` (a faded arm end); a
+ * bunch kept with the arm's clumps (skeleton.ts patchAt) to the power `patchPow`, so the regions gather in the arm's
+ * bright stretches with long empty ones between; `complexes` large ragged complexes (as the bar ends' are, `complexGain`
+ * times a region's light) at strength-weighted places along the two major arms. Each 0 leaves the S106 placement.
  */
 export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
   const next = stream(Math.round(p.seed ?? 7));
@@ -111,6 +116,8 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
   const fadeR = p.fadeR ?? 14;
   const fadeWidth = p.fadeWidth ?? 4;
   const innerR = p.innerR ?? 0;
+  const minStrength = Math.max(0, p.minStrength ?? 0);
+  const patchPow = Math.max(0, p.patchPow ?? 0);
   const out: PlacedRegion[] = [];
   const centres: number[] = [];
   let id = 0;
@@ -137,6 +144,27 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
       centres.push(f.x, f.y);
     }
   }
+  // S107: the large complexes along the major arms, each at a strength-weighted place no nearer another than 2 gaps.
+  const complexes = Math.max(0, Math.round(p.complexes ?? 0));
+  if (complexes > 0) {
+    const majors = sk.arms.map((a, k) => (a.kind === "major" ? k : -1)).filter((k) => k >= 0);
+    let placed = 0;
+    for (let t = 0; t < complexes * 60 && placed < complexes && majors.length; t++) {
+      const a = majors[Math.floor(next() * majors.length) % majors.length];
+      const arm = sk.arms[a];
+      const R = Math.exp(arm.lnR0 + next() * (arm.n - 1) * arm.dlnR);
+      const f = frameAt(sk, a, R);
+      if (!f || f.strength < Math.max(minStrength, 0.3)) continue;
+      if (next() > f.strength * patchAt(arm, R) * radialWeight(R, fadeR, fadeWidth, innerR)) continue;
+      const g2 = 4 * gap * gap;
+      let near = false;
+      for (let j = 0; j < centres.length && !near; j += 2) near = (centres[j] - f.x) ** 2 + (centres[j + 1] - f.y) ** 2 < g2;
+      if (near) continue;
+      members(f, Math.max(3, Math.round(bunch * 1.5)), Math.max(0, p.complexGain ?? 3), true);
+      centres.push(f.x, f.y);
+      placed++;
+    }
+  }
   // The bunches along the ridges.
   const cand = sampleRidges(sk, nBunch * 20, Math.round(p.seed ?? 7) * 7919 + 13, 0);
   const start = out.length;
@@ -144,7 +172,9 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
     const R = cand.radius[k];
     const f = frameAt(sk, cand.arm[k], R);
     if (!f) continue;
-    const w = Math.pow(Math.max(0, f.strength), ridgePow) * radialWeight(R, fadeR, fadeWidth, innerR);
+    if (f.strength < minStrength) continue;
+    const clumps = patchPow > 0 ? Math.pow(patchAt(sk.arms[cand.arm[k]], R), patchPow) : 1;
+    const w = clumps * Math.pow(Math.max(0, f.strength), ridgePow) * radialWeight(R, fadeR, fadeWidth, innerR);
     if (next() > w) continue;
     // Each candidate's own reach (0.4-1.6 gap): the gaps uneven, not a necklace.
     const reach = gap * (0.4 + 1.2 * next());
