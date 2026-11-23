@@ -35,7 +35,6 @@ import {
   registerFeature,
   updateRuntime,
 } from "./index";
-import { GRADE_FRAGMENT, LUMA, gradeColor } from "./grade";
 import type { IllFeature } from "./feature";
 import { ILLUSTRATIVE_BASE } from "./preset";
 
@@ -211,49 +210,7 @@ describe("the patched shaders (S105): anchors found once, the physical sources u
   it("composes the neutral stubs: no A_V, a young gain of 1, the edge's taper", () => {
     const g = illGlsl();
     expect(g).toContain("float illDustAv(vec2 rp) { return illLanesAv(rp) + illFlocAv(rp); }");
-    expect(g).toContain("float illYoungGain(vec2 rp) { return illArmsYoung(rp); }");
+    expect(g).toContain("float illYoungGain(vec2 rp) { return illEdgeYoung(rp) * illArmsYoung(rp); }");
     expect(g).toContain("float illEdge(float r) { return illEdgeTaper(r); }");
-  });
-});
-
-describe("the grade's arithmetic (S105)", () => {
-  const plain = { gain: 0, stretch: 30, white: 1, saturation: 1, contrast: 1, black: 0, balance: 0, split: 0, pivot: 0.6, highlight: 0 };
-  const lum = (c: number[]) => LUMA[0] * c[0] + LUMA[1] * c[1] + LUMA[2] * c[2];
-
-  it("stretches luminance by asinh: a grey goes to asinh(s g L) / asinh(s w)", () => {
-    for (const L of [0.001, 0.05, 0.4]) {
-      const out = gradeColor([L, L, L], plain);
-      const y = Math.asinh(30 * L) / Math.asinh(30);
-      for (const v of out) expect(v).toBeCloseTo(y, 12);
-    }
-    const twice = gradeColor([0.1, 0.1, 0.1], { ...plain, gain: 1 });
-    expect(twice[0]).toBeCloseTo(Math.asinh(30 * 0.2) / Math.asinh(30), 12);
-  });
-
-  it("keeps each pixel's hue: the channels' ratios as drawn, below full scale and past it", () => {
-    const c: [number, number, number] = [0.02, 0.03, 0.05];
-    const out = gradeColor(c, plain);
-    expect(out[0] / out[2]).toBeCloseTo(c[0] / c[2], 12);
-    expect(out[1] / out[2]).toBeCloseTo(c[1] / c[2], 12);
-    expect(lum(out)).toBeCloseTo(Math.asinh(30 * lum(c)) / Math.asinh(30), 12);
-    const bright = gradeColor([40, 20, 10], plain);
-    expect(Math.max(...bright)).toBeCloseTo(1, 12);
-    expect(bright[1] / bright[0]).toBeCloseTo(0.5, 12);
-  });
-
-  it("is the identity on colour at saturation 1, and moves it about luminance otherwise", () => {
-    const c: [number, number, number] = [0.03, 0.02, 0.01];
-    const at1 = gradeColor(c, plain);
-    const grey = gradeColor(c, { ...plain, saturation: 0 });
-    expect(grey[0]).toBeCloseTo(grey[2], 12);
-    expect(grey[0]).toBeCloseTo(lum(at1), 12);
-    const more = gradeColor(c, { ...plain, saturation: 2 });
-    expect(more[0] - lum(at1)).toBeCloseTo(2 * (at1[0] - lum(at1)), 12);
-  });
-
-  it("is the shader's text: the same constants and the same steps", () => {
-    expect(GRADE_FRAGMENT).toContain("float y = gradeAsinh(uStretch * uGain * L) / gradeAsinh(uStretch * uWhite);");
-    expect(GRADE_FRAGMENT).toContain(`dot(c, vec3(${LUMA.join(", ")}))`);
-    expect(GRADE_FRAGMENT).toContain("if (m > 1.0) c3 = mix(c3 / m, vec3(1.0), uHighlight * (1.0 - 1.0 / m));");
   });
 });

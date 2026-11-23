@@ -51,7 +51,7 @@ import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindo
 import { TUNING_CONTROLS, type Tuning, drawnTuning, heldTemplate, loadTuning, lookDefaultsFor, saveTuning } from "./tuning";
 import { type IllContext, type Look, createRuntime, features as illFeatures, illArrays, knotsReplaced, paramsOf, updateRuntime } from "./illustrative";
 import { grade as gradeFeature, gradeUniforms } from "./illustrative/grade";
-import { framing as framingFeature, standScale } from "./illustrative/framing";
+import { framing as framingFeature, standRoll, standScale, standTurn } from "./illustrative/framing";
 import { sampleOpacity, speckle as speckleFeature } from "./illustrative/speckle";
 import { TuningPanel, useDebounced } from "./TuningPanel";
 import { ZOOM_SPAN, scaleBar } from "./zoom";
@@ -674,7 +674,9 @@ export function GalaxyTab({
   const gradeValues = useMemo(() => (illustrative ? gradeUniforms(paramsOf(gradeFeature, illParams)) : null), [illustrative, illParams]);
   // The framing (framing.ts): the template stand's radius times the scale. A slider's move is settled first (a new stand
   // remakes the canvas); a landing or a look switched takes its own at once, so the canvas is made once at its stand.
-  const framingLive = illustrative ? standScale(paramsOf(framingFeature, illParams)) : 1;
+  // The roll and the azimuth's turn ride with the scale, settled the same way ("scale,roll,turn").
+  const framingParams = illustrative ? paramsOf(framingFeature, illParams) : null;
+  const framingLive = framingParams ? `${standScale(framingParams)},${standRoll(framingParams)},${standTurn(framingParams)}` : "1,0,0";
   const framingOf = `${templateName}:${viewLook}`;
   const [framingAt, setFramingAt] = useState({ of: framingOf, v: framingLive });
   useEffect(() => {
@@ -682,9 +684,13 @@ export function GalaxyTab({
     const timer = setTimeout(() => setFramingAt({ of: framingOf, v: framingLive }), 300);
     return () => clearTimeout(timer);
   }, [framingAt, framingOf, framingLive]);
-  const framingScale = framingAt.of === framingOf ? framingAt.v : framingLive;
+  const [framingScale, framingRoll, framingTurn] = (framingAt.of === framingOf ? framingAt.v : framingLive).split(",").map(Number);
   const templateStand = drawn.template?.camera ?? null;
-  const viewStand = illustrative && templateStand ? { ...templateStand, radius_kpc: templateStand.radius_kpc * framingScale } : templateStand;
+  const viewStand =
+    illustrative && templateStand
+      ? { ...templateStand, radius_kpc: templateStand.radius_kpc * framingScale, azimuth_deg: (((templateStand.azimuth_deg + framingTurn) % 360) + 360) % 360 }
+      : templateStand;
+  const viewRoll = illustrative ? framingRoll : 0;
   // A feature that draws the HII regions its own way in place of the default knots (knots.ts, row 106).
   const knotsDefault = illustrative && knotsReplaced(illParams) ? null : knotsShown;
   // The points as drawn (the lead's second pass on R5; rule B1, a read-only copy): their scene positions and light per
@@ -851,6 +857,7 @@ export function GalaxyTab({
         psf={spritePsf}
         tuning={look}
         grade={gradeValues}
+        roll={viewRoll}
       >
         {/* The comparison's one camera (T16, S83): this pane's moves are the other's. */}
         {link && <CameraLinkProbe link={link} leads={solo} />}

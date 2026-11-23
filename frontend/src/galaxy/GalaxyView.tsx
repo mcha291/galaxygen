@@ -33,6 +33,7 @@ import { screenRings } from "./ringProfile";
 import { POINTS_ORDER_WITHOUT_REGION, type PointsRegionUniforms, REGION_ORDER, REGION_TRANSMISSION_KEY, patchPointsForRegion } from "./region";
 import { type SpritePsf, psfTexture } from "./psf";
 import { GRADE_FRAGMENT, GRADE_VERTEX } from "./illustrative/grade";
+import { rolledUp } from "./illustrative/framing";
 import { galaxyRenderer } from "./renderer";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
@@ -97,6 +98,11 @@ interface Props {
    * the renderer's tone mapping off. Null or absent (the physical look): no such pass, the composer as it was.
    */
   grade?: Readonly<Record<string, number>> | null;
+  /**
+   * The illustrative look's roll of the template's stand (S105; illustrative/framing.ts), degrees counter-clockwise: the
+   * camera's up turned about the line of sight. 0 or absent (the physical look): the camera's up the disc's axis, as it was.
+   */
+  roll?: number;
 }
 
 export type ViewTuning = Pick<Tuning, "bloomStrength" | "bloomRadius" | "bloomThreshold" | "toneMapping" | "spriteSize">;
@@ -129,6 +135,7 @@ export function GalaxyView({
   psf = null,
   tuning = TUNING_DEFAULTS,
   grade = null,
+  roll = 0,
 }: Props) {
   const first = layers[0]?.positions;
   const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
@@ -140,7 +147,10 @@ export function GalaxyView({
   const range = useMemo(() => zoomRange(reach, fov, standRadius), [reach, fov, standRadius]);
   const planes = clipPlanes(range);
   const position = placed ? orbitPosition(placed, fov) : cameraFor(preset ?? "oblique", reach, fov);
-  const standKey = placed ? `${placed.inclination_deg},${placed.azimuth_deg},${placed.radius_kpc}` : preset;
+  // A roll only on a template's stand (the illustrative look's); none, the camera options exactly as they were.
+  const rolled = placed && roll ? roll : 0;
+  const standKey = placed ? `${placed.inclination_deg},${placed.azimuth_deg},${placed.radius_kpc}${rolled ? `,${rolled}` : ""}` : preset;
+  const cameraOptions = { position, fov, near: planes.near, far: planes.far, ...(rolled ? { up: rolledUp(position, rolled) } : {}) };
   // T13 (S83): the context lost, and since restored but not yet drawn again - the frame loop paused while lost, and the
   // status line shown until the first frame after the restore (contextLoss.ts).
   const [context, setContext] = useState<{ lost: boolean; redrawing: boolean }>(NOT_LOST);
@@ -149,7 +159,7 @@ export function GalaxyView({
     <div className={styles.view}>
       <Canvas
         key={`${standKey}:${fov}:${epoch}:${hdr}`} // a preset, a template's stand or a lens is a fresh camera; orbiting from there is the user's
-        camera={{ position, fov, near: planes.near, far: planes.far }}
+        camera={cameraOptions}
         dpr={[1, 2]}
         gl={galaxyRenderer} // alpha and antialias, three's shader checks off in a production build (renderer.ts, S80)
         frameloop={context.lost ? "never" : "always"} // no frame while the context is lost (T13): nothing marched is recorded as drawn
