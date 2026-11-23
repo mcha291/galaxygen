@@ -8,8 +8,17 @@
 // a superseded one, is put into the features' own caches (seedMemo: a cache keyed by the inputs, so an older answer can
 // never stand for newer parameters) and the view is told (illArrivals moves); the view then asks the runtime again
 // (updateRuntime), which composes the map from its caches at the parameters drawn NOW - all channels of one parameter
-// set - or, where a plane is still missing, asks again. Where there is no Worker (vitest, SSR) or it failed, nothing is
-// posted and the runtime builds on this thread as it always did (startIllMap returns false).
+// set - or, where a plane is still missing, asks again. Where there is no Worker (vitest, SSR) or one cannot be made,
+// nothing is posted and the runtime builds on this thread as it always did (startIllMap returns false).
+//
+// A FAILED JOB (S107 fix F1). A job fails three ways: it answers an error, the worker throws uncaught (onerror), or no
+// answer comes within ILL_JOB_TIMEOUT_MS (the worker died - closed, killed, out of memory - or hung: the watchdog). Each
+// failure is one console.warn (the job's kind and the reason) and the worker is replaced (terminated; a new one made at
+// the next post, holding nothing). The job is then asked ONCE again of the new worker - unless a newer job of its kind
+// waits, which stands for the parameters drawn now - and if that also fails it is done on this thread: a map's key
+// marked answered (the runtime builds it here, so the picture always arrives), a sparkle built here. No key is ever
+// left un-asked with nothing in flight, so the pending count returns to 0; the next job goes to a worker again. While
+// the last map job failed, illMapFailure names it (the Tuning panel's line); the next map answered clears it.
 //
 // The sparkle's points (sparkleJob.ts) go the same way: SparkleLayer asks (requestSparkle) and draws the last points it
 // had until the new ones arrive; built here where there is no worker.
@@ -21,8 +30,16 @@ import { type SparklePoints, sparklePoints } from "./sparkleJob";
 type Listener = () => void;
 
 let worker: Worker | null = null;
+/** Set only where a Worker cannot be made at all: every job is then done on this thread. */
 let broken = false;
 let nextId = 1;
+
+/**
+ * The watchdog's bound on a running job, ms (S107 fix F1): far above a legitimate job's 0.1-0.5 s (a cold first map at
+ * most ~1 s), so it fires only for a worker that died or hung.
+ */
+export const ILL_JOB_TIMEOUT_MS = 15_000;
+let watchdog: ReturnType<typeof setTimeout> | null = null;
 /** The release's generation: answers to jobs posted before the last release are dropped. */
 let generation = 0;
 
@@ -35,12 +52,16 @@ interface Job {
   make: () => { message: JobMessage; transfer: Transferable[] };
   /** For a sparkle: built here when the worker cannot. */
   fallback?: () => void;
+  /** How many times this job has failed (one retry in a new worker, then done here). */
+  failures?: number;
 }
 let running: Job | null = null;
 const waiting: { map: Job | null; sparkle: Job | null } = { map: null, sparkle: null };
 
-const counts = { posted: 0, answered: 0, seeded: 0, skipped: 0, replaced: 0, dropped: 0, failed: 0, here: 0 };
+const counts = { posted: 0, answered: 0, seeded: 0, skipped: 0, replaced: 0, dropped: 0, failed: 0, here: 0, retried: 0, restarted: 0, timedOut: 0 };
 let lastError: string | null = null;
+/** The Tuning panel's line while the last map job failed (null: it did not). */
+let mapFailure: string | null = null;
 /** The last job of each kind: its time in the worker and from its post to its answer here, ms (the probe's). */
 const times = { map: { ms: 0, roundTripMs: 0 }, sparkle: { ms: 0, roundTripMs: 0 } };
 
@@ -62,15 +83,15 @@ const frames = new Map<number, IllFrame | null>();
 let workerFrame = -1;
 /** The values seeded from the worker, by its ref, and the ref of each (the last 64). */
 const byRef = new Map<number, object>();
-const refOf = new WeakMap<object, number>();
+/** A worker's refs are its own (a new worker numbers from 1 again): both forgotten when the worker is replaced. */
+let refOf = new WeakMap<object, number>();
 
 /**
- * The map key answered last, and the keys that failed: where the key drawn now is the one answered last and the runtime
- * would still build (a cache no seed fills: an unnamed memo), it builds here; a failed key is not asked again. Only the
- * LAST answer counts - an older key's seeds may have been replaced since by a newer answer's, so a return to it asks again.
+ * The map key answered last: where the key drawn now is the one answered last and the runtime would still build (a
+ * cache no seed fills: an unnamed memo; or a job that failed twice, done here), it builds here. Only the LAST answer
+ * counts - an older key's seeds may have been replaced since by a newer answer's, so a return to it asks again.
  */
 let answered: string | null = null;
-const failedKeys = new Set<string>();
 let arrivals = 0;
 const listeners = new Set<Listener>();
 const tell = () => {
@@ -83,9 +104,12 @@ export function illWorkerAvailable(): boolean {
 }
 
 /** The client's counts (the tests' and the probe's): posted, answered, seeds put in caches and skipped, ... */
-export function illJobCounts(): Readonly<typeof counts> & { lastError: string | null; times: typeof times } {
-  return { ...counts, lastError, times: { map: { ...times.map }, sparkle: { ...times.sparkle } } };
+export function illJobCounts(): Readonly<typeof counts> & { lastError: string | null; mapFailure: string | null; times: typeof times } {
+  return { ...counts, lastError, mapFailure, times: { map: { ...times.map }, sparkle: { ...times.sparkle } } };
 }
+
+/** The Tuning panel's line while the last map job failed (retried, or rebuilt here), else null. */
+export const illMapFailure = (): string | null => mapFailure;
 
 /** How many jobs are running or waiting now. */
 export const illJobsPending = (): number => (running ? 1 : 0) + (waiting.map ? 1 : 0) + (waiting.sparkle ? 1 : 0);
@@ -102,19 +126,42 @@ export function subscribeIll(listener: Listener): () => void {
 function workerOf(): Worker | null {
   if (!illWorkerAvailable()) return null;
   if (!worker) {
+    let made: Worker;
     try {
-      worker = new Worker(new URL("./illMap.worker.ts", import.meta.url), { type: "module" });
+      made = new Worker(new URL("./illMap.worker.ts", import.meta.url), { type: "module" });
     } catch {
       broken = true;
       return null;
     }
-    worker.onmessage = (event: MessageEvent<JobAnswer>) => answeredJob(event.data);
-    worker.onerror = (event) => {
-      event.preventDefault();
-      failed();
+    // Events of a worker since replaced are not heard.
+    made.onmessage = (event: MessageEvent<JobAnswer>) => {
+      if (made === worker) answeredJob(event.data);
     };
+    made.onerror = (event) => {
+      event.preventDefault();
+      if (made !== worker) return;
+      const message = (event as ErrorEvent).message;
+      jobFailed(`the worker threw${message ? `: ${message}` : ""}`);
+    };
+    worker = made;
   }
   return worker;
+}
+
+/** The worker terminated and forgotten (its frame, its refs): the next post makes a new one, holding nothing. */
+function replaceWorker() {
+  if (!worker) return;
+  worker.terminate();
+  worker = null;
+  workerFrame = -1;
+  byRef.clear();
+  refOf = new WeakMap();
+  counts.restarted += 1;
+}
+
+function stopWatchdog() {
+  if (watchdog !== null) clearTimeout(watchdog);
+  watchdog = null;
 }
 
 function post(job: Job) {
@@ -126,8 +173,20 @@ function post(job: Job) {
   running = job;
   job.posted = performance.now();
   counts.posted += 1;
-  const { message, transfer } = job.make();
-  w.postMessage(message, transfer);
+  stopWatchdog();
+  try {
+    const { message, transfer } = job.make();
+    w.postMessage(message, transfer);
+  } catch (e) {
+    jobFailed(`it could not be posted: ${e instanceof Error ? e.message : String(e)}`);
+    return;
+  }
+  watchdog = setTimeout(() => {
+    watchdog = null;
+    if (running !== job) return;
+    counts.timedOut += 1;
+    jobFailed(`no answer within ${ILL_JOB_TIMEOUT_MS / 1000} s (the worker died or hung)`);
+  }, ILL_JOB_TIMEOUT_MS);
 }
 
 function next() {
@@ -221,30 +280,28 @@ function keepSparkle(key: string, points: SparklePoints | null) {
 
 function answeredJob(answer: JobAnswer) {
   if (!running || running.id !== answer.id) return;
+  if (answer.kind === "error") {
+    counts.answered += 1;
+    jobFailed(`it answered an error: ${answer.message}`);
+    return;
+  }
+  stopWatchdog();
   const job = running;
   running = null;
   counts.answered += 1;
-  if (answer.kind !== "error") {
-    times[answer.kind] = { ms: answer.ms, roundTripMs: performance.now() - job.posted };
-    // the worker's stages as measures here (the slider probe's breakdown): each ending now, its own length
-    if (answer.kind === "map") for (const [id, ms] of Object.entries(answer.stages)) illMeasure(`worker map ${id}`, illNow() - ms);
-    else illMeasure("worker sparkle", illNow() - answer.ms);
-  }
+  times[answer.kind] = { ms: answer.ms, roundTripMs: performance.now() - job.posted };
+  // the worker's stages as measures here (the slider probe's breakdown): each ending now, its own length
+  if (answer.kind === "map") for (const [id, ms] of Object.entries(answer.stages)) illMeasure(`worker map ${id}`, illNow() - ms);
+  else illMeasure("worker sparkle", illNow() - answer.ms);
   if (job.generation !== generation) counts.dropped += 1;
-  else if (answer.kind === "error") {
-    counts.failed += 1;
-    lastError = answer.message;
-    console.warn(`illustrative ${job.kind} job failed: ${answer.message}`);
-    if (job.kind === "map") failedKeys.add(job.key);
-    else job.fallback?.();
-    arrivals += 1;
-  } else if (answer.kind === "map") {
+  else if (answer.kind === "map") {
     const started = illNow();
     applySeeds(answer.seeds);
     illMeasure("seed", started);
     markAnswered(job.key);
+    mapFailure = null;
     arrivals += 1;
-  } else if (answer.kind === "sparkle") {
+  } else {
     if (answer.missing) job.fallback?.();
     else keepSparkle(job.key, answer.points);
     arrivals += 1;
@@ -253,15 +310,43 @@ function answeredJob(answer: JobAnswer) {
   tell();
 }
 
-/** The worker failed (its script, or a job's message): the running and waiting jobs done here, and every later one. */
-function failed() {
-  broken = true;
-  worker?.terminate();
-  worker = null;
-  workerFrame = -1;
-  const jobs = [running, waiting.map, waiting.sparkle].filter((j): j is Job => j !== null);
-  running = waiting.map = waiting.sparkle = null;
-  for (const job of jobs) here(job);
+/**
+ * The running job failed (`reason`: it answered an error, the worker threw, or the watchdog fired): one warning, the
+ * worker replaced, and the job asked once again of the new worker - or, where a newer job of its kind waits, dropped
+ * for that one; failed twice, done on this thread (a map: its key marked answered, so the runtime builds it here).
+ */
+function jobFailed(reason: string) {
+  stopWatchdog();
+  const job = running;
+  running = null;
+  replaceWorker();
+  if (!job) {
+    next();
+    tell();
+    return;
+  }
+  if (job.generation !== generation) {
+    counts.dropped += 1;
+    next();
+    tell();
+    return;
+  }
+  counts.failed += 1;
+  job.failures = (job.failures ?? 0) + 1;
+  lastError = reason;
+  const newer = waiting[job.kind] !== null;
+  // A sparkle is not asked again (its lanes may have gone with the first post, transferred): built here at once.
+  const retry = !newer && job.kind === "map" && job.failures < 2;
+  const outcome = newer ? "dropped for the newer one waiting" : retry ? "asked again of a new worker" : "built on the main thread";
+  console.warn(`illustrative ${job.kind} job failed: ${reason}; ${outcome}`);
+  if (job.kind === "map") mapFailure = retry || newer ? "the map's worker failed; retrying" : "the map's worker failed; rebuilt here";
+  if (retry) {
+    counts.retried += 1;
+    post(job);
+  } else {
+    if (!newer) here(job);
+    next();
+  }
   tell();
 }
 
@@ -279,9 +364,13 @@ function frameFields(frame: IllFrame | null): { frameId: number; frame?: IllFram
 export const illMapKey = (ill: Readonly<Record<string, number>>, context: { template: string | null; frame: IllFrame | null }): string =>
   JSON.stringify([objectToken(context.frame), context.template, ill]);
 
-/** Whether the map job under `key` has been answered (its seeds are in the caches) or has failed. */
+/** Whether the map job under `key` has been answered (its seeds are in the caches, or it is left to this thread). */
 export const illMapAnswered = (key: string): boolean => answered === key;
-export const illMapFailed = (key: string): boolean => failedKeys.has(key);
+/**
+ * Whether the map job under `key` failed and will not be asked again: never since S107 fix F1 (a failed job is asked
+ * once again of a new worker, then built here), so the runtime's "failed" step no longer occurs.
+ */
+export const illMapFailed = (_key: string): boolean => false;
 
 /**
  * Asks for the planes at these parameters (key: illMapKey): posted now if the worker is idle, else waiting in place of
@@ -374,7 +463,7 @@ export function releaseIllJobs(): void {
   generation += 1;
   waiting.map = waiting.sparkle = null;
   answered = null;
-  failedKeys.clear();
+  mapFailure = null;
   byRef.clear();
   sparkleKept.clear();
   frames.clear();
