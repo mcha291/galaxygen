@@ -71,6 +71,17 @@ export const SKEL_MEAN_SAMPLES = 64;
 /** The model's contrast is carried in A as byte round(255 min(1, n / SKEL_CONTRAST_MAX)). */
 export const SKEL_CONTRAST_MAX = 2.5;
 
+/** The dither's tile, texels (a fixed hash over a DITHER x DITHER tile, repeated). */
+const DITHER = 64;
+
+/** A fixed dither in [-0.5, 0.5) for the byte at column c, row r (an integer hash: the same on every machine). */
+export function ditherAt(c: number, r: number): number {
+  let h = (Math.imul(c | 0, 0x27d4eb2d) ^ Math.imul(r | 0, 0x165667b1) ^ 0x2f1d) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+  h = (h ^ (h >>> 13)) >>> 0;
+  return h / 4294967296 - 0.5;
+}
+
 /**
  * The arms' two planes of the shared map from the skeleton (S106, B3; arms.ts's GLSL reads them under illArmsSkel):
  *   B  round(255 sqrt(s)), s the band (skeleton.ts skeletonBand, its faint wing `wing`), as armPlanes' B;
@@ -110,17 +121,24 @@ export function skeletonPlanes(
   }
   const mean = new Uint8Array(width * height);
   if (contrast) {
+    // S106 (B5, the ring banding): the contrast read across rings by a Catmull-Rom cubic (C1: a linear read kinks at
+    // every model ring, and a kink in a smooth gradient shows as a thin arc), and each byte dithered by a fixed hash
+    // (a rounded smooth field steps by 1/255 along its contours - thin arcs again once the light is divided by it).
     const { n, nR, nPhi: P } = contrast;
-    const i0s = new Int32Array(width);
-    const i1s = new Int32Array(width);
-    const fxs = new Float64Array(width);
+    // Each of the contrast's P azimuth rows resampled across rings once (width columns, the cubic), in units of bytes.
+    const cols = new Float32Array(P * width);
     for (let c = 0; c < width; c++) {
       const x = ((c + 0.5) / width) * nR - 0.5;
       const i0 = Math.floor(x);
-      fxs[c] = x - i0;
-      i0s[c] = Math.min(nR - 1, Math.max(0, i0));
-      i1s[c] = Math.min(nR - 1, Math.max(0, i0 + 1));
+      const t = x - i0;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const w = [0.5 * (-t3 + 2 * t2 - t), 0.5 * (3 * t3 - 5 * t2 + 2), 0.5 * (-3 * t3 + 4 * t2 + t), 0.5 * (t3 - t2)];
+      const a = [0, 1, 2, 3].map((k) => Math.min(nR - 1, Math.max(0, i0 - 1 + k)) * P);
+      for (let j = 0; j < P; j++) cols[j * width + c] = (255 / SKEL_CONTRAST_MAX) * (w[0] * n[a[0] + j] + w[1] * n[a[1] + j] + w[2] * n[a[2] + j] + w[3] * n[a[3] + j]);
     }
+    const dither = new Float32Array(DITHER * DITHER);
+    for (let y = 0; y < DITHER; y++) for (let x = 0; x < DITHER; x++) dither[y * DITHER + x] = ditherAt(x, y);
     for (let r = 0; r < height; r++) {
       const y = ((r + 0.5) / height) * P - 0.5;
       const jf = Math.floor(y);
@@ -128,16 +146,16 @@ export function skeletonPlanes(
       const j0 = ((jf % P) + P) % P;
       const j1 = (j0 + 1) % P;
       const row = r * width;
+      const o0 = j0 * width;
+      const o1 = j1 * width;
+      const drow = (r % DITHER) * DITHER;
       for (let c = 0; c < width; c++) {
-        const a = i0s[c] * P;
-        const b = i1s[c] * P;
-        const fx = fxs[c];
-        const v0 = n[a + j0] * (1 - fx) + n[b + j0] * fx;
-        const v1 = n[a + j1] * (1 - fx) + n[b + j1] * fx;
-        mean[row + c] = Math.round(255 * Math.min(1, Math.max(0, (v0 * (1 - fy) + v1 * fy) / SKEL_CONTRAST_MAX)));
+        const v = cols[o0 + c] * (1 - fy) + cols[o1 + c] * fy;
+        mean[row + c] = Math.round(Math.min(255, Math.max(0, v)) + dither[drow + (c % DITHER)]);
       }
     }
   } else mean.fill(Math.round(255 / SKEL_CONTRAST_MAX));
+
   skeletonBuild.ms = (typeof performance !== "undefined" ? performance.now() : 0) - t0;
   return { share, mean, meanMax, flags: new Array<number>(flagFloats).fill(65535), ringMean: samples };
 }

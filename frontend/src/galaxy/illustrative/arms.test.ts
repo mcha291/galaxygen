@@ -249,7 +249,7 @@ describe("the light hook (index.ts)", () => {
     expect(occurrences(base, anchor)).toBe(1);
     const ill = illustrativeFragment(base);
     expect(occurrences(ill, "          starsLight *= illLight(rp);\n" + anchor)).toBe(1);
-    expect(illGlsl()).toContain("  vec3 illLight(vec2 rp) { return illArmsLight(rp) * illBaseLight(rp); }");
+    expect(illGlsl()).toContain("  vec3 illLight(vec2 rp) { return illEdgeDisc(rp) * illArmsLight(rp) * illBaseLight(rp); }");
     expect(fieldFragment()).toBe(pinned);
   });
 

@@ -103,7 +103,11 @@ describe("the arm skeleton", () => {
     expect(planes.ringMean).toHaveLength(SKEL_MEAN_SAMPLES);
     expect(planes.flags.every((f) => f === 65535)).toBe(true);
     // A carries the contrast: 1 over SKEL_CONTRAST_MAX everywhere for a flat field.
-    expect(planes.mean[12345]).toBe(Math.round(255 / SKEL_CONTRAST_MAX));
+    // (dithered by at most half a byte: S106 B5, the ring banding)
+    expect(Math.abs(planes.mean[12345] - 255 / SKEL_CONTRAST_MAX)).toBeLessThanOrEqual(1);
+    let sum = 0;
+    for (let i = 0; i < planes.mean.length; i += 97) sum += planes.mean[i];
+    expect(sum / Math.ceil(planes.mean.length / 97)).toBeCloseTo(255 / SKEL_CONTRAST_MAX, 1);
   });
 
   it("samples points along the ridges, deterministically", () => {
