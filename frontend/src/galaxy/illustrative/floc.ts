@@ -47,7 +47,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { ngc_4414: 0.85 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
-  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 2.5 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
+  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 2 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0 }, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
     key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
@@ -141,7 +141,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   // S106: the star clouds (flocClouds.ts, FlocClouds.tsx), a points layer of the feature's own, drawn in the plane style.
   {
-    key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 18000 },
+    key: "cloudCount", label: "star cloud points", min: 0, max: 80000, step: 500, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 26000 },
     about: "How many points the star clouds hold (in the plane style only): loose groups over the bright light between the dust, densest in the outer disc; 0 none. Illustrative.",
   },
   { key: "cloudGain", label: "star cloud brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 3000, perTemplate: { ngc_4414: 35000 }, about: "The faintest star cloud point's light, L☉ over the white point (the field's scale, with the exposure). Illustrative." },
@@ -150,9 +150,9 @@ const CONTROLS: readonly IllControl[] = [
   { key: "cloudSize", label: "star cloud point size", min: 0.5, max: 4, step: 0.1, unit: "px", default: 1.5, perTemplate: { ngc_4414: 2.2 }, about: "A star cloud point's sprite, pixels. Illustrative." },
   { key: "cloudGroup", label: "star cloud size", min: 10, max: 800, step: 5, unit: "pc", default: 120, perTemplate: { ngc_4414: 90 }, about: "A star cloud's gaussian radius, parsecs (each between half and one and a half of it). Illustrative." },
   { key: "cloudMembers", label: "star cloud members", min: 1, max: 60, step: 1, unit: "", default: 8, perTemplate: { ngc_4414: 18 }, about: "A star cloud's mean number of points. Illustrative." },
-  { key: "cloudStart", label: "star clouds from", min: 0, max: 2, step: 0.01, unit: "× outer", default: 0.7, perTemplate: { ngc_4414: 0.5 }, about: "Where the star clouds come in to their full number, as a multiple of the network's outer radius (a quarter of it inside). Illustrative." },
+  { key: "cloudStart", label: "star clouds from", min: 0, max: 2, step: 0.01, unit: "× outer", default: 0.7, perTemplate: { ngc_4414: 0.35 }, about: "Where the star clouds come in to their full number, as a multiple of the network's outer radius (a quarter of it inside). Illustrative." },
   { key: "cloudReach", label: "star cloud reach", min: 0.5, max: 3, step: 0.01, unit: "× outer", default: 1.5, perTemplate: { ngc_4414: 0.85 }, about: "How far the star clouds reach, as a multiple of the network's outer radius, the edge pushed in and out by a noise: a ragged rim. Illustrative." },
-  { key: "cloudBlue", label: "star cloud blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0.7 }, about: "How far the outer clouds' colour goes from cream to blue-white. Colour for appearance." },
+  { key: "cloudBlue", label: "star cloud blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0.5 }, about: "How far the outer clouds' colour goes from cream to blue-white. Colour for appearance." },
   { key: "cloudWarmR", label: "star cloud cream radius", min: 0.5, max: 20, step: 0.1, unit: "kpc", default: 5, about: "The clouds are cream inside 0.6 of this radius and blue-white outside 1.6 of it, kpc. Colour for appearance." },
   { key: "cloudRich", label: "star cloud sectors", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.5 }, about: "How far the star clouds keep to two or three rich stretches about the star cloud azimuth; 0 all round. Illustrative." },
   { key: "cloudAz", label: "star cloud azimuth", min: 0, max: 360, step: 1, unit: "°", default: 0, perTemplate: { ngc_4414: 320 }, about: "The galactocentric azimuth of the richest star clouds, degrees. Illustrative." },
@@ -183,7 +183,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "puffs", label: "light puffs", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { ngc_4414: 0.5 }, about: "The plane style: how far the light between the dust gathers into puffs a few hundred parsecs across (a multiplier about 1, brightest at a puff's heart); 0 none. Illustrative." },
   { key: "puffSize", label: "puff size", min: 40, max: 1000, step: 5, unit: "pc", default: 220, about: "A light puff's size, parsecs (a finer set at under half of it rides on them). Illustrative." },
   { key: "puffNear", label: "puffs by the dust", min: 0, max: 4, step: 0.05, unit: "×", default: 1, about: "How much stronger the puffs are where dust lies within 150 parsecs. Illustrative." },
-  { key: "puffBlue", label: "outer puffs blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.8, perTemplate: { ngc_4414: 0.3 }, about: "How far the puffs turn blue-white in the outer disc (from the outer blue's radius). Colour for appearance." },
+  { key: "puffBlue", label: "outer puffs blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.8, perTemplate: { ngc_4414: 0 }, about: "How far the puffs turn blue-white in the outer disc (from the outer blue's radius). Colour for appearance." },
   { key: "meshArc", label: "mesh on arcs", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.8 }, about: "How far the mesh gathers into short flocculent arcs on the spiral (cream disc between); 0 even. Illustrative." },
   { key: "meshArcWidth", label: "mesh arc width", min: 200, max: 4000, step: 10, unit: "pc", default: 900, perTemplate: { ngc_4414: 600 }, about: "A mesh arc's width across the spiral at half the network's outer radius, parsecs (in proportion to the radius). Illustrative." },
   { key: "meshArcRun", label: "mesh arc length", min: 1, max: 12, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 4 }, about: "A mesh arc's length along the spiral over its width. Illustrative." },
@@ -200,6 +200,11 @@ const CONTROLS: readonly IllControl[] = [
   { key: "grainDim", label: "grain shade", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0 }, about: "How far the light's grain dims the light between its puffs: 1 as drawn (bright and dark), 0 bright points only. Illustrative." },
   { key: "puffDim", label: "puff shade", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0.3 }, about: "How far the light's puffs dim the light between them: 1 as drawn, 0 brightening only. Illustrative." },
   { key: "clearFloor", label: "clear zone floor", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, about: "Where the arcs' gate takes the dust away, the light's patches are held at least at this level (0.5 their mean): the clear zones' starlight unshaded. Illustrative." },
+  { key: "coreGain", label: "nucleus point", min: 0, max: 20, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 6 }, about: "A compact bright point at the nucleus: the light there lifted by 1 plus this, falling off over the point's radius (the broad glow kept). Illustrative." },
+  { key: "coreRadius", label: "nucleus point radius", min: 0.01, max: 1, step: 0.005, log: true, unit: "kpc", default: 0.12, perTemplate: { ngc_4414: 0.08 }, about: "The nucleus point's radius at 1/e, kpc. Illustrative." },
+  { key: "coreWhite", label: "nucleus point white", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "How far the nucleus point's lift goes toward a blue-white (it whitens a cream core). Colour for appearance." },
+  { key: "glowDim", label: "nucleus glow dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.85 }, about: "The share of the light taken off the nucleus's broad glow at its centre (a gaussian), so the stretch does not flatten it into a blob. Colour for appearance." },
+  { key: "glowRadius", label: "nucleus glow radius", min: 0.1, max: 5, step: 0.05, log: true, unit: "kpc", default: 1, perTemplate: { ngc_4414: 0.7 }, about: "The radius at 1/e of the glow's dimming, kpc. Colour for appearance." },
   { key: "arcPeak", label: "dust on arcs", min: 0, max: 3, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 1.3 }, about: "The drawn dust's depth on the arcs' crests, a multiplier. Illustrative." },
 ];
 
@@ -311,6 +316,7 @@ export const floc: IllFeature = {
   uniform float illFlocCoolR;
   // S107 (NGC): how far the grain (x) and the puffs (y) dim the light between them (1 as S106, 0 brightening only).
   uniform vec4 illFlocLitDim;
+  uniform vec4 illFlocNucPt;
   // S106 (C3): value noise over the plane in [0, 1], its lattice at the integers (a hash of the cell, computed: no texture read).
   float illFlocHash(vec2 p) {
     vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -563,6 +569,18 @@ export const floc: IllFeature = {
       float n = illFlocNuc * exp(-(rp.x * rp.x) / max(illFlocNucR * illFlocNucR, 1e-6));
       veil *= mix(vec3(1.0), vec3(1.25, 0.98, 0.55), n);
     }
+    // S107 (NGC): the nucleus's sharp point - the light lifted by a narrow gaussian toward a near-white (x the gain,
+    // y the radius at 1/e, kpc, z how white), in the broad glow kept.
+    // S107 (NGC): the broad glow dimmed toward the centre (z the share taken at the centre, w its radius at 1/e, kpc),
+    // so the stretch's shoulder no longer flattens it into a blob and the point reads inside it.
+    if (illFlocNucPt.z > 0.0) {
+      float q = rp.x / max(illFlocNucPt.w, 1e-3);
+      veil *= 1.0 - illFlocNucPt.z * exp(-q * q);
+    }
+    if (illFlocLitDim.w > 0.0) {
+      float q = rp.x / max(illFlocNucPt.x, 1e-3);
+      veil *= vec3(1.0) + illFlocLitDim.w * exp(-q * q) * mix(vec3(1.0), vec3(0.85, 0.97, 1.25), illFlocNucPt.y);
+    }
     return veil;
   }
 `,
@@ -593,7 +611,8 @@ export const floc: IllFeature = {
       illFlocKnots: p.litKnots ?? DEFAULTS.litKnots,
       illFlocCool: p.cool ?? DEFAULTS.cool,
       illFlocCoolR: p.coolRadius ?? DEFAULTS.coolRadius,
-      illFlocLitDim: [p.grainDim ?? DEFAULTS.grainDim, p.puffDim ?? DEFAULTS.puffDim, p.clearFloor ?? DEFAULTS.clearFloor, 0],
+      illFlocLitDim: [p.grainDim ?? DEFAULTS.grainDim, p.puffDim ?? DEFAULTS.puffDim, p.clearFloor ?? DEFAULTS.clearFloor, p.coreGain ?? DEFAULTS.coreGain],
+      illFlocNucPt: [p.coreRadius ?? DEFAULTS.coreRadius, p.coreWhite ?? DEFAULTS.coreWhite, p.glowDim ?? DEFAULTS.glowDim, p.glowRadius ?? DEFAULTS.glowRadius],
       ...meshUniforms(p, context.frame),
     };
   },
