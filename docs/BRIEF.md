@@ -12,7 +12,7 @@ disc that overfills it and dims to blue-grey; a small peach nucleus against a la
 scattered evenly against two or three broad warm brown bands of fine filaments; star clouds at the rim only against
 lumpy clouds all through. **S109 works on these lists.** Frames `docs/pictures/s108/`; `READING_PICTURES.md` S108.
 
-## TWO THINGS ONLY YOU CAN RULE, AND THE OK TO ENTER THEM (#238, #239; nothing waits on them)
+## TWO THINGS ONLY YOU CAN RULE (#238, #239: entered in the register on your word; nothing waits on them)
 - **#238 - a defect in the PHYSICAL look.** At NGC 4414's centre the dust is so thick (optical depth about 97 / 122 /
   159 in R, V, B) that its transmission rounds to exactly 0 at float32, and the viewer reads 0 as "no dust": a blue or
   cyan core and a white ring at close or low-exposure stands. Fixing it moves the four committed NGC 4414 frames, so it
@@ -20,9 +20,9 @@ lumpy clouds all through. **S109 works on these lists.** Frames `docs/pictures/s
   (the depth from a surviving channel in the published ratio), then re-capture those four frames. Say yes or no.
 - **#239 - a model question.** NGC 4414's published central extinction is about 130 mag in V face-on (the Milky Way's
   about 50): a correct march hides the nucleus. The illustrative look thins it 2 dex inside 1 kpc. Re-read it or not?
-- **The OK to enter them.** #238 and #239 are two findings of S106, STILL NOT ENTERED in the register (asked at S106,
-  S107 and now S108): the numbers are reserved; entering them needs a two-line change to tests/test_audit.py (the
-  pinned counts 115 -> 117 and the carried row), which waits for your word.
+- **Entered.** On your word of 2026-11-24 ("Yes, enter both") #238 and #239 are in the register, carried, yours
+  (`GALAXY_INPUTS.md` section 11; the audit test's pinned counts 115 -> 117 and its carried row moved with them). The
+  two rulings above are still open: entering them decided neither.
 
 ## What S108 changed, and how to try it (Tuning panel, group Illustrative; `npm --prefix frontend run look`, 8 frames)
 - **Tilt edge-on:** from 72 to 88 degrees the layer hands over, ray by ray, to the model's own volume: NGC 4414 a
@@ -35,9 +35,9 @@ lumpy clouds all through. **S109 works on these lists.** Frames `docs/pictures/s
 
 ## The state (2026-11-24)
 S108 on `session-108` from `main` 69ffb40 (tag `s107`); a Fable lead, six Opus agents; the physical frames byte for
-byte; **no byte under `model/galaxy` moved** (hash 5a862a70...); register 115 open = 50 + 65, 104 discharged. S107's
-GitHub suite (run 45241440967) in progress, **not read at this close**; S108's dispatched, not read. Next: #240 (#238,
-#239 reserved), D280. S109's two builders run on `s109-mw` and `s109-ngc`, cut from S108's head.
+byte; **no byte under `model/galaxy` moved** (hash 5a862a70...); register 117 open = 50 + 67, 104 discharged (#238, #239 entered
+after the close). S107's GitHub suite (run 45241440967) in progress, **not read at this close**; S108's dispatched, not
+read. Next: #240, D280. S109's two builders run on `s109-mw` and `s109-ngc`, cut from S108's head.
 
 ## Rulings taken on recommendation — yours to re-rule (`BUILD_VIII.md` section 4 is the table)
 1-28 stand. S108's: 29. physics only draws the physical look, shown suspended. 30. the edge-on handover, 72-88 degrees

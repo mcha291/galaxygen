@@ -728,9 +728,13 @@ items, as `tests/test_audit.py`'s register test has said of both blocks since S2
 | **discharged** at S100 | **221** (the gas inside the bar under the lanes or the response on both templates since #220's mend - the Milky Way 6.7590 against 7.0556, `ngc_4414` 2.4949 against 2.5078 - the two strict holds lifted, the clause back in its original tests - D270) | 1 |
 | **discharged** at S102 | **230, 232** (batch Q: the forcing's pitch averaged over the layer's height and a chain's count tapered at its turn back, D219's clause re-ruled on the lane's table; the HII region grown past its natal clump by the D-type front to the stagnation radius and the cloud's cap, its Hα unchanged, what is left #235 - D272) | 2 |
 | **permanent** | 2, 3, 11, 15, 17, 19, 21, 22, 25, 26, 27, 28, 33, 34, 39, 42, 43, 45, 46, 47, 48, 49, 52, 65, 70, 81, 82, 87, 90, 93, 99, 101, 128, 131, 132, 133, 134, 141, 143, 144, 145, 147, 152, 155, 157, 158, 180, 181, 182, 195 | 50 |
-| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 135, 136, 138, 146, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 183, 184, 185, 186, 202, 203, 204, 205, 222, 223, 224, 225, 226, 227, 228, 231, 233, 234, 235, 236 | 65 |
+| **carried** | 80, 83, 84, 85, 86, 88, 89, 91, 92, 94, 95, 96, 97, 98, 100, 102, 103, 107, 109, 110, 111, 115, 117, 118, 124, 125, 127, 129, 130, 135, 136, 138, 146, 149, 153, 154, 156, 159, 162, 163, 169, 170, 176, 177, 179, 183, 184, 185, 186, 202, 203, 204, 205, 222, 223, 224, 225, 226, 227, 228, 231, 233, 234, 235, 236, 238, 239 | 67 |
 
-So the board's **115 open** is 50 permanent and 65 carried, and no item is unruled (S103 (the reading row, BUILD_VII
+So the board's **117 open** is 50 permanent and 67 carried, and no item is unruled (S109, on the owner's word of
+2026-11-24, D280: #238 and #239 entered and carried, the owner's - S106's two findings (D277), reserved through
+S106 to S108: the diffuse dust's transmission underflowing to zero at float32 at `ngc_4414`'s centre and read as no
+dust, in the physical look too; `ngc_4414`'s central extinction of about 130 mag in V; nothing discharged; #237 is
+`batch-r`'s and not on `main`; S103 (the reading row, BUILD_VII
 row 105), D273: #131 ruled permanent at the gate - no scatter number and no per-galaxy table printed for the
 relation; the lanes read and put to the owner under #229 and #234 ((i) no lane recommended); #235's defect named
 (the region grown at today's ionizing rate) and #226's truncations read, the cliff the gas's own (the infall tail's
@@ -8136,6 +8140,29 @@ of the three by a probe; the default's numbers are that test's pins): **the defa
    b5d421c, main's own frontend build) at the same stand, and both effects are there, the same patches in the same
    places, the speckle near-identical. Not traced `[inferred: the runner's guess, a cloud-raster artefact]`. **Carried**, the viewer's. Destination: BUILD_VII row 104, the viewer row. What kills it: the
    cause named.
+238. **The diffuse dust's transmission underflows to zero at float32 at `ngc_4414`'s centre and the viewer reads
+   the zero as no dust** (found at S106, D277; entered at S109 on the owner's word of 2026-11-24, D280. The number
+   237 is `batch-r`'s, S104, D274, not on `main`). The diffuse dust is published as a per-filter TRANSMISSION and
+   fetched at float32; at `ngc_4414`'s centre the optical depth is about 97 / 122 / 159 in R / V / B, so G and B
+   round to exactly 0 while R keeps e^-97, and `frontend/src/galaxy/regimes.ts` `depthOf` reads an exact 0 as no
+   dust and writes that into the ring texture's depth row. Inside 0.30 kpc G and B have no dust (a cyan-green
+   core); one ring near 0.11 kpc loses all three (a white ring); 0.30-0.53 kpc loses B (a blue annulus). The Milky
+   Way's largest depth is 62 and never underflows. **It is in the PHYSICAL look**: every close or low-exposure
+   `ngc_4414` frame (at the default stand the core clips to white and hides it). Not fixed: the physical fix moves
+   committed `ngc_4414` frames (an experiment: 185k of 1.05M pixels, up to 21 levels), which is the owner's ruling;
+   under the illustrative look it is mended in the layer only (`base.mend`, `base.core`). **Carried**, the owner's.
+   Recommended: `regimes.ts` treats an exact 0 transmission as opaque, taking the depth from a surviving channel
+   times the header's extinction ratio (or -ln(2^-149) = 103.28 scaled where none survives), then the four
+   committed `ngc_4414` frames re-captured; the alternatives are fetching `dust_extinction` at f8, or publishing
+   the depth. What kills it: the owner's yes with the fix and the re-capture, or the owner's no (ruled permanent).
+239. **`ngc_4414`'s published central extinction is about 130 mag in V face-on, so a correct march hides its
+   nucleus** (found at S106, D277; entered at S109 on the owner's word of 2026-11-24, D280). The model's diffuse
+   dust at `ngc_4414`'s centre is about 130 mag in V face-on (the Milky Way's about 50): a march that reads the
+   depth correctly (#238 mended) puts the nucleus behind a layer about 14 pc thick, where the photograph shows a
+   bright bare nucleus. A model matter; nothing under `model/` was touched. The illustrative look thins the central
+   dust by 2 dex inside 1 kpc (BUILD_VIII ruling 15), display only. **Carried**, the owner's: re-read the central
+   gas and dust column of the template (the fit's inner profile, a central hole in the dust) or leave it. What
+   kills it: the central column read against a source and either changed in a model batch or declared.
 
 ---
 
