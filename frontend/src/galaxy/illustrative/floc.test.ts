@@ -46,7 +46,12 @@ const FRAME = frame();
 const G: FlocGeometry = geometryOf(FRAME);
 /** NGC 4414's defaults: the tuned preset. */
 const P4414 = paramsOf(floc, illDefaults("ngc_4414"));
-const SHAPE: FlocShape = shapeOf(P4414);
+/**
+ * The drawing's own shape, as its builder set it beside the goal (S109: the controls' defaults, the pitch NGC 4414's):
+ * the properties below are the drawing's, read at it. S105 tuner N moved NGC 4414's shaping values (a denser, finer,
+ * spread network); the tuned shape has a test of its own (the cover, below).
+ */
+const SHAPE: FlocShape = shapeOf({ ...paramsOf(floc, illDefaults(null)), pitch: P4414.pitch });
 /** The map at the defaults, at its full size: built once for the tests that read it. */
 let full: Uint8Array | null = null;
 const fullMap = (): Uint8Array => (full ??= buildFlocChannel(G, SHAPE));
@@ -152,6 +157,15 @@ describe("the map's bytes", () => {
     // No dust, no cover.
     const none = buildFlocChannel(G, { ...SHAPE, density: 0, lace: 0 }, 500, 900);
     expect(flocCover(none, G, 0, RHI, 0.01, 500, 900)).toBe(0);
+  });
+  it("cover more of the disc at NGC 4414's tuned shape (S105 tuner N: the photograph's network over the inner two thirds), and still thin outward", () => {
+    const tuned = shapeOf(P4414);
+    const map = buildFlocChannel(G, tuned);
+    const cover = flocCover(map, G, 1, 0.7 * tuned.outerRadius);
+    expect(cover).toBeGreaterThan(flocCover(fullMap(), G, 1, 0.7 * SHAPE.outerRadius));
+    expect(cover).toBeGreaterThan(0.35);
+    expect(cover).toBeLessThan(0.8);
+    expect(flocCover(map, G, 0.7 * tuned.outerRadius, tuned.outerRadius)).toBeLessThan(0.8 * cover);
   });
 });
 

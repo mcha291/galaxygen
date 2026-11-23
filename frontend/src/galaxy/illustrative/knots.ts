@@ -14,7 +14,7 @@ import { KnotsLayer } from "./knotsLayer";
 const CONTROLS: readonly IllControl[] = [
   { key: "draw", label: "regions drawn", min: 0, max: 1, step: 1, default: 1, about: "1: the HII regions drawn as illustrative nebulae in place of the knots; 0: the default knots. Illustrative." },
   {
-    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 250, ngc_4414: 40 },
+    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 250, ngc_4414: 8 },
     about: "A multiplier on the regions' light over the knots' gain (the field's scale and the exposure). Illustrative.",
   },
   {
@@ -22,7 +22,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "Each region's light drawn as ref (L / ref)^power, ref the 90th percentile: below 1 the string reads evenly, not as a few bright dots. Illustrative.",
   },
   {
-    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 1200, ngc_4414: 3000 },
+    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 1200, ngc_4414: 300 },
     about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
@@ -59,7 +59,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "Inside this radius the regions fade in over the kpc below it (0: none). Illustrative.",
   },
   {
-    key: "pink", label: "pink", min: 0, max: 1, step: 0.01, unit: "", default: 0.9, perTemplate: { milky_way: 1, ngc_4414: 0.2 },
+    key: "pink", label: "pink", min: 0, max: 1, step: 0.01, unit: "", default: 0.9, perTemplate: { milky_way: 1, ngc_4414: 0 },
     about: "The regions' colour mixed from their own lines' colour (0) toward H-alpha pink (1). Colour for appearance.",
   },
   {

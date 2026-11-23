@@ -12,6 +12,8 @@ export const ILLUSTRATIVE_BASE: Readonly<Record<string, Readonly<Record<string, 
   // catch no violet halo.
   milky_way: Object.freeze({ bloomStrength: 0.3, bloomRadius: 0.4, bloomThreshold: 2.5, whiteKelvin: 6000, cloudsExtinction: false, knotsIntensity: 0.3 }),
   // The clouds kept and darkened (the goal's brown network is the nearest thing the frame has), 96 steps (at 48 the core
-  // drew a green-cyan cast under the stretch).
-  ngc_4414: Object.freeze({ bloomStrength: 0.6, bloomRadius: 0.4, bloomThreshold: 1.0, whiteKelvin: 6000, steps: 96, extinctionStrength: 1.6 }),
+  // drew a green-cyan cast under the stretch). S105 tuner N (all features together): the clouds' raster off after all -
+  // its dark flecks fought the flocculent network (floc), which now draws the dust - and the bloom halved, so the
+  // nucleus is a small pale glow.
+  ngc_4414: Object.freeze({ bloomStrength: 0.3, bloomRadius: 0.4, bloomThreshold: 1.0, whiteKelvin: 6000, steps: 96, extinctionStrength: 1.6, cloudsExtinction: false }),
 });
