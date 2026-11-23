@@ -25,7 +25,7 @@ import { FLAG_RINGS, YOUNG_CAP, barFade, armContrast, armMap, armPlanes, armShar
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
 import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
 import { barAngle } from "./lanesMap";
-import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonMemo, skeletonOn, skeletonPlanes } from "./armsSkeleton";
+import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, contrastPlane, meanSamples, skeletonMemo, skeletonOn, skeletonPlanes } from "./armsSkeleton";
 import type { Skeleton } from "./skeleton";
 
 /** The /api/arrays names the arms read. */
@@ -131,8 +131,43 @@ const skeletonPlanesOf = memoOn((sk: unknown, frame: unknown, wing: unknown) => 
   return { grid, ...skeletonPlanes(s, ILL_MAP.width, ILL_MAP.height, grid.rHi, wing as number, FLAG_RINGS / 16, contrast) };
 }, "arms.skelPlanes");
 
+/**
+ * S107 (NGC2): the contrast's planes with the model's own star contrast in A in place of the share's ring mean (as the
+ * skeleton carries it: armsSkeleton.ts contrastPlane), the ring means handed to the GLSL as illArmsSkelMean's samples -
+ * so `flat` can divide the model's arm light (the march's starlight carries pattern_density_contrast: on a flocculent
+ * template its long strokes along the flow) out of the disc without the skeleton. B, the flags and meanMax as planesOf.
+ */
+const flatPlanesOf = memoOn((frame: unknown, shapeJson: unknown) => {
+  const f = frame as IllFrame | null;
+  const pattern = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const gas = (f?.arrays.gas_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const any = pattern ?? gas;
+  if (!f || !any) return null;
+  const grid = gridOf(f.header, any.length);
+  const shape = JSON.parse(shapeJson as string) as ArmShape;
+  const { share, sd } = armShare(armContrast(pattern, gas, grid, shape), grid, shape);
+  const planes = armPlanes(share, sd, grid, ILL_MAP.width, ILL_MAP.height);
+  const ring = new Float64Array(grid.nR);
+  for (let i = 0; i < grid.nR; i++) {
+    let s = 0;
+    for (let j = 0; j < grid.nPhi; j++) s += share[i * grid.nPhi + j];
+    ring[i] = s / grid.nPhi;
+  }
+  const mean = pattern
+    ? contrastPlane({ n: ringNormalise(pattern, grid.nR, grid.nPhi), nR: grid.nR, nPhi: grid.nPhi }, ILL_MAP.width, ILL_MAP.height)
+    : new Uint8Array(ILL_MAP.width * ILL_MAP.height).fill(Math.round(255 / SKEL_CONTRAST_MAX));
+  return { grid, share: planes.share, mean, meanMax: planes.meanMax, flags: planes.flags, ringMean: meanSamples(ring, grid.nR) };
+}, "arms.flatPlanes");
+
+/** Whether the model's own arm light is divided out off the skeleton (`flat` above 0). */
+const flatOn = (p: IllParams): boolean => !skeletonOn(p) && (p.flat ?? 0) > 0;
+
 const planesFor = (p: IllParams, frame: IllFrame | null) =>
-  skeletonOn(p) ? skeletonPlanesOf(armsSkeleton(frame, p), frame, p.skelwing ?? 0.15) : planesOf(frame, shareKey(shapeOf(p, frame)));
+  skeletonOn(p)
+    ? skeletonPlanesOf(armsSkeleton(frame, p), frame, p.skelwing ?? 0.15)
+    : flatOn(p)
+      ? flatPlanesOf(frame, shareKey(shapeOf(p, frame)))
+      : planesOf(frame, shareKey(shapeOf(p, frame)));
 
 /**
  * The bar's ellipse in the disc (S105, tuner M): its half-length and axis ratio as published, its angle read off
@@ -446,6 +481,10 @@ export const arms: IllFeature = {
       about: "On the skeleton, the model's own arm light (the published star contrast over its ring mean) divided out by this power, so the skeleton's arms are the only arms drawn; 0 the model's arms kept under them. Illustrative (S106).",
     },
     {
+      key: "flat", label: "model streaks out", min: 0, max: 1.5, step: 0.01, unit: "", default: 0,
+      about: "Off the skeleton, the model's own arm light (the published star contrast over its ring mean, which the disc's starlight carries: on a flocculent disc long faint strokes along the flow) divided out of all the starlight by this power, over the whole disc, so the old light is a smooth ring-wise even base; 0 the model's light as drawn. The arms' own ridges (strength) are drawn over it as before. Illustrative (S107).",
+    },
+    {
       key: "skelyoungin", label: "young inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0 },
       about: "On the skeleton, the model's clustered young light inside the arms' start (where the arms' shaping has not yet faded in: round the bar) kept by this share; 0 none - no blue smudges inside the first arm. Illustrative (S106, B4).",
     },
@@ -605,11 +644,17 @@ export const arms: IllFeature = {
     float v = 0.5 * (2.0 * p1 + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t + (3.0 * p1 - p0 - 3.0 * p2 + p3) * t * t * t);
     return max(v, 0.0);
   }
-  float illArmsMeanOf(vec4 w, float r) { return illArmsSkel > 0.5 ? illArmsSkelMeanAt(r) : w.a * illArmsMeanMax; }
+  // S107 (NGC2): illArmsAc - A carries the model's contrast (the skeleton, or the contrast's planes under arms.flat);
+  // illArmsFlatAll - off the skeleton, the division over the whole disc, not faded in with the arms' shaping.
+  uniform float illArmsAc;
+  uniform float illArmsFlatAll;
+  float illArmsMeanOf(vec4 w, float r) { return illArmsAc > 0.5 ? illArmsSkelMeanAt(r) : w.a * illArmsMeanMax; }
   float illArmsFlatOf(vec4 w, float fa) {
-    if (illArmsSkel < 0.5 || illArmsFlat <= 0.0) return 1.0;
-    return mix(1.0, pow(max(w.a * ${SKEL_CONTRAST_MAX.toFixed(2)}, 0.25), -illArmsFlat), fa);
+    if (illArmsAc < 0.5 || illArmsFlat <= 0.0) return 1.0;
+    return mix(1.0, pow(max(w.a * ${SKEL_CONTRAST_MAX.toFixed(2)}, 0.25), -illArmsFlat), max(fa, illArmsFlatAll));
   }
+  // (Off the skeleton the light hook, which multiplies the young light too, divides it once: the young hook not again.)
+  float illArmsFlatYoung(vec4 w, float fa) { return illArmsFlatAll > 0.5 ? 1.0 : illArmsFlatOf(w, fa); }
   vec3 illArmsShaped(vec2 rp) {
     if (illArmsOn < 0.5 || rp.x >= rHi) return vec3(1.0);
     vec4 w = illMap(rp);
@@ -644,10 +689,10 @@ export const arms: IllFeature = {
       if (s < illArmsYoungCut) return 0.0;
       float ramp = smoothstep(illArmsYoungCut, min(1.0, illArmsYoungCut + 0.4), s);
       float inside = mix(illArmsYoungIn, 1.0, illArmsStrength > 0.0 ? min(1.0, f / illArmsStrength) : 1.0);
-      return ramp * inside * max(0.0, 1.0 + (illArmsRing(s, illArmsMeanOf(w, rp.x), illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * f) * illArmsFlatOf(w, min(1.0, f));
+      return ramp * inside * max(0.0, 1.0 + (illArmsRing(s, illArmsMeanOf(w, rp.x), illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * f) * illArmsFlatYoung(w, min(1.0, f));
     }
     float inside = illArmsSkel > 0.5 ? mix(illArmsYoungIn, 1.0, illArmsStrength > 0.0 ? min(1.0, f / illArmsStrength) : 1.0) : 1.0;
-    return inside * max(0.0, 1.0 + (illArmsRing(w.b * w.b, illArmsMeanOf(w, rp.x), illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * f) * illArmsFlatOf(w, min(1.0, f));
+    return inside * max(0.0, 1.0 + (illArmsRing(w.b * w.b, illArmsMeanOf(w, rp.x), illArmsYoungFloor, ${YOUNG_CAP.toFixed(1)}) - 1.0) * f) * illArmsFlatYoung(w, min(1.0, f));
   }
 `,
   hooks: { youngGain: "illArmsYoung", light: "illArmsLight" },
@@ -674,15 +719,17 @@ export const arms: IllFeature = {
       illArmsMeanMax: planes?.meanMax ?? 0,
       illArmsRings: planes?.grid.nR ?? 1,
       illArmsFlags: planes?.flags ?? new Array<number>(FLAG_RINGS / 16).fill(0),
-      illArmsSkel: planes && "ringMean" in planes ? 1 : 0,
-      illArmsFlat: p.skelflat ?? 0,
+      illArmsSkel: planes && skeletonOn(p) ? 1 : 0,
+      illArmsAc: planes && "ringMean" in planes ? 1 : 0,
+      illArmsFlatAll: planes && flatOn(p) ? 1 : 0,
+      illArmsFlat: skeletonOn(p) ? (p.skelflat ?? 0) : (p.flat ?? 0),
       illArmsYoungIn: p.skelyoungin ?? 1,
       illArmsYoungCut: p.skelyoungcut ?? 0,
       illArmsLavIn: p.skellavin ?? 0,
       illArmsCoreOn: (p.skelcoreblue ?? 0) !== 0 ? 1 : 0,
       illArmsCoreTint: tint(BAR_GROUND, p.skelcoreblue ?? 0),
       illArmsCore: [p.skelcore ?? 1, p.skelcorein ?? 2, Math.max((p.skelcorein ?? 2) + 0.1, p.skelcoreout ?? 6)] as [number, number, number],
-      illArmsSkelMean: planes && "ringMean" in planes ? heldMean(planes.ringMean as number[], p.skelhold ?? 0) : SKEL_MEAN_ZERO,
+      illArmsSkelMean: planes && "ringMean" in planes ? heldMean(planes.ringMean as number[], skeletonOn(p) ? (p.skelhold ?? 0) : 0) : SKEL_MEAN_ZERO,
       ...barUniforms(p, context.frame),
     };
   },

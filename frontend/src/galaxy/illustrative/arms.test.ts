@@ -21,6 +21,8 @@ import {
   type ArmGrid,
   type ArmShape,
 } from "./armsField";
+import { ILL_MAP } from "./feature";
+import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES } from "./armsSkeleton";
 import { buildSparkle, brightness, shareAt, sparkleFlux, type SparkleShape } from "./armsSparkle";
 import { MARCH_PATCHES, illDefaults, illGlsl, illustrativeFragment, occurrences } from "./index";
 
@@ -322,4 +324,56 @@ describe("the bar's light (S105, tuner M)", () => {
     expect((u.illArmsBarGround[0] + u.illArmsBarGround[1] + u.illArmsBarGround[2]) / 3).toBeCloseTo(0.5, 12);
     expect(u.illArmsBarGround[2]).toBeGreaterThan(u.illArmsBarGround[0]);
   });
+});
+
+describe("the model's arm light divided out off the skeleton (S107 NGC2, arms.flat)", () => {
+  const g: ArmGrid = { nR: 120, nPhi: 180, rHi: 30 };
+  const pattern = spiral(g, 3, 0.3, 5);
+  const frame = {
+    header: { scalars: {}, grid: { axes: { R: { n: g.nR, hi: g.rHi }, phi: { n: g.nPhi } } } },
+    arrays: { pattern_density_contrast: pattern },
+  } as unknown as Parameters<NonNullable<typeof arms.uniforms>>[1]["frame"];
+  const ctx = { template: "ngc_4414", frame };
+  const base = { ...illDefaults("ngc_4414") };
+  const local = (flat: number) => {
+    const p: Record<string, number> = {};
+    for (const [k, v] of Object.entries(base)) if (k.startsWith("arms.")) p[k.slice(5)] = v;
+    p.flat = flat;
+    return p;
+  };
+
+  it("is 0 by default and on both templates", () => {
+    expect(illDefaults("milky_way")["arms.flat"]).toBe(0);
+    expect(arms.controls.find((c) => c.key === "flat")!.default).toBe(0);
+  });
+
+  it("at 0 hands the march exactly the planes and uniforms of before (A the share's ring mean, nothing divided)", () => {
+    const u = arms.uniforms!(local(0), ctx) as Record<string, unknown>;
+    expect(u.illArmsAc).toBe(0);
+    expect(u.illArmsFlatAll).toBe(0);
+    expect(u.illArmsSkel).toBe(0);
+    const [share, mean] = arms.map!.build(local(0), ctx) as Uint8Array[];
+    // A is the ring mean: the same down every row
+    expect(mean[5 * ILL_MAP.width + 700]).toBe(mean[1234 * ILL_MAP.width + 700]);
+    expect(share.length).toBe(ILL_MAP.width * ILL_MAP.height);
+  }, 30000);
+
+  it("above 0 carries the model's contrast in A and the ring means as samples, the share unchanged", () => {
+    const [share0] = arms.map!.build(local(0), ctx) as Uint8Array[];
+    const [share1, mean1] = arms.map!.build(local(1), ctx) as Uint8Array[];
+    expect(share1).toEqual(share0);
+    const u = arms.uniforms!(local(1), ctx) as Record<string, number | number[]>;
+    expect(u.illArmsAc).toBe(1);
+    expect(u.illArmsFlatAll).toBe(1);
+    expect(u.illArmsSkel).toBe(0);
+    expect(u.illArmsFlat).toBe(1);
+    expect((u.illArmsSkelMean as number[]).length).toBe(SKEL_MEAN_SAMPLES);
+    // A decodes to the contrast over its ring mean (1 + 0.3 cos(...)) within the byte and its dither
+    const n = ringNormalise(pattern, g.nR, g.nPhi);
+    for (const [i, j] of [[60, 10], [90, 100], [30, 170]]) {
+      const c = Math.round(((i + 0.5) / g.nR) * ILL_MAP.width - 0.5);
+      const r = Math.round(((j + 0.5) / g.nPhi) * ILL_MAP.height - 0.5);
+      expect(Math.abs((mean1[r * ILL_MAP.width + c] / 255) * SKEL_CONTRAST_MAX - n[i * g.nPhi + j])).toBeLessThan(0.03);
+    }
+  }, 30000);
 });
