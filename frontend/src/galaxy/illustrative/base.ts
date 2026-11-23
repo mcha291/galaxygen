@@ -41,7 +41,7 @@ export const base: IllFeature = {
       about: "The map's noise read coarser (above 1) or finer, while unbrushed or resized. Illustrative.",
     },
     {
-      key: "depth", label: "dust under it", min: 0, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6, ngc_4414: 1 },
+      key: "depth", label: "dust under it", min: 0, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.1, ngc_4414: 1 },
       about: "A multiplier on the diffuse dust's placement while the gas map is drawn: below 1 a clearer, brighter disc. Illustrative.",
     },
     {
@@ -49,7 +49,7 @@ export const base: IllFeature = {
       about: "The disc's starlight lifted by this many stops toward the lift radius (smoothly from none at the centre): a flatter, airbrushed disc. Illustrative.",
     },
     {
-      key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 16},
+      key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 15},
       about: "Where the disc's lift is full, kpc; beyond it the lift holds. Illustrative.",
     },
   ],
