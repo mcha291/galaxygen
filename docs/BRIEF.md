@@ -40,7 +40,6 @@ was on `main` (115 open = 50 + 65, 104 discharged). Next numbers: #238, D277 (#2
 ## Known defects of the new layer (none in the physical look)
 - A look switch while a generation is pending blanks the field until it ends (the canvas remounts on the stand).
 - An intermittent burst of `glGetProgramiv` warnings round a canvas remount; warnings only, frames unchanged; untraced.
-- The network's map rebuilds on the main thread in 0.7-1.0 s per shaping change (once per drag since the debounce).
 
 ## What the next session does (`BUILD_VIII.md` section 6, in order of what a viewer gains)
 1. Your own tuning pass, or your list of what looks wrong: every value is a slider and a per-template default.
@@ -52,12 +51,10 @@ was on `main` (115 open = 50 + 65, 104 discharged). Next numbers: #238, D277 (#2
 `batch-r` 699629c (S104, D274: green, stacked on `batch-q`, one stage-B re-read of `test_s100_bar_length` owed before
 its merge; it now also needs `main` merged into it, and D274 enters before D275); the held heads `batch-q-lanes` and
 `q-231`; BUILD_VII's remaining rows; your owed rulings (#226, #234, #149, #88, #97/#98, #129, #184, the clustering
-questions, S101's list): `git show batch-r:docs/BRIEF.md` is the list. Nine worktrees are on disk
-(`galaxygen-s105`, `-s105-b`, `-s105-c` and the older ones): the app denies their removal; yours to remove or allow.
+questions, S101's list): `git show batch-r:docs/BRIEF.md`. Nine worktrees on disk: yours to remove or allow.
 
 ## The rules said again, and the traps
 - Under `physical` nothing of the layer runs; a change that moves a committed frame is a defect, never a re-capture.
 - The march has NO spare sampler: a feature's map is a channel of the one shared map (`index.ts`'s header).
 - Capture the MERGED head before trusting it; every lane's gates were green while the field was black.
-- Never the full suite here (D246): `gh workflow run ci.yml --ref <branch>`. No backtick in a shell string.
-- Each agent a scratch directory of its own; commit messages through a file; commit at each working step.
+- Never the full suite here (D246): `gh workflow run ci.yml --ref <branch>`. Each agent its own scratch directory.
