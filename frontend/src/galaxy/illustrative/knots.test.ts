@@ -333,3 +333,55 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
     expect(modelLightRef(new Float32Array([3, 3, 3, 1, 1, 1]))).toBe(3);
   });
 });
+
+describe("the complexes and ragged regions (S107, MW2)", () => {
+  const tanp = Math.tan((12 * Math.PI) / 180);
+  const pieces: Piece[] = [0, 1].flatMap((c) =>
+    [0, 1, 2].map((o) => ({ chain: c, order: o, r0: 5 * Math.exp(o * 0.8 * tanp), phi0: c * Math.PI + 1 + o * 0.8, pitchDeg: 12, extent: 0.8, join: 0 })),
+  );
+  const sk = buildSkeleton({ pieces, bar: { halfLength: 4, angle: 0.6 } }, { lesser: 2, spurs: 4 });
+  const base = { total: 300, complexes: 6, complexGain: 5, barEnds: 8, sparkle: 3, minStrength: 0.25 };
+
+  it("places as before at the new controls' defaults", () => {
+    const a = placeOnSkeleton(sk, base);
+    expect(placeOnSkeleton(sk, { ...base, complexMembers: 1, complexSpread: 1, satellites: 0, halo: 0, haloSize: 3, spurCrest: 0 })).toEqual(a);
+    expect(a.some((r) => r.kind === 2)).toBe(false);
+    for (const key of ["complexMembers", "complexSpread", "satellites", "halo", "ragged", "spurCrest"]) {
+      const c = knots.controls.find((x) => x.key === key)!;
+      expect(c.perTemplate?.ngc_4414).toBeUndefined();
+      expect(c.default).toBe(key === "complexMembers" || key === "complexSpread" ? 1 : 0);
+    }
+  });
+
+  it("gives each complex more members, satellites and a soft halo without a core", () => {
+    const plain = placeOnSkeleton(sk, base).filter((r) => r.kind === 0).length;
+    const rich = placeOnSkeleton(sk, { ...base, complexMembers: 2, satellites: 5, halo: 0.5, haloSize: 2 });
+    expect(rich.filter((r) => r.kind === 0).length).toBeGreaterThan(plain);
+    const halos = rich.filter((r) => r.kind === 2);
+    // One per complex and per bar end.
+    expect(halos.length).toBeGreaterThanOrEqual(2);
+    expect(halos.length).toBeLessThanOrEqual(8);
+    for (const h of halos) expect(h.radius).toBeCloseTo(2 * 200, 6);
+    const attrs = skeletonAttributes(rich, { ...base, coreShare: 1 }, 1);
+    rich.forEach((r, k) => {
+      if (r.kind === 2) expect(attrs.core[3 * k] + attrs.core[3 * k + 1] + attrs.core[3 * k + 2]).toBe(0);
+    });
+    const { blobs } = skeletonLobes(7, 2, 4, 1, 1, 4);
+    expect(blobs.reduce((s, b) => s + b[3], 0)).toBeCloseTo(1, 9);
+    // Laid along the arm: the outer lobes further along than across.
+    expect(Math.abs(blobs[0][0])).toBeGreaterThan(5 * Math.abs(blobs[0][1]));
+  });
+
+  it("draws a spur's regions onto its crest", () => {
+    const spurs = sk.arms.map((a, k) => (a.kind === "spur" ? k : -1)).filter((k) => k >= 0);
+    const offCrest = (crest: number) => {
+      const d: number[] = [];
+      for (const r of placeOnSkeleton(sk, { ...base, total: 900, complexes: 0, barEnds: 0, sparkle: 0, spurCrest: crest, across: 0.4, bunchLen: 0 })) {
+        const hit = ridgeAt(sk, Math.hypot(r.x, r.y), Math.atan2(r.y, r.x));
+        if (spurs.includes(hit.arm)) d.push(hit.distance / hit.width);
+      }
+      return d.reduce((s, v) => s + v, 0) / Math.max(1, d.length);
+    };
+    expect(offCrest(1)).toBeLessThan(0.8 * offCrest(0));
+  });
+});

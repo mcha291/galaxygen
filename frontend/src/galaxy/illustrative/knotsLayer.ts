@@ -196,6 +196,7 @@ const skeletonVertexShader = (illGlsl: string) => {
   uniform vec2 viewPx;
   varying vec3 vLight2;
   varying vec4 vTint;
+  varying vec2 vSeed;
   vec2 toPx(vec4 clip) { return clip.xy / clip.w * 0.5 * viewPx; }
   vec4 lobe(vec4 b, vec2 pT, vec2 pN, float rpx) { return vec4(b.x * pT + b.y * pN, max(b.z * rpx, 0.6), b.w); }
   float lobeReach(vec4 c) { return c.w > 0.0 ? length(c.xy) + 3.0 * c.z : 0.0; }
@@ -227,6 +228,7 @@ const skeletonVertexShader = (illGlsl: string) => {
     vec2 pN = toPx(projectionMatrix * (modelViewMatrix * vec4(position + nrm * kpc, 1.0))) - c0;
     vB0 = lobe(aB0, pT, pN, rpx); vB1 = lobe(aB1, pT, pN, rpx); vB2 = lobe(aB2, pT, pN, rpx); vB3 = lobe(aB3, pT, pN, rpx);
     vTint = aTint;
+    vSeed = vec2(fract(position.x * 7.31 + position.z * 3.17), fract(position.z * 5.83 - position.x * 2.29)) * 97.0;
     float reach = max(max(lobeReach(vB0), lobeReach(vB1)), max(lobeReach(vB2), lobeReach(vB3)));
     reach = max(reach, 3.0 * vCoreSigma);
     float size = min(2.0 * reach + 1.0, maxPoint);
@@ -249,13 +251,35 @@ const SKELETON_FRAGMENT = /* glsl */ `
   varying vec4 vB2;
   varying vec4 vB3;
   varying vec4 vTint;
+  varying vec2 vSeed;
+  uniform float knRag;
   float gauss(vec2 o, float s) { return exp(-dot(o, o) / (2.0 * s * s)) / (6.28318531 * s * s); }
   // A lobe already in px (centre xy, sigma z, weight w), y up.
   float lobe(vec2 p, vec4 b) { return b.w > 0.0 ? b.w * gauss(p - b.xy, b.z) : 0.0; }
+  // S107 (MW2): a fixed value noise in the region's own radii, for the lobes' ragged outlines and wisps (knots.ragged).
+  float knHash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7))) * 43758.5453); }
+  float knNoise(vec2 x) {
+    vec2 i = floor(x);
+    vec2 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(knHash(i), knHash(i + vec2(1.0, 0.0)), f.x), mix(knHash(i + vec2(0.0, 1.0)), knHash(i + vec2(1.0, 1.0)), f.x), f.y);
+  }
   void main() {
     vec2 p = (gl_PointCoord - 0.5) * (2.0 * vHalf);
     p.y = -p.y;
-    vec4 s = vec4(lobe(p, vB0), lobe(p, vB1), lobe(p, vB2), lobe(p, vB3));
+    // S107 (MW2, knots.ragged): the lobes read at a point displaced by a fixed noise (ragged, lobed outlines; up to
+    // half a region radius at 1) and their light broken by a finer one (wisps and holes).
+    vec2 pw = p;
+    float mottle = 1.0;
+    if (knRag > 0.0) {
+      vec2 q = p / max(vRpx, 0.5);
+      vec2 warp = vec2(knNoise(q * 1.8 + vSeed), knNoise(q * 1.8 + vSeed.yx + 31.7)) - 0.5;
+      warp += 0.5 * (vec2(knNoise(q * 4.1 + vSeed * 1.3), knNoise(q * 4.1 + vSeed.yx * 1.3 + 7.1)) - 0.5);
+      pw = p + warp * knRag * vRpx;
+      float n = 0.6 * knNoise(q * 6.0 + vSeed.yx) + 0.4 * knNoise(q * 13.0 + vSeed * 1.7);
+      mottle = max(0.0, 1.0 + min(1.0, knRag) * (2.2 * n - 1.1));
+    }
+    vec4 s = vec4(lobe(pw, vB0), lobe(pw, vB1), lobe(pw, vB2), lobe(pw, vB3)) * mottle;
     float all4 = s.x + s.y + s.z + s.w;
     float tinted = dot(s, vTint);
     vec3 light = vLight * (all4 - tinted) + vLight2 * tinted + vCore * gauss(p, vCoreSigma);
@@ -323,6 +347,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
         cloudExt: { value: new Vector3(0, 0, 0) },
         cloudsOn: { value: 0 },
         viewPx: { value: new Vector2(1, 1) },
+        knRag: { value: 0 },
         ...runtime.uniforms,
       },
       vertexShader: onSkeleton ? skeletonVertexShader(runtime.glsl) : vertexShader(runtime.glsl),
@@ -358,6 +383,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
     params.total, params.bunch, params.gap, params.bunchLen, params.inner, params.across, params.slope, params.lightSize, params.ridgePow,
     params.barEnds, params.sparkle, params.sparkleGain, params.seed, params.elong, params.hue, params.coreBlue,
     params.minStrength, params.patchPow, params.complexes, params.complexGain,
+    params.spurCrest, params.complexMembers, params.complexSpread, params.satellites, params.halo, params.haloSize,
   ];
   const geometry = useMemo(() => {
     if (!knots) return null;
@@ -416,6 +442,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
       u.gain.value = g * (p.gain ?? 1);
       u.coreGain.value = p.coreGain ?? 0.5;
       u.coreSize.value = p.coreSize ?? 0.12;
+      u.knRag.value = p.ragged ?? 0;
       u.dustStrength.value = p.dust ?? 1;
       u.dustOn.value = d && (p.dust ?? 1) > 0 ? 1 : 0;
       u.dustDepthScale.value = d?.depthScale ?? 1;
