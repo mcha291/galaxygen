@@ -41,6 +41,10 @@ export interface ArmShape {
   lineMix: number;
   /** The ridge lines' full width at half maximum across the arm, kpc. */
   armWidth: number;
+  /** The share of each arm broken away into gaps (0 whole arms; toward 1 short fragments): a flocculent disc. */
+  fragment: number;
+  /** The fragments' scale, kpc (the breaking noise's lattice). */
+  fragScale: number;
 }
 
 /** The deviation an evened ring is scaled to (the model's typical outer-disc sd is 0.1-0.25). */
@@ -210,6 +214,7 @@ export function armMap(n: Float64Array, g: ArmGrid, shape: ArmShape, strength: n
   if (shape.lineMix > 0) {
     const wind = armWinding(n, g, Math.max(shape.start, 1));
     const lines = ridgeLines(even, g, shape.armWidth, wind ? wind.k : DEFAULT_WINDING);
+    if (shape.fragment > 0) breakLines(lines, g, shape.fragment, shape.fragScale);
     for (let k = 0; k < share.length; k++) share[k] = share[k] * (1 - shape.lineMix) + lines[k] * shape.lineMix;
   }
   const light = ringLight(share, nR, nPhi, shape.floor, shape.cap);
@@ -312,4 +317,46 @@ export function gridOf(header: { [key: string]: unknown } | undefined, length: n
   const rHi = axes.R?.hi ?? 30;
   if (nR * nPhi !== length) return { nR: 400, nPhi: Math.max(1, Math.round(length / 400)), rHi: 30 };
   return { nR, nPhi, rHi };
+}
+
+/** A lattice point's hash in [0, 1) (integer mixing; the same on every machine). */
+export function latticeHash(x: number, y: number): number {
+  let h = (Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(y | 0, 0x165667b1) ^ 0x5108) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0;
+  return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+}
+
+/** Smooth value noise in [0, 1) over the disc's plane, on a lattice of `scale` kpc, fixed in the galaxy's frame. */
+export function valueNoise(x: number, y: number, scale: number): number {
+  const u = x / scale;
+  const v = y / scale;
+  const i = Math.floor(u);
+  const j = Math.floor(v);
+  const fu = u - i;
+  const fv = v - j;
+  const su = fu * fu * (3 - 2 * fu);
+  const sv = fv * fv * (3 - 2 * fv);
+  const a = latticeHash(i, j) * (1 - su) + latticeHash(i + 1, j) * su;
+  const b = latticeHash(i, j + 1) * (1 - su) + latticeHash(i + 1, j + 1) * su;
+  return a * (1 - sv) + b * sv;
+}
+
+/**
+ * The ridge lines broken into fragments, in place: each texel's line times smoothstep(f - 0.2, f + 0.2, noise) at its
+ * place, the noise valueNoise on a `scale` kpc lattice - so a share of about `f` of each arm's length is taken away in
+ * gaps a few kpc long, the rest kept whole.
+ */
+export function breakLines(lines: Float64Array, g: ArmGrid, f: number, scale: number): void {
+  const { nR, nPhi: P } = g;
+  const dR = g.rHi / nR;
+  for (let i = 0; i < nR; i++) {
+    const R = (i + 0.5) * dR;
+    for (let j = 0; j < P; j++) {
+      const k = i * P + j;
+      if (lines[k] <= 0) continue;
+      const phi = ((j + 0.5) * 2 * Math.PI) / P;
+      lines[k] *= smoothstep(f - 0.2, f + 0.2, valueNoise(R * Math.cos(phi), R * Math.sin(phi), Math.max(0.05, scale)));
+    }
+  }
 }
