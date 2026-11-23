@@ -45,11 +45,11 @@ export const base: IllFeature = {
       about: "A multiplier on the diffuse dust's placement while the gas map is drawn: below 1 a clearer, brighter disc. Illustrative.",
     },
     {
-      key: "lift", label: "disc lift", min: 0, max: 3, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: 1.25, ngc_4414: 0 },
+      key: "lift", label: "disc lift", min: 0, max: 3, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: 2.5, ngc_4414: 0 },
       about: "The disc's starlight lifted by this many stops toward the lift radius (smoothly from none at the centre): a flatter, airbrushed disc. Illustrative.",
     },
     {
-      key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 15 },
+      key: "radius", label: "lift radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 12, perTemplate: { milky_way: 16},
       about: "Where the disc's lift is full, kpc; beyond it the lift holds. Illustrative.",
     },
   ],

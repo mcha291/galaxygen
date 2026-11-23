@@ -49,12 +49,29 @@ export function skeletonMemo(): (frame: IllFrame | null, p: IllParams) => Skelet
 /** The last band build's time, ms (a diagnostic). */
 export const skeletonBuild = { ms: 0 };
 
+/** The skeleton's ring means are handed to the GLSL as this many samples over [0, rHi] (illArmsSkelMean). */
+export const SKEL_MEAN_SAMPLES = 64;
+/** The model's contrast is carried in A as byte round(255 min(1, n / SKEL_CONTRAST_MAX)). */
+export const SKEL_CONTRAST_MAX = 2.5;
+
 /**
- * The arms' two planes of the shared map from the skeleton (arms.ts's GLSL reads them as it reads armsField.ts
- * armPlanes'): B round(255 sqrt(s)), s the band (skeleton.ts skeletonBand, its faint wing `wing`), A the band's ring
- * mean over meanMax; the tint flags all set (every ring is a ring of arms).
+ * The arms' two planes of the shared map from the skeleton (S106, B3; arms.ts's GLSL reads them under illArmsSkel):
+ *   B  round(255 sqrt(s)), s the band (skeleton.ts skeletonBand, its faint wing `wing`), as armPlanes' B;
+ *   A  the model's own star contrast n (pattern_density_contrast over its ring mean, `contrast` on the arms' grid,
+ *      bilinear, clamped in R, wrapped in phi) as round(255 min(1, n / SKEL_CONTRAST_MAX)) - so the GLSL can divide
+ *      the model's own arm light out (arms.skelflat) and the skeleton's arms are the only ones drawn;
+ * the band's ring means as SKEL_MEAN_SAMPLES samples (the ring's light kept, as armPlanes' A does), their largest,
+ * and the tint flags all set (every ring is a ring of arms).
  */
-export function skeletonPlanes(sk: Skeleton, width: number, height: number, rHi: number, wing: number, flagFloats: number): { share: Uint8Array; mean: Uint8Array; meanMax: number; flags: number[] } {
+export function skeletonPlanes(
+  sk: Skeleton,
+  width: number,
+  height: number,
+  rHi: number,
+  wing: number,
+  flagFloats: number,
+  contrast: { n: Float64Array; nR: number; nPhi: number } | null = null,
+): { share: Uint8Array; mean: Uint8Array; meanMax: number; flags: number[]; ringMean: number[] } {
   const t0 = typeof performance !== "undefined" ? performance.now() : 0;
   const band = skeletonBand(sk, width, height, rHi, wing);
   const ringMean = new Float64Array(width);
@@ -69,10 +86,41 @@ export function skeletonPlanes(sk: Skeleton, width: number, height: number, rHi:
   }
   const share = new Uint8Array(width * height);
   for (let i = 0; i < band.length; i++) share[i] = Math.round(255 * Math.sqrt(Math.min(1, band[i])));
-  const meanRow = new Uint8Array(width);
-  for (let c = 0; c < width; c++) meanRow[c] = meanMax > 0 ? Math.round((255 * ringMean[c]) / meanMax) : 0;
+  const samples: number[] = [];
+  for (let k = 0; k < SKEL_MEAN_SAMPLES; k++) {
+    const c = Math.min(width - 1, Math.max(0, Math.round(((k + 0.5) / SKEL_MEAN_SAMPLES) * width - 0.5)));
+    samples.push(ringMean[c]);
+  }
   const mean = new Uint8Array(width * height);
-  for (let r = 0; r < height; r++) mean.set(meanRow, r * width);
+  if (contrast) {
+    const { n, nR, nPhi: P } = contrast;
+    const i0s = new Int32Array(width);
+    const i1s = new Int32Array(width);
+    const fxs = new Float64Array(width);
+    for (let c = 0; c < width; c++) {
+      const x = ((c + 0.5) / width) * nR - 0.5;
+      const i0 = Math.floor(x);
+      fxs[c] = x - i0;
+      i0s[c] = Math.min(nR - 1, Math.max(0, i0));
+      i1s[c] = Math.min(nR - 1, Math.max(0, i0 + 1));
+    }
+    for (let r = 0; r < height; r++) {
+      const y = ((r + 0.5) / height) * P - 0.5;
+      const jf = Math.floor(y);
+      const fy = y - jf;
+      const j0 = ((jf % P) + P) % P;
+      const j1 = (j0 + 1) % P;
+      const row = r * width;
+      for (let c = 0; c < width; c++) {
+        const a = i0s[c] * P;
+        const b = i1s[c] * P;
+        const fx = fxs[c];
+        const v0 = n[a + j0] * (1 - fx) + n[b + j0] * fx;
+        const v1 = n[a + j1] * (1 - fx) + n[b + j1] * fx;
+        mean[row + c] = Math.round(255 * Math.min(1, Math.max(0, (v0 * (1 - fy) + v1 * fy) / SKEL_CONTRAST_MAX)));
+      }
+    }
+  } else mean.fill(Math.round(255 / SKEL_CONTRAST_MAX));
   skeletonBuild.ms = (typeof performance !== "undefined" ? performance.now() : 0) - t0;
-  return { share, mean, meanMax, flags: new Array<number>(flagFloats).fill(65535) };
+  return { share, mean, meanMax, flags: new Array<number>(flagFloats).fill(65535), ringMean: samples };
 }

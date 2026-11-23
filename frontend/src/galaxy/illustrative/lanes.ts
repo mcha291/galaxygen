@@ -27,7 +27,7 @@ import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.1, ngc_4414: 0.5 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.8, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
@@ -35,7 +35,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The share of the depth drawn as a veil over all the light on its line of sight (a lane inked over the picture); the rest is dust in the dust's own thin layer, which dims and reddens only the stars behind it. Illustrative.",
   },
   {
-    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 2.4, ngc_4414: 1.0 },
+    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 4, ngc_4414: 1.0 },
     about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance.",
   },
   {
@@ -48,7 +48,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 150, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
   {
-    key: "offset", label: "lane offset", min: -400, max: 800, step: 5, unit: "pc", default: 80, perTemplate: { milky_way: 300, ngc_4414: 60 },
+    key: "offset", label: "lane offset", min: -400, max: 800, step: 5, unit: "pc", default: 80, perTemplate: { milky_way: 60, ngc_4414: 60 },
     about: "How far to the inner (concave) side of an arm's ridge the lane's centre line lies, parsecs; below 0 the outer side. Illustrative.",
   },
   {
@@ -62,12 +62,12 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "braidLength", label: "braid length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 2.2, about: "The length along the arm over which the strands cross one another, kpc. Illustrative." },
   {
-    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 70, ngc_4414: 160 },
+    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 90, ngc_4414: 160 },
     about: "How far the whole lane meanders about its line, parsecs (each strand a third as far again on its own). Illustrative.",
   },
   { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.6, about: "The meander's length along the arm, kpc. Illustrative." },
   {
-    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.12, ngc_4414: 0.25 },
+    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.3, ngc_4414: 0.25 },
     about: "The share of a lane's length that is broken away, so it reads as pieces: 0 unbroken. Illustrative.",
   },
   { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 0.9, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
@@ -86,7 +86,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The arms' lanes fade to nothing inside this radius, kpc. Illustrative.",
   },
   {
-    key: "outerRadius", label: "outer radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 14, perTemplate: { milky_way: 20, ngc_4414: 9 },
+    key: "outerRadius", label: "outer radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 14, perTemplate: { milky_way: 16, ngc_4414: 9 },
     about: "The lanes fade from 0.55 of this radius to nothing at it, kpc: no dark line where the disc's own light has faded. Illustrative.",
   },
   {
