@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonParamsOf, skeletonPlanes } from "./armsSkeleton";
 import type { Piece } from "./lanesMap";
-import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, patchAt, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
+import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, ovalIn, ovalOut, patchAt, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
 
 /** Pieces of a trailing 12-degree winding (phi growing outward), two chains half a turn apart. */
 const pieces: Piece[] = [0, 1].flatMap((c) =>
@@ -271,5 +271,44 @@ describe("the hug (S109, arms.skelopen below 0)", () => {
     const ms = performance.now() - t0;
     console.log(`hug skeleton planes: ${ms.toFixed(0)} ms`);
     expect(ms).toBeLessThan(600);
+  });
+});
+
+describe("the oval round the bar (S109 A2, arms.skeloval)", () => {
+  const params = { oval: 0.6, ovalReach: 1.0, ovalFade: 2.0 };
+  it("is absent at 1 and leaves the band byte for byte", () => {
+    const plain = buildSkeleton({ pieces, bar }, {});
+    const one = buildSkeleton({ pieces, bar }, { oval: 1, ovalReach: 1, ovalFade: 2 });
+    expect(one.oval).toBeUndefined();
+    expect(Array.from(skeletonBand(one, 96, 128, 30, 0.15))).toEqual(Array.from(skeletonBand(plain, 96, 128, 30, 0.15)));
+  });
+  it("squashes across the bar to q inside its reach, not along it, and not beyond its fade", () => {
+    const sk = buildSkeleton({ pieces, bar }, params);
+    expect(sk.oval).toBeDefined();
+    expect(ovalOut(sk, 4, bar.angle)).toBeCloseTo(4, 9);
+    expect(ovalOut(sk, 4, bar.angle + Math.PI / 2)).toBeCloseTo(0.6 * 4, 9);
+    expect(ovalOut(sk, 10.5, bar.angle + Math.PI / 2)).toBe(10.5);
+  });
+  it("ovalIn inverts ovalOut at every azimuth, and the plane's radius grows with the skeleton's", () => {
+    const sk = buildSkeleton({ pieces, bar }, params);
+    for (let k = 0; k < 16; k++) {
+      const phi = (k / 16) * TAU;
+      let last = 0;
+      for (let Rs = 0.2; Rs < 12; Rs += 0.35) {
+        const R = ovalOut(sk, Rs, phi);
+        expect(R).toBeGreaterThan(last);
+        last = R;
+        expect(ovalIn(sk, R, phi)).toBeCloseTo(Rs, 4);
+      }
+    }
+  });
+  it("draws the lanes' ridge points through the oval, the band and ridgeAt read through it", () => {
+    const sk = buildSkeleton({ pieces, bar }, params);
+    const a = sk.arms[0];
+    const l = ridgeLine(a, 0.2, sk);
+    for (let i = 0; i < l.x.length; i += 7) expect(Math.hypot(l.x[i], l.y[i])).toBeCloseTo(ovalOut(sk, l.r[i], l.phi[i]), 6);
+    const i = Math.floor(l.x.length / 6);
+    const Rp = Math.hypot(l.x[i], l.y[i]);
+    expect(ridgeAt(sk, Rp, l.phi[i]).distance).toBeLessThan(0.05);
   });
 });

@@ -237,7 +237,7 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.35, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.25, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
@@ -305,11 +305,11 @@ export const arms: IllFeature = {
       about: "The faintest sparkle point's light, L☉ over the white point (on the field's scale, with the exposure). Illustrative.",
     },
     {
-      key: "sparklerange", label: "sparkle range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 15, perTemplate: { milky_way: 60, ngc_4414: 15 },
+      key: "sparklerange", label: "sparkle range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 15, perTemplate: { milky_way: 200, ngc_4414: 15 },
       about: "The brightest sparkle point over the faintest. Illustrative.",
     },
     {
-      key: "sparkleslope", label: "sparkle slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.4, perTemplate: { milky_way: 1.6, ngc_4414: 1.4 },
+      key: "sparkleslope", label: "sparkle slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.4, perTemplate: { milky_way: 1.3, ngc_4414: 1.4 },
       about: "The brightness law's index: lower has more bright points, higher more faint. Illustrative.",
     },
     {
@@ -345,7 +345,7 @@ export const arms: IllFeature = {
       about: "The share of the sparkle kept off the dust lanes (the points are not under the lanes' veil, so a lane on an arm's crest is lost in its grain otherwise); 0 none. Illustrative (S106).",
     },
     {
-      key: "sparklebig", label: "bright sparkle share", min: 0, max: 0.5, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.03, ngc_4414: 0 },
+      key: "sparklebig", label: "bright sparkle share", min: 0, max: 0.5, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.06, ngc_4414: 0 },
       about: "The brightest share of the sparkle points drawn on the larger sprite below, so the grain has sizes; 0 every point on the small sprite (S106). Illustrative.",
     },
     {
@@ -485,11 +485,11 @@ export const arms: IllFeature = {
       about: "...and gone from this many bar half-lengths on, smoothly between. Illustrative (S109).",
     },
     {
-      key: "skelpatch", label: "patchy arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.6},
+      key: "skelpatch", label: "patchy arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9},
       about: "Each arm's glow and grain modulated along it by a fixed noise of the viewer's own (the wavelength below): bright clumps and thin stretches; 0 an even arm. Illustrative (S107).",
     },
     {
-      key: "skelpatchsize", label: "patch size", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 1.0 },
+      key: "skelpatchsize", label: "patch size", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.7, perTemplate: { milky_way: 0.6},
       about: "The arms' clumps' wavelength along the arm, kpc. Illustrative (S107).",
     },
     {
@@ -497,7 +497,7 @@ export const arms: IllFeature = {
       about: "Each side of an arm's band widened or narrowed along it by a fixed noise by up to this share: uneven edges; 0 even. Illustrative (S107).",
     },
     {
-      key: "skelwing", label: "glow wing", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.35 },
+      key: "skelwing", label: "glow wing", min: 0, max: 0.6, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: 0.05},
       about: "A faint wing three ridge widths wide under each ridge's glow, this share of it. Illustrative (S106).",
     },
     {

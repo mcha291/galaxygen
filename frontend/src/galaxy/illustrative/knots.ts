@@ -30,7 +30,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "Each region's light drawn as ref (L / ref)^power, ref the 90th percentile: below 1 the string reads evenly, not as a few bright dots. Illustrative.",
   },
   {
-    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 300, ngc_4414: 300 },
+    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 700, ngc_4414: 300 },
     about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
@@ -103,7 +103,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "ridgePow", label: "skeleton: ridge-strength power", min: 0, max: 6, step: 0.1, unit: "power", default: 1.5, perTemplate: { milky_way: 2.5 }, about: "A bunch is kept with the ridge's strength to this power: denser where the ridge is strong. Illustrative (S106)." },
   { key: "slope", label: "skeleton: size spread", min: 0.3, max: 4, step: 0.05, unit: "slope", default: 1, perTemplate: { milky_way: 1.8 }, about: "Radii drawn as floor u^(-1/slope) up to the ceiling: lower, more large regions; higher, nearly all at the floor. Illustrative (S106)." },
   { key: "lightSize", label: "skeleton: light with size", min: 0, max: 3, step: 0.05, unit: "power", default: 1, about: "A region's light as (radius / floor)^power: the large complexes the bright ones. Illustrative (S106)." },
-  { key: "barEnds", label: "skeleton: bar-end complexes", min: 0, max: 20, step: 0.1, unit: "×", default: 8, about: "A bright complex at each bar end (the major arms' starts), its members this many times a region's light; 0 none. Illustrative (S106)." },
+  { key: "barEnds", label: "skeleton: bar-end complexes", min: 0, max: 20, step: 0.1, unit: "×", default: 8, perTemplate: { milky_way: 14 }, about: "A bright complex at each bar end (the major arms' starts), its members this many times a region's light; 0 none. Illustrative (S106)." },
   { key: "elong", label: "skeleton: along the arm", min: 1, max: 6, step: 0.05, unit: "×", default: 2.5, perTemplate: { milky_way: 3.5 }, about: "Each region's lobes spread this many times further along the arm than across it. Illustrative (S106)." },
   { key: "hue", label: "skeleton: lobes' hue spread", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.5, about: "The lobes' hues spread this far about the pink-to-magenta setting (each lobe its own). Colour for appearance (S106)." },
   { key: "coreBlue", label: "core: white to blue", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0 }, about: "The skeleton regions' cores from white (0) to the knots' white-blue (1). Colour for appearance (S106)." },

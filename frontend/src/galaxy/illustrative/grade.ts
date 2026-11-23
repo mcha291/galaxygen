@@ -18,7 +18,7 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -2.1, ngc_4414: 0.4 }, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -2.3, ngc_4414: 0.4 }, about: "The light's scale into the stretch, stops. Illustrative." },
   {
     key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 100, ngc_4414: 15 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",
@@ -42,7 +42,7 @@ const CONTROLS: readonly IllControl[] = [
     key: "black", label: "black level", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0.2, ngc_4414: 0.1 },
     about: "A soft toe on the stretched luminance (each pixel's colour kept): the faint light about this level and under it taken smoothly down to a dark sky. Illustrative.",
   },
-  { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.4, ngc_4414: -0.2 }, about: "Toward the warm tint (above 0) or the cool tint (below) over the whole picture. Colour for appearance." },
+  { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.55, ngc_4414: -0.2 }, about: "Toward the warm tint (above 0) or the cool tint (below) over the whole picture. Colour for appearance." },
   {
     key: "split", label: "split tone", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.7, ngc_4414: 0.35 },
     about: "Above 0 the bright light toward the warm tint and the faint toward the cool (a warm core against blue arms); below 0 the reverse. Colour for appearance.",

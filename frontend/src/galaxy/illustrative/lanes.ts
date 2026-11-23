@@ -35,11 +35,11 @@ const CONTROLS: readonly IllControl[] = [
     about: "The share of the depth drawn as a veil over all the light on its line of sight (a lane inked over the picture); the rest is dust in the dust's own thin layer, which dims and reddens only the stars behind it. Illustrative.",
   },
   {
-    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 3.5, ngc_4414: 1.0 },
+    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 4, ngc_4414: 1.0 },
     about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance.",
   },
   {
-    key: "hardness", label: "lane edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.4, ngc_4414: 0.45 },
+    key: "hardness", label: "lane edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.3, ngc_4414: 0.45 },
     about: "How crisp a lane's edge is: 0 a soft Gaussian stroke that fades out, 1 an inked stroke with a flat dark core and a sharp edge (its faint margins gone). Illustrative.",
   },
   {
@@ -52,7 +52,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "How far to the inner (concave) side of an arm's ridge the lane's centre line lies, parsecs; below 0 the outer side. Illustrative.",
   },
   {
-    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 45, ngc_4414: 100 },
+    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 75, ngc_4414: 100 },
     about: "One strand's full width at half depth, parsecs (it swells and thins along its length by the clumping). Illustrative.",
   },
   { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },
@@ -62,7 +62,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "braidLength", label: "braid length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 2.2, about: "The length along the arm over which the strands cross one another, kpc. Illustrative." },
   {
-    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 160, ngc_4414: 160 },
+    key: "wiggle", label: "wiggle", min: 0, max: 600, step: 5, unit: "pc", default: 130, perTemplate: { milky_way: 220, ngc_4414: 160 },
     about: "How far the whole lane meanders about its line, parsecs (each strand a third as far again on its own). Illustrative.",
   },
   { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 1.1 }, about: "The meander's length along the arm, kpc. Illustrative." },
@@ -82,7 +82,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "taper", label: "end taper", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1.5, about: "A lane fades over this length at an arm's free ends, kpc (an end that joins another arm does not fade). Illustrative." },
   {
-    key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 2.5, ngc_4414: 0.5 },
+    key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 1.2, ngc_4414: 0.5 },
     about: "The arms' lanes fade to nothing inside this radius, kpc. Illustrative.",
   },
   {
