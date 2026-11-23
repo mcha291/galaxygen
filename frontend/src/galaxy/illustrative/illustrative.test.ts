@@ -39,6 +39,7 @@ import {
   updateRuntime,
 } from "./index";
 import type { IllFeature } from "./feature";
+import { floc } from "./floc";
 import { ILLUSTRATIVE_BASE } from "./preset";
 
 function memory() {
@@ -252,6 +253,9 @@ describe("the patched shaders (S105): anchors found once, the physical sources u
   it("composes the shared map from each feature's planes, channel by channel, re-made only when a plane changes", () => {
     const size = ILL_MAP.width * ILL_MAP.height;
     let plane: Uint8Array | null = null;
+    // Channel 1 is the flocculent network's since S109: its builder is set aside while the fake owns the channel.
+    const flocMap = floc.map;
+    floc.map = undefined;
     const drop = registerFeature({
       id: "fakemap",
       label: "fake",
@@ -288,13 +292,14 @@ describe("the patched shaders (S105): anchors found once, the physical sources u
       expect(() => illMapPlanes(illDefaults(null), ctx)).toThrow(/bytes/);
     } finally {
       drop();
+      floc.map = flocMap;
     }
   });
 
   it("composes the neutral stubs: no A_V, a young gain of 1, the edge's taper", () => {
     const g = illGlsl();
     expect(g).toContain("float illDustAv(vec2 rp) { return illLanesAv(rp) + illFlocAv(rp); }");
-    expect(g).toContain("float illYoungGain(vec2 rp) { return illEdgeYoung(rp) * illArmsYoung(rp); }");
+    expect(g).toContain("float illYoungGain(vec2 rp) { return illEdgeYoung(rp) * illArmsYoung(rp) * illFlocYoung(rp); }");
     expect(g).toContain("float illEdge(float r) { return illEdgeTaper(r); }");
   });
 });
