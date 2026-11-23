@@ -667,10 +667,21 @@ export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorag
     // The illustrative look has no such past: its own key or its defaults.
     const own = storage?.getItem(storageKeyFor(template, look));
     const text = own ?? (template && look === "physical" ? storage?.getItem(TUNING_STORAGE_KEY) : null);
-    return text ? sanitize(JSON.parse(text), base) : base;
+    if (!text) return base;
+    const raw: unknown = JSON.parse(text);
+    // S105 fix R4: the physical look holds no illustrative parameters - a stored physical entry's "ill" is not read.
+    return sanitize(look === "physical" ? withoutIll(raw) : raw, base);
   } catch {
     return base;
   }
+}
+
+/** An object without its "ill" key (S105 fix R4: the physical look's storage, box and paste never carry one). */
+function withoutIll(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw) || !("ill" in raw)) return raw;
+  const { ill: _ill, ...rest } = raw as Record<string, unknown>;
+  void _ill;
+  return rest;
 }
 
 /**
@@ -680,6 +691,8 @@ export function loadTuning(storage: Pick<Storage, "getItem"> | null = safeStorag
 export function saveTuning(t: Tuning, storage: Pick<Storage, "setItem" | "removeItem"> | null = safeStorage(), template: string | null = null, look: Look = "physical"): void {
   try {
     const diff = changed(t, lookDefaultsFor(template, look));
+    // S105 fix R4: never an "ill" under the physical look's key.
+    if (look === "physical") delete diff.ill;
     const key = storageKeyFor(template, look);
     if (Object.keys(diff).length === 0 && !template) storage?.removeItem(key);
     else storage?.setItem(key, JSON.stringify(diff));
@@ -726,7 +739,11 @@ export function copyBoxText(
   look: Look = "physical",
 ): string {
   const head = { template: template ?? null, filters: filterSet ?? null, exposure: exposure ?? 0 };
-  return JSON.stringify(look === "illustrative" ? { ...head, look, ...changed(t, defaults) } : { ...head, ...changed(t, defaults) });
+  if (look === "illustrative") return JSON.stringify({ ...head, look, ...changed(t, defaults) });
+  // S105 fix R4: the physical look's box is main's text - never an "ill".
+  const diff = changed(t, defaults);
+  delete diff.ill;
+  return JSON.stringify({ ...head, ...diff });
 }
 
 /** What a pasted combination gives (S97): see parseCombination. */
@@ -758,7 +775,15 @@ const BOX_KEYS = new Set(["template", "filters", "exposure", "look", "ill"]);
  */
 // Since S105 a box naming a look ("look": "illustrative") is laid over that look's defaults where `defaultsOfLook` is
 // given (the panel's: the template's under each look), and `look` says to switch to it; "ill" is read per control.
-export function parseCombination(text: string, defaults: Readonly<Tuning> = TUNING_DEFAULTS, defaultsOfLook?: (look: Look) => Readonly<Tuning>): Combination {
+// S105 fix R4: a box applied under the physical look - one naming no look where `defaultsOfLook` is given, or any box
+// without it where `shown` (the look on screen) is "physical" - has its "ill" ignored (listed in `ignored` as "ill"):
+// the physical look holds no illustrative parameters.
+export function parseCombination(
+  text: string,
+  defaults: Readonly<Tuning> = TUNING_DEFAULTS,
+  defaultsOfLook?: (look: Look) => Readonly<Tuning>,
+  shown?: Look,
+): Combination {
   const fail = (error: string): Combination => ({ tuning: null, exposure: null, template: null, filters: null, look: null, ignored: [], rejected: [], error });
   let raw: unknown;
   try {
@@ -778,14 +803,19 @@ export function parseCombination(text: string, defaults: Readonly<Tuning> = TUNI
   }
   const look = lookOf(entries.look);
   if (entries.look !== undefined && look === null) rejected.push("look");
-  const problems = illProblems(entries.ill);
-  ignored.push(...problems.ignored);
-  rejected.push(...problems.rejected);
+  const target = defaultsOfLook ? (look ?? "physical") : (shown ?? null);
+  const physical = target === "physical";
+  if (physical && entries.ill !== undefined) ignored.push("ill");
+  else {
+    const problems = illProblems(entries.ill);
+    ignored.push(...problems.ignored);
+    rejected.push(...problems.rejected);
+  }
   const text_ = (v: unknown) => (typeof v === "string" ? v : null);
   // A box without a look is the physical look's (its copy box names none).
   const base = defaultsOfLook ? defaultsOfLook(look ?? "physical") : defaults;
   return {
-    tuning: sanitize(entries, base),
+    tuning: sanitize(physical ? withoutIll(entries) : entries, base),
     exposure: clampExposure(entries.exposure),
     template: text_(entries.template),
     filters: text_(entries.filters),

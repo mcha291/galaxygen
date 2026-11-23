@@ -100,7 +100,7 @@ export function TuningPanel({ tuning, onChange, stats, template, filterSet, expo
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const apply = () => {
-    const c = parseCombination(paste, defaults, defaultsOfLook);
+    const c = parseCombination(paste, defaults, defaultsOfLook, look);
     // A box names its look (S105): without one it is the physical look's. Without defaultsOfLook the look stays.
     const target: Look = defaultsOfLook ? (c.look ?? "physical") : look;
     if (c.tuning) onChange(c.tuning, target);
