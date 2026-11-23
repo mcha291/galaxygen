@@ -2,7 +2,9 @@
 
 **Status: ADOPTED on the owner's word of 2026-11-23 (D275); rows 105 to 110 run at S105 the same day (D276); rows 111
 to 114 run at S106 the same day (D277): both pictures now read as their goal at a glance; rows 115 to 118 run at S107
-the same day (D278): the sliders no longer freeze the view and both close-ups read as their goal's close-ups.** The
+the same day (D278): the sliders no longer freeze the view and both close-ups read as their goal's close-ups; rows
+119 to 122 run at S108 on 2026-11-23/24 (D279): the look holds away from the tuned stands (edge-on, orbited, under
+physics only and star-first, rerolled), and neither tuned frame moved nearer its goal.** The
 owner, after the status review of that day: "i want to prioritise being able to produce images akin to the goal. the
 physics is secondary and can be incrementally improved later", and then, on the lead's list of what the display lacks
 and its recommendation: "i accept your recommendations, please begin working on it ... do your best to do as much as
@@ -55,6 +57,10 @@ goals is drawn here by the viewer, as a declared layer of its own, and the model
 | 116 | S107 | **the `glGetProgramiv` warnings**: traced to a second canvas per landing (the framing keyed on the live template) and removed by keying it on the drawn one in `GalaxyTab.tsx` (ruling 22); probe `frontend/e2e/switch/glprogram.probe.ts` | Opus (GL) | S107 |
 | 117 | S107 | **the Milky Way at close range**: the pitch opening outward, the lesser arms spaced evenly, patchy arm light, bunched ragged regions with a dozen complexes and a veil (ruling 26), split lanes, the sparkle placed directly, the colour matched patch by patch | Opus (MW, MW2, MW3); the lead's picks | S107 |
 | 118 | S107 | **NGC 4414 at close range**: the brushing traced to the layer's own threads and grain (the map's threads off, ruling 23; `arms.flat` kept at 0, ruling 24), the dust a field of many narrow broken lanes with a pale mesh, dark cores, a veil and wisps (`floc.laneForm`), the rim and a white patch cleared | Opus (NGC, NGC2, NGC3); the lead's picks | S107 |
+| 119 | S108 | **the tour**: 222 settled captures and motion frames of both templates under both looks away from the tuned stands (inclination 0-180, azimuth, zoom, rerolls, physics only, star-first, exposure, canvas sizes, an orbit), ranked worst first; nothing committed | Opus (T) | S108 |
+| 120 | S108 | **the edge-on handover**: per ray, from 72 to 88 degrees off the axis (`illGraze`, `base.grazeFrom` / `grazeTo`), the layer's thin-screen marks fade and its ink goes into the model's own dust layer (`base.grazeDust` 4); the point layers lifted off the midplane (`pointsPlace.ts`, `base.pointHeight`); bit-exact below the start; two edge-on look captures | Opus (G) | S108 |
+| 121 | S108 | **the controls**: physics only draws the physical look, the look shown as suspended (`tuning.ts drawnLook`); the roll held through any orbit (`framing.ts rollAfterLookAt`, `GalaxyView.tsx`), the stand now settling at full quality; star-first points fade at the edge (`points.ts`); the layer's seeds follow a reroll (`illSeeded`), the skeleton's pitch floor; probe `frontend/e2e/s108/controls.probe.ts` | Opus (H; the reviewer's fix) | S108 |
+| 122 | S108 | **the leftovers**: the near region clouds off under the look (`base.nearClouds` 0), the Milky Way's arm grain capped before the bloom (`arms.sparklecap` 30: the soft blue discs reduced, not mended), the pitch floor a slider, the prefetch following the drawn look; a rerolled Milky Way's crescents and bar-end gap diagnosed, not mended | Opus (J) | S108 |
 
 ## 3. Parallelism and pacing
 
@@ -100,6 +106,18 @@ restarted on another model rather than resumed into the same overload (D277).
 | 26 | The regions' veil | premultiplied blending under `knots.place` 1, so the pink stays red over bright arms: a drawing choice; 0 is the plain additive light (D278) |
 | 27 | S107's frames | the illustrative frames remain unpinned; S107's two are committed as plain pictures in `docs/pictures/s107/` (D278) |
 | 28 | #238 and #239 | still wait for the owner's word; nothing entered in the register (D278) |
+| 29 | "Physics only" under the illustrative look | draws the physical look, the illustrative look shown as suspended: with the physics' layers off the layer has no published structure to draw on. Greying the control out, or giving the Milky Way a structure of its own, not taken (D279) |
+| 30 | The edge-on handover | from 72 to 88 degrees off the axis, per ray, the layer's thin-screen marks fade and the model's volume is drawn in the layer's colours; `base.grazeDust` 4 stands in for the clouds' extinction ruling 9 switched off (the clouds are not loaded back edge-on); the point lift scales with the handover (none face-on, so the tuned frames stay as they were) (D279) |
+| 31 | A fix outside the layer for the roll | taken, in `GalaxyView.tsx`: the roll applied after the orbit (both looks pass through it; under the physical look the roll is 0); the swing was the layer's doing and the nine physical frames stayed byte for byte; reviewed independently. Its side effect (the Milky Way's stand settles and marches at full quality) moved the Milky Way's illustrative frames slightly: accepted (D279) |
+| 32 | `points.edge` | applies to the star-first mode's stars and clusters only, not the field mode's regions (D279) |
+| 33 | The layer's seeds | follow the generated galaxy's `pattern_seed` and `texture_seed`; the template's own seeds draw the tuned picture; a rerolled skeleton's pitch has a floor, 10 degrees, a slider (`arms.skelpitchmin`) (D279) |
+| 34 | The near regime's region clouds under the look | not drawn as extinction (`base.nearClouds` 0) on both templates: a change in what `GalaxyTab.tsx` passes to `RegionVolume`; the physical look unchanged (D279) |
+| 35 | The Milky Way's arm grain | capped before the bloom (`arms.sparklecap` 30): it moves the Milky Way's frames; the lead compared the close-up before and after beside the goal's crop and took it (D279) |
+| 36 | A rerolled Milky Way's crescents and bar-end gap | not mended behind a reroll-only gate: they are the default Milky Way's inner zone, mended with it next session, which may move the default frames (D279) |
+| 37 | S108's frames | committed as plain pictures in `docs/pictures/s108/` (the two stands and the two edge-on captures); still not pinned (D279) |
+| 38 | #238 and #239 | still wait for the owner's word; nothing entered in the register (D279) |
+| 39 | NGC 4414's close stand turned 1.6 degrees | accepted: the roll about the true line of sight is the right one, and the close-up is the same picture (D279) |
+| 40 | The Milky Way's view settling | accepted: one full-quality march (up to about 280 ms) after each move, the quality the look was meant to have, where `main`'s never-settling view marched at 2 of 8 sub-samples on every frame; a lower sub-sample ceiling under the look is the owner's to ask for (D279) |
 
 ## 5. What done means
 
@@ -111,27 +129,43 @@ same kind of picture; the owner's eye has not yet ruled** (`READING_PICTURES.md`
 read as their goal at a glance; what remains is texture and finish at close range, not composition; the owner's eye
 has still not ruled** (Part S106). **S107's gate: both close-ups read as their goal's close-ups; what remains is
 strength and balance, most of it within the owner's sliders, and a few forms; the owner's eye has still not ruled**
-(Part S107).
+(Part S107). **S108's gate: the look holds away from the tuned stands (edge-on, orbited, under physics only and
+star-first, rerolled); at the tuned stands neither frame moved nearer its goal, and both full frames are still plainly
+unlike their goals in the ways section 6 lists** (Part S108).
 
 ## 6. What is left, in the order of what a viewer would gain
 
 1. **The owner's own tuning pass** on the live sliders (the Tuning panel's Illustrative group, by feature, with a
-   filter; since S107 no slider freezes the view) **and the owner's rulings**: #238 (the dust transmission's float32
-   underflow: the physical fix and the re-capture of the four NGC 4414 committed frames), #239 (the model's central
-   extinction on NGC 4414), and the OK to enter both in the register (rulings 20 and 28).
-2. **The Milky Way**: the inner arms hugging the bar's ends (the skeleton's start: ours leave an empty lavender zone
-   round the bar); the lesser arms' strength against the two-armed measure (ruling 25); the bar's hue (36 against the
-   goal's 46) and its end clusters; finer, redder lanes (ours hue 30 against 11, broader, zigzagging close up); the
-   colour step's measure (Δ(B−R) −0.067 against −0.354 although the sampled patches match: find what the tool's
-   annuli see; not the disc's size in the frame, which was restored with the step unchanged). The soft round blue blobs
-   between the arms close up (a second reader's), traced by the lead to the arm grain's own soft sprite
-   (`arms.sparkle`): a sharper sprite, or a size that does not grow at close range.
-3. **NGC 4414**: lanes as prominent as the photograph's without the dark fraction rising (0.185 against 0.157; A₂
-   0.042 and arm contrast 1.64 against 0.068 and 2.72); pale tan veils inside them; the fingerprint stripes near the
-   nucleus; the rim's faint smear. The second reader's: the outer disc a bright grey-white to an abrupt edge where the
-   photograph's dims and turns blue (`grade.saturation` 1.15 warmed the middle, not the rim, and moved the inner
-   colour further from the goal's), and the close view a uniform grain.
-4. **Latency**: 0.35 to 3 s from a move to the complete picture (the reviewer's measure; 0.6 to 1.1 s from a settled
-   map slider in the builder's: the 250 ms debounce and the worker); the arms' planes about 0.3 s. The view itself no
-   longer stalls (longest frame gap 17 to 50 ms).
-5. **A third template** would want its own preset (a skeleton or a plane-style network).
+   filter; no slider freezes the view) **and the owner's rulings**: #238 (the dust transmission's float32 underflow:
+   the physical fix and the re-capture of the four NGC 4414 committed frames), #239 (the model's central extinction on
+   NGC 4414), and the OK to enter both in the register (rulings 20, 28 and 38).
+2. **The Milky Way's inner zone, default and rerolled together** (S109's subject, with item 4): inner arms that hug
+   the bar's ends as the goal's do, an oval ring at 1.2 to 1.4 bar half-lengths with the brightest pink-white complexes
+   at the bar's ends and a short inner arc along each long side (ours: the first arm at about twice the half-length, an
+   empty dark lavender moat between); the cause is the skeleton's start (`arms.skelstart` 1.0 x the published bar
+   half-length) against the drawn bar's end, and `arms.skelcore`'s darkening in fixed kpc (3 to 7.5) that does not follow
+   a rerolled bar; on a reroll, the crescents the wing and the ring modulation draw (`arms.skelwing`, `arms.floor`,
+   `skelhold`; ruling 36). Then: the bar pale cream and grainy with fine curling lanes, not saturated yellow-orange
+   with a white halo rim (hue 36 against 46) and its end clusters; the arm count (the goal's four near-equal arms at
+   about 12 degrees filling the disc against our two dominant wide-open arms; the lesser arms' strength against the
+   two-armed measure, ruling 25); the arms' texture a dense mottled cloud, not a smooth glow with sparse points; grain
+   points of varying brightness (ours all much the same white); the fainter soft blue dots still between the arms close
+   up (reduced by `arms.sparklecap`, not gone); finer, redder lanes; a more muted disc; the colour step's measure
+   (Δ(B−R) −0.068 against −0.354: find what the tool's annuli see).
+3. **The Milky Way edge-on**: the pink regions and blue sparkle a busy dotted band along the lane and in front of it
+   (the reviewer: the lifted regions and star clouds sit bright over the lane rather than partly behind it, the
+   unlifted sparkle a narrow blue band at its edge), the bluish-white disc, the small, faint bulge; and at intermediate
+   oblique zoom (6 kpc from an arm at 60 degrees) a pale flat haze with ribbons and stickers.
+4. **NGC 4414** (S109's subject, with item 2): the disc's extent and fall-off (the photograph's overfills the frame
+   and dims outward into a blue-grey haze; ours a sharp-edged oval of even brightness with a bright grainy rim at
+   about three quarters of the frame's width); the centre (a large soft cream bulge glow in a gold-tan inner disc
+   against our small nucleus in peach-orange); the dust in two or three broad warm brown spiral bands of fine filaments
+   with clean bright zones between, as prominent as the photograph's (ours grey-black short dashes scattered evenly, the
+   fingerprint stripes near the nucleus; A₂ 0.042 and arm contrast 1.64 against 0.068 and 2.72, the dark fraction
+   0.185 against 0.157); the colour; lumpy white and blue-white star clouds all through the middle disc (ours near the
+   rim only). Edge-on: the faint brushing between 78 and 82 degrees (the half-faded veil and mottle); the bulge's glow
+   boxy at its top edge.
+5. **The rest**: exposure +3 washes the look out (the arm grain's cap is in linear units and shifts with exposure);
+   the latency from a settled map slider to the picture (0.6 to 1.1 s; 0.35 to 3 s from a move in S107's review);
+   `FluxPoints`' instrument wing pass reads the unlifted position inside the handover (at most about 0.6 kpc, the
+   instrument only); a third template would want its own preset.
