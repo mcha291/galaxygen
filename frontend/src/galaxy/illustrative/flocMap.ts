@@ -18,12 +18,17 @@
 // The map: ONE byte a texel on the lanes' grid (lanesMap.ts LANE_MAP: 2000 rings over 0-rHi by 3600 sectors) - the
 // feature's channel of the look's shared map, the march's fragment having no sampler to spare for a second one - so
 // the dust and the light share it, signed about 128:
-//     byte > 128   dust: sqrt(shape / shapeMax) = (byte - 128) / 127, shape 1 at the centre of one full filament;
-//     byte < 128   light: level = (128 - byte) / 127 - up to 0.5 the patches (the disc's light swelled and thinned in
-//                  soft blobs, their mean level over the disc 0.25), above it a young clump (0.5 its edge, 1 its centre);
-//     byte 128     neither; byte 0 is never written and reads as "no map".
-// A texel between a filament and a patch passes through 128 under the GPU's linear filter: a filament's margin is
-// plain disc, never a bright rim. The feature's GLSL (floc.ts) decodes it; every depth and gain is a uniform there.
+//     byte > 128   dust: sqrt(shape / shapeMax) = (byte - 128) / 127, shape the drawn depth less the margin (0.3): a
+//                  full filament's centre holds 0.7, a crossing more;
+//     byte < 128   light: level = (128 - byte) / 127 - from the floor (0.08) to 0.5 the patches (the disc's light
+//                  swelled and thinned in soft blobs: the floor the darkest gap, 0.5 the brightest patch, their mean
+//                  over the disc half way, 0.29), above 0.5 a young clump (0.5 its edge, 1 its centre). Toward a
+//                  filament's margin and toward the light's reach the level goes to that mean, which changes
+//                  nothing; beyond the reach every byte is the mean;
+//     byte 0       never written: "no map".
+// So a filament's edge is one texel where the GPU's linear filter passes from the mean level through 128 (a level
+// under the floor counts for less and less) into the dust: plain disc beside a filament, never a bright or dark rim.
+// The feature's GLSL (floc.ts) decodes it; every depth and gain is a uniform there.
 
 import type { IllFrame } from "./feature";
 import { LANE_MAP } from "./lanesMap";
@@ -33,9 +38,9 @@ const DEG = Math.PI / 180;
 
 /**
  * The map's size (the lanes' grid: the shared map's), the shape drawn at byte 255, the size of the coarser rasters the
- * light is drawn on before it is laid into the map (over 0 to the light's reach), and the patches' mean level.
+ * light is drawn on before it is laid into the map (over 0 to the light's reach), the light's floor (the patches' darkest gap), and the dust's margin (the depth under which a filament is not drawn: the light's there).
  */
-export const FLOC_MAP = { rings: LANE_MAP.rings, sectors: LANE_MAP.sectors, shapeMax: 4, lightRings: 600, lightSectors: 1800, patchMean: 0.25 } as const;
+export const FLOC_MAP = { rings: LANE_MAP.rings, sectors: LANE_MAP.sectors, shapeMax: 4, lightRings: 600, lightSectors: 1800, lightFloor: 0.08, margin: 0.3 } as const;
 
 /** The light reaches this far past the dust's outer radius (the clumps and patches lie beyond the dust), within the grid. */
 export const FLOC_REACH = 1.3;
@@ -311,6 +316,9 @@ class Raster {
 }
 
 const SQRT_TAU = Math.sqrt(TAU);
+/** The dust's margin, and the light's level at the patches' mean. */
+const MARGIN = FLOC_MAP.margin;
+const MEAN = FLOC_MAP.lightFloor + 0.25 * (1 - 2 * FLOC_MAP.lightFloor);
 const sigmaOf = (fwhmKpc: number) => fwhmKpc / 2.3548;
 
 /** One drawn filament: its points in the plane (kpc), each point's heading, standard deviation (kpc) and depth. */
@@ -377,7 +385,7 @@ export class Ladder {
   static place(r: number): number {
     const l = Math.min(LADDER_LEVELS - 1.001, Math.max(0, 2 * Math.log2(Math.max(r, 1e-6) / LADDER_R0)));
     const k = Math.floor(l);
-    return k + smoothstep(0.15, 0.85, l - k);
+    return k + smoothstep(0.25, 0.75, l - k);
   }
 
   /** The noise in [0, 1] at (ln R, phi) for a place (Ladder.place of the radius), `shift` levels finer (or coarser, below 0). */
@@ -401,9 +409,9 @@ function weightsOf(g: FlocGeometry, shape: FlocShape, pitch: number): Weights {
   const at = (r: number) => (profile ? Number(profile[Math.min(rings - 1, Math.max(0, Math.floor((r / g.rHi) * rings)))]) : 1);
   const ref = Math.max(at(0.5 * outer), 1e-12);
   const radial = (r: number) => (profile && shape.radial > 0 ? Math.min(2.5, Math.max(0, at(r) / ref) ** shape.radial) : 1);
-  // The bundles: spiral pieces of the viewer's own, `bundle` parsecs across and four times as long, and a finer set.
+  // The bundles: spiral pieces of the viewer's own, `bundle` parsecs across and six times as long, and a finer set.
   const across = Math.max(shape.bundle * 1e-3, 0.05);
-  const wide = new Ladder(pitch, across, 4, flocKey(shape.seed, 0, 0, 11));
+  const wide = new Ladder(pitch, across, 6, flocKey(shape.seed, 0, 0, 11));
   const fine = new Ladder(pitch, 0.45 * across, 3, flocKey(shape.seed, 0, 0, 12));
   const start = (x: number, y: number) => {
     const r = Math.hypot(x, y);
@@ -445,13 +453,16 @@ export function flocStrands(g: FlocGeometry, shape: FlocShape): Strand[] {
       ys[k] = y;
       const th = theta(k);
       hs[k] = th;
-      const r = Math.hypot(x, y) || 1e-9;
       const c = Math.cos(th);
       const s = Math.sin(th);
-      const nx = x + ((-y * c + x * s) / r) * ds;
-      const ny = y + ((x * c + y * s) / r) * ds;
-      x = nx;
-      y = ny;
+      // The step's direction taken at its middle (a midpoint step): the heading is kept against the turning radius
+      // vector, so a constant heading is a log spiral of that pitch to the step's second order.
+      const r = Math.hypot(x, y) || 1e-9;
+      const mx = x + ((-y * c + x * s) / r) * 0.5 * ds;
+      const my = y + ((x * c + y * s) / r) * 0.5 * ds;
+      const mr = Math.hypot(mx, my) || 1e-9;
+      x += ((-my * c + mx * s) / mr) * ds;
+      y += ((mx * c + my * s) / mr) * ds;
     }
     return { xs, ys, hs };
   };
@@ -591,6 +602,24 @@ export function flocPatches(g: FlocGeometry, shape: FlocShape): Blob[] {
   return out;
 }
 
+/** The grains: small soft blobs, a third of a patch's size, even over the disc - a patch is a cloud of them. */
+export function flocGrains(g: FlocGeometry, shape: FlocShape): Blob[] {
+  const out: Blob[] = [];
+  const reach = lightReach(g, shape);
+  const size = 0.35 * shape.patchSize * 1e-3;
+  if (!(size > 0)) return out;
+  const count = Math.min(120000, Math.round((0.7 / (size * size)) * Math.PI * reach * reach));
+  const key = flocKey(shape.seed, 7, 0, 1);
+  const floor = (1.2 * reach) / FLOC_MAP.lightRings;
+  for (let p = 0; p < count; p += 1) {
+    const u = (i: number) => flocRandom(key, 4 * p + i);
+    const r = reach * Math.sqrt(u(0));
+    const phi = TAU * u(1);
+    out.push({ x: r * Math.cos(phi), y: r * Math.sin(phi), sigma: Math.max(floor, sigmaOf(size * (0.6 + 0.8 * u(2)))), height: 0.4 + 1.2 * u(3) * u(3) });
+  }
+  return out;
+}
+
 /** The young clumps: short strings of bright blobs along the spiral, gathered where the stars' contrast is high. */
 export function flocClumps(g: FlocGeometry, shape: FlocShape): Blob[] {
   const out: Blob[] = [];
@@ -639,30 +668,24 @@ export function flocClumps(g: FlocGeometry, shape: FlocShape): Blob[] {
   return out;
 }
 
+/**
+ * A light level read as the GLSL reads it: the patches' level in [0, 1] (0.5 their mean), a clump's in [0, 1], and how
+ * far the light is known there (0 under the floor's start, 1 from the floor up: the patches count by this much).
+ */
+export function flocLight(level: number): { patch: number; clump: number; known: number } {
+  const floor = FLOC_MAP.lightFloor;
+  return { patch: clamp01((level - floor) / (0.5 - floor)), clump: clamp01((level - 0.5) * 2), known: smoothstep(0, floor, level) };
+}
+
 /** What a byte of the map holds (the header's encoding): the dust's shape, or the light's level, or neither. */
-export function flocDecode(byte: number): { shape: number; light: number } {
-  if (byte <= 0) return { shape: 0, light: 0 };
+export function flocDecode(byte: number): { shape: number; light: number; patch: number; clump: number; known: number } {
+  if (byte <= 0) return { shape: 0, light: 0, patch: 0.5, clump: 0, known: 0 };
   const s = (byte - 128) / 127;
-  return s > 0 ? { shape: FLOC_MAP.shapeMax * s * s, light: 0 } : { shape: 0, light: -s };
+  return s > 0 ? { shape: FLOC_MAP.shapeMax * s * s, light: 0, patch: 0.5, clump: 0, known: 0 } : { shape: 0, light: -s, ...flocLight(-s) };
 }
 
 /** The radius, kpc, to which the light (the patches and the clumps) is drawn. */
 export const lightReach = (g: FlocGeometry, shape: FlocShape): number => Math.min(g.rHi, FLOC_REACH * Math.max(0.1, shape.outerRadius));
-
-/** A coarse raster read at a radius and a (fractional) sector, bilinear, the azimuth wrapped; nothing beyond its reach. */
-function readRaster(raster: Raster, r: number, phi: number): number {
-  const u = r / raster.dR - 0.5;
-  if (u >= raster.rings - 1) return 0;
-  const v = phi / raster.dPhi - 0.5;
-  const i0 = Math.max(0, Math.floor(u));
-  const j0 = Math.floor(v);
-  const a = Math.max(0, u - i0);
-  const b = v - j0;
-  const { acc, rings, sectors } = raster;
-  const r0 = (((j0 % sectors) + sectors) % sectors) * rings;
-  const r1 = ((((j0 + 1) % sectors) + sectors) % sectors) * rings;
-  return (1 - a) * ((1 - b) * acc[r0 + i0] + b * acc[r1 + i0]) + a * ((1 - b) * acc[r0 + i0 + 1] + b * acc[r1 + i0 + 1]);
-}
 
 /**
  * The lace: the fine network between the filaments, summed into the raster. A smooth noise over the disc whose cells
@@ -721,22 +744,25 @@ function drawLace(raster: Raster, g: FlocGeometry, shape: FlocShape): void {
       const a0 = Math.floor(fa);
       const aw = fa - a0;
       const m = (1 - bw) * ((1 - aw) * mask[m0 + a0] + aw * mask[m0 + a0 + 1]) + bw * ((1 - aw) * mask[m1 + a0] + aw * mask[m1 + a0 + 1]);
-      if (m < 0.02) continue;
+      // Under 0.12 the lace has no depth (below).
+      if (m <= 0.12) continue;
       const ln = lnR[i];
       const at = place[i];
       // A blotch: where the dust gathers and a coarser noise (cells twice the lace's) is high, the threads thicken
       // until they run together, leaving holes.
       const blotch = shape.blotch > 0 ? smoothstep(0.55, 0.75, 0.45 * m + 0.55 * blotches.at(ln, phi, at)) : 0;
+      // A thread's thickness swells and thins along it (a third noise, cells a little finer than the lace's): it breaks
+      // into pieces, and a closed ring is rare. A thread thinner than about a twentieth of a cell is a hairline no eye
+      // reads as dust: it fades out.
+      const t = shape.thread * (0.3 + 0.9 * m + 3.2 * shape.blotch * blotch) * (0.3 + 1.4 * blotches.at(ln, phi, at, 3));
+      if (t <= 0.03) continue;
       // The threads: the noise and two finer ones riding on it (the wiggle, the roughness), ridged about the middle.
       const n1 = 0.62 * threads.at(ln, phi, at) + 0.26 * wiggle.at(ln, phi, at, 2) + 0.12 * wiggle.at(ln, phi, at, 4);
-      // A thread's thickness swells and thins along it (a third noise, cells a little finer than the lace's): it breaks
-      // into pieces, and a closed ring is rare.
-      const t = shape.thread * (0.3 + 0.9 * m + 3.2 * shape.blotch * blotch) * (0.3 + 1.4 * blotches.at(ln, phi, at, 3));
       let ridge = 1 - Math.abs(2 * n1 - 1) / t;
       // The cross-links only where the first is not already a thread.
-      if (ridge < 0.8) ridge = Math.max(ridge, 0.8 * (1 - Math.abs(2 * links.at(ln, phi, at) - 1) / (0.6 * t)));
+      if (ridge < 0.7) ridge = Math.max(ridge, 0.7 * (1 - Math.abs(2 * links.at(ln, phi, at) - 1) / (0.5 * t)));
       if (ridge <= 0) continue;
-      acc[row + i] += shape.lace * smoothstep(0.12, 0.5, m) * (0.75 + 0.5 * blotch) * ridge * ridge * (3 - 2 * ridge);
+      acc[row + i] += shape.lace * smoothstep(0.12, 0.5, m) * smoothstep(0.03, 0.09, t) * (0.75 + 0.5 * blotch) * ridge * ridge * (3 - 2 * ridge);
     }
   }
 }
@@ -752,15 +778,18 @@ export function buildFlocChannel(g: FlocGeometry, shape: FlocShape, rings: numbe
   const reach = lightReach(g, shape);
   const patches = new Raster(FLOC_MAP.lightRings, FLOC_MAP.lightSectors, reach);
   for (const b of flocPatches(g, shape)) patches.spot(b.x, b.y, b.sigma, b.height);
+  const grains = new Raster(FLOC_MAP.lightRings, FLOC_MAP.lightSectors, reach);
+  for (const b of flocGrains(g, shape)) grains.spot(b.x, b.y, b.sigma, b.height);
   const clumps = new Raster(FLOC_MAP.lightRings, FLOC_MAP.lightSectors, reach);
   for (const b of flocClumps(g, shape)) clumps.spot(b.x, b.y, b.sigma, b.height);
-  // The patches' level is 1 - exp(-sum), scaled so that its mean over the disc's area inside 0.85 of the reach is 0.5
-  // (half of it, FLOC_MAP.patchMean, as the light's level): the GLSL swells and thins the light about a constant.
+  // The patches' level is 1 - exp(-sum), grained (a patch is a cloud of small bright grains), scaled so that its mean
+  // over the disc's area inside 0.85 of the reach is 0.5 (as the light's level: half way from the floor to 0.5), so
+  // the GLSL swells and thins the light about a constant.
   let sum = 0;
   let weight = 0;
   const pAcc = patches.acc;
   for (let k = 0; k < pAcc.length; k += 1) {
-    pAcc[k] = 1 - Math.exp(-pAcc[k]);
+    pAcc[k] = (1 - Math.exp(-pAcc[k])) * (0.4 + 0.6 * (1 - Math.exp(-grains.acc[k])));
     const i = k % patches.rings;
     if (i + 0.5 < 0.85 * patches.rings) {
       sum += pAcc[k] * (i + 0.5);
@@ -768,36 +797,58 @@ export function buildFlocChannel(g: FlocGeometry, shape: FlocShape, rings: numbe
     }
   }
   const scale = sum > 0 ? (0.5 * weight) / sum : 0;
+  // The light's level about the patches' mean on the coarse raster: the patches from the floor up to half, a clump
+  // over them up to 1; toward the light's reach it goes to the mean (0 here).
+  const cAcc = clumps.acc;
+  for (let k = 0; k < pAcc.length; k += 1) {
+    const base = FLOC_MAP.lightFloor + (0.5 - FLOC_MAP.lightFloor) * Math.min(1, scale * pAcc[k]);
+    const r = ((k % patches.rings) + 0.5) * patches.dR;
+    pAcc[k] = (base + (1 - base) * (1 - Math.exp(-cAcc[k])) - MEAN) * (1 - smoothstep(0.85 * reach, reach, r));
+  }
 
-  // The mottle: the dust's depth swelled and thinned over the plane at the grain's length and a third of it, so a wide
-  // band is blotches and holes and a thread has knots.
-  const out = new Uint8Array(rings * sectors).fill(128);
+  // Every byte the patches' mean level (which changes nothing), then the disc inside the reach.
+  const none = 128 - Math.round(127 * MEAN);
+  const out = new Uint8Array(rings * sectors).fill(none);
   const acc = raster.acc;
   const grain = Math.max(shape.grain * 1e-3, 1e-3);
   const mKey = flocKey(shape.seed, 5, 0, 1);
   const lit = Math.min(rings, Math.ceil(reach / raster.dR));
+  const inside = Math.min(rings, Math.max(lit, Math.ceil((Math.min(shape.outerRadius, g.rHi) + 1) / raster.dR)));
+  // Each ring's place on the coarse raster (its lower ring and the weight of the next); -1 beyond it.
+  const lo = new Int32Array(inside);
+  const up = new Float32Array(inside);
+  for (let i = 0; i < inside; i += 1) {
+    const u = ((i + 0.5) * raster.dR) / patches.dR - 0.5;
+    lo[i] = i < lit && u < patches.rings - 1 ? Math.max(0, Math.floor(u)) : -1;
+    up[i] = Math.max(0, u - lo[i]);
+  }
   for (let j = 0; j < sectors; j += 1) {
     const phi = (j + 0.5) * raster.dPhi;
     const c = Math.cos(phi) / grain;
     const s = Math.sin(phi) / grain;
     const row = j * rings;
-    for (let i = 0; i < rings; i += 1) {
-      const r = (i + 0.5) * raster.dR;
+    const v0 = phi / patches.dPhi - 0.5;
+    const j0 = Math.floor(v0);
+    const bw = v0 - j0;
+    const r0 = (((j0 % patches.sectors) + patches.sectors) % patches.sectors) * patches.rings;
+    const r1 = ((((j0 + 1) % patches.sectors) + patches.sectors) % patches.sectors) * patches.rings;
+    for (let i = 0; i < inside; i += 1) {
       let v = acc[row + i];
       if (v > 1e-3 && shape.mottle > 0) {
+        // The mottle: the dust's depth swelled and thinned over the plane at the grain's length and a third of it,
+        // so a blotch has holes and a thread has knots.
+        const r = (i + 0.5) * raster.dR;
         const m = 0.6 * noise2(r * c, r * s, mKey) + 0.4 * noise2(r * c * 3.1 + 17.3, r * s * 3.1 + 5.9, mKey ^ 0x2545f491);
         v *= Math.max(0, 1 + shape.mottle * 1.7 * (2 * m - 1));
       }
-      let signed = v > 1e-3 ? Math.sqrt(Math.min(1, v / FLOC_MAP.shapeMax)) : 0;
-      if (i < lit && v < 0.3) {
-        // The light, where no filament lies (it fades out under a filament's margin): the patches up to half, a
-        // clump over them up to 1.
-        const patch = Math.min(1, scale * readRaster(patches, r, phi));
-        const clump = 1 - Math.exp(-readRaster(clumps, r, phi));
-        const level = 0.5 * patch + (1 - 0.5 * patch) * clump;
-        signed -= level * (1 - Math.max(0, v) / 0.3);
+      if (v >= MARGIN) out[row + i] = 128 + Math.round(127 * Math.sqrt(Math.min(1, (v - MARGIN) / FLOC_MAP.shapeMax)));
+      else if (lo[i] >= 0) {
+        // The light, where no filament lies; toward a filament's margin it goes to the mean.
+        const a0 = lo[i];
+        const aw = up[i];
+        const level = (1 - aw) * ((1 - bw) * pAcc[r0 + a0] + bw * pAcc[r1 + a0]) + aw * ((1 - bw) * pAcc[r0 + a0 + 1] + bw * pAcc[r1 + a0 + 1]);
+        out[row + i] = 128 - Math.round(127 * (MEAN + level * (1 - Math.max(0, v) / MARGIN)));
       }
-      out[row + i] = 128 + Math.round(127 * Math.max(-1, Math.min(1, signed)));
     }
   }
   return out;

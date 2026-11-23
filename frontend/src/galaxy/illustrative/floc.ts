@@ -22,22 +22,22 @@
 //              into the clumps.
 // Every depth, gain and colour is a uniform: no rebuild.
 
-import { type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
-import { FLOC_ARRAYS, FLOC_MAP, FLOC_REACH, type FlocShape, SHAPE_KEYS, buildFlocChannel, geometryOf } from "./flocMap";
+import { ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
+import { FLOC_ARRAYS, FLOC_MAP, type FlocShape, SHAPE_KEYS, buildFlocChannel, geometryOf } from "./flocMap";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.6 },
+    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.15 },
     about: "The depth at the centre of one full filament of the dust network, magnitudes of A_V; 0 no network. Illustrative.",
   },
   {
-    key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.55,
+    key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.65,
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
-  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.3, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
-  { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.35, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
+  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
+  { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
-    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.6 },
+    key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
     about: "How far the disc's light swells and thins in soft patches about its mean (a multiplier on all the light at each place); 0 a smooth disc. Illustrative.",
   },
   {
@@ -50,39 +50,39 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
   {
-    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.5 },
+    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.25 },
     about: "A cream tint over the inner disc's light, fading outward: the old disc of the photograph. Colour for appearance.",
   },
   { key: "warmRadius", label: "warmth radius", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 4.5, about: "The radius at which the warm tint has fallen to 1/e, kpc. Colour for appearance." },
-  { key: "density", label: "filaments", min: 0, max: 12, step: 0.05, unit: "/kpc²", default: 2.6, about: "Trunk filaments per square kiloparsec where the gas is at its mean (branches and bands come with them). Illustrative." },
-  { key: "length", label: "filament length", min: 0.2, max: 5, step: 0.05, unit: "kpc", default: 1.5, about: "A trunk's typical length, kpc (each between 0.45 and 1.75 of it): a short piece of a turn. Illustrative." },
-  { key: "width", label: "filament width", min: 30, max: 400, step: 5, unit: "pc", default: 110, about: "A filament's typical full width at half depth, parsecs (each between 0.6 and 2.2 of it, most thin). Illustrative." },
+  { key: "density", label: "filaments", min: 0, max: 12, step: 0.05, unit: "/kpc²", default: 0.5, about: "Trunk filaments per square kiloparsec where the gas is at its mean (branches and bands come with them). Illustrative." },
+  { key: "length", label: "filament length", min: 0.2, max: 5, step: 0.05, unit: "kpc", default: 1.4, about: "A trunk's typical length, kpc (each between 0.45 and 1.75 of it): a short piece of a turn. Illustrative." },
+  { key: "width", label: "filament width", min: 30, max: 400, step: 5, unit: "pc", default: 55, about: "A filament's typical full width at half depth, parsecs (each between 0.6 and 2.2 of it, most thin). Illustrative." },
   { key: "pitch", label: "pitch", min: 0.2, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { ngc_4414: 0.75 }, about: "The filaments' pitch as a share of the galaxy's published pitch angle. Illustrative." },
   { key: "pitchSpread", label: "pitch spread", min: 0, max: 30, step: 0.5, unit: "°", default: 8, about: "The spread of the trunks' own pitches about it, degrees. Illustrative." },
-  { key: "wiggle", label: "wiggle", min: 0, max: 45, step: 0.5, unit: "°", default: 16, about: "How far a filament's heading wanders along its length, degrees. Illustrative." },
-  { key: "branches", label: "branches", min: 0, max: 6, step: 0.1, unit: "", default: 2.2, about: "Branches per trunk of typical length (each carries half as many twigs): the network's forks and cross-links. Illustrative." },
-  { key: "branchAngle", label: "branch angle", min: 0, max: 80, step: 1, unit: "°", default: 30, about: "The angle a branch leaves its filament at, degrees (each between half and one and a half of it); it turns back to the spiral along its length. Illustrative." },
-  { key: "bands", label: "wide bands", min: 0, max: 2, step: 0.01, unit: "", default: 0.3, about: "Short wide bands per trunk: the thick mottled strands. Illustrative." },
+  { key: "wiggle", label: "wiggle", min: 0, max: 45, step: 0.5, unit: "°", default: 24, about: "How far a filament's heading wanders along its length, degrees. Illustrative." },
+  { key: "branches", label: "branches", min: 0, max: 6, step: 0.1, unit: "", default: 1.5, about: "Branches per trunk of typical length (each carries half as many twigs): the network's forks and cross-links. Illustrative." },
+  { key: "branchAngle", label: "branch angle", min: 0, max: 80, step: 1, unit: "°", default: 40, about: "The angle a branch leaves its filament at, degrees (each between half and one and a half of it); it turns back to the spiral along its length. Illustrative." },
+  { key: "bands", label: "wide bands", min: 0, max: 2, step: 0.01, unit: "", default: 0, about: "Short wide bands per trunk: the thick mottled strands. Illustrative." },
   { key: "bandWidth", label: "band width", min: 100, max: 900, step: 10, unit: "pc", default: 320, about: "A band's full width at half depth, parsecs (each between 0.6 and 1.4 of it). Illustrative." },
   { key: "swell", label: "knots", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, about: "How much a filament swells into dark knots and thins to threads along its length. Illustrative." },
   { key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, about: "How much the dust's depth swells and thins from place to place: a band broken into blotches and holes. Illustrative." },
-  { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 140, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
-  { key: "gather", label: "bundling", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, about: "How far the filaments gather into bundles along spiral pieces of the viewer's own: 0 spread evenly. Illustrative." },
-  { key: "bundle", label: "bundle width", min: 150, max: 3000, step: 10, unit: "pc", default: 600, about: "The width across the spiral of the bundles the dust gathers into, parsecs (each about four times as long). Illustrative." },
-  { key: "followGas", label: "follows the gas", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "How far the filaments' number follows the published gas contrast: 0 the same everywhere, 1 none where the gas is thin. Illustrative." },
-  { key: "radial", label: "radial fall", min: 0, max: 2, step: 0.01, unit: "power", default: 0.5, about: "The filaments' number follows the published gas surface density's radial profile to this power: 0 the same at every radius. Illustrative." },
+  { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 90, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
+  { key: "gather", label: "bundling", min: 0, max: 1, step: 0.01, unit: "", default: 0.8, about: "How far the filaments gather into bundles along spiral pieces of the viewer's own: 0 spread evenly. Illustrative." },
+  { key: "bundle", label: "bundle width", min: 150, max: 3000, step: 10, unit: "pc", default: 500, about: "The width across the spiral of the bundles the dust gathers into, parsecs (each about four times as long). Illustrative." },
+  { key: "followGas", label: "follows the gas", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How far the filaments' number follows the published gas contrast: 0 the same everywhere, 1 none where the gas is thin. Illustrative." },
+  { key: "radial", label: "radial fall", min: 0, max: 2, step: 0.01, unit: "power", default: 1.1, about: "The filaments' number follows the published gas surface density's radial profile to this power: 0 the same at every radius. Illustrative." },
   { key: "innerRadius", label: "inner radius", min: 0, max: 8, step: 0.05, unit: "kpc", default: 0.5, about: "The network fades to nothing inside this radius, kpc. Illustrative." },
-  { key: "outerRadius", label: "outer radius", min: 2, max: 23, step: 0.5, unit: "kpc", default: 10, about: "The network fades from 0.7 of this radius to nothing at it, kpc; the patches and clumps reach 1.3 of it. Illustrative." },
-  { key: "patchSize", label: "patch size", min: 60, max: 900, step: 10, unit: "pc", default: 300, about: "A light patch's size, parsecs (each between 0.55 and 1.45 of it, in irregular threes along the spiral). Illustrative." },
-  { key: "clumpDensity", label: "clump strings", min: 0, max: 4, step: 0.01, unit: "/kpc²", default: 0.45, about: "Strings of young clumps per square kiloparsec on the flocculent pieces (each two to seven clumps along the spiral). Illustrative." },
-  { key: "clumpSize", label: "clump size", min: 40, max: 600, step: 5, unit: "pc", default: 170, about: "A young clump's size, parsecs (each between 0.45 and 1.25 of it). Illustrative." },
+  { key: "outerRadius", label: "outer radius", min: 2, max: 23, step: 0.5, unit: "kpc", default: 9, about: "The network fades from 0.7 of this radius to nothing at it, kpc; the patches and clumps reach 1.3 of it. Illustrative." },
+  { key: "patchSize", label: "patch size", min: 60, max: 900, step: 10, unit: "pc", default: 260, about: "A light patch's size, parsecs (each between 0.55 and 1.45 of it, in irregular threes along the spiral). Illustrative." },
+  { key: "clumpDensity", label: "clump strings", min: 0, max: 4, step: 0.01, unit: "/kpc²", default: 0.8, about: "Strings of young clumps per square kiloparsec on the flocculent pieces (each two to seven clumps along the spiral). Illustrative." },
+  { key: "clumpSize", label: "clump size", min: 40, max: 600, step: 5, unit: "pc", default: 120, about: "A young clump's size, parsecs (each between 0.45 and 1.25 of it). Illustrative." },
   { key: "clumpInner", label: "clumps from", min: 0, max: 15, step: 0.1, unit: "kpc", default: 3, about: "The clumps come in over this radius, kpc: the inner disc is old light. Illustrative." },
   { key: "clumpFollow", label: "clumps on the pieces", min: 0, max: 1, step: 0.01, unit: "", default: 0.85, about: "How far the clumps keep to the published stars' contrast (the flocculent pieces): 0 anywhere. Illustrative." },
-  { key: "lace", label: "lace depth", min: 0, max: 3, step: 0.01, unit: "×", default: 0.8, about: "The lace - the fine network of threads that close into cells between the filaments - its depth as a share of a filament's; 0 none. Illustrative." },
-  { key: "cell", label: "lace cell", min: 80, max: 1500, step: 10, unit: "pc", default: 350, about: "The size of the lace's cells across the spiral, parsecs (within a fifth, by radius). Illustrative." },
-  { key: "thread", label: "lace thread", min: 0.02, max: 1, step: 0.01, unit: "", default: 0.14, about: "How thick the lace's threads are, as a share of a cell (thicker where the filaments gather, running together into blotches). Illustrative." },
-  { key: "stretch", label: "lace stretch", min: 0.5, max: 6, step: 0.1, unit: "×", default: 2, about: "How many times longer along the spiral than across it a cell of the lace is. Illustrative." },
-  { key: "blotch", label: "lace blotches", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, about: "How far the lace's threads thicken and run together into mottled blotches where the dust gathers; 0 threads only. Illustrative." },
+  { key: "lace", label: "lace depth", min: 0, max: 3, step: 0.01, unit: "×", default: 1.5, about: "The lace - the fine network of threads that close into cells between the filaments - its depth as a share of a filament's; 0 none. Illustrative." },
+  { key: "cell", label: "lace cell", min: 80, max: 1500, step: 10, unit: "pc", default: 160, about: "The size of the lace's cells across the spiral, parsecs (within a fifth, by radius). Illustrative." },
+  { key: "thread", label: "lace thread", min: 0.02, max: 1, step: 0.01, unit: "", default: 0.15, about: "How thick the lace's threads are, as a share of a cell (thicker where the filaments gather, running together into blotches). Illustrative." },
+  { key: "stretch", label: "lace stretch", min: 0.5, max: 6, step: 0.1, unit: "×", default: 2.6, about: "How many times longer along the spiral than across it a cell of the lace is. Illustrative." },
+  { key: "blotch", label: "lace blotches", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, about: "How far the lace's threads thicken and run together into mottled blotches where the dust gathers; 0 threads only. Illustrative." },
   { key: "seed", label: "network seed", min: 0, max: 999, step: 1, unit: "", default: 11, about: "The seed of the drawing: another number, another network of the same kind. Illustrative." },
 ];
 
@@ -119,6 +119,7 @@ export function flocChannel(p: IllParams, frame: IllFrame | null): Uint8Array | 
 }
 
 const MAX = FLOC_MAP.shapeMax.toFixed(1);
+const FLOOR = FLOC_MAP.lightFloor.toFixed(2);
 
 export const floc: IllFeature = {
   id: "floc",
@@ -126,7 +127,6 @@ export const floc: IllFeature = {
   about: "A flocculent disc's network of short dust filaments, its light broken into patches, young clumps outside and a warm inner disc: placed by the published pitch, gas and stars' contrast, the drawing the viewer's own.",
   controls: CONTROLS,
   glsl: /* glsl */ `
-  uniform float illFlocReach;
   uniform float illFlocDepth;
   uniform float illFlocInk;
   uniform float illFlocRed;
@@ -137,24 +137,17 @@ export const floc: IllFeature = {
   uniform float illFlocBlue;
   uniform float illFlocWarm;
   uniform float illFlocWarmR;
-  // The feature's byte of the shared map at rp, over 255 (0: no map).
-  float illFlocByte(vec2 rp) {
-    return 0.0;
-  }
-  // The patches' mean level at radius r: ${(2 * FLOC_MAP.patchMean).toFixed(2)} over the disc, fading with them at their reach.
-  float illFlocMean(float r) {
-    float reach = min(rHi, illFlocReach);
-    return ${(2 * FLOC_MAP.patchMean).toFixed(2)} * (1.0 - smoothstep(0.85 * reach, reach, r));
-  }
-  // The byte read (flocMap.ts: signed about 128): x the dust, sqrt(shape / ${MAX}); y the patches' level (0 under a
-  // filament; the mean, which changes nothing, where there is no map: a byte of 0 is never written); z a young
-  // clump's level (0 its edge, 1 its centre).
+  // The feature's byte of the shared map read (flocMap.ts: signed about 128): x the dust, sqrt(shape / ${MAX}); y the
+  // patches' level about their mean, in [-0.5, 0.5] (0, which changes nothing, where the light is not known: under a
+  // filament, beyond the light's reach, where there is no map - a byte of 0 is never written); z a young clump's
+  // level (0 its edge, 1 its centre).
   vec3 illFlocRead(vec2 rp) {
-    float b = rp.x < rHi ? illFlocByte(rp) * 255.0 : 0.0;
-    if (b < 0.5) return vec3(0.0, illFlocMean(rp.x), 0.0);
+    float b = rp.x < rHi ? illMap(rp).g * 255.0 : 0.0;
+    if (b < 0.5) return vec3(0.0);
     float s = (b - 128.0) / 127.0;
     float l = max(-s, 0.0);
-    return vec3(max(s, 0.0), min(l, 0.5) * 2.0, max(l - 0.5, 0.0) * 2.0);
+    float level = clamp((l - ${FLOOR}) / (0.5 - ${FLOOR}), 0.0, 1.0) - 0.5;
+    return vec3(max(s, 0.0), level * smoothstep(0.0, ${FLOOR}, l), clamp((l - 0.5) * 2.0, 0.0, 1.0));
   }
   // The dust's shape from its byte: 1 at the centre of one full filament, more where filaments cross. The edge:
   // between the soft stroke as drawn and an inked one, as the lanes'.
@@ -183,7 +176,7 @@ export const floc: IllFeature = {
       veil *= exp(-av * law);
     }
     // The patches: the light swelled and thinned about the patches' mean level.
-    veil *= max(1.0 + illFlocPatch * (map.y - illFlocMean(rp.x)), 0.0);
+    veil *= max(1.0 + illFlocPatch * map.y, 0.0);
     // The clumps: brighter, toward a blue-white.
     veil *= vec3(1.0) + illFlocClump * map.z * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);
     // The warmth: a cream tint over the inner disc.
@@ -196,9 +189,9 @@ export const floc: IllFeature = {
 `,
   hooks: { dustAv: "illFlocAv", youngGain: "illFlocYoung", veil: "illFlocVeil" },
   arrays: FLOC_ARRAYS,
+  map: { channels: ILL_MAP_CHANNELS.floc, build: (p, context) => [flocChannel(p, context.frame)] },
   uniforms: (p) => {
     return {
-      illFlocReach: FLOC_REACH * (p.outerRadius ?? DEFAULTS.outerRadius),
       illFlocDepth: p.depth ?? DEFAULTS.depth,
       illFlocInk: p.ink ?? DEFAULTS.ink,
       illFlocRed: p.redness ?? DEFAULTS.redness,
