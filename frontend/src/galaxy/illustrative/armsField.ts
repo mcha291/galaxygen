@@ -227,11 +227,7 @@ export function armMap(n: Float64Array, g: ArmGrid, shape: ArmShape, strength: n
 export function armShare(n: Float64Array, g: ArmGrid, shape: ArmShape): { share: Float64Array; sd: Float64Array } {
   const { nR, nPhi } = g;
   const sd = ringSd(n, nR, nPhi);
-  const even = new Float64Array(nR * nPhi);
-  for (let i = 0; i < nR; i++) {
-    const gain = sd[i] > 1e-6 ? 1 + shape.equalise * (Math.min(EQUAL_MAX, EQUAL_LEVEL / sd[i]) - 1) : 1;
-    for (let j = 0; j < nPhi; j++) even[i * nPhi + j] = Math.max(0, 1 + (n[i * nPhi + j] - 1) * gain);
-  }
+  const even = evenOf(n, g, shape.equalise, sd);
   const a = sharpen(even, nR, nPhi, shape.power);
   // The ridge share: the sharpened contrast's (1 - e^(-a / knee)) mixed with the ridge lines' narrow profile.
   const share = new Float64Array(nR * nPhi);
@@ -243,6 +239,36 @@ export function armShare(n: Float64Array, g: ArmGrid, shape: ArmShape): { share:
     for (let k = 0; k < share.length; k++) share[k] = share[k] * (1 - shape.lineMix) + lines[k] * shape.lineMix;
   }
   return { share, sd };
+}
+
+/** Each ring's deviation evened toward EQUAL_LEVEL by `equalise` (armShare's first step). */
+export function evenOf(n: Float64Array, g: ArmGrid, equalise: number, sd: Float64Array = ringSd(n, g.nR, g.nPhi)): Float64Array {
+  const { nR, nPhi } = g;
+  const even = new Float64Array(nR * nPhi);
+  for (let i = 0; i < nR; i++) {
+    const gain = sd[i] > 1e-6 ? 1 + equalise * (Math.min(EQUAL_MAX, EQUAL_LEVEL / sd[i]) - 1) : 1;
+    for (let j = 0; j < nPhi; j++) even[i * nPhi + j] = Math.max(0, 1 + (n[i * nPhi + j] - 1) * gain);
+  }
+  return even;
+}
+
+/** A ridge line's crest: ring i, azimuth cell j, its height (ridgeLines' own, in [0, 1]). */
+export interface ArmPeak {
+  i: number;
+  j: number;
+  height: number;
+}
+
+/**
+ * The crests the ridge lines are drawn on (S106: the lanes trace them, lanesMap.ts traceRidges), from the blended
+ * contrast as the arms shape it, and the winding dphi / dlnR they are read with.
+ */
+export function armPeaks(n: Float64Array, g: ArmGrid, shape: Pick<ArmShape, "equalise" | "start">): { peaks: ArmPeak[]; k: number } {
+  const wind = armWinding(n, g, Math.max(shape.start, 1));
+  const k = wind ? wind.k : DEFAULT_WINDING;
+  const peaks: ArmPeak[] = [];
+  ridgeLines(evenOf(n, g, shape.equalise), g, 0.5, k, (i, j, height) => peaks.push({ i, j, height }));
+  return { peaks, k };
 }
 
 /** The rings the tint flags reach (32 floats of 16 bits: illArmsFlags); a ring beyond is tinted as one above 0.02. */
@@ -326,7 +352,7 @@ export const ridge = (a: number, knee = 1): number => 1 - Math.exp(-Math.max(0, 
  * and of height its prominence over twice the ring's deviation (at most 1). A share in [0, 1], 0 between the arms:
  * the arm's width the slider's whatever the model's ridge's.
  */
-export function ridgeLines(even: Float64Array, g: ArmGrid, width: number, k: number): Float64Array {
+export function ridgeLines(even: Float64Array, g: ArmGrid, width: number, k: number, onPeak?: (i: number, j: number, height: number) => void): Float64Array {
   const { nR, nPhi: P } = g;
   const dR = g.rHi / nR;
   const out = new Float64Array(nR * P);
@@ -354,6 +380,7 @@ export function ridgeLines(even: Float64Array, g: ArmGrid, width: number, k: num
       for (let q = 1; q <= 4 && peak; q++) if (smooth[(j + q) % P] > v || smooth[(j - q + P) % P] >= v) peak = false;
       if (!peak) continue;
       const height = Math.min(1, dev / (2 * sd[i]));
+      onPeak?.(i, j, height);
       for (let q = -reach; q <= reach; q++) {
         const d = q * cellAcross;
         const x2 = (d * d) / (sigma * sigma);

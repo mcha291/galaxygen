@@ -51,6 +51,35 @@ export interface SparkleShape {
   rMax: number;
   /** The points' half-thickness, pc. */
   heightPc: number;
+  /** S106: the density's floor between the arms, as a share of a full ridge's (0 none: every point on the arms). */
+  floor?: number;
+  /**
+   * S106: above 0, the density is read from the raw ridge share (buildSparkle's `raw`) as min(1, share / lift) - a
+   * weak ridge lit as fully as a strong one - in place of the map's G; 0 (or no raw share) the G as S105 read it.
+   */
+  lift?: number;
+  /**
+   * S106: the share of the sparkle kept off the dust lanes - its density times 1 - avoid * min(1, lane shape) where the
+   * shared map's lanes (buildSparkle's `lanes`) lie - since the lanes' veil darkens the march, not the points; 0 none.
+   */
+  avoid?: number;
+}
+
+/** The shared map's lane plane as buildSparkle reads it: RGBA bytes (R the lanes, lanesMap.ts's sqrt(shape / 4)). */
+export interface LanePlane {
+  data: ArrayLike<number>;
+  width: number;
+  height: number;
+  rHi: number;
+}
+
+/** The lanes' shape (lanesMap.ts: 1 at a full strand's centre) at (R, phi), nearest texel, 0 outside the map. */
+export function laneShapeAt(l: LanePlane, r: number, phi: number): number {
+  const c = Math.floor((r / l.rHi) * l.width);
+  if (c < 0 || c >= l.width) return 0;
+  const row = Math.floor(((((phi / (2 * Math.PI)) % 1) + 1) % 1) * l.height) % l.height;
+  const b = l.data[(row * l.width + c) * 4] / 255;
+  return 4 * b * b;
 }
 
 export interface Sparkle {
@@ -62,8 +91,11 @@ export interface Sparkle {
   weight: Float32Array;
 }
 
-/** The arm share (the arm map's G channel) at (R, phi), linear between texels, 0 outside the grid. */
-export function shareAt(map: Float32Array, g: ArmGrid, r: number, phi: number): number {
+/**
+ * The arm share (the arm map's G channel: `stride` 4, `channel` 1; or a one-value-per-texel plane: 1, 0) at (R, phi),
+ * linear between texels, 0 outside the grid.
+ */
+export function shareAt(map: Float32Array, g: ArmGrid, r: number, phi: number, stride = 4, channel = 1): number {
   const u = (r / g.rHi) * g.nR - 0.5;
   if (u < -0.5 || u > g.nR - 0.5) return 0;
   const v = ((((phi / (2 * Math.PI)) % 1) + 1) % 1) * g.nPhi - 0.5;
@@ -73,7 +105,7 @@ export function shareAt(map: Float32Array, g: ArmGrid, r: number, phi: number): 
   const j0 = ((Math.floor(v) % g.nPhi) + g.nPhi) % g.nPhi;
   const j1 = (j0 + 1) % g.nPhi;
   const fv = v - Math.floor(v);
-  const at = (i: number, j: number) => map[(j * g.nR + i) * 4 + 1];
+  const at = (i: number, j: number) => map[(j * g.nR + i) * stride + channel];
   return (at(i0, j0) * (1 - fu) + at(i1, j0) * fu) * (1 - fv) + (at(i0, j1) * (1 - fu) + at(i1, j1) * fu) * fv;
 }
 
@@ -86,7 +118,7 @@ export function brightness(u: number, slope: number, range: number): number {
 }
 
 /** The points: deterministic in (map, grid, shape, seed). */
-export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number): Sparkle {
+export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number, raw: Float32Array | null = null, lanes: LanePlane | null = null): Sparkle {
   const total = Math.max(0, Math.floor(s.count));
   const radius = new Float32Array(total);
   const azimuth = new Float32Array(total);
@@ -94,7 +126,16 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
   const weight = new Float32Array(total);
   const next = rng(seed);
   const rMax = Math.min(s.rMax, g.rHi);
-  const density = (r: number, phi: number) => Math.pow(Math.max(0, shareAt(map, g, r, phi)), s.ridge) * (1 - smoothstep(0.7 * rMax, rMax, r));
+  const floor = Math.min(1, Math.max(0, s.floor ?? 0));
+  const lift = s.lift ?? 0;
+  const level =
+    raw && lift > 0
+      ? (r: number, phi: number) => Math.min(1, shareAt(raw, g, r, phi, 1, 0) / lift)
+      : (r: number, phi: number) => shareAt(map, g, r, phi);
+  const avoid = lanes ? Math.min(1, Math.max(0, s.avoid ?? 0)) : 0;
+  const clear = avoid > 0 && lanes ? (r: number, phi: number) => Math.max(0, 1 - avoid * Math.min(1, laneShapeAt(lanes, r, phi))) : () => 1;
+  const density = (r: number, phi: number) =>
+    clear(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
   const place = (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {
@@ -133,6 +174,32 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
     k++;
   }
   return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
+}
+
+/**
+ * The sparkle's two sprite sizes (S106, the Milky Way's grain): the brightest `share` of the points (by weight; ties
+ * at the threshold all bright) drawn on the larger sprite, the rest on the fine one. Returns each point's tier, 1 the
+ * bright. A share of 0 or less: every point fine (the S105 drawing).
+ */
+export function sparkleTiers(weight: ArrayLike<number>, share: number): Uint8Array {
+  const n = weight.length;
+  const out = new Uint8Array(n);
+  const big = Math.floor(n * Math.min(1, Math.max(0, share)));
+  if (big <= 0) return out;
+  const sorted = Float32Array.from(weight).sort();
+  const threshold = sorted[n - big];
+  for (let i = 0; i < n; i++) if (weight[i] >= threshold) out[i] = 1;
+  return out;
+}
+
+/** The members of one tier: the indices whose tier is `tier`. */
+export function tierIndices(tiers: Uint8Array, tier: number): Uint32Array {
+  let n = 0;
+  for (let i = 0; i < tiers.length; i++) if (tiers[i] === tier) n++;
+  const out = new Uint32Array(n);
+  let k = 0;
+  for (let i = 0; i < tiers.length; i++) if (tiers[i] === tier) out[k++] = i;
+  return out;
 }
 
 /**
