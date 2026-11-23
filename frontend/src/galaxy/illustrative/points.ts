@@ -20,13 +20,22 @@ export const points: IllFeature = {
     },
   ],
   // The edge's GLSL (edge.ts, earlier in the registry) declares illEdgeRamp, illEdgeRadius and illEdgeWidth.
+  // S108 (J4): illPointsCap, the brightest a point's light may be (its largest channel, in the frame's linear units),
+  // the sparkle's own (SparkleLayer: arms.sparklecap) - set per material by FluxPoints' illCap, 0 (none) everywhere else.
+  // Up close the arm grain's points grow bright as 1 / depth^2 and the bloom spreads the brightest into soft discs.
   glsl: /* glsl */ `
   uniform float illPointsEdge;
+  uniform float illPointsCap;
+  vec3 illPointsCapped(vec3 light) {
+    if (illPointsCap <= 0.0) return light;
+    float m = max(light.r, max(light.g, light.b));
+    return m > illPointsCap ? light * (illPointsCap / m) : light;
+  }
   float illPointsAt(vec2 rp) {
     if (illPointsEdge <= 0.0) return 1.0;
     return mix(1.0, illEdgeRamp(rp.x, min(illEdgeRadius, rHi), illEdgeWidth), illPointsEdge);
   }
 `,
   hooks: { points: "illPointsAt" },
-  uniforms: (p) => ({ illPointsEdge: p.edge ?? 1 }),
+  uniforms: (p) => ({ illPointsEdge: p.edge ?? 1, illPointsCap: 0 }),
 };

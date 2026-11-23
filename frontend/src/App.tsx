@@ -9,7 +9,7 @@ import { Exposure } from "./galaxy/Exposure";
 import { askFieldAhead } from "./galaxy/fieldLoads";
 import type { FilterSetName } from "./galaxy/filters";
 import { GalaxyTab, type Mode } from "./galaxy/GalaxyTab";
-import { type Look, exposureFor, loadLook, loadTuning, saveLook } from "./galaxy/tuning";
+import { type Look, drawnTuningFor, exposureFor, loadLook, saveLook } from "./galaxy/tuning";
 import { type Preset, type ViewState } from "./galaxy/GalaxyView";
 import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
@@ -176,7 +176,7 @@ export function App() {
   const tabWaits = sampleKey !== null && !sample && meta !== null && meta.model === shownModel && (!landed || viewOf === wf.selection);
   useEffect(() => {
     if (!tabWaits || !meta || !galaxyQuery) return;
-    const timer = setTimeout(() => askFieldAhead(meta, galaxyQuery, filterSet, loadTuning(undefined, landed?.name ?? null, look)), 0);
+    const timer = setTimeout(() => askFieldAhead(meta, galaxyQuery, filterSet, drawnTuningFor(undefined, landed?.name ?? null, look, physicsOnly)), 0);
     return () => clearTimeout(timer);
   }, [tabWaits, sampleKey]); // eslint-disable-line react-hooks/exhaustive-deps -- asked once per query the tab waits on
   // A landing whose query no loader is asking with (the same template chosen again) has nothing to wait for (#188).

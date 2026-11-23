@@ -609,11 +609,17 @@ interface Props {
    * are drawn as before. Read only under the illustrative look.
    */
   illEdged?: boolean;
+  /**
+   * (S108 J4, illustrative/points.ts illPointsCapped) The brightest this material's points may be (their largest channel,
+   * the frame's linear units): the arm grain's (SparkleLayer). Absent or 0, none - every other material's. Read only under
+   * the illustrative look.
+   */
+  illCap?: number;
 }
 
 const BUFFER = new Vector2();
 
-export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null, ill = null, illEdged = false }: Props) {
+export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, extent = null, profile = 0, physical = null, ill = null, illEdged = false, illCap = 0 }: Props) {
   const gl = useThree((s) => s.gl);
   const points = useMemo(() => {
     const geometry = new BufferGeometry();
@@ -662,6 +668,8 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
         ...(ill ? ill.uniforms : {}),
         // S108: the points' edge only where these points take it (illEdged); this material's own 0 elsewhere.
         ...(ill && !illEdged ? { illPointsEdge: { value: 0 } } : {}),
+        // S108 (J4): the cap this material's own (0 unless the sparkle's), set each frame below.
+        ...(ill ? { illPointsCap: { value: 0 } } : {}),
       },
       vertexShader: ill ? illustrativePointsVertex(VERTEX) : VERTEX,
       fragmentShader: FRAGMENT,
@@ -752,6 +760,7 @@ export function FluxPoints({ positions, flux, gain, psf, spriteSize, dust, exten
     }
     uniforms.spritePx.value = (psf?.size ?? spriteSize) * gl.getPixelRatio();
     uniforms.gain.value = gain;
+    if (uniforms.illPointsCap) uniforms.illPointsCap.value = illCap;
     const mean = psf?.mean ?? DEFAULT_MEAN;
     (uniforms.spriteMean.value as Vector3).set(mean[0], mean[1], mean[2]);
     uniforms.sprite.value = psf?.texture ?? psfTexture();

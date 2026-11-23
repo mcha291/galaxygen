@@ -9,6 +9,7 @@
 //             rotation about the line of sight - the camera's screen-up measured against the disc's projected axis.
 //   stars     the star-first mode under each look on NGC 4414 (the points' edge).
 //   reroll    pattern_seed and texture_seed rerolled and Generate pressed, under the illustrative look, on both templates.
+// S108_TUNING: a copy box's JSON (an "ill" object keyed feature.key) stored as the template's tuning before the page loads.
 // S108_OUT: where the PNGs go (default docs/goals/s108 under the repository, gitignored).
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -17,7 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import { type Page, expect, test } from "@playwright/test";
 
-import { LOOK_STORAGE_KEY } from "../../src/galaxy/tuning";
+import { LOOK_STORAGE_KEY, storageKeyFor } from "../../src/galaxy/tuning";
 import { MODE_BUTTON, PHYSICS_ONLY_BUTTON, READY, SELECTION_TEXT } from "../settings";
 
 declare const window: Window & {
@@ -121,6 +122,11 @@ async function open(page: Page, look: "physical" | "illustrative", template: str
   const net = watchApi(page);
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.addInitScript(([key, l]) => localStorage.setItem(key, l), [LOOK_STORAGE_KEY, look] as const);
+  // S108_TUNING (S108 J): a copy box's values (an "ill" object keyed feature.key) stored as this template's tuning under
+  // the look before the page loads, as look.spec.ts's combination is.
+  if (process.env.S108_TUNING) {
+    await page.addInitScript(([key, t]) => localStorage.setItem(key, t), [storageKeyFor(template, look), process.env.S108_TUNING] as const);
+  }
   await page.goto("/");
   await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenFrameSum, null, { timeout: READY.timeoutMs });
   await press(page, LABEL[template]);

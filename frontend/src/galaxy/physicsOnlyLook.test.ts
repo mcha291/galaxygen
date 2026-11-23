@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { LOOKS } from "./illustrative";
-import { LOOK_SUSPENDED_WHAT, drawnLook, lookDefaultsFor, lookSuspended } from "./tuning";
+import { LOOK_SUSPENDED_WHAT, drawnLook, drawnTuningFor, loadTuning, lookDefaultsFor, lookSuspended } from "./tuning";
 
 // S108 (the lead's ruling): "physics only" is a study of the physical model; while it is on the view draws the
 // physical look whatever look is stored, and the stored look returns when it is released.
@@ -27,6 +27,18 @@ describe("the look drawn under physics only (S108)", () => {
       const drawn = lookDefaultsFor(template, drawnLook("illustrative", true));
       expect(drawn).toEqual(lookDefaultsFor(template, "physical"));
       expect(drawn.ill).toEqual(lookDefaultsFor(template, "physical").ill);
+    }
+  });
+});
+
+// S108 J5: App's head start on the field's loads asks with the tuning of the look drawn, not the stored look's.
+describe("the tuning the field's loads are asked ahead with (S108 J5)", () => {
+  const stored = (key: string): string | null => (key.includes("illustrative") ? JSON.stringify({ ill: { "arms.strength": 0.5 } }) : null);
+  const storage = { getItem: stored };
+  it("is the physical look's under physics only, whatever look is stored", () => {
+    for (const template of ["milky_way", "ngc_4414"]) {
+      expect(drawnTuningFor(storage, template, "illustrative", true)).toEqual(loadTuning(storage, template, "physical"));
+      expect(drawnTuningFor(storage, template, "illustrative", false)).toEqual(loadTuning(storage, template, "illustrative"));
     }
   });
 });

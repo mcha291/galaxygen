@@ -626,6 +626,15 @@ export function drawnLook(stored: Look, physicsOnly: boolean): Look {
   return physicsOnly ? "physical" : stored;
 }
 
+/**
+ * The tuning the view will draw a template with (S108 J5): the stored tuning of the look drawn (drawnLook), not the
+ * stored look's - App's head start on the field's loads (fieldLoads.ts askFieldAhead) asks with it, so under "physics
+ * only" it asks the physical look's requests, the ones GalaxyTab's loaders then make.
+ */
+export function drawnTuningFor(storage: Pick<Storage, "getItem"> | null | undefined, template: string | null, stored: Look, physicsOnly: boolean): Tuning {
+  return loadTuning(storage, template, drawnLook(stored, physicsOnly));
+}
+
 /** Whether the stored look is set aside by "physics only" (the look's switch says so, S108). */
 export const lookSuspended = (stored: Look, physicsOnly: boolean): boolean => drawnLook(stored, physicsOnly) !== stored;
 

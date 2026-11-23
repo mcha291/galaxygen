@@ -468,6 +468,8 @@ export const POINTS_PATCHES: readonly Patch[] = [
     apply: (a) =>
       "    float illPhi = atan(-position.z, position.x);\n" +
       "    light *= illPoints(vec2(length(position.xz), illPhi < 0.0 ? illPhi + 6.28318531 : illPhi));\n" +
+      // S108 (J4): the sparkle's brightness cap (points.ts illPointsCapped; 0, none, on every other material).
+      "    light = illPointsCapped(light);\n" +
       a,
   },
   // S106: the gas hook, on the segment's gas fluctuation map (the march's screenGas, read the same way).
