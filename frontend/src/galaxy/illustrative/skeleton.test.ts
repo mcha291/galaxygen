@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonPlanes } from "./armsSkeleton";
 import type { Piece } from "./lanesMap";
-import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
+import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, patchAt, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
 
 /** Pieces of a trailing 12-degree winding (phi growing outward), two chains half a turn apart. */
 const pieces: Piece[] = [0, 1].flatMap((c) =>
@@ -133,5 +133,60 @@ describe("the arm skeleton", () => {
     const a = buildSkeleton({ pieces, bar }).arms[0];
     const l = ridgeLine(a, 0.1);
     for (let i = 1; i < l.x.length; i++) expect(Math.hypot(l.x[i] - l.x[i - 1], l.y[i] - l.y[i - 1])).toBeCloseTo(0.1, 1);
+  });
+});
+
+describe("the arm skeleton's S107 controls (the Milky Way's spiral and patchy arms)", () => {
+  it("leaves the S106 skeleton at their defaults", () => {
+    const s106 = buildSkeleton({ pieces, bar }, { lesser: 2, spurs: 3 });
+    const zeros = buildSkeleton({ pieces, bar }, { lesser: 2, spurs: 3, pitchGrow: 0, open: 0, lesserWidth: 0.85, lesserReach: 0.92, patch: 0, ragged: 0 });
+    expect(zeros.arms.map((a) => [a.phi, a.width, a.r1])).toEqual(s106.arms.map((a) => [a.phi, a.width, a.r1]));
+    expect(s106.arms.every((a) => a.patch === null && a.wIn === null)).toBe(true);
+  });
+
+  it("opens the pitch outward, leaves the bar more steeply, and sets the lessers' width and reach", () => {
+    const flat = buildSkeleton({ pieces, bar }, { drift: 0, kink: 0, lesser: 2, spurs: 0 });
+    const grown = buildSkeleton({ pieces, bar }, { drift: 0, kink: 0, lesser: 2, spurs: 0, pitchGrow: 0.5, open: 1, lesserWidth: 0.5, lesserReach: 0.6 });
+    const m = grown.arms[0];
+    // Steeper at the start (the open) and far out (the growth); the same pitch nowhere near both.
+    expect(m.tanp[0]).toBeGreaterThan(1.5 * flat.arms[0].tanp[0]);
+    expect(m.tanp[m.n - 1]).toBeGreaterThan(1.5 * flat.arms[0].tanp[flat.arms[0].n - 1]);
+    // Fewer turns to the edge.
+    expect(Math.abs(m.phi[m.n - 1] - m.phi[0])).toBeLessThan(0.75 * Math.abs(flat.arms[0].phi[flat.arms[0].n - 1] - flat.arms[0].phi[0]));
+    const lesser = grown.arms.filter((a) => a.kind === "lesser");
+    for (const a of lesser) {
+      expect(a.width).toBeCloseTo(0.5 * grown.width, 9);
+      expect(a.r1).toBeCloseTo(0.6 * m.r1, 6);
+    }
+  });
+
+  it("clumps the glow and the grain along an arm, keeping each ring's mean from the unclumped band", () => {
+    const sk = buildSkeleton({ pieces, bar }, { lesser: 0, spurs: 0, patch: 0.9, patchScale: 1, ragged: 0.5 });
+    const a = sk.arms[0];
+    expect(a.patch).not.toBeNull();
+    const vals = Array.from(a.patch!);
+    expect(Math.max(...vals)).toBeLessThanOrEqual(1);
+    expect(Math.min(...vals)).toBeLessThan(0.4);
+    expect(vals.filter((v) => v > 0.95).length).toBeGreaterThan(0.1 * vals.length);
+    // The grain follows the clumps.
+    const hit = ridgeAt(sk, 9, armAt(a, 9)!.phi);
+    expect(hit.patch).toBeCloseTo(patchAt(a, 9), 9);
+    expect(grainDensity(hit, 0.05, 0)).toBeCloseTo(Math.min(1, 1.05 * hit.patch!), 6);
+    // The planes' ring means are the unclumped band's: the same as with no clumps where the sides are even.
+    const even = buildSkeleton({ pieces, bar }, { lesser: 0, spurs: 0, patch: 0.9, patchScale: 1 });
+    const none = buildSkeleton({ pieces, bar }, { lesser: 0, spurs: 0 });
+    const pe = skeletonPlanes(even, 200, 360, 20, 0.2, 1);
+    const pn = skeletonPlanes(none, 200, 360, 20, 0.2, 1);
+    // (to the far tail the clumped band reaches a little further: the ragged sides may be wider)
+    pe.ringMean.forEach((v, k) => expect(v).toBeCloseTo(pn.ringMean[k], 3));
+    expect(pe.share).not.toEqual(pn.share);
+  });
+
+  it("draws a spur's glow without a wing", () => {
+    const sk = buildSkeleton({ pieces, bar }, { lesser: 0, spurs: 1 });
+    const spurOnly = { ...sk, arms: [sk.arms[2]] };
+    const band = skeletonBand(spurOnly, 200, 720, 20, 0.5);
+    const noWing = skeletonBand(spurOnly, 200, 720, 20, 0);
+    expect(band).toEqual(noWing);
   });
 });

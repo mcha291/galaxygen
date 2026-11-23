@@ -236,11 +236,13 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
         continue;
       }
       // None floats in the inter-arm disc: within two ridge widths of a crest.
-      expect(hit.distance).toBeLessThan(2 * hit.width);
+      // (S107: scattered 0.4 widths across, with the complexes: within two and a half.)
+      expect(hit.distance).toBeLessThan(2.5 * hit.width);
       if (hit.side > 0) inner += 1;
     }
     expect(inside).toBeLessThan(0.02 * nebulae.length);
-    expect(inner / nebulae.length).toBeGreaterThan(0.75);
+    // (S107: the Milky Way's regions scattered 0.4 widths across, not 0.15: still mostly on the inner side.)
+    expect(inner / nebulae.length).toBeGreaterThan(0.65);
     // The blue-white points beside them.
     expect(a.some((r) => r.kind === 1)).toBe(true);
   });
@@ -272,8 +274,39 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
     // A region's light at most (sizeMax / sizeMin)^lightSize; a bar end's member barEnds times that.
     const top = Math.pow(local.sizeMax / local.sizeMin, local.lightSize);
     expect(a.filter((r) => r.light > 2 * top).length).toBeGreaterThanOrEqual(2);
-    const none = placeOnSkeleton(sk, { ...local, barEnds: 0 });
+    const none = placeOnSkeleton(sk, { ...local, barEnds: 0, complexes: 0 });
     expect(none.some((r) => r.light > top * 1.0001)).toBe(false);
+  });
+
+  it("S107: keeps the S106 placement at the new controls' zeros; no bunch on a weak ridge; complexes on the majors", () => {
+    const s106 = { ...local, minStrength: 0, patchPow: 0, complexes: 0 };
+    const { minStrength: _m, patchPow: _p, complexes: _c, ...bare } = s106;
+    void _m;
+    void _p;
+    void _c;
+    expect(placeOnSkeleton(sk, s106)).toEqual(placeOnSkeleton(sk, bare));
+    const strong = placeOnSkeleton(sk, { ...s106, minStrength: 0.5, barEnds: 0, sparkle: 0 });
+    // (A bunch's members spread along the arm and across it, so a few stand where the ridge is a little weaker.)
+    const weak = strong.filter((r) => ridgeAt(sk, Math.hypot(r.x, r.y), Math.atan2(r.y, r.x)).strength < 0.4).length;
+    expect(strong.length).toBeGreaterThan(0);
+    expect(weak).toBeLessThan(0.05 * strong.length);
+    const top = Math.pow(local.sizeMax / local.sizeMin, local.lightSize);
+    const withC = placeOnSkeleton(sk, { ...s106, barEnds: 0, sparkle: 0, complexes: 6, complexGain: 4 });
+    const bright = withC.filter((r) => r.light > top * 1.0001);
+    expect(bright.length).toBeGreaterThanOrEqual(6);
+    // Each within reach of a major arm's crest (the members spread along and across it).
+    for (const r of bright) {
+      const R = Math.hypot(r.x, r.y);
+      const phi = Math.atan2(r.y, r.x);
+      const near = sk.arms.some((a) => {
+        if (a.kind !== "major") return false;
+        const h = armAt(a, R);
+        if (!h) return R < a.r0 + 3 * a.width;
+        const d = Math.abs(Math.atan2(Math.sin(phi - h.phi), Math.cos(phi - h.phi)));
+        return R * d * (h.tanp / Math.sqrt(1 + h.tanp * h.tanp)) < 3 * a.width;
+      });
+      expect(near).toBe(true);
+    }
   });
 
   it("gives each region lobes along the arm, hues between the two pinks, and the attributes' lengths", () => {

@@ -51,7 +51,24 @@ export interface SkeletonParams {
   lesserLevel: number;
   /** The seed of the drift, the kinks, the spurs and the breaks. */
   seed: number;
+  /** S107: the pitch grows outward as (R / the majors' start)^this, so successive windings separate; 0 a constant pitch. */
+  pitchGrow?: number;
+  /** S107: the majors' pitch at their start raised by 1 + this, falling back over about a third of a turn: the arm leaves the bar's end at a clear angle; 0 none. */
+  open?: number;
+  /** S107: the lesser arms' width as a share of the majors' (0.85 until S107). */
+  lesserWidth?: number;
+  /** S107: the lesser arms' outer end as a share of the majors' (LESSER_REACH until S107). */
+  lesserReach?: number;
+  /** S107: the light along each arm modulated by a fixed noise (bright clumps, thin stretches) by this share; 0 an even arm. */
+  patch?: number;
+  /** S107: the clumps' wavelength along the arm, kpc. */
+  patchScale?: number;
+  /** S107: each side of an arm's band widened or narrowed by a fixed noise by up to this share (ragged edges); 0 even edges. */
+  ragged?: number;
 }
+
+/** The lesser arms' outer end as a share of the majors' (the default of SkeletonParams.lesserReach). */
+export const LESSER_REACH = 0.92;
 
 export const SKELETON_DEFAULTS: SkeletonParams = {
   lesser: 2,
@@ -66,10 +83,15 @@ export const SKELETON_DEFAULTS: SkeletonParams = {
   lesserStart: 1.25,
   lesserLevel: 0.75,
   seed: 11,
+  pitchGrow: 0,
+  open: 0,
+  lesserWidth: 0.85,
+  lesserReach: LESSER_REACH,
+  patch: 0,
+  patchScale: 0.7,
+  ragged: 0,
 };
 
-/** The lesser arms' outer end as a share of the majors'. */
-export const LESSER_REACH = 0.92;
 /** How far (rad) a lesser arm's phase may be nudged toward the pieces' strongest phase. */
 export const NUDGE = (35 * Math.PI) / 180;
 /** The samples per unit ln R of an arm's table. */
@@ -92,6 +114,15 @@ export interface SkelArm {
   strength: Float64Array;
   /** The ridge's full width at half maximum here, kpc. */
   width: number;
+  /**
+   * S107 (null without patchiness or raggedness): at each sample the light's clump multiplier (mean about 1) and the
+   * band's width multipliers on the inner (the centre's) and the outer side.
+   */
+  patch: Float64Array | null;
+  wIn: Float64Array | null;
+  wOut: Float64Array | null;
+  /** S107: the largest of the two sides' width multipliers (1 without raggedness). */
+  wMax?: number;
 }
 
 export interface Skeleton {
@@ -162,7 +193,7 @@ const smooth01 = (e0: number, e1: number, x: number): number => {
 };
 
 /** One arm tabulated: from (r0, phi0) out to r1 at a pitch drifting about `pitchDeg`, its strength profile laid. */
-function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg: number, sense: number, level: number, width: number, p: SkeletonParams, key: number, fadeIn: number): SkelArm {
+function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg: number, sense: number, level: number, width: number, p: SkeletonParams, key: number, fadeIn: number, pitchAt: (lnR: number) => number = () => 1): SkelArm {
   const lnR0 = Math.log(r0);
   const span = Math.max(1e-3, Math.log(r1) - lnR0);
   const n = Math.max(8, Math.ceil(span * PER_LN) + 1);
@@ -183,7 +214,7 @@ function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg:
       const x = (f - k.at) * (span / 0.04);
       scale += p.kink * k.sign * Math.exp(-x * x);
     }
-    const t = Math.tan((Math.max(1, Math.min(60, pitchDeg * Math.max(0.2, scale))) * Math.PI) / 180);
+    const t = Math.tan((Math.max(1, Math.min(60, pitchDeg * Math.max(0.2, scale) * pitchAt(lnR))) * Math.PI) / 180);
     tanp[i] = t;
     if (i > 0) ph += (sense * dlnR) / (0.5 * (t + tanp[i - 1]));
     phi[i] = ph;
@@ -199,7 +230,42 @@ function tabulate(kind: ArmKind, r0: number, r1: number, phi0: number, pitchDeg:
     const grain = 0.88 + 0.12 * laneNoise(s / TAU / 1.7 + 9.4, key ^ 0x3c);
     strength[i] = level * inner * out * kept * grain;
   }
-  return { kind, r0, r1, lnR0, dlnR, n, phi, tanp, strength, width };
+  const { patch, wIn, wOut } = patchTables(n, lnR0, dlnR, tanp, p, key);
+  let wMax = 1;
+  if (wIn && wOut) for (let i = 0; i < n; i++) wMax = Math.max(wMax, wIn[i], wOut[i]);
+  return { kind, r0, r1, lnR0, dlnR, n, phi, tanp, strength, width, patch, wIn, wOut, wMax };
+}
+
+/** Two octaves of laneNoise, about [-1, 1]. */
+const noise2 = (x: number, key: number): number => (laneNoise(x, key) + 0.5 * laneNoise(x * 2.07 + 13.7, key ^ 0x5bd1e995)) / 1.5;
+
+/**
+ * S107 (the patchy arms): an arm's clump and edge tables over its samples, from fixed noises in its arc length (kpc
+ * along the crest, ds = R dlnR / sin(pitch)): the clumps min(1, (1 - patch) + patch * 2.2 u^2), u the noise in [0, 1] at the
+ * `patchScale` wavelength (the full ridge in the knots, thin stretches between); each side's width 1 + ragged * noise at half
+ * that wavelength. Null tables where both shares are 0.
+ */
+function patchTables(n: number, lnR0: number, dlnR: number, tanp: Float64Array, p: SkeletonParams, key: number) {
+  const share = Math.min(1, Math.max(0, p.patch ?? 0));
+  const ragged = Math.min(0.9, Math.max(0, p.ragged ?? 0));
+  if (share <= 0 && ragged <= 0) return { patch: null, wIn: null, wOut: null };
+  const L = Math.max(0.05, p.patchScale ?? 0.7);
+  const patch = new Float64Array(n);
+  const wIn = new Float64Array(n);
+  const wOut = new Float64Array(n);
+  let s = 0;
+  for (let i = 0; i < n; i++) {
+    if (i > 0) {
+      const R = Math.exp(lnR0 + (i - 0.5) * dlnR);
+      const t = 0.5 * (tanp[i] + tanp[i - 1]);
+      s += (R * dlnR * Math.sqrt(1 + t * t)) / t;
+    }
+    const u = Math.min(1, Math.max(0, 0.5 + 0.65 * noise2(s / L + 0.71, key ^ 0x2a17)));
+    patch[i] = Math.min(1, 1 - share + share * 2.2 * u * u);
+    wIn[i] = Math.max(0.1, 1 + ragged * noise2((2 * s) / L + 3.3, key ^ 0x6c3));
+    wOut[i] = Math.max(0.1, 1 + ragged * noise2((2 * s) / L + 7.9, key ^ 0x4e1));
+  }
+  return { patch, wIn, wOut };
 }
 
 /** What the skeleton is built from: the arm pieces and the bar (lanesMap.ts LaneGeometry's own). */
@@ -226,7 +292,16 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
     phiA = longest.phi0 - (sense * Math.log(longest.r0 / r0)) / tanp;
   }
   const r1 = Math.max(r0 * 1.2, p.outer);
-  for (let k = 0; k < 2; k++) arms.push(tabulate("major", r0, r1, phiA + k * Math.PI, pitchDeg, sense, 1, p.width, p, laneKey(p.seed, 1, k, 0), 0.04));
+  // S107: the pitch grows outward from the majors' start (every arm the same function of R, so the arms keep their
+  // spacing), and the majors leave the bar's ends more steeply (1 + open at the start, back to 1 over about a third of
+  // a turn).
+  const lnRef = Math.log(r0);
+  const grow = p.pitchGrow ?? 0;
+  const pitchAt = (lnR: number): number => Math.exp(grow * Math.max(0, lnR - lnRef));
+  const open = Math.max(0, p.open ?? 0);
+  const openLen = 0.35 * Math.PI * tanp;
+  const majorPitchAt = open > 0 ? (lnR: number): number => pitchAt(lnR) * (1 + open * Math.exp(-Math.max(0, lnR - lnRef) / Math.max(0.02, openLen))) : pitchAt;
+  for (let k = 0; k < 2; k++) arms.push(tabulate("major", r0, r1, phiA + k * Math.PI, pitchDeg, sense, 1, p.width, p, laneKey(p.seed, 1, k, 0), 0.04, majorPitchAt));
   // The lesser arms: between the majors in the log-spiral phase, nudged to the pieces' strongest phase near there.
   const lesser = Math.max(0, Math.min(4, Math.round(p.lesser)));
   const psiA = phiA - (sense * Math.log(r0)) / tanp;
@@ -249,8 +324,9 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
         best = nominal + d;
       }
     }
-    const phiL = best + (sense * Math.log(rL)) / tanp;
-    arms.push(tabulate("lesser", rL, Math.max(rL * 1.2, r1 * LESSER_REACH), phiL, pitchDeg, sense, p.lesserLevel, p.width * 0.85, p, laneKey(p.seed, 2, k, 0), 0.12));
+    // (With a growing pitch the phase is carried from the majors' start to the lesser start along the same winding.)
+    const phiL = grow > 0 ? best + (sense * lnRef) / tanp + sense * windingTo(lnRef, Math.log(rL), tanp, pitchAt) : best + (sense * Math.log(rL)) / tanp;
+    arms.push(tabulate("lesser", rL, Math.max(rL * 1.2, r1 * (p.lesserReach ?? LESSER_REACH)), phiL, pitchDeg, sense, p.lesserLevel, p.width * (p.lesserWidth ?? 0.85), p, laneKey(p.seed, 2, k, 0), 0.12, pitchAt));
   }
   // The spurs: off the arms' outer sides at seeded places, more open than the arm, short.
   const parents = arms.slice();
@@ -263,9 +339,21 @@ export function buildSkeleton(g: SkeletonGeometry, params: Partial<SkeletonParam
     const rs = Math.exp(parent.lnR0 + i * parent.dlnR);
     const length = 0.12 + 0.14 * laneRandom(key, 2);
     const spurPitch = pitchDeg * (2 + laneRandom(key, 3));
-    arms.push(tabulate("spur", rs, rs * Math.exp(length), parent.phi[i], spurPitch, sense, 0.5 * parent.strength[i] + 0.1, p.width * 0.7, { ...p, fade: 0.6, drift: p.drift * 0.5, kink: 0 }, key, 0.15));
+    arms.push(tabulate("spur", rs, rs * Math.exp(length), parent.phi[i], spurPitch, sense, 0.5 * parent.strength[i] + 0.1, p.width * 0.7, { ...p, fade: 0.6, drift: p.drift * 0.5, kink: 0 }, key, 0.15, pitchAt));
   }
   return { arms, sense, pitchDeg, width: p.width };
+}
+
+/** The winding (rad) from ln R a to b at base tan(pitch) `tanp` times pitchAt (a constant pitch: (b - a) / tanp). */
+function windingTo(a: number, b: number, tanp: number, pitchAt: (lnR: number) => number): number {
+  const steps = 64;
+  const base = (Math.atan(tanp) * 180) / Math.PI;
+  let w = 0;
+  for (let i = 0; i < steps; i++) {
+    const lnR = a + ((i + 0.5) / steps) * (b - a);
+    w += (b - a) / steps / Math.tan((Math.min(60, base * pitchAt(lnR)) * Math.PI) / 180);
+  }
+  return w;
 }
 
 /** An arm's sample index (fractional) at radius R, or null outside it. */
@@ -288,6 +376,21 @@ export function armAt(a: SkelArm, R: number): { phi: number; tanp: number; stren
   return { phi: lerp(a.phi, x), tanp: lerp(a.tanp, x), strength: lerp(a.strength, x) };
 }
 
+/** S107: an arm's clump multiplier at radius R (1 without patchiness or outside it). */
+export function patchAt(a: SkelArm, R: number): number {
+  if (!a.patch) return 1;
+  const x = at(a, R);
+  return x === null ? 1 : lerp(a.patch, x);
+}
+
+/** S107: an arm's width at radius R on its inner (side +1) or outer (-1) side, kpc. */
+export function sideWidth(a: SkelArm, R: number, side: number): number {
+  const t = side >= 0 ? a.wIn : a.wOut;
+  if (!t) return a.width;
+  const x = at(a, R);
+  return x === null ? a.width : a.width * lerp(t, x);
+}
+
 /** The nearest ridge to a point: its distance (kpc, across the arm on the point's ring), strength there, arm index and side. */
 export interface RidgeHit {
   /** kpc, R |dphi| sin(pitch) on the point's ring; Infinity where no arm crosses it. */
@@ -298,8 +401,10 @@ export interface RidgeHit {
   arm: number;
   /** +1 the point lies on the ridge's inner (concave, the centre's) side, -1 its outer. */
   side: number;
-  /** The ridge's FWHM there, kpc. */
+  /** The ridge's FWHM there, kpc (S107: on the point's side of the crest). */
   width: number;
+  /** S107: the arm's clump multiplier there (1 without patchiness). */
+  patch?: number;
 }
 
 /**
@@ -319,7 +424,7 @@ export function ridgeAt(sk: Skeleton, R: number, phi: number): RidgeHit {
       // The inner side: a point displaced from the crest along the ring in the arm's own sense lies where the arm
       // passes further out, so the arm is outside it.
       const side = Math.sign(d) * sk.sense >= 0 ? 1 : -1;
-      best = { distance: dist, strength: h.strength, arm: k, side, width: a.width };
+      best = a.patch || a.wIn ? { distance: dist, strength: h.strength, arm: k, side, width: sideWidth(a, R, side), patch: patchAt(a, R) } : { distance: dist, strength: h.strength, arm: k, side, width: a.width };
     }
   }
   return best;
@@ -335,10 +440,14 @@ export function bandProfile(d: number, width: number, wing: number): number {
 /**
  * The skeleton's band over the shared map's grid (width columns along R over [0, rHi], height rows round the turn,
  * cell-centred, row-major): at each texel the largest strength * bandProfile over the arms crossing its ring.
- * Ring by ring and arm by arm, only the rows within 3.5 sigma of the wing of each crest are touched.
+ * Ring by ring and arm by arm, only the rows within 3.5 sigma of the wing of each crest are touched. S107: `plainMean`,
+ * if given (`width` values), takes each ring's mean of the band without the arms' clumps (the light kept per ring is
+ * the unclumped arm's, so a ring crossing a bright clump is not dimmed between the arms - concentric bands otherwise).
  */
-export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wing: number): Float32Array {
+export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: number, wingAll: number, plainMean: Float64Array | null = null): Float32Array {
   const out = new Float32Array(width * height);
+  // The unclumped band of the ring in hand (one column: every arm crossing it is drawn before the next ring).
+  const plain = plainMean ? new Float32Array(height) : null;
   const dPhi = TAU / height;
   // S106 (B5): near an arm's START each texel's strength is read at the FOOT of its perpendicular on the arm (the
   // crest's point nearest it: ln R moved by sense * dphi * sin(p) cos(p)), none where that foot lies before the start;
@@ -350,9 +459,15 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
   for (let c = 0; c < width; c++) {
     const R = ((c + 0.5) / width) * rHi;
     const lnR = Math.log(R);
+    if (plain) plain.fill(0);
     for (const a of sk.arms) {
+      // S107: a spur's glow has no wing (its wing, three widths across a short branch, began square across it where
+      // the spur leaves its arm: a straight edge in the haze).
+      const wing = a.kind === "spur" ? 0 : wingAll;
       const s = a.width / 2.3548;
-      const reachKpc = (wing > 0 ? 3 * 3.2 : 3.5) * s;
+      // (S107: the core's reach at its widest ragged side; the wing's at the even width.)
+      const core = 3.5 * s * (a.wMax ?? 1);
+      const reachKpc = wing > 0 ? Math.max(3 * 3.2 * s, core) : core;
       // Inside the arm's start (within a reach of it) its crest carried inward at the start's pitch: texels there
       // whose foot lies on the arm are its band's rounded start.
       const h = armAt(a, R) ?? armBefore(a, R, reachKpc, sense);
@@ -367,6 +482,11 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
       // The start's reach along the arm, in ln R: the foot's reading blends into the ring's over the next as much.
       const startLen = Math.max(4 * a.dlnR, (3 * a.width) / a.r0);
       const ringStrength = "strength" in h ? (h.strength as number) : 0;
+      // S107: the clumps and the two sides' widths on this ring (the arm's own tables; 1 and the width without them).
+      const clump = R >= a.r0 ? patchAt(a, R) : 1;
+      const wInner = R >= a.r0 ? sideWidth(a, R, 1) : a.width;
+      const wOuter = R >= a.r0 ? sideWidth(a, R, -1) : a.width;
+      const clumped = !!(a.patch || a.wIn);
       for (let j = jLo; j <= jHi; j++) {
         const dphi = (j - centre) * dPhi;
         const foot = lnR + sense * dphi * sin * cos;
@@ -376,10 +496,33 @@ export function skeletonBand(sk: Skeleton, width: number, height: number, rHi: n
         const atFoot = blend < 1 ? lerp(a.strength, Math.min(a.n - 1, (foot - a.lnR0) / a.dlnR)) : 0;
         const strength = atFoot + (ringStrength - atFoot) * blend;
         if (strength <= 1e-3) continue;
-        const v = strength * bandProfile(R * dphi * sin, a.width, wing);
-        const o = (((j % height) + height) % height) * width + c;
+        const across = R * dphi * sin;
+        let u: number;
+        let v: number;
+        if (clumped) {
+          // S107: the clumps and the ragged sides on the crest's core only - the wing (three widths across: much of
+          // the ring at a low pitch) read at the even width and unclumped, else each ring's clump would lay a faint
+          // arc along the whole wing.
+          const ws = (dphi * sense >= 0 ? wInner : wOuter) / 2.3548;
+          const x = across / ws;
+          const core = Math.exp(-0.5 * x * x) * (1 - wing);
+          const wingPart = wing * Math.exp(-0.5 * (across / ((3 * a.width) / 2.3548)) ** 2);
+          u = strength * (core + wingPart);
+          v = strength * (clump * core + wingPart);
+        } else {
+          u = strength * bandProfile(across, a.width, wing);
+          v = u;
+        }
+        const row = ((j % height) + height) % height;
+        const o = row * width + c;
         if (v > out[o]) out[o] = v;
+        if (plain && u > plain[row]) plain[row] = u;
       }
+    }
+    if (plain && plainMean) {
+      let sum = 0;
+      for (let r = 0; r < height; r++) sum += plain[r];
+      plainMean[c] = sum / height;
     }
   }
   return out;
@@ -474,5 +617,5 @@ export function grainDensity(hit: RidgeHit, tail: number, fadePow: number): numb
   if (!(hit.distance < Infinity) || hit.strength <= 0) return 0;
   const x = hit.distance / Math.max(1e-3, hit.width);
   const v = Math.exp(-0.5 * (x / 0.3) ** 2) * 0.7 + 0.3 * Math.exp(-0.5 * (x / 0.7) ** 2) + tail * Math.exp(-0.5 * (x / 2) ** 2);
-  return Math.min(1, v) * Math.pow(hit.strength, fadePow);
+  return Math.min(1, v * (hit.patch ?? 1)) * Math.pow(hit.strength, fadePow);
 }
