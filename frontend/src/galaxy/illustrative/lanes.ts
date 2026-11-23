@@ -15,7 +15,9 @@
 // The depth, the ink, the redness, the edge and the mottle are uniforms: no rebuild.
 
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllControl, type IllFeature, type IllFrame, type IllParams, memoOn } from "./feature";
-import { LANE_ARRAYS, LANE_MAP, type LaneShape, SHAPE_KEYS, buildLaneMap, geometryOf } from "./lanesMap";
+import { LANE_ARRAYS, LANE_MAP, type LaneShape, SHAPE_KEYS, buildLaneMap, geometryOf, ridgeStep, traceRidges } from "./lanesMap";
+import { arms, shapeOf as armShapeOf } from "./arms";
+import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
@@ -97,6 +99,10 @@ const CONTROLS: readonly IllControl[] = [
   { key: "barWidth", label: "bar lane width", min: 20, max: 400, step: 5, unit: "pc", default: 60, about: "A bar lane's full width at half depth, parsecs. Illustrative." },
   { key: "barCurve", label: "bar lane curve", min: 1, max: 8, step: 0.1, unit: "", default: 2.5, about: "How late a bar lane turns in to the bar's end: 1 a straight line from the end to the centre's side, higher a lane along the axis that turns at the end. Illustrative." },
   { key: "barReach", label: "bar lane reach", min: 0.3, max: 1.3, step: 0.01, unit: "", default: 1, about: "Where a bar lane begins, as a share of the bar's half-length (1 the bar's end). Illustrative." },
+  {
+    key: "trace", label: "lanes on the drawn arms", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+    about: "1: the arms' lanes drawn along the crests of the arms as this look draws them (their ridge lines, traced ring to ring at the arms' template defaults), so a lane lies on its arm's inner edge; 0: along the model's arm pieces. Illustrative (S106).",
+  },
   { key: "seed", label: "lane seed", min: 0, max: 999, step: 1, unit: "", default: 7, about: "The seed of the lanes' wander, breaks and feathers: another number, another drawing of the same lanes. Illustrative." },
 ];
 
@@ -117,15 +123,33 @@ const now = () => (typeof performance !== "undefined" ? performance.now() : 0);
  * LANE_MAP) - built once per (frame, shaping values); null (no lane: the channel reads zero) until the arrays have
  * arrived and for a galaxy with nothing to draw.
  */
-const mapPlane = memoOn((frame: unknown, ...values: unknown[]): Uint8Array | null => {
+const mapPlane = memoOn((frame: unknown, template: unknown, ...values: unknown[]): Uint8Array | null => {
   if (!frame) return null;
   const shape = Object.fromEntries(SHAPE_KEYS.map((k, i) => [k, values[i] as number])) as unknown as LaneShape;
   const started = now();
-  const map = buildLaneMap(geometryOf(frame as IllFrame), shape, ILL_MAP.width, ILL_MAP.height);
+  const g = geometryOf(frame as IllFrame);
+  if (shape.trace >= 0.5) g.traced = tracedFor(frame as IllFrame, (template as string | null) ?? null, ridgeStep(shape));
+  const map = buildLaneMap(g, shape, ILL_MAP.width, ILL_MAP.height);
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
   return map.drawn ? map.data : null;
 });
+
+/**
+ * The arms' crests traced into ridges (S106; lanesMap.ts traceRidges) from the arms' published contrast shaped at the
+ * arms' own defaults on this template (their live sliders are not read: a lane's line moves only with the template).
+ */
+function tracedFor(frame: IllFrame, template: string | null, step: number) {
+  const pattern = (frame.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const gas = (frame.arrays.gas_density_contrast as ArrayLike<number> | undefined) ?? null;
+  const any = pattern ?? gas;
+  if (!any) return null;
+  const p = Object.fromEntries(arms.controls.map((c) => [c.key, (template ? c.perTemplate?.[template] : undefined) ?? c.default]));
+  const grid = gridOf(frame.header, any.length);
+  const shape = armShapeOf(p, frame);
+  const { peaks, k } = armPeaks(armContrast(pattern, gas, grid, shape), grid, shape);
+  return traceRidges(peaks, grid, k, step);
+}
 
 const MAX = LANE_MAP.shapeMax.toFixed(1);
 
@@ -191,7 +215,7 @@ export const lanes: IllFeature = {
     channels: ILL_MAP_CHANNELS.lanes,
     build: (p, context) => {
       const shape = shapeOf(p);
-      return [mapPlane(context.frame, ...SHAPE_KEYS.map((k) => shape[k]))];
+      return [mapPlane(context.frame, shape.trace >= 0.5 ? context.template : null, ...SHAPE_KEYS.map((k) => shape[k]))];
     },
   },
   uniforms: (p) => {

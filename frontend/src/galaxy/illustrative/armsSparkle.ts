@@ -53,6 +53,11 @@ export interface SparkleShape {
   heightPc: number;
   /** S106: the density's floor between the arms, as a share of a full ridge's (0 none: every point on the arms). */
   floor?: number;
+  /**
+   * S106: above 0, the density is read from the raw ridge share (buildSparkle's `raw`) as min(1, share / lift) - a
+   * weak ridge lit as fully as a strong one - in place of the map's G; 0 (or no raw share) the G as S105 read it.
+   */
+  lift?: number;
 }
 
 export interface Sparkle {
@@ -64,8 +69,11 @@ export interface Sparkle {
   weight: Float32Array;
 }
 
-/** The arm share (the arm map's G channel) at (R, phi), linear between texels, 0 outside the grid. */
-export function shareAt(map: Float32Array, g: ArmGrid, r: number, phi: number): number {
+/**
+ * The arm share (the arm map's G channel: `stride` 4, `channel` 1; or a one-value-per-texel plane: 1, 0) at (R, phi),
+ * linear between texels, 0 outside the grid.
+ */
+export function shareAt(map: Float32Array, g: ArmGrid, r: number, phi: number, stride = 4, channel = 1): number {
   const u = (r / g.rHi) * g.nR - 0.5;
   if (u < -0.5 || u > g.nR - 0.5) return 0;
   const v = ((((phi / (2 * Math.PI)) % 1) + 1) % 1) * g.nPhi - 0.5;
@@ -75,7 +83,7 @@ export function shareAt(map: Float32Array, g: ArmGrid, r: number, phi: number): 
   const j0 = ((Math.floor(v) % g.nPhi) + g.nPhi) % g.nPhi;
   const j1 = (j0 + 1) % g.nPhi;
   const fv = v - Math.floor(v);
-  const at = (i: number, j: number) => map[(j * g.nR + i) * 4 + 1];
+  const at = (i: number, j: number) => map[(j * g.nR + i) * stride + channel];
   return (at(i0, j0) * (1 - fu) + at(i1, j0) * fu) * (1 - fv) + (at(i0, j1) * (1 - fu) + at(i1, j1) * fu) * fv;
 }
 
@@ -88,7 +96,7 @@ export function brightness(u: number, slope: number, range: number): number {
 }
 
 /** The points: deterministic in (map, grid, shape, seed). */
-export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number): Sparkle {
+export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, seed: number, raw: Float32Array | null = null): Sparkle {
   const total = Math.max(0, Math.floor(s.count));
   const radius = new Float32Array(total);
   const azimuth = new Float32Array(total);
@@ -97,8 +105,13 @@ export function buildSparkle(map: Float32Array, g: ArmGrid, s: SparkleShape, see
   const next = rng(seed);
   const rMax = Math.min(s.rMax, g.rHi);
   const floor = Math.min(1, Math.max(0, s.floor ?? 0));
+  const lift = s.lift ?? 0;
+  const level =
+    raw && lift > 0
+      ? (r: number, phi: number) => Math.min(1, shareAt(raw, g, r, phi, 1, 0) / lift)
+      : (r: number, phi: number) => shareAt(map, g, r, phi);
   const density = (r: number, phi: number) =>
-    (floor + (1 - floor) * Math.pow(Math.max(0, shareAt(map, g, r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
+    (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
   const place = (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {

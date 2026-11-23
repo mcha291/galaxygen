@@ -16,7 +16,7 @@
 // the knots).
 
 import { createElement, lazy, Suspense } from "react";
-import { FLAG_RINGS, YOUNG_CAP, armContrast, armMap, armPlanes, armShare, gridOf, type ArmGrid, type ArmShape } from "./armsField";
+import { FLAG_RINGS, YOUNG_CAP, barFade, armContrast, armMap, armPlanes, armShare, gridOf, type ArmGrid, type ArmShape } from "./armsField";
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
 import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
 import { barAngle } from "./lanesMap";
@@ -57,11 +57,21 @@ const mapOf = memoOn((frame: unknown, ...values: unknown[]) => {
   const [shapeJson, strength] = values as [string, number];
   const shape = JSON.parse(shapeJson) as ArmShape;
   const n = armContrast(pattern, gas, grid, shape);
-  return { grid, map: armMap(n, grid, shape, strength) };
+  const map = armMap(n, grid, shape, strength);
+  // S106: the ridge share itself, faded as the map's G is but without its smoothstep (index j * nR + i), so the
+  // sparkle can light a weak ridge as fully as a strong one (sparklelift).
+  const { share, sd } = armShare(n, grid, shape);
+  const raw = new Float32Array(grid.nR * grid.nPhi);
+  for (let i = 0; i < grid.nR; i++) {
+    const fa = Math.min(1, barFade((i + 0.5) * (grid.rHi / grid.nR), shape.start, shape.width) * strength);
+    if (sd[i] <= 0.02 || fa <= 0) continue;
+    for (let j = 0; j < grid.nPhi; j++) raw[j * grid.nR + i] = fa * share[i * grid.nPhi + j];
+  }
+  return { grid, map, raw };
 });
 
 /** The arm map for these parameters on this frame (the same object while neither changes). */
-export function armMapFor(p: IllParams, frame: IllFrame | null): { grid: ArmGrid; map: Float32Array } | null {
+export function armMapFor(p: IllParams, frame: IllFrame | null): { grid: ArmGrid; map: Float32Array; raw: Float32Array } | null {
   return mapOf(frame, JSON.stringify(shapeOf(p, frame)), p.strength ?? 1);
 }
 
@@ -246,6 +256,10 @@ export const arms: IllFeature = {
     {
       key: "sparklefloor", label: "sparkle between arms", min: 0, max: 1, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
       about: "The sparkle's density between the arms as a share of a full ridge's, so a sparse grain of stars lies over the whole disc; 0 every point on the arms (S106). Illustrative.",
+    },
+    {
+      key: "sparklelift", label: "sparkle on weak arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
+      about: "Above 0, the sparkle's density read from the arms' ridge share over this level (saturating at 1), so a weak ridge carries as much grain as a strong one; 0 the S105 reading (the tone share). Illustrative (S106).",
     },
     {
       key: "sparklebig", label: "bright sparkle share", min: 0, max: 0.5, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },

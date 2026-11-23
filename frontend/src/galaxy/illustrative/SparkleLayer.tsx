@@ -41,12 +41,13 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
       rMax,
       heightPc: 60,
       floor: params.sparklefloor ?? 0,
+      lift: params.sparklelift ?? 0,
     }),
-    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor],
+    [count, params.clump, params.groupsize, params.members, params.sparkleridge, params.sparkleslope, params.sparklerange, rMax, params.sparklefloor, params.sparklelift],
   );
   const points = useMemo(() => {
     if (!built || shape.count <= 0) return null;
-    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0);
+    const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(context.template ?? "galaxy")) >>> 0, built.raw);
     if (s.radius.length === 0) return null;
     return { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
   }, [built, shape, context.template]);
