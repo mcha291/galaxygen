@@ -34,6 +34,9 @@
 //               A drawing laid over the picture - a lane inked in front of all the starlight, which a depth in the
 //               dust's thin layer cannot do (half the stars stand in front of it) - and so the march's alone: the
 //               points are not veiled.
+//     light     vec3 f(vec2 rp): a per-channel multiplier on all the disc's starlight at the midplane point rp (the
+//               plane's light and the clustered young light; not the bulge, the dust's, the HII's or the gas's).
+//               Multiplied over features into illLight(rp) (S108, the arms).
 //   uniforms   (params, context) => values for its uniforms. Called at every change of a parameter or of the context
 //              (the template; the arrays' frame); a texture (DataTexture, built from context.frame) must be cached by the
 //              feature (feature.ts memoOn) and is handed to the march and every point's material through the same
@@ -144,7 +147,7 @@ export function illArrays(): string[] {
   return [...new Set(FEATURES.flatMap((f) => f.arrays ?? []))].sort();
 }
 
-const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil", arg: string, op: string, unit: string) => {
+const hookCall = (kind: "dustAv" | "youngGain" | "edge" | "veil" | "light", arg: string, op: string, unit: string) => {
   const calls = FEATURES.map((f) => f.hooks?.[kind]).filter((n): n is string => Boolean(n)).map((n) => `${n}(${arg})`);
   return calls.length ? calls.join(` ${op} `) : unit;
 };
@@ -161,6 +164,7 @@ export function illGlsl(): string {
     `  float illYoungGain(vec2 rp) { return ${hookCall("youngGain", "rp", "*", "1.0")}; }`,
     `  float illEdge(float r) { return ${hookCall("edge", "r", "*", "1.0")}; }`,
     `  vec3 illVeil(vec2 rp) { return ${hookCall("veil", "rp", "*", "vec3(1.0)")}; }`,
+    `  vec3 illLight(vec2 rp) { return ${hookCall("light", "rp", "*", "vec3(1.0)")}; }`,
     "",
   ].join("\n");
 }
@@ -179,6 +183,7 @@ export const MARCH_PATCHES: readonly Patch[] = [
     apply: (a) => a.replace("* starsGain;", "* starsGain * illYoungGain(rp);"),
   },
   { anchor: "          hDust = readHeight(rp.x);", apply: (a) => `${a}\n          tau += illDustAv(rp) * cloudExt * dustDepth;` },
+  { anchor: "          float level = readLevel(rp.x);", apply: (a) => `          starsLight *= illLight(rp);\n${a}` },
   {
     anchor: "        // Composed in order (D206; regimes.ts composeStep, line for line). The dust's layer is far thinner than",
     apply: (a) =>
