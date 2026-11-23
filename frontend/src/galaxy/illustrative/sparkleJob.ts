@@ -4,7 +4,7 @@
 // are the same bits either way. No React, no three.js.
 
 import { toScene } from "../positions";
-import { armMapFor, armsSkeleton, shapeOf } from "./arms";
+import { armMapFor, armsSkeleton, barOf, shapeOf } from "./arms";
 import { skeletonOn, skeletonParamsOf } from "./armsSkeleton";
 import { buildSparkle, hashString } from "./armsSparkle";
 import { ILL_MAP, type IllFrame, type IllParams } from "./feature";
@@ -60,7 +60,10 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   const grainFade = params.skelgrainfade ?? 1.5;
   if (!built || shape.count <= 0) return null;
   const plane = lanes ? { data: lanes, width: ILL_MAP.width, height: ILL_MAP.height, rHi: built.grid.rHi } : null;
-  const levelOf = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+  const ridgeLevel = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+  // S109 (sparklebar): on the skeleton, a grain over the drawn bar too (its ellipse's profile, the bar light's own).
+  const onBar = ridgeLevel ? barGrain(params, frame) : null;
+  const levelOf = ridgeLevel && onBar ? (r: number, phi: number) => Math.max(ridgeLevel(r, phi), onBar(r, phi)) : ridgeLevel;
   // S108: the stream follows the generated galaxy (the frame's reroll, index.ts illSeeded; 0 for the template's own).
   const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(template ?? "galaxy") ^ (frame?.header.illReroll ?? 0)) >>> 0, built.raw, plane, levelOf);
   if (s.radius.length === 0) return null;
@@ -95,5 +98,29 @@ export function sparkleKey(params: IllParams, frame: IllFrame | null, frameToken
     JSON.stringify(shapeOf(params, frame)),
     params.strength ?? 1,
     skeletonOn(params) ? [JSON.stringify(skeletonParamsOf(params)), params.skeltail ?? 0.05, params.skelgrainfade ?? 1.5] : null,
+    // S109: the bar's grain (barGrain's inputs; the bar's own geometry is the frame's)
+    (params.sparklebar ?? 0) > 0 ? [params.sparklebar, params.barsize ?? 1, params.barthin ?? 1, params.barsharp ?? 2] : null,
   ]);
+}
+
+/**
+ * S109: the sparkle's density over the drawn bar - sparklebar times the bar light's profile exp(-1.6 e^barsharp), e the
+ * ellipse radius in the drawn bar's units (arms.ts illArmsBarE: the published half-length times barsize, the axis
+ * ratio times barthin, the angle the lanes read); null at 0 or without a bar.
+ */
+export function barGrain(params: IllParams, frame: IllFrame | null): ((r: number, phi: number) => number) | null {
+  const share = params.sparklebar ?? 0;
+  const bar = barOf(frame);
+  if (!(share > 0) || !bar) return null;
+  const a = bar.halfLength * (params.barsize ?? 1);
+  const b = a * bar.axisRatio * (params.barthin ?? 1);
+  const sharp = params.barsharp ?? 2;
+  const c = Math.cos(bar.angle);
+  const s = Math.sin(bar.angle);
+  return (r, phi) => {
+    const x = r * Math.cos(phi);
+    const y = r * Math.sin(phi);
+    const e = Math.hypot((x * c + y * s) / a, (y * c - x * s) / b);
+    return share * Math.exp(-1.6 * Math.pow(e, sharp));
+  };
 }

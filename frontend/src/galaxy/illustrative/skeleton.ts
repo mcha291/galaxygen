@@ -676,6 +676,12 @@ function sampleAtTurn(turned: Float64Array, t: number): number {
   return lo + (d > 0 ? Math.min(1, Math.max(0, (t - turned[lo]) / d)) : 0);
 }
 
+/** S109: an arm's crest radius (kpc) where it has turned `t` rad from its start (its end's past the last). */
+export function radiusAtTurn(a: SkelArm, sense: number, t: number): number {
+  const turned = turnedOf(a, sense);
+  return Math.exp(a.lnR0 + sampleAtTurn(turned, Math.min(turned[a.n - 1], Math.max(0, t))) * a.dlnR);
+}
+
 /** S109: a ray arm's crossings of the ray at azimuth phi (rad): fractional samples, inner first. */
 function crossings(a: SkelArm, sense: number, phi: number): number[] {
   const turned = turnedOf(a, sense);

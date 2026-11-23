@@ -12,7 +12,7 @@
 import { currentSkeleton, skeletonKey } from "./armsSkeleton";
 import type { IllContext, IllParams } from "./feature";
 import { CORE_COLOUR, MAX_BLOBS, hash01, quantile, radialWeight, regionColour } from "./knotsMath";
-import { type Skeleton, armAt, patchAt, sampleRidges } from "./skeleton";
+import { type Skeleton, armAt, patchAt, radiusAtTurn, sampleRidges } from "./skeleton";
 
 const TAU = 2 * Math.PI;
 
@@ -162,7 +162,8 @@ export function placeOnSkeleton(sk: Skeleton, p: IllParams): PlacedRegion[] {
   if (barEnds > 0) {
     for (let a = 0; a < sk.arms.length && a < 2; a++) {
       if (sk.arms[a].kind !== "major") continue;
-      const f = frameAt(sk, a, sk.arms[a].r0 * 1.06);
+      // (S109: on a hugging major, a sixth of a radian along it - its radius grows too slowly there for r0 * 1.06.)
+      const f = frameAt(sk, a, sk.arms[a].ray ? radiusAtTurn(sk.arms[a], sk.sense >= 0 ? 1 : -1, 0.16) : sk.arms[a].r0 * 1.06);
       if (!f) continue;
       complex(f, barEnds);
       centres.push(f.x, f.y);

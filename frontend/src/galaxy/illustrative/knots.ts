@@ -34,7 +34,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
-    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 2.0, ngc_4414: 6 },
+    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 1.4, ngc_4414: 6 },
     about: "A multiplier on each region's own radius (hii_radius) for its drawn radius. Illustrative.",
   },
   {
@@ -42,7 +42,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The smallest drawn radius, pc: regions read as blobs at galaxy scale. Illustrative.",
   },
   {
-    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 180, ngc_4414: 180 },
+    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 110, ngc_4414: 180 },
     about: "The largest drawn radius, pc. Illustrative.",
   },
   {
