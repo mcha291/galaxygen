@@ -238,7 +238,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "dustArmWidth", label: "dust arm width", min: 0.05, max: 0.9, step: 0.01, unit: "", default: 0.4, about: "A band's full width as a share of the spacing between bands (a soft edge). (S109) Illustrative." },
   { key: "dustArmClear", label: "dust between dust arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { ngc_4414: 0.4 }, about: "The share of the drawn dust left between the bands. (S109) Illustrative." },
   { key: "dustArmDeep", label: "dust on dust arms", min: 0, max: 3, step: 0.01, unit: "×", default: 1.2, perTemplate: { ngc_4414: 1.8 }, about: "The drawn dust's depth on a band's crest, a multiplier. (S109) Illustrative." },
-  { key: "dustArmPhase", label: "dust arm phase", min: 0, max: 360, step: 1, unit: "°", default: 0, about: "The bands turned about the centre, degrees. (S109) Illustrative." },
+  { key: "dustArmPhase", label: "dust arm phase", min: 0, max: 360, step: 1, unit: "°", default: 0, about: "The dust arms turned about the centre, degrees; a network seed other than its default turns them further by golden-angle steps (a rerolled galaxy's arms lie elsewhere). (S109) Illustrative." },
   { key: "dustArmWander", label: "dust arm wander", min: 0, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.2 }, about: "How far a band wanders across the spiral, as a share of the spacing. (S109) Illustrative." },
   { key: "dustArmBreak", label: "dust arm breaks", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0.5 }, about: "How far a band is broken along its length into stronger and weaker stretches. (S109) Illustrative." },
   { key: "dustArmLit", label: "light between dust arms", min: 0, max: 4, step: 0.05, unit: "×", default: 0, perTemplate: { ngc_4414: 1 }, about: "The light's puffs and bright grains made this much stronger between the bands (the star clouds' zones), weaker in them. (S109) Illustrative." },
@@ -373,7 +373,7 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
   return {
     illFlocFall: [v("fall"), v("fallIn"), Math.max(v("fallOut"), v("fallIn") + 0.01), v("fallCurve")],
     illFlocFallB: [v("fallPoints"), v("outerBlue"), v("inkTint"), 0],
-    illFlocBandA: [Math.round(v("dustArms")), Math.tan(Math.min(45, Math.max(3, v("dustArmPitch"))) * rad), v("dustArmWidth"), v("dustArmPhase") * rad],
+    illFlocBandA: [Math.round(v("dustArms")), Math.tan(Math.min(45, Math.max(3, v("dustArmPitch"))) * rad), v("dustArmWidth"), (v("dustArmPhase") + (v("seed") === DEFAULTS.seed ? 0 : 137.508 * v("seed"))) * rad],
     illFlocBandB: [v("dustArmClear"), v("dustArmDeep"), v("dustArmWander"), v("dustArmBreak")],
     illFlocBandC: [v("dustArmLit"), v("dustArmFrom"), 0, 0],
   };
