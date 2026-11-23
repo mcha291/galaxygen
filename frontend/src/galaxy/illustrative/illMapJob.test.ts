@@ -328,3 +328,23 @@ describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", 
     expect(got).not.toBe("none"); // built here, at once
   }, 120_000);
 });
+
+describe("rule D1 for the sparkle (S107, MW2): read against the field drawn now", () => {
+  it("reads the field's template from the view's report, and none without one", async () => {
+    vi.resetModules();
+    const client = await import("./illMapClient");
+    expect(client.illFieldDrawn()).toBeUndefined();
+    let field: string | null = "milky_way";
+    client.setIllDrawnFor(() => ({ map: field, mapDrawn: true, field }));
+    expect(client.illFieldDrawn()).toBe("milky_way");
+    // A layer's reading of its points (SparkleLayer.tsx): the template only while the field is theirs.
+    const reading = () => (client.illFieldDrawn() === "milky_way" ? "milky_way" : null);
+    client.setSparkleDrawnFor({}, reading);
+    expect(reading()).toBe("milky_way");
+    // The template switched in GalaxyTab's commit, the canvas's tree not yet: the old points read as not drawn.
+    field = "ngc_4414";
+    expect(client.illFieldDrawn()).toBe("ngc_4414");
+    expect(reading()).toBeNull();
+    client.setIllDrawnFor(null);
+  });
+});

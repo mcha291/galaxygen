@@ -236,3 +236,19 @@ describe("the lanes read the arms' live skeleton (S106, B4: IllContext.paramsOf)
     expect(illStale(e.ill, ctx)).toBe(false);
   }, 30000);
 });
+
+describe("the lanes' splits and the majors' feathers (S107, MW2)", () => {
+  const one = piece({ r0: 5, extent: 2.5 });
+  it("leave the map as it was at their defaults", () => {
+    const a = buildLaneMap(geometry([one]), PLAIN, 300, 600);
+    const b = buildLaneMap(geometry([one]), { ...PLAIN, splitSpacing: 0, splitLength: 0.8, splitSeparation: 120, majorFeather: 1 }, 300, 600);
+    expect(b.data).toEqual(a.data);
+  });
+
+  it("part a thread from the strand for a stretch: more of the map dark, and the shape the same far from any split", () => {
+    const a = buildLaneMap(geometry([one]), PLAIN, 300, 600);
+    const b = buildLaneMap(geometry([one]), { ...PLAIN, splitSpacing: 1, splitLength: 0.8, splitSeparation: 200 }, 300, 600);
+    const count = (m: ReturnType<typeof buildLaneMap>) => m.data.reduce((n, v) => n + (v > 40 ? 1 : 0), 0);
+    expect(count(b)).toBeGreaterThan(1.15 * count(a));
+  });
+});

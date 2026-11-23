@@ -73,6 +73,8 @@ export interface SparkleShape {
   bunchPc?: number;
   /** S106: the points in a bunch brighter by up to 1 + this (the noise's peak), the thin stretches dimmer; 0 none. */
   bunchBright?: number;
+  /** S107 (MW2): the places drawn through an envelope of the density (envelopePlace: the same law, faster); else by rejection over the disc. */
+  direct?: boolean;
 }
 
 /** A smooth value noise in [0, 1] at plane point (x, y) in lattice units (two octaves, the second half as strong). */
@@ -183,8 +185,11 @@ export function buildSparkle(
   const lift2 = bunchBright > 0 ? (r: number, phi: number) => Math.max(0.2, 1 + bunchBright * (2 * noiseAt(r, phi) - 1)) : () => 1;
   const density = (r: number, phi: number) =>
     clear(r, phi) * lumps(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
+  // (The density without the lanes' clearing, never below it: the envelope's bound.)
+  const open = (r: number, phi: number) => lumps(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
   // A place drawn against the density: area-uniform proposals, accepted with probability d (bounded tries).
-  const place = (): [number, number] | null => {
+  // S107 (MW2, `direct`): the same law drawn through an envelope - see envelopePlace.
+  const place = s.direct ? envelopePlace(rMax, next, density, open) : (): [number, number] | null => {
     for (let t = 0; t < 400; t++) {
       const r = rMax * Math.sqrt(next());
       const phi = 2 * Math.PI * next();
@@ -222,6 +227,68 @@ export function buildSparkle(
   }
   if (bunchBright > 0) for (let i = 0; i < k; i++) weight[i] *= lift2(radius[i], azimuth[i]);
   return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
+}
+
+/** The envelope's polar grid (S107, MW2): cells across R and round the turn. */
+export const ENVELOPE_RINGS = 192;
+export const ENVELOPE_SECTORS = 768;
+
+/**
+ * S107 (MW2, the sparkle's latency): places drawn from the law min(1, density) over the disc's area - the law the
+ * area-uniform rejection draws from - through a piecewise envelope: the density without the lanes' clearing (`bound`,
+ * never below the density) read at every corner of a polar grid, each cell's bound 1.3 times its corners' largest plus
+ * 0.02 (at most 1); a cell chosen by its bound times its area, a place uniform in its area, accepted with min(1, d) over
+ * the cell's bound. Most proposals fall on the arms, so a few hundred thousand reads of the density stand for the
+ * millions the rejection over the whole disc made. The same law, other points (the stream is used otherwise).
+ */
+export function envelopePlace(
+  rMax: number,
+  next: () => number,
+  density: (r: number, phi: number) => number,
+  bound: (r: number, phi: number) => number,
+): () => [number, number] | null {
+  const nR = ENVELOPE_RINGS;
+  const nP = ENVELOPE_SECTORS;
+  const dR = rMax / nR;
+  const dP = (2 * Math.PI) / nP;
+  const corner = new Float32Array((nR + 1) * nP);
+  for (let i = 0; i <= nR; i++) {
+    const r = i * dR;
+    for (let j = 0; j < nP; j++) corner[i * nP + j] = Math.min(1, bound(r, j * dP));
+  }
+  const env = new Float32Array(nR * nP);
+  const cum = new Float64Array(nR * nP);
+  let total = 0;
+  for (let i = 0; i < nR; i++) {
+    const area = 0.5 * dP * ((i + 1) * (i + 1) - i * i) * dR * dR;
+    for (let j = 0; j < nP; j++) {
+      const j1 = (j + 1) % nP;
+      const m = Math.max(corner[i * nP + j], corner[i * nP + j1], corner[(i + 1) * nP + j], corner[(i + 1) * nP + j1]);
+      const e = m > 0 ? Math.min(1, 1.3 * m + 0.02) : 0;
+      env[i * nP + j] = e;
+      total += e * area;
+      cum[i * nP + j] = total;
+    }
+  }
+  return () => {
+    if (!(total > 0)) return null;
+    for (let t = 0; t < 400; t++) {
+      const u = next() * total;
+      let lo = 0;
+      let hi = cum.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] < u) lo = mid + 1;
+        else hi = mid;
+      }
+      const i = Math.floor(lo / nP);
+      const j = lo - i * nP;
+      const r = dR * Math.sqrt(i * i + next() * (2 * i + 1));
+      const phi = (j + next()) * dP;
+      if (next() * env[lo] < Math.min(1, density(r, phi))) return [r, phi];
+    }
+    return null;
+  };
 }
 
 /**

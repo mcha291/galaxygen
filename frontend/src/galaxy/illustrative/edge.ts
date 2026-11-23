@@ -24,7 +24,7 @@ export const edge: IllFeature = {
       about: "The field's light and dust taken smoothly to nothing over this many kpc inside the grid's end (30 kpc); 0 the hard edge. Illustrative.",
     },
     {
-      key: "young", label: "young edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 13, ngc_4414: 9 },
+      key: "young", label: "young edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 19, ngc_4414: 9 },
       about: "Where the clustered young light's own taper reaches nothing, kpc: beyond it the outer disc is the smooth light alone, without its grain. 30 and a taper of 0: as drawn. Illustrative.",
     },
     {

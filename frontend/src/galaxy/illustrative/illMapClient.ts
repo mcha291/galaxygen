@@ -373,14 +373,22 @@ export function setIllViewPending(pending: boolean): void {
 
 /** The galaxy each illustrative drawing on screen was built for, against the field's (the probe's check of rule D1). */
 let drawnFor: (() => { map: string | null; mapDrawn: boolean; field: string | null }) | null = null;
-const sparkleFor = new Map<object, string | null>();
+const sparkleFor = new Map<object, string | (() => string | null)>();
 export function setIllDrawnFor(read: typeof drawnFor): void {
   drawnFor = read;
 }
-/** A sparkle layer's points on screen and the template they were built for (null: none drawn); `owner` its own token. */
-export function setSparkleDrawnFor(owner: object, template: string | null): void {
+/**
+ * A sparkle layer's points on screen and the template they were built for (null: none drawn); `owner` its own token.
+ * S107 (MW2): or a reading of it made when asked - the template while the layer draws its points this frame, else null
+ * (SparkleLayer.tsx draws them only while the field drawn is their galaxy, by the same reading).
+ */
+export function setSparkleDrawnFor(owner: object, template: string | null | (() => string | null)): void {
   if (template === null) sparkleFor.delete(owner);
   else sparkleFor.set(owner, template);
+}
+/** S107 (MW2, rule D1): the template whose field is drawn now (GalaxyTab's commit); undefined where no view reports one. */
+export function illFieldDrawn(): string | null | undefined {
+  return drawnFor ? drawnFor().field : undefined;
 }
 
 // The probe (the look capture and the slider probe): how many illustrative builds the picture still waits for.
@@ -388,5 +396,6 @@ if (typeof window !== "undefined") {
   const holder = window as unknown as Record<string, unknown>;
   holder.__galaxygenIllPending = () => illJobsPending() + (viewPending ? 1 : 0);
   holder.__galaxygenIllJobs = illJobCounts;
-  holder.__galaxygenIllDrawnFor = () => (drawnFor ? { ...drawnFor(), sparkle: [...sparkleFor.values()] } : null);
+  holder.__galaxygenIllDrawnFor = () =>
+    drawnFor ? { ...drawnFor(), sparkle: [...sparkleFor.values()].map((v) => (typeof v === "function" ? v() : v)).filter((v): v is string => v !== null) } : null;
 }

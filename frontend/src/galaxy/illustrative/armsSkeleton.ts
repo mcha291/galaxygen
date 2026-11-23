@@ -36,6 +36,9 @@ export function skeletonParamsOf(p: IllParams): SkeletonParams {
     patch: p.skelpatch ?? d.patch,
     patchScale: p.skelpatchsize ?? d.patchScale,
     ragged: p.skelragged ?? d.ragged,
+    // S107, MW2 (the even winding)
+    nudge: p.skelnudge ?? d.nudge,
+    even: p.skeleven ?? d.even,
   };
 }
 

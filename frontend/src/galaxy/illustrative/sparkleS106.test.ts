@@ -67,3 +67,46 @@ describe("the sparkle's S106 shaping (armsSparkle.ts)", () => {
     expect(meanNoise(lumpy)).toBeGreaterThan(meanNoise(plain) + 0.05);
   });
 });
+
+describe("the sparkle drawn through its density's envelope (S107, MW2: shape.direct)", () => {
+  // A narrow log-spiral ridge (FWHM about 0.5 kpc) with a floor: most of the disc rejects the area-uniform proposals.
+  const tan = Math.tan((14 * Math.PI) / 180);
+  const levelOf = (r: number, phi: number) => {
+    if (r < 2) return 0;
+    const d = phi - Math.log(r) / tan;
+    const w = Math.atan2(Math.sin(2 * d), Math.cos(2 * d)) / 2;
+    const x = (r * w * Math.sin(Math.atan(tan))) / 0.21;
+    return Math.exp(-0.5 * x * x);
+  };
+  const s: SparkleShape = { ...shape, count: 20000, clump: 0.3, members: 4, groupPc: 80, floor: 0.02, rMax: 16, bunch: 0.5, bunchPc: 400 };
+  const { map } = maps();
+
+  it("draws the same law as the rejection: the same share on the ridge and the same radial spread", () => {
+    const a = buildSparkle(map, g, s, 11, null, null, levelOf);
+    const b = buildSparkle(map, g, { ...s, direct: true }, 11, null, null, levelOf);
+    expect(b.radius.length).toBe(a.radius.length);
+    const onRidge = (p: { radius: Float32Array; azimuth: Float32Array }) => {
+      let n = 0;
+      for (let i = 0; i < p.radius.length; i++) if (levelOf(p.radius[i], p.azimuth[i]) > 0.5) n++;
+      return n / p.radius.length;
+    };
+    expect(Math.abs(onRidge(a) - onRidge(b))).toBeLessThan(0.03);
+    const mean = (v: Float32Array) => v.reduce((x, y) => x + y, 0) / v.length;
+    expect(Math.abs(mean(a.radius) - mean(b.radius))).toBeLessThan(0.15);
+    for (const q of [0.25, 0.5, 0.75]) {
+      const at = (v: Float32Array) => Float32Array.from(v).sort()[Math.floor(q * v.length)];
+      expect(Math.abs(at(a.radius) - at(b.radius))).toBeLessThan(0.25);
+    }
+  });
+
+  it("is deterministic and faster", () => {
+    const t0 = performance.now();
+    const a = buildSparkle(map, g, s, 5, null, null, levelOf);
+    const t1 = performance.now();
+    const b = buildSparkle(map, g, { ...s, direct: true }, 5, null, null, levelOf);
+    const t2 = performance.now();
+    expect(buildSparkle(map, g, { ...s, direct: true }, 5, null, null, levelOf)).toEqual(b);
+    expect(b.radius.length).toBe(a.radius.length);
+    expect(t2 - t1).toBeLessThan(t1 - t0);
+  });
+});
