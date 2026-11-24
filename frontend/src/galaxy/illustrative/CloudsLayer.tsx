@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { FluxPoints, type PointDust } from "../FluxPoints";
 import { toScene } from "../positions";
 import { cloudShapeOf, cloudThin, shapeOf } from "./floc";
-import { buildClouds, cloudFlux } from "./flocClouds";
+import { buildClouds, buildSparks, cloudFlux } from "./flocClouds";
 import { geometryOf } from "./flocMap";
 import { type IllLayerProps, illMeasure, illNow } from "./feature";
 
@@ -48,17 +48,55 @@ export default function CloudsLayer({ params, runtime, context, knotsGain, dust 
     return { ...r, uniforms: { ...r.uniforms, illPointsLift: { value: 0 } } };
   }, [runtime]);
   lifted.uniforms.illPointsLift.value = context.paramsOf?.("base").pointHeight ?? 0;
-  if (!points || !flux) return null;
+  // S110 (B2): the sparks (flocClouds.ts buildSparks), single sharp points, built once per their shaping values.
+  const spark = {
+    count: params.sparkCount ?? 0, from: params.sparkFrom ?? 5, to: params.sparkTo ?? 12, inner: params.sparkInner ?? 0.15,
+    slope: params.sparkSlope ?? 1.2, range: params.sparkRange ?? 30, seed: params.seed ?? 11,
+  };
+  const sparkKey = JSON.stringify(spark);
+  const sparks = useMemo(() => {
+    if (spark.count <= 0 || shape.style < 0.5) return null;
+    const s = buildSparks(spark);
+    const n = s.weight.length;
+    const radius = new Float32Array(n);
+    const azimuth = new Float32Array(n);
+    for (let i = 0; i < n; i += 1) {
+      radius[i] = Math.hypot(s.x[i], s.y[i]);
+      const phi = Math.atan2(s.y[i], s.x[i]);
+      azimuth[i] = phi < 0 ? phi + 2 * Math.PI : phi;
+    }
+    return { s, positions: toScene(radius, azimuth, new Float32Array(n)) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sparkKey, shape.style]);
+  const sparkGain = params.sparkGain ?? 30000;
+  const sparkFlux = useMemo(() => (sparks ? cloudFlux({ ...sparks.s, groups: [] }, sparkGain, blue, warmR) : null), [sparks, sparkGain, blue, warmR]);
+  if ((!points || !flux) && !(sparks && sparkFlux)) return null;
   return (
-    <FluxPoints
-      positions={points.positions}
-      flux={flux}
-      gain={knotsGain}
-      psf={null}
-      spriteSize={params.cloudSize ?? 1.5}
-      dust={(dust as PointDust | null) ?? null}
-      ill={lifted as never}
-      illCap={params.cloudCap ?? 0}
-    />
+    <>
+      {points && flux && (
+        <FluxPoints
+          positions={points.positions}
+          flux={flux}
+          gain={knotsGain}
+          psf={null}
+          spriteSize={params.cloudSize ?? 1.5}
+          dust={(dust as PointDust | null) ?? null}
+          ill={lifted as never}
+          illCap={params.cloudCap ?? 0}
+        />
+      )}
+      {sparks && sparkFlux && (
+        <FluxPoints
+          positions={sparks.positions}
+          flux={sparkFlux}
+          gain={knotsGain}
+          psf={null}
+          spriteSize={params.sparkSize ?? 0.8}
+          dust={(dust as PointDust | null) ?? null}
+          ill={lifted as never}
+          illCap={params.sparkCap ?? 0}
+        />
+      )}
+    </>
   );
 }

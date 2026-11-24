@@ -19,7 +19,7 @@ export const points: IllFeature = {
       about: "How much of the field's edge taper (the edge's radius and width) the points take: 1 they fade with the field, 0 their whole light to the grid's end as before. Illustrative (S108).",
     },
   ],
-  // The edge's GLSL (edge.ts, earlier in the registry) declares illEdgeRamp, illEdgeRadius and illEdgeWidth.
+  // The edge's GLSL (edge.ts, earlier in the registry) declares illEdgeRamp, illEdgeEnd, illEdgeRadius and illEdgeWidth.
   // S108 (J4): illPointsCap, the brightest a point's light may be (its largest channel, in the frame's linear units),
   // the sparkle's own (SparkleLayer: arms.sparklecap) - set per material by FluxPoints' illCap, 0 (none) everywhere else.
   // Up close the arm grain's points grow bright as 1 / depth^2 and the bloom spreads the brightest into soft discs.
@@ -31,9 +31,12 @@ export const points: IllFeature = {
     float m = max(light.r, max(light.g, light.b));
     return m > illPointsCap ? light * (illPointsCap / m) : light;
   }
+  // S110 (B2): the taper's end and width as the field's own (edge.ts illEdgeEnd: handed over toward edge-on with the
+  // point's sight line, the face-on pair exactly while illGraze is 1), so the points end where the edge-on field does.
   float illPointsAt(vec2 rp) {
     if (illPointsEdge <= 0.0) return 1.0;
-    return mix(1.0, illEdgeRamp(rp.x, min(illEdgeRadius, rHi), illEdgeWidth), illPointsEdge);
+    vec2 end = illEdgeEnd();
+    return mix(1.0, illEdgeRamp(rp.x, end.x, end.y), illPointsEdge);
   }
 `,
   hooks: { points: "illPointsAt" },
