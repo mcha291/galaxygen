@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllFrame } from "./feature";
-import { channelShapeOf, fallBandUniforms, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { channelShapeOf, fallBandUniforms, floc, flocChannel, flocDrawn, shapeOf, sparkFallOf } from "./floc";
 import { buildNetChannel } from "./flocNet";
 import { buildSparks } from "./flocClouds";
 import {
@@ -527,7 +527,7 @@ describe("the fall-off and the dust arms (S109, builder B)", () => {
     const veil = glsl.slice(glsl.indexOf("vec3 illFlocVeil("));
     const deep = veil.indexOf("av *= mix(1.0, illFlocBandB.y, band.y)");
     expect(deep).toBeGreaterThan(veil.indexOf("av *= gate;"));
-    expect(deep).toBeLessThan(veil.indexOf("illFlocLaneC.z * ring"));
+    expect(deep).toBeLessThan(veil.indexOf("illFlocLaneC.z * (1.0 - bs) * ring"));
     expect(glsl).toContain("mix(illFlocBandB.x, 1.0, e1)");
   });
   it("declares every uniform it hands over and is called by the veil, the dust and the points hook", () => {
@@ -660,5 +660,43 @@ describe("the light's lumps, the disc's yellow and the sparks (S110, builder B2)
     expect(Math.max(...a.weight)).toBeGreaterThan(10);
     expect(a.weight.filter((w) => w > 10).length).toBeLessThan(40);
     expect(buildSparks({ ...s, count: 0 }).weight.length).toBe(0);
+  });
+});
+
+describe("the sharp sparks (S111, builder B)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("are off on the Milky Way", () => {
+    expect(illDefaults("milky_way")["floc.sparkSharp"]).toBe(0);
+    expect(illDefaults("milky_way")["floc.sparkCount"]).toBe(0);
+  });
+  it("dim with the disc's fall-off, the points' share of its stops, and are 1 where it is off", () => {
+    const base = own("ngc_4414");
+    const f = sparkFallOf(base);
+    expect(f.at(0)).toBe(1);
+    expect(f.at(base.fallIn)).toBeCloseTo(1, 12);
+    expect(f.at(base.fallOut + 5)).toBeCloseTo(2 ** (-base.fall * base.fallPoints), 12);
+    expect(sparkFallOf({ ...base, fall: 0 }).at(20)).toBe(1);
+    expect(sparkFallOf({ ...base, fall: 0 }).key).toEqual([0]);
+  });
+});
+
+describe("the dust's blotches and the lumps as clouds (S111, builder B)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("draws neither on the Milky Way, even with the sliders moved there (the plane style's only)", () => {
+    const mw = own("milky_way");
+    expect(fallBandUniforms(mw).illFlocBlot[0]).toBe(0);
+    expect(fallBandUniforms({ ...mw, blot: 1 }).illFlocBlot[0]).toBe(0);
+    expect(fallBandUniforms({ ...mw, lumpForm: 1 }).illFlocLumpA[0]).toBe(0);
+  });
+  it("declares the new uniforms and functions above their first use, and moves the blotches with a rerolled seed", () => {
+    const glsl = floc.glsl ?? "";
+    for (const [decl, use] of [
+      ["uniform vec4 illFlocBlot;", "illFlocBlot.x"], ["uniform vec4 illFlocBlotB;", "illFlocBlotB.x"], ["uniform vec4 illFlocLumpD;", "illFlocLumpD.x"],
+      ["float illFlocBlotAt(", "blot = illFlocBlotAt("], ["float illFlocCloudSum(", "illFlocCloudSum(q"], ["float illFlocBlotSum(", "illFlocBlotSum(xy"],
+    ]) expect(glsl.indexOf(decl)).toBeLessThan(glsl.indexOf(use));
+    expect(glsl).toContain("vec2 wq = xy / L + vec2(illFlocScC.z, 0.61 * illFlocScC.z);");
+  });
+  it("clamps the blotches' stretch to what the cells read reach", () => {
+    expect(fallBandUniforms({ ...own("ngc_4414"), blotStretch: 9 }).illFlocBlot[3]).toBe(2.5);
   });
 });
