@@ -527,7 +527,7 @@ describe("the fall-off and the dust arms (S109, builder B)", () => {
     const veil = glsl.slice(glsl.indexOf("vec3 illFlocVeil("));
     const deep = veil.indexOf("av *= mix(1.0, illFlocBandB.y, band.y)");
     expect(deep).toBeGreaterThan(veil.indexOf("av *= gate;"));
-    expect(deep).toBeLessThan(veil.indexOf("illFlocLaneC.z * ring"));
+    expect(deep).toBeLessThan(veil.indexOf("illFlocLaneC.z * (1.0 - bs) * ring"));
     expect(glsl).toContain("mix(illFlocBandB.x, 1.0, e1)");
   });
   it("declares every uniform it hands over and is called by the veil, the dust and the points hook", () => {
@@ -677,5 +677,26 @@ describe("the sharp sparks (S111, builder B)", () => {
     expect(f.at(base.fallOut + 5)).toBeCloseTo(2 ** (-base.fall * base.fallPoints), 12);
     expect(sparkFallOf({ ...base, fall: 0 }).at(20)).toBe(1);
     expect(sparkFallOf({ ...base, fall: 0 }).key).toEqual([0]);
+  });
+});
+
+describe("the dust's blotches and the lumps as clouds (S111, builder B)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("draws neither on the Milky Way, even with the sliders moved there (the plane style's only)", () => {
+    const mw = own("milky_way");
+    expect(fallBandUniforms(mw).illFlocBlot[0]).toBe(0);
+    expect(fallBandUniforms({ ...mw, blot: 1 }).illFlocBlot[0]).toBe(0);
+    expect(fallBandUniforms({ ...mw, lumpForm: 1 }).illFlocLumpA[0]).toBe(0);
+  });
+  it("declares the new uniforms and functions above their first use, and moves the blotches with a rerolled seed", () => {
+    const glsl = floc.glsl ?? "";
+    for (const [decl, use] of [
+      ["uniform vec4 illFlocBlot;", "illFlocBlot.x"], ["uniform vec4 illFlocBlotB;", "illFlocBlotB.x"], ["uniform vec4 illFlocLumpD;", "illFlocLumpD.x"],
+      ["float illFlocBlotAt(", "blot = illFlocBlotAt("], ["float illFlocCloudSum(", "illFlocCloudSum(q"], ["float illFlocBlotSum(", "illFlocBlotSum(xy"],
+    ]) expect(glsl.indexOf(decl)).toBeLessThan(glsl.indexOf(use));
+    expect(glsl).toContain("vec2 wq = xy / L + vec2(illFlocScC.z, 0.61 * illFlocScC.z);");
+  });
+  it("clamps the blotches' stretch to what the cells read reach", () => {
+    expect(fallBandUniforms({ ...own("ngc_4414"), blotStretch: 9 }).illFlocBlot[3]).toBe(2.5);
   });
 });

@@ -302,6 +302,8 @@ const CONTROLS: readonly IllControl[] = [
   { key: "blotCover", label: "blotch cover", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { ngc_4414: 0.45 }, about: "The share of cells holding a blotch: higher, more dust and fewer clear gaps. (S111) Illustrative." },
   { key: "blotStretch", label: "blotch stretch", min: 1, max: 2.5, step: 0.05, unit: "×", default: 1.8, perTemplate: { ngc_4414: 1.8 }, about: "How many times longer along the spiral than across a blotch is (loosely wound). (S111) Illustrative." },
   { key: "blotFill", label: "blotch fill", min: 0, max: 3, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.6 }, about: "A soft dark brown filling a blotch's body, deepest where it is thickest, in full threads; 0 the mesh alone. (S111) Illustrative." },
+  { key: "blotReach", label: "blotches reach", min: 0, max: 20, step: 0.1, unit: "kpc", default: 0, perTemplate: { ngc_4414: 0 }, about: "The blotches (and the lanes' smooth veil giving way to them) are full inside 0.7 of this radius and gone at it, kpc, the lanes as drawn outside; 0 everywhere. (S111) Illustrative." },
+  { key: "blotEdge", label: "blotch edge", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "How firm a blotch is: 0 a soft sum fading out, 1 a dark body to a soft rim with clear disc between the pieces. (S111) Illustrative." },
   { key: "blotFine", label: "small blotches", min: 0, max: 2, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 1 }, about: "The smaller blotches (a third and a ninth of the size) as a share of the largest; 0 none. (S111) Illustrative." },
   { key: "lumpVary", label: "cloud strength spread", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.7 }, about: "How far the clouds differ in brightness one from the next; 0 all alike. (S111) Illustrative." },
   // S110 (B2): the disc's hue - red taken off the disc's light outside the nucleus, so a salmon-orange reads yellow-tan.
@@ -511,7 +513,7 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocLumpD: [v("lumpForm"), v("lumpKnots"), v("lumpCores"), v("lumpVary")],
     // S111 (B): the dust's blotches (the plane style's only).
     illFlocBlot: [v("style") >= 0.5 ? v("blot") : 0, Math.max(v("blotSize"), 50) * 1e-3, v("blotCover"), Math.min(2.5, Math.max(1, v("blotStretch")))],
-    illFlocBlotB: [v("blotFill"), v("blotFine"), 0, 0],
+    illFlocBlotB: [v("blotFill"), v("blotFine"), v("blotEdge"), v("blotReach")],
     // The hue is the plane style's, as the lumps are: on another style the slider draws nothing (S110 review: it moved
     // the Milky Way's frame).
     illFlocTan: [v("style") >= 0.5 ? v("tanHue") : 0, v("tanFrom"), 0, 0],
@@ -944,8 +946,11 @@ export const floc: IllFeature = {
     // bright cores inside (a cascade of the same at a third and a ninth of the size, multiplied into the clump). The
     // cover (the share of cells holding a clump) follows the banks and the lanes' margins as the threshold did.
     float cov = clamp(0.25 + 0.6 * illFlocLumpA.z + 1.5 * (bank + dl), 0.02, 0.98);
-    float c1 = illFlocCloudSum(q, cov, 1.3);
+    // Three sizes of clump (twice, once and half the scale), so the clumps differ several-fold in size and merge.
+    float c1 = 0.9 * illFlocCloudSum(0.5 * q + vec2(7.1, 3.9), 0.7 * cov, 4.7) + illFlocCloudSum(q, cov, 1.3) + 0.6 * illFlocCloudSum(mat2(0.6, -0.8, 0.8, 0.6) * q * 2.0 + vec2(1.9, 6.3), cov, 2.3);
     float body = 1.0 - exp(-1.6 * c1);
+    // The outline eaten by the field's fine octaves (f): a bumpy, cauliflower edge, still soft.
+    body *= smoothstep(0.05, 0.5, 0.8 * body + 0.9 * (f - 0.5));
     if (body < 0.003) return 0.0;
     float kn = illFlocCloudSum(mat2(0.8, 0.6, -0.6, 0.8) * q * 3.1 + vec2(5.3, 1.1), 0.75, 7.9);
     float cores = illFlocCloudSum(mat2(0.28, -0.96, 0.96, 0.28) * q * 9.3 + vec2(2.1, 8.7), 0.35, 13.3);
@@ -993,7 +998,16 @@ export const floc: IllFeature = {
       s += illFlocBlotB.y * 0.8 * illFlocBlotSum(xy, t, 0.36 * L, S, illFlocBlot.z, 6.1);
       s += illFlocBlotB.y * 0.6 * illFlocBlotSum(xy, t, 0.13 * L, S, illFlocBlot.z, 9.7);
     }
-    return 1.0 - exp(-1.5 * s);
+    // illFlocBlotB.z: the pieces' edge - 0 the soft sum as it is, 1 a piece drawn firm to a soft rim (clear disc
+    // between the pieces, a dark body inside).
+    float m = 1.0 - exp(-1.5 * s);
+    if (illFlocBlotB.z <= 0.0) return m;
+    // The firm piece's outline eaten by two fine octaves (a tenth and a twenty-fifth of the size): ragged, knotty edges
+    // and holes, not smooth ovals.
+    float e = 0.65 * illFlocVN(xy / (0.1 * L) + vec2(23.1, 4.4)) + 0.35 * illFlocVN(xy / (0.04 * L) + vec2(1.7, 31.9)) - 0.5;
+    // Inside, the body knotted (darker knots, thinner places a twentieth of the size across), not a flat wash.
+    float kn = 0.55 + 0.45 * smoothstep(0.2, 0.8, illFlocVN(xy / (0.05 * L) + vec2(9.4, 17.2)));
+    return mix(m, smoothstep(0.3, 0.7, m + 0.7 * e) * kn, illFlocBlotB.z);
   }
   vec3 illFlocVeil(vec2 rp) {
     vec3 veil = vec3(1.0);
@@ -1006,9 +1020,12 @@ export const floc: IllFeature = {
     // S111 (B): the blotches - the dust gathered into pieces of many sizes (illFlocBlotAt) in place of the lanes' or
     // arcs' gate, by the share illFlocBlot.x: no regular grooves.
     float blot = 0.0;
-    if (illFlocBlot.x > 0.0 && illFlocStyle > 0.5 && illFlocGate.x > 0.0 && rp.x < illFlocRingA.w) {
+    // bs: the blotches' share here - full inside 0.7 of their reach (illFlocBlotB.w, kpc; 0 everywhere), none beyond it;
+    // the lanes' smooth veil (the regular grooves) gives way to them as far.
+    float bs = illFlocBlot.x > 0.0 && illFlocStyle > 0.5 && illFlocGate.x > 0.0 ? illFlocBlot.x * (illFlocBlotB.w > 0.0 ? 1.0 - smoothstep(0.7 * illFlocBlotB.w, illFlocBlotB.w, rp.x) : 1.0) : 0.0;
+    if (bs > 0.0 && rp.x < illFlocRingA.w) {
       blot = illFlocBlotAt(rp);
-      gate = mix(gate, mix(1.0, illFlocGate.y + (illFlocGate.w - illFlocGate.y) * blot, illFlocGate.x), illFlocBlot.x);
+      gate = mix(gate, mix(1.0, illFlocGate.y + (illFlocGate.w - illFlocGate.y) * blot, illFlocGate.x), bs);
     }
     // The ink: the grains' own depth per magnitude in each channel, its spread about the middle channel's times the
     // redness (0 grey, 1 the grains' own).
@@ -1022,14 +1039,14 @@ export const floc: IllFeature = {
           vec2 cq = rp.x * vec2(cos(rp.y), sin(rp.y)) / illFlocCore.z;
           float cn = 0.65 * illFlocVN(cq + vec2(31.7, 5.3)) + 0.35 * illFlocVN(2.7 * cq + vec2(2.2, 47.1));
           // S111 (B): the cores on the blotches' bodies as much as on the lanes' crests (by the blotches' share).
-          core = smoothstep(0.78 - 0.4 * illFlocCore.y, 0.9 - 0.4 * illFlocCore.y, cn) * mix(smoothstep(0.3, 0.8, lane.x), smoothstep(0.2, 0.7, blot), illFlocBlot.x);
+          core = smoothstep(0.78 - 0.4 * illFlocCore.y, 0.9 - 0.4 * illFlocCore.y, cn) * mix(smoothstep(0.3, 0.8, lane.x), smoothstep(0.2, 0.7, blot), bs);
         }
         mesh *= mix(illFlocCore.x, illFlocCore.w, core);
       }
       av += illFlocDepth * illFlocInk * mesh;
     }
     // S111 (B): a blotch's body filled with a soft dark brown, deepest where it is thickest.
-    if (blot > 0.0 && illFlocBlotB.x > 0.0) av += illFlocDepth * illFlocInk * illFlocBlotB.x * illFlocBlot.x * illFlocRingAt(rp) * blot * blot / max(gate, 0.05);
+    if (blot > 0.0 && illFlocBlotB.x > 0.0) av += illFlocDepth * illFlocInk * illFlocBlotB.x * bs * illFlocRingAt(rp) * blot * blot / max(gate, 0.05);
     if (illFlocStyle > 0.5 && av > 0.0) av *= gate;
     // S109 (B): the broad bands (x the dust's multiplier; z the clear zone's weight, where the light's puffs gather).
     vec3 band = illFlocStyle > 0.5 ? illFlocBand(rp) : vec3(1.0, 0.0, 0.0);
@@ -1042,7 +1059,7 @@ export const floc: IllFeature = {
     if (lanes && (illFlocLaneC.z > 0.0 || illFlocLaneC.w > 0.0) && rp.x < illFlocRingA.w) {
       float ring = illFlocRingAt(rp);
       // The veil reaches past the filaments into the margins, fading: the lane's edge feathered.
-      av += illFlocDepth * illFlocInk * illFlocLaneC.z * ring * (lane.x + 0.6 * lane.y);
+      av += illFlocDepth * illFlocInk * illFlocLaneC.z * (1.0 - bs) * ring * (lane.x + 0.6 * lane.y);
       if (illFlocLaneC.w > 0.0 && lane.y * ring > 0.02) {
         float p = illFlocLaneD.w + illFlocLaneD.z;
         vec2 t = vec2(sin(p) * cos(rp.y) - cos(p) * sin(rp.y), sin(p) * sin(rp.y) + cos(p) * cos(rp.y));
