@@ -18,7 +18,7 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.85, ngc_4414: -0.25}, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.85, ngc_4414: -0.15}, about: "The light's scale into the stretch, stops. Illustrative." },
   {
     key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 100, ngc_4414: 15 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",
@@ -44,7 +44,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "balance", label: "white balance", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.4, ngc_4414: -0.3 }, about: "Toward the warm tint (above 0) or the cool tint (below) over the whole picture. Colour for appearance." },
   {
-    key: "split", label: "split tone", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.7, ngc_4414: 0.1},
+    key: "split", label: "split tone", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.7, ngc_4414: 0.35},
     about: "Above 0 the bright light toward the warm tint and the faint toward the cool (a warm core against blue arms); below 0 the reverse. Colour for appearance.",
   },
   {
