@@ -40,14 +40,14 @@ import { buildNetChannel } from "./flocNet";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3.0},
+    key: "depth", label: "network depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3.4},
     about: "The depth at the centre of one full filament of the dust network, magnitudes of A_V; 0 no network. Illustrative.",
   },
   {
     key: "ink", label: "network ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.75, perTemplate: { ngc_4414: 1 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (sharp brown threads, the same on both sides of the disc); the rest is dust in the dust's own thin layer, which the march makes darker on the near side. Illustrative.",
   },
-  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.8 }, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
+  { key: "redness", label: "network redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 1.4}, about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance." },
   { key: "hardness", label: "filament edge", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0 }, about: "How crisp a filament's edge is: 0 a soft stroke, 1 an inked one with its faint margins gone. Illustrative." },
   {
     key: "patch", label: "patch contrast", min: 0, max: 2, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.8 },
@@ -63,7 +63,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "blue", label: "clump tint", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.6 }, about: "The clump glow's colour: 0 the light's own, 1 a blue-white. Colour for appearance." },
   {
-    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.3},
+    key: "warmth", label: "inner warmth", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.15},
     about: "A cream tint over the inner disc's light, fading outward: the old disc of the photograph. Colour for appearance.",
   },
   { key: "warmYellow", label: "warmth yellow", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "The inner warmth's hue: 0 the S106 cream-orange, 1 a yellow-tan (more green kept, less red added), S110. Colour for appearance." },
@@ -190,7 +190,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "meshArcRun", label: "mesh arc length", min: 1, max: 12, step: 0.1, unit: "×", default: 3, perTemplate: { ngc_4414: 4 }, about: "A mesh arc's length along the spiral over its width. Illustrative." },
   { key: "meshHaze", label: "lane smoke", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.4}, about: "A soft mottled brown smoke over the mesh's arcs (the broad lanes the filaments lie in), in full threads; 0 none. Illustrative." },
   { key: "meshPiece", label: "mesh patches", min: 100, max: 5000, step: 10, unit: "pc", default: 1200, about: "The size of the noise that breaks the mesh into patches with clear disc between, parsecs. Illustrative." },
-  { key: "meshGaps", label: "mesh gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { ngc_4414: 0.2 }, about: "The level of the patches' noise under which the mesh is left out: higher, more clear disc. Illustrative." },
+  { key: "meshGaps", label: "mesh gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { ngc_4414: 0.27}, about: "The level of the patches' noise under which the mesh is left out: higher, more clear disc. Illustrative." },
   { key: "meshWarp", label: "mesh wiggle", min: 0, max: 1.5, step: 0.01, unit: "×", default: 0.4, about: "How far the mesh's plane is pushed about, as a share of a cell: its filaments bend. Illustrative." },
   { key: "taper", label: "taper", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "How far a thread thins toward the ends of its piece; 0 an even width to the end. Illustrative." },
   // S107 (builder NGC): ALL the plane style's dust - the map's threads and the march's mesh alike - gathered on the mesh's
@@ -217,7 +217,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "laneWander", label: "dust lane wander", min: 0, max: 2, step: 0.01, unit: "×", default: 0.6, perTemplate: { ngc_4414: 0.8 }, about: "How far a lane wanders across the spiral, as a share of the spacing (lanes come near, part and join). Illustrative." },
   { key: "laneWanderSize", label: "dust lane wander size", min: 200, max: 6000, step: 10, unit: "pc", default: 1800, perTemplate: { ngc_4414: 1800 }, about: "The size of the noise that makes the lanes wander, parsecs. Illustrative." },
   { key: "lanePiece", label: "dust lane pieces", min: 200, max: 6000, step: 10, unit: "pc", default: 1500, perTemplate: { ngc_4414: 1300 }, about: "The size of the noise that breaks the lanes into pieces, parsecs (a piece is about this long). Illustrative." },
-  { key: "laneGaps", label: "dust lane gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { ngc_4414: 0.4}, about: "The level of the pieces' noise under which a lane is broken: higher, shorter pieces and wider gaps. Illustrative." },
+  { key: "laneGaps", label: "dust lane gaps", min: 0, max: 1, step: 0.01, unit: "", default: 0.4, perTemplate: { ngc_4414: 0.47}, about: "The level of the pieces' noise under which a lane is broken: higher, shorter pieces and wider gaps. Illustrative." },
   { key: "laneVary", label: "dust lane strength spread", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.7 }, about: "How far the pieces' depth varies from one to the next (0 all alike). Illustrative." },
   { key: "laneBranch", label: "dust lane branches", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.6 }, about: "A second set of lanes at a steeper pitch crossing the first (forks and joins), as a share of their depth; 0 none. Illustrative." },
   { key: "laneVeil", label: "dust lane veil", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0.45 }, about: "A smooth pale tan veil filling each lane, in full threads (the light dust the filaments lie in); 0 none. Illustrative." },
@@ -235,20 +235,20 @@ const CONTROLS: readonly IllControl[] = [
   { key: "fallCurve", label: "fall-off curve", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { ngc_4414: 0.7}, about: "The fall-off's shape between its radii: below 1 it drops early, above 1 late. (S109) Illustrative." },
   { key: "fallPoints", label: "points fall-off", min: 0, max: 1, step: 0.01, unit: "", default: 1, about: "The share of the fall-off the points (star clouds, stars, knots) take. (S109) Illustrative." },
   { key: "dustArms", label: "dust arms", min: 0, max: 6, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 4 }, about: "The plane style's drawn dust gathered into this many broad spiral bands (log-spiral arms of the viewer's own), clear zones of starlight between; 0 none (the dust as drawn). Display-only structure of the viewer's own (S109). Illustrative." },
-  { key: "dustArmPitch", label: "dust arm pitch", min: 3, max: 45, step: 0.5, unit: "°", default: 18, perTemplate: { ngc_4414: 22 }, about: "The dust bands' pitch angle, degrees. (S109) Illustrative." },
+  { key: "dustArmPitch", label: "dust arm pitch", min: 3, max: 45, step: 0.5, unit: "°", default: 18, perTemplate: { ngc_4414: 26}, about: "The dust bands' pitch angle, degrees. (S109) Illustrative." },
   { key: "dustArmWidth", label: "dust arm width", min: 0.05, max: 0.9, step: 0.01, unit: "", default: 0.4, about: "A band's full width as a share of the spacing between bands (a soft edge). (S109) Illustrative." },
   { key: "dustArmClear", label: "dust between dust arms", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { ngc_4414: 0.82}, about: "The share of the drawn dust left between the bands. (S109) Illustrative." },
   { key: "dustArmDeep", label: "dust on dust arms", min: 0, max: 3, step: 0.01, unit: "×", default: 1.2, perTemplate: { ngc_4414: 1.3}, about: "The drawn dust's depth on a band's crest, a multiplier. (S109) Illustrative." },
   { key: "dustArmPhase", label: "dust arm phase", min: 0, max: 360, step: 1, unit: "°", default: 0, about: "The dust arms turned about the centre, degrees; a network seed other than its default turns them further by golden-angle steps (a rerolled galaxy's arms lie elsewhere). (S109) Illustrative." },
-  { key: "dustArmWander", label: "dust arm wander", min: 0, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.4}, about: "How far a band wanders across the spiral, as a share of the spacing. (S109) Illustrative." },
-  { key: "dustArmBreak", label: "dust arm breaks", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0.65 }, about: "How far a band is broken along its length into stronger and weaker stretches. (S109) Illustrative." },
-  { key: "dustArmLit", label: "light between dust arms", min: 0, max: 4, step: 0.05, unit: "×", default: 0, perTemplate: { ngc_4414: 3.0 }, about: "The light's puffs and bright grains made this much stronger between the bands (the star clouds' zones), weaker in them. (S109) Illustrative." },
+  { key: "dustArmWander", label: "dust arm wander", min: 0, max: 0.5, step: 0.01, unit: "", default: 0.12, perTemplate: { ngc_4414: 0.9}, about: "How far a band wanders across the spiral, as a share of the spacing. (S109) Illustrative." },
+  { key: "dustArmBreak", label: "dust arm breaks", min: 0, max: 1, step: 0.01, unit: "", default: 0.3, perTemplate: { ngc_4414: 0.85}, about: "How far a band is broken along its length into stronger and weaker stretches. (S109) Illustrative." },
+  { key: "dustArmLit", label: "light between dust arms", min: 0, max: 4, step: 0.05, unit: "×", default: 0, perTemplate: { ngc_4414: 2.0}, about: "The light's puffs and bright grains made this much stronger between the bands (the star clouds' zones), weaker in them. (S109) Illustrative." },
   { key: "dustArmFrom", label: "dust arms from", min: 0, max: 10, step: 0.1, unit: "kpc", default: 0.8, about: "The bands come in over this radius, kpc (the dust inside as drawn). (S109) Illustrative." },
   // S109 (B2): the bands as swarms of the crisp narrow lanes (their number and depth), not a smooth veil.
   { key: "dustArmGaps", label: "dust arm lanes", min: 0, max: 0.6, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0}, about: "How far the bands set how many narrow lanes there are: the lanes' gap level raised by this between the bands (lanes broken away) and lowered on them (a swarm of lanes); 0 the lanes as drawn. (S109) Illustrative." },
   { key: "dustArmNear", label: "dust arm near side", min: -1, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.4 }, about: "How much stronger the bands are toward the near-side azimuth (and weaker opposite); 0 alike all round. (S109) Illustrative." },
   { key: "cloudFall", label: "star clouds by the fall-off", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2}, about: "The star clouds' number thinned by the disc's fall-off, this share of its stops (the dim outskirts carry few clouds: none left floating alone in the dark); 0 the clouds as drawn. (S109) Illustrative." },
-  { key: "dustArmVary", label: "dust arm spread", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.6 }, about: "How far the bands differ from one another in width and strength; 0 all alike. (S109) Illustrative." },
+  { key: "dustArmVary", label: "dust arm spread", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.9}, about: "How far the bands differ from one another in width and strength; 0 all alike. (S109) Illustrative." },
   { key: "inkTint", label: "ink brown", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "How far the drawn dust's shade over the starlight goes to a warm sienna brown (its depth kept), in place of the grains' grey-red. (S109) Colour for appearance." },
   { key: "outerBlue", label: "outer disc blue", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1}, about: "A blue-grey tint over the disc's light growing with the fall-off (none at its start, full at its end). (S109) Colour for appearance." },
   // S109 (B3): the star-cloud field - the light between the dust gathered into clumps of all sizes (an intermittent
