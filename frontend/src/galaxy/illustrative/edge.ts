@@ -43,6 +43,14 @@ export const edge: IllFeature = {
       key: "bulgeout", label: "bulge dim to", min: 1, max: 20, step: 0.1, unit: "kpc", default: 8, perTemplate: { milky_way: 10 },
       about: "The bulge's dimming has faded to nothing at this radius, kpc (from half of it). Illustrative (S106).",
     },
+    {
+      key: "grazeRadius", label: "edge radius edge-on", min: 0, max: 30, step: 0.5, unit: "kpc", default: 0, perTemplate: { ngc_4414: 9.5 },
+      about: "The edge radius handed over to toward edge-on (with the grazing handover, base.grazeFrom to base.grazeTo): the disc's own fall-offs are veils that fade there, so a wide face-on taper would let the smooth disc run on past the lane as a thin band; 0 the face-on radius kept. Face-on nothing moves. Illustrative (S110).",
+    },
+    {
+      key: "grazeWidth", label: "edge taper edge-on", min: 0, max: 25, step: 0.5, unit: "kpc", default: 0, perTemplate: { ngc_4414: 4 },
+      about: "The edge taper handed over to toward edge-on, kpc (with the edge radius edge-on); 0 with that radius at 0 the face-on taper kept. Illustrative (S110).",
+    },
   ],
   glsl: /* glsl */ `
   uniform float illEdgeRadius;
@@ -63,8 +71,17 @@ export const edge: IllFeature = {
     float share = illGraze >= 1.0 ? illEdgeBulge.x : illEdgeBulge.x * illGraze;
     return 1.0 - share * smoothstep(0.0, illEdgeBulge.y, r) * (1.0 - smoothstep(0.5 * illEdgeBulge.z, illEdgeBulge.z, r));
   }
+  // S110 (B1): the taper's end and width handed over toward edge-on (illEdgeGraze: x the radius, y the width; x 0 none),
+  // exactly the face-on pair while illGraze is 1.
+  uniform vec2 illEdgeGraze;
+  vec2 illEdgeEnd() {
+    vec2 face = vec2(min(illEdgeRadius, rHi), illEdgeWidth);
+    if (illGraze >= 1.0 || illEdgeGraze.x <= 0.0) return face;
+    return mix(vec2(min(illEdgeGraze.x, rHi), illEdgeGraze.y), face, illGraze);
+  }
   float illEdgeTaper(float r) {
-    float t = illEdgeRamp(r, min(illEdgeRadius, rHi), illEdgeWidth);
+    vec2 end = illEdgeEnd();
+    float t = illEdgeRamp(r, end.x, end.y);
     return illEdgeBulge.x > 0.0 ? t * illEdgeBulgeAt(r) : t;
   }
   vec3 illEdgeDisc(vec2 rp) { return illEdgeBulge.x > 0.0 ? vec3(1.0 / illEdgeBulgeAt(rp.x)) : vec3(1.0); }
@@ -79,6 +96,7 @@ export const edge: IllFeature = {
     illEdgeYoungRadius: p.young ?? 30,
     illEdgeYoungWidth: p.youngwidth ?? 0,
     illEdgeBulge: [p.bulge ?? 0, p.bulgein ?? 1, Math.max(p.bulgeout ?? 8, 0.2)] as [number, number, number],
+    illEdgeGraze: [Math.max(p.grazeRadius ?? 0, 0), Math.max(p.grazeWidth ?? 0, 0)] as [number, number],
   }),
 };
 
