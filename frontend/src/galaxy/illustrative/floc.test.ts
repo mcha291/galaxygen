@@ -603,3 +603,14 @@ describe("the white-hot core and the star clouds' cap (S109, builder B4)", () =>
     expect(floc.glsl ?? "").toContain("if (illFlocHot.x > 0.0) {");
   });
 });
+
+describe("the inner warmth's yellow hue (S110, builder B)", () => {
+  it("is off on the Milky Way and turns NGC 4414's warmth toward a yellow-tan", () => {
+    expect(illDefaults("milky_way")["floc.warmYellow"]).toBe(0);
+    expect(illDefaults("ngc_4414")["floc.warmYellow"]).toBeGreaterThan(0);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), { template: "ngc_4414", frame: FRAME });
+    expect(ngc.illFlocWarmY).toBe(illDefaults("ngc_4414")["floc.warmYellow"]);
+    // At 0 the S106 tint exactly (the old line kept as the else branch).
+    expect(floc.glsl ?? "").toContain("else veil *= vec3(1.0 + 0.2 * w, 1.0 + 0.03 * w, 1.0 - 0.32 * w);");
+  });
+});
