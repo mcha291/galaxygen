@@ -6,7 +6,7 @@
 import { toScene } from "../positions";
 import { armMapFor, armsSkeleton, barOf, shapeOf } from "./arms";
 import { skeletonOn, skeletonParamsOf } from "./armsSkeleton";
-import { buildSparkle, hashString } from "./armsSparkle";
+import { buildSparkle, hashString, tabulated } from "./armsSparkle";
 import { ILL_MAP, type IllFrame, type IllParams } from "./feature";
 import { grainDensity, ridgeAt } from "./skeleton";
 
@@ -73,7 +73,12 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   const grainFade = params.skelgrainfade ?? 1.5;
   if (!built || shape.count <= 0) return null;
   const plane = lanes ? { data: lanes, width: ILL_MAP.width, height: ILL_MAP.height, rHi: built.grid.rHi } : null;
-  const ridgeLevel = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+  const ridgeExact = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+  // S110 (A2, the cost): with the table on, the ridge read off it here - for the places and for the bar's cream alike
+  // (each a read per point before) - and buildSparkle given the cheap read (its own table then not built).
+  const tableOn = (shape.table ?? 0) > 0;
+  const ridgeLevel = ridgeExact && tableOn ? tabulated(ridgeExact, Math.min(shape.rMax, built.grid.rHi)) : ridgeExact;
+  if (ridgeExact && tableOn) shape.table = 0;
   // S109 (sparklebar): on the skeleton, a grain over the drawn bar too (its ellipse's profile, the bar light's own).
   const onBar = ridgeLevel ? barGrain(params, frame) : null;
   const levelOf = ridgeLevel && onBar ? (r: number, phi: number) => Math.max(ridgeLevel(r, phi), onBar(r, phi)) : ridgeLevel;

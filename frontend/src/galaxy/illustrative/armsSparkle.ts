@@ -407,10 +407,37 @@ export function sparkleTiers(weight: ArrayLike<number>, share: number): Uint8Arr
   const out = new Uint8Array(n);
   const big = Math.floor(n * Math.min(1, Math.max(0, share)));
   if (big <= 0) return out;
-  const sorted = Float32Array.from(weight).sort();
-  const threshold = sorted[n - big];
+  // S110 (A2, the main thread's cost): the threshold - the (n - big)-th smallest weight, what a sort's sorted[n - big]
+  // was - by selection (Hoare's quickselect over a copy), not a full sort of hundreds of thousands of points.
+  const threshold = kthSmallest(Float32Array.from(weight), n - big);
   for (let i = 0; i < n; i++) if (weight[i] >= threshold) out[i] = 1;
   return out;
+}
+
+/** S110 (A2): the k-th smallest value (0-based) of `a`, which is reordered in place (quickselect, middle pivot). */
+export function kthSmallest(a: Float32Array, k: number): number {
+  let lo = 0;
+  let hi = a.length - 1;
+  while (lo < hi) {
+    const pivot = a[(lo + hi) >> 1];
+    let i = lo;
+    let j = hi;
+    while (i <= j) {
+      while (a[i] < pivot) i++;
+      while (a[j] > pivot) j--;
+      if (i <= j) {
+        const t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+        i++;
+        j--;
+      }
+    }
+    if (k <= j) hi = j;
+    else if (k >= i) lo = i;
+    else return a[k];
+  }
+  return a[k];
 }
 
 /** The members of one tier: the indices whose tier is `tier`. */

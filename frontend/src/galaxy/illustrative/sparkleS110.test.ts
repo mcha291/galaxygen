@@ -1,6 +1,6 @@
 // S110 (A2): the sparkle's level table and its field stars (armsSparkle.ts).
 import { describe, expect, it } from "vitest";
-import { buildSparkle, fieldStars, tabulated, TABLE_RINGS, type SparkleShape } from "./armsSparkle";
+import { buildSparkle, fieldStars, kthSmallest, rng, tabulated, TABLE_RINGS, type SparkleShape } from "./armsSparkle";
 
 const g = { nR: 40, nPhi: 36, rHi: 20 };
 /** An arm map (RGBA, G the share) with one ridge (0.6) along phi cells 0-5. */
@@ -49,5 +49,12 @@ describe("the sparkle's S110 level table and field stars", () => {
     expect(Math.min(...f.weight)).toBeGreaterThanOrEqual(0.3 - 1e-6);
     // between the arms too: every quarter of the turn holds some
     for (let q = 0; q < 4; q++) expect(Array.from(f.azimuth).filter((p) => Math.floor(p / (Math.PI / 2)) === q).length).toBeGreaterThan(800);
+  });
+
+  it("selects the k-th smallest weight as a full sort does, ties and all", () => {
+    const next = rng(5);
+    const w = Float32Array.from({ length: 20001 }, () => Math.floor(next() * 50) / 7);
+    const sorted = Float32Array.from(w).sort();
+    for (const k of [0, 1, 777, 10000, 19999, 20000]) expect(kthSmallest(Float32Array.from(w), k)).toBe(sorted[k]);
   });
 });
