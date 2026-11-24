@@ -58,7 +58,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The t taken where a ring has no contrast (no arm placed there, the far disc). Illustrative.",
   },
   {
-    key: "fadeR", label: "regions fade radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 11, perTemplate: { milky_way: 12, ngc_4414: 5.5 },
+    key: "fadeR", label: "regions fade radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 11, perTemplate: { milky_way: 10, ngc_4414: 5.5 },
     about: "Past this radius the regions fade out, over the fade width. Illustrative.",
   },
   { key: "fadeWidth", label: "regions fade width", min: 0.5, max: 15, step: 0.5, unit: "kpc", default: 3, about: "The width of the outer fade, kpc. Illustrative." },
@@ -120,7 +120,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "halo", label: "skeleton: complexes' halo", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0 }, about: "A soft pink envelope along the arm round each large complex (and bar end), its light this share of the complex's largest member; 0 none. Illustrative (S107)." },
   { key: "haloSize", label: "skeleton: halo size", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 2 }, about: "The halo's radius, times the regions' radius ceiling. Illustrative (S107)." },
   { key: "ragged", label: "ragged lobes", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.6 }, about: "On the skeleton's regions, each lobe's light broken by a fixed noise at a few cells per region radius by this share: ragged outlines, wisps and holes; 0 smooth lobes. Illustrative (S107)." },
-  { key: "veil", label: "regions' veil", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "The share of the light behind each region hidden by its own cloud (premultiplied), so the pink keeps a deep red-magenta over the bright arms; 0 the plain additive light. Colour for appearance (S107)." },
+  { key: "veil", label: "regions' veil", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5}, about: "The share of the light behind each region hidden by its own cloud (premultiplied), so the pink keeps a deep red-magenta over the bright arms; 0 the plain additive light. Colour for appearance (S107)." },
   { key: "spurCrest", label: "skeleton: spurs' regions on the crest", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "The regions on a spur drawn onto its crest by this share (0: set to the inner side and scattered as on an arm, so they sit off the short spur). Illustrative (S107)." },
   { key: "edgefade", label: "skeleton: faded edge-on", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "On the skeleton's regions, their light and their veil faded by this share as the view grazes the disc (the edge-on handover, base.grazeFrom to grazeTo), so an edge-on disc shows no confetti of pink along its midplane; exactly as before face-on. Illustrative (S110)." },
   { key: "seed", label: "skeleton: seed", min: 1, max: 99, step: 1, default: 7, about: "The placement's fixed seed (the viewer's own). Illustrative (S106)." },
