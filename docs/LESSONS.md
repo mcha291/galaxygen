@@ -2506,11 +2506,19 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [viewer] **Removing a term that carried light means replacing its light.** The glitter's grain held the close-up's
   brightness (78.2 -> 65.1 without it) and its bright peaks were most of the bright points the tool counts (13 -> 5). A
   texture swap is also a tone and a point-count change. (S110, D281)
-- [viewer] **The eye and the yardstick can part.** NGC 4414's pick reads nearer on the pair sheets and further by the
-  tool on five rows; the darker pixels are now between lumps rather than in lanes. When they part, write both down and
-  let the owner rule; re-measure on the previous frame's ellipse to rule out the outline. (S110, D281)
+- [viewer] **The eye and the yardstick can part.** NGC 4414's second-pass pick read nearer on the pair sheets and
+  further by the tool on five rows, the darker pixels between lumps rather than in lanes. When they part, write both
+  down and let the owner rule; re-measure on the previous frame's ellipse to rule out the outline. (S110, D281)
+- [viewer] **"A gain at both ranges" means the close stand's own frame beside the last session's, at full size** - not
+  a crop of the full frame and not a mean brightness. NGC 4414's close-up passed on its mean luminance (79.4 against
+  79.0) while it showed a crackle and flat flakes where S109's had a warm grain; the lead checked a number, the second
+  reader looked. (S110, D281)
+- [close] **A second reader who built nothing finds what the lead passed.** At S109 a regression edge-on, at S110 a
+  loss at the close stand and three faults in the Milky Way, one of which the lead's own words had named the other way
+  (the bar "paler" while yellower than the last session's). Have the documents' writer read every frame beside the
+  last session's before the close, and leave time to act on it. (S110, D281)
 - [close] **Two passes, two ranges.** A first pass with a list written from the full frame found composition and tone;
   a second pass on the merged head with a list written from the central 45 % found the texture defects the full frame
   hides. (S110, D281)
-- [close] **Tone picked by the lead from its own sheets converged in one round per question** (five sheets a
-  template over the two passes, two to three minutes a round); no judged pass was sent back this session. (S110, D281)
+- [close] **Tone picked by the lead from its own sheets converged in one round per question** (six sheets a template
+  in all, two to three minutes a round); no judged pass was sent back this session. (S110, D281)
