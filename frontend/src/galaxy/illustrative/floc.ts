@@ -127,7 +127,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "litKnots", label: "bright grains", min: 0, max: 3, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 1.4 }, about: "How bright the brightest of the light's grains are (the grain's peaks, in the clump tint). Illustrative." },
   { key: "litReach", label: "light reach", min: 1, max: 3, step: 0.05, unit: "× outer", default: 1.7, perTemplate: { ngc_4414: 1.3 }, about: "How far the plane style's clouds of light reach, as a multiple of the network's outer radius. Illustrative." },
   // S106 second pass (C3): the light's grain and its radial colour, drawn in the march (no rebuild).
-  { key: "litGrain", label: "light grain", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.6 }, about: "The plane style: how far the starlight between the dust is broken into small bright puffs (a multiplier about 1); 0 smooth. Illustrative." },
+  { key: "litGrain", label: "light grain", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.4 }, about: "The plane style: how far the starlight between the dust is broken into small bright puffs (a multiplier about 1); 0 smooth. Illustrative." },
   { key: "litGrainSize", label: "grain size", min: 10, max: 300, step: 1, unit: "pc", default: 40, perTemplate: { ngc_4414: 12 }, about: "A puff of the light's grain, parsecs (a finer one at under half of it rides on it). Illustrative." },
   { key: "litGrainNear", label: "grain by the dust", min: 0, max: 5, step: 0.05, unit: "×", default: 1.5, perTemplate: { ngc_4414: 0 }, about: "How much stronger the grain is just outside a dust thread (the young light along the arcs). Illustrative." },
   { key: "cool", label: "outer blue", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "The plane style: a blue-white tint over the outer disc's light, from the outer blue's radius outward (warm cream inside). Colour for appearance." },
@@ -201,7 +201,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "grainDim", label: "grain shade", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0 }, about: "How far the light's grain dims the light between its puffs: 1 as drawn (bright and dark), 0 bright points only. Illustrative." },
   { key: "puffDim", label: "puff shade", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 0.3 }, about: "How far the light's puffs dim the light between them: 1 as drawn, 0 brightening only. Illustrative." },
   { key: "clearFloor", label: "clear zone floor", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, about: "Where the arcs' gate takes the dust away, the light's patches are held at least at this level (0.5 their mean): the clear zones' starlight unshaded. Illustrative." },
-  { key: "coreGain", label: "nucleus point", min: 0, max: 20, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 20 }, about: "A compact bright point at the nucleus: the light there lifted by 1 plus this, falling off over the point's radius (the broad glow kept). Illustrative." },
+  { key: "coreGain", label: "nucleus point", min: 0, max: 20, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3 }, about: "A compact bright point at the nucleus: the light there lifted by 1 plus this, falling off over the point's radius (the broad glow kept). Illustrative." },
   { key: "coreRadius", label: "nucleus point radius", min: 0.01, max: 1, step: 0.005, log: true, unit: "kpc", default: 0.12, perTemplate: { ngc_4414: 0.12 }, about: "The nucleus point's radius at 1/e, kpc. Illustrative." },
   { key: "coreWhite", label: "nucleus point white", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.9 }, about: "How far the nucleus point's lift goes toward a blue-white (it whitens a cream core). Colour for appearance." },
   { key: "glowDim", label: "nucleus glow dimmed", min: 0, max: 0.995, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.97}, about: "The share of the light taken off the nucleus's broad glow at its centre (a gaussian), so the stretch does not flatten it into a blob. Colour for appearance." },
@@ -273,8 +273,35 @@ const CONTROLS: readonly IllControl[] = [
   // S109 (B4): the star cloud points' brightness capped before the bloom (FluxPoints' illCap, CloudsLayer.tsx): the
   // brightest of them were spread by the bloom into soft round discs; capped they stay crisp points.
   { key: "cloudCap", label: "star cloud brightness cap", min: 0, max: 5000, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3}, about: "The brightest a star cloud point may be (its largest channel in the frame's linear light, before the bloom): the bright ones stay crisp points, not soft discs; 0 none. (S109) Illustrative." },
-  { key: "coreHot", label: "nucleus white core", min: 0, max: 30, step: 0.1, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1.5}, about: "A small white-hot core inside the nucleus's cream glow: the light lifted by 1 plus this at the centre, bluer than the glow, falling as a gaussian over its radius; 0 none. (S109) Colour for appearance." },
+  { key: "coreHot", label: "nucleus white core", min: 0, max: 30, step: 0.1, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3}, about: "A small white-hot core inside the nucleus's cream glow: the light lifted by 1 plus this at the centre, bluer than the glow, falling as a gaussian over its radius; 0 none. (S109) Colour for appearance." },
   { key: "coreHotRadius", label: "nucleus white core radius", min: 0.005, max: 0.5, step: 0.005, log: true, unit: "kpc", default: 0.04, perTemplate: { ngc_4414: 0.09 }, about: "The white core's radius at 1/e, kpc. (S109) Colour for appearance." },
+  // S110 (B2): the light's lumps - soft-edged white clumps of light of many sizes (an irregular field: several octaves
+  // of noise over a warped plane, thresholded, so the lumps differ in size, merge into banks and leave real gaps; no
+  // lattice, no one cell size), packed between the dust, smooth inside. Drawn in the march (uniforms, no rebuild).
+  { key: "lumps", label: "light lumps", min: 0, max: 6, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 0, ngc_4414: 3.0 }, about: "How much brighter the light is inside a lump (1 plus this, toward the lumps' white); 0 none. Display-only structure of the viewer's own (S110). Illustrative." },
+  { key: "lumpSize", label: "lump size", min: 40, max: 2000, step: 5, unit: "pc", default: 300, perTemplate: { ngc_4414: 300 }, about: "The lumps' largest scale, parsecs (finer octaves at a half, a quarter and an eighth of it shape their edges). (S110) Illustrative." },
+  { key: "lumpCover", label: "lump cover", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { ngc_4414: 0.4 }, about: "How much of the disc the lumps cover: higher, more and larger lumps running together into banks. (S110) Illustrative." },
+  { key: "lumpSoft", label: "lump edge", min: 0.01, max: 0.3, step: 0.005, unit: "", default: 0.06, perTemplate: { ngc_4414: 0.08 }, about: "How soft a lump's edge is (the width of the threshold): small, a crisp outline. (S110) Illustrative." },
+  { key: "lumpWarp", label: "lump warp", min: 0, max: 3, step: 0.01, unit: "", default: 1.2, perTemplate: { ngc_4414: 0.6 }, about: "How far the plane is pushed about before the lumps are drawn, in lumps: irregular outlines, no lattice. (S110) Illustrative." },
+  { key: "lumpBanks", label: "lump banks", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "How far the cover varies over a few kiloparsecs: banks of merged lumps here, gaps of plain disc there. (S110) Illustrative." },
+  { key: "lumpNear", label: "lumps by the dust", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "How far the lumps gather beside the dust lanes (the cover raised at a lane's margin, lowered on its crest). (S110) Illustrative." },
+  { key: "lumpWhite", label: "lump white", min: 0, max: 1.5, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 1.5 }, about: "How far a lump's light goes from the disc's own colour to white (blue-white outward, with the star clouds' blue). (S110) Colour for appearance." },
+  { key: "lumpFrom", label: "lumps from", min: 0, max: 10, step: 0.1, unit: "kpc", default: 1.5, perTemplate: { ngc_4414: 1.5 }, about: "The lumps come in over this radius, kpc (from half of it). (S110) Illustrative." },
+  { key: "lumpTo", label: "lumps full to", min: 0.5, max: 25, step: 0.1, unit: "kpc", default: 6, perTemplate: { ngc_4414: 6 }, about: "The lumps are at their brightest out to this radius, kpc, and fall to the outer share by 1.8 of it. (S110) Illustrative." },
+  { key: "lumpRim", label: "outer lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "The lumps' brightness in the outer disc as a share of the ring's. (S110) Illustrative." },
+  { key: "lumpGrain", label: "grain in the lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "How far the light's fine grain is taken out of the lumps (1 none inside them: smooth lumps); 0 the grain as drawn. (S110) Illustrative." },
+  // S110 (B2): the disc's hue - red taken off the disc's light outside the nucleus, so a salmon-orange reads yellow-tan.
+  { key: "tanHue", label: "disc yellow", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.1 }, about: "The share of red taken off the disc's light (green given half of it, blue a tenth), from the yellow's radius outward: a salmon disc toward a yellow-tan; 0 none. (S110) Colour for appearance." },
+  { key: "tanFrom", label: "disc yellow from", min: 0, max: 5, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { ngc_4414: 0.6 }, about: "The yellow comes in over this radius, kpc (from half of it): the nucleus keeps its own colour. (S110) Colour for appearance." },
+  // S110 (B2): the sparks (flocClouds.ts buildSparks, CloudsLayer.tsx) - a sparse tier of single sharp bright points.
+  { key: "sparkCount", label: "sparks", min: 0, max: 2000, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 }, about: "How many single sharp bright points (blue-white stars and young clusters) lie over the disc, most in its outer zone; 0 none. Display-only, of the viewer's own (S110). Illustrative." },
+  { key: "sparkGain", label: "spark brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 30000, perTemplate: { ngc_4414: 30000 }, about: "The faintest spark's light, L☉ over the white point (the field's scale, with the exposure). (S110) Illustrative." },
+  { key: "sparkRange", label: "spark range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 30, perTemplate: { ngc_4414: 30 }, about: "The brightest spark over the faintest. (S110) Illustrative." },
+  { key: "sparkSlope", label: "spark slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.2, perTemplate: { ngc_4414: 1.2 }, about: "The sparks' brightness law's index: smaller, more bright ones. (S110) Illustrative." },
+  { key: "sparkSize", label: "spark size", min: 0.3, max: 3, step: 0.05, unit: "px", default: 0.8, perTemplate: { ngc_4414: 0.8 }, about: "A spark's sprite, pixels: small, a sharp point. (S110) Illustrative." },
+  { key: "sparkFrom", label: "sparks from", min: 0.2, max: 20, step: 0.1, unit: "kpc", default: 5, perTemplate: { ngc_4414: 5 }, about: "The outer zone the most of the sparks lie in starts here, kpc. (S110) Illustrative." },
+  { key: "sparkTo", label: "sparks to", min: 1, max: 25, step: 0.1, unit: "kpc", default: 12, perTemplate: { ngc_4414: 12 }, about: "The sparks' outer zone ends here, kpc. (S110) Illustrative." },
+  { key: "sparkInner", label: "inner sparks", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { ngc_4414: 0.15 }, about: "The share of the sparks inside the outer zone (cream-white there). (S110) Illustrative." },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
@@ -434,6 +461,11 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocScC: [v("scCrisp"), v("inkBrown"), v("seed") === DEFAULTS.seed ? 0 : (37.17 * v("seed")) % 97, v("seed") === DEFAULTS.seed ? 0 : 137.508 * v("seed") * rad],
     illFlocGlow: [v("glowShape"), v("glowLift"), Math.max(v("glowLiftRadius"), 0.05), v("glowCream")],
     illFlocHot: [v("coreHot"), Math.max(v("coreHotRadius"), 0.005), 0, 0],
+    // S110 (B2): the lumps and the disc's yellow.
+    illFlocLumpA: [v("style") >= 0.5 ? v("lumps") : 0, Math.max(v("lumpSize"), 10) * 1e-3, v("lumpCover"), Math.max(v("lumpSoft"), 0.005)],
+    illFlocLumpB: [v("lumpWarp"), v("lumpBanks"), v("lumpNear"), v("lumpWhite")],
+    illFlocLumpC: [v("lumpFrom"), Math.max(v("lumpTo"), 0.1), v("lumpRim"), v("lumpGrain")],
+    illFlocTan: [v("tanHue"), v("tanFrom"), 0, 0],
   };
 }
 
@@ -808,6 +840,33 @@ export const floc: IllFeature = {
     if (illFlocYoungGain <= 0.0) return 1.0;
     return 1.0 + illFlocYoungGain * illFlocRead(rp).z;
   }
+  // S110 (B2): the light's lumps - A: x the gain (0 off), y the largest scale (kpc), z the cover, w the edge's softness;
+  // B: x the warp (lumps), y the banks, z the gathering beside the lanes, w the white; C: x from (kpc), y full to (kpc),
+  // z the outer share, w how far the grain is taken out of them. illFlocTan: x the red taken off the disc, y from (kpc).
+  uniform vec4 illFlocLumpA;
+  uniform vec4 illFlocLumpB;
+  uniform vec4 illFlocLumpC;
+  uniform vec4 illFlocTan;
+  // The lumps' field at xy (kpc) and a shift of the threshold (dl, the lanes' gathering): in [0, 1], 0 the plain disc,
+  // 1 inside a lump (a gentle dome, smooth inside, the edge as soft as illFlocLumpA.w). The plane warped twice over (a
+  // lump and three lumps across), then four octaves of value noise, each turned off the lattice's axes, and a broad
+  // octave that sets the cover by region (banks and gaps): no lattice, no one size.
+  float illFlocLumpField(vec2 xy, float dl) {
+    vec2 q = xy / illFlocLumpA.y;
+    vec2 w1 = vec2(illFlocVN(0.33 * q + vec2(3.1, 17.9)), illFlocVN(0.33 * q + vec2(27.3, 5.4))) - 0.5;
+    vec2 w2 = vec2(illFlocVN(mat2(0.8, 0.6, -0.6, 0.8) * q * 1.1 + vec2(8.8, 1.2)), illFlocVN(mat2(0.8, 0.6, -0.6, 0.8) * q * 1.1 + vec2(4.4, 33.1))) - 0.5;
+    q += illFlocLumpB.x * (2.0 * w1 + 0.7 * w2);
+    // Five octaves (the finest at a sixteenth: a lump's outline bumpy, a cauliflower's, not a smooth blob).
+    float f = 0.42 * illFlocVN(q + vec2(11.3, 2.7))
+      + 0.26 * illFlocVN(mat2(0.6, -0.8, 0.8, 0.6) * q * 2.07 + vec2(1.7, 9.2))
+      + 0.16 * illFlocVN(mat2(-0.28, 0.96, -0.96, -0.28) * q * 4.13 + vec2(23.5, 6.1))
+      + 0.10 * illFlocVN(mat2(0.96, 0.28, -0.28, 0.96) * q * 8.31 + vec2(5.9, 41.3))
+      + 0.06 * illFlocVN(mat2(0.28, -0.96, 0.96, 0.28) * q * 16.7 + vec2(31.1, 17.3));
+    float bank = illFlocLumpB.y * 0.16 * (illFlocVN(0.12 * q + vec2(13.7, 29.1)) - 0.5) * 2.0;
+    float lv = mix(0.64, 0.4, illFlocLumpA.z) - bank - dl;
+    float l = smoothstep(lv, lv + illFlocLumpA.w, f);
+    return l * (0.6 + 0.4 * smoothstep(lv, lv + 0.15, f));
+  }
   vec3 illFlocVeil(vec2 rp) {
     vec3 veil = vec3(1.0);
     vec3 map = illFlocRead(rp);
@@ -897,6 +956,9 @@ export const floc: IllFeature = {
         }
         veil *= vec3(1.0) + illFlocScA.x * g * (sc.x * tex + sc.z) * mix(vec3(0.86, 1.0, 1.22), vec3(0.74, 0.98, 1.45), t);
       }
+      // S110 (B2): the lumps' field here (the lanes' margins raise the cover, their crests lower it).
+      float lump = 0.0;
+      if (illFlocLumpA.x > 0.0 && rp.x < rHi) lump = illFlocLumpField(rp.x * vec2(cos(rp.y), sin(rp.y)), illFlocLumpB.z * 0.08 * (2.0 * lane.y - lane.x));
       // S106 (C3): the light's grain - small bright puffs, stronger just outside a dust thread (the map read 60 pc in
       // and out along the radius: the threads run mostly along the azimuth), none on the dust itself.
       if (illFlocGrain > 0.0 && rp.x < rHi) {
@@ -908,6 +970,7 @@ export const floc: IllFeature = {
         // Fading out over the outer fifth of the network's radius: the disc's faint rim is not broken into puffs.
         float amt = bandLit * illFlocGrain * (1.0 + illFlocGrainNear * smoothstep(0.05, 0.35, side)) * bare * (1.0 - smoothstep(0.75 * illFlocGrainR, illFlocGrainR, rp.x));
         if (illFlocScA.w > 0.0 && illFlocScA.x > 0.0) amt *= mix(1.0, 1.8 * sc.y, illFlocScA.w);
+        if (illFlocLumpC.w > 0.0) amt *= 1.0 - illFlocLumpC.w * lump;
         veil *= max(1.0 + amt * (puff - 0.3 * illFlocLitDim.x), 0.0);
         float peak = illFlocKnots * amt * smoothstep(0.8, 0.95, n);
         veil *= vec3(1.0) + peak * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);
@@ -924,6 +987,15 @@ export const floc: IllFeature = {
         float amt = bandLit * illFlocPuff.x * bare * edge * (1.0 +illFlocPuff.z * (illFlocPuff.z > 0.0 ? illFlocNear(rp) : 0.0));
         float cool = illFlocPuff.w * smoothstep(0.7 * illFlocCoolR, 1.5 * illFlocCoolR, rp.x);
         veil *= max(vec3(1.0) + amt * (heap - 0.25 * illFlocLitDim.y) * mix(vec3(1.0), vec3(0.8, 0.97, 1.3), min(cool, 1.0)), vec3(0.0));
+      }
+      // S110 (B2): the lumps - brightest in their ring, the outer share beyond, white inside and blue-white outward
+      // (with the star clouds' blue and the fall-off's progress).
+      if (lump > 0.0) {
+        float rw = smoothstep(0.5 * illFlocLumpC.x, max(illFlocLumpC.x, 0.01), rp.x) * mix(1.0, illFlocLumpC.z, smoothstep(illFlocLumpC.y, 1.8 * illFlocLumpC.y, rp.x));
+        float t = clamp(illFlocScB.x * (illFlocFall.x > 0.0 ? illFlocFallT(rp.x) : 0.0), 0.0, 1.0);
+        // The tints take the disc's tan (red over green about 1.15, blue 0.88) to a neutral white at a lift near 1.5.
+        vec3 tint = mix(vec3(1.0), mix(vec3(0.8, 1.0, 1.28), vec3(0.66, 0.95, 1.6), t), illFlocLumpB.w);
+        veil *= vec3(1.0) + illFlocLumpA.x * rw * lump * tint;
       }
       // S106 (C3): the outer disc's light toward a blue-white, the inner left cream.
       if (illFlocCool > 0.0) veil *= mix(vec3(1.0), vec3(0.84, 0.97, 1.24), illFlocCool * smoothstep(0.7 * illFlocCoolR, 1.5 * illFlocCoolR, rp.x));
@@ -964,6 +1036,12 @@ export const floc: IllFeature = {
     if (illFlocLitDim.w > 0.0) {
       float q = rp.x / max(illFlocNucPt.x, 1e-3);
       veil *= vec3(1.0) + illFlocLitDim.w * exp(-q * q) * mix(vec3(1.0), vec3(0.85, 0.97, 1.25), illFlocNucPt.y);
+    }
+    // S110 (B2): the disc's yellow - red taken off outside the nucleus and green given (blue a little: blue
+    // over green falls a little, as the photograph's): the hue turns from salmon toward yellow-tan without the light dimming.
+    if (illFlocTan.x > 0.0) {
+      float k = illFlocTan.x * smoothstep(0.5 * illFlocTan.y, max(illFlocTan.y, 0.01), rp.x);
+      veil *= vec3(1.0 - k, 1.0 + 0.5 * k, 1.0 + 0.1 * k);
     }
     // S109 (B): the disc's fall-off, and the outer disc's blue-grey growing with it.
     if (illFlocFall.x > 0.0) veil *= illFlocFallAt(rp.x);

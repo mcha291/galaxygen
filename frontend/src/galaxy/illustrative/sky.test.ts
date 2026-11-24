@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { features, illDefaults, illGlsl, paramsOf } from "./index";
-import { MAX_SKY_STARS, buildSkyStars, frameSolidAngle, sky, skyBrightness, skyDrawn, skyTint, sphereCount } from "./sky";
+import { MAX_SKY_STARS, buildSkyStars, frameSolidAngle, grazePair, sky, skyBrightness, skyDrawn, skyTint, sphereCount } from "./sky";
 
 const LUMA = [0.2126, 0.7152, 0.0722];
 const shape = { count: 5000, seed: 7, slope: 1.1, range: 80, warm: 0.12, blue: 0.7 };
@@ -89,5 +89,11 @@ describe("the sky (S106): field stars fixed on the sky, the floor and the halo",
     const t = skyTint([0.08, 0.05, 1], 1);
     expect(LUMA[0] * t[0] + LUMA[1] * t[1] + LUMA[2] * t[2]).toBeCloseTo(1, 6);
     expect(skyTint([0.08, 0.05, 1], 0)).toEqual([1, 1, 1]);
+  });
+  it("reads the registry's handover angles for the halo (S110: the halo fades edge-on), none while unknown", () => {
+    expect(grazePair([1.2, 1.5])).toEqual([1.2, 1.5]);
+    expect(grazePair({ x: 1.2, y: 1.5 })).toEqual([1.2, 1.5]);
+    expect(grazePair(undefined)).toEqual([0, 0]);
+    expect(grazePair(null)).toEqual([0, 0]);
   });
 });

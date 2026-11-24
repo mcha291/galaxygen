@@ -141,6 +141,49 @@ export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape = c
   return { x: x.subarray(0, k), y: y.subarray(0, k), weight: weight.subarray(0, k), groups };
 }
 
+/** S110 (B2): the sparks' shaping values (floc.ts's spark* controls). */
+export interface SparkShape {
+  /** points in all. */
+  count: number;
+  /** kpc: the outer zone the most of them lie in, from `from` to `to` (even in area). */
+  from: number;
+  to: number;
+  /** the share of them inside `from` (even in area from a kiloparsec). */
+  inner: number;
+  /** the brightness law's index and the brightest over the faintest. */
+  slope: number;
+  range: number;
+  seed: number;
+}
+
+/**
+ * S110 (B2): the sparks - a sparse tier of single sharp bright points (the photograph's hundred or so blue-white stars
+ * and young clusters over the disc, most in its outer blue zone, a few brilliant), each one point at a sprite's own
+ * small size: no group, no glow. Display-only, of the viewer's own. Pure and deterministic in the shape.
+ */
+export function buildSparks(s: SparkShape): { x: Float32Array; y: Float32Array; weight: Float32Array } {
+  const n = Math.max(0, Math.min(5000, Math.floor(s.count)));
+  const x = new Float32Array(n);
+  const y = new Float32Array(n);
+  const weight = new Float32Array(n);
+  const key = flocKey(Math.round(s.seed), 15, 0, 1);
+  let draw = 0;
+  const u = () => flocRandom(key, draw++);
+  const from = Math.max(0.1, s.from);
+  const to = Math.max(from + 0.1, s.to);
+  for (let i = 0; i < n; i += 1) {
+    const inside = u() < s.inner;
+    const lo = inside ? Math.min(1, from) : from;
+    const hi = inside ? from : to;
+    const r = Math.sqrt(lo * lo + (hi * hi - lo * lo) * u());
+    const phi = 2 * Math.PI * u();
+    x[i] = r * Math.cos(phi);
+    y[i] = r * Math.sin(phi);
+    weight[i] = brightness(u(), s.slope, s.range);
+  }
+  return { x, y, weight };
+}
+
 /**
  * Each point's light per channel: its weight times the base, in cream inside `warmR` kpc going to blue-white by
  * twice it (the share `blue` of the way), three floats a point.

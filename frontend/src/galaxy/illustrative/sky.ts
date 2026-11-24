@@ -187,6 +187,18 @@ function SkyLayerLazy(props: IllLayerProps) {
   return createElement(Suspense, { fallback: null }, createElement(Layer, props));
 }
 
+/**
+ * S110 (B2): the registry's handover angles (index.ts illGrazeAt, radians off the disc's axis: a pair or a vector) as
+ * the halo's (SkyLayer.tsx: the halo fades with the sight line's grazing weight, exactly as drawn while it is 1);
+ * (0, 0) - no handover, the halo as drawn - while unknown.
+ */
+export function grazePair(value: unknown): [number, number] {
+  if (Array.isArray(value) && value.length >= 2) return [Number(value[0]) || 0, Number(value[1]) || 0];
+  const v = value as { x?: unknown; y?: unknown } | null;
+  if (v && typeof v.x === "number" && typeof v.y === "number") return [v.x, v.y];
+  return [0, 0];
+}
+
 /** Whether the layer draws anything at these parameters (all off: nothing mounted, the frame as without it). */
 export function skyDrawn(p: Readonly<Record<string, number>>): boolean {
   return (p.stars ?? 0) > 0 || (p.floor ?? 0) > 0 || (p.halo ?? 0) > 0;
