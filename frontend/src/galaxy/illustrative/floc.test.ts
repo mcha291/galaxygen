@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllFrame } from "./feature";
-import { channelShapeOf, fallBandUniforms, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { channelShapeOf, fallBandUniforms, floc, flocChannel, flocDrawn, shapeOf, sparkFallOf } from "./floc";
 import { buildNetChannel } from "./flocNet";
 import { buildSparks } from "./flocClouds";
 import {
@@ -660,5 +660,22 @@ describe("the light's lumps, the disc's yellow and the sparks (S110, builder B2)
     expect(Math.max(...a.weight)).toBeGreaterThan(10);
     expect(a.weight.filter((w) => w > 10).length).toBeLessThan(40);
     expect(buildSparks({ ...s, count: 0 }).weight.length).toBe(0);
+  });
+});
+
+describe("the sharp sparks (S111, builder B)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("are off on the Milky Way", () => {
+    expect(illDefaults("milky_way")["floc.sparkSharp"]).toBe(0);
+    expect(illDefaults("milky_way")["floc.sparkCount"]).toBe(0);
+  });
+  it("dim with the disc's fall-off, the points' share of its stops, and are 1 where it is off", () => {
+    const base = own("ngc_4414");
+    const f = sparkFallOf(base);
+    expect(f.at(0)).toBe(1);
+    expect(f.at(base.fallIn)).toBeCloseTo(1, 12);
+    expect(f.at(base.fallOut + 5)).toBeCloseTo(2 ** (-base.fall * base.fallPoints), 12);
+    expect(sparkFallOf({ ...base, fall: 0 }).at(20)).toBe(1);
+    expect(sparkFallOf({ ...base, fall: 0 }).key).toEqual([0]);
   });
 });
