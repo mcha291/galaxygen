@@ -36,6 +36,12 @@ export function sparkleShape(params: IllParams) {
     // S110 (A1): the gathered grain's gaps (armsSparkle.ts SparkleShape.gap).
     gap: params.sparklegap ?? 0,
     gapSoft: params.sparklegapsoft ?? 0.06,
+    // S110 (A2): the level off a table (the cost fixed), and the field stars (armsSparkle.ts SparkleShape).
+    table: params.sparkletable ?? 0,
+    field: params.sparklefield ?? 0,
+    fieldScale: params.sparklefieldscale ?? 4,
+    fieldEdge: params.sparklefieldedge ?? 16,
+    fieldDim: params.sparklefielddim ?? 0.3,
   };
 }
 
@@ -49,6 +55,8 @@ export interface SparklePoints {
   radius: Float32Array;
   /** S109 (A2, arms.sparklebarcream): each point's share of the bar's cream (absent: none). */
   cream?: Float32Array;
+  /** S110 (A2): how many points at the end are field stars (always on the fine sprite); absent none. */
+  field?: number;
 }
 
 /**
@@ -73,6 +81,7 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(template ?? "galaxy") ^ (frame?.header.illReroll ?? 0)) >>> 0, built.raw, plane, levelOf);
   if (s.radius.length === 0) return null;
   const out: SparklePoints = { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
+  if (s.field) out.field = s.field;
   // S109 (A2): the bar's grain cream - a point's share is how far the bar's density outweighs the arms' there.
   const creamShare = Math.min(1, Math.max(0, params.sparklebarcream ?? 0));
   if (onBar && ridgeLevel && creamShare > 0) {

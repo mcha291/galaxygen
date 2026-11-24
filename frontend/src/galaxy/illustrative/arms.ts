@@ -420,6 +420,26 @@ export const arms: IllFeature = {
       about: "1: the sparkle's places drawn through an envelope of their density (the same law, other points, several times faster where the points keep to the arms); 0: by rejection over the whole disc. Illustrative (S107).",
     },
     {
+      key: "sparkletable", label: "sparkle density table", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 1 },
+      about: "1: the sparkle's density across the ridges read from a polar table (256 x 1024 corners, bilinear) built once per build, so many more points cost no more; 0: read exactly at every proposal. Illustrative (S110).",
+    },
+    {
+      key: "sparklefield", label: "field stars", min: 0, max: 200000, step: 1000, unit: "", default: 0, perTemplate: { milky_way: 0 },
+      about: "This many faint points over the whole disc - between the arms and over the bar too - a sparse second tier of the grain, thinning outward with the disc and gone by the field's edge; 0 none. Illustrative (S110).",
+    },
+    {
+      key: "sparklefieldscale", label: "field stars' scale", min: 0.5, max: 20, step: 0.1, unit: "kpc", default: 4,
+      about: "The field stars' density falls outward as exp(-R / this). Illustrative (S110).",
+    },
+    {
+      key: "sparklefieldedge", label: "field stars' edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16,
+      about: "The field stars taper to nothing from 0.6 of this radius to it, so none lie on the black sky. Illustrative (S110).",
+    },
+    {
+      key: "sparklefielddim", label: "field stars' brightness", min: 0.01, max: 2, step: 0.01, unit: "×", default: 0.3,
+      about: "A field star's brightness against the arms' faintest grain point's: below 1 a dimmer tier. Illustrative (S110).",
+    },
+    {
       key: "sparklefall", label: "sparkle falloff", min: 0, max: 10, step: 0.1, unit: "× h", default: 2, perTemplate: { milky_way: 2, ngc_4414: 3 },
       about: "The sparkle's brightness falls outward as exp(-R / (this times the published thin-disc scale length)) from the arms' start, as the disc's own light does; 0 no falloff. Illustrative.",
     },
