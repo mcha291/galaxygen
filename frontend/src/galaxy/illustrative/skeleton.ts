@@ -821,7 +821,7 @@ function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number
       }
       // Inside the arm's start (within a reach of it) its crest carried inward at the start's pitch: texels there
       // whose foot lies on the arm are its band's rounded start.
-      const h = ringW > 0 ? (armAt(a, R) ?? armBefore(a, R, reachKpc, sense)) : null;
+      const h = ringW > 0 ? (armAt(a, R) ?? armBefore(a, R, reachKpc, sense) ?? (footShare > 0 ? armAfter(a, R, reachKpc, sense) : null)) : null;
       if (!h) {
         if (ray) flushRay(c, width, height, out, plain, c < plainCols ? plainAll : null, plainCols);
         continue;
@@ -864,7 +864,7 @@ function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number
           const wingPart = wing * Math.exp(-0.5 * (across / ((3 * a.width) / 2.3548)) ** 2);
           const clump = clumpAt(a, xf, -sense * across);
           u = strength * (core + wingPart);
-          v = strength * (clump * core + wingPart);
+          v = strength * ((1 + (clump - 1) * crestShare(x)) * core + wingPart);
         } else {
           u = strength * bandProfile(across, a.width, wing);
           v = u;
@@ -1000,7 +1000,7 @@ function rayColumn(a: SkelArm, ray: RayTable, R: number, height: number, reachKp
         const wingPart = wing * Math.exp(-0.5 * (d / ((3 * a.width) / 2.3548)) ** 2);
         const clump = clumpAt(a, xi, (R - r[o]) * cos[o]);
         u = strength * (coreV + wingPart);
-        v = strength * (clump * coreV + wingPart);
+        v = strength * ((1 + (clump - 1) * crestShare(q)) * coreV + wingPart);
       } else {
         u = strength * bandProfile(d, a.width, wing);
         v = u;
@@ -1126,4 +1126,24 @@ export function grainDensity(hit: RidgeHit, tail: number, fadePow: number): numb
   const x = hit.distance / Math.max(1e-3, hit.width);
   const v = Math.exp(-0.5 * (x / 0.3) ** 2) * 0.7 + 0.3 * Math.exp(-0.5 * (x / 0.7) ** 2) + tail * Math.exp(-0.5 * (x / 2) ** 2);
   return Math.min(1, v * (hit.patch ?? 1)) * Math.pow(hit.strength, fadePow);
+}
+
+/**
+ * S109 (A3): the share of an arm's clumps kept at x core sigmas from its crest: 1 on the crest, falling as a gaussian of
+ * one sigma (a seventh at two sigmas) - the mottling inside the band only. On the band's flanks, where the core is steep
+ * and faint, the clumps drew fine fibres across the gaps between the arms (seen in a dump of the band itself).
+ */
+function crestShare(x: number): number {
+  return Math.exp(-0.5 * x * x);
+}
+
+/**
+ * S109 (A3): an arm's crest carried past its outer end (within `reach` kpc of it) at the end's pitch, for the foot's
+ * reading (SkeletonParams.foot): the band's texels just outside the end's ring whose foot lies on the arm. Without it the
+ * band stopped on that ring right across the arm - a straight edge at each outer end (seen in a dump of the band).
+ */
+function armAfter(a: SkelArm, R: number, reach: number, sense: number): { phi: number; tanp: number } | null {
+  if (!(R > a.r1 && R < a.r1 + reach)) return null;
+  const last = a.n - 1;
+  return { phi: a.phi[last] + (sense * (Math.log(R) - a.lnR0 - last * a.dlnR)) / a.tanp[last], tanp: a.tanp[last] };
 }
