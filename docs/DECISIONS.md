@@ -20159,7 +20159,28 @@ the merged head. (65) S111's four frames committed as plain pictures in `docs/pi
 two edge-on captures of 4b370c7); not pinned. (66) The last pick on the second reader's finding: `blotReach` 2.0,
 `lumpForm` 0, `lumps` 1.0, `litGrain` 1.3, `sparkCount` 0, picked from close-ups beside S110's at full size.
 
-**The independent review:** (the lead adds this)
+**The independent review** (an Opus agent that built nothing here, against `main`'s own frontend built from `git archive
+main frontend interface`, on the merged head 220f6f4 - before the lead's last pick, which moved only default values - on
+a quiet machine, in about an hour and a half): **no blocker.** The physical look: 28 of 28 stands and 7 of 7 swap paths
+byte-identical to `main`'s build, no map worker created and no job posted under it (the mouse frames were not reached).
+NGC 4414's settled march 146 to 151 ms against `main`'s 147 to 149: the blotches add no measurable cost at the default
+stand (not measured at the close stand or at 1 kpc, where they fill more of the frame). The stall probe, three runs a
+build: no long task on either, the arms map 0.75 to 0.97 s (`main` 0.74 to 0.88), the sparkle job 0.57 to 0.93 s (0.60
+to 0.92), the picture 1.6 to 2.1 s after a pitch move (1.65 to 1.86): the two builds the same within noise. Away from
+the stands: an inclination sweep in 21 steps on both templates without a pop, band or hairline; three rerolls a
+template, each asked twice, the same bytes each time; every Milky Way reroll a spiral with arms from the bar's tips, no
+rings, no arm crossing the bar; NGC 4414's blotches follow the seed and do not tile at 1 kpc. All 17 new controls move
+NGC 4414's frame, return byte for byte, and leave the Milky Way's frame unchanged. No new sampler in the march; the
+march's new names prefixed and declared before use. **Left, recorded:** (i) moderate, now latent - the sharp sparks
+ignore the exposure and the march's dust (their colour takes neither `knotsGain` nor the dust: at exposure -3 about 120
+points stood bright over a dimmed disc); the lead's last pick switched the sparks off (`sparkCount` 0), so no default
+frame shows it, and it must be mended before they are switched on again; (ii) low - the spark material's shader has
+unprefixed locals, one named `cross` like the GLSL built-in (it compiles; its own material, not the march); (iii) a
+reading, not seen - the blotches' sum reads two cells each way and cuts a stretched piece's last 4 % at the cell edge: a
+faint seam is possible, none was visible at 1 kpc. A row of dots along NGC 4414's edge-on dust band at 84 to 88 degrees
+is also on `main`. Not reached: memory over many moves, the breaking scenarios, the edge-on control runs, a conclusive
+swim test. Gates on the reviewed head: typechecks, vitest 922, build, picture 16, look 8 (the lead's hashes), the stall
+probe, glprogram, switch, S108's four probes, the docs and register tests, the scans.
 
 **The frames beside the goals** (`READING_PICTURES.md` Part S111, the head 4b370c7; read by the documents' writer, the
 first to look at the merged heads' frames). **The Milky Way, full frame: a gain in composition, agreed with the lead.**
@@ -20211,12 +20232,12 @@ larger bar-end complex); bright blue-white-and-pink knots at the tips; a saturat
 `knotsMath`, not the slider); the stipple white-turquoise; the bar's flatness, colour and length; the far arm; the
 close stand's lanes lighter. (d) Away from the tuned stands: the seam at the top of NGC 4414's close-up (in the
 star-cloud field's value path); both edge-on bulges; exposure +3. (e) Cost: the Milky Way's unchanged from S110's on a
-quiet machine; NGC 4414's march with the blotches: (the lead adds the figure).
+quiet machine; NGC 4414's march with the blotches: 146 to 151 ms, `main`'s 147 to 149 (no measurable cost).
 
 **What did not move.** No byte under `model/galaxy` (`git diff 63bc51d..4b370c7 -- model` is empty; the hash
 5a862a70d3760c426ca51c2cffa2b0c2); no committed frame, `frames.json` or thumbnail; the two physical frames byte for byte;
 the register (117 open = 50 + 67, 104 discharged; `tests/test_audit.py` untouched); `batch-r`, `batch-q-lanes`, `q-231`
-untouched and unmerged. GitHub's full suite on S110's head (run 45383329570): dispatched, the lead adds the result;
+untouched and unmerged. GitHub's full suite on S110's head (run 45383329570): green, 1860 passed;
 S111's own: dispatched, not read. Next: #240, D283. The four frames of this close, the head 4b370c7's capture:
 `docs/pictures/s111/milky_way-illustrative.png` (sha256
 5132beeb96c928d4afc1019f590536208ab0690cb33368e8dce99ca7c03eafb2), `docs/pictures/s111/ngc_4414-illustrative.png`

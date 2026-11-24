@@ -33,9 +33,9 @@ sparks built, off.
 ## The state (2026-11-24)
 S111: a lean session (the week's quota nearly spent), one builder pass a lane; a Fable lead, four Opus agents (two
 builders, the reviewer, the documents' writer); the lead read the hand-backs on the builders' sheets, the writer the
-merged head's frames; the final head 4b370c7; the review: (the lead adds it). **No byte under `model/galaxy`
+merged head's frames; the final head 4b370c7; the review no blocker. **No byte under `model/galaxy`
 moved** (hash 5a862a70...); register unchanged, 117 open = 50 + 67, 104 discharged. GitHub: S110's head (run
-45383329570) dispatched, the lead adds the result; S111's dispatched, not read. Next: #240, D283.
+45383329570) green, 1860 passed; S111's dispatched, not read. Next: #240, D283.
 
 ## Rulings taken on recommendation — yours to re-rule (`BUILD_VIII.md` section 4 is the table)
 1-58 stand (some values re-ruled by later rulings). S111's: 59. the Milky Way's composition c6 as handed back. 60. NGC
