@@ -31,9 +31,9 @@ second reader caught a loss the lead had passed on its brightness). The Milky Wa
 bar, faint broken lanes, pink that fades edge-on, three windings in a larger glow; its close stand its best frame.
 
 ## The state (2026-11-24)
-S110: a Fable lead, six Opus agents (four builders, the reviewer, the documents' writer); the review: (the lead adds
-it); **no byte under `model/galaxy` moved** (hash 5a862a70...); register unchanged, 117 open = 50 + 67, 104 discharged.
-GitHub: S109's head (run 45330621176) green, 1860 passed; S110's dispatched, not read. Next: #240, D282.
+S110: a Fable lead, six Opus agents (four builders, the reviewer, the documents' writer); the review no blocker, 49 of
+49 physical frames identical; **no byte under `model/galaxy` moved** (hash 5a862a70...); register unchanged, 117 open =
+50 + 67, 104 discharged. GitHub: S109's head green, 1860 passed; S110's dispatched, not read. Next: #240, D282.
 
 ## Rulings taken on recommendation — yours to re-rule (`BUILD_VIII.md` section 4 is the table)
 1-48 stand (16 and 35 re-ruled by 44 and 45; some of 43's and 45's values by 49-58). S110's: 49. the Milky Way's tone

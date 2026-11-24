@@ -623,6 +623,16 @@ describe("the light's lumps, the disc's yellow and the sparks (S110, builder B2)
     expect(u.illFlocLumpA[0]).toBe(0);
     expect(u.illFlocTan[0]).toBe(0);
     expect(illDefaults("milky_way")["floc.sparkCount"]).toBe(0);
+    // The hue slider moved on the Milky Way draws nothing there: it is the plane style's (S110 review).
+    expect(fallBandUniforms({ ...own("milky_way"), tanHue: 0.3 }).illFlocTan[0]).toBe(0);
+  });
+  it("moves the lumps with a rerolled network seed and leaves them where they were at the default (S110 review)", () => {
+    const glsl = floc.glsl ?? "";
+    expect(glsl).toContain("vec2 q = xy / illFlocLumpA.y + vec2(illFlocScC.z, 0.61 * illFlocScC.z);");
+    expect(glsl.indexOf("uniform vec4 illFlocScC;")).toBeLessThan(glsl.indexOf("float illFlocLumpField("));
+    const base = own("ngc_4414");
+    expect(fallBandUniforms(base).illFlocScC[2]).toBe(0);
+    expect(fallBandUniforms({ ...base, seed: base.seed + 7 }).illFlocScC[2]).not.toBe(0);
   });
   it("gives NGC 4414 lumps on a warped plane with no lattice of one size, and a yellower disc", () => {
     const u = fallBandUniforms(own("ngc_4414"));

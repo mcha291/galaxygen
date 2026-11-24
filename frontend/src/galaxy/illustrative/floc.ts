@@ -466,7 +466,9 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocLumpA: [v("style") >= 0.5 ? v("lumps") : 0, Math.max(v("lumpSize"), 10) * 1e-3, v("lumpCover"), Math.max(v("lumpSoft"), 0.005)],
     illFlocLumpB: [v("lumpWarp"), v("lumpBanks"), v("lumpNear"), v("lumpWhite")],
     illFlocLumpC: [v("lumpFrom"), Math.max(v("lumpTo"), 0.1), v("lumpRim"), v("lumpGrain")],
-    illFlocTan: [v("tanHue"), v("tanFrom"), 0, 0],
+    // The hue is the plane style's, as the lumps are: on another style the slider draws nothing (S110 review: it moved
+    // the Milky Way's frame).
+    illFlocTan: [v("style") >= 0.5 ? v("tanHue") : 0, v("tanFrom"), 0, 0],
   };
 }
 
@@ -853,7 +855,9 @@ export const floc: IllFeature = {
   // lump and three lumps across), then four octaves of value noise, each turned off the lattice's axes, and a broad
   // octave that sets the cover by region (banks and gaps): no lattice, no one size.
   float illFlocLumpField(vec2 xy, float dl) {
-    vec2 q = xy / illFlocLumpA.y;
+    // The lumps move with a network seed other than its default, as the star clouds do (illFlocScC.z, 0 at the
+    // default): a rerolled galaxy's lumps lie elsewhere (S110 review: they sat still under a reroll).
+    vec2 q = xy / illFlocLumpA.y + vec2(illFlocScC.z, 0.61 * illFlocScC.z);
     vec2 w1 = vec2(illFlocVN(0.33 * q + vec2(3.1, 17.9)), illFlocVN(0.33 * q + vec2(27.3, 5.4))) - 0.5;
     vec2 w2 = vec2(illFlocVN(mat2(0.8, 0.6, -0.6, 0.8) * q * 1.1 + vec2(8.8, 1.2)), illFlocVN(mat2(0.8, 0.6, -0.6, 0.8) * q * 1.1 + vec2(4.4, 33.1))) - 0.5;
     q += illFlocLumpB.x * (2.0 * w1 + 0.7 * w2);

@@ -19925,8 +19925,8 @@ but the three shared files named in item 1).
    cost** (the builder's stall probe, the first-pass merged head against its head at 400000 points): the sparkle job
    354-444 ms -> 738-871 ms; the arms map 585-710 -> 596-652 ms; the longest frame gap 17-33 -> 33-67 ms; ONE
    main-thread long task of 56 ms on one pitch move (none before); "main-thread named builds: {}" on every line. The
-   table and the cream fix took back about a third of the increase. At the lead's 250000 points, measured at the
-   close: (the lead adds the figure).
+   table and the cream fix took back about a third of the increase. At the lead's 250000 points, measured by the
+   reviewer on a quiet machine: 0.50 to 0.70 s, S109's 0.58 to 0.70 (the review below).
    **The second reader's findings and the last pick** (one sheet of six, mv6; commit bd44779): the bar read gold beside
    the goal's pale cream, yellower than S109's (the lead's "paler" had been against the first pass's egg-yolk) -
    `arms.barwarm` 1.0 -> 0.7; the pink heaviest on the outermost arm - `knots.fadeR` 12 -> 10; near-black specks in
@@ -19957,7 +19957,37 @@ finding: `floc.meshDepth` 1.4, `lumps` 1.0, `lumpSoft` 0.3, `litGrain` 1.3, `tan
 S109's at full size). (58) The Milky Way's bar paler (`arms.barwarm` 0.7), its pink drawn less far out (`knots.fadeR`
 10) and its regions' veil halved (`knots.veil` 0.5), on the second reader's findings.
 
-**The independent review:** (the lead adds this)
+**The independent review** (an Opus agent that built nothing here, against `main`'s own frontend built from `git archive
+main frontend interface`, on the merged head 3cb5f63 - before the lead's last pick, which moved only default values):
+**no blocker.** The physical look: 49 of 49 frames byte-identical to `main`'s build (28 stands on both templates -
+default, close, star-first, six exposures, inclinations 60 / 85 / 90, a roll, canvas 512 and 1536, 1 kpc; 7 swap paths
+under a stored physical look; 12 mouse orbit, zoom, pan and resize frames), no map worker created and no job posted
+under it, physics only the physical frame byte for byte. The worker, five runs of the stall probe a build on a quiet
+machine: no main-thread long task on either, the longest frame gap 50 ms on both, no named build on the main thread, 0
+frames of another galaxy's map; the Milky Way's sparkle job 0.50 to 0.70 s at the picked 250000 points (`main`, S109's
+head: 0.58 to 0.70), the arms map 0.65 to 0.77 s (0.68 to 0.78), the picture 1.5 to 1.8 s after one pitch move (1.6 to
+1.7) and 0.83 to 0.89 s after a lane-width move (0.94 to 0.97): **S110 costs the worker what S109 did.** Under a loaded
+machine the builder's 56 ms task recurs (11 tasks of 51 to 75 ms), and `main` has as many (12, of 64 to 78 ms). NGC
+4414's settled march 147 to 220 ms on both builds: the lumps, read once per ray, cost nothing measurable. Alternating
+sliders, a template switch and a look toggle mid-drag, and a worker killed mid-job all come to rest on a fresh load's
+picture. Away from the stands: an inclination sweep 0 to 180 in 21 steps without a pop, bar or bow tie; NGC 4414 edge-on
+tapers inside its haze with no band at 84 to 90 degrees where `main`'s build still draws one; the Milky Way's pink gone
+at 88 to 90; the roll held at 15.000 and -25.000 degrees; the Milky Way's rerolls each a spiral, no rings at `skelpitch`
+0.75; the same seeds the same bytes. All 36 new controls return byte for byte. **Mended on its findings (the lead, two
+contained changes, the eight frames re-captured byte for byte):** (i) MEDIUM - NGC 4414's lumps did not follow a reroll
+(their share of the frame correlated 0.94 to 0.96 between five seeds; the field took no seed, where the star clouds and
+the Milky Way's field stars do): the field now shifts with the network seed as the star clouds do (`illFlocScC.z`, 0 at
+the default seed, so no default frame moves); (ii) low - `floc.tanHue` moved the Milky Way's frame when the slider was
+moved there: it is now the plane style's, as the lumps are. **Left, low:** the straight seam at the top of NGC 4414's
+close-up, still unexplained - a near-radial line at azimuth about 195 degrees where the star-cloud grain stops; the
+thin-screen crossing's fallback, the filaments, the bands, the fall-off and the lumps each ruled out by capture; two
+GLSL statements fused on one line in floc.ts (it compiles); the knots shader's varying `vFade` unprefixed (its own
+material, not the march); the map worker's memory over 200 moves ending at 97 MB against `main`'s 65 (one run, not
+monotonic: not called a leak); one stall-probe run in ten that stopped at "the view was not still" before any slider
+moved (a load flake, not seen again in eight more runs). **Not regressions** (also on `main`): a long task of about 1.8
+s on a template switch and 1.5 s on a look toggle in the middle of a drag. Not checked by the reviewer: the yardstick,
+star-first and exposure at the close stands. Gates on the reviewed head: typechecks, vitest 916, build, picture 16, look
+8 (the lead's hashes), the stall probe, glprogram, switch, S108's four probes, the docs and register tests, the scans.
 
 **The frames beside the goals** (`READING_PICTURES.md` Part S110, the head bd44779). **The Milky Way, full frame: much
 nearer than S109's in substance and tone.** A glowing lavender disc with a smooth edge, three windings and an outer
