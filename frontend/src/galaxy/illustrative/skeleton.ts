@@ -393,9 +393,13 @@ function noise2d(x: number, y: number, key: number): number {
   const fy = y - j;
   const ux = fx * fx * fx * (fx * (fx * 6 - 15) + 10);
   const uy = fy * fy * fy * (fy * (fy * 6 - 15) + 10);
-  const v = (a: number, b: number) => laneRandom(key ^ Math.imul(b, 0x2c1b3c6d), a) * 2 - 1;
-  const a0 = v(i, j) + (v(i + 1, j) - v(i, j)) * ux;
-  const a1 = v(i, j + 1) + (v(i + 1, j + 1) - v(i, j + 1)) * ux;
+  // S109 (A4): each lattice value hashed once (the band's mottle reads this per texel; the same values, the same bits).
+  const k0 = key ^ Math.imul(j, 0x2c1b3c6d);
+  const k1 = key ^ Math.imul(j + 1, 0x2c1b3c6d);
+  const v00 = laneRandom(k0, i) * 2 - 1;
+  const v01 = laneRandom(k1, i) * 2 - 1;
+  const a0 = v00 + (laneRandom(k0, i + 1) * 2 - 1 - v00) * ux;
+  const a1 = v01 + (laneRandom(k1, i + 1) * 2 - 1 - v01) * ux;
   return a0 + (a1 - a0) * uy;
 }
 

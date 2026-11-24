@@ -125,7 +125,7 @@ export function skeletonPlanes(
   rHi: number,
   wing: number,
   flagFloats: number,
-  contrast: { n: Float64Array; nR: number; nPhi: number } | null = null,
+  contrast: { n: Float64Array; nR: number; nPhi: number; plane?: Uint8Array } | null = null,
 ): { share: Uint8Array; mean: Uint8Array; meanMax: number; flags: number[]; ringMean: number[] } {
   const t0 = typeof performance !== "undefined" ? performance.now() : 0;
   // S107: with clumped arms the ring means are the unclumped band's (skeletonBand's `plainMean`).
@@ -150,7 +150,13 @@ export function skeletonPlanes(
     const c = Math.min(width - 1, Math.max(0, Math.round(((k + 0.5) / SKEL_MEAN_SAMPLES) * width - 0.5)));
     samples.push(ringMean[c]);
   }
-  const mean = contrast ? contrastPlane(contrast, width, height) : new Uint8Array(width * height).fill(Math.round(255 / SKEL_CONTRAST_MAX));
+  // S109 (A4): the contrast's plane depends on the frame alone - a caller that keeps it (arms.ts) hands it over, copied
+  // (the copy is the value's own buffer, transferred from the worker).
+  const mean = contrast
+    ? contrast.plane && contrast.plane.length === width * height
+      ? contrast.plane.slice()
+      : contrastPlane(contrast, width, height)
+    : new Uint8Array(width * height).fill(Math.round(255 / SKEL_CONTRAST_MAX));
 
   skeletonBuild.ms = (typeof performance !== "undefined" ? performance.now() : 0) - t0;
   return { share, mean, meanMax, flags: new Array<number>(flagFloats).fill(65535), ringMean: samples };

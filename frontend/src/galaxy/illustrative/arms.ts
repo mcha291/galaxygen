@@ -120,14 +120,27 @@ const shareKey = (s: ArmShape): string =>
 /** The arms' skeleton at the live parameters (S106): its planes in place of the contrast's under `skeleton`. */
 export const armsSkeleton = skeletonMemo("arms.skeleton");
 
+/**
+ * S109 (A4): the model's star contrast for the skeleton's A plane, and that plane, per frame (it moves with no slider):
+ * built once, not at every skeleton slider's rebuild (about 70 ms of it). Never handed out itself (skeletonPlanes copies
+ * it), so a transfer of the map's planes cannot take it.
+ */
+const skelContrastOf = memoOn((frame: unknown) => {
+  const f = frame as IllFrame | null;
+  const star = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
+  if (!f || !star) return null;
+  const grid = gridOf(f.header, star.length);
+  const contrast = { n: ringNormalise(star, grid.nR, grid.nPhi), nR: grid.nR, nPhi: grid.nPhi };
+  return { ...contrast, plane: contrastPlane(contrast, ILL_MAP.width, ILL_MAP.height) };
+});
+
 const skeletonPlanesOf = memoOn((sk: unknown, frame: unknown, wing: unknown) => {
   const f = frame as IllFrame | null;
   const s = sk as Skeleton | null;
   const pattern = (f?.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? (f?.arrays.gas_density_contrast as ArrayLike<number> | undefined);
   if (!f || !s || !pattern) return null;
   const grid = gridOf(f.header, pattern.length);
-  const star = (f.arrays.pattern_density_contrast as ArrayLike<number> | undefined) ?? null;
-  const contrast = star ? { n: ringNormalise(star, grid.nR, grid.nPhi), nR: grid.nR, nPhi: grid.nPhi } : null;
+  const contrast = skelContrastOf(f);
   return { grid, ...skeletonPlanes(s, ILL_MAP.width, ILL_MAP.height, grid.rHi, wing as number, FLAG_RINGS / 16, contrast) };
 }, "arms.skelPlanes");
 
