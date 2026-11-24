@@ -32,7 +32,7 @@ export const edge: IllFeature = {
       about: "The clustered young light taken smoothly to nothing over this many kpc inside the young edge; 0 a hard cut there. Illustrative.",
     },
     {
-      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5, ngc_4414: 0 },
+      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.75, ngc_4414: 0 },
       about: "The bulge's light (and the dust's, the HII's and the gas's) dimmed by this share round the bar - from none at the centre, full from the radius below, none again from the next - the disc's starlight kept: the pale haze round the bar thinned so the bar stands on a darker ground; 0 none. Illustrative (S106).",
     },
     {

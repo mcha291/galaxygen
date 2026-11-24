@@ -592,11 +592,11 @@ export const arms: IllFeature = {
       about: "The seed of the skeleton's drift, kinks, spurs and breaks: another number, another drawing. Illustrative (S106).",
     },
     {
-      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1.5, ngc_4414: 1 },
+      key: "barglow", label: "bar light", min: 0.3, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 2, ngc_4414: 1 },
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
-      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.55, ngc_4414: 0 },
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.8, ngc_4414: 0 },
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
@@ -604,7 +604,7 @@ export const arms: IllFeature = {
       about: "The bar's cream held out toward its ellipse's edge by this share, so its fading light keeps the bar's hue (mixed with the light alone the glow outlives the tint: a pale rim round the bar); 0 as S105 drew it. Colour for appearance (S109).",
     },
     {
-      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.9, ngc_4414: 1 },
+      key: "barsize", label: "bar ellipse size", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.6, ngc_4414: 1 },
       about: "The ellipse of the bar light and cream, as a multiple of the published bar (the light and cream falling from the centre as exp(-1.6 e^2), e the ellipse radius in its units: a fifth at its edge). Illustrative (S105).",
     },
     {
@@ -624,7 +624,7 @@ export const arms: IllFeature = {
       about: "The bar light's ellipse's axis ratio as a multiple of the published bar_axis_ratio: below 1 a slimmer drawn bar. Illustrative (S106).",
     },
     {
-      key: "barcore", label: "bar core", min: 0, max: 6, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 3 },
+      key: "barcore", label: "bar core", min: 0, max: 6, step: 0.05, unit: "×", default: 0, perTemplate: { milky_way: 4 },
       about: "A brighter core at the bar's centre: the light there multiplied by 1 + this, falling as a gaussian of the radius below; 0 none. Illustrative (S106).",
     },
     {
