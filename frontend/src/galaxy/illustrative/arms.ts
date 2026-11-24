@@ -324,11 +324,11 @@ export const arms: IllFeature = {
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
-      key: "sparkle", label: "sparkle points", min: 0, max: 400000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 400000, ngc_4414: 70000 },
+      key: "sparkle", label: "sparkle points", min: 0, max: 400000, step: 1000, unit: "", default: 20000, perTemplate: { milky_way: 250000, ngc_4414: 70000 },
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
-      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 40000, ngc_4414: 10000 },
+      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 64000, ngc_4414: 10000 },
       about: "The faintest sparkle point's light, L☉ over the white point (on the field's scale, with the exposure). Illustrative.",
     },
     {

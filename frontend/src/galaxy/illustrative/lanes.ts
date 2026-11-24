@@ -27,11 +27,11 @@ import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.6, ngc_4414: 0.5 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 0.8, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
-    key: "ink", label: "lane ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.8, perTemplate: { milky_way: 0.65, ngc_4414: 0.75 },
+    key: "ink", label: "lane ink", min: 0, max: 1, step: 0.01, unit: "", default: 0.8, perTemplate: { milky_way: 0.4, ngc_4414: 0.75 },
     about: "The share of the depth drawn as a veil over all the light on its line of sight (a lane inked over the picture); the rest is dust in the dust's own thin layer, which dims and reddens only the stars behind it. Illustrative.",
   },
   {
@@ -67,7 +67,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 1.1 }, about: "The meander's length along the arm, kpc. Illustrative." },
   {
-    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.1, ngc_4414: 0.25 },
+    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.4, ngc_4414: 0.25 },
     about: "The share of a lane's length that is broken away, so it reads as pieces: 0 unbroken. Illustrative.",
   },
   { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 0.9, perTemplate: { milky_way: 1.8 }, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
