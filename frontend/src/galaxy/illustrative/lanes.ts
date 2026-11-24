@@ -43,7 +43,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "How crisp a lane's edge is: 0 a soft Gaussian stroke that fades out, 1 an inked stroke with a flat dark core and a sharp edge (its faint margins gone). Illustrative.",
   },
   {
-    key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.9, ngc_4414: 0.6 },
+    key: "mottle", label: "mottle", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { milky_way: 0.5, ngc_4414: 0.6 },
     about: "How much a lane's depth swells and thins from place to place across it: knots, holes and a ragged edge; 0 a smooth stroke. Illustrative.",
   },
   { key: "grain", label: "mottle grain", min: 20, max: 600, step: 5, unit: "pc", default: 150, about: "The size of the mottle's patches, parsecs (a finer set a third of it rides on them). Illustrative." },
@@ -67,17 +67,17 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "wiggleLength", label: "wiggle length", min: 0.2, max: 6, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { milky_way: 1.1 }, about: "The meander's length along the arm, kpc. Illustrative." },
   {
-    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.25, ngc_4414: 0.25 },
+    key: "gaps", label: "gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0.35, perTemplate: { milky_way: 0.1, ngc_4414: 0.25 },
     about: "The share of a lane's length that is broken away, so it reads as pieces: 0 unbroken. Illustrative.",
   },
   { key: "gapLength", label: "gap length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 0.9, perTemplate: { milky_way: 1.8 }, about: "The length of a lane's pieces and of the breaks between them, kpc. Illustrative." },
-  { key: "clump", label: "clumping", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.4 }, about: "How much a strand swells into dark knots and thins to threads along its length. Illustrative." },
+  { key: "clump", label: "clumping", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.2 }, about: "How much a strand swells into dark knots and thins to threads along its length. Illustrative." },
   {
     key: "envelope", label: "envelope", min: 0, max: 1, step: 0.01, unit: "×", default: 0.05, perTemplate: { milky_way: 0.05, ngc_4414: 0.12 },
     about: "A faint band as wide as the braid under the strands, this share of a strand's depth: the lane's translucent margin. Illustrative.",
   },
   {
-    key: "followGas", label: "follows the gas", min: 0, max: 1, step: 0.01, unit: "", default: 0.5,
+    key: "followGas", label: "follows the gas", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { milky_way: 0 },
     about: "How far a lane's depth follows the published gas contrast along its ridge: 0 the same depth everywhere, 1 none where the gas is not gathered. Illustrative.",
   },
   { key: "taper", label: "end taper", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1.5, about: "A lane fades over this length at an arm's free ends, kpc (an end that joins another arm does not fade). Illustrative." },
@@ -98,7 +98,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "featherDepth", label: "feather depth", min: 0, max: 2, step: 0.01, unit: "×", default: 0.8, about: "A feather's depth at its root, as a share of a strand's. Illustrative." },
   { key: "fray", label: "fray", min: 0, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.8 }, about: "Short thin wisps leaving the strands at a low angle, their depth as a share of a strand's: a ragged edge; 0 none. Illustrative." },
   {
-    key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6 },
+    key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.3 },
     about: "The depth of the two lanes along the bar's leading edges, as a share of the lane depth; 0 none. Drawn only where the galaxy has a bar. Illustrative.",
   },
   { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.22}, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
@@ -114,7 +114,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "1: the arms' lanes drawn along the arm skeleton's ridges (arms.ts, at the arms' template defaults), on each ridge's inner edge by the offset, fading with the ridge's strength; 0: as the switch above says. Illustrative (S106).",
   },
   {
-    key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 1, ngc_4414: 1 },
+    key: "barCurl", label: "bar lane curl", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0, ngc_4414: 1 },
     about: "The bar lanes' curl round the nucleus, a share of its 220 degrees: 1 S107's curl, 0 two straight lanes along the bar's leading edges. Illustrative (S106).",
   },
   // S107 (MW2): the lanes braided in places, the majors feathered more.
@@ -122,6 +122,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "splitLength", label: "split length", min: 0.1, max: 4, step: 0.05, unit: "kpc", default: 0.8, about: "A split's length along the arm, kpc (each 0.6-1.4 of it). Illustrative (S107)." },
   { key: "splitSeparation", label: "split width", min: 10, max: 600, step: 5, unit: "pc", default: 120, about: "How far the two threads of a split part at its middle, pc (each 0.7-1.3 of it, to either side). Illustrative (S107)." },
   { key: "majorFeather", label: "majors' feathers", min: 0.2, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.6 }, about: "On the skeleton's two major arms, the feathers this many times as close together. Illustrative (S107)." },
+  { key: "spurDepth", label: "spurs' lanes", min: 0, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0 }, about: "On the skeleton, a spur's lane at this share of an arm's depth: a spur leaves its arm into the gap between the arms, and its lane with it; 1 as on any arm, 0 none. Illustrative (S110)." },
   { key: "seed", label: "lane seed", min: 0, max: 999, step: 1, unit: "", default: 7, about: "The seed of the lanes' wander, breaks and feathers: another number, another drawing of the same lanes. Illustrative." },
 ];
 
@@ -148,7 +149,7 @@ const mapPlane = memoOn((frame: unknown, template: unknown, skelJson: unknown, .
   const started = now();
   const g = geometryOf(frame as IllFrame);
   if (shape.trace >= 0.5) g.traced = tracedFor(frame as IllFrame, (template as string | null) ?? null, ridgeStep(shape));
-  if ((shape.skeleton ?? 0) >= 0.5 && typeof skelJson === "string") g.skeleton = skeletonRidges(frame as IllFrame, JSON.parse(skelJson) as SkeletonParams, ridgeStep(shape));
+  if ((shape.skeleton ?? 0) >= 0.5 && typeof skelJson === "string") g.skeleton = skeletonRidges(frame as IllFrame, JSON.parse(skelJson) as SkeletonParams, ridgeStep(shape), shape.spurDepth ?? 1);
   const map = buildLaneMap(g, shape, ILL_MAP.width, ILL_MAP.height);
   lanesBuild.ms = now() - started;
   lanesBuild.count += 1;
@@ -195,13 +196,15 @@ export const lanesSkeletonKey = (context: IllContext): string => {
  * The arm skeleton's ridges as lanes' ridges (S106, B3): each arm's crest sampled every `step` kpc (skeleton.ts
  * ridgeLine), its strength the depth's weight; `params` the skeleton's (armsSkeleton.ts skeletonParamsOf).
  */
-export function skeletonRidges(frame: IllFrame, params: SkeletonParams, step: number): Ridge[] | null {
+export function skeletonRidges(frame: IllFrame, params: SkeletonParams, step: number, spurDepth = 1): Ridge[] | null {
   const sk = lanesSkeleton(frame, JSON.stringify(params));
   if (!sk) return null;
   return sk.arms.map((a, k) => {
     const l = ridgeLine(a, step, sk);
     const r = ridgeOfPoints(2000 + k, l.x, l.y, 0.3, false, false);
+    // S110 (A2): a spur's lane at spurDepth of an arm's (1: as any arm, the bytes as before).
     r.weight = Float32Array.from(l.strength);
+    if (a.kind === "spur" && spurDepth !== 1) for (let i = 0; i < r.weight.length; i++) r.weight[i] *= Math.max(0, spurDepth);
     return r;
   });
 }

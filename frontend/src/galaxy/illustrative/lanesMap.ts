@@ -334,12 +334,14 @@ export interface LaneShape {
   splitSeparation?: number;
   /** S107 (MW2): on the skeleton's two major arms, the feathers this many times as close together; absent or 1 as on any lane. */
   majorFeather?: number;
+  /** S110 (A2): on the skeleton's spurs, the lane's depth this share of an arm's (a spur's lane leaves its arm into the gap); absent or 1 as on any arm. */
+  spurDepth?: number;
 }
 
 export const SHAPE_KEYS: readonly (keyof LaneShape)[] = [
   "offset", "width", "strands", "spread", "wiggle", "wiggleLength", "braidLength", "gaps", "gapLength", "clump", "envelope", "followGas", "taper",
   "innerRadius", "outerRadius", "featherSpacing", "featherLength", "featherPitch", "featherDepth", "fray", "barDepth", "barOffset", "barWidth", "barCurve", "barReach", "seed", "trace", "skeleton", "barCurl",
-  "splitSpacing", "splitLength", "splitSeparation", "majorFeather",
+  "splitSpacing", "splitLength", "splitSeparation", "majorFeather", "spurDepth",
 ];
 
 /** What the map is drawn from: the ridges, the gas contrast to weigh them by, and the bar. */
