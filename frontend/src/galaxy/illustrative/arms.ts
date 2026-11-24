@@ -444,7 +444,7 @@ export const arms: IllFeature = {
       about: "The sparkle's brightness falls outward as exp(-R / (this times the published thin-disc scale length)) from the arms' start, as the disc's own light does; 0 no falloff. Illustrative.",
     },
     {
-      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 15, ngc_4414: 10 },
+      key: "sparkleedge", label: "sparkle edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 16, perTemplate: { milky_way: 13.5, ngc_4414: 10 },
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {

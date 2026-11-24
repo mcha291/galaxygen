@@ -55,9 +55,9 @@ const CONTROLS: readonly IllControl[] = [
     key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 50, ngc_4414: 100 },
     about: "One strand's full width at half depth, parsecs (it swells and thins along its length by the clumping). Illustrative.",
   },
-  { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },
+  { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 1, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },
   {
-    key: "spread", label: "braid spread", min: 0, max: 1200, step: 10, unit: "pc", default: 260, perTemplate: { milky_way: 250, ngc_4414: 700 },
+    key: "spread", label: "braid spread", min: 0, max: 1200, step: 10, unit: "pc", default: 260, perTemplate: { milky_way: 150, ngc_4414: 700 },
     about: "The width of the band the strands wander and cross in, parsecs. Illustrative.",
   },
   { key: "braidLength", label: "braid length", min: 0.3, max: 8, step: 0.1, unit: "kpc", default: 2.2, about: "The length along the arm over which the strands cross one another, kpc. Illustrative." },

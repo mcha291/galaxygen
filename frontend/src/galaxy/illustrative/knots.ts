@@ -22,7 +22,7 @@ import { KnotsLayer } from "./knotsLayer";
 const CONTROLS: readonly IllControl[] = [
   { key: "draw", label: "regions drawn", min: 0, max: 1, step: 1, default: 1, about: "1: the HII regions drawn as illustrative nebulae in place of the knots; 0: the default knots. Illustrative." },
   {
-    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 80, ngc_4414: 8 },
+    key: "gain", label: "regions gain", min: 0.01, max: 1000, step: 0.01, log: true, unit: "×", default: 100, perTemplate: { milky_way: 160, ngc_4414: 8 },
     about: "A multiplier on the regions' light over the knots' gain (the field's scale and the exposure). Illustrative.",
   },
   {
@@ -58,7 +58,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The t taken where a ring has no contrast (no arm placed there, the far disc). Illustrative.",
   },
   {
-    key: "fadeR", label: "regions fade radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 11, perTemplate: { milky_way: 13, ngc_4414: 5.5 },
+    key: "fadeR", label: "regions fade radius", min: 1, max: 30, step: 0.5, unit: "kpc", default: 11, perTemplate: { milky_way: 12, ngc_4414: 5.5 },
     about: "Past this radius the regions fade out, over the fade width. Illustrative.",
   },
   { key: "fadeWidth", label: "regions fade width", min: 0.5, max: 15, step: 0.5, unit: "kpc", default: 3, about: "The width of the outer fade, kpc. Illustrative." },
@@ -71,7 +71,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The regions' colour mixed from their own lines' colour (0) toward H-alpha pink (1). Colour for appearance.",
   },
   {
-    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: -0.2, ngc_4414: 0.1 },
+    key: "magenta", label: "pink to magenta", min: -1, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { milky_way: -0.3, ngc_4414: 0.1 },
     about: "The pink's hue, from a red pink (0) to magenta (1); below 0 past the pink toward a deep red (S105: the grade's cool tint turns a pink violet). Colour for appearance.",
   },
   { key: "blobs", label: "sub-blobs", min: 1, max: 4, step: 1, default: 4, about: "Each region drawn as this many soft sub-blobs, placed by a hash of its index (stable). Illustrative." },
@@ -81,7 +81,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "soft", label: "softness", min: 0.2, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.8 }, about: "A multiplier on every sub-blob's Gaussian width. Illustrative." },
   {
-    key: "coreGain", label: "core gain", min: 0, max: 5, step: 0.01, unit: "×", default: 0.8, perTemplate: { milky_way: 1.2, ngc_4414: 2 },
+    key: "coreGain", label: "core gain", min: 0, max: 5, step: 0.01, unit: "×", default: 0.8, perTemplate: { milky_way: 0.6, ngc_4414: 2 },
     about: "The white-blue core's light (the young cluster) over the region's own. Illustrative.",
   },
   { key: "coreSize", label: "core size", min: 0.02, max: 0.6, step: 0.01, unit: "×", default: 0.1, perTemplate: { milky_way: 0.05 }, about: "The core's Gaussian width in region radii (at least 0.6 px). Illustrative." },
@@ -96,7 +96,7 @@ const CONTROLS: readonly IllControl[] = [
   },
   { key: "total", label: "skeleton: regions", min: 20, max: 2000, step: 10, default: 600, perTemplate: { milky_way: 2000 }, about: "About how many regions are laid on the skeleton (bar-end complexes and blue-white points apart). Illustrative (S106)." },
   { key: "bunch", label: "skeleton: bunch size", min: 1, max: 10, step: 0.1, default: 4, perTemplate: { milky_way: 6 }, about: "The mean number of regions in a bunch (each bunch 0.3-1.7 times it). Illustrative (S106)." },
-  { key: "gap", label: "skeleton: gap", min: 0, max: 4, step: 0.05, unit: "kpc", default: 1.2, perTemplate: { milky_way: 0.3 }, about: "No two bunches' centres closer than this, kpc: the gaps along a ridge. Illustrative (S106)." },
+  { key: "gap", label: "skeleton: gap", min: 0, max: 4, step: 0.05, unit: "kpc", default: 1.2, perTemplate: { milky_way: 0.15 }, about: "No two bunches' centres closer than this, kpc: the gaps along a ridge. Illustrative (S106)." },
   { key: "bunchLen", label: "skeleton: bunch length", min: 0, max: 1.5, step: 0.01, unit: "kpc", default: 0.18, about: "A bunch's members spread along the arm by a Gaussian of this sigma, kpc. Illustrative (S106)." },
   { key: "inner", label: "skeleton: inner-edge bias", min: -1, max: 2, step: 0.01, unit: "widths", default: 0.35, perTemplate: { milky_way: 0.2 }, about: "The regions set this many ridge widths (FWHM) to the ridge's inner side, the dust lane's (negative: outer). Illustrative (S106)." },
   { key: "across", label: "skeleton: scatter across", min: 0, max: 1.5, step: 0.01, unit: "widths", default: 0.15, perTemplate: { milky_way: 0.15 }, about: "The regions scattered across the arm by a Gaussian of this many ridge widths. Illustrative (S106)." },
@@ -120,7 +120,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "halo", label: "skeleton: complexes' halo", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0 }, about: "A soft pink envelope along the arm round each large complex (and bar end), its light this share of the complex's largest member; 0 none. Illustrative (S107)." },
   { key: "haloSize", label: "skeleton: halo size", min: 0.5, max: 10, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 2 }, about: "The halo's radius, times the regions' radius ceiling. Illustrative (S107)." },
   { key: "ragged", label: "ragged lobes", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.6 }, about: "On the skeleton's regions, each lobe's light broken by a fixed noise at a few cells per region radius by this share: ragged outlines, wisps and holes; 0 smooth lobes. Illustrative (S107)." },
-  { key: "veil", label: "regions' veil", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5 }, about: "The share of the light behind each region hidden by its own cloud (premultiplied), so the pink keeps a deep red-magenta over the bright arms; 0 the plain additive light. Colour for appearance (S107)." },
+  { key: "veil", label: "regions' veil", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "The share of the light behind each region hidden by its own cloud (premultiplied), so the pink keeps a deep red-magenta over the bright arms; 0 the plain additive light. Colour for appearance (S107)." },
   { key: "spurCrest", label: "skeleton: spurs' regions on the crest", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "The regions on a spur drawn onto its crest by this share (0: set to the inner side and scattered as on an arm, so they sit off the short spur). Illustrative (S107)." },
   { key: "edgefade", label: "skeleton: faded edge-on", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1 }, about: "On the skeleton's regions, their light and their veil faded by this share as the view grazes the disc (the edge-on handover, base.grazeFrom to grazeTo), so an edge-on disc shows no confetti of pink along its midplane; exactly as before face-on. Illustrative (S110)." },
   { key: "seed", label: "skeleton: seed", min: 1, max: 99, step: 1, default: 7, about: "The placement's fixed seed (the viewer's own). Illustrative (S106)." },
