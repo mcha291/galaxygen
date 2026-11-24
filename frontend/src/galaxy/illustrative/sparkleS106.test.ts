@@ -66,6 +66,19 @@ describe("the sparkle's S106 shaping (armsSparkle.ts)", () => {
     };
     expect(meanNoise(lumpy)).toBeGreaterThan(meanNoise(plain) + 0.05);
   });
+
+  it("S110: the gaps empty the arm where the noise is below their level; 0 the S106 drawing bit for bit", () => {
+    const { map, raw } = maps();
+    const s = { ...shape, lift: 0.3, bunch: 1, bunchPc: 500, bunchBright: 1 };
+    expect(buildSparkle(map, g, { ...s, gap: 0 }, 7, raw)).toEqual(buildSparkle(map, g, s, 7, raw));
+    const gapped = buildSparkle(map, g, { ...s, gap: 0.5, gapSoft: 0.02 }, 7, raw);
+    expect(buildSparkle(map, g, { ...s, gap: 0.5, gapSoft: 0.02 }, 7, raw)).toEqual(gapped);
+    expect(gapped.radius.length).toBeGreaterThan(0);
+    for (let i = 0; i < gapped.radius.length; i++) {
+      const n = bunchNoise((gapped.radius[i] * Math.cos(gapped.azimuth[i])) / 0.5, (gapped.radius[i] * Math.sin(gapped.azimuth[i])) / 0.5);
+      expect(n).toBeGreaterThan(0.48);
+    }
+  });
 });
 
 describe("the sparkle drawn through its density's envelope (S107, MW2: shape.direct)", () => {

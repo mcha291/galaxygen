@@ -27,7 +27,7 @@ import { armContrast, armPeaks, gridOf } from "./armsField";
 
 const CONTROLS: readonly IllControl[] = [
   {
-    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 2.0, ngc_4414: 0.5 },
+    key: "depth", label: "lane depth", min: 0, max: 10, step: 0.05, unit: "mag", default: 0.85, perTemplate: { milky_way: 1.6, ngc_4414: 0.5 },
     about: "The depth at the centre of one full strand of a lane, magnitudes of A_V; 0 no lanes. Illustrative.",
   },
   {
@@ -35,7 +35,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The share of the depth drawn as a veil over all the light on its line of sight (a lane inked over the picture); the rest is dust in the dust's own thin layer, which dims and reddens only the stars behind it. Illustrative.",
   },
   {
-    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 3.5, ngc_4414: 1.0 },
+    key: "redness", label: "lane redness", min: 0, max: 4, step: 0.05, unit: "×", default: 1.6, perTemplate: { milky_way: 4, ngc_4414: 1.0 },
     about: "The veil's colour: 0 a grey veil, 1 the dust grains' own reddening, higher a redder brown. Colour for appearance.",
   },
   {
@@ -52,7 +52,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "How far to the inner (concave) side of an arm's ridge the lane's centre line lies, parsecs; below 0 the outer side. Illustrative.",
   },
   {
-    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 65, ngc_4414: 100 },
+    key: "width", label: "strand width", min: 30, max: 500, step: 5, unit: "pc", default: 110, perTemplate: { milky_way: 50, ngc_4414: 100 },
     about: "One strand's full width at half depth, parsecs (it swells and thins along its length by the clumping). Illustrative.",
   },
   { key: "strands", label: "strands", min: 1, max: 6, step: 1, unit: "", default: 2, perTemplate: { milky_way: 2, ngc_4414: 4 }, about: "How many braided strands make a lane. Illustrative." },
@@ -101,10 +101,10 @@ const CONTROLS: readonly IllControl[] = [
     key: "barDepth", label: "bar lane depth", min: 0, max: 4, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6 },
     about: "The depth of the two lanes along the bar's leading edges, as a share of the lane depth; 0 none. Drawn only where the galaxy has a bar. Illustrative.",
   },
-  { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.3}, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
+  { key: "barOffset", label: "bar lane offset", min: 0.02, max: 0.95, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.22}, about: "How far from the bar's long axis its lanes run, as a share of the bar's half-width. Illustrative." },
   { key: "barWidth", label: "bar lane width", min: 20, max: 400, step: 5, unit: "pc", default: 60, perTemplate: { milky_way: 20 }, about: "A bar lane's full width at half depth, parsecs. Illustrative." },
   { key: "barCurve", label: "bar lane curve", min: 1, max: 8, step: 0.1, unit: "", default: 2.5, perTemplate: { milky_way: 2 }, about: "How late a bar lane turns in to the bar's end: 1 a straight line from the end to the centre's side, higher a lane along the axis that turns at the end. Illustrative." },
-  { key: "barReach", label: "bar lane reach", min: 0.3, max: 1.3, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0.6 }, about: "Where a bar lane begins, as a share of the bar's half-length (1 the bar's end). Illustrative." },
+  { key: "barReach", label: "bar lane reach", min: 0.3, max: 1.3, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0.4 }, about: "Where a bar lane begins, as a share of the bar's half-length (1 the bar's end). Illustrative." },
   {
     key: "trace", label: "lanes on the drawn arms", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 },
     about: "1: the arms' lanes drawn along the crests of the arms as this look draws them (their ridge lines, traced ring to ring at the arms' template defaults), so a lane lies on its arm's inner edge; 0: along the model's arm pieces. Illustrative (S106).",

@@ -30,11 +30,11 @@ const CONTROLS: readonly IllControl[] = [
     about: "Each region's light drawn as ref (L / ref)^power, ref the 90th percentile: below 1 the string reads evenly, not as a few bright dots. Illustrative.",
   },
   {
-    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 700, ngc_4414: 300 },
+    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 1400, ngc_4414: 300 },
     about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
-    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 1.4, ngc_4414: 6 },
+    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 1.1, ngc_4414: 6 },
     about: "A multiplier on each region's own radius (hii_radius) for its drawn radius. Illustrative.",
   },
   {
@@ -94,9 +94,9 @@ const CONTROLS: readonly IllControl[] = [
     key: "place", label: "regions on the skeleton", min: 0, max: 1, step: 1, default: 0, perTemplate: { milky_way: 1, ngc_4414: 0 },
     about: "1: the regions laid by the viewer along the arm skeleton's ridges (bunches on the inner edge, a fixed seed; the model's regions only set the light's scale); 0: at the model's own HII places. Illustrative (S106).",
   },
-  { key: "total", label: "skeleton: regions", min: 20, max: 2000, step: 10, default: 600, perTemplate: { milky_way: 1100 }, about: "About how many regions are laid on the skeleton (bar-end complexes and blue-white points apart). Illustrative (S106)." },
+  { key: "total", label: "skeleton: regions", min: 20, max: 2000, step: 10, default: 600, perTemplate: { milky_way: 1800 }, about: "About how many regions are laid on the skeleton (bar-end complexes and blue-white points apart). Illustrative (S106)." },
   { key: "bunch", label: "skeleton: bunch size", min: 1, max: 10, step: 0.1, default: 4, about: "The mean number of regions in a bunch (each bunch 0.3-1.7 times it). Illustrative (S106)." },
-  { key: "gap", label: "skeleton: gap", min: 0, max: 4, step: 0.05, unit: "kpc", default: 1.2, perTemplate: { milky_way: 0.6 }, about: "No two bunches' centres closer than this, kpc: the gaps along a ridge. Illustrative (S106)." },
+  { key: "gap", label: "skeleton: gap", min: 0, max: 4, step: 0.05, unit: "kpc", default: 1.2, perTemplate: { milky_way: 0.3 }, about: "No two bunches' centres closer than this, kpc: the gaps along a ridge. Illustrative (S106)." },
   { key: "bunchLen", label: "skeleton: bunch length", min: 0, max: 1.5, step: 0.01, unit: "kpc", default: 0.18, about: "A bunch's members spread along the arm by a Gaussian of this sigma, kpc. Illustrative (S106)." },
   { key: "inner", label: "skeleton: inner-edge bias", min: -1, max: 2, step: 0.01, unit: "widths", default: 0.35, about: "The regions set this many ridge widths (FWHM) to the ridge's inner side, the dust lane's (negative: outer). Illustrative (S106)." },
   { key: "across", label: "skeleton: scatter across", min: 0, max: 1.5, step: 0.01, unit: "widths", default: 0.15, perTemplate: { milky_way: 0.4 }, about: "The regions scattered across the arm by a Gaussian of this many ridge widths. Illustrative (S106)." },
@@ -111,7 +111,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "sparkleGain", label: "skeleton: points' light", min: 0, max: 2, step: 0.01, unit: "×", default: 0.15, about: "Each blue-white point's light against its region's. Illustrative (S106)." },
   { key: "minStrength", label: "skeleton: least ridge", min: 0, max: 1, step: 0.01, default: 0, perTemplate: { milky_way: 0.25 }, about: "No bunch of regions where the ridge's strength is under this (a faded arm end); 0 anywhere on a ridge. Illustrative (S107)." },
   { key: "patchPow", label: "skeleton: on the bright stretches", min: 0, max: 6, step: 0.1, unit: "power", default: 0, perTemplate: { milky_way: 1 }, about: "A bunch kept with the arm's clumps (the arms' patchy arms) to this power: the regions gather in the arms' bright stretches, with long empty ones between; 0 as the ridge's strength alone. Illustrative (S107)." },
-  { key: "complexes", label: "skeleton: large complexes", min: 0, max: 40, step: 1, default: 0, perTemplate: { milky_way: 12 }, about: "This many large ragged complexes (several lobes, a white core, bright points about them) along the two major arms; 0 none. Illustrative (S107)." },
+  { key: "complexes", label: "skeleton: large complexes", min: 0, max: 40, step: 1, default: 0, perTemplate: { milky_way: 4 }, about: "This many large ragged complexes (several lobes, a white core, bright points about them) along the two major arms; 0 none. Illustrative (S107)." },
   { key: "complexGain", label: "skeleton: complexes' light", min: 0, max: 20, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 5 }, about: "A large complex's members' light, times a region's. Illustrative (S107)." },
   // S107 (MW2): the large complexes made to read at full frame, ragged lobes, the spurs' regions on their crests.
   { key: "complexMembers", label: "skeleton: complexes' members", min: 0.5, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 2 }, about: "A large complex's (and a bar end's) members, times as many as before. Illustrative (S107)." },
