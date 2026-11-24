@@ -400,6 +400,18 @@ export const arms: IllFeature = {
       about: "The bunching noise's wavelength, pc. Illustrative (S106).",
     },
     {
+      key: "sparklegap", label: "sparkle gaps", min: 0, max: 0.9, step: 0.01, unit: "", default: 0,
+      about: "The grain gathered: where the bunching noise is below this level the arm holds no sparkle - clumps and short strings with empty stretches between, as the goal's grain; 0 no gaps. Illustrative (S110).",
+    },
+    {
+      key: "sparklegapsoft", label: "gap softness", min: 0.005, max: 0.3, step: 0.005, unit: "", default: 0.06,
+      about: "The gaps' soft step either side of their level, in the noise's units: small a clean clump edge, large a thinning. Illustrative (S110).",
+    },
+    {
+      key: "sparklelav", label: "sparkle lavender", min: 0, max: 1, step: 0.01, unit: "", default: 0,
+      about: "The fine grain's colour from the sparkle's blue-white toward the goal's lavender-white by this share (its brightness kept); the bright share (the clumps' cores) keeps the blue-white. Illustrative (S110).",
+    },
+    {
       key: "sparklebunchbright", label: "bunch brightness", min: 0, max: 2, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2 },
       about: "The points in a bunch brighter (up to 1 + this at the noise's peak), those between dimmer; 0 none. Illustrative (S106).",
     },

@@ -75,6 +75,14 @@ export interface SparkleShape {
   bunchBright?: number;
   /** S107 (MW2): the places drawn through an envelope of the density (envelopePlace: the same law, faster); else by rejection over the disc. */
   direct?: boolean;
+  /**
+   * S110 (A1, the gathered grain): the density cut to nothing where the bunching noise (wavelength `bunchPc`) is below
+   * this level, a soft step of `gapSoft` either side - clumps and short strings of grain with empty stretches between
+   * along the arms, as the goal's; 0 (or absent) no cut.
+   */
+  gap?: number;
+  /** S110: the gap's soft step, in the noise's units (default 0.06). */
+  gapSoft?: number;
 }
 
 /** A smooth value noise in [0, 1] at plane point (x, y) in lattice units (two octaves, the second half as strong). */
@@ -181,7 +189,17 @@ export function buildSparkle(
   const lattice = Math.max(0.01, (s.bunchPc ?? 400) / 1000);
   const noiseAt = (r: number, phi: number) => bunchNoise((r * Math.cos(phi)) / lattice, (r * Math.sin(phi)) / lattice);
   // The bunching: 3 n^2 has a mean near 1 over the noise, so the count of points per arm is about kept.
-  const lumps = bunch > 0 ? (r: number, phi: number) => 1 - bunch + bunch * 3 * noiseAt(r, phi) ** 2 : () => 1;
+  // S110 (A1): the gaps - below `gap` the noise empties the arm (the same noise as the bunching, read once).
+  const gap = Math.min(0.95, Math.max(0, s.gap ?? 0));
+  const gapSoft = Math.max(1e-3, s.gapSoft ?? 0.06);
+  const lumps =
+    bunch > 0 || gap > 0
+      ? (r: number, phi: number) => {
+          const n = noiseAt(r, phi);
+          const kept = gap > 0 ? smoothstep(gap - gapSoft, gap + gapSoft, n) : 1;
+          return kept * (1 - bunch + bunch * 3 * n * n);
+        }
+      : () => 1;
   const lift2 = bunchBright > 0 ? (r: number, phi: number) => Math.max(0.2, 1 + bunchBright * (2 * noiseAt(r, phi) - 1)) : () => 1;
   const density = (r: number, phi: number) =>
     clear(r, phi) * lumps(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));

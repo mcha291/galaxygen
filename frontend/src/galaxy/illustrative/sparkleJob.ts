@@ -33,6 +33,9 @@ export function sparkleShape(params: IllParams) {
     bunchBright: params.sparklebunchbright ?? 0,
     // S107 (MW2): the places drawn through the density's envelope (armsSparkle.ts envelopePlace).
     direct: (params.sparkledirect ?? 0) >= 0.5,
+    // S110 (A1): the gathered grain's gaps (armsSparkle.ts SparkleShape.gap).
+    gap: params.sparklegap ?? 0,
+    gapSoft: params.sparklegapsoft ?? 0.06,
   };
 }
 
