@@ -2486,3 +2486,39 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   tiles, tone on full-size pairs, and read the numbers before setting a default. (S109, D280)
 - [close] **A question asked in the next-step box at three closes was answered at the fourth in three words.** Keep
   asking, and keep the answer's cost small (a prepared two-line change). (S109, D280)
+
+## From S110 (BUILD_VIII rows 127-129: six Opus agents - four builders in two lanes and two passes, a reviewer and a documents' writer; the Fable lead and gate)
+
+- [viewer] **A variant outside a control's range is silently drawn at the range's end.** The lead named
+  `dustArmWander` 0.9 as a default where the range ends at 0.5; the picked frames had drawn 0.5, and three unit tests
+  caught the difference on the merged head. Check a pick against the control's range before naming it. (S110, D281)
+- [viewer] **A builder steered by one number bends the picture to it.** The first Milky Way pass pushed the bar to
+  egg-yolk yellow to move the colour step. A number is a guard on the eye's pick, not the target; and when the lead's
+  own pick then moves that number away, say so in the table rather than hide it. (S110, D281)
+- [viewer] **Find what draws a defect by switching terms off before curing it.** It paid three times in one session:
+  the edge-on band was the edge taper and the halo, not the fall-off; the broad core was the bloom, not the glow terms;
+  the glitter was one grain term. Each guess in a brief was wrong or half right. (S110, D281)
+- [viewer] **Anything a face-on stand leaves on screen edge-on must take the edge-on handover.** A veil hook fades
+  under it; the edge taper, the sky's halo and the star-first points did not, and each drew a band or a smear to the
+  corners until it did. (S110, D281)
+- [viewer] **A hard threshold on a noise field reads as torn paper at any size.** A lump needs a soft edge and a
+  texture inside, or it is a flake (the first lumps: `lumpSoft` 0.08). (S110, D281)
+- [viewer] **Removing a term that carried light means replacing its light.** The glitter's grain held the close-up's
+  brightness (78.2 -> 65.1 without it) and its bright peaks were most of the bright points the tool counts (13 -> 5). A
+  texture swap is also a tone and a point-count change. (S110, D281)
+- [viewer] **The eye and the yardstick can part.** NGC 4414's second-pass pick read nearer on the pair sheets and
+  further by the tool on five rows, the darker pixels between lumps rather than in lanes. When they part, write both
+  down and let the owner rule; re-measure on the previous frame's ellipse to rule out the outline. (S110, D281)
+- [viewer] **"A gain at both ranges" means the close stand's own frame beside the last session's, at full size** - not
+  a crop of the full frame and not a mean brightness. NGC 4414's close-up passed on its mean luminance (79.4 against
+  79.0) while it showed a crackle and flat flakes where S109's had a warm grain; the lead checked a number, the second
+  reader looked. (S110, D281)
+- [close] **A second reader who built nothing finds what the lead passed.** At S109 a regression edge-on, at S110 a
+  loss at the close stand and three faults in the Milky Way, one of which the lead's own words had named the other way
+  (the bar "paler" while yellower than the last session's). Have the documents' writer read every frame beside the
+  last session's before the close, and leave time to act on it. (S110, D281)
+- [close] **Two passes, two ranges.** A first pass with a list written from the full frame found composition and tone;
+  a second pass on the merged head with a list written from the central 45 % found the texture defects the full frame
+  hides. (S110, D281)
+- [close] **Tone picked by the lead from its own sheets converged in one round per question** (six sheets a template
+  in all, two to three minutes a round); no judged pass was sent back this session. (S110, D281)

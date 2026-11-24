@@ -165,7 +165,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The floor's colour from grey (0) to deep blue (1). Colour for appearance.",
   },
   {
-    key: "halo", label: "sky halo", min: 0, max: 0.2, step: 0.0005, unit: "", default: 0, perTemplate: { ngc_4414: 0.004 },
+    key: "halo", label: "sky halo", min: 0, max: 0.2, step: 0.0005, unit: "", default: 0, perTemplate: { ngc_4414: 0.008},
     about: "A wide smooth blue haze about the disc, in its plane (linear light at its centre, before the grade): the faint outer disc's glow on the sky. 0 none. Illustrative.",
   },
   {
@@ -185,6 +185,18 @@ const Layer = lazy(() => import("./SkyLayer"));
 function SkyLayerLazy(props: IllLayerProps) {
   if (!skyDrawn(props.params)) return null;
   return createElement(Suspense, { fallback: null }, createElement(Layer, props));
+}
+
+/**
+ * S110 (B2): the registry's handover angles (index.ts illGrazeAt, radians off the disc's axis: a pair or a vector) as
+ * the halo's (SkyLayer.tsx: the halo fades with the sight line's grazing weight, exactly as drawn while it is 1);
+ * (0, 0) - no handover, the halo as drawn - while unknown.
+ */
+export function grazePair(value: unknown): [number, number] {
+  if (Array.isArray(value) && value.length >= 2) return [Number(value[0]) || 0, Number(value[1]) || 0];
+  const v = value as { x?: unknown; y?: unknown } | null;
+  if (v && typeof v.x === "number" && typeof v.y === "number") return [v.x, v.y];
+  return [0, 0];
 }
 
 /** Whether the layer draws anything at these parameters (all off: nothing mounted, the frame as without it). */

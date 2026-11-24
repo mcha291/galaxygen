@@ -9,6 +9,7 @@ import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllFrame } from "./feature";
 import { channelShapeOf, fallBandUniforms, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
 import { buildNetChannel } from "./flocNet";
+import { buildSparks } from "./flocClouds";
 import {
   FLOC_ARRAYS, FLOC_MAP, FLOC_REACH, type FlocGeometry, type FlocShape, Ladder, SHAPE_KEYS, buildFlocChannel, flocClumps, flocCover, flocDecode, flocGrains, flocKey, flocLight, flocPatches,
   flocStrands, geometryOf, lightReach, readField, spiralNoise, strandPitch,
@@ -601,5 +602,63 @@ describe("the white-hot core and the star clouds' cap (S109, builder B4)", () =>
     expect(hot[1]).toBeGreaterThan(0);
     expect(illDefaults("ngc_4414")["floc.cloudCap"]).toBeGreaterThan(0);
     expect(floc.glsl ?? "").toContain("if (illFlocHot.x > 0.0) {");
+  });
+});
+
+describe("the inner warmth's yellow hue (S110, builder B)", () => {
+  it("is off on the Milky Way and turns NGC 4414's warmth toward a yellow-tan", () => {
+    expect(illDefaults("milky_way")["floc.warmYellow"]).toBe(0);
+    expect(illDefaults("ngc_4414")["floc.warmYellow"]).toBeGreaterThan(0);
+    const ngc = floc.uniforms!(paramsOf(floc, illDefaults("ngc_4414")), { template: "ngc_4414", frame: FRAME });
+    expect(ngc.illFlocWarmY).toBe(illDefaults("ngc_4414")["floc.warmYellow"]);
+    // At 0 the S106 tint exactly (the old line kept as the else branch).
+    expect(floc.glsl ?? "").toContain("else veil *= vec3(1.0 + 0.2 * w, 1.0 + 0.03 * w, 1.0 - 0.32 * w);");
+  });
+});
+
+describe("the light's lumps, the disc's yellow and the sparks (S110, builder B2)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("draws none of them on the Milky Way", () => {
+    const u = fallBandUniforms(own("milky_way"));
+    expect(u.illFlocLumpA[0]).toBe(0);
+    expect(u.illFlocTan[0]).toBe(0);
+    expect(illDefaults("milky_way")["floc.sparkCount"]).toBe(0);
+    // The hue slider moved on the Milky Way draws nothing there: it is the plane style's (S110 review).
+    expect(fallBandUniforms({ ...own("milky_way"), tanHue: 0.3 }).illFlocTan[0]).toBe(0);
+  });
+  it("moves the lumps with a rerolled network seed and leaves them where they were at the default (S110 review)", () => {
+    const glsl = floc.glsl ?? "";
+    expect(glsl).toContain("vec2 q = xy / illFlocLumpA.y + vec2(illFlocScC.z, 0.61 * illFlocScC.z);");
+    expect(glsl.indexOf("uniform vec4 illFlocScC;")).toBeLessThan(glsl.indexOf("float illFlocLumpField("));
+    const base = own("ngc_4414");
+    expect(fallBandUniforms(base).illFlocScC[2]).toBe(0);
+    expect(fallBandUniforms({ ...base, seed: base.seed + 7 }).illFlocScC[2]).not.toBe(0);
+  });
+  it("gives NGC 4414 lumps on a warped plane with no lattice of one size, and a yellower disc", () => {
+    const u = fallBandUniforms(own("ngc_4414"));
+    expect(u.illFlocLumpA[0]).toBeGreaterThan(0);
+    expect(u.illFlocLumpA[1]).toBeGreaterThan(0.05);
+    expect(u.illFlocTan[0]).toBeGreaterThan(0);
+    const glsl = floc.glsl ?? "";
+    // Five octaves of the noise on a warped plane, thresholded: an irregular field, not a cellular tiling.
+    expect(glsl).toContain("float illFlocLumpField(vec2 xy, float dl) {");
+    expect(glsl).toContain("q += illFlocLumpB.x * (2.0 * w1 + 0.7 * w2);");
+    expect(glsl.match(/\* q \* (2\.07|4\.13|8\.31|16\.7)/g)?.length).toBe(4);
+    // Declared above their first use (a uniform used before its declaration blanks the field).
+    expect(glsl.indexOf("uniform vec4 illFlocLumpA;")).toBeLessThan(glsl.indexOf("illFlocLumpA.x"));
+    expect(glsl.indexOf("uniform vec4 illFlocTan;")).toBeLessThan(glsl.indexOf("illFlocTan.x"));
+    expect(glsl.indexOf("float illFlocLumpField(")).toBeLessThan(glsl.indexOf("lump = illFlocLumpField("));
+  });
+  it("places the sparks deterministically, most in the outer zone, a few brilliant", () => {
+    const s = { count: 400, from: 5, to: 12, inner: 0.15, slope: 1.2, range: 30, seed: 11 };
+    const a = buildSparks(s);
+    expect(Array.from(a.weight)).toEqual(Array.from(buildSparks(s).weight));
+    const r = Array.from(a.x, (x, i) => Math.hypot(x, a.y[i]));
+    expect(r.every((v) => v <= 12 + 1e-6)).toBe(true);
+    const outer = r.filter((v) => v >= 5 - 1e-6).length / r.length;
+    expect(outer).toBeGreaterThan(0.75);
+    expect(Math.max(...a.weight)).toBeGreaterThan(10);
+    expect(a.weight.filter((w) => w > 10).length).toBeLessThan(40);
+    expect(buildSparks({ ...s, count: 0 }).weight.length).toBe(0);
   });
 });

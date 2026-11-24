@@ -16,7 +16,7 @@ export const edge: IllFeature = {
   about: "A taper of all the field's light and dust over the last kpc before the grid's outer radius, so the disc never ends in a hard circle; and an earlier one of the clustered young light alone, so the outer disc fades smooth.",
   controls: [
     {
-      key: "radius", label: "edge radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 16, ngc_4414: 16 },
+      key: "radius", label: "edge radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 17, ngc_4414: 16 },
       about: "Where the taper reaches nothing, kpc (at most the grid's 30): a template whose own light ends inside the grid (NGC 4414's disc near 20 kpc) is tapered to its own end. Illustrative.",
     },
     {
@@ -32,7 +32,7 @@ export const edge: IllFeature = {
       about: "The clustered young light taken smoothly to nothing over this many kpc inside the young edge; 0 a hard cut there. Illustrative.",
     },
     {
-      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5, ngc_4414: 0 },
+      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.75, ngc_4414: 0 },
       about: "The bulge's light (and the dust's, the HII's and the gas's) dimmed by this share round the bar - from none at the centre, full from the radius below, none again from the next - the disc's starlight kept: the pale haze round the bar thinned so the bar stands on a darker ground; 0 none. Illustrative (S106).",
     },
     {
@@ -42,6 +42,14 @@ export const edge: IllFeature = {
     {
       key: "bulgeout", label: "bulge dim to", min: 1, max: 20, step: 0.1, unit: "kpc", default: 8, perTemplate: { milky_way: 10 },
       about: "The bulge's dimming has faded to nothing at this radius, kpc (from half of it). Illustrative (S106).",
+    },
+    {
+      key: "grazeRadius", label: "edge radius edge-on", min: 0, max: 30, step: 0.5, unit: "kpc", default: 0, perTemplate: { ngc_4414: 9.5 },
+      about: "The edge radius handed over to toward edge-on (with the grazing handover, base.grazeFrom to base.grazeTo): the disc's own fall-offs are veils that fade there, so a wide face-on taper would let the smooth disc run on past the lane as a thin band; 0 the face-on radius kept. Face-on nothing moves. Illustrative (S110).",
+    },
+    {
+      key: "grazeWidth", label: "edge taper edge-on", min: 0, max: 25, step: 0.5, unit: "kpc", default: 0, perTemplate: { ngc_4414: 4 },
+      about: "The edge taper handed over to toward edge-on, kpc (with the edge radius edge-on); 0 with that radius at 0 the face-on taper kept. Illustrative (S110).",
     },
   ],
   glsl: /* glsl */ `
@@ -63,8 +71,17 @@ export const edge: IllFeature = {
     float share = illGraze >= 1.0 ? illEdgeBulge.x : illEdgeBulge.x * illGraze;
     return 1.0 - share * smoothstep(0.0, illEdgeBulge.y, r) * (1.0 - smoothstep(0.5 * illEdgeBulge.z, illEdgeBulge.z, r));
   }
+  // S110 (B1): the taper's end and width handed over toward edge-on (illEdgeGraze: x the radius, y the width; x 0 none),
+  // exactly the face-on pair while illGraze is 1.
+  uniform vec2 illEdgeGraze;
+  vec2 illEdgeEnd() {
+    vec2 face = vec2(min(illEdgeRadius, rHi), illEdgeWidth);
+    if (illGraze >= 1.0 || illEdgeGraze.x <= 0.0) return face;
+    return mix(vec2(min(illEdgeGraze.x, rHi), illEdgeGraze.y), face, illGraze);
+  }
   float illEdgeTaper(float r) {
-    float t = illEdgeRamp(r, min(illEdgeRadius, rHi), illEdgeWidth);
+    vec2 end = illEdgeEnd();
+    float t = illEdgeRamp(r, end.x, end.y);
     return illEdgeBulge.x > 0.0 ? t * illEdgeBulgeAt(r) : t;
   }
   vec3 illEdgeDisc(vec2 rp) { return illEdgeBulge.x > 0.0 ? vec3(1.0 / illEdgeBulgeAt(rp.x)) : vec3(1.0); }
@@ -79,6 +96,7 @@ export const edge: IllFeature = {
     illEdgeYoungRadius: p.young ?? 30,
     illEdgeYoungWidth: p.youngwidth ?? 0,
     illEdgeBulge: [p.bulge ?? 0, p.bulgein ?? 1, Math.max(p.bulgeout ?? 8, 0.2)] as [number, number, number],
+    illEdgeGraze: [Math.max(p.grazeRadius ?? 0, 0), Math.max(p.grazeWidth ?? 0, 0)] as [number, number],
   }),
 };
 

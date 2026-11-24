@@ -204,11 +204,16 @@ const skeletonVertexShader = (illGlsl: string) => {
   varying vec3 vLight2;
   varying vec4 vTint;
   varying vec2 vSeed;
+  // S110 (A2, knots.edgefade): the regions faded toward edge-on (illGraze) by this share, their cover with them.
+  uniform float knGraze;
+  varying float vFade;
   vec2 toPx(vec4 clip) { return clip.xy / clip.w * 0.5 * viewPx; }
   vec4 lobe(vec4 b, vec2 pT, vec2 pN, float rpx) { return vec4(b.x * pT + b.y * pN, max(b.z * rpx, 0.6), b.w); }
   float lobeReach(vec4 c) { return c.w > 0.0 ? length(c.xy) + 3.0 * c.z : 0.0; }
   void main() {
     illPointsPlace();
+    vFade = 1.0;
+    if (knGraze > 0.0 && illGraze < 1.0) vFade = mix(1.0 - knGraze, 1.0, illGraze);
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     float depth = -mv.z;
     float dist = length(mv.xyz);
@@ -221,6 +226,7 @@ const skeletonVertexShader = (illGlsl: string) => {
     float side = 1000.0 * depth / pxPerUnit;
     float area = side * side * depth / dist;
     vec3 ext = (dustOn > 0.5 ? exp(-dustTo(position) * dustStrength) : vec3(1.0)) * illEdge(length(position.xz));
+    if (vFade < 1.0) ext *= vFade;
     vLight = aLight * gain / area * ext;
     vLight2 = aLight2 * gain / area * ext;
     vCore = aCore * gain * coreGain / area * ext;
@@ -262,6 +268,7 @@ const SKELETON_FRAGMENT = /* glsl */ `
   varying vec2 vSeed;
   uniform float knRag;
   uniform float knVeil;
+  varying float vFade;
   float gauss(vec2 o, float s) { return exp(-dot(o, o) / (2.0 * s * s)) / (6.28318531 * s * s); }
   // A lobe already in px (centre xy, sigma z, weight w), y up.
   float lobe(vec2 p, vec4 b) { return b.w > 0.0 ? b.w * gauss(p - b.xy, b.z) : 0.0; }
@@ -304,6 +311,7 @@ const SKELETON_FRAGMENT = /* glsl */ `
       vec4 d2 = vec4(dot(pw - vB0.xy, pw - vB0.xy), dot(pw - vB1.xy, pw - vB1.xy), dot(pw - vB2.xy, pw - vB2.xy), dot(pw - vB3.xy, pw - vB3.xy));
       vec4 e = exp(-d2 / (2.0 * bz * bz)) * w / max(wMax, 1e-6);
       cover = clamp(knVeil * max(max(e.x, e.y), max(e.z, e.w)) * min(mottle, 1.0), 0.0, 1.0);
+      if (vFade < 1.0) cover *= vFade;
     }
     gl_FragColor = vec4(light, cover);
   }
@@ -371,6 +379,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
         viewPx: { value: new Vector2(1, 1) },
         knRag: { value: 0 },
         knVeil: { value: 0 },
+        knGraze: { value: 0 },
         // S108: the regions' lift toward edge-on (index.ts POINTS_PLACE_GLSL), this material's own.
         illPointsLift: { value: 0 },
         ...runtime.uniforms,
@@ -475,6 +484,7 @@ export function KnotsLayer({ params, runtime, knots, knotsGain, dust, context }:
       u.coreSize.value = p.coreSize ?? 0.12;
       u.knRag.value = p.ragged ?? 0;
       u.knVeil.value = Math.min(1, Math.max(0, p.veil ?? 0));
+      u.knGraze.value = Math.min(1, Math.max(0, p.edgefade ?? 0));
       u.dustStrength.value = p.dust ?? 1;
       u.dustOn.value = d && (p.dust ?? 1) > 0 ? 1 : 0;
       u.dustDepthScale.value = d?.depthScale ?? 1;

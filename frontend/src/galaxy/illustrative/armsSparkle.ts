@@ -75,6 +75,63 @@ export interface SparkleShape {
   bunchBright?: number;
   /** S107 (MW2): the places drawn through an envelope of the density (envelopePlace: the same law, faster); else by rejection over the disc. */
   direct?: boolean;
+  /**
+   * S110 (A1, the gathered grain): the density cut to nothing where the bunching noise (wavelength `bunchPc`) is below
+   * this level, a soft step of `gapSoft` either side - clumps and short strings of grain with empty stretches between
+   * along the arms, as the goal's; 0 (or absent) no cut.
+   */
+  gap?: number;
+  /** S110: the gap's soft step, in the noise's units (default 0.06). */
+  gapSoft?: number;
+  /**
+   * S110 (A2, the sparkle's cost): above 0, the density's level (the ridge read, the costly part) read from a polar table
+   * of TABLE_RINGS x TABLE_SECTORS corners over the disc, bilinear between them, in place of a read per proposal - so the
+   * cost no longer grows with the count of points. 0 (or absent) the exact read.
+   */
+  table?: number;
+  /**
+   * S110 (A2, the field stars): this many faint points over the whole disc - between the arms and over the bar too - as a
+   * second, sparser tier: area density exp(-R / fieldScale), tapered to nothing from 0.6 of `fieldEdge` to it; each
+   * point's brightness the power law's (at most 20 times the faintest) times `fieldDim`. Drawn after the arms' points
+   * from a stream of their own (the arms' points are unchanged by them); 0 (or absent) none.
+   */
+  field?: number;
+  /** S110: the field stars' radial scale, kpc. */
+  fieldScale?: number;
+  /** S110: the field stars' outer edge, kpc. */
+  fieldEdge?: number;
+  /** S110: the field stars' brightness against the arms' faintest point's. */
+  fieldDim?: number;
+}
+
+/** S110 (A2): the level table's polar grid (SparkleShape.table). */
+export const TABLE_RINGS = 256;
+export const TABLE_SECTORS = 1024;
+
+/**
+ * S110 (A2): a level read off a table - `f` read at the (TABLE_RINGS + 1) x TABLE_SECTORS corners of a polar grid out to
+ * rMax, bilinear between them (round the turn, wrapped); 0 beyond rMax.
+ */
+export function tabulated(f: (r: number, phi: number) => number, rMax: number): (r: number, phi: number) => number {
+  const nR = TABLE_RINGS;
+  const nP = TABLE_SECTORS;
+  const dR = rMax / nR;
+  const dP = (2 * Math.PI) / nP;
+  const t = new Float32Array((nR + 1) * nP);
+  for (let i = 0; i <= nR; i++) for (let j = 0; j < nP; j++) t[i * nP + j] = f(i * dR, j * dP);
+  return (r, phi) => {
+    const u = r / dR;
+    if (!(u >= 0) || u > nR) return 0;
+    const i = Math.min(nR - 1, Math.floor(u));
+    const fu = u - i;
+    const v = ((((phi / (2 * Math.PI)) % 1) + 1) % 1) * nP;
+    const j = Math.min(nP - 1, Math.floor(v));
+    const fv = v - j;
+    const j1 = (j + 1) % nP;
+    const a = t[i * nP + j] * (1 - fu) + t[(i + 1) * nP + j] * fu;
+    const b = t[i * nP + j1] * (1 - fu) + t[(i + 1) * nP + j1] * fu;
+    return a * (1 - fv) + b * fv;
+  };
 }
 
 /** A smooth value noise in [0, 1] at plane point (x, y) in lattice units (two octaves, the second half as strong). */
@@ -118,6 +175,8 @@ export interface Sparkle {
   height: Float32Array;
   /** Each point's brightness in units of the faintest. */
   weight: Float32Array;
+  /** S110 (A2): how many of the points, at the end of the buffers, are field stars (SparkleShape.field); absent none. */
+  field?: number;
 }
 
 /**
@@ -169,11 +228,13 @@ export function buildSparkle(
   const rMax = Math.min(s.rMax, g.rHi);
   const floor = Math.min(1, Math.max(0, s.floor ?? 0));
   const lift = s.lift ?? 0;
-  const level = levelOf
+  const exact = levelOf
     ? levelOf
     : raw && lift > 0
       ? (r: number, phi: number) => Math.min(1, shareAt(raw, g, r, phi, 1, 0) / lift)
       : (r: number, phi: number) => shareAt(map, g, r, phi);
+  // S110 (A2): the level off a table where asked (the cost then fixed, whatever the count).
+  const level = (s.table ?? 0) > 0 ? tabulated(exact, rMax) : exact;
   const avoid = lanes ? Math.min(1, Math.max(0, s.avoid ?? 0)) : 0;
   const clear = avoid > 0 && lanes ? (r: number, phi: number) => Math.max(0, 1 - avoid * Math.min(1, laneShapeAt(lanes, r, phi))) : () => 1;
   const bunch = Math.min(1, Math.max(0, s.bunch ?? 0));
@@ -181,7 +242,17 @@ export function buildSparkle(
   const lattice = Math.max(0.01, (s.bunchPc ?? 400) / 1000);
   const noiseAt = (r: number, phi: number) => bunchNoise((r * Math.cos(phi)) / lattice, (r * Math.sin(phi)) / lattice);
   // The bunching: 3 n^2 has a mean near 1 over the noise, so the count of points per arm is about kept.
-  const lumps = bunch > 0 ? (r: number, phi: number) => 1 - bunch + bunch * 3 * noiseAt(r, phi) ** 2 : () => 1;
+  // S110 (A1): the gaps - below `gap` the noise empties the arm (the same noise as the bunching, read once).
+  const gap = Math.min(0.95, Math.max(0, s.gap ?? 0));
+  const gapSoft = Math.max(1e-3, s.gapSoft ?? 0.06);
+  const lumps =
+    bunch > 0 || gap > 0
+      ? (r: number, phi: number) => {
+          const n = noiseAt(r, phi);
+          const kept = gap > 0 ? smoothstep(gap - gapSoft, gap + gapSoft, n) : 1;
+          return kept * (1 - bunch + bunch * 3 * n * n);
+        }
+      : () => 1;
   const lift2 = bunchBright > 0 ? (r: number, phi: number) => Math.max(0.2, 1 + bunchBright * (2 * noiseAt(r, phi) - 1)) : () => 1;
   const density = (r: number, phi: number) =>
     clear(r, phi) * lumps(r, phi) * (floor + (1 - floor) * Math.pow(Math.max(0, level(r, phi)), s.ridge)) * (1 - smoothstep(0.7 * rMax, rMax, r));
@@ -226,6 +297,41 @@ export function buildSparkle(
     k++;
   }
   if (bunchBright > 0) for (let i = 0; i < k; i++) weight[i] *= lift2(radius[i], azimuth[i]);
+  const field = Math.max(0, Math.floor(s.field ?? 0));
+  if (field <= 0) return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
+  // S110 (A2): the field stars, after the arms' points, from a stream of their own.
+  const f = fieldStars(field, s, (seed ^ 0x9e3779b9) >>> 0);
+  const join = (a: Float32Array, b: Float32Array) => {
+    const o = new Float32Array(k + b.length);
+    o.set(a.subarray(0, k));
+    o.set(b, k);
+    return o;
+  };
+  return { radius: join(radius, f.radius), azimuth: join(azimuth, f.azimuth), height: join(height, f.height), weight: join(weight, f.weight), field: f.radius.length };
+}
+
+/** S110 (A2): the field stars (SparkleShape.field): area density exp(-R / scale), tapered over the edge; faint. */
+export function fieldStars(count: number, s: SparkleShape, seed: number): Sparkle {
+  const next = rng(seed);
+  const edge = Math.max(0.5, s.fieldEdge ?? 16);
+  const scale = Math.max(0.1, s.fieldScale ?? 4);
+  const dim = Math.max(0, s.fieldDim ?? 0.3);
+  const hz = s.heightPc / 1000;
+  const radius = new Float32Array(count);
+  const azimuth = new Float32Array(count);
+  const height = new Float32Array(count);
+  const weight = new Float32Array(count);
+  let k = 0;
+  for (let t = 0; k < count && t < 400 * count; t++) {
+    const r = edge * Math.sqrt(next());
+    const phi = 2 * Math.PI * next();
+    if (next() >= Math.exp(-r / scale) * (1 - smoothstep(0.6 * edge, edge, r))) continue;
+    radius[k] = r;
+    azimuth[k] = phi;
+    height[k] = gauss(next) * hz;
+    weight[k] = brightness(next(), s.slope, Math.min(20, s.range)) * dim;
+    k++;
+  }
   return { radius: radius.subarray(0, k), azimuth: azimuth.subarray(0, k), height: height.subarray(0, k), weight: weight.subarray(0, k) };
 }
 
@@ -301,10 +407,37 @@ export function sparkleTiers(weight: ArrayLike<number>, share: number): Uint8Arr
   const out = new Uint8Array(n);
   const big = Math.floor(n * Math.min(1, Math.max(0, share)));
   if (big <= 0) return out;
-  const sorted = Float32Array.from(weight).sort();
-  const threshold = sorted[n - big];
+  // S110 (A2, the main thread's cost): the threshold - the (n - big)-th smallest weight, what a sort's sorted[n - big]
+  // was - by selection (Hoare's quickselect over a copy), not a full sort of hundreds of thousands of points.
+  const threshold = kthSmallest(Float32Array.from(weight), n - big);
   for (let i = 0; i < n; i++) if (weight[i] >= threshold) out[i] = 1;
   return out;
+}
+
+/** S110 (A2): the k-th smallest value (0-based) of `a`, which is reordered in place (quickselect, middle pivot). */
+export function kthSmallest(a: Float32Array, k: number): number {
+  let lo = 0;
+  let hi = a.length - 1;
+  while (lo < hi) {
+    const pivot = a[(lo + hi) >> 1];
+    let i = lo;
+    let j = hi;
+    while (i <= j) {
+      while (a[i] < pivot) i++;
+      while (a[j] > pivot) j--;
+      if (i <= j) {
+        const t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+        i++;
+        j--;
+      }
+    }
+    if (k <= j) hi = j;
+    else if (k >= i) lo = i;
+    else return a[k];
+  }
+  return a[k];
 }
 
 /** The members of one tier: the indices whose tier is `tier`. */

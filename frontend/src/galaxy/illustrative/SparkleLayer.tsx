@@ -23,6 +23,8 @@ const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
 const SPARKLE_CYAN: readonly [number, number, number] = [0.66, 1.1, 1.16];
 /** S109 (A2): the bar's grain colour (arms.sparklebarcream), a warm cream-white. */
 const BAR_CREAM: readonly [number, number, number] = [1.18, 1.0, 0.72];
+/** S110 (A1, arms.sparklelav): the fine grain's lavender-white, the goal's disc grain. */
+const SPARKLE_LAV: readonly [number, number, number] = [0.97, 0.95, 1.12];
 
 /** The members `idx` of a flat buffer of `width` values per point. */
 function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Array {
@@ -99,14 +101,30 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
     return f;
   }, [points, blue, cyan, base, start, scale]);
   const bigShare = params.sparklebig ?? 0;
+  // S110 (A1): the fine tier's colour toward the goal's lavender-white by this share (its luminance kept); the bright
+  // tier - the clumps' cores - keeps the blue-white.
+  const lav = Math.min(1, Math.max(0, params.sparklelav ?? 0));
   const tiers = useMemo(() => {
     if (!points || !flux) return null;
-    const t = sparkleTiers(points.weight, bigShare);
+    // S110 (A2): the field stars (the buffers' last `field` points) always on the fine sprite, and not counted in the
+    // bright share (the arms' bright tier is as it was without them).
+    const nField = points.field ?? 0;
+    const t = nField > 0 ? new Uint8Array(points.weight.length) : sparkleTiers(points.weight, bigShare);
+    if (nField > 0) t.set(sparkleTiers(points.weight.subarray(0, points.weight.length - nField), bigShare));
     return [0, 1].map((tier) => {
       const idx = tierIndices(t, tier);
-      return idx.length === 0 ? null : { positions: pick(points.positions, idx, 3), flux: pick(flux, idx, 3) };
+      if (idx.length === 0) return null;
+      const f = pick(flux, idx, 3);
+      if (tier === 0 && lav > 0) {
+        const c = SPARKLE_BLUE.map((v, k) => 1 + (v + (SPARKLE_CYAN[k] - v) * cyan - 1) * blue);
+        const lc = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+        const ll = 0.3 * SPARKLE_LAV[0] + 0.59 * SPARKLE_LAV[1] + 0.11 * SPARKLE_LAV[2];
+        const k = SPARKLE_LAV.map((v, ch) => 1 + ((v * lc) / ll / c[ch] - 1) * lav);
+        for (let i = 0; i < idx.length; i++) for (let ch = 0; ch < 3; ch++) f[3 * i + ch] *= k[ch];
+      }
+      return { positions: pick(points.positions, idx, 3), flux: f };
     });
-  }, [points, flux, bigShare]);
+  }, [points, flux, bigShare, lav, blue, cyan]);
   if (!tiers) return null;
   const sizes = [params.sparklesize ?? 1.5, params.sparklebigsize ?? 3];
   return (

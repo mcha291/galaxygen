@@ -1180,3 +1180,138 @@ What the lead's words do not say, or where this reader disagrees:
   (1024, 760)), which reads like a beam of light; S108's lane tapered to its tips inside the haze. The Milky Way
   edge-on is S108's picture smaller and less tilted, the pink regions now along the lane's whole length, a thin tail
   of grain beyond the halo at the left tip (about x 120 to 200, y 600 to 620).
+
+---
+
+# Part S110 — the two tuned frames nearer their goals, and a second reading acted on (D281)
+
+## 45. What S110 changed in the frames
+
+BUILD_VIII rows 127 to 129 (D281), viewer-only (model hash 5a862a70..., no model byte moved; the two physical frames
+byte for byte at every merge). Two passes per template, each hand-back read by the lead on pair sheets and its tone
+picked from the lead's own variant sheets; then the documents' writer read the merged head 3cb5f63 as a second reader
+(section 48) and the lead picked once more on its findings (bd44779). **NGC 4414**: edge-on mended (the edge taper and
+the sky's halo now take the edge-on handover); a blue-white outer zone and a browner, more broken dust network (first
+pass); the glitter of the march's fine grain traced, soft lumps built per ray in the veil, the broad cream ball round
+the nucleus (the bloom spreading the nucleus point) shrunk to a compact white core, a yellower inner disc, the haze back
+(second pass); then, because the close-up had become a loss against S109's (a crackle from the denser mesh, the lumps
+as flat flakes), the mesh made half as deep and the lumps kept only as soft banks with the grain back (ruling 57).
+**The Milky Way**: the grain gathered on the arm crests, a mid-tone disc, three windings and an outer arm inside a
+larger glow, a compact bar (first pass); the arms as continuous bands of fine stipple, a faint field-star tier over the
+disc, a grainy bar without the swirl, a thin lane along every arm and none across a gap, then the lanes made faint and
+broken by the lead's pick (second pass); then the bar paler, the pink drawn less far out and the regions' veil halved
+(ruling 58). Every illustrative frame moved; the four of the head bd44779 are committed as plain pictures in
+`docs/pictures/s110/` (ruling 55; sha256 in D281).
+
+## 46. The yardstick on S110's frames
+
+`tools/goal_metrics.py` re-run by the documents' writer on the two committed full frames of bd44779
+(`docs/pictures/s110/`, 1024 px), on S109's committed frames and on both goals, as section 42 did: the Milky Way with
+`--axis-ratio 1`, NGC 4414 at the tool's own geometry. Every goal and S109 row reproduces section 42's; the S110 rows
+agree with the lead's run. The writer had also measured 3cb5f63's frames (the row marked so) before the last picks.
+There is no goal for the edge-on frames and the tool does not measure them.
+
+| picture | D(B−R) (in / out) | A₁ | A₂ | A₃ | A₄ | m | arm / inter-arm | dark | slope | points in | q | a (px) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GOAL `milky_way` | −0.354 (−0.459 / −0.813) | 0.052 | 0.194 | 0.059 | 0.107 | 2 | 1.83 | 0.0066 | −1.99 | 518 | 1 (set) | 2006 |
+| illustrative, S109 | −0.268 (−0.409 / −0.677) | 0.019 | 0.110 | 0.024 | 0.096 | 2 | 1.84 | 0.0192 | −1.58 | 526 | 1 (set) | 356 |
+| S110 at 3cb5f63 | −0.194 (−0.686 / −0.881) | 0.027 | 0.096 | 0.027 | 0.105 | 4 | 1.84 | 0.0042 | −2.20 | 700 | 1 (set) | 361 |
+| **illustrative, S110** | −0.130 (−0.730 / −0.860) | 0.031 | 0.098 | 0.029 | 0.106 | 4 | 1.86 | 0.0035 | −2.35 | 681 | 1 (set) | 359 |
+| GOAL `ngc_4414` (the tool's geometry) | −0.274 (+0.508 / +0.234) | 0.099 | 0.068 | 0.055 | 0.068 | 1 | 2.72 | 0.157 | −2.09 | 97 | 0.512 | 664 |
+| illustrative, S109 | −0.314 (+0.690 / +0.376) | 0.084 | 0.062 | 0.060 | 0.036 | 1 | 1.96 | 0.215 | −2.13 | 20 | 0.542 | 475 |
+| S110 at 3cb5f63 | −0.492 (+0.515 / +0.024) | 0.091 | 0.059 | 0.050 | 0.039 | 1 | 2.10 | 0.281 | −1.75 | 13 | 0.485 | 512 |
+| **illustrative, S110** | −0.449 (+0.564 / +0.115) | 0.086 | 0.054 | 0.041 | 0.035 | 1 | 1.96 | 0.215 | −2.02 | 13 | 0.475 | 514 |
+| S110 on S109's ellipse | −0.438 (+0.561 / +0.123) | 0.082 | 0.039 | 0.044 | 0.038 | 1 | 1.99 | 0.214 | −2.05 | 14 | 0.542 (set) | 475 (set) |
+
+**The Milky Way.** Nearer than S109: the dark fraction (0.0035 against the goal's 0.0066, now under it where S109's was
+three times it) and A₃ (0.029 against 0.059, a little); the arm contrast at the goal's (1.86 against 1.83). Further:
+the colour step (−0.130 against −0.354; S109 −0.268), A₂ (0.098 against 0.194) and, a little, the slope (−2.35 against
+−1.99: past the goal to the smooth side by 0.36, where S109 fell short by 0.41 on the other). **The colour step's loss
+is in its inner band**, −0.730 against the goal's −0.459, while the outer band is near the goal's (−0.860 against
+−0.813). The inner band is 0.15 to 0.35 of a, about 54 to 126 px from the centre on this frame: it holds the bar's ends
+and the violet ground round the bar, so the bluer inner colour is that ground and the now paler bar together. **The
+tool's dominant m is 4** (A₄ 0.106, above A₂), for the first time on any frame of this build; by eye the frame is
+still two long arms and an oval (section 48), so the four-fold term is the oval and the arms together.
+
+**NGC 4414.** Against S109, by the tool: nearer on the inner colour (+0.564 against the photograph's +0.508; S109
++0.690) and the outer colour (+0.115 against +0.234; S109 +0.376, too red then, a little blue now); the same on the
+arm contrast (1.96) and the dark fraction (0.215); a little off on the slope (−2.02 against −2.09; S109 −2.13); further
+on the colour step (−0.449 against −0.274, overshooting), A₂ (0.054 against 0.068), A₃ (0.041 against 0.055) and the
+bright points inside the disc (13 against 97; S109 20). Against 3cb5f63, the last pick took back most of what the lumps
+had cost: the outer colour from +0.024, the dark fraction from 0.281, the slope from −1.75. **The outline grew** (a 475
+-> 514 px, about the frame's half-width; q 0.542 -> 0.475), so the writer re-ran the S110 frame on S109's ellipse (the
+last row): the same reading but for A₂ (0.039 there), so the moves are the picture's, not the ellipse's. Nothing here
+was counted that the tool does not measure (the cloud texture, the dust's colour, the arm count by eye).
+
+## 47. What a viewer sees, in the lead's words (the lead looked at the frames beside both goals)
+
+**The Milky Way, full frame:** much nearer than S109's. A glowing lavender disc with a smooth edge, three windings and
+an outer arm, a compact bar, the arms continuous bands of fine pale stipple with faint thin lanes and pink clusters
+along them, faint stars over the disc. Still unlike: the goal has four arms with four to five crossings along a radius
+where ours has three windings and wider gaps; the arm stipple is sky-blue where the goal's is white-turquoise, the
+bands narrower and sharper-edged than the goal's soft ones; the pink is pale pastel where the goal's is saturated red
+with white cores; a violet-blue moat rings the bar where the goal's ground is plain lavender, and the first arm is an
+oval detached from the bar where the goal's arms spring from the bar's two tips with bright complexes; the bar is
+larger and flatter than the goal's cream with its bright axis; the outermost arm's grain and pink lie on the dark sky
+at the upper right and upper left; the glow outside the disc is a little wide. **After the second reading** the bar
+was made paler (it had read gold beside the goal's pale cream, yellower than S109's), the pink drawn less far out (it
+had been heaviest on the outermost arm) and the regions' veil halved (near-black specks in the clusters). **Central 45
+%:** the texture is the goal's kind (stipple bands, field stars, pink clusters on thin lanes, a grainy bar); fewer arcs
+cross the crop, the stipple bluer, the lanes rarer and the pink paler, the moat. **Close stand:** the most goal-like of
+its frames: fine stipple arms, salmon clusters on thin lanes, faint field stars on a calm glow; one bar-end complex
+blooms toward white. **Edge-on:** better than S109's: a dark lane through a pale disc, no pink confetti; still hardly a
+bulge.
+
+**NGC 4414, full frame:** nearer in zones and colour: a tan inner disc, a blue-white outer zone on a faint haze, a
+compact white nucleus, a brown broken dust network, and since the last pick one natural flocculent disc without the
+dabs. **The close-up had been a loss, passed by the lead** on the central 45 % of the full frame and the close-up's mean
+luminance; beside S109's at full size it showed the dust mesh as crazed glaze and the lumps as flat grey flakes. With
+the mesh half as deep and the lumps only as soft banks with the grain back (ruling 57), the close-up reads as S109's
+grain again, with the blue outer zone and soft cloud banks, no crackle, no flakes (mean encoded luminance 82.3; S109
+79.0); the straight seam at the top (x about 552) still there, since S109. So the photograph's knotty cauliflower cloud
+is NOT achieved: the lumps are in the code, almost withdrawn at the defaults. **Edge-on:** mended: it tapers to its tips
+inside the haze as S108's did, lane and light ending together, no band to the corners, with the haze back; the bulge
+glow still broad and boxy.
+
+**The distance, plainly.** The Milky Way is now plainly its goal's picture in substance and tone, short of it in arm
+count and in the colour and richness of its details; NGC 4414 has its photograph's zones and nucleus but not its cloud
+texture. Both are within reach of the owner's sliders for tone; the textures (cauliflower cloud, four arms) are new
+drawing (`BUILD_VIII.md` section 6, items 2 and 3).
+
+The frames: `docs/pictures/s110/` (committed; sha256 in D281). The close-ups, the physical frames, the variant sheets
+and the lead's goal-beside-ours pair sheets are local (never committed).
+
+## 48. A second reader (the documents' writer, who built none of it)
+
+The writer of S110's close documents read the frames twice. **First on 3cb5f63**: both goals, the four frames of that
+head, its two close-ups, the lead's four pair sheets, S109's four committed frames and its NGC 4414 close-up, and the
+first pass's merged-head close-up of NGC 4414 in the lead's folder. That reading found NGC 4414's close-up a loss (a
+polygon crackle of thin dark lines over the middle, like crazed glaze, stronger than S109's faint trace, and since the
+first pass), the Milky Way's bar yellower than S109's though the lead had called it paler, the pink heaviest on the
+outermost arm, and near-black specks in some pink clusters; the lead acted on all four (rulings 57 and 58). **Then on
+bd44779**: the four committed frames, the two close-ups, the lead's four pair sheets of that head, and crops of the
+close-up's middle and the Milky Way's inner arms at the places named before. Places are in pixels of the 1024-px
+frames. What follows is the second reading; where it disagrees with the lead it says so.
+
+- **NGC 4414's close-up is mended.** The middle (about x 350 to 750, y 520 to 800) is a warm grainy field again with
+  only a faint trace of the crackle, about as faint as S109's; the flakes are gone; the outer part is blue-white
+  grain on the disc's dark edge. Agreed with the lead.
+- **The Milky Way's specks are gone.** At about (640 to 680, 570 to 590) the clusters are pink dots on the stipple, no
+  dark pixels. Agreed.
+- **The bar is paler, but still gold beside the goal.** It is a lighter yellow than at 3cb5f63; beside the goal's pale
+  cream with its white axis it still reads yellow, and larger and flatter. The violet moat round it is unchanged.
+- **The pink is still densest on the outermost arm.** `knots.fadeR` 12 -> 10 thinned the outermost clusters a little,
+  but at full frame the outer arm on the left (y 400 to 860), along the top and at the upper right still carries the
+  frame's thickest pink; the inner arms and the oval carry less, apart from the oval's two end complexes. The goal's
+  pink thins outward. This reader does not find the inversion mended.
+- **NGC 4414's inner third is a whirlpool of thin regular grooves.** In the central pair sheet the dust round the
+  nucleus runs in many thin parallel spiral strokes out to about a third of the crop, where the photograph's is a
+  broken, branching network with white clumps up to the bulge. The lead's "one natural flocculent disc" holds for the
+  full frame at a glance, not at the central 45 %.
+- **NGC 4414's light is S109's kind again: a fine even grain with soft banks**, the blue-white outer third grainy and
+  as bright as the middle, the rim ragged, the disc running off the frame's right edge (about x 1000 to 1024, y 430 to
+  820). The photograph's bright inner disc fades into a darker outer zone.
+- **Left as before, and named by the lead as not acted on**: the Milky Way's rim nearly a closed ring (the outermost
+  arm at almost constant radius from about (180, 420) down the left and along the bottom to about (650, 860)), its
+  lanes grey-olive rather than brown, and the bright white-blue grain along its edge-on lane (with a few warm points
+  at the left tip). The two edge-on frames read as at 3cb5f63.

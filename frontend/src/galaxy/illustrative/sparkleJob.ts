@@ -6,7 +6,7 @@
 import { toScene } from "../positions";
 import { armMapFor, armsSkeleton, barOf, shapeOf } from "./arms";
 import { skeletonOn, skeletonParamsOf } from "./armsSkeleton";
-import { buildSparkle, hashString } from "./armsSparkle";
+import { buildSparkle, hashString, tabulated } from "./armsSparkle";
 import { ILL_MAP, type IllFrame, type IllParams } from "./feature";
 import { grainDensity, ridgeAt } from "./skeleton";
 
@@ -33,6 +33,15 @@ export function sparkleShape(params: IllParams) {
     bunchBright: params.sparklebunchbright ?? 0,
     // S107 (MW2): the places drawn through the density's envelope (armsSparkle.ts envelopePlace).
     direct: (params.sparkledirect ?? 0) >= 0.5,
+    // S110 (A1): the gathered grain's gaps (armsSparkle.ts SparkleShape.gap).
+    gap: params.sparklegap ?? 0,
+    gapSoft: params.sparklegapsoft ?? 0.06,
+    // S110 (A2): the level off a table (the cost fixed), and the field stars (armsSparkle.ts SparkleShape).
+    table: params.sparkletable ?? 0,
+    field: params.sparklefield ?? 0,
+    fieldScale: params.sparklefieldscale ?? 4,
+    fieldEdge: params.sparklefieldedge ?? 16,
+    fieldDim: params.sparklefielddim ?? 0.3,
   };
 }
 
@@ -46,6 +55,8 @@ export interface SparklePoints {
   radius: Float32Array;
   /** S109 (A2, arms.sparklebarcream): each point's share of the bar's cream (absent: none). */
   cream?: Float32Array;
+  /** S110 (A2): how many points at the end are field stars (always on the fine sprite); absent none. */
+  field?: number;
 }
 
 /**
@@ -62,7 +73,12 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   const grainFade = params.skelgrainfade ?? 1.5;
   if (!built || shape.count <= 0) return null;
   const plane = lanes ? { data: lanes, width: ILL_MAP.width, height: ILL_MAP.height, rHi: built.grid.rHi } : null;
-  const ridgeLevel = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+  const ridgeExact = skeleton ? (r: number, phi: number) => grainDensity(ridgeAt(skeleton, r, phi), tail, grainFade) : null;
+  // S110 (A2, the cost): with the table on, the ridge read off it here - for the places and for the bar's cream alike
+  // (each a read per point before) - and buildSparkle given the cheap read (its own table then not built).
+  const tableOn = (shape.table ?? 0) > 0;
+  const ridgeLevel = ridgeExact && tableOn ? tabulated(ridgeExact, Math.min(shape.rMax, built.grid.rHi)) : ridgeExact;
+  if (ridgeExact && tableOn) shape.table = 0;
   // S109 (sparklebar): on the skeleton, a grain over the drawn bar too (its ellipse's profile, the bar light's own).
   const onBar = ridgeLevel ? barGrain(params, frame) : null;
   const levelOf = ridgeLevel && onBar ? (r: number, phi: number) => Math.max(ridgeLevel(r, phi), onBar(r, phi)) : ridgeLevel;
@@ -70,6 +86,7 @@ export function sparklePoints(params: IllParams, frame: IllFrame | null, templat
   const s = buildSparkle(built.map, built.grid, shape, (SPARKLE_SEED ^ hashString(template ?? "galaxy") ^ (frame?.header.illReroll ?? 0)) >>> 0, built.raw, plane, levelOf);
   if (s.radius.length === 0) return null;
   const out: SparklePoints = { positions: toScene(s.radius, s.azimuth, s.height), weight: s.weight, radius: s.radius };
+  if (s.field) out.field = s.field;
   // S109 (A2): the bar's grain cream - a point's share is how far the bar's density outweighs the arms' there.
   const creamShare = Math.min(1, Math.max(0, params.sparklebarcream ?? 0));
   if (onBar && ridgeLevel && creamShare > 0) {

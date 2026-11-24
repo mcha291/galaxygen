@@ -20,7 +20,7 @@ import {
 } from "three";
 
 import type { IllLayerProps } from "./feature";
-import { FLOOR_BLUE, HALO_BLUE, buildSkyStars, skyTint, sphereCount } from "./sky";
+import { FLOOR_BLUE, HALO_BLUE, buildSkyStars, grazePair, skyTint, sphereCount } from "./sky";
 
 /** The frame side the sizes are given at, px. */
 const SIZE_AT = 1024;
@@ -97,19 +97,34 @@ const HALO_VERTEX = /* glsl */ `
     gl_Position = projectionMatrix * viewMatrix * vec4(vSkyR.x, 0.0, vSkyR.y, 1.0);
   }
 `;
+// S110 (B2): the halo takes the grazing handover (index.ts illGraze, the registry's illGrazeAt: from, to radians off
+// the disc's axis): its light times the weight of the sight line to the fragment's point in the disc's plane, so seen
+// edge-on the face-on haze is gone with the veils it sits under and draws no band to the frame's corners. Exactly the
+// S109 light while the weight is 1 (every stand from face-on to base.grazeFrom).
 const HALO_FRAGMENT = /* glsl */ `
   uniform vec3 skyHalo;
   uniform float skyHaloRadius;
+  uniform vec2 skyGrazeAt;
   varying vec2 vSkyR;
+  float skyGrazeOf(vec3 d) {
+    float c = clamp(abs(d.y) / max(length(d), 1e-20), 0.0, 1.0);
+    float a = acos(c);
+    if (skyGrazeAt.y <= 0.0 || a <= skyGrazeAt.x) return 1.0;
+    if (skyGrazeAt.y <= skyGrazeAt.x) return 0.0;
+    return 1.0 - smoothstep(skyGrazeAt.x, skyGrazeAt.y, a);
+  }
   void main() {
     float q = dot(vSkyR, vSkyR) / (skyHaloRadius * skyHaloRadius);
-    gl_FragColor = vec4(skyHalo * exp(-0.5 * q), 1.0);
+    vec3 c = skyHalo * exp(-0.5 * q);
+    float g = skyGrazeOf(vec3(vSkyR.x, 0.0, vSkyR.y) - cameraPosition);
+    if (g < 1.0) c *= g;
+    gl_FragColor = vec4(c, 1.0);
   }
 `;
 
 const additive = { transparent: true, blending: AdditiveBlending, depthTest: false, depthWrite: false } as const;
 
-export default function SkyLayer({ params }: IllLayerProps) {
+export default function SkyLayer({ params, runtime }: IllLayerProps) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const size = useThree((s) => s.size);
   const gl = useThree((s) => s.gl);
@@ -169,7 +184,7 @@ export default function SkyLayer({ params }: IllLayerProps) {
     const object = new Mesh(
       new PlaneGeometry(2, 2),
       new ShaderMaterial({
-        uniforms: { skyHalo: { value: new Vector3() }, skyHaloRadius: { value: 16 }, skyHaloExtent: { value: 16 * HALO_REACH } },
+        uniforms: { skyHalo: { value: new Vector3() }, skyHaloRadius: { value: 16 }, skyHaloExtent: { value: 16 * HALO_REACH }, skyGrazeAt: { value: new Vector2() } },
         vertexShader: HALO_VERTEX,
         fragmentShader: HALO_FRAGMENT,
         side: DoubleSide,
@@ -216,6 +231,8 @@ export default function SkyLayer({ params }: IllLayerProps) {
     (hu.skyHalo.value as Vector3).set(haloColour[0] * h, haloColour[1] * h, haloColour[2] * h);
     hu.skyHaloRadius.value = r;
     hu.skyHaloExtent.value = r * HALO_REACH;
+    const [gFrom, gTo] = grazePair(runtime?.uniforms?.illGrazeAt?.value);
+    (hu.skyGrazeAt.value as Vector2).set(gFrom, gTo);
   });
 
   return (
