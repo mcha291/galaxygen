@@ -288,7 +288,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "lumpWhite", label: "lump white", min: 0, max: 1.5, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 1.5 }, about: "How far a lump's light goes from the disc's own colour to white (blue-white outward, with the star clouds' blue). (S110) Colour for appearance." },
   { key: "lumpFrom", label: "lumps from", min: 0, max: 10, step: 0.1, unit: "kpc", default: 1.5, perTemplate: { ngc_4414: 1.5 }, about: "The lumps come in over this radius, kpc (from half of it). (S110) Illustrative." },
   { key: "lumpTo", label: "lumps full to", min: 0.5, max: 25, step: 0.1, unit: "kpc", default: 6, perTemplate: { ngc_4414: 6 }, about: "The lumps are at their brightest out to this radius, kpc, and fall to the outer share by 1.8 of it. (S110) Illustrative." },
-  { key: "lumpRim", label: "outer lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "The lumps' brightness in the outer disc as a share of the ring's. (S110) Illustrative." },
+  { key: "lumpRim", label: "outer lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.3 }, about: "The lumps' brightness in the outer disc as a share of the ring's. (S110) Illustrative." },
   { key: "lumpGrain", label: "grain in the lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "How far the light's fine grain is taken out of the lumps (1 none inside them: smooth lumps); 0 the grain as drawn. (S110) Illustrative." },
   // S110 (B2): the disc's hue - red taken off the disc's light outside the nucleus, so a salmon-orange reads yellow-tan.
   { key: "tanHue", label: "disc yellow", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.1 }, about: "The share of red taken off the disc's light (green given half of it, blue a tenth), from the yellow's radius outward: a salmon disc toward a yellow-tan; 0 none. (S110) Colour for appearance." },
@@ -302,6 +302,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "sparkFrom", label: "sparks from", min: 0.2, max: 20, step: 0.1, unit: "kpc", default: 5, perTemplate: { ngc_4414: 5 }, about: "The outer zone the most of the sparks lie in starts here, kpc. (S110) Illustrative." },
   { key: "sparkTo", label: "sparks to", min: 1, max: 25, step: 0.1, unit: "kpc", default: 12, perTemplate: { ngc_4414: 12 }, about: "The sparks' outer zone ends here, kpc. (S110) Illustrative." },
   { key: "sparkInner", label: "inner sparks", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { ngc_4414: 0.15 }, about: "The share of the sparks inside the outer zone (cream-white there). (S110) Illustrative." },
+  { key: "sparkCap", label: "spark brightness cap", min: 0, max: 5000, step: 0.1, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "The brightest a spark may be (its largest channel in the frame's linear light, before the bloom): bright sparks stay sharp points, not the bloom's soft discs; 0 none. (S110) Illustrative." },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
@@ -944,8 +945,7 @@ export const floc: IllFeature = {
         float from = smoothstep(0.5 * illFlocScB.y, max(illFlocScB.y, 0.01), rp.x);
         // The grain gathers into the complexes, and is gone inside the field's start (a smooth inner disc).
         sc.y *= from;
-        float g = (1.0 - smoothstep(0.0, 0.3, map.x)) * from * mix(1.0, band.z, illFlocScB.z);
-        float t = clamp(illFlocScB.x * (illFlocFall.x > 0.0 ? illFlocFallT(rp.x) : 0.0), 0.0, 1.0);
+        float g = (1.0 - smoothstep(0.0, 0.3, map.x)) * from * mix(1.0, band.z, illFlocScB.z);        float t = clamp(illFlocScB.x * (illFlocFall.x > 0.0 ? illFlocFallT(rp.x) : 0.0), 0.0, 1.0);
         // A heap's light broken into the grain's own puffs (illFlocScC.x of it): a heap is a cluster of bright grains
         // and knots, not a smooth glow, at every range.
         float tex = 1.0;
@@ -991,10 +991,9 @@ export const floc: IllFeature = {
       // S110 (B2): the lumps - brightest in their ring, the outer share beyond, white inside and blue-white outward
       // (with the star clouds' blue and the fall-off's progress).
       if (lump > 0.0) {
-        float rw = smoothstep(0.5 * illFlocLumpC.x, max(illFlocLumpC.x, 0.01), rp.x) * mix(1.0, illFlocLumpC.z, smoothstep(illFlocLumpC.y, 1.8 * illFlocLumpC.y, rp.x));
-        float t = clamp(illFlocScB.x * (illFlocFall.x > 0.0 ? illFlocFallT(rp.x) : 0.0), 0.0, 1.0);
+        float rw = smoothstep(0.5 * illFlocLumpC.x, max(illFlocLumpC.x, 0.01), rp.x) * mix(1.0, illFlocLumpC.z, smoothstep(illFlocLumpC.y, 1.8 * illFlocLumpC.y, rp.x));        float t = clamp(illFlocScB.x * (illFlocFall.x > 0.0 ? illFlocFallT(rp.x) : 0.0), 0.0, 1.0);
         // The tints take the disc's tan (red over green about 1.15, blue 0.88) to a neutral white at a lift near 1.5.
-        vec3 tint = mix(vec3(1.0), mix(vec3(0.8, 1.0, 1.28), vec3(0.66, 0.95, 1.6), t), illFlocLumpB.w);
+        vec3 tint = mix(vec3(1.0), mix(vec3(0.8, 1.0, 1.28), vec3(0.76, 0.98, 1.36), t), illFlocLumpB.w);
         veil *= vec3(1.0) + illFlocLumpA.x * rw * lump * tint;
       }
       // S106 (C3): the outer disc's light toward a blue-white, the inner left cream.
