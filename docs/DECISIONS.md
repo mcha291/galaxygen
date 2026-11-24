@@ -19782,7 +19782,7 @@ frames of this close, the merged head's capture: `docs/pictures/s109/milky_way-i
 `docs/pictures/s109/ngc_4414-illustrative-edge.png` (sha256
 5696371c0340cfa80a0fbb13aefb5e580225da2aa64802fbbd9a6fa75939c399).
 
-### D281. S110, BUILD_VIII rows 127 to 129: the two tuned frames nearer their goals by S109's method - the Milky Way a glowing lavender disc with its arms as continuous bands of fine stipple, faint field stars over the disc, a compact cream bar, faint broken lanes and pink clusters along them; NGC 4414's light in soft lumps in place of the glitter, a compact white nucleus, a blue-white outer zone over a haze, a browner broken dust network; NGC 4414 edge-on mended (it tapers to its tips again); by the tool NGC 4414 is further than S109 on five rows while the eye reads it nearer; the lead's picks from variant sheets; the physical look byte for byte; no model byte moved; eight more rulings taken on the lead's recommendation (2026-11-24)
+### D281. S110, BUILD_VIII rows 127 to 129: the two tuned frames nearer their goals by S109's method - the Milky Way a glowing lavender disc with its arms as continuous bands of fine stipple, faint field stars over the disc, a compact bar, faint broken lanes and pink clusters along them; NGC 4414 a tan inner disc and a compact white nucleus inside a blue-white outer zone over a haze, a browner broken dust network, its light grain again with soft cloud banks (the lumps built and almost withdrawn after the second reader found the close-up a loss); NGC 4414 edge-on mended (it tapers to its tips again); by the tool NGC 4414 nearer on its colours and further on the colour step, A2 and the bright points; the lead's picks from variant sheets; the physical look byte for byte; no model byte moved; ten more rulings taken on the lead's recommendation (2026-11-24)
 
 **Why a session.** S109 closed with both tuned full frames their goal's kind of picture at a glance and neither yet
 its goal at a second look, with two lists of how (D280, `BUILD_VIII.md` section 6). S110 worked on those lists and
@@ -19792,15 +19792,19 @@ variant sheets. Cut from `main` e8db9b0 (S109's close; tag `s109` the merge 51ea
 Fable lead and six Opus agents: builders A and A2 on the Milky Way, B and B2 on NGC 4414, the independent reviewer and
 the documents' writer. No Fable builder. Before its own work the session finished S109's close (its review: no
 blocker, 39 of 39 physical frames byte-identical, one low finding mended; merged, tagged and pushed; D280). The GitHub
-full suite on S109's head, run 45330621176, was dispatched at 05:03Z on 2026-11-24: dispatched, the lead adds the
-result. No full suite here (D246).
+full suite on S109's head (run 45330621176, dispatched 05:03Z on 2026-11-24) was read during S110: **green**, 1860
+passed, 35 skipped, 10 xfailed, 9539 s (2 h 39 min). The suite for S110's head is dispatched at the close. No full
+suite here (D246).
 
 **How it was run.** Two passes, each with two builders at once on disjoint files, each builder about an hour. The first
 pass's defect lists were written from the full frames and found composition and tone; the second pass's were written
 from the central 45 % of the first pass's merged head and found texture. After each hand-back the lead captured labelled
 variant sheets on the lane's head itself, each variant beside the goal at 600 px, read the tool's numbers before setting
-a value, and picked: the Milky Way in five rounds (10 + 9 + 4 + 5 variants in the first pass, one sheet of eight in the
-second), NGC 4414 in five (9 + 5, then 8 + 4 + 4). No judged pass was sent back.
+a value, and picked. Then the documents' writer, reading the merged head's frames as a second reader, found what the
+lead had passed (below), and the lead picked once more on each template. Rounds of sheets in all: the Milky Way six
+(10 + 9 + 4 + 5 variants for the tone and winding, one of eight for the lanes, one of six for the bar and the pink);
+NGC 4414 six (9 + 5 for the dust; 8 + 4 + 4 for the lumps and the outer colour; one of eight close-ups). No judged pass
+was sent back.
 
 **What was built** (`BUILD_VIII.md` section 2; all under `frontend/src/galaxy/illustrative/` and its template values,
 but the three shared files named in item 1).
@@ -19818,8 +19822,8 @@ but the three shared files named in item 1).
    (`sky.halo` 0.012 face-on) was dropped in this pass. **The zones and the dust** (578d96f, 2ad4ae6): `floc.warmYellow`
    (the inner warmth's hue; 0 is S106's cream-orange exactly); defaults cool 1, coolRadius 4.5, cloudBlue 1.5,
    cloudWarmR 4, warmYellow 1, warmRadius 4, fall 2.0, arcClear 0.2, inkTint 1, inkBrown 1.2, `grade.gain` 0.15,
-   `edge.grazeRadius` 9.5, `edge.grazeWidth` 4. Tried and dropped, said plainly: lumps (`puffs`, less fine grain) drew a
-   regular cobblestone tiling; a tighter core glow (`glowLift` moved nothing: the breadth was elsewhere); more bright
+   `edge.grazeRadius` 9.5, `edge.grazeWidth` 4. Tried and dropped, said plainly: lumps (`puffs`, less fine grain) drew
+   a regular cobblestone tiling; a tighter core glow (`glowLift` moved nothing: the breadth was elsewhere); more bright
    points (`cloudCap` gave soft blue blobs; the count fell 20 -> 13). **What the lead saw:** the full frame gained its
    outer blue-white zone and a denser, browner dust network; on the central 45 % the inner dust lay in regular
    concentric grooves (a whirlpool) on a salmon disc, not plainly a gain at that range. **The lead's pick** (two rounds,
@@ -19853,20 +19857,29 @@ but the three shared files named in item 1).
    `sky.test.ts`). `SkyLayer.tsx` was not named in the brief; the halo is drawn there, and the lead accepts it. **Not
    mended:** the straight seam at the top of the close-up (x about 552, a second step at 584): with `scAmt` 0 it goes,
    so the star-cloud field (`illFlocSc`) draws it; `scCrisp` 0 and `scSpots` 0 leave it; a fade at the edge radius did
-   not move it; the builder's unproven guess is the march's thin-screen crossing at grazing rays (`FieldVolume`, outside
-   the lane). Bright points not gained: 13 -> 5 by the tool (the grain's bright peaks went with the grain). **What the
-   lead saw of the hand-back:** the lumps read as flat, hard-edged, torn-paper flakes drawn out along the spiral,
-   blue-white over the whole outer third, the full frame LESS like the photograph than the merged head ("camouflage");
-   not accepted at those values, and the builder said the same plainly. **The lead's pick** (three rounds, 8 + 4 + 4
-   variants, whole and at the central 45 %; commit 81f38bf): the lumps softer and smaller with some grain kept (`lumps`
-   2.5, `lumpSoft` 0.2, `lumpSize` 160, `lumpCover` 0.5, `lumpRim` 0, `lumpWhite` 1.2, `litGrain` 0.7); the outer zone
-   less blue (`cloudBlue` 1.0, `cool` 0.6); `sky.halo` 0.008. At those the central 45 % shows soft cream-white lumps
-   between the brown filaments in place of the glitter, and the full frame is one coherent flocculent disc. On the
-   picked variant (photograph / first-pass merged head / pick): inner colour 0.508 / 0.607 / 0.515; outer +0.234 /
-   +0.217 / +0.024 (now too blue: the lumps' outward tint and the hue's red cut, not the halo - halo 0.006 did not move
-   it; left); arm over inter-arm 2.72 / 2.00 / 2.10; dark fraction 0.157 / 0.227 / 0.281; slope -2.09 / -2.02 / -1.75
-   (softer: the lumps took fine structure); bright points in the disc 97 / 13 / 13; the close-up's mean encoded
-   luminance 79.4 (the first pass 78.7, S109 79.0).
+   not move it; the builder's unproven guess is the march's thin-screen crossing at grazing rays (`FieldVolume`,
+   outside the lane). Bright points not gained: 13 -> 5 by the tool (the grain's bright peaks went with the grain).
+   **What the lead saw of the hand-back:** the lumps read as flat, hard-edged, torn-paper flakes drawn out along the
+   spiral, blue-white over the whole outer third, the full frame LESS like the photograph than the merged head
+   ("camouflage"); not accepted at those values, and the builder said the same plainly. **The lead's pick** (three
+   rounds, 8 + 4 + 4 variants, whole and at the central 45 %; commit 81f38bf): the lumps softer and smaller with some
+   grain kept (`lumps` 2.5, `lumpSoft` 0.2, `lumpSize` 160, `lumpCover` 0.5, `lumpRim` 0, `lumpWhite` 1.2, `litGrain`
+   0.7); the outer zone less blue (`cloudBlue` 1.0, `cool` 0.6); `sky.halo` 0.008. On the picked variant the outer
+   colour fell to +0.024 (the photograph's +0.234), the dark fraction rose to 0.281 and the slope softened to -1.75.
+   **The second reader's finding and the last pick** (commit bd44779). The documents' writer, reading the merged head
+   3cb5f63 as a second reader, found NGC 4414's close-up a LOSS against S109's: thin dark lines joined into polygons
+   (a crackle like crazed glaze) over the middle, and the lumps as flat grey flakes. The lead had checked the close
+   stand by the central 45 % of the full frame and by the close-up's mean luminance (79.4 against S109's 79.0), never by
+   the close-up itself beside S109's. Put beside S109's at full size, it agreed: S109's is a warm grainy star field;
+   3cb5f63's showed the dust mesh as crazed glaze (since the first pass's denser mesh: `meshGaps` 0.35 -> 0.2, the ink
+   darker) and the lumps as flakes. Rule 41's "a gain at both ranges" had been broken at the close stand. The lead's
+   pick (one sheet of eight close-ups beside S109's, sheet nv6, variant c7): the mesh half as deep (`floc.meshDepth`
+   2.8 -> 1.4), the lumps kept only as soft banks with the grain back (`lumps` 2.5 -> 1.0, `lumpSoft` 0.2 -> 0.3,
+   `litGrain` 0.7 -> 1.3), the hue's red cut halved (`tanHue` 0.1 -> 0.05). Restoring S109's mesh gaps instead
+   (variants c1, c2) also removed the crackle but kept the flakes at `lumps` 2.5. At c7 the close-up reads as S109's
+   grain again, with the blue outer zone and soft cloud banks; the full frame loses its dabs. **So the lumps are in the
+   code but almost withdrawn at the defaults: NGC 4414's light is grain again with soft banks, and the photograph's
+   cauliflower cloud is NOT achieved.** The close-up's mean encoded luminance 82.3 (S109 79.0).
 2. **Row 128, the Milky Way** (builders A and A2; the lead's picks).
    **First pass (branch `s110-mw`, head 59d4d23).** The arm grain GATHERED: `SparkleShape.gap` / `gapSoft`
    (`armsSparkle.ts`) cut the grain's density to zero with a soft step where the bunching noise is below `gap` (clumps
@@ -19892,117 +19905,126 @@ but the three shared files named in item 1).
    pass's picks alone. Built: `arms.sparkletable` (the ridge density read from a 256 x 1024 polar table,
    `armsSparkle.ts` `tabulated`; the bar's cream reads the same table in `sparkleJob.ts`); a faint FIELD-STAR tier
    over the whole disc (`arms.sparklefield` 40000, `sparklefieldscale` 4 kpc, `sparklefieldedge` 16 kpc,
-   `sparklefielddim` 0.3; `armsSparkle.ts` `fieldStars`, its own stream drawn after the arm points, which are unchanged,
-   tested); `knots.edgefade` (the regions' light and veil fade with `illGraze`, `knotsLayer.ts` uniform `knGraze`,
-   bit-exact at `illGraze` >= 1); `lanes.spurDepth` (a spur's lane as a share of an arm's depth; 0 on the Milky Way, so
-   the lane that crossed the gap is gone); `sparkleTiers` finds its threshold by quickselect (tested equal to the sort);
-   a new test file `sparkleS110.test.ts`. Defaults moved (milky_way): arms sparkle 120000 -> 400000 (then the lead's
-   250000), sparklegain 250000 -> 40000 (then 64000), clump 0.2, sparklegap 0.3, sparklebunchsize 1200, sparkleblue 0.1,
-   sparklelav 1, sparklefall 1.6, sparkleedge 13.5, sparklebar 0.4, barcore 2, barcoresize 0.2; knots inner 0.2, across
-   0.15, bunch 6, gap 0.15, gain 160, veil 1, magenta -0.3, coreGain 0.6, fadeR 12, total 2000 (the control's top);
-   lanes barCurl 0, barDepth 0.3, mottle 0.5, clump 0.2, gaps 0.1, followGas 0, strands 1, spread 150. **What the lead
-   saw** (the central 45 % is where this pass shows): no more beads - the arms continuous bands of fine stipple, uneven,
-   whiter; a faint sparse star grain over the whole disc and the bar; the bar grainy, the swirl glyph and the ruled line
-   gone; a thin lane along every arm, none crossing a gap; the pink in clusters on the lanes, the largest at the oval's
-   two ends; edge-on no pink confetti on the midplane; three rerolls (the builder's) spirals, no rings. But the lanes
-   read as dark wire drawn the length of every arm, which made the full frame look like a diagram. **The lead's pick**
-   (one sheet of eight variants, whole and at 0.45; commit 1e9e17d): lanes depth 0.8, gaps 0.4, ink 0.4 (faint and
-   broken); the grain at 250000 points and gain 64000, which draws the same stipple on the sheet as 400000 at 40000 and
-   costs the worker about half (the builder's offer, captured by the lead). **The cost** (the builder's stall probe,
-   the first-pass merged head against its head at 400000 points): the sparkle job 354-444 ms -> 738-871 ms; the arms map
-   585-710 -> 596-652 ms; the longest frame gap 17-33 -> 33-67 ms; ONE main-thread long task of 56 ms on one pitch move
-   (none before); "main-thread named builds: {}" on every line. The table and the cream fix took back about a third of
-   the increase. At the lead's 250000 points, measured at the close: (the lead adds the figure).
+   `sparklefielddim` 0.3; `armsSparkle.ts` `fieldStars`, its own stream drawn after the arm points, which are
+   unchanged, tested); `knots.edgefade` (the regions' light and veil fade with `illGraze`, `knotsLayer.ts` uniform
+   `knGraze`, bit-exact at `illGraze` >= 1); `lanes.spurDepth` (a spur's lane as a share of an arm's depth; 0 on the
+   Milky Way, so the lane that crossed the gap is gone); `sparkleTiers` finds its threshold by quickselect (tested
+   equal to the sort); a new test file `sparkleS110.test.ts`. Defaults moved (milky_way): arms sparkle 120000 -> 400000
+   (then the lead's 250000), sparklegain 250000 -> 40000 (then 64000), clump 0.2, sparklegap 0.3, sparklebunchsize
+   1200, sparkleblue 0.1, sparklelav 1, sparklefall 1.6, sparkleedge 13.5, sparklebar 0.4, barcore 2, barcoresize 0.2;
+   knots inner 0.2, across 0.15, bunch 6, gap 0.15, gain 160, veil 1, magenta -0.3, coreGain 0.6, fadeR 12, total 2000
+   (the control's top); lanes barCurl 0, barDepth 0.3, mottle 0.5, clump 0.2, gaps 0.1, followGas 0, strands 1, spread
+   150. **What the lead saw** (the central 45 % is where this pass shows): no more beads - the arms continuous bands of
+   fine stipple, uneven, whiter; a faint sparse star grain over the whole disc and the bar; the bar grainy, the swirl
+   glyph and the ruled line gone; a thin lane along every arm, none crossing a gap; the pink in clusters on the lanes,
+   the largest at the oval's two ends; edge-on no pink confetti on the midplane; three rerolls (the builder's)
+   spirals, no rings. But the lanes read as dark wire drawn the length of every arm, which made the full frame look
+   like a diagram. **The lead's pick** (one sheet of eight variants, whole and at 0.45; commit 1e9e17d): lanes depth
+   0.8, gaps 0.4, ink 0.4 (faint and broken); the grain at 250000 points and gain 64000, which draws the same stipple on
+   the sheet as 400000 at 40000 and costs the worker about half (the builder's offer, captured by the lead). **The
+   cost** (the builder's stall probe, the first-pass merged head against its head at 400000 points): the sparkle job
+   354-444 ms -> 738-871 ms; the arms map 585-710 -> 596-652 ms; the longest frame gap 17-33 -> 33-67 ms; ONE
+   main-thread long task of 56 ms on one pitch move (none before); "main-thread named builds: {}" on every line. The
+   table and the cream fix took back about a third of the increase. At the lead's 250000 points, measured at the
+   close: (the lead adds the figure).
+   **The second reader's findings and the last pick** (one sheet of six, mv6; commit bd44779): the bar read gold beside
+   the goal's pale cream, yellower than S109's (the lead's "paler" had been against the first pass's egg-yolk) -
+   `arms.barwarm` 1.0 -> 0.7; the pink heaviest on the outermost arm - `knots.fadeR` 12 -> 10; near-black specks in
+   the pink clusters - `knots.veil` 1 -> 0.5. Not acted on, and left in section 6: the rim reading as nearly a closed
+   ring, the lanes grey-olive rather than brown, the bright grain along the edge-on lane.
 3. **Row 129, the gate and the close.** The first pass merged into `session-110`: `s110-ngc` clean (68a6bde);
    `s110-mw` conflicted on one line of `grade.ts` (both lanes set a per-template value on it), resolved by keeping the
    session's side and taking the milky_way values from the lane (30ad476); e49bf2a on top; on it typecheck, vitest 908
-   passed, the build, look 8 passed. The second pass merged clean (f979403, 3cb5f63). **The head these documents
-   describe is 3cb5f63**: typecheck, vitest 916 passed (96 files), the build, look 8 passed; the two physical frames
-   unchanged (milky_way-physical 9de9b23b095c7916..., ngc_4414-physical bca52b22f5b4d510...); an independent review
-   against `main`'s own build (below).
+   passed, the build, look 8 passed. The second pass merged clean (f979403, 3cb5f63). The close documents merged
+   (cd17002), and the lead's last picks on the second reader's findings went on top (bd44779). **The head these
+   documents describe is bd44779**: typecheck, vitest 916 passed (96 files), the build, look 8 passed; the two physical
+   frames unchanged (milky_way-physical 9de9b23b095c7916..., ngc_4414-physical bca52b22f5b4d510...); an independent
+   review against `main`'s own build (below).
 
-**The rulings taken on recommendation** (`BUILD_VIII.md` section 4, rulings 49 to 56). (49) The Milky Way's tone and
-winding: the lead's first-pass picks (`barwarm` 1.0, `skelpitch` 0.75, `skelouter` 13.5, `edge.radius` 17,
-`grade.gain` -3.1, saturation 1.5, `arms.floor` 0.6, `skelcore` 0.6). (50) The Milky Way's lanes faint and broken (depth
-0.8, gaps 0.4, ink 0.4) and its grain at 250000 points and gain 64000. (51) NGC 4414's dust: the lead's first-pass picks
-(`dustArmBreak` 0.85, `dustArmVary` 0.9, `dustArmWander` 0.5, `dustArmPitch` 26, `laneGaps` 0.47, `meshGaps` 0.27,
-`dustArmLit` 2.0, depth 3.4, redness 1.4, warmth 0.15). (52) NGC 4414's lumps soft and small, the outer zone less blue,
-`sky.halo` 0.008 (the second-pass list above); the lumps are accepted though the tool reads the frame further than
-S109's on five of its eight rows: ruled by the eye on the pair sheets. (53) NGC 4414's core without the broad ball:
-`coreGain` 3, `coreHot` 3 (the bloom was the breadth). (54) `SkyLayer.tsx`, `sky.ts` and `points.ts`, shared files,
-changed by the NGC 4414 lane for the halo's and the star-first points' edge-on handover; the Milky Way's frames byte for
-byte. (55) S110's four frames committed as plain pictures in `docs/pictures/s110/` (the two stands and the two edge-on
-captures; the close-ups not committed); still not pinned. (56) The sparkle job's cost accepted as measured at the close.
+**The rulings taken on recommendation** (`BUILD_VIII.md` section 4, rulings 49 to 58). (49) The Milky Way's tone and
+winding: the lead's first-pass picks (`barwarm` 1.0, since 0.7 by ruling 58; `skelpitch` 0.75, `skelouter` 13.5,
+`edge.radius` 17, `grade.gain` -3.1, saturation 1.5, `arms.floor` 0.6, `skelcore` 0.6). (50) The Milky Way's lanes
+faint and broken (depth 0.8, gaps 0.4, ink 0.4) and its grain at 250000 points and gain 64000. (51) NGC 4414's dust:
+the lead's first-pass picks (`dustArmBreak` 0.85, `dustArmVary` 0.9, `dustArmWander` 0.5, `dustArmPitch` 26,
+`laneGaps` 0.47, `meshGaps` 0.27, `dustArmLit` 2.0, depth 3.4, redness 1.4, warmth 0.15). (52) NGC 4414's lumps: built,
+and drawn only as soft banks (ruling 57's values); the outer zone less blue (`cloudBlue` 1.0, `cool` 0.6), `sky.halo`
+0.008. (53) NGC 4414's core without the broad ball: `coreGain` 3, `coreHot` 3 (the bloom was the breadth). (54)
+`SkyLayer.tsx`, `sky.ts` and `points.ts`, shared files, changed by the NGC 4414 lane for the halo's and the star-first
+points' edge-on handover; the Milky Way's frames byte for byte. (55) S110's four frames committed as plain pictures in
+`docs/pictures/s110/` (the two stands and the two edge-on captures; the close-ups not committed); still not pinned.
+(56) The sparkle job's cost accepted as measured at the close. (57) NGC 4414's close-up mended on the second reader's
+finding: `floc.meshDepth` 1.4, `lumps` 1.0, `lumpSoft` 0.3, `litGrain` 1.3, `tanHue` 0.05 (the close-up beside
+S109's at full size). (58) The Milky Way's bar paler (`arms.barwarm` 0.7), its pink drawn less far out (`knots.fadeR`
+10) and its regions' veil halved (`knots.veil` 0.5), on the second reader's findings.
 
 **The independent review:** (the lead adds this)
 
-**The frames beside the goals** (`READING_PICTURES.md` Part S110). **The Milky Way, full frame: much nearer than S109's
-in substance and tone.** A glowing lavender disc with a smooth edge, three windings and an outer arm, a compact cream
-bar, the arms continuous bands of fine pale stipple with faint thin lanes and pink clusters along them, faint stars
-over the disc. Still unlike the goal, in the lead's list: the goal has four arms with four to five crossings along a
-radius where ours has three windings and wider gaps; the stipple is sky-blue where the goal's is white-turquoise, the
-bands narrower and sharper-edged than the goal's soft ones; the pink pale pastel where the goal's is saturated red with
+**The frames beside the goals** (`READING_PICTURES.md` Part S110, the head bd44779). **The Milky Way, full frame: much
+nearer than S109's in substance and tone.** A glowing lavender disc with a smooth edge, three windings and an outer
+arm, a compact bar, the arms continuous bands of fine pale stipple with faint thin lanes and pink clusters along them,
+faint stars over the disc. Still unlike the goal: the goal has four arms with four to five crossings along a radius
+where ours has three windings and wider gaps; the stipple is sky-blue where the goal's is white-turquoise, the bands
+narrower and sharper-edged than the goal's soft ones; the pink pale pastel where the goal's is saturated red with
 white cores; a violet-blue moat rings the bar where the goal's ground is plain lavender, and the first arm is an oval
-detached from the bar where the goal's arms spring from the bar's two tips with bright complexes; the bar larger,
-flatter and yellower than the goal's cream with its bright axis; the outermost arm's grain and pink on the dark sky at
-the upper right and upper left; the glow outside the disc a little wide. **Central 45 %:** the goal's kind of texture
-now (stipple bands, field stars, pink clusters on thin lanes, a grainy bar); fewer arcs cross the crop, the stipple
-bluer, the lanes rarer, the pink paler, the moat. **Close stand:** the most goal-like of its frames - fine stipple
-arms, salmon clusters on thin lanes, faint field stars on a calm glow; one bar-end complex blooms toward white; the
-glow ends in a soft rim below the lower arm. **Edge-on:** better than S109's: a dark lane through a pale
-disc with a grain, no pink confetti; still hardly a bulge. **NGC 4414, full frame: nearer in zones and colour, not in
-texture.** A tan inner disc, a blue-white outer zone on a faint haze, a compact white nucleus, a brown broken dust
-network. Still unlike the photograph: the light is soft dabs drawn out along the spiral (brush strokes) where the
-photograph's is knotty cauliflower cloud; the outer third too blue and too uniform; the dust weaker than the
-photograph's dense dark-brown network (the lumps washed some of it out); a dark mottled skirt at the lower left; the
-whole a little soft (the fine structure went with the grain). **Central 45 %:** soft cream-white lumps between brown
-filaments and a compact nucleus in place of S109's salmon glitter and broad bloom; still softer, less white and less
-knotty than the photograph, the dust thinner. **Close stand:** not darker (79.4; S109 79.0); a blue outer zone, brown
-lanes, soft lumps; the straight seam at the top (x about 552) still there, since S109. **Edge-on: mended** - it tapers
-to its tips inside the haze as S108's did, lane and light ending together, no band to the corners, the haze back; the
-bulge glow still broad and boxy. A second reader (the documents' writer) read the frames too and adds a polygon
-crackle in NGC 4414's close-up, dark specks in the Milky Way's pink clusters and the pink heaviest on its outermost arm
-(`READING_PICTURES.md` section 48).
+detached from the bar where the goal's arms spring from the bar's two tips with bright complexes; the bar still larger
+and flatter than the goal's, and to this reader still yellower than its pale cream though paler than at 3cb5f63; the
+outermost arm's grain and pink on the dark sky at the upper right and upper left, and (to this reader) still the
+densest pink in the frame; the rim nearly a closed ring. **Central 45 %:** the goal's kind of texture (stipple bands,
+field stars, pink clusters on thin lanes, a grainy bar); fewer arcs cross the crop, the stipple bluer, the lanes
+rarer, the pink paler, the moat; no black specks in the clusters now. **Close stand:** the most goal-like of its
+frames - fine stipple arms, salmon clusters on thin lanes, faint field stars on a calm glow; one bar-end complex blooms
+toward white. **Edge-on:** better than S109's: a dark lane through a pale disc, no pink confetti, a bright grain along
+the lane; still hardly a bulge. **NGC 4414, full frame: nearer in zones and colour; its light grain again.** A tan
+inner disc, a blue-white outer zone on a faint haze, a compact white nucleus, a brown broken dust network winding in,
+soft cloud banks; one coherent flocculent disc with no dabs. Still unlike the photograph: the bright zones are fine
+even grain with soft banks, not knotty cauliflower clouds; the inner third's dust lies in regular thin concentric
+grooves (a whirlpool) where the photograph's is a broken network; the outer third still bluer and more uniform than
+the photograph's and as bright as the middle; 13 bright points against 97; the disc runs off the right edge of the
+frame. **Central 45 %:** warm grain with brown filaments and a compact nucleus in place of S109's salmon glitter and
+broad bloom; no white clumps up to the bulge as the photograph has. **Close stand: S109's warm grain again**, a blue
+outer zone, brown lanes, soft banks; the crackle down to a faint trace like S109's, no flakes; brighter than S109's
+(82.3 against 79.0); the straight seam at the top (x about 552) still there, since S109. **Edge-on: mended** - it
+tapers to its tips inside the haze as S108's did, lane and light ending together, no band to the corners, the haze
+back; the bulge glow still broad and boxy. A second reader read the frames twice (`READING_PICTURES.md` section 48).
 
 The yardstick (`tools/goal_metrics.py`, re-measured by the documents' writer on the two committed full frames; goal /
-S109 / S110; the lead's run agrees to the last digit): the Milky Way (`--axis-ratio 1`) Δ(B−R) −0.354 / −0.268 /
-−0.194 (inner and outer −0.686 / −0.881 at S110: the inner band is far bluer than the goal's −0.459), A₂ 0.194 / 0.110
-/ 0.096, A₃ 0.059 / 0.024 / 0.027, A₄ 0.107 / 0.096 / 0.105 (the tool's dominant m now 4, as no frame before), arm over
-inter-arm 1.83 / 1.84 / 1.84, dark fraction 0.0066 / 0.0192 / 0.0042, slope −1.99 / −1.58 / −2.20; NGC 4414 inner
-colour +0.508 / +0.690 / +0.515, outer +0.234 / +0.376 / +0.024, Δ(B−R) −0.274 / −0.314 / −0.492, A₂ 0.068 / 0.062 /
-0.059, A₃ 0.055 / 0.060 / 0.050, arm over inter-arm 2.72 / 1.96 / 2.10, dark fraction 0.157 / 0.215 / 0.281, slope
-−2.09 / −2.13 / −1.75, bright points inside 97 / 20 / 13. **Said plainly: by the tool NGC 4414 moved FURTHER from the
-photograph on five rows (the outer colour, now too blue; the colour step; the dark fraction; the slope; the bright
-points) and a hair on A₂, nearer on two (the inner colour, now the photograph's; the arm contrast), while the eye reads
-it nearer (zones, dust colour, nucleus, haze).** The lead ruled by the eye on the pair sheets and says so (ruling 52);
-the owner may rule otherwise. The NGC 4414 outline grew again (a 475 -> 512 px, the frame's half-width; q 0.542 ->
-0.485), but measured on S109's ellipse the S110 frame reads the same way (outer +0.043, dark 0.270, slope −1.85), so the
-moves are the picture's, not the ellipse's. The Milky Way nearer on A₃, the dark fraction (now under the goal's) and the
-slope's size (now past it), the arm contrast held at the goal's; further on the colour step (the lead's paler bar and
-the violet ground round it) and A₂.
+S109 / S110; the lead's run agrees): the Milky Way (`--axis-ratio 1`) Δ(B−R) −0.354 / −0.268 / −0.130 (inner and outer
+−0.730 / −0.860 at S110: the inner band far bluer than the goal's −0.459), A₂ 0.194 / 0.110 / 0.098, A₃ 0.059 / 0.024 /
+0.029, A₄ 0.107 / 0.096 / 0.106 (the tool's dominant m now 4, as on no frame before), arm over inter-arm 1.83 / 1.84 /
+1.86, dark fraction 0.0066 / 0.0192 / 0.0035, slope −1.99 / −1.58 / −2.35; NGC 4414 inner colour +0.508 / +0.690 /
++0.564, outer +0.234 / +0.376 / +0.115, Δ(B−R) −0.274 / −0.314 / −0.449, A₂ 0.068 / 0.062 / 0.054, A₃ 0.055 / 0.060 /
+0.041, arm over inter-arm 2.72 / 1.96 / 1.96, dark fraction 0.157 / 0.215 / 0.215, slope −2.09 / −2.13 / −2.02, bright
+points inside 97 / 20 / 13. **Said plainly: by the tool NGC 4414 is nearer than S109 on the inner and outer colours,
+the same on the arm contrast and the dark fraction, a little off on the slope, and further on the colour step, A₂, A₃
+and the bright points; the eye reads it nearer (zones, nucleus, haze, the dust's colour).** Measured on S109's ellipse
+(the outline grew from a = 475 to 514 px), the S110 frame reads the same way, so the moves are the picture's. The Milky
+Way nearer on the dark fraction (now under the goal's) and A₃; the arm contrast at the goal's; further on the colour
+step (the paler bar and the blue inner band), A₂, and the slope (now past the goal's to the smooth side, about as far
+off as S109's on the other).
 
 **Not mended, carried in `BRIEF.md` and `BUILD_VIII.md` section 6.** (a) The owner's own tuning pass and rulings
-(#238's physical fix with its re-capture, #239). (b) NGC 4414: the light as knotty cauliflower cloud (a texture inside
-the lumps, bumpier edges, less drawn out along the spiral); the outer third less blue and less uniform (the hue's red
-cut reaches the outer zone: give `tanHue` an outer bound); a denser, darker dust network under the lumps; about a
-hundred sharp bright points (the sparks are built and off: drawn after the bloom, or a sprite the bloom does not
-spread); the fine structure back; the lower-left skirt. (c) The Milky Way: four arms (a fourth winding without the
-rings); the arms springing from the bar's tips with bright complexes there, and no violet moat; the stipple
-white-turquoise and the bands softer; the pink saturated red and more of it, on the inner arms as well as the outer;
+(#238's physical fix with its re-capture, #239). (b) NGC 4414: the light as knotty cauliflower cloud - NOT achieved
+(the lumps are built and drawn only as soft banks: a lump that reads as cloud needs a texture inside, bumpier edges,
+less drawing-out along the spiral, and must keep the close-up's grain); the outer third less blue and less uniform; a
+denser, darker dust network, and the inner whirlpool grooves broken up; about a hundred sharp bright points (the
+sparks are built and off: drawn after the bloom, or a sprite the bloom does not spread); the disc's run off the frame's
+right edge and its brightness to the rim. (c) The Milky Way: four arms (a fourth winding without the rings) and the rim
+no longer a closed ring; the arms springing from the bar's tips with bright complexes there, and no violet moat; the
+stipple white-turquoise and the bands softer; the pink saturated red and more of it on the inner arms; the lanes brown;
 a smaller, cream, bright-axis bar; a dim glow under the outermost arm. (d) Away from the tuned stands: NGC 4414's
 close-up seam (drawn by the star-cloud field at a straight screen line; the march's thin-screen crossing suspected,
-unproven) and the polygon crackle there; both edge-on bulges; exposure +3; one bar-end complex blooming white at the
-Milky Way's close stand. (e) Cost: the sparkle job and the arms map in the worker (the close's figures); NGC 4414's
-march with the lumps drawn per ray (the reviewer's measure).
+unproven); both edge-on bulges and the Milky Way's bright grain along its edge-on lane; exposure +3; one bar-end complex
+blooming white at the Milky Way's close stand. (e) Cost: the sparkle job and the arms map in the worker (the close's
+figures); NGC 4414's march with the lumps drawn per ray (the reviewer's measure).
 
-**What did not move.** No byte under `model/galaxy` (`git diff e8db9b0..3cb5f63 -- model` is empty; the hash
+**What did not move.** No byte under `model/galaxy` (`git diff e8db9b0..bd44779 -- model` is empty; the hash
 5a862a70d3760c426ca51c2cffa2b0c2); the pinned fragment unchanged; no committed frame, `frames.json` or thumbnail; the
 two physical frames byte for byte at every merge; the register (117 open = 50 + 67, 104 discharged;
 `tests/test_audit.py` untouched); `batch-r`, `batch-q-lanes`, `q-231` untouched and unmerged. Next: #240, D282. The
-four frames of this close, the merged head's capture: `docs/pictures/s110/milky_way-illustrative.png` (sha256
-0028364eb7079d7e4f458941deff542d167d6235a0250b38b86003a6b8ae957d), `docs/pictures/s110/ngc_4414-illustrative.png`
-(sha256 e761da10ac64c8cce6c066975a79f724bb6fcb90180cb7a98203b27d47ae2984),
+four frames of this close, the head bd44779's capture: `docs/pictures/s110/milky_way-illustrative.png` (sha256
+c640307571dca4e34ebeb0e0b6a8c177210636de8bf5c24c7c1320eb18a8745b), `docs/pictures/s110/ngc_4414-illustrative.png`
+(sha256 86ace8f2647a26402c71700f8fb19d44bd28d8c410230a716f60e44520937aab),
 `docs/pictures/s110/milky_way-illustrative-edge.png` (sha256
-4c0529d2ba743d318d5adfdd6b6e6cc9fd73b6f99b5db261ec2b69cc8d07cd7d) and
+6541a144686fee55d84c8ad1e5d4688589d1c031fbf3f1e05d21bd23373434f4) and
 `docs/pictures/s110/ngc_4414-illustrative-edge.png` (sha256
-1773322e89819bf8f4d45389a6f8e4ece00b05b73a8db5548dbe361e81c34daa).
+ed9ec2509911365e63fcbc241ed9e7cfbbeb1e8bd593c6266cb4e59086ca602e).
