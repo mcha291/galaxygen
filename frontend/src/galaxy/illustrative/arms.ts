@@ -23,7 +23,7 @@
 import { createElement, lazy, Suspense } from "react";
 import { FLAG_RINGS, YOUNG_CAP, barFade, armContrast, armMap, armPlanes, armShare, gridOf, ringNormalise, type ArmGrid, type ArmShape } from "./armsField";
 import type { IllContext, IllFeature, IllFrame, IllLayerProps, IllParams } from "./feature";
-import { ILL_MAP, ILL_MAP_CHANNELS, memoOn } from "./feature";
+import { ILL_MAP, ILL_MAP_CHANNELS, memoHeld, memoOn, wouldBuild } from "./feature";
 import { barAngle } from "./lanesMap";
 import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, contrastPlane, meanSamples, skeletonMemo, skeletonOn, skeletonPlanes } from "./armsSkeleton";
 import type { Skeleton } from "./skeleton";
@@ -168,6 +168,20 @@ const planesFor = (p: IllParams, frame: IllFrame | null) =>
     : flatOn(p)
       ? flatPlanesOf(frame, shareKey(shapeOf(p, frame)))
       : planesOf(frame, shareKey(shapeOf(p, frame)));
+
+/**
+ * S109 (A3): the planes the uniforms read (the ring means, meanMax). On the skeleton, while the map worker has not yet
+ * answered for the live values (a slider dragged), the last planes held - a drag of a skeleton slider otherwise built the
+ * whole band on the main thread inside the uniforms (a 1.2-1.9 s long task, the stall probe's "uniforms arms"); the map
+ * itself is the worker's, and the uniforms follow it when it lands.
+ */
+function uniformPlanes(p: IllParams, frame: IllFrame | null) {
+  if (skeletonOn(p) && wouldBuild(() => planesFor(p, frame))) {
+    const held = memoHeld("arms.skelPlanes");
+    if (held && held.inputs[1] === frame) return held.value as ReturnType<typeof planesFor>;
+  }
+  return planesFor(p, frame);
+}
 
 /**
  * The bar's ellipse in the disc (S105, tuner M): its half-length and axis ratio as published, its angle read off
@@ -769,7 +783,7 @@ export const arms: IllFeature = {
     },
   },
   uniforms: (p: IllParams, context: IllContext) => {
-    const planes = planesFor(p, context.frame);
+    const planes = uniformPlanes(p, context.frame);
     const shape = shapeOf(p, context.frame);
     return {
       illArmsOn: planes ? 1 : 0,

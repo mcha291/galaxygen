@@ -862,7 +862,7 @@ function skeletonBandOn(sk: Skeleton, width: number, height: number, rHi: number
           const x = across / ws;
           const core = Math.exp(-0.5 * x * x) * (1 - wing);
           const wingPart = wing * Math.exp(-0.5 * (across / ((3 * a.width) / 2.3548)) ** 2);
-          const clump = clumpAt(a, xf, -sense * across);
+          const clump = x * x < 16 ? clumpAt(a, xf, -sense * across) : 1;
           u = strength * (core + wingPart);
           v = strength * ((1 + (clump - 1) * crestShare(x)) * core + wingPart);
         } else {
@@ -998,7 +998,7 @@ function rayColumn(a: SkelArm, ray: RayTable, R: number, height: number, reachKp
         const q = d / ws;
         const coreV = Math.exp(-0.5 * q * q) * (1 - wing);
         const wingPart = wing * Math.exp(-0.5 * (d / ((3 * a.width) / 2.3548)) ** 2);
-        const clump = clumpAt(a, xi, (R - r[o]) * cos[o]);
+        const clump = q * q < 16 ? clumpAt(a, xi, (R - r[o]) * cos[o]) : 1;
         u = strength * (coreV + wingPart);
         v = strength * ((1 + (clump - 1) * crestShare(q)) * coreV + wingPart);
       } else {
