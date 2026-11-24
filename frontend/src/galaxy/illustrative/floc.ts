@@ -422,7 +422,8 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocBandD: [v("dustArmVary"), v("nearAz") * rad, v("dustArmInner"), v("dustArmFork")],
     illFlocScA: [v("style") >= 0.5 ? v("scAmt") : 0, Math.max(v("scSize"), 0.05), v("scSparse"), v("scGrain")],
     illFlocScB: [v("scBlue"), v("scFrom"), v("scBands"), v("scSpots")],
-    illFlocScC: [v("scCrisp"), v("inkBrown"), 0, 0],
+    // z: the heaps moved with a network seed other than its default (a rerolled galaxy's heaps lie elsewhere; 0 at it).
+    illFlocScC: [v("scCrisp"), v("inkBrown"), v("seed") === DEFAULTS.seed ? 0 : (37.17 * v("seed")) % 97, 0],
     illFlocGlow: [v("glowShape"), v("glowLift"), Math.max(v("glowLiftRadius"), 0.05), v("glowCream")],
   };
 }
@@ -552,6 +553,7 @@ export const floc: IllFeature = {
   // octaves multiplied (a cascade): the complexes' mask, the clumps in them at a third, a sixth, a twelfth of their size.
   vec3 illFlocSc(vec2 xy) {
     float s = illFlocScA.y;
+    xy += vec2(illFlocScC.z, 0.61 * illFlocScC.z);
     float lv = 0.36 + 0.3 * illFlocScA.z;
     float mn = 0.65 * illFlocVN(xy / s + vec2(19.3, 7.1)) + 0.35 * illFlocVN(xy / (0.5 * s) + vec2(3.3, 41.9));
     float m = smoothstep(lv, lv + 0.2, mn);
