@@ -264,7 +264,7 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.18, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.4, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
@@ -272,7 +272,7 @@ export const arms: IllFeature = {
       about: "Where a ridge's brightening saturates, in units of its ring's mean sharpened contrast: higher keeps a strong arm brighter than a weak one, lower lights every arm alike. Illustrative.",
     },
     {
-      key: "cap", label: "ridge cap", min: 1, max: 8, step: 0.1, unit: "×", default: 2.2, perTemplate: { milky_way: 1.35, ngc_4414: 2.5 },
+      key: "cap", label: "ridge cap", min: 1, max: 8, step: 0.1, unit: "×", default: 2.2, perTemplate: { milky_way: 1.2, ngc_4414: 2.5 },
       about: "The most a ridge's light is multiplied. Illustrative.",
     },
     {
@@ -320,7 +320,7 @@ export const arms: IllFeature = {
       about: "The arms' tint and the sparkle's colour turned from blue-white toward cyan-teal by this share; 0 the blue-white. Colour for appearance (S107).",
     },
     {
-      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.12, ngc_4414: -0.6 },
+      key: "lavender", label: "inter-arm tint", min: -1.5, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.35, ngc_4414: -0.6 },
       about: "The disc's light between the arms (outside the bar's fade) tinted toward lavender by this share; a negative share tints it warm instead. Illustrative.",
     },
     {
@@ -328,7 +328,7 @@ export const arms: IllFeature = {
       about: "How many small bright young-star points are scattered along the arms' ridges; 0 none. Illustrative.",
     },
     {
-      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 400000, ngc_4414: 10000 },
+      key: "sparklegain", label: "sparkle brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 300000, perTemplate: { milky_way: 250000, ngc_4414: 10000 },
       about: "The faintest sparkle point's light, L☉ over the white point (on the field's scale, with the exposure). Illustrative.",
     },
     {
@@ -456,7 +456,7 @@ export const arms: IllFeature = {
       about: "Two or three short changes of pitch along each arm, this share of the pitch: slight kinks. Illustrative (S106).",
     },
     {
-      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.9},
+      key: "skelwidth", label: "ridge width", min: 0.1, max: 3, step: 0.01, unit: "kpc", default: 0.6, perTemplate: { milky_way: 0.75},
       about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
     },
     {
@@ -624,7 +624,7 @@ export const arms: IllFeature = {
       about: "On the skeleton, the disc inside the first arm dimmed as the disc between the arms is (the ring mean the light is kept by held inward from where the arms begin) by this share; 0 undimmed there - a pale disc round the bar ending in a circle where the arms start. Illustrative (S106).",
     },
     {
-      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.15},
+      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.35},
       about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
     },
     {
@@ -636,7 +636,7 @@ export const arms: IllFeature = {
       about: "The inner disc's darkening (above) is full inside this radius, kpc. Illustrative (S106).",
     },
     {
-      key: "skelcoreout", label: "inner dark ends", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 6, perTemplate: { milky_way: 1.6},
+      key: "skelcoreout", label: "inner dark ends", min: 0.5, max: 15, step: 0.1, unit: "kpc", default: 6, perTemplate: { milky_way: 1.2},
       about: "The inner disc's darkening has faded to nothing at this radius, kpc (a smooth ramp from the radius above). Illustrative (S106).",
     },
     {
