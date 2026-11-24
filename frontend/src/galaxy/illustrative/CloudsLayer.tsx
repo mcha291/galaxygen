@@ -58,6 +58,7 @@ export default function CloudsLayer({ params, runtime, context, knotsGain, dust 
       spriteSize={params.cloudSize ?? 1.5}
       dust={(dust as PointDust | null) ?? null}
       ill={lifted as never}
+      illCap={params.cloudCap ?? 0}
     />
   );
 }

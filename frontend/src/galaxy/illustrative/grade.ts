@@ -18,7 +18,7 @@
 import type { IllControl, IllFeature, IllParams } from "./feature";
 
 const CONTROLS: readonly IllControl[] = [
-  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.85, ngc_4414: -0.25}, about: "The light's scale into the stretch, stops. Illustrative." },
+  { key: "gain", label: "grade gain", min: -6, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: -1.85, ngc_4414: 0.0}, about: "The light's scale into the stretch, stops. Illustrative." },
   {
     key: "stretch", label: "asinh stretch", min: 0.1, max: 3000, step: 0.1, log: true, unit: "", default: 30, perTemplate: { milky_way: 100, ngc_4414: 15 },
     about: "How hard the asinh compresses: about linear below 1 / stretch, logarithmic above. Illustrative.",

@@ -571,3 +571,18 @@ describe("the star-cloud field, the glow, the opaque ink, the bands' breaks (S10
     expect(glsl).toContain("if (illFlocBandD.w > 0.0) e = max(e,");
   });
 });
+
+describe("the white-hot core and the star clouds' cap (S109, builder B4)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("is off on the Milky Way (no core lift, no cap)", () => {
+    expect(fallBandUniforms(own("milky_way")).illFlocHot[0]).toBe(0);
+    expect(illDefaults("milky_way")["floc.cloudCap"]).toBe(0);
+  });
+  it("lifts NGC 4414's centre to white and caps its cloud points before the bloom", () => {
+    const hot = fallBandUniforms(own("ngc_4414")).illFlocHot;
+    expect(hot[0]).toBeGreaterThan(0);
+    expect(hot[1]).toBeGreaterThan(0);
+    expect(illDefaults("ngc_4414")["floc.cloudCap"]).toBeGreaterThan(0);
+    expect(floc.glsl ?? "").toContain("if (illFlocHot.x > 0.0) {");
+  });
+});
