@@ -200,6 +200,19 @@ describe("the edge's tapers (S105)", () => {
     expect(d.young).toBe(30);
     expect(d.youngwidth).toBe(0);
   });
+
+  it("hands NGC 4414's taper over to a shorter one toward edge-on only (S110 B1); the Milky Way keeps its own", () => {
+    const n = paramsOf(edge, illDefaults("ngc_4414"));
+    expect(n.grazeRadius).toBeGreaterThan(0);
+    expect(n.grazeRadius).toBeLessThan(n.radius);
+    const m = paramsOf(edge, illDefaults("milky_way"));
+    expect(m.grazeRadius).toBe(0);
+    expect(edge.uniforms?.(m, { template: "milky_way", frame: null }).illEdgeGraze).toEqual([0, 0]);
+    // Face-on (illGraze 1) or with no edge-on radius, the face-on pair exactly; the uniform declared before its use.
+    expect(edge.glsl).toContain("if (illGraze >= 1.0 || illEdgeGraze.x <= 0.0) return face;");
+    const g = edge.glsl ?? "";
+    expect(g.indexOf("uniform vec2 illEdgeGraze;")).toBeLessThan(g.indexOf("illEdgeGraze.x"));
+  });
 });
 
 describe("the framing's roll (S105)", () => {
