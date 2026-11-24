@@ -557,6 +557,23 @@ describe("the star-cloud field, the glow, the opaque ink, the bands' breaks (S10
     expect(mw.illFlocGlow[1]).toBe(0);
     expect(mw.illFlocScC[0]).toBe(0);
   });
+  it("turns the bands with the phase and re-rolls their widths with the seed alone (S109 review)", () => {
+    const base = own("ngc_4414");
+    const still = fallBandUniforms(base);
+    const turned = fallBandUniforms({ ...base, dustArmPhase: 360 });
+    // The phase reaches the bands' angle only: the hash's offset (ScC w) does not move with it.
+    expect(turned.illFlocBandA[3]).toBeCloseTo(TAU, 10);
+    expect(turned.illFlocScC[3]).toBe(still.illFlocScC[3]);
+    expect(still.illFlocScC[3]).toBe(0);
+    // A seed other than the default turns the bands and re-rolls them by the same angle as before the split.
+    const seeded = fallBandUniforms({ ...base, seed: base.seed + 7 });
+    expect(seeded.illFlocScC[3]).toBe(seeded.illFlocBandA[3]);
+    expect(seeded.illFlocScC[3]).not.toBe(0);
+    const glsl = floc.glsl ?? "";
+    expect(glsl).toContain("illFlocHash(vec2(id + 3.1 * illFlocScC.w, 1.9))");
+    expect(glsl).toContain("illFlocHash(vec2(id + 3.1 * illFlocScC.w, 7.3))");
+    expect(glsl).not.toContain("3.1 * illFlocBandA.w");
+  });
   it("draws on NGC 4414 the heaps, the opaque ink, the bands' inner breaks and the glow's cusp", () => {
     const ngc = fallBandUniforms(own("ngc_4414"));
     expect(ngc.illFlocScA[0]).toBeGreaterThan(0);

@@ -28,12 +28,12 @@ now is texture and balance, mostly within your sliders' reach (`docs/pictures/s1
 ## What S109 changed, and how to see it
 Pull `main`, hard-reload, open the Tuning panel's group Illustrative; or `npm --prefix frontend run look` (8 frames).
 New: NGC 4414's fall-off, dust bands, white core, cloud heaps; the Milky Way's oval round the bar, the roll 15, no
-combed streaks or soft blue discs, the pitch slider's freeze mended (a skeleton slider's picture now arrives 0.8-0.9 s
-late, no stall). Close up and edge-on little is better (the Milky Way's close stand frames fewer arms; NGC 4414's is
-darker outside; the Milky Way edge-on still busy).
+combed streaks or soft blue discs, the pitch slider's freeze mended (no stall; its picture now 1.6-1.8 s after a move,
+0.8-1.0 at S108). Close up and edge-on little is better (the Milky Way's close stand frames fewer arms; NGC 4414's is
+darker outside; the Milky Way edge-on still busy) and **NGC 4414 edge-on is worse**: the disc runs on like a beam.
 
 ## The state (2026-11-24)
-S109 on `session-109` from `main` 411426a; a Fable lead, ten Opus agents; the physical frames byte for byte; **no byte
+S109: a Fable lead, ten Opus agents; the review no blocker, 39 of 39 physical frames identical; **no byte
 under `model/galaxy` moved** (hash 5a862a70...); register 117 open = 50 + 67, 104 discharged. GitHub suites: S107's
 (run 45241440967) and S108's (run 45277627004) green, 1860 passed each; S109's dispatched, not read. Next: #240, D281.
 
@@ -41,7 +41,7 @@ under `model/galaxy` moved** (hash 5a862a70...); register 117 open = 50 + 67, 10
 1-40 stand (16's roll and 35's cap re-ruled by 44 and 45). S109's: 41. a pass merges only if it gains at both ranges; a
 lane that does not converge goes to variant sheets the lead picks from. 42. NGC 4414 overfills the frame, a fall-off of
 the layer's own. 43. NGC 4414's dust and tone the lead's pick; its close-up a little darker. 44. the Milky Way's roll 15
-degrees. 45. its winding, width, tone and lanes the lead's picks (`sparklecap` 10). 46. the 0.8-0.9 s worker rebuild.
+degrees. 45. its winding, width, tone and lanes the lead's picks (`sparklecap` 10). 46. the worker's slower rebuild.
 47. four plain pictures in `docs/pictures/s109/`. 48. #238 / #239 entered on your word; their rulings yours.
 
 ## Parked, waiting on your word (nothing here touched them)

@@ -428,7 +428,9 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocScA: [v("style") >= 0.5 ? v("scAmt") : 0, Math.max(v("scSize"), 0.05), v("scSparse"), v("scGrain")],
     illFlocScB: [v("scBlue"), v("scFrom"), v("scBands"), v("scSpots")],
     // z: the heaps moved with a network seed other than its default (a rerolled galaxy's heaps lie elsewhere; 0 at it).
-    illFlocScC: [v("scCrisp"), v("inkBrown"), v("seed") === DEFAULTS.seed ? 0 : (37.17 * v("seed")) % 97, 0],
+    // w: the seed's own turn of the bands (rad; 0 at the default seed), which alone re-rolls the bands' widths and
+    // strengths: the phase slider turns them and re-rolls nothing (S109 review: 360 degrees draws what 0 draws).
+    illFlocScC: [v("scCrisp"), v("inkBrown"), v("seed") === DEFAULTS.seed ? 0 : (37.17 * v("seed")) % 97, v("seed") === DEFAULTS.seed ? 0 : 137.508 * v("seed") * rad],
     illFlocGlow: [v("glowShape"), v("glowLift"), Math.max(v("glowLiftRadius"), 0.05), v("glowCream")],
     illFlocHot: [v("coreHot"), Math.max(v("coreHotRadius"), 0.005), 0, 0],
   };
@@ -486,7 +488,8 @@ export const floc: IllFeature = {
   // fine grain gathers into it; B: x the blue outward, y from (kpc), z how far it keeps between the bands, w the spots.
   uniform vec4 illFlocScA;
   uniform vec4 illFlocScB;
-  // x how far a heap's light is broken into the grain's puffs; y the ink's brown's darkness (a share of its colour).
+  // x how far a heap's light is broken into the grain's puffs; y the ink's brown's darkness (a share of its colour); z
+  // the heaps' shift and w the bands' turn with a network seed other than its default (both 0 at it).
   uniform vec4 illFlocScC;
   // S109 (B3): the nucleus's glow - x the power of its dimming (2 a gaussian), y a broad lift's gain, z its radius
   // (kpc), w how far the lift goes to a pale yellow-cream.
@@ -533,10 +536,10 @@ export const floc: IllFeature = {
     // S109 (B2): each band its own width and strength (a hash of its index round the turn, turned with the seed), and
     // the near side's bands the stronger (the plane style's near azimuth).
     float id = mod(floor(v), illFlocBandA.x) + 5.7 * k;
-    float hw = illFlocBandD.x > 0.0 ? mix(1.0, 0.55 + 0.9 * illFlocHash(vec2(id + 3.1 * illFlocBandA.w, 1.9)), illFlocBandD.x) : 1.0;
+    float hw = illFlocBandD.x > 0.0 ? mix(1.0, 0.55 + 0.9 * illFlocHash(vec2(id + 3.1 * illFlocScC.w, 1.9)), illFlocBandD.x) : 1.0;
     float s = f / max(illFlocBandA.z * hw, 0.02);
     float e = exp(-2.773 * s * s);
-    if (illFlocBandD.x > 0.0) e *= mix(1.0, 0.4 + 1.2 * illFlocHash(vec2(id + 3.1 * illFlocBandA.w, 7.3)), illFlocBandD.x);
+    if (illFlocBandD.x > 0.0) e *= mix(1.0, 0.4 + 1.2 * illFlocHash(vec2(id + 3.1 * illFlocScC.w, 7.3)), illFlocBandD.x);
     if (illFlocBandB.w > 0.0) e *= 1.0 - illFlocBandB.w * (1.0 - smoothstep(0.25, 0.7, illFlocVN(xy / (2.5 * sc) + vec2(17.1 + k, 3.3))));
     return e;
   }

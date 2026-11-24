@@ -66,7 +66,7 @@ goals is drawn here by the viewer, as a declared layer of its own, and the model
 | 123 | S109 | **NGC 4414 at full frame**: the disc overfilling the frame and dissolving at its edge (`framing.scale` 0.45, `edge.radius` 16 / `width` 14), a radial fall-off of the drawn light with a blue outer disc (`floc.fall`, `illFlocPts`), brown ink and four log-spiral dust bands (`floc.dustArm*`), a soft cream glow with a white-hot core (`glowShape`, `coreHot`), a multi-scale star-cloud field in the veil (`floc.sc*`), the cloud points capped before the bloom (`cloudCap`); a declared-before-use test for floc's uniforms | Opus (B, B2, B3, B4); the lead's pick | S109 |
 | 124 | S109 | **the Milky Way at full frame**: four arms hugging the bar, the skeleton squashed into an oval through the bar's ends (`skelopen`, `skeloval*`, `skelcorebar`), a cream bar held to its ellipse (`barhold`, `sparklebar*`), the roll 15 degrees, the disc at the goal's size; the band read at the arm's nearest point with a 2-D mottle (`skelfoot`, `skelmottle`, `skelbreaks` 0) and a test on its step; the soft blue discs gone (`sparklecap` 10); the pitch slider's freeze mended (`illMapClient.ts`, `illMapJob.ts`) | Opus (A, A2, A3, A4's variant sheets); the lead's picks | S109 |
 | 125 | S109 | **the register entry**: #238 and #239 entered in `GALAXY_INPUTS.md` section 11 on the owner's word ("Yes, enter both", 2026-11-24), carried, the owner's; 117 open = 50 + 67; `tests/test_audit.py`'s two pins (e591fd0) | the Fable lead | S109 |
-| 126 | S109 | **the gate and the close**: each pass read on pair sheets, merged on both ranges; the lead's picks from variant sheets; the merged head captured; an independent review against `main`'s own build (the lead adds its line) | Opus (the reviewer); the Fable lead | S109 |
+| 126 | S109 | **the gate and the close**: each pass read on pair sheets, merged on both ranges; the lead's picks from variant sheets; the merged head captured; an independent review against `main`'s own build: no blocker, 39 of 39 physical frames byte-identical, 0 long tasks in ten stall runs, one low finding mended (NGC 4414's dust arm phase re-rolled the bands as it turned them), the worker's cost and NGC 4414's edge-on left (section 6) | Opus (the reviewer); the Fable lead | S109 |
 
 ## 3. Parallelism and pacing
 
@@ -169,8 +169,12 @@ ruled** (Part S109).
    in the disc (the photograph's 97; ours 20 by the tool).
 4. **Away from the tuned stands**: the Milky Way edge-on (busy with regions and grain along the lane, hardly a bulge);
    the close stands, which no longer frame what they were chosen for (the Milky Way's spiral moved under its close
-   stand; NGC 4414's close stand is darker in its outer half than S107's, ruling 43); exposure +3 washes the look out;
-   NGC 4414's faint brushing between 78 and 82 degrees.
-5. **Cost and the rest**: the arms map's worker rebuild of about 0.8 to 0.9 s (the picture arrives late after a
-   skeleton slider settles, ruling 46); `FluxPoints`' instrument wing pass reads the unlifted position inside the
+   stand; NGC 4414's close stand is darker in its outer half than S107's, ruling 43); **NGC 4414 edge-on, worse than
+   S108's** (the lane ends bluntly and the faint disc runs on to the frame's corners like a beam; a boxy bulge glow;
+   a grey speckled slab at 84 degrees - untried: a smaller edge radius and width under the graze handover); exposure
+   +3 washes the look out; at 1 kpc NGC 4414's white core is a flat disc; its faint brushing between 78 and 82
+   degrees.
+5. **Cost and the rest**: the worker's rebuilds (the reviewer's measure: the arms map 0.6 to 0.7 s, the sparkle job
+   0.6 to 0.7 s, four times S108's - 250000 points through the oval's inverse; the picture 1.6 to 1.8 s after a
+   single pitch move against 0.8 to 1.0, no stall; ruling 46); `FluxPoints`' instrument wing pass reads the unlifted position inside the
    handover (at most about 0.6 kpc, the instrument only; S108's low item); a third template would want its own preset.

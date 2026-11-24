@@ -19692,7 +19692,38 @@ map's worker rebuild of about 0.8 to 0.9 s accepted for now (no stall; a later a
 committed as plain pictures in `docs/pictures/s109/` (the two stands and the two edge-on captures; the close-ups are
 not committed); still not pinned. (48) #238 and #239 are entered, on the owner's word; their rulings stay the owner's.
 
-**The independent review:** (the lead adds this)
+**The independent review** (an Opus agent that built nothing here, against `main`'s own frontend built from `git archive
+main frontend interface`, on the merged head 318314f): **no blocker.** The physical look: 39 of 39 frames byte-identical
+to `main`'s build (20 stands on both templates - default, close, star-first, five exposures, inclinations 60 / 85 / 90,
+a roll, canvas 512 and 1536, 1 kpc; 7 swap paths under a stored physical look; 12 mouse-orbit, zoom, pan and resize
+frames), no map worker created and no job posted under it, physics only identical to `main`'s. The worker: ten runs of
+the stall probe, 157 slider moves and the drags - 0 main-thread long tasks on either template, the largest frame gap 50
+ms (the Milky Way) and 17 ms (NGC 4414), no named build on the main thread on any of 170 lines, 0 wrong frames;
+alternating sliders, a template switch and a look toggle mid-drag, a reroll mid-drag and a worker killed mid-job (the
+watchdog restarts it after 15 s) all come to rest on the picture a fresh load draws; memory levels off over 200 moves
+(main thread 111 to 149 MB, the worker 50 to 65 MB; `main`'s 102 to 129 and 50 to 49). Away from the stands: an
+inclination sweep 0 to 180 in 21 steps without a pop, bar, hairline or bow tie; the roll held at +15.000 and -25.000
+degrees through an orbit; five rerolls a template, each its own drawing and the same seeds the same bytes, every Milky
+Way a spiral with its oval following its bar; no seam at azimuth 0. All 53 new controls move a frame on at least one
+template and return byte for byte; none of one template's controls moves the other's frame. The settled march costs what
+`main`'s does (the Milky Way 55 to 57 ms against 53 to 54, NGC 4414 147 to 149 against 148 to 150). **Mended on its
+finding (the lead, one contained change):** NGC 4414's `dust arm phase` was not periodic - the bands' width and strength
+hash took the phase with the seed's turn, so the slider re-rolled the bands as it turned them and 360 degrees did not
+draw what 0 draws; the hash now takes the seed's turn alone (`illFlocScC.w`), which is 0 at the default seed and the
+same angle as before on a rerolled one, so no default or rerolled frame moves (the eight frames re-captured: byte for
+byte). **Left, low:** (i) cost in the worker, which ruling 46's figure understated in one part and missed in another -
+the arms map 0.57 to 0.70 s (`main` 0.28 to 0.32), and the sparkle job 0.58 to 0.72 s (`main` 0.14 to 0.23; 250000
+points against 110000, each read through the oval's inverse), which a lanes slider pays too; so the picture arrives 1.6
+to 1.8 s after a single pitch move (`main` 0.8 to 1.0), 0.9 to 1.0 s after a strand-width move (0.5 to 0.6), with no
+stall; (ii) NGC 4414 edge-on reads ugly rather than broken - a broad, somewhat boxy cream bulge over a grey lane
+sprinkled with cloud points, a grey speckled slab at 84 degrees, and (the documents' second reader) the lane ending
+bluntly with the faint disc running on to the frame's corners like a beam, worse than S108's; (iii) exposure +3 washes
+both out; at 1 kpc NGC 4414's white core is a flat white disc and the model's own stars are soft blue discs (the last
+also on `main`). **Not regressions** (also on `main`): one long task of about 2 s when the template or the look is
+switched in the middle of a drag. One probe (the reroll on NGC 4414) failed once with "the view was not ready" while
+other probes ran and passed alone. Gates on the reviewed head: typechecks, vitest 904, build, picture 16, look 8
+(byte-identical to the lead's merged frames), the stall probe x10, glprogram, switch, S108's four probes, the docs and
+register tests, the scans.
 
 **The frames beside the goals** (`READING_PICTURES.md` Part S109). **Both full frames are now their goal's kind of
 picture at a glance, which they were not at S108; neither is yet its goal at a second look.** The Milky Way: a spiral
