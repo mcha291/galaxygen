@@ -4,7 +4,9 @@
 to 114 run at S106 the same day (D277): both pictures now read as their goal at a glance; rows 115 to 118 run at S107
 the same day (D278): the sliders no longer freeze the view and both close-ups read as their goal's close-ups; rows
 119 to 122 run at S108 on 2026-11-23/24 (D279): the look holds away from the tuned stands (edge-on, orbited, under
-physics only and star-first, rerolled), and neither tuned frame moved nearer its goal.** The
+physics only and star-first, rerolled), and neither tuned frame moved nearer its goal; rows 123 to 126 run at S109 on
+2026-11-23/24 (D280): both tuned full frames are now their goal's kind of picture at a glance, neither yet its goal at a
+second look; #238 and #239 entered in the register on the owner's word.** The
 owner, after the status review of that day: "i want to prioritise being able to produce images akin to the goal. the
 physics is secondary and can be incrementally improved later", and then, on the lead's list of what the display lacks
 and its recommendation: "i accept your recommendations, please begin working on it ... do your best to do as much as
@@ -61,6 +63,10 @@ goals is drawn here by the viewer, as a declared layer of its own, and the model
 | 120 | S108 | **the edge-on handover**: per ray, from 72 to 88 degrees off the axis (`illGraze`, `base.grazeFrom` / `grazeTo`), the layer's thin-screen marks fade and its ink goes into the model's own dust layer (`base.grazeDust` 4); the point layers lifted off the midplane (`pointsPlace.ts`, `base.pointHeight`); bit-exact below the start; two edge-on look captures | Opus (G) | S108 |
 | 121 | S108 | **the controls**: physics only draws the physical look, the look shown as suspended (`tuning.ts drawnLook`); the roll held through any orbit (`framing.ts rollAfterLookAt`, `GalaxyView.tsx`), the stand now settling at full quality; star-first points fade at the edge (`points.ts`); the layer's seeds follow a reroll (`illSeeded`), the skeleton's pitch floor; probe `frontend/e2e/s108/controls.probe.ts` | Opus (H; the reviewer's fix) | S108 |
 | 122 | S108 | **the leftovers**: the near region clouds off under the look (`base.nearClouds` 0), the Milky Way's arm grain capped before the bloom (`arms.sparklecap` 30: the soft blue discs reduced, not mended), the pitch floor a slider, the prefetch following the drawn look; a rerolled Milky Way's crescents and bar-end gap diagnosed, not mended | Opus (J) | S108 |
+| 123 | S109 | **NGC 4414 at full frame**: the disc overfilling the frame and dissolving at its edge (`framing.scale` 0.45, `edge.radius` 16 / `width` 14), a radial fall-off of the drawn light with a blue outer disc (`floc.fall`, `illFlocPts`), brown ink and four log-spiral dust bands (`floc.dustArm*`), a soft cream glow with a white-hot core (`glowShape`, `coreHot`), a multi-scale star-cloud field in the veil (`floc.sc*`), the cloud points capped before the bloom (`cloudCap`); a declared-before-use test for floc's uniforms | Opus (B, B2, B3, B4); the lead's pick | S109 |
+| 124 | S109 | **the Milky Way at full frame**: four arms hugging the bar, the skeleton squashed into an oval through the bar's ends (`skelopen`, `skeloval*`, `skelcorebar`), a cream bar held to its ellipse (`barhold`, `sparklebar*`), the roll 15 degrees, the disc at the goal's size; the band read at the arm's nearest point with a 2-D mottle (`skelfoot`, `skelmottle`, `skelbreaks` 0) and a test on its step; the soft blue discs gone (`sparklecap` 10); the pitch slider's freeze mended (`illMapClient.ts`, `illMapJob.ts`) | Opus (A, A2, A3, A4's variant sheets); the lead's picks | S109 |
+| 125 | S109 | **the register entry**: #238 and #239 entered in `GALAXY_INPUTS.md` section 11 on the owner's word ("Yes, enter both", 2026-11-24), carried, the owner's; 117 open = 50 + 67; `tests/test_audit.py`'s two pins (e591fd0) | the Fable lead | S109 |
+| 126 | S109 | **the gate and the close**: each pass read on pair sheets, merged on both ranges; the lead's picks from variant sheets; the merged head captured; an independent review against `main`'s own build: no blocker, 39 of 39 physical frames byte-identical, 0 long tasks in ten stall runs, one low finding mended (NGC 4414's dust arm phase re-rolled the bands as it turned them), the worker's cost and NGC 4414's edge-on left (section 6) | Opus (the reviewer); the Fable lead | S109 |
 
 ## 3. Parallelism and pacing
 
@@ -118,6 +124,14 @@ restarted on another model rather than resumed into the same overload (D277).
 | 38 | #238 and #239 | still wait for the owner's word; nothing entered in the register (D279) |
 | 39 | NGC 4414's close stand turned 1.6 degrees | accepted: the roll about the true line of sight is the right one, and the close-up is the same picture (D279) |
 | 40 | The Milky Way's view settling | accepted: one full-quality march (up to about 280 ms) after each move, the quality the look was meant to have, where `main`'s never-settling view marched at 2 of 8 sub-samples on every frame; a lower sub-sample ceiling under the look is the owner's to ask for (D279) |
+| 41 | How a pass is merged | only if it is a gain at both ranges (full frame and close-up); a lane that does not converge under judged passes is switched to variant sheets on named axes, the goal the first tile, picked by the lead (D280) |
+| 42 | NGC 4414's framing | the disc overfills the frame (`framing.scale` 0.45) as the photograph's does; the layer draws a radial fall-off of its own (display only) (D280) |
+| 43 | NGC 4414's dust and tone | the lead's pick between the third and fourth passes (`dustArmClear` 0.82, depth 3.7, `inkOpaque` 0.5, `inkBrown` 0.8, `coreHot` 1.5, `grade.gain` 0, `grade.split` 0.1); the close-up accepted a little darker in its outer half than S107's (the fall-off is real there too) (D280) |
+| 44 | The Milky Way's roll | 15 degrees, the bar at the goal's angle (ruling 16's 25 re-ruled) (D280) |
+| 45 | The Milky Way's winding, width, tone and lanes | the lead's picks: from the variant sheets `arms.skelpitch` 0.9, `sparklecap` 10 (ruling 35's 30 replaced), knots `sizeMin` 20 / `sizeMax` 80, lanes `width` 65, `barglow` 1.5, `skelwidthgrow` 0.3; from the lead's fourteen 600-px variants `arms.floor` 0.4, `lavender` 0.35, `skelcore` 0.35, `skelcoreout` 1.2, `cap` 1.2, `sparklegain` 250000, `skelwidth` 0.75, `lanes.redness` 3.5, `lanes.depth` 2.0, `grade.gain` -2.5, `grade.saturation` 1.15 (the sheets' first defaults were near-black between the arms at full size) (D280) |
+| 46 | The arms map's worker rebuild | about 0.8 to 0.9 s accepted for now: no stall, the picture arrives later after a skeleton slider settles (D280) |
+| 47 | S109's frames | committed as plain pictures in `docs/pictures/s109/` (the two stands and the two edge-on captures; the close-ups not committed); still not pinned (D280) |
+| 48 | #238 and #239 | **now ENTERED in the register on the owner's word** ("Yes, enter both", 2026-11-24): carried, the owner's, 117 open = 50 + 67. Rulings 20, 28 and 38 stand as the record of the wait. Their rulings (#238's physical fix with its re-capture, #239's central column) stay the owner's (D280) |
 
 ## 5. What done means
 
@@ -131,41 +145,36 @@ has still not ruled** (Part S106). **S107's gate: both close-ups read as their g
 strength and balance, most of it within the owner's sliders, and a few forms; the owner's eye has still not ruled**
 (Part S107). **S108's gate: the look holds away from the tuned stands (edge-on, orbited, under physics only and
 star-first, rerolled); at the tuned stands neither frame moved nearer its goal, and both full frames are still plainly
-unlike their goals in the ways section 6 lists** (Part S108).
+unlike their goals in the ways section 6 lists** (Part S108). **S109's gate: both tuned full frames are now their
+goal's kind of picture at a glance; neither is yet its goal at a second look: what separates them is texture and
+balance (the Milky Way's speckle against clumps, its arm weights and lanes; NGC 4414's dust density and colour, its
+cloud texture), most of it within the owner's sliders' reach, some of it new drawing; the owner's eye has still not
+ruled** (Part S109).
 
 ## 6. What is left, in the order of what a viewer would gain
 
 1. **The owner's own tuning pass** on the live sliders (the Tuning panel's Illustrative group, by feature, with a
    filter; no slider freezes the view) **and the owner's rulings**: #238 (the dust transmission's float32 underflow:
-   the physical fix and the re-capture of the four NGC 4414 committed frames), #239 (the model's central extinction on
-   NGC 4414), and the OK to enter both in the register (rulings 20, 28 and 38).
-2. **The Milky Way's inner zone, default and rerolled together** (S109's subject, with item 4): inner arms that hug
-   the bar's ends as the goal's do, an oval ring at 1.2 to 1.4 bar half-lengths with the brightest pink-white complexes
-   at the bar's ends and a short inner arc along each long side (ours: the first arm at about twice the half-length, an
-   empty dark lavender moat between); the cause is the skeleton's start (`arms.skelstart` 1.0 x the published bar
-   half-length) against the drawn bar's end, and `arms.skelcore`'s darkening in fixed kpc (3 to 7.5) that does not follow
-   a rerolled bar; on a reroll, the crescents the wing and the ring modulation draw (`arms.skelwing`, `arms.floor`,
-   `skelhold`; ruling 36). Then: the bar pale cream and grainy with fine curling lanes, not saturated yellow-orange
-   with a white halo rim (hue 36 against 46) and its end clusters; the arm count (the goal's four near-equal arms at
-   about 12 degrees filling the disc against our two dominant wide-open arms; the lesser arms' strength against the
-   two-armed measure, ruling 25); the arms' texture a dense mottled cloud, not a smooth glow with sparse points; grain
-   points of varying brightness (ours all much the same white); the fainter soft blue dots still between the arms close
-   up (reduced by `arms.sparklecap`, not gone); finer, redder lanes; a more muted disc; the colour step's measure
-   (Δ(B−R) −0.068 against −0.354: find what the tool's annuli see).
-3. **The Milky Way edge-on**: the pink regions and blue sparkle a busy dotted band along the lane and in front of it
-   (the reviewer: the lifted regions and star clouds sit bright over the lane rather than partly behind it, the
-   unlifted sparkle a narrow blue band at its edge), the bluish-white disc, the small, faint bulge; and at intermediate
-   oblique zoom (6 kpc from an arm at 60 degrees) a pale flat haze with ribbons and stickers.
-4. **NGC 4414** (S109's subject, with item 2): the disc's extent and fall-off (the photograph's overfills the frame
-   and dims outward into a blue-grey haze; ours a sharp-edged oval of even brightness with a bright grainy rim at
-   about three quarters of the frame's width); the centre (a large soft cream bulge glow in a gold-tan inner disc
-   against our small nucleus in peach-orange); the dust in two or three broad warm brown spiral bands of fine filaments
-   with clean bright zones between, as prominent as the photograph's (ours grey-black short dashes scattered evenly, the
-   fingerprint stripes near the nucleus; A₂ 0.042 and arm contrast 1.64 against 0.068 and 2.72, the dark fraction
-   0.185 against 0.157); the colour; lumpy white and blue-white star clouds all through the middle disc (ours near the
-   rim only). Edge-on: the faint brushing between 78 and 82 degrees (the half-faded veil and mottle); the bulge's glow
-   boxy at its top edge.
-5. **The rest**: exposure +3 washes the look out (the arm grain's cap is in linear units and shifts with exposure);
-   the latency from a settled map slider to the picture (0.6 to 1.1 s; 0.35 to 3 s from a move in S107's review);
-   `FluxPoints`' instrument wing pass reads the unlifted position inside the handover (at most about 0.6 kpc, the
-   instrument only); a third template would want its own preset.
+   the physical fix and the re-capture of the four NGC 4414 committed frames) and #239 (the model's central extinction
+   on NGC 4414). Both are now entered in the register on the owner's word (ruling 48); the rulings are still open.
+2. **The Milky Way**: the arm grain as knotted clusters and cumulus-like clumps with a turquoise tint, not a uniform
+   fine speckle; four nearer-equal, narrower arms with more wraps (ours two broad and dominant), without bringing back
+   the target of rings; the lanes as broken reddish-brown filaments strung with small pink regions (ours thin
+   continuous dark strokes, the pink regions fewer and larger); a brighter grainy bar with a definite edge and the dark
+   ground beside its long sides; the tight inner arcs along the bar's flanks; a smooth outer glow (ours ragged grain on
+   a dim haze) and the faint far arm at the right.
+3. **NGC 4414**: a denser, warmer-brown dust network covering about a third of the inner and middle disc, strongest on
+   the near side (ours sparser and greyer); lumpy cauliflower clouds in place of the even sand with heaps; a blue-grey
+   outer haze (ours grey-white clumps on dark); a slightly tighter glow round the core; about a hundred bright points
+   in the disc (the photograph's 97; ours 20 by the tool).
+4. **Away from the tuned stands**: the Milky Way edge-on (busy with regions and grain along the lane, hardly a bulge);
+   the close stands, which no longer frame what they were chosen for (the Milky Way's spiral moved under its close
+   stand; NGC 4414's close stand is darker in its outer half than S107's, ruling 43); **NGC 4414 edge-on, worse than
+   S108's** (the lane ends bluntly and the faint disc runs on to the frame's corners like a beam; a boxy bulge glow;
+   a grey speckled slab at 84 degrees - untried: a smaller edge radius and width under the graze handover); exposure
+   +3 washes the look out; at 1 kpc NGC 4414's white core is a flat disc; its faint brushing between 78 and 82
+   degrees.
+5. **Cost and the rest**: the worker's rebuilds (the reviewer's measure: the arms map 0.6 to 0.7 s, the sparkle job
+   0.6 to 0.7 s, four times S108's - 250000 points through the oval's inverse; the picture 1.6 to 1.8 s after a
+   single pitch move against 0.8 to 1.0, no stall; ruling 46); `FluxPoints`' instrument wing pass reads the unlifted position inside the
+   handover (at most about 0.6 kpc, the instrument only; S108's low item); a third template would want its own preset.

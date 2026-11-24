@@ -2,7 +2,7 @@
 // encoding flocMap.ts's, fast enough for a slider.
 import { describe, expect, it } from "vitest";
 
-import { cloudShapeOf, floc, shapeOf } from "./floc";
+import { cloudShapeOf, cloudThin, floc, shapeOf } from "./floc";
 import { buildClouds } from "./flocClouds";
 import { FLOC_MAP, type FlocGeometry, flocDecode } from "./flocMap";
 import { buildNetChannel, netSampler } from "./flocNet";
@@ -11,7 +11,7 @@ import { illDefaults, paramsOf } from "./index";
 const RHI = 30;
 const G: FlocGeometry = { rHi: RHI, pitchDeg: 20, gas: null, pattern: null, gasProfile: null };
 // NGC 4414's network with its threads drawn (its default draws its dust as the march's mesh, netDepth 0; S106 C4).
-const SHAPE = { ...shapeOf(paramsOf(floc, illDefaults("ngc_4414"))), netDepth: 1.6 };
+const SHAPE = { ...shapeOf(paramsOf(floc, illDefaults("ngc_4414"))), netDepth: 1.6, cloudGlow: 1 }; // S109: the clouds' glow held on (NGC 4414's default is now 0) so the knots are drawn
 
 describe("the star clouds", () => {
   it("places NGC 4414's points in groups in the outer disc, inside its edge, fast", () => {
@@ -147,5 +147,23 @@ describe("the network drawn in the plane", () => {
       return s;
     };
     expect(mean(Math.PI / 2)).toBeGreaterThan(1.5 * mean((3 * Math.PI) / 2));
+  });
+});
+
+describe("the star clouds thinned by the fall-off (S109 B2)", () => {
+  it("changes nothing on the Milky Way; on NGC 4414 leaves the inner clouds and takes some of the outer away", () => {
+    expect(cloudThin(paramsOf(floc, illDefaults("milky_way"))).thin).toBeUndefined();
+    const p = paramsOf(floc, illDefaults("ngc_4414"));
+    const { thin } = cloudThin(p);
+    expect(thin).toBeDefined();
+    expect(thin!(p.fallIn - 0.1)).toBe(1);
+    expect(thin!(p.fallOut + 1)).toBeCloseTo(2 ** -(p.fall * p.cloudFall), 9);
+    // A thinning of 1 everywhere draws the clouds as without it, point for point.
+    const a = buildClouds(G, SHAPE, cloudShapeOf(p));
+    const b = buildClouds(G, SHAPE, cloudShapeOf(p), () => 1);
+    expect(Array.from(b.x)).toEqual(Array.from(a.x));
+    const c = buildClouds(G, SHAPE, cloudShapeOf(p), thin);
+    const outer = (cl: typeof a) => Array.from(cl.x).filter((x, i) => Math.hypot(x, cl.y[i]) > p.fallIn + 1.5).length;
+    expect(outer(c)).toBeLessThan(outer(a));
   });
 });

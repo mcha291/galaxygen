@@ -21,6 +21,8 @@ import { type SparklePoints, sparkleKey, sparkleReadsLanes, sparkleShown } from 
 const SPARKLE_BLUE: readonly [number, number, number] = [0.72, 0.98, 1.2];
 /** S107: the sparkle's cyan-teal, mixed into the blue-white by the arms' `cyan` share. */
 const SPARKLE_CYAN: readonly [number, number, number] = [0.66, 1.1, 1.16];
+/** S109 (A2): the bar's grain colour (arms.sparklebarcream), a warm cream-white. */
+const BAR_CREAM: readonly [number, number, number] = [1.18, 1.0, 0.72];
 
 /** The members `idx` of a flat buffer of `width` values per point. */
 function pick(values: Float32Array, idx: Uint32Array, width: number): Float32Array {
@@ -82,7 +84,19 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   const flux = useMemo(() => {
     if (!points) return null;
     const c = SPARKLE_BLUE.map((v, k) => 1 + (v + (SPARKLE_CYAN[k] - v) * cyan - 1) * blue) as [number, number, number];
-    return sparkleFlux(points.weight, points.radius, base, c, start, scale);
+    const f = sparkleFlux(points.weight, points.radius, base, c, start, scale);
+    // S109 (A2): the bar's points toward its cream (the same light: the colour's luminance kept).
+    const cream = points.cream;
+    if (cream) {
+      const lc = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+      const lk = 0.3 * BAR_CREAM[0] + 0.59 * BAR_CREAM[1] + 0.11 * BAR_CREAM[2];
+      const k = BAR_CREAM.map((v, ch) => (v * lc) / lk / c[ch]);
+      for (let i = 0; i < cream.length; i++) {
+        const t = cream[i];
+        if (t > 0) for (let ch = 0; ch < 3; ch++) f[3 * i + ch] *= 1 + (k[ch] - 1) * t;
+      }
+    }
+    return f;
   }, [points, blue, cyan, base, start, scale]);
   const bigShare = params.sparklebig ?? 0;
   const tiers = useMemo(() => {

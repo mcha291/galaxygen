@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "../FieldVolume";
 import { ILL_MAP, ILL_MAP_CHANNELS, type IllFrame } from "./feature";
-import { channelShapeOf, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
+import { channelShapeOf, fallBandUniforms, floc, flocChannel, flocDrawn, shapeOf } from "./floc";
 import { buildNetChannel } from "./flocNet";
 import {
   FLOC_ARRAYS, FLOC_MAP, FLOC_REACH, type FlocGeometry, type FlocShape, Ladder, SHAPE_KEYS, buildFlocChannel, flocClumps, flocCover, flocDecode, flocGrains, flocKey, flocLight, flocPatches,
@@ -349,7 +349,7 @@ describe("the feature", () => {
 
   it("is registered with its three hooks, declares no sampler, names no reserved word, and gives every uniform it declares", () => {
     expect(features().some((f) => f === floc)).toBe(true);
-    expect(floc.hooks).toEqual({ dustAv: "illFlocAv", youngGain: "illFlocYoung", veil: "illFlocVeil" });
+    expect(floc.hooks).toEqual({ dustAv: "illFlocAv", youngGain: "illFlocYoung", veil: "illFlocVeil", points: "illFlocPts" });
     const glsl = floc.glsl!;
     for (const name of Object.values(floc.hooks!)) expect(glsl).toContain(` ${name}(vec2 rp) {`);
     expect(glsl).not.toMatch(/sampler/);
@@ -494,4 +494,112 @@ describe("the plane style with no threads drawn keys only on what it reads (S107
       expect(flocChannel({ ...P4414, netDepth: 1.6, [k]: v }, FRAME), k).not.toBe(threaded);
     }
   }, 120_000);
+});
+
+describe("the fall-off and the dust arms (S109, builder B)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("are off on the Milky Way (its frames drawn bit for bit: every multiplier exactly 1) and on on NGC 4414", () => {
+    const mw = fallBandUniforms(own("milky_way"));
+    expect(mw.illFlocFall[0]).toBe(0);
+    expect(mw.illFlocBandA[0]).toBe(0);
+    expect(mw.illFlocBandC[0]).toBe(0);
+    expect(mw.illFlocFallB[1]).toBe(0);
+    expect(mw.illFlocFallB[2]).toBe(0);
+    const ngc = fallBandUniforms(own("ngc_4414"));
+    expect(ngc.illFlocFall[0]).toBeGreaterThan(0);
+    expect(ngc.illFlocBandA[0]).toBe(4);
+    expect(ngc.illFlocFall[2]).toBeGreaterThan(ngc.illFlocFall[1]);
+    // S109 (B2): the bands' lanes, near side and spread off on the Milky Way, on on NGC 4414.
+    expect([mw.illFlocBandC[2], mw.illFlocBandC[3], mw.illFlocBandD[0]]).toEqual([0, 0, 0]);
+    // S109 (B3): NGC 4414's bands no longer set the lanes' gaps (0: the crests' lanes broken as often as the rest, no
+    // unbroken ribbons in a pinwheel); its near side and spread still on.
+    expect(ngc.illFlocBandC[2]).toBe(0);
+    expect(ngc.illFlocBandC[3]).toBeGreaterThan(0);
+    expect(ngc.illFlocBandD[0]).toBeGreaterThan(0);
+  });
+  it("makes a band a swarm of the crisp lanes (S109 B2): the lanes' gap level set by the band, the crest's depth on the filaments only", () => {
+    const glsl = floc.glsl ?? "";
+    // The gap level is the lanes' own exactly where the bands or their lanes are off (a template without them bit for bit).
+    expect(glsl).toContain("float gl = illFlocLaneB.w;");
+    expect(glsl).toContain("illFlocLaneSet(rp, xy, illFlocLaneA.y, illFlocLaneA.z, 1.3, gl)");
+    // The crest's depth applied after the gate and before the lanes' smooth veil is added; the band's own multiplier at most 1.
+    const veil = glsl.slice(glsl.indexOf("vec3 illFlocVeil("));
+    const deep = veil.indexOf("av *= mix(1.0, illFlocBandB.y, band.y)");
+    expect(deep).toBeGreaterThan(veil.indexOf("av *= gate;"));
+    expect(deep).toBeLessThan(veil.indexOf("illFlocLaneC.z * ring"));
+    expect(glsl).toContain("mix(illFlocBandB.x, 1.0, e1)");
+  });
+  it("declares every uniform it hands over and is called by the veil, the dust and the points hook", () => {
+    const glsl = floc.glsl ?? "";
+    for (const u of Object.keys(fallBandUniforms({}))) expect(glsl).toContain(`uniform vec4 ${u};`);
+    expect(glsl).toContain("float illFlocPts(vec2 rp)");
+    expect(glsl).toMatch(/illFlocGateAt\(rp\) \* illFlocBand\(rp\)\.x/);
+    expect(floc.graze?.points).toBe("fade");
+  });
+});
+
+describe("the star-cloud field, the glow, the opaque ink, the bands' breaks (S109, builder B3)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("declares every uniform before its first use (an undeclared one blanks the whole field while every test is green)", () => {
+    const glsl = (floc.glsl ?? "").replace(/\/\/[^\n]*/g, "");
+    for (const m of glsl.matchAll(/uniform \w+ (illFloc\w+);/g)) {
+      const first = glsl.search(new RegExp(`\\b${m[1]}\\b`));
+      expect(first, m[1]).toBe(m.index! + m[0].indexOf(m[1]));
+    }
+  });
+  it("is off on the Milky Way: every new multiplier exactly 1 there", () => {
+    const mw = fallBandUniforms(own("milky_way"));
+    expect(mw.illFlocScA[0]).toBe(0);
+    expect(mw.illFlocFallB[3]).toBe(0);
+    expect(mw.illFlocBandD[2]).toBe(1);
+    expect(mw.illFlocBandD[3]).toBe(0);
+    expect(mw.illFlocGlow[0]).toBe(2);
+    expect(mw.illFlocGlow[1]).toBe(0);
+    expect(mw.illFlocScC[0]).toBe(0);
+  });
+  it("turns the bands with the phase and re-rolls their widths with the seed alone (S109 review)", () => {
+    const base = own("ngc_4414");
+    const still = fallBandUniforms(base);
+    const turned = fallBandUniforms({ ...base, dustArmPhase: 360 });
+    // The phase reaches the bands' angle only: the hash's offset (ScC w) does not move with it.
+    expect(turned.illFlocBandA[3]).toBeCloseTo(TAU, 10);
+    expect(turned.illFlocScC[3]).toBe(still.illFlocScC[3]);
+    expect(still.illFlocScC[3]).toBe(0);
+    // A seed other than the default turns the bands and re-rolls them by the same angle as before the split.
+    const seeded = fallBandUniforms({ ...base, seed: base.seed + 7 });
+    expect(seeded.illFlocScC[3]).toBe(seeded.illFlocBandA[3]);
+    expect(seeded.illFlocScC[3]).not.toBe(0);
+    const glsl = floc.glsl ?? "";
+    expect(glsl).toContain("illFlocHash(vec2(id + 3.1 * illFlocScC.w, 1.9))");
+    expect(glsl).toContain("illFlocHash(vec2(id + 3.1 * illFlocScC.w, 7.3))");
+    expect(glsl).not.toContain("3.1 * illFlocBandA.w");
+  });
+  it("draws on NGC 4414 the heaps, the opaque ink, the bands' inner breaks and the glow's cusp", () => {
+    const ngc = fallBandUniforms(own("ngc_4414"));
+    expect(ngc.illFlocScA[0]).toBeGreaterThan(0);
+    expect(ngc.illFlocFallB[3]).toBeGreaterThan(0);
+    expect(ngc.illFlocBandD[2]).toBeLessThan(1);
+    expect(ngc.illFlocGlow[0]).toBeLessThan(2);
+  });
+  it("keeps the bands as drawn where their new terms are off (the first set's noise read at the same scale and offsets)", () => {
+    const glsl = floc.glsl ?? "";
+    expect(glsl).toContain("float sc = illFlocBandD.z < 1.0 ?");
+    expect(glsl).toContain("illFlocBandE(rp, xy, r, illFlocBandA.y, illFlocBandA.w, 0.0, sc)");
+    expect(glsl).toContain("if (illFlocBandD.w > 0.0) e = max(e,");
+  });
+});
+
+describe("the white-hot core and the star clouds' cap (S109, builder B4)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("is off on the Milky Way (no core lift, no cap)", () => {
+    expect(fallBandUniforms(own("milky_way")).illFlocHot[0]).toBe(0);
+    expect(illDefaults("milky_way")["floc.cloudCap"]).toBe(0);
+  });
+  it("lifts NGC 4414's centre to white and caps its cloud points before the bloom", () => {
+    const hot = fallBandUniforms(own("ngc_4414")).illFlocHot;
+    expect(hot[0]).toBeGreaterThan(0);
+    expect(hot[1]).toBeGreaterThan(0);
+    expect(illDefaults("ngc_4414")["floc.cloudCap"]).toBeGreaterThan(0);
+    expect(floc.glsl ?? "").toContain("if (illFlocHot.x > 0.0) {");
+  });
 });

@@ -108,6 +108,22 @@ export class MapJobState {
     return value && typeof value === "object" ? this.refs.get(value) : undefined;
   }
 
+  /**
+   * S109 (A4): the named memos' values built here outside a map job (the sparkle's job builds arms.skeleton at its own
+   * values), with their names and inputs. No seed went back for them, so a later map job that finds one cached and names
+   * it as an input sends its seed first (mapJob's encode) - before, that input had no ref, the dependent seed was dropped,
+   * and the main thread, told the job was answered, built the plane itself (a skeleton slider's drag: a 1.4 s long task).
+   */
+  private unheard = new WeakMap<object, { name: string; inputs: unknown[] }>();
+
+  hearUnheard(name: string, inputs: unknown[], value: unknown) {
+    if (value && typeof value === "object" && !this.refs.has(value)) this.unheard.set(value, { name, inputs });
+  }
+
+  unheardOf(value: unknown): { name: string; inputs: unknown[] } | undefined {
+    return value && typeof value === "object" ? this.unheard.get(value) : undefined;
+  }
+
   keepLanes(ref: number, plane: Uint8Array) {
     if (this.lanes.has(ref)) return;
     this.lanes.set(ref, plane.slice());
@@ -131,6 +147,7 @@ export class MapJobState {
     releaseMemos();
     this.frame = null;
     this.refs = new WeakMap();
+    this.unheard = new WeakMap();
     this.lanes.clear();
     this.rgba = null;
   }
@@ -149,7 +166,16 @@ export function mapJob(state: MapJobState, request: MapRequest, stages: Record<s
     if (v === null || v === undefined || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
     if (v === frame) return { $frame: request.frameId };
     const ref = state.knownRef(v);
-    return ref === undefined ? SKIP : { $memo: ref };
+    if (ref !== undefined) return { $memo: ref };
+    // S109 (A4): a named memo's value built unheard (by the sparkle's job) and found cached by this one: its own seed
+    // first, so the main thread holds it by ref when the seed that names it arrives.
+    const built = state.unheardOf(v);
+    if (!built) return SKIP;
+    const inputs = built.inputs.map(encode);
+    if (inputs.some((e) => e === SKIP)) return SKIP;
+    const made = state.refOf(v);
+    seeds.push({ name: built.name, inputs: inputs as Encoded[], value: v, ref: made });
+    return { $memo: made };
   };
   const stop = observeMemoBuilds((name, inputs, value) => {
     const encoded = inputs.map(encode);
@@ -181,7 +207,13 @@ export function sparkleJob(state: MapJobState, request: SparkleRequest): { point
   const frame = state.frameOf(request.frameId, request.frame);
   const lanes = state.lanesFor(request.lanes);
   if (lanes === undefined) return { points: null, missing: true };
-  return { points: sparklePoints(request.params, frame, request.template, lanes), missing: false };
+  // S109 (A4): the named memos it builds (the arms' skeleton) heard and kept for a later map job to seed (mapJob's encode).
+  const stop = observeMemoBuilds((name, inputs, value) => state.hearUnheard(name, inputs, value));
+  try {
+    return { points: sparklePoints(request.params, frame, request.template, lanes), missing: false };
+  } finally {
+    stop();
+  }
 }
 
 const SKIP: unique symbol = Symbol("unencodable");

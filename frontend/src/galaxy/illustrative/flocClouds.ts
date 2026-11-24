@@ -101,7 +101,7 @@ export function cloudDensity(g: FlocGeometry, shape: FlocShape, c: CloudShape): 
 const brightness = (u: number, slope: number, range: number) => Math.min(range, (1 - u) ** (-1 / Math.max(0.1, slope)));
 
 /** The points: groups placed against the density, members in a gaussian about each, brightest at the centre. */
-export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape = cloudsOf(shape)): Clouds {
+export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape = cloudsOf(shape), thin?: (r: number) => number): Clouds {
   const total = Math.max(0, Math.floor(c.count));
   const x = new Float32Array(total);
   const y = new Float32Array(total);
@@ -120,7 +120,9 @@ export function buildClouds(g: FlocGeometry, shape: FlocShape, c: CloudShape = c
     const phi = 2 * Math.PI * u();
     const cx = r * Math.cos(phi);
     const cy = r * Math.sin(phi);
-    if (u() >= density(cx, cy)) continue;
+    // S109 (B2): `thin` (in [0, 1] by radius) takes clouds away where the disc's own light is dimmed: no clump left
+    // floating alone on the dark outskirts. Absent, the clouds as drawn (the same draws, the same points).
+    if (u() >= density(cx, cy) * (thin ? thin(r) : 1)) continue;
     // Members: a few to a few dozen (a log-uniform spread about the mean); the group's size spread several-fold.
     // S106 (C4): a share of the groups are large complexes - many more members over a wider glow.
     const big = c.complex > 0 && u() < c.complex ? 1 : 0;

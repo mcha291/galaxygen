@@ -254,7 +254,7 @@ describe("the framing's roll (S105)", () => {
 
   it("leaves a stand unrolled where no template names a roll (S106: the Milky Way's bar at its goal's angle)", () => {
     expect(paramsOf(framing, illDefaults(null)).roll).toBe(0);
-    expect(paramsOf(framing, illDefaults("milky_way")).roll).toBe(25);
+    expect(paramsOf(framing, illDefaults("milky_way")).roll).toBe(15);
     expect(paramsOf(framing, illDefaults("milky_way")).turn).toBe(0);
   });
 });

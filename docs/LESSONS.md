@@ -2465,3 +2465,24 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   found the stored look thrown away by the first slider moved under physics only. (S108, D279)
 - [close] **A defect behind a rarely used control (physics only, star-first, reroll) costs the owner's trust at the
   first click.** The cheap cure may be to suspend the look there and say so. (S108, D279)
+
+## From S109 (BUILD_VIII rows 123-126: ten Opus agents - eight builders in two lanes, a reviewer and a documents' writer; the Fable lead and gate)
+
+- [viewer] **When the defect is "it does not look like the picture", make sheets and let one reader pick.** Three
+  judged passes on the Milky Way each fixed the list and broke something else; forty labelled variants on named axes,
+  the goal the first tile of every sheet, reached the goal's kind of picture in two rounds. Keep judged passes for
+  mechanisms. (S109, D280)
+- [viewer] **Merge on both ranges or not at all.** The first NGC 4414 pass bought its full frame with the close-up,
+  and the fourth bought its dust with both. (S109, D280)
+- [viewer] **A streak that survives every feature switch is in the reading, not the feature.** The arm map read along
+  rings what belongs to the arm's nearest point. Dumping the map plane as an image found two more marks no frame
+  showed. (S109, D280)
+- [viewer] **"0 on the main thread" in the worker's own summary was true and the page still froze.** The fallback
+  path was not counted. Count what the main thread builds, by name, in the probe. (S109, D280)
+- [viewer] **A uniform declared after its use blanked the field and the look capture passed**, because the stars kept
+  the frame lit: the dark-frame check cannot see a missing layer; a declared-before-use test can. (S109, D280)
+- [viewer] **A contact sheet of small tiles hides tone.** The lead picked a near-black inter-arm disc from 440-px
+  tiles; the builder's full-frame numbers (a dark fraction 18 times the goal's) caught it. Pick composition on small
+  tiles, tone on full-size pairs, and read the numbers before setting a default. (S109, D280)
+- [close] **A question asked in the next-step box at three closes was answered at the fourth in three words.** Keep
+  asking, and keep the answer's cost small (a prepared two-line change). (S109, D280)
