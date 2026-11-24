@@ -264,7 +264,7 @@ export const arms: IllFeature = {
       about: "0 the model's own arm amplitude at each radius; 1 every ring's arm contrast evened to one level, so the outer arms read as strongly as the inner. Illustrative.",
     },
     {
-      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.4, ngc_4414: 0.5 },
+      key: "floor", label: "inter-arm light", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { milky_way: 0.6, ngc_4414: 0.5 },
       about: "The disc's light between the arms as a share of a full ridge's (each ring's mean light is then kept): lower darkens the gaps; 1 no arm contrast. Illustrative.",
     },
     {
@@ -452,7 +452,7 @@ export const arms: IllFeature = {
       about: "How many short spurs leave the skeleton's arms on their outer sides, more open than the arm. Illustrative (S106).",
     },
     {
-      key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.9},
+      key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.75},
       about: "A multiplier on the arm pieces' pitch (their length-weighted median) for the skeleton's winding: below 1 more turns before the edge. Illustrative (S106).",
     },
     {
@@ -472,7 +472,7 @@ export const arms: IllFeature = {
       about: "A skeleton ridge's full width at half maximum, kpc (the lesser arms 0.85 of it, the spurs 0.7). Illustrative (S106).",
     },
     {
-      key: "skelouter", label: "arms' reach", min: 4, max: 30, step: 0.5, unit: "kpc", default: 18, perTemplate: { milky_way: 13},
+      key: "skelouter", label: "arms' reach", min: 4, max: 30, step: 0.5, unit: "kpc", default: 18, perTemplate: { milky_way: 13.5},
       about: "Where the skeleton's major arms end, kpc (the lesser arms a little inside): the winding's extent. Illustrative (S106).",
     },
     {
@@ -596,7 +596,7 @@ export const arms: IllFeature = {
       about: "The disc's starlight inside the bar's ellipse (the published half-length and axis ratio, the angle the lanes read) multiplied, so the bar stands out of the inner disc as a distinct ellipse; 1 none. Illustrative (S105).",
     },
     {
-      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.2, ngc_4414: 0 },
+      key: "barwarm", label: "bar cream", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.0, ngc_4414: 0 },
       about: "The starlight inside the bar's ellipse tinted toward cream by this share; 0 none. Colour for appearance (S105).",
     },
     {
@@ -636,7 +636,7 @@ export const arms: IllFeature = {
       about: "On the skeleton, the disc inside the first arm dimmed as the disc between the arms is (the ring mean the light is kept by held inward from where the arms begin) by this share; 0 undimmed there - a pale disc round the bar ending in a circle where the arms start. Illustrative (S106).",
     },
     {
-      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.35},
+      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6},
       about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
     },
     {
