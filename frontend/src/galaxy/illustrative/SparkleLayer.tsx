@@ -106,7 +106,11 @@ export default function ArmsSparkle({ params, runtime, context, knotsGain, dust 
   const lav = Math.min(1, Math.max(0, params.sparklelav ?? 0));
   const tiers = useMemo(() => {
     if (!points || !flux) return null;
-    const t = sparkleTiers(points.weight, bigShare);
+    // S110 (A2): the field stars (the buffers' last `field` points) always on the fine sprite, and not counted in the
+    // bright share (the arms' bright tier is as it was without them).
+    const nField = points.field ?? 0;
+    const t = nField > 0 ? new Uint8Array(points.weight.length) : sparkleTiers(points.weight, bigShare);
+    if (nField > 0) t.set(sparkleTiers(points.weight.subarray(0, points.weight.length - nField), bigShare));
     return [0, 1].map((tier) => {
       const idx = tierIndices(t, tier);
       if (idx.length === 0) return null;
