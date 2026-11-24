@@ -16,23 +16,23 @@ export const edge: IllFeature = {
   about: "A taper of all the field's light and dust over the last kpc before the grid's outer radius, so the disc never ends in a hard circle; and an earlier one of the clustered young light alone, so the outer disc fades smooth.",
   controls: [
     {
-      key: "radius", label: "edge radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 20, ngc_4414: 16 },
+      key: "radius", label: "edge radius", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 16, ngc_4414: 16 },
       about: "Where the taper reaches nothing, kpc (at most the grid's 30): a template whose own light ends inside the grid (NGC 4414's disc near 20 kpc) is tapered to its own end. Illustrative.",
     },
     {
-      key: "width", label: "edge taper", min: 0, max: 25, step: 0.5, unit: "kpc", default: 8, perTemplate: { milky_way: 10, ngc_4414: 14 },
+      key: "width", label: "edge taper", min: 0, max: 25, step: 0.5, unit: "kpc", default: 8, perTemplate: { milky_way: 9, ngc_4414: 14 },
       about: "The field's light and dust taken smoothly to nothing over this many kpc inside the grid's end (30 kpc); 0 the hard edge. Illustrative.",
     },
     {
-      key: "young", label: "young edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 19, ngc_4414: 14 },
+      key: "young", label: "young edge", min: 2, max: 30, step: 0.5, unit: "kpc", default: 30, perTemplate: { milky_way: 13.5, ngc_4414: 14 },
       about: "Where the clustered young light's own taper reaches nothing, kpc: beyond it the outer disc is the smooth light alone, without its grain. 30 and a taper of 0: as drawn. Illustrative.",
     },
     {
-      key: "youngwidth", label: "young taper", min: 0, max: 25, step: 0.5, unit: "kpc", default: 0, perTemplate: { milky_way: 8, ngc_4414: 8 },
+      key: "youngwidth", label: "young taper", min: 0, max: 25, step: 0.5, unit: "kpc", default: 0, perTemplate: { milky_way: 5, ngc_4414: 8 },
       about: "The clustered young light taken smoothly to nothing over this many kpc inside the young edge; 0 a hard cut there. Illustrative.",
     },
     {
-      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.9, ngc_4414: 0 },
+      key: "bulge", label: "bulge haze dimmed", min: 0, max: 0.95, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5, ngc_4414: 0 },
       about: "The bulge's light (and the dust's, the HII's and the gas's) dimmed by this share round the bar - from none at the centre, full from the radius below, none again from the next - the disc's starlight kept: the pale haze round the bar thinned so the bar stands on a darker ground; 0 none. Illustrative (S106).",
     },
     {

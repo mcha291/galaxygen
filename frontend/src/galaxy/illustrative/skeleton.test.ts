@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { SKEL_CONTRAST_MAX, SKEL_MEAN_SAMPLES, skeletonParamsOf, skeletonPlanes } from "./armsSkeleton";
 import type { Piece } from "./lanesMap";
-import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, patchAt, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
+import { SKELETON_DEFAULTS, armAt, bandProfile, buildSkeleton, grainDensity, ovalIn, ovalOut, patchAt, piecesPitch, ridgeAt, ridgeLine, sampleRidges, skeletonBand } from "./skeleton";
 
 /** Pieces of a trailing 12-degree winding (phi growing outward), two chains half a turn apart. */
 const pieces: Piece[] = [0, 1].flatMap((c) =>
@@ -234,5 +234,109 @@ describe("the pitch floor's slider (S108 J2, arms.skelpitchmin)", () => {
     const g = { pieces: [piece(1.4, 4), piece(1.3, 6), piece(1.5, 8)], bar: null };
     expect(buildSkeleton(g, skeletonParamsOf({ skelpitchmin: 16 })).pitchDeg).toBeCloseTo(16, 9);
     expect(buildSkeleton(g, skeletonParamsOf({ skelpitchmin: 4 })).pitchDeg).toBeCloseTo(4, 9);
+  });
+});
+
+describe("the hug (S109, arms.skelopen below 0)", () => {
+  const hugParams = { lesser: 3, spurs: 0, drift: 0, kink: 0, open: -0.8, openTurns: 0.3, pitchGrow: 0.35, start: 0.85 };
+  it("runs each major round the bar close to its end before it opens, and reads its band along the ray", () => {
+    const sk = buildSkeleton({ pieces, bar }, hugParams);
+    const [a] = sk.arms;
+    expect(a.ray).toBe(true);
+    // A quarter turn on, the crest is within 1.15 of its start (the S108 skeleton's open arm: past 1.4).
+    let i = 0;
+    while (i < a.n - 1 && (a.phi[i] - a.phi[0]) * sk.sense < Math.PI / 2) i++;
+    expect(Math.exp(a.lnR0 + i * a.dlnR) / a.r0).toBeLessThan(1.15);
+    const open = buildSkeleton({ pieces, bar }, { ...hugParams, open: 0.8, openTurns: 0.175 });
+    expect(open.arms[0].ray).toBeUndefined();
+    // Read along the ray: just inside the crest a quarter turn on, the band is the crest's (a ring reading had nothing
+    // inside the start's radius: a hard dark disc), and half a ridge width inside it, about half.
+    const W = 2000;
+    const H = 3600;
+    const band = skeletonBand(sk, W, H, 30, 0);
+    const R = Math.exp(a.lnR0 + i * a.dlnR);
+    const row = Math.round(((((a.phi[i] % TAU) + TAU) % TAU) / TAU) * H - 0.5);
+    const col = (r: number) => Math.round((r / 30) * W - 0.5);
+    expect(band[row * W + col(R)]).toBeGreaterThan(0.8 * a.strength[i]);
+    const half = band[row * W + col(R - a.width / 2)] / band[row * W + col(R)];
+    expect(half).toBeGreaterThan(0.3);
+    expect(half).toBeLessThan(0.7);
+    // ridgeAt agrees: on the crest, nearly no distance.
+    expect(ridgeAt(sk, R, a.phi[i]).distance).toBeLessThan(0.05);
+  });
+  it("builds its planes within a slider's budget", () => {
+    const sk = buildSkeleton({ pieces, bar }, { ...hugParams, patch: 0.9, ragged: 0.5 });
+    const t0 = performance.now();
+    skeletonPlanes(sk, 2000, 3600, 30, 0.35, 32, null);
+    const ms = performance.now() - t0;
+    console.log(`hug skeleton planes: ${ms.toFixed(0)} ms`);
+    expect(ms).toBeLessThan(600);
+  });
+});
+
+describe("the oval round the bar (S109 A2, arms.skeloval)", () => {
+  const params = { oval: 0.6, ovalReach: 1.0, ovalFade: 2.0 };
+  it("is absent at 1 and leaves the band byte for byte", () => {
+    const plain = buildSkeleton({ pieces, bar }, {});
+    const one = buildSkeleton({ pieces, bar }, { oval: 1, ovalReach: 1, ovalFade: 2 });
+    expect(one.oval).toBeUndefined();
+    expect(Array.from(skeletonBand(one, 96, 128, 30, 0.15))).toEqual(Array.from(skeletonBand(plain, 96, 128, 30, 0.15)));
+  });
+  it("squashes across the bar to q inside its reach, not along it, and not beyond its fade", () => {
+    const sk = buildSkeleton({ pieces, bar }, params);
+    expect(sk.oval).toBeDefined();
+    expect(ovalOut(sk, 4, bar.angle)).toBeCloseTo(4, 9);
+    expect(ovalOut(sk, 4, bar.angle + Math.PI / 2)).toBeCloseTo(0.6 * 4, 9);
+    expect(ovalOut(sk, 10.5, bar.angle + Math.PI / 2)).toBe(10.5);
+  });
+  it("ovalIn inverts ovalOut at every azimuth, and the plane's radius grows with the skeleton's", () => {
+    const sk = buildSkeleton({ pieces, bar }, params);
+    for (let k = 0; k < 16; k++) {
+      const phi = (k / 16) * TAU;
+      let last = 0;
+      for (let Rs = 0.2; Rs < 12; Rs += 0.35) {
+        const R = ovalOut(sk, Rs, phi);
+        expect(R).toBeGreaterThan(last);
+        last = R;
+        expect(ovalIn(sk, R, phi)).toBeCloseTo(Rs, 4);
+      }
+    }
+  });
+  it("draws the lanes' ridge points through the oval, the band and ridgeAt read through it", () => {
+    const sk = buildSkeleton({ pieces, bar }, params);
+    const a = sk.arms[0];
+    const l = ridgeLine(a, 0.2, sk);
+    for (let i = 0; i < l.x.length; i += 7) expect(Math.hypot(l.x[i], l.y[i])).toBeCloseTo(ovalOut(sk, l.r[i], l.phi[i]), 6);
+    const i = Math.floor(l.x.length / 6);
+    const Rp = Math.hypot(l.x[i], l.y[i]);
+    expect(ridgeAt(sk, Rp, l.phi[i]).distance).toBeLessThan(0.05);
+  });
+});
+
+describe("the band without straight edges (S109 A3)", () => {
+  // The Milky Way's kind of skeleton: four arms, the hug, patchy, ragged, mottled arms.
+  const mw = { lesser: 2, spurs: 0, open: -0.7, openTurns: 0.2, start: 0.7, patch: 0.5, patchScale: 1.5, ragged: 0.3, raggedScale: 2.5, width: 1.4, widthGrow: 0.8, mottle: 1, foot: 1, breaks: 0, fade: 0.3 };
+  const W = 1000;
+  const H = 1800;
+  /** The largest step between neighbouring texels (along R and round the turn) over R in [2, 16] kpc. */
+  const largestStep = (band: Float32Array): number => {
+    let worst = 0;
+    const c0 = Math.round((2 / 30) * W);
+    const c1 = Math.round((16 / 30) * W);
+    for (let j = 0; j < H; j++) {
+      const row = j * W;
+      const next = ((j + 1) % H) * W;
+      for (let c = c0; c < c1; c++) worst = Math.max(worst, Math.abs(band[row + c + 1] - band[row + c]), Math.abs(band[next + c] - band[row + c]));
+    }
+    return worst;
+  };
+  it("steps nowhere: the hug's hand-over, the clumps and the outer ends are smooth", () => {
+    const steps = [mw, { ...mw, start: 1 }, { ...mw, fade: 0.05 }, { ...mw, fade: 0.4, start: 0.9 }].map((p) => largestStep(skeletonBand(buildSkeleton({ pieces, bar }, p), W, H, 30, 0.05)));
+    // (Measured 0.066-0.079: a soft band's own slope over one texel.)
+    for (const s of steps) expect(s).toBeLessThan(0.12);
+    // The test's power: S108's reading (strength, clumps and sides on the ring, sides at half a 0.5 kpc wavelength)
+    // steps by 0.28.
+    const old = largestStep(skeletonBand(buildSkeleton({ pieces, bar }, { ...mw, foot: 0, mottle: 0, patchScale: 0.5, ragged: 0.5, raggedScale: 0.25 }), W, H, 30, 0.05));
+    expect(old).toBeGreaterThan(0.2);
   });
 });

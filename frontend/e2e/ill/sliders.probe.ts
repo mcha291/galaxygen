@@ -41,7 +41,16 @@ declare const window: Window & {
   __galaxygenFrameSum?: () => { sum: number[] };
   __illProbe?: { frames: number[]; tasks: { start: number; ms: number }[]; on: boolean; busyUntil: number; d1: boolean; samples: number; wrong: string[] };
   __galaxygenIllPending?: () => number;
-  __galaxygenIllJobs?: () => { posted: number; seeded: number; skipped: number; here: number; failed: number; times: Record<string, { ms: number; roundTripMs: number }> };
+  __galaxygenIllJobs?: () => {
+    posted: number;
+    seeded: number;
+    skipped: number;
+    here: number;
+    failed: number;
+    times: Record<string, { ms: number; roundTripMs: number }>;
+    mainBuilds?: Record<string, number>;
+    mainMiss?: string | null;
+  };
 };
 
 async function press(page: Page, label: string, siblingOf?: string) {
@@ -186,6 +195,12 @@ for (const template of ["milky_way", "ngc_4414"] as const) {
             `ill-probe   worker: ${jobs.posted} posted, ${jobs.seeded} seeded, ${jobs.skipped} skipped, ${jobs.here} on the main thread, ${jobs.failed} failed; ` +
               `last map ${jobs.times.map.ms.toFixed(0)} ms in the worker (${jobs.times.map.roundTripMs.toFixed(0)} round trip), ` +
               `last sparkle ${jobs.times.sparkle.ms.toFixed(0)} ms (${jobs.times.sparkle.roundTripMs.toFixed(0)}); the picture the move's ${got.drawnMs.toFixed(0)} ms after it`,
+          );
+        // S109 (A4): the named memos built on the main thread while the worker builds the map (none, by the map
+        // contract), and the last one's inputs against its last seed - a plane built here shows by name.
+        if (jobs)
+          console.log(
+            `ill-probe   main-thread named builds: ${JSON.stringify(jobs.mainBuilds ?? {})}${jobs.mainMiss ? `; last: ${jobs.mainMiss}` : ""}`,
           );
       }
     }

@@ -250,7 +250,8 @@ describe("the regions on the skeleton (S106, K: knots.ts place = 1, knotsPlace.t
   it("draws sizes from a steep spread: many small, few large, within the floor and the ceiling", () => {
     const radii = placeOnSkeleton(sk, local).filter((r) => r.kind === 0).map((r) => r.radius);
     const small = radii.filter((r) => r < 2 * local.sizeMin).length;
-    const large = radii.filter((r) => r > 0.5 * local.sizeMax).length;
+    // (S109: "large" four floors - the ceiling came down to 110 pc, 4.4 floors, so half of it no longer meant large.)
+    const large = radii.filter((r) => r > Math.min(4 * local.sizeMin, 0.9 * local.sizeMax)).length;
     expect(small / radii.length).toBeGreaterThan(0.4);
     expect(large).toBeGreaterThan(0);
     expect(large / radii.length).toBeLessThan(0.15);

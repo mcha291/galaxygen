@@ -23,13 +23,15 @@
 // The sparkle's points (sparkleJob.ts) go the same way: SparkleLayer asks (requestSparkle) and draws the last points it
 // had until the new ones arrive; built here where there is no worker.
 
-import { ILL_MAP, type IllFrame, illMeasure, illNow, seedMemo } from "./feature";
+import { ILL_MAP, type IllFrame, illMeasure, illNow, observeMemoBuilds, seedMemo } from "./feature";
 import type { Encoded, JobAnswer, JobMessage, LanesSpec, MapRequest, Seed, SparkleRequest } from "./illMapJob";
 import { type SparklePoints, sparklePoints } from "./sparkleJob";
 
 type Listener = () => void;
 
 let worker: Worker | null = null;
+/** Whether this thread's named-memo builds are heard (from the first worker made on). */
+let heard = false;
 /** Set only where a Worker cannot be made at all: every job is then done on this thread. */
 let broken = false;
 let nextId = 1;
@@ -52,13 +54,20 @@ interface Job {
   make: () => { message: JobMessage; transfer: Transferable[] };
   /** For a sparkle: built here when the worker cannot. */
   fallback?: () => void;
+  /**
+   * S109 (A4): for a sparkle that named the lanes by the worker's ref, the same job with the lanes' bytes sent - asked
+   * when the worker no longer holds that plane (it keeps the last two; a skeleton slider's drag builds a new one at
+   * every step). Before, the sparkle was then built HERE, and its arms.skeleton build put another skeleton in this
+   * thread's memo in place of the seeded one: the next runtime step built the arms' band here (a 1.3 s long task).
+   */
+  withBytes?: () => Job;
   /** How many times this job has failed (one retry in a new worker, then done here). */
   failures?: number;
 }
 let running: Job | null = null;
 const waiting: { map: Job | null; sparkle: Job | null } = { map: null, sparkle: null };
 
-const counts = { posted: 0, answered: 0, seeded: 0, skipped: 0, replaced: 0, dropped: 0, failed: 0, here: 0, retried: 0, restarted: 0, timedOut: 0 };
+const counts = { posted: 0, answered: 0, seeded: 0, skipped: 0, replaced: 0, dropped: 0, failed: 0, here: 0, retried: 0, restarted: 0, timedOut: 0, resent: 0 };
 let lastError: string | null = null;
 /** The Tuning panel's line while the last map job failed (null: it did not). */
 let mapFailure: string | null = null;
@@ -98,14 +107,46 @@ const tell = () => {
   for (const l of listeners) l();
 };
 
+/**
+ * S109 (A4): the named memos built on THIS thread while a worker builds the map (none, by the map contract), by name,
+ * and the last such build's inputs against the last seed of that name ("<name>: input i <seeded> -> <asked>"): the
+ * slider probe's check that a drag builds no plane here. Heard from the first worker made on.
+ */
+const mainBuilds: Record<string, number> = {};
+let mainMiss: string | null = null;
+const lastSeeded = new Map<string, unknown[]>();
+const show = (v: unknown): string =>
+  v === null || v === undefined || typeof v !== "object" ? String(v).slice(0, 80) : `#${objectToken(v as object)}`;
+function hearMainBuilds() {
+  observeMemoBuilds((name, inputs) => {
+    // a build without the arrays (the empty map's values while another galaxy's planes are built, rule D1) is cheap
+    if (!inputs.some((v) => v !== null && typeof v === "object")) return;
+    mainBuilds[name] = (mainBuilds[name] ?? 0) + 1;
+    const seeded = lastSeeded.get(name);
+    const diff = !seeded
+      ? "never seeded"
+      : inputs
+          .map((v, i) => (Object.is(v, seeded[i]) ? null : `input ${i} ${show(seeded[i])} -> ${show(v)}`))
+          .filter((s) => s !== null)
+          .join("; ");
+    mainMiss = `${name}: ${diff}`;
+  });
+}
+
 /** Whether jobs go to the worker here (a Worker exists and has not failed). */
 export function illWorkerAvailable(): boolean {
   return !broken && typeof Worker !== "undefined";
 }
 
 /** The client's counts (the tests' and the probe's): posted, answered, seeds put in caches and skipped, ... */
-export function illJobCounts(): Readonly<typeof counts> & { lastError: string | null; mapFailure: string | null; times: typeof times } {
-  return { ...counts, lastError, mapFailure, times: { map: { ...times.map }, sparkle: { ...times.sparkle } } };
+export function illJobCounts(): Readonly<typeof counts> & {
+  lastError: string | null;
+  mapFailure: string | null;
+  times: typeof times;
+  mainBuilds: Record<string, number>;
+  mainMiss: string | null;
+} {
+  return { ...counts, lastError, mapFailure, times: { map: { ...times.map }, sparkle: { ...times.sparkle } }, mainBuilds: { ...mainBuilds }, mainMiss };
 }
 
 /** The Tuning panel's line while the last map job failed (retried, or rebuilt here), else null. */
@@ -143,6 +184,10 @@ function workerOf(): Worker | null {
       const message = (event as ErrorEvent).message;
       jobFailed(`the worker threw${message ? `: ${message}` : ""}`);
     };
+    if (!heard) {
+      heard = true;
+      hearMainBuilds();
+    }
     worker = made;
   }
   return worker;
@@ -254,6 +299,7 @@ export function applySeeds(seeds: readonly Seed[]): void {
       continue;
     }
     counts.seeded += 1;
+    lastSeeded.set(seed.name, inputs);
     if (seed.value && typeof seed.value === "object" && seed.ref > 0) {
       refOf.set(seed.value, seed.ref);
       // S107 review: a value that is or carries a map plane (7.2 MB each) is not kept by ref - no memo takes a plane as
@@ -302,8 +348,18 @@ function answeredJob(answer: JobAnswer) {
     mapFailure = null;
     arrivals += 1;
   } else {
-    if (answer.missing) job.fallback?.();
-    else keepSparkle(job.key, answer.points);
+    if (!answer.missing) keepSparkle(job.key, answer.points);
+    else if (job.withBytes) {
+      // S109 (A4): asked again with the lanes' bytes (never built here while the worker answers); a newer sparkle
+      // waiting stands for the parameters drawn now in its place.
+      if (!waiting.sparkle) {
+        counts.resent += 1;
+        waiting.sparkle = job.withBytes();
+      }
+    } else {
+      counts.here += 1;
+      job.fallback?.();
+    }
     arrivals += 1;
   }
   next();
@@ -440,18 +496,22 @@ export function requestSparkle(
       : refOf.has(lanes.plane)
         ? { kind: "ref", ref: refOf.get(lanes.plane)! }
         : { kind: "bytes", plane: lanes.plane.slice() };
-  enqueue({
+  const plane = lanes?.plane ?? null;
+  const jobFor = (spec: LanesSpec): Job => ({
     id: nextId++,
     kind: "sparkle",
     key,
     generation,
     posted: 0,
     fallback: build,
+    // S109 (A4): a plane named by ref that the worker no longer holds is sent as bytes (illMapClient answeredJob).
+    withBytes: spec.kind === "ref" && plane ? () => jobFor({ kind: "bytes", plane: plane.slice() }) : undefined,
     make() {
       const request: SparkleRequest = { ...frameFields(frame), template, params: values, lanes: spec };
       return { message: { id: this.id, kind: "sparkle", request }, transfer: spec.kind === "bytes" ? [spec.plane.buffer as ArrayBuffer] : [] };
     },
   });
+  enqueue(jobFor(spec));
   return stop;
 }
 

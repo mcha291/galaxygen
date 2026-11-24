@@ -30,19 +30,19 @@ const CONTROLS: readonly IllControl[] = [
     about: "Each region's light drawn as ref (L / ref)^power, ref the 90th percentile: below 1 the string reads evenly, not as a few bright dots. Illustrative.",
   },
   {
-    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 300, ngc_4414: 300 },
+    key: "count", label: "regions drawn (brightest)", min: 100, max: 20000, step: 100, default: 2000, perTemplate: { milky_way: 700, ngc_4414: 300 },
     about: "Only the brightest this many regions by their weighted, compressed light are drawn. Illustrative.",
   },
   {
-    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 2.0, ngc_4414: 6 },
+    key: "size", label: "region size", min: 0.5, max: 40, step: 0.1, log: true, unit: "×", default: 8, perTemplate: { milky_way: 1.4, ngc_4414: 6 },
     about: "A multiplier on each region's own radius (hii_radius) for its drawn radius. Illustrative.",
   },
   {
-    key: "sizeMin", label: "region radius floor", min: 0, max: 400, step: 5, unit: "pc", default: 40, perTemplate: { milky_way: 25, ngc_4414: 50 },
+    key: "sizeMin", label: "region radius floor", min: 0, max: 400, step: 5, unit: "pc", default: 40, perTemplate: { milky_way: 20, ngc_4414: 50 },
     about: "The smallest drawn radius, pc: regions read as blobs at galaxy scale. Illustrative.",
   },
   {
-    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 180, ngc_4414: 180 },
+    key: "sizeMax", label: "region radius ceiling", min: 10, max: 1000, step: 5, unit: "pc", default: 150, perTemplate: { milky_way: 80, ngc_4414: 180 },
     about: "The largest drawn radius, pc. Illustrative.",
   },
   {
@@ -103,7 +103,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "ridgePow", label: "skeleton: ridge-strength power", min: 0, max: 6, step: 0.1, unit: "power", default: 1.5, perTemplate: { milky_way: 2.5 }, about: "A bunch is kept with the ridge's strength to this power: denser where the ridge is strong. Illustrative (S106)." },
   { key: "slope", label: "skeleton: size spread", min: 0.3, max: 4, step: 0.05, unit: "slope", default: 1, perTemplate: { milky_way: 1.8 }, about: "Radii drawn as floor u^(-1/slope) up to the ceiling: lower, more large regions; higher, nearly all at the floor. Illustrative (S106)." },
   { key: "lightSize", label: "skeleton: light with size", min: 0, max: 3, step: 0.05, unit: "power", default: 1, about: "A region's light as (radius / floor)^power: the large complexes the bright ones. Illustrative (S106)." },
-  { key: "barEnds", label: "skeleton: bar-end complexes", min: 0, max: 20, step: 0.1, unit: "×", default: 8, about: "A bright complex at each bar end (the major arms' starts), its members this many times a region's light; 0 none. Illustrative (S106)." },
+  { key: "barEnds", label: "skeleton: bar-end complexes", min: 0, max: 20, step: 0.1, unit: "×", default: 8, perTemplate: { milky_way: 20 }, about: "A bright complex at each bar end (the major arms' starts), its members this many times a region's light; 0 none. Illustrative (S106)." },
   { key: "elong", label: "skeleton: along the arm", min: 1, max: 6, step: 0.05, unit: "×", default: 2.5, perTemplate: { milky_way: 3.5 }, about: "Each region's lobes spread this many times further along the arm than across it. Illustrative (S106)." },
   { key: "hue", label: "skeleton: lobes' hue spread", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.5, about: "The lobes' hues spread this far about the pink-to-magenta setting (each lobe its own). Colour for appearance (S106)." },
   { key: "coreBlue", label: "core: white to blue", min: 0, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0 }, about: "The skeleton regions' cores from white (0) to the knots' white-blue (1). Colour for appearance (S106)." },
@@ -114,7 +114,7 @@ const CONTROLS: readonly IllControl[] = [
   { key: "complexes", label: "skeleton: large complexes", min: 0, max: 40, step: 1, default: 0, perTemplate: { milky_way: 12 }, about: "This many large ragged complexes (several lobes, a white core, bright points about them) along the two major arms; 0 none. Illustrative (S107)." },
   { key: "complexGain", label: "skeleton: complexes' light", min: 0, max: 20, step: 0.1, unit: "×", default: 3, perTemplate: { milky_way: 5 }, about: "A large complex's members' light, times a region's. Illustrative (S107)." },
   // S107 (MW2): the large complexes made to read at full frame, ragged lobes, the spurs' regions on their crests.
-  { key: "complexMembers", label: "skeleton: complexes' members", min: 0.5, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.2 }, about: "A large complex's (and a bar end's) members, times as many as before. Illustrative (S107)." },
+  { key: "complexMembers", label: "skeleton: complexes' members", min: 0.5, max: 4, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 2 }, about: "A large complex's (and a bar end's) members, times as many as before. Illustrative (S107)." },
   { key: "complexSpread", label: "skeleton: complexes' length", min: 0.5, max: 6, step: 0.05, unit: "×", default: 1, perTemplate: { milky_way: 1.0 }, about: "A large complex's members spread this many times the bunch length along the arm: an elongated complex. Illustrative (S107)." },
   { key: "satellites", label: "skeleton: complexes' satellites", min: 0, max: 20, step: 1, default: 0, perTemplate: { milky_way: 4 }, about: "This many tiny regions scattered about each large complex (and bar end), just beyond its members; 0 none. Illustrative (S107)." },
   { key: "halo", label: "skeleton: complexes' halo", min: 0, max: 3, step: 0.01, unit: "×", default: 0, perTemplate: { milky_way: 0 }, about: "A soft pink envelope along the arm round each large complex (and bar end), its light this share of the complex's largest member; 0 none. Illustrative (S107)." },

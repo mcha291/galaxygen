@@ -42,7 +42,7 @@ describe("the points' edge (S108)", () => {
 
 describe("the sparkle's brightness cap (S108 J4, arms.sparklecap)", () => {
   it("is the Milky Way's alone, 0 (none) on NGC 4414, and never set on the runtime the other points share", () => {
-    expect(illDefaults("milky_way")["arms.sparklecap"]).toBe(30);
+    expect(illDefaults("milky_way")["arms.sparklecap"]).toBe(10); // S109 (A4): 10, no soft dots between the arms up close
     expect(illDefaults("ngc_4414")["arms.sparklecap"]).toBe(0);
     expect(createRuntime(illDefaults("milky_way"), { template: "milky_way", frame: null }).uniforms.illPointsCap.value).toBe(0);
   });
