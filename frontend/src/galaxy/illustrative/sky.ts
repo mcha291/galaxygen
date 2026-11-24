@@ -165,7 +165,7 @@ const CONTROLS: readonly IllControl[] = [
     about: "The floor's colour from grey (0) to deep blue (1). Colour for appearance.",
   },
   {
-    key: "halo", label: "sky halo", min: 0, max: 0.2, step: 0.0005, unit: "", default: 0, perTemplate: { ngc_4414: 0.012 },
+    key: "halo", label: "sky halo", min: 0, max: 0.2, step: 0.0005, unit: "", default: 0, perTemplate: { ngc_4414: 0.008},
     about: "A wide smooth blue haze about the disc, in its plane (linear light at its centre, before the grade): the faint outer disc's glow on the sky. 0 none. Illustrative.",
   },
   {
