@@ -1,17 +1,18 @@
-# BRIEF — after S109: both tuned frames now the goals' kind of picture (D280, BUILD_VIII rows 123-126)
+# BRIEF — after S110: the Milky Way much nearer, NGC 4414 nearer by eye (D281, BUILD_VIII rows 127-129)
 
-**First, plainly: both full frames are now their goal's kind of picture at a glance, which they were not at S108;
-neither is yet its goal at a second look.** S109 worked only on the two tuned frames. **The Milky Way** is now a spiral
-of four arms on a lavender-blue disc, its first arm an oval through the ends of a cream bar at the goal's angle, pink
-regions in bunches, dark-brown lanes, a soft edge, the disc at the goal's size. **Still unlike:** two of its four arms
-broad and dominant (the goal's four nearer equal, narrower, more wound); the arms a uniform icy speckle, not knotted
-clusters and clumps; lanes thin continuous strokes, not broken reddish filaments strung with pink; fewer, larger pink
-regions; a softer, paler bar with a weak dark ground beside it; no inner arcs along the bar; a ragged outer edge; no
-far arm. **NGC 4414** now overfills the frame and fades outward, a white core in a cream glow, a warm tan inner disc,
-broken lanes winding in, heaps of white and blue-white clumps. **Still unlike:** its dust sparser and greyer than the
-photograph's dense warm-brown network; even sand with heaps, not lumpy cauliflower clouds; the outer third grey-white
-clumps on dark, not a blue-grey haze; the core's glow a little broad; 20 bright points against 97. What separates them
-now is texture and balance, mostly within your sliders' reach (`docs/pictures/s109/`; `READING_PICTURES.md` S109).
+**First, plainly: the Milky Way is now plainly its goal's picture in substance and tone, short of it in arm count and
+in the colour and richness of its details; NGC 4414 has its photograph's zones and nucleus but not yet its cloud
+texture, and by the tool it is further than S109 on five rows.** **The Milky Way**: a glowing lavender disc with a
+smooth edge, three windings and an outer arm, a compact cream bar, the arms continuous bands of fine pale stipple with
+faint thin lanes and pink clusters, faint stars over the disc. **Still unlike:** three windings with wide gaps against
+the goal's four arms; the stipple sky-blue, not white-turquoise, the bands sharper; the pink pastel, not saturated red,
+and heaviest on the outermost arm; a violet moat round a larger, yellower bar, the first arm an oval detached from it;
+the outermost arm's grain on dark sky. **NGC 4414**: a tan inner disc, a blue-white outer zone on a faint haze, a
+compact white nucleus, a brown broken dust network. **Still unlike:** the light soft dabs drawn along the spiral, not
+knotty cauliflower cloud; the outer third too blue and uniform; the dust weaker than the photograph's dense network; a
+dark skirt at the lower left; 13 bright points against 97; a little soft. **By the tool NGC 4414 is further on the
+outer colour, the colour step, the dark fraction, the fine structure and the bright points; the lead ruled by the eye
+(ruling 52): look at it first.** Tone is within your sliders; the textures are new drawing (`docs/pictures/s110/`).
 
 ## TWO THINGS ONLY YOU CAN RULE (#238, #239: entered in the register on your word; nothing waits on them)
 - **#238 - a defect in the PHYSICAL look.** At NGC 4414's centre the dust is so thick (optical depth about 97 / 122 /
@@ -21,28 +22,26 @@ now is texture and balance, mostly within your sliders' reach (`docs/pictures/s1
   (the depth from a surviving channel in the published ratio), then re-capture those four frames. Say yes or no.
 - **#239 - a model question.** NGC 4414's published central extinction is about 130 mag in V face-on (the Milky Way's
   about 50): a correct march hides the nucleus. The illustrative look thins it 2 dex inside 1 kpc. Re-read it or not?
-- **Entered.** On your word of 2026-11-24 ("Yes, enter both") #238 and #239 are in the register, carried, yours
-  (`GALAXY_INPUTS.md` section 11; the audit test's pinned counts 115 -> 117 and its carried row moved with them). The
-  two rulings above are still open: entering them decided neither.
+- Both are carried in `GALAXY_INPUTS.md` section 11 since your "Yes, enter both" (2026-11-24); entering decided neither.
 
-## What S109 changed, and how to see it
+## What S110 changed, and how to see it
 Pull `main`, hard-reload, open the Tuning panel's group Illustrative; or `npm --prefix frontend run look` (8 frames).
-New: NGC 4414's fall-off, dust bands, white core, cloud heaps; the Milky Way's oval round the bar, the roll 15, no
-combed streaks or soft blue discs, the pitch slider's freeze mended (no stall; its picture now 1.6-1.8 s after a move,
-0.8-1.0 at S108). Close up and edge-on little is better (the Milky Way's close stand frames fewer arms; NGC 4414's is
-darker outside; the Milky Way edge-on still busy) and **NGC 4414 edge-on is worse**: the disc runs on like a beam.
+NGC 4414: soft lumps for the glitter (`floc.lump*`), a compact nucleus (the broad ball was the bloom), a yellower inner
+disc, the blue-white outer zone and haze, **edge-on mended** (it tapers again). The Milky Way: stipple bands, field
+stars, a grainy bar, faint broken lanes, pink that fades edge-on, three windings in a larger glow; its close stand is
+its most goal-like frame. NGC 4414's close-up keeps S109's seam and shows a fine polygon crackle (S110's first pass).
 
 ## The state (2026-11-24)
-S109: a Fable lead, ten Opus agents; the review no blocker, 39 of 39 physical frames identical; **no byte
-under `model/galaxy` moved** (hash 5a862a70...); register 117 open = 50 + 67, 104 discharged. GitHub suites: S107's
-(run 45241440967) and S108's (run 45277627004) green, 1860 passed each; S109's dispatched, not read. Next: #240, D281.
+S110: a Fable lead, six Opus agents (four builders, the reviewer, the documents' writer); the review: (the lead adds
+it); **no byte under `model/galaxy` moved** (hash 5a862a70...); register unchanged, 117 open = 50 + 67, 104 discharged.
+GitHub suites: S109's head (run 45330621176) dispatched, the lead adds the result. Next: #240, D282.
 
 ## Rulings taken on recommendation — yours to re-rule (`BUILD_VIII.md` section 4 is the table)
-1-40 stand (16's roll and 35's cap re-ruled by 44 and 45). S109's: 41. a pass merges only if it gains at both ranges; a
-lane that does not converge goes to variant sheets the lead picks from. 42. NGC 4414 overfills the frame, a fall-off of
-the layer's own. 43. NGC 4414's dust and tone the lead's pick; its close-up a little darker. 44. the Milky Way's roll 15
-degrees. 45. its winding, width, tone and lanes the lead's picks (`sparklecap` 10). 46. the worker's slower rebuild.
-47. four plain pictures in `docs/pictures/s109/`. 48. #238 / #239 entered on your word; their rulings yours.
+1-48 stand (16 and 35 re-ruled by 44 and 45; some of 43's and 45's values by 49-53). S110's: 49. the Milky Way's
+tone and winding the lead's picks (pitch 0.75, a larger glow, a mid-tone grade). 50. its lanes faint and broken, the
+grain at 250000 points. 51. NGC 4414's dust the lead's picks. 52. its soft lumps and less blue outer zone, accepted by
+the eye against the tool's five rows. 53. its core `coreGain` 3 / `coreHot` 3. 54. three shared files changed for the
+edge-on handover. 55. four plain pictures in `docs/pictures/s110/`. 56. the sparkle job's cost as measured at the close.
 
 ## Parked, waiting on your word (nothing here touched them)
 `batch-r` 699629c (S104, D274: green, stacked on `batch-q`, one stage-B re-read of `test_s100_bar_length` owed; it
@@ -54,7 +53,8 @@ in `git show batch-r:docs/BRIEF.md`); the worktrees on disk, yours to remove or 
 - Under `physical` nothing of the layer runs; a change that moves a committed frame is a defect, never a re-capture. The
   march has NO spare sampler: a feature's map is a channel of the one shared map (`index.ts`'s header).
 - A new map plane is a NAMED pure memo (`memoOn`); nothing of another galaxy drawn for a frame; the main thread builds
-  no map while a worker answers. The edge-on handover is per ray and bit-exact below 72 degrees. Physics only draws
-  the physical look. Capture the MERGED head before trusting it. Never the full suite here (D246).
-- Merge a pass on both ranges (full frame and close-up) or not at all; a lane that does not converge goes to variant
-  sheets. Pick composition on small tiles, tone on full-size pairs, and read the numbers before setting a default.
+  no map while a worker answers. The edge-on handover is per ray and bit-exact below 72 degrees; a veil hook, the
+  halo and the points fade under it, so anything left edge-on must take it too. Capture the MERGED head before trusting
+  it. Never the full suite here (D246).
+- Merge a pass on both ranges or not at all; tone from variant sheets; check a pick against its control's range (a
+  capture clamps it silently); switch terms off to find what draws a defect; a number guards the eye, not a target.
