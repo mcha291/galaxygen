@@ -2538,10 +2538,14 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   D282)
 - [viewer] **Replacing a texture that read wrong does not make the new one right.** The record grooves went, and the
   blotches in their place read as rust streaks brushed along the spiral; at the close stand they smeared the fine grain
-  S110 had won back. Read the replacement at both ranges beside the last session's, not only the defect's absence.
-  (S111, D282)
+  S110 had won back. Read the replacement at both ranges beside the last session's, not only the defect's absence; the
+  cure was to keep the new texture only where the old defect was (the blotches inside 2 kpc). (S111, D282)
 - [close] **When the quota is short, keep the review and the second reader and cut the passes.** One pass a lane with
-  both kept was better than two passes with neither. (S111, D282)
-- [close] **Someone must look at the merged head's frames before the close.** The lead checked them by hash and number
-  only; the documents' writer, the first to look, found NGC 4414's close-up a loss in its lower half that the lead had
-  read on the builder's sheet as different and no worse. A sheet the builder made is the builder's reading. (S111, D282)
+  both kept was better than two passes with neither - and the lean session's rule held only because the second reader
+  looked. (S111, D282)
+- [close] **A close stand is judged at full size beside the last session's, by someone, every time.** The lead checked
+  the merged head's frames by hash and number only and had accepted NGC 4414's close-up as "no worse" from a builder's
+  small side-by-side; the documents' writer, the first to look, found it a loss, and the lead, putting S110's close-up
+  beside variants at full size, agreed and mended it. It is the second time in two sessions that the lead misjudged the
+  close stand (S110 on a mean brightness, S111 on a builder's sheet). A sheet the builder made is the builder's
+  reading. (S111, D282)
