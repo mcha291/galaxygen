@@ -456,6 +456,78 @@ describe("the illustrative map's worker (S107: illMapJob.ts, illMapClient.ts)", 
     expect(sparkleShown(undefined, null, "1:milky_way")).toBeNull();
   });
 
+  // S109 (A4): a drag of a skeleton slider stalled the main thread ~1.4 s ("map arms"). The sparkle's job, asked at the
+  // live values, built the worker's arms.skeleton memo unheard (no seed, no ref); the map job at those values then found
+  // the skeleton cached, built only arms.skelPlanes - whose input, that skeleton, had no ref - and dropped its seed. The
+  // main thread, told the key was answered, built the band itself.
+  it("seeds every plane of a map job that follows a sparkle job at the same values: nothing built here (S109 drag)", async () => {
+    const { main, client, feature, ref } = await graphs();
+    const base = main.illDefaults("milky_way");
+    const ctx = { template: "milky_way", frame: F };
+    const rt = main.createRuntime(base, { template: "milky_way", frame: null });
+    const w = () => FakeWorker.made[0];
+    expect(main.stepRuntime(rt, base, ctx)).toBe("asked");
+    w().deliverAll();
+    expect(main.stepRuntime(rt, base, ctx)).toBe("drawn");
+    const arms = main.features().find((f) => f.id === "arms")!;
+    const tex = rt.uniforms.illMapTex.value as { image: { data: Uint8Array }; userData: { illPlanes: (Uint8Array | null)[] } };
+    for (const pitch of [1.04, 1.08, 1.12]) {
+      const X = { ...base, "arms.skelpitch": pitch };
+      // the sparkle at the dragged value first (its layer reads the live values), then the map's job at the same values
+      client.requestSparkle(`s${pitch}`, main.paramsOf(arms, X), ctx, { plane: tex.userData.illPlanes[0], rgba: tex.image.data }, () => undefined);
+      w().deliverAll();
+      expect(main.stepRuntime(rt, X, ctx)).toBe("asked");
+      w().deliverAll();
+      expect(client.illMapAnswered(client.illMapKey(X, ctx))).toBe(true);
+      expect(feature.wouldBuild(() => main.illMapPlanes(X, ctx)), `pitch ${pitch}`).toBe(false);
+      expect(main.stepRuntime(rt, X, ctx)).toBe("drawn");
+      const got = (rt.uniforms.illMapTex.value as { image: { data: Uint8Array } }).image.data;
+      const want = (ref.illUniformValues(X, ctx).illMapTex as { image: { data: Uint8Array } }).image.data;
+      expect(Buffer.from(got).equals(Buffer.from(want)), `pitch ${pitch}`).toBe(true);
+    }
+    expect(client.illJobCounts().here).toBe(0);
+    expect(client.illJobCounts().skipped).toBe(0);
+    // no named memo was built on this thread (the probe's count)
+    expect(client.illJobCounts().mainBuilds).toEqual({});
+    expect(client.illJobCounts().mainMiss).toBeNull();
+  }, 120_000);
+
+  // S109 (A4), the drag's cause in the page: the sparkle named the drawn lanes' plane by the worker's ref, the worker had
+  // let it go (it keeps the last two; each drag step builds a new one), and the sparkle was built HERE - its
+  // arms.skeleton build replaced the seeded skeleton in this thread's memo, so the next runtime step built the band.
+  it("asks a sparkle again with the lanes' bytes where the worker let its plane go: nothing built here (S109 drag)", async () => {
+    const { main, client, feature, ref, refSparkle } = await graphs();
+    const base = main.illDefaults("milky_way");
+    const ctx = { template: "milky_way", frame: F };
+    const rt = main.createRuntime(base, { template: "milky_way", frame: null });
+    const w = () => FakeWorker.made[0];
+    expect(main.stepRuntime(rt, base, ctx)).toBe("asked");
+    w().deliverAll();
+    expect(main.stepRuntime(rt, base, ctx)).toBe("drawn");
+    const tex = rt.uniforms.illMapTex.value as { image: { data: Uint8Array }; userData: { illPlanes: (Uint8Array | null)[] } };
+    const lanesPlane = tex.userData.illPlanes[0]!;
+    const rgba = Uint8Array.from(tex.image.data);
+    // three more lane planes built in the worker (asked, never drawn): it keeps the last two, the drawn one let go
+    for (const [width, pitch] of [[61, 1.04], [62, 1.08], [63, 1.12]]) {
+      expect(main.stepRuntime(rt, { ...base, "lanes.width": width, "arms.skelpitch": pitch }, ctx)).toBe("asked");
+      w().deliverAll();
+    }
+    // back to the drawn values: the caches hold the last answer's planes, so the base is asked again of the worker
+    const skeleton = feature.memoHeld("arms.skeleton")?.value;
+    const params = main.paramsOf(main.features().find((f) => f.id === "arms")!, base);
+    let got: unknown = "none";
+    client.requestSparkle("bytes", params, ctx, { plane: lanesPlane, rgba }, (p) => (got = p));
+    w().deliverAll();
+    expect(client.illJobCounts().mainBuilds).toEqual({});
+    expect(feature.memoHeld("arms.skeleton")?.value).toBe(skeleton); // this thread's skeleton memo untouched
+    expect(client.illJobCounts().resent).toBe(1);
+    expect(client.illJobCounts().here).toBe(0);
+    const want = refSparkle.sparklePoints(params, F, "milky_way", (ref.illUniformValues(base, ctx).illMapTex as { image: { data: Uint8Array } }).image.data);
+    const g = got as { positions: Float32Array };
+    expect(g).not.toBe("none");
+    expect(Buffer.from(g.positions.buffer, g.positions.byteOffset, g.positions.byteLength).equals(Buffer.from(want!.positions.buffer, want!.positions.byteOffset, want!.positions.byteLength))).toBe(true);
+  }, 120_000);
+
   it("without a Worker builds everything on this thread, as before (vitest's own path, and SSR)", async () => {
     vi.resetModules();
     const main = await import("./index");
