@@ -511,7 +511,10 @@ describe("the fall-off and the dust arms (S109, builder B)", () => {
     expect(ngc.illFlocFall[2]).toBeGreaterThan(ngc.illFlocFall[1]);
     // S109 (B2): the bands' lanes, near side and spread off on the Milky Way, on on NGC 4414.
     expect([mw.illFlocBandC[2], mw.illFlocBandC[3], mw.illFlocBandD[0]]).toEqual([0, 0, 0]);
-    expect(ngc.illFlocBandC[2]).toBeGreaterThan(0);
+    // S109 (B3): NGC 4414's bands no longer set the lanes' gaps (0: the crests' lanes broken as often as the rest, no
+    // unbroken ribbons in a pinwheel); its near side and spread still on.
+    expect(ngc.illFlocBandC[2]).toBe(0);
+    expect(ngc.illFlocBandC[3]).toBeGreaterThan(0);
     expect(ngc.illFlocBandD[0]).toBeGreaterThan(0);
   });
   it("makes a band a swarm of the crisp lanes (S109 B2): the lanes' gap level set by the band, the crest's depth on the filaments only", () => {
@@ -532,5 +535,39 @@ describe("the fall-off and the dust arms (S109, builder B)", () => {
     expect(glsl).toContain("float illFlocPts(vec2 rp)");
     expect(glsl).toMatch(/illFlocGateAt\(rp\) \* illFlocBand\(rp\)\.x/);
     expect(floc.graze?.points).toBe("fade");
+  });
+});
+
+describe("the star-cloud field, the glow, the opaque ink, the bands' breaks (S109, builder B3)", () => {
+  const own = (t: string) => Object.fromEntries(Object.entries(illDefaults(t)).filter(([k]) => k.startsWith("floc.")).map(([k, v]) => [k.slice(5), v]));
+  it("declares every uniform before its first use (an undeclared one blanks the whole field while every test is green)", () => {
+    const glsl = (floc.glsl ?? "").replace(/\/\/[^\n]*/g, "");
+    for (const m of glsl.matchAll(/uniform \w+ (illFloc\w+);/g)) {
+      const first = glsl.search(new RegExp(`\\b${m[1]}\\b`));
+      expect(first, m[1]).toBe(m.index! + m[0].indexOf(m[1]));
+    }
+  });
+  it("is off on the Milky Way: every new multiplier exactly 1 there", () => {
+    const mw = fallBandUniforms(own("milky_way"));
+    expect(mw.illFlocScA[0]).toBe(0);
+    expect(mw.illFlocFallB[3]).toBe(0);
+    expect(mw.illFlocBandD[2]).toBe(1);
+    expect(mw.illFlocBandD[3]).toBe(0);
+    expect(mw.illFlocGlow[0]).toBe(2);
+    expect(mw.illFlocGlow[1]).toBe(0);
+    expect(mw.illFlocScC[0]).toBe(0);
+  });
+  it("draws on NGC 4414 the heaps, the opaque ink, the bands' inner breaks and the glow's cusp", () => {
+    const ngc = fallBandUniforms(own("ngc_4414"));
+    expect(ngc.illFlocScA[0]).toBeGreaterThan(0);
+    expect(ngc.illFlocFallB[3]).toBeGreaterThan(0);
+    expect(ngc.illFlocBandD[2]).toBeLessThan(1);
+    expect(ngc.illFlocGlow[0]).toBeLessThan(2);
+  });
+  it("keeps the bands as drawn where their new terms are off (the first set's noise read at the same scale and offsets)", () => {
+    const glsl = floc.glsl ?? "";
+    expect(glsl).toContain("float sc = illFlocBandD.z < 1.0 ?");
+    expect(glsl).toContain("illFlocBandE(rp, xy, r, illFlocBandA.y, illFlocBandA.w, 0.0, sc)");
+    expect(glsl).toContain("if (illFlocBandD.w > 0.0) e = max(e,");
   });
 });
