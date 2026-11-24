@@ -229,9 +229,9 @@ const CONTROLS: readonly IllControl[] = [
   { key: "grainReach", label: "grain reach", min: 0.3, max: 1.5, step: 0.01, unit: "× outer", default: 1, perTemplate: { ngc_4414: 0.8 }, about: "How far the light's grain and puffs reach, as a multiple of the network's outer radius (they fade over its outer quarter): the disc's rim left smooth. Illustrative." },
   { key: "wispAngle", label: "lane wisp angle", min: 0, max: 80, step: 1, unit: "°", default: 35, about: "The wisps' angle to their lane, degrees. Illustrative." },
   // S109 (builder B): the disc's radial fall-off and the dust's broad bands, drawn in the march (uniforms, no rebuild).
-  { key: "fall", label: "disc fall-off", min: 0, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2.0}, about: "All the disc's light (the field's and the points') dimmed by this many stops from the fall-off's start to its end radius, smoothly: the outer disc fainter than the inner; 0 none. (S109) Illustrative." },
-  { key: "fallIn", label: "fall-off from", min: 0, max: 20, step: 0.1, unit: "kpc", default: 1, perTemplate: { ngc_4414: 7}, about: "Where the disc's fall-off starts, kpc. (S109) Illustrative." },
-  { key: "fallOut", label: "fall-off to", min: 0.5, max: 30, step: 0.1, unit: "kpc", default: 10, perTemplate: { ngc_4414: 17 }, about: "Where the disc's fall-off is full, kpc (beyond it the fall-off holds). (S109) Illustrative." },
+  { key: "fall", label: "disc fall-off", min: 0, max: 8, step: 0.05, unit: "stops", default: 0, perTemplate: { milky_way: 0, ngc_4414: 2.5}, about: "All the disc's light (the field's and the points') dimmed by this many stops from the fall-off's start to its end radius, smoothly: the outer disc fainter than the inner; 0 none. (S109) Illustrative." },
+  { key: "fallIn", label: "fall-off from", min: 0, max: 20, step: 0.1, unit: "kpc", default: 1, perTemplate: { ngc_4414: 6}, about: "Where the disc's fall-off starts, kpc. (S109) Illustrative." },
+  { key: "fallOut", label: "fall-off to", min: 0.5, max: 30, step: 0.1, unit: "kpc", default: 10, perTemplate: { ngc_4414: 14 }, about: "Where the disc's fall-off is full, kpc (beyond it the fall-off holds). (S109) Illustrative." },
   { key: "fallCurve", label: "fall-off curve", min: 0.3, max: 3, step: 0.01, unit: "power", default: 1, perTemplate: { ngc_4414: 0.7}, about: "The fall-off's shape between its radii: below 1 it drops early, above 1 late. (S109) Illustrative." },
   { key: "fallPoints", label: "points fall-off", min: 0, max: 1, step: 0.01, unit: "", default: 1, about: "The share of the fall-off the points (star clouds, stars, knots) take. (S109) Illustrative." },
   { key: "dustArms", label: "dust arms", min: 0, max: 6, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 4 }, about: "The plane style's drawn dust gathered into this many broad spiral bands (log-spiral arms of the viewer's own), clear zones of starlight between; 0 none (the dust as drawn). Display-only structure of the viewer's own (S109). Illustrative." },
@@ -290,19 +290,42 @@ const CONTROLS: readonly IllControl[] = [
   { key: "lumpTo", label: "lumps full to", min: 0.5, max: 25, step: 0.1, unit: "kpc", default: 6, perTemplate: { ngc_4414: 6 }, about: "The lumps are at their brightest out to this radius, kpc, and fall to the outer share by 1.8 of it. (S110) Illustrative." },
   { key: "lumpRim", label: "outer lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0}, about: "The lumps' brightness in the outer disc as a share of the ring's. (S110) Illustrative." },
   { key: "lumpGrain", label: "grain in the lumps", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "How far the light's fine grain is taken out of the lumps (1 none inside them: smooth lumps); 0 the grain as drawn. (S110) Illustrative." },
+  // S111 (B): the lumps as CLOUDS - soft gaussian clumps of many sizes and strengths, merging into banks, with smaller
+  // knots and bright cores inside (no threshold: no torn edge). Drawn in the march (uniforms, no rebuild).
+  { key: "lumpForm", label: "lumps as clouds", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0}, about: "0: S110's lumps (a thresholded noise field, smooth inside); 1: soft clumps of many sizes and strengths merging into banks, each with knots and bright cores inside. (S111) Illustrative." },
+  { key: "lumpKnots", label: "knots in the clouds", min: 0, max: 1, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.6 }, about: "How far a cloud's light is broken into smaller knots a third of its size; 0 a smooth clump. (S111) Illustrative." },
+  { key: "lumpCores", label: "cores in the clouds", min: 0, max: 3, step: 0.01, unit: "", default: 0.5, perTemplate: { ngc_4414: 0.5 }, about: "Bright cores a ninth of a cloud's size inside it, as a share of its light; 0 none. (S111) Illustrative." },
+  // S111 (B): the dust gathered into BLOTCHES - pieces of many sizes and weights drawn out a little along the spiral,
+  // the mesh dark in them and faint threads between - in place of the narrow lanes' regular grooves. Drawn in the march.
+  { key: "blot", label: "dust in blotches", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "How far the drawn dust gathers into blotches of many sizes (pieces drawn out along the spiral, the mesh dark in them, faint threads between) in place of the narrow lanes or arcs; 0 as drawn. Display-only structure of the viewer's own (S111). Illustrative." },
+  { key: "blotSize", label: "blotch size", min: 100, max: 4000, step: 10, unit: "pc", default: 900, perTemplate: { ngc_4414: 700 }, about: "The largest blotches' cell, parsecs (a piece is between a third and nine tenths of it across, longer along the spiral); smaller ones at a third and a ninth of it. (S111) Illustrative." },
+  { key: "blotCover", label: "blotch cover", min: 0, max: 1, step: 0.01, unit: "", default: 0.45, perTemplate: { ngc_4414: 0.5 }, about: "The share of cells holding a blotch: higher, more dust and fewer clear gaps. (S111) Illustrative." },
+  { key: "blotStretch", label: "blotch stretch", min: 1, max: 2.5, step: 0.05, unit: "×", default: 1.8, perTemplate: { ngc_4414: 2.2 }, about: "How many times longer along the spiral than across a blotch is (loosely wound). (S111) Illustrative." },
+  { key: "blotFill", label: "blotch fill", min: 0, max: 3, step: 0.01, unit: "", default: 0.6, perTemplate: { ngc_4414: 0.6 }, about: "A soft dark brown filling a blotch's body, deepest where it is thickest, in full threads; 0 the mesh alone. (S111) Illustrative." },
+  { key: "blotReach", label: "blotches reach", min: 0, max: 20, step: 0.1, unit: "kpc", default: 0, perTemplate: { ngc_4414: 2.0}, about: "The blotches (and the lanes' smooth veil giving way to them) are full inside 0.7 of this radius and gone at it, kpc, the lanes as drawn outside; 0 everywhere. (S111) Illustrative." },
+  { key: "blotEdge", label: "blotch edge", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 1 }, about: "How firm a blotch is: 0 a soft sum fading out, 1 a dark body to a soft rim with clear disc between the pieces. (S111) Illustrative." },
+  { key: "blotFine", label: "small blotches", min: 0, max: 2, step: 0.01, unit: "", default: 1, perTemplate: { ngc_4414: 1.2 }, about: "The smaller blotches (a third and a ninth of the size) as a share of the largest; 0 none. (S111) Illustrative." },
+  { key: "lumpVary", label: "cloud strength spread", min: 0, max: 1, step: 0.01, unit: "", default: 0.7, perTemplate: { ngc_4414: 0.7 }, about: "How far the clouds differ in brightness one from the next; 0 all alike. (S111) Illustrative." },
   // S110 (B2): the disc's hue - red taken off the disc's light outside the nucleus, so a salmon-orange reads yellow-tan.
   { key: "tanHue", label: "disc yellow", min: 0, max: 0.3, step: 0.005, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0.05}, about: "The share of red taken off the disc's light (green given half of it, blue a tenth), from the yellow's radius outward: a salmon disc toward a yellow-tan; 0 none. (S110) Colour for appearance." },
   { key: "tanFrom", label: "disc yellow from", min: 0, max: 5, step: 0.05, unit: "kpc", default: 0.6, perTemplate: { ngc_4414: 0.6 }, about: "The yellow comes in over this radius, kpc (from half of it): the nucleus keeps its own colour. (S110) Colour for appearance." },
   // S110 (B2): the sparks (flocClouds.ts buildSparks, CloudsLayer.tsx) - a sparse tier of single sharp bright points.
-  { key: "sparkCount", label: "sparks", min: 0, max: 2000, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0 }, about: "How many single sharp bright points (blue-white stars and young clusters) lie over the disc, most in its outer zone; 0 none. Display-only, of the viewer's own (S110). Illustrative." },
+  { key: "sparkCount", label: "sparks", min: 0, max: 2000, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 0}, about: "How many single sharp bright points (blue-white stars and young clusters) lie over the disc, most in its outer zone; 0 none. Display-only, of the viewer's own (S110). Illustrative." },
   { key: "sparkGain", label: "spark brightness", min: 10, max: 1e7, step: 0.01, log: true, unit: "L☉", default: 30000, perTemplate: { ngc_4414: 30000 }, about: "The faintest spark's light, L☉ over the white point (the field's scale, with the exposure). (S110) Illustrative." },
-  { key: "sparkRange", label: "spark range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 30, perTemplate: { ngc_4414: 30 }, about: "The brightest spark over the faintest. (S110) Illustrative." },
+  { key: "sparkRange", label: "spark range", min: 1, max: 1000, step: 0.01, log: true, unit: "×", default: 30, perTemplate: { ngc_4414: 4 }, about: "The brightest spark over the faintest. (S110) Illustrative." },
   { key: "sparkSlope", label: "spark slope", min: 0.3, max: 4, step: 0.05, unit: "", default: 1.2, perTemplate: { ngc_4414: 1.2 }, about: "The sparks' brightness law's index: smaller, more bright ones. (S110) Illustrative." },
   { key: "sparkSize", label: "spark size", min: 0.3, max: 3, step: 0.05, unit: "px", default: 0.8, perTemplate: { ngc_4414: 0.8 }, about: "A spark's sprite, pixels: small, a sharp point. (S110) Illustrative." },
-  { key: "sparkFrom", label: "sparks from", min: 0.2, max: 20, step: 0.1, unit: "kpc", default: 5, perTemplate: { ngc_4414: 5 }, about: "The outer zone the most of the sparks lie in starts here, kpc. (S110) Illustrative." },
-  { key: "sparkTo", label: "sparks to", min: 1, max: 25, step: 0.1, unit: "kpc", default: 12, perTemplate: { ngc_4414: 12 }, about: "The sparks' outer zone ends here, kpc. (S110) Illustrative." },
+  { key: "sparkFrom", label: "sparks from", min: 0.2, max: 20, step: 0.1, unit: "kpc", default: 5, perTemplate: { ngc_4414: 2.5 }, about: "The outer zone the most of the sparks lie in starts here, kpc. (S110) Illustrative." },
+  { key: "sparkTo", label: "sparks to", min: 1, max: 25, step: 0.1, unit: "kpc", default: 12, perTemplate: { ngc_4414: 7 }, about: "The sparks' outer zone ends here, kpc. (S110) Illustrative." },
   { key: "sparkInner", label: "inner sparks", min: 0, max: 1, step: 0.01, unit: "", default: 0.15, perTemplate: { ngc_4414: 0.15 }, about: "The share of the sparks inside the outer zone (cream-white there). (S110) Illustrative." },
   { key: "sparkCap", label: "spark brightness cap", min: 0, max: 5000, step: 0.1, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "The brightest a spark may be (its largest channel in the frame's linear light, before the bloom): bright sparks stay sharp points, not the bloom's soft discs; 0 none. (S110) Illustrative." },
+  // S111 (B): the sparks drawn sharp (CloudsLayer.tsx SPARK_VERTEX): a tight core at a given peak, near the bloom's
+  // threshold, so the bloom does not spread it into a disc; a faint halo and cross of their own.
+  { key: "sparkSharp", label: "sharp sparks", min: 0, max: 1, step: 1, unit: "", default: 0, perTemplate: { milky_way: 0, ngc_4414: 1 }, about: "0: the sparks drawn as S110's points (the spark brightness, size and cap); 1: as sharp cores of a given peak brightness with a faint halo and cross of their own, which the bloom does not spread. (S111) Illustrative." },
+  { key: "sparkPeak", label: "sharp spark peak", min: 0.01, max: 100, step: 0.01, log: true, unit: "", default: 1, perTemplate: { ngc_4414: 5 }, about: "The faintest sharp spark's peak, in the frame's linear light before the bloom (the brightest is the spark range times it): near the bloom's threshold a spark stays a point. (S111) Illustrative." },
+  { key: "sparkCore", label: "sharp spark core", min: 0.2, max: 3, step: 0.05, unit: "px", default: 0.6, perTemplate: { ngc_4414: 0.5 }, about: "A sharp spark's core, its gaussian radius in pixels of a 1024 px frame. (S111) Illustrative." },
+  { key: "sparkHalo", label: "sharp spark halo", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "A faint halo of the spark's own, three cores wide; 0 none. (S111) Illustrative." },
+  { key: "sparkCross", label: "sharp spark cross", min: 0, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { ngc_4414: 0 }, about: "A faint four-ray cross along the frame's axes (the photograph's brightest stars have one); 0 none. (S111) Illustrative." },
 ];
 
 const DEFAULTS: Readonly<Record<string, number>> = Object.fromEntries(CONTROLS.map((c) => [c.key, c.default]));
@@ -443,6 +466,26 @@ export function cloudThin(p: IllParams): { key: number[]; thin: ((r: number) => 
   return { key: [stops, from, to, curve], thin };
 }
 
+/**
+ * S111 (B): the disc's fall-off on the points (the GLSL's illFlocPts: the points' share `fallPoints` of its stops), as a
+ * function of radius for the sharp sparks' colours, and the values it is built from (the layer's memo key).
+ */
+export function sparkFallOf(p: IllParams): { key: number[]; at: (r: number) => number } {
+  const v = (k: string) => p[k] ?? DEFAULTS[k];
+  const stops = v("fall") * v("fallPoints");
+  const from = v("fallIn");
+  const to = Math.max(v("fallOut"), from + 0.01);
+  const curve = v("fallCurve");
+  if (!(stops > 0)) return { key: [0], at: () => 1 };
+  return {
+    key: [stops, from, to, curve],
+    at: (r: number) => {
+      const t = Math.min(1, Math.max(0, (r - from) / (to - from)));
+      return 2 ** (-stops * (t * t * (3 - 2 * t)) ** curve);
+    },
+  };
+}
+
 /** S109 (B): the fall-off's and the bands' uniforms (floc.ts GLSL illFlocFallAt, illFlocBand). */
 export function fallBandUniforms(p: IllParams): Record<string, number[]> {
   const v = (k: string) => p[k] ?? DEFAULTS[k];
@@ -466,6 +509,11 @@ export function fallBandUniforms(p: IllParams): Record<string, number[]> {
     illFlocLumpA: [v("style") >= 0.5 ? v("lumps") : 0, Math.max(v("lumpSize"), 10) * 1e-3, v("lumpCover"), Math.max(v("lumpSoft"), 0.005)],
     illFlocLumpB: [v("lumpWarp"), v("lumpBanks"), v("lumpNear"), v("lumpWhite")],
     illFlocLumpC: [v("lumpFrom"), Math.max(v("lumpTo"), 0.1), v("lumpRim"), v("lumpGrain")],
+    // S111 (B): the clouds' form and their inner texture.
+    illFlocLumpD: [v("lumpForm"), v("lumpKnots"), v("lumpCores"), v("lumpVary")],
+    // S111 (B): the dust's blotches (the plane style's only).
+    illFlocBlot: [v("style") >= 0.5 ? v("blot") : 0, Math.max(v("blotSize"), 50) * 1e-3, v("blotCover"), Math.min(2.5, Math.max(1, v("blotStretch")))],
+    illFlocBlotB: [v("blotFill"), v("blotFine"), v("blotEdge"), v("blotReach")],
     // The hue is the plane style's, as the lumps are: on another style the slider draws nothing (S110 review: it moved
     // the Milky Way's frame).
     illFlocTan: [v("style") >= 0.5 ? v("tanHue") : 0, v("tanFrom"), 0, 0],
@@ -854,6 +902,28 @@ export const floc: IllFeature = {
   // 1 inside a lump (a gentle dome, smooth inside, the edge as soft as illFlocLumpA.w). The plane warped twice over (a
   // lump and three lumps across), then four octaves of value noise, each turned off the lattice's axes, and a broad
   // octave that sets the cover by region (banks and gaps): no lattice, no one size.
+  // S111 (B): x the clouds' form (0 S110's thresholded lumps, 1 soft clumps with knots inside), y the knots' strength
+  // inside a clump, z the bright cores', w how far the clumps differ in strength one from the next.
+  uniform vec4 illFlocLumpD;
+  // S111 (B): a sum of soft gaussian clumps about q (in cells): one clump in a cell with the chance cov, jittered, each
+  // its own radius (0.2 to 0.45 of a cell: none reaches past the cells read) and strength (illFlocLumpD.w its spread); k the set's offset.
+  float illFlocCloudSum(vec2 q, float cov, float k) {
+    vec2 c0 = floor(q);
+    float s = 0.0;
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        vec2 c = c0 + vec2(float(i), float(j));
+        float h0 = illFlocHash(c + vec2(k, 0.37 * k));
+        if (h0 >= cov) continue;
+        vec2 h = illFlocMeshPt(c, k);
+        float rad = 0.2 + 0.25 * fract(h.x * 5.31 + h.y * 2.17);
+        vec2 d = c + h - q;
+        float b = 1.0 - illFlocLumpD.w + illFlocLumpD.w * fract(h.x * 9.73 + h.y * 4.41 + h0 * 3.3);
+        s += b * exp(-dot(d, d) / (rad * rad));
+      }
+    }
+    return s;
+  }
   float illFlocLumpField(vec2 xy, float dl) {
     // The lumps move with a network seed other than its default, as the star clouds do (illFlocScC.z, 0 at the
     // default): a rerolled galaxy's lumps lie elsewhere (S110 review: they sat still under a reroll).
@@ -870,7 +940,74 @@ export const floc: IllFeature = {
     float bank = illFlocLumpB.y * 0.16 * (illFlocVN(0.12 * q + vec2(13.7, 29.1)) - 0.5) * 2.0;
     float lv = mix(0.64, 0.4, illFlocLumpA.z) - bank - dl;
     float l = smoothstep(lv, lv + illFlocLumpA.w, f);
-    return l * (0.6 + 0.4 * smoothstep(lv, lv + 0.15, f));
+    if (illFlocLumpD.x < 0.5) return l * (0.6 + 0.4 * smoothstep(lv, lv + 0.15, f));
+    // S111 (B): CLOUDS in place of the thresholded field - soft gaussian clumps of many sizes and strengths (no
+    // threshold, so no torn edge), merging where they lie close into banks, each carrying smaller knots and a few
+    // bright cores inside (a cascade of the same at a third and a ninth of the size, multiplied into the clump). The
+    // cover (the share of cells holding a clump) follows the banks and the lanes' margins as the threshold did.
+    float cov = clamp(0.25 + 0.6 * illFlocLumpA.z + 1.5 * (bank + dl), 0.02, 0.98);
+    // Three sizes of clump (twice, once and half the scale), so the clumps differ several-fold in size and merge.
+    float c1 = 0.9 * illFlocCloudSum(0.5 * q + vec2(7.1, 3.9), 0.7 * cov, 4.7) + illFlocCloudSum(q, cov, 1.3) + 0.6 * illFlocCloudSum(mat2(0.6, -0.8, 0.8, 0.6) * q * 2.0 + vec2(1.9, 6.3), cov, 2.3);
+    float body = 1.0 - exp(-1.6 * c1);
+    // The outline eaten by the field's fine octaves (f): a bumpy, cauliflower edge, still soft.
+    body *= smoothstep(0.05, 0.5, 0.8 * body + 0.9 * (f - 0.5));
+    if (body < 0.003) return 0.0;
+    float kn = illFlocCloudSum(mat2(0.8, 0.6, -0.6, 0.8) * q * 3.1 + vec2(5.3, 1.1), 0.75, 7.9);
+    float cores = illFlocCloudSum(mat2(0.28, -0.96, 0.96, 0.28) * q * 9.3 + vec2(2.1, 8.7), 0.35, 13.3);
+    float inner = mix(1.0, 0.35 + 1.1 * (1.0 - exp(-1.4 * kn)), illFlocLumpD.y);
+    return body * inner + illFlocLumpD.z * body * cores * cores;
+  }
+  // S111 (B): the dust's blotches - A: x their share of the gate (0 off), y the largest pieces' size (kpc), z the cover
+  // (the share of cells holding a piece), w how many times longer along the spiral than across a piece is; B: x the
+  // soft dark fill of a piece's body (in full threads), y the smaller pieces' share (a third and a ninth of the size).
+  uniform vec4 illFlocBlot;
+  uniform vec4 illFlocBlotB;
+  // One octave of pieces about xy (kpc) for cells of cell kpc: soft gaussian pieces drawn out along the spiral's
+  // heading t (S times), one in a cell with the chance cov, each its own size and weight (some heavy, most light).
+  float illFlocBlotSum(vec2 xy, vec2 t, float cell, float S, float cov, float k) {
+    vec2 c0 = floor(xy / cell);
+    float s = 0.0;
+    for (int i = -2; i <= 2; i++) {
+      for (int j = -2; j <= 2; j++) {
+        vec2 c = c0 + vec2(float(i), float(j));
+        float h0 = illFlocHash(c + vec2(k, 0.53 * k));
+        if (h0 >= cov) continue;
+        vec2 h = illFlocMeshPt(c, k);
+        vec2 d = (c + h) * cell - xy;
+        vec2 q = vec2(dot(d, t) / S, d.y * t.x - d.x * t.y);
+        float rad = cell * (0.18 + 0.32 * fract(h.x * 5.31 + h.y * 2.17));
+        float w = 0.25 + 0.75 * pow(fract(h.x * 9.73 + h.y * 4.41 + h0 * 3.3), 2.0);
+        s += w * exp(-dot(q, q) / (rad * rad));
+      }
+    }
+    return s;
+  }
+  // The blotches' level at rp in [0, 1): three octaves (the largest, a third, a ninth), the plane bent a little so no
+  // piece is a clean ellipse, moved with a rerolled network seed (illFlocScC.z, 0 at the default).
+  float illFlocBlotAt(vec2 rp) {
+    vec2 xy = rp.x * vec2(cos(rp.y), sin(rp.y));
+    float L = illFlocBlot.y;
+    vec2 wq = xy / L + vec2(illFlocScC.z, 0.61 * illFlocScC.z);
+    xy += 0.35 * L * (vec2(illFlocVN(wq + vec2(3.3, 7.9)), illFlocVN(wq + vec2(19.1, 2.2))) - 0.5);
+    xy += vec2(illFlocScC.z, 0.61 * illFlocScC.z);
+    float p = illFlocMeshB.z;
+    vec2 t = vec2(sin(p) * cos(rp.y) - cos(p) * sin(rp.y), sin(p) * sin(rp.y) + cos(p) * cos(rp.y));
+    float S = max(illFlocBlot.w, 1.0);
+    float s = illFlocBlotSum(xy, t, L, S, illFlocBlot.z, 2.9);
+    if (illFlocBlotB.y > 0.0) {
+      s += illFlocBlotB.y * 0.8 * illFlocBlotSum(xy, t, 0.36 * L, S, illFlocBlot.z, 6.1);
+      s += illFlocBlotB.y * 0.6 * illFlocBlotSum(xy, t, 0.13 * L, S, illFlocBlot.z, 9.7);
+    }
+    // illFlocBlotB.z: the pieces' edge - 0 the soft sum as it is, 1 a piece drawn firm to a soft rim (clear disc
+    // between the pieces, a dark body inside).
+    float m = 1.0 - exp(-1.5 * s);
+    if (illFlocBlotB.z <= 0.0) return m;
+    // The firm piece's outline eaten by two fine octaves (a tenth and a twenty-fifth of the size): ragged, knotty edges
+    // and holes, not smooth ovals.
+    float e = 0.65 * illFlocVN(xy / (0.1 * L) + vec2(23.1, 4.4)) + 0.35 * illFlocVN(xy / (0.04 * L) + vec2(1.7, 31.9)) - 0.5;
+    // Inside, the body knotted (darker knots, thinner places a twentieth of the size across), not a flat wash.
+    float kn = 0.55 + 0.45 * smoothstep(0.2, 0.8, illFlocVN(xy / (0.05 * L) + vec2(9.4, 17.2)));
+    return mix(m, smoothstep(0.3, 0.7, m + 0.7 * e) * kn, illFlocBlotB.z);
   }
   vec3 illFlocVeil(vec2 rp) {
     vec3 veil = vec3(1.0);
@@ -880,6 +1017,16 @@ export const floc: IllFeature = {
     bool lanes = illFlocStyle > 0.5 && illFlocLaneA.x > 0.5 && illFlocGate.x > 0.0;
     vec2 lane = lanes ? illFlocLanes(rp) : vec2(0.0);
     float gate = lanes ? mix(1.0, illFlocGate.y + (illFlocGate.w - illFlocGate.y) * lane.x, illFlocGate.x) : (illFlocStyle > 0.5 ? illFlocGateAt(rp) : 1.0);
+    // S111 (B): the blotches - the dust gathered into pieces of many sizes (illFlocBlotAt) in place of the lanes' or
+    // arcs' gate, by the share illFlocBlot.x: no regular grooves.
+    float blot = 0.0;
+    // bs: the blotches' share here - full inside 0.7 of their reach (illFlocBlotB.w, kpc; 0 everywhere), none beyond it;
+    // the lanes' smooth veil (the regular grooves) gives way to them as far.
+    float bs = illFlocBlot.x > 0.0 && illFlocStyle > 0.5 && illFlocGate.x > 0.0 ? illFlocBlot.x * (illFlocBlotB.w > 0.0 ? 1.0 - smoothstep(0.7 * illFlocBlotB.w, illFlocBlotB.w, rp.x) : 1.0) : 0.0;
+    if (bs > 0.0 && rp.x < illFlocRingA.w) {
+      blot = illFlocBlotAt(rp);
+      gate = mix(gate, mix(1.0, illFlocGate.y + (illFlocGate.w - illFlocGate.y) * blot, illFlocGate.x), bs);
+    }
     // The ink: the grains' own depth per magnitude in each channel, its spread about the middle channel's times the
     // redness (0 grey, 1 the grains' own).
     float av = illFlocDepth * illFlocInk * illFlocShape(map.x);
@@ -891,12 +1038,15 @@ export const floc: IllFeature = {
         if (illFlocCore.y > 0.0 && mesh > 0.0) {
           vec2 cq = rp.x * vec2(cos(rp.y), sin(rp.y)) / illFlocCore.z;
           float cn = 0.65 * illFlocVN(cq + vec2(31.7, 5.3)) + 0.35 * illFlocVN(2.7 * cq + vec2(2.2, 47.1));
-          core = smoothstep(0.78 - 0.4 * illFlocCore.y, 0.9 - 0.4 * illFlocCore.y, cn) * smoothstep(0.3, 0.8, lane.x);
+          // S111 (B): the cores on the blotches' bodies as much as on the lanes' crests (by the blotches' share).
+          core = smoothstep(0.78 - 0.4 * illFlocCore.y, 0.9 - 0.4 * illFlocCore.y, cn) * mix(smoothstep(0.3, 0.8, lane.x), smoothstep(0.2, 0.7, blot), bs);
         }
         mesh *= mix(illFlocCore.x, illFlocCore.w, core);
       }
       av += illFlocDepth * illFlocInk * mesh;
     }
+    // S111 (B): a blotch's body filled with a soft dark brown, deepest where it is thickest.
+    if (blot > 0.0 && illFlocBlotB.x > 0.0) av += illFlocDepth * illFlocInk * illFlocBlotB.x * bs * illFlocRingAt(rp) * blot * blot / max(gate, 0.05);
     if (illFlocStyle > 0.5 && av > 0.0) av *= gate;
     // S109 (B): the broad bands (x the dust's multiplier; z the clear zone's weight, where the light's puffs gather).
     vec3 band = illFlocStyle > 0.5 ? illFlocBand(rp) : vec3(1.0, 0.0, 0.0);
@@ -909,7 +1059,7 @@ export const floc: IllFeature = {
     if (lanes && (illFlocLaneC.z > 0.0 || illFlocLaneC.w > 0.0) && rp.x < illFlocRingA.w) {
       float ring = illFlocRingAt(rp);
       // The veil reaches past the filaments into the margins, fading: the lane's edge feathered.
-      av += illFlocDepth * illFlocInk * illFlocLaneC.z * ring * (lane.x + 0.6 * lane.y);
+      av += illFlocDepth * illFlocInk * illFlocLaneC.z * (1.0 - bs) * ring * (lane.x + 0.6 * lane.y);
       if (illFlocLaneC.w > 0.0 && lane.y * ring > 0.02) {
         float p = illFlocLaneD.w + illFlocLaneD.z;
         vec2 t = vec2(sin(p) * cos(rp.y) - cos(p) * sin(rp.y), sin(p) * sin(rp.y) + cos(p) * cos(rp.y));
@@ -974,7 +1124,7 @@ export const floc: IllFeature = {
         // Fading out over the outer fifth of the network's radius: the disc's faint rim is not broken into puffs.
         float amt = bandLit * illFlocGrain * (1.0 + illFlocGrainNear * smoothstep(0.05, 0.35, side)) * bare * (1.0 - smoothstep(0.75 * illFlocGrainR, illFlocGrainR, rp.x));
         if (illFlocScA.w > 0.0 && illFlocScA.x > 0.0) amt *= mix(1.0, 1.8 * sc.y, illFlocScA.w);
-        if (illFlocLumpC.w > 0.0) amt *= 1.0 - illFlocLumpC.w * lump;
+        if (illFlocLumpC.w > 0.0) amt *= 1.0 - illFlocLumpC.w * min(lump, 1.0);
         veil *= max(1.0 + amt * (puff - 0.3 * illFlocLitDim.x), 0.0);
         float peak = illFlocKnots * amt * smoothstep(0.8, 0.95, n);
         veil *= vec3(1.0) + peak * mix(vec3(1.0), vec3(0.78, 0.98, 1.35), illFlocBlue);

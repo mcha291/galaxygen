@@ -300,11 +300,11 @@ export const arms: IllFeature = {
       about: "The arms' shaping starts at this multiple of the bar's half-length (the published bar_half_length), so the bar and the bulge are never brightened. Illustrative.",
     },
     {
-      key: "inner", label: "inner start", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, perTemplate: { milky_way: 1, ngc_4414: 3 },
+      key: "inner", label: "inner start", min: 0, max: 10, step: 0.1, unit: "kpc", default: 2, perTemplate: { milky_way: 0, ngc_4414: 3 },
       about: "The arms' shaping starts no nearer the centre than this, kpc (an unbarred disc's start). Illustrative.",
     },
     {
-      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 2.5, ngc_4414: 2 },
+      key: "fadewidth", label: "fade-in width", min: 0, max: 6, step: 0.1, unit: "kpc", default: 1, perTemplate: { milky_way: 0.5, ngc_4414: 2 },
       about: "Over how many kpc the arms' shaping fades in from its start. Illustrative.",
     },
     {
@@ -312,11 +312,11 @@ export const arms: IllFeature = {
       about: "How far past the ring where the model's arms fade out their pattern is carried outward along the arms' own measured winding, kpc, so the arms reach the disc's edge; 0 the model's end. Illustrative.",
     },
     {
-      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.7, ngc_4414: 0.05 },
+      key: "blue", label: "arm blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.4, perTemplate: { milky_way: 0.45, ngc_4414: 0.05 },
       about: "The arms' light tinted toward blue-white by this share. Illustrative.",
     },
     {
-      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3 },
+      key: "cyan", label: "arm cyan", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.15 },
       about: "The arms' tint and the sparkle's colour turned from blue-white toward cyan-teal by this share; 0 the blue-white. Colour for appearance (S107).",
     },
     {
@@ -448,7 +448,7 @@ export const arms: IllFeature = {
       about: "The outermost radius of the sparkle, kpc, its density tapered to nothing over the outer 30 % (so no lone points stand beyond the fading disc). Illustrative.",
     },
     {
-      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0.1, ngc_4414: 0.15 },
+      key: "sparkleblue", label: "sparkle blue", min: 0, max: 1.5, step: 0.01, unit: "", default: 0.7, perTemplate: { milky_way: 0, ngc_4414: 0.15 },
       about: "The sparkle's colour from white toward blue-white by this share. Illustrative.",
     },
     {
@@ -472,7 +472,7 @@ export const arms: IllFeature = {
       about: "How many short spurs leave the skeleton's arms on their outer sides, more open than the arm. Illustrative (S106).",
     },
     {
-      key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.75},
+      key: "skelpitch", label: "skeleton pitch", min: 0.3, max: 2, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.95},
       about: "A multiplier on the arm pieces' pitch (their length-weighted median) for the skeleton's winding: below 1 more turns before the edge. Illustrative (S106).",
     },
     {
@@ -500,7 +500,7 @@ export const arms: IllFeature = {
       about: "The outer share of each arm's length (in ln R) over which it fades and breaks into flecks. Illustrative (S106).",
     },
     {
-      key: "skelstart", label: "arms' start", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.95},
+      key: "skelstart", label: "arms' start", min: 0.3, max: 2, step: 0.01, unit: "× bar", default: 1, perTemplate: { milky_way: 0.6},
       about: "Where the major arms leave the bar, times its published half-length (kpc without a bar). Illustrative (S106).",
     },
     {
@@ -524,15 +524,15 @@ export const arms: IllFeature = {
       about: "The skeleton's pitch grows outward as (R / the arms' start) to this power, so successive windings separate instead of running round as rings; 0 a constant pitch. Illustrative (S107).",
     },
     {
-      key: "skelopen", label: "leave the bar", min: -0.95, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.7},
+      key: "skelopen", label: "leave the bar", min: -0.95, max: 3, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.3},
       about: "The major arms' pitch at the bar's ends multiplied by 1 + this, easing back over the length below, so each major leaves its bar end at a clear angle; below 0 (S109) the majors hug the bar instead - they leave its ends at a lower pitch and run round it close to its ends before opening; 0 none. Illustrative (S107).",
     },
     {
-      key: "skelopenturns", label: "leave-the-bar length", min: 0.05, max: 1.5, step: 0.005, unit: "turn", default: 0.175, perTemplate: { milky_way: 0.2},
+      key: "skelopenturns", label: "leave-the-bar length", min: 0.05, max: 1.5, step: 0.005, unit: "turn", default: 0.175, perTemplate: { milky_way: 0.3},
       about: "Over how much of a turn (at the skeleton's base pitch) the majors' changed pitch at the bar's ends eases back (the slider above): longer keeps a hugging arm round the bar for longer. Illustrative (S109).",
     },
     {
-      key: "skeloval", label: "oval round the bar", min: 0.3, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 0.55},
+      key: "skeloval", label: "oval round the bar", min: 0.3, max: 1, step: 0.01, unit: "", default: 1, perTemplate: { milky_way: 1},
       about: "Near the bar the whole skeleton (glow, grain, lanes, regions) squashed across the bar's axis to this share: the arms round the bar become an oval along it, through its ends and closer to its long sides; 1 none. The viewer's own drawing. Illustrative (S109).",
     },
     {
@@ -572,7 +572,7 @@ export const arms: IllFeature = {
       about: "The breaks and flecks at the arms' outer ends by this share; 0 each arm fades out whole. Illustrative (S109).",
     },
     {
-      key: "skelwidthgrow", label: "width growth", min: -0.5, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3},
+      key: "skelwidthgrow", label: "width growth", min: -0.5, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: -0.3},
       about: "The skeleton's ridge width grows outward as (R / 8 kpc) to this power (held within 0.4-2.5 of the ridge width), so the arms keep one share of their spacing, which grows outward; 0 one width throughout. Illustrative (S109).",
     },
     {
@@ -652,15 +652,15 @@ export const arms: IllFeature = {
       about: "The bar core's gaussian radius, times the drawn bar's half-length. Illustrative (S106).",
     },
     {
-      key: "skelhold", label: "haze inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.5},
+      key: "skelhold", label: "haze inside the arms", min: 0, max: 1, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0},
       about: "On the skeleton, the disc inside the first arm dimmed as the disc between the arms is (the ring mean the light is kept by held inward from where the arms begin) by this share; 0 undimmed there - a pale disc round the bar ending in a circle where the arms start. Illustrative (S106).",
     },
     {
-      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 0.6},
+      key: "skelcore", label: "light inside the arms", min: 0.05, max: 1, step: 0.01, unit: "×", default: 1, perTemplate: { milky_way: 1},
       about: "On the skeleton, the inner disc's starlight round the bar (off the bar's ellipse) taken to this share, fully inside the radius below and smoothly less out to the next, so the ground about the bar is the disc's darkest; 1 none. Illustrative (S106).",
     },
     {
-      key: "skelcoreblue", label: "inner slate", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 1.1 },
+      key: "skelcoreblue", label: "inner slate", min: 0, max: 1.5, step: 0.01, unit: "", default: 0, perTemplate: { milky_way: 0.3 },
       about: "The same inner zone (round the bar, off its ellipse, over the same ramp) tinted toward a slate blue by this share; 0 none. Colour for appearance (S106).",
     },
     {

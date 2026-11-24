@@ -2522,3 +2522,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   hides. (S110, D281)
 - [close] **Tone picked by the lead from its own sheets converged in one round per question** (six sheets a template
   in all, two to three minutes a round); no judged pass was sent back this session. (S110, D281)
+
+## From S111 (BUILD_VIII rows 130-132, a lean session: four Opus agents - two builders, a reviewer and a documents' writer; the Fable lead and gate)
+
+- [viewer] **A timing taken while another capture runs is not a measurement.** A builder reported the worker's cost
+  doubled (the arms map 1.25 to 1.9 s, main-thread tasks of 54 to 83 ms); on a quiet machine the lead measured S110's
+  cost. Time the worker alone. (S111, D282)
+- [viewer] **Switch-off captures found a cause again and disproved two guesses in one session.** The grooves were the
+  narrow lanes' gate and veil, not the dust bands; the seam is not an azimuth wrap (the field is Cartesian); the outer
+  blue is not the fall-off driving `outerBlue`. Write a guess down as a guess. (S111, D282)
+- [viewer] **Look for the control before building one.** The largest step in the Milky Way's drawing since S109 was
+  sixteen default values of existing controls and no code. (S111, D282)
+- [viewer] **A slider that turns a colour the wrong way is the wrong tool.** A redder pink by `magenta` went
+  orange-salmon at the close stand; the builder said so and left it rather than ship the nearest wrong colour. (S111,
+  D282)
+- [viewer] **Replacing a texture that read wrong does not make the new one right.** The record grooves went, and the
+  blotches in their place read as rust streaks brushed along the spiral; at the close stand they smeared the fine grain
+  S110 had won back. Read the replacement at both ranges beside the last session's, not only the defect's absence; the
+  cure was to keep the new texture only where the old defect was (the blotches inside 2 kpc). (S111, D282)
+- [close] **When the quota is short, keep the review and the second reader and cut the passes.** One pass a lane with
+  both kept was better than two passes with neither - and the lean session's rule held only because the second reader
+  looked. (S111, D282)
+- [close] **A close stand is judged at full size beside the last session's, by someone, every time.** The lead checked
+  the merged head's frames by hash and number only and had accepted NGC 4414's close-up as "no worse" from a builder's
+  small side-by-side; the documents' writer, the first to look, found it a loss, and the lead, putting S110's close-up
+  beside variants at full size, agreed and mended it. It is the second time in two sessions that the lead misjudged the
+  close stand (S110 on a mean brightness, S111 on a builder's sheet). A sheet the builder made is the builder's
+  reading. (S111, D282)
